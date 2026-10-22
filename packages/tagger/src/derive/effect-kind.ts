@@ -168,6 +168,25 @@ export function cantBeBlocked(object: string, clauseText = ""): boolean {
   return clauseText === "" || /\b(?:can['\u2019]t|cannot) be blocked\b/i.test(clauseText);
 }
 
+/** A RESTRICTION ON ATTACKING OR BLOCKING (CR 508.1c: "effects that say a creature can't attack"; CR 509.1b: "effects that say a creature can't block"), and which of the two (#1315).
+ *  The model stores `cant | attack or block` (Pacifism, Arrest), `cant | block` (Gravecrawler, Bedlam), `cant | attack` (Moat), `cant | block this turn`, or keeps its subject in the
+ *  object ("enchanted creature can't block", Mishra's Domination). ONLY the bare forms read: "attack", "block", "attack or block", with "this turn" or "until your next turn".
+ *  Not "can't attack you or planeswalkers you control" (Vow of Flight; Propaganda's tax is a payable and is read first), not a requirement ("not attack each combat if able",
+ *  "doesn't attack"), not a narrowed block ("block creatures without flying", "block this creature"), not "alone" and not an "unless" condition, and never "be blocked" (evasion).
+ *  CEILING: the narrowed and conditional forms are left unread -- 32 "block creatures without flying", 26 "attack unless defending player controls an island", 12 "... alone",
+ *  11 "block this creature" stored objects (research/tagger/restriction-objects.ts, 2026-10-22); each is a real restriction that this kind would overclaim as total.
+ *  Where the clause text is known it must print "can't|cannot attack|block". Linear: one `search`, one anchored match. */
+export function restrictedActions(object: string, clauseText = ""): ("attack" | "block")[] | undefined {
+  if (/\bbe blocked\b/i.test(object)) return undefined;
+  const at = object.search(/\b(?:can['\u2019]t|cannot)\s/i);
+  const rest = (at < 0 ? object : object.slice(object.indexOf(" ", at) + 1)).trim();
+  const m = /^(attack|block)(?: or (attack|block))?(?: this turn| until your next turn)?$/i.exec(rest);
+  if (!m) return undefined;
+  if (clauseText !== "" && !/\b(?:can['\u2019]t|cannot) (?:attack|block)\b/i.test(clauseText)) return undefined;
+  const out = [m[1]!.toLowerCase(), ...(m[2] ? [m[2].toLowerCase()] : [])] as ("attack" | "block")[];
+  return [...new Set(out)];
+}
+
 function retargetPhrase(text: string): string | undefined {
   const lower = text.toLowerCase();
   for (const head of RETARGET_HEADS) {
@@ -644,7 +663,11 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   if (verb === "cant" && /\babilit(?:y|ies)\b/i.test(action.object ?? "")) return "ability-loss";
   // CEILING: "can't be blocked unless defending player pays {3}" (Awesome Presence) is an evasion by CR 509.1b and stays a `tax` -- the payable
   // reading is checked first, as it always was; one corpus card. Reading it as evasion would need a payable-evasion kind of its own.
-  if (verb === "cant") return PAYABLE.test(action.object ?? "") ? "tax" : cantBeBlocked(action.object ?? "", clauseText) ? "evasion" : null;
+  if (verb === "cant") {
+    if (PAYABLE.test(action.object ?? "")) return "tax";
+    if (cantBeBlocked(action.object ?? "", clauseText)) return "evasion";
+    return restrictedActions(action.object ?? "", clauseText) ? "restriction" : null;
+  }
   if (verb === "cost-modify") return costDirection(action.object ?? "", clauseText);
   // THE OBJECT SOMETIMES STATES THE ORIGIN THE FIELD OMITTED. Hidetsugu and Kairi reads "put two
   // cards FROM YOUR HAND on top of your library" and the normalizer left `fromZone` unset, so the

@@ -989,6 +989,11 @@ export const EFFECT_KINDS = [
   // "unless defending player pays" stays `tax`. The subject is whoever cannot be blocked ("this creature" is `self`; a static keeps one
   // only when it names a class, so an Aura's host stays unnamed). A fact kind like `bounce`: the pair channels read it blank.
   "evasion",
+  // RESTRICTION (CR 508.1c "effects that say a creature can't attack", CR 509.1b "effects that say a creature can't block"; #1315): "Enchanted creature can't attack
+  // or block" (Pacifism, Arrest, Utopia Vow), "can't block" (Mishra's Domination's "Otherwise", Gravecrawler, Bedlam), "can't attack" (Moat). WHICH actions are on
+  // `Ability.restricts`. A fact kind like `evasion`: the pair channels read it blank. NOT "can't be blocked" (evasion), NOT "can't attack you" (a tax, Propaganda), NOT
+  // a requirement ("attacks each combat if able"), and a block narrowed to a class ("can't block creatures without flying") is left unread.
+  "restriction",
 ] as const;
 
 export type EffectKind = (typeof EFFECT_KINDS)[number];
@@ -1175,6 +1180,13 @@ export interface Ability {
    *  ABSENT MEANS "NOT SAID", NOT "NOT A HOST EFFECT". CEILING: a trigger on "this creature or equipped creature" (Razorfield Ripper), a recipient list ("equipped creature and Zombies you
    *  control", Wand of Orcus), the inner pump of a quoted grant (Dragon Mantle), a base P/T setter (Aettir and Priwen, Belt of Giant Strength) and "doesn't untap" (Venarian Gold) carry none. */
   host?: true;
+  /** THE CLAUSE THAT GRANTS THIS ABILITY (#1315). On an ability derived from a QUOTED ability another clause hands over (Sunbond's "Enchanted creature has 'Whenever you gain
+   *  life, put that many +1/+1 counters on this creature.'"), the id of the granting clause (`segment()`'s `granted` clause and its `parentId`): the granting clause's own
+   *  ability is a `keyword-grant` with empty `grants` and says nothing of what is granted, so a reader that must judge the grant (a buff or a curse) follows this to the
+   *  abilities that say it. Additive and read by no edge code. ABSENT on every ability no clause grants. */
+  grantedBy?: number;
+  /** WHICH ACTIONS A `restriction` ABILITY FORBIDS (#1315): `attack`, `block`, or both ("can't attack or block"). Only on an ability of effect kind `restriction`. */
+  restricts?: ("attack" | "block")[];
   /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs. */
   trigger?: {
     verbs: Verb[];

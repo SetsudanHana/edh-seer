@@ -6,8 +6,9 @@ import { connect, loadConfig } from "@edh-seer/data";
 import { deriveRow } from "../../packages/tagger/src/derive-worker.js";
 const store = await connect(loadConfig());
 const stored = new Map((await store.db.collection("cardTagsDerived").find({ isToken: { $ne: true } }).toArray()).map((d: any) => [d.oracleId, d]));
-const strip = (abilities: any[]) => JSON.stringify(abilities.map((a) => { const { host: _h, ...rest } = a; return rest; }));
-let same = 0, diff = 0, legal = 0;
+// A clause whose only action became a `restriction` loses the kindless placeholder ability the trigger head used to leave (Aragorn, Ahn-Crop Crasher): dropped on both sides.
+const strip = (abilities: any[], restrictedClauses: Set<unknown>) => JSON.stringify(abilities.filter((a) => a.effect?.kind !== "restriction" && !(a.effect?.kind === "" && !a.emits && restrictedClauses.has(a.clause))).map((a) => { const { host: _h, grantedBy: _g, restricts: _r, ...rest } = a; return rest; })); // the fields and the kind added since the stored rows (369-373)
+let gainedRestriction = 0, same = 0, diff = 0, legal = 0;
 const cards = { aura: new Set<string>(), equipment: new Set<string>(), other: new Set<string>() };
 const abil = { aura: 0, equipment: 0, other: 0 };
 const kinds: Record<string, number> = {};
@@ -20,7 +21,8 @@ for (const doc of await store.db.collection("cardClauses").find({ isToken: { $ne
   if (!src) continue;
   const tags = deriveRow({ doc, source: src, isToken: false }).tags as any;
   const old = stored.get(doc.oracleId) ?? {};
-  if (strip(tags.abilities ?? []) === strip(old.abilities ?? [])) same++; else { diff++; console.log("DIFF", doc.name); }
+  const rc = new Set((tags.abilities ?? []).filter((a: any) => a.effect?.kind === "restriction").map((a: any) => a.clause)); if (rc.size > 0) gainedRestriction++;
+  if (strip(tags.abilities ?? [], rc) === strip(old.abilities ?? [], rc)) same++; else { diff++; console.log("DIFF", doc.name); }
   if (src.legalities?.commander !== "legal") continue;
   legal++;
   const tl = String(src.typeLine ?? "");
@@ -40,7 +42,8 @@ for (const doc of await store.db.collection("cardClauses").find({ isToken: { $ne
     (residue[key] ??= []).push(src.name);
   }
 }
-console.log(`identity (host stripped): identical ${same}, different ${diff}`);
+console.log(`cards deriving a restriction (all legalities): ${gainedRestriction}`);
+console.log(`identity (host, grantedBy, restricts, restriction stripped): identical ${same}, different ${diff}`);
 console.log(`commander-legal ${legal}; cards with host: aura ${cards.aura.size}, equipment ${cards.equipment.size}, other ${cards.other.size}; abilities: ${JSON.stringify(abil)}`);
 console.log("unmarked host-kind abilities on Auras/Equipment (a card's other-class effects, granted inner effects, Magemarks):", JSON.stringify(unmarked));
 console.log("by effect kind", JSON.stringify(kinds));

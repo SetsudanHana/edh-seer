@@ -135,9 +135,9 @@ test("a tutor derives `search`, the verb it is printed with", () => {
 
 test("`cant` is a tax only when it can be paid through", () => {
   // Propaganda and Ghostly Prison both carry a live flat tag of { kind: "tax" }; Bedlam
-  // ("Creatures can't block") carries []. The difference is whether the restriction has a price.
+  // ("Creatures can't block") carried [] until #1315, which reads it as a `restriction`. The difference is whether the restriction has a price.
   expect(actionEffectKind({ verb: "cant", object: "attack you unless their controller pays {2}" })).toBe("tax");
-  expect(actionEffectKind({ verb: "cant", object: "block" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "block" })).toBe("restriction");
   expect(actionEffectKind({ verb: "cant", object: "" })).toBeNull();
 });
 
@@ -723,7 +723,7 @@ test("a restriction on being blocked is evasion (CR 509.1b); a payable one stays
   expect(actionEffectKind({ verb: "cant", object: "not be blocked if able" })).toBeNull();
   expect(actionEffectKind({ verb: "cant", object: "be blocked by fewer than two creatures" })).toBeNull();
   // "can't block" is a different restriction.
-  expect(actionEffectKind({ verb: "cant", object: "target creature can't block this turn" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "target creature can't block this turn" })).toBe("restriction"); // since #1315 (restriction): a bare "can't block", no longer unread
   expect(actionEffectKind({ verb: "cant", object: "cast this spell except during the declare blockers step" })).toBeNull();
 });
 
@@ -968,4 +968,21 @@ test("an extra loyalty activation is extra-loyalty, for your planeswalkers or fo
 test("a discount counted off the opponents' life loss is a cost reduction", () => {
   const text = "Creature spells you cast cost {1} less to cast for each 1 life your opponents have lost this turn.";
   expect(actionEffectKind({ verb: "cost-modify", object: "Creature spells you cast" } as never, text)).toBe("cost-reduction");
+});
+
+test("a restriction on attacking or blocking is `restriction` (CR 508.1c, 509.1b); evasion, a payable, a requirement and a narrowed block are not (#1315)", () => {
+  for (const object of ["attack or block", "attack", "block", "block this turn", "attack or block this turn", "attack or block until your next turn", "enchanted creature can't block", "this creature can't block"]) {
+    expect(actionEffectKind({ verb: "cant", object }), object).toBe("restriction");
+  }
+  expect(actionEffectKind({ verb: "cant", object: "be blocked" })).toBe("evasion");
+  expect(actionEffectKind({ verb: "cant", object: "attack you or planeswalkers you control" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "enchanted creature can't attack you or planeswalkers you control" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "attack you unless its controller pays {2}" })).toBe("tax");
+  expect(actionEffectKind({ verb: "cant", object: "not attack each combat if able" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "doesn't attack each combat if able" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "block creatures without flying" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "block this creature" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "block or be blocked by creatures with power 2 or less" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "cast this spell unless you've been attacked this step" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "attack or block alone" })).toBeNull();
 });

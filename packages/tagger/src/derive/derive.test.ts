@@ -6275,3 +6275,81 @@ describe("host: an effect on the attached permanent (#1315)", () => {
     expect(curse.some((x) => x.host)).toBe(false);
   });
 });
+
+describe("grantedBy: the clause that grants a quoted ability (#1315)", () => {
+  const derive = (name: string, typeLine: string, oracleText: string, model?: Parameters<typeof deriveAbilities>[0]) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card);
+    return model
+      ? deriveCardTags(deriveInputOf(card as never, "x", name, model, undefined, undefined)).abilities
+      : deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities;
+  };
+  const by = (abilities: Ability[]) => abilities.map((a) => `${a.clause}:${a.grantedBy ?? "-"}`);
+
+  test("the quoted ability's clause names the granting clause (Sunbond, Dragon Mantle, Pendrell Flux, Splinter Twin)", () => {
+    expect(by(derive("Sunbond", "Enchantment — Aura", "Enchant creature\nEnchanted creature has \"Whenever you gain life, put that many +1/+1 counters on this creature.\""))).toEqual(["2:-", "3:2"]);
+    expect(by(derive("Dragon Mantle", "Enchantment — Aura", "Enchant creature\nWhen this Aura enters, draw a card.\nEnchanted creature has \"{R}: This creature gets +1/+0 until end of turn.\""))).toEqual(["2:-", "3:-", "4:3"]);
+    expect(by(derive("Pendrell Flux", "Enchantment — Aura", "Enchant creature\nEnchanted creature has \"At the beginning of your upkeep, sacrifice this creature unless you pay its mana cost.\""))).toEqual(["2:-", "3:2"]);
+    expect(by(derive("Splinter Twin", "Enchantment — Aura", "Enchant creature\nEnchanted creature has \"{T}: Create a token that's a copy of this creature, except it has haste. Exile that token at the beginning of the next end step.\""))).toEqual(["2:-", "3:2"]);
+  });
+
+  test("the model path (stored clauses) carries it too (Dragon Mantle)", () => {
+    const text = "Enchant creature\nWhen this Aura enters, draw a card.\nEnchanted creature has \"{R}: This creature gets +1/+0 until end of turn.\"";
+    const a = derive("Dragon Mantle", "Enchantment — Aura", text, [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant creature" }] },
+      { id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "this Aura", control: "you" }, actions: [{ verb: "draw", object: "a card", amount: "1" }] },
+      { id: 3, abilityType: "static", actions: [{ verb: "grant-ability", object: "that ability" }] },
+      { id: 4, abilityType: "activated", actions: [{ verb: "modify-pt", object: "this creature", amount: "+1/+0 until end of turn" }] },
+    ] as never);
+    expect(a.filter((x) => x.grantedBy !== undefined).map((x) => [x.clause, x.grantedBy])).toEqual([[4, 3]]);
+  });
+
+  test("an ability no clause grants carries none (Rancor, Bonesplitter)", () => {
+    expect(derive("Bonesplitter", "Artifact — Equipment", "Equipped creature gets +2/+0.\nEquip {1}").some((a) => a.grantedBy !== undefined)).toBe(false);
+    expect(derive("Rancor", "Enchantment — Aura", "Enchant creature\nEnchanted creature gets +2/+0 and has trample.").some((a) => a.grantedBy !== undefined)).toBe(false);
+  });
+});
+
+describe("restriction: a host that can't attack or block (#1315, CR 508.1c, 509.1b)", () => {
+  const derive = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities;
+  };
+  const rs = (abilities: Ability[]) => abilities.filter((a) => a.effect.kind === "restriction").map((a) => `${(a.restricts ?? []).join("+")}:${a.host === true}`);
+  const AURA = "Enchantment — Aura";
+
+  test("Pacifism, Utopia Vow, Pillory of the Sleepless, Compulsory Rest: attack and block, on the host", () => {
+    expect(rs(derive("Pacifism", AURA, "Enchant creature\nEnchanted creature can't attack or block."))).toEqual(["attack+block:true"]);
+    expect(rs(derive("Utopia Vow", AURA, "Enchant creature\nEnchanted creature can't attack or block.\nEnchanted creature has \"{T}: Add one mana of any color.\""))).toEqual(["attack+block:true"]);
+    expect(rs(derive("Pillory of the Sleepless", AURA, "Enchant creature\nEnchanted creature can't attack or block.\nEnchanted creature has \"At the beginning of your upkeep, you lose 1 life.\""))).toEqual(["attack+block:true"]);
+    expect(rs(derive("Compulsory Rest", AURA, "Enchant creature\nEnchanted creature can't attack or block.\nEnchanted creature has \"{2}, Sacrifice this creature: You gain 2 life.\""))).toEqual(["attack+block:true"]);
+  });
+
+  test("the either-or Auras' 'Otherwise, it can't ...' half is on the host (Mishra's Domination: block; Bonds of Faith: attack and block)", () => {
+    const card = { name: "Mishra's Domination", typeLine: AURA, oracleText: "Enchant creature\nAs long as you control enchanted creature, it gets +2/+2. Otherwise, it can't block.", keywords: [] as string[] };
+    const stored = [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant creature" }] },
+      { id: 2, abilityType: "static", actions: [{ verb: "modify-pt", object: "enchanted creature", amount: "+2/+2" }, { verb: "cant", object: "enchanted creature can't block" }] },
+    ] as never;
+    expect(rs(deriveCardTags(deriveInputOf(card as never, "x", card.name, stored)).abilities)).toEqual(["block:true"]);
+    expect(rs(derive("Bonds of Faith", AURA, "Enchant creature\nEnchanted creature gets +2/+2 as long as it's a Human. Otherwise, it can't attack or block."))).toEqual(["attack+block:true"]);
+  });
+
+  test("Arrest: the activation lock is not a restriction on attacking or blocking", () => {
+    expect(rs(derive("Arrest", AURA, "Enchant creature\nEnchanted creature can't attack or block, and its activated abilities can't be activated."))).toEqual(["attack+block:true"]);
+  });
+
+  test("another class or the card itself is not the host (Bedlam, Moat, Gravecrawler)", () => {
+    expect(rs(derive("Bedlam", "Enchantment", "Creatures can't block."))).toEqual(["block:false"]);
+    expect(rs(derive("Moat", "Enchantment", "Creatures without flying can't attack."))).toEqual(["attack:false"]);
+    expect(rs(derive("Gravecrawler", "Creature — Zombie", "This creature can't block.\nYou may cast this card from your graveyard as long as you control a Zombie."))).toEqual(["block:false"]);
+  });
+
+  test("not a restriction: can't be blocked (evasion), can't attack you (Vow of Flight, Propaganda's tax), must attack", () => {
+    expect(rs(derive("Aqueous Form", AURA, "Enchant creature\nEnchanted creature can't be blocked."))).toEqual([]);
+    expect(rs(derive("Vow of Flight", AURA, "Enchant creature\nEnchanted creature gets +2/+2, has flying, and can't attack you or planeswalkers you control."))).toEqual([]);
+    expect(rs(derive("Propaganda", "Enchantment", "Creatures can't attack you unless their controller pays {2} for each creature they control that's attacking you."))).toEqual([]);
+    expect(derive("Propaganda", "Enchantment", "Creatures can't attack you unless their controller pays {2} for each creature they control that's attacking you.").some((a) => a.effect.kind === "tax")).toBe(true);
+  });
+});

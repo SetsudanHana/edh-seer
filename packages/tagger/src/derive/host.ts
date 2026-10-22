@@ -3,7 +3,7 @@
 import type { Action } from "../canonicalize.js";
 
 /** The effect kinds a host marker is read for: what a buff, a curse or a neutraliser does TO the thing it is attached to. */
-const HOST_KINDS: ReadonlySet<string> = new Set(["pump", "debuff", "keyword-grant", "speed-increase", "type-grant", "ability-loss", "animate", "evasion"]);
+const HOST_KINDS: ReadonlySet<string> = new Set(["pump", "debuff", "keyword-grant", "speed-increase", "type-grant", "ability-loss", "animate", "evasion", "restriction"]);
 
 /** "enchanted creature", "equipped creature", "enchanted permanent", "enchanted land": the host phrase at the START of a recipient. Not "enchanted creature's
  *  controller" (a player) and not "enchanted player" (a Curse) or a plural ("Enchanted creatures you control have shroud", Greater Auramancy: a class) and not "enchanted creature and ..." / "... or ..." (a list that is not only the host), not a plural (Kor Blademaster's "Equipped Warriors you control") and not "... you control". */
@@ -23,7 +23,7 @@ const PRONOUN = /^(?:it|that creature)$/i;
 /** The clause STARTS with a host phrase, or a condition or trigger on one ("As long as enchanted creature is black, it gets ...", "Whenever equipped creature attacks, it gains ..."): a pronoun recipient is then the host.
  *  "Whenever this creature or equipped creature attacks, ... it" (Razorfield Ripper) opens on "this creature", so its "it" is not marked. */
 function opensOnHost(clauseText: string): boolean {
-  return HOST_PHRASE.test(clauseText.trim().replace(/^(?:as long as|when|whenever)\s+/i, ""));
+  return HOST_PHRASE.test(clauseText.trim().replace(/^(?:as long as|when|whenever)\s+(?:you control\s+)?/i, ""));
 }
 
 // CEILING: these shapes are left unmarked, "not said" and never wrong. Census over the commander-legal Auras and Equipment (research/tagger/host-census.ts, derive 371): 56 print

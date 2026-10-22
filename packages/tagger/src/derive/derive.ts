@@ -9,7 +9,7 @@ import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
-import { ZONE_SCOPED_KINDS, actionEffectKind, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
+import { ZONE_SCOPED_KINDS, actionEffectKind, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
 import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
@@ -532,7 +532,8 @@ import { emblemRecipient } from "../emblem.js";
 // 370: #1315 -- `Ability.host`: the effect applies to the permanent the card is attached to (an Aura's "enchanted creature / permanent", CR 303.4; an Equipment's "equipped creature", CR 301.5), set on pump, debuff, keyword-grant, speed-increase, type-grant, ability-loss, animate and evasion when the printed recipient is the host (derive/host.ts): the object ("enchanted creature +2/+0"), the clause head for a bare-object grant ("Enchanted creature has double strike"), a condition ahead of it ("During your turn, equipped creature has ..."), and "it" in a clause that opens on the host ("As long as enchanted creature is black, it gets ...", the "Otherwise, it gets -3/-3" half of Clutch of Undeath). Not another class on the card (Inner Demon's board -2/-2, Vampirism's other creatures, the Magemarks' creatures that are enchanted, "enchanted creature's controller", "enchanted player", "enchanted creatures you control"). A MARKER, not `effect.subject.status`: a static with a subject forms `static:<kind>` tags and whole-deck edges, so `effect.subject` is untouched and no edge code reads `host`. Measured over the 31,998 commander-legal cards: 1,437 cards / 2,208 abilities carry it (Aura 829 cards / 1,238 abilities; Equipment 555 / 885; other 53 / 85, the bestow, Licid, reconfigure and equipment-creature cards), and with `host` stripped every stored 369 row re-derives byte-identical (32,006 same, 2 not: Plan for All Outcomes and Overwrite the Multiverse, whose empower rows differ at 369 too). 59 Auras / Equipment print "enchanted|equipped X gets|has|gains|loses|can't ..." and derive no host ability: the commonest cause is a regex hit that is not a recipient (a player gains or loses life off the host's trigger, 21); a trigger's "it" (Thunderous Might, Razorfield Ripper, Reaper's Talisman, Writ of Passage, Wand of Orcus, Cocoon) is left unmarked; the rest derive no host-kind effect at all (Venarian Gold, Aettir and Priwen, Belt of Giant Strength, Mammoth Harness's "loses flying", Blossombind, Lithoform Blight) or are another class (Goblin Caves, the Magemarks).
 // 371: #1315 -- `Ability.host` also reads "it" after a TRIGGER on the host ("Whenever enchanted creature attacks, it gets +X/+0": Thunderous Might; "Whenever equipped creature attacks, it gains deathtouch": Reaper's Talisman; "..., if its power is 2 or less, it can't be blocked": Writ of Passage, two heads stripped). Not "this creature or equipped creature" (Razorfield Ripper) and not a list ("equipped creature and Zombies you control", Wand of Orcus). Measured: 1,442 cards / 2,216 abilities carry host (Aura 831 / 1,242, Equipment 557 / 889, other 53 / 85; 370 read 1,437 / 2,208), residue 59 -> 56; with host stripped the 369 rows are still identical (32,006; the same 2 differ). The unread shapes are now CEILING comments in derive/host.ts.
 // 372: #1315 review -- `Ability.host` no longer marks: a plural head or "... you control" (Kor Blademaster's "Equipped Warriors you control have double strike"); a grant whose clause hands it to another class (Gemcutter Buccaneer's Treasures, quoting "Equipped creature gets +2/+0"); a LOSS filed as a grant (Earthbind's "Enchanted creature loses flying", Observed Stasis's "loses all abilities": still derived as keyword-grant, the kind is wrong, the mark is withheld). `Ability.host` documents that it carries no polarity. Measured: 1,437 cards / 2,209 abilities carry host (Aura 829 / 1,237, Equipment 557 / 889, other 51 / 83; 371 read 1,442 / 2,216), residue 56 -> 58 (Earthbind, Observed Stasis); identity with host stripped unchanged (32,006; the same 2 differ).
-export const DERIVE_VERSION = 372;
+// 373: #1315 -- (1) `Ability.grantedBy`: the id of the clause that grants a quoted ability, on every ability derived from a `granted` clause (segment()'s `parentId`, `DeriveInput.clauseGrants`; both clause sources): Sunbond's counter trigger (clause 3) names clause 2, Dragon Mantle's pump 3, Pendrell Flux's sacrifice, Splinter Twin's token copy. Additive, read by no edge code. (2) a new effect kind `restriction` (CR 508.1c, 509.1b) with `Ability.restricts` ("attack" | "block"), read off `cant | attack or block` / `attack` / `block` (+ "this turn", "until your next turn", or the subject kept in the object: Mishra's Domination's "Otherwise, it can't block"): Pacifism, Arrest, Utopia Vow, Pillory of the Sleepless, Compulsory Rest, Bedlam, Moat, Gravecrawler. A FACT kind (edges.ts FACT_KINDS, impact 0.2): the pair channels read it blank. `host.ts` HOST_KINDS lists it, so a host's "can't attack or block" is `host`. Not read: "can't be blocked" (evasion), "can't attack you" (Propaganda's tax, Vow of Flight), requirements ("attacks each combat if able"), narrowed blocks ("block creatures without flying"), "alone", "unless" conditions (CEILING in effect-kind.ts). Measured: 759 abilities / 594 cards carry grantedBy; of 157 commander-legal Auras with a host keyword-grant of empty `grants`, 138 have a grantedBy child of that clause and 19 none; 367 commander-legal cards (376 abilities) derive a restriction (0 before): attack+block 68, block 269, attack 39, 71 on the host (69 commander-legal cards); unclaimed 6118 -> 5730 actions, 5378 -> 5036 cards; with the new fields and restriction abilities stripped every stored 372 row re-derives identical (32,006; the same 2 differ).
+export const DERIVE_VERSION = 373;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1158,6 +1159,8 @@ function everyCreatureYouControl(who: string, clauseText: string): boolean {
 }
 /** The words left of "can't be blocked" / "be blocked": the one that cannot be blocked (#1315). */
 const CANT_BE_BLOCKED = /^(.*?\S)\s+(?:(?:can['\u2019]t|cannot)\s+)?be blocked\b/i;
+/** Who cannot attack or block (#1315): the words ahead of "can't attack|block". */
+const CANT_ATTACK_OR_BLOCK = /^(.*?\S)\s+(?:can['\u2019]t|cannot)\s+(?:attack|block)\b/i;
 /** Who LOSES abilities: "Creatures lose all abilities", "Enchanted creature loses all abilities". */
 const LOSES_ABILITIES = /^(.*?\S)\s+\bloses?\s+all\s+abilities\b/i;
 /** The same defect one verb over. `copy` records the copy SOURCE as its object -- Shapesharer's
@@ -1383,12 +1386,13 @@ function effectSubject(
   // CEILING: "enchanted / equipped creature" and the other narrowings stay unnamed, and a STATIC keeps no subject (`namesItsTargets`): 328 of the 541
   // derived evasion abilities carry no type, subtype or self. A later task marks an Aura's / Equipment's host; until then a reader cannot tell
   // whose evasion it is from the subject alone.
-  if (kind === "evasion") {
+  if (kind === "evasion" || kind === "restriction") {
     const object = action.object ?? "";
-    const who = (CANT_BE_BLOCKED.exec(object)?.[1] ?? recipientBefore(clauseText, CANT_BE_BLOCKED))
+    const re = kind === "evasion" ? CANT_BE_BLOCKED : CANT_ATTACK_OR_BLOCK;
+    const who = (re.exec(object)?.[1] ?? recipientBefore(clauseText, re))
       ?.replace(/\s+(?:gets?|gains?|has|have|loses?)\b.*$/i, "").trim().replace(/ and$/i, "");
     // A GRANTED ability's "this creature" is the grantee, not the card (Rime Transfusion's Aura): unnamed, never `self`.
-    const granted = /["\u201c][^"\u201d]*\b(?:can['\u2019]t|cannot) be blocked/i.test(clauseText);
+    const granted = (kind === "evasion" ? /["\u201c][^"\u201d]*\b(?:can['\u2019]t|cannot) be blocked/i : /["\u201c][^"\u201d]*\b(?:can['\u2019]t|cannot) (?:attack|block)/i).test(clauseText);
     if (!who || granted || UNEXPRESSIBLE_NARROWING.test(who) || /^(?:it|that creature|they|them)$/i.test(who)) return parseSubject("");
     const s = subjectFrom(who, cardName, cardText);
     if (SELF_REFERENCE.test(who) || isSelfSubject(who, cardName)) s.self = true;
@@ -3079,6 +3083,7 @@ export function deriveAbilities(
       if (trigger) ability.trigger = trigger;
       // The effect lands on the permanent this card is attached to (#1315): a marker, never a subject -- see `Ability.host`.
       if (hostEffect(action, effectKind, text)) ability.host = true;
+      if (effectKind === "restriction") { const r = restrictedActions(action.object ?? "", text); if (r) ability.restricts = r; }
       // "DRAW A CARD IF IT WAS ATTACKING. OTHERWISE, ..." (#798, Garna; Zurgo Stormrender): the
       // condition narrows the action its own sentence names to a death IN COMBAT, which is the
       // trigger subject's combat state; the "Otherwise" branch keeps every other death.
@@ -3663,7 +3668,9 @@ export function deriveCardTags(input: DeriveInput): CardTags {
     (chars.faces ? chars.faces[face ?? 0]?.types ?? [] : chars.types).some((t) => /^(?:instant|sorcery)$/i.test(t));
   const spellOnce = pinned.map((a) => a.kind === "on-cast" || a.repeats === "once" || !isSpellFace(a.face) ? a : { ...a, repeats: "once" as const })
     // A SELF "YOU LOSE THE GAME" ABILITY CLAIMS NOTHING (#1252, #1264), decided on the FINAL emits: every control fill above has run.
-    .map(stampSelfLoss);
+    .map(stampSelfLoss)
+    // THE CLAUSE THAT GRANTS A QUOTED ABILITY (#1315): `segment()`'s granted clause and its parent, from `DeriveInput.clauseGrants` (both clause sources).
+    .map((a) => { const by = a.clause !== undefined ? input.clauseGrants?.[a.clause as number] : undefined; return by === undefined ? a : { ...a, grantedBy: by }; });
   // A CREATURE ONLY UNDER A CONDITION (#797): the action grammar reads "As long as your devotion to red
   // is less than five, Purphoros isn't a creature" as the card itself that "can't be a creature".
   // Read off the printed text, which reaches the Theros gods the store filed as something else.
