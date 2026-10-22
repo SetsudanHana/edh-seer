@@ -12,7 +12,7 @@ export interface RoleParentIdentity {
 }
 
 export const ROLE_PARENTS: readonly RoleParentIdentity[] = [
-  { name: "Card advantage", key: "consistency", leaves: ["draw", "cardSelection", "impulseDraw", "tutor"] },
+  { name: "Card advantage", key: "consistency", leaves: ["draw", "cardSelection", "impulseDraw", "handFill", "tutor"] },
   { name: "Ramp", key: "ramp", leaves: ["ramp"] },
   { name: "Interaction", key: "interaction", leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"] },
   { name: "Board wipes", key: "boardWipes", leaves: ["boardWipe"] },

@@ -53,7 +53,10 @@ export type RuleClause =
       /** The effect TARGETS something (`scope: target`, so no `scope` option beside it) that can be a PERMANENT not only yours (#1294, the removal ruling of 2026-10-22: targeted damage is removal when its allowed target includes a permanent on the battlefield, at any amount):
        *  a typed subject that is not a player ("target creature", "creature or planeswalker", a battle), an UNTYPED one with no `player` flag ("any target"), or an `anyOf` with such a branch ("target player or planeswalker", Lava Spike).
        *  "Target player" and "target opponent" carry `player: true` since derive 381 and are refused; control `you` and the card itself are refused. An effect with no subject reads its targeted `non-combat-damage` emits instead (Aethertorch Renegade). */
-      reachesPermanent?: true }
+      reachesPermanent?: true;
+      /** A `to-hand` ability that is the IMPULSE LINE (#1302): one card chosen from a larger look (`Ability.chooses` with `amount` "1"). Owner 2026-10-02: choosing one of the top N is card selection, so
+       *  `handFill.effect` lists it under `not`; a card whose conditional upgrade adds a second branch ("put each of those into your hand instead if ...", See the Truth) keeps its base case. */
+      pickOne?: true }
   /** WHAT AN ABILITY EMITS, for the one family that has no effect kind by design: removal.
    *  `destroy`/`exile`/`bounce` derive as kindless abilities whose EMIT is `dies` or `leaves`
    *  (emits.ts: "`destroy` has no payoff kind in the engine's vocabulary, but without its `dies`
@@ -563,7 +566,8 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.reachesPlayer !== true || abilityReachesPlayer(a))
         && (clause.reachesPermanent !== true || abilityReachesPermanent(a))
         && (clause.notLandOnly !== true || !(a.effect.subject !== undefined && landOnlySubject(a.effect.subject)))
-        && (clause.toughnessDown !== true || lowersToughness(a.amount)));
+        && (clause.toughnessDown !== true || lowersToughness(a.amount))
+        && (clause.pickOne !== true || (a.chooses === true && a.amount === "1")));
     // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive mislabels some cards, so the role is wrong on them by name.
     //   LOST (real removal, no usable emit): Polymorph, Transmogrify, Chaos Mutation, Divergent Transformations (derive reads the polymorph family as played on YOUR creature, `control: you`: owner ruling 2026-10-02 / #962,
     //   "primary use", so the opponent use is dropped on purpose; the role pays for it);

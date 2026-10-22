@@ -1,6 +1,6 @@
 {
   "deriveVersion": 384,
-  "rulesVersion": 34,
+  "rulesVersion": 35,
   "roles": {
     "ramp": {
       "weights": {
@@ -156,6 +156,19 @@
         "timing": 0.5
       },
       "pairs": 4,
+      "heldOutAccuracy": 0,
+      "baselineAccuracy": 0,
+      "fallbackAccuracy": 0,
+      "fallback": true
+    },
+    "handFill": {
+      "weights": {
+        "frequency": 1000000,
+        "rateFloor": 1000,
+        "manaValue": -2,
+        "timing": 0.5
+      },
+      "pairs": 1,
       "heldOutAccuracy": 0,
       "baselineAccuracy": 0,
       "fallbackAccuracy": 0,

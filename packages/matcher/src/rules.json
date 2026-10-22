@@ -1,5 +1,5 @@
 {
-  "version": 34,
+  "version": 35,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -36,7 +36,6 @@
     "colouredMana": "\\{[WUBRG]\\}|any colou?r|chosen colou?r|any combination of colou?rs|color identity",
     "manaToken": "create\\b[\\s\\S]*?(treasure|gold|eldrazi (?:spawn|scion))( creature)? tokens?",
     "selection": "\\bscry\\b|\\bsurveil\\b|look at the top \\w+ cards?",
-    "digToHand": "\\b(?:reveal|look at) the top \\w+ cards? of your library\\.(?: [^.]*\\.){0,2} put (?:one pile|(?:two|three|four|five|six|seven|x) of (?:them|those cards))\\b[^.]*\\binto your hand",
     "impulseDraw": "exile the top (?:\\w+ )?cards? of your library[\\s\\S]*?you may play",
     "neutraliseAura": "(?:^|\\n)enchant (?<class>[^\\n]+)(?=[\\s\\S]*?enchanted (?:creature|permanent)[^.]*?(?:loses all (?:other card types and )?abilities|is a colou?rless land))",
     "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't",
@@ -136,11 +135,14 @@
       "why": "A draw `repeats.ts` REFUSED to label, on a card with no labelled engine draw beside it. Shown, not hidden: unlabelled beats mislabelled, and a reader who sees 3 unlabelled knows the engine count is a floor."
     },
     {
-      "id": "draw.dig",
-      "category": "draw",
-      "match": [{ "op": "oracle", "pattern": "digToHand" }],
-      "not": [{ "op": "countsAsLand" }],
-      "why": "CARDS TO HAND OFF THE TOP, two or a pile (owner, 2026-10-02: \"fact or fiction has a role, it is a draw spell\"). Its derived tags hold only the mill half, so no draw-card effect reaches draw.effect. One card to hand (Impulse) stays card selection."
+      "id": "handFill.effect",
+      "category": "handFill",
+      "match": [{ "op": "effectKind", "in": ["to-hand"], "control": ["you"] }],
+      "not": [
+        { "op": "countsAsLand" },
+        { "op": "effectKind", "in": ["to-hand"], "pickOne": true }
+      ],
+      "why": "CARDS PUT FROM YOUR LIBRARY INTO YOUR HAND ARE CARD ADVANTAGE, NOT DRAW (owner 2026-10-22, #1302; CR 121.5: drawing is its own instruction, so a draw payoff does not see Fact or Fiction, Dark Confidant or Ad Nauseam). A new leaf in Card advantage beside draw, card selection, impulse draw and tutor. This reverses the 2026-10-02 'fact or fiction is a draw spell' line the printed `digToHand` pattern (`draw.dig`) stood on. DERIVED (derive 384): the `to-hand` effect kind and its `amount`. Included: a pile (Fact or Fiction), two or three of a look (Dig Through Time), every card of a type (Tamiyo, Winding Way), a reveal that turns up one card (Dark Confidant, Ad Nauseam, Coiling Oracle's hand branch). Demonic Consultation reveals until a NAMED card: a tutor in effect, but the derive reads it as a library-to-hand put and the ruling is that such a put is handFill, not draw. NOT the Impulse line (owner 2026-10-02, still binding): one card chosen from a larger look stays card selection; a card with that line AND a conditional bigger branch (See the Truth, Accumulate Wisdom, Flow State) keeps its base case. A typed dig (\"a creature card from among them\") stays `search` by the 2026-09-16 ruling, so it never reaches here."
     },
     {
       "id": "ramp.engine.source",

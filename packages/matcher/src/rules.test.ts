@@ -1503,3 +1503,36 @@ test("graveyard hate that removes nothing from the battlefield is still not targ
   const removal = detectBuildCategories(hate.map((n) => realCard(n))).get("targetedRemoval") ?? new Set<string>();
   for (const n of hate) expect(removal.has(n), n).toBe(false);
 });
+
+describe("handFill: cards put from your library into your hand are card advantage, not draw (#1302)", () => {
+  const roles = (name: string): string[] => {
+    const m = detectBuildCategories([realCard(name)]);
+    return [...m.entries()].filter(([, s]) => s.has(name)).map(([k]) => k).sort();
+  };
+  test("a reveal, a pile, two of a look, or all of a type fill handFill (owner 2026-10-22)", () => {
+    // Dark Confidant, Ad Nauseam, Darkstar-style reveals: one card, no pick. Demonic Consultation reveals until a named card: a tutor in effect, per the ruling it is still not a draw.
+    for (const n of ["Dark Confidant", "Ad Nauseam", "Demonic Consultation", "Fact or Fiction", "Dig Through Time", "Winding Way", "Tamiyo, Collector of Tales"]) {
+      expect(roles(n), n).toContain("handFill");
+    }
+    expect(roles("Coiling Oracle")).toContain("handFill");
+  });
+  test("they are no longer draw (the 2026-10-02 `draw.dig` line is reversed)", () => {
+    for (const n of ["Fact or Fiction", "Dig Through Time", "Dark Confidant", "Ad Nauseam"]) expect(roles(n), n).not.toContain("draw");
+  });
+  test("one card chosen from a larger look is still card selection (owner 2026-10-02: Impulse, Browse)", () => {
+    for (const n of ["Impulse", "Browse"]) {
+      expect(roles(n), n).toContain("cardSelection");
+      expect(roles(n), n).not.toContain("handFill");
+    }
+    // An Impulse that upgrades to two or all on a condition keeps its base case.
+    for (const n of ["Accumulate Wisdom", "Flow State"]) expect(roles(n), n).not.toContain("handFill");
+  });
+  test("a printed draw is unchanged (Divination)", () => {
+    expect(roles("Divination")).toContain("draw");
+    expect(roles("Divination")).not.toContain("handFill");
+  });
+  test("the old printed pattern is gone", () => {
+    expect(loadRules().patterns["digToHand"]).toBeUndefined();
+    expect(loadRules().rules.find((r) => r.id === "draw.dig")).toBeUndefined();
+  });
+});

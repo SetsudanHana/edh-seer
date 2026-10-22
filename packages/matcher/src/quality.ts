@@ -36,6 +36,7 @@ const ROLE_KINDS: Record<Role, { kinds?: readonly string[]; verbs?: readonly str
   draw: { kinds: ["draw-card"] },
   cardSelection: { verbs: ["scry", "surveil"], kinds: ["top-set"] },
   impulseDraw: { kinds: ["impulse-draw"], verbs: ["exiled"] },
+  handFill: { kinds: ["to-hand"] },
   targetedRemoval: { verbs: ["dies", "exiled", "leaves", "shuffle"] },
   stackInteraction: { verbs: ["counter-spell"] },
   boardWipe: { verbs: ["dies", "exiled", "leaves"] },

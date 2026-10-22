@@ -22,12 +22,15 @@ export type BuildCategory =
   | "protection"
   | "tutor"
   | "graveyardHate"
-  | "lands";
+  | "lands"
+  | "handFill";
 
 /** THE ORDER IS A WIRE FORMAT since 2026-09-24: `NameIndexEntry.r` ships indices into it. Append
  *  only; reordering silently relabels every card's role in a deployed artifact. */
 export const BUILD_CATEGORIES: BuildCategory[] = [
   "ramp", "draw", "cardSelection", "impulseDraw", "targetedRemoval", "stackInteraction", "boardWipe", "burn", "stax", "protection", "tutor", "graveyardHate", "lands",
+  // Appended last: the order is a wire format (above). #1302.
+  "handFill",
 ];
 
 const isLand = (dc: DeckCard): boolean => countsAsLand(dc.card);
@@ -163,7 +166,7 @@ export function detectAnswerClasses(cards: DeckCard[]): Map<string, AnswerClassM
  *  `gatedLandsTarget`. */
 export const BASE_TARGETS: Record<BuildCategory, number> = {
   ramp: 0, draw: 0, cardSelection: 0, impulseDraw: 0, targetedRemoval: 0, stackInteraction: 0, boardWipe: 0,
-  burn: 0, stax: 0, protection: 0, tutor: 0, graveyardHate: 0,
+  burn: 0, stax: 0, protection: 0, tutor: 0, graveyardHate: 0, handFill: 0,
   lands: 36,
 };
 

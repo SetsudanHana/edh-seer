@@ -11,6 +11,7 @@ export const BUILD_CATEGORY_LABEL: Record<string, string> = {
   draw: "Draw",
   cardSelection: "Card selection",
   impulseDraw: "Impulse draw",
+  handFill: "Cards to hand",
   targetedRemoval: "Removal",
   stackInteraction: "Counterspells",
   boardWipe: "Board wipes",

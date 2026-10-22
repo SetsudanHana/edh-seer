@@ -20,7 +20,7 @@ test("a card with several roles is named by the first job in the report's order"
 test("every job's tally is the name of the parent that owns its role", async () => {
   const { BUILD_PARENTS } = await import("./build.js");
   expect(BUILD_PARENTS.map((p) => [p.name, p.key, p.leaves])).toEqual(ROLE_PARENTS.map((p) => [p.name, p.key, [...p.leaves]]));
-  for (const role of ["ramp", "boardWipe", "targetedRemoval", "stackInteraction", "protection", "graveyardHate", "tutor", "draw", "cardSelection", "impulseDraw"] as const) {
+  for (const role of ["ramp", "boardWipe", "targetedRemoval", "stackInteraction", "protection", "graveyardHate", "tutor", "draw", "cardSelection", "impulseDraw", "handFill"] as const) {
     const parent = BUILD_PARENTS.find((p) => p.leaves.includes(role))!;
     expect(jobOf([role])?.tally, role).toBe(parent.name);
   }
