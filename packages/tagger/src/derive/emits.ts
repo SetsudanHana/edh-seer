@@ -518,7 +518,26 @@ export const COPY_TOKEN_HEAD = /^((?:[a-z0-9]+ ){0,3}tokens?(?: that(?:'s| are| 
 const PLAYER_CREATES = /\b(?:opponents?|players?|controllers?|owners?|friends?|foes?)\s+(?:may\s+)?creates?\b/i;
 const COPIED_PHRASE = /\bcop(?:y|ies)\s+of\b[^.]*/i;
 
+/** A `gain-control` ACTION WHOSE PRINTED CLAUSE STATES A CONTROL CHANGE (#1318).
+ *  The model sometimes files another sentence as `gain-control`: Crown of Awe's "... gain protection from black and from red" (so wincon.voltron refused a protection Aura),
+ *  Misleading Signpost's "reselect which player or permanent ... is attacking". Where the clause text is known it has to print one of the control-change wordings:
+ *  "gain(s)/gained/take(s) control", "exchange control", "under <someone>'s control" (Vraska the Silencer, Gather Specimens), "controls enchanted/equipped/target ..." (Fealty to the Realm's
+ *  "The monarch controls enchanted creature"), "you control target player" (Opposition Agent). Anchored words and a bounded gap only: linear on any input.
+ *  CEILING: any sentence of the clause may carry it, not the one the action came from; a clause that has both a real control change and a misread one keeps both. */
+const CONTROL_CHANGE_PRINTED = [
+  /\b(?:gains?|gained|takes?|took|taken|exchanges?|steals?)\s+control\b/i,
+  /\bunder\s[^.,;:]{0,40}?\bcontrol\b/i,
+  /\bcontrols?\s+(?:enchanted|equipped|target|that|those|each|all|another)\b/i,
+  // A PLAYER CONTROLLED (CR 723.1: one player controlling another): Opposition Agent's "You control your opponents", Cruel Entertainment's "The first player controls the second player".
+  /\bcontrols?\s+(?:your\s+opponents?|the\s+(?:first|second)\s+player)\b/i,
+];
+export function printsControlChange(clauseText: string): boolean {
+  return CONTROL_CHANGE_PRINTED.some((re) => re.test(clauseText));
+}
+
 export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean } = {}): GameEvent[] {
+  // A `gain-control` THE PRINTED CLAUSE DOES NOT STATE IS NOT A CONTROL CHANGE (#1318): see `printsControlChange`. Dropped, so the action goes to `unclaimed`.
+  if (action.verb === "gain-control" && clauseText !== undefined && clauseText !== "" && !printsControlChange(clauseText)) return [];
   const casualty = action.verb === "grant-ability" ? CASUALTY.exec(action.object ?? "") : null;
   if (casualty) return [casualtySacrifice(Number(casualty[1]))];
   // "YOU GET {E}{E}" IS A COUNTER ON A PLAYER (CR 107.14: the energy symbol represents one energy

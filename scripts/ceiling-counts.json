@@ -52,7 +52,7 @@
   "packages/tagger/src/derive/delay.ts": 2,
   "packages/tagger/src/derive/derive.ts": 35,
   "packages/tagger/src/derive/effect-kind.ts": 9,
-  "packages/tagger/src/derive/emits.ts": 5,
+  "packages/tagger/src/derive/emits.ts": 6,
   "packages/tagger/src/derive/event-count.ts": 1,
   "packages/tagger/src/derive/gate.ts": 2,
   "packages/tagger/src/derive/graveyard-replacement.ts": 1,
