@@ -538,7 +538,8 @@ import { emblemRecipient } from "../emblem.js";
 // 375: #1318 -- a `gain-control` action derives a `gains-control` emit only when its PRINTED clause states a control change (`printsControlChange`, emits.ts: gain(s)/take(s)/exchange control, "under <someone>'s control", "controls enchanted/equipped/target ...", "controls your opponents" / "the second player", CR 723.1); the model had filed other sentences as `gain-control`, and the action now goes to `unclaimed`. Crown of Awe ("gain protection from black and from red") loses the phantom steal and regains `wincon:voltron`. Measured: gains-control emit events 395 -> 390, abilities with one 382 -> 377 clauses, cards 372 -> 367 (Berserker's Frenzy, Crown of Awe, Fabrication Module, Gollum Scheming Guide, Misleading Signpost; research/tagger/gains-control-census.ts); unclaimed 5773 -> 5777 actions, 5069 -> 5072 cards; role-ratchet gained 1 (Crown of Awe +wincon:voltron), lost 0; event-match diff for gains-control: 34 pairs -> 34, 0 new, 0 lost. Kept: Opposition Agent and Cruel Entertainment (a player controlled, CR 723.1). (The guard reads the whole clause, not the action's own sentence: see emits.ts.)
 // 376: #1321 -- the printed-verb guard (derive/verb-words.ts, `verbPrint`) is on for `add-mana`: an add-mana action whose clause AND whole card never print "add" or mana (Evereth, Caustic Exhale, Dutiful Replicator, Hurska Sweet-Tooth, Wildborn Preserver, Bogslither's Embrace, Go-Shintai of Boundless Vigor, Labyrinth Adversary: "you may pay {1}" read as a mana producer; Roil Cartographer, Peema Trailblazer, Scurry of Gremlins, Blaster Hulk: an energy or payment the energy test does not recognise) goes to `unclaimed`. An energy add-mana ({E}, 63 actions) is exempt: derive already reads it as the `counter-added` energy emit (CR 107.14). Measured: 12 actions dropped, 8 kept as clause mix-ups; unclaimed 5736 -> 5748 actions, 5034 -> 5046 cards; mana-generation abilities 2449 -> 2437; emits unchanged; counter-added pairs 163976 -> 163976, 0 new, 0 lost; role-ratchet gained 0, lost 0; panel PRECISION 100.0%, RETENTION 98.4% (428 held, 7 lost, ratchet ok); theme-stats unchanged.
 // 377: #1321 -- the printed-verb guard is on for `goad` (CR 701.15, Goad): a goad action whose clause and whole card never print "goad" goes to `unclaimed`. The model filed "attacks this turn if able" / "blocks this turn if able" under it (Dulcet Sirens, Incite War, Instigator, Maddening Imp, Siren's Call, Heckling Fiends, Rage Nimbus, Shipwreck Singer, Imaginary Threats, Gideon Jura, Nahiri the Unforgiving, Ravener, Trench Behemoth, Kookus, Howlsquad Heavy, Aggravate, Berserker's Frenzy): a forced attack is a combat requirement, not a goad, which also makes the creature attack a player other than the goader. Measured: 17 actions dropped, 0 clause mix-ups; goad emits 99 -> 82; unclaimed 5748 -> 5765 actions, 5046 -> 5059 cards; goad has no consumer so event-match pairs 0 -> 0; role-ratchet gained 0, lost 0; panel PRECISION 100.0%, RETENTION 98.4% (7 lost, ratchet ok).
-export const DERIVE_VERSION = 377;
+// 378: #1321 -- the printed-verb guard is on for `shuffle`, `scry`, `mill` and `search` (library operations): the model filed a DIG ("look at the top N cards ... put the rest on the bottom of your library in a random order") under scry (Basic Conjuration, Board the Weatherlight, Commune with Beavers, Storm the Festival, Zimone's Experiment, Water Tribe Rallier, Wilfred Mott, Devourer of Destiny, Nahiri's Warcrafting) and under shuffle (the same text, Planar Genesis, Torsten, Adewale, Animist's Awakening, United Battlefront, Elvish Rejuvenator, Michelangelo's Technique, Arcane Infusion, The Mana Rig, Break Out, Search for Survivors); a dig is neither a scry (CR 701.22) nor a shuffle (CR 701.24), and "whenever you scry" / "whenever a player shuffles" payoffs joined them. The action goes to `unclaimed` and stays in the clause's action list so a later "those cards" keeps its antecedent (Nahiri's Warcrafting). Measured: emits shuffle 1234 -> 1220, scry 449 -> 440, mill 820 -> 819, search 1019 -> 1018; unclaimed 5765 -> 5787 actions, 5059 -> 5074 cards (six dig cards now equal their grammar reading and switch to it); event-match pairs shuffle 274 -> 262 (12 lost: six dig cards x Cosi's Trickster, Psychic Surgery), scry 8160 -> 7989 (171 lost: nine dig cards x 19 scry payoffs), mill 483 -> 483, search 456 -> 456, exiled 17050 -> 17050; 0 new; role-ratchet gained 0, lost 0; panel PRECISION 100.0%, RETENTION 98.4% (7 lost, ratchet ok); theme-stats: scry:any 445 -> 436, shuffle:any 1163 -> 1149, mill:any 745 -> 744, static:scry 9 -> 7, search:assassin 1 -> 0.
+export const DERIVE_VERSION = 378;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2236,16 +2237,6 @@ export function deriveAbilities(
     // cue localises the actor to a VERB, not to an action, so a clause with two actions of that verb
     // is ambiguous and is left alone -- a missing answer beats a wrong one.
     const clauseText = rehomed ?? textForClause(clause, clauseTexts);
-    // AN ACTION WHOSE VERB THE PRINTED TEXT NEVER STATES IS NOT THAT ACTION (#1321): see `verbPrint`. For a verb in GUARDED_VERBS it is dropped to `unclaimed`; printed on ANOTHER clause of the card it is a clause mix-up and kept.
-    // CEILING: a mix-up is kept whole (its clause's own sentence is not searched for the right one), so a verb the card prints once can still feed two clauses.
-    if (GUARDED_VERBS.size > 0 && (clause.actions ?? []).some((a) => GUARDED_VERBS.has(a.verb ?? ""))) {
-      const kept = (clause.actions ?? []).filter((a) => {
-        if (!GUARDED_VERBS.has(a.verb ?? "") || guardExempt(a) || verbPrint(a.verb ?? "", clauseText, clauseCosts?.[clause.id as number], oracleText) !== "none") return true;
-        unclaimed.push(a);
-        return false;
-      });
-      clause = { ...clause, actions: kept };
-    }
     // "EACH CREATURE YOU CONTROL BECOMES PREPARED" IS A PREPARE, NOT A GRANT (CR 722.3a). Codie,
     // Ravenous Codex's activated ability came back from the model as `grant-ability` even with
     // `prepare` in the vocabulary, so the one card that prepares a whole board prepared nothing.
@@ -2594,6 +2585,16 @@ export function deriveAbilities(
     const before = abilities.length;
     /** The abilities (the ability and its twins) a `search` or `counter-spell` action made, by action index: the put that follows names its destination (#1301). */
     const destinationOwners = new Map<number, Ability[]>();
+    // AN ACTION WHOSE VERB THE PRINTED TEXT NEVER STATES IS NOT THAT ACTION (#1321): see `verbPrint`. For a verb in GUARDED_VERBS it goes to `unclaimed` and derives nothing; printed on ANOTHER clause of the
+    // card it is a clause mix-up and is kept. It stays in the clause's action list, so a later action's "those cards" still finds its antecedent (Nahiri's Warcrafting: dropping the misread scry left the exile
+    // naming the damage target).
+    // CEILING: a mix-up is kept whole (its clause's own sentence is not searched for the right one), so a verb the card prints once can still feed two clauses.
+    const misfiled = new Set<Action>();
+    if (GUARDED_VERBS.size > 0) {
+      for (const a of clause.actions ?? []) {
+        if (GUARDED_VERBS.has(a.verb ?? "") && !guardExempt(a) && verbPrint(a.verb ?? "", clauseText, clauseCosts?.[clause.id as number], oracleText) === "none") misfiled.add(a);
+      }
+    }
     for (const action of clause.actions ?? []) {
       // A PRINTED "Casualty N" keyword line is the spell's own sacrifice outlet (Make Disappear):
       // Scryfall's keyword list drops the N, so the line itself is read. See `casualtySacrifice`.
@@ -2604,6 +2605,7 @@ export function deriveAbilities(
       }
       // Inert: states no action (`INERT_VERBS`), so there is nothing to report. A printed casualty line above has its own ability.
       if (INERT_VERBS.has(action.verb ?? "")) continue;
+      if (misfiled.has(action)) { unclaimed.push(action); continue; }
       if (keywordActionOnStaticClause(kind, action.verb)) { unclaimed.push(action); continue; }
       // See antecedentFor: a pronoun object inherits the thing named earlier in the same clause.
       // "Whenever a player casts a spell, if it's not their turn, this creature deals 4 damage to THEM"
