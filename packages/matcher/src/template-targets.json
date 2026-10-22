@@ -1,24 +1,24 @@
 {
  "version": 1,
- "source": "packages/cli/decks/edhrec, 2126 decks over 214 themes, one fit for every column: regenerated 2026-10-14 by research/matcher/template-fit.ts under RULES 23 / DERIVE 309",
+ "source": "packages/cli/decks/edhrec, 2126 decks over 214 themes, regenerated 2026-10-22 by research/matcher/template-fit.ts",
  "population": {
   "consistency": 14,
   "ramp": 13,
-  "interaction": 12,
+  "interaction": 13,
   "boardWipes": 2
  },
  "range": {
   "consistency": [
-   6,
+   6.5,
    31
   ],
   "ramp": [
    7,
-   29
+   33
   ],
   "interaction": [
-   4,
-   25
+   5,
+   26
   ],
   "boardWipes": [
    0,
@@ -28,82 +28,82 @@
  "themes": {
   "activated-abilities": {
    "consistency": 12.5,
-   "ramp": 17,
-   "interaction": 13,
+   "ramp": 17.5,
+   "interaction": 14.5,
    "n": 10
   },
   "adventures": {
-   "consistency": 14.5,
+   "consistency": 15,
    "ramp": 15,
-   "interaction": 14,
+   "interaction": 16.5,
    "n": 10
   },
   "affinity": {
    "consistency": 12,
    "ramp": 21.5,
-   "interaction": 10.5,
+   "interaction": 11,
    "n": 10
   },
   "aggro": {
    "consistency": 10,
    "ramp": 10,
-   "interaction": 11.5,
+   "interaction": 14,
    "n": 10
   },
   "aikido": {
    "consistency": 12.5,
    "ramp": 12,
-   "interaction": 12.5,
+   "interaction": 13.5,
    "n": 10
   },
   "airbending": {
-   "consistency": 13.5,
+   "consistency": 14,
    "ramp": 14,
-   "interaction": 12.5,
+   "interaction": 14,
    "boardWipes": 0,
    "n": 10
   },
   "amass": {
    "consistency": 14.5,
    "ramp": 11,
-   "interaction": 10.5,
+   "interaction": 12.5,
    "n": 10
   },
   "annihilator": {
    "consistency": 12,
-   "ramp": 29,
-   "interaction": 15.5,
+   "ramp": 32.5,
+   "interaction": 16,
    "n": 10
   },
   "anthems": {
    "consistency": 13,
-   "ramp": 13,
-   "interaction": 12.5,
+   "ramp": 13.5,
+   "interaction": 13,
    "n": 10
   },
   "arcane": {
    "consistency": 13,
    "ramp": 11.5,
-   "interaction": 15,
+   "interaction": 15.5,
    "n": 10
   },
   "aristocrats": {
    "consistency": 14.5,
    "ramp": 14,
-   "interaction": 8.5,
+   "interaction": 9,
    "boardWipes": 3.5,
    "n": 10
   },
   "artifacts": {
    "consistency": 16.5,
    "ramp": 18,
-   "interaction": 11.5,
+   "interaction": 12,
    "n": 10
   },
   "attack-triggers": {
    "consistency": 8.5,
    "ramp": 11,
-   "interaction": 12,
+   "interaction": 14.5,
    "n": 10
   },
   "auras": {
@@ -115,19 +115,19 @@
   "banding": {
    "consistency": 8,
    "ramp": 8,
-   "interaction": 8.5,
+   "interaction": 9,
    "n": 10
   },
   "battles": {
-   "consistency": 17.5,
+   "consistency": 19,
    "ramp": 10,
-   "interaction": 12,
+   "interaction": 17,
    "n": 10
   },
   "big-mana": {
-   "consistency": 15,
+   "consistency": 14.5,
    "ramp": 22.5,
-   "interaction": 11.5,
+   "interaction": 12.5,
    "n": 10
   },
   "blink": {
@@ -139,93 +139,93 @@
   "blood": {
    "consistency": 9,
    "ramp": 10,
-   "interaction": 10,
+   "interaction": 12.5,
    "n": 10
   },
   "bloodthirst": {
    "consistency": 11,
    "ramp": 11.5,
-   "interaction": 12,
+   "interaction": 13,
    "boardWipes": 3.5,
    "n": 10
   },
   "bobbleheads": {
    "consistency": 13.5,
    "ramp": 20,
-   "interaction": 7.5,
+   "interaction": 8,
    "n": 10
   },
   "books": {
    "consistency": 30,
    "ramp": 8,
-   "interaction": 4,
+   "interaction": 5,
    "n": 10
   },
   "bounce": {
    "consistency": 16,
-   "ramp": 14.5,
-   "interaction": 14.5,
+   "ramp": 15,
+   "interaction": 15,
    "n": 10
   },
   "burn": {
    "consistency": 15.5,
    "ramp": 13.5,
-   "interaction": 11,
+   "interaction": 16,
    "boardWipes": 7,
    "n": 10
   },
   "cascade": {
    "consistency": 9.5,
-   "ramp": 16,
-   "interaction": 10,
+   "ramp": 16.5,
+   "interaction": 12.5,
    "n": 10
   },
   "caves": {
    "consistency": 11,
-   "ramp": 11,
-   "interaction": 10,
+   "ramp": 13.5,
+   "interaction": 11.5,
    "n": 10
   },
   "chaos": {
    "consistency": 18.5,
    "ramp": 10.5,
-   "interaction": 9,
+   "interaction": 12.5,
    "n": 10
   },
   "charge-counters": {
    "consistency": 15.5,
    "ramp": 11.5,
-   "interaction": 10.5,
+   "interaction": 13.5,
    "n": 10
   },
   "clash": {
    "consistency": 16.5,
-   "ramp": 10,
-   "interaction": 11.5,
+   "ramp": 12,
+   "interaction": 12.5,
    "boardWipes": 4,
    "n": 8
   },
   "clones": {
    "consistency": 10.5,
    "ramp": 16,
-   "interaction": 10,
+   "interaction": 12.5,
    "n": 10
   },
   "clues": {
    "consistency": 12.5,
    "ramp": 14.5,
-   "interaction": 10.5,
+   "interaction": 11.5,
    "n": 10
   },
   "coin-flip": {
    "consistency": 21,
    "ramp": 17,
-   "interaction": 10.5,
+   "interaction": 15.5,
    "n": 10
   },
   "color-hack": {
    "consistency": 13.5,
-   "ramp": 10,
+   "ramp": 10.5,
    "interaction": 15,
    "n": 10
   },
@@ -237,160 +237,160 @@
   },
   "commander-matters": {
    "consistency": 10.5,
-   "ramp": 14,
-   "interaction": 17.5,
+   "ramp": 14.5,
+   "interaction": 18.5,
    "n": 10
   },
   "connive": {
    "consistency": 16,
    "ramp": 14.5,
-   "interaction": 12,
+   "interaction": 12.5,
    "n": 10
   },
   "control": {
    "consistency": 17,
    "ramp": 14,
-   "interaction": 18.5,
+   "interaction": 20.5,
    "n": 10
   },
   "convoke": {
    "consistency": 16,
    "ramp": 10,
-   "interaction": 10,
+   "interaction": 11,
    "n": 10
   },
   "counters": {
    "consistency": 14,
-   "ramp": 11.5,
-   "interaction": 12.5,
+   "ramp": 12,
+   "interaction": 13,
    "n": 10
   },
   "counters-matter": {
    "consistency": 11.5,
    "ramp": 12,
-   "interaction": 11,
+   "interaction": 12,
    "n": 10
   },
   "craft": {
    "consistency": 14,
    "ramp": 14,
-   "interaction": 12,
+   "interaction": 14,
    "n": 9
   },
   "creatureless": {
    "consistency": 14.5,
    "ramp": 15,
-   "interaction": 9,
+   "interaction": 11,
    "n": 10
   },
   "crime": {
    "consistency": 14,
    "ramp": 12.5,
-   "interaction": 16,
+   "interaction": 21,
    "n": 10
   },
   "curses": {
    "consistency": 14,
    "ramp": 8.5,
-   "interaction": 8.5,
+   "interaction": 9,
    "n": 10
   },
   "cycling": {
    "consistency": 15.5,
    "ramp": 10.5,
-   "interaction": 14,
+   "interaction": 15,
    "n": 10
   },
   "day-night": {
    "consistency": 15,
    "ramp": 13.5,
-   "interaction": 10,
+   "interaction": 16.5,
    "n": 10
   },
   "deathtouch": {
-   "consistency": 10,
+   "consistency": 10.5,
    "ramp": 12.5,
-   "interaction": 12,
+   "interaction": 15,
    "n": 10
   },
   "defenders": {
    "consistency": 9,
-   "ramp": 11,
+   "ramp": 12,
    "interaction": 13,
    "boardWipes": 3.5,
    "n": 10
   },
   "delirium": {
    "consistency": 14,
-   "ramp": 15,
-   "interaction": 12,
+   "ramp": 16,
+   "interaction": 12.5,
    "n": 10
   },
   "descend": {
    "consistency": 14,
-   "ramp": 10.5,
-   "interaction": 8.5,
+   "ramp": 11.5,
+   "interaction": 9,
    "n": 10
   },
   "deserts": {
-   "consistency": 13,
-   "ramp": 15.5,
-   "interaction": 9,
+   "consistency": 11.5,
+   "ramp": 21,
+   "interaction": 10,
    "n": 10
   },
   "devoid": {
    "consistency": 13,
-   "ramp": 28,
-   "interaction": 15.5,
+   "ramp": 33,
+   "interaction": 16.5,
    "n": 10
   },
   "devotion": {
    "consistency": 15.5,
    "ramp": 18,
-   "interaction": 8.5,
+   "interaction": 11,
    "boardWipes": 4,
    "n": 10
   },
   "die-roll": {
    "consistency": 15,
    "ramp": 17.5,
-   "interaction": 8.5,
+   "interaction": 13,
    "n": 10
   },
   "discard": {
    "consistency": 17,
    "ramp": 11.5,
-   "interaction": 8.5,
+   "interaction": 11,
    "n": 10
   },
   "discover": {
    "consistency": 10.5,
    "ramp": 16,
-   "interaction": 11,
+   "interaction": 13,
    "n": 10
   },
   "donate": {
    "consistency": 15,
-   "ramp": 10.5,
-   "interaction": 11.5,
+   "ramp": 11,
+   "interaction": 12,
    "n": 10
   },
   "dredge": {
    "consistency": 10.5,
-   "ramp": 14,
-   "interaction": 9,
+   "ramp": 18,
+   "interaction": 8.5,
    "n": 10
   },
   "dungeon": {
    "consistency": 9.5,
    "ramp": 15.5,
-   "interaction": 10.5,
+   "interaction": 11,
    "n": 10
   },
   "earthbending": {
-   "consistency": 12,
+   "consistency": 11,
    "ramp": 16.5,
-   "interaction": 11,
+   "interaction": 11.5,
    "n": 10
   },
   "enchantress": {
@@ -402,131 +402,131 @@
   "energy": {
    "consistency": 16,
    "ramp": 11.5,
-   "interaction": 8,
+   "interaction": 12.5,
    "n": 10
   },
   "enrage": {
    "consistency": 10.5,
    "ramp": 16.5,
-   "interaction": 11,
+   "interaction": 14,
    "boardWipes": 5,
    "n": 10
   },
   "equipment": {
    "consistency": 13,
    "ramp": 11,
-   "interaction": 16,
+   "interaction": 16.5,
    "n": 10
   },
   "etb": {
    "consistency": 13,
    "ramp": 13,
-   "interaction": 12,
+   "interaction": 15,
    "n": 10
   },
   "evoke": {
    "consistency": 13.5,
-   "ramp": 15.5,
-   "interaction": 10,
+   "ramp": 16.5,
+   "interaction": 13.5,
    "boardWipes": 3.5,
    "n": 10
   },
   "exalted": {
    "consistency": 13,
    "ramp": 9.5,
-   "interaction": 14,
+   "interaction": 14.5,
    "boardWipes": 0.5,
    "n": 10
   },
   "exile": {
    "consistency": 17.5,
-   "ramp": 15.5,
-   "interaction": 15,
+   "ramp": 16,
+   "interaction": 16.5,
    "n": 10
   },
   "experience-counters": {
    "consistency": 13.5,
    "ramp": 13,
-   "interaction": 12.5,
+   "interaction": 13,
    "n": 10
   },
   "exploit": {
    "consistency": 11.5,
    "ramp": 10,
-   "interaction": 9.5,
+   "interaction": 10,
    "boardWipes": 4,
    "n": 10
   },
   "explore": {
    "consistency": 13.5,
-   "ramp": 8.5,
-   "interaction": 13,
+   "ramp": 9.5,
+   "interaction": 14.5,
    "n": 10
   },
   "extra-combats": {
    "consistency": 12.5,
    "ramp": 16,
-   "interaction": 13,
+   "interaction": 14.5,
    "n": 10
   },
   "extra-turns": {
-   "consistency": 17,
+   "consistency": 17.5,
    "ramp": 12.5,
-   "interaction": 13.5,
+   "interaction": 14.5,
    "n": 10
   },
   "extra-upkeeps": {
    "consistency": 12.5,
    "ramp": 12.5,
-   "interaction": 12,
+   "interaction": 11.5,
    "n": 10
   },
   "fight": {
    "consistency": 7.5,
    "ramp": 13.5,
-   "interaction": 9,
+   "interaction": 16,
    "n": 10
   },
   "firebending": {
-   "consistency": 14,
+   "consistency": 15,
    "ramp": 13.5,
-   "interaction": 11,
+   "interaction": 13,
    "n": 10
   },
   "flash": {
    "consistency": 15.5,
    "ramp": 12,
-   "interaction": 16,
+   "interaction": 19,
    "n": 10
   },
   "flashback": {
-   "consistency": 15,
+   "consistency": 15.5,
    "ramp": 11.5,
-   "interaction": 10,
+   "interaction": 11,
    "n": 10
   },
   "fling": {
    "consistency": 13,
    "ramp": 20,
-   "interaction": 7.5,
+   "interaction": 14.5,
    "n": 10
   },
   "flying": {
    "consistency": 11.5,
    "ramp": 13,
-   "interaction": 17,
+   "interaction": 18,
    "n": 10
   },
   "food": {
    "consistency": 13,
    "ramp": 18,
-   "interaction": 11.5,
+   "interaction": 11,
    "n": 10
   },
   "forced-combat": {
-   "consistency": 12,
+   "consistency": 11.5,
    "ramp": 12.5,
-   "interaction": 11.5,
+   "interaction": 12.5,
    "n": 10
   },
   "foretell": {
@@ -538,75 +538,75 @@
   "freerunning": {
    "consistency": 15,
    "ramp": 9,
-   "interaction": 15.5,
+   "interaction": 16.5,
    "n": 10
   },
   "glass-cannon": {
-   "consistency": 14,
+   "consistency": 14.5,
    "ramp": 16.5,
-   "interaction": 12,
+   "interaction": 15.5,
    "n": 10
   },
   "graveyard": {
    "consistency": 14,
-   "ramp": 14,
-   "interaction": 10,
+   "ramp": 16,
+   "interaction": 11,
    "n": 10
   },
   "group-hug": {
    "consistency": 22,
-   "ramp": 15.5,
+   "ramp": 16,
    "interaction": 10.5,
    "n": 10
   },
   "group-slug": {
    "consistency": 13.5,
    "ramp": 16,
-   "interaction": 11,
+   "interaction": 13,
    "n": 10
   },
   "guildgates": {
-   "consistency": 15.5,
-   "ramp": 18,
-   "interaction": 8.5,
+   "consistency": 15,
+   "ramp": 22,
+   "interaction": 9,
    "n": 10
   },
   "hand-size": {
    "consistency": 31,
    "ramp": 11,
-   "interaction": 10,
+   "interaction": 11,
    "n": 10
   },
   "haste": {
-   "consistency": 14,
+   "consistency": 13.5,
    "ramp": 17,
-   "interaction": 11,
+   "interaction": 13,
    "boardWipes": 4.5,
    "n": 10
   },
   "hatebears": {
    "consistency": 9.5,
    "ramp": 12,
-   "interaction": 16,
+   "interaction": 16.5,
    "n": 10
   },
   "hellbent": {
    "consistency": 15.5,
    "ramp": 13,
-   "interaction": 7.5,
+   "interaction": 8.5,
    "n": 10
   },
   "heroic": {
    "consistency": 15,
    "ramp": 7,
-   "interaction": 14.5,
+   "interaction": 15.5,
    "boardWipes": 0.5,
    "n": 10
   },
   "historic": {
    "consistency": 16.5,
    "ramp": 19.5,
-   "interaction": 15,
+   "interaction": 16,
    "n": 10
   },
   "horsemanship": {
@@ -618,20 +618,20 @@
   "improvise": {
    "consistency": 18.5,
    "ramp": 14,
-   "interaction": 10.5,
+   "interaction": 12,
    "n": 10
   },
   "impulse-draw": {
    "consistency": 17.5,
    "ramp": 18.5,
-   "interaction": 11.5,
+   "interaction": 14,
    "boardWipes": 4,
    "n": 10
   },
   "increment": {
    "consistency": 19,
    "ramp": 15,
-   "interaction": 7,
+   "interaction": 9,
    "n": 6
   },
   "incubate": {
@@ -643,138 +643,138 @@
   },
   "indestructible": {
    "consistency": 11.5,
-   "ramp": 16,
-   "interaction": 10.5,
+   "ramp": 16.5,
+   "interaction": 13,
    "boardWipes": 4.5,
    "n": 10
   },
   "infect": {
    "consistency": 10,
    "ramp": 11.5,
-   "interaction": 12.5,
+   "interaction": 13.5,
    "n": 10
   },
   "job-select": {
    "consistency": 15,
    "ramp": 11,
-   "interaction": 11.5,
+   "interaction": 12.5,
    "boardWipes": 0,
    "n": 10
   },
   "keywords": {
    "consistency": 9,
-   "ramp": 12,
+   "ramp": 12.5,
    "interaction": 17,
    "n": 10
   },
   "kicker": {
    "consistency": 10.5,
    "ramp": 15,
-   "interaction": 9,
+   "interaction": 13.5,
    "n": 10
   },
   "land-animation": {
-   "consistency": 11,
+   "consistency": 10.5,
    "ramp": 17,
-   "interaction": 11,
+   "interaction": 12.5,
    "n": 10
   },
   "land-destruction": {
-   "consistency": 10,
-   "ramp": 15,
-   "interaction": 10.5,
+   "consistency": 9.5,
+   "ramp": 18,
+   "interaction": 12.5,
    "boardWipes": 4,
    "n": 10
   },
   "landfall": {
    "consistency": 11.5,
-   "ramp": 18,
-   "interaction": 8.5,
+   "ramp": 21.5,
+   "interaction": 10,
    "n": 10
   },
   "lands-matter": {
-   "consistency": 13.5,
-   "ramp": 17.5,
-   "interaction": 10,
+   "consistency": 12,
+   "ramp": 21.5,
+   "interaction": 11,
    "n": 10
   },
   "landwalk": {
    "consistency": 15,
    "ramp": 9,
-   "interaction": 12.5,
+   "interaction": 13.5,
    "n": 10
   },
   "legends": {
    "consistency": 14,
    "ramp": 15,
-   "interaction": 16,
+   "interaction": 17,
    "n": 10
   },
   "lessons": {
-   "consistency": 17,
+   "consistency": 17.5,
    "ramp": 12,
-   "interaction": 13,
+   "interaction": 15.5,
    "n": 10
   },
   "level-up": {
    "consistency": 16,
    "ramp": 11,
-   "interaction": 13,
+   "interaction": 15,
    "n": 10
   },
   "life-exchange": {
    "consistency": 12,
    "ramp": 11,
-   "interaction": 13.5,
+   "interaction": 14,
    "n": 10
   },
   "lifedrain": {
    "consistency": 14.5,
    "ramp": 9,
-   "interaction": 10.5,
+   "interaction": 11.5,
    "n": 10
   },
   "lifegain": {
    "consistency": 11,
    "ramp": 10.5,
-   "interaction": 13,
+   "interaction": 13.5,
    "n": 10
   },
   "ltb-effects": {
    "consistency": 13,
-   "ramp": 11.5,
-   "interaction": 11,
+   "ramp": 12,
+   "interaction": 13.5,
    "boardWipes": 3.5,
    "n": 10
   },
   "lure": {
    "consistency": 11,
-   "ramp": 14,
-   "interaction": 10,
+   "ramp": 14.5,
+   "interaction": 16,
    "n": 10
   },
   "madness": {
    "consistency": 15,
    "ramp": 9.5,
-   "interaction": 10,
+   "interaction": 14,
    "n": 10
   },
   "mayhem": {
    "consistency": 14.5,
    "ramp": 13.5,
-   "interaction": 8,
+   "interaction": 10.5,
    "n": 10
   },
   "menace": {
-   "consistency": 13,
+   "consistency": 13.5,
    "ramp": 12,
-   "interaction": 9,
+   "interaction": 10.5,
    "n": 10
   },
   "midrange": {
-   "consistency": 18.5,
+   "consistency": 19.5,
    "ramp": 20,
-   "interaction": 17,
+   "interaction": 19.5,
    "n": 10
   },
   "mill": {
@@ -786,32 +786,32 @@
   "minus-1-minus-1-counters": {
    "consistency": 14,
    "ramp": 12,
-   "interaction": 23.5,
+   "interaction": 23,
    "boardWipes": 7,
    "n": 10
   },
   "miracle": {
    "consistency": 17.5,
    "ramp": 13.5,
-   "interaction": 10.5,
+   "interaction": 11,
    "n": 10
   },
   "modified-creatures": {
-   "consistency": 12,
-   "ramp": 12.5,
-   "interaction": 15,
+   "consistency": 11,
+   "ramp": 13,
+   "interaction": 15.5,
    "n": 10
   },
   "modular": {
    "consistency": 14.5,
-   "ramp": 13,
-   "interaction": 8.5,
+   "ramp": 13.5,
+   "interaction": 11,
    "n": 10
   },
   "monarch": {
    "consistency": 8,
    "ramp": 11.5,
-   "interaction": 12.5,
+   "interaction": 15,
    "n": 10
   },
   "morph": {
@@ -823,124 +823,124 @@
   "multicolor-matters": {
    "consistency": 13,
    "ramp": 18,
-   "interaction": 16,
+   "interaction": 17.5,
    "n": 10
   },
   "mutate": {
    "consistency": 12.5,
-   "ramp": 10.5,
+   "ramp": 12,
    "interaction": 13,
    "n": 10
   },
   "myriad": {
    "consistency": 12,
    "ramp": 13.5,
-   "interaction": 12,
+   "interaction": 14.5,
    "n": 10
   },
   "ninjutsu": {
    "consistency": 19,
    "ramp": 8,
-   "interaction": 15,
+   "interaction": 16,
    "n": 10
   },
   "offspring": {
    "consistency": 12.5,
    "ramp": 7.5,
-   "interaction": 10.5,
+   "interaction": 12,
    "n": 10
   },
   "oil-counters": {
-   "consistency": 14.5,
-   "ramp": 11.5,
-   "interaction": 10.5,
+   "consistency": 14,
+   "ramp": 12,
+   "interaction": 12.5,
    "n": 10
   },
   "opus": {
    "consistency": 22,
    "ramp": 17,
-   "interaction": 9,
+   "interaction": 14,
    "boardWipes": 3.5,
    "n": 10
   },
   "paradigm": {
    "consistency": 20.5,
    "ramp": 13,
-   "interaction": 13,
+   "interaction": 14,
    "n": 10
   },
   "paradox": {
-   "consistency": 13.5,
+   "consistency": 14.5,
    "ramp": 15.5,
-   "interaction": 9,
+   "interaction": 10,
    "n": 10
   },
   "party": {
    "consistency": 11,
    "ramp": 12,
-   "interaction": 16,
+   "interaction": 16.5,
    "n": 10
   },
   "phasing": {
    "consistency": 11,
    "ramp": 9,
-   "interaction": 25,
+   "interaction": 26,
    "n": 10
   },
   "pillow-fort": {
    "consistency": 13,
    "ramp": 10.5,
-   "interaction": 13,
+   "interaction": 13.5,
    "n": 10
   },
   "pingers": {
    "consistency": 16.5,
    "ramp": 11,
-   "interaction": 9.5,
+   "interaction": 16.5,
    "boardWipes": 4,
    "n": 10
   },
   "plot": {
-   "consistency": 20,
+   "consistency": 19.5,
    "ramp": 14,
-   "interaction": 11.5,
+   "interaction": 13.5,
    "n": 10
   },
   "politics": {
    "consistency": 13,
    "ramp": 13,
-   "interaction": 13,
+   "interaction": 13.5,
    "boardWipes": 4,
    "n": 10
   },
   "polymorph": {
    "consistency": 16.5,
    "ramp": 11,
-   "interaction": 16,
+   "interaction": 15.5,
    "n": 10
   },
   "populate": {
    "consistency": 11,
    "ramp": 13,
-   "interaction": 11.5,
+   "interaction": 13.5,
    "n": 10
   },
   "power": {
    "consistency": 10,
    "ramp": 16.5,
-   "interaction": 8,
+   "interaction": 11,
    "n": 10
   },
   "power-matters": {
    "consistency": 13.5,
-   "ramp": 21,
-   "interaction": 10,
+   "ramp": 21.5,
+   "interaction": 12.5,
    "n": 10
   },
   "prison": {
    "consistency": 12.5,
    "ramp": 10,
-   "interaction": 16,
+   "interaction": 16.5,
    "n": 10
   },
   "proliferate": {
@@ -952,97 +952,97 @@
   "prowess": {
    "consistency": 23,
    "ramp": 12.5,
-   "interaction": 12,
+   "interaction": 14.5,
    "n": 10
   },
   "rad-counters": {
    "consistency": 9.5,
-   "ramp": 11.5,
-   "interaction": 10.5,
+   "ramp": 13,
+   "interaction": 10,
    "n": 10
   },
   "reach": {
-   "consistency": 6,
-   "ramp": 12,
-   "interaction": 8.5,
+   "consistency": 6.5,
+   "ramp": 13,
+   "interaction": 11.5,
    "n": 10
   },
   "reanimator": {
-   "consistency": 15,
-   "ramp": 14,
-   "interaction": 12,
+   "consistency": 15.5,
+   "ramp": 15.5,
+   "interaction": 11.5,
    "n": 10
   },
   "repartee": {
    "consistency": 16,
    "ramp": 9,
-   "interaction": 12.5,
+   "interaction": 13.5,
    "n": 10
   },
   "retrace": {
-   "consistency": 14,
+   "consistency": 13,
    "ramp": 12,
-   "interaction": 9.5,
+   "interaction": 10,
    "n": 10
   },
   "rooms": {
-   "consistency": 17,
+   "consistency": 16.5,
    "ramp": 9.5,
-   "interaction": 10.5,
+   "interaction": 11.5,
    "boardWipes": 3.5,
    "n": 10
   },
   "saboteurs": {
    "consistency": 16,
-   "ramp": 12,
-   "interaction": 14,
+   "ramp": 12.5,
+   "interaction": 15,
    "n": 10
   },
   "sacrifice": {
-   "consistency": 12,
-   "ramp": 15.5,
-   "interaction": 11.5,
+   "consistency": 11.5,
+   "ramp": 20,
+   "interaction": 14,
    "n": 10
   },
   "sagas": {
    "consistency": 17,
-   "ramp": 17,
-   "interaction": 16,
+   "ramp": 18,
+   "interaction": 16.5,
    "n": 10
   },
   "self-damage": {
    "consistency": 13,
    "ramp": 13,
-   "interaction": 14,
+   "interaction": 14.5,
    "n": 10
   },
   "self-destruct": {
-   "consistency": 13,
-   "ramp": 17,
-   "interaction": 9.5,
+   "consistency": 12.5,
+   "ramp": 17.5,
+   "interaction": 12.5,
    "n": 10
   },
   "self-discard": {
    "consistency": 21,
    "ramp": 10,
-   "interaction": 10.5,
+   "interaction": 14.5,
    "n": 10
   },
   "self-mill": {
    "consistency": 11,
-   "ramp": 11.5,
-   "interaction": 9,
+   "ramp": 14.5,
+   "interaction": 8.5,
    "n": 10
   },
   "shrines": {
-   "consistency": 14,
+   "consistency": 15.5,
    "ramp": 14,
-   "interaction": 8.5,
+   "interaction": 12.5,
    "n": 10
   },
   "skulk": {
    "consistency": 12,
-   "ramp": 9,
+   "ramp": 10,
    "interaction": 10.5,
    "boardWipes": 3.5,
    "n": 10
@@ -1050,55 +1050,55 @@
   "sneak": {
    "consistency": 13.5,
    "ramp": 7,
-   "interaction": 11.5,
+   "interaction": 13,
    "n": 10
   },
   "sneak-attack": {
    "consistency": 14,
    "ramp": 15,
-   "interaction": 7,
+   "interaction": 11.5,
    "boardWipes": 5,
    "n": 10
   },
   "snow": {
-   "consistency": 13.5,
+   "consistency": 12,
    "ramp": 12.5,
-   "interaction": 11,
+   "interaction": 12,
    "n": 10
   },
   "spacecraft": {
    "consistency": 12,
-   "ramp": 16,
-   "interaction": 9.5,
+   "ramp": 18,
+   "interaction": 13.5,
    "n": 10
   },
   "speed": {
    "consistency": 15,
-   "ramp": 12.5,
-   "interaction": 12,
+   "ramp": 13.5,
+   "interaction": 14,
    "n": 10
   },
   "spell-copy": {
    "consistency": 18.5,
    "ramp": 17,
-   "interaction": 11.5,
+   "interaction": 15,
    "n": 10
   },
   "spellslinger": {
    "consistency": 19,
    "ramp": 15,
-   "interaction": 11.5,
+   "interaction": 16.5,
    "n": 10
   },
   "spore-counters": {
-   "consistency": 9.5,
+   "consistency": 9,
    "ramp": 10.5,
-   "interaction": 10.5,
+   "interaction": 11,
    "boardWipes": 0.5,
    "n": 10
   },
   "squad": {
-   "consistency": 11,
+   "consistency": 10,
    "ramp": 13,
    "interaction": 12,
    "n": 9
@@ -1106,48 +1106,48 @@
   "stax": {
    "consistency": 11.5,
    "ramp": 11.5,
-   "interaction": 18,
+   "interaction": 19,
    "n": 10
   },
   "stompy": {
-   "consistency": 12,
+   "consistency": 12.5,
    "ramp": 16.5,
-   "interaction": 12,
+   "interaction": 12.5,
    "n": 10
   },
   "storm": {
    "consistency": 26,
    "ramp": 19.5,
-   "interaction": 11,
+   "interaction": 15,
    "n": 10
   },
   "stun": {
    "consistency": 18.5,
    "ramp": 11.5,
-   "interaction": 11.5,
+   "interaction": 12.5,
    "n": 10
   },
   "summons": {
    "consistency": 17,
-   "ramp": 16,
-   "interaction": 15.5,
+   "ramp": 17.5,
+   "interaction": 16,
    "n": 10
   },
   "sunburst": {
    "consistency": 11.5,
    "ramp": 12.5,
-   "interaction": 8,
+   "interaction": 10.5,
    "n": 10
   },
   "superfriends": {
    "consistency": 16.5,
    "ramp": 16,
-   "interaction": 15.5,
+   "interaction": 16,
    "boardWipes": 6.5,
    "n": 10
   },
   "surveil": {
-   "consistency": 20.5,
+   "consistency": 20,
    "ramp": 10.5,
    "interaction": 11,
    "n": 10
@@ -1155,179 +1155,179 @@
   "suspend": {
    "consistency": 12.5,
    "ramp": 12.5,
-   "interaction": 13.5,
+   "interaction": 14.5,
    "n": 10
   },
   "tap-untap": {
    "consistency": 15.5,
    "ramp": 12,
-   "interaction": 11,
+   "interaction": 13,
    "n": 10
   },
   "tempo": {
    "consistency": 17,
    "ramp": 8,
-   "interaction": 18,
+   "interaction": 19,
    "n": 10
   },
   "the-ring": {
    "consistency": 13.5,
-   "ramp": 11,
-   "interaction": 14,
+   "ramp": 12,
+   "interaction": 13.5,
    "n": 10
   },
   "theft": {
    "consistency": 9.5,
    "ramp": 16,
-   "interaction": 13,
+   "interaction": 14,
    "n": 10
   },
   "time-counters": {
    "consistency": 13,
-   "ramp": 12,
-   "interaction": 12.5,
+   "ramp": 12.5,
+   "interaction": 13.5,
    "n": 10
   },
   "tokens": {
    "consistency": 10,
    "ramp": 11.5,
-   "interaction": 12,
+   "interaction": 15,
    "n": 10
   },
   "toolbox": {
    "consistency": 12,
    "ramp": 20,
-   "interaction": 16,
+   "interaction": 17.5,
    "n": 10
   },
   "topdeck": {
-   "consistency": 29,
-   "ramp": 11.5,
+   "consistency": 28.5,
+   "ramp": 12.5,
    "interaction": 11,
    "n": 10
   },
   "toughness-matters": {
    "consistency": 9,
-   "ramp": 11.5,
+   "ramp": 12,
    "interaction": 13,
    "n": 10
   },
   "towns": {
    "consistency": 15.5,
-   "ramp": 14.5,
-   "interaction": 12.5,
+   "ramp": 17,
+   "interaction": 15,
    "n": 10
   },
   "transform": {
-   "consistency": 12.5,
+   "consistency": 13,
    "ramp": 12,
-   "interaction": 11.5,
+   "interaction": 12,
    "n": 10
   },
   "treasure": {
    "consistency": 14.5,
    "ramp": 23.5,
-   "interaction": 8.5,
+   "interaction": 11,
    "n": 10
   },
   "triggered-abilities": {
-   "consistency": 12,
-   "ramp": 15.5,
-   "interaction": 11,
+   "consistency": 11.5,
+   "ramp": 16.5,
+   "interaction": 11.5,
    "n": 10
   },
   "turbo-fog": {
    "consistency": 12.5,
    "ramp": 15,
-   "interaction": 9.5,
+   "interaction": 10,
    "n": 10
   },
   "type-hack": {
    "consistency": 13,
-   "ramp": 14.5,
+   "ramp": 16.5,
    "interaction": 11.5,
    "n": 10
   },
   "unblockable": {
    "consistency": 16.5,
    "ramp": 10,
-   "interaction": 13.5,
+   "interaction": 14.5,
    "n": 10
   },
   "vanilla": {
    "consistency": 10.5,
    "ramp": 10.5,
-   "interaction": 7.5,
+   "interaction": 7,
    "boardWipes": 0.5,
    "n": 10
   },
   "vehicles": {
    "consistency": 15.5,
-   "ramp": 14,
-   "interaction": 10,
+   "ramp": 15.5,
+   "interaction": 11,
    "n": 10
   },
   "villainous-choice": {
    "consistency": 14,
-   "ramp": 11,
-   "interaction": 10.5,
+   "ramp": 11.5,
+   "interaction": 12,
    "n": 10
   },
   "voltron": {
    "consistency": 14,
    "ramp": 11,
-   "interaction": 18,
+   "interaction": 18.5,
    "n": 10
   },
   "voting": {
    "consistency": 17,
    "ramp": 14.5,
-   "interaction": 11.5,
+   "interaction": 12,
    "boardWipes": 4,
    "n": 10
   },
   "warp": {
-   "consistency": 14.5,
-   "ramp": 11,
-   "interaction": 14.5,
+   "consistency": 15,
+   "ramp": 11.5,
+   "interaction": 15.5,
    "n": 10
   },
   "waterbending": {
    "consistency": 16,
    "ramp": 9,
-   "interaction": 11.5,
+   "interaction": 12,
    "n": 10
   },
   "web-slinging": {
    "consistency": 11.5,
-   "ramp": 14.5,
-   "interaction": 10.5,
+   "ramp": 15,
+   "interaction": 12,
    "boardWipes": 0.5,
    "n": 10
   },
   "weenies": {
    "consistency": 15,
    "ramp": 8,
-   "interaction": 13,
+   "interaction": 14,
    "boardWipes": 5,
    "n": 10
   },
   "wheels": {
    "consistency": 24,
-   "ramp": 13,
-   "interaction": 12,
+   "ramp": 13.5,
+   "interaction": 13.5,
    "n": 10
   },
   "x-spells": {
    "consistency": 13,
-   "ramp": 16,
-   "interaction": 13.5,
+   "ramp": 16.5,
+   "interaction": 17.5,
    "n": 10
   },
   "zoo": {
    "consistency": 15,
-   "ramp": 16.5,
-   "interaction": 14,
+   "ramp": 17,
+   "interaction": 15.5,
    "n": 10
   }
  }

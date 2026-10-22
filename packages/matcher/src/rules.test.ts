@@ -1244,6 +1244,12 @@ describe("removal.targeted is derived", () => {
     expect(ruleMatches(land, realCard("Sunscorched Desert"), set)).toBe(true);
     expect(ruleMatches(rule, realCard("Sunscorched Desert"), set)).toBe(false);
   });
+  test("a damage REDIRECT is not removal (owner ruling 2026-10-22): Harm's Way, Shining Shoal, Captain's Maneuver, Glarecaster, Mirrorwood Treefolk, Ward of Piety, Zhalfirin Crusader; nor damage the victim may have dealt (Requiem Monolith)", () => {
+    for (const n of ["Harm's Way", "Shining Shoal", "Captain's Maneuver", "Glarecaster", "Mirrorwood Treefolk", "Ward of Piety", "Zhalfirin Crusader", "Requiem Monolith"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(false);
+  });
+  test("prevent-then-deal DEALS the damage and stays removal (Refraction Trap, Divine Deflection, Vengeful Archon), and so does a trample overflow card (Ram Through)", () => {
+    for (const n of ["Refraction Trap", "Divine Deflection", "Vengeful Archon", "Ram Through"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(true);
+  });
   test("damage that cannot reach a permanent is burn, not removal: 'target player' / 'target opponent' (Pyroclastic Elemental, Sudden Impact, Hired Claw, Fire and Brimstone), 'each opponent' (Purphoros), your own creature (Rile)", () => {
     for (const n of ["Pyroclastic Elemental", "Sudden Impact", "Hired Claw", "Fire and Brimstone", "Purphoros, God of the Forge", "Rile", "Anathemancer"]) expect(ruleMatches(rule, realCard(n), set), n).toBe(false);
   });

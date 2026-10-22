@@ -825,6 +825,9 @@ export interface GameEvent {
    *  the role's `notVictimMay` refuses it. Set by derive on the emits of an action whose own verb the
    *  clause hands to the victim (`victimDeclines`); never set by the LLM. */
   victimMay?: true;
+  /** THIS DAMAGE IS A REDIRECT (#1294): "the next 2 damage that would be dealt to you is dealt to any target instead" (Harm's Way, Glarecaster). The card deals no damage of its own; it hands damage that was coming at you to a target, so the
+   *  removal role refuses it (`notRedirect`). Set by derive on the `non-combat-damage` emits of an action whose clause says "is dealt to ... instead"; never by the LLM. "Prevent ... then this card deals that much" (Refraction Trap) is not one. */
+  redirect?: true;
   /** THIS `leaves` IS A TUCK: a permanent put into its owner's library (Condemn, Oust, Teferi, Hero of Dominaria -3). It left the battlefield, so a leaves payoff hears it, but the
    *  owner's quality ladder puts it BELOW a bounce (exile > destroy / sacrifice > bounce > tuck), which `quality.ts` `permanenceOf` reads. Set by derive (`actionEmits`); never by the LLM. */
   tuck?: true;

@@ -48,6 +48,8 @@ export type RuleClause =
        *  branch ("target player or planeswalker", "each creature and each player"). A subject typed to permanents only ("target creature") is removal, not burn; control `you` ("deals 2 damage to you") is refused;
        *  a subject that is the card itself is refused. */
       reachesPlayer?: true;
+      /** Refuse an ability one of whose emits is a damage REDIRECT (`GameEvent.redirect`, #1294): "the next 2 damage ... is dealt to any target instead" (Harm's Way, Glarecaster) deals no damage of its own. */
+      notRedirect?: true;
       /** The effect TARGETS something (`scope: target`, so no `scope` option beside it) that can be a PERMANENT not only yours (#1294, the removal ruling of 2026-10-22: targeted damage is removal when its allowed target includes a permanent on the battlefield, at any amount):
        *  a typed subject that is not a player ("target creature", "creature or planeswalker", a battle), an UNTYPED one with no `player` flag ("any target"), or an `anyOf` with such a branch ("target player or planeswalker", Lava Spike).
        *  "Target player" and "target opponent" carry `player: true` since derive 381 and are refused; control `you` and the card itself are refused. An effect with no subject reads its targeted `non-combat-damage` emits instead (Aethertorch Renegade). */
@@ -557,6 +559,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.notSelf !== true || a.effect.subject?.self !== true)
         && (clause.notVictimMay !== true || !(a.emits ?? []).some((e) => e.victimMay === true))
         && (clause.librarySearch === undefined || (a.librarySearch !== undefined && clause.librarySearch.includes(a.librarySearch)))
+        && (clause.notRedirect !== true || !(a.emits ?? []).some((e) => e.redirect === true))
         && (clause.reachesPlayer !== true || abilityReachesPlayer(a))
         && (clause.reachesPermanent !== true || abilityReachesPermanent(a))
         && (clause.notLandOnly !== true || !(a.effect.subject !== undefined && landOnlySubject(a.effect.subject)))

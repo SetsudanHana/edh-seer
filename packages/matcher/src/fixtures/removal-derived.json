@@ -12237,5 +12237,947 @@
     }
    }
   ]
+ },
+ "Harm's Way": {
+  "oracleText": "The next 2 damage that a source of your choice would deal to you and/or permanents you control this turn is dealt to any target instead.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "prevented",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "permanent",
+       "scope": "all"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "you",
+      "token": null,
+      "type": "permanent",
+      "scope": "all"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "redirect": true,
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   }
+  ]
+ },
+ "Shining Shoal": {
+  "oracleText": "You may exile a white card with mana value X from your hand rather than pay this spell's mana cost.\nThe next X damage that a source of your choice would deal to you and/or creatures you control this turn is dealt to any target instead.",
+  "typeLine": "Instant — Arcane",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "hand",
+       "colors": [
+        "W"
+       ]
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "",
+     "scaling": "x-cost"
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "prevented",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "all"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     },
+     "scaling": "x-cost"
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "redirect": true,
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   }
+  ]
+ },
+ "Captain's Maneuver": {
+  "oracleText": "The next X damage that would be dealt to target creature, planeswalker, or player this turn is dealt to another target creature, planeswalker, or player instead.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "prevented",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": [
+        "creature",
+        "planeswalker"
+       ],
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target",
+      "other": true,
+      "anyOf": [
+       {
+        "type": "creature"
+       },
+       {
+        "type": "planeswalker"
+       },
+       {
+        "player": true
+       }
+      ]
+     },
+     "scaling": "x-cost"
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "other": true,
+       "type": "creature",
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "redirect": true,
+      "instantSpeed": true
+     },
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "other": true,
+       "type": "planeswalker",
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "redirect": true,
+      "instantSpeed": true
+     },
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "player": true,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "redirect": true,
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   }
+  ]
+ },
+ "Glarecaster": {
+  "oracleText": "Flying\n{5}{W}: The next time damage would be dealt to this creature and/or you this turn, that damage is dealt to any target instead.",
+  "typeLine": "Creature — Bird Cleric",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{5}{W}",
+    "emits": [
+     {
+      "verb": "prevented",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{5}{W}"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "cost": "{5}{W}",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "redirect": true,
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{5}{W}"
+    }
+   }
+  ]
+ },
+ "Mirrorwood Treefolk": {
+  "oracleText": "{2}{R}{W}: The next time damage would be dealt to this creature this turn, that damage is dealt to any target instead.",
+  "typeLine": "Creature — Treefolk",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}{R}{W}",
+    "emits": [
+     {
+      "verb": "prevented",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{2}{R}{W}"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "cost": "{2}{R}{W}",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "redirect": true,
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{2}{R}{W}"
+    }
+   }
+  ]
+ },
+ "Ward of Piety": {
+  "oracleText": "Enchant creature\n{1}{W}: The next 1 damage that would be dealt to enchanted creature this turn is dealt to any target instead.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{1}{W}",
+    "emits": [
+     {
+      "verb": "prevented",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{1}{W}"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "cost": "{1}{W}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "redirect": true,
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}{W}"
+    }
+   }
+  ]
+ },
+ "Zhalfirin Crusader": {
+  "oracleText": "Flanking (Whenever a creature without flanking blocks this creature, the blocking creature gets -1/-1 until end of turn.)\n{1}{W}: The next 1 damage that would be dealt to this creature this turn is dealt to any target instead.",
+  "typeLine": "Creature — Human Knight",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{1}{W}",
+    "emits": [
+     {
+      "verb": "prevented",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{1}{W}"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "cost": "{1}{W}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "redirect": true,
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}{W}"
+    }
+   }
+  ]
+ },
+ "Refraction Trap": {
+  "oracleText": "If an opponent cast a red instant or sorcery spell this turn, you may pay {W} rather than pay this spell's mana cost.\nPrevent the next 3 damage that a source of your choice would deal to you and/or permanents you control this turn. If damage is prevented this way, Refraction Trap deals that much damage to any target.",
+  "typeLine": "Instant — Trap",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "prevented",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "permanent",
+       "scope": "all"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "amount": "that much",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Divine Deflection": {
+  "oracleText": "Prevent the next X damage that would be dealt to you and/or permanents you control this turn. If damage is prevented this way, Divine Deflection deals that much damage to any target.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "prevented",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "permanent",
+       "scope": "all"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "you",
+      "token": null,
+      "type": "permanent",
+      "scope": "all"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "amount": "that much",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Vengeful Archon": {
+  "oracleText": "Flying\n{X}: Prevent the next X damage that would be dealt to you this turn. If damage is prevented this way, this creature deals that much damage to target player or planeswalker.",
+  "typeLine": "Creature — Archon",
+  "manaValue": 7,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{X}",
+    "emits": [
+     {
+      "verb": "prevented",
+      "subject": {
+       "control": "any",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{X}"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target",
+      "anyOf": [
+       {
+        "player": true
+       },
+       {
+        "type": "planeswalker"
+       }
+      ]
+     }
+    },
+    "cost": "{X}",
+    "amount": "that much",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "player": true,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "planeswalker",
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{X}"
+    }
+   }
+  ]
+ },
+ "Requiem Monolith": {
+  "oracleText": "{T}: Until end of turn, target creature gains \"Whenever this creature is dealt damage, you draw that many cards and lose that much life.\" That creature's controller may have this artifact deal 1 damage to it. Activate only as a sorcery.",
+  "typeLine": "Artifact",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "victimMay": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "payment": {
+     "tap": true
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "damaged"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "amount": "that many",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "grantedBy": 1
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "damaged"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "amount": "that much",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "grantedBy": 1
+   }
+  ]
+ },
+ "Ram Through": {
+  "oracleText": "Target creature you control deals damage equal to its power to target creature you don't control. If the creature you control has trample, excess damage is dealt to that creature's controller instead.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "amount": "its power",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "amount": "excess damage",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null
+      },
+      "dealer": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
  }
 }

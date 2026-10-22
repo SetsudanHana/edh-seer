@@ -229,6 +229,8 @@ export function sacrificerIsTargeted(clauseText: string): boolean {
 const DECLINE_VERBS: Record<string, string> = { sacrifice: "sacrifices?", exile: "exiles?", destroy: "destroys?" };
 const DECLINER = "(?:(?:its|their|that [a-z]+'s) controller|that player|they|target (?:player|opponent)|each opponent|its owner|the player|he or she)";
 export function victimDeclines(clauseText: string, verb: string): boolean {
+  // DAMAGE THE VICTIM MAY HAVE DEALT (#1294): "That creature's controller may have this artifact deal 1 damage to it" (Requiem Monolith) is the creature's controller's option, not damage anyone aims. Only damage back to the decliner ("to it", "to them"): Pandemonium's "may have it deal damage equal to its power to any target" is the controller choosing a target.
+  if (verb === "deal-damage") return new RegExp(`\\b${DECLINER}\\s+may\\s+have\\s+[^.]{0,40}?\\bdeals?\\b[^.]{0,40}?\\bdamage to (?:it|them|him|her)\\b`, "i").test(clauseText);
   const stem = DECLINE_VERBS[verb];
   if (!stem) return false;
   // "ANY PLAYER MAY EXILE a card from their graveyard" (Carrion Rats, Carrion Wurm), "EACH PLAYER MAY exile any number" (Grave Consequences): the exile is every player's option (#1266, graveyardHate).

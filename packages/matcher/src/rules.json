@@ -1,5 +1,5 @@
 {
-  "version": 32,
+  "version": 33,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -95,7 +95,7 @@
           { "op": "effectKind", "in": ["debuff"], "scope": ["target"], "control": ["opp", "any"], "toughnessDown": true, "notOnFlip": true },
           { "op": "effectKind", "in": ["forced-sacrifice"], "scope": ["target"] },
           { "op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "edict": true, "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
-          { "op": "effectKind", "in": ["damage"], "reachesPermanent": true }
+          { "op": "effectKind", "in": ["damage"], "reachesPermanent": true, "notRedirect": true, "notVictimMay": true }
         ] }
       ],
       "not": [{ "op": "oracle", "pattern": "graveyardHate" }],
@@ -286,7 +286,7 @@
           { "op": "effectKind", "in": ["debuff"], "scope": ["target"], "control": ["opp", "any"], "toughnessDown": true, "notOnFlip": true },
           { "op": "effectKind", "in": ["forced-sacrifice"], "scope": ["target"] },
           { "op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "edict": true, "type": ["creature", "permanent", "artifact", "enchantment", "planeswalker", "land", "battle"] },
-          { "op": "effectKind", "in": ["damage"], "reachesPermanent": true }
+          { "op": "effectKind", "in": ["damage"], "reachesPermanent": true, "notRedirect": true, "notVictimMay": true }
         ] }
       ],
       "not": [
@@ -295,7 +295,7 @@
         { "op": "oracle", "pattern": "boardWipe" },
         { "op": "oracle", "pattern": "controllerGetsCopies" }
       ],
-      "why": "DERIVED (#1266): the ability EMITS a kill, exile, shuffle or bounce of an opponent's or any permanent that it targets (a `dies`; an `exiled`, `leaves` or `shuffle` from the battlefield, refusing an immediate flicker of your own permanent), a -1/-1 counter on a target, a debuff that lowers toughness, or a forced sacrifice, or an EDICT (a `dies` marked `edict`: \"target player sacrifices a creature of their choice\" targets the player and no creature, #1295; it replaced the printed `targetPlayerSacrifices` pattern); plus TARGETED DAMAGE whose allowed target includes a permanent (`reachesPermanent`, #1294; it was the printed `damageRemoval`). Owner ruling 2026-10-22: \"any target\", \"target creature\", \"target creature or planeswalker\", a battle, and \"target player or planeswalker\" (through the planeswalker: Lava Spike) are removal at ANY amount, a 1-damage ping and a repeatable pinger (Prodigal Pyromancer) included; \"target player\" / \"target opponent\" (derive 381 marks them `player`), \"each opponent\" and a creature you control are burn or nothing. DELIBERATE DIFFERENCE: the answer classes `damage` / `damage.any` keep their own #581 meaning (2+ damage for \"any target\"), so a 1-damage ping fills this role and answers no class. An emit the victim may decline (`victimMay`: \"its controller may sacrifice it\", \"unless that player sacrifices it\") and a permanent \"you own\" are not removal. A wipe takes precedence, so a mass effect is not counted in both. That was an else-if in code and is a `not` clause here. A destroy whose controller gets copies back is not removal (owner ruling 2026-09-27, #513: Saw in Half is played on your own creatures to win or combo)."
+      "why": "DERIVED (#1266): the ability EMITS a kill, exile, shuffle or bounce of an opponent's or any permanent that it targets (a `dies`; an `exiled`, `leaves` or `shuffle` from the battlefield, refusing an immediate flicker of your own permanent), a -1/-1 counter on a target, a debuff that lowers toughness, or a forced sacrifice, or an EDICT (a `dies` marked `edict`: \"target player sacrifices a creature of their choice\" targets the player and no creature, #1295; it replaced the printed `targetPlayerSacrifices` pattern); plus TARGETED DAMAGE whose allowed target includes a permanent (`reachesPermanent`, #1294; it was the printed `damageRemoval`). Owner ruling 2026-10-22: \"any target\", \"target creature\", \"target creature or planeswalker\", a battle, and \"target player or planeswalker\" (through the planeswalker: Lava Spike) are removal at ANY amount, a 1-damage ping and a repeatable pinger (Prodigal Pyromancer) included; \"target player\" / \"target opponent\" (derive 381 marks them `player`), \"each opponent\" and a creature you control are burn or nothing. A damage REDIRECT (\"the next 2 damage ... is dealt to any target instead\": Harm's Way, Glarecaster; derive 382 marks it `redirect`) and damage the victim may have dealt (Requiem Monolith, `victimMay`) are not removal (owner ruling 2026-10-22); prevent-then-deal (Refraction Trap) deals damage and stays. CEILING: the graveyardHate guard drops damage removal with an incidental graveyard exile (Grim Lavamancer and 27 more cards), a recall gap tracked in #1326. DELIBERATE DIFFERENCE: the answer classes `damage` / `damage.any` keep their own #581 meaning (2+ damage for \"any target\"), so a 1-damage ping fills this role and answers no class. An emit the victim may decline (`victimMay`: \"its controller may sacrifice it\", \"unless that player sacrifices it\") and a permanent \"you own\" are not removal. A wipe takes precedence, so a mass effect is not counted in both. That was an else-if in code and is a `not` clause here. A destroy whose controller gets copies back is not removal (owner ruling 2026-09-27, #513: Saw in Half is played on your own creatures to win or combo)."
     },
     {
       "id": "removal.neutralise",
