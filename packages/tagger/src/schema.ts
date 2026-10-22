@@ -983,6 +983,12 @@ export const EFFECT_KINDS = [
   // Your own COPY's new targets are not it (#491). The model answers `other` (or a misfiled `cost-modify`), so it is read off
   // the action's object. A fact kind like `bounce`: the pair channels read it blank; `stackInteraction` reads it raw.
   "retarget",
+  // EVASION (CR 509.1b: a blocking restriction "may be created by an evasion ability"; #1315): "can't be blocked", "can't be blocked
+  // except by Walls / creatures with flying or reach", "... by creatures with power 3 or greater", "... this turn", "... as long as ...".
+  // The model stores `cant | be blocked ...`. NOT "can't block" (a drawback on the other side), NOT "must be blocked", and a payable
+  // "unless defending player pays" stays `tax`. The subject is whoever cannot be blocked ("this creature" is `self`; a static keeps one
+  // only when it names a class, so an Aura's host stays unnamed). A fact kind like `bounce`: the pair channels read it blank.
+  "evasion",
 ] as const;
 
 export type EffectKind = (typeof EFFECT_KINDS)[number];

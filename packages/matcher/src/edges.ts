@@ -1804,10 +1804,10 @@ function ownBoardKill(a: Ability): number | undefined {
  *  "re-firing" Acererak's return-to-hand, Arid Archway's sentence losing its surveil). The same
  *  object back when nothing changes, so the per-tags caches downstream still hit. */
 /** Kinds that record a fact for loop economics and claim nothing pairwise: `bounce` (#802),
- *  `play-from-top` (#856), `extra-loyalty` (#859) and `retarget` (#1266). Each derived blank before its kind existed, so reading it blank keeps
+ *  `play-from-top` (#856), `extra-loyalty` (#859), `retarget` (#1266) and `evasion` (#1315). Each derived blank before its kind existed, so reading it blank keeps
  *  every edge where it was. */
 // play-from-top and extra-loyalty are read raw by `playFromTopEdges` and `extraLoyaltyEdges`.
-const FACT_KINDS: ReadonlySet<string> = new Set(["bounce", "play-from-top", "extra-loyalty", "retarget"]);
+const FACT_KINDS: ReadonlySet<string> = new Set(["bounce", "play-from-top", "extra-loyalty", "retarget", "evasion"]);
 /** A SELF "YOU LOSE THE GAME" ABILITY IS NEVER A PAYOFF (owner ruling 2026-10-16, #1252; ALL ability
  *  kinds, ruling 2026-10-17: Forbidden Crypt, Nefarious Lich and Out of the Tombs are static or
  *  replacement-shaped). An ability whose ONLY effect is that its controller loses the game (Phage the Untouchable's "When Phage

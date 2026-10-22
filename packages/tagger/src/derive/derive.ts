@@ -527,7 +527,8 @@ import { emblemRecipient } from "../emblem.js";
 // 366: #1266 task 3 -- the card a trigger exiles from a graveyard (`ref: trigger`) is in the graveyard of whoever the trigger names: a trigger of yours or the card's own ("Whenever a creature you control dies, exile it": Promise of Tomorrow, Cyclopean Mummy, Eater of Virtue, Bag of Devouring, the Rectors) is `owner: you`, an opponent's (Mari, Patron of the Vein) or an any-player one (Planar Void, Mimic Vat, Koh) is not. And "any player may exile" / "each player may exile" a card from their graveyard (Carrion Rats, Carrion Wurm, Grave Consequences) marks the exile `victimMay` like "unless that player exiles" (Axebane Ferox) and "its controller may exile" (Lost in Thought). A graveyard-hate effect whose emits are all yours carries `owner: you` too (Nightmare Shepherd, Brenard), and "your hand or graveyard" (Mairsil) is your graveyard, so it is no graveyard-hate.
 // 367: #1266 (burn) -- WHO A DAMAGE OR LIFE LOSS HITS reads off the printed recipient, on the effect subject AND the emits. A recipient that LISTS a player beside a permanent kept only the permanent: "each opponent and each creature they control" (Wildfire Cerberus), "... each planeswalker they control" (Kumano Faces Kakkazan), "target player and each creature that player controls" (Chandra's Flame Wave), "that permanent or player" (Erratic Explosion) and the EMIT of "target player or planeswalker" (Lava Spike: typed planeswalker, the player dropped; the effect already read it through the filter grammar). The effect keeps an `anyOf` with a player branch; the emits are one event per half (the matcher's `damaged` test reads a victim's top-level type, so one `anyOf` event would meet neither side). "X's controller" / "its owner" / "enchanted player" / "they" is the PLAYER, untyped, never X's type nor `you` (Repercussion, Banewasp Affliction, Curse of Leeches; a lose-life emit read `you` there and fed "whenever you lose life"). "that player" after an opponent's spell or the card's own damage is `opp`, not the trigger's `you` (Thunderbreak Regent, Megrim, Underworld Dreams). "any target that isn't a Dragon" is any target. A damage's "it" is the object the trigger names, as its emit already read it (Caltrops: effect subject creature, was untyped). A life total SET (CR 119.5: "your life total becomes 1", "each player's life total becomes the highest"; The Golden Throne, Arbiter of Knollridge, 17 clauses) is neither damage nor life loss: no kind. 465 cards' abilities changed (337 gained a player-shaped untyped half or took the controller as the player, 49 "that player" -> `opp`, 22 life loss `you` -> `any`, 45 effect only). Census over 3,869 damage / life-loss clauses (printed recipient class against the stored subject, clause level): 833 disagreements -> 286, the rest classifier artifacts, model-labelled `static` clauses (Duggan, Herald of Hadar: no subject kept by the static guard) and Braids's Frightful Return ("If they don't, they lose 3 life" reads `you`).
 // 368: #1266 (wincon) -- "you win the game" is the clause VERB `win-game` (Epic Struggle, Thassa's Oracle, Laboratory Maniac, Coalition Victory, Mortal Combat ...) and only the `other` escape hatch ever reached the `win-game` effect kind (CR 104.2b: an effect may state that a player wins the game): 1 corpus card derived it, now 39 of the 40 that print it (residue: see the commit); "can't win/lose" is the verb `cant` and derives none. And "exiles the top N cards of their library" is not a MILL (CR 701.17a: top cards into the GRAVEYARD): a `mill` action whose own sentence says exile and never says mill or graveyard is dropped where the clause already exiles from the library (Lidless Gaze, Plargg and Nassari) and rewritten to an exile from the library otherwise (Sire of Stagnation, Ulamog, Black Widow, Possibility Storm, and the own-library impulse cards Reckless Impulse, Seize Opportunity, Embrace the Unknown, Inspired Tinkering, Opera Love Song, Crossover Collaboration, Heroes' Hangout, Ecstatic Beauty, Atsushi, Lady Loki, Bre of Clan Stoutarm, The Infamous Cruelclaw, Chandra, Heart of Fire, which fed "enters your graveyard" payoffs as self-mill). Side effect of the card-by-card grammar switch: Halo Fountain, Bre of Clan Stoutarm and 7 impulse cards now derive from the grammar.
-export const DERIVE_VERSION = 368;
+// 369: #1315 -- a new effect kind `evasion` (CR 509.1b), read off `cant | be blocked ...` (Aqueous Form, Cloak of Mists, Invisibility, Seeker, Kithkin Armor, Field of Reality, Canopy Cover; "this creature can't be blocked", "... this turn", "... as long as ..."). Subject: whoever cannot be blocked (`self` for "this creature"; a static keeps one only through `namesItsTargets`, so an Aura's "enchanted creature" stays unnamed). The model's `cant | not be blocked ...` / `be blocked by fewer than ...` is "MUST be blocked" (Gorm, The Foretold Soldier, Frodo Baggins): a drawback, not read. "Can't block" is not read; Awesome Presence's payable stays `tax`. A fact kind (edges.ts FACT_KINDS): no edge moves. Measured: 520 commander-legal cards derive an evasion (0 before); `unclaimed` 6604 -> 6067 entries, cards with any 5803 -> 5331. 15 cards matching "can't be blocked" derive none (12 token/granted quotes made by create or grant-ability, Awesome Presence's tax, Kang Dynasty, Jasmine Boreal of the Seven).
+export const DERIVE_VERSION = 369;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1151,6 +1152,8 @@ const STATIC_GRANT_VERB = /\bcreatures? you control (?:get [+-][\dX]+\/[+-][\dX]
 function everyCreatureYouControl(who: string, clauseText: string): boolean {
   return EVERY_CREATURE_YOU_CONTROL.test(who.trim()) && STATIC_GRANT_VERB.test(clauseText);
 }
+/** The words left of "can't be blocked" / "be blocked": the one that cannot be blocked (#1315). */
+const CANT_BE_BLOCKED = /^(.*?\S)\s+(?:(?:can['\u2019]t|cannot)\s+)?be blocked\b/i;
 /** Who LOSES abilities: "Creatures lose all abilities", "Enchanted creature loses all abilities". */
 const LOSES_ABILITIES = /^(.*?\S)\s+\bloses?\s+all\s+abilities\b/i;
 /** The same defect one verb over. `copy` records the copy SOURCE as its object -- Shapesharer's
@@ -1368,6 +1371,20 @@ function effectSubject(
     const phrase = retargetObject(action.object ?? "", action.verb ?? "", clauseText) ?? "";
     const s = parseSubject(phrase);
     if (/\b(?:spells? (?:or|and\/or) abilit)/.test(phrase) && !s.abilityKind) s.abilityKind = ["activated", "triggered"];
+    return s;
+  }
+  // WHO CANNOT BE BLOCKED (#1315, CR 509.1b) is stated to the left of "can't be blocked": in the object when the model kept it
+  // ("this creature can't be blocked", "creatures can't be blocked"), else in the clause ("Enchanted creature can't be blocked ...").
+  // A "gets +1/+0 and" ahead of it is not the subject. "enchanted creature" and the other narrowings the filter cannot hold stay unnamed.
+  if (kind === "evasion") {
+    const object = action.object ?? "";
+    const who = (CANT_BE_BLOCKED.exec(object)?.[1] ?? recipientBefore(clauseText, CANT_BE_BLOCKED))
+      ?.replace(/\s+(?:gets?|gains?|has|have|loses?)\b.*$/i, "").replace(/\s+and$/i, "").trim();
+    // A GRANTED ability's "this creature" is the grantee, not the card (Rime Transfusion's Aura): unnamed, never `self`.
+    const granted = /["\u201c][^"\u201d]*\b(?:can['\u2019]t|cannot) be blocked/i.test(clauseText);
+    if (!who || granted || UNEXPRESSIBLE_NARROWING.test(who) || /^(?:it|that creature|they|them)$/i.test(who)) return parseSubject("");
+    const s = subjectFrom(who, cardName, cardText);
+    if (SELF_REFERENCE.test(who) || isSelfSubject(who, cardName)) s.self = true;
     return s;
   }
   if (kind === "ability-loss") {

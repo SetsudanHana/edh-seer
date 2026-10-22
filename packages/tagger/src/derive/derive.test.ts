@@ -3311,7 +3311,7 @@ test("a static gated on a typed count keeps a kindless ability that carries the 
   expect(abilities[0].trigger).toBeUndefined();
 });
 
-test("a static gated on a graveyard count keeps a kindless ability that carries the count (AF7c)", () => {
+test("a static gated on a graveyard count keeps an ability that carries the count (AF7c; an `evasion` since #1315, once kindless)", () => {
   // Cephalid Inkmage: until DERIVE 151 a graveyard card count was refused as "not a class of
   // permanent" and the clause derived nothing. It is a fill demand now, and the one thing the
   // card asks of its deck -- a full graveyard -- rides on the kindless ability.
@@ -3321,7 +3321,7 @@ test("a static gated on a graveyard count keeps a kindless ability that carries 
     { 1: "This creature can't be blocked as long as there are seven or more cards in your graveyard." },
   );
   expect(abilities).toHaveLength(1);
-  expect(abilities[0]).toMatchObject({ kind: "static", effect: { kind: "" }, threshold: { atLeast: 7 },
+  expect(abilities[0]).toMatchObject({ kind: "static", effect: { kind: "evasion" }, threshold: { atLeast: 7 },
     thresholdSubject: { control: "you", zone: "graveyard" } });
 });
 
@@ -5343,6 +5343,58 @@ describe("retarget: a change-the-target of a TARGET spell or ability (#1266, CR 
     spell("change the target of " + " ".repeat(50_000) + "target spell");
     spell("choose new targets for ".repeat(5_000) + "x");
     expect(performance.now() - t0).toBeLessThan(200);
+  });
+});
+
+describe("evasion: a restriction on being blocked (#1315, CR 509.1b)", () => {
+  const run = (abilityType: "static" | "spell" | "triggered" | "activated", object: string, text: string, name = "Test") =>
+    deriveAbilities([{ id: 1, abilityType, actions: [{ verb: "cant", object }] }] as never, name, { 1: text }, undefined, text).abilities;
+  const evasion = (a: ReturnType<typeof run>) => a.filter((x) => x.effect.kind === "evasion");
+
+  test("an Aura's 'enchanted creature can't be blocked' is a static evasion with no named host (Cloak of Mists, Aqueous Form)", () => {
+    const [a] = evasion(run("static", "be blocked", "Enchanted creature can't be blocked.", "Cloak of Mists"));
+    expect(a!.kind).toBe("static");
+    expect(a!.effect.subject).toBeUndefined();
+  });
+
+  test("the restricted forms all read (Invisibility, Seeker, Kithkin Armor, Field of Reality, Canopy Cover)", () => {
+    for (const [object, text] of [
+      ["be blocked except by Walls", "Enchanted creature can't be blocked except by Walls."],
+      ["be blocked except by artifact creatures and/or white creatures", "Enchanted creature can't be blocked except by artifact creatures and/or white creatures."],
+      ["be blocked by creatures with power 3 or greater", "Enchanted creature can't be blocked by creatures with power 3 or greater."],
+      ["be blocked by Spirits", "Enchanted creature can't be blocked by Spirits."],
+      ["be blocked except by creatures with flying or reach", "Enchanted creature can't be blocked except by creatures with flying or reach."],
+    ] as const) expect(evasion(run("static", object, text)), text).toHaveLength(1);
+  });
+
+  test("a creature's own 'this creature can't be blocked' in a trigger is self (Cunning Survivor)", () => {
+    const [a] = evasion(run("triggered", "this creature can't be blocked", "Whenever you cycle or discard a card, this creature gets +1/+0 until end of turn and can't be blocked this turn.", "Cunning Survivor"));
+    expect(a!.effect.subject?.self).toBe(true);
+  });
+
+  test("a one-shot 'target creature can't be blocked this turn' names its target", () => {
+    const [a] = evasion(run("spell", "be blocked this turn", "Target creature can't be blocked this turn."));
+    expect(a!.effect.subject).toMatchObject({ type: "creature", scope: "target" });
+  });
+
+  test("sentences the model files as `cant | ... be blocked ...` but the card does not print are not evasion (protection, defender, swampwalk)", () => {
+    expect(evasion(run("static", "be blocked by Vampires, be blocked by Werewolves, or be blocked by Zombies", "Protection from Vampires, from Werewolves, and from Zombies"))).toHaveLength(0);
+    expect(evasion(run("activated", "this creature can't be blocked by defender creatures as though it didn't have defender", "{2}{G}: This creature can attack this turn as though it didn't have defender."))).toHaveLength(0);
+    expect(evasion(run("static", "be blocked as though they didn't have swampwalk", "Creatures with swampwalk can be blocked as though they didn't have swampwalk."))).toHaveLength(0);
+  });
+
+  test("a granted ability's 'this creature can't be blocked' is evasion with no named subject, never self (Rime Transfusion)", () => {
+    const [a] = evasion(run("activated", "this creature can't be blocked this turn except by snow creatures", "Enchanted creature gets +2/+1 and has \"{S}: This creature can't be blocked this turn except by snow creatures.\"", "Rime Transfusion"));
+    expect(a!.effect.subject?.self).toBeUndefined();
+    expect(a!.effect.subject?.type).toBeUndefined();
+  });
+
+  test("'must be blocked' filed as a cant, 'can't block' and a payable block restriction are not evasion", () => {
+    expect(evasion(run("static", "not be blocked", "Gorm must be blocked if able."))).toHaveLength(0);
+    expect(evasion(run("spell", "target creature can't block this turn", "Target creature can't block this turn."))).toHaveLength(0);
+    const tax = run("static", "be blocked unless defending player pays {3}", "This creature can't be blocked unless defending player pays {3}.");
+    expect(evasion(tax)).toHaveLength(0);
+    expect(tax.some((x) => x.effect.kind === "tax")).toBe(true);
   });
 });
 

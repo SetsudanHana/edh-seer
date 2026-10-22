@@ -148,6 +148,26 @@ export function extraLoyalty(text: string): "yours" | "self" | undefined {
  *  Linear: fixed heads by `indexOf`, a split on sentence punctuation, then a word scan. */
 const RETARGET_HEADS = ["change the target of ", "change the targets of ", "change a target of ", "change any targets of ", "choose new targets for ", "choose a new target for "];
 const RETARGET_STOP: ReadonlySet<string> = new Set(["with", "that", "if", "to", "which", "unless"]);
+/** A BLOCKING RESTRICTION THE CARD'S OWN ATTACKER CARRIES (CR 509.1b: "A restriction may be created by an evasion ability (a static
+ *  ability an attacking creature has that restricts what can block it)"): "can't be blocked", "... except by Walls", "... by creatures with
+ *  power 3 or greater", "... this turn", "... as long as ...". The model stores it as `cant | be blocked ...` (or with the subject kept in the
+ *  object: "this creature can't be blocked"). It also files "MUST be blocked if able" (Gorm, The Foretold Soldier, Frodo Baggins, Maarika) as
+ *  `cant | not be blocked ...` and "must be blocked by two or more creatures" as `be blocked by fewer than two creatures`: a drawback, not
+ *  evasion, so a leading "not" and "fewer than" are refused (and the printed clause must say "can't be blocked").
+ *  "Can't block" is the other restriction and never has "be blocked" in its object. A quoted grant ("a token with 'This token can't be blocked'")
+ *  is a `create`/`grant-ability` verb and never reaches here. */
+export function cantBeBlocked(object: string, clauseText = ""): boolean {
+  if (!/\bbe blocked\b/i.test(object)) return false;
+  if (/^\s*not\b/i.test(object) || /\bfewer than\b/i.test(object) || /\bas though\b|\bblock or be blocked\b/i.test(object)) return false;
+  // THE PRINTED CLAUSE MUST SAY IT. The model also files other sentences as `cant | ... be blocked ...`: "Protection from Vampires" (Elite
+  // Inquisitor: protection's own blocking clause, a keyword, not a printed evasion), "can attack as though it didn't have defender" (Krotiq
+  // Nestguard, Colossus of Akros), "Creatures with swampwalk can be blocked as though ..." (Ur-Drago), "all creatures able to block target
+  // creature this turn do so" (Taunting Arbormage). Where the clause text is known it has to print "can't be blocked".
+  // CEILING: "can't block or be blocked by ..." (Sneaky Homunculus) is both a drawback and an evasion and is left unread; so is "can be blocked
+  // only by creatures in the same sector" (Space Beleren), a restriction that does not print "can't be blocked".
+  return clauseText === "" || /\b(?:can['\u2019]t|cannot) be blocked\b/i.test(clauseText);
+}
+
 function retargetPhrase(text: string): string | undefined {
   const lower = text.toLowerCase();
   for (const head of RETARGET_HEADS) {
@@ -622,7 +642,9 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // turns the board off -- and the engine claimed Grim Guardian drains when Dress Down enters
   // (owner, 2026-09-05). Layer 6 of CR 613: an ability-removing effect. 73 corpus cards print it.
   if (verb === "cant" && /\babilit(?:y|ies)\b/i.test(action.object ?? "")) return "ability-loss";
-  if (verb === "cant") return PAYABLE.test(action.object ?? "") ? "tax" : null;
+  // CEILING: "can't be blocked unless defending player pays {3}" (Awesome Presence) is an evasion by CR 509.1b and stays a `tax` -- the payable
+  // reading is checked first, as it always was; one corpus card. Reading it as evasion would need a payable-evasion kind of its own.
+  if (verb === "cant") return PAYABLE.test(action.object ?? "") ? "tax" : cantBeBlocked(action.object ?? "", clauseText) ? "evasion" : null;
   if (verb === "cost-modify") return costDirection(action.object ?? "", clauseText);
   // THE OBJECT SOMETIMES STATES THE ORIGIN THE FIELD OMITTED. Hidetsugu and Kairi reads "put two
   // cards FROM YOUR HAND on top of your library" and the normalizer left `fromZone` unset, so the

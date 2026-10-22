@@ -51,7 +51,7 @@
   "packages/tagger/src/derive/damage-recipient.ts": 3,
   "packages/tagger/src/derive/delay.ts": 2,
   "packages/tagger/src/derive/derive.ts": 33,
-  "packages/tagger/src/derive/effect-kind.ts": 4,
+  "packages/tagger/src/derive/effect-kind.ts": 6,
   "packages/tagger/src/derive/emits.ts": 5,
   "packages/tagger/src/derive/event-count.ts": 1,
   "packages/tagger/src/derive/gate.ts": 2,

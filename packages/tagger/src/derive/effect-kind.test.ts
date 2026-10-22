@@ -710,6 +710,23 @@ test("losing abilities is ability-loss, and a payable can't is still a tax", () 
   expect(actionEffectKind({ verb: "cant", object: "attack you unless its controller pays {2}" })).toBe("tax");
 });
 
+test("a restriction on being blocked is evasion (CR 509.1b); a payable one stays a tax, a MUST be blocked is neither (#1315)", () => {
+  for (const object of ["be blocked", "be blocked except by Walls", "be blocked except by creatures with flying or reach",
+    "be blocked by creatures with power 3 or greater", "be blocked by Spirits", "be blocked this turn", "this creature can't be blocked",
+    "be blocked as long as it's attacking alone", "be blocked by more than one creature", "be blocked except by three or more creatures"]) {
+    expect(actionEffectKind({ verb: "cant", object }), object).toBe("evasion");
+  }
+  // Awesome Presence: "can't be blocked unless defending player pays {3}" -- the payable reading wins, as before.
+  expect(actionEffectKind({ verb: "cant", object: "be blocked unless defending player pays {3}" })).toBe("tax");
+  // The model files "must be blocked if able" as `cant | not be blocked ...` (Gorm, The Foretold Soldier, Frodo): a drawback, not evasion.
+  expect(actionEffectKind({ verb: "cant", object: "not be blocked" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "not be blocked if able" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "be blocked by fewer than two creatures" })).toBeNull();
+  // "can't block" is a different restriction.
+  expect(actionEffectKind({ verb: "cant", object: "target creature can't block this turn" })).toBeNull();
+  expect(actionEffectKind({ verb: "cant", object: "cast this spell except during the declare blockers step" })).toBeNull();
+});
+
 test("setting a base power and toughness is neither a pump nor a debuff", () => {
   // Sludge Monster: "have base power and toughness 2/2" is removal, and an unsigned "2/2" mapped to pump.
   expect(actionEffectKind({ verb: "modify-pt", object: "Non-Horror creatures with slime counters on them", amount: "2/2" },
