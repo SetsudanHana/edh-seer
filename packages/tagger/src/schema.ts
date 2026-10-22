@@ -1171,6 +1171,7 @@ export interface Ability {
    *  A MARKER AND NOT `effect.subject.status: ["enchanted"]` ON PURPOSE: a static ability with a subject emits a `static:<kind>` tag in edges.ts and can form
    *  whole-deck edges (see `namesItsTargets` and "A subject is attached ONLY when there is a kind" in derive.ts). No edge code reads this field; `effect.subject`
    *  is exactly what it was. It says the buff is a host effect, which is all a voltron reading needs; WHICH hosts an Aura accepts is `characteristics.enchants`.
+   *  THE MARKER CARRIES NO POLARITY: a grant of defender, or a debuff, is `host` as much as a buff is; a reader that wants a buff filters the kind and the grant (`grants`, the sign of `amount`).
    *  ABSENT MEANS "NOT SAID", NOT "NOT A HOST EFFECT". CEILING: a trigger on "this creature or equipped creature" (Razorfield Ripper), a recipient list ("equipped creature and Zombies you
    *  control", Wand of Orcus), the inner pump of a quoted grant (Dragon Mantle), a base P/T setter (Aettir and Priwen, Belt of Giant Strength) and "doesn't untap" (Venarian Gold) carry none. */
   host?: true;

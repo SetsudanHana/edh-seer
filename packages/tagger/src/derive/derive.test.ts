@@ -6248,6 +6248,23 @@ describe("host: an effect on the attached permanent (#1315)", () => {
     expect(hosts(wand)).toEqual(["keyword-grant:false"]);
   });
 
+  test("review of 41a1da15: a plural class, a grant to another class, and a LOSS are not host (Kor Blademaster, Gemcutter Buccaneer, Earthbind)", () => {
+    const kor = viaModel("Kor Blademaster", "Double strike\nEquipped Warriors you control have double strike.", [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Double strike" }] },
+      { id: 2, abilityType: "static", actions: [{ verb: "grant-ability", object: "double strike" }] },
+    ] as never);
+    expect(hosts(kor)).toEqual(["speed-increase:false"]);
+    const gem = viaModel("Gemcutter Buccaneer", "Whenever this creature or another Pirate you control enters, create a tapped Treasure token.\nTreasures you control are Equipment in addition to their other types and have \"Equipped creature gets +2/+0,\" equip Pirate {1}, and equip {3}.", [
+      { id: 2, abilityType: "static", actions: [{ verb: "grant-ability", object: "Treasures you control are Equipment in addition to their other types" }, { verb: "grant-ability", object: "Equipped creature gets +2/+0" }, { verb: "grant-ability", object: "equip {3}" }] },
+    ] as never);
+    expect(gem.some((a) => a.host)).toBe(false);
+    const earth = viaModel("Earthbind", "Enchant creature\nWhen this Aura enters, if enchanted creature has flying, this Aura deals 2 damage to that creature and this Aura gains \"Enchanted creature loses flying.\"", [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant creature" }] },
+      { id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "this Aura", control: "you" }, actions: [{ verb: "deal-damage", object: "enchanted creature", amount: "2" }, { verb: "grant-ability", object: "Enchanted creature loses flying" }] },
+    ] as never);
+    expect(earth.some((a) => a.host)).toBe(false);
+  });
+
   test("the host's controller is a player, not the host", () => {
     const a = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "enchanted creature's controller has hexproof" }] }] as never, "Test", { 1: "Enchanted creature's controller has hexproof." }).abilities;
     expect(a.some((x) => x.host)).toBe(false);
