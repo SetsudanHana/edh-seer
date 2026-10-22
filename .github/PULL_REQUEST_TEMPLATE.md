@@ -25,5 +25,8 @@
 - [ ] `npm run typecheck` passes — vitest does not typecheck
 - [ ] `npm run lint:bins` passes, if a script was added or moved
 - [ ] `npm run tokens:check` passes, if `tokens/` or UI CSS changed
+- [ ] If `DERIVE_VERSION` moved: `role-ratchet.ts` and `dropped-clauses.ts` (both in
+      `packages/instruments/src/`) run at the new version, each result quoted, and every moved
+      line explained in the commit that re-banks it. CI cannot run either (they read Mongo)
 - [ ] `docs/reference/SCHEMA.md` regenerated, if the schema or a vocabulary changed
 - [ ] Screenshots and demos regenerated (`npm run screenshots -w @edh-seer/web`, `npm run demo -w @edh-seer/web`, `-- --story browse`), if the paste box, report, map, manabase, commander or precon pages look different

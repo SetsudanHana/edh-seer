@@ -38,6 +38,10 @@ every claim in the brief — including "kept simple deliberately" — as unverif
   citations must match `rules/MagicCompRules.txt` by TITLE, not just exist.
 - Derive semantics changed without a `DERIVE_VERSION` bump. `NORMALIZE_MIN_COMPATIBLE` raised for
   an additive change (that re-buys the corpus).
+- A `DERIVE_VERSION` bump whose commits do not quote the result of BOTH Mongo-only ratchets,
+  `role-ratchet.ts` and `dropped-clauses.ts`, at the new version (moved lines explained, or
+  "gained 0, lost 0" / "new drops 0, fixed 0"). CI runs neither; `dropped-clauses` sat red from
+  derive 360 to 387 because nobody ran it (#1329).
 - Engine importing from `@edh-seer/instruments`. A research script importing package source by
   name instead of relative path. A `bin/` file with no test, script, importer or write.
 - In `packages/web/functions`, a VALUE import from a module that drags node deps in.
