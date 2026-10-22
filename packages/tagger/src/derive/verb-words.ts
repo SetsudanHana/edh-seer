@@ -40,7 +40,7 @@ export const VERB_WORDS: Readonly<Record<string, string>> = {
   "airbend": "airbend", "waterbend": "waterbend", "proliferate": "proliferat(?:e|es|ed)",
 };
 /** The verbs a "none" verdict drops. One family per commit (#1321); empty until each is measured. */
-export const GUARDED_VERBS: Set<string> = new Set<string>([]);
+export const GUARDED_VERBS: Set<string> = new Set<string>(["add-mana"]);
 /** An action the guard never drops although its verb is guarded: a reading derive has for it already (an `add-mana` of {E} is the energy counter, CR 107.14, emitted as `counter-added`). */
 export function guardExempt(action: { verb?: string; object?: string }): boolean {
   return action.verb === "add-mana" && isEnergyObject(action.object ?? "");

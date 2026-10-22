@@ -8,7 +8,7 @@
 import { connect, loadConfig } from "@edh-seer/data";
 import { clauseCosts, clauseTexts, deriveInputOf } from "../../packages/tagger/src/derive-input.js";
 import { deriveCardTags } from "../../packages/tagger/src/derive/derive.js";
-import { GUARDED_VERBS, verbPrint } from "../../packages/tagger/src/derive/verb-words.js";
+import { GUARDED_VERBS, guardExempt, verbPrint } from "../../packages/tagger/src/derive/verb-words.js";
 import { grammarClauseRecords } from "../../packages/tagger/src/grammar/clause-record.js";
 import type { CardTags } from "../../packages/tagger/src/schema.js";
 
@@ -27,7 +27,7 @@ const canon = new Map<string, Rec[]>();
 for await (const d of clauseCol.find({}, { projection: { oracleId: 1, canonical: 1 } })) canon.set(d.oracleId, d.canonical);
 
 type Flag = { where: "card" | "none"; source: "model" | "grammar"; name: string; oracleId: string; clause: number; k: number; verb: string; object: string; text: string; emits: number; kinds: number; lostEmits?: string[] };
-const totals = { model: 0, grammar: 0, tokenRows: 0, noText: 0, noRecords: 0 };
+const totals = { model: 0, grammar: 0, tokenRows: 0, noText: 0, noRecords: 0, exempt: 0 };
 const perVerb = new Map<string, { total: number; modelTotal: number; grammarTotal: number; flags: Flag[] }>();
 const flags: { flag: Flag; card: Record<string, unknown>; recs: Rec[]; readings: unknown }[] = [];
 
@@ -55,6 +55,7 @@ for (let b = 0; b < rows.length; b += BATCH) {
         if (text === undefined) { totals.noText++; return; }
         const where = verbPrint(a.verb, text, costs[r.id], String(card.oracleText ?? ""));
         if (where === "own") return;
+        if (where === "none" && guardExempt(a)) { totals.exempt++; return; } // a reading derive already has for it (an energy add-mana): the guard keeps it
         const stripped = (costs[r.id] ? `${costs[r.id]} : ${text}` : text).replace(/\([^()]*\)/g, " ").replace(/\s+/g, " ").trim();
         const flag: Flag = { where, source, name: String(card.name), oracleId: row.oracleId, clause: r.id, k, verb: a.verb, object: String(a.object ?? ""), text: stripped, emits: 0, kinds: 0 };
         v.flags.push(flag);
@@ -96,7 +97,7 @@ if (DUMP) {
   for (const f of perVerb.get(DUMP)?.flags ?? []) console.log(`${f.where} | ${f.source} | ${f.name} [${f.clause}#${f.k}] ${f.verb} :: ${f.object} || ${f.text}${f.lostEmits?.length ? `  {lost ${[...new Set(f.lostEmits)].join(",")}}` : ""}`);
 } else {
   const sum = (src: string, w?: string) => rank.reduce((n, r) => n + r.flags.filter((f) => f.source === src && (w === undefined || f.where === w)).length, 0);
-  console.log(`actions scanned ${totals.model + totals.grammar} (model ${totals.model}, grammar ${totals.grammar}); misfiled (printed nowhere on the card) ${sum("model", "none") + sum("grammar", "none")} (model ${sum("model", "none")}, grammar ${sum("grammar", "none")}); clause mix-ups (printed elsewhere on the card) ${sum("model", "card") + sum("grammar", "card")}; token rows skipped ${totals.tokenRows}; no clause text ${totals.noText}; no records ${totals.noRecords}`);
+  console.log(`actions scanned ${totals.model + totals.grammar} (model ${totals.model}, grammar ${totals.grammar}); misfiled (printed nowhere on the card) ${sum("model", "none") + sum("grammar", "none")} (model ${sum("model", "none")}, grammar ${sum("grammar", "none")}); clause mix-ups (printed elsewhere on the card) ${sum("model", "card") + sum("grammar", "card")}; token rows skipped ${totals.tokenRows}; no clause text ${totals.noText}; no records ${totals.noRecords}; exempt from the guard (energy add-mana, derive reads it as counter-added) ${totals.exempt}`);
   console.log(`verb | actions | misfiled (c) | mix-ups (b) | rate (c) | (c) with an emit or ability lost | emits lost | abilities lost | guarded`);
   for (const r of rank) {
     if (r.flags.length === 0) continue;
