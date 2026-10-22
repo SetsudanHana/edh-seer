@@ -5894,6 +5894,23 @@ describe("#1266 burn: who a damage or life loss hits", () => {
     expect(halves.some((s) => s.type === "planeswalker")).toBe(true);
   });
 
+  it.each([
+    ["Pyroclastic Elemental", "target player", "{1}{R}{R}: This creature deals 1 damage to target player."],
+    ["Sudden Impact", "target player", "Sudden Impact deals damage to target player equal to the number of cards in that player's hand."],
+    ["Anathemancer", "target player", "When this creature enters, it deals damage to target player equal to the number of nonbasic lands that player controls."],
+    ["Runeflare Trap", "target player", "Runeflare Trap deals damage to target player equal to the number of cards in that player's hand."],
+    ["Fire and Brimstone", "target player who attacked this turn", "Fire and Brimstone deals 4 damage to target player who attacked this turn and 4 damage to you."],
+    ["Knight Rampager", "target opponent chosen at random", "When this creature dies, it deals 4 damage to target opponent chosen at random."],
+    ["Hired Claw", "target opponent", "Whenever you attack with one or more Lizards, this creature deals 1 damage to target opponent."],
+  ])("%s: damage to '%s' is PLAYER-ONLY, on the effect and the emit (#1294; it read like 'any target')", (name, object, text) => {
+    const [a] = dmg(abil([{ id: 1, abilityType: "spell", actions: [{ verb: "deal-damage", object, amount: "1" }] }], name, { 1: text }));
+    expect(a!.effect.subject?.player).toBe(true);
+    expect(a!.effect.subject?.scope).toBe("target");
+    expect(a!.effect.subject?.type).toBeUndefined();
+    expect(a!.emits!.every((e) => e.subject.player === true && e.subject.scope === "target")).toBe(true);
+    expect(a!.effect.subject?.control).toBe(object.startsWith("target opponent") ? "opp" : "any");
+  });
+
   it("a creature-only target stays creature-typed (Garruk Relentless 0: 'target creature')", () => {
     const [a] = dmg(abil([{ id: 2, abilityType: "activated", actions: [{ verb: "deal-damage", object: "target creature", amount: "3" }] }], "Garruk Relentless",
       { 2: "0: Garruk deals 3 damage to target creature. That creature deals damage equal to its power to him." }));
