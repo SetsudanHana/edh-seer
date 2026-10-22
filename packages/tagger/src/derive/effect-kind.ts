@@ -8,7 +8,7 @@
 import type { Action } from "../canonicalize.js";
 import type { EffectKind } from "../schema.js";
 import { parseSubject, spellMove } from "./subject.js";
-import { putsTopCardsIntoYourHand } from "./to-hand.js";
+import { readToHand, type ToHandRead } from "./to-hand.js";
 
 /** Zone-sensitive rules, checked before the plain lookup. Order matters within this list.
  *  `from`/`to` omitted means "don't care"; `from: null` means the clause STATED NO ORIGIN.
@@ -244,6 +244,12 @@ export function retargetObject(object: string, verb = "other", clauseText = ""):
 
 /** Does a dig's object name a class -- a type, subtype, stat predicate or name, on the subject or
  *  in an `anyOf` branch? "Two of them" and "a card" do not. See the `put library -> hand` row. */
+/** The read of a `put library -> hand` that is the top of your own library going to your hand without a printed search (`to-hand.ts`), or `undefined`. One reading for the effect kind and for the ability's markers. */
+export function handFillRead(action: Action, clauseText: string): ToHandRead | undefined {
+  if (action.verb !== "put" || action.fromZone !== "library" || action.toZone !== "hand") return undefined;
+  const object = String(action.object ?? "");
+  return readToHand(object, clauseText, digNamesAClass(object));
+}
 function digNamesAClass(object: string): boolean {
   const s = parseSubject(object);
   const has = (b: Partial<typeof s>): boolean =>
@@ -744,8 +750,14 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
     // standing in for "is this the top-of-library family?", which the kind now says outright.
     if (r.kind === "top-set" && ON_THE_BOTTOM.test(clauseText) && !ON_TOP.test(clauseText)) return null;
     // AN UNTYPED DIG FINDS NO PARTICULAR CARD. See the `put library -> hand` row.
-    // ...and an UNTYPED one that takes the top of your own library into your hand with no search is `to-hand` (#1302, CR 121.5): card advantage that is neither a draw nor a tutor.
-    if (r.kind === "search" && verb === "put" && !digNamesAClass(String(action.object ?? ""))) return putsTopCardsIntoYourHand(String(action.object ?? ""), clauseText) ? "to-hand" : null;
+    // ...and one that takes the top of your own library into your hand with no printed search is hand-fill (#1302, CR 121.5: card advantage that is neither a draw nor a tutor): `to-hand` when it names no class,
+    // and STAYS `search` when the card restricts it to one -- the object ("a Zombie card") or the clause ("If it's a Zombie card", "until you reveal a creature card"; owner 2026-09-16 and 2026-10-22), because a
+    // dig for a Zombie is worth more with Zombies. A typed dig the clause does not allow (Cultivate's put after its search) keeps its old reading.
+    if (r.kind === "search" && verb === "put") {
+      const read = handFillRead(action, clauseText);
+      if (read) return read.typed ? "search" : "to-hand";
+      return digNamesAClass(String(action.object ?? "")) ? "search" : null;
+    }
     return r.kind;
   }
   // Life change is one verb per direction, but which kind depends on whose life it is.

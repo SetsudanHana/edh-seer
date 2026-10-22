@@ -7,7 +7,7 @@ import { deriveAbilities, deriveCardTags } from "./derive.js";
 import { deriveInputOf } from "../derive-input.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import { actionEffectKind } from "./effect-kind.js";
-import { toHandAmount, toHandChooses } from "./to-hand.js";
+import { readToHand, toHandAmount, toHandChooses } from "./to-hand.js";
 
 const put = (object: string, toZone: string, optional = false): Action =>
   ({ verb: "put", object, fromZone: "library", toZone, amount: null, optional } as unknown as Action);
@@ -58,15 +58,46 @@ describe("actionEffectKind: a put from the top of your library into your hand is
     expect(actionEffectKind({ verb: "put", object: "target creature", fromZone: "battlefield", toZone: "hand" } as Action, "Return target creature to its owner's hand.")).toBe("bounce");
   });
 
-  test("a dig the card's TEXT types is not to-hand, whatever the stored object says (2026-09-16 ruling; Archghoul of Thraben, Dryad Greenseeker, Nessian Wanderer)", () => {
+  test("a dig the card's TEXT types stays a search, whatever the stored object says (2026-09-16 and 2026-10-22; Archghoul of Thraben, Dryad Greenseeker, Nessian Wanderer, the #1302 review's misses)", () => {
     for (const [object, text] of [
       ["it", "Whenever this creature or another Zombie you control dies, look at the top card of your library. If it's a Zombie card, you may reveal it and put it into your hand. If you don't put the card into your hand, you may put it into your graveyard."],
       ["it", "{T}: Look at the top card of your library. If it's a land card, you may reveal it and put it into your hand."],
       ["that card", "Whenever an enchantment you control enters, look at the top three cards of your library. You may reveal a land card from among them and put that card into your hand. Put the rest on the bottom of your library in a random order."],
       ["the revealed card", "Look at the top three cards of your library. You may reveal a creature or land card from among them and put it into your hand. Put the rest on the bottom of your library in any order."],
-    ] as const) expect(actionEffectKind(put(object, "hand"), text), text).toBeNull();
-    // An untyped pick from among them, and an "Otherwise" branch beside a typed condition, are not typed.
+      // The misses of the first typing: a comma inside the condition, a card of the chosen type, a shared type, a revealed-this-way class, a reveal-until class, a predicate pick.
+      ["it", "Look at the top card of your library. If it's a noncreature, nonland card, you may reveal it and put it into your hand."],
+      ["a card of the chosen type", "When this artifact enters and at the beginning of your upkeep, look at the top card of your library. If it's a card of the chosen type, you may reveal it and put it into your hand."],
+      ["that card", "Whenever another permanent you control enters, look at the top card of your library. If it shares a card type with that permanent, you may reveal that card and put it into your hand."],
+      ["it", "Scry 4, then you may reveal the top card of your library. If a planeswalker card is revealed this way, put it into your hand."],
+      ["revealed cards of the chosen type", "Choose a creature type. Look at the top six cards of your library. You may reveal any number of cards of the chosen type from among them and put the revealed cards into your hand."],
+      ["the revealed cards", "Look at the top six cards of your library. You may reveal up to two creature cards with mana value X or less from among them. Put the revealed cards into your hand, then shuffle."],
+      ["that card", "Reveal cards from the top of your library until you reveal a creature card. Put that card into your hand and the rest on the bottom of your library in a random order."],
+      ["that card", "Reveal cards from the top of your library until you reveal an Elf or Elemental card. Put that card into your hand and the rest on the bottom of your library in a random order."],
+      ["that card", "Choose land or nonland. Reveal cards from the top of your library until you reveal a card of the chosen kind. Put that card into your hand and the rest on the bottom of your library in a random order."],
+      ["a card of that type from among the revealed cards", "Reveal the top ten cards of your library. For each card type, you may put a card of that type from among the revealed cards into your hand."],
+      ["a card that's exactly two colors", "Look at the top six cards of your library. You may reveal a card that's exactly two colors from among them and put it into your hand."],
+    ] as const) expect(actionEffectKind(put(object, "hand"), text), text).toBe("search");
+    // An untyped pick from among them, an "Otherwise" branch beside a typed condition, a "the rest" beside a typed sibling, and the "If you don't" fallback are not typed.
     expect(actionEffectKind(put("it", "hand"), "Look at the top three cards of your library. You may reveal a card from among them and put it into your hand.")).toBe("to-hand");
+    expect(actionEffectKind(put("the rest", "hand"), "Look at the top five cards of your library. Put any number of permanent cards from among them onto the battlefield and the rest into your hand.")).toBe("to-hand");
+    expect(actionEffectKind(put("it", "hand"), "Look at the top card of your library. If it's a land card, you may put it onto the battlefield tapped. If you don't, put it into your hand.")).toBe("to-hand");
+  });
+
+  test("the riders: named (reveal until a named card), netZero (a draw replaced, a swap), an opponent's pick is not yours", () => {
+    const run = (object: string, text: string) => readToHand(object, text, false)!;
+    expect(run("that card", "Choose a card name. Exile the top six cards of your library, then reveal cards from the top of your library until you reveal a card with the chosen name. Put that card into your hand and exile all other cards revealed this way.").named).toBe(true);
+    expect(run("that card", "Choose a card name. Reveal cards from the top of your library until you reveal a card with that name, then put that card into your hand.").named).toBe(true);
+    // Taking every hit of a name from a look is not a guaranteed find.
+    expect(run("all of them with the chosen name", "Choose a card name other than a basic land card name. Reveal the top seven cards of your library and put all of them with that name into your hand. Exile the rest.").named).toBe(false);
+    expect(run("that many cards from the top of your library", "Exile any number of cards from your hand face down. Put that many cards from the top of your library into your hand. Then look at the exiled cards and put them on top of your library in any order.").netZero).toBe(true);
+    expect(run("one of those cards", "If you would draw a card, look at the top three cards of your library instead. Put one of those cards into your hand and the rest on the bottom of your library in any order.").netZero).toBe(true);
+    expect(run("that card", DARK_CONFIDANT).netZero).toBe(false);
+    // Karn: the opponent picks. Truth or Tale: the opponent picks the pile. Eye of Yawgmoth: "a number of cards", your pick.
+    expect(run("that card", "Reveal the top two cards of your library. An opponent chooses one of them. Put that card into your hand and exile the other with a silver counter on it.").chooses).toBe(false);
+    expect(run("a card from the chosen pile", "Reveal the top five cards of your library and separate them into two piles. An opponent chooses one of those piles. Put a card from the chosen pile into your hand, then put all other cards revealed this way on the bottom of your library in any order.").chooses).toBe(false);
+    expect(run("one", "Reveal a number of cards from the top of your library equal to the sacrificed creature's power. Put one into your hand and exile the rest.").chooses).toBe(true);
+    // Atraxa: one per card type, not one.
+    expect(run("a card of that type from among the revealed cards", "Reveal the top ten cards of your library. For each card type, you may put a card of that type from among the revealed cards into your hand.").amount).toBe("X");
   });
 
   test("a typed dig stays a search (owner ruling 2026-09-16): one action, one kind", () => {
@@ -104,9 +135,10 @@ describe("amount and choice", () => {
     // "Exile the top six cards" is not a look, and the reveal-until card is found by the rule, not picked.
     expect(toHandChooses("that card", "Choose a card name. Exile the top six cards of your library, then reveal cards from the top of your library until you reveal a card with the chosen name. Put that card into your hand and exile all other cards revealed this way.")).toBe(false);
     expect(toHandChooses("one of them chosen at random", "Search your library for three creature cards and reveal them. If you reveal three cards with different names, choose one of them at random and put that card into your hand.")).toBe(false);
-    // The pick can be made in an earlier sentence and pointed back at: Nessian Wanderer, Karn (an opponent picks), Stargaze (twice X).
+    // The pick can be made in an earlier sentence and pointed back at: Nessian Wanderer, Stargaze (twice X).
     expect(toHandChooses("that card", "Whenever an enchantment you control enters, look at the top three cards of your library. You may reveal a land card from among them and put that card into your hand. Put the rest on the bottom of your library in a random order.")).toBe(true);
-    expect(toHandChooses("that card", "Reveal the top two cards of your library. An opponent chooses one of them. Put that card into your hand and exile the other with a silver counter on it.")).toBe(true);
+    // ...but not when the OPPONENT picks (Karn, Scion of Urza, owner 2026-10-22): `chooses` means YOU choose.
+    expect(toHandChooses("that card", "Reveal the top two cards of your library. An opponent chooses one of them. Put that card into your hand and exile the other with a silver counter on it.")).toBe(false);
     expect(toHandChooses("X cards from among them", "Look at twice X cards from the top of your library. Put X cards from among them into your hand and the rest into your graveyard. You lose X life.")).toBe(true);
     // A single card looked at is not a choice among cards.
     expect(toHandChooses("it", "Look at the top card of your library. If it's a creature card, you may reveal it and put it into your hand.")).toBe(false);

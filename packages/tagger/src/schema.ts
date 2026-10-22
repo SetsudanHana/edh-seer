@@ -1203,6 +1203,18 @@ export interface Ability {
    *  is `pile`), everything just singled out (`amount` `all`), and a card chosen at random. The Impulse line (owner ruling 2026-10-02: choosing one of the top N is card
    *  selection) is `chooses` with `amount` "1". */
   chooses?: true;
+  /** THIS `search` ABILITY IS A DIG THAT PUTS CARDS FROM THE TOP OF YOUR LIBRARY INTO YOUR HAND (#1302, owner 2026-10-22): "If it's a Zombie card, you may reveal it and put it into your hand", "reveal a land card from among
+   *  them and put it into your hand", "reveal cards until you reveal a creature card". A dig restricted to a class stays `search` for the tutor EDGES (a Zombie dig is worth more with Zombies) and is ALSO hand-fill
+   *  ("Cards to hand"); the value is how many cards reach the hand, in `to-hand`'s `amount` vocabulary ("1", "2", "X", `pile`, `all`). `Ability.amount` is untouched. Absent on every other ability, and on a
+   *  PRINTED search of your library (Demonic Tutor: `librarySearch`), which stays a tutor. Read by the hand-fill role through `effectKind.toHand`. */
+  toHand?: string;
+  /** A `to-hand` OR typed-dig ability that REVEALS UNTIL A NAMED CARD (#1302, owner 2026-10-22): "Choose a card name. Reveal cards from the top of your library until you reveal a card with that name. Put that card into your
+   *  hand" (Demonic Consultation, Divining Witch, Spoils of the Vault). A tutor in effect with no printed search, so the tutor role reads this marker. NOT "put all of them with that name" (Desperate Research, Tamiyo,
+   *  Wood Sage), which may find nothing and is hand-fill. Only `true` is written. */
+  named?: true;
+  /** A `to-hand` OR typed-dig ability that NETS ZERO CARDS (#1302, owner 2026-10-22): it replaces a draw ("If you would draw a card, you may instead ... reveal cards ...": Abundance, Underrealm Lich, Tomorrow) or swaps with the
+   *  top of the library (Scroll Rack). Card selection, not hand-fill. Only `true` is written. */
+  netZero?: true;
   /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs. */
   trigger?: {
     verbs: Verb[];
