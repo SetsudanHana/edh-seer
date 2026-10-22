@@ -15,6 +15,7 @@ import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, TEMP
 import { interveningIfOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
 import { hostEffect } from "./host.js";
+import { toHandAmount, toHandChooses } from "./to-hand.js";
 import { librarySearchOwner, printsSearch } from "./library-search.js";
 import { creatureDamageSource, damageHitsSelf, damageRecipient, playerOnlyRecipient } from "./damage-recipient.js";
 import { actionRecipients, damagedPlayerIsOpponent, sacrificerIsTargeted, sentenceNamesAPlayer, thatPlayerIsOpponent, victimDeclines } from "./recipient.js";
@@ -543,7 +544,8 @@ import { emblemRecipient } from "../emblem.js";
 // 380: #1321 -- the printed-verb guard is on for `transform`, `prevent`, `return`, `roll-dice`, `vote` and `city-blessing`. transform: "becomes a Forest / an Island / Swamps" (Gaea's Liege, Tidal Warrior, Nightcreep, The Irencrag) is a type change, not a transform; 28+3 transform payoffs ("whenever this transforms") had joined them. prevent: "this creature assigns no combat damage this turn" (Bone Dancer, Stromgald Spy, Pygmy Hippo, Delif's Cone) is not a prevention ("protection from" and "would be dealt" stay). return: "Remove target attacking creature from combat" (Illusionist's Gambit, Reconnaissance) is no return; a put into a hand, library, graveyard or onto the battlefield stays a return (Flamewar, Worlds Within Worlds, Blight Herder, Glyph of Reincarnation). roll-dice: Ral, Monsoon Mage flips a coin (CR 705, not 706). vote: Bitter Feud, Day of the Moon only "choose". city-blessing: Court of Ire and Starscream become the monarch (a different designation). Measured: 15 actions dropped; emits transform 346 -> 342, prevented 596 -> 592, enters 6298 -> 6296, dice-rolled 92 -> 91, vote 34 -> 32, city-blessing 2 -> 0; unclaimed 5810 -> 5823 actions, 5091 -> 5101 cards; event-match pairs transform 643 -> 609, prevented 2855 -> 2835, dice-rolled 890 -> 880, vote 128 -> 120, leaves 198927 -> 198927, 0 new, all lost pairs are false; role-ratchet gained 0, lost 0; panel PRECISION 100.0%, RETENTION 98.4% (7 lost, ratchet ok). NOT enabled: deal-damage (Unholy Annex's "each opponent loses 2 life" is its only burn, role:burn + wincon:burn would go), create (the one misfile, Cybership, is also its only go-wide: it does put two creatures onto the battlefield per hit), investigate ("open an Attraction" enters an Attraction, a true fact with no verb of its own), lose-life (Orcish Cannonade's damage to you is a life loss), fight (Grim Contest), draw, exile, destroy, sacrifice, discard (0 misfiled, only clause mix-ups), and the noise verbs.
 // 381: #1294 -- damage to "target player" / "target opponent" / "that player" / "that opponent" (player-only) carries `player: true` on the effect subject AND the `non-combat-damage` emit (it was byte-identical to "any target": untyped, control any/opp, scope target), so a role asking "can this damage reach a permanent?" can tell Pyroclastic Elemental from Lightning Bolt. "Any target" stays untyped. Measured: see the commit message.
 // 382: #1294 -- a damage REDIRECT ("the next 2 damage that a source of your choice would deal to you ... is dealt to any target instead": Harm's Way, Shining Shoal, Captain's Maneuver, Glarecaster, Mirrorwood Treefolk, Ward of Piety, Zhalfirin Crusader) marks its non-combat-damage emits `redirect`, and damage the victim may have dealt ("That creature's controller may have this artifact deal 1 damage to it": Requiem Monolith) marks them `victimMay`, so the removal role refuses both (owner ruling 2026-10-22). Measured: see the commit message.
-export const DERIVE_VERSION = 382;
+// 383: #1302 (owner ruling 2026-10-22) -- a new effect kind `to-hand` (CR 121.5: cards moved from your library to your hand without the word "draw" are not drawn): an UNTYPED `put` from the top of your own library into your hand with no search in the clause (Dark Confidant, Ad Nauseam, Fact or Fiction, Impulse, Dig Through Time, Browse, Akal Pakal, Expressive Iteration, Coiling Oracle's hand branch, Bloodline Shaman, Demonic Consultation, Dark Tutelage, Darkstar Augur), read in `to-hand.ts`. `Ability.amount` is how many reach the hand ("1", "2", "X", `pile`, `all`; "up to two" is its upper bound) and `Ability.chooses` marks a pick from a larger look (Impulse line). A typed dig stays `search` (2026-09-16); a clause with a search, a clause that does not say "top" and "your library" (Guided Passage), and another player's hand or library (Goblin Guide, Duskmantle Seer, Petra Sphinx, Keen Duelist's second put) stay unclaimed. A fact kind (edges.ts FACT_KINDS): no edge moves (the draw event-match pair set is identical, 202696 -> 202696). Measured: 268 `to-hand` abilities on 253 cards (0 before): amount 1 x204 (126 chooses, 78 not), 2 x20, 3 x2, X x4 (3 chooses), all x24, pile x14; unclaimed `put library>hand` 282 actions on 271 cards -> 29 on 29 (all searches, another player's hand or library, Guided Passage); all unclaimed 5859 -> 5606 actions, 5134 -> 4922 cards. 10 cards switch from the grammar reading to the stored model answer because the grammar misreads "reveal the top card of your library and put it into your hand" as `put this creature -> hand` (Caustic Bronco, Neurok Familiar: a false self-bounce, gone) or types a one-card look (Dryad Greenseeker, Traveling Botanist, Vivien's Grizzly, Territory Culler, Archghoul of Thraben, Sarinth Steelseeker, Bison Whistle: `search` -> `to-hand`) and Genesis Ultimatum.
+export const DERIVE_VERSION = 383;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1410,6 +1412,8 @@ function effectSubject(
     if (SELF_REFERENCE.test(who) || isSelfSubject(who, cardName)) s.self = true;
     return s;
   }
+  // WHOSE HAND (#1302): `putsTopCardsIntoYourHand` only lets YOUR hand through, so the subject is you; the cards themselves are `Ability.amount` / `Ability.chooses`, not a class.
+  if (kind === "to-hand") return { ...parseSubject(""), control: "you" };
   if (kind === "ability-loss") {
     const who = recipientBefore(clauseText, LOSES_ABILITIES);
     return who && !UNEXPRESSIBLE_NARROWING.test(who) ? parseSubject(who) : parseSubject("");
@@ -3158,6 +3162,11 @@ export function deriveAbilities(
           const n = ANTECEDENT_COUNT.exec(antecedent.trim());
           if (n) ability.amount = n[0].toLowerCase();
         }
+      }
+      // HOW MANY CARDS REACH YOUR HAND, and whether they are a pick from a larger look (#1302, CR 121.5): read off the put's own object, never the clause's `amount`.
+      if (effectKind === "to-hand") {
+        ability.amount = toHandAmount(action.object ?? "");
+        if (toHandChooses(action.object ?? "", text)) ability.chooses = true;
       }
       // The payment that stops the effect (CR 118.12a), verbatim: the floor the rate axis reads.
       if (action.unless?.cost) ability.unless = { cost: action.unless.cost, payer: action.unless.payer as "you" | "opponent" | "controller" | "any" };

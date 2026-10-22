@@ -209,6 +209,7 @@ export function ingredients(d: DeckCard, role: Role): Ingredients {
   out.drawback = all.some((a) => (a.emits ?? []).some(isDrawback)) || GIVES_A_PERMANENT.test(d.card.oracleText ?? "") ? 1 : 0;
   // A SECOND ABILITY WITH ITS OWN EFFECT, not a gift to the opponent (Swords' lifegain is the victim's).
   // A `restriction` ("can't attack or block", "can't block") is a cost or a curse, never extra value -- self drawback or rider alike (owner 2026-10-22, #1315).
+  // A `to-hand` ability (#1302: Sea Gate Oracle's look-and-take, Dark Confidant's reveal) IS extra value: it is real card advantage, so it counts here like any other kind.
   const others = all.filter((a) => !abilities.includes(a) && a.effect.kind !== "" && a.effect.kind !== "restriction"
     && !(a.emits ?? []).some((e) => e.subject.control === "opp"));
   const types = (d.tags?.characteristics.types ?? []).map((t) => t.toLowerCase());

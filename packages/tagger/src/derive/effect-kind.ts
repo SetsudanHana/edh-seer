@@ -8,6 +8,7 @@
 import type { Action } from "../canonicalize.js";
 import type { EffectKind } from "../schema.js";
 import { parseSubject, spellMove } from "./subject.js";
+import { putsTopCardsIntoYourHand } from "./to-hand.js";
 
 /** Zone-sensitive rules, checked before the plain lookup. Order matters within this list.
  *  `from`/`to` omitted means "don't care"; `from: null` means the clause STATED NO ORIGIN.
@@ -743,7 +744,8 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
     // standing in for "is this the top-of-library family?", which the kind now says outright.
     if (r.kind === "top-set" && ON_THE_BOTTOM.test(clauseText) && !ON_TOP.test(clauseText)) return null;
     // AN UNTYPED DIG FINDS NO PARTICULAR CARD. See the `put library -> hand` row.
-    if (r.kind === "search" && verb === "put" && !digNamesAClass(String(action.object ?? ""))) return null;
+    // ...and an UNTYPED one that takes the top of your own library into your hand with no search is `to-hand` (#1302, CR 121.5): card advantage that is neither a draw nor a tutor.
+    if (r.kind === "search" && verb === "put" && !digNamesAClass(String(action.object ?? ""))) return putsTopCardsIntoYourHand(String(action.object ?? ""), clauseText) ? "to-hand" : null;
     return r.kind;
   }
   // Life change is one verb per direction, but which kind depends on whose life it is.
