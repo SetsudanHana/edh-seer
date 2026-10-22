@@ -8,6 +8,6 @@ for (const name of process.argv.slice(2)) {
   console.log("==", name, "|", src?.typeLine, "|", d?.clauseSource, d?.normalizeVersion);
   console.log(String(src?.oracleText).replace(/\n/g, " / "));
   console.log("CLAUSES", JSON.stringify(doc?.clauses));
-  console.log("ABILITIES", JSON.stringify(d?.abilities?.map((a: any) => ({ k: a.kind, e: a.effect, amount: a.amount, g: a.grants, c: a.clause }))));
+  console.log("ABILITIES", JSON.stringify(d?.abilities?.map((a: any) => ({ k: a.kind, e: a.effect, amount: a.amount, g: a.grants, c: a.clause, host: a.host }))));
 }
 await store.close();

@@ -6226,6 +6226,28 @@ describe("host: an effect on the attached permanent (#1315)", () => {
     expect(hosts(viaGrammar("Hexgold Halberd", "Artifact — Equipment", "During your turn, equipped creature has first strike and trample.\nEquip {2}{R}")).slice(0, 1)).toEqual(["keyword-grant:true"]);
   });
 
+  test("'it' after a trigger on the host is the host (Thunderous Might, Reaper's Talisman, Writ of Passage); not a trigger on 'this creature or equipped creature' (Razorfield Ripper), not 'equipped creature and Zombies' (Wand of Orcus)", () => {
+    const might = viaModel("Thunderous Might", "Enchant creature\nWhenever enchanted creature attacks, it gets +X/+0 until end of turn, where X is your devotion to red.", [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant creature" }] },
+      { id: 2, abilityType: "triggered", trigger: { event: "attacks", subject: "enchanted creature", control: "you" }, actions: [{ verb: "modify-pt", object: "it", amount: "X/0, where X is your devotion to red" }] },
+    ] as never);
+    expect(hosts(might)).toEqual(["pump:true"]);
+    expect(hosts(viaGrammar("Reaper's Talisman", "Artifact — Equipment", "Whenever equipped creature attacks, it gains deathtouch until end of turn.\nEquip {2}")).slice(0, 1)).toEqual(["keyword-grant:true"]);
+    const writ = viaModel("Writ of Passage", "Enchant creature\nWhenever enchanted creature attacks, if its power is 2 or less, it can't be blocked this turn.", [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant creature" }] },
+      { id: 2, abilityType: "triggered", trigger: { event: "attacks", subject: "enchanted creature", control: "you" }, actions: [{ verb: "cant", object: "be blocked this turn" }] },
+    ] as never);
+    expect(hosts(writ)).toEqual(["evasion:true"]);
+    const ripper = viaModel("Razorfield Ripper", "Whenever this creature or equipped creature attacks, you get {E}, then it gets +X/+X until end of turn, where X is the amount of {E} you have.", [
+      { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature or equipped creature", control: "you" }, actions: [{ verb: "modify-pt", object: "it", amount: "X" }] },
+    ] as never);
+    expect(hosts(ripper)).toEqual(["pump:false"]);
+    const wand = viaModel("Wand of Orcus", "Whenever equipped creature attacks or blocks, it and Zombies you control gain deathtouch until end of turn.", [
+      { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "equipped creature", control: "you" }, actions: [{ verb: "grant-ability", object: "equipped creature and Zombies you control gain deathtouch until end of turn" }] },
+    ] as never);
+    expect(hosts(wand)).toEqual(["keyword-grant:false"]);
+  });
+
   test("the host's controller is a player, not the host", () => {
     const a = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "enchanted creature's controller has hexproof" }] }] as never, "Test", { 1: "Enchanted creature's controller has hexproof." }).abilities;
     expect(a.some((x) => x.host)).toBe(false);
