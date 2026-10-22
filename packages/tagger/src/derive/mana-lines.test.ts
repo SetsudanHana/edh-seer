@@ -978,9 +978,9 @@ describe("a token-maker line reads how many it makes (#1265)", () => {
   });
 });
 
-describe("an energy cost is no mana amount (DERIVE_VERSION 311)", () => {
-  it("Blaster Hulk's 'pay eight {E}' leaves the ability without an amount", () => {
-    expect((tagsOf("Blaster Hulk").abilities ?? []).filter((a) => a.effect.kind === "mana-generation").map((a) => a.amount)).toEqual([undefined]);
+describe("an energy cost is no mana amount (DERIVE_VERSION 311, 376)", () => {
+  it("Blaster Hulk's 'pay eight {E}' is no mana at all: its add-mana action is printed nowhere (#1321), so no mana-generation ability remains", () => {
+    expect((tagsOf("Blaster Hulk").abilities ?? []).filter((a) => a.effect.kind === "mana-generation").map((a) => a.amount)).toEqual([]);
   });
 });
 
