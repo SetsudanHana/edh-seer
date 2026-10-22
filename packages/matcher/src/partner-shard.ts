@@ -58,6 +58,7 @@ const JOB_SPECS: readonly { role: string; noun: string }[] = [
   { role: "draw", noun: "card draw" },
   { role: "cardSelection", noun: "card selection" },
   { role: "impulseDraw", noun: "card draw" },
+  { role: "handFill", noun: "card advantage" },
 ];
 /** `tally` is the NAME of the build parent whose leaves hold the role (#1168), never a typed string. */
 const JOBS: readonly { role: string; noun: string; tally: string }[] = JOB_SPECS.map((j) => ({ ...j, tally: parentOfRole(j.role)!.name }));

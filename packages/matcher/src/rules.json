@@ -1,5 +1,5 @@
 {
-  "version": 34,
+  "version": 36,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -36,7 +36,6 @@
     "colouredMana": "\\{[WUBRG]\\}|any colou?r|chosen colou?r|any combination of colou?rs|color identity",
     "manaToken": "create\\b[\\s\\S]*?(treasure|gold|eldrazi (?:spawn|scion))( creature)? tokens?",
     "selection": "\\bscry\\b|\\bsurveil\\b|look at the top \\w+ cards?",
-    "digToHand": "\\b(?:reveal|look at) the top \\w+ cards? of your library\\.(?: [^.]*\\.){0,2} put (?:one pile|(?:two|three|four|five|six|seven|x) of (?:them|those cards))\\b[^.]*\\binto your hand",
     "impulseDraw": "exile the top (?:\\w+ )?cards? of your library[\\s\\S]*?you may play",
     "neutraliseAura": "(?:^|\\n)enchant (?<class>[^\\n]+)(?=[\\s\\S]*?enchanted (?:creature|permanent)[^.]*?(?:loses all (?:other card types and )?abilities|is a colou?rless land))",
     "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't",
@@ -136,11 +135,28 @@
       "why": "A draw `repeats.ts` REFUSED to label, on a card with no labelled engine draw beside it. Shown, not hidden: unlabelled beats mislabelled, and a reader who sees 3 unlabelled knows the engine count is a floor."
     },
     {
-      "id": "draw.dig",
-      "category": "draw",
-      "match": [{ "op": "oracle", "pattern": "digToHand" }],
-      "not": [{ "op": "countsAsLand" }],
-      "why": "CARDS TO HAND OFF THE TOP, two or a pile (owner, 2026-10-02: \"fact or fiction has a role, it is a draw spell\"). Its derived tags hold only the mill half, so no draw-card effect reaches draw.effect. One card to hand (Impulse) stays card selection."
+      "id": "handFill.effect",
+      "category": "handFill",
+      "match": [{ "op": "effectKind", "in": ["to-hand"], "control": ["you"] }],
+      "not": [
+        { "op": "countsAsLand" },
+        { "op": "effectKind", "in": ["to-hand"], "pickOne": true },
+        { "op": "effectKind", "in": ["to-hand"], "named": true },
+        { "op": "effectKind", "in": ["to-hand"], "netZero": true }
+      ],
+      "why": "CARDS PUT FROM YOUR LIBRARY INTO YOUR HAND ARE CARD ADVANTAGE, NOT DRAW (owner 2026-10-22, #1302; CR 121.5: drawing is its own instruction, so a draw payoff does not see Fact or Fiction, Dark Confidant or Ad Nauseam). A new leaf in Card advantage beside draw, card selection, impulse draw and tutor. This reverses the 2026-10-02 'fact or fiction is a draw spell' line the printed `digToHand` pattern (`draw.dig`) stood on. DERIVED (derive 384): the `to-hand` effect kind and its `amount`. Included: a pile (Fact or Fiction), two or three of a look (Dig Through Time), every card of a type (Tamiyo, Winding Way), a reveal that turns up one card (Dark Confidant, Ad Nauseam, Coiling Oracle's hand branch). A reveal-until-a-NAMED-card (Demonic Consultation, Divining Witch, Spoils of the Vault) is a tutor (owner 2026-10-22, `Ability.named`); a swap or a draw replacement (Scroll Rack, Abundance, Underrealm Lich) nets zero cards and is card selection (`Ability.netZero`); an opponent's pick (Karn, Scion of Urza) is not YOUR choice, so it stays here. NOT the Impulse line (owner 2026-10-02, still binding): one card chosen from a larger look stays card selection; a card with that line AND a conditional bigger branch (See the Truth, Accumulate Wisdom, Flow State) keeps its base case. A typed dig (\"a creature card from among them\") reaches here through `handFill.dig`."
+    },
+    {
+      "id": "handFill.dig",
+      "category": "handFill",
+      "match": [{ "op": "effectKind", "in": ["search"], "toHand": true }],
+      "not": [
+        { "op": "countsAsLand" },
+        { "op": "effectKind", "in": ["search"], "pickOne": true },
+        { "op": "effectKind", "in": ["search"], "named": true },
+        { "op": "effectKind", "in": ["search"], "netZero": true }
+      ],
+      "why": "A TYPED DIG IS CARDS TO HAND TOO (owner 2026-10-22: \"take a Wizard from the top 4 is better the more Wizards you run\"). \"Look at the top four cards, you may reveal an Elemental, Island, or Mountain card and put it into your hand\", \"if it's a Zombie card, you may reveal it and put it into your hand\", \"reveal cards until you reveal a creature card\" keep their `search` kind for the tutor EDGES (a Zombie dig is worth more with Zombies) and carry `Ability.toHand` (derive 385): the same hand-fill as `handFill.effect`, so the two cannot drift. NOT a printed search of your library (Demonic Tutor: `librarySearch`, a tutor, no `toHand`). The same refusals as `handFill.effect`: one card YOU pick from a larger look is the Impulse line (card selection), a reveal-until-a-named-card is a tutor, a draw replacement or swap is card selection."
     },
     {
       "id": "ramp.engine.source",
@@ -249,6 +265,16 @@
       "not": [{ "op": "countsAsLand" }]
     },
     {
+      "id": "cardSelection.derived",
+      "category": "cardSelection",
+      "match": [{ "op": "anyOf", "clauses": [
+        { "op": "effectKind", "in": ["to-hand", "search"], "pickOne": true },
+        { "op": "effectKind", "in": ["to-hand", "search"], "netZero": true }
+      ] }],
+      "not": [{ "op": "countsAsLand" }],
+      "why": "THE IMPULSE LINE AND THE NET-ZERO SWAPS, READ FROM DERIVED DATA (#1302, owner 2026-10-02 and 2026-10-22). The printed `selection` pattern misses a pick worded \"reveal a number of cards ... put one into your hand\" (Eye of Yawgmoth), so one card YOU choose from a larger look (`Ability.chooses`, count 1: to-hand, or a typed dig's `toHand`) is read here as well. And a put that nets zero cards is selection, not card advantage: a draw REPLACEMENT (Abundance, Underrealm Lich, Tomorrow, Azami's Familiar, Sages of the Anima) or a SWAP with the top of the library (Scroll Rack) reorders what you will hold (`Ability.netZero`). An opponent's pick (Karn, Scion of Urza) is not YOUR choice and is not here."
+    },
+    {
       "id": "impulseDraw.text",
       "category": "impulseDraw",
       "match": [{ "op": "oracle", "pattern": "impulseDraw" }],
@@ -336,6 +362,13 @@
       ] }],
       "not": [{ "op": "countsAsLand" }],
       "why": "A PRINTED SEARCH OF YOUR OWN LIBRARY IS A TUTOR; A TYPED DIG IS NOT (owner ruling 2026-10-21). DERIVED (#1266): a `search` ability with `librarySearch: yours` (Demonic Tutor, Rhystic Tutor, 'your library and/or graveyard', 'graveyard, hand, and/or library': Finale of Devastation, Boonweaver Giant, the 'card named X' planeswalker-deck cards). Not another player's search (Sphinx Ambassador, Path to Exile), and not a reveal-until or look-at-the-top dig (Commune with Nature, Hermit Druid, Winota), which derive also types as `search` for edges but leaves without `librarySearch`. A search whose subject is land only is fixing, not a tutor (Farseek, Expedition Map, Pir's Whim's land search); a subject with no type is not land-only. The keyword tutors derive does not read are read off the printed keyword list: Transmute, Transfigure, and Typecycling unless the card is Landcycling (Plainscycling, basic landcycling and artifact landcycling fetch lands or a fixed artifact: Sojourner's Companion leaves the role). CEILING: an EMBLEM ultimate's search lives on the emblem's own node (same accepted gap as the Venser CEILING in rules.ts), so Garruk, Unleashed; Garruk, Caller of Beasts; Kaito Shizuki and Tezzeret, Artifice Master lose the role. CEILING: a land-only fetch beside a non-land mode keeps the role through that mode (Aang's Journey's Shrine, Analyze the Pollen and Traverse the Ulvenwald's creature-or-land, Verdant Crescendo's named card)."
+    },
+    {
+      "id": "tutor.named",
+      "category": "tutor",
+      "match": [{ "op": "effectKind", "in": ["to-hand", "search"], "named": true }],
+      "not": [{ "op": "countsAsLand" }],
+      "why": "A REVEAL-UNTIL-A-NAMED-CARD IS A TUTOR (owner 2026-10-22): Demonic Consultation, Divining Witch and Spoils of the Vault name a card and reveal until it turns up, which finds that card as surely as a search does, with no printed \"search\" (so `tutor.text`'s `librarySearch` cannot see it). DERIVED: `Ability.named` (derive 385). NOT \"put all of them with the chosen name into your hand\" (Desperate Research, Tamiyo, Wood Sage), which may find nothing: that is hand-fill."
     },
     {
       "id": "stax.text",

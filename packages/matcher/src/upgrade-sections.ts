@@ -37,7 +37,7 @@ export type RoleSectionId = Exclude<UpgradeSectionId, "lands" | "synergy">;
  *  in no section: neither is a job a precon is short of. */
 export const SECTION_ROLES: Record<RoleSectionId, readonly Role[]> = {
   ramp: ["ramp"],
-  consistency: ["draw", "cardSelection", "impulseDraw", "tutor"],
+  consistency: ["draw", "cardSelection", "impulseDraw", "handFill", "tutor"],
   interaction: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"],
   wipes: ["boardWipe"],
 };

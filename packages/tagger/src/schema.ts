@@ -997,6 +997,13 @@ export const EFFECT_KINDS = [
   // `Ability.restricts`. A fact kind like `evasion`: the pair channels read it blank. NOT "can't be blocked" (evasion), NOT "can't attack you" (a tax, Propaganda), NOT
   // a requirement ("attacks each combat if able"), and a block narrowed to a class ("can't block creatures without flying") is left unread.
   "restriction",
+  // TO-HAND (CR 121.5: "If an effect moves cards from a player's library to that player's hand without using the word 'draw,' the player has not drawn those cards"; #1302,
+  // owner ruling 2026-10-22): cards put from the TOP of your own library into your hand with no search -- Dark Confidant ("reveal the top card of your library and put that
+  // card into your hand"), Ad Nauseam, Fact or Fiction (one pile), Impulse / Dig Through Time ("look at the top N ... put one / two of them into your hand"), Coiling
+  // Oracle's hand branch. Card advantage, not a draw (a draw payoff does not see it) and not a tutor (no library search). `Ability.amount` is how many reach the hand
+  // ("1", "2", "X", `pile`, `all`) and `Ability.chooses` marks a pick from a larger look. NOT a search (that is `search`), NOT a return from the graveyard or exile, NOT a
+  // put into another player's hand, NOT a bounce. A fact kind like `bounce`: the pair channels read it blank.
+  "to-hand",
 ] as const;
 
 export type EffectKind = (typeof EFFECT_KINDS)[number];
@@ -1190,6 +1197,24 @@ export interface Ability {
   grantedBy?: number;
   /** WHICH ACTIONS A `restriction` ABILITY FORBIDS (#1315): `attack`, `block`, or both ("can't attack or block"). Only on an ability of effect kind `restriction`. */
   restricts?: ("attack" | "block")[];
+  /** A `to-hand` ABILITY'S CARDS REACH THE HAND BY A PICK (#1302): somebody chooses which of at least two looked-at or revealed cards go to your hand -- "look at the top four
+   *  cards, put one of them into your hand" (Impulse), "put two of them" (Dig Through Time), "you may reveal a historic card from among them and put it into your hand". `amount`
+   *  says how many. Only `true` is written. ABSENT: the one card a reveal turned up (Dark Confidant, Coiling Oracle, Demonic Consultation), a pile (Fact or Fiction: `amount`
+   *  is `pile`), everything just singled out (`amount` `all`), and a card chosen at random. The Impulse line (owner ruling 2026-10-02: choosing one of the top N is card
+   *  selection) is `chooses` with `amount` "1". */
+  chooses?: true;
+  /** THIS `search` ABILITY IS A DIG THAT PUTS CARDS FROM THE TOP OF YOUR LIBRARY INTO YOUR HAND (#1302, owner 2026-10-22): "If it's a Zombie card, you may reveal it and put it into your hand", "reveal a land card from among
+   *  them and put it into your hand", "reveal cards until you reveal a creature card". A dig restricted to a class stays `search` for the tutor EDGES (a Zombie dig is worth more with Zombies) and is ALSO hand-fill
+   *  ("Cards to hand"); the value is how many cards reach the hand, in `to-hand`'s `amount` vocabulary ("1", "2", "X", `pile`, `all`). `Ability.amount` is untouched. Absent on every other ability, and on a
+   *  PRINTED search of your library (Demonic Tutor: `librarySearch`), which stays a tutor. Read by the hand-fill role through `effectKind.toHand`. */
+  toHand?: string;
+  /** A `to-hand` OR typed-dig ability that REVEALS UNTIL A NAMED CARD (#1302, owner 2026-10-22): "Choose a card name. Reveal cards from the top of your library until you reveal a card with that name. Put that card into your
+   *  hand" (Demonic Consultation, Divining Witch, Spoils of the Vault). A tutor in effect with no printed search, so the tutor role reads this marker. NOT "put all of them with that name" (Desperate Research, Tamiyo,
+   *  Wood Sage), which may find nothing and is hand-fill. Only `true` is written. */
+  named?: true;
+  /** A `to-hand` OR typed-dig ability that NETS ZERO CARDS (#1302, owner 2026-10-22): it replaces a draw ("If you would draw a card, you may instead ... reveal cards ...": Abundance, Underrealm Lich, Tomorrow) or swaps with the
+   *  top of the library (Scroll Rack). Card selection, not hand-fill. Only `true` is written. */
+  netZero?: true;
   /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs. */
   trigger?: {
     verbs: Verb[];

@@ -5130,7 +5130,9 @@ describe("a put that is another effect's destination (#1301)", () => {
   test("a put with no search in its clause is untouched", () => {
     const { abilities, unclaimed } = deriveAbilities([{ id: 1, abilityType: "spell", actions: [putOf("it", "library", "hand")] }], undefined, { 1: "Reveal the top card of your library. Put it into your hand." });
     expect(abilities.some((a) => a.toZone !== undefined)).toBe(false);
-    expect(unclaimed).toHaveLength(1);
+    // Untouched by the search destination, and since #1302 (CR 121.5) claimed by its own kind: the top card into your hand is `to-hand`.
+    expect(abilities.filter((a) => a.effect.kind === "to-hand")).toHaveLength(1);
+    expect(unclaimed).toHaveLength(0);
   });
 
   test("dig remainder: 'put the rest on the bottom' beside the dig's own put is claimed, with no emit (Acclaimed Contender)", () => {

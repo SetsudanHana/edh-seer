@@ -14,12 +14,12 @@ import { TARGET_LABEL, type BracketTarget } from "./upgrade-package.js";
 export const REASON_MAX = 160;
 
 const JOB: Record<Role, string> = {
-  ramp: "ramp", draw: "card draw", cardSelection: "card selection", impulseDraw: "card draw", tutor: "card search",
+  ramp: "ramp", draw: "card draw", cardSelection: "card selection", impulseDraw: "card draw", handFill: "cards to hand", tutor: "card search",
   targetedRemoval: "removal", stackInteraction: "counterspell", boardWipe: "board wipe", burn: "damage", stax: "lock piece",
   protection: "protection", graveyardHate: "graveyard hate",
 };
 export const jobOf = (role: Role): string => JOB[role];
-const YIELD_NOUN: Partial<Record<Role, string>> = { ramp: "mana", draw: "cards", impulseDraw: "cards", tutor: "cards found" };
+const YIELD_NOUN: Partial<Record<Role, string>> = { ramp: "mana", draw: "cards", impulseDraw: "cards", handFill: "cards", tutor: "cards found" };
 const COLOUR: Record<string, string> = { W: "white", U: "blue", B: "black", R: "red", G: "green" };
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;

@@ -26,7 +26,7 @@ export const JOB_LABEL: Record<Job, string> = {
   other: "other",
 };
 
-const DRAW = new Set(["draw", "cardSelection", "impulseDraw", "tutor"]);
+const DRAW = new Set(["draw", "cardSelection", "impulseDraw", "handFill", "tutor"]);
 const ANSWER = new Set(["targetedRemoval", "stackInteraction", "boardWipe", "protection", "stax", "graveyardHate"]);
 
 export interface TurnStep {

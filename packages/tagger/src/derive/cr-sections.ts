@@ -96,7 +96,7 @@ export const SECTIONS: Record<string, Status> = {
   "117": { verdict: "PARTIAL", note: "timing and priority — instant speed is `castAtInstantSpeed` (an Instant or flash); split second, stack timing and 'any time you could cast an instant' are not modelled", probe: /\bany time you could cast an instant\b|\bflash\b/i },
   "119": { verdict: "MODELLED", note: "life — `gain-life`/`lose-life` emits, `life-gained`/`life-lost` words, drain merges the pair; paying life is losing life (118.3b prompt rule)" },
   "120": { verdict: "PARTIAL", note: "damage — combat vs non-combat split by text; the RECEIVING side (`damaged`, 122 cards) has a word and no engine verb; excess damage (120.10) unmodelled" },
-  "121": { verdict: "MODELLED", note: "drawing — `draw` emit and word, controller default, replacement draws refused as events (614 prompt rule)" },
+  "121": { verdict: "MODELLED", note: "drawing — `draw` emit and word, controller default, replacement draws refused as events (614 prompt rule); 121.5 cards put from your library into your hand without 'draw' are `to-hand`, not a draw" },
   "123": { verdict: "N/A", note: "stickers — Unfinity sticker sheets, excluded with Attractions (9 cards, 0 bought)" },
   "200": { verdict: "N/A", note: "parts of a card, general" },
   "201": { verdict: "MODELLED", note: "name — self-reference by name is `SubjectFilter.self`, the biggest false-edge family this engine had" },

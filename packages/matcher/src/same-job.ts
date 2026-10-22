@@ -137,7 +137,7 @@ export const jobOf = (d: DeckCard, role: Role) => readJob(d, role);
  *  "same with upside" (owner, 2026-10-06) keeps Mana Drain with Counterspell and Harmonize with
  *  Ambition's Cost. */
 const ROLE_VERBS: Partial<Record<Role, readonly string[]>> = {
-  draw: ["draw"], impulseDraw: ["exile", "play", "cast"], tutor: ["search", "put"],
+  draw: ["draw"], impulseDraw: ["exile", "play", "cast"], handFill: ["put"], tutor: ["search", "put"],
   targetedRemoval: ["destroy", "exile", "deal-damage", "modify-pt", "sacrifice"],
   boardWipe: ["destroy", "exile", "deal-damage", "modify-pt", "sacrifice"],
   stackInteraction: ["counter-spell", "counter-ability"], protection: ["grant-ability", "phase-out"],

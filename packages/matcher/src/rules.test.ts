@@ -1503,3 +1503,102 @@ test("graveyard hate that removes nothing from the battlefield is still not targ
   const removal = detectBuildCategories(hate.map((n) => realCard(n))).get("targetedRemoval") ?? new Set<string>();
   for (const n of hate) expect(removal.has(n), n).toBe(false);
 });
+
+describe("handFill: cards put from your library into your hand are card advantage, not draw (#1302)", () => {
+  const roles = (name: string): string[] => {
+    const m = detectBuildCategories([realCard(name)]);
+    return [...m.entries()].filter(([, s]) => s.has(name)).map(([k]) => k).sort();
+  };
+  test("a reveal, a pile, two of a look, or all of a type fill handFill (owner 2026-10-22)", () => {
+    // Dark Confidant, Ad Nauseam, Darkstar-style reveals: one card, no pick (Demonic Consultation is a tutor now: see below).
+    for (const n of ["Dark Confidant", "Ad Nauseam", "Fact or Fiction", "Dig Through Time", "Winding Way", "Tamiyo, Collector of Tales"]) {
+      expect(roles(n), n).toContain("handFill");
+    }
+    expect(roles("Coiling Oracle")).toContain("handFill");
+  });
+  test("every card of a type (Winding Way) is a typed dig: handFill through `handFill.dig`, not `handFill.effect`", () => {
+    const set = loadRules(), card = realCard("Winding Way");
+    expect(card.tags!.abilities.some((a) => a.effect.kind === "search" && a.toHand === "all")).toBe(true);
+    expect(ruleMatches(set.rules.find((r) => r.id === "handFill.dig")!, card, set)).toBe(true);
+    expect(ruleMatches(set.rules.find((r) => r.id === "handFill.effect")!, card, set)).toBe(false);
+  });
+  test("handFill.dig refuses a dig that reveals until a named card, a pick of one, and a net-zero swap", () => {
+    const set = loadRules(), rule = set.rules.find((r) => r.id === "handFill.dig")!;
+    const dig = (extra: Record<string, unknown>) => ({ ...mk("Dig", ""), tags: { abilities: [{ kind: "spell", effect: { kind: "search" }, toHand: "1", ...extra }] } }) as never;
+    expect(ruleMatches(rule, dig({}), set)).toBe(true);
+    expect(ruleMatches(rule, dig({ named: true }), set)).toBe(false);
+    expect(ruleMatches(rule, dig({ netZero: true }), set)).toBe(false);
+    expect(ruleMatches(rule, dig({ chooses: true }), set)).toBe(false);
+    expect(ruleMatches(rule, dig({ chooses: true, toHand: "2" }), set)).toBe(true);
+  });
+  test("YOUR one pick from a typed look is card selection, whatever the object says (Augur of Bolas, Boughside Wanderers, Break Out, Follow the Lumarets' base case)", () => {
+    for (const n of ["Augur of Bolas", "Boughside Wanderers", "Break Out", "Follow the Lumarets"]) {
+      expect(roles(n), n).toContain("cardSelection");
+      expect(roles(n), n).not.toContain("handFill");
+    }
+  });
+  test("two named classes, a list of four, and three picks in a row are cards to hand (Kiora, Gift of the Gargantuan, Harper Recruiter, Memories Returning)", () => {
+    for (const n of ["Kiora, Master of the Depths", "Gift of the Gargantuan", "Harper Recruiter", "Memories Returning"]) expect(roles(n), n).toContain("handFill");
+  });
+  test("they are no longer draw (the 2026-10-02 `draw.dig` line is reversed)", () => {
+    for (const n of ["Fact or Fiction", "Dig Through Time", "Dark Confidant", "Ad Nauseam"]) expect(roles(n), n).not.toContain("draw");
+  });
+  test("one card chosen from a larger look is still card selection (owner 2026-10-02: Impulse, Browse)", () => {
+    for (const n of ["Impulse", "Browse"]) {
+      expect(roles(n), n).toContain("cardSelection");
+      expect(roles(n), n).not.toContain("handFill");
+    }
+    // An Impulse that upgrades to two or all on a condition keeps its base case.
+    for (const n of ["Accumulate Wisdom", "Flow State"]) expect(roles(n), n).not.toContain("handFill");
+  });
+  test("a dig for a CLASS is cards to hand too, and keeps its search kind for the tutor edges (owner 2026-10-22)", () => {
+    // Archghoul ("If it's a Zombie card"), Eclipsed Flamekin (up to one card of three types), Narset Transcendent, Yuna's Whistle (reveal until a creature), Atraxa (one per card type).
+    for (const n of ["Archghoul of Thraben", "Narset Transcendent", "Yuna's Whistle", "Atraxa, Grand Unifier", "Dryad Greenseeker"]) {
+      const r = roles(n);
+      expect(r, n).toContain("handFill");
+      expect(r, n).not.toContain("tutor");
+    }
+    expect(realCard("Archghoul of Thraben").tags!.abilities.some((a) => a.effect.kind === "search" && a.toHand === "1")).toBe(true);
+    // One card YOU pick from a typed look is the Impulse line: card selection, not hand-fill.
+    for (const n of ["Eclipsed Flamekin", "Gather the Pack", "Thundertrap Trainer"]) {
+      expect(roles(n), n).toContain("cardSelection");
+      expect(roles(n), n).not.toContain("handFill");
+    }
+    // A PRINTED search of your library stays a tutor and is no hand-fill.
+    expect(roles("Demonic Tutor")).toContain("tutor");
+    expect(roles("Demonic Tutor")).not.toContain("handFill");
+  });
+  test("a net-zero swap or draw replacement is card selection, not hand-fill (Scroll Rack, Abundance, Underrealm Lich)", () => {
+    for (const n of ["Scroll Rack", "Abundance", "Underrealm Lich"]) {
+      expect(roles(n), n).toContain("cardSelection");
+      expect(roles(n), n).not.toContain("handFill");
+    }
+  });
+  test("a reveal-until-a-NAMED-card is a tutor with no printed search; taking every hit of a name is not (owner 2026-10-22)", () => {
+    for (const n of ["Demonic Consultation", "Divining Witch", "Spoils of the Vault"]) {
+      expect(roles(n), n).toContain("tutor");
+      expect(roles(n), n).not.toContain("handFill");
+    }
+    for (const n of ["Desperate Research", "Tamiyo, Collector of Tales"]) {
+      expect(roles(n), n).toContain("handFill");
+      expect(roles(n), n).not.toContain("tutor");
+    }
+  });
+  test("an opponent's pick of the CARD is not your choice (Karn: hand-fill), a pick of your own (Eye of Yawgmoth, Truth or Tale) is selection", () => {
+    expect(roles("Karn, Scion of Urza")).toContain("handFill");
+    // Truth or Tale: the opponent picks the PILE, YOU pick the card from it: your own one-of-N pick.
+    expect(roles("Truth or Tale")).toContain("cardSelection");
+    expect(roles("Truth or Tale")).not.toContain("handFill");
+    expect(roles("Eye of Yawgmoth")).toContain("cardSelection");
+    expect(roles("Eye of Yawgmoth")).not.toContain("handFill");
+    expect(roles("Genesis Ultimatum")).toContain("handFill");
+  });
+  test("a printed draw is unchanged (Divination)", () => {
+    expect(roles("Divination")).toContain("draw");
+    expect(roles("Divination")).not.toContain("handFill");
+  });
+  test("the old printed pattern is gone", () => {
+    expect(loadRules().patterns["digToHand"]).toBeUndefined();
+    expect(loadRules().rules.find((r) => r.id === "draw.dig")).toBeUndefined();
+  });
+});

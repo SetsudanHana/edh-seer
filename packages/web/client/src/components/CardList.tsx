@@ -12,18 +12,18 @@ import { cardImageUrl } from "./card-node.js";
 import { isUnread } from "../lib/unread.js";
 
 type Category =
-  | "ramp" | "draw" | "cardSelection" | "impulseDraw" | "targetedRemoval" | "stackInteraction"
+  | "ramp" | "draw" | "cardSelection" | "impulseDraw" | "handFill" | "targetedRemoval" | "stackInteraction"
   | "boardWipe" | "burn" | "stax" | "protection" | "tutor" | "lands";
 
 // Exported for this file's own filter chips below. GraphView used to reuse these for its
 // role-ring zone labels; the graph page is retired -- these are plain internal exports again.
 export const CATEGORY_LABELS: Record<Category, string> = {
-  ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", impulseDraw: "Impulse draw", targetedRemoval: "Removal",
+  ramp: "Ramp", draw: "Draw", cardSelection: "Card selection", impulseDraw: "Impulse draw", handFill: "Cards to hand", targetedRemoval: "Removal",
   stackInteraction: "Counterspells", boardWipe: "Board wipes", burn: "Burn & drain", stax: "Stax",
   protection: "Protection", tutor: "Tutors", lands: "Lands",
 };
 const CATEGORY_ORDER: Category[] = [
-  "ramp", "draw", "cardSelection", "impulseDraw", "targetedRemoval", "stackInteraction",
+  "ramp", "draw", "cardSelection", "impulseDraw", "handFill", "targetedRemoval", "stackInteraction",
   "boardWipe", "burn", "stax", "protection", "tutor", "lands",
 ];
 

@@ -23,6 +23,8 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   // "by power 3 or greater" as well as "can't be blocked", and `restriction` is attack, block or both (`Ability.restricts` is not on the row). No pair reason is built from either.
   evasion: [() => "restricts what can block it", "restricts what can block it"],
   restriction: [() => "restricts attacking or blocking", "restricts attacking or blocking"],
+  // Cards put into your hand from the top of your library are not drawn (the tagger's `to-hand` kind), so the row says "puts", never "draws".
+  "to-hand": [() => "puts cards into your hand", "puts cards into your hand"],
   retarget: [() => "changes what a spell or ability targets", "changes what a spell or ability targets"],
   // CR 114.2's own verb. An emblem is not a token, and the row must not say it is.
   emblem: [() => "gets an emblem", "gets an emblem"],
