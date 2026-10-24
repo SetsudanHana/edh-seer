@@ -29,6 +29,12 @@
  *  life yourself, an opponent losing life and damage to you would all collide. `you` and `not you` are
  *  different outputs (gated apart); an opponent versus any target within `not you` is a `recipient` chip.
  *
+ *  So "target player gains life" and "each player draws" gate apart from "you gain life" / "you draw" ON
+ *  PURPOSE: a card that feeds the opponent is not the card that feeds you. The same goes for who gets a created token.
+ *
+ *  SCOPE: for removal-shaped outputs (dies, exile, sacrifice, counters ...) one target versus each/all is a
+ *  different job (Doom Blade is not Wrath of God): it is a `scope` chip and puts the pair in `output`.
+ *
  *  CARD TIER is the WORST over the seed's abilities that share an output with the candidate, each against
  *  its own best partner. One lucky pair (Zulaport's and Blood Artist's self-death splits match each other)
  *  must not hide that the main abilities differ.
@@ -47,7 +53,7 @@ import { VERB_PHRASES, emitSubjectNoun } from "./sentence.js";
 export interface SimilarCard { id: number; name: string; tags: CardTags | null }
 
 export type SimilarTier = "same" | "close" | "output";
-export type ChipDim = "trigger" | "amount" | "repeats" | "type" | "kind" | "extra" | "missing" | "recipient";
+export type ChipDim = "scope" | "trigger" | "amount" | "repeats" | "type" | "kind" | "extra" | "missing" | "recipient";
 export interface Chip { dim: ChipDim; label: string }
 export interface Comparison { tier: SimilarTier; chips: Chip[]; score: number }
 export interface SimilarHit extends Comparison { id: number; name: string }
@@ -56,7 +62,7 @@ type Ability = CardTags["abilities"][number];
 type Amount = FactAmount;
 type Who = "you" | "opp" | "any";
 /** `key` is the gate key (raw eventKey plus a `@you`/`@other` recipient class where the verb has one). */
-interface Output { key: string; who: Who | null; event: GameEvent }
+interface Output { key: string; who: Who | null; scope: "one" | "many" | null; event: GameEvent }
 export interface AbilitySig {
   kind: FactKind;
   /** Sorted trigger verbs, null on an untriggered ability. */
@@ -85,26 +91,39 @@ const REPEAT_LABEL: Record<string, string> = {
   repeatable: "every time it happens", continuous: "always on",
 };
 
-/** Verbs whose recipient the key does not carry. */
-const RECIPIENT_VERBS = new Set(["gain-life", "lose-life", "draw", "discard", "mill", "non-combat-damage"]);
+/** Verbs whose recipient the key does not carry. A token created or entering is the same question: whose it is. */
+const RECIPIENT_VERBS = new Set(["gain-life", "lose-life", "draw", "discard", "mill", "non-combat-damage", "create-token"]);
+const hasRecipient = (e: GameEvent): boolean => RECIPIENT_VERBS.has(e.verb) || (e.verb === "enters" && e.subject.token === true);
+/** Verbs where one target and each/all are different jobs. */
+const SCOPE_VERBS = new Set(["dies", "exiled", "leaves", "sacrifice", "counter-added", "taps", "untaps", "gains-control", "counter-spell"]);
+/** A chip's noun for what a card does, never a sentence. */
 const NOUN: Record<string, string> = {
-  "gain-life": "life gain", "lose-life": "life loss", draw: "card draw", discard: "discard", mill: "mill", "non-combat-damage": "damage",
+  "gain-life": "life gain", "lose-life": "life loss", draw: "card draw", discard: "discard", mill: "mill",
+  "non-combat-damage": "damage", "combat-damage": "combat damage", damaged: "being dealt damage",
+  dies: "death", leaves: "leaving the battlefield", exiled: "exile", sacrifice: "sacrifice", "counter-added": "counters",
+  taps: "tapping", untaps: "untapping", search: "library search", shuffle: "shuffling", transform: "transforming",
+  transforms: "transforming", enchant: "enchanting", attached: "attaching", cast: "casting spells", "land-play": "land drops",
+  "gains-control": "control change", "counter-spell": "counterspell", proliferate: "proliferate", scry: "scry", surveil: "surveil",
 };
 
 function outputOf(e: GameEvent, key: string): Output {
-  if (!RECIPIENT_VERBS.has(e.verb)) return { key, who: null, event: e };
+  const scope = SCOPE_VERBS.has(e.verb) ? (e.subject.scope === "each" || e.subject.scope === "all" ? "many" : "one") : null;
+  if (!hasRecipient(e)) return { key, who: null, scope, event: e };
   const c = e.subject.control;
   const who: Who = c === "you" ? "you" : c === "opp" ? "opp" : "any";
-  return { key: `${key}@${who === "you" ? "you" : "other"}`, who, event: e };
+  return { key: `${key}@${who === "you" ? "you" : "other"}`, who, scope, event: e };
 }
 
-/** The output as a noun phrase for a chip: "life loss", "protection"-style, never a sentence. */
+/** The output as a noun phrase for a chip, with no article: "life loss", "Spirit token", "death", "exile". */
 function outputNoun(e: GameEvent): string {
-  const base = NOUN[e.verb];
-  if (base) return e.subject.control === "opp" && e.verb !== "gain-life" ? `opponent ${base}` : base;
-  const verb = VERB_PHRASES[e.verb] ?? e.verb.replace(/-/g, " ");
-  const noun = e.subject.type !== undefined || e.subject.subtype !== undefined ? emitSubjectNoun(e.subject) : undefined;
-  return noun ? `${noun} ${verb}` : verb;
+  const s = e.subject;
+  if (e.verb === "create-token" || (e.verb === "enters" && s.token === true)) {
+    const w = list(s.subtype)[0] ?? list(s.type)[0] ?? "";
+    return `${w ? `${w.charAt(0).toUpperCase()}${w.slice(1)} ` : ""}token`;
+  }
+  if (e.verb === "enters") return "entering the battlefield";
+  const base = NOUN[e.verb] ?? e.verb.replace(/-/g, " ");
+  return s.control === "opp" && RECIPIENT_VERBS.has(e.verb) && e.verb !== "gain-life" ? `opponent ${base}` : base;
 }
 
 function amountOf(a: Ability): Amount {
@@ -225,6 +244,8 @@ function evalPair(a: AbilitySig, b: AbilitySig, shared: Output, mine: Output, sa
   let score = 0;
   const verbsEqual = (a.verbs === null && b.verbs === null) || (a.verbs !== null && b.verbs !== null && sameSet(a.verbs, b.verbs));
   let differs = false;
+  const scopeDiffers = mine.scope !== null && shared.scope !== null && mine.scope !== shared.scope;
+  if (scopeDiffers) score += 4;
   if (verbsEqual) {
     if (a.subject && b.subject) { const n = subjectFacets(a.subject, b.subject); if (n > 0) { differs = true; score += 2 * n; } }
     if (a.kind !== b.kind) { differs = true; score += 2; }
@@ -234,7 +255,7 @@ function evalPair(a: AbilitySig, b: AbilitySig, shared: Output, mine: Output, sa
   const wd = mine.who !== shared.who ? 1 : 0;
   if (ad > 0 || rd > 0 || wd > 0 || !sameTypes) differs = true;
   score += ad + rd + wd + (sameTypes ? 0 : 1);
-  return { tier: !verbsEqual ? "output" : differs ? "close" : "same", score, shared, mine };
+  return { tier: !verbsEqual || scopeDiffers ? "output" : differs ? "close" : "same", score, shared, mine };
 }
 
 function pairChips(a: AbilitySig, b: AbilitySig, p: Pair, sameTypes: boolean, typeChip: string): Chip[] {
@@ -244,6 +265,9 @@ function pairChips(a: AbilitySig, b: AbilitySig, p: Pair, sameTypes: boolean, ty
     if (a.subject && b.subject && subjectFacets(a.subject, b.subject) > 0) chips.push({ dim: "trigger", label: subjectLabel(b.subject) });
     if (a.kind !== b.kind) chips.push({ dim: "kind", label: KIND_LABEL[b.kind] });
   } else chips.push({ dim: "trigger", label: triggerLabel(b) });
+  if (p.mine.scope !== null && p.shared.scope !== null && p.mine.scope !== p.shared.scope) {
+    chips.push({ dim: "scope", label: p.shared.scope === "many" ? `each ${subjectWords(p.shared.event.subject, false)}` : "one target" });
+  }
   if (amountDistance(a.amount, b.amount) > 0) chips.push({ dim: "amount", label: amountLabel(b.amount, p.shared.event.verb) });
   if (repeatsDistance(a.repeats, b.repeats) > 0) chips.push({ dim: "repeats", label: b.repeats === undefined ? "repeat rate not stated" : (REPEAT_LABEL[b.repeats] ?? b.repeats) });
   if (p.mine.who !== p.shared.who && p.shared.who !== null) chips.push({ dim: "recipient", label: RECIPIENT_LABEL[p.shared.who] });
@@ -294,9 +318,17 @@ function chipsOf(a: CardSig, b: CardSig, r: Ranked): Chip[] {
   const seen = new Set<string>();
   const add = (c: Chip) => { const k = `${c.dim}:${c.label}`; if (!seen.has(k)) { seen.add(k); chips.push(c); } };
   for (const [x, y, p] of r.pairs) for (const c of pairChips(x, y, p, sameTypes, typeChip)) add(c);
-  for (const [k, e] of b.outputs) if (!a.outputs.has(k)) add({ dim: "extra", label: `+ ${outputNoun(e)}` });
+  // ONE CHIP PER VERB: a card that creates a token also "enters" one, and two types of the same verb are one difference to a reader.
+  const verbs = new Set<string>();
+  const once = (dim: string, e: GameEvent): boolean => {
+    const v = `${dim}:${e.verb === "enters" && e.subject.token === true ? "create-token" : e.verb}`;
+    if (verbs.has(v)) return false;
+    verbs.add(v);
+    return true;
+  };
+  for (const [k, e] of b.outputs) if (!a.outputs.has(k) && once("extra", e)) add({ dim: "extra", label: `+ ${outputNoun(e)}` });
   for (const kw of b.keywords) if (!a.keywords.includes(kw)) add({ dim: "extra", label: `+ ${kw}` });
-  for (const [k, e] of a.outputs) if (!b.outputs.has(k)) add({ dim: "missing", label: `no ${outputNoun(e)}` });
+  for (const [k, e] of a.outputs) if (!b.outputs.has(k) && once("missing", e)) add({ dim: "missing", label: `no ${outputNoun(e)}` });
   for (const kw of a.keywords) if (!b.keywords.includes(kw)) add({ dim: "missing", label: `no ${kw}` });
   return chips;
 }

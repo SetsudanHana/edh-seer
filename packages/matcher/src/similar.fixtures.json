@@ -1594,5 +1594,699 @@
    "segmentHash": "e2881be71378eef4f2f919400977f3dc559c1668279d9d6335af0a2a053296ac",
    "clauseSource": "grammar"
   }
+ },
+ "Forbidden Orchard": {
+  "card": {
+   "name": "Forbidden Orchard",
+   "typeLine": "Land",
+   "oracleText": "{T}: Add one mana of any color.\nWhenever you tap this land for mana, target opponent creates a 1/1 colorless Spirit creature token.",
+   "colorIdentity": []
+  },
+  "tags": {
+   "oracleId": "cfd60d1f-9832-4408-b84e-0fd3018b015b",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "land"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 0,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "token-generation",
+      "subject": {
+       "control": "opp",
+       "token": true,
+       "type": "creature",
+       "subtype": "spirit",
+       "colors": [
+        "C"
+       ],
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "create-token",
+       "subject": {
+        "control": "opp",
+        "token": true,
+        "colors": [
+         "C"
+        ],
+        "type": "creature",
+        "subtype": "spirit",
+        "stats": [
+         {
+          "metric": "power",
+          "op": "eq",
+          "value": 1
+         },
+         {
+          "metric": "toughness",
+          "op": "eq",
+          "value": 1
+         }
+        ]
+       }
+      },
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "opp",
+        "token": true,
+        "colors": [
+         "C"
+        ],
+        "type": "creature",
+        "subtype": "spirit",
+        "stats": [
+         {
+          "metric": "power",
+          "op": "eq",
+          "value": 1
+         },
+         {
+          "metric": "toughness",
+          "op": "eq",
+          "value": 1
+         }
+        ]
+       }
+      }
+     ],
+     "clause": 2,
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "loyalty": null,
+      "consumes": [],
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": "any",
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null
+    }
+   ],
+   "unknownTriggers": [
+    "taps-for-mana"
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 12,
+   "segmentHash": "4d819b59d540a11786b757006bc37244bd5e4a80465d82e5e1850acb89bbb522",
+   "clauseSource": "grammar"
+  }
+ },
+ "Clarion Spirit": {
+  "card": {
+   "name": "Clarion Spirit",
+   "typeLine": "Creature — Spirit",
+   "oracleText": "Whenever you cast your second spell each turn, create a 1/1 white Spirit creature token with flying.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "dec20b18-afe6-405e-b47d-a757a5645c63",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "spirit"
+    ],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 2,
+    "power": "2",
+    "toughness": "2",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "token-generation",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "creature",
+       "subtype": "spirit",
+       "colors": [
+        "W"
+       ],
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ],
+       "keyword": [
+        "flying"
+       ]
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "create-token",
+       "subject": {
+        "control": "you",
+        "token": true,
+        "keyword": [
+         "flying"
+        ],
+        "colors": [
+         "W"
+        ],
+        "type": "creature",
+        "subtype": "spirit",
+        "stats": [
+         {
+          "metric": "power",
+          "op": "eq",
+          "value": 1
+         },
+         {
+          "metric": "toughness",
+          "op": "eq",
+          "value": 1
+         }
+        ]
+       }
+      },
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": true,
+        "keyword": [
+         "flying"
+        ],
+        "colors": [
+         "W"
+        ],
+        "type": "creature",
+        "subtype": "spirit",
+        "stats": [
+         {
+          "metric": "power",
+          "op": "eq",
+          "value": 1
+         },
+         {
+          "metric": "toughness",
+          "op": "eq",
+          "value": 1
+         }
+        ]
+       }
+      }
+     ],
+     "clause": 1,
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "unknownTriggers": [
+    "narrowing:cast"
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "e34f85d0c9cc204e618dc2a6796780b31759f54f9036d7b4a467b3de8d4e17fc",
+   "clauseSource": "grammar"
+  }
+ },
+ "Doom Blade": {
+  "card": {
+   "name": "Doom Blade",
+   "typeLine": "Instant",
+   "oracleText": "Destroy target nonblack creature.",
+   "colorIdentity": [
+    "B"
+   ]
+  },
+  "tags": {
+   "oracleId": "59e7f2ae-4535-4191-98be-3e65b6b2befa",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "creature",
+        "scope": "target"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 13,
+   "segmentHash": "e9ba62376378650e60132495456df154a9743b048779069ade4a7486c5cb9e87",
+   "clauseSource": "grammar"
+  }
+ },
+ "Wrath of God": {
+  "card": {
+   "name": "Wrath of God",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy all creatures. They can't be regenerated.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "34515b16-c9a4-4f98-8c77-416a7a523407",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "sorcery"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 4,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "creature",
+        "scope": "all"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 0,
+      "ceiling": null,
+      "scalesWith": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "all"
+      }
+     }
+    }
+   ],
+   "unclaimed": [
+    {
+     "clause": 1,
+     "verb": "cant",
+     "object": "be regenerated"
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "9eb28d717c0c73a9b80952df7038a4e9f58cfd3e01e3656cf6fbae2125625d22",
+   "clauseSource": "grammar"
+  }
+ },
+ "Swords to Plowshares": {
+  "card": {
+   "name": "Swords to Plowshares",
+   "typeLine": "Instant",
+   "oracleText": "Exile target creature. Its controller gains life equal to its power.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "b1544f21-7e98-461b-aed5-e748b0168c52",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "exiled",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "creature",
+        "scope": "target",
+        "fromZone": "battlefield"
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "leaves",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "creature",
+        "scope": "target",
+        "fromZone": "battlefield"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "opp",
+       "token": null
+      }
+     },
+     "amount": "its power",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "opp",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 12,
+   "segmentHash": "9d92e25877ba3988ea86ddd995ebbd73c237949df06ebabcbc3888471aead558",
+   "clauseSource": "grammar"
+  }
+ },
+ "Path to Exile": {
+  "card": {
+   "name": "Path to Exile",
+   "typeLine": "Instant",
+   "oracleText": "Exile target creature. Its controller may search their library for a basic land card, put that card onto the battlefield tapped, then shuffle.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "d683d985-9888-4d21-8b5f-69e69ce4a03b",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "exiled",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "creature",
+        "scope": "target",
+        "fromZone": "battlefield"
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "leaves",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "creature",
+        "scope": "target",
+        "fromZone": "battlefield"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "search",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "basic": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "search",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "basic": true,
+        "type": "land",
+        "fromZone": "library"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "librarySearch": "other",
+     "toZone": "battlefield",
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    }
+   ],
+   "unclaimed": [
+    {
+     "clause": 1,
+     "verb": "tap",
+     "object": "that card"
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 12,
+   "segmentHash": "77b6263cff389d1f226fa6a49b5acd0c3155a862fd112d924d474567f655d560",
+   "clauseSource": "grammar"
+  }
  }
 }

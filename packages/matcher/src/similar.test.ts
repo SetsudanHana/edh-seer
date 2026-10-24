@@ -117,3 +117,40 @@ describe("amount and repeats", () => {
     expect(perTurn.score).toBeLessThan(once.score);
   });
 });
+
+describe("scope, token recipient and chip wording", () => {
+  test("a token made for an opponent is not a token made for you (Forbidden Orchard against Clarion Spirit)", () => {
+    expect(compareCards(card("Clarion Spirit"), card("Forbidden Orchard"))).toBeNull();
+    expect(compareCards(card("Forbidden Orchard"), card("Clarion Spirit"))).toBeNull();
+  });
+
+  test("spot removal and a sweeper are different jobs (Doom Blade against Wrath of God)", () => {
+    const r = compareCards(card("Doom Blade"), card("Wrath of God"))!;
+    expect(r.tier).toBe("output");
+    expect(r.chips).toContainEqual({ dim: "scope", label: "each creature" });
+    expect(compareCards(card("Wrath of God"), card("Doom Blade"))!.chips).toContainEqual({ dim: "scope", label: "one target" });
+  });
+
+  test("Swords to Plowshares and Path to Exile stay close, and the extras read as nouns", () => {
+    const r = compareCards(card("Swords to Plowshares"), card("Path to Exile"))!;
+    expect(r.tier).toBe("close");
+    expect(r.chips.filter((c) => c.dim !== "type").map((c) => c.label).sort()).toEqual(["+ library search", "+ shuffling", "no life gain"]);
+  });
+});
+
+describe("limit keeps the best and evicts the worst", () => {
+  test("limit 3 over a longer list is the first three of the full ranking", () => {
+    const warden = card("Soul Warden");
+    const clones: SimilarCard[] = Array.from({ length: 9 }, (_, i) => {
+      const tags = structuredClone(warden.tags!) as CardTags;
+      tags.abilities[0]!.amount = String(i + 2);
+      return { id: 1000 + i, name: `Clone ${9 - i}`, tags };
+    });
+    const idx = similarIndex([...cards, ...clones]);
+    const all = idx.similarTo(warden.id, { limit: 100 });
+    expect(all.length).toBeGreaterThanOrEqual(8);
+    const top = idx.similarTo(warden.id, { limit: 3 });
+    expect(top).toEqual(all.slice(0, 3));
+    for (const dropped of all.slice(3)) expect(dropped.score).toBeGreaterThanOrEqual(top[2]!.score);
+  });
+});
