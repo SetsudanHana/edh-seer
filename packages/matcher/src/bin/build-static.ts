@@ -200,6 +200,8 @@ const partners = workers <= 1
 // the UI links each one: the index is built over exactly `partners.index`, so a candidate's id IS its
 // name-index position and the shard row needs no slug. Computed here, after the partner build, on the
 // main thread (workers return only after the index is final).
+// PER TIER, so Blood Artist-style `output` rows show beside a full `close` tier.
+const PER_TIER = { same: 12, close: 12, output: 8 };
 const similarStart = Date.now();
 const deckByName = new Map<string, (typeof partnerDeckCards)[number]>();
 for (const d of partnerDeckCards) if (!deckByName.has(d.card.name)) deckByName.set(d.card.name, d);
@@ -212,10 +214,10 @@ let similarRows = 0;
 partners.index.forEach((e, id) => {
   const rec = partners.shards.get(partnerShardOf(e.slug))?.[e.slug];
   if (!rec) return;
-  const own = similar.similarTo(id, { limit: 24 });
+  const own = similar.similarTo(id, { perTier: PER_TIER });
   if (own.length > 0) { rec.sim = encodeSimilar(own, chipTable); similarRows += own.length; }
   if (e.commander) {
-    const within = similar.similarTo(id, { limit: 24, identityWithin: e.identity });
+    const within = similar.similarTo(id, { perTier: PER_TIER, identityWithin: e.identity });
     if (within.length > 0) { rec.commanderSim = encodeSimilar(within, chipTable); similarRows += within.length; }
   }
 });

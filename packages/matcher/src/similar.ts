@@ -326,10 +326,19 @@ function chipsOf(a: CardSig, b: CardSig, r: Ranked): Chip[] {
     verbs.add(v);
     return true;
   };
-  for (const [k, e] of b.outputs) if (!a.outputs.has(k) && once("extra", e)) add({ dim: "extra", label: `+ ${outputNoun(e)}` });
-  for (const kw of b.keywords) if (!a.keywords.includes(kw)) add({ dim: "extra", label: `+ ${kw}` });
-  for (const [k, e] of a.outputs) if (!b.outputs.has(k) && once("missing", e)) add({ dim: "missing", label: `no ${outputNoun(e)}` });
-  for (const kw of a.keywords) if (!b.keywords.includes(kw)) add({ dim: "missing", label: `no ${kw}` });
+  // AT MOST ONE `extra` AND ONE `missing` CHIP PER ROW: a multi-ability seed lacks something of nearly every candidate (Heliod:
+  // "no counters", "no indestructible" on every row), and a wall of them hides the chips that explain the tier. More than one
+  // collapses to a count; trigger/amount/repeats/type/kind/recipient/scope chips are never capped.
+  const extra: string[] = [];
+  const missing: string[] = [];
+  for (const [k, e] of b.outputs) if (!a.outputs.has(k) && once("extra", e)) extra.push(`+ ${outputNoun(e)}`);
+  for (const kw of b.keywords) if (!a.keywords.includes(kw)) extra.push(`+ ${kw}`);
+  for (const [k, e] of a.outputs) if (!b.outputs.has(k) && once("missing", e)) missing.push(`no ${outputNoun(e)}`);
+  for (const kw of a.keywords) if (!b.keywords.includes(kw)) missing.push(`no ${kw}`);
+  if (extra.length === 1) add({ dim: "extra", label: extra[0]! });
+  else if (extra.length > 1) add({ dim: "extra", label: `+ ${extra.length} other effects` });
+  if (missing.length === 1) add({ dim: "missing", label: missing[0]! });
+  else if (missing.length > 1) add({ dim: "missing", label: `lacks ${missing.length} other effects` });
   return chips;
 }
 
@@ -341,9 +350,14 @@ export function compareCards(seed: SimilarCard, cand: SimilarCard): Comparison |
   return r && { tier: r.tier, score: r.score, chips: chipsOf(a, b, r) };
 }
 
+const TIER_NAMES: readonly SimilarTier[] = ["same", "close", "output"];
+
 export interface SimilarOptions {
-  /** Maximum hits; default 24. */
+  /** Maximum hits; default 24. Ignored when `perTier` is given. */
   limit?: number;
+  /** A CAP PER TIER instead of one cap, so a tier the page must show is never crowded out by a bigger one above it
+   *  (Soul Warden's 24 `same`/`close` rows left no room for Blood Artist's `output`). A tier not named gets 0. */
+  perTier?: Partial<Record<SimilarTier, number>>;
   /** Colour identity letters allowed (a commander's identity): a candidate must be a subset. */
   identityWithin?: readonly string[];
 }
@@ -374,11 +388,12 @@ export function similarIndex(cards: readonly SimilarCard[]) {
       const si = at.get(seedId);
       if (si === undefined) return [];
       const limit = opts.limit ?? 24;
-      if (limit <= 0) return [];
+      const capOf = (tier: SimilarTier): number => (opts.perTier ? opts.perTier[tier] ?? 0 : limit);
+      if (opts.perTier ? TIER_NAMES.every((t) => capOf(t) <= 0) : limit <= 0) return [];
       const seed = cards[si]!;
       const allowed = opts.identityWithin ? new Set(opts.identityWithin) : null;
       const seen = new Set<number>([si]);
-      const top: { ci: number; tier: SimilarTier; score: number; name: string; r: Ranked }[] = [];
+      const tops: Record<SimilarTier, { ci: number; tier: SimilarTier; score: number; name: string; r: Ranked }[]> = { same: [], close: [], output: [] };
       for (const k of sigs[si]!.outputs.keys()) {
         for (const ci of buckets.get(k) ?? []) {
           if (seen.has(ci)) continue;
@@ -389,14 +404,18 @@ export function similarIndex(cards: readonly SimilarCard[]) {
           const r = rank(sigs[si]!, sigs[ci]!);
           if (!r) continue;
           const item = { ci, tier: r.tier, score: r.score, name: cand.name, r };
-          if (top.length >= limit && order(item, top[top.length - 1]!) >= 0) continue;
+          const cap = capOf(r.tier);
+          if (cap <= 0) continue;
+          // `item.tier` is `r.tier`; each tier keeps its own bounded list.
+          const top = opts.perTier ? tops[r.tier] : tops.same;
+          if (top.length >= cap && order(item, top[top.length - 1]!) >= 0) continue;
           let at2 = top.length;
           while (at2 > 0 && order(item, top[at2 - 1]!) < 0) at2--;
           top.splice(at2, 0, item);
-          if (top.length > limit) top.pop();
+          if (top.length > cap) top.pop();
         }
       }
-      return top.map((t) => ({ id: cards[t.ci]!.id, name: t.name, tier: t.tier, score: t.score, chips: chipsOf(sigs[si]!, sigs[t.ci]!, t.r) }));
+      return [...tops.same, ...tops.close, ...tops.output].map((t) => ({ id: cards[t.ci]!.id, name: t.name, tier: t.tier, score: t.score, chips: chipsOf(sigs[si]!, sigs[t.ci]!, t.r) }));
     },
   };
 }

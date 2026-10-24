@@ -134,7 +134,7 @@ describe("scope, token recipient and chip wording", () => {
   test("Swords to Plowshares and Path to Exile stay close, and the extras read as nouns", () => {
     const r = compareCards(card("Swords to Plowshares"), card("Path to Exile"))!;
     expect(r.tier).toBe("close");
-    expect(r.chips.filter((c) => c.dim !== "type").map((c) => c.label).sort()).toEqual(["+ library search", "+ shuffling", "no life gain"]);
+    expect(r.chips.filter((c) => c.dim !== "type").map((c) => c.label).sort()).toEqual(["+ 2 other effects", "no life gain"]);
   });
 });
 
@@ -152,5 +152,34 @@ describe("limit keeps the best and evicts the worst", () => {
     const top = idx.similarTo(warden.id, { limit: 3 });
     expect(top).toEqual(all.slice(0, 3));
     for (const dropped of all.slice(3)) expect(dropped.score).toBeGreaterThanOrEqual(top[2]!.score);
+  });
+});
+
+describe("per-tier caps (#1341)", () => {
+  test("a tier is capped on its own, so a full close tier cannot crowd out output", () => {
+    const idx = similarIndex(cards);
+    const id = card("Soul Warden").id;
+    const r = idx.similarTo(id, { perTier: { same: 1, close: 1, output: 5 } });
+    expect(r.map((x) => [x.tier, x.name])).toEqual([
+      ["same", "Essence Warden"], ["close", "Auriok Champion"], ["output", "Blood Artist"], ["output", "Zulaport Cutthroat"],
+    ]);
+    expect(idx.similarTo(id, { perTier: { output: 1 } }).map((x) => x.name)).toEqual(["Blood Artist"]);
+    expect(idx.similarTo(id, { perTier: {} })).toEqual([]);
+  });
+});
+
+describe("extra and missing chips are capped at one per row", () => {
+  test("several missing outputs collapse to a count; one stays named", () => {
+    const warden = card("Soul Warden");
+    const rich = structuredClone(warden.tags!) as CardTags;
+    rich.abilities.push(
+      { ...structuredClone(rich.abilities[0]!), emits: [{ verb: "draw", subject: { control: "you", token: null } }] },
+      { ...structuredClone(rich.abilities[0]!), emits: [{ verb: "lose-life", subject: { control: "opp", token: null } }] },
+    );
+    const seed: SimilarCard = { id: 500, name: "Rich", tags: rich };
+    const lacks = compareCards(seed, warden)!.chips.filter((c) => c.dim === "missing");
+    expect(lacks).toEqual([{ dim: "missing", label: "lacks 2 other effects" }]);
+    const has = compareCards(warden, seed)!.chips.filter((c) => c.dim === "extra");
+    expect(has).toEqual([{ dim: "extra", label: "+ 2 other effects" }]);
   });
 });
