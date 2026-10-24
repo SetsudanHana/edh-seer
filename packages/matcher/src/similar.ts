@@ -240,7 +240,9 @@ function subjectFacets(a: SubjectFilter, b: SubjectFilter): number {
 }
 
 /** Verbs that move an object between zones. A creature entering, dying or leaving is one KIND of event; casting a spell is another. */
-const ZONE_CHANGE = new Set(["enters", "dies", "leaves", "exiled"]);
+// CEILING: the distances below (2 for a different verb, +1 per subject facet, +2 across the zone-change line, 6 for triggered
+// against untriggered) are hand-tuned on the Soul Warden fixture and unmeasured against the corpus.
+const ZONE_CHANGE = new Set(["enters", "dies", "leaves", "exiled", "sacrifice", "discard", "mill"]);
 
 /** HOW FAR APART TWO DIFFERENT TRIGGERS ARE (output tier only). A triggered ability against an untriggered one is the
  *  far step (6). Two triggers with different verbs start at 2, plus one per differing facet of the trigger SUBJECT
@@ -378,7 +380,9 @@ export function compareCards(seed: SimilarCard, cand: SimilarCard): Comparison |
 function dropUniversalChips<T extends { chips: Chip[] }>(rows: T[]): T[] {
   if (rows.length < 3) return rows;
   const key = (c: Chip): string => `${c.dim}:${c.label}`;
-  const everywhere = rows[0]!.chips.map(key).filter((k) => rows.every((r) => r.chips.some((c) => key(c) === k)));
+  // ONLY `extra`/`missing`: they describe the SEED (it has more abilities than every candidate). A trigger, amount or type chip
+  // on every row is the whole difference of that list ("your creatures" on every close row) and must stay.
+  const everywhere = rows[0]!.chips.filter((c) => c.dim === "extra" || c.dim === "missing").map(key).filter((k) => rows.every((r) => r.chips.some((c) => key(c) === k)));
   if (everywhere.length === 0) return rows;
   return rows.map((r) => ({ ...r, chips: r.chips.filter((c) => !everywhere.includes(key(c))) }));
 }

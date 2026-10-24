@@ -132,7 +132,8 @@ export async function renderCardPage(
       // above swaps in whichever list this ROUTE prints; the app wants what `loadCardPage` would
       // have returned, so that both pages read the same shape they already read and neither needs
       // to know it came from the document instead of the network.
-      data: { slug, record },
+      // THE VERSION THE RECORD CAME FROM: its `sim`/`commanderSim` are name-index positions of THAT build, so the app decodes them only against the same version.
+      data: { slug, record, version },
     }), { headers: htmlHeaders(indexable) });
   } catch {
     return degraded();

@@ -1,4 +1,5 @@
 import { afterEach, expect, vi } from "vitest";
+import { resetSharedNameIndex } from "./lib/partners.js";
 import * as matchers from "@testing-library/jest-dom/matchers";
 
 // Import matchers/expect explicitly (rather than the "@testing-library/jest-dom/vitest"
@@ -97,6 +98,8 @@ afterEach(() => {
   // "was NOT called" saw ten calls from its predecessors.
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  // `loadCardPage` shares one `StaticLookup` per base URL; one bound to a test's fetch spy must not serve the next test.
+  resetSharedNameIndex();
 
   // THE URL OUTLIVES THE TEST TOO, and for the same reason: jsdom keeps one Location and one history
   // per FILE. `App` decides it was opened from a share link by reading `#deck=` at mount, and several

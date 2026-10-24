@@ -253,4 +253,10 @@ describe("a chip on every row is dropped (#1341)", () => {
     expect(r).toHaveLength(2);
     for (const h of r) expect(h.chips.some((c) => c.label === "lacks 2 other effects")).toBe(true);
   });
+  test("a trigger or type chip all rows share is the list's whole difference and stays", () => {
+    const enchantments = [601, 602, 603].map((id) => variant(id, `Enchant ${id}`, (t) => { t.characteristics.types = ["enchantment"]; }));
+    const r = similarIndex([warden, ...enchantments]).similarTo(warden.id);
+    expect(r).toHaveLength(3);
+    for (const h of r) expect(h.chips).toEqual([{ dim: "type", label: "enchantment" }]);
+  });
 });

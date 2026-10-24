@@ -217,6 +217,7 @@ partners.index.forEach((e, id) => {
   const own = similar.similarTo(id, { perTier: PER_TIER });
   if (own.length > 0) { rec.sim = encodeSimilar(own, chipTable); similarRows += own.length; }
   if (e.commander) {
+    // CEILING: `identityWithin` is the commander's own identity, so a partner's wider identity (Partner, Background) is ignored here.
     const within = similar.similarTo(id, { perTier: PER_TIER, identityWithin: e.identity });
     if (within.length > 0) { rec.commanderSim = encodeSimilar(within, chipTable); similarRows += within.length; }
   }

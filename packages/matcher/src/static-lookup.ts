@@ -353,6 +353,9 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
     return { types: body.types ?? [], subtypes: body.subtypes ?? [], keywords: body.keywords ?? [], pairTags: body.pairTags ?? [], similarChips: body.similarChips ?? [] };
   }
 
+  /** The version directory this lookup reads from ("" on the flat layout): what a caller compares an inlined record's stamp to. */
+  staticVersion(): Promise<string> { return this.version(); }
+
   /** A PAGE RECORD'S SIMILAR LISTS, DECODED against the name index and chip table this lookup already
    *  holds (#1341). Both lists are empty for a record from a shard built before they shipped, and
    *  when the index cannot be read: the section is then absent, never wrong. */
