@@ -128,10 +128,21 @@ const NOUN: Record<string, string> = {
 const COST_SELF_VERBS = new Set(["sacrifice", "dies", "leaves", "exiled", "discard", "shuffle"]);
 /** SHUFFLE IS A BY-PRODUCT of a search: it gates only when it is all both cards do, and never counts as an extra or missing effect. */
 const WEAK_VERBS = new Set(["shuffle"]);
-const verbOfKey = (key: string): string => key.split(/[|@:]/)[0]!;
+/** Per-key facts, computed once: `rank` asks them for every key of every candidate, and a regex split per ask was the build's hot spot. */
+const keyMeta = new Map<string, { verb: string; gate: Gate; weak: boolean }>();
 type Gate = "open" | "never" | "alone";
-const gateOfKey = (key: string): Gate =>
-  key.endsWith("@self") && COST_SELF_VERBS.has(verbOfKey(key)) ? "never" : WEAK_VERBS.has(verbOfKey(key)) ? "alone" : "open";
+function metaOf(key: string): { verb: string; gate: Gate; weak: boolean } {
+  let m = keyMeta.get(key);
+  if (!m) {
+    const verb = key.split(/[|@:]/)[0]!;
+    const weak = WEAK_VERBS.has(verb);
+    m = { verb, weak, gate: key.endsWith("@self") && COST_SELF_VERBS.has(verb) ? "never" : weak ? "alone" : "open" };
+    keyMeta.set(key, m);
+  }
+  return m;
+}
+const gateOfKey = (key: string): Gate => metaOf(key).gate;
+const isWeakKey = (key: string): boolean => metaOf(key).weak;
 
 function outputOf(e: GameEvent, key: string): Output {
   // A SEARCH FOR THE CARD'S OWN NAME ("up to three cards named Squadron Hawk") is not a tutor for anything.
@@ -397,8 +408,8 @@ function rank(a: CardSig, b: CardSig): Ranked | null {
   let score = 0;
   for (const [, , p] of pairs) { if (TIER_RANK[p.tier] > TIER_RANK[tier]) tier = p.tier; score += p.score; }
   let extras = 0;
-  for (const k of b.outputs.keys()) if (!a.outputs.has(k) && !WEAK_VERBS.has(verbOfKey(k))) extras++;
-  for (const k of a.outputs.keys()) if (!b.outputs.has(k) && !WEAK_VERBS.has(verbOfKey(k))) extras++;
+  for (const k of b.outputs.keys()) if (!a.outputs.has(k) && !isWeakKey(k)) extras++;
+  for (const k of a.outputs.keys()) if (!b.outputs.has(k) && !isWeakKey(k)) extras++;
   for (const kw of b.keywords) if (!a.keywords.includes(kw)) extras++;
   for (const kw of a.keywords) if (!b.keywords.includes(kw)) extras++;
   // A card with something extra or missing is not the same job; the difference never moves it between close and output.
@@ -434,9 +445,9 @@ function chipsOf(a: CardSig, b: CardSig, r: Ranked): Chip[] {
   // collapses to a count; trigger/amount/repeats/type/kind/recipient/scope chips are never capped.
   const extra: string[] = [];
   const missing: string[] = [];
-  for (const [k, e] of b.outputs) if (!a.outputs.has(k) && !WEAK_VERBS.has(verbOfKey(k)) && once("extra", e)) extra.push(`+ ${outputNoun(e)}`);
+  for (const [k, e] of b.outputs) if (!a.outputs.has(k) && !isWeakKey(k) && once("extra", e)) extra.push(`+ ${outputNoun(e)}`);
   for (const kw of b.keywords) if (!a.keywords.includes(kw)) extra.push(`+ ${kw}`);
-  for (const [k, e] of a.outputs) if (!b.outputs.has(k) && !WEAK_VERBS.has(verbOfKey(k)) && once("missing", e)) missing.push(`no ${outputNoun(e)}`);
+  for (const [k, e] of a.outputs) if (!b.outputs.has(k) && !isWeakKey(k) && once("missing", e)) missing.push(`no ${outputNoun(e)}`);
   for (const kw of a.keywords) if (!b.keywords.includes(kw)) missing.push(`no ${kw}`);
   if (extra.length === 1) add({ dim: "extra", label: extra[0]! });
   else if (extra.length > 1) add({ dim: "extra", label: `+ ${extra.length} other effects` });
