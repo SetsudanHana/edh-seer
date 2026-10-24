@@ -29,7 +29,7 @@
  *  that field existed and captured the victim, so Fiery Emancipation's trigger read `permanent` and
  *  Khalni Ambush's fight -- dealer `{control: you}`, no type -- could never satisfy it. The source
  *  phrase before "would" is now the half the matcher checks, so it is the subject. */
-import type { EffectKind, TokenMultiplier, Verb } from "../schema.js";
+import type { EffectKind, ReplacementChange, TokenMultiplier, Verb } from "../schema.js";
 
 export interface Replacement {
   /** The event this modifies — what a consumer trigger fires on. */
@@ -51,6 +51,34 @@ export interface Replacement {
   restricted?: true;
   /** Token replacements only: how the tokens change. See `Effect.tokenMultiplier`. */
   tokenMultiplier?: TokenMultiplier;
+  /** What the replacement does to the event's number, when the sentence states one. See
+   *  `Ability.change`. */
+  change?: ReplacementChange;
+}
+
+const NUMBER_WORDS: Record<string, number> = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+};
+
+/** HOW A REPLACEMENT CHANGES THE EVENT'S NUMBER (owner, 2026-10-24: "fix the derive so it can catch
+ *  the amount on replacement effects"), read from the clause the template already matched.
+ *
+ *  Multiplying first: "triple" / "three times" / "thrice" is x3, "double" / "twice" x2 (Fiery
+ *  Emancipation, Anointed Procession, Tekuthal's "proliferate twice"). Then adding: "plus 2", "plus
+ *  one", and "plus an additional ..." as one more (Pyromancer's Gauntlet, Hardened Scales, Xorn).
+ *
+ *  ONLY A STATED NUMBER. "Plus that many Squirrels" adds a count that is itself variable, and
+ *  "draw two cards instead" (Alhammarret's Archive) replaces one draw with two without naming a
+ *  multiple of "that many"; both stay unset, which a consumer reads as "not on record".
+ *  CEILING: "half that damage" (a prevention-side divide) is not read; nothing searches for it. */
+export function changeOf(clauseText: string): ReplacementChange | undefined {
+  if (/\b(?:triple|three times|thrice)\b/i.test(clauseText)) return { op: "times", value: 3 };
+  if (/\b(?:double|twice)\b/i.test(clauseText)) return { op: "times", value: 2 };
+  const plus = clauseText.match(/\bplus\s+(an?\s+additional|\d+|one|two|three|four|five|six|seven|eight|nine|ten)\b/i);
+  if (!plus) return undefined;
+  const word = plus[1]!.toLowerCase();
+  const value = /^an?\s/.test(word) ? 1 : /^\d+$/.test(word) ? Number(word) : NUMBER_WORDS[word];
+  return value === undefined ? undefined : { op: "plus", value };
 }
 
 /** HOW A TOKEN REPLACEMENT CHANGES THE COUNT (#1136). Of the 34 corpus cards deriving `token-doubling`
@@ -149,6 +177,7 @@ export function replacementOf(clauseText: string): Replacement | null {
       kind: t.kind,
       subjectText: (t.subject === 0 ? "" : m[t.subject] ?? "").trim(),
       ...(t.kind === "token-doubling" ? { tokenMultiplier: tokenMultiplierOf(clauseText) } : {}),
+      ...(() => { const change = changeOf(clauseText); return change ? { change } : {}; })(),
       ...(t.counter !== undefined && m[t.counter] ? { counter: m[t.counter].trim() } : {}),
       ...(t.actor !== undefined && !UNRESTRICTED_ACTOR.test(actor) ? { restricted: true as const } : {}),
     };

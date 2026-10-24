@@ -1087,6 +1087,11 @@ export interface Effect {
 
 export type TokenMultiplier = "twice" | "thrice" | "additional" | "one-of-each" | "replaced";
 
+/** WHAT A CR 614 REPLACEMENT DOES TO THE NUMBER OF THE EVENT IT HEARS: adds `value` ("that much
+ *  damage plus 2", "that many plus one") or multiplies by it ("double", "twice that many",
+ *  "triple"). See `derive/replacement.ts` `changeOf`. */
+export interface ReplacementChange { op: "plus" | "times"; value: number }
+
 export type AbilityKind = "triggered" | "activated" | "static" | "on-cast";
 /** The kinds a card can name as an OBJECT (CR 113.3 plus the two the cards single out). */
 export type AbilityObjectKind = "activated" | "triggered" | "loyalty" | "mana";
@@ -1427,6 +1432,10 @@ export interface Ability {
    *  "replacement effects make the effects better, not the other way around" -- so the matcher
    *  writes the edge FROM this card TO the card whose effect it improves. */
   replacement?: true;
+  /** HOW THIS REPLACEMENT CHANGES THE EVENT IT HEARS, when the sentence states a number (owner,
+   *  2026-10-24): Torbran's "plus 2", Fiery Emancipation's "triple". Set only beside
+   *  `replacement`; absent when the change is not a stated number ("plus that many Squirrels"). */
+  change?: ReplacementChange;
   /** A GAME-STATE MARKER THE ABILITY NEEDS, evaluable against a state the owner supplies (roadmap
    *  W18). "Max speed —" abilities need the player's speed at 4 (CR 702.179). Unlike
    *  `conditionCares` this IS evaluated: with no state, or one that falls short, the ability is
