@@ -1,4 +1,6 @@
 import type { RateFamily, RateSpan } from "@edh-seer/matcher/rate";
+import { ABILITY_KINDS, REPEATS_LADDER, type FactFilter, type FactKind } from "@edh-seer/matcher/member-facts";
+import type { Repeats } from "@edh-seer/tagger";
 export type { RateFamily } from "@edh-seer/matcher/rate";
 
 /** FIND BY WHAT A CARD CAUSES AND WHAT IT ASKS FOR (spec 2026-09-19, roadmap AJ3).
@@ -66,6 +68,20 @@ export interface EventQuery {
   powMax?: number;
   touMin?: number;
   touMax?: number;
+  /** HOW THE ASKED EVENTS HAPPEN (owner, 2026-10-24): which kind of ability does it, how often it
+   *  can, and how much per occurrence. They narrow the `and` and `or` event terms, never the `not`
+   *  ones, and only through ONE ability: a card passes when a single ability that causes (or asks
+   *  for) the event meets all three (`memberPasses`). With no event asked they narrow nothing.
+   *
+   *  The amount reads on the CAUSES side only; an asker has no size of its own on record. */
+  abilityKinds?: FactKind[];
+  /** At least this often, on `REPEATS_LADDER`. */
+  repeatsMin?: Repeats;
+  /** Per-occurrence size, both ends inclusive and optional, zero a real bound -- like `mvMin`. */
+  amountMin?: number;
+  amountMax?: number;
+  /** Keep "X" and "equal to its power" causers too when a size range is set. */
+  amountVariable?: boolean;
   /** How the kept rows are ordered. Absent means `orderOf`'s default. `effect` is HOW MUCH THE
    *  CARD DOES at what it was asked to cause (owner 2026-09-23, AN3): the deck-build run found rare
    *  events outranking good cards -- Ashnod's Altar 242nd on "sacrifices a creature" -- and reached
@@ -140,6 +156,34 @@ export function eventsFromParams(p: URLSearchParams): EventQuery {
     ...Object.fromEntries(Object.entries(ranges).filter(([, v]) => v !== undefined)),
     ...(SORTS.has(sort) ? { sort: sort as EventQuery["sort"] } : {}),
     ...(dir === "asc" || dir === "desc" ? { dir } : {}),
+    ...effectFromParams(p),
+  };
+}
+
+/** THE EFFECT FILTERS OUT OF THE URL. An unknown word is dropped, not guessed at -- the same rule a
+ *  bad bound follows. */
+function effectFromParams(p: URLSearchParams): Partial<EventQuery> {
+  const kinds = [...new Set(p.getAll("ability"))].filter((k): k is FactKind => (ABILITY_KINDS as readonly string[]).includes(k));
+  const repeats = p.get("repeats") ?? "";
+  const amountMin = bound(p.get("amtmin"));
+  const amountMax = bound(p.get("amtmax"));
+  return {
+    ...(kinds.length > 0 ? { abilityKinds: kinds } : {}),
+    ...((REPEATS_LADDER as readonly string[]).includes(repeats) ? { repeatsMin: repeats as Repeats } : {}),
+    ...(amountMin !== undefined ? { amountMin } : {}),
+    ...(amountMax !== undefined ? { amountMax } : {}),
+    ...(p.get("amtvar") === "1" ? { amountVariable: true } : {}),
+  };
+}
+
+/** WHAT THE EFFECT FILTERS ASK OF ONE SIDE'S MEMBERS. The pays side gets no size: see `amountMin`. */
+export function factFilterOf(q: EventQuery, side: "makes" | "pays"): FactFilter {
+  return {
+    ...(q.abilityKinds && q.abilityKinds.length > 0 ? { kinds: q.abilityKinds } : {}),
+    ...(q.repeatsMin !== undefined ? { minRepeats: q.repeatsMin } : {}),
+    ...(side === "makes" && q.amountMin !== undefined ? { amountMin: q.amountMin } : {}),
+    ...(side === "makes" && q.amountMax !== undefined ? { amountMax: q.amountMax } : {}),
+    ...(side === "makes" && q.amountVariable === true ? { includeVariable: true } : {}),
   };
 }
 
@@ -150,6 +194,7 @@ export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchPara
     // `mv` IS DELETED AND NEVER WRITTEN. It is read for the links that already carry it and
     // rewritten as `mvmax`, so the legacy spelling does not propagate into new ones.
     "mv", "mvmin", "mvmax", "powmin", "powmax", "toumin", "toumax",
+    "ability", "repeats", "amtmin", "amtmax", "amtvar",
   ]) out.delete(k);
   for (const k of q.produce) out.append("produce", k);
   for (const k of q.consume) out.append("consume", k);
@@ -163,6 +208,11 @@ export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchPara
     ["mvmin", q.mvMin], ["mvmax", q.mvMax], ["powmin", q.powMin],
     ["powmax", q.powMax], ["toumin", q.touMin], ["toumax", q.touMax],
   ] as const) if (v !== undefined) out.set(name, String(v));
+  for (const k of q.abilityKinds ?? []) out.append("ability", k);
+  if (q.repeatsMin !== undefined) out.set("repeats", q.repeatsMin);
+  if (q.amountMin !== undefined) out.set("amtmin", String(q.amountMin));
+  if (q.amountMax !== undefined) out.set("amtmax", String(q.amountMax));
+  if (q.amountVariable === true) out.set("amtvar", "1");
   // THE DEFAULT IS NOT WRITTEN DOWN. `?sort=partners` in every shared link is noise, and it would
   // pin the order against a future change of default. The default depends on the query (a cause
   // makes it `effect`), so it is compared against the query's own.
@@ -317,7 +367,8 @@ export function rateLabel([floor, floorMana, ceiling, ceilingMana, delayed]: Rat
 export type FilterKind =
   | "colours" | "cardColours" | "typeline" | "keywords"
   | "mv" | "power" | "toughness"
-  | "produce" | "consume";
+  | "produce" | "consume"
+  | "abilityKind" | "repeats" | "amount";
 
 /** THE ORDER THE ROWS ARE DRAWN IN, and it is fixed rather than the order they were added: a
  *  reader's own panel and the link they share are the same question, and rows that shuffle between
@@ -329,7 +380,12 @@ export const FILTER_KINDS: FilterKind[] = [
   "colours", "cardColours", "typeline", "keywords",
   "mv", "power", "toughness",
   "produce", "consume",
+  // HOW THE EVENTS HAPPEN, after the events they narrow (owner, 2026-10-24).
+  "abilityKind", "repeats", "amount",
 ];
+
+/** THE THREE ROWS THAT NARROW THE EVENTS rather than the cards: they answer nothing alone. */
+export const EFFECT_KINDS: readonly FilterKind[] = ["abilityKind", "repeats", "amount"];
 
 /** WHICH ROWS THE URL IS ALREADY ASKING FOR. Derived, never stored: a link carrying
  *  `?subtype=sliver&mv=3` has to arrive with those two rows open and filled, or a shared search
@@ -352,6 +408,9 @@ export function filterKindsOf(q: EventQuery): FilterKind[] {
     // ANY TERM ON THE SIDE, whatever its operator: `produce` is the question "what it makes".
     produce: q.produce.length + (q.orProduce?.length ?? 0) + (q.notProduce?.length ?? 0) > 0,
     consume: q.consume.length + (q.orConsume?.length ?? 0) + (q.notConsume?.length ?? 0) > 0,
+    abilityKind: (q.abilityKinds?.length ?? 0) > 0,
+    repeats: q.repeatsMin !== undefined,
+    amount: q.amountMin !== undefined || q.amountMax !== undefined || q.amountVariable === true,
   };
   return FILTER_KINDS.filter((k) => asked[k]);
 }
@@ -375,5 +434,8 @@ export function withoutFilterKind(q: EventQuery, kind: FilterKind): EventQuery {
     case "toughness": { const { touMin: _a, touMax: _b, ...rest } = q; return rest; }
     case "produce": { const { orProduce: _a, notProduce: _b, ...rest } = q; return { ...rest, produce: [] }; }
     case "consume": { const { orConsume: _a, notConsume: _b, ...rest } = q; return { ...rest, consume: [] }; }
+    case "abilityKind": { const { abilityKinds: _a, ...rest } = q; return rest; }
+    case "repeats": { const { repeatsMin: _a, ...rest } = q; return rest; }
+    case "amount": { const { amountMin: _a, amountMax: _b, amountVariable: _c, ...rest } = q; return rest; }
   }
 }

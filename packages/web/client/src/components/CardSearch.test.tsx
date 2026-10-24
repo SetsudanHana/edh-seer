@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within, act } from "@testing-library/react";
+import { packFact } from "@edh-seer/matcher/member-facts";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { expect, test, vi } from "vitest";
@@ -965,4 +966,44 @@ test("the unasked page browses two full rows of tiles, and never fewer than twel
   expect(browseCount(3)).toBe(12);
   expect(browseCount(8)).toBe(16);
   expect(browseCount(16)).toBe(32);
+});
+
+/** HOW THE EVENT HAPPENS (owner, 2026-10-24): "cards that give me 2 and more life", "pingers for
+ *  exactly 1", "all replacement effects for dealing damage". A card passes through ONE ability. */
+const pingOne = packFact({ kind: "triggered", repeats: "repeatable", amount: { kind: "fixed", value: 1 } });
+const millTwoOnce = packFact({ kind: "spell", repeats: "once", amount: { kind: "fixed", value: 2 } });
+const FACT_MEMBERS: Record<string, EventMembers> = {
+  ...MEMBERS,
+  [MILL]: { p: [1, 2], c: [], pf: [[millTwoOnce], [pingOne]], cf: [] },
+};
+const factProps = { members: async (_b: string, k: string) => FACT_MEMBERS[k] ?? null };
+
+test("an amount and how-often filter narrows a cause to the abilities that meet both", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&amtmin=1&amtmax=1&repeats=per-cycle`, factProps);
+  expect(await screen.findByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Inspiring Call/ })).toBeNull();
+  // The rows arrive open from the link, so the reader sees what is narrowing the list.
+  expect(screen.getByText("How often")).toBeInTheDocument();
+  expect(screen.getByLabelText("Amount, each time, from")).toHaveValue("1");
+});
+
+test("an ability type chip narrows the list", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=spell`, factProps);
+  expect(await screen.findByRole("link", { name: /Inspiring Call/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Skullclamp/ })).toBeNull();
+  await userEvent.click(screen.getByRole("button", { name: "Triggered" }));
+  expect(await screen.findByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
+});
+
+/** AN OLD BUILD CARRIES NO FACTS, and the page says it cannot answer rather than guessing. */
+test("a build without facts says the ability filters cannot be answered", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=spell`);
+  expect(await screen.findByText(/predates the ability filters/)).toBeInTheDocument();
+});
+
+/** THE ROWS NARROW EVENTS, so they are not offered before one is asked. */
+test("the effect rows are offered only once an event is asked", async () => {
+  atUrl("/cards");
+  await userEvent.click(await screen.findByText("Add a filter"));
+  expect(screen.queryByRole("button", { name: "Amount" })).toBeNull();
 });
