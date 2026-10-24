@@ -1,7 +1,7 @@
 import type { CardTags, Repeats } from "@edh-seer/tagger";
 
-/** WHAT ONE ABILITY DOES FOR ONE EVENT KEY, packed into a single number so the event shards can ship
- *  one per member ability without tripling their size (owner, 2026-10-24: "filter by amount of the
+/** WHAT ONE ABILITY DOES FOR ONE EVENT KEY, packed into a single number so the event shards ship
+ *  one small integer per member ability (owner, 2026-10-24: "filter by amount of the
  *  effect happening ... and also repeatability of the effect", and "categorization if cast ability,
  *  triggered, replacement effect, activated ability").
  *
@@ -38,6 +38,11 @@ export interface MemberFact { kind: FactKind; repeats: Repeats | undefined; amou
 
 type Ability = CardTags["abilities"][number];
 
+/** CEILING: `replacement` is stamped only where `derive/replacement.ts` reads the "would ...
+ *  instead" frame -- counters, tokens, damage, mill, draw, proliferate. Other CR 614 replacements
+ *  keep `static` here: graveyard hate (Rest in Peace, Leyline of the Void, via
+ *  `graveyard-replacement.ts`), enters-tapped and enters-with-counters riders, and prevention. The
+ *  upgrade path is stamping `replacement` from those derive passes too. */
 export function factKindOf(a: Ability): FactKind {
   if (a.replacement === true) return "replacement";
   switch (a.kind) {
@@ -77,16 +82,15 @@ export function factOf(a: Ability, withAmount: boolean): number {
   return packFact({ kind: factKindOf(a), repeats: a.repeats, amount: withAmount ? factAmountOf(a.amount) : { kind: "unstated" } });
 }
 
-/** EACH KEY A CARD SUPPLIES, WITH THE FACTS OF THE ABILITIES THAT SUPPLY IT. `formsOf` is the
- *  caller's emit-to-key widening (`splitKey(eventKey(e)).flatMap(supplyForms)` in `partners-core`),
- *  taken as an argument so this file stays free of the matcher's key machinery. A key the card
- *  supplies only by being played (Sol Ring and "an artifact enters") has no ability, so no facts. */
-export function supplyFactsOf(abilities: readonly Ability[], formsOf: (e: NonNullable<Ability["emits"]>[number]) => readonly string[]): Map<string, number[]> {
+/** EACH KEY A CARD SUPPLIES, WITH THE FACTS OF THE ABILITIES THAT SUPPLY IT. `keysOf` is the
+ *  caller's ability-to-key reading (`supplyFactsOfCard` in `partners-core`), taken as an argument so
+ *  this file stays free of the matcher's key machinery. A key the card supplies only by being played
+ *  (Sol Ring and "an artifact enters") or by a printed keyword has no ability, so no facts. */
+export function supplyFactsOf(abilities: readonly Ability[], keysOf: (a: Ability) => readonly string[]): Map<string, number[]> {
   const out = new Map<string, number[]>();
   for (const a of abilities) {
     const fact = factOf(a, true);
-    const keys = new Set((a.emits ?? []).flatMap((e) => formsOf(e)));
-    for (const k of keys) {
+    for (const k of new Set(keysOf(a))) {
       const b = out.get(k);
       if (!b) out.set(k, [fact]);
       else if (!b.includes(fact)) b.push(fact);
@@ -160,4 +164,11 @@ export function factPasses(f: MemberFact, q: FactFilter): boolean {
 export function memberPasses(facts: readonly number[] | undefined, q: FactFilter): boolean {
   if (isEmptyFilter(q)) return true;
   return (facts ?? []).some((n) => factPasses(unpackFact(n), q));
+}
+
+/** HOW MANY OF A SIDE'S MEMBERS NO ABILITY FACT DESCRIBES: the cards on the key by what they are
+ *  (cast, enter, a keyword) rather than by an ability. A filter leaves them out because it cannot
+ *  judge them, which is not the same as judging them and finding them short -- the page says so. */
+export function unjudged(facts: readonly (readonly number[])[] | undefined): number {
+  return (facts ?? []).filter((f) => f.length === 0).length;
 }

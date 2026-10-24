@@ -28,7 +28,7 @@
   "packages/matcher/src/mana-audit.ts": 4,
   "packages/matcher/src/mana-base.ts": 1,
   "packages/matcher/src/mana-lines.ts": 11,
-  "packages/matcher/src/member-facts.ts": 1,
+  "packages/matcher/src/member-facts.ts": 2,
   "packages/matcher/src/mesh.ts": 1,
   "packages/matcher/src/mulligan.ts": 1,
   "packages/matcher/src/orchestrate.ts": 1,

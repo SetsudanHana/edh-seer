@@ -1761,6 +1761,45 @@ test("event members carry the kind, repeats and size of the abilities that put t
   expect(m.cf).toHaveLength(m.c.length);
 });
 
+/** EVERY KEY AN ABILITY PUTS A CARD ON CARRIES THAT ABILITY'S FACT (review of 160d353): the
+ *  graveyard event a discard implies, the fodder a sacrifice outlet eats, the graveyard a reanimator
+ *  reads. Only what the card supplies by being -- here a printed keyword -- ships no fact. */
+test("implied and feeder memberships carry their ability's facts; a keyword's does not", () => {
+  const looting = withTypes(base("Looting", [{ kind: "on-cast", repeats: "once", effect: { kind: "discard" }, amount: "2",
+    emits: [{ verb: "discard", subject: { control: "you", token: null } }] }] as unknown as CardTags["abilities"]), ["sorcery"]);
+  const altar = withTypes(base("Altar", [{ kind: "activated", cost: "Sacrifice a creature", repeats: "repeatable", effect: { kind: "mana-generation" },
+    emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: "creature" } }] }] as unknown as CardTags["abilities"]), ["artifact"]);
+  const reanimator = base("Reanimator", [{ kind: "triggered", repeats: "per-cycle",
+    trigger: { verbs: ["dies"], subject: { control: "you", token: null, type: "creature" } },
+    effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "creature", zone: "graveyard" } },
+    emits: [{ verb: "leaves", subject: { control: "you", token: null, type: "creature", zone: "graveyard" } }] }] as unknown as CardTags["abilities"]);
+  const lifelinker = (() => {
+    const d = base("Lifelinker", []);
+    return { ...d, tags: { ...d.tags, characteristics: { ...d.tags.characteristics, keywords: ["Lifelink"] } } as CardTags };
+  })();
+  // THE KEYS EXIST ONLY WHERE SOMETHING ASKS, so two enchantment askers stand in for the payoffs.
+  const asks = (verb: string) => withTypes(base(`Asks ${verb}`, [{
+    kind: "triggered", trigger: { verbs: [verb], subject: { control: "you", token: null } }, effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]), ["enchantment"]);
+  const { events, index } = buildPartnerArtifact([looting, altar, reanimator, lifelinker, asks("enters-graveyard"), asks("gain-life")], H);
+  const factsOn = (key: string, side: "p" | "c", name: string) => {
+    const m = events.get(key);
+    const ids = side === "p" ? m?.p : m?.c;
+    const facts = side === "p" ? m?.pf : m?.cf;
+    const at = (ids ?? []).findIndex((pos) => index[pos]!.name === name);
+    return at < 0 ? undefined : facts![at]!.map(unpackFact).map((f) => f.kind);
+  };
+  const graveyardKey = [...events.keys()].find((k) => k.startsWith("enters-graveyard|") && events.get(k)!.p.some((p) => index[p]!.name === "Looting"))!;
+  expect(factsOn(graveyardKey, "p", "Looting")).toEqual(["spell"]);
+  const fodderKey = [...events.keys()].find((k) => k.startsWith("fodder|"))!;
+  expect(factsOn(fodderKey, "c", "Altar")).toEqual(["activated"]);
+  const fillKey = [...events.keys()].find((k) => k.startsWith("fills|") && events.get(k)!.c.some((p) => index[p]!.name === "Reanimator"))!;
+  expect(factsOn(fillKey, "c", "Reanimator")).toEqual(["triggered"]);
+  // LIFELINK IS THE CARD, NOT AN ABILITY: on the key, with no fact, and counted apart by the page.
+  const lifeKey = [...events.keys()].find((k) => k.startsWith("gain-life|") && events.get(k)!.p.some((p) => index[p]!.name === "Lifelinker"));
+  expect(factsOn(lifeKey!, "p", "Lifelinker")).toEqual([]);
+});
+
 test("the artifact counts the askers beside the causers", () => {
   const { consumers } = buildPartnerArtifact([krenko, impactTremors], H);
   expect(consumers["enters|creature|-|-"]).toBe(1);

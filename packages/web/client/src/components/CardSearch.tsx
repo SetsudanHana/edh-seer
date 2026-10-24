@@ -5,7 +5,7 @@ import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/par
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
 import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, factFilterOf, orderOf, withoutFilterKind, EFFECT_KINDS, FILTER_KINDS, NATURAL_DIR, type EventQuery, type FilterKind } from "../lib/facets.js";
-import { membersPassing } from "../lib/effect-filter.js";
+import { membersPassing, unjudgedMembers } from "../lib/effect-filter.js";
 import { AbilityKindRow, AmountRow, RepeatsRow } from "./EffectRows.js";
 import { EventSentence, termWords } from "./EventSentence.js";
 import { answerTerms, termsOf, withTerms } from "../lib/event-terms.js";
@@ -307,6 +307,18 @@ export function CardSearch({
       ? (t.side === "makes" ? lists.get(t.key)!.p : lists.get(t.key)!.c)
       : membersPassing(lists.get(t.key)!, t.side, factFilterOf(eventQuery, t.side))!));
   }, [chosenKeys, lists, terms, eventQuery, effectUnanswerable]);
+  // HOW MANY CARDS THE FILTERS COULD NOT JUDGE (review of 160d353): on an asked event by what they
+  // are -- cast, entering, lifelink -- rather than by an ability. Left out, and said so.
+  const unjudgedCount = useMemo(() => {
+    const narrowing = EFFECT_KINDS.some((k) => askedKinds.includes(k));
+    if (!narrowing) return 0;
+    const ids = new Set<number>();
+    for (const t of terms) {
+      const m = lists.get(t.key);
+      if (t.op !== "not" && m) for (const id of unjudgedMembers(m, t.side)) ids.add(id);
+    }
+    return ids.size;
+  }, [terms, lists, askedKinds]);
   const unanswerable = effectUnanswerable || (chosenKeys.length > 0 && chosenKeys.every((k) => lists.has(k))
     && chosenKeys.some((k) => lists.get(k) === null));
 
@@ -844,6 +856,11 @@ export function CardSearch({
                         ? (commanderMode ? "commander matches" : "card matches")
                         : (commanderMode ? "commanders match" : "cards match")}
                       {matches.length > shown ? `, showing the first ${shown}` : ""}.</>}
+                {unjudgedCount > 0 && (
+                  <>{" "}{unjudgedCount.toLocaleString("en-US")} more {unjudgedCount === 1 ? "is" : "are"} on these
+                    events by what {unjudgedCount === 1 ? "it is" : "they are"} (being cast, entering, a keyword like
+                    lifelink) rather than by an ability, so the ability filters can't judge {unjudgedCount === 1 ? "it" : "them"} and leave {unjudgedCount === 1 ? "it" : "them"} out.</>
+                )}
               </p>
               {/* THE ORDER NAMES ITS AXIS AND THE DIRECTION IS ITS OWN CONTROL (owner 2026-09-22):
                 * "biggest first" did not say whether it meant power or toughness, and there was no

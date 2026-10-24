@@ -1007,3 +1007,13 @@ test("the effect rows are offered only once an event is asked", async () => {
   await userEvent.click(await screen.findByText("Add a filter"));
   expect(screen.queryByRole("button", { name: "Amount" })).toBeNull();
 });
+
+/** A MEMBER NO ABILITY DESCRIBES IS LEFT OUT AND COUNTED (review of 160d353), so an emptied list
+ *  never reads as "none of them do it". */
+test("the cards the ability filters cannot judge are counted beside the result", async () => {
+  const withUnjudged = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === MILL ? { p: [1, 2, 0], c: [], pf: [[millTwoOnce], [pingOne], []], cf: [] } : MEMBERS[k] ?? null;
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered`, { members: withUnjudged });
+  expect(await screen.findByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
+  expect(screen.getByText(/1 more is on these events by what it is/)).toBeInTheDocument();
+});

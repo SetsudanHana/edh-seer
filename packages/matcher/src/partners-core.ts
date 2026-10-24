@@ -11,7 +11,7 @@ import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
 import { FACT_KINDS, POLYMORPH_HIT_MV, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
-import { keywordAbilities } from "./implied.js";
+import { impliedCounterEvents, impliedGraveyardEvents, keywordAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { isRefusedTrigger, isSelfLoss } from "./claims.js";
 import { parseSubject } from "@edh-seer/tagger/subject";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "./hierarchy.js";
@@ -343,18 +343,39 @@ const damageSizesOf = (d: DeckCard, verb: string): number[] => [...new Set(claim
   .filter((x) => /^\d+$/.test(x))
   .map(Number))].sort((a, b) => a - b);
 
-/** PER CARD, ONCE: every key its abilities supply, with their facts. Matched the way `effectOrder`
- *  matches an ability to a key, so the filter and the order agree on which ability is meant. */
-const supplyFactsOfCard = perCard((d: DeckCard): Map<string, number[]> =>
-  supplyFactsOf(claimingAbilitiesOf(d), (e) => splitKey(eventKey(e)).flatMap(supplyForms)));
-/** The asker side: a trigger's keys (not its own self-trigger, as `demandKeysOf`), a static's
- *  reach, and the intervening-if families. Feeder keys (board counts) carry no ability fact. */
+/** PER CARD, ONCE: every key its abilities supply, with their facts. Each ability's own emits and
+ *  the events `producerEvents` DERIVES from them -- a discard or a death is also "a card goes to a
+ *  graveyard", a proliferate also "a counter is added" -- so a looter answers the graveyard key and
+ *  a proliferate spell the counter key with their own facts (review of 160d353: both shipped `[]`).
+ *  What stays fact-less is what the card supplies by BEING: cast, enters, and printed keywords
+ *  (lifelink, extort), which no derived ability carries. The page counts those apart. */
+const supplyFactsOfCard = perCard((d: DeckCard): Map<string, number[]> => {
+  const chars = d.tags?.characteristics;
+  return supplyFactsOf(claimingAbilitiesOf(d), (a) => {
+    if (!chars) return [];
+    const base = selfLeavesTypes((a.emits ?? []).map(normalizeZoneEvent), chars);
+    const events = [...base, ...selfFillTypes(impliedGraveyardEvents(base), chars), ...impliedCounterEvents(base)];
+    return events.flatMap((e) => splitKey(eventKey(e)).flatMap(supplyForms));
+  });
+});
+/** ONE ABILITY AS A WHOLE CARD, for the feeder readers, which walk a card's abilities themselves.
+ *  No keywords, so a keyword's own feeder (delve) is not handed to the ability that happens to sit
+ *  beside it. */
+const withOnly = (d: DeckCard, a: CardTags["abilities"][number]): DeckCard => (d.tags
+  ? { ...d, tags: { ...d.tags, abilities: [a], characteristics: { ...d.tags.characteristics, keywords: [] } } }
+  : d);
+/** The asker side, key for key what `consumersOf` files: a trigger's keys (not its own self-trigger,
+ *  as `demandKeysOf`), the intervening-if families, a static's reach, and the FEEDER keys -- the
+ *  fodder a sacrifice outlet eats, the graveyard a reanimator reads, the board a count scales on,
+ *  the abilities a copier copies (review of 160d353: every one shipped `[]`). Delve's fill is the
+ *  card's keyword, not an ability, and stays fact-less. */
 const demandFactsOfCard = perCard((d: DeckCard): Map<string, number[]> =>
   demandFactsOf(claimingAbilitiesOf(d), (a) => [
     ...(a.trigger?.subject?.self === true ? []
       : (a.trigger?.verbs ?? []).flatMap((v) => splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)))),
     ...(a.conditionCares ?? []).filter((t) => POOL_CONDITION_FAMILIES.test(t)).flatMap(conditionDemandKeys),
     ...staticKeysOfAbility(a),
+    ...feederDemandsOf(withOnly(d, a)).map((f) => f.key),
   ]));
 
 /** THE COUNTS FILE, as `event-frequency.json` ships it (roadmap AJ3). `supply` is how many cards
