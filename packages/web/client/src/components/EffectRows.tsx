@@ -1,0 +1,114 @@
+import { useId } from "react";
+import { ABILITY_KINDS, REPEATS_LADDER, type FactKind } from "@edh-seer/matcher/member-facts";
+import type { Repeats } from "@edh-seer/tagger";
+import { RangeRow } from "./RangeRow.js";
+
+/** HOW THE ASKED EVENTS HAPPEN (owner, 2026-10-24): three rows that narrow the sentence's events
+ *  rather than the cards. Each says so in its own words, because a reader who adds "Amount" and
+ *  sees nothing change needs to know it is waiting for a "causes" event. */
+
+/** The rules' own words for the five kinds. "Spell" is what an instant or sorcery does when it
+ *  resolves; "Whenever you cast" is a trigger. */
+export const ABILITY_KIND_LABEL: Record<FactKind, string> = {
+  spell: "Spell",
+  triggered: "Triggered",
+  activated: "Activated",
+  static: "Static",
+  replacement: "Replacement",
+};
+
+/** THE LADDER IN A PLAYER'S WORDS. `per-cycle` is once a round -- your turn, or one use of a tap
+ *  ability; `per-turn` fires on every player's turn. */
+export const REPEATS_LABEL: Record<(typeof REPEATS_LADDER)[number], string> = {
+  once: "Once",
+  "per-cycle": "Once a round",
+  "per-turn": "Every turn",
+  repeatable: "Any number of times",
+  continuous: "Always on",
+};
+
+export function AbilityKindRow(
+  { chosen, onChange }: { chosen: readonly FactKind[]; onChange: (next: FactKind[]) => void },
+): React.JSX.Element {
+  return (
+    <fieldset className="flex flex-wrap items-center gap-2">
+      <legend className="eyebrow">Ability type</legend>
+      {ABILITY_KINDS.map((k) => {
+        const on = chosen.includes(k);
+        return (
+          <button
+            key={k} type="button" aria-pressed={on} className="chip"
+            onClick={() => onChange(on ? chosen.filter((x) => x !== k) : [...chosen, k])}
+          >
+            {ABILITY_KIND_LABEL[k]}
+          </button>
+        );
+      })}
+    </fieldset>
+  );
+}
+
+export function RepeatsRow(
+  { min, onChange }: { min: Repeats | undefined; onChange: (next: Repeats | undefined) => void },
+): React.JSX.Element {
+  const id = useId();
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="eyebrow" htmlFor={id}>How often</label>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-(--muted) text-sm">at least</span>
+        <select
+          id={id} className="field w-52"
+          value={min ?? ""}
+          onChange={(e) => onChange(e.target.value === "" ? undefined : e.target.value as Repeats)}
+        >
+          <option value="">any</option>
+          {REPEATS_LADDER.map((r) => <option key={r} value={r}>{REPEATS_LABEL[r]}</option>)}
+        </select>
+      </div>
+    </div>
+  );
+}
+
+/** THE SIZE OF ONE OCCURRENCE (owner: "per occurrence, cause I am looking for noncombat pingers
+ *  that ping for exactly 1"). "1 to 1" is exactly one. A variable size is left out unless asked
+ *  for: "equal to its power" is not an answer to "exactly 1".
+ *
+ *  ON A "CARES ABOUT" EVENT THE SAME RANGE READS A REPLACEMENT'S CHANGE (owner, 2026-10-24):
+ *  Torbran adds 2, Furnace of Rath doubles. The op picks which kind of change. */
+export function AmountRow(
+  { min, max, variable, change, onChange }: {
+    min: number | undefined; max: number | undefined; variable: boolean; change: "plus" | "times" | undefined;
+    onChange: (next: { min: number | undefined; max: number | undefined; variable: boolean; change: "plus" | "times" | undefined }) => void;
+  },
+): React.JSX.Element {
+  const id = useId();
+  return (
+    <div className="flex flex-col gap-2">
+      <RangeRow
+        label="Amount, each time" min={min} max={max} ceiling={20}
+        onChange={(r) => onChange({ ...r, variable, change })}
+      />
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={variable} onChange={(e) => onChange({ min, max, variable: e.target.checked, change })} />
+        Include variable amounts (X, “equal to its power”)
+      </label>
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <label htmlFor={id}>A replacement that</label>
+        <select
+          id={id} className="field w-40"
+          value={change ?? ""}
+          onChange={(e) => onChange({ min, max, variable, change: e.target.value === "" ? undefined : e.target.value as "plus" | "times" })}
+        >
+          <option value="">adds or multiplies</option>
+          <option value="plus">adds (+N)</option>
+          <option value="times">multiplies (×N)</option>
+        </select>
+      </div>
+      <p className="text-(--muted) text-sm max-w-[55ch]">
+        On a “causes” event this is how much one use does. On a “cares about” event it is how much a
+        replacement changes it: Torbran adds 2, a doubler multiplies by 2.
+      </p>
+    </div>
+  );
+}

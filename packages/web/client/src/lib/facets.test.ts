@@ -1,5 +1,5 @@
 import { expect, test, describe } from "vitest";
-import { coloursFit, eventsFromParams, eventsToParams, orderOf, intersect, rateLabel, compileCharacteristics, filterKindsOf, withoutFilterKind, type EventQuery } from "./facets.js";
+import { coloursFit, eventsFromParams, eventsToParams, orderOf, intersect, rateLabel, compileCharacteristics, filterKindsOf, withoutFilterKind, factFilterOf, type EventQuery } from "./facets.js";
 
 /** THE SEARCH IS ASKED IN EVENTS (spec 2026-09-19): repeated params because a key can carry a
  *  comma, everything ANDs, and identity is fits-in on Cards and exact on Commanders. */
@@ -434,4 +434,44 @@ test("with no cause asked, 'how much it does' falls back to connections, even of
   const none: EventQuery = { produce: [], consume: ["dies|creature|-|-"], colours: [], types: [], subtypes: [], keywords: [], cardColours: [] };
   expect(orderOf(none)).toBe("partners");
   expect(orderOf(eventsFromParams(new URLSearchParams("consume=dies%7Ccreature%7C-%7C-&sort=effect")))).toBe("partners");
+});
+
+/** HOW THE EVENTS HAPPEN (owner, 2026-10-24): ability kind, how often, and the size per occurrence.
+ *  The owner's own question is the fixture -- noncombat pingers for exactly 1, repeatedly. */
+describe("the effect filters", () => {
+  const base: EventQuery = { produce: ["non-combat-damage|*|*|*"], consume: [], colours: [], types: [], subtypes: [], keywords: [], cardColours: [] };
+
+  test("survive the URL, zero included", () => {
+    const q: EventQuery = { ...base, abilityKinds: ["triggered", "replacement"], repeatsMin: "per-cycle", amountMin: 1, amountMax: 1, amountVariable: true };
+    expect(eventsFromParams(eventsToParams(q, new URLSearchParams()))).toEqual(q);
+    const zero: EventQuery = { ...base, amountMin: 0, amountMax: 0 };
+    expect(eventsFromParams(eventsToParams(zero, new URLSearchParams()))).toEqual(zero);
+  });
+
+  test("an unknown word or a junk number asks nothing", () => {
+    const q = eventsFromParams(new URLSearchParams("ability=sorcery&ability=triggered&repeats=often&amtmin=abc&amtvar=yes"));
+    expect(q.abilityKinds).toEqual(["triggered"]);
+    expect(q.repeatsMin).toBeUndefined();
+    expect(q.amountMin).toBeUndefined();
+    expect(q.amountVariable).toBeUndefined();
+  });
+
+  test("each is its own row, after the events, and removing one leaves the others", () => {
+    const q: EventQuery = { ...base, abilityKinds: ["triggered"], repeatsMin: "repeatable", amountMax: 1 };
+    expect(filterKindsOf(q)).toEqual(["produce", "abilityKind", "repeats", "amount"]);
+    const noAmount = withoutFilterKind({ ...q, amountVariable: true }, "amount");
+    expect(noAmount.amountMax).toBeUndefined();
+    expect(noAmount.amountVariable).toBeUndefined();
+    expect(noAmount.repeatsMin).toBe("repeatable");
+    expect(withoutFilterKind(q, "abilityKind").abilityKinds).toBeUndefined();
+  });
+
+  /** ON THE CARES-ABOUT SIDE THE SIZE IS A REPLACEMENT'S CHANGE: "times, 2 to 2" is the doublers. */
+  test("the size reads on both sides, the variable toggle on causes and the change op on cares-about", () => {
+    const q: EventQuery = { ...base, abilityKinds: ["replacement"], amountMin: 2, amountMax: 2, amountVariable: true, amountChange: "times" };
+    expect(factFilterOf(q, "makes")).toEqual({ kinds: ["replacement"], amountMin: 2, amountMax: 2, includeVariable: true });
+    expect(factFilterOf(q, "pays")).toEqual({ kinds: ["replacement"], amountMin: 2, amountMax: 2, changeOp: "times" });
+    expect(eventsFromParams(eventsToParams(q, new URLSearchParams()))).toEqual(q);
+    expect(withoutFilterKind(q, "amount").amountChange).toBeUndefined();
+  });
 });

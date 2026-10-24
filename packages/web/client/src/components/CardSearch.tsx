@@ -4,7 +4,9 @@ import { useSearchParams } from "react-router";
 import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
-import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, orderOf, withoutFilterKind, FILTER_KINDS, NATURAL_DIR, type EventQuery, type FilterKind } from "../lib/facets.js";
+import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, factFilterOf, orderOf, withoutFilterKind, EFFECT_KINDS, FILTER_KINDS, NATURAL_DIR, type EventQuery, type FilterKind } from "../lib/facets.js";
+import { membersPassing, unjudgedMembers } from "../lib/effect-filter.js";
+import { AbilityKindRow, AmountRow, RepeatsRow } from "./EffectRows.js";
 import { EventSentence, termWords } from "./EventSentence.js";
 import { answerTerms, termsOf, withTerms } from "../lib/event-terms.js";
 import { CardTile } from "./CardTile.js";
@@ -105,6 +107,9 @@ const FILTER_LABEL: Record<FilterKind, string> = {
   toughness: "Toughness",
   produce: "Causes",
   consume: "Cares about",
+  abilityKind: "Ability type",
+  repeats: "How often",
+  amount: "Amount",
 };
 
 /** The panel's rows: every kind but the two events, which the sentence asks. */
@@ -206,7 +211,10 @@ export function CardSearch({
   }, [askedKinds]);
   // THE EVENTS ARE NOT ROWS ANY MORE: the sentence above the panel asks them (owner, 2026-09-27).
   const shownKinds = ROW_KINDS.filter((k) => askedKinds.includes(k) || pending.includes(k));
-  const available = ROW_KINDS.filter((k) => !shownKinds.includes(k));
+  // HOW THE EVENTS HAPPEN IS OFFERED ONCE AN EVENT IS ASKED (owner, 2026-10-24): before that the
+  // three rows would narrow nothing, and a control that changes nothing reads as a broken one.
+  const eventAsked = terms.some((t) => t.op !== "not");
+  const available = ROW_KINDS.filter((k) => !shownKinds.includes(k) && (eventAsked || !EFFECT_KINDS.includes(k)));
   const [menuOpen, setMenuOpen] = useState(false);
   // REMOVING A ROW CLEARS ITS QUESTION AND FORGETS THE ROW. Doing only the first would leave an
   // empty control standing where a reader had just said they were finished with it.
@@ -267,7 +275,10 @@ export function CardSearch({
   // an EMPTY page with no count -- the filter applied and the list was never drawn, which reads as
   // "no Slivers" rather than as "nothing asked". `filterKindsOf` is the same reading of the same
   // query, so asking it here means a dimension can never again be added to one and not the other.
-  const asked = needle.length > 0 || chosenKeys.length > 0 || filterKindsOf(eventQuery).length > 0;
+  // THE EFFECT ROWS ARE NOT A QUESTION ON THEIR OWN: they narrow the events, and with none asked an
+  // "Amount 1 to 1" link would otherwise draw the whole index as its answer.
+  const asked = needle.length > 0 || chosenKeys.length > 0
+    || filterKindsOf(eventQuery).some((k) => !EFFECT_KINDS.includes(k));
   // ONCE PER INDEX, not once per pass: `some` over 25,582 rows is cheap but it is not free, and
   // the answer only changes when a different artifact loads.
   const carriesColours = useMemo(() => (index ?? []).some((e) => e.c !== undefined), [index]);
@@ -280,14 +291,36 @@ export function CardSearch({
   // card causes the event, which is a claim, and this engine says nothing rather than guessing.
   // AND THE OPERATORS (owner, 2026-09-27): every `and` term, at least one `or` term, no `not` term.
   // `keep` null is the whole index; `drop` is taken away from whatever is kept.
+  // A SHARD BUILT BEFORE THE FACTS SHIPPED CANNOT ANSWER HOW AN EVENT HAPPENS (`membersPassing`).
+  const effectUnanswerable = useMemo(() => terms.some((t) => {
+    const m = lists.get(t.key);
+    return t.op !== "not" && m != null && membersPassing(m, t.side, factFilterOf(eventQuery, t.side)) === null;
+  }), [terms, lists, eventQuery]);
   const keptIds = useMemo((): { keep: Set<number> | null; drop: Set<number> } | null | undefined => {
     if (chosenKeys.length === 0) return null;
     if (chosenKeys.some((k) => !lists.has(k))) return undefined;
     if (chosenKeys.some((k) => lists.get(k) === null)) return undefined;
-    return answerTerms(terms, (t) => (t.side === "makes" ? lists.get(t.key)!.p : lists.get(t.key)!.c));
-  }, [chosenKeys, lists, terms]);
-  const unanswerable = chosenKeys.length > 0 && chosenKeys.every((k) => lists.has(k))
-    && chosenKeys.some((k) => lists.get(k) === null);
+    // HOW THE EVENT HAPPENS NARROWS THE `and` AND `or` TERMS, never a `not` one: "never makes a
+    // player lose life" means never, not "never by a triggered ability" (owner, 2026-10-24).
+    if (effectUnanswerable) return undefined;
+    return answerTerms(terms, (t) => (t.op === "not"
+      ? (t.side === "makes" ? lists.get(t.key)!.p : lists.get(t.key)!.c)
+      : membersPassing(lists.get(t.key)!, t.side, factFilterOf(eventQuery, t.side))!));
+  }, [chosenKeys, lists, terms, eventQuery, effectUnanswerable]);
+  // HOW MANY CARDS THE FILTERS COULD NOT JUDGE (review of 160d353): on an asked event by what they
+  // are -- cast, entering, lifelink -- rather than by an ability. Left out, and said so.
+  const unjudgedCount = useMemo(() => {
+    const narrowing = EFFECT_KINDS.some((k) => askedKinds.includes(k));
+    if (!narrowing) return 0;
+    const ids = new Set<number>();
+    for (const t of terms) {
+      const m = lists.get(t.key);
+      if (t.op !== "not" && m) for (const id of unjudgedMembers(m, t.side)) ids.add(id);
+    }
+    return ids.size;
+  }, [terms, lists, askedKinds]);
+  const unanswerable = effectUnanswerable || (chosenKeys.length > 0 && chosenKeys.every((k) => lists.has(k))
+    && chosenKeys.some((k) => lists.get(k) === null));
 
   // ONE RULE WITH THE HEADER FIELD. `matchNames` is the rule; this page adds the commander and
   // colour predicates the header does not offer, and the events narrow that answer by position.
@@ -548,6 +581,33 @@ export function CardSearch({
             onChange={(r) => setEvents({ ...eventQuery, touMin: r.min, touMax: r.max })}
           />
         );
+      case "abilityKind":
+        return (
+          <AbilityKindRow
+            chosen={eventQuery.abilityKinds ?? []}
+            onChange={(next) => { const { abilityKinds: _a, ...rest } = eventQuery; setEvents(next.length > 0 ? { ...rest, abilityKinds: next } : rest); }}
+          />
+        );
+      case "repeats":
+        return (
+          <RepeatsRow
+            min={eventQuery.repeatsMin}
+            onChange={(next) => { const { repeatsMin: _a, ...rest } = eventQuery; setEvents(next !== undefined ? { ...rest, repeatsMin: next } : rest); }}
+          />
+        );
+      case "amount":
+        return (
+          <AmountRow
+            min={eventQuery.amountMin} max={eventQuery.amountMax} variable={eventQuery.amountVariable === true}
+            change={eventQuery.amountChange}
+            onChange={(r) => {
+              const { amountMin: _a, amountMax: _b, amountVariable: _c, amountChange: _d, ...rest } = eventQuery;
+              setEvents({ ...rest, ...(r.min !== undefined ? { amountMin: r.min } : {}),
+                ...(r.max !== undefined ? { amountMax: r.max } : {}), ...(r.variable ? { amountVariable: true } : {}),
+                ...(r.change !== undefined ? { amountChange: r.change } : {}) });
+            }}
+          />
+        );
       /* THE EVENTS ARE ASKED BY THE SENTENCE, not by a row (owner, 2026-09-27); these two kinds
        * stay kinds so a link's question is still "asked", and are never drawn as rows. */
       case "produce":
@@ -766,7 +826,9 @@ export function CardSearch({
             </ul>
           </div>
         : unanswerable
-        ? <p role="status" className="text-(--muted)">This site's card data can't answer one of those events. Remove it to search again.</p>
+        ? <p role="status" className="text-(--muted)">{effectUnanswerable
+          ? "This site's card data predates the ability filters. Remove the ability type, how often and amount filters to search again."
+          : "This site's card data can't answer one of those events. Remove it to search again."}</p>
         : matches === null
         ? <p className="eyebrow text-(--muted)">reading what cards do</p>
         : (
@@ -794,6 +856,11 @@ export function CardSearch({
                         ? (commanderMode ? "commander matches" : "card matches")
                         : (commanderMode ? "commanders match" : "cards match")}
                       {matches.length > shown ? `, showing the first ${shown}` : ""}.</>}
+                {unjudgedCount > 0 && (
+                  <>{" "}{unjudgedCount.toLocaleString("en-US")} more {unjudgedCount === 1 ? "is" : "are"} on these
+                    events by what {unjudgedCount === 1 ? "it is" : "they are"} (being cast, entering, a keyword like
+                    lifelink) rather than by an ability, so the ability filters can't judge {unjudgedCount === 1 ? "it" : "them"} and leave {unjudgedCount === 1 ? "it" : "them"} out.</>
+                )}
               </p>
               {/* THE ORDER NAMES ITS AXIS AND THE DIRECTION IS ITS OWN CONTROL (owner 2026-09-22):
                 * "biggest first" did not say whether it meant power or toughness, and there was no
