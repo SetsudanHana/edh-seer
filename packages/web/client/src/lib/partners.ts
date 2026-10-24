@@ -1,5 +1,6 @@
 import { StaticLookup } from "@edh-seer/matcher/static-lookup";
 import type { CardPageRecord, EventFrequencyFile, EventMembers, NameIndexEntry, PartnerRow } from "@edh-seer/matcher/partners-core";
+import type { SimilarItem } from "@edh-seer/matcher/similar-shard";
 import { CARD_PAGE_DATA_ID } from "./inject.js";
 
 /** THE CARD PAGES' DATA PLANE, and it is deliberately three lines over `StaticLookup`.
@@ -13,7 +14,11 @@ import { CARD_PAGE_DATA_ID } from "./inject.js";
  *  NO INSTANCE IS MEMOIZED HERE. A navigation pays one extra `manifest.json` read; the shard bytes
  *  -- the part that is actually large -- are cached by URL in the browser's own cache, which is
  *  where the version directory exists to put them. */
-export type CardPageData = CardPageRecord;
+/** THE SHARD RECORD PLUS ITS DECODED SIMILAR LISTS (#1341). `similar` is the card page's list and
+ *  `commanderSimilar` the commander page's, within the commander's colours; both are `[]` when the
+ *  shard predates them (OPTIONAL IN THE TYPE only so the many page fixtures need not carry them;
+ *  `loadCardPage` always sets both, and a reader writes `page.similar ?? []`). The raw `sim`/`commanderSim` codes stay on the record for the edge's inline copy. */
+export type CardPageData = CardPageRecord & { similar?: SimilarItem[]; commanderSimilar?: SimilarItem[] };
 export type { EventFrequencyFile, EventMembers, NameIndexEntry, PartnerRow };
 
 /** THE RECORD THE EDGE ALREADY PUT IN THIS DOCUMENT, or null.
@@ -32,23 +37,27 @@ export type { EventFrequencyFile, EventMembers, NameIndexEntry, PartnerRow };
  *  EVERY FAILURE IS `null`, WHICH MEANS "ASK THE NETWORK". No tag (a dev server, the SPA fallback,
  *  a degraded edge response), a body that will not parse, no `document` at all under SSR or a test:
  *  all of them fall through to the fetch that has always been here. */
-export function inlineCardPage(slug: string, doc?: Document): CardPageData | null {
+export function inlineCardPage(slug: string, doc?: Document): CardPageRecord | null {
   const d = doc ?? (typeof document === "undefined" ? undefined : document);
   const el = d?.getElementById(CARD_PAGE_DATA_ID);
   if (!el || el.getAttribute("data-slug") !== slug) return null;
   try {
-    return JSON.parse(el.textContent ?? "") as CardPageData;
+    return JSON.parse(el.textContent ?? "") as CardPageRecord;
   } catch {
     return null;
   }
 }
 
-export function loadCardPage(
+export async function loadCardPage(
   slug: string, baseUrl: string, fetchImpl: typeof fetch = fetch,
 ): Promise<CardPageData | null> {
   const inline = inlineCardPage(slug);
-  if (inline) return Promise.resolve(inline);
-  return new StaticLookup(baseUrl, fetchImpl).cardPage(slug);
+  const lookup = inline ? sharedLookup(baseUrl, fetchImpl) : new StaticLookup(baseUrl, fetchImpl);
+  const rec: CardPageRecord | null = inline ?? await lookup.cardPage(slug);
+  if (!rec) return null;
+  // A decode that cannot read the index is an absent section, not a card page that will not load.
+  const lists = await lookup.similarOf(rec).catch(() => ({ similar: [], commanderSimilar: [] }));
+  return { ...rec, ...lists };
 }
 
 /** THE TYPE AND SUBTYPE TABLES the index's `t`/`s` codes point into (2026-09-21). Its own loader

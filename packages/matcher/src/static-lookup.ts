@@ -4,6 +4,7 @@ import type { CardLookup } from "@edh-seer/data/resolve";
 import type { CardTagsLookup } from "./deck-cards.js";
 import type { AnalysisSources } from "./orchestrate.js";
 import { shardOf } from "./bin/build-static-core.js";
+import { decodeSimilar, type SimilarItem } from "./similar-shard.js";
 import { partnerShardOf, type CardPageRecord, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "./partners-core.js";
 import { eventShardOf } from "./bin/events-index-core.js";
 
@@ -321,7 +322,7 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
    *  guaranteed second download of a 4.3 MB file and a second parse of it, while `partners.ts`
    *  claimed one request per session. The rows and the tables come out of the same body because
    *  they ARE the same body. */
-  private nameIndexBody(): Promise<NameIndexEntry[] | { types?: string[]; subtypes?: string[]; keywords?: string[]; pairTags?: string[]; cards?: NameIndexEntry[] } | null> {
+  private nameIndexBody(): Promise<NameIndexEntry[] | { types?: string[]; subtypes?: string[]; keywords?: string[]; pairTags?: string[]; similarChips?: [string, string][]; cards?: NameIndexEntry[] } | null> {
     return (this.nameIndexPromise ??= (async () => {
       const res = await this.fetchCached("/name-index.json");
       return res.ok ? await res.json() as NameIndexEntry[] | { cards?: NameIndexEntry[] } : null;
@@ -346,10 +347,22 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
    *  after the first two and is missing from an artifact built between, which the same `?? []`
    *  covers: an absent table means no row has a `k`, so the keyword row matches nothing and offers
    *  nothing rather than offering words it cannot answer. */
-  async nameIndexVocabulary(): Promise<{ types: string[]; subtypes: string[]; keywords: string[]; pairTags: string[] }> {
+  async nameIndexVocabulary(): Promise<{ types: string[]; subtypes: string[]; keywords: string[]; pairTags: string[]; similarChips: [string, string][] }> {
     const body = await this.nameIndexBody();
-    if (!body || Array.isArray(body)) return { types: [], subtypes: [], keywords: [], pairTags: [] };
-    return { types: body.types ?? [], subtypes: body.subtypes ?? [], keywords: body.keywords ?? [], pairTags: body.pairTags ?? [] };
+    if (!body || Array.isArray(body)) return { types: [], subtypes: [], keywords: [], pairTags: [], similarChips: [] };
+    return { types: body.types ?? [], subtypes: body.subtypes ?? [], keywords: body.keywords ?? [], pairTags: body.pairTags ?? [], similarChips: body.similarChips ?? [] };
+  }
+
+  /** A PAGE RECORD'S SIMILAR LISTS, DECODED against the name index and chip table this lookup already
+   *  holds (#1341). Both lists are empty for a record from a shard built before they shipped, and
+   *  when the index cannot be read: the section is then absent, never wrong. */
+  async similarOf(rec: Pick<CardPageRecord, "sim" | "commanderSim">): Promise<{ similar: SimilarItem[]; commanderSimilar: SimilarItem[] }> {
+    if (!rec.sim?.length && !rec.commanderSim?.length) return { similar: [], commanderSimilar: [] };
+    const [index, vocab] = await Promise.all([this.nameIndex(), this.nameIndexVocabulary()]);
+    return {
+      similar: decodeSimilar(rec.sim, index, vocab.similarChips),
+      commanderSimilar: decodeSimilar(rec.commanderSim, index, vocab.similarChips),
+    };
   }
 
   /** ONE EVENT'S CARDS (roadmap AJ3), from the shard its key hashes into -- one fetch per event a

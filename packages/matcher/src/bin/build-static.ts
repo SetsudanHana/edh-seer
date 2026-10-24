@@ -19,7 +19,9 @@ import { connect, docToCard, loadConfig } from "@edh-seer/data";
 import { DERIVED_COLLECTION, DERIVE_VERSION, type CardTags } from "@edh-seer/tagger";
 import { loadTokenTags } from "../index.js";
 import { SHARD_COUNT, comboIndex, shardOf, shippedTags, shippedTokenTags, staleRows, type StaticCombo } from "./build-static-core.js";
-import { browseSlices, buildPartnerArtifact, type PartnerId } from "../partners-core.js";
+import { browseSlices, buildPartnerArtifact, commanderPlayable, partnerShardOf, type PartnerId } from "../partners-core.js";
+import { similarIndex } from "../similar.js";
+import { ChipTable, encodeSimilar } from "../similar-shard.js";
 import { eventShards } from "./events-index-core.js";
 import { eventPatterns, patternFrequency } from "../event-pattern.js";
 import { loadHierarchy } from "../hierarchy.js";
@@ -193,6 +195,31 @@ const partnerDeckCards = pageCards.map((card) => ({
 const partners = workers <= 1
   ? buildPartnerArtifact(partnerDeckCards as never, loadHierarchy())
   : await buildPartnerArtifactInWorkers(partnerDeckCards as never, pageCards.map((c) => c._id), loadHierarchy(), { workers });
+// CARDS THAT DO THE SAME OR A SIMILAR JOB (#1341): one list per page card, and a second inside the
+// colour identity for a commander. CANDIDATES ARE PAGE CARDS THAT CAN BE IN A COMMANDER DECK, because
+// the UI links each one: the index is built over exactly `partners.index`, so a candidate's id IS its
+// name-index position and the shard row needs no slug. Computed here, after the partner build, on the
+// main thread (workers return only after the index is final).
+const similarStart = Date.now();
+const deckByName = new Map<string, (typeof partnerDeckCards)[number]>();
+for (const d of partnerDeckCards) if (!deckByName.has(d.card.name)) deckByName.set(d.card.name, d);
+const similar = similarIndex(partners.index.flatMap((e, id) => {
+  const d = deckByName.get(e.name);
+  return d && commanderPlayable(d as never) ? [{ id, name: e.name, tags: d.tags }] : [];
+}));
+const chipTable = new ChipTable();
+let similarRows = 0;
+partners.index.forEach((e, id) => {
+  const rec = partners.shards.get(partnerShardOf(e.slug))?.[e.slug];
+  if (!rec) return;
+  const own = similar.similarTo(id, { limit: 24 });
+  if (own.length > 0) { rec.sim = encodeSimilar(own, chipTable); similarRows += own.length; }
+  if (e.commander) {
+    const within = similar.similarTo(id, { limit: 24, identityWithin: e.identity });
+    if (within.length > 0) { rec.commanderSim = encodeSimilar(within, chipTable); similarRows += within.length; }
+  }
+});
+console.log(`similar: ${similarRows} rows, ${chipTable.chips.length} distinct chips, ${((Date.now() - similarStart) / 1000).toFixed(1)} s`);
 // THE REPORT'S CANDIDATE POOL RIDES IN THE CARD SHARDS (spec 2026-09-24 deck suggestions, §1): the
 // report already prefetches these, so `pi` costs it no request, where reading `partners/` would
 // have cost about 9 MB a report. One entry object serves every alias of a card, so setting it once
@@ -250,6 +277,7 @@ writeFileSync(join(stagingDir, "event-frequency.json"), JSON.stringify({
 writeFileSync(join(stagingDir, "name-index.json"), JSON.stringify({
   types: partners.typeNames, subtypes: partners.subtypeNames, keywords: partners.keywordNames,
   pairTags: partners.pairTagNames,
+  similarChips: chipTable.chips,
   cards: partners.index,
 }));
 // EVERY LAND A COMMANDER DECK CAN PLAY (#767), by name and colour identity. The name index holds only

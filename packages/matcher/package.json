@@ -30,6 +30,7 @@
     "./quality": "./src/quality.ts",
     "./same-job": "./src/same-job.ts",
     "./similar": "./src/similar.ts",
+    "./similar-shard": "./src/similar-shard.ts",
     "./staples": "./src/staples.ts",
     "./archetypes": "./src/archetypes.ts",
     "./brackets": "./src/brackets.ts",

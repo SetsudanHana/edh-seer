@@ -34,6 +34,7 @@ import type { DeckCard, Hierarchy } from "./types.js";
 // THE SLUG RULE LIVES IN A LEAF (`../slug.ts`) so the browser's search field can import it without
 // pulling this whole module -- and, through `themesOf`, the archetype table -- into the entry chunk.
 import { slugOf } from "./slug.js";
+import type { SimilarRow } from "./similar-shard.js";
 import { BUILD_CATEGORIES, detectAnswerClasses, detectBuildCategories, rampGrade, type BuildCategory } from "./build.js";
 import { POOL_CLASSES } from "./answer-pool.js";
 import { BASIC_LAND_TYPE_SET } from "./typeline.js";
@@ -1764,6 +1765,12 @@ export interface CardPageRecord {
    *  with -- the index's `r` field, by name. A card page with no partners explains its job from
    *  these (`jobOf`), and a card with a job is indexable. Absent on a card with no role. */
   roles?: BuildCategory[];
+  /** CARDS THAT DO THE SAME OR A SIMILAR JOB (#1341), as `SimilarRow`s over the name index (`similar-shard.ts`).
+   *  Absent on a shard built before it shipped, which reads as empty. The page reads the DECODED
+   *  `similar` (web `loadCardPage`), never this. */
+  sim?: SimilarRow[];
+  /** The same list restricted to the commander's colour identity. Commander records only. */
+  commanderSim?: SimilarRow[];
 }
 
 export interface NameIndexEntry {
