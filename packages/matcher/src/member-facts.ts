@@ -60,6 +60,14 @@ export function factAmountOf(amount: string | undefined): FactAmount {
   return /^\d+$/.test(s) ? { kind: "fixed", value: Number(s) } : { kind: "variable" };
 }
 
+/** "PART OF THIS CARD'S MEMBERSHIP IS NOT AN ABILITY" -- a reserved packed value, not a fact. A card
+ *  on a key by what it is (a keyword, being cast, entering) AND by an ability ships the ability's
+ *  facts plus this, so a filter that passes only the ability cannot silently drop a card it never
+ *  judged. The kind field is three bits and `ABILITY_KINDS` fills 0-4, so kind 7 is no real packing;
+ *  `isUnjudgedFact` is the one test, and `factPasses`/`unpackFact` never see it. */
+export const UNJUDGED_FACT = 7;
+export const isUnjudgedFact = (n: number): boolean => n % 8 === 7;
+
 export function packFact(f: MemberFact): number {
   const value = "value" in f.amount ? f.amount.value : 0;
   const repeats = f.repeats === undefined ? 0 : REPEATS_LADDER.indexOf(f.repeats as (typeof REPEATS_LADDER)[number]) + 1;
@@ -122,7 +130,8 @@ export function demandFactsOf(abilities: readonly Ability[], keysOf: (a: Ability
 export interface FactFilter {
   /** Ability kinds to keep; empty or absent = any. */
   kinds?: readonly FactKind[];
-  /** Keep abilities firing at least this often on `REPEATS_LADDER`. An unlabelled one is dropped. */
+  /** Keep abilities firing at least this often on `REPEATS_LADDER`. An unlabelled one passes the
+   *  bottom rung ("at least once" is any) and, above it, is dropped and counted by `memberUndecided`. */
   minRepeats?: Repeats;
   /** Inclusive size range, per occurrence. `max` absent = no upper bound. */
   amountMin?: number;
@@ -142,7 +151,7 @@ export const isEmptyFilter = (f: FactFilter): boolean =>
 export function factPasses(f: MemberFact, q: FactFilter): boolean {
   if (q.kinds && q.kinds.length > 0 && !q.kinds.includes(f.kind)) return false;
   if (q.minRepeats !== undefined) {
-    if (f.repeats === undefined) return false;
+    if (f.repeats === undefined) return q.minRepeats === REPEATS_LADDER[0];
     if (REPEATS_LADDER.indexOf(f.repeats as (typeof REPEATS_LADDER)[number]) < REPEATS_LADDER.indexOf(q.minRepeats as (typeof REPEATS_LADDER)[number])) return false;
   }
   const change = f.amount.kind === "plus" || f.amount.kind === "times";
@@ -163,12 +172,24 @@ export function factPasses(f: MemberFact, q: FactFilter): boolean {
  *  the key by being played) passes only an empty filter. */
 export function memberPasses(facts: readonly number[] | undefined, q: FactFilter): boolean {
   if (isEmptyFilter(q)) return true;
-  return (facts ?? []).some((n) => factPasses(unpackFact(n), q));
+  return (facts ?? []).some((n) => !isUnjudgedFact(n) && factPasses(unpackFact(n), q));
 }
 
-/** HOW MANY OF A SIDE'S MEMBERS NO ABILITY FACT DESCRIBES: the cards on the key by what they are
- *  (cast, enter, a keyword) rather than by an ability. A filter leaves them out because it cannot
+/** A MEMBER THE FILTER COULD NOT FULLY JUDGE: no ability fact at all (on the key by what it is),
+ *  part of its membership by what it is (`UNJUDGED_FACT`), or an unlabelled ability against a
+ *  repeats minimum above the bottom rung. When such a member is not kept, the page says it was left
+ *  out unjudged rather than judged short. An empty filter judges everything. */
+export function memberUndecided(facts: readonly number[] | undefined, q: FactFilter): boolean {
+  if (isEmptyFilter(q)) return false;
+  const fs = facts ?? [];
+  if (fs.length === 0 || fs.some(isUnjudgedFact)) return true;
+  return q.minRepeats !== undefined && q.minRepeats !== REPEATS_LADDER[0]
+    && fs.some((n) => unpackFact(n).repeats === undefined);
+}
+
+/** HOW MANY OF A SIDE'S MEMBERS NO ABILITY FACT FULLY DESCRIBES: the cards on the key by what they are
+ *  (cast, enter, a keyword) rather than, or as well as, by an ability. A filter leaves them out because it cannot
  *  judge them, which is not the same as judging them and finding them short -- the page says so. */
 export function unjudged(facts: readonly (readonly number[])[] | undefined): number {
-  return (facts ?? []).filter((f) => f.length === 0).length;
+  return (facts ?? []).filter((f) => f.length === 0 || f.some(isUnjudgedFact)).length;
 }

@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { isPattern, narrowingOf, verbOfKey } from "@edh-seer/matcher/event-pattern";
 import { useSearchParams } from "react-router";
 import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
 import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, factFilterOf, orderOf, withoutFilterKind, EFFECT_KINDS, FILTER_KINDS, NATURAL_DIR, type EventQuery, type FilterKind } from "../lib/facets.js";
-import { membersPassing, unjudgedMembers } from "../lib/effect-filter.js";
+import { membersPassing, unjudgedLeftOut } from "../lib/effect-filter.js";
 import { AbilityKindRow, AmountRow, RepeatsRow } from "./EffectRows.js";
 import { EventSentence, termWords } from "./EventSentence.js";
 import { answerTerms, termsOf, withTerms } from "../lib/event-terms.js";
@@ -307,18 +307,33 @@ export function CardSearch({
       ? (t.side === "makes" ? lists.get(t.key)!.p : lists.get(t.key)!.c)
       : membersPassing(lists.get(t.key)!, t.side, factFilterOf(eventQuery, t.side))!));
   }, [chosenKeys, lists, terms, eventQuery, effectUnanswerable]);
+  // THE CARD-LEVEL PREDICATES, ONE RULE FOR THE LIST AND FOR THE "left out" COUNT: the name, the
+  // commander toggle, the colours and what the card is. `identityKeyOf` spells colourless "C" and
+  // `coloursFit` spells it "", the same normalisation the facet rows carried. Getting it wrong would
+  // make every colourless card answer only the `C` chip, which is the opposite of the fits-in ruling.
+  // Compiled ONCE per pass: the names become codes here, not inside the filter, or a chosen subtype
+  // costs a 488-entry scan per card on every keystroke. WHETHER THIS ARTIFACT CAN ANSWER A COLOUR
+  // QUESTION AT ALL is read off the rows rather than assumed: a missing `c` is colourless on a fresh
+  // artifact and meaningless on an old one, and the deploy ships `static-out/` without rebuilding it.
+  const fitCard = useCallback((entries: NameIndexEntry[]): NameIndexEntry[] => {
+    const named = needle.length === 0 ? entries : matchNames(entries, { query });
+    const identityOf = (e: NameIndexEntry): string => {
+      const key = identityKeyOf(e.identity);
+      return key === "C" ? "" : key;
+    };
+    const fitsCharacteristics = compileCharacteristics(eventQuery, { ...vocabulary, colours: carriesColours });
+    return named.filter((e) => (!commanderMode || e.commander)
+      && coloursFit(identityOf(e), colours, mode)
+      && fitsCharacteristics(e));
+  }, [needle, query, eventQuery, vocabulary, carriesColours, commanderMode, colours, mode]);
   // HOW MANY CARDS THE FILTERS COULD NOT JUDGE (review of 160d353): on an asked event by what they
   // are -- cast, entering, lifelink -- rather than by an ability. Left out, and said so.
   const unjudgedCount = useMemo(() => {
-    const narrowing = EFFECT_KINDS.some((k) => askedKinds.includes(k));
-    if (!narrowing) return 0;
-    const ids = new Set<number>();
-    for (const t of terms) {
-      const m = lists.get(t.key);
-      if (t.op !== "not" && m) for (const id of unjudgedMembers(m, t.side)) ids.add(id);
-    }
-    return ids.size;
-  }, [terms, lists, askedKinds]);
+    if (index === null || !asked || keptIds === undefined) return 0;
+    const left = unjudgedLeftOut(terms, lists, eventQuery)
+      .map((id) => index[id]).filter((e): e is NameIndexEntry => e !== undefined);
+    return fitCard(left).length;
+  }, [terms, lists, eventQuery, index, asked, keptIds, fitCard]);
   const unanswerable = effectUnanswerable || (chosenKeys.length > 0 && chosenKeys.every((k) => lists.has(k))
     && chosenKeys.some((k) => lists.get(k) === null));
 
@@ -331,24 +346,7 @@ export function CardSearch({
       : (keptIds.keep === null ? index : [...keptIds.keep].map((id) => index[id]))
         .filter((e): e is NameIndexEntry => e !== undefined)
         .filter((e) => keptIds.drop.size === 0 || !keptIds.drop.has(positionOf.get(e) ?? -1));
-    const named = needle.length === 0 ? base : matchNames(base, { query });
-    // `identityKeyOf` spells colourless "C" and `coloursFit` spells it "", the same normalisation
-    // the facet rows carried. Getting it wrong would make every colourless card answer only the
-    // `C` chip, which is the opposite of the fits-in ruling.
-    const identityOf = (e: NameIndexEntry): string => {
-      const key = identityKeyOf(e.identity);
-      return key === "C" ? "" : key;
-    };
-    // WHAT THE CARD IS, answered off the row rather than from the membership index (2026-09-21).
-    // Compiled ONCE per pass: the names become codes here, not inside the filter, or a chosen
-    // subtype costs a 488-entry scan per card on every keystroke.
-    // WHETHER THIS ARTIFACT CAN ANSWER A COLOUR QUESTION AT ALL, read off the rows rather than
-    // assumed. A missing `c` is colourless on a fresh artifact and meaningless on an old one, and
-    // the deploy ships `static-out/` without rebuilding it -- so the row is told, not guessed.
-    const fitsCharacteristics = compileCharacteristics(eventQuery, { ...vocabulary, colours: carriesColours });
-    const kept = named.filter((e) => (!commanderMode || e.commander)
-      && coloursFit(identityOf(e), colours, mode)
-      && fitsCharacteristics(e));
+    const kept = fitCard(base);
     // AMONG CARDS THAT ALL ANSWER THE QUESTION, THE BETTER-CONNECTED ONE FIRST (owner 2026-09-17),
     // and that stays the default. The other two orders exist so a reader can ESCAPE that ranking:
     // the deck-build run found rare events outranking good cards and could only reach staples "by
@@ -387,7 +385,7 @@ export function CardSearch({
         : order === "tou" ? byNumber((e) => e.tou)
         : byNumber((e) => e.partners ?? 0),
     );
-  }, [index, keptIds, needle, query, colours, commanderMode, mode, asked, eventQuery, vocabulary, lists, positionOf]);
+  }, [index, keptIds, asked, eventQuery, lists, positionOf, fitCard]);
 
   // WHAT THE PICKERS OFFER, AND WHAT EACH ROW COSTS TO SAY.
   //

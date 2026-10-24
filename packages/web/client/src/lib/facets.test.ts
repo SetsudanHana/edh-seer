@@ -467,6 +467,15 @@ describe("the effect filters", () => {
   });
 
   /** ON THE CARES-ABOUT SIDE THE SIZE IS A REPLACEMENT'S CHANGE: "times, 2 to 2" is the doublers. */
+  /** WITHOUT AN OP, THE RANGE NARROWS CAUSERS ONLY (review of #1339): askers state no amount, so a
+   *  range on the pays side emptied `?produce=X&consume=Y&amtmin=1&amtmax=1` with no notice. */
+  test("without a change op the amount range is not carried to the pays side", () => {
+    const q: EventQuery = { ...base, amountMin: 1, amountMax: 1 };
+    expect(factFilterOf(q, "pays")).toEqual({});
+    expect(factFilterOf(q, "makes")).toEqual({ amountMin: 1, amountMax: 1 });
+    expect(factFilterOf({ ...q, amountChange: "plus" }, "pays")).toEqual({ amountMin: 1, amountMax: 1, changeOp: "plus" });
+  });
+
   test("the size reads on both sides, the variable toggle on causes and the change op on cares-about", () => {
     const q: EventQuery = { ...base, abilityKinds: ["replacement"], amountMin: 2, amountMax: 2, amountVariable: true, amountChange: "times" };
     expect(factFilterOf(q, "makes")).toEqual({ kinds: ["replacement"], amountMin: 2, amountMax: 2, includeVariable: true });

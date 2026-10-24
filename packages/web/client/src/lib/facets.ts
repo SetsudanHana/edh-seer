@@ -181,14 +181,19 @@ function effectFromParams(p: URLSearchParams): Partial<EventQuery> {
   };
 }
 
-/** WHAT THE EFFECT FILTERS ASK OF ONE SIDE'S MEMBERS. The size reads on both sides (`amountMin`);
+/** WHAT THE EFFECT FILTERS ASK OF ONE SIDE'S MEMBERS. The size reads on a causer; an asker reads it only with the change op;
  *  "include variable" means a causer's "X", and the change op an asker's replacement. */
 export function factFilterOf(q: EventQuery, side: "makes" | "pays"): FactFilter {
   return {
     ...(q.abilityKinds && q.abilityKinds.length > 0 ? { kinds: q.abilityKinds } : {}),
     ...(q.repeatsMin !== undefined ? { minRepeats: q.repeatsMin } : {}),
-    ...(q.amountMin !== undefined ? { amountMin: q.amountMin } : {}),
-    ...(q.amountMax !== undefined ? { amountMax: q.amountMax } : {}),
+    // THE RANGE READS A CAUSER'S SIZE, AND ON THE ASKING SIDE ONLY A REPLACEMENT'S CHANGE (op set).
+    // Askers state no amount of their own, so a range carried there with no op failed every one and
+    // emptied `?produce=X&consume=Y&amtmin=1&amtmax=1` with no notice (review of #1339).
+    ...(side === "makes" || q.amountChange !== undefined ? {
+      ...(q.amountMin !== undefined ? { amountMin: q.amountMin } : {}),
+      ...(q.amountMax !== undefined ? { amountMax: q.amountMax } : {}),
+    } : {}),
     ...(side === "makes" && q.amountVariable === true ? { includeVariable: true } : {}),
     ...(side === "pays" && q.amountChange !== undefined ? { changeOp: q.amountChange } : {}),
   };

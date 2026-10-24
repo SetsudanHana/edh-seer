@@ -5,7 +5,7 @@ import { directedReasons, FACT_KINDS } from "./edges.js";
 import { expect, test, vi } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
-import { unpackFact } from "./member-facts.js";
+import { isUnjudgedFact, memberPasses, memberUndecided, unpackFact } from "./member-facts.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, PI_KEEP, buildPartnerArtifact, printingIdOf, demandForms, eventKey, isSubstantive, impliedKeysOf, VERIFY_LIMIT,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyBuckets, totalOf, browseLetterOf, browseSlices,
@@ -1798,6 +1798,28 @@ test("implied and feeder memberships carry their ability's facts; a keyword's do
   // LIFELINK IS THE CARD, NOT AN ABILITY: on the key, with no fact, and counted apart by the page.
   const lifeKey = [...events.keys()].find((k) => k.startsWith("gain-life|") && events.get(k)!.p.some((p) => index[p]!.name === "Lifelinker"));
   expect(factsOn(lifeKey!, "p", "Lifelinker")).toEqual([]);
+});
+
+/** MIXED MEMBERSHIP (review of #1339): a lifelink creature whose only ability is a once-only ETB
+ *  lifegain is on `gain-life` by what it is AND by an ability, so it ships the ability's fact plus
+ *  the unjudged marker -- `repeats=repeatable` must not silently drop it. */
+test("a card on a key by what it is and by an ability ships the marker beside the ability's fact", () => {
+  const d = base("Lifelink Etb", [{ kind: "triggered", repeats: "once",
+    trigger: { verbs: ["enters"], subject: { self: true, control: "you", token: null } },
+    effect: { kind: "gain-life" }, amount: "2",
+    emits: [{ verb: "gain-life", subject: { control: "you", token: null } }] }] as unknown as CardTags["abilities"]);
+  const lifelinkEtb = { ...d, tags: { ...d.tags, characteristics: { ...d.tags.characteristics, keywords: ["Lifelink"] } } as CardTags };
+  const asks = withTypes(base("Asks gain-life", [{
+    kind: "triggered", trigger: { verbs: ["gain-life"], subject: { control: "you", token: null } }, effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]), ["enchantment"]);
+  const { events, index } = buildPartnerArtifact([lifelinkEtb, asks], H);
+  const m = events.get([...events.keys()].find((k) => k.startsWith("gain-life|") && events.get(k)!.p.some((p) => index[p]!.name === "Lifelink Etb"))!)!;
+  const at = m.p.findIndex((p) => index[p]!.name === "Lifelink Etb");
+  const facts = m.pf![at]!;
+  expect(facts.filter(isUnjudgedFact)).toHaveLength(1);
+  expect(facts.filter((n) => !isUnjudgedFact(n)).map(unpackFact)).toEqual([{ kind: "triggered", repeats: "once", amount: { kind: "fixed", value: 2 } }]);
+  expect(memberPasses(facts, { minRepeats: "repeatable" })).toBe(false);
+  expect(memberUndecided(facts, { minRepeats: "repeatable" })).toBe(true);
 });
 
 test("the artifact counts the askers beside the causers", () => {
