@@ -21,6 +21,18 @@
  *  - `output`: same output, a different trigger verb or an untriggered/triggered split (Blood Artist
  *              gains life when a creature DIES, not when one enters).
  *
+ *  GATE KEYS ARE THE RAW `eventKey`, NOT `supplyForms` (which widens a key to everything it satisfies), ON
+ *  PURPOSE: a Goblin-token maker and a generic token maker are different outputs, however well the first
+ *  would feed a consumer of the second. Similarity asks "does it do this", not "does it feed that".
+ *
+ *  WHO RECEIVES IT is part of the output for the verbs below: `eventKey` carries no recipient, so gaining
+ *  life yourself, an opponent losing life and damage to you would all collide. `you` and `not you` are
+ *  different outputs (gated apart); an opponent versus any target within `not you` is a `recipient` chip.
+ *
+ *  CARD TIER is the WORST over the seed's abilities that share an output with the candidate, each against
+ *  its own best partner. One lucky pair (Zulaport's and Blood Artist's self-death splits match each other)
+ *  must not hide that the main abilities differ.
+ *
  *  CEILING: a MIRROR effect is not surfaced as such. Suture Priest's second ability makes an opponent
  *  lose life when THEIR creature enters, which is the same trigger turned on the other player; it shares
  *  no output with Soul Warden, so only its gain-life half matches (as a close, with "+ lose life"). A mirror
@@ -29,20 +41,22 @@ import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 import { isRefusedTrigger } from "./claims.js";
 import { REPEATS_LADDER, factAmountOf, factKindOf, type FactAmount, type FactKind } from "./member-facts.js";
 import { eventKey, splitKey } from "./partners-core.js";
-import { VERB_PHRASES, emitPhrase, emitSubjectNoun } from "./sentence.js";
+import { VERB_PHRASES, emitSubjectNoun } from "./sentence.js";
 
 /** What a card carries here: the same pair `partners-core` builds per card (a card and its derived tags), flattened. */
 export interface SimilarCard { id: number; name: string; tags: CardTags | null }
 
 export type SimilarTier = "same" | "close" | "output";
-export type ChipDim = "trigger" | "amount" | "repeats" | "type" | "kind" | "extra" | "missing";
+export type ChipDim = "trigger" | "amount" | "repeats" | "type" | "kind" | "extra" | "missing" | "recipient";
 export interface Chip { dim: ChipDim; label: string }
 export interface Comparison { tier: SimilarTier; chips: Chip[]; score: number }
 export interface SimilarHit extends Comparison { id: number; name: string }
 
 type Ability = CardTags["abilities"][number];
 type Amount = FactAmount;
-interface Output { key: string; label: string }
+type Who = "you" | "opp" | "any";
+/** `key` is the gate key (raw eventKey plus a `@you`/`@other` recipient class where the verb has one). */
+interface Output { key: string; who: Who | null; event: GameEvent }
 export interface AbilitySig {
   kind: FactKind;
   /** Sorted trigger verbs, null on an untriggered ability. */
@@ -54,7 +68,8 @@ export interface AbilitySig {
 }
 interface CardSig {
   abilities: AbilitySig[];
-  outputs: Map<string, string>;
+  /** gate key -> an event that has it (for labels). */
+  outputs: Map<string, GameEvent>;
   keywords: string[];
   types: string[];
   identity: string[];
@@ -70,9 +85,23 @@ const REPEAT_LABEL: Record<string, string> = {
   repeatable: "every time it happens", continuous: "always on",
 };
 
-function outputLabel(e: GameEvent): string {
-  const phrase = emitPhrase([e]);
-  if (phrase) return phrase;
+/** Verbs whose recipient the key does not carry. */
+const RECIPIENT_VERBS = new Set(["gain-life", "lose-life", "draw", "discard", "mill", "non-combat-damage"]);
+const NOUN: Record<string, string> = {
+  "gain-life": "life gain", "lose-life": "life loss", draw: "card draw", discard: "discard", mill: "mill", "non-combat-damage": "damage",
+};
+
+function outputOf(e: GameEvent, key: string): Output {
+  if (!RECIPIENT_VERBS.has(e.verb)) return { key, who: null, event: e };
+  const c = e.subject.control;
+  const who: Who = c === "you" ? "you" : c === "opp" ? "opp" : "any";
+  return { key: `${key}@${who === "you" ? "you" : "other"}`, who, event: e };
+}
+
+/** The output as a noun phrase for a chip: "life loss", "protection"-style, never a sentence. */
+function outputNoun(e: GameEvent): string {
+  const base = NOUN[e.verb];
+  if (base) return e.subject.control === "opp" && e.verb !== "gain-life" ? `opponent ${base}` : base;
   const verb = VERB_PHRASES[e.verb] ?? e.verb.replace(/-/g, " ");
   const noun = e.subject.type !== undefined || e.subject.subtype !== undefined ? emitSubjectNoun(e.subject) : undefined;
   return noun ? `${noun} ${verb}` : verb;
@@ -93,20 +122,17 @@ function sigOf(card: SimilarCard): CardSig {
   const hit = sigCache.get(key);
   if (hit) return hit;
   const abilities: AbilitySig[] = [];
-  const outputs = new Map<string, string>();
+  const outputs = new Map<string, GameEvent>();
   for (const a of card.tags?.abilities ?? []) {
     if (!a.emits || a.emits.length === 0 || isRefusedTrigger(a)) continue;
-    const own = new Map<string, string>();
-    for (const e of a.emits) {
-      const label = outputLabel(e);
-      for (const k of splitKey(eventKey(e))) if (!own.has(k)) own.set(k, label);
-    }
-    for (const [k, l] of own) if (!outputs.has(k)) outputs.set(k, l);
+    const own = new Map<string, Output>();
+    for (const e of a.emits) for (const k of splitKey(eventKey(e))) { const o = outputOf(e, k); if (!own.has(o.key)) own.set(o.key, o); }
+    for (const o of own.values()) if (!outputs.has(o.key)) outputs.set(o.key, o.event);
     abilities.push({
       kind: factKindOf(a),
       verbs: a.trigger ? [...a.trigger.verbs].sort() : null,
       subject: a.trigger?.subject ?? null,
-      outputs: [...own].map(([k, label]) => ({ key: k, label })),
+      outputs: [...own.values()],
       amount: amountOf(a),
       repeats: a.repeats,
     });
@@ -137,10 +163,11 @@ function subjectWords(s: SubjectFilter, pl: boolean): string {
   return `${s.token === true ? "token " : s.token === false ? "nontoken " : ""}${nouns}`;
 }
 
+/** THE CANDIDATE'S ACTUAL SCOPE, not "only" the difference: "any creature", "your creatures", "your Goblins". */
 function subjectLabel(s: SubjectFilter): string {
-  if (s.self === true) return "itself only";
-  if (s.control === "you") return `your ${subjectWords(s, true)} only`;
-  if (s.control === "opp") return `opponents' ${subjectWords(s, true)} only`;
+  if (s.self === true) return s.control === "you" || s.control === undefined ? "itself" : `itself (${s.control})`;
+  if (s.control === "you") return `your ${subjectWords(s, true)}`;
+  if (s.control === "opp") return `an opponent's ${subjectWords(s, true)}`;
   return `any ${subjectWords(s, false)}`;
 }
 
@@ -152,6 +179,8 @@ function triggerLabel(sig: AbilitySig): string {
   const verbs = sig.verbs.map((v) => VERB_PHRASES[v] ?? v.replace(/-/g, " ")).join(" or ");
   return `when ${base}${who} ${verbs}`;
 }
+
+const RECIPIENT_LABEL: Record<Who, string> = { you: "you", opp: "opponents only", any: "any player or target" };
 
 const UNIT: Record<string, string> = { "gain-life": "life", "lose-life": "life", "non-combat-damage": "damage" };
 function amountLabel(a: Amount, verb: string): string {
@@ -180,66 +209,104 @@ function repeatsDistance(a: Ability["repeats"], b: Ability["repeats"]): number {
   return Math.abs(REPEATS_LADDER.indexOf(a as never) - REPEATS_LADDER.indexOf(b as never));
 }
 
-/** How many facets of the trigger subject differ. `other` is ignored: "another creature" is the same event. */
+/** How many facets of the trigger subject differ. `other` is ignored: "another creature" is the same event.
+ *  `control` counts for a self subject too: "this creature or another creature you control dies" splits into a
+ *  self ability that Blood Artist's own split (control: you) must not hide the difference of. */
 function subjectFacets(a: SubjectFilter, b: SubjectFilter): number {
   if ((a.self === true) !== (b.self === true)) return 1;
-  if (a.self === true) return 0;
   return (a.control !== b.control ? 1 : 0) + ((a.token ?? null) !== (b.token ?? null) ? 1 : 0)
     + (sameSet(sorted(a.type), sorted(b.type)) ? 0 : 1) + (sameSet(sorted(a.subtype), sorted(b.subtype)) ? 0 : 1);
 }
 
-function compareAbilities(a: AbilitySig, b: AbilitySig, shared: string, sameTypes: boolean, typeChip: string): Comparison {
-  const chips: Chip[] = [];
+interface Pair { tier: SimilarTier; score: number; shared: Output; mine: Output }
+
+/** NUMERIC ONLY: no label is built here. Called for every candidate in a bucket. */
+function evalPair(a: AbilitySig, b: AbilitySig, shared: Output, mine: Output, sameTypes: boolean): Pair {
   let score = 0;
   const verbsEqual = (a.verbs === null && b.verbs === null) || (a.verbs !== null && b.verbs !== null && sameSet(a.verbs, b.verbs));
+  let differs = false;
   if (verbsEqual) {
-    if (a.subject && b.subject) {
-      const n = subjectFacets(a.subject, b.subject);
-      if (n > 0) { chips.push({ dim: "trigger", label: subjectLabel(b.subject) }); score += 2 * n; }
-    }
-    if (a.kind !== b.kind) { chips.push({ dim: "kind", label: KIND_LABEL[b.kind] }); score += 2; }
-  } else {
-    chips.push({ dim: "trigger", label: triggerLabel(b) });
-    score += 4;
-  }
-  const verb = shared.split("|")[0] ?? "";
+    if (a.subject && b.subject) { const n = subjectFacets(a.subject, b.subject); if (n > 0) { differs = true; score += 2 * n; } }
+    if (a.kind !== b.kind) { differs = true; score += 2; }
+  } else score += 4;
   const ad = amountDistance(a.amount, b.amount);
-  if (ad > 0) { chips.push({ dim: "amount", label: amountLabel(b.amount, verb) }); score += ad; }
   const rd = repeatsDistance(a.repeats, b.repeats);
-  if (rd > 0) { chips.push({ dim: "repeats", label: b.repeats === undefined ? "repeat rate not stated" : (REPEAT_LABEL[b.repeats] ?? b.repeats) }); score += rd; }
-  if (!sameTypes) { chips.push({ dim: "type", label: typeChip }); score += 1; }
-  const tier: SimilarTier = !verbsEqual ? "output" : chips.length > 0 ? "close" : "same";
-  return { tier, chips, score };
+  const wd = mine.who !== shared.who ? 1 : 0;
+  if (ad > 0 || rd > 0 || wd > 0 || !sameTypes) differs = true;
+  score += ad + rd + wd + (sameTypes ? 0 : 1);
+  return { tier: !verbsEqual ? "output" : differs ? "close" : "same", score, shared, mine };
 }
 
-/** The best comparison of two cards, or null when no ability of the seed shares an output key with one of the candidate's: THE GATE. */
-function compareSigs(a: CardSig, b: CardSig): Comparison | null {
-  let best: Comparison | null = null;
+function pairChips(a: AbilitySig, b: AbilitySig, p: Pair, sameTypes: boolean, typeChip: string): Chip[] {
+  const chips: Chip[] = [];
+  const verbsEqual = (a.verbs === null && b.verbs === null) || (a.verbs !== null && b.verbs !== null && sameSet(a.verbs, b.verbs));
+  if (verbsEqual) {
+    if (a.subject && b.subject && subjectFacets(a.subject, b.subject) > 0) chips.push({ dim: "trigger", label: subjectLabel(b.subject) });
+    if (a.kind !== b.kind) chips.push({ dim: "kind", label: KIND_LABEL[b.kind] });
+  } else chips.push({ dim: "trigger", label: triggerLabel(b) });
+  if (amountDistance(a.amount, b.amount) > 0) chips.push({ dim: "amount", label: amountLabel(b.amount, p.shared.event.verb) });
+  if (repeatsDistance(a.repeats, b.repeats) > 0) chips.push({ dim: "repeats", label: b.repeats === undefined ? "repeat rate not stated" : (REPEAT_LABEL[b.repeats] ?? b.repeats) });
+  if (p.mine.who !== p.shared.who && p.shared.who !== null) chips.push({ dim: "recipient", label: RECIPIENT_LABEL[p.shared.who] });
+  if (!sameTypes) chips.push({ dim: "type", label: typeChip });
+  return chips;
+}
+
+const better = (x: Pair, y: Pair | null): boolean => y === null || TIER_RANK[x.tier] < TIER_RANK[y.tier] || (x.tier === y.tier && x.score < y.score);
+
+interface Ranked { tier: SimilarTier; score: number; pairs: [AbilitySig, AbilitySig, Pair][] }
+
+/** Gate and tier, numerically. null when no seed ability shares an output key with a candidate ability.
+ *  `a` is the seed; `b` is the candidate (`mine` is the seed's output, `shared` the candidate's). */
+function rank(a: CardSig, b: CardSig): Ranked | null {
+  const sameTypes = sameSet(a.types, b.types);
+  const pairs: [AbilitySig, AbilitySig, Pair][] = [];
+  for (const x of a.abilities) {
+    let best: Pair | null = null;
+    let bestY: AbilitySig | null = null;
+    for (const y of b.abilities) {
+      for (const mine of x.outputs) {
+        const shared = y.outputs.find((o) => o.key === mine.key);
+        if (!shared) continue;
+        const p = evalPair(x, y, shared, mine, sameTypes);
+        if (better(p, best)) { best = p; bestY = y; }
+      }
+    }
+    if (best && bestY) pairs.push([x, bestY, best]);
+  }
+  if (pairs.length === 0) return null;
+  let tier: SimilarTier = "same";
+  let score = 0;
+  for (const [, , p] of pairs) { if (TIER_RANK[p.tier] > TIER_RANK[tier]) tier = p.tier; score += p.score; }
+  let extras = 0;
+  for (const k of b.outputs.keys()) if (!a.outputs.has(k)) extras++;
+  for (const k of a.outputs.keys()) if (!b.outputs.has(k)) extras++;
+  for (const kw of b.keywords) if (!a.keywords.includes(kw)) extras++;
+  for (const kw of a.keywords) if (!b.keywords.includes(kw)) extras++;
+  // A card with something extra or missing is not the same job; the difference never moves it between close and output.
+  if (extras > 0 && tier === "same") tier = "close";
+  return { tier, score: score + extras, pairs };
+}
+
+function chipsOf(a: CardSig, b: CardSig, r: Ranked): Chip[] {
   const sameTypes = sameSet(a.types, b.types);
   const typeChip = b.types.join(" ");
-  for (const x of a.abilities) {
-    for (const y of b.abilities) {
-      const shared = x.outputs.find((o) => y.outputs.some((p) => p.key === o.key));
-      if (!shared) continue;
-      const c = compareAbilities(x, y, shared.key, sameTypes, typeChip);
-      if (best === null || TIER_RANK[c.tier] < TIER_RANK[best.tier] || (c.tier === best.tier && c.score < best.score)) best = c;
-    }
-  }
-  if (best === null) return null;
-  // CARD-LEVEL DIFFERENCES: what one card does or has that the other does not. They add distance and
-  // keep a same-job pair from reading as identical, but never move a card between `close` and `output`.
-  const chips = [...best.chips];
-  let score = best.score;
-  for (const [k, l] of b.outputs) if (!a.outputs.has(k)) { chips.push({ dim: "extra", label: `+ ${l}` }); score += 1; }
-  for (const kw of b.keywords) if (!a.keywords.includes(kw)) { chips.push({ dim: "extra", label: `+ ${kw}` }); score += 1; }
-  for (const [k, l] of a.outputs) if (!b.outputs.has(k)) { chips.push({ dim: "missing", label: `lacks ${l}` }); score += 1; }
-  for (const kw of a.keywords) if (!b.keywords.includes(kw)) { chips.push({ dim: "missing", label: `lacks ${kw}` }); score += 1; }
-  return { tier: best.tier === "same" && chips.length > 0 ? "close" : best.tier, chips, score };
+  const chips: Chip[] = [];
+  const seen = new Set<string>();
+  const add = (c: Chip) => { const k = `${c.dim}:${c.label}`; if (!seen.has(k)) { seen.add(k); chips.push(c); } };
+  for (const [x, y, p] of r.pairs) for (const c of pairChips(x, y, p, sameTypes, typeChip)) add(c);
+  for (const [k, e] of b.outputs) if (!a.outputs.has(k)) add({ dim: "extra", label: `+ ${outputNoun(e)}` });
+  for (const kw of b.keywords) if (!a.keywords.includes(kw)) add({ dim: "extra", label: `+ ${kw}` });
+  for (const [k, e] of a.outputs) if (!b.outputs.has(k)) add({ dim: "missing", label: `no ${outputNoun(e)}` });
+  for (const kw of a.keywords) if (!b.keywords.includes(kw)) add({ dim: "missing", label: `no ${kw}` });
+  return chips;
 }
 
 /** Reusable by the deck context (#1342): how `cand` differs from `seed`, null when it does not do the same job at all. */
 export function compareCards(seed: SimilarCard, cand: SimilarCard): Comparison | null {
-  return compareSigs(sigOf(seed), sigOf(cand));
+  const a = sigOf(seed);
+  const b = sigOf(cand);
+  const r = rank(a, b);
+  return r && { tier: r.tier, score: r.score, chips: chipsOf(a, b, r) };
 }
 
 export interface SimilarOptions {
@@ -249,12 +316,16 @@ export interface SimilarOptions {
   identityWithin?: readonly string[];
 }
 
-/** BUCKETED BY OUTPUT KEY ONCE; each seed compares only the buckets of its own keys.
+const order = (x: { tier: SimilarTier; score: number; name: string }, y: { tier: SimilarTier; score: number; name: string }): number =>
+  TIER_RANK[x.tier] - TIER_RANK[y.tier] || x.score - y.score || (x.name < y.name ? -1 : x.name > y.name ? 1 : 0);
+
+/** BUCKETED BY OUTPUT KEY ONCE; each seed compares only the buckets of its own keys. Scores and tiers are
+ *  numeric; chip labels are built only for the `limit` survivors, which are kept by bounded insertion
+ *  rather than sorting the bucket.
  *
  *  BIG-BUCKET RISK: the common outputs (`gain-life`, `draw`, `enters|creature` tokens) hold thousands of
- *  cards, so one seed on such a key compares against that whole bucket, and abilities are compared pairwise
- *  inside each pair of cards. ~18k seeds over ~32k cards is the build-static cost to measure (task 2);
- *  if it bites, the way down is to index a bucket by trigger verb as well, not to truncate it. */
+ *  cards, so one seed on such a key compares against that whole bucket. Measured on a synthetic bucket of 5,000 one-ability gain-life cards (2026-10-24, this machine, vitest): 0.86 ms per seed, so 18k seeds in a 5k bucket is ~16 s; real cards carry several abilities, so re-measure on the build.
+ *  If it bites, index a bucket by trigger verb as well rather than truncate it. */
 export function similarIndex(cards: readonly SimilarCard[]) {
   const sigs = cards.map(sigOf);
   const at = new Map<number, number>();
@@ -270,10 +341,12 @@ export function similarIndex(cards: readonly SimilarCard[]) {
     similarTo(seedId: number, opts: SimilarOptions = {}): SimilarHit[] {
       const si = at.get(seedId);
       if (si === undefined) return [];
+      const limit = opts.limit ?? 24;
+      if (limit <= 0) return [];
       const seed = cards[si]!;
       const allowed = opts.identityWithin ? new Set(opts.identityWithin) : null;
       const seen = new Set<number>([si]);
-      const hits: SimilarHit[] = [];
+      const top: { ci: number; tier: SimilarTier; score: number; name: string; r: Ranked }[] = [];
       for (const k of sigs[si]!.outputs.keys()) {
         for (const ci of buckets.get(k) ?? []) {
           if (seen.has(ci)) continue;
@@ -281,12 +354,17 @@ export function similarIndex(cards: readonly SimilarCard[]) {
           const cand = cards[ci]!;
           if (cand.name === seed.name) continue;
           if (allowed && !sigs[ci]!.identity.every((c) => allowed.has(c))) continue;
-          const c = compareSigs(sigs[si]!, sigs[ci]!);
-          if (c) hits.push({ id: cand.id, name: cand.name, ...c });
+          const r = rank(sigs[si]!, sigs[ci]!);
+          if (!r) continue;
+          const item = { ci, tier: r.tier, score: r.score, name: cand.name, r };
+          if (top.length >= limit && order(item, top[top.length - 1]!) >= 0) continue;
+          let at2 = top.length;
+          while (at2 > 0 && order(item, top[at2 - 1]!) < 0) at2--;
+          top.splice(at2, 0, item);
+          if (top.length > limit) top.pop();
         }
       }
-      hits.sort((x, y) => TIER_RANK[x.tier] - TIER_RANK[y.tier] || x.score - y.score || (x.name < y.name ? -1 : x.name > y.name ? 1 : 0));
-      return hits.slice(0, opts.limit ?? 24);
+      return top.map((t) => ({ id: cards[t.ci]!.id, name: t.name, tier: t.tier, score: t.score, chips: chipsOf(sigs[si]!, sigs[t.ci]!, t.r) }));
     },
   };
 }

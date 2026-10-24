@@ -12,51 +12,63 @@ describe("Soul Warden as the seed", () => {
   const ranked = similarIndex(cards).similarTo(card("Soul Warden").id);
   const of = (n: keyof typeof fixtures) => ranked.find((r) => r.name === n);
 
-  test("same job: Essence Warden and Soul's Attendant (a 'may' is no difference)", () => {
-    expect(of("Essence Warden")).toMatchObject({ tier: "same", chips: [] });
-    expect(of("Soul's Attendant")).toMatchObject({ tier: "same", chips: [] });
-  });
-
-  test("close: Ajani's Welcome (enchantment, your creatures only) and Impassioned Orator (your creatures only)", () => {
-    const ajani = of("Ajani's Welcome")!;
-    expect(ajani.tier).toBe("close");
-    expect(ajani.chips).toEqual(expect.arrayContaining([{ dim: "type", label: "enchantment" }, { dim: "trigger", label: "your creatures only" }]));
-    const orator = of("Impassioned Orator")!;
-    expect(orator.tier).toBe("close");
-    expect(orator.chips).toEqual([{ dim: "trigger", label: "your creatures only" }]);
-  });
-
-  test("close: Auriok Champion carries protection Soul Warden lacks", () => {
-    const auriok = of("Auriok Champion")!;
-    expect(auriok.tier).toBe("close");
-    expect(auriok.chips).toEqual([{ dim: "extra", label: "+ protection" }]);
-  });
-
-  test("output tier: Blood Artist gains life when a creature dies, not when one enters", () => {
-    const blood = of("Blood Artist")!;
-    expect(blood.tier).toBe("output");
-    expect(blood.chips.find((c) => c.dim === "trigger")?.label).toBe("when a creature dies");
-  });
-
-  test("a different output is absent however it is triggered or sized", () => {
-    for (const n of ["Sol Ring", "Llanowar Elves", "Lightning Bolt"] as const) expect(of(n)).toBeUndefined();
+  test("the full ranking, tier and chips", () => {
+    expect(ranked.map((r) => [r.tier, r.name, r.chips])).toEqual([
+      ["same", "Essence Warden", []],
+      ["same", "Soul's Attendant", []],
+      ["close", "Auriok Champion", [{ dim: "extra", label: "+ protection" }]],
+      ["close", "Impassioned Orator", [{ dim: "trigger", label: "your creatures" }]],
+      ["close", "Ajani's Welcome", [{ dim: "trigger", label: "your creatures" }, { dim: "type", label: "enchantment" }]],
+      ["close", "Suture Priest", [{ dim: "trigger", label: "your creatures" }, { dim: "extra", label: "+ opponent life loss" }]],
+      ["output", "Blood Artist", [{ dim: "trigger", label: "when a creature dies" }, { dim: "extra", label: "+ life loss" }]],
+      ["output", "Zulaport Cutthroat", [{ dim: "trigger", label: "when a creature you control dies" }, { dim: "extra", label: "+ opponent life loss" }]],
+    ]);
   });
 
   test("grouped same -> close -> output, never the seed itself", () => {
-    const order = ranked.map((r) => r.tier);
-    expect(order).toEqual([...order].sort((a, b) => ["same", "close", "output"].indexOf(a) - ["same", "close", "output"].indexOf(b)));
-    expect(ranked.some((r) => r.name === "Soul Warden")).toBe(false);
+    const tiers = ranked.map((r) => r.tier);
+    expect(tiers).toEqual([...tiers].sort((a, b) => ["same", "close", "output"].indexOf(a) - ["same", "close", "output"].indexOf(b)));
+    expect(of("Soul Warden")).toBeUndefined();
   });
 
   test("limit is honoured and the order is deterministic", () => {
     const idx = similarIndex(cards);
     expect(idx.similarTo(card("Soul Warden").id, { limit: 2 }).map((r) => r.name)).toEqual(ranked.slice(0, 2).map((r) => r.name));
+    expect(idx.similarTo(card("Soul Warden").id, { limit: 0 })).toEqual([]);
   });
 
   test("identityWithin keeps only cards whose colour identity fits", () => {
     const white = similarIndex(cards).similarTo(card("Soul Warden").id, { identityWithin: ["W"] });
     expect(white.some((r) => r.name === "Essence Warden")).toBe(false); // green
     expect(white.some((r) => r.name === "Soul's Attendant")).toBe(true);
+  });
+});
+
+describe("the card's tier is the worst of its abilities, not the luckiest pair", () => {
+  test("Zulaport Cutthroat against Blood Artist is close: yours only versus any creature", () => {
+    const r = compareCards(card("Zulaport Cutthroat"), card("Blood Artist"))!;
+    expect(r.tier).toBe("close");
+    expect(r.chips).toContainEqual({ dim: "trigger", label: "any creature" });
+  });
+  test("Blood Artist against Zulaport says so the other way", () => {
+    const r = compareCards(card("Blood Artist"), card("Zulaport Cutthroat"))!;
+    expect(r.tier).toBe("close");
+    expect(r.chips).toContainEqual({ dim: "trigger", label: "your creatures" });
+  });
+  test("an opponent versus any target is a recipient chip, and not the same job", () => {
+    const r = compareCards(card("Zulaport Cutthroat"), card("Blood Artist"))!;
+    expect(r.chips).toContainEqual({ dim: "recipient", label: "any player or target" });
+  });
+});
+
+describe("who receives it is part of the output", () => {
+  test("damage to you is not damage to a target (Ancient Tomb against Lightning Bolt)", () => {
+    expect(compareCards(card("Ancient Tomb"), card("Lightning Bolt"))).toBeNull();
+    expect(compareCards(card("Lightning Bolt"), card("Ancient Tomb"))).toBeNull();
+  });
+  test("you losing life is not an opponent losing life (Phyrexian Arena against Zulaport)", () => {
+    const r = compareCards(card("Phyrexian Arena"), card("Zulaport Cutthroat"));
+    expect(r).toBeNull();
   });
 });
 
@@ -68,6 +80,11 @@ describe("the output is the gate", () => {
     tags.abilities[0]!.emits = [{ verb: "lose-life", subject: { control: "opp", token: null } }];
     const loser: SimilarCard = { id: 99, name: "Hypothetical Drainer", tags };
     expect(compareCards(warden, loser)).toBeNull();
+  });
+
+  test("a real card with emits and a similar trigger but a different output (Cathars' Crusade: counters)", () => {
+    expect(compareCards(card("Soul Warden"), card("Cathars' Crusade"))).toBeNull();
+    expect(compareCards(card("Soul Warden"), card("Lightning Bolt"))).toBeNull();
   });
 
   test("signatures hold one entry per ability that has emits", () => {
