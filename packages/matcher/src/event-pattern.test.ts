@@ -48,6 +48,34 @@ test("both sides of a pattern are unions of the keys it covers; makers keep the 
   expect(out.get("dies|*|*|*")!.c).not.toContain(99);
 });
 
+/** THE AMOUNT AND KIND FILTERS ANSWER A PATTERN (owner, 2026-10-24): each member keeps the facts of
+ *  every concrete key it entered the pattern through, merged and sorted, beside its own position. */
+test("a pattern's members keep the facts of every key they came through", () => {
+  const events = new Map([
+    ["gain-life|-|-|-", { p: [4, 2], c: [7], pf: [[10], [20]], cf: [[1]] }],
+    ["gain-life|creature|-|-", { p: [2], c: [], pf: [[5]], cf: [] }],
+  ]);
+  const out = eventPatterns(events).get("gain-life|*|*|*")!;
+  expect(out.p).toEqual([4, 2]);
+  expect(out.pf).toEqual([[10], [5, 20]]);
+  expect(out.cf).toEqual([[1]]);
+  // A build without facts ships none on its patterns either.
+  expect(eventPatterns(new Map([["draw|-|-|-", { p: [4], c: [] }]])).get("draw|*|*|*")).toEqual({ p: [4], c: [] });
+});
+
+/** A CARD FACT-LESS ON ONE SOURCE KEY (by what it is) AND WITH ABILITIES ON ANOTHER is partly unjudged. */
+test("a member fact-less on one source key keeps the marker beside the other key's facts", () => {
+  const events = new Map([
+    ["counter-added|-|-|-", { p: [3, 8], c: [], pf: [[], [9]], cf: [] }],
+    ["counter-added|creature|-|-", { p: [3], c: [], pf: [[26]], cf: [] }],
+  ]);
+  const out = eventPatterns(events).get("counter-added|*|*|*")!;
+  expect(out.p).toEqual([3, 8]);
+  expect(out.pf).toEqual([[7, 26], [9]]);
+  const bare = new Map([["counter-added|-|-|-", { p: [3], c: [], pf: [[]], cf: [] }]]);
+  expect(eventPatterns(bare).get("counter-added|*|*|*")!.pf).toEqual([[]]);
+});
+
 test("a verb's narrowings come from keys with exactly one target, once each", () => {
   const keys = ["dies|creature|-|-", "dies|-|goblin|-", "dies|-|-|t", "dies|creature|goblin|-", "dies|-|-|-",
     "dies|creature|*|*", "dies|artifact,creature|-|-", "enters|land|-|-"];

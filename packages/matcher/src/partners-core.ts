@@ -11,7 +11,7 @@ import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
 import { FACT_KINDS, POLYMORPH_HIT_MV, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
-import { keywordAbilities } from "./implied.js";
+import { impliedCounterEvents, impliedGraveyardEvents, keywordAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { isRefusedTrigger, isSelfLoss } from "./claims.js";
 import { parseSubject } from "@edh-seer/tagger/subject";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "./hierarchy.js";
@@ -23,6 +23,7 @@ import { bestRates, compareRates, manaOf, ratesOf, type Rate, type RateFamily } 
 export { effectPhrase } from "./sentence.js";
 import { phraseKindOf } from "./sentence.js";
 import { normalizeZoneEvent, tagKey } from "./zones.js";
+import { UNJUDGED_FACT, demandFactsOf, supplyFactsOf } from "./member-facts.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 
 /** PURE, AND IT HAS TO STAY THAT WAY. `build-partners.ts` is the Mongo and fs wiring; everything
@@ -323,6 +324,13 @@ export interface EventMembers {
    *  wants exactly 1 (Ghyrson Starn) before it fetches the card (2026-09-25). A hint: the engine's
    *  `trigger.amount` gate still decides. */
   pd?: number[][];
+  /** WHAT THE ABILITIES THAT PUT `p[i]` HERE DO, packed by `member-facts.ts`: kind (replacement split
+   *  out), how often, and the stated size per occurrence. Empty when the card causes the key only by
+   *  being played. What lets the search filter "pings for exactly 1, repeatedly" before it fetches a
+   *  card (owner, 2026-10-24). Absent on shards built before it shipped. */
+  pf?: number[][];
+  /** The same for `c[i]`, the askers: kind and how often, no size (see `demandFactsOf`). */
+  cf?: number[][];
 }
 
 const DAMAGE_KEY = /^(?:non-combat-damage|combat-damage)\|/;
@@ -334,6 +342,52 @@ const damageSizesOf = (d: DeckCard, verb: string): number[] => [...new Set(claim
   .map((a) => (a.amount ?? "").trim())
   .filter((x) => /^\d+$/.test(x))
   .map(Number))].sort((a, b) => a - b);
+
+/** PER CARD, ONCE: every key its abilities supply, with their facts. Each ability's own emits and
+ *  the events `producerEvents` DERIVES from them -- a discard or a death is also "a card goes to a
+ *  graveyard", a proliferate also "a counter is added" -- so a looter answers the graveyard key and
+ *  a proliferate spell the counter key with their own facts (review of 160d353: both shipped `[]`).
+ *  What stays fact-less is what the card supplies by BEING: cast, enters, and printed keywords
+ *  (lifelink, extort), which no derived ability carries. The page counts those apart. */
+const supplyFactsOfCard = perCard((d: DeckCard): Map<string, number[]> => {
+  const chars = d.tags?.characteristics;
+  return supplyFactsOf(claimingAbilitiesOf(d), (a) => {
+    if (!chars) return [];
+    const base = selfLeavesTypes((a.emits ?? []).map(normalizeZoneEvent), chars);
+    const events = [...base, ...selfFillTypes(impliedGraveyardEvents(base), chars), ...impliedCounterEvents(base)];
+    return events.flatMap((e) => splitKey(eventKey(e)).flatMap(supplyForms));
+  });
+});
+/** THE KEYS A CARD SUPPLIES BY WHAT IT IS, not by an ability: `producerEvents` over the card with its
+ *  abilities taken away leaves the implied cast and enter and what its printed keywords emit. A card
+ *  on one of these keys AND on it by an ability is judged only by the ability, so it ships
+ *  `UNJUDGED_FACT` beside the ability's facts (review of #1339: lifelink plus a once-only ETB gain). */
+const implicitSupplyKeysOfCard = perCard((d: DeckCard): ReadonlySet<string> => new Set(d.tags
+  ? producerEvents({ ...d.tags, abilities: [] }).flatMap((e) => splitKey(eventKey(e)).flatMap(supplyForms))
+  : []));
+const supplyFactsAt = (d: DeckCard, k: string): number[] => {
+  const facts = supplyFactsOfCard(d).get(k) ?? [];
+  return facts.length > 0 && implicitSupplyKeysOfCard(d).has(k) ? [...facts, UNJUDGED_FACT] : facts;
+};
+/** ONE ABILITY AS A WHOLE CARD, for the feeder readers, which walk a card's abilities themselves.
+ *  No keywords, so a keyword's own feeder (delve) is not handed to the ability that happens to sit
+ *  beside it. */
+const withOnly = (d: DeckCard, a: CardTags["abilities"][number]): DeckCard => (d.tags
+  ? { ...d, tags: { ...d.tags, abilities: [a], characteristics: { ...d.tags.characteristics, keywords: [] } } }
+  : d);
+/** The asker side, key for key what `consumersOf` files: a trigger's keys (not its own self-trigger,
+ *  as `demandKeysOf`), the intervening-if families, a static's reach, and the FEEDER keys -- the
+ *  fodder a sacrifice outlet eats, the graveyard a reanimator reads, the board a count scales on,
+ *  the abilities a copier copies (review of 160d353: every one shipped `[]`). Delve's fill is the
+ *  card's keyword, not an ability, and stays fact-less. */
+const demandFactsOfCard = perCard((d: DeckCard): Map<string, number[]> =>
+  demandFactsOf(claimingAbilitiesOf(d), (a) => [
+    ...(a.trigger?.subject?.self === true ? []
+      : (a.trigger?.verbs ?? []).flatMap((v) => splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)))),
+    ...(a.conditionCares ?? []).filter((t) => POOL_CONDITION_FAMILIES.test(t)).flatMap(conditionDemandKeys),
+    ...staticKeysOfAbility(a),
+    ...feederDemandsOf(withOnly(d, a)).map((f) => f.key),
+  ]));
 
 /** THE COUNTS FILE, as `event-frequency.json` ships it (roadmap AJ3). `supply` is how many cards
  *  can CAUSE each event and `consume` how many ask for it; `byIdentity` is `supply` split into the
@@ -2479,8 +2533,12 @@ export function partnerBuilder(all: DeckCard[], h: Hierarchy) {
       const events = new Map<string, EventMembers>();
       for (const k of new Set([...members.keys(), ...consumersOf.keys()])) {
         const p = byEffect(k, members.get(k) ?? []);
-        events.set(k, { p, c: reindex(consumersOf.get(k) ?? []),
-          ...(DAMAGE_KEY.test(k) ? { pd: p.map((pos) => damageSizesOf(byName.get(index[pos]!.name)!, k.slice(0, k.indexOf("|")))) } : {}) });
+        const c = reindex(consumersOf.get(k) ?? []);
+        const cardAt = (pos: number): DeckCard => byName.get(index[pos]!.name)!;
+        events.set(k, { p, c,
+          ...(DAMAGE_KEY.test(k) ? { pd: p.map((pos) => damageSizesOf(cardAt(pos), k.slice(0, k.indexOf("|")))) } : {}),
+          pf: p.map((pos) => supplyFactsAt(cardAt(pos), k)),
+          cf: c.map((pos) => demandFactsOfCard(cardAt(pos)).get(k) ?? []) });
       }
       const consumers: Record<string, number> = {};
       for (const [k, ids] of consumersOf) consumers[k] = ids.length;

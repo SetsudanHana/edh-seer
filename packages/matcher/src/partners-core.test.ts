@@ -5,6 +5,7 @@ import { directedReasons, FACT_KINDS } from "./edges.js";
 import { expect, test, vi } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
+import { isUnjudgedFact, memberPasses, memberUndecided, unpackFact } from "./member-facts.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, PI_KEEP, buildPartnerArtifact, printingIdOf, demandForms, eventKey, isSubstantive, impliedKeysOf, VERIFY_LIMIT,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyBuckets, totalOf, browseLetterOf, browseSlices,
@@ -1734,6 +1735,91 @@ test("a damage causer's sizes are read per verb", () => {
   const { events } = buildPartnerArtifact([both, asks("non-combat-damage"), asks("combat-damage")], H);
   expect(events.get("non-combat-damage|-|-|-")?.pd).toEqual([[1]]);
   expect(events.get("combat-damage|-|-|-")?.pd).toEqual([[3]]);
+});
+
+/** EVERY MEMBER SHIPS ITS ABILITIES' FACTS (owner, 2026-10-24): the search filters "pings for
+ *  exactly 1, repeatedly" and "replacement effects for damage" on the shard, before any card page. */
+test("event members carry the kind, repeats and size of the abilities that put them there", () => {
+  const ping = base("Pings Each", [{
+    kind: "triggered", repeats: "repeatable",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "damage" }, amount: "1",
+    emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, scope: "each" }, dealer: { control: "you", token: null } }],
+  }] as unknown as CardTags["abilities"]);
+  const doubler = withTypes(base("Doubles Damage", [{
+    kind: "static", replacement: true, repeats: "continuous",
+    trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null } },
+    effect: { kind: "damage-multiplier" },
+  }] as unknown as CardTags["abilities"]), ["enchantment"]);
+  const { events, index } = buildPartnerArtifact([ping, doubler], H);
+  const m = events.get("non-combat-damage|-|-|-")!;
+  const factsOf = (ids: number[], facts: number[][] | undefined) =>
+    Object.fromEntries(ids.map((pos, i) => [index[pos]!.name, (facts?.[i] ?? []).map(unpackFact)]));
+  expect(factsOf(m.p, m.pf)["Pings Each"]).toEqual([{ kind: "triggered", repeats: "repeatable", amount: { kind: "fixed", value: 1 } }]);
+  expect(factsOf(m.c, m.cf)["Doubles Damage"]).toEqual([{ kind: "replacement", repeats: "continuous", amount: { kind: "unstated" } }]);
+  expect(m.pf).toHaveLength(m.p.length);
+  expect(m.cf).toHaveLength(m.c.length);
+});
+
+/** EVERY KEY AN ABILITY PUTS A CARD ON CARRIES THAT ABILITY'S FACT (review of 160d353): the
+ *  graveyard event a discard implies, the fodder a sacrifice outlet eats, the graveyard a reanimator
+ *  reads. Only what the card supplies by being -- here a printed keyword -- ships no fact. */
+test("implied and feeder memberships carry their ability's facts; a keyword's does not", () => {
+  const looting = withTypes(base("Looting", [{ kind: "on-cast", repeats: "once", effect: { kind: "discard" }, amount: "2",
+    emits: [{ verb: "discard", subject: { control: "you", token: null } }] }] as unknown as CardTags["abilities"]), ["sorcery"]);
+  const altar = withTypes(base("Altar", [{ kind: "activated", cost: "Sacrifice a creature", repeats: "repeatable", effect: { kind: "mana-generation" },
+    emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: "creature" } }] }] as unknown as CardTags["abilities"]), ["artifact"]);
+  const reanimator = base("Reanimator", [{ kind: "triggered", repeats: "per-cycle",
+    trigger: { verbs: ["dies"], subject: { control: "you", token: null, type: "creature" } },
+    effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "creature", zone: "graveyard" } },
+    emits: [{ verb: "leaves", subject: { control: "you", token: null, type: "creature", zone: "graveyard" } }] }] as unknown as CardTags["abilities"]);
+  const lifelinker = (() => {
+    const d = base("Lifelinker", []);
+    return { ...d, tags: { ...d.tags, characteristics: { ...d.tags.characteristics, keywords: ["Lifelink"] } } as CardTags };
+  })();
+  // THE KEYS EXIST ONLY WHERE SOMETHING ASKS, so two enchantment askers stand in for the payoffs.
+  const asks = (verb: string) => withTypes(base(`Asks ${verb}`, [{
+    kind: "triggered", trigger: { verbs: [verb], subject: { control: "you", token: null } }, effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]), ["enchantment"]);
+  const { events, index } = buildPartnerArtifact([looting, altar, reanimator, lifelinker, asks("enters-graveyard"), asks("gain-life")], H);
+  const factsOn = (key: string, side: "p" | "c", name: string) => {
+    const m = events.get(key);
+    const ids = side === "p" ? m?.p : m?.c;
+    const facts = side === "p" ? m?.pf : m?.cf;
+    const at = (ids ?? []).findIndex((pos) => index[pos]!.name === name);
+    return at < 0 ? undefined : facts![at]!.map(unpackFact).map((f) => f.kind);
+  };
+  const graveyardKey = [...events.keys()].find((k) => k.startsWith("enters-graveyard|") && events.get(k)!.p.some((p) => index[p]!.name === "Looting"))!;
+  expect(factsOn(graveyardKey, "p", "Looting")).toEqual(["spell"]);
+  const fodderKey = [...events.keys()].find((k) => k.startsWith("fodder|"))!;
+  expect(factsOn(fodderKey, "c", "Altar")).toEqual(["activated"]);
+  const fillKey = [...events.keys()].find((k) => k.startsWith("fills|") && events.get(k)!.c.some((p) => index[p]!.name === "Reanimator"))!;
+  expect(factsOn(fillKey, "c", "Reanimator")).toEqual(["triggered"]);
+  // LIFELINK IS THE CARD, NOT AN ABILITY: on the key, with no fact, and counted apart by the page.
+  const lifeKey = [...events.keys()].find((k) => k.startsWith("gain-life|") && events.get(k)!.p.some((p) => index[p]!.name === "Lifelinker"));
+  expect(factsOn(lifeKey!, "p", "Lifelinker")).toEqual([]);
+});
+
+/** MIXED MEMBERSHIP (review of #1339): a lifelink creature whose only ability is a once-only ETB
+ *  lifegain is on `gain-life` by what it is AND by an ability, so it ships the ability's fact plus
+ *  the unjudged marker -- `repeats=repeatable` must not silently drop it. */
+test("a card on a key by what it is and by an ability ships the marker beside the ability's fact", () => {
+  const d = base("Lifelink Etb", [{ kind: "triggered", repeats: "once",
+    trigger: { verbs: ["enters"], subject: { self: true, control: "you", token: null } },
+    effect: { kind: "gain-life" }, amount: "2",
+    emits: [{ verb: "gain-life", subject: { control: "you", token: null } }] }] as unknown as CardTags["abilities"]);
+  const lifelinkEtb = { ...d, tags: { ...d.tags, characteristics: { ...d.tags.characteristics, keywords: ["Lifelink"] } } as CardTags };
+  const asks = withTypes(base("Asks gain-life", [{
+    kind: "triggered", trigger: { verbs: ["gain-life"], subject: { control: "you", token: null } }, effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]), ["enchantment"]);
+  const { events, index } = buildPartnerArtifact([lifelinkEtb, asks], H);
+  const m = events.get([...events.keys()].find((k) => k.startsWith("gain-life|") && events.get(k)!.p.some((p) => index[p]!.name === "Lifelink Etb"))!)!;
+  const at = m.p.findIndex((p) => index[p]!.name === "Lifelink Etb");
+  const facts = m.pf![at]!;
+  expect(facts.filter(isUnjudgedFact)).toHaveLength(1);
+  expect(facts.filter((n) => !isUnjudgedFact(n)).map(unpackFact)).toEqual([{ kind: "triggered", repeats: "once", amount: { kind: "fixed", value: 2 } }]);
+  expect(memberPasses(facts, { minRepeats: "repeatable" })).toBe(false);
+  expect(memberUndecided(facts, { minRepeats: "repeatable" })).toBe(true);
 });
 
 test("the artifact counts the askers beside the causers", () => {
