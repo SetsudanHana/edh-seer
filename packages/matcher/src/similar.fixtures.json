@@ -6636,5 +6636,1653 @@
    "segmentHash": "bad6a8738777bf2be502e7a3d9f10e1e57565d90a989d86b7853e7acb46aa034",
    "clauseSource": "grammar"
   }
+ },
+ "Befuddle": {
+  "card": {
+   "name": "Befuddle",
+   "typeLine": "Instant",
+   "oracleText": "Target creature gets -4/-0 until end of turn.\nDraw a card.",
+   "colorIdentity": [
+    "U"
+   ]
+  },
+  "tags": {
+   "oracleId": "664c1219-acfa-41da-b811-503a63fc8d84",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "U"
+    ],
+    "identity": [
+     "U"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "debuff",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     },
+     "amount": "-4/-0",
+     "clause": 1,
+     "repeats": "once"
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "771921245e7acf36431c29683500aa9b372403ed733f933b7da360f2320a7647",
+   "clauseSource": "grammar"
+  }
+ },
+ "Balduvian Rage": {
+  "card": {
+   "name": "Balduvian Rage",
+   "typeLine": "Instant",
+   "oracleText": "Target attacking creature gets +X/+0 until end of turn.\nDraw a card at the beginning of the next turn's upkeep.",
+   "colorIdentity": [
+    "R"
+   ]
+  },
+  "tags": {
+   "oracleId": "1bc7d73b-0f54-4807-b13a-3def0c5e5616",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "pump",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "combat": "attacking"
+      }
+     },
+     "amount": "+X/+0",
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 0,
+      "ceiling": null,
+      "scalesWith": "mana"
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "7c2b34184b4de3692e9a6598c3f882a8a8b91e556dfd8a96b7ccc9c732e64e96",
+   "clauseSource": "grammar"
+  }
+ },
+ "Stun": {
+  "card": {
+   "name": "Stun",
+   "typeLine": "Instant",
+   "oracleText": "Target creature can't block this turn.\nDraw a card.",
+   "colorIdentity": [
+    "R"
+   ]
+  },
+  "tags": {
+   "oracleId": "d3491972-44c5-4962-a680-42b79357a189",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "restriction",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     },
+     "restricts": [
+      "block"
+     ],
+     "clause": 1,
+     "repeats": "once"
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "3a4201322edaefaa47336516d8846cff7268b8a1f4f7abdabec8885179278c1c",
+   "clauseSource": "grammar"
+  }
+ },
+ "Accelerate": {
+  "card": {
+   "name": "Accelerate",
+   "typeLine": "Instant",
+   "oracleText": "Target creature gains haste until end of turn.\nDraw a card.",
+   "colorIdentity": [
+    "R"
+   ]
+  },
+  "tags": {
+   "oracleId": "79189464-9645-4411-8886-68fd40a588ed",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "speed-increase",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "clause": 1,
+     "repeats": "once",
+     "grants": [
+      "haste"
+     ]
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "3867e35d9ceb7a1d34be8e0004cfc93268285f29bab08e30007d557e1a4d5851",
+   "clauseSource": "grammar"
+  }
+ },
+ "Rakdos Cluestone": {
+  "card": {
+   "name": "Rakdos Cluestone",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Add {B} or {R}.\n{B}{R}, {T}, Sacrifice this artifact: Draw a card.",
+   "colorIdentity": [
+    "B",
+    "R"
+   ]
+  },
+  "tags": {
+   "oracleId": "b4f0bda0-1051-4ab8-b254-891f427b33ad",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [
+     "B",
+     "R"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{B}{R}, {T}, Sacrifice this artifact",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "artifact",
+        "self": true
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "artifact",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{B}{R}",
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "cost": "{B}{R}, {T}, Sacrifice this artifact",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{B}{R}",
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "loyalty": null,
+      "consumes": [],
+      "other": []
+     },
+     "colours": [
+      "B",
+      "R"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "ef0e8f6c901c76f25b5d461f50f011bcb433b537e2b1e7514386d4e534431c67",
+   "clauseSource": "grammar"
+  }
+ },
+ "Basilica Skullbomb": {
+  "card": {
+   "name": "Basilica Skullbomb",
+   "typeLine": "Artifact",
+   "oracleText": "{1}, Sacrifice this artifact: Draw a card.\n{2}{W}, Sacrifice this artifact: Target creature you control gets +2/+2 and gains flying until end of turn. Draw a card. Activate only as a sorcery.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "43057d84-b424-489c-abec-3fb4cb823d80",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [
+     "W"
+    ],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{1}, Sacrifice this artifact",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "artifact",
+        "self": true
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "artifact",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{1}",
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "cost": "{1}, Sacrifice this artifact",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{1}",
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{2}{W}, Sacrifice this artifact",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "artifact",
+        "self": true
+       }
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "artifact",
+        "self": true
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{2}{W}",
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "pump",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     },
+     "cost": "{2}{W}, Sacrifice this artifact",
+     "amount": "+2/+2",
+     "clause": 2,
+     "repeats": "once",
+     "payment": {
+      "mana": "{2}{W}",
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "keyword-grant",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{2}{W}, Sacrifice this artifact",
+     "amount": "flying until end of turn",
+     "clause": 2,
+     "repeats": "once",
+     "payment": {
+      "mana": "{2}{W}",
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     },
+     "grants": [
+      "flying"
+     ]
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "cost": "{2}{W}, Sacrifice this artifact",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{2}{W}",
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "b69f97054ca524cc0b3af4c016f5b13cbb12378b68b7649e593e816142f4215b",
+   "clauseSource": "model"
+  }
+ },
+ "Ent-Draught Basin": {
+  "card": {
+   "name": "Ent-Draught Basin",
+   "typeLine": "Artifact",
+   "oracleText": "{X}, {T}: Put a +1/+1 counter on target creature with power X. Activate only as a sorcery.",
+   "colorIdentity": []
+  },
+  "tags": {
+   "oracleId": "02acf8b2-6108-4496-9803-7199ca7e199a",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "counter-placement",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "variable": true
+        }
+       ]
+      }
+     },
+     "cost": "{X}, {T}",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "counter-added",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "creature",
+        "scope": "target",
+        "counter": "+1/+1"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{X}",
+      "tap": true
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "f2df626b13a4cc55064f00c4cac4c290178468e8f0303128b9ed9282d19e81ce",
+   "clauseSource": "model"
+  }
+ },
+ "Magnetic Web": {
+  "card": {
+   "name": "Magnetic Web",
+   "typeLine": "Artifact",
+   "oracleText": "If a creature with a magnet counter on it attacks, all creatures with magnet counters on them attack if able.\nWhenever a creature with a magnet counter on it attacks, all creatures with magnet counters on them block that creature this turn if able.\n{1}, {T}: Put a magnet counter on target creature.",
+   "colorIdentity": []
+  },
+  "tags": {
+   "oracleId": "c62c8006-5650-43cb-8247-da097aa42376",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": ""
+     },
+     "trigger": {
+      "verbs": [
+       "attacks"
+      ],
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "counter": "magnet"
+      }
+     },
+     "clause": 2,
+     "repeats": "repeatable"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "counter-placement",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     },
+     "cost": "{1}, {T}",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "counter-added",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "creature",
+        "scope": "target",
+        "counter": "magnet"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 3,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{1}",
+      "tap": true
+     }
+    }
+   ],
+   "unclaimed": [
+    {
+     "clause": 1,
+     "verb": "cant",
+     "object": "creatures with magnet counters on them can't not attack if able"
+    },
+    {
+     "clause": 2,
+     "verb": "cant",
+     "object": "creatures with magnet counters on them can't not block that creature this turn if able"
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "e58a7377127f4c16364c0cefdd1f15c028ca37a924e4e66345f8893a8f1af918",
+   "clauseSource": "model"
+  }
+ },
+ "Spontaneous Flight": {
+  "card": {
+   "name": "Spontaneous Flight",
+   "typeLine": "Instant",
+   "oracleText": "Target creature gets +2/+2 until end of turn. Put a flying counter on it.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "04da8c46-9703-47f2-974b-c144464ec380",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "pump",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     },
+     "amount": "+2/+2",
+     "clause": 1,
+     "repeats": "once"
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "counter-placement",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "flying"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "counter-added",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "counter": "flying"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "e39bdb9959f1af238b7443f148c914c18c1bcd0e9929f7792be73c6c5ff1b791",
+   "clauseSource": "grammar"
+  }
+ },
+ "Puncture Bolt": {
+  "card": {
+   "name": "Puncture Bolt",
+   "typeLine": "Instant",
+   "oracleText": "Puncture Bolt deals 1 damage to target creature. Put a -1/-1 counter on that creature.",
+   "colorIdentity": [
+    "R"
+   ]
+  },
+  "tags": {
+   "oracleId": "c8e53740-c633-42f8-9e02-3434d6dc0b30",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "non-combat-damage",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "creature",
+        "scope": "target"
+       },
+       "dealer": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "counter-placement",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "counter-added",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "counter": "-1/-1"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "b49b7c0cd544254f11c4e11a388e0ca8af35c53edacc13c740f575cb598be61a",
+   "clauseSource": "grammar"
+  }
+ },
+ "Mind Extraction": {
+  "card": {
+   "name": "Mind Extraction",
+   "typeLine": "Sorcery",
+   "oracleText": "As an additional cost to cast this spell, sacrifice a creature.\nTarget player reveals their hand and discards all cards of each of the sacrificed creature's colors.",
+   "colorIdentity": [
+    "B"
+   ]
+  },
+  "tags": {
+   "oracleId": "0077740a-528b-4ee3-b331-fac321b95302",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "sorcery"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature"
+       }
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "all",
+     "emits": [
+      {
+       "verb": "discard",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "scope": "target"
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "once"
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "1c8f356c0932d7b623ad5d1436d644f24903c33db35af7adb2e0b0726b621fa1",
+   "clauseSource": "grammar"
+  }
+ },
+ "Bone Splinters": {
+  "card": {
+   "name": "Bone Splinters",
+   "typeLine": "Sorcery",
+   "oracleText": "As an additional cost to cast this spell, sacrifice a creature.\nDestroy target creature.",
+   "colorIdentity": [
+    "B"
+   ]
+  },
+  "tags": {
+   "oracleId": "0c936582-d4c0-4da8-bc7e-49da5a433939",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "sorcery"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature"
+       }
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "creature",
+        "scope": "target"
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "42039a49c6d75e0a85fbeb62f6fea0630b431e24853a6f0180e3c18b48182372",
+   "clauseSource": "grammar"
+  }
+ },
+ "Viashino Lashclaw": {
+  "card": {
+   "name": "Viashino Lashclaw",
+   "typeLine": "Creature — Lizard Warrior",
+   "oracleText": "{T}, Discard a card: Creatures you control gain haste until end of turn.",
+   "colorIdentity": [
+    "R"
+   ]
+  },
+  "tags": {
+   "oracleId": "02358f98-99d5-45a3-b7e3-f2cbf08fa52c",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "lizard",
+     "warrior"
+    ],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 2,
+    "power": "2",
+    "toughness": "2",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{T}, Discard a card",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "discard",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true,
+      "discard": [
+       {
+        "amount": "1",
+        "subject": {
+         "control": "you",
+         "token": null
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "speed-increase",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}, Discard a card",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "payment": {
+      "tap": true,
+      "discard": [
+       {
+        "amount": "1",
+        "subject": {
+         "control": "you",
+         "token": null
+        }
+       }
+      ]
+     },
+     "grants": [
+      "haste"
+     ]
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "cc04c658e53790f2239161c53326507bbf6e1a9a1ad356af299f96d3e9cdf5bf",
+   "clauseSource": "grammar"
+  }
+ },
+ "Firefright Mage": {
+  "card": {
+   "name": "Firefright Mage",
+   "typeLine": "Creature — Goblin Spellshaper",
+   "oracleText": "{1}{R}, {T}, Discard a card: Target creature can't be blocked this turn except by artifact creatures and/or red creatures.",
+   "colorIdentity": [
+    "R"
+   ]
+  },
+  "tags": {
+   "oracleId": "9a0bb238-f832-4b37-97ae-520899798e7a",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "goblin",
+     "spellshaper"
+    ],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 1,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{1}{R}, {T}, Discard a card",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "discard",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{1}{R}",
+      "tap": true,
+      "discard": [
+       {
+        "amount": "1",
+        "subject": {
+         "control": "you",
+         "token": null
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "evasion",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     },
+     "cost": "{1}{R}, {T}, Discard a card",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "payment": {
+      "mana": "{1}{R}",
+      "tap": true,
+      "discard": [
+       {
+        "amount": "1",
+        "subject": {
+         "control": "you",
+         "token": null
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "c000f692c381426968a29d3a03ae8594f3df1e1925ac256f94ff6bec4b187d07",
+   "clauseSource": "grammar"
+  }
+ },
+ "Village Rites": {
+  "card": {
+   "name": "Village Rites",
+   "typeLine": "Instant",
+   "oracleText": "As an additional cost to cast this spell, sacrifice a creature.\nDraw two cards.",
+   "colorIdentity": [
+    "B"
+   ]
+  },
+  "tags": {
+   "oracleId": "365548fb-5acc-4a8a-b20b-26d28b7d029f",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature"
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 13,
+   "segmentHash": "25dab1341428c0eb51eab05df18d7421df37ea69d8c97f9c9f7634535bf0e59a",
+   "clauseSource": "grammar"
+  }
  }
 }

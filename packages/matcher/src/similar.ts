@@ -128,15 +128,19 @@ const NOUN: Record<string, string> = {
 const COST_SELF_VERBS = new Set(["sacrifice", "dies", "leaves", "exiled", "discard", "shuffle"]);
 /** SHUFFLE IS A BY-PRODUCT of a search: it gates only when it is all both cards do, and never counts as an extra or missing effect. */
 const WEAK_VERBS = new Set(["shuffle"]);
+/** A COST THE PLAYER PAYS (discard to activate, sacrifice another creature, pay life, "as an additional cost to cast ... sacrifice a creature")
+ *  and an EFFECT-KIND PSEUDO-OUTPUT (an ability that emits nothing: pump, debuff, mana) never open the gate. */
+const COST_SUFFIX = "~cost";
+const EFFECT_PREFIX = "effect:";
 /** Per-key facts, computed once: `rank` asks them for every key of every candidate, and a regex split per ask was the build's hot spot. */
 const keyMeta = new Map<string, { verb: string; gate: Gate; weak: boolean }>();
 type Gate = "open" | "never" | "alone";
 function metaOf(key: string): { verb: string; gate: Gate; weak: boolean } {
   let m = keyMeta.get(key);
   if (!m) {
-    const verb = key.split(/[|@:]/)[0]!;
+    const verb = key.split(/[|@:~]/)[0]!;
     const weak = WEAK_VERBS.has(verb);
-    m = { verb, weak, gate: key.endsWith("@self") && COST_SELF_VERBS.has(verb) ? "never" : weak ? "alone" : "open" };
+    m = { verb, weak, gate: key.endsWith(COST_SUFFIX) || key.startsWith(EFFECT_PREFIX) || (key.endsWith("@self") && COST_SELF_VERBS.has(verb)) ? "never" : weak ? "alone" : "open" };
     keyMeta.set(key, m);
   }
   return m;
@@ -144,7 +148,7 @@ function metaOf(key: string): { verb: string; gate: Gate; weak: boolean } {
 const gateOfKey = (key: string): Gate => metaOf(key).gate;
 const isWeakKey = (key: string): boolean => metaOf(key).weak;
 
-function outputOf(e: GameEvent, key: string): Output {
+function outputOf(e: GameEvent, key: string, cost = false): Output {
   // A SEARCH FOR THE CARD'S OWN NAME ("up to three cards named Squadron Hawk") is not a tutor for anything.
   if (e.verb === "search" && e.subject.named === "~") return { key: "search@named-self", who: null, scope: null, event: e };
   if (e.subject.self === true) {
@@ -152,14 +156,30 @@ function outputOf(e: GameEvent, key: string): Output {
     const counter = e.verb === "counter-added" && e.subject.counter !== undefined ? `:${String(e.subject.counter)}` : "";
     return { key: `${e.verb}${counter}@self`, who: null, scope: null, event: e };
   }
+  // THE COUNTER'S KIND IS PART OF THE OUTPUT: +1/+1, -1/-1, stun, poison and energy are different jobs.
+  if (e.verb === "counter-added" && e.subject.counter !== undefined) key = `${key}:${String(e.subject.counter)}`;
   const scope = SCOPE_VERBS.has(e.verb) ? (e.subject.scope === "each" || e.subject.scope === "all" ? "many" : "one") : null;
-  if (!hasRecipient(e)) return { key, who: null, scope, event: e };
+  const sfx = cost ? COST_SUFFIX : "";
+  if (!hasRecipient(e)) return { key: `${key}${sfx}`, who: null, scope, event: e };
   const c = e.subject.control;
   const who: Who = c === "you" ? "you" : c === "opp" ? "opp" : "any";
-  return { key: `${key}@${who === "you" ? "you" : "other"}`, who, scope, event: e };
+  return { key: `${key}@${who === "you" ? "you" : "other"}${sfx}`, who, scope, event: e };
 }
 
 /** The output as a noun phrase for a chip, with no article: "life loss", "Spirit token", "death", "exile". */
+/** Effect kinds the same card also emits as events in a sibling ability (a drain emits life loss and gain): a pseudo-output would count them twice. */
+const EMITTED_ELSEWHERE = new Set(["drain", "draw-card", "mill", "bounce"]);
+const EFFECT_NOUN: Record<string, string> = {
+  pump: "pump", debuff: "debuff", "keyword-grant": "keyword grant", "mana-generation": "mana", "speed-increase": "speed boost",
+  animate: "animation", evasion: "evasion", "cost-reduction": "cost reduction", search: "library search", restriction: "restriction",
+  drain: "drain", "ability-loss": "ability loss", "to-hand": "return to hand", "top-set": "top-of-library setup", tax: "tax",
+  "type-grant": "type change", emblem: "emblem", "damage-multiplier": "damage multiplier", "counter-placement": "counters",
+  "extra-turn": "extra turn", "extra-combat": "extra combat", "trigger-doubling": "trigger doubling", "win-game": "winning the game",
+  "token-doubling": "token doubling", retarget: "retargeting", "extra-loyalty": "extra loyalty activation", "extra-phase": "extra phase",
+  "draw-card": "card draw", bounce: "bounce", "play-from-top": "playing from the top", "graveyard-recursion": "recursion",
+  mill: "mill", "exile-processing": "exile processing", flicker: "flicker",
+};
+
 function outputNoun(e: GameEvent): string {
   const s = e.subject;
   if (e.verb === "create-token" || (e.verb === "enters" && s.token === true)) {
@@ -167,6 +187,7 @@ function outputNoun(e: GameEvent): string {
     return `${w ? `${w.charAt(0).toUpperCase()}${w.slice(1)} ` : ""}token`;
   }
   if (e.verb === "enters") return "entering the battlefield";
+  if (e.verb.startsWith(EFFECT_PREFIX)) { const k = e.verb.slice(EFFECT_PREFIX.length); return EFFECT_NOUN[k] ?? k.replace(/-/g, " "); }
   const base = NOUN[e.verb] ?? e.verb.replace(/-/g, " ");
   return s.control === "opp" && OPP_NOUN_VERBS.has(e.verb) ? `opponent ${base}` : base;
 }
@@ -180,6 +201,21 @@ export function signatureOf(card: SimilarCard): AbilitySig[] {
   return sigOf(card).abilities;
 }
 
+/** THE VERBS OF THIS ABILITY THAT ARE A COST: what an activation's `payment` consumes (a non-self discard or sacrifice, life), and an
+ *  on-cast ability that only sacrifices/discards/pays life of yours with no effect of its own beside another on-cast ability
+ *  ("as an additional cost to cast this spell, sacrifice a creature" is encoded that way: Bone Splinters, Village Rites). */
+function costVerbsOf(a: Ability, onCastCount: number): Set<string> {
+  const v = new Set<string>();
+  const p = a.payment;
+  if (p?.discard?.some((o) => o.subject?.self !== true)) v.add("discard");
+  if (p?.sacrifice?.some((o) => o.subject?.self !== true)) { v.add("sacrifice"); v.add("dies"); }
+  if (p?.life) v.add("lose-life");
+  if (a.kind === "on-cast" && onCastCount > 1 && !a.effect?.kind && a.emits?.every((e) => ["sacrifice", "dies", "discard", "lose-life"].includes(e.verb) && e.subject.control === "you" && e.subject.self !== true)) {
+    for (const e of a.emits ?? []) v.add(e.verb);
+  }
+  return v;
+}
+
 const sigCache = new WeakMap<object, CardSig>();
 function sigOf(card: SimilarCard): CardSig {
   const key = card.tags ?? card;
@@ -187,10 +223,20 @@ function sigOf(card: SimilarCard): CardSig {
   if (hit) return hit;
   const abilities: AbilitySig[] = [];
   const outputs = new Map<string, GameEvent>();
-  for (const a of card.tags?.abilities ?? []) {
-    if (!a.emits || a.emits.length === 0 || isRefusedTrigger(a)) continue;
+  const all = card.tags?.abilities ?? [];
+  const onCast = all.filter((x) => x.kind === "on-cast").length;
+  for (const a of all) {
+    if (isRefusedTrigger(a)) continue;
+    // AN ABILITY THAT EMITS NOTHING still does something (pump, debuff, mana): its effect kind rides along as a pseudo-output that
+    // never gates but counts as an extra or missing effect.
+    if (!a.emits || a.emits.length === 0) {
+      const kind = a.effect?.kind;
+      if (kind && !EMITTED_ELSEWHERE.has(kind)) { const k = `${EFFECT_PREFIX}${kind}`; if (!outputs.has(k)) outputs.set(k, { verb: k, subject: { control: "any", token: null } } as unknown as GameEvent); }
+      continue;
+    }
+    const costVerbs = costVerbsOf(a, onCast);
     const own = new Map<string, Output>();
-    for (const e of a.emits) for (const k of splitKey(eventKey(e))) { const o = outputOf(e, k); if (!own.has(o.key)) own.set(o.key, o); }
+    for (const e of a.emits) for (const k of splitKey(eventKey(e))) { const o = outputOf(e, k, e.subject.self !== true && costVerbs.has(e.verb)); if (!own.has(o.key)) own.set(o.key, o); }
     for (const o of own.values()) if (!outputs.has(o.key)) outputs.set(o.key, o.event);
     abilities.push({
       kind: factKindOf(a),

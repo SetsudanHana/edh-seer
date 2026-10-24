@@ -26,14 +26,14 @@ describe("Soul Warden as the seed", () => {
       ["output", "Auspicious Ancestor", [{ dim: "trigger", label: "when a white spell is cast" }]],
       ["output", "Dune Diviner", [{ dim: "trigger", label: "an activated ability" }]],
       ["output", "Angel's Feather", [{ dim: "trigger", label: "when a white spell is cast" }, { dim: "type", label: "artifact" }]],
-      ["output", "Bontu's Monument", [{ dim: "trigger", label: "when you cast a creature spell" }, { dim: "type", label: "artifact" }, { dim: "extra", label: "+ opponent life loss" }]],
       ["output", "Demon's Horn", [{ dim: "trigger", label: "when a black spell is cast" }, { dim: "type", label: "artifact" }]],
       ["output", "Dragon's Claw", [{ dim: "trigger", label: "when a red spell is cast" }, { dim: "type", label: "artifact" }]],
       ["output", "Kraken's Eye", [{ dim: "trigger", label: "when a blue spell is cast" }, { dim: "type", label: "artifact" }]],
       ["output", "Wurm's Tooth", [{ dim: "trigger", label: "when a green spell is cast" }, { dim: "type", label: "artifact" }]],
+      ["output", "Bontu's Monument", [{ dim: "trigger", label: "when you cast a creature spell" }, { dim: "type", label: "artifact" }, { dim: "extra", label: "+ 2 other effects" }]],
       ["output", "Soldier of the Pantheon", [{ dim: "trigger", label: "when an opponent casts a multicoloured spell" }, { dim: "extra", label: "+ protection" }]],
       ["output", "Sythis, Harvest's Hand", [{ dim: "trigger", label: "when you cast an enchantment spell" }, { dim: "type", label: "enchantment" }, { dim: "extra", label: "+ card draw" }]],
-      ["output", "Professor Onyx", [{ dim: "trigger", label: "when you cast an instant or sorcery spell" }, { dim: "amount", label: "2 life" }, { dim: "type", label: "planeswalker" }, { dim: "extra", label: "+ 5 other effects" }]],
+      ["output", "Professor Onyx", [{ dim: "trigger", label: "when you cast an instant or sorcery spell" }, { dim: "amount", label: "2 life" }, { dim: "type", label: "planeswalker" }, { dim: "extra", label: "+ 6 other effects" }]],
     ]);
   });
 
@@ -385,5 +385,39 @@ describe("a search for the card's own name is its own output (#1341 review)", ()
   test("Squadron Hawk is not a generic tutor like Rune-Scarred Demon", () => {
     expect(compareCards(card("Squadron Hawk"), card("Rune-Scarred Demon"))).toBeNull();
     expect(compareCards(card("Rune-Scarred Demon"), card("Squadron Hawk"))).toBeNull();
+  });
+});
+
+describe("an emit-less ability is a visible effect, never a gate (#1341 final review)", () => {
+  test("a cantrip's main effect separates it: Befuddle, Stun, Accelerate and Balduvian Rage are not the same", () => {
+    for (const [a, b] of [["Befuddle", "Balduvian Rage"], ["Stun", "Accelerate"], ["Rakdos Cluestone", "Basilica Skullbomb"]] as const) {
+      const r = compareCards(card(a), card(b))!;
+      expect(r.tier, a + " vs " + b).not.toBe("same");
+      expect(r.chips.some((c) => c.dim === "extra" || c.dim === "missing"), a + " vs " + b).toBe(true);
+    }
+    expect(compareCards(card("Befuddle"), card("Balduvian Rage"))!.chips.map((c) => c.label)).toEqual(["+ pump", "no debuff"]);
+  });
+  test("the shared draw still joins them, one step out, with the effect named", () => {
+    const r = compareCards(card("Stun"), card("Accelerate"))!;
+    expect(r.tier).toBe("close");
+    expect(r.chips.map((c) => c.label)).toEqual(["+ speed boost", "no restriction"]);
+  });
+});
+
+describe("counter kind is part of the output (#1341 final review)", () => {
+  test("+1/+1 and stun counters are different outputs", () => {
+    expect(compareCards(card("Ent-Draught Basin"), card("Magnetic Web"))?.tier).not.toBe("same");
+    expect(compareCards(card("Spontaneous Flight"), card("Puncture Bolt"))?.tier).not.toBe("close");
+  });
+});
+
+describe("a cost the player pays never opens the gate (#1341 final review)", () => {
+  const names = (seed: keyof typeof fixtures) => similarIndex(cards).similarTo(card(seed).id, { limit: 99 }).filter((r) => r.tier !== "output").map((r) => r.name);
+  test("an additional cost to cast is not the spell's effect", () => {
+    expect(names("Mind Extraction")).not.toContain("Bone Splinters");
+    expect(names("Bone Splinters")).not.toContain("Village Rites");
+  });
+  test("discarding to activate is not the ability's effect", () => {
+    expect(names("Viashino Lashclaw")).not.toContain("Firefright Mage");
   });
 });
