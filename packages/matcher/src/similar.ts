@@ -81,6 +81,8 @@ interface CardSig {
   identity: string[];
 }
 
+/** Supertypes (CR 205.4a) ride in `characteristics.types` but are not card types: a legendary creature and a creature are the same type here. */
+const SUPERTYPES = new Set(["legendary", "basic", "snow", "world", "ongoing"]);
 const TIER_RANK: Record<SimilarTier, number> = { same: 0, close: 1, output: 2 };
 const KIND_LABEL: Record<FactKind, string> = {
   spell: "when cast", triggered: "a triggered ability", activated: "an activated ability",
@@ -160,7 +162,7 @@ function sigOf(card: SimilarCard): CardSig {
   const sig: CardSig = {
     abilities, outputs,
     keywords: [...new Set((ch?.keywords ?? []).map((k) => k.toLowerCase()))].sort(),
-    types: [...(ch?.types ?? [])].sort(),
+    types: [...(ch?.types ?? [])].filter((t) => !SUPERTYPES.has(t)).sort(),
     identity: ch?.identity ?? [],
   };
   sigCache.set(key, sig);
@@ -237,6 +239,19 @@ function subjectFacets(a: SubjectFilter, b: SubjectFilter): number {
     + (sameSet(sorted(a.type), sorted(b.type)) ? 0 : 1) + (sameSet(sorted(a.subtype), sorted(b.subtype)) ? 0 : 1);
 }
 
+/** Verbs that move an object between zones. A creature entering, dying or leaving is one KIND of event; casting a spell is another. */
+const ZONE_CHANGE = new Set(["enters", "dies", "leaves", "exiled"]);
+
+/** HOW FAR APART TWO DIFFERENT TRIGGERS ARE (output tier only). A triggered ability against an untriggered one is the
+ *  far step (6). Two triggers with different verbs start at 2, plus one per differing facet of the trigger SUBJECT
+ *  (creature vs creature, same control: 0), plus 2 when one is a zone change and the other is not: Soul Warden's
+ *  "another creature enters" is nearer Blood Artist's "a creature dies" than to "a player casts a white spell". */
+function verbDistance(a: AbilitySig, b: AbilitySig): number {
+  if (!a.verbs || !b.verbs || !a.subject || !b.subject) return 6;
+  const zone = (v: string[]): boolean => v.every((x) => ZONE_CHANGE.has(x));
+  return 2 + subjectFacets(a.subject, b.subject) + (zone(a.verbs) === zone(b.verbs) ? 0 : 2);
+}
+
 interface Pair { tier: SimilarTier; score: number; shared: Output; mine: Output }
 
 /** NUMERIC ONLY: no label is built here. Called for every candidate in a bucket. */
@@ -249,7 +264,7 @@ function evalPair(a: AbilitySig, b: AbilitySig, shared: Output, mine: Output, sa
   if (verbsEqual) {
     if (a.subject && b.subject) { const n = subjectFacets(a.subject, b.subject); if (n > 0) { differs = true; score += 2 * n; } }
     if (a.kind !== b.kind) { differs = true; score += 2; }
-  } else score += 4;
+  } else score += verbDistance(a, b);
   const ad = amountDistance(a.amount, b.amount);
   const rd = repeatsDistance(a.repeats, b.repeats);
   const wd = mine.who !== shared.who ? 1 : 0;
@@ -311,9 +326,17 @@ function rank(a: CardSig, b: CardSig): Ranked | null {
   return { tier, score: score + extras, pairs };
 }
 
+/** WHAT DIFFERS IN CARD TYPE, by name: the candidate's types the seed lacks ("enchantment"), else the seed's the candidate lacks ("not an enchantment"). */
+function typeLabel(seed: string[], cand: string[]): string {
+  const added = cand.filter((t) => !seed.includes(t));
+  if (added.length > 0) return added.join(" ");
+  const gone = seed.filter((t) => !cand.includes(t));
+  return gone.map((t) => `not ${/^[aeiou]/.test(t) ? "an" : "a"} ${t}`).join(" ");
+}
+
 function chipsOf(a: CardSig, b: CardSig, r: Ranked): Chip[] {
   const sameTypes = sameSet(a.types, b.types);
-  const typeChip = b.types.join(" ");
+  const typeChip = typeLabel(a.types, b.types);
   const chips: Chip[] = [];
   const seen = new Set<string>();
   const add = (c: Chip) => { const k = `${c.dim}:${c.label}`; if (!seen.has(k)) { seen.add(k); chips.push(c); } };
@@ -348,6 +371,16 @@ export function compareCards(seed: SimilarCard, cand: SimilarCard): Comparison |
   const b = sigOf(cand);
   const r = rank(a, b);
   return r && { tier: r.tier, score: r.score, chips: chipsOf(a, b, r) };
+}
+
+/** A CHIP EVERY ROW CARRIES SAYS NOTHING about any one row (Heliod: "lacks 2 other effects" on all 13): it describes the
+ *  seed, not the difference. Dropped from the final list, only when there are at least 3 rows to be universal across. */
+function dropUniversalChips<T extends { chips: Chip[] }>(rows: T[]): T[] {
+  if (rows.length < 3) return rows;
+  const key = (c: Chip): string => `${c.dim}:${c.label}`;
+  const everywhere = rows[0]!.chips.map(key).filter((k) => rows.every((r) => r.chips.some((c) => key(c) === k)));
+  if (everywhere.length === 0) return rows;
+  return rows.map((r) => ({ ...r, chips: r.chips.filter((c) => !everywhere.includes(key(c))) }));
 }
 
 const TIER_NAMES: readonly SimilarTier[] = ["same", "close", "output"];
@@ -415,7 +448,8 @@ export function similarIndex(cards: readonly SimilarCard[]) {
           if (top.length > cap) top.pop();
         }
       }
-      return [...tops.same, ...tops.close, ...tops.output].map((t) => ({ id: cards[t.ci]!.id, name: t.name, tier: t.tier, score: t.score, chips: chipsOf(sigs[si]!, sigs[t.ci]!, t.r) }));
+      const rows = [...tops.same, ...tops.close, ...tops.output].map((t) => ({ id: cards[t.ci]!.id, name: t.name, tier: t.tier, score: t.score, chips: chipsOf(sigs[si]!, sigs[t.ci]!, t.r) }));
+      return dropUniversalChips(rows);
     },
   };
 }

@@ -2288,5 +2288,379 @@
    "segmentHash": "77b6263cff389d1f226fa6a49b5acd0c3155a862fd112d924d474567f655d560",
    "clauseSource": "grammar"
   }
+ },
+ "Auspicious Ancestor": {
+  "card": {
+   "name": "Auspicious Ancestor",
+   "typeLine": "Creature — Human Cleric",
+   "oracleText": "When this creature dies, you gain 3 life.\nWhenever a player casts a white spell, you may pay {1}. If you do, you gain 1 life.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "82fb9834-de65-41a5-b908-f49668dee3ec",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "human",
+     "cleric"
+    ],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 4,
+    "power": "2",
+    "toughness": "3",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "dies"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "amount": "3",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 3,
+      "ceiling": 3
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "spell",
+       "colors": [
+        "W"
+       ]
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "675557912631bb892006d070372f834eced81f045be8e79429f389c0d5652133",
+   "clauseSource": "model"
+  }
+ },
+ "Apothecary Initiate": {
+  "card": {
+   "name": "Apothecary Initiate",
+   "typeLine": "Creature — Kithkin Cleric",
+   "oracleText": "Whenever a player casts a white spell, you may pay {1}. If you do, you gain 1 life.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "a74d80ec-9f42-418d-ab98-897acc23c319",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "kithkin",
+     "cleric"
+    ],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 1,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "spell",
+       "colors": [
+        "W"
+       ]
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "79c94ae48fa414b1f47fc4cb506f585cb40a785eb9d5cea23363515f96bc1721",
+   "clauseSource": "model"
+  }
+ },
+ "Soldier of the Pantheon": {
+  "card": {
+   "name": "Soldier of the Pantheon",
+   "typeLine": "Creature — Human Soldier",
+   "oracleText": "Protection from multicolored\nWhenever an opponent casts a multicolored spell, you gain 1 life.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "a97f3131-586b-440f-a646-50d65e12e13f",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "human",
+     "soldier"
+    ],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 1,
+    "power": "2",
+    "toughness": "1",
+    "token": false,
+    "keywords": [
+     "protection"
+    ]
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "spell",
+       "colorCount": "multi"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "c892f05f3c010e8b2dc8d0ec97848bc1678284f1bf275bf708825ce1e14518f7",
+   "clauseSource": "grammar"
+  }
+ },
+ "Dune Diviner": {
+  "card": {
+   "name": "Dune Diviner",
+   "typeLine": "Creature — Snake Cleric",
+   "oracleText": "{1}, Tap an untapped Desert you control: You gain 1 life.",
+   "colorIdentity": [
+    "G"
+   ]
+  },
+  "tags": {
+   "oracleId": "4bf308fc-a54e-4fba-b0fd-3bedb4db3b18",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "snake",
+     "cleric"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 3,
+    "power": "2",
+    "toughness": "3",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "cost": "{1}, Tap an untapped Desert you control",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{1}",
+      "tapOther": [
+       {
+        "amount": "1",
+        "subject": {
+         "control": "you",
+         "token": null,
+         "subtype": "desert"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "unclaimed": [
+    {
+     "clause": 1,
+     "verb": "tap",
+     "object": "an untapped Desert you control"
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "aeca3ed577f13324578ba65a7f94ef8a6ad42cff1c85bde0a71abc1ec5108bed",
+   "clauseSource": "grammar"
+  }
  }
 }

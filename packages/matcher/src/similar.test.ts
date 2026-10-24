@@ -22,7 +22,22 @@ describe("Soul Warden as the seed", () => {
       ["close", "Suture Priest", [{ dim: "trigger", label: "your creatures" }, { dim: "extra", label: "+ opponent life loss" }]],
       ["output", "Blood Artist", [{ dim: "trigger", label: "when a creature dies" }, { dim: "extra", label: "+ life loss" }]],
       ["output", "Zulaport Cutthroat", [{ dim: "trigger", label: "when a creature you control dies" }, { dim: "extra", label: "+ opponent life loss" }]],
+      ["output", "Apothecary Initiate", [{ dim: "trigger", label: "when a spell is cast" }]],
+      ["output", "Auspicious Ancestor", [{ dim: "trigger", label: "when a spell is cast" }]],
+      ["output", "Dune Diviner", [{ dim: "trigger", label: "an activated ability" }]],
+      ["output", "Soldier of the Pantheon", [{ dim: "trigger", label: "when a spell an opponent controls is cast" }, { dim: "extra", label: "+ protection" }]],
     ]);
+  });
+
+  test("output tier is ordered by trigger distance, not by name (#1341)", () => {
+    const out = ranked.filter((r) => r.tier === "output").map((r) => r.name);
+    const at = (n: string) => out.indexOf(n);
+    // a creature dying is nearer "another creature enters" than any cast trigger, and an activated ability is the farthest.
+    for (const near of ["Blood Artist", "Zulaport Cutthroat"]) {
+      for (const far of ["Apothecary Initiate", "Auspicious Ancestor", "Soldier of the Pantheon"]) expect(at(near)).toBeLessThan(at(far));
+    }
+    expect(at("Dune Diviner")).toBeGreaterThan(at("Apothecary Initiate"));
+    expect(at("Dune Diviner")).toBeGreaterThan(at("Auspicious Ancestor"));
   });
 
   test("grouped same -> close -> output, never the seed itself", () => {
@@ -159,9 +174,10 @@ describe("per-tier caps (#1341)", () => {
   test("a tier is capped on its own, so a full close tier cannot crowd out output", () => {
     const idx = similarIndex(cards);
     const id = card("Soul Warden").id;
-    const r = idx.similarTo(id, { perTier: { same: 1, close: 1, output: 5 } });
+    const r = idx.similarTo(id, { perTier: { same: 1, close: 1, output: 4 } });
     expect(r.map((x) => [x.tier, x.name])).toEqual([
       ["same", "Essence Warden"], ["close", "Auriok Champion"], ["output", "Blood Artist"], ["output", "Zulaport Cutthroat"],
+      ["output", "Apothecary Initiate"], ["output", "Auspicious Ancestor"],
     ]);
     expect(idx.similarTo(id, { perTier: { output: 1 } }).map((x) => x.name)).toEqual(["Blood Artist"]);
     expect(idx.similarTo(id, { perTier: {} })).toEqual([]);
@@ -181,5 +197,60 @@ describe("extra and missing chips are capped at one per row", () => {
     expect(lacks).toEqual([{ dim: "missing", label: "lacks 2 other effects" }]);
     const has = compareCards(warden, seed)!.chips.filter((c) => c.dim === "extra");
     expect(has).toEqual([{ dim: "extra", label: "+ 2 other effects" }]);
+  });
+});
+
+describe("type chip names card types only (#1341)", () => {
+  const withTypes = (id: number, name: string, types: string[]): SimilarCard => {
+    const tags = structuredClone(card("Soul Warden").tags!) as CardTags;
+    tags.characteristics.types = types;
+    return { id, name, tags };
+  };
+  const typeChips = (seed: string[], cand: string[]) =>
+    compareCards(withTypes(901, "Seed", seed), withTypes(902, "Cand", cand))!.chips.filter((c) => c.dim === "type");
+
+  test("supertypes are neither a difference nor a label", () => {
+    expect(typeChips(["creature"], ["legendary", "creature"])).toEqual([]);
+    expect(typeChips(["legendary", "creature"], ["creature"])).toEqual([]);
+    expect(typeChips(["creature"], ["legendary", "enchantment"])).toEqual([{ dim: "type", label: "enchantment" }]);
+    expect(typeChips(["creature"], ["legendary", "enchantment", "creature"])).toEqual([{ dim: "type", label: "enchantment" }]);
+  });
+  test("a candidate that lacks a seed type says so", () => {
+    expect(typeChips(["enchantment", "creature"], ["creature"])).toEqual([{ dim: "type", label: "not an enchantment" }]);
+    expect(typeChips(["legendary", "artifact", "creature"], ["creature"])).toEqual([{ dim: "type", label: "not an artifact" }]);
+  });
+});
+
+describe("a chip on every row is dropped (#1341)", () => {
+  const warden = card("Soul Warden");
+  const rich = structuredClone(warden.tags!) as CardTags;
+  rich.abilities.push(
+    { ...structuredClone(rich.abilities[0]!), emits: [{ verb: "draw", subject: { control: "you", token: null } }] },
+    { ...structuredClone(rich.abilities[0]!), emits: [{ verb: "lose-life", subject: { control: "opp", token: null } }] },
+  );
+  const variant = (id: number, name: string, edit: (t: CardTags) => void): SimilarCard => {
+    const tags = structuredClone(warden.tags!) as CardTags;
+    edit(tags);
+    return { id, name, tags };
+  };
+  const seed: SimilarCard = { id: 500, name: "Rich", tags: rich };
+  const rows = [
+    variant(501, "A plain", () => {}),
+    variant(502, "B bigger", (t) => { t.abilities[0]!.amount = "2"; }),
+    variant(503, "C yours", (t) => { t.abilities[0]!.trigger!.subject.control = "you"; }),
+  ];
+
+  test("with three rows, the chip all share goes and the distinguishing ones stay", () => {
+    expect(compareCards(seed, rows[0]!)!.chips).toEqual([{ dim: "missing", label: "lacks 2 other effects" }]);
+    const r = similarIndex([seed, ...rows]).similarTo(500);
+    expect(r).toHaveLength(3);
+    for (const h of r) expect(h.chips.some((c) => c.label === "lacks 2 other effects")).toBe(false);
+    expect(r.find((h) => h.name === "B bigger")!.chips).toEqual([{ dim: "amount", label: "2 life" }]);
+    expect(r.find((h) => h.name === "C yours")!.chips).toEqual([{ dim: "trigger", label: "your creatures" }]);
+  });
+  test("with fewer than three rows nothing is dropped", () => {
+    const r = similarIndex([seed, rows[0]!, rows[1]!]).similarTo(500);
+    expect(r).toHaveLength(2);
+    for (const h of r) expect(h.chips.some((c) => c.label === "lacks 2 other effects")).toBe(true);
   });
 });
