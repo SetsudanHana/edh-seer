@@ -23,7 +23,7 @@ import { bestRates, compareRates, manaOf, ratesOf, type Rate, type RateFamily } 
 export { effectPhrase } from "./sentence.js";
 import { phraseKindOf } from "./sentence.js";
 import { normalizeZoneEvent, tagKey } from "./zones.js";
-import { demandFactsOf, supplyFactsOf } from "./member-facts.js";
+import { UNJUDGED_FACT, demandFactsOf, supplyFactsOf } from "./member-facts.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 
 /** PURE, AND IT HAS TO STAY THAT WAY. `build-partners.ts` is the Mongo and fs wiring; everything
@@ -358,6 +358,17 @@ const supplyFactsOfCard = perCard((d: DeckCard): Map<string, number[]> => {
     return events.flatMap((e) => splitKey(eventKey(e)).flatMap(supplyForms));
   });
 });
+/** THE KEYS A CARD SUPPLIES BY WHAT IT IS, not by an ability: `producerEvents` over the card with its
+ *  abilities taken away leaves the implied cast and enter and what its printed keywords emit. A card
+ *  on one of these keys AND on it by an ability is judged only by the ability, so it ships
+ *  `UNJUDGED_FACT` beside the ability's facts (review of #1339: lifelink plus a once-only ETB gain). */
+const implicitSupplyKeysOfCard = perCard((d: DeckCard): ReadonlySet<string> => new Set(d.tags
+  ? producerEvents({ ...d.tags, abilities: [] }).flatMap((e) => splitKey(eventKey(e)).flatMap(supplyForms))
+  : []));
+const supplyFactsAt = (d: DeckCard, k: string): number[] => {
+  const facts = supplyFactsOfCard(d).get(k) ?? [];
+  return facts.length > 0 && implicitSupplyKeysOfCard(d).has(k) ? [...facts, UNJUDGED_FACT] : facts;
+};
 /** ONE ABILITY AS A WHOLE CARD, for the feeder readers, which walk a card's abilities themselves.
  *  No keywords, so a keyword's own feeder (delve) is not handed to the ability that happens to sit
  *  beside it. */
@@ -2526,7 +2537,7 @@ export function partnerBuilder(all: DeckCard[], h: Hierarchy) {
         const cardAt = (pos: number): DeckCard => byName.get(index[pos]!.name)!;
         events.set(k, { p, c,
           ...(DAMAGE_KEY.test(k) ? { pd: p.map((pos) => damageSizesOf(cardAt(pos), k.slice(0, k.indexOf("|")))) } : {}),
-          pf: p.map((pos) => supplyFactsOfCard(cardAt(pos)).get(k) ?? []),
+          pf: p.map((pos) => supplyFactsAt(cardAt(pos), k)),
           cf: c.map((pos) => demandFactsOfCard(cardAt(pos)).get(k) ?? []) });
       }
       const consumers: Record<string, number> = {};

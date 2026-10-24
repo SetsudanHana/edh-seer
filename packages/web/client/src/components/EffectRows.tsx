@@ -74,8 +74,9 @@ export function RepeatsRow(
  *  that ping for exactly 1"). "1 to 1" is exactly one. A variable size is left out unless asked
  *  for: "equal to its power" is not an answer to "exactly 1".
  *
- *  ON A "CARES ABOUT" EVENT THE SAME RANGE READS A REPLACEMENT'S CHANGE (owner, 2026-10-24):
- *  Torbran adds 2, Furnace of Rath doubles. The op picks which kind of change. */
+ *  ON A "CARES ABOUT" EVENT THE SAME RANGE READS A REPLACEMENT'S CHANGE (owner, 2026-10-24), and
+ *  ONLY ONCE AN OP IS CHOSEN: Torbran adds 2, Furnace of Rath doubles. With no op the range narrows
+ *  the causes and leaves the "cares about" side alone (askers state no amount; review of #1339). */
 export function AmountRow(
   { min, max, variable, change, onChange }: {
     min: number | undefined; max: number | undefined; variable: boolean; change: "plus" | "times" | undefined;
@@ -106,7 +107,8 @@ export function AmountRow(
         </select>
       </div>
       <p className="text-(--muted) text-sm max-w-[55ch]">
-        On a “causes” event this is how much one use does. On a “cares about” event it is how much a
+        On a “causes” event this is how much one use does. It applies to a “cares about” event only
+        when “A replacement that adds” or “multiplies” is chosen, and then it is how much the
         replacement changes it: Torbran adds 2, a doubler multiplies by 2.
       </p>
     </div>
