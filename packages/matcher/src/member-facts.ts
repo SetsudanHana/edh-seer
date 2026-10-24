@@ -99,15 +99,15 @@ export function supplyFactsOf(abilities: readonly Ability[], keysOf: (a: Ability
   return out;
 }
 
-/** EACH KEY A CARD ASKS FOR, WITH THE FACTS OF THE ABILITIES THAT ASK. No amount on this side: a
- *  trigger's own effect size is not what it asks for, and a replacement's "+2" or "triple" is a
- *  modifier the schema does not record as a number yet.
- *  CEILING: replacement magnitudes ("+2", "double", "triple") are not shipped, so the amount filter
- *  cannot tell Torbran from Fiery Emancipation. `tokenMultiplier` covers tokens only. */
+/** EACH KEY A CARD ASKS FOR, WITH THE FACTS OF THE ABILITIES THAT ASK. The only size on this side
+ *  is a replacement's change to the event it hears (`Ability.change`, DERIVE 388): Torbran's "+2",
+ *  Fiery Emancipation's "x3". A trigger's own effect size is not what it asks for, so it ships none. */
 export function demandFactsOf(abilities: readonly Ability[], keysOf: (a: Ability) => readonly string[]): Map<string, number[]> {
   const out = new Map<string, number[]>();
   for (const a of abilities) {
-    const fact = factOf(a, false);
+    const fact = a.replacement === true && a.change
+      ? packFact({ kind: factKindOf(a), repeats: a.repeats, amount: { kind: a.change.op, value: a.change.value } })
+      : factOf(a, false);
     for (const k of new Set(keysOf(a))) {
       const b = out.get(k);
       if (!b) out.set(k, [fact]);
