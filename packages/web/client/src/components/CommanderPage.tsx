@@ -11,6 +11,7 @@ import { EngineReading } from "./EngineReading.js";
 import { NotFound } from "./NotFound.js";
 import { PageMap } from "./PageMap.js";
 import { PartnerList } from "./PartnerList.js";
+import { SimilarCards } from "./SimilarCards.js";
 
 type Ranked = { partners: PartnerRow[]; pool: Record<string, number>; rarity: Record<string, number> };
 
@@ -310,6 +311,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
             ? "No pairings yet: we couldn't read this card's text, so there is nothing to rank them by."
             : "No standout pairings in these colours. Whatever this commander helps, hundreds of other cards help just as well, or none of the possible pairings held up."}
         />
+        <SimilarCards items={page.commanderSimilar ?? []} note="Only cards within this commander's colour identity are listed." />
 
     </CardShell>
   );

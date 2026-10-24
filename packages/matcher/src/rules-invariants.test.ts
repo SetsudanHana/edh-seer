@@ -26,6 +26,7 @@ const TESTED: Record<string, string> = {
   "704.5j": "edges.test.ts — copy: a token copy of a legend fires its entry trigger AND its death trigger",
   "707.2": "edges.test.ts — copy: a NONLEGENDARY consumer gets the entry and never the legend rule",
   "700.4": "zones.test.ts — dies stays dies (CR 700.4)",
+  "207.2c": "similar.test.ts — ability words are not keywords (CR 207.2c)",
   "700.11": "deck-fit.test.ts — a permanent card put into your graveyard from anywhere is a descent, so a creature dying meets the descend condition (#1166)",
   "701.17a": "partners-core.test.ts — a mill also supplies the general graveyard put, one way only",
   "400.1": "partners-core.test.ts — a graveyard leave keys apart from a battlefield leave (AK6)",

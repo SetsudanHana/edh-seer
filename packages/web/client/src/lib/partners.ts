@@ -1,5 +1,6 @@
 import { StaticLookup } from "@edh-seer/matcher/static-lookup";
 import type { CardPageRecord, EventFrequencyFile, EventMembers, NameIndexEntry, PartnerRow } from "@edh-seer/matcher/partners-core";
+import type { SimilarItem } from "@edh-seer/matcher/similar-shard";
 import { CARD_PAGE_DATA_ID } from "./inject.js";
 
 /** THE CARD PAGES' DATA PLANE, and it is deliberately three lines over `StaticLookup`.
@@ -10,10 +11,13 @@ import { CARD_PAGE_DATA_ID } from "./inject.js";
  *  `Illegal invocation`. `StaticLookup` already does all four and carries the measured reason for
  *  each; this file is the page-shaped API over it, not a second implementation of it.
  *
- *  NO INSTANCE IS MEMOIZED HERE. A navigation pays one extra `manifest.json` read; the shard bytes
- *  -- the part that is actually large -- are cached by URL in the browser's own cache, which is
- *  where the version directory exists to put them. */
-export type CardPageData = CardPageRecord;
+ *  `loadCardPage` USES THE SHARED LOOKUP (#1341 review): decoding a page's similar list needs the ~4 MB name index, and a
+ *  fresh instance per peek or navigation would fetch and parse it every time. */
+/** THE SHARD RECORD PLUS ITS DECODED SIMILAR LISTS (#1341). `similar` is the card page's list and
+ *  `commanderSimilar` the commander page's, within the commander's colours; both are `[]` when the
+ *  shard predates them (OPTIONAL IN THE TYPE only so the many page fixtures need not carry them;
+ *  `loadCardPage` always sets both, and a reader writes `page.similar ?? []`). The raw `sim`/`commanderSim` codes stay on the record for the edge's inline copy. */
+export type CardPageData = CardPageRecord & { similar?: SimilarItem[]; commanderSimilar?: SimilarItem[] };
 export type { EventFrequencyFile, EventMembers, NameIndexEntry, PartnerRow };
 
 /** THE RECORD THE EDGE ALREADY PUT IN THIS DOCUMENT, or null.
@@ -32,23 +36,52 @@ export type { EventFrequencyFile, EventMembers, NameIndexEntry, PartnerRow };
  *  EVERY FAILURE IS `null`, WHICH MEANS "ASK THE NETWORK". No tag (a dev server, the SPA fallback,
  *  a degraded edge response), a body that will not parse, no `document` at all under SSR or a test:
  *  all of them fall through to the fetch that has always been here. */
-export function inlineCardPage(slug: string, doc?: Document): CardPageData | null {
+/** The static version the edge stamped on the inline record (`data-version`), or null when it did not. */
+export function inlineCardVersion(slug: string, doc?: Document): string | null {
+  const d = doc ?? (typeof document === "undefined" ? undefined : document);
+  const el = d?.getElementById(CARD_PAGE_DATA_ID);
+  if (!el || el.getAttribute("data-slug") !== slug) return null;
+  return el.getAttribute("data-version");
+}
+
+export function inlineCardPage(slug: string, doc?: Document): CardPageRecord | null {
   const d = doc ?? (typeof document === "undefined" ? undefined : document);
   const el = d?.getElementById(CARD_PAGE_DATA_ID);
   if (!el || el.getAttribute("data-slug") !== slug) return null;
   try {
-    return JSON.parse(el.textContent ?? "") as CardPageData;
+    return JSON.parse(el.textContent ?? "") as CardPageRecord;
   } catch {
     return null;
   }
 }
 
-export function loadCardPage(
+export async function loadCardPage(
   slug: string, baseUrl: string, fetchImpl: typeof fetch = fetch,
 ): Promise<CardPageData | null> {
   const inline = inlineCardPage(slug);
-  if (inline) return Promise.resolve(inline);
-  return new StaticLookup(baseUrl, fetchImpl).cardPage(slug);
+  // THE PAGE IS READ THROUGH A FRESH LOOKUP, never the shared one: `StaticLookup` memoises its manifest, so a tab opened
+  // before a deploy would keep fetching the old version's shards (404 -> "no page" for a real card), and a transient
+  // manifest failure would pin the flat layout the same way. Only the 4 MB name index is worth sharing, and only when it
+  // is the same version the fresh read resolved.
+  const lookup = new StaticLookup(baseUrl, fetchImpl);
+  let rec: CardPageRecord | null;
+  if (inline && !inline.sim?.length && !inline.commanderSim?.length) rec = inline; // nothing to decode: no network at all
+  else if (inline) {
+    // `sim` holds name-index POSITIONS of the build that served this document. After a deploy the lookup may resolve a newer
+    // index (manifest max-age=60), and the same positions would name other cards. Use the inline record only when the
+    // versions agree; otherwise read the shard of the version the index comes from. With neither (no network), the
+    // record without its list.
+    const stamp = inlineCardVersion(slug);
+    if (stamp && stamp === await lookup.staticVersion()) rec = inline;
+    else rec = (await lookup.cardPage(slug)) ?? { ...inline, sim: undefined, commanderSim: undefined };
+  } else rec = await lookup.cardPage(slug);
+  if (!rec) return null;
+  // A decode that cannot read the index is an absent section, not a card page that will not load.
+  if (!rec.sim?.length && !rec.commanderSim?.length) return { ...rec, similar: [], commanderSimilar: [] };
+  const shared = sharedLookup(baseUrl, fetchImpl);
+  const decoder = (await shared.staticVersion()) === (await lookup.staticVersion()) ? shared : lookup;
+  const lists = await decoder.similarOf(rec).catch(() => ({ similar: [], commanderSimilar: [] }));
+  return { ...rec, ...lists };
 }
 
 /** THE TYPE AND SUBTYPE TABLES the index's `t`/`s` codes point into (2026-09-21). Its own loader

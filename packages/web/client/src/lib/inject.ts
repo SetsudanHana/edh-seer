@@ -130,7 +130,7 @@ export interface InjectedPage {
    *  6.5 KB (measured over all 16,715 records, 2026-09-08) and nothing.
    *
    *  Omitted -- not `null` -- on a page that has no record, so `injectPage` writes no tag at all. */
-  data?: { slug: string; record: unknown };
+  data?: { slug: string; record: unknown; version?: string };
 }
 
 /** WHERE THE APP LOOKS FOR THE INLINE RECORD. One constant, imported by the writer and the reader,
@@ -217,7 +217,7 @@ export function injectPage(shell: string, page: InjectedPage): string {
   // wants against `data-slug` and falls back to the network when they differ. Without that check
   // every partner link would show the previous card's page.
   const data = page.data === undefined ? "" : `\n    <script type="application/json" id="${CARD_PAGE_DATA_ID}"`
-    + ` data-slug="${esc(page.data.slug)}">${jsonForScript(page.data.record)}</script>`;
+    + ` data-slug="${esc(page.data.slug)}"${page.data.version ? ` data-version="${esc(page.data.version)}"` : ""}>${jsonForScript(page.data.record)}</script>`;
 
   return out.replace('<div id="root"></div>', () => `<div id="root"></div>\n${page.bodyHtml}${data}`);
 }

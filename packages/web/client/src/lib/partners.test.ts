@@ -136,3 +136,58 @@ test("an empty answer is not remembered, so the next call fetches again", async 
   expect(await sharedNameIndex("/static", f as unknown as typeof fetch)).toEqual(index);
   expect(f.mock.calls.some(([u]) => u.endsWith("/name-index.json"))).toBe(true);
 });
+
+/** VERSION SKEW (#1341 review): the edge's inline record carries name-index POSITIONS of the build that served the document.
+ *  After a deploy the lookup resolves a newer index, and the same positions would name other cards. */
+const SIM_FILES = (version: string, names: string[], sim: number[][]) => ({
+  [`/static/${version}/name-index.json`]: { cards: names.map((n) => ({ slug: n.toLowerCase(), name: n })), similarChips: [] },
+  [`/static/${version}/partners/${partnerShardOf("krenko-mob-boss")}.json`]: { "krenko-mob-boss": { ...KRENKO, sim } },
+});
+
+const inlineWith = (rec: unknown, version: string): void => {
+  const d = withTag("krenko-mob-boss", JSON.stringify(rec));
+  d.getElementById(CARD_PAGE_DATA_ID)!.setAttribute("data-version", version);
+  document.body.appendChild(d.getElementById(CARD_PAGE_DATA_ID)!);
+};
+
+test("an inline record is decoded only against the version it came from", async () => {
+  resetSharedNameIndex();
+  inlineWith({ ...KRENKO, sim: [[0, 0]] }, "v-old");
+  try {
+    // same version: the inline positions are used (index 0 is Alpha)
+    const same = fetchOf({ "/static/manifest.json": { version: "v-old" }, ...SIM_FILES("v-old", ["Alpha", "Beta"], [[1, 0]]) });
+    expect((await loadCardPage("krenko-mob-boss", "/static", same as unknown as typeof fetch))?.similar?.map((s) => s.name)).toEqual(["Alpha"]);
+    // skew: the manifest names a newer build whose index is reordered; the inline `[0]` would read "Beta" there, the shard's own is right
+    resetSharedNameIndex();
+    const skew = fetchOf({ "/static/manifest.json": { version: "v-new" }, ...SIM_FILES("v-new", ["Beta", "Alpha"], [[1, 0]]) });
+    expect((await loadCardPage("krenko-mob-boss", "/static", skew as unknown as typeof fetch))?.similar?.map((s) => s.name)).toEqual(["Alpha"]);
+    // an unstamped inline record with a list is never trusted either
+    resetSharedNameIndex();
+    document.getElementById(CARD_PAGE_DATA_ID)!.removeAttribute("data-version");
+    expect((await loadCardPage("krenko-mob-boss", "/static", skew as unknown as typeof fetch))?.similar?.map((s) => s.name)).toEqual(["Alpha"]);
+  } finally {
+    document.getElementById(CARD_PAGE_DATA_ID)?.remove();
+    resetSharedNameIndex();
+  }
+});
+
+/** A TAB OPENED BEFORE A DEPLOY (#1341): the shared lookup memoised manifest A; the card page must still load from the CURRENT
+ *  version B (a 404 on the old shard would read as "no page" for a real card), and its list must decode against B's index. */
+test("a shared lookup pinned at an old version does not pin the page load", async () => {
+  resetSharedNameIndex();
+  await sharedNameIndex("/static", fetchOf({ "/static/manifest.json": { version: "v-a" }, ...SIM_FILES("v-a", ["Alpha", "Beta"], []) }) as unknown as typeof fetch);
+  const b = fetchOf({ "/static/manifest.json": { version: "v-b" }, ...SIM_FILES("v-b", ["Beta", "Alpha"], [[1, 0]]) });
+  const page = await loadCardPage("krenko-mob-boss", "/static", b as unknown as typeof fetch);
+  expect(page?.name).toBe("Krenko, Mob Boss");
+  expect(page?.similar?.map((x) => x.name)).toEqual(["Alpha"]);
+  resetSharedNameIndex();
+});
+
+test("the name index is fetched once across page loads", async () => {
+  resetSharedNameIndex();
+  const f = fetchOf({ "/static/manifest.json": { version: "v-abc" }, ...SIM_FILES("v-abc", ["Alpha", "Beta"], [[1, 2]]) });
+  await loadCardPage("krenko-mob-boss", "/static", f as unknown as typeof fetch);
+  await loadCardPage("krenko-mob-boss", "/static", f as unknown as typeof fetch);
+  expect(f.mock.calls.filter((c) => String(c[0]).endsWith("name-index.json"))).toHaveLength(1);
+  resetSharedNameIndex();
+});

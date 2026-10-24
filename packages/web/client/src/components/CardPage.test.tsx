@@ -360,3 +360,15 @@ test("arriving at a card by URL never draws it with the card you left", async ()
   await waitFor(() => expect(document.querySelector("[data-id='sol-ring']")).not.toBeNull(), { timeout: 3000 });
   expect(document.querySelector("[data-id='sol-ring']")).toHaveAttribute("aria-label", "Sol Ring");
 });
+
+test("similar cards follow the partners; a card with none shows no section", async () => {
+  const { unmount } = at("krenko-mob-boss", async () => ({ ...KRENKO, similar: [
+    { name: "Gamble", slug: "gamble", tier: "same", chips: [] },
+  ] }));
+  expect(await screen.findByRole("heading", { level: 2, name: "Similar cards" })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Gamble" })).toHaveAttribute("href", "/cards/gamble");
+  unmount();
+  at("krenko-mob-boss", async () => KRENKO);
+  await screen.findByRole("heading", { level: 1, name: /Krenko, Mob Boss/ });
+  expect(screen.queryByRole("heading", { name: "Similar cards" })).toBeNull();
+});

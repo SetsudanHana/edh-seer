@@ -250,3 +250,13 @@ test("a second tap on a commander page's map walks to the card on the map, and B
   // Back on the commander, the page's own card is the one beside the list again.
   expect(screen.queryByRole("dialog")).toBeNull();
 });
+
+test("the commander page lists commanderSimilar, not the card page's list, and says it is colour-limited", async () => {
+  at("krenko-mob-boss", async () => ({ ...KRENKO,
+    similar: [{ name: "Wrong List", slug: "wrong-list", tier: "same", chips: [] }],
+    commanderSimilar: [{ name: "Right Card", slug: "right-card", tier: "close", chips: [] }] }));
+  expect(await screen.findByRole("heading", { level: 2, name: "Similar cards" })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Right Card" })).toHaveAttribute("href", "/cards/right-card");
+  expect(screen.queryByRole("link", { name: "Wrong List" })).toBeNull();
+  expect(screen.getByText(/within this commander.s colour identity/i)).toBeInTheDocument();
+});

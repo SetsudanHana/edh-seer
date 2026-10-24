@@ -7,6 +7,7 @@ import { EngineReading } from "./EngineReading.js";
 import { NotFound } from "./NotFound.js";
 import { PageMap } from "./PageMap.js";
 import { PartnerList } from "./PartnerList.js";
+import { SimilarCards } from "./SimilarCards.js";
 
 /** ONE CARD: what the engine reads on it, and the cards it is most specifically connected to.
  *
@@ -106,6 +107,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
           empty="No standout pairings. Whatever this card helps, hundreds of other cards help just as well, or none of the possible pairings held up."
         />
       </section>}
+      <SimilarCards items={page.similar ?? []} />
     </CardShell>
   );
 }

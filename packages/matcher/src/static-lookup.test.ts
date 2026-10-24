@@ -333,3 +333,19 @@ test("partnerIds answers under every name the prefetched card carries", async ()
   expect(l.partnerIds("krenko alt")).toEqual([[4, 0.273]]);
   expect(l.partnerIds("krenko")).toEqual([[4, 0.273]]);
 });
+
+test("similarOf decodes a record's lists against the name index and chip table; an old record is empty", async () => {
+  const files = {
+    "/static/manifest.json": { version: VERSION },
+    [`/static/${VERSION}/name-index.json`]: {
+      cards: [{ slug: "soul-warden", name: "Soul Warden" }, { slug: "blood-artist", name: "Blood Artist" }],
+      similarChips: [["extra", "+ life loss"]],
+    },
+  };
+  const lookup = new StaticLookup("/static", fetchOf(files));
+  expect(await lookup.similarOf({})).toEqual({ similar: [], commanderSimilar: [] });
+  expect(await lookup.similarOf({ sim: [[1, 2, 0]], commanderSim: [[1, 0]] })).toEqual({
+    similar: [{ name: "Blood Artist", slug: "blood-artist", tier: "output", chips: [{ dim: "extra", label: "+ life loss" }] }],
+    commanderSimilar: [{ name: "Blood Artist", slug: "blood-artist", tier: "same", chips: [] }],
+  });
+});
