@@ -59,7 +59,11 @@ export async function loadCardPage(
   slug: string, baseUrl: string, fetchImpl: typeof fetch = fetch,
 ): Promise<CardPageData | null> {
   const inline = inlineCardPage(slug);
-  const lookup = sharedLookup(baseUrl, fetchImpl);
+  // THE PAGE IS READ THROUGH A FRESH LOOKUP, never the shared one: `StaticLookup` memoises its manifest, so a tab opened
+  // before a deploy would keep fetching the old version's shards (404 -> "no page" for a real card), and a transient
+  // manifest failure would pin the flat layout the same way. Only the 4 MB name index is worth sharing, and only when it
+  // is the same version the fresh read resolved.
+  const lookup = new StaticLookup(baseUrl, fetchImpl);
   let rec: CardPageRecord | null;
   if (inline && !inline.sim?.length && !inline.commanderSim?.length) rec = inline; // nothing to decode: no network at all
   else if (inline) {
@@ -73,7 +77,10 @@ export async function loadCardPage(
   } else rec = await lookup.cardPage(slug);
   if (!rec) return null;
   // A decode that cannot read the index is an absent section, not a card page that will not load.
-  const lists = await lookup.similarOf(rec).catch(() => ({ similar: [], commanderSimilar: [] }));
+  if (!rec.sim?.length && !rec.commanderSim?.length) return { ...rec, similar: [], commanderSimilar: [] };
+  const shared = sharedLookup(baseUrl, fetchImpl);
+  const decoder = (await shared.staticVersion()) === (await lookup.staticVersion()) ? shared : lookup;
+  const lists = await decoder.similarOf(rec).catch(() => ({ similar: [], commanderSimilar: [] }));
   return { ...rec, ...lists };
 }
 

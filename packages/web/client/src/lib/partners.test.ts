@@ -171,6 +171,18 @@ test("an inline record is decoded only against the version it came from", async 
   }
 });
 
+/** A TAB OPENED BEFORE A DEPLOY (#1341): the shared lookup memoised manifest A; the card page must still load from the CURRENT
+ *  version B (a 404 on the old shard would read as "no page" for a real card), and its list must decode against B's index. */
+test("a shared lookup pinned at an old version does not pin the page load", async () => {
+  resetSharedNameIndex();
+  await sharedNameIndex("/static", fetchOf({ "/static/manifest.json": { version: "v-a" }, ...SIM_FILES("v-a", ["Alpha", "Beta"], []) }) as unknown as typeof fetch);
+  const b = fetchOf({ "/static/manifest.json": { version: "v-b" }, ...SIM_FILES("v-b", ["Beta", "Alpha"], [[1, 0]]) });
+  const page = await loadCardPage("krenko-mob-boss", "/static", b as unknown as typeof fetch);
+  expect(page?.name).toBe("Krenko, Mob Boss");
+  expect(page?.similar?.map((x) => x.name)).toEqual(["Alpha"]);
+  resetSharedNameIndex();
+});
+
 test("the name index is fetched once across page loads", async () => {
   resetSharedNameIndex();
   const f = fetchOf({ "/static/manifest.json": { version: "v-abc" }, ...SIM_FILES("v-abc", ["Alpha", "Beta"], [[1, 2]]) });
