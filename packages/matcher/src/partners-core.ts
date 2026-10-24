@@ -23,6 +23,7 @@ import { bestRates, compareRates, manaOf, ratesOf, type Rate, type RateFamily } 
 export { effectPhrase } from "./sentence.js";
 import { phraseKindOf } from "./sentence.js";
 import { normalizeZoneEvent, tagKey } from "./zones.js";
+import { demandFactsOf, supplyFactsOf } from "./member-facts.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 
 /** PURE, AND IT HAS TO STAY THAT WAY. `build-partners.ts` is the Mongo and fs wiring; everything
@@ -323,6 +324,13 @@ export interface EventMembers {
    *  wants exactly 1 (Ghyrson Starn) before it fetches the card (2026-09-25). A hint: the engine's
    *  `trigger.amount` gate still decides. */
   pd?: number[][];
+  /** WHAT THE ABILITIES THAT PUT `p[i]` HERE DO, packed by `member-facts.ts`: kind (replacement split
+   *  out), how often, and the stated size per occurrence. Empty when the card causes the key only by
+   *  being played. What lets the search filter "pings for exactly 1, repeatedly" before it fetches a
+   *  card (owner, 2026-10-24). Absent on shards built before it shipped. */
+  pf?: number[][];
+  /** The same for `c[i]`, the askers: kind and how often, no size (see `demandFactsOf`). */
+  cf?: number[][];
 }
 
 const DAMAGE_KEY = /^(?:non-combat-damage|combat-damage)\|/;
@@ -334,6 +342,20 @@ const damageSizesOf = (d: DeckCard, verb: string): number[] => [...new Set(claim
   .map((a) => (a.amount ?? "").trim())
   .filter((x) => /^\d+$/.test(x))
   .map(Number))].sort((a, b) => a - b);
+
+/** PER CARD, ONCE: every key its abilities supply, with their facts. Matched the way `effectOrder`
+ *  matches an ability to a key, so the filter and the order agree on which ability is meant. */
+const supplyFactsOfCard = perCard((d: DeckCard): Map<string, number[]> =>
+  supplyFactsOf(claimingAbilitiesOf(d), (e) => splitKey(eventKey(e)).flatMap(supplyForms)));
+/** The asker side: a trigger's keys (not its own self-trigger, as `demandKeysOf`), a static's
+ *  reach, and the intervening-if families. Feeder keys (board counts) carry no ability fact. */
+const demandFactsOfCard = perCard((d: DeckCard): Map<string, number[]> =>
+  demandFactsOf(claimingAbilitiesOf(d), (a) => [
+    ...(a.trigger?.subject?.self === true ? []
+      : (a.trigger?.verbs ?? []).flatMap((v) => splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)))),
+    ...(a.conditionCares ?? []).filter((t) => POOL_CONDITION_FAMILIES.test(t)).flatMap(conditionDemandKeys),
+    ...staticKeysOfAbility(a),
+  ]));
 
 /** THE COUNTS FILE, as `event-frequency.json` ships it (roadmap AJ3). `supply` is how many cards
  *  can CAUSE each event and `consume` how many ask for it; `byIdentity` is `supply` split into the
@@ -2479,8 +2501,12 @@ export function partnerBuilder(all: DeckCard[], h: Hierarchy) {
       const events = new Map<string, EventMembers>();
       for (const k of new Set([...members.keys(), ...consumersOf.keys()])) {
         const p = byEffect(k, members.get(k) ?? []);
-        events.set(k, { p, c: reindex(consumersOf.get(k) ?? []),
-          ...(DAMAGE_KEY.test(k) ? { pd: p.map((pos) => damageSizesOf(byName.get(index[pos]!.name)!, k.slice(0, k.indexOf("|")))) } : {}) });
+        const c = reindex(consumersOf.get(k) ?? []);
+        const cardAt = (pos: number): DeckCard => byName.get(index[pos]!.name)!;
+        events.set(k, { p, c,
+          ...(DAMAGE_KEY.test(k) ? { pd: p.map((pos) => damageSizesOf(cardAt(pos), k.slice(0, k.indexOf("|")))) } : {}),
+          pf: p.map((pos) => supplyFactsOfCard(cardAt(pos)).get(k) ?? []),
+          cf: c.map((pos) => demandFactsOfCard(cardAt(pos)).get(k) ?? []) });
       }
       const consumers: Record<string, number> = {};
       for (const [k, ids] of consumersOf) consumers[k] = ids.length;

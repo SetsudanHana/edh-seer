@@ -63,23 +63,45 @@ export function patternsOf(key: string): string[] {
 export function eventPatterns(events: ReadonlyMap<string, EventMembers>): Map<string, EventMembers> {
   const makers = new Map<string, Set<number>>();
   const payers = new Map<string, Set<number>>();
-  const add = (into: Map<string, Set<number>>, pattern: string, ids: readonly number[]) => {
+  // THE FACTS FOLLOW THEIR MEMBERS (owner, 2026-10-24): a card in `gain-life|*|*|*` keeps the facts
+  // of every concrete key it entered through, so the amount and kind filters answer a pattern the
+  // way they answer a key. `undefined` when no source key carried facts (an older build).
+  const makerFacts = new Map<string, Map<number, Set<number>>>();
+  const payerFacts = new Map<string, Map<number, Set<number>>>();
+  const add = (into: Map<string, Set<number>>, factsInto: Map<string, Map<number, Set<number>>>,
+    pattern: string, ids: readonly number[], facts: readonly number[][] | undefined) => {
     if (ids.length === 0) return;
     const set = into.get(pattern) ?? new Set<number>();
     for (const id of ids) set.add(id);
     into.set(pattern, set);
+    if (!facts) return;
+    const byId = factsInto.get(pattern) ?? new Map<number, Set<number>>();
+    ids.forEach((id, i) => {
+      const f = byId.get(id) ?? new Set<number>();
+      for (const n of facts[i] ?? []) f.add(n);
+      byId.set(id, f);
+    });
+    factsInto.set(pattern, byId);
   };
   for (const [key, members] of events) {
     if (isPattern(key)) continue;
-    for (const pattern of patternsOf(key)) { add(makers, pattern, members.p); add(payers, pattern, members.c); }
+    for (const pattern of patternsOf(key)) {
+      add(makers, makerFacts, pattern, members.p, members.pf);
+      add(payers, payerFacts, pattern, members.c, members.cf);
+    }
   }
+  const factsFor = (byId: Map<number, Set<number>> | undefined, ids: readonly number[]): number[][] | undefined =>
+    byId && ids.map((id) => [...(byId.get(id) ?? [])].sort((x, y) => x - y));
   const out = new Map<string, EventMembers>();
   for (const pattern of new Set([...makers.keys(), ...payers.keys()])) {
     const made = makers.get(pattern) ?? new Set<number>();
     const ordered = (events.get(supplyKeyOf(pattern))?.p ?? []).filter((id) => made.has(id));
     const placed = new Set(ordered);
     const p = [...ordered, ...[...made].filter((id) => !placed.has(id)).sort((x, y) => x - y)];
-    out.set(pattern, { p, c: [...(payers.get(pattern) ?? [])].sort((x, y) => x - y) });
+    const c = [...(payers.get(pattern) ?? [])].sort((x, y) => x - y);
+    const pf = factsFor(makerFacts.get(pattern), p);
+    const cf = factsFor(payerFacts.get(pattern), c);
+    out.set(pattern, { p, c, ...(pf ? { pf } : {}), ...(cf ? { cf } : {}) });
   }
   return out;
 }
