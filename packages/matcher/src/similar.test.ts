@@ -25,7 +25,7 @@ describe("Soul Warden as the seed", () => {
       ["output", "Apothecary Initiate", [{ dim: "trigger", label: "when a spell is cast" }]],
       ["output", "Auspicious Ancestor", [{ dim: "trigger", label: "when a spell is cast" }]],
       ["output", "Dune Diviner", [{ dim: "trigger", label: "an activated ability" }]],
-      ["output", "Soldier of the Pantheon", [{ dim: "trigger", label: "when a spell an opponent controls is cast" }, { dim: "extra", label: "+ protection" }]],
+      ["output", "Soldier of the Pantheon", [{ dim: "trigger", label: "when an opponent casts a spell" }, { dim: "extra", label: "+ protection" }]],
     ]);
   });
 
@@ -258,5 +258,38 @@ describe("a chip on every row is dropped (#1341)", () => {
     const r = similarIndex([warden, ...enchantments]).similarTo(warden.id);
     expect(r).toHaveLength(3);
     for (const h of r) expect(h.chips).toEqual([{ dim: "type", label: "enchantment" }]);
+  });
+});
+
+describe("player-event triggers read as the player's event (#1341)", () => {
+  const warden = card("Soul Warden");
+  const label = (verb: string, control: "you" | "opp" | "any"): string | undefined => {
+    const tags = structuredClone(warden.tags!) as CardTags;
+    tags.abilities[0]!.trigger = { verbs: [verb as never], subject: { control, token: null } };
+    return compareCards(warden, { id: 950, name: "V", tags })!.chips.find((c) => c.dim === "trigger")?.label;
+  };
+  test("draw, scry, gain life and cast name the player", () => {
+    expect(label("draw", "you")).toBe("when you draw a card");
+    expect(label("draw", "opp")).toBe("when an opponent draws a card");
+    expect(label("draw", "any")).toBe("when a player draws a card");
+    expect(label("discard", "you")).toBe("when you discard a card");
+    expect(label("scry", "you")).toBe("when you scry");
+    expect(label("surveil", "you")).toBe("when you surveil");
+    expect(label("lose-life", "opp")).toBe("when an opponent loses life");
+  });
+  test("phase triggers are the beginning of a step, not a permanent reaching one", () => {
+    expect(label("upkeep", "you")).toBe("at the beginning of your upkeep");
+    expect(label("upkeep", "any")).toBe("at the beginning of each upkeep");
+    expect(label("end-step", "you")).toBe("at the beginning of your end step");
+    expect(label("begin-combat", "you")).toBe("at the beginning of combat on your turn");
+  });
+});
+
+describe("ability words are not keywords (#1341, CR 207.2c)", () => {
+  test("Witty Roastmaster (Alliance) against Impact Tremors has no keyword chip either way", () => {
+    for (const [a, b] of [["Impact Tremors", "Witty Roastmaster"], ["Witty Roastmaster", "Impact Tremors"]] as const) {
+      const chips = compareCards(card(a), card(b))!.chips;
+      expect(chips.filter((c) => c.dim === "extra" || c.dim === "missing")).toEqual([]);
+    }
   });
 });

@@ -83,6 +83,9 @@ interface CardSig {
 
 /** Supertypes (CR 205.4a) ride in `characteristics.types` but are not card types: a legendary creature and a creature are the same type here. */
 const SUPERTYPES = new Set(["legendary", "basic", "snow", "world", "ongoing"]);
+/** ABILITY WORDS (CR 207.2c) ride in `characteristics.keywords` but "have no special rules meaning": "+ alliance" says nothing a reader can act on. Verbatim from the rule. */
+const ABILITY_WORDS = new Set(("adamant, addendum, alliance, battalion, bloodrush, celebration, channel, chroma, cohort, constellation, converge, council's dilemma, coven, delirium, descend 4, descend 8, disappear, domain, eerie, eminence, enrage, fateful hour, fathomless descent, ferocious, flurry, formidable, grandeur, hellbent, heroic, imprint, infusion, inspired, join forces, kinship, landfall, lieutenant, magecraft, metalcraft, morbid, opus, pack tactics, paradox, parley, radiance, raid, rally, renew, repartee, revolt, secret council, spell mastery, strive, survival, sweep, tempting offer, threshold, undergrowth, valiant, vivid, void, will of the council")
+  .split(", ").map((w) => w.replace("’", "'")));
 const TIER_RANK: Record<SimilarTier, number> = { same: 0, close: 1, output: 2 };
 const KIND_LABEL: Record<FactKind, string> = {
   spell: "when cast", triggered: "a triggered ability", activated: "an activated ability",
@@ -161,7 +164,7 @@ function sigOf(card: SimilarCard): CardSig {
   const ch = card.tags?.characteristics;
   const sig: CardSig = {
     abilities, outputs,
-    keywords: [...new Set((ch?.keywords ?? []).map((k) => k.toLowerCase()))].sort(),
+    keywords: [...new Set((ch?.keywords ?? []).map((k) => k.toLowerCase()).filter((k) => !ABILITY_WORDS.has(k)))].sort(),
     types: [...(ch?.types ?? [])].filter((t) => !SUPERTYPES.has(t)).sort(),
     identity: ch?.identity ?? [],
   };
@@ -192,9 +195,30 @@ function subjectLabel(s: SubjectFilter): string {
   return `any ${subjectWords(s, false)}`;
 }
 
+/** A PLAYER'S EVENT, not a permanent's: [you, opponent, any player]. "A permanent you control draws a card" is not a sentence. */
+const PLAYER_EVENT: Record<string, [string, string, string]> = {
+  draw: ["when you draw a card", "when an opponent draws a card", "when a player draws a card"],
+  discard: ["when you discard a card", "when an opponent discards a card", "when a player discards a card"],
+  mill: ["when you mill a card", "when an opponent mills a card", "when a player mills a card"],
+  scry: ["when you scry", "when an opponent scries", "when a player scries"],
+  surveil: ["when you surveil", "when an opponent surveils", "when a player surveils"],
+  "gain-life": ["when you gain life", "when an opponent gains life", "when a player gains life"],
+  "lose-life": ["when you lose life", "when an opponent loses life", "when a player loses life"],
+  search: ["when you search a library", "when an opponent searches a library", "when a player searches a library"],
+  "land-play": ["when you play a land", "when an opponent plays a land", "when a player plays a land"],
+  // CR: these are the beginnings of steps ("beginning-of-combat" is what `begin-combat` is normalised from).
+  upkeep: ["at the beginning of your upkeep", "at the beginning of an opponent's upkeep", "at the beginning of each upkeep"],
+  "end-step": ["at the beginning of your end step", "at the beginning of an opponent's end step", "at the beginning of each end step"],
+  "begin-combat": ["at the beginning of combat on your turn", "at the beginning of combat on an opponent's turn", "at the beginning of each combat"],
+  cast: ["when you cast a spell", "when an opponent casts a spell", "when a spell is cast"],
+};
+
 function triggerLabel(sig: AbilitySig): string {
   if (!sig.verbs || !sig.subject) return KIND_LABEL[sig.kind];
   const s = sig.subject;
+  const phrase = sig.verbs.length === 1 ? PLAYER_EVENT[sig.verbs[0]!] : undefined;
+  const typed = list(s.subtype).length > 0 || list(s.type).some((t) => t !== "spell" && t !== "player");
+  if (phrase && s.self !== true && !typed) return phrase[s.control === "you" ? 0 : s.control === "opp" ? 1 : 2];
   const base = s.self === true ? "this card" : (emitSubjectNoun(s) ?? "a permanent");
   const who = s.self === true ? "" : s.control === "you" ? " you control" : s.control === "opp" ? " an opponent controls" : "";
   const verbs = sig.verbs.map((v) => VERB_PHRASES[v] ?? v.replace(/-/g, " ")).join(" or ");
