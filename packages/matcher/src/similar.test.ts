@@ -22,10 +22,15 @@ describe("Soul Warden as the seed", () => {
       ["close", "Suture Priest", [{ dim: "trigger", label: "your creatures" }, { dim: "extra", label: "+ opponent life loss" }]],
       ["output", "Blood Artist", [{ dim: "trigger", label: "when a creature dies" }, { dim: "extra", label: "+ life loss" }]],
       ["output", "Zulaport Cutthroat", [{ dim: "trigger", label: "when a creature you control dies" }, { dim: "extra", label: "+ opponent life loss" }]],
-      ["output", "Apothecary Initiate", [{ dim: "trigger", label: "when a spell is cast" }]],
-      ["output", "Auspicious Ancestor", [{ dim: "trigger", label: "when a spell is cast" }]],
+      ["output", "Apothecary Initiate", [{ dim: "trigger", label: "when a white spell is cast" }]],
+      ["output", "Auspicious Ancestor", [{ dim: "trigger", label: "when a white spell is cast" }]],
       ["output", "Dune Diviner", [{ dim: "trigger", label: "an activated ability" }]],
-      ["output", "Soldier of the Pantheon", [{ dim: "trigger", label: "when an opponent casts a spell" }, { dim: "extra", label: "+ protection" }]],
+      ["output", "Angel's Feather", [{ dim: "trigger", label: "when a white spell is cast" }, { dim: "type", label: "artifact" }]],
+      ["output", "Demon's Horn", [{ dim: "trigger", label: "when a black spell is cast" }, { dim: "type", label: "artifact" }]],
+      ["output", "Dragon's Claw", [{ dim: "trigger", label: "when a red spell is cast" }, { dim: "type", label: "artifact" }]],
+      ["output", "Kraken's Eye", [{ dim: "trigger", label: "when a blue spell is cast" }, { dim: "type", label: "artifact" }]],
+      ["output", "Wurm's Tooth", [{ dim: "trigger", label: "when a green spell is cast" }, { dim: "type", label: "artifact" }]],
+      ["output", "Soldier of the Pantheon", [{ dim: "trigger", label: "when an opponent casts a multicoloured spell" }, { dim: "extra", label: "+ protection" }]],
     ]);
   });
 
@@ -291,5 +296,42 @@ describe("ability words are not keywords (#1341, CR 207.2c)", () => {
       const chips = compareCards(card(a), card(b))!.chips;
       expect(chips.filter((c) => c.dim === "extra" || c.dim === "missing")).toEqual([]);
     }
+  });
+});
+
+describe("self-subject outputs never open the gate (#1341 review)", () => {
+  const of = (seed: keyof typeof fixtures) => similarIndex(cards).similarTo(card(seed).id, { limit: 99 });
+  test("Sakura-Tribe Elder is not similar to sacrifice outlets that merely sacrifice themselves", () => {
+    const names = of("Sakura-Tribe Elder").map((r) => r.name);
+    expect(names).toContain("Evolving Wilds");
+    for (const n of ["Cephalid Pathmage", "Boggart Forager", "Accursed Centaur"]) expect(names).not.toContain(n);
+  });
+  test("returning this Aura to hand is no shared output: Shackles and Agoraphobia get no list", () => {
+    expect(of("Shackles")).toEqual([]);
+    expect(of("Agoraphobia")).toEqual([]);
+    expect(compareCards(card("Shackles"), card("Agoraphobia"))).toBeNull();
+  });
+  test("Ghost Quarter's destroy-target-land is not Evolving Wilds' sacrifice-itself", () => {
+    const r = compareCards(card("Ghost Quarter"), card("Evolving Wilds"));
+    expect(r?.tier).not.toBe("same");
+    expect(compareCards(card("Evolving Wilds"), card("Ghost Quarter"))?.tier).not.toBe("same");
+  });
+  test("an edict is not a drawback: Accursed Centaur sacrifices your own creature", () => {
+    expect(of("Diabolic Edict").map((r) => r.name)).not.toContain("Accursed Centaur");
+  });
+});
+
+describe("trigger colour is part of the trigger (#1341 review)", () => {
+  const rows = similarIndex(cards).similarTo(card("Angel's Feather").id, { limit: 99 });
+  test("a black, red, blue or green spell trigger is close, not same, and names its colour", () => {
+    const by = (n: string) => rows.find((r) => r.name === n)!;
+    expect([by("Demon's Horn").tier, by("Dragon's Claw").tier, by("Kraken's Eye").tier, by("Wurm's Tooth").tier]).toEqual(["close", "close", "close", "close"]);
+    expect(by("Demon's Horn").chips).toEqual([{ dim: "trigger", label: "any black spell" }]);
+    expect(by("Wurm's Tooth").chips).toEqual([{ dim: "trigger", label: "any green spell" }]);
+  });
+  test("a cast trigger label names the colour", () => {
+    const o = similarIndex(cards).similarTo(card("Soul Warden").id, { limit: 99 });
+    expect(o.find((r) => r.name === "Apothecary Initiate")!.chips).toEqual([{ dim: "trigger", label: "when a white spell is cast" }]);
+    expect(o.find((r) => r.name === "Soldier of the Pantheon")!.chips[0]).toEqual({ dim: "trigger", label: "when an opponent casts a multicoloured spell" });
   });
 });

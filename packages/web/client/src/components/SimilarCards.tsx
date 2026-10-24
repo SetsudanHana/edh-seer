@@ -30,7 +30,7 @@ export function SimilarCards({ items, note }: { items: readonly SimilarItem[]; n
           if (rows.length === 0) return null;
           return (
             <div key={tier} className="flex flex-col gap-2 min-w-0">
-              <h3 className="font-semibold">{heading}</h3>
+              <h3 className="t-subsection">{heading}</h3>
               <ul className="flex flex-col">
                 {rows.map((r) => (
                   <li key={r.slug} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-(--separator) py-2 first:border-t-0 min-h-11">

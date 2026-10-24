@@ -1,6 +1,11 @@
 /** CARDS THAT DO THE SAME OR A SIMILAR JOB (#1341; owner 2026-10-24: "take Soul Warden for example and
  *  click to see cards that show the same or similar effects").
  *
+ *  NOT `same-job.ts` (`sameJob`), AND WHY. That one is role-and-printed-text based, built for swap suggestions ("which card
+ *  fills the slot this one fills"); this file is ability-signature based (what each ability listens for, produces, how
+ *  much, how often). They answer different questions and will disagree. #1342 (deck context) must reconcile which notion
+ *  it uses before showing both.
+ *
  *  PURE, NO I/O: derived tags in, a ranked list out. build-static calls it once per page card.
  *
  *  THE OWNER'S DEFINITION, per ability: the event it listens for, WHAT IT PRODUCES, the amount, and the
@@ -62,7 +67,7 @@ type Ability = CardTags["abilities"][number];
 type Amount = FactAmount;
 type Who = "you" | "opp" | "any";
 /** `key` is the gate key (raw eventKey plus a `@you`/`@other` recipient class where the verb has one). */
-interface Output { key: string; who: Who | null; scope: "one" | "many" | null; event: GameEvent }
+interface Output { key: string; who: Who | null; scope: "one" | "many" | null; event: GameEvent; self?: true }
 export interface AbilitySig {
   kind: FactKind;
   /** Sorted trigger verbs, null on an untriggered ability. */
@@ -97,8 +102,12 @@ const REPEAT_LABEL: Record<string, string> = {
 };
 
 /** Verbs whose recipient the key does not carry. A token created or entering is the same question: whose it is. */
-const RECIPIENT_VERBS = new Set(["gain-life", "lose-life", "draw", "discard", "mill", "non-combat-damage", "create-token"]);
-const hasRecipient = (e: GameEvent): boolean => RECIPIENT_VERBS.has(e.verb) || (e.verb === "enters" && e.subject.token === true);
+const RECIPIENT_VERBS = new Set(["gain-life", "lose-life", "draw", "discard", "mill", "non-combat-damage", "create-token", "sacrifice", "search", "shuffle", "dies"]);
+// `dies` rides with `sacrifice` (every sacrifice also emits it): whose creature dies is the edict-versus-drawback question.
+/** The verbs whose chip noun reads "opponent X" ("opponent life loss"); the rest of RECIPIENT_VERBS name the recipient differently. */
+const OPP_NOUN_VERBS = new Set(["lose-life", "draw", "discard", "mill", "non-combat-damage", "create-token"]);
+/** `enters` always has a whose: a token you create and a land an opponent puts onto the battlefield are different outputs. */
+const hasRecipient = (e: GameEvent): boolean => RECIPIENT_VERBS.has(e.verb) || e.verb === "enters";
 /** Verbs where one target and each/all are different jobs. */
 const SCOPE_VERBS = new Set(["dies", "exiled", "leaves", "sacrifice", "counter-added", "taps", "untaps", "gains-control", "counter-spell"]);
 /** A chip's noun for what a card does, never a sentence. */
@@ -112,7 +121,10 @@ const NOUN: Record<string, string> = {
 };
 
 function outputOf(e: GameEvent, key: string): Output {
-  const scope = SCOPE_VERBS.has(e.verb) ? (e.subject.scope === "each" || e.subject.scope === "all" ? "many" : "one") : null;
+  // A SELF SUBJECT IS A COST OR A SELF-MOVE, not the effect a card is for: "sacrifice this creature", "this card dies",
+  // "return this Aura to hand". Keyed apart (`@self`) so it only ever pairs with another self output, and never opens the gate.
+  if (e.subject.self === true) // By VERB alone: a creature sacrificing itself and a land sacrificing itself are the same cost, and the type is the type chip's business.
+  return { key: `${e.verb}@self`, who: null, scope: null, event: e, self: true };  const scope = SCOPE_VERBS.has(e.verb) ? (e.subject.scope === "each" || e.subject.scope === "all" ? "many" : "one") : null;
   if (!hasRecipient(e)) return { key, who: null, scope, event: e };
   const c = e.subject.control;
   const who: Who = c === "you" ? "you" : c === "opp" ? "opp" : "any";
@@ -128,7 +140,7 @@ function outputNoun(e: GameEvent): string {
   }
   if (e.verb === "enters") return "entering the battlefield";
   const base = NOUN[e.verb] ?? e.verb.replace(/-/g, " ");
-  return s.control === "opp" && RECIPIENT_VERBS.has(e.verb) && e.verb !== "gain-life" ? `opponent ${base}` : base;
+  return s.control === "opp" && OPP_NOUN_VERBS.has(e.verb) ? `opponent ${base}` : base;
 }
 
 function amountOf(a: Ability): Amount {
@@ -180,11 +192,26 @@ const list = (v: string | string[] | undefined): string[] => (v === undefined ? 
 const sameSet = (a: string[], b: string[]): boolean => a.length === b.length && a.every((x, i) => x === b[i]);
 const sorted = (v: string | string[] | undefined): string[] => [...list(v)].sort();
 
+const COLOUR: Record<string, string> = { W: "white", U: "blue", B: "black", R: "red", G: "green", C: "colourless" };
+const COUNT_WORD: Record<string, string> = { multi: "multicoloured", mono: "monocoloured", all: "all-coloured", "exactly-two": "two-coloured", colored: "coloured" };
+/** The colour words of a subject: "white", "white or blue", "multicoloured", "nonblack". Empty when it states none. */
+function colourWords(s: SubjectFilter): string {
+  const parts: string[] = [];
+  if (s.colors?.length) parts.push(s.colors.map((c) => COLOUR[c] ?? c).join(" or "));
+  if (s.allColors?.length) parts.push(s.allColors.map((c) => COLOUR[c] ?? c).join(" and "));
+  if (s.colorCount) parts.push(COUNT_WORD[s.colorCount] ?? s.colorCount);
+  if (s.notColors?.length) parts.push(s.notColors.map((c) => `non${COLOUR[c] ?? c}`).join(" "));
+  return parts.join(" ");
+}
+const colourKey = (s: SubjectFilter): string => colourWords(s);
+const articled = (w: string): string => `${/^[aeiou]/i.test(w) ? "an" : "a"} ${w}`;
+
 function subjectWords(s: SubjectFilter, pl: boolean): string {
   const subs = list(s.subtype).map((w) => w.charAt(0).toUpperCase() + w.slice(1));
   const words = subs.length > 0 ? subs : list(s.type);
   const nouns = (words.length > 0 ? words : ["permanent"]).map((w) => (pl ? plural(w) : w)).join(" or ");
-  return `${s.token === true ? "token " : s.token === false ? "nontoken " : ""}${nouns}`;
+  const col = colourWords(s);
+  return `${s.token === true ? "token " : s.token === false ? "nontoken " : ""}${col ? `${col} ` : ""}${nouns}`;
 }
 
 /** THE CANDIDATE'S ACTUAL SCOPE, not "only" the difference: "any creature", "your creatures", "your Goblins". */
@@ -210,7 +237,6 @@ const PLAYER_EVENT: Record<string, [string, string, string]> = {
   upkeep: ["at the beginning of your upkeep", "at the beginning of an opponent's upkeep", "at the beginning of each upkeep"],
   "end-step": ["at the beginning of your end step", "at the beginning of an opponent's end step", "at the beginning of each end step"],
   "begin-combat": ["at the beginning of combat on your turn", "at the beginning of combat on an opponent's turn", "at the beginning of each combat"],
-  cast: ["when you cast a spell", "when an opponent casts a spell", "when a spell is cast"],
 };
 
 function triggerLabel(sig: AbilitySig): string {
@@ -219,7 +245,15 @@ function triggerLabel(sig: AbilitySig): string {
   const phrase = sig.verbs.length === 1 ? PLAYER_EVENT[sig.verbs[0]!] : undefined;
   const typed = list(s.subtype).length > 0 || list(s.type).some((t) => t !== "spell" && t !== "player");
   if (phrase && s.self !== true && !typed) return phrase[s.control === "you" ? 0 : s.control === "opp" ? 1 : 2];
-  const base = s.self === true ? "this card" : (emitSubjectNoun(s) ?? "a permanent");
+  // CAST NAMES THE SPELL'S COLOUR when the trigger does: "when a white spell is cast".
+  if (sig.verbs.length === 1 && sig.verbs[0] === "cast" && s.self !== true && !(list(s.subtype).length > 0)) {
+    const col = colourWords(s);
+    const noun = col ? `${col} spell` : "spell";
+    return s.control === "you" ? `when you cast ${articled(noun)}` : s.control === "opp" ? `when an opponent casts ${articled(noun)}` : `when ${articled(noun)} is cast`;
+  }
+  const noun0 = s.self === true ? "this card" : (emitSubjectNoun(s) ?? "a permanent");
+  const col = s.self === true ? "" : colourWords(s);
+  const base = col ? articled(`${col} ${noun0.replace(/^(a|an) /, "")}`) : noun0;
   const who = s.self === true ? "" : s.control === "you" ? " you control" : s.control === "opp" ? " an opponent controls" : "";
   const verbs = sig.verbs.map((v) => VERB_PHRASES[v] ?? v.replace(/-/g, " ")).join(" or ");
   return `when ${base}${who} ${verbs}`;
@@ -259,7 +293,7 @@ function repeatsDistance(a: Ability["repeats"], b: Ability["repeats"]): number {
  *  self ability that Blood Artist's own split (control: you) must not hide the difference of. */
 function subjectFacets(a: SubjectFilter, b: SubjectFilter): number {
   if ((a.self === true) !== (b.self === true)) return 1;
-  return (a.control !== b.control ? 1 : 0) + ((a.token ?? null) !== (b.token ?? null) ? 1 : 0)
+  return (a.control !== b.control ? 1 : 0) + (colourKey(a) !== colourKey(b) ? 1 : 0) + ((a.token ?? null) !== (b.token ?? null) ? 1 : 0)
     + (sameSet(sorted(a.type), sorted(b.type)) ? 0 : 1) + (sameSet(sorted(a.subtype), sorted(b.subtype)) ? 0 : 1);
 }
 
@@ -330,6 +364,7 @@ function rank(a: CardSig, b: CardSig): Ranked | null {
     let bestY: AbilitySig | null = null;
     for (const y of b.abilities) {
       for (const mine of x.outputs) {
+        if (mine.self) continue;
         const shared = y.outputs.find((o) => o.key === mine.key);
         if (!shared) continue;
         const p = evalPair(x, y, shared, mine, sameTypes);
@@ -440,6 +475,7 @@ export function similarIndex(cards: readonly SimilarCard[]) {
   cards.forEach((c, i) => {
     at.set(c.id, i);
     for (const k of sigs[i]!.outputs.keys()) {
+      if (k.endsWith("@self")) continue;
       const b = buckets.get(k);
       if (b) b.push(i); else buckets.set(k, [i]);
     }
@@ -456,7 +492,7 @@ export function similarIndex(cards: readonly SimilarCard[]) {
       const seen = new Set<number>([si]);
       const tops: Record<SimilarTier, { ci: number; tier: SimilarTier; score: number; name: string; r: Ranked }[]> = { same: [], close: [], output: [] };
       for (const k of sigs[si]!.outputs.keys()) {
-        for (const ci of buckets.get(k) ?? []) {
+        for (const ci of k.endsWith("@self") ? [] : buckets.get(k) ?? []) {
           if (seen.has(ci)) continue;
           seen.add(ci);
           const cand = cards[ci]!;

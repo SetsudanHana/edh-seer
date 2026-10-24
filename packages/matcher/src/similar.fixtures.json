@@ -2832,5 +2832,1848 @@
    "segmentHash": "899821e59e5364c5704c77a3c138a9a503b8b56a07de099931e85ea47d2dead7",
    "clauseSource": "grammar"
   }
+ },
+ "Sakura-Tribe Elder": {
+  "card": {
+   "name": "Sakura-Tribe Elder",
+   "typeLine": "Creature — Snake Shaman",
+   "oracleText": "Sacrifice this creature: Search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.",
+   "colorIdentity": [
+    "G"
+   ]
+  },
+  "tags": {
+   "oracleId": "e3afc704-220f-498f-9eaa-0821b17dc24c",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "snake",
+     "shaman"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 2,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "Sacrifice this creature",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature",
+        "self": true
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "land",
+       "basic": true
+      }
+     },
+     "cost": "Sacrifice this creature",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "search",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "basic": true,
+        "type": "land",
+        "fromZone": "library"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "librarySearch": "yours",
+     "toZone": "battlefield",
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "Sacrifice this creature",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "basic": true,
+        "type": "land",
+        "entersTapped": true,
+        "fromZone": "library"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "Sacrifice this creature",
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "payment": {
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 0,
+      "tap": false,
+      "sacrificeSelf": true,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "loyalty": null,
+      "consumes": [],
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null
+    }
+   ],
+   "landFetch": {
+    "kind": "permanent",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   },
+   "unclaimed": [
+    {
+     "clause": 1,
+     "verb": "tap",
+     "object": "that card"
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 12,
+   "segmentHash": "ec73fe87456680c92fb57d872799ca3da5b135f2c56f446be9505defa015d86f",
+   "clauseSource": "grammar"
+  }
+ },
+ "Cephalid Pathmage": {
+  "card": {
+   "name": "Cephalid Pathmage",
+   "typeLine": "Creature — Octopus Wizard",
+   "oracleText": "This creature can't be blocked.\n{T}, Sacrifice this creature: Target creature can't be blocked this turn.",
+   "colorIdentity": [
+    "U"
+   ]
+  },
+  "tags": {
+   "oracleId": "c5c5f3f4-42e3-4d60-b6b1-8411ac51ce4e",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "octopus",
+     "wizard"
+    ],
+    "layout": "normal",
+    "colors": [
+     "U"
+    ],
+    "identity": [
+     "U"
+    ],
+    "cmc": 3,
+    "power": "1",
+    "toughness": "2",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "evasion"
+     },
+     "clause": 1,
+     "repeats": "continuous"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{T}, Sacrifice this creature",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature",
+        "self": true
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "evasion",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     },
+     "cost": "{T}, Sacrifice this creature",
+     "clause": 2,
+     "repeats": "once",
+     "payment": {
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "902e352edbfccbe6d46079b3c071d456bef39ee548d841441375b22b25e771ae",
+   "clauseSource": "grammar"
+  }
+ },
+ "Shackles": {
+  "card": {
+   "name": "Shackles",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature\nEnchanted creature doesn't untap during its controller's untap step.\n{W}: Return this Aura to its owner's hand.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "05861ff2-ec85-43d1-b641-c5d2da819c03",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [
+     "aura"
+    ],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "enchant"
+    ],
+    "enchants": {
+     "control": "any",
+     "token": null,
+     "type": "creature"
+    }
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "bounce",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "subtype": "aura",
+       "self": true,
+       "zone": "battlefield"
+      }
+     },
+     "cost": "{W}",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "leaves",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "subtype": "aura",
+        "fromZone": "battlefield",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 3,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{W}"
+     }
+    }
+   ],
+   "unclaimed": [
+    {
+     "clause": 2,
+     "verb": "cant",
+     "object": "untap during its controller's untap step"
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "c0844099ca385e1cc30c79de0a63c71e4d844124d25eefa1e7aa99a42b143878",
+   "clauseSource": "grammar"
+  }
+ },
+ "Agoraphobia": {
+  "card": {
+   "name": "Agoraphobia",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature\nEnchanted creature gets -5/-0.\n{2}{U}: Return this Aura to its owner's hand.",
+   "colorIdentity": [
+    "U"
+   ]
+  },
+  "tags": {
+   "oracleId": "b268fe15-2860-4730-865e-eed7f308fc45",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [
+     "aura"
+    ],
+    "layout": "normal",
+    "colors": [
+     "U"
+    ],
+    "identity": [
+     "U"
+    ],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "enchant"
+    ],
+    "enchants": {
+     "control": "any",
+     "token": null,
+     "type": "creature"
+    }
+   },
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "debuff"
+     },
+     "host": true,
+     "amount": "-5/-0",
+     "clause": 2,
+     "repeats": "continuous"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "bounce",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "subtype": "aura",
+       "self": true,
+       "zone": "battlefield"
+      }
+     },
+     "cost": "{2}{U}",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "leaves",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "subtype": "aura",
+        "fromZone": "battlefield",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 3,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{2}{U}"
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "167d9f798ab1be6fe1123888b58733d225c795f269908873a5595242f466f173",
+   "clauseSource": "grammar"
+  }
+ },
+ "Ghost Quarter": {
+  "card": {
+   "name": "Ghost Quarter",
+   "typeLine": "Land",
+   "oracleText": "{T}: Add {C}.\n{T}, Sacrifice this land: Destroy target land. Its controller may search their library for a basic land card, put it onto the battlefield, then shuffle.",
+   "colorIdentity": []
+  },
+  "tags": {
+   "oracleId": "2ec4288e-34c6-4831-a2c0-ba1ca1d9d1dc",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "land"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 0,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{T}, Sacrifice this land",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "land",
+        "self": true
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "land",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{T}, Sacrifice this land",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "land",
+        "scope": "target"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "search",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "basic": true
+      }
+     },
+     "cost": "{T}, Sacrifice this land",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "search",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "basic": true,
+        "type": "land",
+        "fromZone": "library"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "librarySearch": "other",
+     "toZone": "battlefield",
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{T}, Sacrifice this land",
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "payment": {
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "loyalty": null,
+      "consumes": [],
+      "other": []
+     },
+     "colours": [],
+     "colourless": 1,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "0a9c404124d3e997e547496893c8e1dd5764e3f6e26008673b96b5e05370614d",
+   "clauseSource": "grammar"
+  }
+ },
+ "Evolving Wilds": {
+  "card": {
+   "name": "Evolving Wilds",
+   "typeLine": "Land",
+   "oracleText": "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.",
+   "colorIdentity": []
+  },
+  "tags": {
+   "oracleId": "a75445d3-1303-4bb5-89ad-26ea93fecd48",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "land"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 0,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{T}, Sacrifice this land",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "land",
+        "self": true
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "land",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "land",
+       "basic": true
+      }
+     },
+     "cost": "{T}, Sacrifice this land",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "search",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "basic": true,
+        "type": "land",
+        "fromZone": "library"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "librarySearch": "yours",
+     "toZone": "battlefield",
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{T}, Sacrifice this land",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "basic": true,
+        "type": "land",
+        "entersTapped": true,
+        "fromZone": "library"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{T}, Sacrifice this land",
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "payment": {
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "fetch",
+     "repeats": "once",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": true,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "loyalty": null,
+      "consumes": [],
+      "other": []
+     },
+     "colours": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "unread": false,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null
+    }
+   ],
+   "landFetch": {
+    "kind": "permanent",
+    "tapped": true,
+    "reach": [
+     "W",
+     "U",
+     "B",
+     "R",
+     "G"
+    ]
+   },
+   "unclaimed": [
+    {
+     "clause": 1,
+     "verb": "tap",
+     "object": "it"
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 12,
+   "segmentHash": "db701d11e9a0add5c41d589d347a9f4069b3b6e57aef19b15a7c275a005b1e68",
+   "clauseSource": "grammar"
+  }
+ },
+ "Angel's Feather": {
+  "card": {
+   "name": "Angel's Feather",
+   "typeLine": "Artifact",
+   "oracleText": "Whenever a player casts a white spell, you may gain 1 life.",
+   "colorIdentity": []
+  },
+  "tags": {
+   "oracleId": "3d0d4ba4-d5aa-4d9f-89ab-46687637fecf",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "spell",
+       "colors": [
+        "W"
+       ]
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "2a8463192b725ab1d61adc8fc8a6f3f6b72d30898781e33e521a9897844a2d48",
+   "clauseSource": "grammar"
+  }
+ },
+ "Demon's Horn": {
+  "card": {
+   "name": "Demon's Horn",
+   "typeLine": "Artifact",
+   "oracleText": "Whenever a player casts a black spell, you may gain 1 life.",
+   "colorIdentity": []
+  },
+  "tags": {
+   "oracleId": "ee38377f-8d3a-402e-a5d7-a01cfe3a5322",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "spell",
+       "colors": [
+        "B"
+       ]
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 12,
+   "segmentHash": "34bbb939ede7569d64656cca2ec43d0823efa38feace371fed9d2d993e1879b9",
+   "clauseSource": "grammar"
+  }
+ },
+ "Dragon's Claw": {
+  "card": {
+   "name": "Dragon's Claw",
+   "typeLine": "Artifact",
+   "oracleText": "Whenever a player casts a red spell, you may gain 1 life.",
+   "colorIdentity": []
+  },
+  "tags": {
+   "oracleId": "bd8d707d-1201-42c6-bce6-fbda12ce5ea8",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "spell",
+       "colors": [
+        "R"
+       ]
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "7c50695f5db549b6d84feac3a4035690c241817d3693d188fc0cae876a7ecb96",
+   "clauseSource": "grammar"
+  }
+ },
+ "Kraken's Eye": {
+  "card": {
+   "name": "Kraken's Eye",
+   "typeLine": "Artifact",
+   "oracleText": "Whenever a player casts a blue spell, you may gain 1 life.",
+   "colorIdentity": []
+  },
+  "tags": {
+   "oracleId": "14a21d8a-2097-4150-8af5-8c155049477a",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "spell",
+       "colors": [
+        "U"
+       ]
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "cc703bbfa87f0885dc031ee003e3913bd91fc55d84e1013d83458f309847c45d",
+   "clauseSource": "grammar"
+  }
+ },
+ "Wurm's Tooth": {
+  "card": {
+   "name": "Wurm's Tooth",
+   "typeLine": "Artifact",
+   "oracleText": "Whenever a player casts a green spell, you may gain 1 life.",
+   "colorIdentity": []
+  },
+  "tags": {
+   "oracleId": "69476326-fda5-48c8-a506-e71eb7c81c2f",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "spell",
+       "colors": [
+        "G"
+       ]
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "4199677c0913db5574f97eade7505e94bbb369914719d9f5e07f09dc93d2a6ac",
+   "clauseSource": "grammar"
+  }
+ },
+ "Diabolic Edict": {
+  "card": {
+   "name": "Diabolic Edict",
+   "typeLine": "Instant",
+   "oracleText": "Target player sacrifices a creature of their choice.",
+   "colorIdentity": [
+    "B"
+   ]
+  },
+  "tags": {
+   "oracleId": "058917c1-21ab-488a-9f9c-591c55f3c596",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 2,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "creature",
+        "edict": true
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "creature",
+        "edict": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "586fa74bddb6ac2962143227dbf73ab93154c7ca5f57c2b34cfcf868cf34649c",
+   "clauseSource": "grammar"
+  }
+ },
+ "Accursed Centaur": {
+  "card": {
+   "name": "Accursed Centaur",
+   "typeLine": "Creature — Zombie Centaur",
+   "oracleText": "When this creature enters, sacrifice a creature.",
+   "colorIdentity": [
+    "B"
+   ]
+  },
+  "tags": {
+   "oracleId": "b1e6921e-e460-4e58-82b0-d98ee31c279d",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "zombie",
+     "centaur"
+    ],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 1,
+    "power": "2",
+    "toughness": "2",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": ""
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature"
+       }
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "a098820c1c34ccd0307afb2b9858ee3e585a3232da3a5d035fdc3372a20115ef",
+   "clauseSource": "grammar"
+  }
+ },
+ "Boggart Forager": {
+  "card": {
+   "name": "Boggart Forager",
+   "typeLine": "Creature — Goblin Rogue",
+   "oracleText": "{R}, Sacrifice this creature: Target player shuffles their library.",
+   "colorIdentity": [
+    "R"
+   ]
+  },
+  "tags": {
+   "oracleId": "cef9e0d3-5e28-4c5f-88fc-0d78af5a4db1",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "goblin",
+     "rogue"
+    ],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 1,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{R}, Sacrifice this creature",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature",
+        "self": true
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{R}",
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{R}, Sacrifice this creature",
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "any",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "payment": {
+      "mana": "{R}",
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "78d4886a1723c254ff3a76afaf6ba18440a1c79b92fac247b7901b63b1b80a51",
+   "clauseSource": "grammar"
+  }
+ },
+ "Attrition": {
+  "card": {
+   "name": "Attrition",
+   "typeLine": "Enchantment",
+   "oracleText": "{B}, Sacrifice a creature: Destroy target nonblack creature.",
+   "colorIdentity": [
+    "B"
+   ]
+  },
+  "tags": {
+   "oracleId": "a85ee0cf-39ce-49f2-874a-f6f54ca1775f",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{B}, Sacrifice a creature",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature"
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{B}",
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "control": "you",
+         "token": null,
+         "type": "creature"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{B}, Sacrifice a creature",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "creature",
+        "scope": "target"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{B}",
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "control": "you",
+         "token": null,
+         "type": "creature"
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "8b5e264b0133993ed2f074dbcaf2ff804db9a7f262e844115ae4594dc21b2046",
+   "clauseSource": "grammar"
+  }
  }
 }
