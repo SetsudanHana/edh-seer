@@ -115,3 +115,28 @@ test("a token replacement says HOW it multiplies (#1136)", () => {
   // Only the token family carries it.
   expect(mode("If an opponent would mill one or more cards, they mill twice that many cards instead.")).toBeUndefined();
 });
+
+/** WHAT THE REPLACEMENT DOES TO THE EVENT (owner, 2026-10-24: "fix the derive so it can catch the
+ *  amount on replacement effects"). Printed texts from the committed fixtures, not from memory. */
+test("a replacement says how it changes the event: adds N, or multiplies by N", () => {
+  const change = (t: string) => replacementOf(t)?.change;
+  // Fiery Emancipation, Anointed Procession, Tekuthal.
+  expect(change("If a source you control would deal damage to a permanent or player, it deals triple that damage to that permanent or player instead.")).toEqual({ op: "times", value: 3 });
+  expect(change("If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.")).toEqual({ op: "times", value: 2 });
+  expect(change("If you would proliferate, proliferate twice instead.")).toEqual({ op: "times", value: 2 });
+  expect(change("If a Wizard you control would deal damage to a permanent or player, it deals double that damage instead.")).toEqual({ op: "times", value: 2 });
+  // Pyromancer's Gauntlet's template, Hardened Scales, Xorn.
+  expect(change("If a red instant or sorcery spell you control would deal damage to a permanent or player, it deals that much damage plus 2 to that permanent or player instead.")).toEqual({ op: "plus", value: 2 });
+  expect(change("If one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 counters are put on it instead.")).toEqual({ op: "plus", value: 1 });
+  expect(change("If you would create one or more Treasure tokens, instead create those tokens plus an additional Treasure token.")).toEqual({ op: "plus", value: 1 });
+  // Doc Samson's ACTIVE counter frame ("If you would put one or more counters on ...") matches no
+  // template at all, so it is not read as a replacement yet -- a gap in the templates, not here.
+});
+
+/** NO NUMBER, NO CHANGE: a count that is itself variable is not a size the filter can compare. */
+test("a change the sentence does not state as a number is left unset", () => {
+  // Chatterfang's shape: "plus that many" adds a variable count.
+  expect(replacementOf("If one or more tokens would be created under your control, those tokens plus that many 1/1 green Squirrel creature tokens are created instead.")?.change).toBeUndefined();
+  // Alhammarret's Archive: a different event count, not a multiple of "that many".
+  expect(replacementOf("If you would draw a card except the first one you draw in each of your draw steps, draw two cards instead.")?.change).toBeUndefined();
+});

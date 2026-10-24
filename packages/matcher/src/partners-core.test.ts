@@ -1747,7 +1747,7 @@ test("event members carry the kind, repeats and size of the abilities that put t
     emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, scope: "each" }, dealer: { control: "you", token: null } }],
   }] as unknown as CardTags["abilities"]);
   const doubler = withTypes(base("Doubles Damage", [{
-    kind: "static", replacement: true, repeats: "continuous",
+    kind: "static", replacement: true, repeats: "continuous", change: { op: "times", value: 2 },
     trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null } },
     effect: { kind: "damage-multiplier" },
   }] as unknown as CardTags["abilities"]), ["enchantment"]);
@@ -1756,7 +1756,8 @@ test("event members carry the kind, repeats and size of the abilities that put t
   const factsOf = (ids: number[], facts: number[][] | undefined) =>
     Object.fromEntries(ids.map((pos, i) => [index[pos]!.name, (facts?.[i] ?? []).map(unpackFact)]));
   expect(factsOf(m.p, m.pf)["Pings Each"]).toEqual([{ kind: "triggered", repeats: "repeatable", amount: { kind: "fixed", value: 1 } }]);
-  expect(factsOf(m.c, m.cf)["Doubles Damage"]).toEqual([{ kind: "replacement", repeats: "continuous", amount: { kind: "unstated" } }]);
+  // ITS CHANGE RIDES IN THE SIZE SLOT (DERIVE 388): "double" is times 2.
+  expect(factsOf(m.c, m.cf)["Doubles Damage"]).toEqual([{ kind: "replacement", repeats: "continuous", amount: { kind: "times", value: 2 } }]);
   expect(m.pf).toHaveLength(m.p.length);
   expect(m.cf).toHaveLength(m.c.length);
 });

@@ -222,6 +222,15 @@ test("CR 614: a multiplier performs no action — Hardened Scales places no coun
   for (const a of abilities) expect(a.emits ?? []).toEqual([]);
 });
 
+test("CR 614: the multiplier's ability records what it does to the event (DERIVE 388)", () => {
+  const text = "If one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 counters are put on it instead.";
+  const c = clause(text, "add-counter", "+1/+1 counters");
+  const { abilities } = deriveAbilities(c.clauses, "Hardened Scales", c.texts, undefined, text);
+  const heard = abilities.filter((a) => a.replacement === true);
+  expect(heard.length).toBeGreaterThan(0);
+  for (const a of heard) expect(a.change).toEqual({ op: "plus", value: 1 });
+});
+
 test("CR 106.12a and 104.3: 'tapped for mana' is refused, and 'loses the game' is read as loses-game, never as lose-life", () => {
   const mana = clause("Whenever a land is tapped for mana, add an additional {G}.", "add-mana", "{G}", { event: "taps", subject: "a land", control: "any" });
   expect(deriveAbilities(mana.clauses, "Mana Reflection", mana.texts, undefined, mana.texts[1]).unknownTriggers).toContain("taps-for-mana");
