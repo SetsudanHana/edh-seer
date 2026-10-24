@@ -75,7 +75,7 @@ export function unjudgedLeftOut(
     if (before.drop.has(id) || after.keep?.has(id)) return false;
     if (andTerms.some((t) => status.get(t)!.get(id) === "fail")) return false;
     const orSeen = orTerms.map((t) => status.get(t)!.get(id)).filter((x): x is Status => x !== undefined);
-    if (orSeen.length > 0 && !orSeen.includes("undecided")) return false;
+    if (orSeen.length > 0 && orSeen.every((x) => x === "fail")) return false;
     return [...andTerms, ...orTerms].some((t) => status.get(t)!.get(id) === "undecided");
   });
 }

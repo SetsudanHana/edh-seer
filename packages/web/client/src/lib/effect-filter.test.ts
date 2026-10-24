@@ -57,6 +57,15 @@ describe("unjudgedLeftOut", () => {
     expect(unjudgedLeftOut([and("a"), and("b")], only, q)).toEqual([]);
   });
 
+  test("an OR term the card passes does not hide that another term left it unjudged", () => {
+    const or = (key: string): EventTerm => ({ key, side: "makes", op: "or" });
+    const q = { ...q0, produce: ["a"], orProduce: ["b"], repeatsMin: "repeatable" as const };
+    // card 2: no facts on a (undecided), a passing ping on b.
+    expect(unjudgedLeftOut([and("a"), or("b")], lists, q).sort()).toEqual([2, 3]);
+    const failing = new Map(lists).set("b", { p: [1, 2, 3], c: [], pf: [[ping], [bolt], [bolt]], cf: [] });
+    expect(unjudgedLeftOut([and("a"), or("b")], failing, q)).toEqual([]);
+  });
+
   test("a not term never narrows, and a card it removes is not counted", () => {
     const notC: EventTerm = { key: "c", side: "makes", op: "not" };
     const withC = new Map(lists).set("c", { p: [2], c: [], pf: [[ping]], cf: [] });
