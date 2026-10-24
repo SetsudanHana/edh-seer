@@ -14,7 +14,12 @@ import type { CardTags, Repeats } from "@edh-seer/tagger";
  *    for noncombat pingers that ping for exactly 1 dmg"). A digit string is a fixed size; anything
  *    else stated ("X", "that much") is variable; nothing stated is NOT one -- see `Ability.amount`.
  *
- *  Layout: `amount * 64 + repeats * 8 + kind`. Amount 0 = unstated, 1 = variable, n + 2 = fixed n. */
+ *  - CHANGE (askers only): what a replacement does to the event it hears -- "+2" (Torbran) or "x3"
+ *    (Fiery Emancipation) -- shipped in the amount slot as its own two shapes, so one size filter
+ *    reads "exactly 1" on a pinger and "doubles" on a doubler.
+ *
+ *  Layout: `value * 512 + shape * 64 + repeats * 8 + kind`, three bits each for kind, repeats and
+ *  shape (`AMOUNT_SHAPES`), the rest the number. */
 export const ABILITY_KINDS = ["spell", "triggered", "activated", "static", "replacement"] as const;
 export type FactKind = (typeof ABILITY_KINDS)[number];
 
@@ -24,7 +29,11 @@ export type FactKind = (typeof ABILITY_KINDS)[number];
  *  minimum-repeatability filter should keep it rather than drop it below `once`. */
 export const REPEATS_LADDER = ["once", "per-cycle", "per-turn", "repeatable", "continuous"] as const satisfies readonly Repeats[];
 
-export type FactAmount = { kind: "unstated" } | { kind: "variable" } | { kind: "fixed"; value: number };
+export type FactAmount =
+  | { kind: "unstated" } | { kind: "variable" } | { kind: "fixed"; value: number }
+  /** A replacement's change to the event it hears: "plus 2", "double", "triple". */
+  | { kind: "plus"; value: number } | { kind: "times"; value: number };
+const AMOUNT_SHAPES = ["unstated", "variable", "fixed", "plus", "times"] as const satisfies readonly FactAmount["kind"][];
 export interface MemberFact { kind: FactKind; repeats: Repeats | undefined; amount: FactAmount }
 
 type Ability = CardTags["abilities"][number];
@@ -47,19 +56,20 @@ export function factAmountOf(amount: string | undefined): FactAmount {
 }
 
 export function packFact(f: MemberFact): number {
-  const amount = f.amount.kind === "unstated" ? 0 : f.amount.kind === "variable" ? 1 : f.amount.value + 2;
+  const value = "value" in f.amount ? f.amount.value : 0;
   const repeats = f.repeats === undefined ? 0 : REPEATS_LADDER.indexOf(f.repeats as (typeof REPEATS_LADDER)[number]) + 1;
-  return amount * 64 + repeats * 8 + ABILITY_KINDS.indexOf(f.kind);
+  return value * 512 + AMOUNT_SHAPES.indexOf(f.amount.kind) * 64 + repeats * 8 + ABILITY_KINDS.indexOf(f.kind);
 }
 
 export function unpackFact(n: number): MemberFact {
   const kind = ABILITY_KINDS[n % 8] ?? "static";
   const r = Math.floor(n / 8) % 8;
-  const a = Math.floor(n / 64);
+  const shape = AMOUNT_SHAPES[Math.floor(n / 64) % 8] ?? "unstated";
+  const value = Math.floor(n / 512);
   return {
     kind,
     repeats: r === 0 ? undefined : REPEATS_LADDER[r - 1],
-    amount: a === 0 ? { kind: "unstated" } : a === 1 ? { kind: "variable" } : { kind: "fixed", value: a - 2 },
+    amount: shape === "unstated" || shape === "variable" ? { kind: shape } : { kind: shape, value },
   };
 }
 
@@ -116,10 +126,14 @@ export interface FactFilter {
   /** Keep variable ("X", "that much") and unstated sizes when a range is set. Default false: a
    *  player asking for "exactly 1" did not ask for "equal to its power". */
   includeVariable?: boolean;
+  /** A replacement's change only: "plus" (Torbran's +2) or "times" (a doubler). Absent = either.
+   *  The range above then reads the change's number -- "times, 2 to 2" is the doublers. */
+  changeOp?: "plus" | "times";
 }
 
 export const isEmptyFilter = (f: FactFilter): boolean =>
-  (f.kinds?.length ?? 0) === 0 && f.minRepeats === undefined && f.amountMin === undefined && f.amountMax === undefined;
+  (f.kinds?.length ?? 0) === 0 && f.minRepeats === undefined && f.amountMin === undefined && f.amountMax === undefined
+  && f.changeOp === undefined;
 
 export function factPasses(f: MemberFact, q: FactFilter): boolean {
   if (q.kinds && q.kinds.length > 0 && !q.kinds.includes(f.kind)) return false;
@@ -127,10 +141,14 @@ export function factPasses(f: MemberFact, q: FactFilter): boolean {
     if (f.repeats === undefined) return false;
     if (REPEATS_LADDER.indexOf(f.repeats as (typeof REPEATS_LADDER)[number]) < REPEATS_LADDER.indexOf(q.minRepeats as (typeof REPEATS_LADDER)[number])) return false;
   }
+  const change = f.amount.kind === "plus" || f.amount.kind === "times";
+  // A CHANGE IS ASKED FOR BY ITS OP, and an op asks for nothing else: "times" keeps only doublers.
+  if (q.changeOp !== undefined && f.amount.kind !== q.changeOp) return false;
   if (q.amountMin !== undefined || q.amountMax !== undefined) {
-    if (f.amount.kind !== "fixed") return q.includeVariable === true;
-    if (q.amountMin !== undefined && f.amount.value < q.amountMin) return false;
-    if (q.amountMax !== undefined && f.amount.value > q.amountMax) return false;
+    if (f.amount.kind !== "fixed" && !change) return q.includeVariable === true;
+    const value = (f.amount as { value: number }).value;
+    if (q.amountMin !== undefined && value < q.amountMin) return false;
+    if (q.amountMax !== undefined && value > q.amountMax) return false;
   }
   return true;
 }

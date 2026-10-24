@@ -466,10 +466,12 @@ describe("the effect filters", () => {
     expect(withoutFilterKind(q, "abilityKind").abilityKinds).toBeUndefined();
   });
 
-  /** AN ASKER HAS NO SIZE ON RECORD, so the amount narrows the causes side only. */
-  test("the amount reads on the causes side only", () => {
-    const q: EventQuery = { ...base, abilityKinds: ["replacement"], amountMin: 1, amountMax: 1 };
-    expect(factFilterOf(q, "makes")).toEqual({ kinds: ["replacement"], amountMin: 1, amountMax: 1 });
-    expect(factFilterOf(q, "pays")).toEqual({ kinds: ["replacement"] });
+  /** ON THE CARES-ABOUT SIDE THE SIZE IS A REPLACEMENT'S CHANGE: "times, 2 to 2" is the doublers. */
+  test("the size reads on both sides, the variable toggle on causes and the change op on cares-about", () => {
+    const q: EventQuery = { ...base, abilityKinds: ["replacement"], amountMin: 2, amountMax: 2, amountVariable: true, amountChange: "times" };
+    expect(factFilterOf(q, "makes")).toEqual({ kinds: ["replacement"], amountMin: 2, amountMax: 2, includeVariable: true });
+    expect(factFilterOf(q, "pays")).toEqual({ kinds: ["replacement"], amountMin: 2, amountMax: 2, changeOp: "times" });
+    expect(eventsFromParams(eventsToParams(q, new URLSearchParams()))).toEqual(q);
+    expect(withoutFilterKind(q, "amount").amountChange).toBeUndefined();
   });
 });

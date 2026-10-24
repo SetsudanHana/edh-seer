@@ -12,6 +12,8 @@ test("a fact survives packing, every field", () => {
     { kind: "spell", repeats: "once", amount: { kind: "variable" } },
     { kind: "activated", repeats: undefined, amount: { kind: "fixed", value: 1000 } },
     { kind: "static", repeats: "per-turn", amount: { kind: "fixed", value: 0 } },
+    { kind: "replacement", repeats: "continuous", amount: { kind: "plus", value: 2 } },
+    { kind: "replacement", repeats: "continuous", amount: { kind: "times", value: 3 } },
   ];
   for (const f of facts) expect(unpackFact(packFact(f))).toEqual(f);
 });
@@ -66,4 +68,16 @@ test("an unlabelled repeats fails a minimum, and a static always clears one", ()
   const anthem = packFact({ kind: "static", repeats: "continuous", amount: { kind: "unstated" } });
   expect(memberPasses([unknown], { minRepeats: "once" })).toBe(false);
   expect(memberPasses([anthem], { minRepeats: "repeatable" })).toBe(true);
+});
+
+/** A REPLACEMENT'S CHANGE IS READ BY THE SAME SIZE FILTER (owner, 2026-10-24: "fix the derive so it
+ *  can catch the amount on replacement effects"): Torbran +2, Furnace of Rath x2, Fiery x3. */
+test("a change filter tells adding from multiplying, and the range reads its number", () => {
+  const torbran = packFact({ kind: "replacement", repeats: "continuous", amount: { kind: "plus", value: 2 } });
+  const furnace = packFact({ kind: "replacement", repeats: "continuous", amount: { kind: "times", value: 2 } });
+  const fiery = packFact({ kind: "replacement", repeats: "continuous", amount: { kind: "times", value: 3 } });
+  const doublers = { changeOp: "times" as const, amountMin: 2, amountMax: 2 };
+  expect([torbran, furnace, fiery].map((f) => memberPasses([f], doublers))).toEqual([false, true, false]);
+  expect([torbran, furnace, fiery].map((f) => memberPasses([f], { changeOp: "plus" }))).toEqual([true, false, false]);
+  expect([torbran, furnace, fiery].map((f) => memberPasses([f], { amountMin: 3 }))).toEqual([false, false, true]);
 });

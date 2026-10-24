@@ -73,7 +73,9 @@ export interface EventQuery {
    *  ones, and only through ONE ability: a card passes when a single ability that causes (or asks
    *  for) the event meets all three (`memberPasses`). With no event asked they narrow nothing.
    *
-   *  The amount reads on the CAUSES side only; an asker has no size of its own on record. */
+   *  On the CAUSES side the amount is the size of one occurrence; on the CARES ABOUT side it is a
+   *  replacement's change to the event it hears ("plus 2", "double") -- an asker has no size of its
+   *  own on record. */
   abilityKinds?: FactKind[];
   /** At least this often, on `REPEATS_LADDER`. */
   repeatsMin?: Repeats;
@@ -82,6 +84,8 @@ export interface EventQuery {
   amountMax?: number;
   /** Keep "X" and "equal to its power" causers too when a size range is set. */
   amountVariable?: boolean;
+  /** A replacement's change only: adds ("plus") or multiplies ("times"). */
+  amountChange?: "plus" | "times";
   /** How the kept rows are ordered. Absent means `orderOf`'s default. `effect` is HOW MUCH THE
    *  CARD DOES at what it was asked to cause (owner 2026-09-23, AN3): the deck-build run found rare
    *  events outranking good cards -- Ashnod's Altar 242nd on "sacrifices a creature" -- and reached
@@ -173,17 +177,20 @@ function effectFromParams(p: URLSearchParams): Partial<EventQuery> {
     ...(amountMin !== undefined ? { amountMin } : {}),
     ...(amountMax !== undefined ? { amountMax } : {}),
     ...(p.get("amtvar") === "1" ? { amountVariable: true } : {}),
+    ...(p.get("amtop") === "plus" || p.get("amtop") === "times" ? { amountChange: p.get("amtop") as "plus" | "times" } : {}),
   };
 }
 
-/** WHAT THE EFFECT FILTERS ASK OF ONE SIDE'S MEMBERS. The pays side gets no size: see `amountMin`. */
+/** WHAT THE EFFECT FILTERS ASK OF ONE SIDE'S MEMBERS. The size reads on both sides (`amountMin`);
+ *  "include variable" means a causer's "X", and the change op an asker's replacement. */
 export function factFilterOf(q: EventQuery, side: "makes" | "pays"): FactFilter {
   return {
     ...(q.abilityKinds && q.abilityKinds.length > 0 ? { kinds: q.abilityKinds } : {}),
     ...(q.repeatsMin !== undefined ? { minRepeats: q.repeatsMin } : {}),
-    ...(side === "makes" && q.amountMin !== undefined ? { amountMin: q.amountMin } : {}),
-    ...(side === "makes" && q.amountMax !== undefined ? { amountMax: q.amountMax } : {}),
+    ...(q.amountMin !== undefined ? { amountMin: q.amountMin } : {}),
+    ...(q.amountMax !== undefined ? { amountMax: q.amountMax } : {}),
     ...(side === "makes" && q.amountVariable === true ? { includeVariable: true } : {}),
+    ...(side === "pays" && q.amountChange !== undefined ? { changeOp: q.amountChange } : {}),
   };
 }
 
@@ -194,7 +201,7 @@ export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchPara
     // `mv` IS DELETED AND NEVER WRITTEN. It is read for the links that already carry it and
     // rewritten as `mvmax`, so the legacy spelling does not propagate into new ones.
     "mv", "mvmin", "mvmax", "powmin", "powmax", "toumin", "toumax",
-    "ability", "repeats", "amtmin", "amtmax", "amtvar",
+    "ability", "repeats", "amtmin", "amtmax", "amtvar", "amtop",
   ]) out.delete(k);
   for (const k of q.produce) out.append("produce", k);
   for (const k of q.consume) out.append("consume", k);
@@ -213,6 +220,7 @@ export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchPara
   if (q.amountMin !== undefined) out.set("amtmin", String(q.amountMin));
   if (q.amountMax !== undefined) out.set("amtmax", String(q.amountMax));
   if (q.amountVariable === true) out.set("amtvar", "1");
+  if (q.amountChange !== undefined) out.set("amtop", q.amountChange);
   // THE DEFAULT IS NOT WRITTEN DOWN. `?sort=partners` in every shared link is noise, and it would
   // pin the order against a future change of default. The default depends on the query (a cause
   // makes it `effect`), so it is compared against the query's own.
@@ -410,7 +418,7 @@ export function filterKindsOf(q: EventQuery): FilterKind[] {
     consume: q.consume.length + (q.orConsume?.length ?? 0) + (q.notConsume?.length ?? 0) > 0,
     abilityKind: (q.abilityKinds?.length ?? 0) > 0,
     repeats: q.repeatsMin !== undefined,
-    amount: q.amountMin !== undefined || q.amountMax !== undefined || q.amountVariable === true,
+    amount: q.amountMin !== undefined || q.amountMax !== undefined || q.amountVariable === true || q.amountChange !== undefined,
   };
   return FILTER_KINDS.filter((k) => asked[k]);
 }
@@ -436,6 +444,6 @@ export function withoutFilterKind(q: EventQuery, kind: FilterKind): EventQuery {
     case "consume": { const { orConsume: _a, notConsume: _b, ...rest } = q; return { ...rest, consume: [] }; }
     case "abilityKind": { const { abilityKinds: _a, ...rest } = q; return rest; }
     case "repeats": { const { repeatsMin: _a, ...rest } = q; return rest; }
-    case "amount": { const { amountMin: _a, amountMax: _b, amountVariable: _c, ...rest } = q; return rest; }
+    case "amount": { const { amountMin: _a, amountMax: _b, amountVariable: _c, amountChange: _d, ...rest } = q; return rest; }
   }
 }

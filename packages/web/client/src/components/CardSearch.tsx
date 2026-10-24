@@ -587,10 +587,12 @@ export function CardSearch({
         return (
           <AmountRow
             min={eventQuery.amountMin} max={eventQuery.amountMax} variable={eventQuery.amountVariable === true}
+            change={eventQuery.amountChange}
             onChange={(r) => {
-              const { amountMin: _a, amountMax: _b, amountVariable: _c, ...rest } = eventQuery;
+              const { amountMin: _a, amountMax: _b, amountVariable: _c, amountChange: _d, ...rest } = eventQuery;
               setEvents({ ...rest, ...(r.min !== undefined ? { amountMin: r.min } : {}),
-                ...(r.max !== undefined ? { amountMax: r.max } : {}), ...(r.variable ? { amountVariable: true } : {}) });
+                ...(r.max !== undefined ? { amountMax: r.max } : {}), ...(r.variable ? { amountVariable: true } : {}),
+                ...(r.change !== undefined ? { amountChange: r.change } : {}) });
             }}
           />
         );

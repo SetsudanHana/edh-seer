@@ -72,24 +72,43 @@ export function RepeatsRow(
 
 /** THE SIZE OF ONE OCCURRENCE (owner: "per occurrence, cause I am looking for noncombat pingers
  *  that ping for exactly 1"). "1 to 1" is exactly one. A variable size is left out unless asked
- *  for: "equal to its power" is not an answer to "exactly 1". */
+ *  for: "equal to its power" is not an answer to "exactly 1".
+ *
+ *  ON A "CARES ABOUT" EVENT THE SAME RANGE READS A REPLACEMENT'S CHANGE (owner, 2026-10-24):
+ *  Torbran adds 2, Furnace of Rath doubles. The op picks which kind of change. */
 export function AmountRow(
-  { min, max, variable, onChange }: {
-    min: number | undefined; max: number | undefined; variable: boolean;
-    onChange: (next: { min: number | undefined; max: number | undefined; variable: boolean }) => void;
+  { min, max, variable, change, onChange }: {
+    min: number | undefined; max: number | undefined; variable: boolean; change: "plus" | "times" | undefined;
+    onChange: (next: { min: number | undefined; max: number | undefined; variable: boolean; change: "plus" | "times" | undefined }) => void;
   },
 ): React.JSX.Element {
+  const id = useId();
   return (
     <div className="flex flex-col gap-2">
       <RangeRow
         label="Amount, each time" min={min} max={max} ceiling={20}
-        onChange={(r) => onChange({ ...r, variable })}
+        onChange={(r) => onChange({ ...r, variable, change })}
       />
       <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={variable} onChange={(e) => onChange({ min, max, variable: e.target.checked })} />
+        <input type="checkbox" checked={variable} onChange={(e) => onChange({ min, max, variable: e.target.checked, change })} />
         Include variable amounts (X, “equal to its power”)
       </label>
-      <p className="text-(--muted) text-sm max-w-[55ch]">Counts what a card causes, not what it cares about.</p>
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <label htmlFor={id}>A replacement that</label>
+        <select
+          id={id} className="field w-40"
+          value={change ?? ""}
+          onChange={(e) => onChange({ min, max, variable, change: e.target.value === "" ? undefined : e.target.value as "plus" | "times" })}
+        >
+          <option value="">adds or multiplies</option>
+          <option value="plus">adds (+N)</option>
+          <option value="times">multiplies (×N)</option>
+        </select>
+      </div>
+      <p className="text-(--muted) text-sm max-w-[55ch]">
+        On a “causes” event this is how much one use does. On a “cares about” event it is how much a
+        replacement changes it: Torbran adds 2, a doubler multiplies by 2.
+      </p>
     </div>
   );
 }
