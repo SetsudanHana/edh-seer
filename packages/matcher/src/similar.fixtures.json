@@ -4675,5 +4675,1966 @@
    "segmentHash": "8b5e264b0133993ed2f074dbcaf2ff804db9a7f262e844115ae4594dc21b2046",
    "clauseSource": "grammar"
   }
+ },
+ "Ajani's Pridemate": {
+  "card": {
+   "name": "Ajani's Pridemate",
+   "typeLine": "Creature — Cat Soldier",
+   "oracleText": "Whenever you gain life, put a +1/+1 counter on this creature.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "95e94dea-5ac0-4d6f-adec-ca147aee861f",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "cat",
+     "soldier"
+    ],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 2,
+    "power": "2",
+    "toughness": "2",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "counter-placement",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "gain-life"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "counter-added",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "counter": "+1/+1",
+        "self": true
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "20e6a55f48cb8b0bbd4bb28cd287b474e9fe75a6d54005b419756686c985e4a5",
+   "clauseSource": "grammar"
+  }
+ },
+ "Bloodbond Vampire": {
+  "card": {
+   "name": "Bloodbond Vampire",
+   "typeLine": "Creature — Vampire Shaman Ally",
+   "oracleText": "Whenever you gain life, put a +1/+1 counter on this creature.",
+   "colorIdentity": [
+    "B"
+   ]
+  },
+  "tags": {
+   "oracleId": "a2057118-9fd1-431d-9441-fef198d67ff2",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "vampire",
+     "shaman",
+     "ally"
+    ],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 4,
+    "power": "3",
+    "toughness": "3",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "counter-placement",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "gain-life"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "counter-added",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "counter": "+1/+1",
+        "self": true
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "59bc8b9294618fe62998a74b392b13e01b54f5a1b27ec36465a2f2528cde66f8",
+   "clauseSource": "grammar"
+  }
+ },
+ "Squadron Hawk": {
+  "card": {
+   "name": "Squadron Hawk",
+   "typeLine": "Creature — Bird",
+   "oracleText": "Flying\nWhen this creature enters, you may search your library for up to three cards named Squadron Hawk, reveal them, put them into your hand, then shuffle.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "00ab9841-934f-4a66-a98d-68d01661b1c9",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "bird"
+    ],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 2,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": [
+     "flying"
+    ]
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "named": "squadron hawk"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "amount": "3",
+     "emits": [
+      {
+       "verb": "search",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "named": "~",
+        "fromZone": "library"
+       }
+      }
+     ],
+     "librarySearch": "yours",
+     "toZone": "hand",
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 3,
+      "ceiling": 3
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": ""
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "once"
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "d6daf783003adabf28cc371bbc7dc7ed107590ada73faaceeb9e717984e7eaa8",
+   "clauseSource": "grammar"
+  }
+ },
+ "Rune-Scarred Demon": {
+  "card": {
+   "name": "Rune-Scarred Demon",
+   "typeLine": "Creature — Demon",
+   "oracleText": "Flying\nWhen this creature enters, search your library for a card, put it into your hand, then shuffle.",
+   "colorIdentity": [
+    "B"
+   ]
+  },
+  "tags": {
+   "oracleId": "14aefe99-fb60-4f1c-a71f-7ffbe94c8b13",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "demon"
+    ],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 7,
+    "power": "6",
+    "toughness": "6",
+    "token": false,
+    "keywords": [
+     "flying"
+    ]
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "search",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "search",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "fromZone": "library"
+       }
+      }
+     ],
+     "librarySearch": "yours",
+     "toZone": "hand",
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": ""
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "once"
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "2b928a095bb156eaf17c76cf45f2b71423593cdef8fd5eb336f454f74d5806ec",
+   "clauseSource": "grammar"
+  }
+ },
+ "Cloudshift": {
+  "card": {
+   "name": "Cloudshift",
+   "typeLine": "Instant",
+   "oracleText": "Exile target creature you control, then return that card to the battlefield under your control.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "6879f5ce-7a1b-4606-bad1-885779b0d456",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "exiled",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature",
+        "scope": "target",
+        "fromZone": "battlefield"
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "leaves",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature",
+        "scope": "target",
+        "fromZone": "battlefield"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "flicker",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature",
+        "scope": "target",
+        "fromZone": "exile"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "bb91335a236ae2359b9002b450c5fd2a6e32253f82220ca364594260e20ef6f5",
+   "clauseSource": "grammar"
+  }
+ },
+ "Whitemane Lion": {
+  "card": {
+   "name": "Whitemane Lion",
+   "typeLine": "Creature — Cat",
+   "oracleText": "Flash\nWhen this creature enters, return a creature you control to its owner's hand.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "e8d6084b-9b72-438e-a30a-851b888f3e4d",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "cat"
+    ],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 2,
+    "power": "2",
+    "toughness": "2",
+    "token": false,
+    "keywords": [
+     "flash"
+    ]
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "bounce",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "zone": "battlefield"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "leaves",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature",
+        "fromZone": "battlefield"
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "d1eccaf03a4ab6ab88a0652f2c151775c937d534958635811a917a1bb38049d2",
+   "clauseSource": "grammar"
+  }
+ },
+ "Man-o'-War": {
+  "card": {
+   "name": "Man-o'-War",
+   "typeLine": "Creature — Jellyfish",
+   "oracleText": "When this creature enters, return target creature to its owner's hand.",
+   "colorIdentity": [
+    "U"
+   ]
+  },
+  "tags": {
+   "oracleId": "67a3541c-8408-40c8-b44f-90035b860f57",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "jellyfish"
+    ],
+    "layout": "normal",
+    "colors": [
+     "U"
+    ],
+    "identity": [
+     "U"
+    ],
+    "cmc": 3,
+    "power": "2",
+    "toughness": "2",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "bounce",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "zone": "battlefield"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "leaves",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "creature",
+        "scope": "target",
+        "fromZone": "battlefield"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "c1bd73ffecf58426501f3977944c744bcaf28c70bf450a2d84b1f3a4cbce1395",
+   "clauseSource": "grammar"
+  }
+ },
+ "Threaten": {
+  "card": {
+   "name": "Threaten",
+   "typeLine": "Sorcery",
+   "oracleText": "Untap target creature and gain control of it until end of turn. That creature gains haste until end of turn. (It can attack and {T} this turn.)",
+   "colorIdentity": [
+    "R"
+   ]
+  },
+  "tags": {
+   "oracleId": "3dc8d15a-3ca7-4d1f-a819-c1b7f947a59e",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "sorcery"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "untap",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "untaps",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "creature",
+        "scope": "target"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "gains-control",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature",
+        "scope": "target"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "speed-increase",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "clause": 1,
+     "repeats": "once",
+     "grants": [
+      "haste"
+     ]
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "95b025c279c260974f7d27bd95e80598628e3724cf44eeacffadc87b9fb692ad",
+   "clauseSource": "grammar"
+  }
+ },
+ "Donate": {
+  "card": {
+   "name": "Donate",
+   "typeLine": "Sorcery",
+   "oracleText": "Target player gains control of target permanent you control.",
+   "colorIdentity": [
+    "U"
+   ]
+  },
+  "tags": {
+   "oracleId": "049d1fb2-cce7-40e7-a633-e84cf9782d89",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "sorcery"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "U"
+    ],
+    "identity": [
+     "U"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "gains-control",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "permanent",
+        "scope": "target"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "65964008f9afc80af2f444e6a7a3e7a1e6a8e459880d830d1e6eaed8fb877f87",
+   "clauseSource": "grammar"
+  }
+ },
+ "Bontu's Monument": {
+  "card": {
+   "name": "Bontu's Monument",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "Black creature spells you cast cost {1} less to cast.\nWhenever you cast a creature spell, each opponent loses 1 life and you gain 1 life.",
+   "colorIdentity": []
+  },
+  "tags": {
+   "oracleId": "940ba435-7abc-40f8-a5af-c1c653b3284e",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "legendary",
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "cost-reduction",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "all",
+       "colors": [
+        "B"
+       ]
+      }
+     },
+     "amount": "-1",
+     "clause": 1,
+     "repeats": "continuous",
+     "reduces": {
+      "mana": "{1}"
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "player-life-loss",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "scope": "each"
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "drain",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     "clause": 2,
+     "repeats": "repeatable"
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 12,
+   "segmentHash": "2db72ad9dd854cacec235809b5be469d6dd3c394d4cf7b380a0461253a9f9fcd",
+   "clauseSource": "grammar"
+  }
+ },
+ "Professor Onyx": {
+  "card": {
+   "name": "Professor Onyx",
+   "typeLine": "Legendary Planeswalker — Liliana",
+   "oracleText": "Magecraft — Whenever you cast or copy an instant or sorcery spell, each opponent loses 2 life and you gain 2 life.\n+1: You lose 1 life. Look at the top three cards of your library. Put one of them into your hand and the rest into your graveyard.\n−3: Each opponent sacrifices a creature with the greatest power among creatures that player controls.\n−8: Each opponent may discard a card. If they don't, they lose 3 life. Repeat this process six more times.",
+   "colorIdentity": [
+    "B"
+   ]
+  },
+  "tags": {
+   "oracleId": "9df2e909-ed13-456a-9636-7398732009a9",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "legendary",
+     "planeswalker"
+    ],
+    "subtypes": [
+     "liliana"
+    ],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 6,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "magecraft"
+    ]
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "player-life-loss",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": [
+        "instant",
+        "sorcery"
+       ]
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "scope": "each"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "player-life-loss",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "copy"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": [
+        "instant",
+        "sorcery"
+       ]
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "scope": "each"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": [
+        "instant",
+        "sorcery"
+       ]
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "copy"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": [
+        "instant",
+        "sorcery"
+       ]
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "drain",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": [
+        "instant",
+        "sorcery"
+       ]
+      }
+     },
+     "clause": 1,
+     "repeats": "repeatable"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "+1",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "loyalty": "+1"
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "to-hand",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "cost": "+1",
+     "amount": "1",
+     "chooses": true,
+     "clause": 2,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "loyalty": "+1"
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mill",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "+1",
+     "emits": [
+      {
+       "verb": "mill",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "fromZone": "library"
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "per-cycle",
+     "payment": {
+      "loyalty": "+1"
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "−3",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "creature",
+        "scope": "all"
+       }
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "creature",
+        "scope": "all"
+       }
+      }
+     ],
+     "clause": 3,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "loyalty": "-3"
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "−8",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "discard",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "scope": "each"
+       }
+      }
+     ],
+     "clause": 4,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "loyalty": "-8"
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "player-life-loss",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "cost": "−8",
+     "amount": "3",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 4,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 3,
+      "ceiling": 3
+     },
+     "payment": {
+      "loyalty": "-8"
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "player-life-loss",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "copy"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": [
+        "instant",
+        "sorcery"
+       ]
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "scope": "each"
+       }
+      }
+     ],
+     "clause": 101,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "copy"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": [
+        "instant",
+        "sorcery"
+       ]
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 101,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "drain",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "copy"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": [
+        "instant",
+        "sorcery"
+       ]
+      }
+     },
+     "clause": 101,
+     "repeats": "repeatable"
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 16,
+   "segmentHash": "30b3d4167515ea700399f3d0b2f4d2fe519d2161a1f210f737aa561ac453b2d8",
+   "clauseSource": "model"
+  }
+ },
+ "Sythis, Harvest's Hand": {
+  "card": {
+   "name": "Sythis, Harvest's Hand",
+   "typeLine": "Legendary Enchantment Creature — Nymph",
+   "oracleText": "Whenever you cast an enchantment spell, you gain 1 life and draw a card.",
+   "colorIdentity": [
+    "G",
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "0fc64fd6-f057-4056-9dca-47accb7ff036",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "legendary",
+     "enchantment",
+     "creature"
+    ],
+    "subtypes": [
+     "nymph"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G",
+     "W"
+    ],
+    "identity": [
+     "G",
+     "W"
+    ],
+    "cmc": 2,
+    "power": "1",
+    "toughness": "2",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "enchantment"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "enchantment"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 13,
+   "segmentHash": "605e21a91e7d155ce238f21ec060c8cead0a877d17f4044c47d7f88da2c18497",
+   "clauseSource": "grammar"
+  }
+ },
+ "Myr Mindservant": {
+  "card": {
+   "name": "Myr Mindservant",
+   "typeLine": "Artifact Creature — Myr",
+   "oracleText": "{2}, {T}: Shuffle your library.",
+   "colorIdentity": []
+  },
+  "tags": {
+   "oracleId": "c0ea83ab-f62e-43ee-b7ad-ddbbc8916632",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "artifact",
+     "creature"
+    ],
+    "subtypes": [
+     "myr"
+    ],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 1,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{2}, {T}",
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "per-cycle",
+     "payment": {
+      "mana": "{2}",
+      "tap": true
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "e1d32e9b61e3fe6030b783dcca2926166bd47b6ab4c51965a01562d84fcb3ae0",
+   "clauseSource": "grammar"
+  }
+ },
+ "Assembly Hall": {
+  "card": {
+   "name": "Assembly Hall",
+   "typeLine": "Artifact",
+   "oracleText": "{4}, {T}: Reveal a creature card in your hand. Search your library for a card with the same name as that card, reveal it, put it into your hand, then shuffle.",
+   "colorIdentity": []
+  },
+  "tags": {
+   "oracleId": "8da9f975-519d-455a-80c1-2b468cad79a1",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 5,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "nameRelation": "same"
+      }
+     },
+     "cost": "{4}, {T}",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "search",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "fromZone": "library"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "librarySearch": "yours",
+     "toZone": "hand",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "mana": "{4}",
+      "tap": true
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{4}, {T}",
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "per-cycle",
+     "payment": {
+      "mana": "{4}",
+      "tap": true
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "2557afef1449e34859f5bff1c5ad29b29502616d8c0add97ecb418030eb8ae66",
+   "clauseSource": "grammar"
+  }
+ },
+ "Lantern of Insight": {
+  "card": {
+   "name": "Lantern of Insight",
+   "typeLine": "Artifact",
+   "oracleText": "Players play with the top card of their libraries revealed.\n{T}, Sacrifice this artifact: Target player shuffles.",
+   "colorIdentity": []
+  },
+  "tags": {
+   "oracleId": "e4d9c9c9-90e4-4397-9a88-9457fc6854fa",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{T}, Sacrifice this artifact",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "artifact",
+        "self": true
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "artifact",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{T}, Sacrifice this artifact",
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once",
+     "payment": {
+      "tap": true,
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "e40a4121c1c12092fb007e6f748b4ad5160392e1cf2eb69196dd6b0c4d9eac56",
+   "clauseSource": "model"
+  }
+ },
+ "Blade Banish": {
+  "card": {
+   "name": "Blade Banish",
+   "typeLine": "Instant",
+   "oracleText": "Exile target creature with power 4 or greater.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "d8838e16-96ca-4f73-ad61-7e98a76c4baf",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 4,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "exiled",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "creature",
+        "scope": "target",
+        "stats": [
+         {
+          "metric": "power",
+          "op": "gte",
+          "value": 4
+         }
+        ],
+        "fromZone": "battlefield"
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "leaves",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "creature",
+        "scope": "target",
+        "stats": [
+         {
+          "metric": "power",
+          "op": "gte",
+          "value": 4
+         }
+        ],
+        "fromZone": "battlefield"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 19,
+   "segmentHash": "bad6a8738777bf2be502e7a3d9f10e1e57565d90a989d86b7853e7acb46aa034",
+   "clauseSource": "grammar"
+  }
  }
 }

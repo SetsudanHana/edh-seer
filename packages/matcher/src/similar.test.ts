@@ -26,11 +26,14 @@ describe("Soul Warden as the seed", () => {
       ["output", "Auspicious Ancestor", [{ dim: "trigger", label: "when a white spell is cast" }]],
       ["output", "Dune Diviner", [{ dim: "trigger", label: "an activated ability" }]],
       ["output", "Angel's Feather", [{ dim: "trigger", label: "when a white spell is cast" }, { dim: "type", label: "artifact" }]],
+      ["output", "Bontu's Monument", [{ dim: "trigger", label: "when you cast a creature spell" }, { dim: "type", label: "artifact" }, { dim: "extra", label: "+ opponent life loss" }]],
       ["output", "Demon's Horn", [{ dim: "trigger", label: "when a black spell is cast" }, { dim: "type", label: "artifact" }]],
       ["output", "Dragon's Claw", [{ dim: "trigger", label: "when a red spell is cast" }, { dim: "type", label: "artifact" }]],
       ["output", "Kraken's Eye", [{ dim: "trigger", label: "when a blue spell is cast" }, { dim: "type", label: "artifact" }]],
       ["output", "Wurm's Tooth", [{ dim: "trigger", label: "when a green spell is cast" }, { dim: "type", label: "artifact" }]],
       ["output", "Soldier of the Pantheon", [{ dim: "trigger", label: "when an opponent casts a multicoloured spell" }, { dim: "extra", label: "+ protection" }]],
+      ["output", "Sythis, Harvest's Hand", [{ dim: "trigger", label: "when you cast an enchantment spell" }, { dim: "type", label: "enchantment" }, { dim: "extra", label: "+ card draw" }]],
+      ["output", "Professor Onyx", [{ dim: "trigger", label: "when you cast an instant or sorcery spell" }, { dim: "amount", label: "2 life" }, { dim: "type", label: "planeswalker" }, { dim: "extra", label: "+ 5 other effects" }]],
     ]);
   });
 
@@ -154,7 +157,7 @@ describe("scope, token recipient and chip wording", () => {
   test("Swords to Plowshares and Path to Exile stay close, and the extras read as nouns", () => {
     const r = compareCards(card("Swords to Plowshares"), card("Path to Exile"))!;
     expect(r.tier).toBe("close");
-    expect(r.chips.filter((c) => c.dim !== "type").map((c) => c.label).sort()).toEqual(["+ 2 other effects", "no life gain"]);
+    expect(r.chips.filter((c) => c.dim !== "type").map((c) => c.label).sort()).toEqual(["+ library search", "no life gain"]);
   });
 });
 
@@ -333,5 +336,54 @@ describe("trigger colour is part of the trigger (#1341 review)", () => {
     const o = similarIndex(cards).similarTo(card("Soul Warden").id, { limit: 99 });
     expect(o.find((r) => r.name === "Apothecary Initiate")!.chips).toEqual([{ dim: "trigger", label: "when a white spell is cast" }]);
     expect(o.find((r) => r.name === "Soldier of the Pantheon")!.chips[0]).toEqual({ dim: "trigger", label: "when an opponent casts a multicoloured spell" });
+  });
+});
+
+describe("self verbs that are effects still gate, against other self outputs only (#1341 review 3)", () => {
+  const of = (seed: keyof typeof fixtures) => similarIndex(cards).similarTo(card(seed).id, { limit: 99 });
+  test("Ajani's Pridemate: the same +1/+1 counter on itself is the same job as Bloodbond Vampire", () => {
+    const r = of("Ajani's Pridemate").find((x) => x.name === "Bloodbond Vampire");
+    expect(r?.tier).toBe("same");
+  });
+});
+
+describe("cast labels keep the spell's type (#1341 review)", () => {
+  const chips = (seed: keyof typeof fixtures, cand: keyof typeof fixtures) => compareCards(card(seed), card(cand))!.chips.filter((c) => c.dim === "trigger");
+  test("a creature, enchantment, or instant-or-sorcery spell is named as such", () => {
+    expect(chips("Soul Warden", "Bontu's Monument")).toEqual([{ dim: "trigger", label: "when you cast a creature spell" }]);
+    expect(chips("Soul Warden", "Sythis, Harvest's Hand")).toEqual([{ dim: "trigger", label: "when you cast an enchantment spell" }]);
+  });
+});
+
+describe("whose creature leaves, whose permanent changes hands (#1341 review)", () => {
+  const names = (seed: keyof typeof fixtures) => similarIndex(cards).similarTo(card(seed).id, { limit: 99 }).map((r) => r.name);
+  test("returning your own creature is not bounce removal", () => {
+    expect(names("Whitemane Lion")).not.toContain("Man-o'-War");
+    expect(names("Man-o'-War")).not.toContain("Whitemane Lion");
+  });
+  test("Cloudshift is not Blade Banish or Swords to Plowshares", () => {
+    expect(names("Cloudshift")).not.toContain("Blade Banish");
+    expect(names("Cloudshift")).not.toContain("Swords to Plowshares");
+  });
+  test("stealing and donating are different outputs", () => {
+    expect(compareCards(card("Threaten"), card("Donate"))).toBeNull();
+  });
+});
+
+describe("shuffle is a by-product (#1341 review)", () => {
+  test("Sakura-Tribe Elder is not Lantern of Insight, and Myr Mindservant is not Assembly Hall", () => {
+    expect(compareCards(card("Sakura-Tribe Elder"), card("Lantern of Insight"))).toBeNull();
+    expect(compareCards(card("Myr Mindservant"), card("Assembly Hall"))).toBeNull();
+  });
+  test("Ghost Quarter against Evolving Wilds is not joined by the shuffle", () => {
+    const r = compareCards(card("Ghost Quarter"), card("Evolving Wilds"));
+    expect(r === null || r.tier !== "close").toBe(true);
+  });
+});
+
+describe("a search for the card's own name is its own output (#1341 review)", () => {
+  test("Squadron Hawk is not a generic tutor like Rune-Scarred Demon", () => {
+    expect(compareCards(card("Squadron Hawk"), card("Rune-Scarred Demon"))).toBeNull();
+    expect(compareCards(card("Rune-Scarred Demon"), card("Squadron Hawk"))).toBeNull();
   });
 });

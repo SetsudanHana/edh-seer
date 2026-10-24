@@ -67,7 +67,7 @@ type Ability = CardTags["abilities"][number];
 type Amount = FactAmount;
 type Who = "you" | "opp" | "any";
 /** `key` is the gate key (raw eventKey plus a `@you`/`@other` recipient class where the verb has one). */
-interface Output { key: string; who: Who | null; scope: "one" | "many" | null; event: GameEvent; self?: true }
+interface Output { key: string; who: Who | null; scope: "one" | "many" | null; event: GameEvent }
 export interface AbilitySig {
   kind: FactKind;
   /** Sorted trigger verbs, null on an untriggered ability. */
@@ -84,6 +84,8 @@ interface CardSig {
   keywords: string[];
   types: string[];
   identity: string[];
+  /** Outputs that open the gate on their own. */
+  strong: number;
 }
 
 /** Supertypes (CR 205.4a) ride in `characteristics.types` but are not card types: a legendary creature and a creature are the same type here. */
@@ -102,8 +104,8 @@ const REPEAT_LABEL: Record<string, string> = {
 };
 
 /** Verbs whose recipient the key does not carry. A token created or entering is the same question: whose it is. */
-const RECIPIENT_VERBS = new Set(["gain-life", "lose-life", "draw", "discard", "mill", "non-combat-damage", "create-token", "sacrifice", "search", "shuffle", "dies"]);
-// `dies` rides with `sacrifice` (every sacrifice also emits it): whose creature dies is the edict-versus-drawback question.
+const RECIPIENT_VERBS = new Set(["gain-life", "lose-life", "draw", "discard", "mill", "non-combat-damage", "create-token", "sacrifice", "search", "shuffle", "dies", "exiled", "leaves", "gains-control"]);
+// `dies` rides with `sacrifice` (every sacrifice also emits it): whose creature dies is the edict-versus-drawback question. `exiled`/`leaves`: returning YOUR creature is not bounce removal. `gains-control`: the subject is who ends up controlling it (Threaten `you`, Donate `opp`).
 /** The verbs whose chip noun reads "opponent X" ("opponent life loss"); the rest of RECIPIENT_VERBS name the recipient differently. */
 const OPP_NOUN_VERBS = new Set(["lose-life", "draw", "discard", "mill", "non-combat-damage", "create-token"]);
 /** `enters` always has a whose: a token you create and a land an opponent puts onto the battlefield are different outputs. */
@@ -120,11 +122,26 @@ const NOUN: Record<string, string> = {
   "gains-control": "control change", "counter-spell": "counterspell", proliferate: "proliferate", scry: "scry", surveil: "surveil",
 };
 
+/** SELF COSTS AND SELF-MOVES never open the gate: "sacrifice this creature", "this card dies", "return this Aura to hand". Any other
+ *  self verb ("put a +1/+1 counter on this creature", "this untaps", "transform this") is what the card IS FOR and gates, but only
+ *  against another self output of that verb (`<verb>@self`, a counter's kind in the key). */
+const COST_SELF_VERBS = new Set(["sacrifice", "dies", "leaves", "exiled", "discard", "shuffle"]);
+/** SHUFFLE IS A BY-PRODUCT of a search: it gates only when it is all both cards do, and never counts as an extra or missing effect. */
+const WEAK_VERBS = new Set(["shuffle"]);
+const verbOfKey = (key: string): string => key.split(/[|@:]/)[0]!;
+type Gate = "open" | "never" | "alone";
+const gateOfKey = (key: string): Gate =>
+  key.endsWith("@self") && COST_SELF_VERBS.has(verbOfKey(key)) ? "never" : WEAK_VERBS.has(verbOfKey(key)) ? "alone" : "open";
+
 function outputOf(e: GameEvent, key: string): Output {
-  // A SELF SUBJECT IS A COST OR A SELF-MOVE, not the effect a card is for: "sacrifice this creature", "this card dies",
-  // "return this Aura to hand". Keyed apart (`@self`) so it only ever pairs with another self output, and never opens the gate.
-  if (e.subject.self === true) // By VERB alone: a creature sacrificing itself and a land sacrificing itself are the same cost, and the type is the type chip's business.
-  return { key: `${e.verb}@self`, who: null, scope: null, event: e, self: true };  const scope = SCOPE_VERBS.has(e.verb) ? (e.subject.scope === "each" || e.subject.scope === "all" ? "many" : "one") : null;
+  // A SEARCH FOR THE CARD'S OWN NAME ("up to three cards named Squadron Hawk") is not a tutor for anything.
+  if (e.verb === "search" && e.subject.named === "~") return { key: "search@named-self", who: null, scope: null, event: e };
+  if (e.subject.self === true) {
+    // By VERB (and counter kind) alone: a creature and a land sacrificing themselves are the same cost; the type is the type chip's business.
+    const counter = e.verb === "counter-added" && e.subject.counter !== undefined ? `:${String(e.subject.counter)}` : "";
+    return { key: `${e.verb}${counter}@self`, who: null, scope: null, event: e };
+  }
+  const scope = SCOPE_VERBS.has(e.verb) ? (e.subject.scope === "each" || e.subject.scope === "all" ? "many" : "one") : null;
   if (!hasRecipient(e)) return { key, who: null, scope, event: e };
   const c = e.subject.control;
   const who: Who = c === "you" ? "you" : c === "opp" ? "opp" : "any";
@@ -179,6 +196,7 @@ function sigOf(card: SimilarCard): CardSig {
     keywords: [...new Set((ch?.keywords ?? []).map((k) => k.toLowerCase()).filter((k) => !ABILITY_WORDS.has(k)))].sort(),
     types: [...(ch?.types ?? [])].filter((t) => !SUPERTYPES.has(t)).sort(),
     identity: ch?.identity ?? [],
+    strong: [...outputs.keys()].filter((k) => gateOfKey(k) === "open").length,
   };
   sigCache.set(key, sig);
   return sig;
@@ -245,10 +263,10 @@ function triggerLabel(sig: AbilitySig): string {
   const phrase = sig.verbs.length === 1 ? PLAYER_EVENT[sig.verbs[0]!] : undefined;
   const typed = list(s.subtype).length > 0 || list(s.type).some((t) => t !== "spell" && t !== "player");
   if (phrase && s.self !== true && !typed) return phrase[s.control === "you" ? 0 : s.control === "opp" ? 1 : 2];
-  // CAST NAMES THE SPELL'S COLOUR when the trigger does: "when a white spell is cast".
-  if (sig.verbs.length === 1 && sig.verbs[0] === "cast" && s.self !== true && !(list(s.subtype).length > 0)) {
-    const col = colourWords(s);
-    const noun = col ? `${col} spell` : "spell";
+  // CAST NAMES THE SPELL: its colour and its type ("when you cast a white creature spell"), not just "a spell".
+  if (sig.verbs.length === 1 && sig.verbs[0] === "cast" && s.self !== true) {
+    const kinds = list(s.subtype).length > 0 ? list(s.subtype).map((w) => w.charAt(0).toUpperCase() + w.slice(1)) : list(s.type).filter((t) => t !== "spell" && t !== "player");
+    const noun = [colourWords(s), kinds.join(" or "), "spell"].filter((w) => w !== "").join(" ");
     return s.control === "you" ? `when you cast ${articled(noun)}` : s.control === "opp" ? `when an opponent casts ${articled(noun)}` : `when ${articled(noun)} is cast`;
   }
   const noun0 = s.self === true ? "this card" : (emitSubjectNoun(s) ?? "a permanent");
@@ -364,7 +382,8 @@ function rank(a: CardSig, b: CardSig): Ranked | null {
     let bestY: AbilitySig | null = null;
     for (const y of b.abilities) {
       for (const mine of x.outputs) {
-        if (mine.self) continue;
+        const g = gateOfKey(mine.key);
+        if (g === "never" || (g === "alone" && (a.strong > 0 || b.strong > 0))) continue;
         const shared = y.outputs.find((o) => o.key === mine.key);
         if (!shared) continue;
         const p = evalPair(x, y, shared, mine, sameTypes);
@@ -378,8 +397,8 @@ function rank(a: CardSig, b: CardSig): Ranked | null {
   let score = 0;
   for (const [, , p] of pairs) { if (TIER_RANK[p.tier] > TIER_RANK[tier]) tier = p.tier; score += p.score; }
   let extras = 0;
-  for (const k of b.outputs.keys()) if (!a.outputs.has(k)) extras++;
-  for (const k of a.outputs.keys()) if (!b.outputs.has(k)) extras++;
+  for (const k of b.outputs.keys()) if (!a.outputs.has(k) && !WEAK_VERBS.has(verbOfKey(k))) extras++;
+  for (const k of a.outputs.keys()) if (!b.outputs.has(k) && !WEAK_VERBS.has(verbOfKey(k))) extras++;
   for (const kw of b.keywords) if (!a.keywords.includes(kw)) extras++;
   for (const kw of a.keywords) if (!b.keywords.includes(kw)) extras++;
   // A card with something extra or missing is not the same job; the difference never moves it between close and output.
@@ -415,9 +434,9 @@ function chipsOf(a: CardSig, b: CardSig, r: Ranked): Chip[] {
   // collapses to a count; trigger/amount/repeats/type/kind/recipient/scope chips are never capped.
   const extra: string[] = [];
   const missing: string[] = [];
-  for (const [k, e] of b.outputs) if (!a.outputs.has(k) && once("extra", e)) extra.push(`+ ${outputNoun(e)}`);
+  for (const [k, e] of b.outputs) if (!a.outputs.has(k) && !WEAK_VERBS.has(verbOfKey(k)) && once("extra", e)) extra.push(`+ ${outputNoun(e)}`);
   for (const kw of b.keywords) if (!a.keywords.includes(kw)) extra.push(`+ ${kw}`);
-  for (const [k, e] of a.outputs) if (!b.outputs.has(k) && once("missing", e)) missing.push(`no ${outputNoun(e)}`);
+  for (const [k, e] of a.outputs) if (!b.outputs.has(k) && !WEAK_VERBS.has(verbOfKey(k)) && once("missing", e)) missing.push(`no ${outputNoun(e)}`);
   for (const kw of a.keywords) if (!b.keywords.includes(kw)) missing.push(`no ${kw}`);
   if (extra.length === 1) add({ dim: "extra", label: extra[0]! });
   else if (extra.length > 1) add({ dim: "extra", label: `+ ${extra.length} other effects` });
@@ -475,7 +494,8 @@ export function similarIndex(cards: readonly SimilarCard[]) {
   cards.forEach((c, i) => {
     at.set(c.id, i);
     for (const k of sigs[i]!.outputs.keys()) {
-      if (k.endsWith("@self")) continue;
+      const g = gateOfKey(k);
+      if (g === "never" || (g === "alone" && sigs[i]!.strong > 0)) continue;
       const b = buckets.get(k);
       if (b) b.push(i); else buckets.set(k, [i]);
     }
@@ -492,7 +512,9 @@ export function similarIndex(cards: readonly SimilarCard[]) {
       const seen = new Set<number>([si]);
       const tops: Record<SimilarTier, { ci: number; tier: SimilarTier; score: number; name: string; r: Ranked }[]> = { same: [], close: [], output: [] };
       for (const k of sigs[si]!.outputs.keys()) {
-        for (const ci of k.endsWith("@self") ? [] : buckets.get(k) ?? []) {
+        const g = gateOfKey(k);
+        if (g === "never" || (g === "alone" && sigs[si]!.strong > 0)) continue;
+        for (const ci of buckets.get(k) ?? []) {
           if (seen.has(ci)) continue;
           seen.add(ci);
           const cand = cards[ci]!;
