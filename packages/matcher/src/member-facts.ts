@@ -183,8 +183,10 @@ export function memberUndecided(facts: readonly number[] | undefined, q: FactFil
   if (isEmptyFilter(q)) return false;
   const fs = facts ?? [];
   if (fs.length === 0 || fs.some(isUnjudgedFact)) return true;
-  return q.minRepeats !== undefined && q.minRepeats !== REPEATS_LADDER[0]
-    && fs.some((n) => unpackFact(n).repeats === undefined);
+  if (q.minRepeats === undefined || q.minRepeats === REPEATS_LADDER[0]) return false;
+  // ONLY WHERE THE MISSING LABEL IS WHAT DECIDES: the fact passes every other criterion.
+  const { minRepeats: _dropped, ...rest } = q;
+  return fs.some((n) => { const f = unpackFact(n); return f.repeats === undefined && factPasses(f, rest); });
 }
 
 /** HOW MANY OF A SIDE'S MEMBERS NO ABILITY FACT FULLY DESCRIBES: the cards on the key by what they are

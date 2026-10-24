@@ -1,3 +1,4 @@
+import { UNJUDGED_FACT, isUnjudgedFact } from "./member-facts.js";
 import { identityMask, type EventFrequencyFile, type EventMembers } from "./partners-core.js";
 
 /** ONE EVENT, NARROWED ONLY WHEN ASKED (owner, 2026-09-29: "we already support filtering by type,
@@ -60,6 +61,7 @@ export function patternsOf(key: string): string[] {
 /** EVERY PATTERN, from the index's own keys: its makers (in the supply form's order where the index
  *  has one, then ascending) and its pay-offs (ascending). A pattern nothing makes or asks for is not
  *  written. */
+const NO_FACTS = -1;
 export function eventPatterns(events: ReadonlyMap<string, EventMembers>): Map<string, EventMembers> {
   const makers = new Map<string, Set<number>>();
   const payers = new Map<string, Set<number>>();
@@ -78,7 +80,11 @@ export function eventPatterns(events: ReadonlyMap<string, EventMembers>): Map<st
     const byId = factsInto.get(pattern) ?? new Map<number, Set<number>>();
     ids.forEach((id, i) => {
       const f = byId.get(id) ?? new Set<number>();
-      for (const n of facts[i] ?? []) f.add(n);
+      const own = facts[i] ?? [];
+      // A SOURCE KEY THAT SHIPPED NO FACT FOR THIS CARD (it is on it by what it is) is remembered, so a
+      // card with abilities on another source key is not judged by those alone (review of #1339).
+      if (own.length === 0) f.add(NO_FACTS);
+      for (const n of own) f.add(n);
       byId.set(id, f);
     });
     factsInto.set(pattern, byId);
@@ -91,7 +97,12 @@ export function eventPatterns(events: ReadonlyMap<string, EventMembers>): Map<st
     }
   }
   const factsFor = (byId: Map<number, Set<number>> | undefined, ids: readonly number[]): number[][] | undefined =>
-    byId && ids.map((id) => [...(byId.get(id) ?? [])].sort((x, y) => x - y));
+    byId && ids.map((id) => {
+      const f = byId.get(id) ?? new Set<number>();
+      const real = [...f].filter((n) => n !== NO_FACTS);
+      if (f.has(NO_FACTS) && real.length > 0 && !real.some(isUnjudgedFact)) real.push(UNJUDGED_FACT);
+      return real.sort((x, y) => x - y);
+    });
   const out = new Map<string, EventMembers>();
   for (const pattern of new Set([...makers.keys(), ...payers.keys()])) {
     const made = makers.get(pattern) ?? new Set<number>();

@@ -63,6 +63,19 @@ test("a pattern's members keep the facts of every key they came through", () => 
   expect(eventPatterns(new Map([["draw|-|-|-", { p: [4], c: [] }]])).get("draw|*|*|*")).toEqual({ p: [4], c: [] });
 });
 
+/** A CARD FACT-LESS ON ONE SOURCE KEY (by what it is) AND WITH ABILITIES ON ANOTHER is partly unjudged. */
+test("a member fact-less on one source key keeps the marker beside the other key's facts", () => {
+  const events = new Map([
+    ["counter-added|-|-|-", { p: [3, 8], c: [], pf: [[], [9]], cf: [] }],
+    ["counter-added|creature|-|-", { p: [3], c: [], pf: [[26]], cf: [] }],
+  ]);
+  const out = eventPatterns(events).get("counter-added|*|*|*")!;
+  expect(out.p).toEqual([3, 8]);
+  expect(out.pf).toEqual([[7, 26], [9]]);
+  const bare = new Map([["counter-added|-|-|-", { p: [3], c: [], pf: [[]], cf: [] }]]);
+  expect(eventPatterns(bare).get("counter-added|*|*|*")!.pf).toEqual([[]]);
+});
+
 test("a verb's narrowings come from keys with exactly one target, once each", () => {
   const keys = ["dies|creature|-|-", "dies|-|goblin|-", "dies|-|-|t", "dies|creature|goblin|-", "dies|-|-|-",
     "dies|creature|*|*", "dies|artifact,creature|-|-", "enters|land|-|-"];

@@ -107,3 +107,11 @@ test("the unjudged marker never passes a filter and collides with no real packin
   expect(memberUndecided([once, UNJUDGED_FACT], { minRepeats: "repeatable" })).toBe(true);
   expect(unjudged([[once, UNJUDGED_FACT], [once], []])).toBe(2);
 });
+
+/** UNDECIDED ONLY WHERE THE REPEATS LABEL IS WHAT DECIDES: an unlabelled static against kinds=[triggered]
+ *  fails on its kind whatever its repeats are. */
+test("an unlabelled ability that fails another criterion is not undecided", () => {
+  const staticUnlabelled = packFact({ kind: "static", repeats: undefined, amount: { kind: "unstated" } });
+  expect(memberUndecided([staticUnlabelled], { kinds: ["triggered"], minRepeats: "repeatable" })).toBe(false);
+  expect(memberUndecided([staticUnlabelled], { kinds: ["static"], minRepeats: "repeatable" })).toBe(true);
+});
