@@ -12,6 +12,7 @@ const FIXTURES = [
   "fixtures/mana-colour-sources.json",
   "ramp-colour.fixtures.json",
   "same-job.fixtures.json",
+  "similar.fixtures.json",
   "quality.fixtures.json",
   "same-job.labels.cards.json",
 ] as const;

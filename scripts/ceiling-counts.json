@@ -40,6 +40,7 @@
   "packages/matcher/src/rules.ts": 1,
   "packages/matcher/src/same-job.ts": 5,
   "packages/matcher/src/sentence.ts": 2,
+  "packages/matcher/src/similar.ts": 1,
   "packages/matcher/src/split-cost.ts": 1,
   "packages/matcher/src/static-fixers.ts": 6,
   "packages/matcher/src/suggest-static.ts": 2,

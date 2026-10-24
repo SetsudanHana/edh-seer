@@ -1,0 +1,1288 @@
+{
+ "Soul Warden": {
+  "card": {
+   "name": "Soul Warden",
+   "typeLine": "Creature — Human Cleric",
+   "oracleText": "Whenever another creature enters, you gain 1 life.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "f3fad295-1af2-4ecc-8546-b121ad6be27b",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "human",
+     "cleric"
+    ],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 1,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "other": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "c6dd2e9a2507cc07b1ff22e1f0d3ddc65160ac0a577e2aaa2cfd144e174c4f70",
+   "clauseSource": "grammar"
+  }
+ },
+ "Essence Warden": {
+  "card": {
+   "name": "Essence Warden",
+   "typeLine": "Creature — Elf Shaman",
+   "oracleText": "Whenever another creature enters, you gain 1 life.",
+   "colorIdentity": [
+    "G"
+   ]
+  },
+  "tags": {
+   "oracleId": "6ca2a89e-7032-4864-b4e9-66f3178f90ab",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "elf",
+     "shaman"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 1,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "other": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "d9e9e17a54596c11aa5d9571f70ecec62adaa25c703fade5e47c3b0dcfdde99e",
+   "clauseSource": "grammar"
+  }
+ },
+ "Soul's Attendant": {
+  "card": {
+   "name": "Soul's Attendant",
+   "typeLine": "Creature — Human Cleric",
+   "oracleText": "Whenever another creature enters, you may gain 1 life.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "045a9d3d-c20d-427f-a77b-0bffc6f55526",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "human",
+     "cleric"
+    ],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 1,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "other": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "a1b55e55d832a50e05f58316af02c0640ad8c08f3ea7718f6594b624e0dabff7",
+   "clauseSource": "grammar"
+  }
+ },
+ "Ajani's Welcome": {
+  "card": {
+   "name": "Ajani's Welcome",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever a creature you control enters, you gain 1 life.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "4a782bf9-4051-4613-8852-33b0d85a0edd",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "68031a73d4cbb90e58ee93b2b00c7e2d7c6b76e9e202f4b704add003285615a1",
+   "clauseSource": "grammar"
+  }
+ },
+ "Impassioned Orator": {
+  "card": {
+   "name": "Impassioned Orator",
+   "typeLine": "Creature — Human Cleric",
+   "oracleText": "Whenever another creature you control enters, you gain 1 life.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "c7107a2d-2dcf-42e9-9ea9-d0fc0d6d2ec6",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "human",
+     "cleric"
+    ],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 2,
+    "power": "2",
+    "toughness": "2",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "other": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "4354c78435a2288616e5d65bab1e761d1a258af1e881439e93c557906f247782",
+   "clauseSource": "grammar"
+  }
+ },
+ "Auriok Champion": {
+  "card": {
+   "name": "Auriok Champion",
+   "typeLine": "Creature — Human Cleric",
+   "oracleText": "Protection from black and from red\nWhenever another creature enters, you may gain 1 life.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "633fd158-19d0-4d97-a076-2ad897bbed19",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "human",
+     "cleric"
+    ],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 2,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": [
+     "protection"
+    ]
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "other": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "b22cb50db031e119b84017ad7b3985a15ec3997ebb9f9499ab158ab311ebb5cf",
+   "clauseSource": "grammar"
+  }
+ },
+ "Blood Artist": {
+  "card": {
+   "name": "Blood Artist",
+   "typeLine": "Creature — Vampire",
+   "oracleText": "Whenever this creature or another creature dies, target player loses 1 life and you gain 1 life.",
+   "colorIdentity": [
+    "B"
+   ]
+  },
+  "tags": {
+   "oracleId": "310f141c-7f37-4729-aed6-dd9c09db448d",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "vampire"
+    ],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 2,
+    "power": "0",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "player-life-loss",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "dies"
+      ],
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "scope": "target"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "player-life-loss",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "dies"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "scope": "target"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "dies"
+      ],
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "dies"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "drain",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "dies"
+      ],
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     "clause": 1,
+     "repeats": "repeatable"
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 12,
+   "segmentHash": "0af8d6274dc4ad32988084eeb18618499b245ab76b101c64e19c6c904cf87cfe",
+   "clauseSource": "grammar"
+  }
+ },
+ "Suture Priest": {
+  "card": {
+   "name": "Suture Priest",
+   "typeLine": "Creature — Phyrexian Cleric",
+   "oracleText": "Whenever another creature you control enters, you may gain 1 life.\nWhenever a creature an opponent controls enters, you may have that player lose 1 life.",
+   "colorIdentity": [
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "c4d36522-3ace-4bfb-bf2d-1a366f458698",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "phyrexian",
+     "cleric"
+    ],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 2,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "other": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "player-life-loss",
+      "subject": {
+       "control": "opp",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "opp",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "34c620f10d8f2a21b0698251694da1aff71ae3657df7a8a03d423fb1d5e67bc8",
+   "clauseSource": "grammar"
+  }
+ },
+ "Sol Ring": {
+  "card": {
+   "name": "Sol Ring",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Add {C}{C}.",
+   "colorIdentity": []
+  },
+  "tags": {
+   "oracleId": "6ad8011d-3471-4369-9d68-b264cc027487",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "artifact"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "2",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 2,
+      "ceiling": 2
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "loyalty": null,
+      "consumes": [],
+      "other": []
+     },
+     "colours": [],
+     "colourless": 2,
+     "anyColour": null,
+     "amount": {
+      "fixed": 2,
+      "scales": null
+     },
+     "unread": false,
+     "net": 2,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 12,
+   "segmentHash": "17632accec9769553f4e43cfe11a932c81a8cc736f9d74c13d2af1c0166c4b97",
+   "clauseSource": "grammar"
+  }
+ },
+ "Llanowar Elves": {
+  "card": {
+   "name": "Llanowar Elves",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "{T}: Add {G}.",
+   "colorIdentity": [
+    "G"
+   ]
+  },
+  "tags": {
+   "oracleId": "68954295-54e3-4303-a6bc-fc4547a4e3a3",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "elf",
+     "druid"
+    ],
+    "layout": "normal",
+    "colors": [
+     "G"
+    ],
+    "identity": [
+     "G"
+    ],
+    "cmc": 1,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "manaLines": [
+    {
+     "face": 0,
+     "source": "activated",
+     "repeats": "per-cycle",
+     "cost": {
+      "mana": 0,
+      "tap": true,
+      "sacrificeSelf": false,
+      "sacrificeOther": false,
+      "life": 0,
+      "counters": null,
+      "tapOther": false,
+      "loyalty": null,
+      "consumes": [],
+      "other": []
+     },
+     "colours": [
+      "G"
+     ],
+     "colourless": 0,
+     "anyColour": null,
+     "amount": {
+      "fixed": 1,
+      "scales": null
+     },
+     "unread": false,
+     "net": 1,
+     "gate": null,
+     "restriction": null,
+     "timing": "now",
+     "producesToken": null,
+     "trigger": null
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 12,
+   "segmentHash": "02ab38ff881cfe07df0fbf730a861bd9aa196da25f2561fc0633d67ee78c3edd",
+   "clauseSource": "grammar"
+  }
+ },
+ "Lightning Bolt": {
+  "card": {
+   "name": "Lightning Bolt",
+   "typeLine": "Instant",
+   "oracleText": "Lightning Bolt deals 3 damage to any target.",
+   "colorIdentity": [
+    "R"
+   ]
+  },
+  "tags": {
+   "oracleId": "4457ed35-7c10-48c8-9776-456485fdf070",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      }
+     },
+     "amount": "3",
+     "emits": [
+      {
+       "verb": "non-combat-damage",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "scope": "target"
+       },
+       "dealer": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 3,
+      "ceiling": 3
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 12,
+   "segmentHash": "2dddbcdc2e0ab07ca6ca92afa96b7fba5745e9ffa8fd55706de2e3a414954255",
+   "clauseSource": "grammar"
+  }
+ },
+ "Zulaport Cutthroat": {
+  "card": {
+   "name": "Zulaport Cutthroat",
+   "typeLine": "Creature — Human Rogue Ally",
+   "oracleText": "Whenever this creature or another creature you control dies, each opponent loses 1 life and you gain 1 life.",
+   "colorIdentity": [
+    "B"
+   ]
+  },
+  "tags": {
+   "oracleId": "76b003e0-15af-4f22-bdf2-1ade5430964a",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "human",
+     "rogue",
+     "ally"
+    ],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 2,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "player-life-loss",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "dies"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "scope": "each"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "player-life-loss",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "dies"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "scope": "each"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "dies"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "dies"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "drain",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "dies"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     "clause": 1,
+     "repeats": "repeatable"
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 12,
+   "segmentHash": "0b8bdcf698ee92c579890d7d0f00e3d2f6063d93dda086ea238c8a83bbd5e562",
+   "clauseSource": "grammar"
+  }
+ }
+}
