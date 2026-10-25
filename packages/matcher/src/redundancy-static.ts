@@ -35,7 +35,9 @@ export interface RedundancyStats {
   /** Seed keys with no entry even after falling back. */
   missing: string[];
 }
-export interface RedundancyResult { hits: RedundancyHit[]; poolSize: number; seedPartners: string[]; amplifiers: string[]; stats: RedundancyStats }
+/** `slug` is the card page, from the decoded index; absent for a deck card the index does not carry (no link to offer). */
+export type RedundancyRow = RedundancyHit & { slug?: string };
+export interface RedundancyResult { hits: RedundancyRow[]; poolSize: number; seedPartners: string[]; amplifiers: string[]; stats: RedundancyStats }
 
 type SeedFact = ReturnType<typeof seedBuckets>[number]["facts"][number];
 /** How far a member's ability is from the seed's: kind, then how often, then size. 0 = the same job at the same rate. */
@@ -230,5 +232,6 @@ export async function redundancyFor(input: {
   }
   stats.poolSize = poolSize;
   const hits = findRedundancy({ seed: seedCard, seedPartners, candidates, amplifiers, identity: input.commanderColorIdentity }, input.perTier ? { perTier: input.perTier } : {});
-  return { hits, poolSize, seedPartners, amplifiers, stats };
+  const rows: RedundancyRow[] = hits.map((h) => { const slug = atName.get(h.name)?.slug; return slug ? { ...h, slug } : h; });
+  return { hits: rows, poolSize, seedPartners, amplifiers, stats };
 }

@@ -106,6 +106,12 @@ describe("redundancyFor", () => {
     expect(knight.deckChips).toContainEqual({ dim: "amplifier", label: "loses synergy with Fiery Emancipation" });
   });
 
+  test("every hit carries its page slug from the name index", async () => {
+    const r = await run(deck(true));
+    expect(r.hits.length).toBeGreaterThan(0);
+    for (const h of r.hits) expect(h.slug).toBe(slugOf(h.name));
+  });
+
   test("without Fiery Emancipation there is no amplifier chip", async () => {
     const r = await run(deck(false));
     expect(r.amplifiers).toEqual([]);

@@ -11,6 +11,8 @@ import { SuggestionPanel } from "./SuggestionPanel.js";
 import { slugOf } from "@edh-seer/matcher/slug";
 import { faceLabels, indexByLabel } from "../lib/label-index.js";
 import { isPlainClick } from "./peek.js";
+import { RedundancySection } from "./RedundancySection.js";
+import type { FindRedundancy } from "../lib/redundancy.js";
 
 /** WHAT A REPORT ADDS TO THE DRAWER: the deck's links, to know which cards are on the commander's
  *  map, and a way to walk that map from the card. The report registers them; the drawer sits above it. */
@@ -26,6 +28,9 @@ export interface DrawerExtras {
   /** Open two cards as a pair on the commander's map: the first in the middle, the second lit
    *  (pair-view mockups F1/F2, owner 2026-09-30: "why won't we just reuse constellation for it"). */
   pair?: (centre: string, partner: string) => void;
+  /** The cards that do this deck card's job (#1342), by the card's physical name. Absent where the page has no
+   *  analysed deck to search; the drawer then offers nothing. The report supplies one function per report. */
+  redundancy?: FindRedundancy;
 }
 
 /** THE INSPECTOR, REACHABLE FROM ANY CARD NAME IN THE REPORT.
@@ -54,6 +59,10 @@ interface CardDrawerApi {
   /** Open a SUGGESTED card, one not in the deck (`SuggestionPanel`); `replaces` names the cut whose
    *  slot it can take. */
   openSuggestion: (card: SuggestedCard, replaces?: string) => void;
+  /** True when the report registered the redundancy search, so a menu can offer it (#1342). */
+  canFindRedundancy: boolean;
+  /** Open a deck card in the drawer and start its redundancy search. A no-op for a name the graph does not carry. */
+  findRedundancy: (name: string) => void;
   /** False outside a provider, where a card link keeps navigating as it always did. */
   live: boolean;
   /** Names the graph carries, so a caller can ask BEFORE rendering an affordance. */
@@ -92,7 +101,7 @@ interface CardDrawerApi {
 }
 
 const CardDrawerContext = createContext<CardDrawerApi>({
-  open: () => {}, openToken: () => {}, canOpenToken: () => false, close: () => {}, openSuggestion: () => {}, live: false, known: new Set(), labels: new Map(), tokens: new Map(),
+  open: () => {}, openToken: () => {}, canOpenToken: () => false, close: () => {}, openSuggestion: () => {}, canFindRedundancy: false, findRedundancy: () => {}, live: false, known: new Set(), labels: new Map(), tokens: new Map(),
   added: new Set(), isAdded: () => false, setExtras: () => {},
   setRailOn: () => {}, railHost: null, setRailBack: () => {}, pairOf: () => null, walkFrom: () => null,
 });
@@ -135,9 +144,12 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
   children: ReactNode;
 }) {
   const [openId, setOpenIdRaw] = useState<string | null>(null);
+  // The card menu's "Find redundancy": which card, and a counter so asking twice for one card starts it twice.
+  const askCount = useRef(0);
+  const [redundancyAsk, setRedundancyAsk] = useState<{ name: string; n: number } | null>(null);
   const [suggestion, setSuggestion] = useState<{ card: SuggestedCard; replaces?: string } | null>(null);
   // ONE THING IN THE DRAWER AT A TIME: a deck card or a suggestion, and closing clears both.
-  const setOpenId = useCallback((id: string | null) => { setOpenIdRaw(id); setSuggestion(null); }, []);
+  const setOpenId = useCallback((id: string | null) => { setOpenIdRaw(id); setSuggestion(null); setRedundancyAsk(null); }, []);
   const shown = openId ?? (suggestion ? `suggestion:${suggestion.card.name}` : null);
   const [extras, setExtras] = useState<DrawerExtras | null>(null);
   const [railOn, setRailOn] = useState(false);
@@ -214,6 +226,12 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
     if (!shownNow.current) opener.current = document.activeElement;
     setOpenIdRaw(null); setSuggestion({ card, replaces }); opened.current = true;
   }, []);
+  const canFindRedundancy = extras?.redundancy !== undefined;
+  const findRedundancy = useCallback((name: string) => {
+    if (!byName.has(name)) return;
+    openNode(byName.get(name));
+    setRedundancyAsk({ name, n: ++askCount.current });
+  }, [byName, openNode]);
   /** WHICH CARD MAKES EACH TOKEN, read off the graph's own create edges (`The Rani creates Mark of
    *  the Rani`). A token name in a reason sentence was dead text saying nothing -- see
    *  `reason-text.ts` -- and "the token your commander makes" is the whole answer a reader needed
@@ -283,10 +301,10 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
   }, [extras, setOpenId]);
   const api = useMemo<CardDrawerApi>(
     () => ({
-      open, openToken, canOpenToken, close: () => setOpenId(null), openSuggestion, live: true, known: new Set(byName.keys()), labels, tokens, added, isAdded, setExtras,
+      open, openToken, canOpenToken, close: () => setOpenId(null), openSuggestion, canFindRedundancy, findRedundancy, live: true, known: new Set(byName.keys()), labels, tokens, added, isAdded, setExtras,
       setRailOn, railHost: railShown ? railEl : null, setRailBack, pairOf, walkFrom,
     }),
-    [open, openToken, canOpenToken, openSuggestion, setOpenId, byName, tokens, added, isAdded, railShown, railEl, pairOf, walkFrom],
+    [open, openToken, canOpenToken, openSuggestion, canFindRedundancy, findRedundancy, setOpenId, byName, tokens, added, isAdded, railShown, railEl, pairOf, walkFrom],
   );
 
   // Escape closes it. The panel has a close button of its own, but this drawer floats over a
@@ -402,6 +420,10 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
                         className="btn-secondary self-stretch">
                         Walk the map from here
                       </button>
+                    ) : null}
+                    {extras.redundancy && !node.isToken ? (
+                      <RedundancySection key={node.id} seed={node.cardName ?? node.label} find={extras.redundancy}
+                        ask={redundancyAsk && redundancyAsk.name === (node.cardName ?? node.label) ? redundancyAsk.n : 0} />
                     ) : null}
                   </div>
                 ) : undefined}

@@ -7,8 +7,15 @@ export { cardLines, PopMenu, type MenuItem } from "./pop-menu.js";
 /** The lines every card list offers for a card, by its physical name. Only lines that can work for
  *  this card: a name the report does not carry gets its page and its name, nothing else. */
 export function useCardMenu(): (name: string) => MenuItem[] {
-  const { open, known } = useCardDrawer();
-  return (name) => cardLines(name, known.has(name) ? () => open(name) : undefined);
+  const { open, known, canFindRedundancy, findRedundancy } = useCardDrawer();
+  return (name) => {
+    const lines = cardLines(name, known.has(name) ? () => open(name) : undefined);
+    // After "Read the card": the same card, with the search started. Only for a card the drawer can show.
+    if (!canFindRedundancy || !known.has(name)) return lines;
+    const read = lines.findIndex((l) => l.label === "Read the card");
+    lines.splice(read + 1, 0, { label: "Find redundancy in this deck", run: () => findRedundancy(name) });
+    return lines;
+  };
 }
 
 /** The "⋯" beside a card in a list. `extra` lines come first: what this list alone can do. */
