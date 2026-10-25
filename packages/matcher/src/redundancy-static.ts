@@ -10,7 +10,7 @@
  *  PHYSICAL NAMES throughout: report edges and reasons name the FACE that does the work, `report.cards` maps it back (`cardName ?? name`). */
 import type { DeckReport, Reason } from "@edh-seer/engine";
 import { normalizeName } from "@edh-seer/data/names";
-import { StaticLookup } from "./static-lookup.js";
+import { StaticLookup, shardOf } from "./static-lookup.js";
 import { decodeIndex, deckCards } from "./suggest-static.js";
 import { faceDeckCards } from "./faces.js";
 import { directedReasons } from "./edges.js";
@@ -189,7 +189,11 @@ export async function redundancyFor(input: {
   }
 
   stats.fetched = offDeck.size;
-  await lookup.prefetch([...offDeck.keys()].map(normalizeName)).catch((e) => console.warn("redundancy: candidate prefetch failed", e));
+  // ONE PREFETCH PER SHARD, ALL SETTLED BEFORE ANY READ: `prefetch` is a Promise.all over shards, so a rejecting shard would end it while the others are
+  // still in flight, and `findByName` (memory only) would read null for them -- cached by `deckCards`. Run each shard's names alone instead.
+  const byShard = new Map<string, string[]>();
+  for (const n of [...offDeck.keys()].map(normalizeName)) { const k = shardOf(n); byShard.set(k, [...(byShard.get(k) ?? []), n]); }
+  await Promise.all([...byShard.values()].map((g) => lookup.prefetch(g).catch((e) => console.warn("redundancy: a candidate shard failed", e))));
   const cardOf = async (name: string, pos: number): Promise<{ card: SimilarCard; dc: DeckCard } | null> => {
     try {
       const dc = await raw(name);

@@ -271,6 +271,8 @@ describe("redundancyFor", () => {
     const inner = fetchOf(files);
     const flaky = (async (url: string) => {
       if (url === lossShard || url === boltShard) throw new Error("network down");
+      // The good shards land LATER than the bad one rejects: a Promise.all prefetch would give up before they arrive.
+      if (url.includes("/cards/")) await new Promise((r) => setTimeout(r, 20));
       return inner(url);
     }) as unknown as typeof fetch;
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
