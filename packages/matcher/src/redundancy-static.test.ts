@@ -338,4 +338,13 @@ describe("redundancyFor", () => {
     const mixed = (async (url: string) => { if (url === lossShard) throw new Error("network down"); return inner(url); }) as unknown as typeof fetch;
     await expect(redundancyFor({ report: deck(false), seed: "Impact Tremors", commanderColorIdentity: ["R", "B", "W"], baseUrl: "/static", fetchImpl: mixed })).rejects.toThrow(/event index could not be read/);
   });
+
+  test("a bucket that reads but leaves nothing, beside one lost to an error, rejects: the unread bucket might have held the answer", async () => {
+    // The damage bucket loads, but under a white identity every member is off-colour; the lose-life shard rejects.
+    const files = staticFiles({ events: EVENTS });
+    const lossShard = `/static/${VERSION}/events/${eventShardOf("lose-life|-|-|-")}.json`;
+    const inner = fetchOf(files);
+    const mixed = (async (url: string) => { if (url === lossShard) throw new Error("network down"); return inner(url); }) as unknown as typeof fetch;
+    await expect(redundancyFor({ report: deck(false), seed: "Impact Tremors", commanderColorIdentity: ["W"], baseUrl: "/static", fetchImpl: mixed })).rejects.toThrow(/event index could not be read/);
+  });
 });

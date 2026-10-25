@@ -262,6 +262,9 @@ export async function redundancyFor(input: {
   }
   stats.poolSize = poolSize;
   const hits = findRedundancy({ seed: seedCard, seedPartners, candidates, amplifiers, identity: input.commanderColorIdentity }, input.perTier ? { perTier: input.perTier } : {});
+  // NOTHING TO SHOW WHILE A BUCKET WAS LOST TO A READ ERROR: the buckets that did read may have left nothing after the identity, land and
+  // `compareCards` filters, and the unread one might have held the answer, so "no card does this job" would be the network talking. Reject.
+  if (hits.length === 0 && outputs.some((o) => o.error)) throw new Error(`redundancy: the event index could not be read (${stats.errors.join(", ")})`);
   const rows: RedundancyRow[] = hits.map((h) => { const slug = atName.get(h.name)?.slug; return slug ? { ...h, slug } : h; });
   return { hits: rows, poolSize, seedPartners, amplifiers, stats };
 }
