@@ -122,16 +122,21 @@ const NOT_DECK_TYPE_LINE = /\b(?:Plane|Phenomenon|Scheme|Vanguard|Dungeon|Conspi
 /** THE RELEASE DATE OF AN UNRELEASED SPOILER CARD, or undefined for anything else. Scryfall marks a
  *  spoiled card `not_legal` in EVERY format until release, which is indistinguishable by legality
  *  alone from a funny un-card (`set_type` "funny") or a digital-only card (no "paper" in `games`);
- *  both stay out. `today` is passed in (YYYY-MM-DD, UTC) so this stays pure. The stamp holds until Scryfall flips
+ *  both stay out. `today` is passed in (YYYY-MM-DD, UTC) so this stays pure. A new stamp needs a future date; an existing one holds until Scryfall flips
  *  a legality (the next ingest then drops it and legality comes from Scryfall) or the grace below runs out. */
-export function upcomingDate(raw: ScryfallCard, today: string): string | undefined {
+export function upcomingDate(raw: ScryfallCard, today: string, wasUpcoming = false): string | undefined {
   const date = raw.released_at;
   if (date === undefined) return undefined;
-  // CEILING: 30 days of grace after release. Scryfall flips legality some time after a set is out,
-  // and an ingest in that gap would otherwise read the card as not_legal (flagged illegal, page
-  // gone) until the next one. Thirty is a guess at "a flip never takes longer"; a flip clears the
-  // stamp sooner (any non-not_legal legality), and a card still not_legal past it is left alone.
-  if (date < shiftDays(today, -UPCOMING_GRACE_DAYS)) return undefined;
+  // A NEW STAMP NEEDS A FUTURE DATE. A card released into a set Scryfall never makes legal (the
+  // Mystery Booster playtest cards, 60 of them, all not_legal, paper) must not be stamped.
+  // CEILING: 30 days of STICKY grace after release. Scryfall flips legality some time after a set is
+  // out, and an ingest in that gap would otherwise read a spoiler as not_legal (flagged illegal,
+  // page gone) until the next one. So a card that ALREADY carried the stamp (`wasUpcoming`, read
+  // from the stored docs) keeps it up to 30 days past release; a flip clears it sooner (any
+  // non-not_legal legality). Thirty is a guess at "a flip never takes longer".
+  if (date <= today) {
+    if (!wasUpcoming || date < shiftDays(today, -UPCOMING_GRACE_DAYS)) return undefined;
+  }
   const legal = Object.values(raw.legalities ?? {});
   if (legal.length === 0 || legal.some((v) => v !== "not_legal")) return undefined;
   if (raw.set_type !== undefined && NOT_DECK_SET_TYPES.has(raw.set_type)) return undefined;
@@ -144,11 +149,13 @@ export function upcomingDate(raw: ScryfallCard, today: string): string | undefin
 export interface NormalizeOptions {
   /** The ingest date, YYYY-MM-DD. Defaults to the current UTC date; tests pass one. */
   today?: string;
+  /** The stored doc for this card already carries `upcoming`: only such a card keeps it past its release date. */
+  wasUpcoming?: boolean;
 }
 
 export function normalizeScryfallCard(
   raw: ScryfallCard,
-  { today = new Date().toISOString().slice(0, 10) }: NormalizeOptions = {},
+  { today = new Date().toISOString().slice(0, 10), wasUpcoming = false }: NormalizeOptions = {},
 ): NormalizedCard | null {
   if (!raw.oracle_id || !raw.name || !raw.type_line) return null;
   if (raw.layout !== undefined && NON_GAMEPLAY_LAYOUTS.has(raw.layout)) return null;
@@ -208,7 +215,7 @@ export function normalizeScryfallCard(
     ...(f.image_uris?.art_crop !== undefined ? { artCrop: f.image_uris.art_crop } : {}),
   }));
 
-  const upcoming = upcomingDate(raw, today);
+  const upcoming = upcomingDate(raw, today, wasUpcoming);
 
   return {
     oracleId: raw.oracle_id,

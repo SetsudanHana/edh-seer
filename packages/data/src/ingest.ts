@@ -42,6 +42,10 @@ export async function ingestCards(
   const stickerNames = new Set<string>();
   let done = 0;
   let ops: AnyBulkWriteOperation<CardDoc>[] = [];
+  // Read BEFORE writing: only a card already stamped `upcoming` keeps it past its release date.
+  const stamped = new Set(
+    (await cards.find({ upcoming: { $exists: true } }, { projection: { _id: 1 } }).toArray()).map((d) => d._id),
+  );
 
   const flush = async (): Promise<void> => {
     if (ops.length === 0) return;
@@ -51,7 +55,7 @@ export async function ingestCards(
 
   for (const raw of raws) {
     done++;
-    const n = normalizeScryfallCard(raw, today !== undefined ? { today } : {});
+    const n = normalizeScryfallCard(raw, { ...(today !== undefined ? { today } : {}), wasUpcoming: raw.oracle_id !== undefined && stamped.has(raw.oracle_id) });
     if (!n || digitalOnly.has(n.oracleId)) {
       skipped++;
     } else {

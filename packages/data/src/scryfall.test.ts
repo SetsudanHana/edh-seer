@@ -288,13 +288,20 @@ describe("upcoming (unreleased spoiler cards, owner 2026-10-25)", () => {
     expect(up({ set_type: "token" })).toBeUndefined();
     expect(up({ set_type: "memorabilia" })).toBeUndefined();
   });
-  test("release-day edge: the stamp survives 30 days past release while Scryfall still says not_legal", () => {
-    const up = (today: string, o: object = {}) => normalizeScryfallCard({ ...base, ...o }, { today })!.upcoming;
-    expect(up("2026-11-13")).toBe("2026-11-13");
-    expect(up("2026-11-20")).toBe("2026-11-13");
-    expect(up("2026-12-13")).toBe("2026-11-13");
-    expect(up("2026-12-14")).toBeUndefined();
-    expect(up("2026-11-20", { legalities: { ...NL, commander: "legal" } })).toBeUndefined();
+  test("grace is sticky: only a card already stamped keeps `upcoming` after its release date", () => {
+    const up = (today: string, wasUpcoming: boolean, o: object = {}) =>
+      normalizeScryfallCard({ ...base, ...o }, { today, wasUpcoming })!.upcoming;
+    // (a) released 6 days ago, never stamped (Mystery Booster playtest cards): unstamped.
+    expect(up("2026-11-19", false)).toBeUndefined();
+    // (b) same, previously stamped: kept, through day 30.
+    expect(up("2026-11-19", true)).toBe("2026-11-13");
+    expect(up("2026-12-13", true)).toBe("2026-11-13");
+    // (c) a legality now legal: cleared.
+    expect(up("2026-11-19", true, { legalities: { ...NL, commander: "legal" } })).toBeUndefined();
+    // (d) 31 days after: cleared.
+    expect(up("2026-12-14", true)).toBeUndefined();
+    // (e) future release, never stamped: stamped.
+    expect(up("2026-10-25", false)).toBe("2026-11-13");
   });
   test("cards that are never deck cards are not upcoming, by front-face type line", () => {
     const up = (type_line: string) => normalizeScryfallCard({ ...base, type_line }, { today: TODAY })!.upcoming;
