@@ -553,6 +553,11 @@ export interface CompareOptions {
 }
 
 /** Reusable by the deck context (#1342): how `cand` differs from `seed`, null when it does not do the same job at all. */
+/** The outcome chip labels: the candidate swaps the seed's damage for life loss, or the reverse. */
+export const OUTCOME_LOSS_LABEL = "life loss, not damage";
+export const OUTCOME_DAMAGE_LABEL = "damage, not life loss";
+/** A card's colour identity as the engine reads it (empty for colourless or untagged). */
+export function identityOf(card: SimilarCard): readonly string[] { return sigOf(card).identity; }
 export function compareCards(seed: SimilarCard, cand: SimilarCard, opts: CompareOptions = {}): Comparison | null {
   const a = sigOf(seed);
   const b = sigOf(cand);
@@ -564,7 +569,7 @@ export function compareCards(seed: SimilarCard, cand: SimilarCard, opts: Compare
   if (!sw || !rs) return null;
   // The pair that matched carries the swapped verb: damage there means the candidate's own output is life loss.
   const candLoses = rs.pairs.some(([, , p]) => p.shared.event.verb === "non-combat-damage");
-  return { tier: "outcome", score: rs.score, chips: [{ dim: "outcome", label: candLoses ? "life loss, not damage" : "damage, not life loss" }, ...chipsOf(a, sw, rs)] };
+  return { tier: "outcome", score: rs.score, chips: [{ dim: "outcome", label: candLoses ? OUTCOME_LOSS_LABEL : OUTCOME_DAMAGE_LABEL }, ...chipsOf(a, sw, rs)] };
 }
 
 /** A CHIP EVERY ROW CARRIES SAYS NOTHING about any one row (Heliod: "lacks 2 other effects" on all 13): it describes the
