@@ -20,13 +20,9 @@ const GROUPS: { tier: SimilarItem["tier"]; heading: string }[] = [
 
 /** A row as this list draws it. The redundancy search (#1342) reuses the list: its rows may lack a page
  *  (`slug` absent: a name, no link) and carry what they mean for THIS deck (`deckChips`). */
-export type SimilarRow = Omit<SimilarItem, "slug"> & { slug?: string; deckChips?: readonly DeckChip[] };
-
-/** "shares 7 of 9 partners" -> 7 and 9. Read back from the label `findRedundancy` writes; a counted field on the chip would be cleaner and is a matcher change. */
-const sharedCount = (r: SimilarRow): { n: string; of: string } | null => {
-  const m = /^shares (\d+) of (\d+) partners$/.exec(r.deckChips?.find((c) => c.dim === "shared")?.label ?? "");
-  return m ? { n: m[1]!, of: m[2]! } : null;
-};
+export type SimilarRow = Omit<SimilarItem, "slug"> & { slug?: string; deckChips?: readonly DeckChip[];
+  /** How many of the seed's deck partners this card also works with, of how many. Absent: no figure. */
+  shared?: { n: number; of: number } };
 
 /** `level` 3 puts the section under a heading of its own (the card drawer); the tiers go one below it. */
 export function SimilarCards({ items, note, title = "Similar cards", id = "similar-cards", intro, empty, fold, deckView = false, level = 2, titleClass = "t-section", tierClass = "t-subsection" }: {
@@ -71,7 +67,7 @@ export function SimilarCards({ items, note, title = "Similar cards", id = "simil
         {GROUPS.map(({ tier, heading }) => {
           const rows = items.filter((i) => i.tier === tier);
           if (rows.length === 0) return null;
-          const figures = deckView ? rows.map(sharedCount) : [];
+          const figures = deckView ? rows.map((r) => r.shared ?? null) : [];
           const same = figures.length > 1 && figures.every((f) => f && f.n === figures[0]!.n && f.of === figures[0]!.of);
           const folded = fold !== undefined && rows.length > fold && !opened.has(tier);
           return (
@@ -83,7 +79,7 @@ export function SimilarCards({ items, note, title = "Similar cards", id = "simil
                     {r.slug !== undefined
                       ? <Link to={`/cards/${r.slug}`} className="text-(--accent) hover:underline inline-flex items-center min-h-6 [@media(pointer:coarse)_and_(not_(any-pointer:fine))]:min-h-11">{r.name}</Link>
                       : <span>{r.name}</span>}
-                    {deckView ? <DeckFacts row={r} figure={same ? null : sharedCount(r)} /> : null}
+                    {deckView ? <DeckFacts row={r} figure={same ? null : r.shared ?? null} /> : null}
                     {r.chips.length > 0 && (
                       <span className="flex flex-wrap items-center gap-1.5 text-sm text-(--muted)">
                         <span>differs by</span>
@@ -111,7 +107,7 @@ export function SimilarCards({ items, note, title = "Similar cards", id = "simil
 
 /** WHAT THE ROW MEANS FOR THIS DECK, as the drawer reads it: "in your deck" is a plain fact, the partner count a right-hand figure (said in
  *  words for a screen reader), and an amplifier a warning in chip shape. None of these is a control, so none looks like one. */
-function DeckFacts({ row, figure }: { row: SimilarRow; figure: { n: string; of: string } | null }) {
+function DeckFacts({ row, figure }: { row: SimilarRow; figure: { n: number; of: number } | null }) {
   const chips = row.deckChips ?? [];
   return (
     <>

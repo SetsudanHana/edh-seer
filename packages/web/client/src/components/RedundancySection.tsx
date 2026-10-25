@@ -23,6 +23,11 @@ const ids = new WeakMap<FindRedundancy, number>();
 let issued = 0;
 export const findKey = (f: FindRedundancy): number => ids.get(f) ?? ids.set(f, ++issued).get(f)!;
 
+/** The figure comes from the data (`sharedPartners` of the seed's `seedPartners`), never from a chip's label. */
+const rowsOf = (r: RedundancyResult) => r.hits.map((h) => ({
+  ...h, ...(h.sharedPartners.length > 0 && r.seedPartners.length > 0 ? { shared: { n: h.sharedPartners.length, of: r.seedPartners.length } } : {}),
+}));
+
 type State = { kind: "idle" } | { kind: "loading" } | { kind: "error" } | { kind: "ready"; result: RedundancyResult };
 
 /** FIND REDUNDANCY IN THIS DECK (#1342): the cards that do this card's job, the deck's own first. Asked for, never run on open --
@@ -45,7 +50,10 @@ export function RedundancySection({ seed, find, ask = 0 }: { seed: string; find:
   useEffect(() => {
     if (state.kind !== "ready" || !focusResults.current) return;
     focusResults.current = false;
-    box.current?.querySelector<HTMLElement>("#redundancy-title")?.focus({ preventScroll: true });
+    const title = box.current?.querySelector<HTMLElement>("#redundancy-title");
+    // The heading goes to the TOP of the rail once the results have rendered; scrolling before they exist, or letting focus scroll, left it at the foot of the first screen.
+    title?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    title?.focus({ preventScroll: true });
   }, [state.kind]);
   const handled = useRef(0);
   useEffect(() => {
@@ -61,9 +69,9 @@ export function RedundancySection({ seed, find, ask = 0 }: { seed: string; find:
     <div ref={box} data-testid="drawer-redundancy" className="flex flex-col gap-3 border-t border-(--separator) pt-2">
       {state.kind === "ready" ? (
         <SimilarCards
-          items={state.result.hits} level={4} fold={5} deckView id="redundancy-title" title="Redundancy in this deck"
+          items={rowsOf(state.result)} level={4} fold={5} deckView id="redundancy-title" title="Redundancy in this deck"
           titleClass="t-subsection" tierClass="eyebrow text-(--muted)"
-          intro={<>Cards that do the same job as {seed} in this deck, best match first.</>}
+          intro={<>Cards that do the same job as {seed} in this deck, best match first. The figure is how many of the same deck cards each one works with.</>}
           empty={state.result.stats?.comparable === false
             ? "This card has no effect the search can compare."
             : "No card in your colours does the same job as this one."}

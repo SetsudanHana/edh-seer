@@ -9,14 +9,15 @@ import { engineDeck } from "../lib/engine-model.fixture.js";
 import { CardDrawerProvider, useCardDrawer, type DrawerExtras } from "./card-drawer.js";
 import { useCardMenu } from "./card-menu.js";
 
+const sp = (n: number) => Array.from({ length: n }, (_, i) => `P${i}`);
 const chip = (dim: "deck" | "shared" | "amplifier", label: string) => ({ dim, label });
 const hit = (name: string, tier: "same" | "close" | "output" | "outcome", deckChips: ReturnType<typeof chip>[] = [], extra: object = {}) =>
   ({ id: 1, name, slug: name.toLowerCase().replace(/ /g, "-"), tier, chips: [], score: 1, inDeck: false, sharedPartners: [], deckChips, ...extra });
-const result = (hits: object[], comparable?: boolean): RedundancyResult => ({ hits, poolSize: 3, seedPartners: [], amplifiers: [], stats: { buckets: [], bucketSizes: [], poolSize: 0, fetched: 0, fallbacks: [], missing: [], ...(comparable === undefined ? {} : { comparable }) } }) as unknown as RedundancyResult;
+const result = (hits: object[], comparable?: boolean, seedN = 2): RedundancyResult => ({ hits, poolSize: 3, seedPartners: sp(seedN), amplifiers: [], stats: { buckets: [], bucketSizes: [], poolSize: 0, fetched: 0, fallbacks: [], missing: [], ...(comparable === undefined ? {} : { comparable }) } }) as unknown as RedundancyResult;
 
 const HITS = [
-  hit("Witty Roastmaster", "close", [chip("deck", "in your deck"), chip("shared", "shares 2 of 2 partners")], { inDeck: true }),
-  hit("Warstorm Surge", "same", [chip("shared", "shares 1 of 2 partners")]),
+  hit("Witty Roastmaster", "close", [chip("deck", "in your deck"), chip("shared", "reworded label")], { inDeck: true, sharedPartners: sp(2) }),
+  hit("Warstorm Surge", "same", [chip("shared", "x")], { sharedPartners: sp(1) }),
   hit("Corpse Knight", "outcome", [chip("amplifier", "loses synergy with Fiery Emancipation")]),
 ];
 
@@ -198,11 +199,11 @@ test("'Show N more' moves focus to the first revealed row; results move focus to
 });
 
 test("a tier whose rows all share the same count says it once in its heading; mixed counts show per row", async () => {
-  const a = hit("Alpha", "close", [chip("shared", "shares 9 of 9 partners")]);
-  const b = hit("Beta", "close", [chip("shared", "shares 9 of 9 partners"), chip("deck", "in your deck")]);
-  const c = hit("Gamma", "same", [chip("shared", "shares 4 of 9 partners")]);
-  const e = hit("Delta", "same", [chip("shared", "shares 9 of 9 partners")]);
-  render(<Host redundancy={async () => result([a, b, c, e])} />);
+  const a = hit("Alpha", "close", [chip("shared", "x")], { sharedPartners: sp(9) });
+  const b = hit("Beta", "close", [chip("shared", "x"), chip("deck", "in your deck")], { sharedPartners: sp(9) });
+  const c = hit("Gamma", "same", [chip("shared", "x")], { sharedPartners: sp(4) });
+  const e = hit("Delta", "same", [chip("shared", "x")], { sharedPartners: sp(9) });
+  render(<Host redundancy={async () => result([a, b, c, e], undefined, 9)} />);
   const d = await drawer();
   await userEvent.click(within(d).getByRole("button", { name: "Find redundancy in this deck" }));
   expect(await within(d).findByRole("heading", { name: "Close variants · 2 · all work with 9 of 9" })).toBeInTheDocument();
@@ -219,4 +220,18 @@ test("the section is the drawer's last block", async () => {
   const d = await drawer();
   const section = within(d).getByTestId("drawer-redundancy");
   expect(d.lastElementChild === section || d.lastElementChild!.contains(section)).toBe(true);
+});
+
+test("the intro keys the figure, and the heading is scrolled to the top of the rail once results render", async () => {
+  const scroll = vi.fn();
+  Element.prototype.scrollIntoView = scroll;
+  render(<Host redundancy={async () => result(HITS)} />);
+  const d = await drawer();
+  await userEvent.click(within(d).getByRole("button", { name: "Find redundancy in this deck" }));
+  await within(d).findByRole("heading", { level: 4, name: "Redundancy in this deck" });
+  expect(within(d).getByText(/The figure is how many of the same deck cards each one works with/)).toBeInTheDocument();
+  await waitFor(() => expect(scroll).toHaveBeenCalledWith({ behavior: "smooth", block: "start" }));
+  const title = within(d).getByRole("heading", { level: 4, name: "Redundancy in this deck" });
+  expect(scroll.mock.contexts).toContain(title);
+  delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
 });
