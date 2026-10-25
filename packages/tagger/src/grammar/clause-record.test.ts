@@ -550,3 +550,26 @@ test("a put back on top of your library is a library to library put; the bottom 
   const doom = grammarClauseRecords({ name: "X", typeLine: "Sorcery", oracleText: "Search your library and graveyard for five cards and exile the rest. Put the chosen cards on top of your library in any order." });
   expect(doom.records.flatMap((r) => r.actions ?? []).find((a) => a.verb === "put")).toMatchObject({ fromZone: "library" });
 });
+
+test("a pronoun put on top of a library keeps the zone its earlier move left (#1349 review)", () => {
+  const put = (text: string) => {
+    const g = grammarClauseRecords({ name: "X", typeLine: "Sorcery", oracleText: text });
+    expect(g.complete, text).toBe(true);
+    return g.records.flatMap((r) => r.actions ?? []).find((a) => a.verb === "put")?.fromZone;
+  };
+  expect(put("Exile target creature. Put it on top of its owner's library.")).toBe("exile");
+  expect(put("Destroy target creature. Put it on top of its owner's library.")).toBeNull();
+});
+
+test("the modal intros: 'that hasn't been chosen', 'worth of modes', 'one or both' read as the parent's action (#1349 review)", () => {
+  const kobayashi = grammarClauseRecords({ name: "Kobayashi Maru Scenario", typeLine: "Enchantment", oracleText: "At the beginning of your upkeep, choose one that hasn't been chosen —\n• Hail — Return up to one target creature an opponent controls with mana value 3 or less to its owner's hand.\n• Sensors — Draw two cards.\n• Transport — Create two 1/1 red Officer creature tokens.\n• Abandon Ship — You lose the game." });
+  expect(kobayashi.blocker).toBeUndefined();
+  expect(kobayashi.records[0]).toMatchObject({ id: 1, abilityType: "triggered", trigger: { event: "upkeep" }, actions: [{ verb: "none" }] });
+  expect(kobayashi.records.length).toBe(5);
+  const hela = grammarClauseRecords({ name: "Hela's Arcanum", typeLine: "Instant — Arcane", oracleText: "Choose up to five {P} worth of modes. You may choose the same mode more than once.\n{P} — Target creature gets +1/+0 and gains deathtouch until end of turn.\n{P}{P} — Until end of turn, target creature gains \"When this creature dies, return it to the battlefield tapped under its owner's control.\"\n{P}{P}{P} — Destroy each non-Zombie creature with power 3 or less." });
+  expect(hela.blocker).toBeUndefined();
+  expect(hela.complete).toBe(true);
+  const flash = grammarClauseRecords({ name: "Flash Thompson, Spider-Fan", typeLine: "Legendary Creature — Human Citizen", keywords: ["Hero Worship", "Heckle", "Flash"], oracleText: "Flash\nWhen Flash Thompson enters, choose one or both —\n• Heckle — Tap target creature.\n• Hero Worship — Untap target creature." });
+  expect(flash.blocker).toBeUndefined();
+  expect(flash.records[1]).toMatchObject({ abilityType: "triggered", trigger: { event: "enters" }, actions: [{ verb: "none" }] });
+});

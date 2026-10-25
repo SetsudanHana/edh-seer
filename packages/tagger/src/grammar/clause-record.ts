@@ -247,7 +247,12 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     // "put it back on top of your library" (Triumph of Saint Katherine), "put the chosen cards on top of your library"
     // (Doomsday): the player restacking cards of THEIR library, a library to library put. Read by the DESTINATION
     // "on top of", never "bottom of": "put each other card exiled this way on the bottom of your library" (Codie) comes from exile.
-    const topPut = r.verb === "put" && r.toZone === "library" && /^(?:it|them|that pile|the chosen cards|those cards)(?: back)?$/i.test(object)
+    // A bare pronoun needs "back" and a pile shuffled before it: "Exile target creature. Put it on top of its owner's library"
+    // is the exiled creature, from exile, and the back-reference branch below keeps that reading.
+    // CEILING: Gishath's "Dinosaur creature cards from among them" put has no sentence naming its source, so its
+    // fromZone stays null, and Codie's "each other card exiled this way ... bottom" is null by the same strictness.
+    const topPut = r.verb === "put" && r.toZone === "library"
+      && (/^(?:that pile|the chosen cards|those cards)$/i.test(object) || (/^(?:it|them) back$/i.test(object) && out.some((a) => a.verb === "shuffle")))
       && /\bon top of (?:your|their|its owner's) library\b/i.test(r.phrase ?? r.text ?? "") ? "library" : null;
     const from = r.fromZone ?? castRef ?? selfBounce ?? topPut ?? (!ZONE_VERBS.has(r.verb) || r.verb === "shuffle" ? null
       : ref ? (before?.verb === "search" ? "library" : before?.verb === "exile" ? (looksAtLibrary && !SINGULAR_REF.test(object) ? "library" : "exile") : before !== undefined ? null
