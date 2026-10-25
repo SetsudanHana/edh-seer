@@ -26,6 +26,13 @@ describe("findRedundancy, Impact Tremors seed", () => {
     const without = findRedundancy({ ...base, candidates });
     expect(find(without, "Corpse Knight")?.deckChips.some((c) => c.dim === "amplifier")).toBe(false);
   });
+  test("a candidate's own amplifier list replaces the global one: an amplifier that also boosts it is no loss", () => {
+    const hits = findRedundancy({ ...base, candidates: [{ ...cand("Corpse Knight"), amplifiers: [] }, cand("Corpse Knight")], amplifiers: ["Fiery Emancipation"] });
+    expect(hits).toHaveLength(1); // one card, merged by name: the first entry's list wins
+    expect(hits[0]!.deckChips.some((c) => c.dim === "amplifier")).toBe(false);
+    const kept = findRedundancy({ ...base, candidates: [{ ...cand("Corpse Knight"), amplifiers: ["X"] }], amplifiers: ["Fiery Emancipation"] });
+    expect(kept[0]!.deckChips).toContainEqual({ dim: "amplifier", label: "loses synergy with X" });
+  });
   test("two amplifiers read with 'and'", () => {
     const hits = findRedundancy({ ...base, candidates, amplifiers: ["X", "Y"] });
     expect(find(hits, "Corpse Knight")?.deckChips).toContainEqual({ dim: "amplifier", label: "loses synergy with X and Y" });

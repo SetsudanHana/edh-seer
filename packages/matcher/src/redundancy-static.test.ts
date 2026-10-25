@@ -309,9 +309,13 @@ describe("redundancyFor", () => {
     const r = await run(report);
     expect(r.amplifiers).toEqual([]);
     expect(r.hits.find((h) => h.name === "Corpse Knight")!.deckChips.some((c) => c.dim === "amplifier")).toBe(false);
-    // ...and a combat-damage replacement still is one.
-    report.edges = [report.edges[0]!, edge("Fiery Emancipation", "Impact Tremors", [reason("Fiery Emancipation", "Impact Tremors", "combat-damage:any", { producerAbility: 0, consumerAbility: 0 })])] as never;
-    expect((await run(report)).amplifiers).toEqual(["Fiery Emancipation"]);
+    // A COMBAT damage doubler (Torbran: `combat-damage:creature`) boosts any creature's combat damage and the life-loss candidate keeps it: not an amplifier.
+    report.edges = [report.edges[0]!, edge("Fiery Emancipation", "Impact Tremors", [reason("Fiery Emancipation", "Impact Tremors", "combat-damage:creature", { producerAbility: 0, consumerAbility: 0 })])] as never;
+    const combat = await run(report);
+    expect(combat.amplifiers).toEqual([]);
+    expect(combat.hits.find((h) => h.name === "Corpse Knight")!.deckChips.some((c) => c.dim === "amplifier")).toBe(false);
+    // A noncombat-damage replacement is one.
+    expect((await run(deck(true))).amplifiers).toEqual(["Fiery Emancipation"]);
   });
 
   test("every events shard unreadable by ERROR rejects (so the caller can retry); an absent key is not an error", async () => {
@@ -323,5 +327,15 @@ describe("redundancyFor", () => {
     const none = await run(deck(false), staticFiles({ events: {} }));
     expect(none.stats.comparable).toBe(false);
     expect(none.stats.errors).toEqual([]);
+  });
+
+  test("one absent key beside one errored key, with nothing else to show, rejects: the error is not an answer about the card", async () => {
+    // Only the lose-life key exists, in a shard that rejects; the damage key is absent (404).
+    const files = staticFiles({ events: { "lose-life|-|-|-": { p: [2], pf: [[PING]] } } });
+    const lossShard = `/static/${VERSION}/events/${eventShardOf("lose-life|-|-|-")}.json`;
+    expect(eventShardOf("non-combat-damage|-|-|-")).not.toBe(eventShardOf("lose-life|-|-|-"));
+    const inner = fetchOf(files);
+    const mixed = (async (url: string) => { if (url === lossShard) throw new Error("network down"); return inner(url); }) as unknown as typeof fetch;
+    await expect(redundancyFor({ report: deck(false), seed: "Impact Tremors", commanderColorIdentity: ["R", "B", "W"], baseUrl: "/static", fetchImpl: mixed })).rejects.toThrow(/event index could not be read/);
   });
 });

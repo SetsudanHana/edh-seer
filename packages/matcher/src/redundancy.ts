@@ -16,6 +16,8 @@ export interface RedundancyCandidate {
   inDeck: boolean;
   /** Deck cards (physical names) this candidate connects to that the seed ALSO connects to. */
   sharedPartners: readonly string[];
+  /** The seed's amplifiers that STILL apply to this seed-less candidate's loss: those the engine does not also link to the candidate by a damage reason. Absent = all of `RedundancyInput.amplifiers`. */
+  amplifiers?: readonly string[];
 }
 export interface RedundancyInput {
   seed: SimilarCard;
@@ -45,7 +47,7 @@ export function findRedundancy(input: RedundancyInput, opts: { perTier?: Partial
   for (const c of input.candidates) {
     if (c.card.name === input.seed.name) continue;
     const prev = byName.get(c.card.name);
-    byName.set(c.card.name, prev ? { card: prev.card, inDeck: prev.inDeck || c.inDeck, sharedPartners: [...new Set([...prev.sharedPartners, ...c.sharedPartners])] } : c);
+    byName.set(c.card.name, prev ? { card: prev.card, inDeck: prev.inDeck || c.inDeck, sharedPartners: [...new Set([...prev.sharedPartners, ...c.sharedPartners])], ...(prev.amplifiers ?? c.amplifiers ? { amplifiers: prev.amplifiers ?? c.amplifiers } : {}) } : c);
   }
   const hits: RedundancyHit[] = [];
   for (const c of byName.values()) {
@@ -56,8 +58,9 @@ export function findRedundancy(input: RedundancyInput, opts: { perTier?: Partial
     if (c.inDeck) deckChips.push({ dim: "deck", label: "in your deck" });
     if (c.sharedPartners.length > 0) deckChips.push({ dim: "shared", label: `shares ${c.sharedPartners.length} of ${input.seedPartners.length} partners` });
     // CEILING: only the seed's own amplifiers are read; a life-loss seed with a damage candidate that GAINS an amplifier is not credited.
-    if (input.amplifiers.length > 0 && cmp.tier === "outcome" && cmp.chips.some((k: Chip) => k.dim === "outcome" && k.label === OUTCOME_LOSS_LABEL)) {
-      deckChips.push({ dim: "amplifier", label: amplifierLabel(input.amplifiers) });
+    const amps = c.amplifiers ?? input.amplifiers;
+    if (amps.length > 0 && cmp.tier === "outcome" && cmp.chips.some((k: Chip) => k.dim === "outcome" && k.label === OUTCOME_LOSS_LABEL)) {
+      deckChips.push({ dim: "amplifier", label: amplifierLabel(amps) });
     }
     hits.push({ ...cmp, id: c.card.id, name: c.card.name, inDeck: c.inDeck, sharedPartners: [...c.sharedPartners], deckChips });
   }

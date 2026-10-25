@@ -23,7 +23,10 @@ import { isUnjudgedFact, unpackFact } from "./member-facts.js";
 import type { DeckCard } from "./types.js";
 
 const DEFAULT_POOL_CAP = 150;
-const DAMAGE_TAG = /^(?:non-)?combat-damage(?:[:|]|$)/;
+/** The seed's amplifier is a NONCOMBAT damage replacement: the chip is about its noncombat damage being swapped for life loss. */
+const AMPLIFIER_TAG = /^non-combat-damage(?:[:|]|$)/;
+/** A reason the engine draws between an amplifier and a candidate that says the amplifier boosts the candidate's damage too. */
+const DAMAGE_REASON = /^(?:non-)?combat-damage/;
 /** A member with no judged fact sorts after any member whose facts we can compare. */
 const UNKNOWN_DISTANCE = 6;
 /** Added to a member that does not ask for the seed's trigger event: larger than any fact distance, so trigger match ranks first. */
@@ -112,9 +115,9 @@ export async function redundancyFor(input: {
   // writes `producerAbility` as an index into the producer's FACE abilities, so the tags are read per face.
   const amps = new Set<string>();
   for (const e of report.edges) for (const r of e.reasons as Reason[]) {
-    // ONLY A DAMAGE REPLACEMENT: the chip is about damage vs life loss, so a token doubler or a draw doubler into the seed is no amplifier of it (the engine
-    // already says what that one does). Combat and non-combat damage both count: a damage amplifier boosts either (reason tags `non-combat-damage:any` / `combat-damage:any`).
-    if (!r.consumer || !r.producer || r.producerAbility === undefined || !DAMAGE_TAG.test(r.tag)) continue;
+    // ONLY A NONCOMBAT-DAMAGE REPLACEMENT: a token or draw doubler is no amplifier of the seed's damage, and nor is a COMBAT damage doubler (Torbran): it boosts any
+    // creature's combat damage, which the life-loss candidate keeps.
+    if (!r.consumer || !r.producer || r.producerAbility === undefined || !AMPLIFIER_TAG.test(r.tag)) continue;
     const consumer = physicalOf.get(r.consumer), producer = physicalOf.get(r.producer);
     if (consumer !== seed || !producer || producer === seed || amps.has(producer)) continue;
     const dc = await raw(producer);
@@ -204,9 +207,9 @@ export async function redundancyFor(input: {
     } catch (e) { console.warn("redundancy: the seed's similar rows were unreadable", e); }
   }
 
-  // EVERY BUCKET LOST TO A READ ERROR and nothing else produced a candidate: REJECT, so the caller shows its error and retries rather than caching
+  // NO BUCKET PRODUCED MEMBERS, AT LEAST ONE LOST TO A READ ERROR, and nothing else produced a candidate (an absent key beside an errored one proves nothing): REJECT, so the caller shows its error and retries rather than caching
   // "cannot compare" (a claim about the card) for what was the network.
-  if (buckets.length > 0 && outputs.every((o) => o.error) && offDeck.size === 0) throw new Error(`redundancy: the event index could not be read (${stats.errors.join(", ")})`);
+  if (outputs.some((o) => o.error) && outputs.every((o) => !o.m) && offDeck.size === 0) throw new Error(`redundancy: the event index could not be read (${stats.errors.join(", ")})`);
   if (buckets.length > 0 && stats.missing.length === buckets.length) stats.comparable = false;
   stats.fetched = offDeck.size;
   // ONE PREFETCH PER SHARD, ALL SETTLED BEFORE ANY READ: `prefetch` is a Promise.all over shards, so a rejecting shard would end it while the others are
@@ -222,12 +225,6 @@ export async function redundancyFor(input: {
   };
 
   const candidates: RedundancyCandidate[] = [];
-  for (const name of physical) {
-    if (name === seed) continue;
-    const c = await cardOf(name, atName.get(name)?.pos ?? -1);
-    if (c) candidates.push({ card: c.card, inDeck: true, sharedPartners: [...(partnersOf.get(name) ?? [])].filter((p) => seedSet.has(p)).sort() });
-  }
-
   // SHARED PARTNERS FOR AN OFF-DECK CANDIDATE: the engine, only for those `compareCards` keeps. CEILING: the deck's chosen types, commander mark and
   // land types are not threaded (as `suggestForDeck` does), so a partner that needs them reads as not shared.
   const h = loadHierarchy();
@@ -238,6 +235,21 @@ export async function redundancyFor(input: {
     return partnerFaces.filter(([, faces]) => faces.some((pf) => mine.some((cf) =>
       [...directedReasons(cf, pf, h, { tokensMediate: false }), ...directedReasons(pf, cf, h, { tokensMediate: false })].some((r) => !r.impliedProducer)))).map(([n]) => n);
   };
+  // PER CANDIDATE: an amplifier the engine also links to THIS card by a damage reason boosts it too, so the card loses nothing by it. The chip is then true by
+  // construction: "this amplifier boosts the seed and not this card".
+  const ampFaces = (await Promise.all(amplifiers.map(async (n) => [n, await raw(n)] as const)))
+    .filter((x): x is readonly [string, DeckCard] => x[1] !== null).map(([n, d]) => [n, faceDeckCards(d)] as const);
+  const ampsLostBy = (dc: DeckCard): string[] => {
+    const mine = faceDeckCards(dc);
+    return ampFaces.filter(([, faces]) => !faces.some((af) => mine.some((cf) =>
+      directedReasons(af, cf, h, { tokensMediate: false }).some((r) => DAMAGE_REASON.test(r.tag))))).map(([n]) => n);
+  };
+  for (const name of physical) {
+    if (name === seed) continue;
+    const c = await cardOf(name, atName.get(name)?.pos ?? -1);
+    if (c) candidates.push({ card: c.card, inDeck: true, sharedPartners: [...(partnersOf.get(name) ?? [])].filter((p) => seedSet.has(p)).sort(), amplifiers: ampsLostBy(c.dc) });
+  }
+
   let poolSize = 0;
   for (const [name, pos] of offDeck) {
     const c = await cardOf(name, pos);
@@ -245,7 +257,7 @@ export async function redundancyFor(input: {
     poolSize++;
     try {
       if (!compareCards(seedCard, c.card, { drainIsDamage: true })) continue;
-      candidates.push({ card: c.card, inDeck: false, sharedPartners: sharedOf(c.dc) });
+      candidates.push({ card: c.card, inDeck: false, sharedPartners: sharedOf(c.dc), amplifiers: ampsLostBy(c.dc) });
     } catch (e) { console.warn(`redundancy: ${name} could not be compared`, e); }
   }
   stats.poolSize = poolSize;
