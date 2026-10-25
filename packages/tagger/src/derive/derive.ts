@@ -2186,6 +2186,9 @@ export function deriveAbilities(
   let inheritedTrigger: (typeof clauses)[number]["trigger"];
   /** ...and the trigger the header DERIVED, which the bullet takes verbatim. */
   let headerTrigger: Ability["trigger"];
+  /** ...and what the header's trigger REFUSED (`if:attacks`, `narrowing:...`), which each of its modes records again
+   *  instead of re-reading the raw trigger against its own bullet (it has no "if" there: Jin Sakai's modes heard every attack). */
+  let headerRefused: string[] = [];
 
   /** What an earlier clause exiled, for "the exiled card" in a later one (#860). */
   let lastExiled: string | undefined;
@@ -2233,8 +2236,10 @@ export function deriveAbilities(
     // synthesizes the damage trigger it hears (`replacementOf`), and the header's would erase it.
     const inherits = kind === "triggered" && !clause.trigger?.event && inheritedTrigger !== undefined
       && !replacementOf(textForClause(clause, clauseTexts));
-    if (inherits) clause = { ...clause, trigger: inheritedTrigger };
-    else if (!clause.trigger?.event && kind !== "triggered") { inheritedTrigger = undefined; headerTrigger = undefined; }
+    // ...unless the header's trigger was REFUSED: the mode keeps the clause's trigger for the SUBJECT it reads ("It gains X"
+    // is the creature you control), says the same refusal, and derives no trigger below.
+    if (inherits) { clause = { ...clause, trigger: inheritedTrigger }; unknownTriggers.push(...headerRefused); }
+    else if (!clause.trigger?.event && kind !== "triggered") { inheritedTrigger = undefined; headerTrigger = undefined; headerRefused = []; }
     // THE RAW TRIGGER EVENT, FOR THE LABELLER ONLY (`repeatsFor`). An event outside the `Verb`
     // union reaches `unknownTriggers` below and the ability derives with no trigger, so this is the
     // one channel through which "at the beginning of your first main phase" can still say it is a
@@ -3406,6 +3411,7 @@ export function deriveAbilities(
       // clauses, 3 abilities, every zipped row a lie).
       abilities[i] = { ...abilities[i], clause: clause.id };
       if (inherits && headerTrigger && abilities[i].trigger) abilities[i] = { ...abilities[i], trigger: headerTrigger };
+      else if (inherits && headerRefused.length > 0 && abilities[i].trigger) { const { trigger: _t, ...untriggered } = abilities[i]; abilities[i] = untriggered; }
       const repeats = exhaust ? "once" : delayed?.repeats ?? repeatsFor(abilities[i], text, cost, rawTrigger);
       if (repeats) abilities[i] = { ...abilities[i], repeats };
       if (delayed && abilities[i].trigger) abilities[i] = { ...abilities[i], delayedBy: delayed.delayedBy };
@@ -3501,6 +3507,7 @@ export function deriveAbilities(
     if (!inherits && clause.trigger?.event) {
       inheritedTrigger = clause.trigger;
       headerTrigger = abilities.slice(before).find((a) => a.trigger)?.trigger;
+      headerRefused = headerTrigger === undefined ? unknownTriggers.slice(refusedBefore) : [];
     }
   }
   // AN OPPONENT'S GRAVEYARD, TAKEN ON THE WAY IN (recall v4 #28, 2026-09-09). Valgavoth, Terror

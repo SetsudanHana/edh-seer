@@ -502,3 +502,36 @@ test("a choice that is not a modal intro is still unread", () => {
     expect(g.blocker, text).toMatchObject({ clause: 1, kind: "action" });
   }
 });
+
+// #1349 review: a mode whose header's trigger was refused does not re-derive the raw trigger against its own bullet.
+test("a mode under a refused header trigger carries no trigger, and the refusal is recorded", async () => {
+  const { deriveInputOf } = await import("../derive-input.js");
+  const { deriveCardTags } = await import("../derive/derive.js");
+  const cards = [
+    { name: "Jin Sakai, Ghost of Tsushima", typeLine: "Legendary Creature — Human Samurai", keywords: ["Ghost", "Standoff"], oracleText: "Whenever Jin Sakai deals combat damage to a player, draw a card.\nWhenever a creature you control attacks a player, if no other creatures are attacking that player, choose one —\n• Standoff — It gains double strike until end of turn.\n• Ghost — It can't be blocked this turn." },
+    { name: "Wardens of the Cycle", typeLine: "Creature — Elf Warlock", keywords: ["Morbid"], oracleText: "Morbid — At the beginning of your end step, if a creature died this turn, choose one —\n• You gain 2 life.\n• You draw a card and you lose 1 life." },
+  ];
+  for (const card of cards) {
+    const g = grammarClauseRecords(card);
+    expect(g.complete, card.name).toBe(true);
+    const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings));
+    const header = card.name.startsWith("Jin") ? 2 : 1;
+    const modes = tags.abilities.filter((a) => a.clause !== undefined && a.clause > header);
+    expect(modes.length, card.name).toBeGreaterThan(0);
+    for (const m of modes) expect(m.trigger, `${card.name} clause ${m.clause}`).toBeUndefined();
+    if (card.name.startsWith("Jin")) expect((tags.unknownTriggers ?? []).filter((r) => r.startsWith("if:")).length).toBeGreaterThanOrEqual(3);
+  }
+});
+
+test("a card leaving exile is from exile; a destination 'bottom of its owner's library' is not a source (#1349 review)", () => {
+  const from = (text: string, type = "Creature — Elf") => {
+    const g = grammarClauseRecords({ name: "X", typeLine: type, oracleText: text });
+    expect(g.complete, text).toBe(true);
+    return g.records.flatMap((r) => r.actions ?? []).find((a) => a.verb === "put" || a.verb === "return" || a.verb === "search")?.fromZone;
+  };
+  expect(from("When this creature enters, put target exiled card with warp on the bottom of its owner's library.")).toBe("exile");
+  expect(from("When this creature enters, put target card you don't own in exile that has an Adventure on the bottom of its owner's library.")).toBe("exile");
+  expect(from("When this creature enters, return target card you own in exile that has an Adventure to your hand.")).toBe("exile");
+  expect(from("When this creature enters, put target creature on the bottom of its owner's library.")).toBe("battlefield");
+  expect(from("When this creature enters, put a card from the top of your library into your hand.")).toBe("library");
+});

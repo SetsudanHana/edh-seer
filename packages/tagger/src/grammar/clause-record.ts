@@ -251,7 +251,10 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
         : r.verb === "exile" && out.some((a) => a.verb === "counter-spell") ? "stack"
         : revealedFrom ?? (/^(?:dies|sacrificed|put-into-graveyard|discarded|milled)$/.test(triggerEvent ?? "") && out.length === 0 ? "graveyard" : null))
       // "that many cards from the bottom of your library": the library the words name.
-      : /\b(?:top|bottom) of (?:your|their|its owner's|that player's|target player's) library\b/i.test(r.phrase ?? r.text ?? "") ? "library"
+      // "target exiled card with warp", "target card you own in exile": it leaves exile, wherever it lands.
+      : /\b(?:exiled cards?|in exile)\b/i.test(object) ? "exile"
+      // Only a SOURCE: "on the bottom of its owner's library" is where a card lands, not where it was.
+      : /\bfrom the (?:top|bottom) of (?:your|their|its owner's|that player's|target player's) library\b/i.test(r.phrase ?? r.text ?? "") ? "library"
       // A set the sentence made: cards milled are in the graveyard, cards revealed in the library
       // (Szarekh's "from among the cards milled this way", Glint Raker's "revealed this way" and "the rest").
       : /\bmilled\b/i.test(object) ? "graveyard"
