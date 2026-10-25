@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRedundancy } from "../lib/redundancy.js";
 import type { AnalyzeResponse } from "../types.js";
 import { CHAPTERS, type ChapterId } from "../lib/chapters.js";
 import { ChapterRail, useCurrentChapter } from "./ChapterRail.js";
@@ -208,6 +209,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
    *  where a full-screen second map used to open over the report. */
   const drawer = useCardDrawer();
   const { setExtras, setRailOn, railHost, setRailBack } = drawer;
+  const redundancy = useRedundancy(data);
   const chapterNow = useRef(current);
   chapterNow.current = current;
   // THE RAIL IS THE REPORT'S (drawer option B, owner 2026-09-29): on while the chapters are up, and
@@ -244,6 +246,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
     const inCombo = (name: string) => (report.combos ?? []).some((c) => c.cards.includes(name));
     setExtras({
       model: themes,
+      ...(redundancy ? { redundancy } : {}),
       walk: (id) => {
         setCentre(id);
         document.getElementById("commander-map")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -278,7 +281,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
       },
     });
     return () => setExtras(null);
-  }, [themes, setExtras, report, cuts]);
+  }, [themes, setExtras, report, cuts, redundancy]);
   /** The over-target role groups, each with its cards: the rest of a trim, shown as the cards to
    *  pick from rather than as a count (appeal review 2026-09-26). */
   const surplus = useMemo((): Surplus[] => {

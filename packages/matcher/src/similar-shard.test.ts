@@ -33,4 +33,11 @@ describe("similar shard codec", () => {
     expect(decodeSimilar(undefined, index, [])).toEqual([]);
     expect(decodeSimilar([[99, 0], [1, 1], [2, 0, 7]], index, [])).toEqual([{ name: "Essence Warden", slug: "essence-warden", tier: "close", chips: [] }]);
   });
+
+  test("`outcome` is appended after `output`: an `output` row keeps its code (#1342)", () => {
+    const table = new ChipTable();
+    const hit = (tier: "output" | "outcome") => ({ id: 2, name: "Blood Artist", tier, score: 0, chips: [] });
+    expect(encodeSimilar([hit("output"), hit("outcome")], table)).toEqual([[2, 2], [2, 3]]);
+    expect(decodeSimilar([[2, 2], [2, 3]], index, []).map((r) => r.tier)).toEqual(["output", "outcome"]);
+  });
 });

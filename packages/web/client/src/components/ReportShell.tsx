@@ -1,4 +1,5 @@
 import type { GameState } from "@edh-seer/engine";
+import { useRedundancy } from "../lib/redundancy.js";
 import { indexByLabel } from "../lib/label-index.js";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router";
@@ -173,11 +174,12 @@ function Reference({ children, comboCount, data }: { children: React.ReactNode; 
   // so the walk is left out and the rest is the same.
   const { setExtras } = useCardDrawer();
   const model = useMemo(() => (data?.graph ? buildEngineModel(data.report, data.graph) : null), [data]);
+  const redundancy = useRedundancy(data);
   useEffect(() => {
     if (!model?.totalLinks) return;
-    setExtras({ model });
+    setExtras({ model, ...(redundancy ? { redundancy } : {}) });
     return () => setExtras(null);
-  }, [model, setExtras]);
+  }, [model, setExtras, redundancy]);
   return (
     <div className="flex flex-col gap-2 pt-2">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">

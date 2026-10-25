@@ -30,6 +30,8 @@
     "./quality": "./src/quality.ts",
     "./same-job": "./src/same-job.ts",
     "./similar": "./src/similar.ts",
+    "./redundancy": "./src/redundancy.ts",
+    "./redundancy-static": "./src/redundancy-static.ts",
     "./similar-shard": "./src/similar-shard.ts",
     "./staples": "./src/staples.ts",
     "./archetypes": "./src/archetypes.ts",

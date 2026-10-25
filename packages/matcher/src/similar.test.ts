@@ -421,3 +421,46 @@ describe("a cost the player pays never opens the gate (#1341 final review)", () 
     expect(names("Viashino Lashclaw")).not.toContain("Firefright Mage");
   });
 });
+
+describe("outcome tier: damage and life loss are one job in a deck (#1342)", () => {
+  const drain = { drainIsDamage: true };
+  test("without the option, damage and life loss never match", () => {
+    expect(compareCards(card("Impact Tremors"), card("Corpse Knight"))).toBeNull();
+    expect(compareCards(card("Corpse Knight"), card("Impact Tremors"))).toBeNull();
+  });
+  test("with the option, both directions are `outcome` and the chip names the swap", () => {
+    const fwd = compareCards(card("Impact Tremors"), card("Corpse Knight"), drain);
+    expect(fwd?.tier).toBe("outcome");
+    expect(fwd?.chips).toContainEqual({ dim: "outcome", label: "life loss, not damage" });
+    const back = compareCards(card("Corpse Knight"), card("Impact Tremors"), drain);
+    expect(back?.tier).toBe("outcome");
+    expect(back?.chips).toContainEqual({ dim: "outcome", label: "damage, not life loss" });
+  });
+  test("the option changes nothing when the plain comparison already matches", () => {
+    const plain = compareCards(card("Impact Tremors"), card("Witty Roastmaster"));
+    expect(plain?.tier).toBe("close");
+    expect(compareCards(card("Impact Tremors"), card("Witty Roastmaster"), drain)).toEqual(plain);
+  });
+  test("you losing life is a drawback, not a drain: it never matches by the swap", () => {
+    expect(compareCards(card("Impact Tremors"), card("Phyrexian Arena"), drain)).toBeNull();
+    expect(compareCards(card("Corpse Knight"), card("Phyrexian Arena"), drain)).toBeNull();
+  });
+  test("an amount chip names the CANDIDATE's own unit, not the seed's", () => {
+    const amount = (x: keyof typeof fixtures, y: keyof typeof fixtures) => compareCards(card(x), card(y), drain)?.chips.filter((c) => c.dim === "amount");
+    expect(amount("Corpse Knight", "Lightning Bolt")).toEqual([{ dim: "amount", label: "3 damage" }]);
+    expect(amount("Lightning Bolt", "Corpse Knight")).toEqual([{ dim: "amount", label: "1 life" }]);
+  });
+  test("an extra chip names the candidate's real output, not the swapped verb", () => {
+    // Corpse Knight plus a second life-loss ability keyed differently (creature subject), which Impact Tremors lacks: an extra.
+    const tags = structuredClone((fixtures["Corpse Knight"] as unknown as { tags: CardTags }).tags);
+    const extra = structuredClone(tags.abilities[0]!);
+    extra.emits![0]!.subject.type = "creature";
+    tags.abilities.push(extra);
+    const synth: SimilarCard = { id: 9999, name: "Synthetic Knight", tags };
+    expect(compareCards(card("Impact Tremors"), synth, drain)?.chips).toContainEqual({ dim: "extra", label: "+ opponent life loss" });
+  });
+  test("the page's index never emits `outcome`", () => {
+    const all = cards.flatMap((c) => similarIndex(cards).similarTo(c.id, { limit: 99 }));
+    expect(all.some((r) => r.tier === "outcome")).toBe(false);
+  });
+});
