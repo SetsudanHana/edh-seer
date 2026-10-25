@@ -11,7 +11,7 @@ import { SuggestionPanel } from "./SuggestionPanel.js";
 import { slugOf } from "@edh-seer/matcher/slug";
 import { faceLabels, indexByLabel } from "../lib/label-index.js";
 import { isPlainClick } from "./peek.js";
-import { RedundancySection } from "./RedundancySection.js";
+import { RedundancySection, findKey } from "./RedundancySection.js";
 import type { FindRedundancy } from "../lib/redundancy.js";
 
 /** WHAT A REPORT ADDS TO THE DRAWER: the deck's links, to know which cards are on the commander's
@@ -421,11 +421,11 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
                         Walk the map from here
                       </button>
                     ) : null}
-                    {extras.redundancy && !node.isToken ? (
-                      <RedundancySection key={node.id} seed={node.cardName ?? node.label} find={extras.redundancy}
-                        ask={redundancyAsk && redundancyAsk.name === (node.cardName ?? node.label) ? redundancyAsk.n : 0} />
-                    ) : null}
                   </div>
+                ) : undefined}
+                after={extras?.redundancy && !node.isToken && extras.model.cards.get(node.id) ? (
+                  <RedundancySection key={`${node.id}:${findKey(extras.redundancy)}`} seed={node.cardName ?? node.label} find={extras.redundancy}
+                    ask={redundancyAsk && redundancyAsk.name === (node.cardName ?? node.label) ? redundancyAsk.n : 0} />
                 ) : undefined}
               />
             </div>,

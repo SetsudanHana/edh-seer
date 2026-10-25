@@ -34,6 +34,8 @@ export interface RedundancyStats {
   fallbacks: { key: string; usedKey: string }[];
   /** Seed keys with no entry even after falling back. */
   missing: string[];
+  /** False when the seed has nothing the search can compare (no tags, no output buckets, or none readable): an empty `hits` then means "cannot say", not "no card does this". */
+  comparable: boolean;
 }
 /** `slug` is the card page, from the decoded index; absent for a deck card the index does not carry (no link to offer). */
 export type RedundancyRow = RedundancyHit & { slug?: string };
@@ -60,7 +62,7 @@ export async function redundancyFor(input: {
   poolCap?: number; lookup?: StaticLookup; perTier?: Partial<Record<SimilarTier, number>>;
 }): Promise<RedundancyResult> {
   const { report, seed } = input;
-  const stats: RedundancyStats = { buckets: [], bucketSizes: [], poolSize: 0, fetched: 0, fallbacks: [], missing: [] };
+  const stats: RedundancyStats = { buckets: [], bucketSizes: [], poolSize: 0, fetched: 0, fallbacks: [], missing: [], comparable: true };
   const empty: RedundancyResult = { hits: [], poolSize: 0, seedPartners: [], amplifiers: [], stats };
   const lookup = input.lookup ?? new StaticLookup(input.baseUrl, input.fetchImpl);
 
@@ -68,7 +70,7 @@ export async function redundancyFor(input: {
   const physicalOf = new Map<string, string>();
   for (const c of report.cards) if (!c.isCompanion) { const p = c.cardName ?? c.name; physicalOf.set(c.name, p); physicalOf.set(p, p); }
   const physical = [...new Set(physicalOf.values())];
-  if (!physical.includes(seed)) return empty;
+  if (!physical.includes(seed)) { stats.comparable = false; return empty; }
   // The DECK's own prefetch may throw: with no deck there is nothing to show. Every later read is per card or per shard and drops only that.
   await lookup.prefetch(physical.map(normalizeName));
   const index = await decodeIndex(lookup);
@@ -119,7 +121,7 @@ export async function redundancyFor(input: {
   const amplifiers = [...amps].sort();
 
   const seedDc = await raw(seed);
-  if (!seedDc?.tags) return empty;
+  if (!seedDc?.tags) { stats.comparable = false; return empty; }
   const seedCard: SimilarCard = { id: atName.get(seed)?.pos ?? index.length, name: seed, tags: seedDc.tags };
 
   // OFF-DECK POOL: members of the seed's output buckets (and their drain counterparts), identity-filtered on the DECODED INDEX before any card is
@@ -151,6 +153,7 @@ export async function redundancyFor(input: {
     }
     return { m: null, used: key };
   };
+  if (buckets.length === 0) stats.comparable = false;
   const [outputs, triggers] = await Promise.all([
     Promise.all(buckets.map((b) => resolveBucket(b.key))),
     Promise.all(triggerKeys.map((k) => members(k))),
@@ -190,6 +193,7 @@ export async function redundancyFor(input: {
     } catch (e) { console.warn("redundancy: the seed's similar rows were unreadable", e); }
   }
 
+  if (buckets.length > 0 && stats.missing.length === buckets.length) stats.comparable = false;
   stats.fetched = offDeck.size;
   // ONE PREFETCH PER SHARD, ALL SETTLED BEFORE ANY READ: `prefetch` is a Promise.all over shards, so a rejecting shard would end it while the others are
   // still in flight, and `findByName` (memory only) would read null for them -- cached by `deckCards`. Run each shard's names alone instead.

@@ -22,7 +22,7 @@ type Edge = CardGraph["edges"][number];
  *  oracle-text-derived sentence that explains it. That is a real limit, recorded on the ROADMAP,
  *  not papered over with an invented id here. */
 export function CardInspector({
-  node, edges, flow, textOf, nameOf, onClose, phone = "sheet", extra, closeLabel, docked = false, pairOf,
+  node, edges, flow, textOf, nameOf, onClose, phone = "sheet", extra, closeLabel, docked = false, pairOf, after,
 }: {
   /** What opens this card and a partner as a pair on the commander's map, or null when that pair
    *  is not on it (see `pairOf` in `card-drawer.tsx`). */
@@ -35,6 +35,8 @@ export function CardInspector({
   /** What the report adds about this card, above its links: in the report's drawer, the card's own
    *  small map and a way to walk the commander's map from it. */
   extra?: ReactNode;
+  /** What the report adds BELOW everything the inspector says itself (the redundancy search, #1342). */
+  after?: ReactNode;
   node: GraphNode;
   /** HOW THE PANEL SITS BELOW `sm`. "sheet" fills its container, which is right for the Cards
    *  drawer (nothing behind it the reader needs). "half" hugs the bottom at no more than half the
@@ -448,6 +450,7 @@ export function CardInspector({
           </div>
         </details>
       )}
+      {after}
     </div>
   );
 }

@@ -18,6 +18,19 @@ function search(find: FindRedundancy, seed: string): Promise<RedundancyResult> {
   return p;
 }
 
+/** One id per search function, so the section is keyed by the report it asks about. */
+const ids = new WeakMap<FindRedundancy, number>();
+let issued = 0;
+export const findKey = (f: FindRedundancy): number => ids.get(f) ?? ids.set(f, ++issued).get(f)!;
+
+/** A partner count that reads the same on EVERY row says nothing ("shares 9 of 9 partners" on each of nine rows): dropped, as `similar.ts` drops a universal chip. */
+function dropUniversal(hits: RedundancyResult["hits"]): RedundancyResult["hits"] {
+  if (hits.length < 2) return hits;
+  const first = hits[0]!.deckChips.find((c) => c.dim === "shared")?.label;
+  if (first === undefined || !hits.every((h) => h.deckChips.some((c) => c.dim === "shared" && c.label === first))) return hits;
+  return hits.map((h) => ({ ...h, deckChips: h.deckChips.filter((c) => !(c.dim === "shared" && c.label === first)) }));
+}
+
 type State = { kind: "idle" } | { kind: "loading" } | { kind: "error" } | { kind: "ready"; result: RedundancyResult };
 
 /** FIND REDUNDANCY IN THIS DECK (#1342): the cards that do this card's job, the deck's own first. Asked for, never run on open --
@@ -31,10 +44,17 @@ export function RedundancySection({ seed, find, ask = 0 }: { seed: string; find:
   const start = () => {
     setState({ kind: "loading" });
     search(find, seed).then(
-      (result) => { if (live.current) setState({ kind: "ready", result }); },
+      (result) => { if (live.current) { focusResults.current = true; setState({ kind: "ready", result }); } },
       (err: unknown) => { console.warn("[redundancy] failed", err); if (live.current) setState({ kind: "error" }); },
     );
   };
+  // After a search lands, focus goes to the section heading: the button that held it is gone.
+  const focusResults = useRef(false);
+  useEffect(() => {
+    if (state.kind !== "ready" || !focusResults.current) return;
+    focusResults.current = false;
+    box.current?.querySelector<HTMLElement>("#redundancy-title")?.focus({ preventScroll: true });
+  }, [state.kind]);
   const handled = useRef(0);
   useEffect(() => {
     if (ask > 0 && ask !== handled.current) {
@@ -49,14 +69,17 @@ export function RedundancySection({ seed, find, ask = 0 }: { seed: string; find:
     <div ref={box} data-testid="drawer-redundancy" className="flex flex-col gap-3 border-t border-(--separator) pt-2">
       {state.kind === "ready" ? (
         <SimilarCards
-          items={state.result.hits} level={3} fold={8} id="redundancy-title" title="Redundancy in this deck"
+          items={dropUniversal(state.result.hits)} level={4} fold={8} id="redundancy-title" title="Redundancy in this deck"
+          titleClass="eyebrow text-(--muted)" tierClass="text-sm font-medium"
           intro={<>These do the same job as {seed} in this deck, ranked by how many of the same deck cards they work with.</>}
-          empty="No card in your colours does the same job as this one."
+          empty={state.result.stats?.comparable === false
+            ? "This card has no effect the search can compare."
+            : "No card in your colours does the same job as this one."}
         />
       ) : (
         <>
           <button type="button" className="btn-secondary self-stretch" onClick={start} aria-busy={state.kind === "loading"}>
-            {state.kind === "loading" ? <><span aria-hidden="true" className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> Finding…</>
+            {state.kind === "loading" ? <><span aria-hidden="true" className="inline-block h-3 w-3 motion-safe:animate-spin rounded-full border-2 border-current border-t-transparent" /> Finding…</>
               : state.kind === "error" ? "Try again" : "Find redundancy in this deck"}
           </button>
           {state.kind === "error" ? <p role="status" className="text-sm text-(--muted)">Couldn't load the redundancy search. Check your connection and try again.</p> : null}

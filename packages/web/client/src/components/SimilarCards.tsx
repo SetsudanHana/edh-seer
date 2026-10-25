@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import type { SimilarItem } from "@edh-seer/matcher/similar-shard";
@@ -22,7 +22,7 @@ const GROUPS: { tier: SimilarItem["tier"]; heading: string }[] = [
 export type SimilarRow = Omit<SimilarItem, "slug"> & { slug?: string; deckChips?: readonly DeckChip[] };
 
 /** `level` 3 puts the section under a heading of its own (the card drawer); the tiers go one below it. */
-export function SimilarCards({ items, note, title = "Similar cards", id = "similar-cards", intro, empty, fold, level = 2 }: {
+export function SimilarCards({ items, note, title = "Similar cards", id = "similar-cards", intro, empty, fold, level = 2, titleClass = "t-section", tierClass = "t-subsection" }: {
   items: readonly SimilarRow[]; note?: string;
   title?: string; id?: string;
   /** Replaces the default sentence under the title. */
@@ -31,15 +31,26 @@ export function SimilarCards({ items, note, title = "Similar cards", id = "simil
   empty?: string;
   /** Show this many rows of a tier, the rest behind "Show N more". */
   fold?: number;
-  level?: 2 | 3;
+  /** The title's heading level; the tiers sit one below. */
+  level?: 2 | 3 | 4;
+  /** The type styles of the title and the tier headings; the page's by default, the drawer's own in the drawer. */
+  titleClass?: string; tierClass?: string;
 }) {
   const [opened, setOpened] = useState<ReadonlySet<SimilarItem["tier"]>>(new Set());
+  const list = useRef<HTMLElement>(null);
+  // After "Show N more" focus goes to the first row it revealed, or a keyboard reader is left on a button that is gone.
+  const revealed = useRef<SimilarItem["tier"] | null>(null);
+  useEffect(() => {
+    if (!revealed.current || fold === undefined) return;
+    list.current?.querySelector<HTMLElement>(`[data-tier="${revealed.current}"] li:nth-child(${fold + 1}) a`)?.focus();
+    revealed.current = null;
+  }, [opened, fold]);
   if (items.length === 0 && !empty) return null;
-  const Head = level === 3 ? "h3" : "h2", Sub = level === 3 ? "h4" : "h3";
+  const Head = `h${level}` as "h2", Sub = `h${level + 1}` as "h3";
   return (
-    <section className="flex flex-col gap-5" aria-labelledby={id}>
+    <section ref={list} className="flex flex-col gap-5" aria-labelledby={id}>
       <div className="flex flex-col gap-2 max-w-[68ch]">
-        <Head id={id} className="t-section">{title}</Head>
+        <Head id={id} className={titleClass} tabIndex={level === 2 ? undefined : -1}>{title}</Head>
         <p className="text-(--muted) max-w-[65ch]">
           {items.length === 0 ? empty : intro ?? <>
             Similar means it produces the same thing first, then the same trigger, amount and how
@@ -53,8 +64,8 @@ export function SimilarCards({ items, note, title = "Similar cards", id = "simil
           if (rows.length === 0) return null;
           const folded = fold !== undefined && rows.length > fold && !opened.has(tier);
           return (
-            <div key={tier} className="flex flex-col gap-2 min-w-0">
-              <Sub className="t-subsection">{heading}</Sub>
+            <div key={tier} data-tier={tier} className="flex flex-col gap-2 min-w-0">
+              <Sub className={tierClass}>{heading}</Sub>
               <ul className="flex flex-col">
                 {(folded ? rows.slice(0, fold) : rows).map((r) => (
                   <li key={r.slug ?? r.name} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-(--separator) py-2 first:border-t-0 min-h-11">
@@ -64,7 +75,7 @@ export function SimilarCards({ items, note, title = "Similar cards", id = "simil
                     {r.deckChips && r.deckChips.length > 0 && (
                       <span className="flex flex-wrap items-center gap-1.5 text-sm">
                         {r.deckChips.map((c, i) => (
-                          <span key={i} className="border border-(--accent) rounded-(--radius) px-2 py-0.5 leading-tight">{c.label}</span>
+                          <span key={i} className="border border-(--separator) text-(--accent) rounded-(--radius) px-2 py-0.5 leading-tight">{c.label}</span>
                         ))}
                       </span>
                     )}
@@ -80,7 +91,7 @@ export function SimilarCards({ items, note, title = "Similar cards", id = "simil
                 ))}
               </ul>
               {folded && (
-                <button type="button" className="btn-secondary self-start" onClick={() => setOpened(new Set([...opened, tier]))}>
+                <button type="button" className="btn-secondary self-start" onClick={() => { revealed.current = tier; setOpened(new Set([...opened, tier])); }}>
                   Show {rows.length - (fold ?? 0)} more
                 </button>
               )}

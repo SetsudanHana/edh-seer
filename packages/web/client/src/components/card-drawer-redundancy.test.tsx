@@ -12,7 +12,7 @@ import { useCardMenu } from "./card-menu.js";
 const chip = (dim: "deck" | "shared" | "amplifier", label: string) => ({ dim, label });
 const hit = (name: string, tier: "same" | "close" | "output" | "outcome", deckChips: ReturnType<typeof chip>[] = [], extra: object = {}) =>
   ({ id: 1, name, slug: name.toLowerCase().replace(/ /g, "-"), tier, chips: [], score: 1, inDeck: false, sharedPartners: [], deckChips, ...extra });
-const result = (hits: object[]): RedundancyResult => ({ hits, poolSize: 3, seedPartners: [], amplifiers: [], stats: { buckets: [], bucketSizes: [], poolSize: 0, fetched: 0, fallbacks: [], missing: [] } }) as unknown as RedundancyResult;
+const result = (hits: object[], comparable?: boolean): RedundancyResult => ({ hits, poolSize: 3, seedPartners: [], amplifiers: [], stats: { buckets: [], bucketSizes: [], poolSize: 0, fetched: 0, fallbacks: [], missing: [], ...(comparable === undefined ? {} : { comparable }) } }) as unknown as RedundancyResult;
 
 const HITS = [
   hit("Witty Roastmaster", "close", [chip("deck", "in your deck"), chip("shared", "shares 2 of 2 partners")], { inDeck: true }),
@@ -141,4 +141,80 @@ test("the card menu offers the line only with the extra registered, and it opens
   const d = await drawer();
   expect(await within(d).findByRole("heading", { name: "Same effect" })).toBeInTheDocument();
   expect(redundancy).toHaveBeenCalledWith("Reducer");
+});
+
+/** A RE-ANALYSED DECK RESETS THE SECTION: the old deck's hits are not this deck's, and the old search must not land in it. */
+const swapDeck = engineDeck();
+const swapModel = buildEngineModel(swapDeck.report, swapDeck.graph);
+function SwapRegister({ find }: { find: NonNullable<DrawerExtras["redundancy"]> }) {
+  const { setExtras, open } = useCardDrawer();
+  useEffect(() => { open("Reducer"); }, [open]);
+  useEffect(() => { setExtras({ model: swapModel, redundancy: find }); }, [setExtras, find]);
+  return null;
+}
+const Swap = ({ find }: { find: NonNullable<DrawerExtras["redundancy"]> }) =>
+  <MemoryRouter><CardDrawerProvider graph={swapDeck.graph}><SwapRegister find={find} /></CardDrawerProvider></MemoryRouter>;
+
+test("a new report's search resets the section; the old search resolving late does not land in it", async () => {
+  let late!: (r: RedundancyResult) => void;
+  const first = vi.fn(() => new Promise<RedundancyResult>((r) => { late = r; }));
+  const second = vi.fn(async () => result(HITS));
+  const { rerender } = render(<Swap find={first} />);
+  await drawer();
+  await userEvent.click(screen.getByRole("button", { name: "Find redundancy in this deck" }));
+  rerender(<Swap find={second} />);
+  expect(await screen.findByRole("button", { name: "Find redundancy in this deck" })).toBeInTheDocument();
+  await act(async () => { late(result([hit("Stale Card", "same")])); });
+  expect(screen.queryByText("Stale Card")).toBeNull();
+  await userEvent.click(screen.getByRole("button", { name: "Find redundancy in this deck" }));
+  await screen.findByRole("heading", { name: "Same effect" });
+  rerender(<Swap find={vi.fn(async () => result([]))} />);
+  expect(await screen.findByRole("button", { name: "Find redundancy in this deck" })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "Same effect" })).toBeNull();
+});
+
+test("a card the search cannot compare says so, not 'none in your colours'", async () => {
+  render(<Host redundancy={async () => result([], false)} />);
+  const d = await drawer();
+  await userEvent.click(within(d).getByRole("button", { name: "Find redundancy in this deck" }));
+  expect(await within(d).findByText("This card has no effect the search can compare.")).toBeInTheDocument();
+  expect(within(d).queryByText(/No card in your colours/)).toBeNull();
+});
+
+test("'Show N more' moves focus to the first revealed row; results move focus to the section heading", async () => {
+  const many = Array.from({ length: 11 }, (_, i) => hit(`Card ${i + 1}`, "close"));
+  render(<Host redundancy={async () => result(many)} />);
+  const d = await drawer();
+  await userEvent.click(within(d).getByRole("button", { name: "Find redundancy in this deck" }));
+  const title = await within(d).findByRole("heading", { level: 4, name: "Redundancy in this deck" });
+  await waitFor(() => expect(title).toHaveFocus());
+  expect(within(d).getByRole("heading", { level: 5, name: "Close variants" })).toBeInTheDocument();
+  await userEvent.click(within(d).getByRole("button", { name: "Show 3 more" }));
+  await waitFor(() => expect(within(d).getByRole("link", { name: "Card 9" })).toHaveFocus());
+});
+
+test("a partner count identical on every row is dropped; differing counts stay", async () => {
+  const a = hit("Alpha", "same", [chip("shared", "shares 9 of 9 partners")]);
+  const b = hit("Beta", "close", [chip("shared", "shares 9 of 9 partners"), chip("deck", "in your deck")]);
+  const { unmount } = render(<Host redundancy={async () => result([a, b])} />);
+  let d = await drawer();
+  await userEvent.click(within(d).getByRole("button", { name: "Find redundancy in this deck" }));
+  await within(d).findByText("Beta");
+  expect(within(d).queryByText("shares 9 of 9 partners")).toBeNull();
+  expect(within(d).getByText("in your deck")).toBeInTheDocument();
+  unmount();
+  const c = hit("Gamma", "close", [chip("shared", "shares 4 of 9 partners")]);
+  render(<Host redundancy={async () => result([a, c])} />);
+  d = await drawer();
+  await userEvent.click(within(d).getByRole("button", { name: "Find redundancy in this deck" }));
+  await within(d).findByText("Gamma");
+  expect(within(d).getByText("shares 9 of 9 partners")).toBeInTheDocument();
+  expect(within(d).getByText("shares 4 of 9 partners")).toBeInTheDocument();
+});
+
+test("the section is the drawer's last block", async () => {
+  render(<Host redundancy={async () => result(HITS)} />);
+  const d = await drawer();
+  const section = within(d).getByTestId("drawer-redundancy");
+  expect(d.lastElementChild === section || d.lastElementChild!.contains(section)).toBe(true);
 });

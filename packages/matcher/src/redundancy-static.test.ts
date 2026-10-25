@@ -143,6 +143,8 @@ describe("redundancyFor", () => {
     expect(r.hits.length).toBeGreaterThan(0);
     const none = await run(deck(false, [cardRow("Unknown Card")]), staticFiles({ events: EVENTS }), "Unknown Card");
     expect(none).toMatchObject({ hits: [], poolSize: 0, seedPartners: [], amplifiers: [] });
+    expect(none.stats.comparable).toBe(false);
+    expect(r.stats.comparable).toBe(true);
   });
 
   test("the seed's own precomputed similar rows join the pool", async () => {
