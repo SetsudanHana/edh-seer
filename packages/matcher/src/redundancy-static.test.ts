@@ -305,7 +305,7 @@ describe("redundancyFor", () => {
   test("a replacement that is not a damage replacement is no amplifier (a token doubler into the seed)", async () => {
     const report = deck(true);
     // The same shape as the engine's reason for Parallel Lives / Anointed Procession: a replacement ability, but on tokens, not damage.
-    report.edges = [report.edges[0]!, edge("Fiery Emancipation", "Impact Tremors", [reason("Fiery Emancipation", "Impact Tremors", "create-token:any", { producerAbility: 0, consumerAbility: 0 })])] as never;
+    report.edges = [report.edges[0]!, edge("Fiery Emancipation", "Impact Tremors", [reason("Fiery Emancipation", "Impact Tremors", "create-token:creature", { producerAbility: 0, consumerAbility: 0 })])] as never;
     const r = await run(report);
     expect(r.amplifiers).toEqual([]);
     expect(r.hits.find((h) => h.name === "Corpse Knight")!.deckChips.some((c) => c.dim === "amplifier")).toBe(false);
