@@ -352,7 +352,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  decks. */}
           {/* A BROKEN RULE LEADS; A CLEAN DECK SAYS SO IN ONE LINE UNDER THE HERO (appeal review
             *  2026-09-26: a paragraph about deck-rule checks was the first thing on the page). */}
-          {report.legality?.length ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
+          {report.legality?.length || report.upcoming?.length ? <LegalityPanel legality={report.legality} companions={report.companions} upcoming={report.upcoming} /> : null}
           {/* THE FIRST SCREEN IS THE MOCKUP'S (owner, 2026-09-27: "the top of the report is different
             *  from the screens you mocked up"): the theme and the map's key on the left, the
             *  commander's map on the right. The line for the table, the verdict and the card counts

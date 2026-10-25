@@ -117,6 +117,15 @@ export function pairingLicense(a: Card, b: Card): string | undefined {
   return undefined;
 }
 
+/** UNRELEASED SPOILER CARDS IN THE DECK (owner 2026-10-25), by name with the release date. INFORMATION,
+ *  never a finding: such a card reads commander-legal (`docToCard`) and is previewed, so the report
+ *  only says it is not out yet. Distinct names, in deck order. */
+export function upcomingCards(cards: readonly Card[]): { name: string; date: string }[] {
+  const seen = new Map<string, string>();
+  for (const c of cards) if (c.upcoming !== undefined && !seen.has(c.name)) seen.set(c.name, c.upcoming);
+  return [...seen].map(([name, date]) => ({ name, date }));
+}
+
 export interface LegalityFinding {
   rule: "size" | "duplicate" | "color-identity" | "commander" | "pairing"
     | "banned" | "not-legal" | "companion" | "construction" | "unchecked";

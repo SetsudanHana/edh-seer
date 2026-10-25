@@ -2853,6 +2853,24 @@ test("the mana panel shows a policy range, its spread, and says what it is not",
   expect(container).toBeEmptyDOMElement();
 });
 
+// OWNER 2026-10-25: a spoiler card is previewed; the panel says so quietly and it is no violation.
+test("the legality panel lists unreleased cards as information", () => {
+  const up = [{ name: "Captain Kirk, Boldly Going", date: "2026-11-13" }];
+  const clean = render(<LegalityPanel legality={[]} upcoming={up} />);
+  expect(screen.getByText(/Not yet released:/)).toBeInTheDocument();
+  expect(screen.getByText(/Captain Kirk, Boldly Going/)).toBeInTheDocument();
+  expect(screen.getByText(/13 Nov 2026/)).toBeInTheDocument();
+  expect(screen.getByText(/Checked against Commander.s deck rules/)).toBeInTheDocument();
+  clean.unmount();
+  const broken = render(<LegalityPanel legality={[{ rule: "size", detail: "34 cards", cards: [] }]} upcoming={up} />);
+  expect(screen.getByText(/34 cards/)).toBeInTheDocument();
+  expect(screen.getByText(/Not yet released:/)).toBeInTheDocument();
+  broken.unmount();
+  const none = render(<LegalityPanel legality={[]} />);
+  expect(screen.queryByText(/Not yet released/)).toBeNull();
+  none.unmount();
+});
+
 // J4 + J12's pairing rule, wired to the web 2026-08-25. THE COPY IS THE ASSERTION, not just the
 // findings: this panel sits above two real scores out of five, and a list of complaints with no
 // caveat reads as a verdict. Silence must mean "nothing was FOUND", never "the deck is legal".

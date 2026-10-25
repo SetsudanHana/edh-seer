@@ -19,7 +19,7 @@ import { connect, docToCard, loadConfig } from "@edh-seer/data";
 import { DERIVED_COLLECTION, DERIVE_VERSION, type CardTags } from "@edh-seer/tagger";
 import { loadTokenTags } from "../index.js";
 import { SHARD_COUNT, comboIndex, shardOf, shippedTags, shippedTokenTags, staleRows, type StaticCombo } from "./build-static-core.js";
-import { browseSlices, buildPartnerArtifact, commanderPlayable, partnerShardOf, type PartnerId } from "../partners-core.js";
+import { browseSlices, buildPartnerArtifact, commanderPlayable, hasPage, isLandPoolMember, partnerShardOf, type PartnerId } from "../partners-core.js";
 import { similarIndex } from "../similar.js";
 import { ChipTable, encodeSimilar } from "../similar-shard.js";
 import { eventShards } from "./events-index-core.js";
@@ -182,9 +182,8 @@ writeFileSync(join(stagingDir, "token-text.json"), JSON.stringify(tokenText));
 // RESOLVE it, but a 2021 Mystery Booster playtest Red Herring shared its name and its slug with
 // the 2024 Clue Fish, and the page it took was the real card's. Banned and restricted count as
 // legal somewhere; a card whose legalities are all `not_legal` is a playtest or an un-card.
-const legalSomewhere = (card: { legalities?: Record<string, string> }): boolean =>
-  !card.legalities || Object.values(card.legalities).some((v) => v !== "not_legal");
-const pageCards = cards.filter(legalSomewhere);
+// AN UPCOMING SPOILER (owner 2026-10-25) is not_legal everywhere only until release: `hasPage` keeps it.
+const pageCards = cards.filter(hasPage);
 console.log(`cards with a page: ${pageCards.length} of ${cards.length} (${cards.length - pageCards.length} legal in no format)`);
 const partnerDeckCards = pageCards.map((card) => ({
   card: { ...card, ...docToCard(card) },
@@ -291,7 +290,7 @@ writeFileSync(join(stagingDir, "name-index.json"), JSON.stringify({
 // swap-in lands for the upgrade package -- adding the modal DFCs' land backs to it is a separate
 // decision (and a static rebuild), not part of making the deck's own count agree.
 const lands = [...new Map(cards
-  .filter((c) => /\bland\b/i.test((c.typeLine ?? "").split("//")[0]!) && c.legalities?.commander !== "not_legal" && c.legalities?.commander !== "banned")
+  .filter(isLandPoolMember)
   .map((c) => [c.name, { name: c.name, identity: c.colorIdentity ?? [] }] as const)).values()]
   .sort((a, b) => a.name.localeCompare(b.name));
 writeFileSync(join(stagingDir, "lands.json"), JSON.stringify(lands));

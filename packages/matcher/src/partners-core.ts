@@ -4,6 +4,7 @@ import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 // time -- a value import of the root took every client test down with "The URL must be of
 // scheme file". `segment.ts` closes over `./subtypes` and `./emblem` only, both already public,
 // and does nothing but read strings.
+import { commanderLegalityOf } from "@edh-seer/data/docs";
 import { qualityTable } from "./quality-percentiles.js";
 import type { Role } from "./quality.js";
 import { segment } from "@edh-seer/tagger/segment";
@@ -1953,9 +1954,21 @@ export type PartnerId = [number, number, ...number[]];
  *  Background -- and commander-legal. This file used to say "Legendary Creature" and call the rest a
  *  larger question; the answer was already three files away, and the gap was 40 Vehicles, 5
  *  Spacecraft and 21 planeswalkers (measured 2026-09-05). */
-const isCommander = (d: DeckCard): boolean =>
+export const isCommander = (d: DeckCard): boolean =>
   isLegalCommander(d.card as Card)
-  && (d.card as { legalities?: Record<string, string> }).legalities?.commander === "legal";
+  && commanderLegalityOf(d.card as { legalities?: Record<string, string>; upcoming?: string }) === "legal";
+
+/** A CARD GETS A PAGE (roadmap X4) unless it is legal in no format: a playtest or an un-card. An
+ *  UPCOMING spoiler is `not_legal` everywhere only because it is not out yet (owner 2026-10-25), so it
+ *  keeps its page. Banned and restricted count as legal somewhere. */
+export const hasPage = (card: { legalities?: Record<string, string>; upcoming?: string }): boolean =>
+  card.upcoming !== undefined || !card.legalities || Object.values(card.legalities).some((v) => v !== "not_legal");
+
+/** THE LAND POOL (#767): a front-face land a commander deck can play. An upcoming land reads legal. */
+export const isLandPoolMember = (c: { typeLine?: string; legalities?: Record<string, string>; upcoming?: string }): boolean => {
+  const l = commanderLegalityOf(c);
+  return /\bland\b/i.test((c.typeLine ?? "").split("//")[0]!) && l !== "not_legal" && l !== "banned";
+};
 
 /** A Background is a commander only opposite a card that prints "Choose a Background" -- the same
  *  test `pairingLicense` makes, so the record and the licence can never disagree. */

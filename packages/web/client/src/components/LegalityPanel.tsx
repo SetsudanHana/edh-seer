@@ -14,12 +14,29 @@ import { CardName } from "./card-drawer.js";
  *
  *  IT FIRES ON NOTHING IN THE 71 CALIBRATION DECKS, by construction — they are the owner's own
  *  well-built lists. This exists for the arbitrary pasted one. */
-export function LegalityPanel({ legality, companions = [] }: {
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** "2026-11-13" -> "13 Nov 2026". By hand, not Intl: a date-only ISO string parses as UTC and a local formatter can shift the day. */
+const releaseDate = (iso: string): string => {
+  const [y, m, d] = iso.split("-");
+  const month = MONTHS[Number(m) - 1];
+  return month && d && y ? `${Number(d)} ${month} ${y}` : iso;
+};
+
+export function LegalityPanel({ legality, companions = [], upcoming = [] }: {
   legality: DeckReport["legality"];
+  /** Unreleased spoiler cards (owner 2026-10-25): information, never a violation. */
+  upcoming?: DeckReport["upcoming"];
   /** CR 702.139, outside the 100: named here because this is where it is judged. */
   companions?: readonly string[];
 }) {
   if (!legality) return null;
+  const notOut = upcoming.length > 0 && (
+    <p className="text-xs text-(--muted) max-w-[65ch]">
+      Not yet released: {upcoming.map((u, i) => (
+        <span key={u.name}>{i > 0 && ", "}<CardName name={u.name} /> ({releaseDate(u.date)})</span>
+      ))}
+    </p>
+  );
   const companionClause = companions.length > 0 ? `, and ${companions.join(" and ")} as your companion` : "";
   // A CLEAN RESULT SAYS WHAT WAS CHECKED (owner, 2026-09-22). Silence was meant to read "nothing
   // found", and the deck-build agent read it as "the report never checks legality". So a deck with
@@ -29,6 +46,7 @@ export function LegalityPanel({ legality, companions = [] }: {
     return (
       // ONE LINE, THE DETAIL ONE TAP AWAY (appeal review 2026-09-26): the full sentence was the
       // first paragraph on the page, and a clean deck needs only the word.
+      <div className="flex flex-col gap-1">
       <details className="text-xs text-(--muted) max-w-[65ch]">
         <summary className="cursor-pointer min-h-6 inline-flex items-center gap-1.5">
           <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-(--success) shrink-0">
@@ -43,6 +61,8 @@ export function LegalityPanel({ legality, companions = [] }: {
           banned list is as of our card data, so it can lag a fresh announcement.
         </p>
       </details>
+      {notOut}
+      </div>
     );
   }
   return (
@@ -70,6 +90,7 @@ export function LegalityPanel({ legality, companions = [] }: {
           </li>
         ))}
       </ul>
+      {notOut}
       <p className="text-xs text-(--muted)">
         A report, not a verdict — nothing here stops the analysis. The banned list is as of the card
         data, and a card that changes deck building in a way this tool does not read is listed rather
