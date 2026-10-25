@@ -23,6 +23,7 @@ import { isUnjudgedFact, unpackFact } from "./member-facts.js";
 import type { DeckCard } from "./types.js";
 
 const DEFAULT_POOL_CAP = 150;
+const DAMAGE_TAG = /^(?:non-)?combat-damage(?:[:|]|$)/;
 /** A member with no judged fact sorts after any member whose facts we can compare. */
 const UNKNOWN_DISTANCE = 6;
 /** Added to a member that does not ask for the seed's trigger event: larger than any fact distance, so trigger match ranks first. */
@@ -36,6 +37,8 @@ export interface RedundancyStats {
   missing: string[];
   /** False when the seed has nothing the search can compare (no tags, no output buckets, or none readable): an empty `hits` then means "cannot say", not "no card does this". */
   comparable: boolean;
+  /** Output or trigger keys whose events shard could not be READ (a network error, not an absent key). */
+  errors: string[];
 }
 /** `slug` is the card page, from the decoded index; absent for a deck card the index does not carry (no link to offer). */
 export type RedundancyRow = RedundancyHit & { slug?: string };
@@ -62,7 +65,7 @@ export async function redundancyFor(input: {
   poolCap?: number; lookup?: StaticLookup; perTier?: Partial<Record<SimilarTier, number>>;
 }): Promise<RedundancyResult> {
   const { report, seed } = input;
-  const stats: RedundancyStats = { buckets: [], bucketSizes: [], poolSize: 0, fetched: 0, fallbacks: [], missing: [], comparable: true };
+  const stats: RedundancyStats = { buckets: [], bucketSizes: [], poolSize: 0, fetched: 0, fallbacks: [], missing: [], comparable: true, errors: [] };
   const empty: RedundancyResult = { hits: [], poolSize: 0, seedPartners: [], amplifiers: [], stats };
   const lookup = input.lookup ?? new StaticLookup(input.baseUrl, input.fetchImpl);
 
@@ -109,7 +112,9 @@ export async function redundancyFor(input: {
   // writes `producerAbility` as an index into the producer's FACE abilities, so the tags are read per face.
   const amps = new Set<string>();
   for (const e of report.edges) for (const r of e.reasons as Reason[]) {
-    if (!r.consumer || !r.producer || r.producerAbility === undefined) continue;
+    // ONLY A DAMAGE REPLACEMENT: the chip is about damage vs life loss, so a token doubler or a draw doubler into the seed is no amplifier of it (the engine
+    // already says what that one does). Combat and non-combat damage both count: a damage amplifier boosts either (reason tags `non-combat-damage:any` / `combat-damage:any`).
+    if (!r.consumer || !r.producer || r.producerAbility === undefined || !DAMAGE_TAG.test(r.tag)) continue;
     const consumer = physicalOf.get(r.consumer), producer = physicalOf.get(r.producer);
     if (consumer !== seed || !producer || producer === seed || amps.has(producer)) continue;
     const dc = await raw(producer);
@@ -136,35 +141,41 @@ export async function redundancyFor(input: {
     !a.trigger || a.trigger.subject?.self === true ? []
       : a.trigger.verbs.flatMap((v) => splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)))))];
   const buckets = seedBuckets(seedCard, { drainIsDamage: true });
-  // ONE UNREADABLE SHARD DROPS THAT BUCKET, not the result.
-  const members = (key: string): Promise<EventMembers | null> => lookup.eventMembers(key).catch(() => null);
+  // ONE UNREADABLE SHARD DROPS THAT BUCKET, not the result. A READ ERROR IS NOT AN ABSENT KEY: it is tracked apart (`failed`), because "no such key" is a
+  // claim about the card and a network error is not.
+  const failed = new Set<string>();
+  const members = (key: string): Promise<EventMembers | null> => lookup.eventMembers(key).catch(() => { failed.add(key); return null; });
   // THE SHIPPED EVENTS INDEX IS KEYED BY DEMANDED EVENTS ONLY (`supplyBuckets`), so a seed's exact output key is often absent (measured 2026-10-25:
   // 35% of seed buckets, 17% of seeds with none). Fall back to the nearest coarser key of the same verb that exists, most specific first
   // (`supplyForms` is the widening the index is built from). CEILING: the fallback bucket does not discriminate the subtype or token, so the pool cap
   // can cut exact matches; `compareCards` still gates on the exact key. A supply-keyed index would fix it, which is new static data (out of scope, owner 2026-10-25).
   const specificity = (k: string): number => k.split("|").slice(1).filter((x) => x !== "-").length;
-  const resolveBucket = async (key: string): Promise<{ m: EventMembers | null; used: string }> => {
+  const resolveBucket = async (key: string): Promise<{ m: EventMembers | null; used: string; error: boolean }> => {
     const exact = await members(key);
-    if (exact) return { m: exact, used: key };
+    if (exact) return { m: exact, used: key, error: false };
+    if (failed.has(key)) return { m: null, used: key, error: true };
     const verb = key.split("|")[0];
+    let error = false;
     for (const f of [...supplyForms(key)].filter((f) => f !== key && f.split("|")[0] === verb).sort((x, y) => specificity(y) - specificity(x))) {
       const m = await members(f);
-      if (m) return { m, used: f };
+      if (m) return { m, used: f, error: false };
+      if (failed.has(f)) error = true;
     }
-    return { m: null, used: key };
+    return { m: null, used: key, error };
   };
   if (buckets.length === 0) stats.comparable = false;
   const [outputs, triggers] = await Promise.all([
     Promise.all(buckets.map((b) => resolveBucket(b.key))),
     Promise.all(triggerKeys.map((k) => members(k))),
   ]);
+  for (const k of triggerKeys) if (failed.has(k)) stats.errors.push(k);
   const asks = new Set<number>();
   for (const t of triggers) for (const pos of t?.c ?? []) asks.add(pos);
   buckets.forEach((b, bi) => {
     const { m, used } = outputs[bi]!;
     stats.buckets.push(b.key);
     stats.bucketSizes.push(m?.p.length ?? 0);
-    if (!m) { stats.missing.push(b.key); return; }
+    if (!m) { (outputs[bi]!.error ? stats.errors : stats.missing).push(b.key); return; }
     if (used !== b.key) stats.fallbacks.push({ key: b.key, usedKey: used });
     m.p.forEach((pos, i) => {
       const c = index[pos];
@@ -193,6 +204,9 @@ export async function redundancyFor(input: {
     } catch (e) { console.warn("redundancy: the seed's similar rows were unreadable", e); }
   }
 
+  // EVERY BUCKET LOST TO A READ ERROR and nothing else produced a candidate: REJECT, so the caller shows its error and retries rather than caching
+  // "cannot compare" (a claim about the card) for what was the network.
+  if (buckets.length > 0 && outputs.every((o) => o.error) && offDeck.size === 0) throw new Error(`redundancy: the event index could not be read (${stats.errors.join(", ")})`);
   if (buckets.length > 0 && stats.missing.length === buckets.length) stats.comparable = false;
   stats.fetched = offDeck.size;
   // ONE PREFETCH PER SHARD, ALL SETTLED BEFORE ANY READ: `prefetch` is a Promise.all over shards, so a rejecting shard would end it while the others are

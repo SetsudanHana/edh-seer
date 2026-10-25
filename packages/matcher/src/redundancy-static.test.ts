@@ -288,6 +288,8 @@ describe("redundancyFor", () => {
     warn.mockRestore();
     expect(r.hits.map((h) => h.name)).toContain("Witty Roastmaster");
     expect(r.hits.map((h) => h.name)).not.toContain("Lightning Bolt");
+    expect(r.stats.errors).toEqual(["lose-life|-|-|-"]);
+    expect(r.stats.comparable).toBe(true);
   });
 
   test("a sim row outside the commander's identity is never fetched", async () => {
@@ -298,5 +300,28 @@ describe("redundancyFor", () => {
     const swords = `/static/${VERSION}/cards/${shardOf(normalizeName("Swords to Plowshares"))}.json`;
     await redundancyFor({ report: deck(false), seed: "Impact Tremors", commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: logged });
     expect(log).not.toContain(swords);
+  });
+
+  test("a replacement that is not a damage replacement is no amplifier (a token doubler into the seed)", async () => {
+    const report = deck(true);
+    // The same shape as the engine's reason for Parallel Lives / Anointed Procession: a replacement ability, but on tokens, not damage.
+    report.edges = [report.edges[0]!, edge("Fiery Emancipation", "Impact Tremors", [reason("Fiery Emancipation", "Impact Tremors", "create-token:any", { producerAbility: 0, consumerAbility: 0 })])] as never;
+    const r = await run(report);
+    expect(r.amplifiers).toEqual([]);
+    expect(r.hits.find((h) => h.name === "Corpse Knight")!.deckChips.some((c) => c.dim === "amplifier")).toBe(false);
+    // ...and a combat-damage replacement still is one.
+    report.edges = [report.edges[0]!, edge("Fiery Emancipation", "Impact Tremors", [reason("Fiery Emancipation", "Impact Tremors", "combat-damage:any", { producerAbility: 0, consumerAbility: 0 })])] as never;
+    expect((await run(report)).amplifiers).toEqual(["Fiery Emancipation"]);
+  });
+
+  test("every events shard unreadable by ERROR rejects (so the caller can retry); an absent key is not an error", async () => {
+    const files = staticFiles({ events: EVENTS });
+    const inner = fetchOf(files);
+    const down = (async (url: string) => { if (url.includes("/events/")) throw new Error("network down"); return inner(url); }) as unknown as typeof fetch;
+    await expect(redundancyFor({ report: deck(false), seed: "Impact Tremors", commanderColorIdentity: ["R", "B", "W"], baseUrl: "/static", fetchImpl: down })).rejects.toThrow(/event index could not be read/);
+    // Absent keys (404) are the card's own answer: resolves, uncomparable.
+    const none = await run(deck(false), staticFiles({ events: {} }));
+    expect(none.stats.comparable).toBe(false);
+    expect(none.stats.errors).toEqual([]);
   });
 });
