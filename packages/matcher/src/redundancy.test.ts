@@ -8,7 +8,7 @@ const names = Object.keys(fixtures) as (keyof typeof fixtures)[];
 const cards: SimilarCard[] = names.map((n, i) => ({ id: i + 1, name: n, tags: (fixtures[n] as unknown as { tags: CardTags }).tags }));
 const card = (n: keyof typeof fixtures) => cards.find((c) => c.name === n)!;
 const cand = (n: keyof typeof fixtures, inDeck = false, sharedPartners: string[] = []): RedundancyCandidate => ({ card: card(n), inDeck, sharedPartners });
-const base = { seed: card("Impact Tremors"), seedPartners: ["A", "B", "C"], amplifiers: [] as string[], identity: [] as string[] };
+const base = { seed: card("Impact Tremors"), seedPartners: ["A", "B", "C"], amplifiers: [] as string[], identity: null as string[] | null };
 const find = (hits: ReturnType<typeof findRedundancy>, n: string) => hits.find((h) => h.name === n);
 
 describe("findRedundancy, Impact Tremors seed", () => {
@@ -21,14 +21,23 @@ describe("findRedundancy, Impact Tremors seed", () => {
   });
   test("amplifier loss only on the life-loss substitute", () => {
     const withAmp = findRedundancy({ ...base, candidates, amplifiers: ["Fiery Emancipation"] });
-    expect(find(withAmp, "Corpse Knight")?.deckChips).toContainEqual({ dim: "amplifier", label: "loses Fiery Emancipation synergy" });
+    expect(find(withAmp, "Corpse Knight")?.deckChips).toContainEqual({ dim: "amplifier", label: "loses synergy with Fiery Emancipation" });
     expect(find(withAmp, "Witty Roastmaster")?.deckChips.some((c) => c.dim === "amplifier")).toBe(false);
     const without = findRedundancy({ ...base, candidates });
     expect(find(without, "Corpse Knight")?.deckChips.some((c) => c.dim === "amplifier")).toBe(false);
   });
+  test("two amplifiers read with 'and'", () => {
+    const hits = findRedundancy({ ...base, candidates, amplifiers: ["X", "Y"] });
+    expect(find(hits, "Corpse Knight")?.deckChips).toContainEqual({ dim: "amplifier", label: "loses synergy with X and Y" });
+  });
+  test("a damage candidate for a life-loss seed gains the amplifier, so no loss chip", () => {
+    const hits = findRedundancy({ ...base, seed: card("Corpse Knight"), candidates: [cand("Impact Tremors")], amplifiers: ["Fiery Emancipation"] });
+    expect(hits[0]?.tier).toBe("outcome");
+    expect(hits[0]?.deckChips.some((c) => c.dim === "amplifier")).toBe(false);
+  });
   test("many amplifiers are summarised", () => {
     const hits = findRedundancy({ ...base, candidates, amplifiers: ["X", "Y", "Z"] });
-    expect(find(hits, "Corpse Knight")?.deckChips).toContainEqual({ dim: "amplifier", label: "loses X and 2 others synergy" });
+    expect(find(hits, "Corpse Knight")?.deckChips).toContainEqual({ dim: "amplifier", label: "loses synergy with X and 2 others" });
   });
 });
 
@@ -46,6 +55,17 @@ describe("ranking, identity, deck chips, caps", () => {
     const kept = findRedundancy({ ...b, identity: ["W"], candidates: [cand("Blood Artist", true)] });
     expect(kept.map((h) => h.name)).toEqual(["Blood Artist"]);
     expect(kept[0]!.deckChips).toContainEqual({ dim: "deck", label: "in your deck" });
+  });
+  test("[] is colourless: a coloured outsider is dropped, an in-deck one kept", () => {
+    expect(findRedundancy({ ...b, identity: [], candidates: [cand("Essence Warden")] })).toEqual([]);
+    expect(findRedundancy({ ...b, identity: [], candidates: [cand("Essence Warden", true)] }).map((h) => h.name)).toEqual(["Essence Warden"]);
+  });
+  test("duplicate names merge: union of partners, inDeck from either copy", () => {
+    const hits = findRedundancy({ ...b, candidates: [cand("Essence Warden", false, ["A"]), cand("Essence Warden", true, ["B"])] });
+    expect(hits).toHaveLength(1);
+    expect(hits[0]!.sharedPartners.sort()).toEqual(["A", "B"]);
+    expect(hits[0]!.deckChips).toContainEqual({ dim: "deck", label: "in your deck" });
+    expect(hits[0]!.deckChips).toContainEqual({ dim: "shared", label: "shares 2 of 3 partners" });
   });
   test("perTier cap ignores in-deck hits; duplicates merge", () => {
     const cs = [cand("Essence Warden"), cand("Soul's Attendant"), cand("Auriok Champion", true), cand("Essence Warden", true)];

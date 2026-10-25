@@ -1,3 +1,14 @@
+/** CARDS THAT DO THE SAME JOB IN THIS DECK (#1342): for a seed card, which other cards (in the deck or candidates for it) fill its role,
+ *  ranked, with what the deck adds to the picture (already in the deck, shares partners with the seed, would lose an amplifier).
+ *
+ *  ENGINE: `compareCards` from similar.ts, ONLY (owner ruling 2026-10-25). Never `same-job.ts`: the panel must not show two
+ *  notions of "same job" that disagree.
+ *
+ *  PURE, NO I/O: the candidates, partners and amplifiers arrive already gathered (task 3 reads them from static data).
+ *
+ *  `inDeck` EXEMPTS a candidate from the identity filter and from the per-tier caps: it is already legal in this deck and
+ *  already chosen, so hiding it would hide the very redundancy the player asked about. The deck path does NOT drop similar.ts's
+ *  universal chips (that pruning belongs to `similarIndex` lists; here a short list is read with the deck chips beside it). */
 import { compareCards, identityOf, OUTCOME_LOSS_LABEL, type Chip, type SimilarCard, type SimilarHit, type SimilarTier } from "./similar.js";
 
 export interface RedundancyCandidate {
@@ -13,8 +24,8 @@ export interface RedundancyInput {
   candidates: readonly RedundancyCandidate[];
   /** Deck cards whose REPLACEMENT ability improves the seed's damage (e.g. Fiery Emancipation). */
   amplifiers: readonly string[];
-  /** Commander colour identity; a candidate outside it is dropped. Empty = no filter. */
-  identity: readonly string[];
+  /** Commander colour identity; a candidate outside it is dropped. `[]` is COLOURLESS (as `similarIndex` `identityWithin`), `null` = no filter. */
+  identity: readonly string[] | null;
 }
 export interface DeckChip { dim: "deck" | "shared" | "amplifier"; label: string }
 export interface RedundancyHit extends SimilarHit { inDeck: boolean; sharedPartners: string[]; deckChips: DeckChip[] }
@@ -23,12 +34,13 @@ const TIERS: SimilarTier[] = ["same", "close", "output", "outcome"];
 const DEFAULT_CAPS: Record<SimilarTier, number> = { same: 12, close: 12, output: 8, outcome: 8 };
 
 function amplifierLabel(names: readonly string[]): string {
-  return names.length > 2 ? `loses ${names[0]} and ${names.length - 1} others synergy` : `loses ${names.join(", ")} synergy`;
+  if (names.length > 2) return `loses synergy with ${names[0]} and ${names.length - 1} others`;
+  return `loses synergy with ${names.join(" and ")}`;
 }
 
 export function findRedundancy(input: RedundancyInput, opts: { perTier?: Partial<Record<SimilarTier, number>> } = {}): RedundancyHit[] {
   const caps = { ...DEFAULT_CAPS, ...opts.perTier };
-  const allowed = input.identity.length > 0 ? new Set(input.identity) : null;
+  const allowed = input.identity ? new Set(input.identity) : null;
   const byName = new Map<string, RedundancyCandidate>();
   for (const c of input.candidates) {
     if (c.card.name === input.seed.name) continue;

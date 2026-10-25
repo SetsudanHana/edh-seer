@@ -3,8 +3,8 @@
  *
  *  NOT `same-job.ts` (`sameJob`), AND WHY. That one is role-and-printed-text based, built for swap suggestions ("which card
  *  fills the slot this one fills"); this file is ability-signature based (what each ability listens for, produces, how
- *  much, how often). They answer different questions and will disagree. #1342 (deck context) must reconcile which notion
- *  it uses before showing both.
+ *  much, how often). They answer different questions and will disagree. Owner ruling 2026-10-25: #1342 uses this file
+ *  only; sameJob stays in swap suggestions and is never shown in that panel.
  *
  *  PURE, NO I/O: derived tags in, a ranked list out. build-static calls it once per page card.
  *
@@ -552,12 +552,12 @@ export interface CompareOptions {
   drainIsDamage?: boolean;
 }
 
-/** Reusable by the deck context (#1342): how `cand` differs from `seed`, null when it does not do the same job at all. */
 /** The outcome chip labels: the candidate swaps the seed's damage for life loss, or the reverse. */
 export const OUTCOME_LOSS_LABEL = "life loss, not damage";
 export const OUTCOME_DAMAGE_LABEL = "damage, not life loss";
 /** A card's colour identity as the engine reads it (empty for colourless or untagged). */
 export function identityOf(card: SimilarCard): readonly string[] { return sigOf(card).identity; }
+/** Reusable by the deck context (#1342): how `cand` differs from `seed`, null when it does not do the same job at all. */
 export function compareCards(seed: SimilarCard, cand: SimilarCard, opts: CompareOptions = {}): Comparison | null {
   const a = sigOf(seed);
   const b = sigOf(cand);
