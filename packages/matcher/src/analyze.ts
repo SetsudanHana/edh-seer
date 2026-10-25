@@ -55,7 +55,7 @@ import { deckBracket } from "./brackets.js";
 import { unmetLandConditions } from "./land-conditions.js";
 import { commanderDamage } from "./commander-damage.js";
 import { manaModel } from "./goldfish.js";
-import { deckLegality } from "./legality.js";
+import { deckLegality, upcomingCards } from "./legality.js";
 import { COMMANDER_TAX_CAVEAT, COMMANDER_TAX_PER_CAST } from "./format.js";
 import { countsAsLand } from "./typeline.js";
 import { faceKey } from "./face-key.js";
@@ -1132,6 +1132,7 @@ export function analyzeDeckStructured(
       companions: companions.map((dc) => dc.card),
       unresolvedCompanions,
     }),
+    ...(upcomingCards(resolved.map((dc) => dc.card)).length > 0 ? { upcoming: upcomingCards(resolved.map((dc) => dc.card)) } : {}),
     ...(companions.length > 0 ? { companions: companions.map((dc) => dc.card.name) } : {}),
     // CR 903.8 (roadmap J5), a CAVEAT and never a number: the tax is a function of how many times
     // the commander has DIED and nothing here simulates a game. Shipped as data because no subpath

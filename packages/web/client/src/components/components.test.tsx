@@ -2853,6 +2853,46 @@ test("the mana panel shows a policy range, its spread, and says what it is not",
   expect(container).toBeEmptyDOMElement();
 });
 
+// ONE MOUNT PER STATE: a clean deck with a spoiler once showed two "Checked against" lines.
+test("the report mounts the legality panel once, with the unreleased line once", () => {
+  const up = [{ name: "Captain Kirk, Boldly Going", date: "2026-11-13" }];
+  const clean = render(<MemoryRouter><ReportChapters data={{ ...SAMPLE, report: { ...SAMPLE.report, legality: [], upcoming: up } } as never} /></MemoryRouter>);
+  expect(screen.getAllByText(/Checked against Commander.s deck rules/)).toHaveLength(1);
+  expect(screen.getAllByText(/Not yet released:/)).toHaveLength(1);
+  clean.unmount();
+  render(<MemoryRouter><ReportChapters data={{ ...SAMPLE, report: { ...SAMPLE.report, legality: [{ rule: "size", detail: "34 cards, and a Commander deck is exactly 100", cards: [] }], upcoming: up } } as never} /></MemoryRouter>);
+  expect(screen.getByText(/34 cards/)).toBeInTheDocument();
+  expect(screen.queryByText(/Checked against Commander.s deck rules/)).toBeNull();
+  expect(screen.getAllByText(/Not yet released:/)).toHaveLength(1);
+});
+
+// OWNER 2026-10-25: a spoiler card is previewed; the panel says so quietly and it is no violation.
+test("the legality panel lists unreleased cards as information", () => {
+  const up = [{ name: "Captain Kirk, Boldly Going", date: "2026-11-13" }];
+  const clean = render(<LegalityPanel legality={[]} upcoming={up} />);
+  expect(screen.getByText(/Not yet released:/)).toBeInTheDocument();
+  expect(screen.getByText(/Captain Kirk, Boldly Going/)).toBeInTheDocument();
+  expect(screen.getByText(/13 Nov 2026/)).toBeInTheDocument();
+  expect(screen.getByText(/Checked against Commander.s deck rules/)).toBeInTheDocument();
+  clean.unmount();
+  const broken = render(<LegalityPanel legality={[{ rule: "size", detail: "34 cards", cards: [] }]} upcoming={up} />);
+  expect(screen.getByText(/34 cards/)).toBeInTheDocument();
+  expect(screen.getByText(/Not yet released:/)).toBeInTheDocument();
+  broken.unmount();
+  const none = render(<LegalityPanel legality={[]} />);
+  expect(screen.queryByText(/Not yet released/)).toBeNull();
+  none.unmount();
+});
+
+test("the legality panel splits unreleased from released-but-not-yet-legal cards by the browser's date", () => {
+  vi.useFakeTimers({ toFake: ["Date"], now: new Date(2026, 10, 20, 12) });
+  try {
+    render(<LegalityPanel legality={[]} upcoming={[{ name: "Captain Kirk, Boldly Going", date: "2026-11-13" }, { name: "Mr. Spock", date: "2026-12-01" }]} />);
+    expect(screen.getByText(/Not yet released:/).textContent).toMatch(/Mr\. Spock \(1 Dec 2026\)/);
+    expect(screen.getByText(/Released, not yet legal in our card data:/).textContent).toMatch(/Captain Kirk, Boldly Going \(13 Nov 2026\)/);
+  } finally { vi.useRealTimers(); }
+});
+
 // J4 + J12's pairing rule, wired to the web 2026-08-25. THE COPY IS THE ASSERTION, not just the
 // findings: this panel sits above two real scores out of five, and a list of complaints with no
 // caveat reads as a verdict. Silence must mean "nothing was FOUND", never "the deck is legal".

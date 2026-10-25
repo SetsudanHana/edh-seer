@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
-import { choosesColour, deckLegality } from "./legality.js";
+import { choosesColour, deckLegality, upcomingCards } from "./legality.js";
 import { companionFindings } from "./deck-rules.js";
 import { commanderDamage } from "./commander-damage.js";
 
@@ -400,4 +400,15 @@ test("companions read the FRONT face: a Sorcery // Land modal DFC is a nonland c
   const mdfc = card("Shatterskull Smashing // Shatterskull, the Hammer Pass", "Sorcery // Land", { layout: "modal_dfc", manaValue: 2 });
   const out = companionFindings(keruga, { cards: [mdfc, ...filler(3)], commanders: [] } as never);
   expect(out.map((f) => f.cards)).toEqual([[mdfc.name]]);
+});
+
+// OWNER 2026-10-25: an unreleased spoiler card is previewed. It reads commander-legal (task 1), so no
+// not-legal finding; the report lists it separately, as information and never a rule failure.
+test("an upcoming card is no violation and is listed with its date; a real not_legal card is still flagged", () => {
+  const spoiler = card("Captain Kirk, Boldly Going", "Legendary Creature — Human", { colorIdentity: ["R"], commanderLegality: "legal", upcoming: "2026-11-13" } as Partial<Card>);
+  const bad = card("Time Flamingo", "Creature — Bird", { commanderLegality: "not_legal" } as Partial<Card>);
+  expect(deckLegality({ cards: [spoiler, ...filler(99)], commanders: [spoiler] })).toEqual([]);
+  expect(upcomingCards([spoiler, spoiler, ...filler(3)])).toEqual([{ name: "Captain Kirk, Boldly Going", date: "2026-11-13" }]);
+  expect(upcomingCards(filler(3))).toEqual([]);
+  expect(deckLegality({ cards: [cmd, bad, ...filler(98)], commanders: [cmd] }).map((f) => f.rule)).toEqual(["not-legal"]);
 });

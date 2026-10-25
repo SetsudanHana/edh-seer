@@ -9,6 +9,7 @@ import { PageFoot } from "./PageFoot.js";
 import { PeekContext, usePeekState } from "./peek.js";
 import { FaceContext } from "./face.js";
 import { CardSymbol } from "./CardSymbol.js";
+import { localToday, upcomingLine } from "../lib/release-date.js";
 import { KeywordRow } from "./KeywordRow.js";
 import { TypeLine } from "./TypeLine.js";
 import { useState } from "react";
@@ -84,6 +85,8 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
             {page.manaCost && <span className="text-2xl sm:text-3xl"><ManaSymbols cost={page.manaCost} /></span>}
           </h1>
           <p className="text-(--muted)"><TypeLine line={page.typeLine} /></p>
+          {/* AN UNRELEASED SPOILER SAYS SO (owner 2026-10-25): words carry it, no badge. */}
+          {page.upcoming && <p className="text-sm text-(--muted)">{upcomingLine(page.upcoming, localToday())}</p>}
           {/* THE KEYWORDS THE CARD PRINTS, as their own row rather than marked up inside the
             * reading below -- a printed line is prose and keeps its words (owner, 2026-09-20). */}
           <KeywordRow keywords={page.keywords} />

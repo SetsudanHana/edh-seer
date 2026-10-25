@@ -535,6 +535,9 @@ export interface DeckReport {
    *  found, never "the deck is legal": four rules are checked and the format has more. Defined in
    *  `matcher/src/legality.ts`; feeds no score. */
   legality?: { rule: string; detail: string; cards: string[] }[];
+  /** Unreleased spoiler cards in the deck with their release date (YYYY-MM-DD), owner 2026-10-25.
+   *  Information beside `legality`, never a rule failure; absent when there are none. */
+  upcoming?: { name: string; date: string }[];
   /** Mana availability from a seeded goldfish simulation (roadmap I11's report wiring).
    *
    *  AN INTERVAL AND NEVER A POINT — the model's own falsifier fired, so what ships is the pair of

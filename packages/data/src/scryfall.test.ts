@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { normalizeScryfallCard, NON_GAMEPLAY_LAYOUTS } from "./scryfall.js";
 
 test("normalizes a standard card", () => {
@@ -265,4 +265,50 @@ test("carries a planeswalker's starting loyalty, on the card and on each face (o
   expect("loyalty" in dfc).toBe(false);
   expect("loyalty" in dfc.faces![0]!).toBe(false);
   expect(dfc.faces![1]!.loyalty).toBe("5");
+});
+
+describe("upcoming (unreleased spoiler cards, owner 2026-10-25)", () => {
+  const NL = { commander: "not_legal", modern: "not_legal" };
+  const base = {
+    oracle_id: "up", name: "Spoiler", type_line: "Creature", legalities: NL,
+    released_at: "2026-11-13", set_type: "commander", games: ["paper", "mtgo"],
+  };
+  const TODAY = "2026-10-25";
+  test("a future, all-not_legal, non-funny paper card is upcoming with its date", () => {
+    expect(normalizeScryfallCard(base, { today: TODAY })!.upcoming).toBe("2026-11-13");
+  });
+  test("funny set, arena-only, released, or any legal format: not upcoming", () => {
+    const up = (o: object) => normalizeScryfallCard({ ...base, ...o }, { today: TODAY })!.upcoming;
+    expect(up({ set_type: "funny" })).toBeUndefined();
+    expect(up({ games: ["arena"] })).toBeUndefined();
+    expect(up({ games: undefined })).toBeUndefined();
+    expect(up({ released_at: "2025-01-01" })).toBeUndefined();
+    expect(up({ legalities: { ...NL, modern: "legal" } })).toBeUndefined();
+    expect(up({ legalities: undefined })).toBeUndefined();
+    expect(up({ set_type: "token" })).toBeUndefined();
+    expect(up({ set_type: "memorabilia" })).toBeUndefined();
+  });
+  test("grace is sticky: only a card already stamped keeps `upcoming` after its release date", () => {
+    const up = (today: string, wasUpcoming: boolean, o: object = {}) =>
+      normalizeScryfallCard({ ...base, ...o }, { today, wasUpcoming })!.upcoming;
+    // (a) released 6 days ago, never stamped (Mystery Booster playtest cards): unstamped.
+    expect(up("2026-11-19", false)).toBeUndefined();
+    // (b) same, previously stamped: kept, through day 30.
+    expect(up("2026-11-19", true)).toBe("2026-11-13");
+    expect(up("2026-12-13", true)).toBe("2026-11-13");
+    // (c) a legality now legal: cleared.
+    expect(up("2026-11-19", true, { legalities: { ...NL, commander: "legal" } })).toBeUndefined();
+    // (d) 31 days after: cleared.
+    expect(up("2026-12-14", true)).toBeUndefined();
+    // (e) future release, never stamped: stamped.
+    expect(up("2026-10-25", false)).toBe("2026-11-13");
+  });
+  test("cards that are never deck cards are not upcoming, by front-face type line", () => {
+    const up = (type_line: string) => normalizeScryfallCard({ ...base, type_line }, { today: TODAY })!.upcoming;
+    for (const t of ["Plane — Dominaria", "Phenomenon", "Scheme", "Vanguard", "Dungeon", "Conspiracy", "Artifact — Attraction", "Artifact — Contraption", "Token Enchantment Creature — Spirit"]) {
+      expect(up(t), t).toBeUndefined();
+    }
+    expect(up("Legendary Creature — Human // Instant")).toBe("2026-11-13");
+    expect(up("Creature — Elf // Plane — Foo")).toBe("2026-11-13");
+  });
 });

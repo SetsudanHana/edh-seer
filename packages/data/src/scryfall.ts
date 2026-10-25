@@ -44,6 +44,10 @@ export interface ScryfallCard {
   produced_mana?: string[];
   legalities?: Record<string, string>;
   released_at?: string;
+  /** The set's kind ("commander", "funny", ...). "funny" marks un-cards, which are `not_legal` everywhere for good. */
+  set_type?: string;
+  /** Where this printing is played: "paper", "arena", "mtgo". */
+  games?: string[];
   game_changer?: boolean;
   reserved?: boolean;
   all_parts?: Array<{ id?: string; component?: string; name?: string; type_line?: string }>;
@@ -77,6 +81,8 @@ export interface NormalizedCard {
   layout?: string;
   legalities?: Record<string, string>;
   releasedAt?: string;
+  /** UNRELEASED SPOILER (owner 2026-10-25): the release date (YYYY-MM-DD) of a card Scryfall already lists but marks `not_legal` in every format until it is out. See `upcomingDate`. */
+  upcoming?: string;
   gameChanger?: boolean;
   reserved?: boolean;
   allParts?: RelatedPart[];
@@ -97,7 +103,60 @@ export const NON_GAMEPLAY_LAYOUTS: ReadonlySet<string> = new Set([
   "reversible_card",
 ]);
 
-export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null {
+const UPCOMING_GRACE_DAYS = 30;
+
+/** YYYY-MM-DD plus `days`, in UTC (no local-time drift). */
+function shiftDays(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y!, m! - 1, d! + days)).toISOString().slice(0, 10);
+}
+
+/** Set kinds whose cards are never deck cards: un-cards ("funny"), tokens, memorabilia. */
+const NOT_DECK_SET_TYPES: ReadonlySet<string> = new Set(["funny", "token", "memorabilia"]);
+
+/** Front-face type lines of cards that are `not_legal` for good and never in a deck (Attractions:
+ *  owner 2026-09-27). CEILING: a denylist, so a future non-deck supertype would be stamped
+ *  "upcoming" until added here. */
+const NOT_DECK_TYPE_LINE = /\b(?:Plane|Phenomenon|Scheme|Vanguard|Dungeon|Conspiracy|Attraction|Contraption|Token)\b/;
+
+/** THE RELEASE DATE OF AN UNRELEASED SPOILER CARD, or undefined for anything else. Scryfall marks a
+ *  spoiled card `not_legal` in EVERY format until release, which is indistinguishable by legality
+ *  alone from a funny un-card (`set_type` "funny") or a digital-only card (no "paper" in `games`);
+ *  both stay out. `today` is passed in (YYYY-MM-DD, UTC) so this stays pure. A new stamp needs a future date; an existing one holds until Scryfall flips
+ *  a legality (the next ingest then drops it and legality comes from Scryfall) or the grace below runs out. */
+export function upcomingDate(raw: ScryfallCard, today: string, wasUpcoming = false): string | undefined {
+  const date = raw.released_at;
+  if (date === undefined) return undefined;
+  // A NEW STAMP NEEDS A FUTURE DATE. A card released into a set Scryfall never makes legal (the
+  // Mystery Booster playtest cards, 60 of them, all not_legal, paper) must not be stamped.
+  // CEILING: 30 days of STICKY grace after release. Scryfall flips legality some time after a set is
+  // out, and an ingest in that gap would otherwise read a spoiler as not_legal (flagged illegal,
+  // page gone) until the next one. So a card that ALREADY carried the stamp (`wasUpcoming`, read
+  // from the stored docs) keeps it up to 30 days past release; a flip clears it sooner (any
+  // non-not_legal legality). Thirty is a guess at "a flip never takes longer".
+  if (date <= today) {
+    if (!wasUpcoming || date < shiftDays(today, -UPCOMING_GRACE_DAYS)) return undefined;
+  }
+  const legal = Object.values(raw.legalities ?? {});
+  if (legal.length === 0 || legal.some((v) => v !== "not_legal")) return undefined;
+  if (raw.set_type !== undefined && NOT_DECK_SET_TYPES.has(raw.set_type)) return undefined;
+  const front = (raw.type_line ?? "").split(" // ")[0]!;
+  if (NOT_DECK_TYPE_LINE.test(front)) return undefined;
+  if (!raw.games?.includes("paper")) return undefined;
+  return date;
+}
+
+export interface NormalizeOptions {
+  /** The ingest date, YYYY-MM-DD. Defaults to the current UTC date; tests pass one. */
+  today?: string;
+  /** The stored doc for this card already carries `upcoming`: only such a card keeps it past its release date. */
+  wasUpcoming?: boolean;
+}
+
+export function normalizeScryfallCard(
+  raw: ScryfallCard,
+  { today = new Date().toISOString().slice(0, 10), wasUpcoming = false }: NormalizeOptions = {},
+): NormalizedCard | null {
   if (!raw.oracle_id || !raw.name || !raw.type_line) return null;
   if (raw.layout !== undefined && NON_GAMEPLAY_LAYOUTS.has(raw.layout)) return null;
 
@@ -156,6 +215,8 @@ export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null 
     ...(f.image_uris?.art_crop !== undefined ? { artCrop: f.image_uris.art_crop } : {}),
   }));
 
+  const upcoming = upcomingDate(raw, today, wasUpcoming);
+
   return {
     oracleId: raw.oracle_id,
     card,
@@ -166,6 +227,7 @@ export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null 
     ...(raw.layout !== undefined ? { layout: raw.layout } : {}),
     ...(raw.legalities !== undefined ? { legalities: raw.legalities } : {}),
     ...(raw.released_at !== undefined ? { releasedAt: raw.released_at } : {}),
+    ...(upcoming !== undefined ? { upcoming } : {}),
     ...(raw.game_changer !== undefined ? { gameChanger: raw.game_changer } : {}),
     ...(raw.reserved !== undefined ? { reserved: raw.reserved } : {}),
     ...(allParts !== undefined && allParts.length > 0 ? { allParts } : {}),

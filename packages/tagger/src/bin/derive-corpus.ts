@@ -5,6 +5,7 @@
  *  token. If this ever needs the network, the layering has been broken.
  *
  *  Usage: tsx src/bin/derive-corpus.ts [--force] */
+import { deriveScopeFilter } from "../derive-scope.js";
 import { connect, loadConfig } from "@edh-seer/data";
 import { deriveInputOf } from "../derive-input.js";
 import { createPool } from "@edh-seer/data/parallel";
@@ -40,12 +41,13 @@ let written = 0, skipped = 0, empty = 0, tokenWritten = 0, grammarSwitched = 0;
 // erratum). It derives from its printed text here, and the stored loop below leaves it alone. Same
 // scope as `normalize-corpus --commander-legal`. A card the grammar does not read stays as before:
 // derived from its stored answer if it has one, absent until bought if not.
+// SCOPE (owner 2026-10-25): `deriveScopeFilter` also takes UPCOMING spoiler cards, which Scryfall marks not_legal until release. Only this bin widens; see derive-scope.ts for why normalize-corpus and the ratchet bins do not.
 const answeredHash = new Map(clauseDocs.filter((d) => !(d as { isToken?: boolean }).isToken).map((d) => [d.oracleId, d.segmentHash] as const));
 const grammarOnly = new Set<string>();
 let grammarOnlyWritten = 0;
 // A loyalty-cost mana line whose card document gave no starting loyalty is a source silently dropped downstream (owner 2026-10-13: loyalty comes from ingest): counted and named.
 const unpricedLoyalty: string[] = [];
-for await (const card of store.cards.find({ "legalities.commander": "legal" } as never).project({ _id: 1, oracleText: 1, keywords: 1, typeLine: 1 })) {
+for await (const card of store.cards.find(deriveScopeFilter() as never).project({ _id: 1, oracleText: 1, keywords: 1, typeLine: 1 })) {
   const c = card as unknown as { _id: string; oracleText?: string; keywords?: string[]; typeLine?: string };
   const hash = segmentHash(c.oracleText ?? "", c.typeLine ?? "", c.keywords ?? []);
   if (answeredHash.get(c._id) === hash) continue;

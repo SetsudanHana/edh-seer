@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { toCardDoc, docToCard, isStickerCard } from "./docs.js";
+import { toCardDoc, docToCard, isStickerCard, commanderLegalityOf } from "./docs.js";
 import type { NormalizedCard } from "./scryfall.js";
 import { normalizeScryfallCard } from "./scryfall.js";
 
@@ -249,4 +249,27 @@ test("isStickerCard reads a sticker sheet by its Stickers type line, and a stick
   expect(isStickerCard({ typeLine: "Artifact", oracleText: "{T}: Add {C}." })).toBe(false);
   expect(isStickerCard({ typeLine: "Artifact", oracleText: "" })).toBe(false);
   expect(isStickerCard({ oracleText: "Draw a card." })).toBe(false);
+});
+
+test("upcoming flows NormalizedCard -> CardDoc -> Card, absent otherwise", () => {
+  const n = { oracleId: "u", card: { name: "S", typeLine: "Creature", oracleText: "", keywords: [], colors: [], manaValue: 1, power: null, toughness: null }, faceNames: [] as string[], upcoming: "2026-11-13" };
+  const doc = toCardDoc(n);
+  expect(doc.upcoming).toBe("2026-11-13");
+  expect(docToCard(doc).upcoming).toBe("2026-11-13");
+  expect("upcoming" in toCardDoc({ ...n, upcoming: undefined })).toBe(false);
+  expect("upcoming" in docToCard(toCardDoc({ ...n, upcoming: undefined }))).toBe(false);
+});
+
+test("docToCard reads an upcoming card as commander-legal and keeps the date", () => {
+  const doc = { ...toCardDoc(treasureMaker), legalities: { commander: "not_legal" }, upcoming: "2026-11-13" };
+  const c = docToCard(doc);
+  expect(c.commanderLegality).toBe("legal");
+  expect(c.upcoming).toBe("2026-11-13");
+});
+
+test("commanderLegalityOf: upcoming reads legal, otherwise Scryfall's value", () => {
+  expect(commanderLegalityOf({ legalities: { commander: "not_legal" }, upcoming: "2026-11-13" })).toBe("legal");
+  expect(commanderLegalityOf({ legalities: { commander: "banned" } })).toBe("banned");
+  expect(commanderLegalityOf({ legalities: { commander: "legal" } })).toBe("legal");
+  expect(commanderLegalityOf({})).toBeUndefined();
 });

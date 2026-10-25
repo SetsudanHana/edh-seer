@@ -22,6 +22,8 @@ export interface CardDoc {
   /** Kept as a property, not edges: 24 formats across ~35k cards is ~835k edges for one fact. */
   legalities?: Record<string, string>;
   releasedAt?: string;
+  /** Release date of an UNRELEASED SPOILER card (owner 2026-10-25); absent once released. Ingest replaces the whole doc, so the next ingest after release clears it. */
+  upcoming?: string;
   gameChanger?: boolean;
   reserved?: boolean;
   allParts?: RelatedPart[];
@@ -94,6 +96,7 @@ export function toCardDoc(n: NormalizedCard): CardDoc {
     ...(n.layout !== undefined ? { layout: n.layout } : {}),
     ...(n.legalities !== undefined ? { legalities: n.legalities } : {}),
     ...(n.releasedAt !== undefined ? { releasedAt: n.releasedAt } : {}),
+    ...(n.upcoming !== undefined ? { upcoming: n.upcoming } : {}),
     ...(n.gameChanger !== undefined ? { gameChanger: n.gameChanger } : {}),
     ...(n.reserved !== undefined ? { reserved: n.reserved } : {}),
     ...(n.allParts !== undefined ? { allParts: n.allParts } : {}),
@@ -101,6 +104,15 @@ export function toCardDoc(n: NormalizedCard): CardDoc {
     ...(n.artCrop !== undefined ? { artCrop: n.artCrop } : {}),
     ...(n.loyalty !== undefined ? { loyalty: n.loyalty } : {}),
   };
+}
+
+/** THE COMMANDER LEGALITY EVERY CONSUMER SHOULD READ. An unreleased spoiler card (`upcoming`) is
+ *  `not_legal` in Scryfall's data only because it is not out yet, so it reads "legal" here (owner
+ *  2026-10-25) and is marked "not yet released" instead of illegal. Anything else is Scryfall's own
+ *  value. The first ingest after Scryfall flips a legality (or 30 days past release, for a card that was already stamped) drops `upcoming`, and legality then comes from Scryfall.
+ *  Pure and Node-free, so the browser and the Pages functions can import it. */
+export function commanderLegalityOf(card: { legalities?: Record<string, string>; upcoming?: string }): string | undefined {
+  return card.upcoming !== undefined ? "legal" : card.legalities?.commander;
 }
 
 export function docToCard(d: CardDoc): Card {
@@ -163,7 +175,9 @@ export function docToCard(d: CardDoc): Card {
     // FIFTH, and the pattern holds: `legalities` has been on every `CardDoc` (and every static
     // shard) since ingest and never reached `Card`. The banned-list check is its first reader, and
     // it takes only the Commander entry.
-    ...(d.legalities?.commander !== undefined ? { commanderLegality: d.legalities.commander } : {}),
+    // `commanderLegalityOf`, not the raw value: a spoiler card is not_legal only until release, and every reader of `commanderLegality` (playable, deck rules, legality report) must see it as legal. `upcoming` rides alongside so the report can still say "not yet released".
+    ...(commanderLegalityOf(d) !== undefined ? { commanderLegality: commanderLegalityOf(d)! } : {}),
+    ...(d.upcoming !== undefined ? { upcoming: d.upcoming } : {}),
     // FOURTH field found on `CardDoc` and dropped here, after `producedMana`, `allParts` and
     // `gameChanger`. A FACE IS A NODE (2026-08-27) and the graph cannot count faces without it.
     ...(d.faces !== undefined ? { faces: d.faces } : {}),
