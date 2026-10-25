@@ -15,6 +15,8 @@ import { decodeIndex, deckCards } from "./suggest-static.js";
 import { faceDeckCards } from "./faces.js";
 import { directedReasons } from "./edges.js";
 import { loadHierarchy } from "./hierarchy.js";
+import { eventKey, splitKey } from "./partners-core.js";
+import type { GameEvent } from "@edh-seer/tagger";
 import { findRedundancy, type RedundancyCandidate, type RedundancyHit } from "./redundancy.js";
 import { compareCards, seedBuckets, type SimilarCard, type SimilarTier } from "./similar.js";
 import { isUnjudgedFact, unpackFact } from "./member-facts.js";
@@ -23,6 +25,8 @@ import type { DeckCard } from "./types.js";
 const DEFAULT_POOL_CAP = 150;
 /** A member with no judged fact sorts after any member whose facts we can compare. */
 const UNKNOWN_DISTANCE = 6;
+/** Added to a member that does not ask for the seed's trigger event: larger than any fact distance, so trigger match ranks first. */
+const TRIGGER_MISS = 100;
 
 export interface RedundancyStats { buckets: string[]; bucketSizes: number[]; poolSize: number; fetched: number }
 export interface RedundancyResult { hits: RedundancyHit[]; poolSize: number; seedPartners: string[]; amplifiers: string[]; stats: RedundancyStats }
@@ -114,19 +118,32 @@ export async function redundancyFor(input: {
   const allowed = new Set(input.commanderColorIdentity);
   const deckNames = new Set(physical);
   const best = new Map<number, number>();
-  for (const b of seedBuckets(seedCard, { drainIsDamage: true })) {
-    const m = await lookup.eventMembers(b.key);
+  // SAME TRIGGER FIRST: in a 3,000-card output bucket hundreds tie on kind/repeats/size, and the cap would fall in name order. A member that also
+  // ASKS for the event the seed triggers on is "same trigger, same result" by construction (Warstorm Surge, Terror of the Peaks for Impact Tremors).
+  // The trigger keys are `demandKeysOf`'s own reading (a card's own `self` trigger is no demand); the askers are the `c` list of that key's shard.
+  const triggerKeys = [...new Set((seedDc.tags.abilities ?? []).flatMap((a) =>
+    !a.trigger || a.trigger.subject?.self === true ? []
+      : a.trigger.verbs.flatMap((v) => splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)))))];
+  const buckets = seedBuckets(seedCard, { drainIsDamage: true });
+  const [outputs, triggers] = await Promise.all([
+    Promise.all(buckets.map((b) => lookup.eventMembers(b.key))),
+    Promise.all(triggerKeys.map((k) => lookup.eventMembers(k))),
+  ]);
+  const asks = new Set<number>();
+  for (const t of triggers) for (const pos of t?.c ?? []) asks.add(pos);
+  buckets.forEach((b, bi) => {
+    const m = outputs[bi];
     stats.buckets.push(b.key);
     stats.bucketSizes.push(m?.p.length ?? 0);
-    if (!m) continue;
+    if (!m) return;
     m.p.forEach((pos, i) => {
       const c = index[pos];
       if (!c || c.isLand || deckNames.has(c.name) || !c.identity.every((x) => allowed.has(x))) return;
       const facts = m.pf?.[i] ?? [];
-      const d = (facts.length === 0 ? UNKNOWN_DISTANCE : Math.min(...facts.map((n) => factDistance(n, b.facts)))) + (b.swapped ? 1 : 0);
+      const d = (facts.length === 0 ? UNKNOWN_DISTANCE : Math.min(...facts.map((n) => factDistance(n, b.facts)))) + (b.swapped ? 1 : 0) + (asks.has(pos) ? 0 : TRIGGER_MISS);
       if (d < (best.get(pos) ?? Infinity)) best.set(pos, d);
     });
-  }
+  });
   const offDeck = new Map<string, number>();
   [...best].sort((x, y) => x[1] - y[1] || index[x[0]]!.name.localeCompare(index[y[0]]!.name, "en"))
     .slice(0, input.poolCap ?? DEFAULT_POOL_CAP).forEach(([pos]) => offDeck.set(index[pos]!.name, pos));

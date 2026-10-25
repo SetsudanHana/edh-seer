@@ -6,6 +6,7 @@ import { shardOf } from "./bin/build-static-core.js";
 import { partnerShardOf } from "./partner-shard.js";
 import { eventShardOf } from "./bin/events-index-core.js";
 import { packFact } from "./member-facts.js";
+import { eventKey, splitKey } from "./partners-core.js";
 import similarFixtures from "./similar.fixtures.json" with { type: "json" };
 import extraFixtures from "./redundancy.fixtures.json" with { type: "json" };
 import { redundancyFor } from "./redundancy-static.js";
@@ -201,5 +202,19 @@ describe("redundancyFor", () => {
     expect(r.hits.find((h) => h.name === "Warstorm Surge")!.tier).toBe("close");
     const none = await redundancyFor({ report: deck(false), seed: "Impact Tremors", commanderColorIdentity: ["R", "B", "W"], baseUrl: "/static", fetchImpl: fetchOf(staticFiles({ events })), perTier: { close: 0 } });
     expect(none.hits.some((h) => h.tier === "close")).toBe(false);
+  });
+
+  test("a member that asks for the seed's trigger outranks name-order ties when the pool is capped", async () => {
+    const t = (FX["Impact Tremors"]!.tags.abilities[0] as unknown as { trigger: { verbs: string[]; subject: never } }).trigger;
+    const triggerKey = splitKey(eventKey({ verb: t.verbs[0], subject: t.subject } as never))[0]!;
+    // Bolt sorts first by name and ties Witty on pf; only Witty (last by name) asks for "a creature enters".
+    const events = {
+      "non-combat-damage|-|-|-": { p: [5, 1], pf: [[PING], [PING]] },
+      [triggerKey]: { p: [], c: [1] },
+    };
+    const r = await redundancyFor({ report: deck(false), seed: "Impact Tremors", commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(staticFiles({ events })), poolCap: 1 });
+    expect(r.stats.fetched).toBe(1);
+    expect(r.hits.map((h) => h.name)).toContain("Witty Roastmaster");
+    expect(r.hits.map((h) => h.name)).not.toContain("Lightning Bolt");
   });
 });
