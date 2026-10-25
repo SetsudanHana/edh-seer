@@ -190,5 +190,221 @@
    "segmentHash": "23ba3d198a3be770b28abfb177f74b7cf054b322ef51b027a8e274c9173c7994",
    "clauseSource": "grammar"
   }
+ },
+ "Goblin Instigator": {
+  "card": {
+   "name": "Goblin Instigator",
+   "typeLine": "Creature — Goblin Rogue",
+   "oracleText": "When this creature enters, create a 1/1 red Goblin creature token.",
+   "colorIdentity": [
+    "R"
+   ]
+  },
+  "tags": {
+   "oracleId": "8b022754-6d16-470e-b754-4df6e4f4709e",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "goblin",
+     "rogue"
+    ],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 2,
+    "power": "1",
+    "toughness": "1",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "token-generation",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "creature",
+       "subtype": "goblin",
+       "colors": [
+        "R"
+       ],
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "create-token",
+       "subject": {
+        "control": "you",
+        "token": true,
+        "colors": [
+         "R"
+        ],
+        "type": "creature",
+        "subtype": "goblin",
+        "stats": [
+         {
+          "metric": "power",
+          "op": "eq",
+          "value": 1
+         },
+         {
+          "metric": "toughness",
+          "op": "eq",
+          "value": 1
+         }
+        ]
+       }
+      },
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": true,
+        "colors": [
+         "R"
+        ],
+        "type": "creature",
+        "subtype": "goblin",
+        "stats": [
+         {
+          "metric": "power",
+          "op": "eq",
+          "value": 1
+         },
+         {
+          "metric": "toughness",
+          "op": "eq",
+          "value": 1
+         }
+        ]
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "dd9136846586ebb00b6b3adafa928d43046e92bb4a9b519dfbe2d9d084bd826f",
+   "clauseSource": "grammar"
+  }
+ },
+ "Warstorm Surge": {
+  "card": {
+   "name": "Warstorm Surge",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever a creature you control enters, it deals damage equal to its power to any target.",
+   "colorIdentity": [
+    "R"
+   ]
+  },
+  "tags": {
+   "oracleId": "42fb1a1c-ab3d-4cdc-a6ff-a591f7481583",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 6,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     "amount": "its power",
+     "emits": [
+      {
+       "verb": "non-combat-damage",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "scope": "target"
+       },
+       "dealer": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable"
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 12,
+   "segmentHash": "e30b3a23ab3e0ec6d565406e189eabf0be69b078d42cf0a8e0400b6fbbee15d4",
+   "clauseSource": "grammar"
+  }
  }
 }

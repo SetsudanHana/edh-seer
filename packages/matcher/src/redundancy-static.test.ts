@@ -15,7 +15,7 @@ type Fx = { card: { name: string; typeLine: string; oracleText: string; colorIde
 const FX = { ...similarFixtures, ...extraFixtures } as unknown as Record<string, Fx>;
 
 // INDEX ORDER IS THE POSITION `pi` AND `sim` POINT AT.
-const ORDER = ["Impact Tremors", "Witty Roastmaster", "Corpse Knight", "Hordeling Outburst", "Fiery Emancipation", "Lightning Bolt", "Swords to Plowshares"];
+const ORDER = ["Impact Tremors", "Witty Roastmaster", "Corpse Knight", "Hordeling Outburst", "Fiery Emancipation", "Lightning Bolt", "Swords to Plowshares", "Goblin Instigator", "Warstorm Surge"];
 const TYPES = ["creature", "enchantment", "instant", "sorcery", "land"];
 const slugOf = (n: string) => n.toLowerCase().replace(/[^a-z]+/g, "-");
 
@@ -173,5 +173,33 @@ describe("redundancyFor", () => {
     expect(r.hits.map((h) => h.name)).not.toContain("Swords to Plowshares");
     expect(r.hits.map((h) => h.name)).not.toContain("Corpse Knight"); // W/B, outside R/B too
     expect(r.stats.fetched).toBe(2);
+  });
+
+  test("a token maker is a seed partner through its token node, and the numerator agrees (Witty Roastmaster vs Goblin Instigator)", async () => {
+    const report = {
+      cards: [cardRow("Impact Tremors"), cardRow("Goblin Instigator"), cardRow("Hordeling Outburst")],
+      tokenNodes: [{ name: "Goblin Token", hasPartner: true, madeBy: ["Goblin Instigator", "Hordeling Outburst"] }],
+      edges: [
+        // The direct reasons are baseline ("a card enters"); the report follows the token node instead.
+        edge("Goblin Instigator", "Impact Tremors", [reason("Goblin Instigator", "Impact Tremors", "creature-enters", { impliedProducer: true })]),
+        edge("Goblin Token", "Impact Tremors", [reason("Goblin Token", "Impact Tremors", "creature-enters", { impliedProducer: true, producerIsToken: true })]),
+        // The makers' own edges to the token must not link the makers to each other.
+        edge("Goblin Instigator", "Goblin Token", [reason("Goblin Instigator", "Goblin Token", "creates", { consumerIsToken: true })]),
+        edge("Hordeling Outburst", "Goblin Token", [reason("Hordeling Outburst", "Goblin Token", "creates", { consumerIsToken: true })]),
+      ],
+      buildParents: [], cutList: [],
+    } as unknown as DeckReport;
+    const r = await run(report);
+    expect(r.seedPartners).toEqual(["Goblin Instigator", "Hordeling Outburst"]);
+    expect(r.hits.find((h) => h.name === "Witty Roastmaster")!.deckChips).toContainEqual({ dim: "shared", label: "shares 2 of 2 partners" });
+  });
+
+  test("a variable-amount enters trigger (Warstorm Surge) is a close hit, and perTier passes through", async () => {
+    const VARIABLE = packFact({ kind: "triggered", repeats: "repeatable", amount: { kind: "variable" } });
+    const events = { ...EVENTS, "non-combat-damage|-|-|-": { p: [1, 5, 8], pf: [[PING], [PING], [VARIABLE]] } };
+    const r = await run(deck(false), staticFiles({ events }));
+    expect(r.hits.find((h) => h.name === "Warstorm Surge")!.tier).toBe("close");
+    const none = await redundancyFor({ report: deck(false), seed: "Impact Tremors", commanderColorIdentity: ["R", "B", "W"], baseUrl: "/static", fetchImpl: fetchOf(staticFiles({ events })), perTier: { close: 0 } });
+    expect(none.hits.some((h) => h.tier === "close")).toBe(false);
   });
 });

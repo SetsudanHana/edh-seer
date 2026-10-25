@@ -31,7 +31,7 @@ export interface DeckChip { dim: "deck" | "shared" | "amplifier"; label: string 
 export interface RedundancyHit extends SimilarHit { inDeck: boolean; sharedPartners: string[]; deckChips: DeckChip[] }
 
 const TIERS: SimilarTier[] = ["same", "close", "output", "outcome"];
-const DEFAULT_CAPS: Record<SimilarTier, number> = { same: 12, close: 12, output: 8, outcome: 8 };
+const DEFAULT_CAPS: Record<SimilarTier, number> = { same: 12, close: 24, output: 12, outcome: 8 };
 
 function amplifierLabel(names: readonly string[]): string {
   if (names.length > 2) return `loses synergy with ${names[0]} and ${names.length - 1} others`;

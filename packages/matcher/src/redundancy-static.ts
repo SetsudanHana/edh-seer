@@ -16,7 +16,7 @@ import { faceDeckCards } from "./faces.js";
 import { directedReasons } from "./edges.js";
 import { loadHierarchy } from "./hierarchy.js";
 import { findRedundancy, type RedundancyCandidate, type RedundancyHit } from "./redundancy.js";
-import { compareCards, seedBuckets, type SimilarCard } from "./similar.js";
+import { compareCards, seedBuckets, type SimilarCard, type SimilarTier } from "./similar.js";
 import { isUnjudgedFact, unpackFact } from "./member-facts.js";
 import type { DeckCard } from "./types.js";
 
@@ -45,7 +45,7 @@ function factDistance(n: number, seed: readonly SeedFact[]): number {
 
 export async function redundancyFor(input: {
   report: DeckReport; seed: string; commanderColorIdentity: string[]; baseUrl: string; fetchImpl?: typeof fetch;
-  poolCap?: number; lookup?: StaticLookup;
+  poolCap?: number; lookup?: StaticLookup; perTier?: Partial<Record<SimilarTier, number>>;
 }): Promise<RedundancyResult> {
   const { report, seed } = input;
   const stats: RedundancyStats = { buckets: [], bucketSizes: [], poolSize: 0, fetched: 0 };
@@ -63,13 +63,29 @@ export async function redundancyFor(input: {
   const raw = deckCards(lookup);
 
   // DECK PARTNERS: every deck card an edge joins to each deck card, by a reason that is not merely "a card enters". Token nodes are not in `physicalOf`.
+  // A TOKEN MAKER REACHES A PAYOFF THROUGH ITS TOKEN NODE (maker -> Goblin token -> Impact Tremors): the direct reason is `impliedProducer` and the report
+  // follows the two hops instead, so a token node's edge to a card links that card to every maker of the token. The token's own enters is implied
+  // (`producerIsToken`) but the maker authored it (`analyze.ts` `addHop`), so it counts here.
+  const makersOf = new Map((report.tokenNodes ?? []).filter((t) => !physicalOf.has(t.name))
+    .map((t) => [t.name, (t.madeBy ?? []).map((m) => physicalOf.get(m) ?? m).filter((m) => physical.includes(m))] as const));
   const partnersOf = new Map<string, Set<string>>();
-  for (const e of report.edges) {
-    const a = physicalOf.get(e.a), b = physicalOf.get(e.b);
-    if (!a || !b || a === b) continue;
-    if (e.reasons.length > 0 && e.reasons.every((r) => r.impliedProducer)) continue;
+  const link = (a: string, b: string): void => {
+    if (a === b) return;
     (partnersOf.get(a) ?? partnersOf.set(a, new Set()).get(a)!).add(b);
     (partnersOf.get(b) ?? partnersOf.set(b, new Set()).get(b)!).add(a);
+  };
+  for (const e of report.edges) {
+    const a = physicalOf.get(e.a), b = physicalOf.get(e.b);
+    if (a && b) {
+      if (e.reasons.length > 0 && !e.reasons.every((r) => r.impliedProducer)) link(a, b);
+      continue;
+    }
+    const tokenName = a ? e.b : b ? e.a : undefined, card = a ?? b;
+    const makers = tokenName === undefined ? undefined : makersOf.get(tokenName);
+    // CEILING: a card that itself makes the token is skipped on its token edge (that edge also carries the `creates` reason, which would link every
+    // maker of one token to each other); a maker that is also the token's payoff is joined only by a direct reason.
+    if (!card || !makers || makers.includes(card)) continue;
+    if (e.reasons.some((r) => !r.impliedProducer || r.producerIsToken)) for (const m of makers) link(m, card);
   }
   const seedPartners = [...(partnersOf.get(seed) ?? [])].sort();
   const seedSet = new Set(seedPartners);
@@ -160,6 +176,6 @@ export async function redundancyFor(input: {
     candidates.push({ card: c.card, inDeck: false, sharedPartners: sharedOf(c.dc) });
   }
   stats.poolSize = poolSize;
-  const hits = findRedundancy({ seed: seedCard, seedPartners, candidates, amplifiers, identity: input.commanderColorIdentity });
+  const hits = findRedundancy({ seed: seedCard, seedPartners, candidates, amplifiers, identity: input.commanderColorIdentity }, input.perTier ? { perTier: input.perTier } : {});
   return { hits, poolSize, seedPartners, amplifiers, stats };
 }
