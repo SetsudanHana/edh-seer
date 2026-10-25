@@ -23,14 +23,6 @@ const ids = new WeakMap<FindRedundancy, number>();
 let issued = 0;
 export const findKey = (f: FindRedundancy): number => ids.get(f) ?? ids.set(f, ++issued).get(f)!;
 
-/** A partner count that reads the same on EVERY row says nothing ("shares 9 of 9 partners" on each of nine rows): dropped, as `similar.ts` drops a universal chip. */
-function dropUniversal(hits: RedundancyResult["hits"]): RedundancyResult["hits"] {
-  if (hits.length < 2) return hits;
-  const first = hits[0]!.deckChips.find((c) => c.dim === "shared")?.label;
-  if (first === undefined || !hits.every((h) => h.deckChips.some((c) => c.dim === "shared" && c.label === first))) return hits;
-  return hits.map((h) => ({ ...h, deckChips: h.deckChips.filter((c) => !(c.dim === "shared" && c.label === first)) }));
-}
-
 type State = { kind: "idle" } | { kind: "loading" } | { kind: "error" } | { kind: "ready"; result: RedundancyResult };
 
 /** FIND REDUNDANCY IN THIS DECK (#1342): the cards that do this card's job, the deck's own first. Asked for, never run on open --
@@ -59,7 +51,7 @@ export function RedundancySection({ seed, find, ask = 0 }: { seed: string; find:
   useEffect(() => {
     if (ask > 0 && ask !== handled.current) {
       handled.current = ask;
-      box.current?.scrollIntoView?.({ behavior: "smooth", block: "nearest" });
+      box.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
       if (!mapOf(done, find).has(seed)) start();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -69,9 +61,9 @@ export function RedundancySection({ seed, find, ask = 0 }: { seed: string; find:
     <div ref={box} data-testid="drawer-redundancy" className="flex flex-col gap-3 border-t border-(--separator) pt-2">
       {state.kind === "ready" ? (
         <SimilarCards
-          items={dropUniversal(state.result.hits)} level={4} fold={8} id="redundancy-title" title="Redundancy in this deck"
-          titleClass="eyebrow text-(--muted)" tierClass="text-sm font-medium"
-          intro={<>These do the same job as {seed} in this deck, ranked by how many of the same deck cards they work with.</>}
+          items={state.result.hits} level={4} fold={5} deckView id="redundancy-title" title="Redundancy in this deck"
+          titleClass="t-subsection" tierClass="eyebrow text-(--muted)"
+          intro={<>Cards that do the same job as {seed} in this deck, best match first.</>}
           empty={state.result.stats?.comparable === false
             ? "This card has no effect the search can compare."
             : "No card in your colours does the same job as this one."}
