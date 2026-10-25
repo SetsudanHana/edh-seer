@@ -2853,6 +2853,19 @@ test("the mana panel shows a policy range, its spread, and says what it is not",
   expect(container).toBeEmptyDOMElement();
 });
 
+// ONE MOUNT PER STATE: a clean deck with a spoiler once showed two "Checked against" lines.
+test("the report mounts the legality panel once, with the unreleased line once", () => {
+  const up = [{ name: "Captain Kirk, Boldly Going", date: "2026-11-13" }];
+  const clean = render(<MemoryRouter><ReportChapters data={{ ...SAMPLE, report: { ...SAMPLE.report, legality: [], upcoming: up } } as never} /></MemoryRouter>);
+  expect(screen.getAllByText(/Checked against Commander.s deck rules/)).toHaveLength(1);
+  expect(screen.getAllByText(/Not yet released:/)).toHaveLength(1);
+  clean.unmount();
+  render(<MemoryRouter><ReportChapters data={{ ...SAMPLE, report: { ...SAMPLE.report, legality: [{ rule: "size", detail: "34 cards, and a Commander deck is exactly 100", cards: [] }], upcoming: up } } as never} /></MemoryRouter>);
+  expect(screen.getByText(/34 cards/)).toBeInTheDocument();
+  expect(screen.queryByText(/Checked against Commander.s deck rules/)).toBeNull();
+  expect(screen.getAllByText(/Not yet released:/)).toHaveLength(1);
+});
+
 // OWNER 2026-10-25: a spoiler card is previewed; the panel says so quietly and it is no violation.
 test("the legality panel lists unreleased cards as information", () => {
   const up = [{ name: "Captain Kirk, Boldly Going", date: "2026-11-13" }];
