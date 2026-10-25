@@ -15,7 +15,7 @@ import { decodeIndex, deckCards } from "./suggest-static.js";
 import { faceDeckCards } from "./faces.js";
 import { directedReasons } from "./edges.js";
 import { loadHierarchy } from "./hierarchy.js";
-import { eventKey, splitKey } from "./partners-core.js";
+import { eventKey, splitKey, supplyForms, type EventMembers } from "./partners-core.js";
 import type { GameEvent } from "@edh-seer/tagger";
 import { findRedundancy, type RedundancyCandidate, type RedundancyHit } from "./redundancy.js";
 import { compareCards, seedBuckets, type SimilarCard, type SimilarTier } from "./similar.js";
@@ -28,7 +28,13 @@ const UNKNOWN_DISTANCE = 6;
 /** Added to a member that does not ask for the seed's trigger event: larger than any fact distance, so trigger match ranks first. */
 const TRIGGER_MISS = 100;
 
-export interface RedundancyStats { buckets: string[]; bucketSizes: number[]; poolSize: number; fetched: number }
+export interface RedundancyStats {
+  buckets: string[]; bucketSizes: number[]; poolSize: number; fetched: number;
+  /** A seed key with no shard entry that was answered from a coarser key. */
+  fallbacks: { key: string; usedKey: string }[];
+  /** Seed keys with no entry even after falling back. */
+  missing: string[];
+}
 export interface RedundancyResult { hits: RedundancyHit[]; poolSize: number; seedPartners: string[]; amplifiers: string[]; stats: RedundancyStats }
 
 type SeedFact = ReturnType<typeof seedBuckets>[number]["facts"][number];
@@ -52,7 +58,7 @@ export async function redundancyFor(input: {
   poolCap?: number; lookup?: StaticLookup; perTier?: Partial<Record<SimilarTier, number>>;
 }): Promise<RedundancyResult> {
   const { report, seed } = input;
-  const stats: RedundancyStats = { buckets: [], bucketSizes: [], poolSize: 0, fetched: 0 };
+  const stats: RedundancyStats = { buckets: [], bucketSizes: [], poolSize: 0, fetched: 0, fallbacks: [], missing: [] };
   const empty: RedundancyResult = { hits: [], poolSize: 0, seedPartners: [], amplifiers: [], stats };
   const lookup = input.lookup ?? new StaticLookup(input.baseUrl, input.fetchImpl);
 
@@ -61,6 +67,7 @@ export async function redundancyFor(input: {
   for (const c of report.cards) if (!c.isCompanion) { const p = c.cardName ?? c.name; physicalOf.set(c.name, p); physicalOf.set(p, p); }
   const physical = [...new Set(physicalOf.values())];
   if (!physical.includes(seed)) return empty;
+  // The DECK's own prefetch may throw: with no deck there is nothing to show. Every later read is per card or per shard and drops only that.
   await lookup.prefetch(physical.map(normalizeName));
   const index = await decodeIndex(lookup);
   const atName = new Map(index.map((c) => [c.name, c] as const));
@@ -125,17 +132,35 @@ export async function redundancyFor(input: {
     !a.trigger || a.trigger.subject?.self === true ? []
       : a.trigger.verbs.flatMap((v) => splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)))))];
   const buckets = seedBuckets(seedCard, { drainIsDamage: true });
+  // ONE UNREADABLE SHARD DROPS THAT BUCKET, not the result.
+  const members = (key: string): Promise<EventMembers | null> => lookup.eventMembers(key).catch(() => null);
+  // THE SHIPPED EVENTS INDEX IS KEYED BY DEMANDED EVENTS ONLY (`supplyBuckets`), so a seed's exact output key is often absent (measured 2026-10-25:
+  // 35% of seed buckets, 17% of seeds with none). Fall back to the nearest coarser key of the same verb that exists, most specific first
+  // (`supplyForms` is the widening the index is built from). CEILING: the fallback bucket does not discriminate the subtype or token, so the pool cap
+  // can cut exact matches; `compareCards` still gates on the exact key. A supply-keyed index would fix it, which is new static data (out of scope, owner 2026-10-25).
+  const specificity = (k: string): number => k.split("|").slice(1).filter((x) => x !== "-").length;
+  const resolveBucket = async (key: string): Promise<{ m: EventMembers | null; used: string }> => {
+    const exact = await members(key);
+    if (exact) return { m: exact, used: key };
+    const verb = key.split("|")[0];
+    for (const f of [...supplyForms(key)].filter((f) => f !== key && f.split("|")[0] === verb).sort((x, y) => specificity(y) - specificity(x))) {
+      const m = await members(f);
+      if (m) return { m, used: f };
+    }
+    return { m: null, used: key };
+  };
   const [outputs, triggers] = await Promise.all([
-    Promise.all(buckets.map((b) => lookup.eventMembers(b.key))),
-    Promise.all(triggerKeys.map((k) => lookup.eventMembers(k))),
+    Promise.all(buckets.map((b) => resolveBucket(b.key))),
+    Promise.all(triggerKeys.map((k) => members(k))),
   ]);
   const asks = new Set<number>();
   for (const t of triggers) for (const pos of t?.c ?? []) asks.add(pos);
   buckets.forEach((b, bi) => {
-    const m = outputs[bi];
+    const { m, used } = outputs[bi]!;
     stats.buckets.push(b.key);
     stats.bucketSizes.push(m?.p.length ?? 0);
-    if (!m) return;
+    if (!m) { stats.missing.push(b.key); return; }
+    if (used !== b.key) stats.fallbacks.push({ key: b.key, usedKey: used });
     m.p.forEach((pos, i) => {
       const c = index[pos];
       if (!c || c.isLand || deckNames.has(c.name) || !c.identity.every((x) => allowed.has(x))) return;
@@ -151,20 +176,25 @@ export async function redundancyFor(input: {
   // THE SEED'S OWN PRECOMPUTED SIMILAR ROWS. Absent record or rows = nothing.
   const seedEntry = atName.get(seed);
   if (seedEntry) {
-    const rec = await lookup.cardPage(seedEntry.slug).catch(() => null);
-    const similar = rec ? (await lookup.similarOf(rec)).similar : [];
-    for (const s of similar) {
-      const at = atName.get(s.name);
-      if (!at || deckNames.has(s.name) || offDeck.has(s.name)) continue;
-      offDeck.set(s.name, at.pos);
-    }
+    try {
+      const rec = await lookup.cardPage(seedEntry.slug);
+      const similar = rec ? (await lookup.similarOf(rec)).similar : [];
+      for (const s of similar) {
+        const at = atName.get(s.name);
+        // The same admission as the buckets, BEFORE any card is fetched.
+        if (!at || at.isLand || deckNames.has(s.name) || offDeck.has(s.name) || !at.identity.every((x) => allowed.has(x))) continue;
+        offDeck.set(s.name, at.pos);
+      }
+    } catch (e) { console.warn("redundancy: the seed's similar rows were unreadable", e); }
   }
 
   stats.fetched = offDeck.size;
-  await lookup.prefetch([...offDeck.keys()].map(normalizeName));
+  await lookup.prefetch([...offDeck.keys()].map(normalizeName)).catch((e) => console.warn("redundancy: candidate prefetch failed", e));
   const cardOf = async (name: string, pos: number): Promise<{ card: SimilarCard; dc: DeckCard } | null> => {
-    const dc = await raw(name);
-    return dc?.tags ? { card: { id: pos, name, tags: dc.tags }, dc } : null;
+    try {
+      const dc = await raw(name);
+      return dc?.tags ? { card: { id: pos, name, tags: dc.tags }, dc } : null;
+    } catch (e) { console.warn(`redundancy: ${name} is unreadable`, e); return null; }
   };
 
   const candidates: RedundancyCandidate[] = [];
@@ -189,8 +219,10 @@ export async function redundancyFor(input: {
     const c = await cardOf(name, pos);
     if (!c) continue;
     poolSize++;
-    if (!compareCards(seedCard, c.card, { drainIsDamage: true })) continue;
-    candidates.push({ card: c.card, inDeck: false, sharedPartners: sharedOf(c.dc) });
+    try {
+      if (!compareCards(seedCard, c.card, { drainIsDamage: true })) continue;
+      candidates.push({ card: c.card, inDeck: false, sharedPartners: sharedOf(c.dc) });
+    } catch (e) { console.warn(`redundancy: ${name} could not be compared`, e); }
   }
   stats.poolSize = poolSize;
   const hits = findRedundancy({ seed: seedCard, seedPartners, candidates, amplifiers, identity: input.commanderColorIdentity }, input.perTier ? { perTier: input.perTier } : {});

@@ -38,7 +38,7 @@
   "packages/matcher/src/quality.ts": 2,
   "packages/matcher/src/ramp-class.ts": 1,
   "packages/matcher/src/rate.ts": 3,
-  "packages/matcher/src/redundancy-static.ts": 2,
+  "packages/matcher/src/redundancy-static.ts": 3,
   "packages/matcher/src/redundancy.ts": 1,
   "packages/matcher/src/rules.ts": 1,
   "packages/matcher/src/same-job.ts": 5,

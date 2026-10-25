@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckReport } from "@edh-seer/engine";
 import { normalizeName } from "@edh-seer/data/names";
@@ -16,7 +16,7 @@ type Fx = { card: { name: string; typeLine: string; oracleText: string; colorIde
 const FX = { ...similarFixtures, ...extraFixtures } as unknown as Record<string, Fx>;
 
 // INDEX ORDER IS THE POSITION `pi` AND `sim` POINT AT.
-const ORDER = ["Impact Tremors", "Witty Roastmaster", "Corpse Knight", "Hordeling Outburst", "Fiery Emancipation", "Lightning Bolt", "Swords to Plowshares", "Goblin Instigator", "Warstorm Surge"];
+const ORDER = ["Impact Tremors", "Witty Roastmaster", "Corpse Knight", "Hordeling Outburst", "Fiery Emancipation", "Lightning Bolt", "Swords to Plowshares", "Goblin Instigator", "Warstorm Surge", "Soul Warden"];
 const TYPES = ["creature", "enchantment", "instant", "sorcery", "land"];
 const slugOf = (n: string) => n.toLowerCase().replace(/[^a-z]+/g, "-");
 
@@ -150,7 +150,8 @@ describe("redundancyFor", () => {
     const r = await run(deck(false));
     // Lightning Bolt is in the damage bucket but the token maker draws no reason to or from it.
     const bolt = r.hits.find((h) => h.name === "Lightning Bolt");
-    if (bolt) expect(bolt.sharedPartners).toEqual([]);
+    expect(bolt).toBeDefined();
+    expect(bolt!.sharedPartners).toEqual([]);
     expect(r.hits.find((h) => h.name === "Witty Roastmaster")!.sharedPartners).toEqual(["Hordeling Outburst"]);
   });
 
@@ -216,5 +217,76 @@ describe("redundancyFor", () => {
     expect(r.stats.fetched).toBe(1);
     expect(r.hits.map((h) => h.name)).toContain("Witty Roastmaster");
     expect(r.hits.map((h) => h.name)).not.toContain("Lightning Bolt");
+  });
+
+  test("a seed partner that is a plain creature is not shared: 'a creature enters' links are dropped (impliedProducer)", async () => {
+    const report = {
+      cards: [cardRow("Impact Tremors"), cardRow("Soul Warden")],
+      edges: [edge("Soul Warden", "Impact Tremors", [reason("Soul Warden", "Impact Tremors", "creature-enters")])],
+      buildParents: [], cutList: [],
+    } as unknown as DeckReport;
+    const r = await run(report);
+    expect(r.seedPartners).toEqual(["Soul Warden"]);
+    const witty = r.hits.find((h) => h.name === "Witty Roastmaster")!;
+    expect(witty.sharedPartners).toEqual([]);
+    expect(witty.deckChips.some((c) => c.dim === "shared")).toBe(false);
+  });
+
+  const tokenDeck = (): DeckReport => ({
+    cards: [cardRow("Goblin Instigator"), cardRow("Hordeling Outburst"), cardRow("Impact Tremors")],
+    tokenNodes: [{ name: "Goblin Token", hasPartner: true, madeBy: ["Goblin Instigator", "Hordeling Outburst"] }],
+    edges: [
+      edge("Goblin Token", "Impact Tremors", [reason("Goblin Token", "Impact Tremors", "creature-enters", { impliedProducer: true, producerIsToken: true })]),
+      edge("Goblin Instigator", "Goblin Token", [reason("Goblin Instigator", "Goblin Token", "creates", { consumerIsToken: true })]),
+      edge("Hordeling Outburst", "Goblin Token", [reason("Hordeling Outburst", "Goblin Token", "creates", { consumerIsToken: true })]),
+    ],
+    buildParents: [], cutList: [],
+  } as unknown as DeckReport);
+
+  test("makers of one token are not partners of each other: an in-deck maker shares only the payoff", async () => {
+    const r = await run(tokenDeck(), staticFiles({ events: {} }), "Goblin Instigator");
+    expect(r.seedPartners).toEqual(["Impact Tremors"]);
+    const hordeling = r.hits.find((h) => h.name === "Hordeling Outburst")!;
+    expect(hordeling.inDeck).toBe(true);
+    expect(hordeling.sharedPartners).toEqual(["Impact Tremors"]);
+  });
+
+  test("an absent exact key falls back to the nearest coarser key that exists, and stats says so", async () => {
+    const GOBLIN = "create-token|creature|goblin|t";
+    const files = staticFiles({ events: { "create-token|creature|-|t": { p: [7], pf: [[PING]] } } });
+    const r = await run(deck(false), files, "Hordeling Outburst");
+    expect(r.stats.fallbacks).toContainEqual({ key: GOBLIN, usedKey: "create-token|creature|-|t" });
+    expect(r.stats.bucketSizes[r.stats.buckets.indexOf(GOBLIN)]).toBe(1);
+    expect(r.stats.fetched).toBe(1);
+    expect(r.hits.map((h) => h.name)).toContain("Goblin Instigator");
+    const none = await run(deck(false), staticFiles({ events: {} }), "Hordeling Outburst");
+    expect(none.stats.missing).toContain(GOBLIN);
+  });
+
+  test("an unreadable events shard and an unreadable candidate shard drop only themselves", async () => {
+    const files = staticFiles({ events: EVENTS });
+    const lossShard = `/static/${VERSION}/events/${eventShardOf("lose-life|-|-|-")}.json`;
+    const boltShard = `/static/${VERSION}/cards/${shardOf(normalizeName("Lightning Bolt"))}.json`;
+    expect(Object.keys(files)).toContain(lossShard);
+    const inner = fetchOf(files);
+    const flaky = (async (url: string) => {
+      if (url === lossShard || url === boltShard) throw new Error("network down");
+      return inner(url);
+    }) as unknown as typeof fetch;
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const r = await redundancyFor({ report: deck(false), seed: "Impact Tremors", commanderColorIdentity: ["R", "B", "W"], baseUrl: "/static", fetchImpl: flaky });
+    warn.mockRestore();
+    expect(r.hits.map((h) => h.name)).toContain("Witty Roastmaster");
+    expect(r.hits.map((h) => h.name)).not.toContain("Lightning Bolt");
+  });
+
+  test("a sim row outside the commander's identity is never fetched", async () => {
+    const files = staticFiles({ pages: { [slugOf("Impact Tremors")]: { sim: [[6, 1]] } } });
+    const log: string[] = [];
+    const inner = fetchOf(files);
+    const logged = (async (url: string) => { log.push(String(url)); return inner(url); }) as unknown as typeof fetch;
+    const swords = `/static/${VERSION}/cards/${shardOf(normalizeName("Swords to Plowshares"))}.json`;
+    await redundancyFor({ report: deck(false), seed: "Impact Tremors", commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: logged });
+    expect(log).not.toContain(swords);
   });
 });
