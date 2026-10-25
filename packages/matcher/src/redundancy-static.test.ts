@@ -1,0 +1,134 @@
+import { describe, expect, test } from "vitest";
+import type { CardTags } from "@edh-seer/tagger";
+import type { DeckReport } from "@edh-seer/engine";
+import { normalizeName } from "@edh-seer/data/names";
+import { shardOf } from "./bin/build-static-core.js";
+import { partnerShardOf } from "./partner-shard.js";
+import similarFixtures from "./similar.fixtures.json" with { type: "json" };
+import extraFixtures from "./redundancy.fixtures.json" with { type: "json" };
+import { redundancyFor } from "./redundancy-static.js";
+
+const VERSION = "v-test";
+type Fx = { card: { name: string; typeLine: string; oracleText: string; colorIdentity: string[] }; tags: CardTags };
+const FX = { ...similarFixtures, ...extraFixtures } as unknown as Record<string, Fx>;
+
+// INDEX ORDER IS THE POSITION `pi` AND `sim` POINT AT.
+const ORDER = ["Impact Tremors", "Witty Roastmaster", "Corpse Knight", "Hordeling Outburst", "Fiery Emancipation", "Lightning Bolt", "Swords to Plowshares"];
+const TYPES = ["creature", "enchantment", "instant", "sorcery", "land"];
+const slugOf = (n: string) => n.toLowerCase().replace(/[^a-z]+/g, "-");
+
+function staticFiles(opts: { pi?: Record<string, [number, number][]>; pages?: Record<string, unknown> } = {}): Record<string, unknown> {
+  const out: Record<string, Record<string, unknown>> = {};
+  for (const n of ORDER) {
+    const fx = FX[n]!;
+    const key = normalizeName(n);
+    const path = `/static/${VERSION}/cards/${shardOf(key)}.json`;
+    out[path] = {
+      ...(out[path] ?? {}),
+      [key]: {
+        card: {
+          _id: fx.tags.oracleId, name: n, typeLine: fx.card.typeLine, oracleText: fx.card.oracleText, keywords: [], colors: fx.card.colorIdentity,
+          manaValue: fx.tags.characteristics.cmc, colorIdentity: fx.card.colorIdentity, power: null, toughness: null, searchNames: [key],
+        },
+        tags: fx.tags, combos: [],
+        ...(opts.pi?.[n] ? { pi: opts.pi[n] } : {}),
+      },
+    };
+  }
+  const pages: Record<string, Record<string, unknown>> = {};
+  for (const [slug, rec] of Object.entries(opts.pages ?? {})) {
+    const p = `/static/${VERSION}/partners/${partnerShardOf(slug)}.json`;
+    pages[p] = { ...(pages[p] ?? {}), [slug]: rec };
+  }
+  return {
+    "/static/manifest.json": { version: VERSION },
+    [`/static/${VERSION}/name-index.json`]: {
+      types: TYPES, subtypes: [], keywords: [], pairTags: [], similarChips: [],
+      cards: ORDER.map((n) => ({ slug: slugOf(n), name: n, identity: FX[n]!.card.colorIdentity, commander: false, t: FX[n]!.tags.characteristics.types.map((t) => TYPES.indexOf(t)), mv: FX[n]!.tags.characteristics.cmc })),
+    },
+    [`/static/${VERSION}/event-frequency.json`]: { supply: {}, consume: {}, byIdentity: {} },
+    ...out, ...pages,
+  };
+}
+function fetchOf(f: Record<string, unknown>): typeof fetch {
+  return (async (url: string) => {
+    const body = f[String(url)];
+    return body === undefined
+      ? ({ ok: false, status: 404, json: async () => ({}) } as Response)
+      : ({ ok: true, status: 200, json: async () => body } as Response);
+  }) as unknown as typeof fetch;
+}
+
+const PI = { "Hordeling Outburst": [[1, 0.4], [2, 0.3]] as [number, number][] };
+const reason = (producer: string, consumer: string, tag: string, extra: object = {}) => ({ tag, text: `${producer} -> ${consumer}`, producer, consumer, ...extra });
+const edge = (a: string, b: string, reasons: object[]) => ({ a, b, score: 1, reasons });
+const cardRow = (name: string, extra: object = {}) => ({ name, isCommander: false, ...extra });
+
+function deck(withFiery: boolean, extraCards: object[] = [], extraEdges: object[] = []): DeckReport {
+  return {
+    cards: [cardRow("Impact Tremors"), cardRow("Hordeling Outburst"), ...(withFiery ? [cardRow("Fiery Emancipation")] : []), ...extraCards],
+    edges: [
+      edge("Hordeling Outburst", "Impact Tremors", [reason("Hordeling Outburst", "Impact Tremors", "creature-enters", { producerAbility: 0, consumerAbility: 0 })]),
+      ...(withFiery ? [edge("Fiery Emancipation", "Impact Tremors", [reason("Fiery Emancipation", "Impact Tremors", "non-combat-damage:any", { producerAbility: 0, consumerAbility: 0 })])] : []),
+      ...extraEdges,
+    ],
+    buildParents: [], cutList: [],
+  } as unknown as DeckReport;
+}
+const run = (report: DeckReport, files = staticFiles({ pi: PI }), seed = "Impact Tremors", identity = ["R", "B", "W"]) =>
+  redundancyFor({ report, seed, commanderColorIdentity: identity, baseUrl: "/static", fetchImpl: fetchOf(files) });
+
+describe("redundancyFor", () => {
+  test("pool from the seed partners' pi, partners shared, amplifier chip when Fiery Emancipation is in the deck", async () => {
+    const r = await run(deck(true));
+    expect(r.seedPartners.sort()).toEqual(["Fiery Emancipation", "Hordeling Outburst"]);
+    expect(r.amplifiers).toEqual(["Fiery Emancipation"]);
+    expect(r.poolSize).toBe(2);
+    const witty = r.hits.find((h) => h.name === "Witty Roastmaster")!;
+    expect(witty.tier).toBe("close");
+    expect(witty.deckChips).toContainEqual({ dim: "shared", label: "shares 1 of 2 partners" });
+    const knight = r.hits.find((h) => h.name === "Corpse Knight")!;
+    expect(knight.tier).toBe("outcome");
+    expect(knight.deckChips).toContainEqual({ dim: "amplifier", label: "loses synergy with Fiery Emancipation" });
+  });
+
+  test("without Fiery Emancipation there is no amplifier chip", async () => {
+    const r = await run(deck(false));
+    expect(r.amplifiers).toEqual([]);
+    expect(r.seedPartners).toEqual(["Hordeling Outburst"]);
+    const knight = r.hits.find((h) => h.name === "Corpse Knight")!;
+    expect(knight.deckChips.some((c) => c.dim === "amplifier")).toBe(false);
+    expect(knight.deckChips).toContainEqual({ dim: "shared", label: "shares 1 of 1 partners" });
+    expect(r.hits.find((h) => h.name === "Witty Roastmaster")!.deckChips).toContainEqual({ dim: "shared", label: "shares 1 of 1 partners" });
+  });
+
+  test("a deck card that does the same job is listed in-deck with the partners it shares", async () => {
+    const r = await run(deck(false, [cardRow("Witty Roastmaster")], [edge("Hordeling Outburst", "Witty Roastmaster", [reason("Hordeling Outburst", "Witty Roastmaster", "creature-enters")])]), staticFiles({ pi: PI }));
+    const witty = r.hits.find((h) => h.name === "Witty Roastmaster")!;
+    expect(witty.inDeck).toBe(true);
+    expect(witty.sharedPartners).toEqual(["Hordeling Outburst"]);
+    expect(r.poolSize).toBe(1);
+  });
+
+  test("a reason naming a face resolves to its physical card", async () => {
+    const report = deck(false, [cardRow("Hordeling Outburst // Back Face", { cardName: "Hordeling Outburst" })]);
+    (report.cards as { name: string; cardName?: string }[])[1] = { name: "Hordeling Outburst // Back Face", cardName: "Hordeling Outburst" } as never;
+    report.edges = [edge("Hordeling Outburst // Back Face", "Impact Tremors", [reason("Hordeling Outburst // Back Face", "Impact Tremors", "creature-enters")])] as never;
+    const r = await run(report);
+    expect(r.seedPartners).toEqual(["Hordeling Outburst"]);
+  });
+
+  test("a seed with no page record, or no tags at all, is empty and never an error", async () => {
+    const r = await run(deck(false), staticFiles({ pi: PI, pages: {} }));
+    expect(r.hits.length).toBeGreaterThan(0);
+    const none = await run(deck(false, [cardRow("Unknown Card")]), staticFiles({ pi: PI }), "Unknown Card");
+    expect(none).toEqual({ hits: [], poolSize: 0, seedPartners: [], amplifiers: [] });
+  });
+
+  test("the seed's own precomputed similar rows join the pool", async () => {
+    const files = staticFiles({ pages: { [slugOf("Impact Tremors")]: { sim: [[1, 1]] } } });
+    const r = await run(deck(false), files);
+    expect(r.hits.map((h) => h.name)).toContain("Witty Roastmaster");
+    expect(r.hits.find((h) => h.name === "Witty Roastmaster")!.sharedPartners).toEqual([]);
+  });
+});
