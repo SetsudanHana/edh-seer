@@ -286,5 +286,15 @@ describe("upcoming (unreleased spoiler cards, owner 2026-10-25)", () => {
     expect(up({ released_at: "2025-01-01" })).toBeUndefined();
     expect(up({ legalities: { ...NL, modern: "legal" } })).toBeUndefined();
     expect(up({ legalities: undefined })).toBeUndefined();
+    expect(up({ set_type: "token" })).toBeUndefined();
+    expect(up({ set_type: "memorabilia" })).toBeUndefined();
+  });
+  test("cards that are never deck cards are not upcoming, by front-face type line", () => {
+    const up = (type_line: string) => normalizeScryfallCard({ ...base, type_line }, { today: TODAY })!.upcoming;
+    for (const t of ["Plane — Dominaria", "Phenomenon", "Scheme", "Vanguard", "Dungeon", "Conspiracy", "Artifact — Attraction", "Artifact — Contraption", "Token Enchantment Creature — Spirit"]) {
+      expect(up(t), t).toBeUndefined();
+    }
+    expect(up("Legendary Creature — Human // Instant")).toBe("2026-11-13");
+    expect(up("Creature — Elf // Plane — Foo")).toBe("2026-11-13");
   });
 });

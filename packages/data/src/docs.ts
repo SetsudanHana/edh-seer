@@ -175,7 +175,8 @@ export function docToCard(d: CardDoc): Card {
     // FIFTH, and the pattern holds: `legalities` has been on every `CardDoc` (and every static
     // shard) since ingest and never reached `Card`. The banned-list check is its first reader, and
     // it takes only the Commander entry.
-    ...(d.legalities?.commander !== undefined ? { commanderLegality: d.legalities.commander } : {}),
+    // `commanderLegalityOf`, not the raw value: a spoiler card is not_legal only until release, and every reader of `commanderLegality` (playable, deck rules, legality report) must see it as legal. `upcoming` rides alongside so the report can still say "not yet released".
+    ...(commanderLegalityOf(d) !== undefined ? { commanderLegality: commanderLegalityOf(d)! } : {}),
     ...(d.upcoming !== undefined ? { upcoming: d.upcoming } : {}),
     // FOURTH field found on `CardDoc` and dropped here, after `producedMana`, `allParts` and
     // `gameChanger`. A FACE IS A NODE (2026-08-27) and the graph cannot count faces without it.

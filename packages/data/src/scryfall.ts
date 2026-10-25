@@ -103,6 +103,14 @@ export const NON_GAMEPLAY_LAYOUTS: ReadonlySet<string> = new Set([
   "reversible_card",
 ]);
 
+/** Set kinds whose cards are never deck cards: un-cards ("funny"), tokens, memorabilia. */
+const NOT_DECK_SET_TYPES: ReadonlySet<string> = new Set(["funny", "token", "memorabilia"]);
+
+/** Front-face type lines of cards that are `not_legal` for good and never in a deck (Attractions:
+ *  owner 2026-09-27). CEILING: a denylist, so a future non-deck supertype would be stamped
+ *  "upcoming" until added here. */
+const NOT_DECK_TYPE_LINE = /\b(?:Plane|Phenomenon|Scheme|Vanguard|Dungeon|Conspiracy|Attraction|Contraption|Token)\b/;
+
 /** THE RELEASE DATE OF AN UNRELEASED SPOILER CARD, or undefined for anything else. Scryfall marks a
  *  spoiled card `not_legal` in EVERY format until release, which is indistinguishable by legality
  *  alone from a funny un-card (`set_type` "funny") or a digital-only card (no "paper" in `games`);
@@ -113,7 +121,9 @@ export function upcomingDate(raw: ScryfallCard, today: string): string | undefin
   if (date === undefined || date <= today) return undefined;
   const legal = Object.values(raw.legalities ?? {});
   if (legal.length === 0 || legal.some((v) => v !== "not_legal")) return undefined;
-  if (raw.set_type === "funny") return undefined;
+  if (raw.set_type !== undefined && NOT_DECK_SET_TYPES.has(raw.set_type)) return undefined;
+  const front = (raw.type_line ?? "").split(" // ")[0]!;
+  if (NOT_DECK_TYPE_LINE.test(front)) return undefined;
   if (!raw.games?.includes("paper")) return undefined;
   return date;
 }

@@ -260,6 +260,13 @@ test("upcoming flows NormalizedCard -> CardDoc -> Card, absent otherwise", () =>
   expect("upcoming" in docToCard(toCardDoc({ ...n, upcoming: undefined }))).toBe(false);
 });
 
+test("docToCard reads an upcoming card as commander-legal and keeps the date", () => {
+  const doc = { ...toCardDoc(treasureMaker), legalities: { commander: "not_legal" }, upcoming: "2026-11-13" };
+  const c = docToCard(doc);
+  expect(c.commanderLegality).toBe("legal");
+  expect(c.upcoming).toBe("2026-11-13");
+});
+
 test("commanderLegalityOf: upcoming reads legal, otherwise Scryfall's value", () => {
   expect(commanderLegalityOf({ legalities: { commander: "not_legal" }, upcoming: "2026-11-13" })).toBe("legal");
   expect(commanderLegalityOf({ legalities: { commander: "banned" } })).toBe("banned");
