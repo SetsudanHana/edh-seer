@@ -44,6 +44,10 @@ export interface ScryfallCard {
   produced_mana?: string[];
   legalities?: Record<string, string>;
   released_at?: string;
+  /** The set's kind ("commander", "funny", ...). "funny" marks un-cards, which are `not_legal` everywhere for good. */
+  set_type?: string;
+  /** Where this printing is played: "paper", "arena", "mtgo". */
+  games?: string[];
   game_changer?: boolean;
   reserved?: boolean;
   all_parts?: Array<{ id?: string; component?: string; name?: string; type_line?: string }>;
@@ -77,6 +81,8 @@ export interface NormalizedCard {
   layout?: string;
   legalities?: Record<string, string>;
   releasedAt?: string;
+  /** UNRELEASED SPOILER (owner 2026-10-25): the release date (YYYY-MM-DD) of a card Scryfall already lists but marks `not_legal` in every format until it is out. See `upcomingDate`. */
+  upcoming?: string;
   gameChanger?: boolean;
   reserved?: boolean;
   allParts?: RelatedPart[];
@@ -97,7 +103,30 @@ export const NON_GAMEPLAY_LAYOUTS: ReadonlySet<string> = new Set([
   "reversible_card",
 ]);
 
-export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null {
+/** THE RELEASE DATE OF AN UNRELEASED SPOILER CARD, or undefined for anything else. Scryfall marks a
+ *  spoiled card `not_legal` in EVERY format until release, which is indistinguishable by legality
+ *  alone from a funny un-card (`set_type` "funny") or a digital-only card (no "paper" in `games`);
+ *  both stay out. `today` is passed in (YYYY-MM-DD, UTC) so this stays pure: the NEXT ingest after
+ *  release sees `released_at <= today`, drops `upcoming`, and legality comes from Scryfall again. */
+export function upcomingDate(raw: ScryfallCard, today: string): string | undefined {
+  const date = raw.released_at;
+  if (date === undefined || date <= today) return undefined;
+  const legal = Object.values(raw.legalities ?? {});
+  if (legal.length === 0 || legal.some((v) => v !== "not_legal")) return undefined;
+  if (raw.set_type === "funny") return undefined;
+  if (!raw.games?.includes("paper")) return undefined;
+  return date;
+}
+
+export interface NormalizeOptions {
+  /** The ingest date, YYYY-MM-DD. Defaults to the current UTC date; tests pass one. */
+  today?: string;
+}
+
+export function normalizeScryfallCard(
+  raw: ScryfallCard,
+  { today = new Date().toISOString().slice(0, 10) }: NormalizeOptions = {},
+): NormalizedCard | null {
   if (!raw.oracle_id || !raw.name || !raw.type_line) return null;
   if (raw.layout !== undefined && NON_GAMEPLAY_LAYOUTS.has(raw.layout)) return null;
 
@@ -156,6 +185,8 @@ export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null 
     ...(f.image_uris?.art_crop !== undefined ? { artCrop: f.image_uris.art_crop } : {}),
   }));
 
+  const upcoming = upcomingDate(raw, today);
+
   return {
     oracleId: raw.oracle_id,
     card,
@@ -166,6 +197,7 @@ export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null 
     ...(raw.layout !== undefined ? { layout: raw.layout } : {}),
     ...(raw.legalities !== undefined ? { legalities: raw.legalities } : {}),
     ...(raw.released_at !== undefined ? { releasedAt: raw.released_at } : {}),
+    ...(upcoming !== undefined ? { upcoming } : {}),
     ...(raw.game_changer !== undefined ? { gameChanger: raw.game_changer } : {}),
     ...(raw.reserved !== undefined ? { reserved: raw.reserved } : {}),
     ...(allParts !== undefined && allParts.length > 0 ? { allParts } : {}),

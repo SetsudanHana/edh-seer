@@ -37,6 +37,23 @@ test("ingestCards batches upserts via bulkWrite and reports progress (no Mongo)"
   expect(progress.at(-1)).toEqual([2, 2]);
 });
 
+test("ingestCards replaces the whole doc, so a released card loses `upcoming` (owner 2026-10-25)", async () => {
+  const bulkWrite = vi.fn(async () => ({}));
+  const cards = { bulkWrite } as unknown as Collection<CardDoc>;
+  const raw: ScryfallCard = {
+    oracle_id: "s", name: "Spoiler", type_line: "Creature", oracle_text: "", colors: [], cmc: 1,
+    legalities: { commander: "not_legal" }, released_at: "2026-11-13", set_type: "commander", games: ["paper"],
+  };
+  const replacement = async (today: string) => {
+    bulkWrite.mockClear();
+    await ingestCards([raw], cards, undefined, new Set(), today);
+    const ops = (bulkWrite.mock.calls as unknown as unknown[][])[0][0] as Array<{ replaceOne: { replacement: CardDoc } }>;
+    return ops[0].replaceOne.replacement;
+  };
+  expect((await replacement("2026-10-25")).upcoming).toBe("2026-11-13");
+  expect("upcoming" in (await replacement("2026-11-14"))).toBe(false);
+});
+
 test("ingestCards drops sticker cards and sticker sheets, counted apart (owner 2026-10-14)", async () => {
   const bulkWrite = vi.fn(async () => ({}));
   const cards = { bulkWrite } as unknown as Collection<CardDoc>;

@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { normalizeScryfallCard, NON_GAMEPLAY_LAYOUTS } from "./scryfall.js";
 
 test("normalizes a standard card", () => {
@@ -265,4 +265,26 @@ test("carries a planeswalker's starting loyalty, on the card and on each face (o
   expect("loyalty" in dfc).toBe(false);
   expect("loyalty" in dfc.faces![0]!).toBe(false);
   expect(dfc.faces![1]!.loyalty).toBe("5");
+});
+
+describe("upcoming (unreleased spoiler cards, owner 2026-10-25)", () => {
+  const NL = { commander: "not_legal", modern: "not_legal" };
+  const base = {
+    oracle_id: "up", name: "Spoiler", type_line: "Creature", legalities: NL,
+    released_at: "2026-11-13", set_type: "commander", games: ["paper", "mtgo"],
+  };
+  const TODAY = "2026-10-25";
+  test("a future, all-not_legal, non-funny paper card is upcoming with its date", () => {
+    expect(normalizeScryfallCard(base, { today: TODAY })!.upcoming).toBe("2026-11-13");
+  });
+  test("funny set, arena-only, released, or any legal format: not upcoming", () => {
+    const up = (o: object) => normalizeScryfallCard({ ...base, ...o }, { today: TODAY })!.upcoming;
+    expect(up({ set_type: "funny" })).toBeUndefined();
+    expect(up({ games: ["arena"] })).toBeUndefined();
+    expect(up({ games: undefined })).toBeUndefined();
+    expect(up({ released_at: TODAY })).toBeUndefined();
+    expect(up({ released_at: "2025-01-01" })).toBeUndefined();
+    expect(up({ legalities: { ...NL, modern: "legal" } })).toBeUndefined();
+    expect(up({ legalities: undefined })).toBeUndefined();
+  });
 });

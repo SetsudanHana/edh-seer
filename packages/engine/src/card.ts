@@ -57,6 +57,8 @@ export interface Card {
    *  reads it for the banned list. AS OF THE CARD DATA: the list changes and the corpus is a
    *  snapshot. Absent when the source card carried no legalities. */
   commanderLegality?: string;
+  /** Release date (YYYY-MM-DD) of an UNRELEASED SPOILER card (owner 2026-10-25), absent once released. Its `commanderLegality` already reads "legal"; the UI marks it "not yet released". */
+  upcoming?: string;
   /** Scryfall produced_mana: the colours this card can add, e.g. ["B","G"]. Includes "C" for
    *  colorless. Present only on cards that produce mana at all.
    *

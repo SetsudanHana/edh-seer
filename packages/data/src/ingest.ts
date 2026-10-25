@@ -32,6 +32,8 @@ export async function ingestCards(
    *  corpus. They are unplayable in paper and unreachable by ingest-otags, which filters
    *  -is:alchemy, so they would sit permanently untagged. */
   digitalOnly: ReadonlySet<string> = new Set(),
+  /** The ingest date (YYYY-MM-DD, UTC); decides which cards are still unreleased. Defaults to now. */
+  today?: string,
 ): Promise<IngestCounts & { stickers: number; stickerNames: Set<string> }> {
   const total = raws.length;
   let processed = 0;
@@ -49,7 +51,7 @@ export async function ingestCards(
 
   for (const raw of raws) {
     done++;
-    const n = normalizeScryfallCard(raw);
+    const n = normalizeScryfallCard(raw, today !== undefined ? { today } : {});
     if (!n || digitalOnly.has(n.oracleId)) {
       skipped++;
     } else {
