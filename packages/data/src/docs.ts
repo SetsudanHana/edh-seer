@@ -109,7 +109,7 @@ export function toCardDoc(n: NormalizedCard): CardDoc {
 /** THE COMMANDER LEGALITY EVERY CONSUMER SHOULD READ. An unreleased spoiler card (`upcoming`) is
  *  `not_legal` in Scryfall's data only because it is not out yet, so it reads "legal" here (owner
  *  2026-10-25) and is marked "not yet released" instead of illegal. Anything else is Scryfall's own
- *  value. The NEXT ingest after release drops `upcoming`, and legality then comes from Scryfall.
+ *  value. The first ingest after Scryfall flips a legality (or 30 days past release) drops `upcoming`, and legality then comes from Scryfall.
  *  Pure and Node-free, so the browser and the Pages functions can import it. */
 export function commanderLegalityOf(card: { legalities?: Record<string, string>; upcoming?: string }): string | undefined {
   return card.upcoming !== undefined ? "legal" : card.legalities?.commander;

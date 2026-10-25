@@ -1,6 +1,6 @@
 import type { DeckReport } from "../types.js";
 import { CardName } from "./card-drawer.js";
-import { releaseDate } from "../lib/release-date.js";
+import { isReleased, localToday, releaseDate } from "../lib/release-date.js";
 
 /** WHAT IS OFF ABOUT THIS DECK, AS A REPORT AND NEVER A GATE (roadmap J4, plus J12's pairing rule).
  *
@@ -23,12 +23,20 @@ export function LegalityPanel({ legality, companions = [], upcoming = [] }: {
   companions?: readonly string[];
 }) {
   if (!legality) return null;
-  const notOut = upcoming.length > 0 && (
+  // Split by the browser's date: past it the card is out and only our snapshot lags, so "not yet released" would be false.
+  const today = localToday();
+  const list = (cards: typeof upcoming, lead: string) => cards.length > 0 && (
     <p className="text-xs text-(--muted) max-w-[65ch]">
-      Not yet released: {upcoming.map((u, i) => (
+      {lead} {cards.map((u, i) => (
         <span key={u.name}>{i > 0 && ", "}<CardName name={u.name} /> ({releaseDate(u.date)})</span>
       ))}
     </p>
+  );
+  const notOut = upcoming.length > 0 && (
+    <>
+      {list(upcoming.filter((u) => !isReleased(u.date, today)), "Not yet released:")}
+      {list(upcoming.filter((u) => isReleased(u.date, today)), "Released, not yet legal in our card data:")}
+    </>
   );
   const companionClause = companions.length > 0 ? `, and ${companions.join(" and ")} as your companion` : "";
   // A CLEAN RESULT SAYS WHAT WAS CHECKED (owner, 2026-09-22). Silence was meant to read "nothing

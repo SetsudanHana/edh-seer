@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useNavigate } from "react-router";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { CardPage } from "./CardPage.js";
 import type { CardPageData } from "../lib/partners.js";
 
@@ -371,6 +371,15 @@ test("similar cards follow the partners; a card with none shows no section", asy
   at("krenko-mob-boss", async () => KRENKO);
   await screen.findByRole("heading", { level: 1, name: /Krenko, Mob Boss/ });
   expect(screen.queryByRole("heading", { name: "Similar cards" })).toBeNull();
+});
+
+test("past its date an upcoming card says it is released but not yet legal in our data", async () => {
+  vi.useFakeTimers({ toFake: ["Date"], now: new Date(2026, 10, 20, 12) });
+  try {
+    at("krenko-mob-boss", async () => ({ ...KRENKO, upcoming: "2026-11-13" }));
+    expect(await screen.findByText("Released 13 Nov 2026 \u2014 not yet legal in our card data")).toBeTruthy();
+    expect(screen.queryByText(/Not yet released/)).toBeNull();
+  } finally { vi.useRealTimers(); }
 });
 
 /** AN UPCOMING SPOILER SAYS SO under its type line (owner 2026-10-25), in words and a British date. */

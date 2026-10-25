@@ -51,7 +51,14 @@ test("ingestCards replaces the whole doc, so a released card loses `upcoming` (o
     return ops[0].replaceOne.replacement;
   };
   expect((await replacement("2026-10-25")).upcoming).toBe("2026-11-13");
-  expect("upcoming" in (await replacement("2026-11-14"))).toBe(false);
+  // Release day and a week on, Scryfall still says not_legal: the stamp survives (30-day grace).
+  expect((await replacement("2026-11-20")).upcoming).toBe("2026-11-13");
+  // Scryfall flips a legality: the stamp clears.
+  raw.legalities = { commander: "legal" };
+  expect("upcoming" in (await replacement("2026-11-20"))).toBe(false);
+  // Still not_legal 31 days after release: the grace is over.
+  raw.legalities = { commander: "not_legal" };
+  expect("upcoming" in (await replacement("2026-12-14"))).toBe(false);
 });
 
 test("ingestCards drops sticker cards and sticker sheets, counted apart (owner 2026-10-14)", async () => {

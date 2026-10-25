@@ -118,7 +118,7 @@ export async function renderCardPage(
       description,
       canonical: `${origin}/${isCommanderPage ? "commanders" : "cards"}/${slug}`,
       indexable,
-      bodyHtml: cardPageHtml({ ...record, partners, rarity, pool }, slug, kind),
+      bodyHtml: cardPageHtml({ ...record, partners, rarity, pool }, slug, kind, new Date().toISOString().slice(0, 10)),
       // The same function `CardArt` renders with, so the preloaded URL is the one the app asks for.
       image: record.artCrop ? cardImageUrl(record.artCrop) ?? undefined : undefined,
       breadcrumbs: [

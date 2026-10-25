@@ -282,12 +282,19 @@ describe("upcoming (unreleased spoiler cards, owner 2026-10-25)", () => {
     expect(up({ set_type: "funny" })).toBeUndefined();
     expect(up({ games: ["arena"] })).toBeUndefined();
     expect(up({ games: undefined })).toBeUndefined();
-    expect(up({ released_at: TODAY })).toBeUndefined();
     expect(up({ released_at: "2025-01-01" })).toBeUndefined();
     expect(up({ legalities: { ...NL, modern: "legal" } })).toBeUndefined();
     expect(up({ legalities: undefined })).toBeUndefined();
     expect(up({ set_type: "token" })).toBeUndefined();
     expect(up({ set_type: "memorabilia" })).toBeUndefined();
+  });
+  test("release-day edge: the stamp survives 30 days past release while Scryfall still says not_legal", () => {
+    const up = (today: string, o: object = {}) => normalizeScryfallCard({ ...base, ...o }, { today })!.upcoming;
+    expect(up("2026-11-13")).toBe("2026-11-13");
+    expect(up("2026-11-20")).toBe("2026-11-13");
+    expect(up("2026-12-13")).toBe("2026-11-13");
+    expect(up("2026-12-14")).toBeUndefined();
+    expect(up("2026-11-20", { legalities: { ...NL, commander: "legal" } })).toBeUndefined();
   });
   test("cards that are never deck cards are not upcoming, by front-face type line", () => {
     const up = (type_line: string) => normalizeScryfallCard({ ...base, type_line }, { today: TODAY })!.upcoming;

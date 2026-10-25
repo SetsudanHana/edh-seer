@@ -103,6 +103,14 @@ export const NON_GAMEPLAY_LAYOUTS: ReadonlySet<string> = new Set([
   "reversible_card",
 ]);
 
+const UPCOMING_GRACE_DAYS = 30;
+
+/** YYYY-MM-DD plus `days`, in UTC (no local-time drift). */
+function shiftDays(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y!, m! - 1, d! + days)).toISOString().slice(0, 10);
+}
+
 /** Set kinds whose cards are never deck cards: un-cards ("funny"), tokens, memorabilia. */
 const NOT_DECK_SET_TYPES: ReadonlySet<string> = new Set(["funny", "token", "memorabilia"]);
 
@@ -114,11 +122,16 @@ const NOT_DECK_TYPE_LINE = /\b(?:Plane|Phenomenon|Scheme|Vanguard|Dungeon|Conspi
 /** THE RELEASE DATE OF AN UNRELEASED SPOILER CARD, or undefined for anything else. Scryfall marks a
  *  spoiled card `not_legal` in EVERY format until release, which is indistinguishable by legality
  *  alone from a funny un-card (`set_type` "funny") or a digital-only card (no "paper" in `games`);
- *  both stay out. `today` is passed in (YYYY-MM-DD, UTC) so this stays pure: the NEXT ingest after
- *  release sees `released_at <= today`, drops `upcoming`, and legality comes from Scryfall again. */
+ *  both stay out. `today` is passed in (YYYY-MM-DD, UTC) so this stays pure. The stamp holds until Scryfall flips
+ *  a legality (the next ingest then drops it and legality comes from Scryfall) or the grace below runs out. */
 export function upcomingDate(raw: ScryfallCard, today: string): string | undefined {
   const date = raw.released_at;
-  if (date === undefined || date <= today) return undefined;
+  if (date === undefined) return undefined;
+  // CEILING: 30 days of grace after release. Scryfall flips legality some time after a set is out,
+  // and an ingest in that gap would otherwise read the card as not_legal (flagged illegal, page
+  // gone) until the next one. Thirty is a guess at "a flip never takes longer"; a flip clears the
+  // stamp sooner (any non-not_legal legality), and a card still not_legal past it is left alone.
+  if (date < shiftDays(today, -UPCOMING_GRACE_DAYS)) return undefined;
   const legal = Object.values(raw.legalities ?? {});
   if (legal.length === 0 || legal.some((v) => v !== "not_legal")) return undefined;
   if (raw.set_type !== undefined && NOT_DECK_SET_TYPES.has(raw.set_type)) return undefined;

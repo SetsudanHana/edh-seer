@@ -2884,6 +2884,15 @@ test("the legality panel lists unreleased cards as information", () => {
   none.unmount();
 });
 
+test("the legality panel splits unreleased from released-but-not-yet-legal cards by the browser's date", () => {
+  vi.useFakeTimers({ toFake: ["Date"], now: new Date(2026, 10, 20, 12) });
+  try {
+    render(<LegalityPanel legality={[]} upcoming={[{ name: "Captain Kirk, Boldly Going", date: "2026-11-13" }, { name: "Mr. Spock", date: "2026-12-01" }]} />);
+    expect(screen.getByText(/Not yet released:/).textContent).toMatch(/Mr\. Spock \(1 Dec 2026\)/);
+    expect(screen.getByText(/Released, not yet legal in our card data:/).textContent).toMatch(/Captain Kirk, Boldly Going \(13 Nov 2026\)/);
+  } finally { vi.useRealTimers(); }
+});
+
 // J4 + J12's pairing rule, wired to the web 2026-08-25. THE COPY IS THE ASSERTION, not just the
 // findings: this panel sits above two real scores out of five, and a list of complaints with no
 // caveat reads as a verdict. Silence must mean "nothing was FOUND", never "the deck is legal".

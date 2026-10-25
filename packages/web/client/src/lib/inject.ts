@@ -23,7 +23,7 @@ import { cardImageUrl } from "../components/card-node.js";
 import { effectPhrase } from "@edh-seer/matcher/sentence";
 import { MIN_INDEXABLE_PARTNERS, jobOf, jobSentence } from "@edh-seer/matcher/partner-shard";
 import { eventKeyAction, eventKeyClause, eventKeySentence } from "./demand-sentence.js";
-import { releaseDate } from "./release-date.js";
+import { upcomingLine } from "./release-date.js";
 import { groupAnchor } from "./group-anchor.js";
 import { SECURITY_HEADERS } from "./csp.js";
 
@@ -444,6 +444,8 @@ function factorLead(rows: InjectableCard["partners"]):
  *  derivation, and the engine's own sentences. */
 export function cardPageHtml(
   card: InjectableCard, slug: string, kind: "card" | "commander",
+  /** The request's date (YYYY-MM-DD, UTC): decides "not yet released" against "released, not yet legal". */
+  today: string = new Date().toISOString().slice(0, 10),
 ): string {
   // ONE GROUP PER EVENT, IN ARRIVAL ORDER, the same split `PartnerList` draws, and above each the
   // number the ranking is computed from. The count is what makes this block THIS card's and not a
@@ -556,7 +558,7 @@ export function cardPageHtml(
   return `    <section class="prerendered">
     <h1>${esc(card.name)}</h1>
 ${art}    <p>${esc(card.typeLine)}</p>
-${card.upcoming ? `    <p>Not yet released \u2014 ${esc(releaseDate(card.upcoming))}</p>\n` : ""}${card.manaCost ? `    <p>Mana cost: ${esc(card.manaCost)}</p>\n` : ""}${read}${crossLink}    <p>Causes: ${card.emits.map((e) => esc(eventKeyAction(e) ?? eventKeyClause(e))).join(", ") || "nothing"}.</p>
+${card.upcoming ? `    <p>${esc(upcomingLine(card.upcoming, today))}</p>\n` : ""}${card.manaCost ? `    <p>Mana cost: ${esc(card.manaCost)}</p>\n` : ""}${read}${crossLink}    <p>Causes: ${card.emits.map((e) => esc(eventKeyAction(e) ?? eventKeyClause(e))).join(", ") || "nothing"}.</p>
     <p>Cares about: ${card.demands.map((d) => esc(eventKeyClause(d))).join(", ") || "nothing"}.</p>
 ${partners}
     </section>`;

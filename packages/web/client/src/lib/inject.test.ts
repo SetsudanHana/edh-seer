@@ -696,3 +696,11 @@ test("the static block names the release date of an upcoming card and only then"
   expect(cardPageHtml({ ...KRENKO, upcoming: "2026-11-13" }, "krenko-mob-boss", "card")).toContain("Not yet released \u2014 13 Nov 2026");
   expect(cardPageHtml(KRENKO, "krenko-mob-boss", "card")).not.toContain("Not yet released");
 });
+
+test("the static block says Released, not yet legal, once the date has passed (today is passed in)", () => {
+  const card = { ...KRENKO, upcoming: "2026-11-13" };
+  expect(cardPageHtml(card, "krenko-mob-boss", "card", "2026-11-12")).toContain("Not yet released \u2014 13 Nov 2026");
+  const after = cardPageHtml(card, "krenko-mob-boss", "card", "2026-11-13");
+  expect(after).toContain("Released 13 Nov 2026 \u2014 not yet legal in our card data");
+  expect(after).not.toContain("Not yet released");
+});
