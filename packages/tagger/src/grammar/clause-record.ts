@@ -244,7 +244,12 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
       : r.verb === "return" && r.toZone === "hand" && /^that (?:creature|permanent)$/i.test(object) && before === undefined ? "battlefield"
       // "Shuffle Beacon of Immortality into its owner's library": a spell shuffles itself from the stack.
       : r.verb === "shuffle" && r.object?.self === true && type === "spell" ? "stack" : null);
-    const from = r.fromZone ?? castRef ?? selfBounce ?? (!ZONE_VERBS.has(r.verb) || r.verb === "shuffle" ? null
+    // "put it back on top of your library" (Triumph of Saint Katherine), "put the chosen cards on top of your library"
+    // (Doomsday): the player restacking cards of THEIR library, a library to library put. Read by the DESTINATION
+    // "on top of", never "bottom of": "put each other card exiled this way on the bottom of your library" (Codie) comes from exile.
+    const topPut = r.verb === "put" && r.toZone === "library" && /^(?:it|them|that pile|the chosen cards|those cards)(?: back)?$/i.test(object)
+      && /\bon top of (?:your|their|its owner's) library\b/i.test(r.phrase ?? r.text ?? "") ? "library" : null;
+    const from = r.fromZone ?? castRef ?? selfBounce ?? topPut ?? (!ZONE_VERBS.has(r.verb) || r.verb === "shuffle" ? null
       : ref ? (before?.verb === "search" ? "library" : before?.verb === "exile" ? (looksAtLibrary && !SINGULAR_REF.test(object) ? "library" : "exile") : before !== undefined ? null
         // "When enchanted creature dies, return that card": the card the trigger put in the graveyard.
         // "Counter target spell. If that spell is countered this way, exile it instead": still on the stack.

@@ -535,3 +535,18 @@ test("a card leaving exile is from exile; a destination 'bottom of its owner's l
   expect(from("When this creature enters, put target creature on the bottom of its owner's library.")).toBe("battlefield");
   expect(from("When this creature enters, put a card from the top of your library into your hand.")).toBe("library");
 });
+
+test("a put back on top of your library is a library to library put; the bottom of it is not (#1349 review)", async () => {
+  const { deriveInputOf } = await import("../derive-input.js");
+  const { deriveCardTags } = await import("../derive/derive.js");
+  const triumph = { name: "Triumph of Saint Katherine", typeLine: "Creature — Angel", keywords: [] as string[], oracleText: "When this creature is put into your graveyard from the battlefield, exile it and the top six cards of your library in a face-down pile. If you do, shuffle that pile and put it back on top of your library." };
+  const g = grammarClauseRecords(triumph);
+  expect(g.complete).toBe(true);
+  expect(g.records.flatMap((r) => r.actions ?? []).find((a) => a.verb === "put")).toMatchObject({ fromZone: "library", toZone: "library" });
+  const tags = deriveCardTags(deriveInputOf(triumph as never, "x", triumph.name, g.records, undefined, g.readings));
+  expect(tags.abilities.some((a) => a.effect.kind === "top-set")).toBe(true);
+  const codie = grammarClauseRecords({ name: "X", typeLine: "Artifact", oracleText: "{4}, {T}: Exile cards from the top of your library until you exile an instant or sorcery card. Put each other card exiled this way on the bottom of your library in a random order." });
+  expect(codie.records.flatMap((r) => r.actions ?? []).find((a) => a.verb === "put")?.fromZone).toBeNull();
+  const doom = grammarClauseRecords({ name: "X", typeLine: "Sorcery", oracleText: "Search your library and graveyard for five cards and exile the rest. Put the chosen cards on top of your library in any order." });
+  expect(doom.records.flatMap((r) => r.actions ?? []).find((a) => a.verb === "put")).toMatchObject({ fromZone: "library" });
+});
