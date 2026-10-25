@@ -1568,6 +1568,12 @@ const OPENER = /^(if you do|if you don't|if [^,]+|otherwise|then|as an additiona
 /** Collects the phrases `parseActions` could not read, while `unreadPhrases` runs it. */
 let unread: string[] | null = null;
 
+/** The sentences of a modal ability that choose its modes: "choose one —", "choose one or both —",
+ *  "choose any number —", "choose one that hasn't been chosen —" (a Case-like mode memory), "choose up to five {P}
+ *  worth of modes" with its "You may choose the same mode more than once", and an override that widens the choice
+ *  ("If you have no cards in hand, choose one or more instead", Captain James T. Kirk). */
+const MODAL_INTRO = /^(?:(?:if [^,]{1,80}, )?choose (?:(?:one|two|three|four|five|up to \w+)(?: or (?:more|both))?(?: that hasn't been chosen)?|any number|up to \w+ (?:\{P\})+ worth of modes)(?: instead)?(?: —)?|you may choose the same mode more than once)$/i;
+
 /** DIAGNOSTIC (instruments only): the action phrases of a clause the grammar did not read, as
  *  printed -- what `packages/instruments/src/action-blockers.ts` clusters to rank the next work. */
 export function unreadPhrases(effect: string, type: string | null, cost?: string): string[] {
@@ -1627,6 +1633,10 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     let s = raw.trim().replace(/\.$/, "");
     if (s === "") continue;
     if (/^you may reveal this card from your opening hand$/i.test(s)) { gameStart = true; continue; }
+    // A MODAL INTRO ("When this creature enters, choose one —", "{2}, {T}: Choose one —"): the parent of a
+    // triggered or activated modal ability. The modes are their own clauses (the segmenter), and the store
+    // records the parent with no action of its own, so this sentence reads as nothing.
+    if (MODAL_INTRO.test(s)) continue;
     const look = /^look at (the top (?:card|(?:\w+|\d+) cards) of your library)$/i.exec(s);
     if (look) { if (pendingLook !== null) unread?.push(pendingLook); pendingLook = s; lookedAtLibrary = look[1]!.toLowerCase(); continue; }
     // "You may pay {2}. If you do, draw a card": the draw is as optional as the payment (the store's

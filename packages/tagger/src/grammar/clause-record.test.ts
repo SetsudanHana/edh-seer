@@ -472,3 +472,33 @@ test("Phage the Untouchable: its own loss is yours, the player it damages is an 
   const lg = tags.abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.verb === "loses-game").map((e) => [a.clause, e.subject.control] as const));
   expect(lg).toEqual([[1, "you"], [3, "opp"]]);
 });
+
+// #1349 task 1: the parent of a triggered or activated modal ability is its intro ("choose one —"), no action of its own.
+test("a modal parent reads as the store records it: the trigger, no action, and the modes as their own clauses", () => {
+  const odo = grammarClauseRecords({ name: "Constable Odo", typeLine: "Legendary Creature — Shapeshifter Detective", keywords: ["Investigate"], oracleText: "When Constable Odo enters, choose one —\n• Tap target creature an opponent controls. Put two stun counters on it. (If a permanent with a stun counter would become untapped, remove one from it instead.)\n• Investigate twice. (To investigate, create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")" });
+  expect(odo.blocker).toBeUndefined();
+  expect(odo.complete).toBe(true);
+  expect(odo.records[0]).toMatchObject({ id: 1, abilityType: "triggered", trigger: { event: "enters", control: "you" }, actions: [{ verb: "none", object: "" }] });
+  expect(odo.records.map((r) => r.id)).toEqual([1, 2, 3]);
+  // A mode is typed triggered and carries no trigger of its own.
+  expect(odo.records[1]).toMatchObject({ id: 2, abilityType: "triggered" });
+  expect(odo.records[1]!.trigger).toBeUndefined();
+  const kirk = grammarClauseRecords({ name: "Captain James T. Kirk", typeLine: "Legendary Creature — Human Officer", oracleText: "Whenever Captain Kirk enters or attacks, choose one. If you have no cards in hand, choose one or more instead.\n• Discard a card, then draw a card.\n• Create a 1/1 red Officer creature token.\n• Creatures you control get +1/+0 until end of turn." });
+  expect(kirk.complete).toBe(true);
+  expect(kirk.records[0]).toMatchObject({ id: 1, trigger: { event: "enters" }, actions: [{ verb: "none" }] });
+  const tea = grammarClauseRecords({ name: "Tea, Earl Grey, Hot", typeLine: "Artifact — Food", oracleText: "When this artifact enters, draw a card.\n{2}, {T}, Sacrifice this artifact: Choose one —\n• This artifact deals 2 damage to target opponent.\n• You gain 3 life." });
+  expect(tea.complete).toBe(true);
+  expect(tea.records.map((r) => r.abilityType)).toEqual(["triggered", "activated", "activated", "activated"]);
+  const vger = grammarClauseRecords({ name: "V'Ger, the Intruder", typeLine: "Legendary Artifact Creature — Construct", keywords: ["Flying"], oracleText: "Flying\nWhenever V'Ger enters or attacks, choose one —\n• Look at target opponent's hand, then draw a card.\n• Creatures your opponents control get -1/-0 until your next turn." });
+  // V'Ger's intro reads; the card still waits on its second mode's "look at target opponent's hand".
+  expect(vger.blocker).toMatchObject({ clause: 3, kind: "action", phrase: "look at target opponent's hand" });
+  expect(vger.records[1]).toMatchObject({ id: 2, trigger: { event: "enters" }, actions: [{ verb: "none" }] });
+});
+
+test("a choice that is not a modal intro is still unread", () => {
+  for (const text of ["When this land enters, choose a color.", "When this creature enters, choose a creature type.", "When this creature enters, choose one of them at random."]) {
+    const g = grammarClauseRecords({ name: "X", typeLine: "Creature — Elf", oracleText: text });
+    expect(g.complete, text).toBe(false);
+    expect(g.blocker, text).toMatchObject({ clause: 1, kind: "action" });
+  }
+});

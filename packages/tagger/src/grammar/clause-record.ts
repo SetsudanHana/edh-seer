@@ -334,7 +334,9 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     const labelled = !c.cost && (c.abilityType ?? "static") === "static" ? missedCost(c.text) : null;
     const type = labelled ? "activated" : c.abilityType ?? "static";
     const record: ClauseRecord = { id: c.id, abilityType: type, actions: [] };
-    if (type === "triggered") {
+    // A MODE of a triggered modal ability is typed triggered (the store's convention) but has no trigger of
+    // its own: the parent's trigger is its trigger. Only a mode that prints its own ("When ..., ...") reads one.
+    if (type === "triggered" && !(c.kind === "mode" && !/^\s*(?:whenever|when|at the beginning of|at end of)\b/i.test(c.text))) {
       const preamble = printedPreamble(c.text, card.name);
       const read = preamble ? parseTrigger(preamble, interveningIfOf(selfAsTilde(c.text, card.name))) : null;
       if (!read) return { records, complete: false, blocker: { clause: c.id, kind: "trigger", ...(preamble ? { phrase: preamble } : {}) } };
