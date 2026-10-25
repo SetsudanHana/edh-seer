@@ -572,6 +572,38 @@ export function compareCards(seed: SimilarCard, cand: SimilarCard, opts: Compare
   return { tier: "outcome", score: rs.score, chips: [{ dim: "outcome", label: candLoses ? OUTCOME_LOSS_LABEL : OUTCOME_DAMAGE_LABEL }, ...chipsOf(a, sw, rs)] };
 }
 
+/** ONE EVENT-INDEX BUCKET THE SEED'S OUTPUTS DRAW CANDIDATES FROM (#1342): `key` is the raw `eventKey` (what `events/` shards are keyed by),
+ *  `facts` what the seed's abilities that emit it do (kind, how often, size), for pre-ranking members by `pf` closeness. `swapped` marks the
+ *  drain counterpart (lose-life <-> non-combat-damage), which `compareCards` reads as the `outcome` tier. */
+export interface SeedBucket { key: string; facts: { kind: FactKind; repeats: Ability["repeats"]; amount: Amount }[]; swapped: boolean }
+/** The seed's gate-eligible output buckets, exactly the keys `similarIndex` buckets a seed by (`never` skipped, `alone` only with no strong output).
+ *  Outputs that are not an event key (`@self`, `effect:`, the named-self search) have no bucket. */
+export function seedBuckets(seed: SimilarCard, opts: { drainIsDamage?: boolean } = {}): SeedBucket[] {
+  const sig = sigOf(seed);
+  const out = new Map<string, SeedBucket>();
+  const rawOf = (k: string): string => {
+    let r = k.replace(/~cost$/, "").replace(/@(?:you|other)$/, "");
+    if (r.startsWith("counter-added|")) r = r.replace(/^((?:[^|]*\|){3}[^|:]*):.*$/, "$1");
+    return r;
+  };
+  for (const x of sig.abilities) {
+    for (const o of x.outputs) {
+      const g = gateOfKey(o.key);
+      if (g === "never" || (g === "alone" && sig.strong > 0)) continue;
+      if (o.key.endsWith("@self") || o.key.startsWith(EFFECT_PREFIX) || o.key === "search@named-self") continue;
+      const fact = { kind: x.kind, repeats: x.repeats, amount: x.amount };
+      const add = (key: string, swapped: boolean): void => {
+        const b = out.get(key) ?? { key, facts: [], swapped };
+        b.facts.push(fact);
+        out.set(key, b);
+      };
+      add(rawOf(o.key), false);
+      if (opts.drainIsDamage) { const sw = drainSwapKey(o.key); if (sw !== null) add(rawOf(sw), true); }
+    }
+  }
+  return [...out.values()];
+}
+
 /** A CHIP EVERY ROW CARRIES SAYS NOTHING about any one row (Heliod: "lacks 2 other effects" on all 13): it describes the
  *  seed, not the difference. Dropped from the final list, only when there are at least 3 rows to be universal across. */
 function dropUniversalChips<T extends { chips: Chip[] }>(rows: T[]): T[] {

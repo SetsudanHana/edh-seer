@@ -1,27 +1,55 @@
 /** REDUNDANCY FOR ONE SEED CARD, IN THE BROWSER (#1342, owner ruling 2026-10-25: similar.ts only, candidates computed LIVE from static
  *  data, no new artifact). Gathers what `findRedundancy` (pure) needs: the seed's deck partners, the amplifiers, and a candidate pool of
- *  (a) off-deck cards the seed's partners list in their `pi`, (b) the seed's own precomputed similar rows, (c) every other deck card.
+ *  (a) off-deck cards in the EVENT BUCKETS of the seed's outputs (`events/` shards, measured 2026-10-25: `pi` is the wrong source, it is each
+ *  card's corpus-wide top 200 and lists neither the seed's job-mates nor this deck), (b) the seed's own precomputed similar rows,
+ *  (c) every other deck card.
+ *
+ *  SHARED PARTNERS ARE REAL ENGINE EDGES, face by face, with `impliedProducer` reasons dropped (a link true of every creature that enters,
+ *  owner 2026-10-02). Report edges are filtered the same way, so the "of N" denominator matches the numerator.
  *
  *  PHYSICAL NAMES throughout: report edges and reasons name the FACE that does the work, `report.cards` maps it back (`cardName ?? name`). */
 import type { DeckReport, Reason } from "@edh-seer/engine";
 import { normalizeName } from "@edh-seer/data/names";
 import { StaticLookup } from "./static-lookup.js";
 import { decodeIndex, deckCards } from "./suggest-static.js";
-import { byConnection, candidatePool, type DeckSide } from "./suggest.js";
 import { faceDeckCards } from "./faces.js";
+import { directedReasons } from "./edges.js";
+import { loadHierarchy } from "./hierarchy.js";
 import { findRedundancy, type RedundancyCandidate, type RedundancyHit } from "./redundancy.js";
-import type { SimilarCard } from "./similar.js";
+import { compareCards, seedBuckets, type SimilarCard } from "./similar.js";
+import { isUnjudgedFact, unpackFact } from "./member-facts.js";
+import type { DeckCard } from "./types.js";
 
 const DEFAULT_POOL_CAP = 150;
+/** A member with no judged fact sorts after any member whose facts we can compare. */
+const UNKNOWN_DISTANCE = 6;
 
-export interface RedundancyResult { hits: RedundancyHit[]; poolSize: number; seedPartners: string[]; amplifiers: string[] }
+export interface RedundancyStats { buckets: string[]; bucketSizes: number[]; poolSize: number; fetched: number }
+export interface RedundancyResult { hits: RedundancyHit[]; poolSize: number; seedPartners: string[]; amplifiers: string[]; stats: RedundancyStats }
+
+type SeedFact = ReturnType<typeof seedBuckets>[number]["facts"][number];
+/** How far a member's ability is from the seed's: kind, then how often, then size. 0 = the same job at the same rate. */
+function factDistance(n: number, seed: readonly SeedFact[]): number {
+  if (isUnjudgedFact(n)) return UNKNOWN_DISTANCE;
+  const m = unpackFact(n);
+  let best = UNKNOWN_DISTANCE;
+  for (const f of seed) {
+    let d = m.kind === f.kind ? 0 : 4;
+    if (m.repeats !== f.repeats) d += m.repeats === undefined || f.repeats === undefined ? 1 : 2;
+    const ma = m.amount, fa = f.amount;
+    if (ma.kind !== fa.kind || ("value" in ma && "value" in fa && ma.value !== fa.value)) d += 1;
+    best = Math.min(best, d);
+  }
+  return best;
+}
 
 export async function redundancyFor(input: {
   report: DeckReport; seed: string; commanderColorIdentity: string[]; baseUrl: string; fetchImpl?: typeof fetch;
   poolCap?: number; lookup?: StaticLookup;
 }): Promise<RedundancyResult> {
   const { report, seed } = input;
-  const empty: RedundancyResult = { hits: [], poolSize: 0, seedPartners: [], amplifiers: [] };
+  const stats: RedundancyStats = { buckets: [], bucketSizes: [], poolSize: 0, fetched: 0 };
+  const empty: RedundancyResult = { hits: [], poolSize: 0, seedPartners: [], amplifiers: [], stats };
   const lookup = input.lookup ?? new StaticLookup(input.baseUrl, input.fetchImpl);
 
   // FACE NAME -> PHYSICAL CARD.
@@ -34,11 +62,12 @@ export async function redundancyFor(input: {
   const atName = new Map(index.map((c) => [c.name, c] as const));
   const raw = deckCards(lookup);
 
-  // DECK PARTNERS: every deck card an edge joins to each deck card (token nodes are not in `physicalOf`).
+  // DECK PARTNERS: every deck card an edge joins to each deck card, by a reason that is not merely "a card enters". Token nodes are not in `physicalOf`.
   const partnersOf = new Map<string, Set<string>>();
   for (const e of report.edges) {
     const a = physicalOf.get(e.a), b = physicalOf.get(e.b);
     if (!a || !b || a === b) continue;
+    if (e.reasons.length > 0 && e.reasons.every((r) => r.impliedProducer)) continue;
     (partnersOf.get(a) ?? partnersOf.set(a, new Set()).get(a)!).add(b);
     (partnersOf.get(b) ?? partnersOf.set(b, new Set()).get(b)!).add(a);
   }
@@ -60,17 +89,31 @@ export async function redundancyFor(input: {
   }
   const amplifiers = [...amps].sort();
 
-  // OFF-DECK POOL from the seed partners' `pi` (non-land), as the suggestions build it.
-  const pi = new Map<string, readonly (readonly [number, number, ...number[]])[]>();
-  for (const name of seedPartners) {
-    if (atName.get(name)?.isLand) continue;
-    const ids = lookup.partnerIds(normalizeName(name));
-    if (ids && ids.length > 0) pi.set(name, ids);
+  const seedDc = await raw(seed);
+  if (!seedDc?.tags) return empty;
+  const seedCard: SimilarCard = { id: atName.get(seed)?.pos ?? index.length, name: seed, tags: seedDc.tags };
+
+  // OFF-DECK POOL: members of the seed's output buckets (and their drain counterparts), identity-filtered on the DECODED INDEX before any card is
+  // fetched, pre-ranked by how close the member's ability facts are to the seed's, capped.
+  const allowed = new Set(input.commanderColorIdentity);
+  const deckNames = new Set(physical);
+  const best = new Map<number, number>();
+  for (const b of seedBuckets(seedCard, { drainIsDamage: true })) {
+    const m = await lookup.eventMembers(b.key);
+    stats.buckets.push(b.key);
+    stats.bucketSizes.push(m?.p.length ?? 0);
+    if (!m) continue;
+    m.p.forEach((pos, i) => {
+      const c = index[pos];
+      if (!c || c.isLand || deckNames.has(c.name) || !c.identity.every((x) => allowed.has(x))) return;
+      const facts = m.pf?.[i] ?? [];
+      const d = (facts.length === 0 ? UNKNOWN_DISTANCE : Math.min(...facts.map((n) => factDistance(n, b.facts)))) + (b.swapped ? 1 : 0);
+      if (d < (best.get(pos) ?? Infinity)) best.set(pos, d);
+    });
   }
-  const deck: DeckSide = { names: new Set(physical), identity: new Set(input.commanderColorIdentity), pi };
-  const pool = [...candidatePool(deck, index).values()].sort(byConnection).slice(0, input.poolCap ?? DEFAULT_POOL_CAP);
-  const offDeck = new Map<string, { pos: number; shared: string[] }>();
-  for (const c of pool) offDeck.set(c.card.name, { pos: c.card.pos, shared: c.connections.map((x) => x.deckCard) });
+  const offDeck = new Map<string, number>();
+  [...best].sort((x, y) => x[1] - y[1] || index[x[0]]!.name.localeCompare(index[y[0]]!.name, "en"))
+    .slice(0, input.poolCap ?? DEFAULT_POOL_CAP).forEach(([pos]) => offDeck.set(index[pos]!.name, pos));
 
   // THE SEED'S OWN PRECOMPUTED SIMILAR ROWS. Absent record or rows = nothing.
   const seedEntry = atName.get(seed);
@@ -78,37 +121,45 @@ export async function redundancyFor(input: {
     const rec = await lookup.cardPage(seedEntry.slug).catch(() => null);
     const similar = rec ? (await lookup.similarOf(rec)).similar : [];
     for (const s of similar) {
-      if (physicalOf.has(s.name) || offDeck.has(s.name)) continue;
       const at = atName.get(s.name);
-      if (at) offDeck.set(s.name, { pos: at.pos, shared: [] });
+      if (!at || deckNames.has(s.name) || offDeck.has(s.name)) continue;
+      offDeck.set(s.name, at.pos);
     }
   }
 
+  stats.fetched = offDeck.size;
   await lookup.prefetch([...offDeck.keys()].map(normalizeName));
-  let spare = index.length;
-  const idOf = new Map<string, number>();
-  const cardOf = async (name: string, pos?: number): Promise<SimilarCard | null> => {
+  const cardOf = async (name: string, pos: number): Promise<{ card: SimilarCard; dc: DeckCard } | null> => {
     const dc = await raw(name);
-    if (!dc?.tags) return null;
-    const id = pos ?? atName.get(name)?.pos ?? idOf.get(name) ?? (idOf.set(name, spare++), idOf.get(name)!);
-    return { id, name, tags: dc.tags };
+    return dc?.tags ? { card: { id: pos, name, tags: dc.tags }, dc } : null;
   };
-  const seedCard = await cardOf(seed);
-  if (!seedCard) return empty;
 
   const candidates: RedundancyCandidate[] = [];
   for (const name of physical) {
     if (name === seed) continue;
-    const card = await cardOf(name);
-    if (card) candidates.push({ card, inDeck: true, sharedPartners: [...(partnersOf.get(name) ?? [])].filter((p) => seedSet.has(p)).sort() });
+    const c = await cardOf(name, atName.get(name)?.pos ?? -1);
+    if (c) candidates.push({ card: c.card, inDeck: true, sharedPartners: [...(partnersOf.get(name) ?? [])].filter((p) => seedSet.has(p)).sort() });
   }
+
+  // SHARED PARTNERS FOR AN OFF-DECK CANDIDATE: the engine, only for those `compareCards` keeps. CEILING: the deck's chosen types, commander mark and
+  // land types are not threaded (as `suggestForDeck` does), so a partner that needs them reads as not shared.
+  const h = loadHierarchy();
+  const partnerFaces = (await Promise.all(seedPartners.map(async (n) => [n, await raw(n)] as const)))
+    .filter((x): x is readonly [string, DeckCard] => x[1] !== null).map(([n, d]) => [n, faceDeckCards(d)] as const);
+  const sharedOf = (dc: DeckCard): string[] => {
+    const mine = faceDeckCards(dc);
+    return partnerFaces.filter(([, faces]) => faces.some((pf) => mine.some((cf) =>
+      [...directedReasons(cf, pf, h, { tokensMediate: false }), ...directedReasons(pf, cf, h, { tokensMediate: false })].some((r) => !r.impliedProducer)))).map(([n]) => n);
+  };
   let poolSize = 0;
-  for (const [name, v] of offDeck) {
-    const card = await cardOf(name, v.pos);
-    if (!card) continue;
+  for (const [name, pos] of offDeck) {
+    const c = await cardOf(name, pos);
+    if (!c) continue;
     poolSize++;
-    candidates.push({ card, inDeck: false, sharedPartners: v.shared });
+    if (!compareCards(seedCard, c.card, { drainIsDamage: true })) continue;
+    candidates.push({ card: c.card, inDeck: false, sharedPartners: sharedOf(c.dc) });
   }
+  stats.poolSize = poolSize;
   const hits = findRedundancy({ seed: seedCard, seedPartners, candidates, amplifiers, identity: input.commanderColorIdentity });
-  return { hits, poolSize, seedPartners, amplifiers };
+  return { hits, poolSize, seedPartners, amplifiers, stats };
 }
