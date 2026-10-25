@@ -1,5 +1,6 @@
 import type { DeckReport } from "../types.js";
 import { CardName } from "./card-drawer.js";
+import { releaseDate } from "../lib/release-date.js";
 
 /** WHAT IS OFF ABOUT THIS DECK, AS A REPORT AND NEVER A GATE (roadmap J4, plus J12's pairing rule).
  *
@@ -14,14 +15,6 @@ import { CardName } from "./card-drawer.js";
  *
  *  IT FIRES ON NOTHING IN THE 71 CALIBRATION DECKS, by construction — they are the owner's own
  *  well-built lists. This exists for the arbitrary pasted one. */
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-/** "2026-11-13" -> "13 Nov 2026". By hand, not Intl: a date-only ISO string parses as UTC and a local formatter can shift the day. */
-const releaseDate = (iso: string): string => {
-  const [y, m, d] = iso.split("-");
-  const month = MONTHS[Number(m) - 1];
-  return month && d && y ? `${Number(d)} ${month} ${y}` : iso;
-};
-
 export function LegalityPanel({ legality, companions = [], upcoming = [] }: {
   legality: DeckReport["legality"];
   /** Unreleased spoiler cards (owner 2026-10-25): information, never a violation. */

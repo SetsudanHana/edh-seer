@@ -372,3 +372,13 @@ test("similar cards follow the partners; a card with none shows no section", asy
   await screen.findByRole("heading", { level: 1, name: /Krenko, Mob Boss/ });
   expect(screen.queryByRole("heading", { name: "Similar cards" })).toBeNull();
 });
+
+/** AN UPCOMING SPOILER SAYS SO under its type line (owner 2026-10-25), in words and a British date. */
+test("an upcoming card's page says when it is released, and a released card's does not", async () => {
+  const first = at("krenko-mob-boss", async () => ({ ...KRENKO, upcoming: "2026-11-13" }));
+  expect(await screen.findByText("Not yet released \u2014 13 Nov 2026")).toBeTruthy();
+  first.unmount();
+  at("krenko-mob-boss", async () => KRENKO);
+  await screen.findByRole("heading", { level: 1 });
+  expect(screen.queryByText(/Not yet released/)).toBeNull();
+});

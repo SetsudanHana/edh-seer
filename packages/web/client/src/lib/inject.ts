@@ -23,6 +23,7 @@ import { cardImageUrl } from "../components/card-node.js";
 import { effectPhrase } from "@edh-seer/matcher/sentence";
 import { MIN_INDEXABLE_PARTNERS, jobOf, jobSentence } from "@edh-seer/matcher/partner-shard";
 import { eventKeyAction, eventKeyClause, eventKeySentence } from "./demand-sentence.js";
+import { releaseDate } from "./release-date.js";
 import { groupAnchor } from "./group-anchor.js";
 import { SECURITY_HEADERS } from "./csp.js";
 
@@ -226,6 +227,8 @@ export function injectPage(shell: string, page: InjectedPage): string {
 export interface InjectableCard {
   name: string;
   typeLine: string;
+  /** Release date of an unreleased spoiler card; absent when released. */
+  upcoming?: string;
   commander: boolean;
   emits: string[];
   demands: string[];
@@ -553,7 +556,7 @@ export function cardPageHtml(
   return `    <section class="prerendered">
     <h1>${esc(card.name)}</h1>
 ${art}    <p>${esc(card.typeLine)}</p>
-${card.manaCost ? `    <p>Mana cost: ${esc(card.manaCost)}</p>\n` : ""}${read}${crossLink}    <p>Causes: ${card.emits.map((e) => esc(eventKeyAction(e) ?? eventKeyClause(e))).join(", ") || "nothing"}.</p>
+${card.upcoming ? `    <p>Not yet released \u2014 ${esc(releaseDate(card.upcoming))}</p>\n` : ""}${card.manaCost ? `    <p>Mana cost: ${esc(card.manaCost)}</p>\n` : ""}${read}${crossLink}    <p>Causes: ${card.emits.map((e) => esc(eventKeyAction(e) ?? eventKeyClause(e))).join(", ") || "nothing"}.</p>
     <p>Cares about: ${card.demands.map((d) => esc(eventKeyClause(d))).join(", ") || "nothing"}.</p>
 ${partners}
     </section>`;

@@ -1662,6 +1662,8 @@ export interface AbilityRow {
 export interface CardPageRecord {
   name: string;
   typeLine: string;
+  /** RELEASE DATE (YYYY-MM-DD) of an unreleased spoiler card (owner 2026-10-25). Absent on a released card. */
+  upcoming?: string;
   manaCost: string | null;
   /** THE CARD'S OWN PICTURE, as Scryfall's `art_crop` URL -- the client rewrites the path segment
    *  to `/normal/` for the whole card, which is what `cardImageUrl` already does for the graph.
@@ -2240,6 +2242,7 @@ export function partnerBuilder(all: DeckCard[], h: Hierarchy) {
       const record: CardPageRecord = {
         name: d.card.name,
         typeLine: d.card.typeLine ?? "",
+        ...((d.card as { upcoming?: string }).upcoming ? { upcoming: (d.card as { upcoming?: string }).upcoming } : {}),
         manaCost: (d.card as { manaCost?: string }).manaCost ?? null,
         // THE FRONT FACE IS THE FALLBACK, because a genuinely two-faced card has no card-level art:
         // Scryfall puts `image_uris` on each FACE for transform and modal_dfc and omits the top-level

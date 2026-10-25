@@ -328,6 +328,17 @@ test("a two-faced card's page takes the front face's art when the card has none"
   expect(rec.backArtCrop).toBe("https://cards.scryfall.io/art_crop/back/e/a/ea7e.jpg");
 });
 
+/** AN UPCOMING SPOILER'S PAGE SAYS SO (owner 2026-10-25): the record carries the release date, and a
+ *  released card carries no key at all. */
+test("a page record carries the release date of an upcoming card and nothing otherwise", () => {
+  const soon = base("Soon Card", krenko.tags.abilities);
+  (soon.card as unknown as { upcoming: string }).upcoming = "2026-11-13";
+  const { shards } = buildPartnerArtifact([soon, krenko, impactTremors], H);
+  const all = [...shards.values()].flatMap((s) => Object.entries(s));
+  expect(all.find(([slug]) => slug === "soon-card")![1].upcoming).toBe("2026-11-13");
+  expect("upcoming" in all.find(([slug]) => slug === "krenko-mob-boss")![1]).toBe(false);
+});
+
 /** `backArtCrop` IS A FIELD AND NOT A GUESS FROM THE NAME. Split, adventure and flip cards print
  *  two names on ONE physical face and have no back image; `name.includes(" // ")` would have
  *  offered every one of them a control that turns to nothing. Measured 2026-09-08: exactly 491
