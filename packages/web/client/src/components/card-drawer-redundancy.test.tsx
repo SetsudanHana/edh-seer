@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect } from "react";
 import { MemoryRouter } from "react-router";
@@ -21,8 +21,10 @@ const HITS = [
   hit("Corpse Knight", "outcome", [chip("amplifier", "loses synergy with Fiery Emancipation")]),
 ];
 
-function Host({ redundancy, open = "Reducer", token, children }: { redundancy?: DrawerExtras["redundancy"]; open?: string; token?: string; children?: React.ReactNode }) {
-  const { report, graph } = engineDeck();
+function Host({ redundancy, open = "Reducer", token, companion, children }: { redundancy?: DrawerExtras["redundancy"]; open?: string; token?: string; companion?: string; children?: React.ReactNode }) {
+  const deckBase = engineDeck();
+  const { report } = deckBase;
+  const graph = companion ? { ...deckBase.graph, nodes: deckBase.graph.nodes.map((n) => (n.id === companion ? { ...n, isCompanion: true } : n)) } : deckBase.graph;
   const model = buildEngineModel(report, graph);
   function Register() {
     const { setExtras, open: o, openToken } = useCardDrawer();
@@ -234,4 +236,38 @@ test("the intro keys the figure, and the heading is scrolled to the top of the r
   const title = within(d).getByRole("heading", { level: 4, name: "Redundancy in this deck" });
   expect(scroll.mock.contexts).toContain(title);
   delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+});
+
+test("a companion gets neither the button nor the menu line; a main-deck card still does", async () => {
+  function Lines({ out }: { out: { labels: string[] } }) {
+    const lines = useCardMenu();
+    out.labels = [...lines("Reducer"), ...lines("Payoff A")].map((x) => x.label);
+    return null;
+  }
+  const out = { labels: [] as string[] };
+  const { unmount } = render(<Host redundancy={async () => result([])} companion="Reducer"><Lines out={out} /></Host>);
+  expect(within(await drawer()).queryByRole("button", { name: /redundancy/i })).toBeNull();
+  // Reducer (the companion) offers no line; Payoff A, in the main deck, does -- exactly one line in all.
+  expect(out.labels.filter((l) => l === "Find redundancy in this deck")).toHaveLength(1);
+  unmount();
+  render(<Host redundancy={async () => result([])} open="Payoff A" companion="Reducer" />);
+  expect(within(await drawer()).getByRole("button", { name: "Find redundancy in this deck" })).toBeInTheDocument();
+});
+
+test("a rejection after an earlier success is an error with retry, and is not cached", async () => {
+  vi.spyOn(console, "warn").mockImplementation(() => {});
+  const redundancy = vi.fn().mockResolvedValueOnce(result(HITS)).mockRejectedValueOnce(new Error("events shards unreachable")).mockResolvedValueOnce(result(HITS));
+  render(<Host redundancy={redundancy} open="Reducer" />);
+  const d = await drawer();
+  await userEvent.click(within(d).getByRole("button", { name: "Find redundancy in this deck" }));
+  await within(d).findByRole("heading", { name: /^Same effect/ });
+  cleanup();
+  // A different card on the same search function: its rejection is shown, then retried.
+  render(<Host redundancy={redundancy} open="Payoff A" />);
+  const d2 = await drawer();
+  await userEvent.click(within(d2).getByRole("button", { name: "Find redundancy in this deck" }));
+  expect(await within(d2).findByText(/couldn't load/i)).toBeInTheDocument();
+  await userEvent.click(within(d2).getByRole("button", { name: "Try again" }));
+  expect(await within(d2).findByRole("heading", { name: /^Same effect/ })).toBeInTheDocument();
+  expect(redundancy).toHaveBeenCalledTimes(3);
 });

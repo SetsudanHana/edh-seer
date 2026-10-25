@@ -11,7 +11,7 @@ export function useCardMenu(): (name: string) => MenuItem[] {
   return (name) => {
     const lines = cardLines(name, known.has(name) ? () => open(name) : undefined);
     // After "Read the card": the same card, with the search started. Only for a card the drawer can show.
-    if (!canFindRedundancy || !known.has(name)) return lines;
+    if (!canFindRedundancy(name)) return lines;
     const read = lines.findIndex((l) => l.label === "Read the card");
     lines.splice(read + 1, 0, { label: "Find redundancy in this deck", run: () => findRedundancy(name) });
     return lines;

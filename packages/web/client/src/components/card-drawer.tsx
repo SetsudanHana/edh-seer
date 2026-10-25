@@ -60,7 +60,7 @@ interface CardDrawerApi {
    *  slot it can take. */
   openSuggestion: (card: SuggestedCard, replaces?: string) => void;
   /** True when the report registered the redundancy search, so a menu can offer it (#1342). */
-  canFindRedundancy: boolean;
+  canFindRedundancy: (name: string) => boolean;
   /** Open a deck card in the drawer and start its redundancy search. A no-op for a name the graph does not carry. */
   findRedundancy: (name: string) => void;
   /** False outside a provider, where a card link keeps navigating as it always did. */
@@ -101,7 +101,7 @@ interface CardDrawerApi {
 }
 
 const CardDrawerContext = createContext<CardDrawerApi>({
-  open: () => {}, openToken: () => {}, canOpenToken: () => false, close: () => {}, openSuggestion: () => {}, canFindRedundancy: false, findRedundancy: () => {}, live: false, known: new Set(), labels: new Map(), tokens: new Map(),
+  open: () => {}, openToken: () => {}, canOpenToken: () => false, close: () => {}, openSuggestion: () => {}, canFindRedundancy: () => false, findRedundancy: () => {}, live: false, known: new Set(), labels: new Map(), tokens: new Map(),
   added: new Set(), isAdded: () => false, setExtras: () => {},
   setRailOn: () => {}, railHost: null, setRailBack: () => {}, pairOf: () => null, walkFrom: () => null,
 });
@@ -226,12 +226,15 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
     if (!shownNow.current) opener.current = document.activeElement;
     setOpenIdRaw(null); setSuggestion({ card, replaces }); opened.current = true;
   }, []);
-  const canFindRedundancy = extras?.redundancy !== undefined;
+  // A COMPANION IS NOT IN THE DECK for this search (`redundancyFor` leaves it out), though its node is on the graph: offering it would answer "cannot compare" about a card that can.
+  const companions = useMemo(() => new Set((graph?.nodes ?? []).filter((n) => n.isCompanion === true).flatMap((n) => [n.label, n.cardName ?? n.label])), [graph]);
+  const hasSearch = extras?.redundancy !== undefined;
+  const canFindRedundancy = useCallback((name: string) => hasSearch && byName.has(name) && !companions.has(name), [hasSearch, byName, companions]);
   const findRedundancy = useCallback((name: string) => {
-    if (!byName.has(name)) return;
+    if (!canFindRedundancy(name)) return;
     openNode(byName.get(name));
     setRedundancyAsk({ name, n: ++askCount.current });
-  }, [byName, openNode]);
+  }, [canFindRedundancy, byName, openNode]);
   /** WHICH CARD MAKES EACH TOKEN, read off the graph's own create edges (`The Rani creates Mark of
    *  the Rani`). A token name in a reason sentence was dead text saying nothing -- see
    *  `reason-text.ts` -- and "the token your commander makes" is the whole answer a reader needed
@@ -423,7 +426,7 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
                     ) : null}
                   </div>
                 ) : undefined}
-                after={extras?.redundancy && !node.isToken && extras.model.cards.get(node.id) ? (
+                after={extras?.redundancy && !node.isToken && node.isCompanion !== true && extras.model.cards.get(node.id) ? (
                   <RedundancySection key={`${node.id}:${findKey(extras.redundancy)}`} seed={node.cardName ?? node.label} find={extras.redundancy}
                     ask={redundancyAsk && redundancyAsk.name === (node.cardName ?? node.label) ? redundancyAsk.n : 0} />
                 ) : undefined}
