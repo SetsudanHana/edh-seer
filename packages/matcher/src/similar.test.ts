@@ -445,6 +445,19 @@ describe("outcome tier: damage and life loss are one job in a deck (#1342)", () 
     expect(compareCards(card("Impact Tremors"), card("Phyrexian Arena"), drain)).toBeNull();
     expect(compareCards(card("Corpse Knight"), card("Phyrexian Arena"), drain)).toBeNull();
   });
+  test("an amount chip names the CANDIDATE's own unit, not the seed's", () => {
+    const amount = (x: keyof typeof fixtures, y: keyof typeof fixtures) => compareCards(card(x), card(y), drain)?.chips.filter((c) => c.dim === "amount");
+    expect(amount("Corpse Knight", "Lightning Bolt")).toEqual([{ dim: "amount", label: "3 damage" }]);
+    expect(amount("Lightning Bolt", "Corpse Knight")).toEqual([{ dim: "amount", label: "1 life" }]);
+  });
+  test("extra/missing nouns name the candidate's real output", () => {
+    const labels = (x: keyof typeof fixtures, y: keyof typeof fixtures) => compareCards(card(x), card(y), drain)?.chips.map((c) => c.label) ?? [];
+    for (const [x, y] of [["Corpse Knight", "Lightning Bolt"], ["Lightning Bolt", "Corpse Knight"], ["Impact Tremors", "Professor Onyx"]] as const) {
+      const l = labels(x, y);
+      const wrong = y === "Lightning Bolt" ? "life loss" : "damage";
+      expect(l).not.toContain(`+ ${wrong}`);
+    }
+  });
   test("the page's index never emits `outcome`", () => {
     const all = cards.flatMap((c) => similarIndex(cards).similarTo(c.id, { limit: 99 }));
     expect(all.some((r) => r.tier === "outcome")).toBe(false);

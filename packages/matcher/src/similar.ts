@@ -75,7 +75,9 @@ type Ability = CardTags["abilities"][number];
 type Amount = FactAmount;
 type Who = "you" | "opp" | "any";
 /** `key` is the gate key (raw eventKey plus a `@you`/`@other` recipient class where the verb has one). */
-interface Output { key: string; who: Who | null; scope: "one" | "many" | null; event: GameEvent }
+interface Output { key: string; who: Who | null; scope: "one" | "many" | null; event: GameEvent;
+  /** Set only on a drain-swapped output (#1342): the candidate's real event, which labels read, while `event` carries the swapped verb. */
+  orig?: GameEvent }
 export interface AbilitySig {
   kind: FactKind;
   /** Sorted trigger verbs, null on an untriggered ability. */
@@ -426,7 +428,7 @@ function pairChips(a: AbilitySig, b: AbilitySig, p: Pair, sameTypes: boolean, ty
   if (p.mine.scope !== null && p.shared.scope !== null && p.mine.scope !== p.shared.scope) {
     chips.push({ dim: "scope", label: p.shared.scope === "many" ? `each ${subjectWords(p.shared.event.subject, false)}` : "one target" });
   }
-  if (amountDistance(a.amount, b.amount) > 0) chips.push({ dim: "amount", label: amountLabel(b.amount, p.shared.event.verb) });
+  if (amountDistance(a.amount, b.amount) > 0) chips.push({ dim: "amount", label: amountLabel(b.amount, (p.shared.orig ?? p.shared.event).verb) });
   if (repeatsDistance(a.repeats, b.repeats) > 0) chips.push({ dim: "repeats", label: b.repeats === undefined ? "repeat rate not stated" : (REPEAT_LABEL[b.repeats] ?? b.repeats) });
   if (p.mine.who !== p.shared.who && p.shared.who !== null) chips.push({ dim: "recipient", label: RECIPIENT_LABEL[p.shared.who] });
   if (!sameTypes) chips.push({ dim: "type", label: typeChip });
@@ -522,12 +524,14 @@ function drainSwapKey(key: string): string | null {
 
 const swappedCache = new WeakMap<CardSig, CardSig | null>();
 /** THE CANDIDATE AS IF ITS LIFE LOSS WERE DAMAGE (and the reverse), or null when it has no such output. Only the key and the event's verb
- *  change, so the amount, trigger and extras compare exactly as they would for a plain match. */
+ *  change, so the amount, trigger and extras compare exactly as they would for a plain match; labels read the real events (`orig`).
+ *  CEILING: the swap is tried only when the plain comparison is null, and for the whole card, not per ability. A pair that also shares
+ *  another output (both make a token) keeps its plain tier with "no damage" / "+ life loss" chips and gets no drain credit. */
 function drainSwapped(b: CardSig): CardSig | null {
   if (swappedCache.has(b)) return swappedCache.get(b)!;
   const swap = (o: Output): Output => {
     const k = drainSwapKey(o.key);
-    return k === null ? o : { ...o, key: k, event: { ...o.event, verb: DRAIN_SWAP[o.event.verb] ?? o.event.verb } as GameEvent };
+    return k === null ? o : { ...o, key: k, orig: o.event, event: { ...o.event, verb: DRAIN_SWAP[o.event.verb] ?? o.event.verb } as GameEvent };
   };
   let any = false;
   const outputs = new Map<string, GameEvent>();
@@ -535,7 +539,7 @@ function drainSwapped(b: CardSig): CardSig | null {
     const nk = drainSwapKey(k);
     if (nk === null) { outputs.set(k, e); continue; }
     any = true;
-    outputs.set(nk, { ...e, verb: DRAIN_SWAP[e.verb] ?? e.verb } as GameEvent);
+    outputs.set(nk, e); // the real event: extra/missing nouns read it
   }
   const sig: CardSig | null = any ? { ...b, outputs, abilities: b.abilities.map((x) => ({ ...x, outputs: x.outputs.map(swap) })) } : null;
   swappedCache.set(b, sig);
