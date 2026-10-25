@@ -26,6 +26,14 @@
  *  - `output`: same output, a different trigger verb or an untriggered/triggered split (Blood Artist
  *              gains life when a creature DIES, not when one enters).
  *
+ *  - `outcome`: DECK CONTEXT ONLY (#1342), never produced by `similarIndex` or a card page; `compareCards` yields it
+ *              only when asked (`drainIsDamage`) and only when the plain comparison found nothing. The same job by a
+ *              different event: damage to each opponent and an opponent losing life (Impact Tremors, Corpse Knight)
+ *              both take opponents' life total down, so a deck holding both has said the same thing twice. It is
+ *              not folded into `output` because the card page's answer to "same output" stays the engine's own key;
+ *              and amplifiers break the equivalence (a damage doubler or a life-loss prevention touches only one of
+ *              the two), which the deck pass, not this file, accounts for.
+ *
  *  GATE KEYS ARE THE RAW `eventKey`, NOT `supplyForms` (which widens a key to everything it satisfies), ON
  *  PURPOSE: a Goblin-token maker and a generic token maker are different outputs, however well the first
  *  would feed a consumer of the second. Similarity asks "does it do this", not "does it feed that".
@@ -57,8 +65,8 @@ import { VERB_PHRASES, emitSubjectNoun } from "./sentence.js";
 /** What a card carries here: the same pair `partners-core` builds per card (a card and its derived tags), flattened. */
 export interface SimilarCard { id: number; name: string; tags: CardTags | null }
 
-export type SimilarTier = "same" | "close" | "output";
-export type ChipDim = "scope" | "trigger" | "amount" | "repeats" | "type" | "kind" | "extra" | "missing" | "recipient";
+export type SimilarTier = "same" | "close" | "output" | "outcome";
+export type ChipDim = "outcome" | "scope" | "trigger" | "amount" | "repeats" | "type" | "kind" | "extra" | "missing" | "recipient";
 export interface Chip { dim: ChipDim; label: string }
 export interface Comparison { tier: SimilarTier; chips: Chip[]; score: number }
 export interface SimilarHit extends Comparison { id: number; name: string }
@@ -93,7 +101,7 @@ const SUPERTYPES = new Set(["legendary", "basic", "snow", "world", "ongoing"]);
 /** ABILITY WORDS (CR 207.2c) ride in `characteristics.keywords` but "have no special rules meaning": "+ alliance" says nothing a reader can act on. Verbatim from the rule. */
 const ABILITY_WORDS = new Set(("adamant, addendum, alliance, battalion, bloodrush, celebration, channel, chroma, cohort, constellation, converge, council's dilemma, coven, delirium, descend 4, descend 8, disappear, domain, eerie, eminence, enrage, fateful hour, fathomless descent, ferocious, flurry, formidable, grandeur, hellbent, heroic, imprint, infusion, inspired, join forces, kinship, landfall, lieutenant, magecraft, metalcraft, morbid, opus, pack tactics, paradox, parley, radiance, raid, rally, renew, repartee, revolt, secret council, spell mastery, strive, survival, sweep, tempting offer, threshold, undergrowth, valiant, vivid, void, will of the council")
   .split(", ").map((w) => w.replace("’", "'")));
-const TIER_RANK: Record<SimilarTier, number> = { same: 0, close: 1, output: 2 };
+const TIER_RANK: Record<SimilarTier, number> = { same: 0, close: 1, output: 2, outcome: 3 };
 const KIND_LABEL: Record<FactKind, string> = {
   spell: "when cast", triggered: "a triggered ability", activated: "an activated ability",
   static: "a static ability", replacement: "a replacement effect",
@@ -502,12 +510,57 @@ function chipsOf(a: CardSig, b: CardSig, r: Ranked): Chip[] {
   return chips;
 }
 
+const DRAIN_SWAP: Record<string, string> = { "lose-life": "non-combat-damage", "non-combat-damage": "lose-life" };
+/** The verb prefix of an `@other` key swapped to its counterpart, null for any other key. Keys are `verb|...|...|...@recipient`
+ *  (`outputOf`); `@you` is damage to you / you losing life, a drawback and not a drain, and `~cost` (pay life) is a cost. */
+function drainSwapKey(key: string): string | null {
+  if (!key.endsWith("@other")) return null;
+  const bar = key.indexOf("|");
+  const to = bar < 0 ? undefined : DRAIN_SWAP[key.slice(0, bar)];
+  return to === undefined ? null : `${to}${key.slice(bar)}`;
+}
+
+const swappedCache = new WeakMap<CardSig, CardSig | null>();
+/** THE CANDIDATE AS IF ITS LIFE LOSS WERE DAMAGE (and the reverse), or null when it has no such output. Only the key and the event's verb
+ *  change, so the amount, trigger and extras compare exactly as they would for a plain match. */
+function drainSwapped(b: CardSig): CardSig | null {
+  if (swappedCache.has(b)) return swappedCache.get(b)!;
+  const swap = (o: Output): Output => {
+    const k = drainSwapKey(o.key);
+    return k === null ? o : { ...o, key: k, event: { ...o.event, verb: DRAIN_SWAP[o.event.verb] ?? o.event.verb } as GameEvent };
+  };
+  let any = false;
+  const outputs = new Map<string, GameEvent>();
+  for (const [k, e] of b.outputs) {
+    const nk = drainSwapKey(k);
+    if (nk === null) { outputs.set(k, e); continue; }
+    any = true;
+    outputs.set(nk, { ...e, verb: DRAIN_SWAP[e.verb] ?? e.verb } as GameEvent);
+  }
+  const sig: CardSig | null = any ? { ...b, outputs, abilities: b.abilities.map((x) => ({ ...x, outputs: x.outputs.map(swap) })) } : null;
+  swappedCache.set(b, sig);
+  return sig;
+}
+
+export interface CompareOptions {
+  /** A DECK ASKS WHETHER DAMAGE AND LIFE LOSS ARE ONE JOB (#1342). When the plain comparison finds nothing, retry with the
+   *  candidate's opponent-facing life loss read as damage (and the reverse); a match is tier `outcome` with an `outcome` chip. */
+  drainIsDamage?: boolean;
+}
+
 /** Reusable by the deck context (#1342): how `cand` differs from `seed`, null when it does not do the same job at all. */
-export function compareCards(seed: SimilarCard, cand: SimilarCard): Comparison | null {
+export function compareCards(seed: SimilarCard, cand: SimilarCard, opts: CompareOptions = {}): Comparison | null {
   const a = sigOf(seed);
   const b = sigOf(cand);
   const r = rank(a, b);
-  return r && { tier: r.tier, score: r.score, chips: chipsOf(a, b, r) };
+  if (r) return { tier: r.tier, score: r.score, chips: chipsOf(a, b, r) };
+  if (!opts.drainIsDamage) return null;
+  const sw = drainSwapped(b);
+  const rs = sw && rank(a, sw);
+  if (!sw || !rs) return null;
+  // The pair that matched carries the swapped verb: damage there means the candidate's own output is life loss.
+  const candLoses = rs.pairs.some(([, , p]) => p.shared.event.verb === "non-combat-damage");
+  return { tier: "outcome", score: rs.score, chips: [{ dim: "outcome", label: candLoses ? "life loss, not damage" : "damage, not life loss" }, ...chipsOf(a, sw, rs)] };
 }
 
 /** A CHIP EVERY ROW CARRIES SAYS NOTHING about any one row (Heliod: "lacks 2 other effects" on all 13): it describes the
@@ -522,6 +575,7 @@ function dropUniversalChips<T extends { chips: Chip[] }>(rows: T[]): T[] {
   return rows.map((r) => ({ ...r, chips: r.chips.filter((c) => !everywhere.includes(key(c))) }));
 }
 
+/** NEVER `outcome`: that tier is deck-context only (#1342), so a card page's index cannot produce it. */
 const TIER_NAMES: readonly SimilarTier[] = ["same", "close", "output"];
 
 export interface SimilarOptions {
@@ -567,7 +621,7 @@ export function similarIndex(cards: readonly SimilarCard[]) {
       const seed = cards[si]!;
       const allowed = opts.identityWithin ? new Set(opts.identityWithin) : null;
       const seen = new Set<number>([si]);
-      const tops: Record<SimilarTier, { ci: number; tier: SimilarTier; score: number; name: string; r: Ranked }[]> = { same: [], close: [], output: [] };
+      const tops: Record<SimilarTier, { ci: number; tier: SimilarTier; score: number; name: string; r: Ranked }[]> = { same: [], close: [], output: [], outcome: [] };
       for (const k of sigs[si]!.outputs.keys()) {
         const g = gateOfKey(k);
         if (g === "never" || (g === "alone" && sigs[si]!.strong > 0)) continue;

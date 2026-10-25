@@ -8284,5 +8284,90 @@
    "segmentHash": "25dab1341428c0eb51eab05df18d7421df37ea69d8c97f9c9f7634535bf0e59a",
    "clauseSource": "grammar"
   }
+ },
+ "Corpse Knight": {
+  "card": {
+   "name": "Corpse Knight",
+   "typeLine": "Creature — Zombie Knight",
+   "oracleText": "Whenever another creature you control enters, each opponent loses 1 life.",
+   "colorIdentity": [
+    "B",
+    "W"
+   ]
+  },
+  "tags": {
+   "oracleId": "0c77b805-728d-4ae4-88a9-223f4b7b52e0",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "zombie",
+     "knight"
+    ],
+    "layout": "normal",
+    "colors": [
+     "B",
+     "W"
+    ],
+    "identity": [
+     "B",
+     "W"
+    ],
+    "cmc": 2,
+    "power": "2",
+    "toughness": "2",
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "player-life-loss",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "enters"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "other": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "scope": "each"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 388,
+   "normalizeVersion": 14,
+   "segmentHash": "335abf3cc5e39b7b26553241961e6a94fa4f7fec83f729884fd95e18fc942fd5",
+   "clauseSource": "grammar"
+  }
  }
 }

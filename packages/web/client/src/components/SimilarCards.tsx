@@ -11,6 +11,7 @@ const GROUPS: { tier: SimilarItem["tier"]; heading: string }[] = [
   { tier: "same", heading: "Same effect" },
   { tier: "close", heading: "Close variants" },
   { tier: "output", heading: "Same result, different trigger" },
+  { tier: "outcome", heading: "Same outcome, different event" },
 ];
 
 export function SimilarCards({ items, note }: { items: readonly SimilarItem[]; note?: string }) {

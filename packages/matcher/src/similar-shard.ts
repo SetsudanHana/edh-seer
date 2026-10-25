@@ -9,7 +9,8 @@ import type { Chip, ChipDim, SimilarHit, SimilarTier } from "./similar.js";
 export type SimilarRow = [number, number, ...number[]];
 export interface SimilarItem { name: string; slug: string; tier: SimilarTier; chips: Chip[] }
 
-const TIERS: readonly SimilarTier[] = ["same", "close", "output"];
+/** The index IS the wire code: append only, never reorder, so a shard row built before a tier existed still decodes. */
+const TIERS: readonly SimilarTier[] = ["same", "close", "output", "outcome"];
 
 /** Interns chips in first-use order; `chips` is what ships, as `[dim, label]` pairs. */
 export class ChipTable {
