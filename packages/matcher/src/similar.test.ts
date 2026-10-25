@@ -450,13 +450,14 @@ describe("outcome tier: damage and life loss are one job in a deck (#1342)", () 
     expect(amount("Corpse Knight", "Lightning Bolt")).toEqual([{ dim: "amount", label: "3 damage" }]);
     expect(amount("Lightning Bolt", "Corpse Knight")).toEqual([{ dim: "amount", label: "1 life" }]);
   });
-  test("extra/missing nouns name the candidate's real output", () => {
-    const labels = (x: keyof typeof fixtures, y: keyof typeof fixtures) => compareCards(card(x), card(y), drain)?.chips.map((c) => c.label) ?? [];
-    for (const [x, y] of [["Corpse Knight", "Lightning Bolt"], ["Lightning Bolt", "Corpse Knight"], ["Impact Tremors", "Professor Onyx"]] as const) {
-      const l = labels(x, y);
-      const wrong = y === "Lightning Bolt" ? "life loss" : "damage";
-      expect(l).not.toContain(`+ ${wrong}`);
-    }
+  test("an extra chip names the candidate's real output, not the swapped verb", () => {
+    // Corpse Knight plus a second life-loss ability keyed differently (creature subject), which Impact Tremors lacks: an extra.
+    const tags = structuredClone((fixtures["Corpse Knight"] as unknown as { tags: CardTags }).tags);
+    const extra = structuredClone(tags.abilities[0]!);
+    extra.emits![0]!.subject.type = "creature";
+    tags.abilities.push(extra);
+    const synth: SimilarCard = { id: 9999, name: "Synthetic Knight", tags };
+    expect(compareCards(card("Impact Tremors"), synth, drain)?.chips).toContainEqual({ dim: "extra", label: "+ opponent life loss" });
   });
   test("the page's index never emits `outcome`", () => {
     const all = cards.flatMap((c) => similarIndex(cards).similarTo(c.id, { limit: 99 }));
