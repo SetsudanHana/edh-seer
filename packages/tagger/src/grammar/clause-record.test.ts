@@ -769,3 +769,11 @@ test("'Activate only if <cast condition>' demands the cast; a count stays thresh
   expect(caresOf(angel, 2)).toContain("gain-life:any");
   expect(caresOf(angel, 3)).toEqual([]);
 });
+
+test("'as though it didn't have defender' grants no defender", () => {
+  const bulwark = grammarDerive({ name: "Walking Bulwark", typeLine: "Artifact Creature — Construct", keywords: ["Defender"], oracleText: "Defender\n{2}: Until end of turn, target creature with defender gains haste, can attack as though it didn't have defender, and assigns combat damage equal to its toughness rather than its power. Activate only as a sorcery." });
+  expect(bulwark.g.complete).toBe(true);
+  const grants = bulwark.tags.abilities.flatMap((a) => a.grants ?? []);
+  expect(grants).toContain("haste");
+  expect(grants).not.toContain("defender");
+});

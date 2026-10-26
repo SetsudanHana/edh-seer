@@ -1300,7 +1300,9 @@ function withoutQuotedAbilities(text: string): string {
   return out;
 }
 function grantedKeywords(objects: string[]): string[] {
-  const text = objects.map(withoutQuotedAbilities).join(" ").toLowerCase();
+  // "can attack as though it didn't have defender", "can block creatures with shadow as though they didn't have shadow" name a keyword the
+  // thing does NOT have, never one it is handed: Walking Bulwark, Mobile Fort and Glade Watcher read "grants defender" (#1349).
+  const text = objects.map(withoutQuotedAbilities).join(" ").toLowerCase().replace(/(?:creatures with \w+ )?as though (?:it|they) (?:didn't|did not) have \w+/g, " ");
   const named = KEYWORD_ABILITIES.filter((k) => new RegExp(`(?:^|[^a-z])${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:$|[^a-z])`).test(text));
   // LANDWALK IS ONE KEYWORD WITH A LAND TYPE (CR 702.14): "islandwalk" and "swampwalk" are instances,
   // not names on the list, so 47 grants named no keyword (S-T1, 2026-10-06).
