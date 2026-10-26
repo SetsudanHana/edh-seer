@@ -75,7 +75,7 @@
   "packages/tagger/src/derive/threshold.ts": 2,
   "packages/tagger/src/derive/to-hand.ts": 5,
   "packages/tagger/src/derive/token-kinds.ts": 1,
-  "packages/tagger/src/grammar/action.ts": 9,
+  "packages/tagger/src/grammar/action.ts": 10,
   "packages/tagger/src/grammar/clause-record.ts": 7,
   "packages/tagger/src/grammar/filter.ts": 8,
   "packages/tagger/src/grammar/preamble.ts": 2,

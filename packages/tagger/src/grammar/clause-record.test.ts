@@ -1107,6 +1107,36 @@ test("every Beam me up card reads complete: Adversary by Algorithm, Open Communi
   }
 });
 
+const ASSIMILATE_REMINDER = "(Put it onto the battlefield under your control with a +1/+1 counter. It's a Borg artifact creature and loses all other creature types.)";
+const DEATH_IS_IRRELEVANT = { name: "Death Is Irrelevant", typeLine: "Enchantment", keywords: [] as string[], oracleText: `Artifact creatures you control have indestructible.\nAt the beginning of your end step, assimilate target creature card from a graveyard. ${ASSIMILATE_REMINDER}` };
+
+test("Assimilate is a put onto the battlefield under your control, a +1/+1 counter on it, and a Borg artifact creature: Death Is Irrelevant", () => {
+  const { g, tags } = deriveOf(DEATH_IS_IRRELEVANT);
+  expect(g.blocker).toBeUndefined();
+  expect(g.complete).toBe(true);
+  const ab = tags.abilities.filter((a) => a.clause === 2);
+  // enters from the zone the sentence names ...
+  expect(ab.some((a) => a.emits?.some((e) => e.verb === "enters" && e.subject.fromZone === "graveyard"))).toBe(true);
+  // ... with a +1/+1 counter ...
+  expect(ab.some((a) => a.emits?.some((e) => e.verb === "counter-added" && e.subject.counter === "+1/+1"))).toBe(true);
+  // ... and the type is CARRIED (#1352: the grammar's animate drops the becomes-phrase): an artifact creature, subtype Borg.
+  const animate = ab.find((a) => a.effect.kind === "animate");
+  expect(animate?.effect.subject).toMatchObject({ subtype: "borg" });
+  expect([animate?.effect.subject?.type].flat()).toEqual(expect.arrayContaining(["artifact", "creature"]));
+});
+
+test("Assimilate reads the zone its sentence names: exiled with it (Borg Cube), the exiled card (The Borg Queen), an opponent's graveyard (Borg Queen, Perfection Manifest)", () => {
+  const cube = deriveOf({ name: "Borg Cube", typeLine: "Artifact — Spacecraft", keywords: [], oracleText: `Whenever this Spacecraft enters or attacks, assimilate a creature card exiled with it. If you can't, exile up to one target creature. ${ASSIMILATE_REMINDER}` });
+  expect(cube.g.blocker).toBeUndefined();
+  expect(cube.tags.abilities.some((a) => a.emits?.some((e) => e.verb === "enters" && e.subject.fromZone === "exile"))).toBe(true);
+  const queen = deriveOf({ name: "Borg Queen, Perfection Manifest", typeLine: "Legendary Artifact Creature — Borg Noble", keywords: [], oracleText: `Artifact creatures you control get +2/+0.\nWhen Borg Queen enters, assimilate target creature card from an opponent's graveyard. ${ASSIMILATE_REMINDER}` });
+  expect(queen.g.blocker).toBeUndefined();
+  expect(queen.tags.abilities.some((a) => a.emits?.some((e) => e.verb === "enters" && e.subject.fromZone === "graveyard"))).toBe(true);
+  const borg = deriveOf({ name: "The Borg Queen", typeLine: "Legendary Artifact Creature — Borg Noble", keywords: [], oracleText: `Artifact creatures you control get +2/+2.\nWhenever The Borg Queen enters or attacks, target opponent exiles cards from the top of their library until they exile a creature card. Assimilate that card. They put the rest on the bottom in a random order. ${ASSIMILATE_REMINDER}` });
+  expect(borg.g.blocker).toBeUndefined();
+  expect(borg.tags.abilities.some((a) => a.effect.kind === "animate")).toBe(true);
+});
+
 test("Scotty, Miracle Worker: the grant of beam me up reads; the card stops at the cost sentence, the blocker Lier's granted flashback has (no grant-with-a-cost shape in the grammar yet)", () => {
   const g = grammarClauseRecords({ name: "Scotty, Miracle Worker", typeLine: "Legendary Creature — Human Artificer", keywords: [], oracleText: "During your main phase, each card in your graveyard has beam me up. The beam me up cost is equal to that spell's mana cost. Scotty can't be beamed up to cast a spell this way. (Only instant and sorcery spells can be cast this way. You may cast a card from your graveyard for its beam me up cost if you also return another creature you control to its owner's hand. Then exile that spell.)" });
   expect(g.complete).toBe(false);

@@ -7,6 +7,8 @@
  *  Anchored words and bounded gaps only (CodeQL js/polynomial-redos): linear on any input. The research census (research/tagger/verb-printed-census.ts) imports THIS table, so the two cannot drift. */
 import { isEnergyObject } from "./effect-kind.js";
 
+// STAR TREK (#1349, owner 2026-10-26): "assimilate <card>" puts a +1/+1 counter on it (its `add-counter`); the reminder that says so is stripped from the clause, so the
+// keyword itself is the printed word of the action it stands for. ("Beam me up {cost}" needs none: its short line is tested with its reminder, below.)
 const KEYWORD = (w: string): string => `${w}(?:s|es|ed|ing)?`;
 export const VERB_WORDS: Readonly<Record<string, string>> = {
   "sacrifice": "sacrifice(?:s|d)?|sacrificing",
@@ -14,7 +16,7 @@ export const VERB_WORDS: Readonly<Record<string, string>> = {
   "draw": "draw(?:s|ing)?|drew", "mill": "mill(?:s|ed)?|graveyard", "search": "search(?:es|ed|ing)?|look(?:s)? at|reveals? cards? from the top", "put": "puts?|placed?|placing|putting|enters?|entered|begin the game|moves?|shuffles? [^.]{0,60} into|onto the battlefield",
   "return": "returns?|returned|returning|back|onto the battlefield|into (?:your|their|its owner's|their owners'|that player's|his or her|target player's)[^.]{0,20}(?:hands?|librar(?:y|ies)|graveyards?)|until [^.]{0,60} leaves the battlefield|until [^.]{0,60} leaves play", "counter-spell": "counters?|countered",
   "copy": "cop(?:y|ies|ied|ying)", "gain-life": "gains?|gained|life|lifelink", "lose-life": "loses?|lost|life", "deal-damage": "deals?|dealt|damage",
-  "add-mana": "adds?|added|mana", "add-counter": "puts?|put|counters?|bolster|adapt|proliferate|support|distribute|moves?|gets? \\{e\\}|enters? with|enters the battlefield with|place",
+  "add-mana": "adds?|added|mana", "add-counter": "puts?|put|counters?|bolster|adapt|proliferate|support|distribute|moves?|gets? \\{e\\}|enters? with|enters the battlefield with|place|assimilate",
   "remove-counter": "pays?|paid|\\{e\\}|removes?|removed|counters?|proliferate", "grant-ability": "gains?|gained|has|have|had|with|gets?|can|can't|cannot|protection|haste|flying|lifelink|deathtouch|trample|vigilance|first strike|double strike|menace|reach|hexproof|indestructible|ward|keyword|ability|abilities|\\bis\\b|\\bare\\b|becomes?|loses?|doesn't|don't",
   "modify-pt": "\\d+/\\d+|gets?|get|[+-]\\d+/[+-]\\d+|[+-]x/[+-]x|base power|power|toughness|becomes?|has|have|with|equal to|swap|exchange|double|triple",
   "prevent": "protection from|prevent(?:s|ed)?|prevention|instead|redirect|can't|cannot|won't|doesn't|don't|would be dealt",

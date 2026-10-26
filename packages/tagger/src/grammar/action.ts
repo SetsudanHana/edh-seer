@@ -1687,6 +1687,18 @@ export function parseActions(effect: string, _type: string | null, cost?: string
       if (cast && bounce) out.push(...cast, ...bounce); else unread?.push(s);
       continue;
     }
+    // ASSIMILATE <card> (Star Trek; owner 2026-10-26, #1349): "Put it onto the battlefield under your control with a +1/+1 counter. It's a Borg artifact
+    // creature and loses all other creature types." Composed from existing verbs: the put (the source zone is the sentence's: a graveyard, "exiled with
+    // it", or "that card" after an exile), the +1/+1 counter on it, and an animate that CARRIES its type in the object, as the stored path writes it
+    // ("this as a 3/6 Golem artifact creature"), which #1352 says the grammar's own animate drops. CEILING: "loses all other creature types" is not read.
+    const assimilate = /^assimilate (.+)$/i.exec(s);
+    if (assimilate) {
+      const put = readPhrase(`put ${assimilate[1]} onto the battlefield under your control`, condition);
+      const counter = readPhrase("put a +1/+1 counter on it", condition);
+      if (put && counter) out.push(...put, ...counter, { verb: "animate", object: REF, text: "it as a Borg artifact creature", ...(condition ? { condition } : {}) });
+      else unread?.push(s);
+      continue;
+    }
     // CEILING: "If you do, increase or decrease the result by 1" (Xenosquirrels, CR 706.2) modifies a die
     // result, which no verb expresses; it records no action.
     if (/^increase or decrease the result by \d+$/i.test(s)) continue;
