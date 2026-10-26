@@ -345,7 +345,7 @@ const DECK_LIMIT_PERMISSION = /\bdeck can have any number of cards named\b/i;
  *  of the ability, and `LABEL` has known that since Uthros Research Craft — but it was consulted on
  *  ONE line, the trigger cue, so the cost scan and the keyword test never saw it stripped. 40 cards,
  *  48 clauses: a whole printed frame the segmenter had learned only a third of. */
-const STATION_BAR = /^\d+\+\s*\|\s*/;
+export const STATION_BAR = /^\d+\+\s*\|\s*/;
 
 /** Is everything after the bar just printed keywords? "10+ | Flying", "9+ | Flying, first strike".
  *  MEASURED SPLIT: 27 such rows against 3 real statics behind the same bar — Lumen-Class Frigate's
@@ -547,6 +547,22 @@ function isKeywordLine(line: string, keywords: string[]): boolean {
  *  typeLine)` triple -- five in `derive-input.ts`, one in `grammar/clause-record.ts` -- and a
  *  dual derive (stored answer, then the grammar's own records) calls it again. `segmentRaw` holds
  *  the real implementation; nothing outside this file calls it, so every caller gets the cache. */
+/** The text's lines, a line break INSIDE reminder parentheses not being one: Scryfall wraps Those Old Scientists' "(As this Saga
+ *  enters and after your draw\nstep, add a lore counter. ...)" mid-sentence, and cut there it left two "static" clauses, the first
+ *  an unclosed "(", the second a sacrifice. Rejoined with a space while a parenthesis is open. A line is read as it is printed when
+ *  parentheses balance, which is every other card in the corpus (measured: 1 card in 34,000 has a break inside parentheses). */
+function physicalLines(text: string): string[] {
+  const out: string[] = [];
+  let open = false;
+  for (const line of text.split("\n")) {
+    if (open && out.length > 0) out[out.length - 1] += ` ${line}`;
+    else out.push(line);
+    const last = out[out.length - 1]!;
+    open = last.lastIndexOf("(") > last.lastIndexOf(")");
+  }
+  return out;
+}
+
 function segmentRaw(oracleText: string, keywords: string[] = [], typeLine = ""): Clause[] {
   const out: Clause[] = [];
   let id = 0;
@@ -578,7 +594,7 @@ function segmentRaw(oracleText: string, keywords: string[] = [], typeLine = ""):
     return clause;
   };
 
-  for (const rawLine of (oracleText ?? "").split("\n")) {
+  for (const rawLine of physicalLines(oracleText ?? "")) {
     const raw = rawLine.trim();
     if (raw === "") continue;
     // The corpus joins a multi-face card's faces with a bare "//" line. It is a printed separator,

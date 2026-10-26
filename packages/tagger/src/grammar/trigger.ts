@@ -378,6 +378,8 @@ const ACTOR_VERBS: [RegExp, string, boolean][] = [
   [/^surveils?$/, "surveil", false],
   [/^commits? a crime$/, "crime", false],
   [/^expends? \d+$/, "expend", false],
+  // Star Trek (owner 2026-10-26, #1349): "you face a dilemma as you choose one or more modes", fed by every modal spell or ability (derive/modal.ts).
+  [/^faces? a dilemma$/, "face-a-dilemma", false],
   [/^rolls? (?:a die|one or more dice)$/, "roll-dice", false],
   [/^flips? a coin$/, "flip-coin", false],
   [/^proliferate$/, "proliferate", false],

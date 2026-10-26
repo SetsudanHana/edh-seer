@@ -1,10 +1,12 @@
 {
  "permanentSubtypes": [
   "advisor",
+  "aenar",
   "aetherborn",
   "alien",
   "ally",
   "andorian",
+  "android",
   "angel",
   "antelope",
   "ape",
@@ -25,6 +27,7 @@
   "azra",
   "background",
   "badger",
+  "bajoran",
   "balloon",
   "barbarian",
   "bard",
@@ -36,6 +39,7 @@
   "beeble",
   "beholder",
   "berserker",
+  "betazoid",
   "bird",
   "bison",
   "blinkmoth",
@@ -52,6 +56,7 @@
   "camarid",
   "camel",
   "capybara",
+  "cardassian",
   "caribou",
   "carrier",
   "cartouche",
@@ -83,6 +88,7 @@
   "dauthi",
   "demigod",
   "demon",
+  "denobulan",
   "desert",
   "deserter",
   "detective",
@@ -102,6 +108,7 @@
   "echidna",
   "efreet",
   "egg",
+  "el-aurian",
   "elder",
   "eldrazi",
   "elemental",
@@ -111,8 +118,10 @@
   "employee",
   "equipment",
   "eternal",
+  "excalbian",
   "eye",
   "faerie",
+  "ferengi",
   "ferret",
   "fish",
   "flagbearer",
@@ -156,6 +165,7 @@
   "hero",
   "hippo",
   "hippogriff",
+  "hirogen",
   "homarid",
   "homunculus",
   "horror",
@@ -164,6 +174,7 @@
   "hydra",
   "hyena",
   "illusion",
+  "illyrian",
   "imp",
   "incarnation",
   "incubator",
@@ -188,6 +199,7 @@
   "kor",
   "kraken",
   "kree",
+  "kwejian",
   "lair",
   "lamia",
   "lammasu",
@@ -205,6 +217,7 @@
   "manticore",
   "map",
   "masticore",
+  "medusan",
   "mercenary",
   "merfolk",
   "metathran",
@@ -226,6 +239,7 @@
   "mutant",
   "myr",
   "mystic",
+  "na'kuhl",
   "naga",
   "nautilus",
   "necron",
@@ -369,6 +383,8 @@
   "toy",
   "treasure",
   "treefolk",
+  "tribble",
+  "trill",
   "trilobite",
   "triskelavite",
   "troll",
@@ -409,10 +425,12 @@
  ],
  "creatureSubtypes": [
   "advisor",
+  "aenar",
   "aetherborn",
   "alien",
   "ally",
   "andorian",
+  "android",
   "angel",
   "antelope",
   "ape",
@@ -430,6 +448,7 @@
   "avatar",
   "azra",
   "badger",
+  "bajoran",
   "balloon",
   "barbarian",
   "bard",
@@ -441,6 +460,7 @@
   "beeble",
   "beholder",
   "berserker",
+  "betazoid",
   "bird",
   "bison",
   "blinkmoth",
@@ -454,6 +474,7 @@
   "camarid",
   "camel",
   "capybara",
+  "cardassian",
   "caribou",
   "carrier",
   "cat",
@@ -477,6 +498,7 @@
   "dauthi",
   "demigod",
   "demon",
+  "denobulan",
   "deserter",
   "detective",
   "devil",
@@ -495,6 +517,7 @@
   "echidna",
   "efreet",
   "egg",
+  "el-aurian",
   "elder",
   "eldrazi",
   "elemental",
@@ -503,8 +526,10 @@
   "elk",
   "employee",
   "eternal",
+  "excalbian",
   "eye",
   "faerie",
+  "ferengi",
   "ferret",
   "fish",
   "flagbearer",
@@ -542,6 +567,7 @@
   "hero",
   "hippo",
   "hippogriff",
+  "hirogen",
   "homarid",
   "homunculus",
   "horror",
@@ -550,6 +576,7 @@
   "hydra",
   "hyena",
   "illusion",
+  "illyrian",
   "imp",
   "incarnation",
   "inhuman",
@@ -570,6 +597,7 @@
   "kor",
   "kraken",
   "kree",
+  "kwejian",
   "lamia",
   "lammasu",
   "lanthanite",
@@ -583,6 +611,7 @@
   "lobster",
   "manticore",
   "masticore",
+  "medusan",
   "mercenary",
   "merfolk",
   "metathran",
@@ -601,6 +630,7 @@
   "mutant",
   "myr",
   "mystic",
+  "na'kuhl",
   "naga",
   "nautilus",
   "necron",
@@ -724,6 +754,8 @@
   "tosk",
   "toy",
   "treefolk",
+  "tribble",
+  "trill",
   "trilobite",
   "triskelavite",
   "troll",
@@ -983,6 +1015,9 @@
   "advisor": [
    "creature"
   ],
+  "aenar": [
+   "creature"
+  ],
   "aetherborn": [
    "creature"
   ],
@@ -999,6 +1034,9 @@
    "planeswalker"
   ],
   "andorian": [
+   "creature"
+  ],
+  "android": [
    "creature"
   ],
   "angel": [
@@ -1083,6 +1121,9 @@
   "bahamut": [
    "planeswalker"
   ],
+  "bajoran": [
+   "creature"
+  ],
   "balloon": [
    "creature"
   ],
@@ -1117,6 +1158,9 @@
    "creature"
   ],
   "berserker": [
+   "creature"
+  ],
+  "betazoid": [
    "creature"
   ],
   "bird": [
@@ -1171,6 +1215,9 @@
    "creature"
   ],
   "capybara": [
+   "creature"
+  ],
+  "cardassian": [
    "creature"
   ],
   "caribou": [
@@ -1294,6 +1341,9 @@
   "demon": [
    "creature"
   ],
+  "denobulan": [
+   "creature"
+  ],
   "desert": [
    "land"
   ],
@@ -1369,6 +1419,9 @@
   "egg": [
    "creature"
   ],
+  "el-aurian": [
+   "creature"
+  ],
   "elder": [
    "creature"
   ],
@@ -1411,10 +1464,16 @@
   "eternal": [
    "creature"
   ],
+  "excalbian": [
+   "creature"
+  ],
   "eye": [
    "creature"
   ],
   "faerie": [
+   "creature"
+  ],
+  "ferengi": [
    "creature"
   ],
   "feroz": [
@@ -1567,6 +1626,9 @@
   "hippogriff": [
    "creature"
   ],
+  "hirogen": [
+   "creature"
+  ],
   "homarid": [
    "creature"
   ],
@@ -1592,6 +1654,9 @@
    "creature"
   ],
   "illusion": [
+   "creature"
+  ],
+  "illyrian": [
    "creature"
   ],
   "imp": [
@@ -1699,6 +1764,9 @@
   "kree": [
    "creature"
   ],
+  "kwejian": [
+   "creature"
+  ],
   "lair": [
    "land"
   ],
@@ -1769,6 +1837,9 @@
   "masticore": [
    "creature"
   ],
+  "medusan": [
+   "creature"
+  ],
   "mercenary": [
    "creature"
   ],
@@ -1789,6 +1860,9 @@
   ],
   "minsc": [
    "planeswalker"
+  ],
+  "missing": [
+   "creature"
   ],
   "mite": [
    "creature"
@@ -1839,6 +1913,9 @@
    "creature"
   ],
   "mystic": [
+   "creature"
+  ],
+  "na'kuhl": [
    "creature"
   ],
   "naga": [
@@ -2353,6 +2430,12 @@
   "treefolk": [
    "creature"
   ],
+  "tribble": [
+   "creature"
+  ],
+  "trill": [
+   "creature"
+  ],
   "trilobite": [
    "creature"
   ],
@@ -2522,6 +2605,7 @@
   "world"
  ],
  "keywordActions": [
+  "",
   "abandon",
   "activate",
   "adapt",
@@ -2549,6 +2633,7 @@
   "double",
   "draft from a spellbook",
   "earthbend",
+  "empower jace",
   "endure",
   "exchange",
   "exert",
@@ -2833,6 +2918,7 @@
   "∞"
  ],
  "abilityWords": [
+  "actualize",
   "adamant",
   "addendum",
   "alliance",
@@ -2888,8 +2974,10 @@
   "repartee",
   "revolt",
   "secret council",
+  "seek out",
   "spell mastery",
   "start your engines!",
+  "strange new worlds",
   "strive",
   "survival",
   "sweep",

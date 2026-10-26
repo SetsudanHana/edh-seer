@@ -4,6 +4,7 @@
  *  was measured on. */
 import { withoutArticle } from "../derive/self-reference.js";
 import { SUBTYPES } from "../derive/subtypes.js";
+import { STATION_BAR } from "../segment.js";
 import { selfAsTilde, selfPronouns } from "./self-as-tilde.js";
 
 /** A comma inside a short list ("whenever you cast an instant, sorcery, or Wizard spell,") does not
@@ -43,6 +44,9 @@ function shortNameAsTilde(preamble: string, name: string): string {
  *  made of words, apostrophes, commas, "?", "!" and hyphens -- never a ".", ":" or a brace, which
  *  would make it a sentence, a cost or a mana symbol. The ONE rule `parseActions` reads too. */
 export function withoutAbilityWord(text: string): string {
+  // A Spacecraft's STATION BAR ("3+ | At the beginning of combat ...") is the same kind of label. Its threshold (CR 721.2a: "{N+}[abilities]"
+  // means "as long as this permanent has N or more charge counters on it, it has [abilities]") is read by derive from the clause text, which keeps the bar.
+  text = text.replace(STATION_BAR, "");
   const dash = text.indexOf(" — ");
   return dash > 0 && dash <= 41 && /^[A-Z~][\w' ,~?!-]*$/.test(text.slice(0, dash)) ? text.slice(dash + 3) : text;
 }

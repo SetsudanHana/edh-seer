@@ -92,6 +92,8 @@ export const ENGINE_TO_TRIGGER: Record<string, string> = {
   "city-blessing": "city-blessing",
   "ring-tempts": "ring-tempts",
   prepared: "prepared",
+  // Star Trek (#1349): no action, so no clause word beside it; derive's modal pass emits it from every modal header.
+  "face-a-dilemma": "face-a-dilemma",
 };
 
 /** TRIGGERS words that map to NO engine verb, each with the reason, so `unknownTriggers` at runtime

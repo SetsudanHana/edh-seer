@@ -656,3 +656,11 @@ test("an owner's tuck names the target the sentence names", () => {
 test("an owner's tuck of a back-reference stays a reference (Tolarian Contempt: 'That creature's owner puts it ...')", () => {
   expect(parseActions("That creature's owner puts it on their choice of the top or bottom of their library.", "triggered")[0]?.text).toBeUndefined();
 });
+
+// Koloth, Tribble Hunter (Mongo `cards`): "All Tribbles get +1/+0 and are goaded." The plural status
+// fell past `^is goaded$` into the "becomes" animate reading, which made every Tribble a creature
+// retype and fed the reanimator archetype.
+test("a plural subject's \"are goaded\" is a goad, not an animate", () => {
+  const r = read("All Tribbles get +1/+0 and are goaded.");
+  expect(r.map((x) => x.verb)).toEqual(["modify-pt", "goad"]);
+});

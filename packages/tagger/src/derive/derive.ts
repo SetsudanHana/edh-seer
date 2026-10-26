@@ -34,7 +34,7 @@ import { reductionOf } from "./reduction.js";
 import crKeywords from "./cr-keywords.json" with { type: "json" };
 import { paymentOf } from "./payment.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
-import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
+import { stationThresholdFor, thresholdFor, thresholdSubjectFor } from "./threshold.js";
 import { addsManaText, deriveMana, production } from "./mana-lines.js";
 import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
@@ -550,7 +550,8 @@ import { emblemRecipient } from "../emblem.js";
 // 387: #1302 review of 386 -- a hand-fill (`to-hand`, or a typed dig's `search`) never has a `self` subject: a library card is not the permanent that entered (Niv-Mizzet Reborn's "the chosen cards" read as the card itself and the dig "dug for itself"); and the stored object's trailing "into your hand" is stripped without a quadratic `\s+` regex (ReDoS). Measured: derive-identity against 386 differs on Niv-Mizzet Reborn alone (plus the 2 known drift cards).
 // 388: (owner 2026-10-24) a CR 614 replacement records what it does to the event it hears: `Ability.change` {op: plus|times, value}, read by `replacement.ts` `changeOf` off the matched clause -- triple/three times/thrice x3, double/twice x2, "plus N" / "plus one" / "plus an additional" +N (Fiery Emancipation x3, Anointed Procession x2, Tekuthal x2, Pyromancer's Gauntlet +2, Hardened Scales +1, Xorn +1). Only a stated number: "plus that many Squirrels" and Alhammarret's Archive's "draw two cards instead" stay unset. Set only beside `replacement: true`, so a restricted replacement (Bruvac) carries none.
 // 389: #1349 -- the grammar reads modal intros, short-name/pronoun self-reference and ability restrictions (riders read off the printed text); "Activate only if <condition>" feeds conditionCares like a trigger's intervening if (owner 2026-10-26), negated/poison/loyalty/player counters demand none; "as though it didn't have defender" grants none; the switch keeps a stored animate's type/subtype/stats. Whole-branch review fixes: "becomes blocked" is no animate (Trap Runner, Curtain of Light, Choking Vines, Fog Patch; GH #1353); a grant in a self-animate sentence is the card's own (Skinshifter, Paragon of the Amesha, Dragonsoul Knight); a counter put as a cost names its permanent in the cost (Jessica Jones, Mazemind Tome; a granted ability's, Sinking Feeling, is excluded); a modal header's every trigger reaches each mode (Captain Kirk, Appa, Galadriel, Oracle of Tragedy); a mode's trailing "if" is no unconditional effect (Federation Field Medic).
-export const DERIVE_VERSION = 389;
+// 390: #1349 part 2 -- Saga chapters (event "chapter") and Station rows: an "N+ |" bar gates every ability in its striation with threshold {atLeast: N} (CR 721.2/721.2a), on both paths; set mechanics composed per owner 2026-10-26 (Beam me up = graveyard cast + own-creature bounce, Assimilate = put + counter + Borg artifact creature) and the new `face-a-dilemma` event, emitted once per modal header; kind-less counter replacements ("if one or more counters would be put", "if you would put one or more counters") carry replacement + change (Doubling Season, Winding Constrictor, Vorinclex, Pir), a temporary one stays unread; "on the bottom in a random order" is no top-set; time travel is yours, "they lose the game" the damaged opponent; the switch refuses a reading that loses a trigger's `batched`, or that changes any mana field (manaDiffers: Gauntlet of Power lost its chosen-color filter). Goad (unmerged 390, no bump): the plural "are goaded" is a goad like "is goaded" (grammar/action.ts), so Koloth, Tribble Hunter's "All Tribbles get +1/+0 and are goaded" emits goad instead of reading as an animate (whole-corpus grammar diff: Koloth and Baeloth Barrityl only; Baeloth's derived tags are unchanged, only its clauseSource moves model to grammar).
+export const DERIVE_VERSION = 390;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2195,6 +2196,8 @@ export function deriveAbilities(
   creatureCard?: boolean,
   /** Granted clause id -> the clause that grants it (`DeriveInput.clauseGrants`): a quoted ability's own "this creature" is the grantee. */
   clauseGrants?: Record<number, number>,
+  /** Clause ids that are a modal spell's or ability's header (`derive/modal.ts`): each is supplied the `face-a-dilemma` event once (Star Trek, #1349). Absent: none is. */
+  modalHeads?: ReadonlySet<number>,
 ): { abilities: Ability[]; unclaimed: Action[]; unclaimedAt: UnclaimedAction[]; unknownTriggers: string[]; twinOf: ReadonlyMap<number | string, number | string>; spliced: ReadonlySet<number | string> } {
   const abilities: Ability[] = [];
   /** Every action nothing claimed, with the clause that printed it (#1299). `unclaimed` is the same list as bare actions. */
@@ -2264,6 +2267,8 @@ export function deriveAbilities(
   /** The mark at which a duplicate mode visit began: what it pushed to `unclaimed` / `unknownTriggers` repeats its first visit's, so it is cut back. */
   let dupMark: { unclaimed: number; unknown: number } | undefined;
   const visits = modeVisits(clauses, clauseTexts);
+  /** The last header visited was a modal one: a textless twin right after it (the grammar's "enters or attacks" overflow record) is the same modal ability under its other trigger. */
+  let modalOpen = false;
 
   /** What an earlier clause exiled, for "the exiled card" in a later one (#860). */
   let lastExiled: string | undefined;
@@ -2275,6 +2280,10 @@ export function deriveAbilities(
     if (dupMark) { unclaimedHere.length = dupMark.unclaimed; unknownTriggers.length = dupMark.unknown; dupMark = undefined; }
     if (visit.k) dupMark = { unclaimed: unclaimedHere.length, unknown: unknownTriggers.length };
     let clause = visit.clause;
+    // FACE A DILEMMA (Star Trek, #1349): a modal header, or the textless twin of one, supplies the event once per trigger.
+    const modalTwin: boolean = modalOpen && !visit.k && triggerHeaderOnly(clause) && clauseTexts?.[clause.id as number] === undefined;
+    const facesDilemma: boolean = !visit.k && (modalHeads?.has(clause.id as number) === true || modalTwin);
+    if (!visit.k) modalOpen = facesDilemma;
     // A mode of a multi-trigger header is visited once per header trigger, each time under that trigger's own derived state.
     const headerState = visit.group ? headerStates.get(visit.group[visit.k ?? 0]!.id) : undefined;
     if (headerState) ({ inheritedTrigger, headerTrigger, headerRefused } = headerState);
@@ -2950,7 +2959,7 @@ export function deriveAbilities(
       }
       // #1252: "that player loses the game" after damage the card's side deals to a player is the damaged
       // player -- an opponent (Phage, Vorpal Sword, Atemsis). Unresolved ("a creature deals ...") stays `any`.
-      if (action.verb === "lose-game" && /^that player$/i.test((action.object ?? "").trim())
+      if (action.verb === "lose-game" && /^(?:that player|they)$/i.test((action.object ?? "").trim())
         && damagedPlayerIsOpponent(text, trigger?.subject.self === true, cardName)) {
         for (const e of emits) if (e.verb === "loses-game" && e.subject.control === "any") e.subject.control = "opp";
       }
@@ -3419,6 +3428,21 @@ export function deriveAbilities(
 
     const drain = drainAbility(clause, kind, trigger, cost);
     if (drain) { if (face) drain.face = face; abilities.push(drain); }
+    // THE MODAL HEADER SUPPLIES THE EVENT ITSELF (`derive/modal.ts`): "you face a dilemma as you choose one or more modes for a spell or ability" is no verb a clause
+    // instructs, so it is pushed here with the header's own kind, trigger and cost, and the labelling below stamps its clause, repeats and count like any other. A spell's
+    // header carries no ability type of its own (static, or none), and a modal spell is cast: on-cast. A triggered header whose trigger was REFUSED derives no trigger
+    // and would claim an event that never fires, so it emits nothing (a missing edge, never a wrong one).
+    // CEILING: that refusal leaves genuinely modal cards with no dilemma emit: 14 of 758 headers (Black Market Connections "first main phase", Hylda of the Icy Crown and Voltstorm
+    // Angel "When you do" reflexives, Life of Toshiro Umezawa's chapter, Jin Sakai and Tetsuo "if" riders, "second spell each turn"). Their modes are still derived; the dilemma is not.
+    if (facesDilemma && !(kind === "triggered" && !trigger)) {
+      const dilemmaKind: AbilityKind = kind === "static" || clause.abilityType === "none" || clause.abilityType === undefined ? "on-cast" : kind;
+      // The same instant-speed rule as the emits beside it (above): an activated ability not limited to sorcery speed, or an instant's / flash spell's cast.
+      const dilemmaInstant = dilemmaKind === "activated"
+        ? !SORCERY_SPEED.test(clauseText ?? "") && paymentOf(cost, cardName)?.loyalty === undefined
+        : dilemmaKind === "on-cast" && castAtInstantSpeed === true;
+      abilities.push({ kind: dilemmaKind, effect: { kind: "" }, ...(trigger ? { trigger } : {}),
+        emits: [{ verb: "face-a-dilemma", subject: { control: "you", token: null }, ...(dilemmaInstant ? { instantSpeed: true as const } : {}) }], ...(kind === "activated" ? { cost } : {}), ...(face ? { face } : {}) });
+    }
     const toughnessDamage = toughnessDamageAbility(text);
     if (toughnessDamage) { if (face) toughnessDamage.face = face; abilities.push(toughnessDamage); }
     // THE MODEL LEFT BOLAS'S CITADEL'S PERMISSION EMPTY (verb `none`); the printed sentence still says
@@ -3452,8 +3476,9 @@ export function deriveAbilities(
     // its kind: a trigger's intervening if, a static's "as long as", an activation's "only if", a
     // restriction's "unless". Once per clause, so `thresholdFor` and `thresholdSubjectFor` cannot
     // disagree between two abilities of one sentence.
-    const threshold = thresholdFor(text);
-    const thresholdSubject = threshold ? thresholdSubjectFor(text) : undefined;
+    const printedThreshold = thresholdFor(text);
+    const threshold = printedThreshold ?? stationThresholdFor(text, cardText);
+    const thresholdSubject = printedThreshold ? thresholdSubjectFor(text) : undefined;
     // A TYPED COUNT IS A DEMAND IN ITS OWN RIGHT, as a trigger is (recall v6 #77, v7 #79). Gadrak
     // "can't attack unless you control four or more artifacts" is a `cant` static whose action maps
     // to no kind, so the clause pushed nothing and the one thing the card asks of its deck --
@@ -3714,6 +3739,8 @@ export interface DeriveInput {
   /** Granted clause id -> the clause that grants it (`segment()`'s `parentId` on a `granted` clause): Chromatic Lantern's
    *  quoted "{T}: Add one mana of any color" -> "Lands you control have that ability". Read by `manaLines`. */
   clauseGrants?: Record<number, number>;
+  /** Clause ids that are a modal spell's or ability's header, from `segment()` (`modalHeaderIds`): the `face-a-dilemma` event is emitted from each, once (Star Trek, #1349). */
+  modalHeads?: ReadonlySet<number>;
   /** The printed mana cost of each face, index = face, "" when it prints none (Mox Tantalite). Read by `manaLines` for the
    *  cost of a spell and for `suspendOnly`. Absent: only `characteristics.cmc` is known. */
   manaCosts?: string[];
@@ -3739,7 +3766,7 @@ export function deriveAbilitiesOf(input: DeriveInput): ReturnType<typeof deriveA
   return deriveAbilities(
     input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken,
     input.clauseFaces, castAtInstantSpeed, input.clauseRequires, input.readings,
-    chars.subtypes.some((t) => t.toLowerCase() === "curse"), chars.types.some((t) => t.toLowerCase() === "creature"), input.clauseGrants);
+    chars.subtypes.some((t) => t.toLowerCase() === "curse"), chars.types.some((t) => t.toLowerCase() === "creature"), input.clauseGrants, input.modalHeads);
 }
 export function deriveCardTags(input: DeriveInput): CardTags {
   const chars = input.characteristics;

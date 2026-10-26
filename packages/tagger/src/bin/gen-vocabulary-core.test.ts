@@ -113,3 +113,14 @@ test("the rules' own artifact types are unioned in where MTGJSON lags (2026-09-2
   expect(unioned.data.artifact!.subTypes).toContain("Heartwood");
   expect(unioned.data.land!.subTypes).toContain("Urza's");
 });
+
+// MTGJSON lists "Missing" under CardTypes.creature, but no printed card has it (CR 205.3m's creature list does not hold it) and it is an ordinary English word:
+// "cards missing from your graveyard" would read as a subtype demand. It stays in the subtype -> card type map and out of the free-text sets.
+test("an English word MTGJSON lists as a creature type is kept out of the free-text sets but stays in the type map", () => {
+  const withMissing = { data: { ...types.data, creature: { subTypes: ["Rat", "Missing"], superTypes: [] } } };
+  const v = buildVocabulary(withMissing, enums);
+  expect(v.permanentSubtypes).not.toContain("missing");
+  expect(v.creatureSubtypes).not.toContain("missing");
+  expect(v.subtypeTypes.missing).toEqual(["creature"]);
+  expect(v.permanentSubtypes).toContain("rat");
+});

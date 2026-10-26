@@ -172,7 +172,7 @@ const DRAW_SEARCH: Record<string, [string, Handler]> = {
   }],
   reveal: ["reveal", (rest) => {
     if (WHOLE_HAND.test(rest)) return { object: { ...CARD, zone: "hand" } };
-    const top = /^the top (card|two cards|three cards|four cards|five cards|x cards) of (?:your|their) library$/.exec(rest);
+    const top = /^the top (card|two cards|three cards|four cards|five cards|x cards) of (?:your|their) library$/i.exec(rest);
     if (top) return { amount: amountOf(top[1]!.split(" ")[0]!.replace(/^card$/, "a")) ?? "1", object: CARD, fromZone: "library" };
     return objectOf(rest);
   }],
@@ -352,8 +352,10 @@ const COUNTERS: Record<string, [string, Handler]> = {
     // "a counter from a permanent you control": any kind, from another permanent -- a counter-removal
     // outlet, fed by whatever puts counters there (owner 2026-10-02: "you need counters to remove
     // counters"). The store's whole phrase is the object.
-    const any = /^(a|two|three|x) counters? from (.+)$/i.exec(rest);
-    if (any) { const on = objectOf(any[2]!); if (on) return { object: on.object, amount: amountOf(any[1]!) ?? "1", text: rest }; }
+    // ...and "Remove three counters from among creatures you control" (Tayam, Luminous Enigma; Lieutenant Commander Data): the same outlet spread over a class.
+    // The "among" form's stored object is the class alone (Tekuthal: "other artifacts, creatures, and planeswalkers you control", amount 3).
+    const any = /^(a|two|three|x) counters? from (among )?(.+)$/i.exec(rest);
+    if (any) { const on = objectOf(any[3]!); if (on) return { object: on.object, amount: amountOf(any[1]!) ?? "1", text: any[2] ? any[3]! : rest }; }
     // "X +1/+1 counters from among creatures you control": the same outlet, one kind.
     const m = /^(all|.+? counters?) from (?:among )?(.+)$/.exec(rest);
     const c = m ? (/^all .+ counters$/.test(m[1]!) ? { amount: "all", counter: counterKindOf(m[1]!.slice(4)) } : countersOf(m[1]!)) : null;
@@ -528,10 +530,10 @@ function destinationOf(words: string): string | undefined {
 function withCounters(rest: string, move: (rest: string) => Args | Args[] | null): Args[] | Args | null {
   // "with an additional +1/+1 counter on it", "with a hexproof counter and an indestructible counter
   // on it": cut by index (CodeQL polynomial-redos).
-  const at = rest.search(/ with (?:a|an|one|two|three|four|five|x|\d+) /);
+  const at = rest.search(/ with (?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|x|\d+) /);
   if (at < 0 || !/ counters? on (?:it|them)$/.test(rest)) return move(rest);
   const r = move(rest.slice(0, at));
-  const c = counterList(rest.slice(at + " with ".length).replace(/ on (?:it|them)$/, "").replace(/\b(an?|one|two|three) additional /g, "$1 "));
+  const c = counterList(rest.slice(at + " with ".length).replace(/ on (?:it|them)$/, "").replace(/\b(an?|one|two|three|four|five|six|seven|eight|nine|ten) additional /g, "$1 "));
   return r && c ? [...[r].flat(), ...c.map((k) => ({ verb: "add-counter", object: { control: "any" as const, token: null, ref: "sentence" as const }, counter: k.counter, amount: k.amount ?? "1" }))] : null;
 }
 
@@ -626,6 +628,8 @@ const MANA = /^(?:(?:\{[WUBRGCSX0-9/]+\})+(?:,? (?:or|and) (?:\{[WUBRGCSX0-9/]+\
  *  "an additional one mana of any color", "one mana of any type that land produced", "two mana of
  *  different colors", "X mana in any combination of {B} and/or {R}". The text keeps what it makes. */
 const MANA_ITEM = /^(?:an additional |that much |(?:two|three|four|five|six|seven|eight|nine|ten|x) )?(?:\{[WUBRGCSX0-9/]+\})+$|^(?:an additional )?(?:one|two|three|four|five|six|seven|eight|nine|ten|x|that much|that many)(?: additional)? mana (?:of|in) [^,]+$/i;
+/** A payment this grammar can drop: mana symbols (the MANA pattern above: colours, generic, X, hybrid) or energy. Not {D} (Boulder Jockey's land drop) or any other brace word. */
+const paysMana = (t: string): boolean => /^(?:\{E\})+$/.test(t) || (t.startsWith("{") && MANA.test(t));
 const manaOf = (t: string): boolean => MANA.test(t) || t.split(/,? or (?=\{|an? |one |two |three |x )/i).every((p) => MANA_ITEM.test(p.trim()));
 
 const MANA_TAP: Record<string, [string, Handler]> = {
@@ -1126,7 +1130,8 @@ const KEYWORDS = [...KEYWORD_ABILITIES].map((k) => k.toLowerCase());
 function isAbility(part: string): boolean {
   const p = part.toLowerCase();
   // "all creature types" (a changeling's reach) is granted like a keyword.
-  if (/^"[^"]*"$/.test(part) || /^(?:that|this|those) abilit(?:y|ies)$/.test(p) || p === "all creature types") return true;
+  // "beam me up" (Star Trek, #1349) is granted like a keyword: Scotty, Miracle Worker's "each card in your graveyard has beam me up".
+  if (/^"[^"]*"$/.test(part) || /^(?:that|this|those) abilit(?:y|ies)$/.test(p) || p === "all creature types" || p === "beam me up") return true;
   return KEYWORDS.some((k) => p === k || (p.startsWith(`${k} `) && p.length - k.length <= (k === "protection" ? 70 : 40) && !/\blife\b|\bcosts?\b/.test(p)));
 }
 
@@ -1237,7 +1242,7 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
   // "has base power and toughness 9/9": the store's modify-pt with the set value as its amount.
   const base = /^(?:has|have) base power and toughness ((?:\d+|x)\/(?:\d+|x))$/i.exec(pred);
   if (base) return [{ verb: "modify-pt", ...target, amount: base[1]! }];
-  if (/^is goaded$/i.test(pred)) return [{ verb: "goad", ...target }];
+  if (/^(?:is|are) goaded$/i.test(pred)) return [{ verb: "goad", ...target }];
   // "can't block", "can't be blocked this turn", "attacks each combat if able": a restriction.
   // "doesn't untap during its controller's untap step": a restriction, as restrictionOf reads it.
   const doesnt = /^(?:doesn't|don't) (.+)$/i.exec(pred);
@@ -1374,6 +1379,12 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   if (who) { condition = [condition, t.slice(who[1]!.length + 1, who[0].length - 1)].filter(Boolean).join(", "); t = `${who[1]} ${t.slice(who[0].length)}`; }
   // "each player ... each draw": the second "each" repeats the actor.
   t = t.replace(/^((?:two|any number of) target (?:players|opponents)) each /i, "$1 ");
+  // "You have no maximum hand size [until your next turn]" (Reliquary Tower, Enter the Infinite): the store's `other` with the sentence as its words, which
+  // derive leaves unclaimed. CR 402.2 is the rule it states.
+  if (/^you have no maximum hand size(?: until your next turn| for the rest of the game)?$/i.test(t)) return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t, ...(condition ? { condition } : {}) }];
+  // "It becomes day [as this creature enters]" (Sunstreak Phoenix, CR 731.1 Day and Night): the game's day/night state, not a permanent that becomes something -- the store's `other`.
+  // Read as a "becomes" it was an animate of the card itself, a claim the text never makes.
+  if (/^it becomes (?:day|night)(?: as (?:~|this [a-z]+) enters)?$/i.test(t)) return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t, ...(condition ? { condition } : {}) }];
   // "you may pay {G} rather than pay this spell's mana cost": an alternative cost, the store's
   // cost-modify, the whole phrase its text. Read before the tail below strips "rather than pay".
   if (/^you may pay (?:\{[^}]+\})+ rather than pay this spell's mana cost$/i.test(t)) return [{ verb: "cost-modify", object: SELF, text: t, optional: true, ...(condition ? { condition } : {}) }];
@@ -1434,6 +1445,18 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
     const cond = [unless ? undefined : condition, a.condition].filter(Boolean).join(", ");
     return { ...a, ...(unless ? { text: `${a.text} ${unless}` } : {}), ...(cond ? { condition: cond } : {}) };
   });
+  // "Then if there are three or more promotion counters on ~, remove those counters" (Beckett Mariner, Prize Pig): every counter of the kind the condition counts, on
+  // the card itself. The store reads this as a removal of that kind, and writes the condition's threshold into the amount ("three or more", Prize Pig), which is not an
+  // amount: "all" is what the words say ("remove all of them", Replicating Ring, is stored "all").
+  const removeAll = /^remove (?:those counters|all of them|them all)$/i.exec(t);
+  // The condition is read by index (CodeQL polynomial-redos): "if there are three or more promotion counters on ~" / "if it has eight or more night counters on it".
+  const heldIf = removeAll ? /^if (?:there are|it has|~ has|this [a-z]+ has) \w+ or more /i.exec(condition ?? "") : null;
+  const heldRest = heldIf ? (condition ?? "").slice(heldIf[0].length) : "";
+  const heldOn = heldRest.lastIndexOf(" on ");
+  // "it" / "her" / "him" is the card itself only when the counter the sentence just put went on the card itself (`counterOnSelf`); "~" and "this <type>" name it outright.
+  const heldOwner = heldRest.slice(heldOn + 4);
+  const countedKind = heldIf && heldOn > 0 && (/^(?:~|this [a-z]+)$/i.test(heldOwner) || (/^(?:it|her|him)$/i.test(heldOwner) && counterOnSelf)) ? countersOf(heldRest.slice(0, heldOn)) : null;
+  if (countedKind) return [{ verb: "remove-counter", object: SELF, counter: countedKind.counter, amount: "all", ...(condition ? { condition } : {}) }];
   const pg = pumpOrGrant(t);
   // "-X/-0, where X is the number of cards in your graveyard": the store keeps the X's definition.
   // An animation whose X the sentence defines keeps the stored object, which carries the definition
@@ -1450,6 +1473,22 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   // Not "would deal": "prevent all damage a source of your choice would deal this turn" has no dealer.
   if (!haveSource && deals > 0 && deals <= 70 && !t.slice(0, deals).includes(",") && !/\b(?:would|can't|could)$/i.test(t.slice(0, deals))) { t = t.slice(deals + 1); actor = undefined; }
   // "that many plus one +1/+1 counters are put on it instead" (Hardened Scales): the improved count.
+  // ...and the same with no kind named, "of each of those kinds of counters" (Winding Constrictor, Pir; Brad Boimler's "that many plus one of each of those kinds of counters are put on
+  // that permanent instead") and the player's own "put twice that many of each of those kinds of counters on that creature instead" (Vorinclex, Innkeeper's Talent; Dr. Joseph M'Benga).
+  // The store writes the phrase itself as the object and no kind or amount, and derive reads the replacement off the printed clause (`replacementOf` / `changeOf`), so this is that.
+  // CEILING: no counter kind is carried ("each of those kinds" is every kind the event had); the add-counter carries the words only, and derive's counter replacement template (replacement.ts, kind optional since the follow-up) reads the printed clause for the replacement and its change.
+  const KINDS = "of each of those kinds of counters", ON = "(?:it|that creature|that permanent|that permanent or player|them|each of them)", MORE = "that many plus (?:one|two|\\d+)|twice that many|three times that many";
+  const eachKind = new RegExp(`^(?:put (twice that many|three times that many) (${KINDS}) on ${ON}|(${MORE}) (${KINDS}) (?:are|is) put on ${ON}|you get (${MORE}) (${KINDS}))$`, "i").exec(t);
+  if (eachKind) {
+    // The permanents the event hears ("... would be put on a permanent you control"), which the object text carries so derive scopes the replacement to them.
+    // CEILING: "a permanent or player" (Vorinclex, Innkeeper's Talent) is left unscoped: the subject grammar would read it as permanents only and drop the players.
+    // By index, not a regex over the condition (CodeQL polynomial-redos).
+    const heardCondition = (condition ?? "").replace(/, instead$/, "");
+    const onAt = /\bcounters?\b/i.test(heardCondition) ? heardCondition.lastIndexOf(" on ") : -1;
+    const heard = onAt >= 0 && !heardCondition.slice(onAt + 4).includes(",") ? heardCondition.slice(onAt + 4) : undefined;
+    const heardClass = heard !== undefined && !/\bplayers?\b/i.test(heard) ? heard : undefined;
+    return [{ verb: "add-counter", object: REF, text: `${(eachKind[1] ?? eachKind[3] ?? eachKind[5])!.toLowerCase()} ${(eachKind[2] ?? eachKind[4] ?? eachKind[6])!.toLowerCase()}${heardClass ? ` on ${heardClass}` : ""}`, ...(condition ? { condition } : {}) }];
+  }
   const more = /^(that many plus (?:one|two|\d+)|twice that many|three times that many) (.+? counters?) (?:are|is) put on (?:it|that creature|that permanent|them|each of them)$/i.exec(t);
   if (more && countersOf(more[2]!)) return [{ verb: "add-counter", object: REF, counter: countersOf(more[2]!)!.counter, amount: more[1]!.toLowerCase(), ...(condition ? { condition } : {}) }];
   const setLife = SET_LIFE.exec(t);
@@ -1458,6 +1497,11 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
     const whose = setLife[1]!.toLowerCase() === "your" ? "you" : setLife[1]!.replace(/'s$/, "");
     return [{ verb: "set-life", ...(/^their$/i.test(whose) ? {} : { text: whose }), amount: setLife[2]!, ...(condition ? { condition } : {}) }];
   }
+  // "it enters with additional counters on it equal to the same number and kinds of counters the copied permanent has on it" (Dominion Saboteur, a clone): the card's own counters,
+  // of every kind the copied permanent has. No bought card prints it; the shape is the stored add-counter on the card itself (Bloodspore Thrinax's "X +1/+1 counters"), kind unnamed.
+  // CEILING: the kind is not carried (it is the copied permanent's), only that this card gets counters, and how many: as many as the copied permanent has.
+  const copiedCounters = /^(?:it|~|this [a-z]+) enters with additional counters on it equal to (the same number and kinds of counters the copied (?:permanent|creature|artifact) has on it)$/i.exec(t);
+  if (copiedCounters) return [{ verb: "add-counter", object: SELF, amount: copiedCounters[1]!, ...(condition ? { condition } : {}) }];
   const entersWith = entersWithOf(t);
   const ew = entersWith ? counterList(entersWith[0].replace(/,? or (?=(?:a|an) [^,]*counter)/g, " and ")) : null;
   if (ew) {
@@ -1577,12 +1621,15 @@ const GAME_START_LEAD = /^(?:at the beginning of (?:the|your) first (?:upkeep|ma
 const GAME_START_TAIL = / at the beginning of (?:the|your) first (?:upkeep|main phase of the game)$/i;
 
 /** A sentence's opener: "If you do, ...", "If ..., ...", "Otherwise, ...". */
-const OPENER = /^(if you do|if you don't|if [^,]+|otherwise|then|as an additional cost to cast this spell|as long as [^,]+|during [^,]+|starting with you|whenever [^,]+|each time [^,]+), /i;
+const OPENER = /^(?:then )?(if you do|if you don't|if [^,]+|otherwise|then|as an additional cost to cast this spell|as long as [^,]+|during [^,]+|starting with you|whenever [^,]+|each time [^,]+), /i;
 
 /** The actions a clause's printed text states that this grammar reads completely, in printed order:
  *  the cost's first (as the store writes them), then the effect's. */
 /** Collects the phrases `parseActions` could not read, while `unreadPhrases` runs it. */
 let unread: string[] | null = null;
+/** Whether the last counter placed in this `parseActions` call went on the card itself (read by "remove those counters"). */
+// CEILING: module state like `unread`, reset per call; a nested parseActions (a granted ability's quoted text) can overwrite it, which only ever makes "remove those counters" refuse.
+let counterOnSelf = false;
 
 /** The sentences of a modal ability that choose its modes: "choose one —", "choose one or both —",
  *  "choose any number —", "choose one that hasn't been chosen —" (a Case-like mode memory), "choose up to five {P}
@@ -1599,6 +1646,7 @@ export function unreadPhrases(effect: string, type: string | null, cost?: string
 
 export function parseActions(effect: string, _type: string | null, cost?: string): ActionReading[] {
   const out: ActionReading[] = [];
+  counterOnSelf = false;
   // A mode's or a result's label is not text the action reads: a Spree mode's added cost ("+ {2} —"),
   // a d20 table row ("10—19 |"), a loyalty cost the segmenter left in ("[−9]").
   // An ability word ("Crescent Fang —", "Date Night —") names the ability and does nothing.
@@ -1645,7 +1693,8 @@ export function parseActions(effect: string, _type: string | null, cost?: string
   // reveal it and put it into your hand", Domri Rade) is never resolved to the looked-at card, so the clause would read complete with the claim
   // silently missing: an unconsumed look stays an unread phrase and the card blocks.
   let pendingLook: string | null = null;
-  for (const raw of unquoted.split(/(?<=\.)\s+/)) {
+  const sentences = unquoted.split(/(?<=\.)\s+/);
+  for (const [sentenceAt, raw] of sentences.entries()) {
     let s = raw.trim().replace(/\.$/, "");
     if (s === "") continue;
     // "Activate only as a sorcery", "This ability triggers only once each turn": a restriction the store drops and
@@ -1658,7 +1707,27 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     // triggered or activated modal ability. The modes are their own clauses (the segmenter), and the store
     // records the parent with no action of its own, so this sentence reads as nothing.
     if (MODAL_INTRO.test(s)) continue;
-    const look = /^look at (the top (?:card|(?:\w+|\d+) cards) of your library)$/i.exec(s);
+    // THE SENTENCES THAT CLAIM NOTHING (#1349 part 2, task C1), as the store writes them: a lone `none` (or no action at all) beside the clause's real ones.
+    // "You may look at the top card of your library any time" / "Play with the top card of your library revealed" (Courser of Kruphix, Future Sight): the library
+    // stays where it is, and what the revealed card lets you DO is the next sentence's. "Choose a color" / "Choose a number between 0 and 10": the store drops the
+    // choice and keeps the reference in the later words ("of the chosen color", "mana of that color"), which this grammar reads or leaves unread by its own rules.
+    // The store keeps a REPLACEMENT's choice ("As this creature enters, choose a color": 52 of the 90 stored cards that print a choose-a-color, the rest are inside an effect) as an `other` with the choice as its words, which derive lists as unclaimed;
+    // the same choice inside an effect it drops.
+    // CEILING: the choice is never carried: a later "of that color" / "the chosen number" is read (or left unread) by its own words, and "of the chosen color" is the filter's `chosenType`, as for a bought card.
+    if (/^(?:you may look at the top card of your library any time|play with the top card of your library revealed|choose a color|choose a number between \d+ and \d+)$/i.test(s)) { mayBefore = false; continue; }
+    const asEnters = /^as (?:~|this [a-z]+) enters, (choose a color|choose a number between \d+ and \d+)$/i.exec(s);
+    if (asEnters) { mayBefore = false; out.push({ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: asEnters[1]! }); continue; }
+    // "Look at target opponent's hand" (Telepathy, Gitaxian Probe): nothing leaves the hand, so no action; "..., then draw a card" (V'Ger) is the rest of the sentence.
+    const handLook = /^look at (?:target player's|target opponent's|that player's) hand(?:, then (.+))?$/i.exec(s);
+    if (handLook) {
+      mayBefore = false;
+      if (handLook[1] === undefined) continue;
+      s = handLook[1];
+    }
+    // "Look at the top X cards of your library, where X is the number of creature types among non-Borg creatures you control" (Hoshi Sato; Worldly Counsel's "basic land types among lands
+    // you control"): the store records no action for the look, so the count that defines X is carried by nothing.
+    // CEILING: X's definition is dropped with the look, as the stored answer drops it; the cards looked at are still "the top X cards of your library" for the sentences after.
+    const look = /^look at (the top (?:card|(?:\w+|\d+) cards) of your library)(?:, where x is [^,]+)?$/i.exec(s);
     if (look) { if (pendingLook !== null) unread?.push(pendingLook); pendingLook = s; lookedAtLibrary = look[1]!.toLowerCase(); continue; }
     // "You may pay {2}. If you do, draw a card": the draw is as optional as the payment (the store's
     // reading, and the rules': nothing happens unless you choose to pay).
@@ -1668,13 +1737,61 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     // "Until end of turn, target creature becomes ...": a duration at the front, not a condition.
     // "Simultaneously, all phased-out creatures phase in and ..." (CR 702.26a): a timing word, no action.
     s = s.replace(/^simultaneously, /i, "");
+    const durationLead = /^(?:until end of turn|until your next turn|until your next upkeep|until the end of your next turn), /i.test(s);
     s = s.replace(/^(?:until end of turn|until your next turn|until your next upkeep|until the end of your next turn|this turn|for as long as [^,]+), /i, "");
+    // A TEMPORARY COUNTER REPLACEMENT ("Until end of turn, if one or more counters would be put on a permanent you control, that many plus one of each of those kinds of counters are put on
+    // that permanent instead", Brad Boimler; Prairie Dog's activated one): read as an add-counter it is a producer of counters on every permanent, which the card never is, and a standing
+    // replacement is wrong too (derive drops the trigger that starts it). Refused: the card keeps this phrase as its blocker.
+    // By index, not one regex over both words (CodeQL polynomial-redos).
+    const lead = s.toLowerCase().startsWith("if ") ? s.slice(0, s.includes(",") ? s.indexOf(",") : s.length) : "";
+    if (durationLead && /\bcounters?\b/i.test(lead) && /\bwould (?:be )?put\b/i.test(lead)) { unread?.push(raw.trim().replace(/\.$/, "")); continue; }
     // Openers stack: "As long as ~ is equipped, if a triggered ability ... triggers, ...".
     for (let open = OPENER.exec(s), k = 0; open && k < 2; open = OPENER.exec(s), k++) {
       if (!/^then$/i.test(open[1]!)) condition = [condition, open[1]!.toLowerCase()].filter(Boolean).join(", ");
       s = s.slice(open[0].length);
     }
     s = s.replace(/^([A-Z])/, (c) => c.toLowerCase());
+    // "For each opponent, goad target creature that player controls" (Frenzied Gorespawn, Grasp of Fate, Tempted by the Oriq): the repetition per opponent is no action
+    // and the store keeps no trace of it, only the verb phrase behind (the "that player" in it is the sentence's back-reference).
+    // CEILING: the per-opponent repetition is not carried, as the stored actions do not carry it.
+    const forEachOpponent = /^for each opponent, /i.test(s);
+    s = s.replace(/^for each opponent, /i, "");
+    // "For each creature target player controls, create a token that's a copy of that creature" (Clone Legion, Face Yourself, Multiversal Incursion; Mirror Universe Intrusion's kicked
+    // "instead for each creature target opponent controls, ..."): the store keeps only the copy, and derive reads the count off the copied creature.
+    // CEILING: the per-object repetition is not carried (the stored object has none); only a copy of "that creature/permanent" is read, no other token created per object.
+    const eachCopy = /^(?:instead )?for each [^,]+? controls?, (create a token that's a copy of that (?:creature|permanent)\b.*)$/i.exec(s);
+    if (eachCopy) s = eachCopy[1]!;
+    // "You may pay {1}. If you do, <effect>" (Wooden Sphere, Marooned): the payment records no action, as the store has it, and the effect after "If you do" is as
+    // optional as the payment (`ifYouDoAfterMay`). Only a mana payment, and only with that reflexive sentence behind it: a payment nothing follows claims nothing here.
+    // CEILING: the payment itself (its mana, its energy) is not recorded, as the store drops it too; the effect reads as optional but not as costing anything.
+    if (condition === undefined && /^you may pay /i.test(s) && paysMana(s.slice("you may pay ".length)) && /^if you do, /i.test(sentences[sentenceAt + 1]?.trim() ?? "")) continue;
+    // "You may reveal an artifact card from among them and put it into your hand" (Harald, Courageous Outrider): the dig's pick, read as the put it is
+    // ("you may put an artifact card from among them into your hand"); the reveal is bookkeeping the store drops.
+    const revealPick = /^you may reveal (.+) from among (them|those cards) and put (?:it|that card) into your hand$/i.exec(s);
+    if (revealPick) s = `you may put ${revealPick[1]} from among ${revealPick[2]} into your hand`;
+    // BEAM ME UP {COST} (Star Trek; owner 2026-10-26, #1349). Not in the Comprehensive Rules: the card's reminder is the whole definition, "You may cast this
+    // card from your graveyard for {cost} if you also return a creature you control to its owner's hand. Then exile this spell." Composed from the shapes
+    // that exist: a cast of the card itself from the graveyard (as Gravecrawler's is read) and the return of a creature of yours (the bounce Deprive's
+    // additional cost reads). CEILING: the {cost} and the exile afterwards are dropped, as flashback's cost and exile are; the return is stated outright
+    // though it is a cost of the beamed cast only (the owner's ruling is the bounce edge, whatever the cast).
+    if (/^beam me up (?:\{[^}]+\})+$/i.test(s)) {
+      const cast = readPhrase("you may cast this card from your graveyard", condition);
+      const bounce = readPhrase("return a creature you control to its owner's hand", condition);
+      if (cast && bounce) out.push(...cast, ...bounce); else unread?.push(s);
+      continue;
+    }
+    // ASSIMILATE <card> (Star Trek; owner 2026-10-26, #1349): "Put it onto the battlefield under your control with a +1/+1 counter. It's a Borg artifact
+    // creature and loses all other creature types." Composed from existing verbs: the put (the source zone is the sentence's: a graveyard, "exiled with
+    // it", or "that card" after an exile), the +1/+1 counter on it, and an animate that CARRIES its type in the object, as the stored path writes it
+    // ("this as a 3/6 Golem artifact creature"), which #1352 says the grammar's own animate drops. CEILING: "loses all other creature types" is not read.
+    const assimilate = /^assimilate (.+)$/i.exec(s);
+    if (assimilate) {
+      const put = readPhrase(`put ${assimilate[1]} onto the battlefield under your control`, condition);
+      const counter = readPhrase("put a +1/+1 counter on it", condition);
+      if (put && counter) out.push(...put, ...counter, { verb: "animate", object: REF, text: "it as a Borg artifact creature", ...(condition ? { condition } : {}) });
+      else unread?.push(s);
+      continue;
+    }
     // CEILING: "If you do, increase or decrease the result by 1" (Xenosquirrels, CR 706.2) modifies a die
     // result, which no verb expresses; it records no action.
     if (/^increase or decrease the result by \d+$/i.test(s)) continue;
@@ -1732,7 +1849,11 @@ export function parseActions(effect: string, _type: string | null, cost?: string
       const [main, payment] = p.split(/ unless /);
       // The payment is the player's choice: optional, as the store writes it. An "unless" that is no
       // payment ("enters tapped unless you control two or fewer other lands") is the main's condition.
-      const pay = payment ? readPhrase(payment, "unless")?.map((a) => ({ ...a, optional: true as const })) ?? null : null;
+      // ...except a LIFE payment by "that player" of a "For each opponent, you ..." sentence ("... return that card from your graveyard to your hand unless that player pays 3 life",
+      // Sivriss): read as a separate lose-life, derive takes its recipient off a sentence that opens with "you", and the payment becomes yours. It stays the main action's `unless`, as the stored answer has it.
+      // CEILING: only after "For each opponent,"; "they" / "its controller" pay (Tyrannize, Wand of Ith) keep the separate lose-life the stored rows also carry, and a granted ability's "that player" (Nazgul Battle-Mace) is not touched.
+      const thatPlayerPaysLife = forEachOpponent && payment !== undefined && /^that (?:player|opponent) pays? .+ life$/i.test(payment);
+      const pay = payment && !thatPlayerPaysLife ? readPhrase(payment, "unless")?.map((a) => ({ ...a, optional: true as const })) ?? null : null;
       const mainCondition = payment && !pay ? [condition, `unless ${payment}`].filter(Boolean).join(", ") : condition;
       // "discard a card or pay {2}", "sacrifice a creature or discard a card": either is an action.
       for (const alt of main!.split(/ or (?=(?:pay|sacrifice|discard|draw|mill|exile|lose|reveal|search)\b)/)) {
@@ -1743,7 +1864,7 @@ export function parseActions(effect: string, _type: string | null, cost?: string
         else if (startsMay) { /* scope already on */ }
         else if (!bareVerbPhrase(alt) || mayEnds(alt)) mayScope = false;
         else if (mayScope && r) r = r.map((a) => ({ ...a, optional: true as const }));
-        if (r) out.push(...r);
+        if (r) { out.push(...r); for (const a of r) if (a.verb === "add-counter") counterOnSelf = a.object?.self === true; }
         else unread?.push(alt.replace(/\uE000(\d+)\uE001/g, (_m, i: string) => quotes[Number(i)]!).trim());
         // The actor carries even past a phrase this grammar does not read yet: "target opponent
         // sacrifices a creature, discards a card, and loses 3 life" -- all three are theirs.

@@ -267,8 +267,9 @@ export const ZONE_SCOPED_KINDS: ReadonlySet<string> = new Set(["graveyard-recurs
  *  caught: that one really does place counters later and is ordinary `counter-placement`. */
 const ENTERS_WITH = /\benters? with\b[^.]{0,40}\bcounters?\b/i;
 
-/** "…on the bottom of your library" — the disposal half of a dig, never a top-of-library supply. */
-const ON_THE_BOTTOM = /on the bottom of (?:your|their|its owner's|a|the) librar/i;
+/** "…on the bottom of your library" — the disposal half of a dig, never a top-of-library supply. Also the library left unsaid, as the Star Trek digs print it
+ *  ("Put the rest on the bottom in a random order", There's Coffee in that Nebula): read without it, that dig's rest was `top-set`. */
+const ON_THE_BOTTOM = /on the bottom (?:of (?:your|their|its owner's|a|the) librar|in (?:any|a random) order)/i;
 /** A CHOICE OF TOP OR BOTTOM IS TOP MANIPULATION: Dream Cache puts two cards from your hand "both
  *  on top of your library or both on the bottom", and the bottom guard alone dropped it (DERIVE
  *  162; the rate then read it as 3 cards for 3 mana with nothing to net). */

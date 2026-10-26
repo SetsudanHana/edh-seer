@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 23;
+export const NORMALIZE_VERSION = 24;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -35,7 +35,7 @@ export const NORMALIZE_MIN_COMPATIBLE = 3;
  *  prose fix reopen the whole `carriesOther` set — on 2026-08-06 a one-line rule about trigger
  *  subjects selected 158 cards, of which 148 had been bought hours earlier at v8 and would come back
  *  identical. Priced at $0.69 to fix 9 cards. With this the same run selects 10 and costs $0.02. */
-export const VOCAB_VERSION = 23;
+export const VOCAB_VERSION = 24;
 
 /** The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION.
  *
@@ -60,7 +60,7 @@ export const VOCAB_VERSION = 23;
  *  whole trigger list, so a doc answered at v13+ genuinely had every word and is correctly skipped,
  *  while everything below is still selected. No doc is de-selected by the change -- none exists at
  *  13 or above.  */
-export const TRIGGER_VOCAB_VERSION = 21;
+export const TRIGGER_VOCAB_VERSION = 24;
 
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
@@ -210,6 +210,8 @@ export const EXEMPLAR_TERMS = [
   "unattach", "creature evolves",
   // Reality Fracture, 2026-09-27.
   "empower Jace", "enters prepared", "becomes prepared", "becomes unprepared", "prepared spell",
+  // Star Trek, 2026-10-26.
+  "face a dilemma",
 ] as const;
 
 export const ZONES = ["battlefield", "graveyard", "hand", "library", "exile", "stack", "command"];
@@ -506,6 +508,10 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // "becomes prepared" / "becomes unprepared" (passive: done TO a permanent). No card triggers on
   // any of them yet; the words are here by the completeness ruling, not by demand.
   "empower-jace", "prepared", "unprepared",
+  // STAR TREK, 2026-10-26 (owner ruling, #1349): "you face a dilemma as you choose one or more modes for a spell or ability" (Seven of Nine, Elim Garak, Obsidian Order
+  // Operative, Tinkerer). Not in the Comprehensive Rules copy of 2026-09-25: the reminder is the whole definition. Passive-free and active: a player does it. Its producer
+  // is every modal spell or ability (CR 700.2), supplied by derive's modal pass, not by a clause verb, so it is a TRIGGERS word and no VERBS member.
+  "face-a-dilemma",
   // JUDGED AND NOT ADDED, with the reading, so the next walk does not re-propose them:
   //   - "whenever you add mana" (Caged Sun, Dictate of Karametra): every printed head is a land
   //     being tapped for mana, which `tapped-for-mana` (CR 106.12a) already spells. 0 heads left.

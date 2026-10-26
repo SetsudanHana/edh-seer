@@ -901,7 +901,9 @@ export function analyzeDeckStructured(
     }
   }
   // AND A TAG ONE OR TWO CARDS CARRY CANNOT EITHER (#748), however rare it is.
-  const rankableThemes = demoteThinHeadline(demoteUnrankableHeadline(rankedThemes, suppliedPhases), deckFreq, resolved.length, suppliedPhases);
+  const rankableThemes = demoteThinHeadline(
+    demoteUnrankableHeadline(rankedThemes, suppliedPhases, new Set(caresFreq.keys())),
+    deckFreq, resolved.length, suppliedPhases, new Set(caresFreq.keys()));
   const promotedThemes = orderHeadline(rankableThemes, deckFreq, promoteMembership, headlineFloor(resolved.length), new Set(caresFreq.keys()), suppliedPhases);
   const themes = promotedThemes.map((tag) => ({ tag, count: deckFreq.get(tag) ?? 0 }));
 

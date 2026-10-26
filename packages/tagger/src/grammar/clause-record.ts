@@ -7,7 +7,7 @@
  *  against the stored answers by `instruments/src/grammar-only.ts`. Pure and synchronous. */
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import { interveningIfOf } from "../derive/intervening-if.js";
-import { segment } from "../segment.js";
+import { segment, STATION_BAR } from "../segment.js";
 import { amountOf, parseActions, unreadPhrases, type ActionReading } from "./action.js";
 import { effectText, missedCost, printedPreamble, withoutAbilityWord } from "./preamble.js";
 import { selfAsTilde } from "./self-as-tilde.js";
@@ -28,7 +28,7 @@ export interface GrammarRecords {
 }
 
 /** The verbs a trigger opening's event is printed with, to cut its subject off the front. */
-const EVENT_VERB = /\s(?:dies|die|enters|enter|attacks|attack|blocks|block|becomes|become|is|are|deals|deal|casts|cast|gains|gain|loses|lose|draws|draw|discards|discard|sacrifices|sacrifice|leaves|leave|phases|gets|get|puts|put|plays|play|activates|activate|creates|create|mills|mill|explores|explore|taps|tap|untaps|untap|searches|search|cycles|cycle|scries|scry|surveils|surveil|exiles|exile|returns|return|fights|fight|transforms|transform|copies|copy|counters|was|were|has|have|would|can't|connives|proliferates?|expends|commits?|ventures?|completes?|crews?|saddles?|chooses?|reveals?|wins?|pays?|spends?|finishes?|unlocks?|opens?|rolls?|flips?|shuffles?|investigates?|forages?|descends?)\b/;
+const EVENT_VERB = /\s(?:dies|die|enters|enter|attacks|attack|blocks|block|becomes|become|is|are|deals|deal|casts|cast|gains|gain|loses|lose|draws|draw|discards|discard|sacrifices|sacrifice|leaves|leave|phases|gets|get|puts|put|plays|play|activates|activate|creates|create|mills|mill|explores|explore|taps|tap|untaps|untap|searches|search|cycles|cycle|scries|scry|surveils|surveil|exiles|exile|returns|return|fights|fight|transforms|transform|copies|copy|counters|was|were|has|have|would|can't|connives|proliferates?|expends|commits?|ventures?|completes?|crews?|saddles?|chooses?|reveals?|wins?|pays?|spends?|finishes?|unlocks?|opens?|rolls?|flips?|shuffles?|investigates?|forages?|descends?|faces?(?= a dilemma))\b/;
 const PLAYER = /^(?:you|a player|an opponent|each player|each opponent|target opponent|that player|one or more players|another player)$/i;
 
 /** WHOSE PHASE a phase trigger watches, which derive's repeats labeller reads: your turns only is
@@ -83,6 +83,10 @@ export function triggerSubjectText(preamble: string): string {
   const ownGraveyard = caused !== null && !!caused[2] && /\binto your graveyard\b/i.test(caused[3]!);
   const v = EVENT_VERB.exec(rest);
   const head = (v ? rest.slice(0, v.index) : rest).trim();
+  // "a basic land is tapped for mana OF THE CHOSEN COLOR" (Gauntlet of Power): the colour is part of which taps the trigger hears, and the store keeps it in the subject
+  // ("a basic land tapped for mana of the chosen color"). Cut at the verb it was dropped, and the mana line read an unconditional land trigger.
+  const chosen = /\b(?:is|are) (tapped for mana of the chosen colou?r)$/i.exec(rest);
+  if (chosen && v && head !== "" && /^(?:a|an|each) /i.test(head)) return `${head} ${chosen[1]}`;
   if (v && PLAYER.test(head)) {
     // "you cast or cycle ~": the second verb is the event's, not the object's.
     const obj = rest.slice(v.index + v[0].length).trim().replace(/^or \w+ /i, "");
@@ -96,7 +100,7 @@ export function triggerSubjectText(preamble: string): string {
 
 const SELF_SUBJECT = /^(?:~|this [a-z]+)$/i;
 /** Verbs the player does with nothing after them, whose stored object is "you". */
-const NO_OBJECT_YOU = new Set(["monarch", "initiative", "ring-tempts", "learn", "venture-into-the-dungeon", "manifest-dread", "investigate", "populate", "win-game", "lose-game"]);
+const NO_OBJECT_YOU = new Set(["monarch", "initiative", "ring-tempts", "learn", "venture-into-the-dungeon", "manifest-dread", "investigate", "populate", "win-game", "lose-game", "time-travel"]);
 /** Verbs whose stored object can be the PLAYER it happens to ("target player mills two cards" ->
  *  "target player"), the convention derive's `PLAYER_OBJECT_VERBS` reads. */
 const PLAYER_VERBS = new Set(["draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life", "blight"]); // blight: "target opponent blights 2" names the opponent (Champion of the Weird); your own "blight 2" keeps its amount as the object
@@ -148,7 +152,8 @@ function objectWordsOf(r: ActionReading): string {
   // Not the "to" of "up to four target cards" (Stream of Consciousness).
   // Not "from their graveyard": where it comes from is part of the object, as the store writes it (Exhume).
   // Not the "to" of "up to four target cards" (Stream of Consciousness, Wakka).
-  const at = p.search(/ (?:onto|into|on top of|on the bottom of) |(?<!\bup) to /);
+  // ...and "on the bottom" with no library after it ("Put the rest on the bottom in a random order", There's Coffee in that Nebula): where the rest goes, not which cards.
+  const at = p.search(/ (?:onto|into|on top of|on the bottom(?: of)?) |(?<!\bup) to /);
   return (at > 0 ? p.slice(0, at) : p).replace(/ (?:tapped|face down)$/, "");
 }
 
@@ -157,7 +162,8 @@ function objectWordsOf(r: ActionReading): string {
 function unlessOf(condition: string | undefined): Action["unless"] | undefined {
   const m = condition ? /(?:^|, )unless (.+?) (?:pays?) (.+)$/i.exec(condition) : null;
   // "unless that player pays {1}" (Rhystic Study): the opponent the trigger named.
-  return m ? { cost: m[2]!.trim(), payer: /^you$/i.test(m[1]!) ? "you" : /^(?:that player|that opponent|they)$/i.test(m[1]!) ? "opponent" : "controller" } : undefined;
+  // "unless any player pays {1}" (Rhystic Cave) is anyone's payment, which the schema's closed set names "any" (and the stored answer writes).
+  return m ? { cost: m[2]!.trim(), payer: /^you$/i.test(m[1]!) ? "you" : /^(?:that player|that opponent|they)$/i.test(m[1]!) ? "opponent" : /^any player$/i.test(m[1]!) ? "any" : "controller" } : undefined;
 }
 
 /** The count an object's words state when the reading carries none, as the store writes it: "the top
@@ -329,6 +335,26 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
   return out;
 }
 
+/** A trigger word inside a sentence: the "whenever" of a delayed trigger a chapter creates. */
+const DELAYED_TRIGGER_WORD = /\b(?:whenever|when|at the beginning of|at the end of|at end of)\b/i;
+
+/** A STATION ROW'S "Flying, first strike" is ONE grant of a keyword list, as the store writes it for Wedgelight Rammer: derive reads the whole
+ *  list off each grant-ability action, so one action per keyword derived the same gated keyword-grant once per keyword. Plain keywords, side by side.
+ *  CEILING: only a Station row. Elsewhere the store mostly writes one action per keyword ("gain vigilance, trample, and indestructible" derives the
+ *  grant three times: Song of Freyalise, Entropic Battlecruiser, some 450 bought cards), and merging them made 340 bought cards switch to the grammar
+ *  (measured 2026-10-26, 34 of them losing an ability), so the grammar keeps the duplicates the store has. */
+const PLAIN_KEYWORD = /^[a-z]+(?:, [a-z]+| [a-z]+)*$/i;
+function mergeKeywordGrants(actions: Action[]): Action[] {
+  const merged: Action[] = [];
+  for (const a of actions) {
+    const last = merged[merged.length - 1];
+    if (last && a.verb === "grant-ability" && last.verb === "grant-ability" && PLAIN_KEYWORD.test(a.object ?? "") && PLAIN_KEYWORD.test(last.object ?? "")
+      && a.unless === undefined && last.unless === undefined && a.optional === last.optional) { merged[merged.length - 1] = { ...last, object: `${last.object}, ${a.object}` } as Action; continue; }
+    merged.push(a);
+  }
+  return merged;
+}
+
 export function grammarClauseRecords(card: CardText): GrammarRecords {
   const records: ClauseRecord[] = [];
   const clauses = segment(card.oracleText ?? "", card.keywords ?? [], card.typeLine ?? "");
@@ -341,15 +367,42 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
   let nextId = Math.max(0, ...clauses.map((c) => c.id)) + 1;
   const readings: Record<number, { trigger?: TriggerReading[]; actions?: ActionReading[] }> = {};
   for (const c of clauses) {
-    if (c.kind === "reminder") continue;
+    // A SAGA'S REMINDER LINE ("(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)") is the store's
+    // inert record, the text as printed (CR 714.3 and 704.5s are what it reminds of). Any other reminder-only line states nothing and has no record.
+    if (c.kind === "reminder") {
+      if (/^\(As this Saga enters\b/.test(c.text)) records.push({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text } as Action] });
+      continue;
+    }
     if (c.kind === "keyword") { records.push({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text } as Action] }); continue; }
     // A mana cost behind a label the segmenter missed makes the clause ACTIVATED, carrying that cost.
     const labelled = !c.cost && (c.abilityType ?? "static") === "static" ? missedCost(c.text) : null;
     const type = labelled ? "activated" : c.abilityType ?? "static";
     const record: ClauseRecord = { id: c.id, abilityType: type, actions: [] };
+    // A SAGA CHAPTER ("I, II — ...") is fired by the lore counter reaching its number (CR 714.2b: "{rN}—[Effect]"), not by an event the trigger
+    // grammar reads: the store writes `{event: "chapter", subject: "chapter <marker>", control: "you"}` (385 of 571 stored chapters; 186 write the bare marker) and derive reads the event as "once" (repeats.ts).
+    // A chapter whose text OPENS with a trigger word ("II, III — Whenever you cast a noncreature spell this turn, ...") keeps its printed
+    // trigger, as before: the store has that chapter's trigger as the cast, not the chapter.
+    // CEILING: a chapter that states a trigger further in ("III — Until end of turn, whenever a Salamander deals combat damage to a player,
+    // it deals that much damage ...", Nightmares and Daydreams) is REFUSED, not read as a chapter: read so, its effect would fire at the chapter
+    // with the "whenever" dropped, a claim the text does not make (the stored answer keeps it unclaimed or triggered).
+    const bareChapter = c.kind === "chapter" && type === "triggered" && c.marker !== undefined && printedPreamble(c.text, card.name) === null;
+    const delayedWord = bareChapter ? DELAYED_TRIGGER_WORD.exec(c.text.replace(/"[^"]*"/g, " ")) : null;
+    if (delayedWord) {
+      const rest = c.text.slice(c.text.toLowerCase().indexOf(delayedWord[0].toLowerCase()));
+      const comma = rest.indexOf(",");
+      return { records, complete: false, blocker: { clause: c.id, kind: "trigger", phrase: comma > 0 ? rest.slice(0, comma) : rest } };
+    }
+    // A REFLEXIVE "When you do" after a chapter's first sentence ("I — Mill five cards. When you do, this Saga deals damage ...", Kraven's Last
+    // Hunt; the segmenter makes it a clause of its own) is that chapter's own ability (CR 603.12), so once: the chapter's trigger, as the store has it.
+    // So is the ONE delayed trigger the chapter sets up ("... At the beginning of the next combat this turn, gain control of that creature", The Wrath
+    // of Khan): read as a phase trigger on anyone's combat it fired every turn (per-turn), where it fires the once.
+    const reflexiveChapter = c.kind === "chapter" && c.marker === undefined && type === "triggered" && /^(?:when you do,|at the beginning of the next )/i.test(c.text);
+    const parentMarker = reflexiveChapter ? [...clauses].reverse().find((p) => p.id < c.id && p.kind === "chapter" && p.marker !== undefined)?.marker : undefined;
+    const chapterOnly = bareChapter || (reflexiveChapter && parentMarker !== undefined);
+    if (chapterOnly) record.trigger = { event: "chapter", subject: `chapter ${c.marker ?? parentMarker!}`, control: "you" };
     // A MODE of a triggered modal ability is typed triggered (the store's convention) but has no trigger of
     // its own: the parent's trigger is its trigger. Only a mode that prints its own ("When ..., ...") reads one.
-    if (type === "triggered" && !(c.kind === "mode" && !/^\s*(?:whenever|when|at the beginning of|at end of)\b/i.test(c.text))) {
+    if (!chapterOnly && type === "triggered" && !(c.kind === "mode" && !/^\s*(?:whenever|when|at the beginning of|at end of)\b/i.test(c.text))) {
       const preamble = printedPreamble(c.text, card.name);
       const read = preamble ? parseTrigger(preamble, interveningIfOf(selfAsTilde(c.text, card.name))) : null;
       if (!read) return { records, complete: false, blocker: { clause: c.id, kind: "trigger", ...(preamble ? { phrase: preamble } : {}) } };
@@ -424,7 +477,9 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     readings[c.id] = { ...readings[c.id], actions: readingsHere };
     // A KEYWORD LINE the segmenter left as an ability ("Suspend 4—{U}", its reminder stripped): the
     // card's own keywords, which the store records as no action, as it does a keyword clause.
-    if (type !== "triggered" && !cost && readingsHere.length > 0 && !/\b(?:has|have|gains?|gets?|is|are|becomes?)\b/i.test(effect) && !/^equip\b/i.test(c.text)
+    // A STATION ROW'S KEYWORDS ("8+ | Flying") are not the card's own keywords but a grant gated on charge counters (CR 721.2a): a static
+    // grant, as the store records it, and derive stamps the row's threshold on it.
+    if (type !== "triggered" && !cost && readingsHere.length > 0 && !/\b(?:has|have|gains?|gets?|is|are|becomes?)\b/i.test(effect) && !/^equip\b/i.test(c.text) && !STATION_BAR.test(c.text)
       && readingsHere.every((r) => r.verb === "grant-ability" && r.object?.self === true)) {
       records.push({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text } as Action] });
       continue;
@@ -437,6 +492,7 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     // with no trigger noun takes the clause's own "this creature".
     const selfWord = selfNoun && selfNoun !== "~" ? selfNoun : /\bthis (?:creature|artifact|enchantment|land|planeswalker|permanent|vehicle|card|spell|aura|equipment|battle)\b/i.exec(c.text)?.[0] ?? "this";
     record.actions = actionsOf(readingsHere, selfNoun === "~" ? "this" : selfNoun, type, selfWord, record.trigger?.subject, record.trigger?.event);
+    if (STATION_BAR.test(c.text)) record.actions = mergeKeywordGrants(record.actions);
     if (record.actions.length === 0 && type !== "static") record.actions = [{ verb: "none", object: "" } as Action];
     records.push(record);
     for (const o of overflow) if (o.actions!.length === 0 && o.trigger) o.actions = record.actions;

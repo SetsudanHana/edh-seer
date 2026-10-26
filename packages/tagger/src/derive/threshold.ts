@@ -122,6 +122,36 @@ export function thresholdFor(text: string): { atLeast: number } | undefined {
   return m ? { atLeast: m.atLeast } : undefined;
 }
 
+/** A STATION ROW AND EVERYTHING PRINTED UNDER ITS BAR (CR 721.2: "Any abilities printed within the same text box striation as a station symbol are
+ *  part of its static ability"; 721.2a: "{N+}[abilities]" means "as long as this permanent has N or more charge counters on it, it has [abilities]").
+ *  Oracle text marks a striation only by its bar, so every line from a bar to the next bar or the end of the card takes that bar's N. Lines BEFORE the
+ *  first bar are treated normally (721.4). MEASURED over all 42 Station cards: lines after the last bar exist on 12 (Entropic Battlecruiser's attack
+ *  trigger, Uthros Research Craft's +1/+0, Hearthhull, Sledge-Class Seedship, Specimen Freighter, Starship Enterprise, Seriema, Inspirit, Exploration
+ *  Broodship, Infinite Guideline Station, Debris Field Crusher, Land Station) and every one is that last striation's ability; none sits between bars.
+ *  The clause is found in the card's lines by its first 50 characters, reminder text removed (segment() strips it). An N of 1 is kept: unlike "one or
+ *  more" it is a count of charge counters, not the English plural. A row that also states its own numeric condition keeps that one (`selectThreshold`
+ *  runs first): one slot, and the printed condition is the narrower. No `thresholdSubject`: the counted thing is the card's own charge counters, which
+ *  no SubjectFilter names. */
+const STATION_ROW = /^(\d+)\+\s*\|/;
+/** ONLY ON A STATION CARD (a "Station" keyword line in its text): a d20 table prints "15+ | ..." with the same bar, and that is a roll
+ *  result, not a charge-counter count (Danse Macabre, Druid of the Emerald Grove: 11 cards). */
+const STATION_LINE = /^Station\b/m;
+const bare = (s: string): string => s.replace(/\([^()]*\)/g, " ").replace(/\s+/g, " ").trim();
+export function stationThresholdFor(text: string, cardText: string): { atLeast: number } | undefined {
+  if (!STATION_LINE.test(cardText)) return undefined;
+  // The row's own bar (an activated row's text is its bar plus the effect, the cost having been split off, so it is not a substring of the line).
+  const own = STATION_ROW.exec(text.trim());
+  if (own) return { atLeast: Number(own[1]) };
+  const probe = bare(text).slice(0, 50);
+  if (probe === "") return undefined;
+  const lines = cardText.split("\n").map(bare);
+  for (let j = lines.findIndex((l) => l.includes(probe)); j >= 0; j--) {
+    const m = STATION_ROW.exec(lines[j]!);
+    if (m) return { atLeast: Number(m[1]) };
+  }
+  return undefined;
+}
+
 /** A zone-scoped card count is not a battlefield count. "Eight or more permanent cards in your
  *  graveyard" and "thirteen cards in your hand" both name a COUNT of cards sitting in a zone, not a
  *  class of permanents on the battlefield -- and no `SubjectFilter` can say "in your graveyard", so

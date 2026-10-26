@@ -111,8 +111,18 @@ const TEMPLATES: {
   // CEILING: reuses counter-placement; give it its own kind when a consumer needs to tell a
   // doubler from a placer.
   {
-    re: /\bif\s+(?:one or more|a|an)\s+([^.]{0,20}?)\s+counters?\s+would be (?:put|placed)\s+on\s+([^,.]+)/i,
+    // The KIND IS OPTIONAL: "if one or more counters would be put on ..." (Winding Constrictor, Pir) names none, meaning any kind, and then the ability carries no `counter`.
+    // The receiving class runs to the end of the sentence and is cut at the comma that opens the replacement (`classOf`) ("a creature, Spacecraft, or Planet you control, twice that many ...", Loading Zone).
+    re: /\bif (?:one or more|a|an) (?:([^.]{1,20}?) )?counters? would be (?:put|placed) on ([^.]+)/i,
     verbs: ["counter-added"], kind: "counter-placement", subject: 2, counter: 1,
+  },
+  // The ACTIVE frame of the same replacement: "If you would put one or more counters on a creature you control, put twice that many of each of those kinds of counters on that creature
+  // instead" (Dr. Joseph M'Benga, Vorinclex), "If an effect would put one or more counters on a permanent you control, it puts twice that many ..." (Doubling Season). The actor is
+  // the half the engine cannot check: an opponent's counters (Vorinclex's halving) make it `restricted`.
+  // CEILING: the receiving class is the permanents or players the sentence names first; Lae'zel's "or on yourself" (a creature or planeswalker you control OR yourself) is read as the permanents alone, an under-claim.
+  {
+    re: /\bif (you|an effect|an opponent|a player|a source) would put (?:one or more|a|an) (?:([^.]{1,20}?) )?counters? on ([^.]+)/i,
+    verbs: ["counter-added"], kind: "counter-placement", subject: 3, counter: 2, actor: 1,
   },
   // "If you would create one or more Treasure tokens, instead create ..."
   // ...and "If an effect would create ..." (Doubling Season, Parallel Lives, Anointed Procession, #858).
@@ -164,18 +174,28 @@ const TEMPLATES: {
 
 /** "a source", "a source you control", "you" — the whole of what your deck can do. Anything else
  *  ("an opponent") narrows the multiplier to a subset the emit cannot identify. */
-const UNRESTRICTED_ACTOR = /^(?:a source(?: you control)?|you|any source)$/i;
+const UNRESTRICTED_ACTOR = /^(?:a source(?: you control)?|you|any source|an effect)$/i;
+
+/** The receiving class of a counter replacement, cut at the comma that opens what happens to the counters ("a creature, Spacecraft, or Planet you control, twice that many ..."). By search, not a lazy regex (CodeQL polynomial-redos). */
+function classOf(rest: string): string {
+  const at = rest.search(/, (?:that many|twice|three times|put |it puts|they put|you get|those counters|each of)/);
+  return at >= 0 ? rest.slice(0, at) : rest;
+}
 
 export function replacementOf(clauseText: string): Replacement | null {
   if (!/\binstead\b/i.test(clauseText)) return null;
   for (const t of TEMPLATES) {
     const m = clauseText.match(t.re);
     if (!m) continue;
+    // A TEMPORARY counter replacement ("Whenever ~ becomes tapped, until end of turn, if one or more counters would be put on ...", Brad Boimler) holds only after its trigger, and the
+    // derive drops that trigger; read as a standing replacement it would multiply every counter the deck places. Left to the old reading.
+    // CEILING: only the counter templates are guarded; no other temporary frame is in the corpus on a replacement template.
+    if (t.kind === "counter-placement" && /\buntil (?:end of turn|your next turn)\b/i.test(clauseText.slice(0, m.index))) continue;
     const actor = t.actor !== undefined ? (m[t.actor] ?? "").trim() : "";
     return {
       verbs: t.verbs,
       kind: t.kind,
-      subjectText: (t.subject === 0 ? "" : m[t.subject] ?? "").trim(),
+      subjectText: (t.subject === 0 ? "" : t.kind === "counter-placement" ? classOf(m[t.subject] ?? "") : m[t.subject] ?? "").trim(),
       ...(t.kind === "token-doubling" ? { tokenMultiplier: tokenMultiplierOf(clauseText) } : {}),
       ...(() => { const change = changeOf(clauseText); return change ? { change } : {}; })(),
       ...(t.counter !== undefined && m[t.counter] ? { counter: m[t.counter].trim() } : {}),

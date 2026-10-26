@@ -1,7 +1,7 @@
 /** G3 FOR #896 TASK 7 (moved from instruments: `derive-corpus` reads it for the per-card switch): does a card derive the same abilities from its grammar-only clause records as from
  *  the stored model answer? A difference is grouped by WHICH ability fields differ -- the H3 grouping
  *  of task 2 -- so a group is labelled once and its members spot-checked, not judged one by one. */
-import type { Ability } from "../schema.js";
+import type { Ability, CardTags } from "../schema.js";
 
 /** Key order is not a difference: two derives that build the same subject in a different order agree. */
 // ...nor an amount's comma before its "where X is" ("+X/+X, where X is ..." reads as "+X/+X where X is ...").
@@ -116,4 +116,33 @@ export function lostAnimateFields(stored: readonly Ability[], grammar: readonly 
   };
   return stored.some((a) => a.effect?.kind === "animate"
     && fields.some((f) => [...values([a], a.clause, f)].some((v) => !values(grammar, a.clause, f).has(v))));
+}
+
+/** THE TRIGGER FLAGS THE GRAMMAR DROPS (#1349 review). `lostClaims` compares effect kinds and emit verbs, so a labelled "grammar right" group can switch a card whose grammar
+ *  trigger lost a flag the stored one carries: Kate Stewart's "one or more time counters" is `batched` in the stored derive, and the grammar's bare counter-added trigger is not,
+ *  which `edge-magnitude` and `wincon` read as one firing per batch. True when, per trigger event (the verbs), the stored abilities carry more `batched` triggers, or more
+ *  event-size bounds (`amount`), than the grammar's. One-directional and narrow on purpose: a flag only the grammar carries is never a loss. */
+export function lostTriggerFlags(stored: readonly Ability[], grammar: readonly Ability[]): boolean {
+  const count = (abs: readonly Ability[], flag: "batched" | "amount"): Map<string, number> => {
+    const out = new Map<string, number>();
+    for (const a of abs) {
+      const t = a.trigger;
+      if (!t || t[flag] === undefined) continue;
+      const k = `${[...t.verbs].sort().join("+")}|${flag === "amount" ? json(t.amount) : ""}`;
+      out.set(k, (out.get(k) ?? 0) + 1);
+    }
+    return out;
+  };
+  return (["batched", "amount"] as const).some((flag) => {
+    const g = count(grammar, flag);
+    return [...count(stored, flag)].some(([k, n]) => n > (g.get(k) ?? 0));
+  });
+}
+
+/** THE MANA FIELDS NO OTHER GATE COMPARES (#1349 review). `manaLines`, `staticFixer`, `landFetch`, `isOneShot` and `suspendOnly` are derived from the clause text AND the abilities,
+ *  and `deriveDiff` reads abilities only, so a card could switch to the grammar with a different mana reading: Gauntlet of Power's land trigger lost "of the chosen color" and
+ *  claimed an extra mana from every basic land; Caged Sun's chosen colour went unread. True when any of the five differs. ANY difference, not only a loss: wrong ramp
+ *  changes land advice, and a gain here is as unjudged as a loss. */
+export function manaDiffers(stored: Pick<CardTags, "manaLines" | "staticFixer" | "landFetch" | "isOneShot" | "suspendOnly">, grammar: Pick<CardTags, "manaLines" | "staticFixer" | "landFetch" | "isOneShot" | "suspendOnly">): boolean {
+  return (["manaLines", "staticFixer", "landFetch", "isOneShot", "suspendOnly"] as const).some((k) => json(stored[k]) !== json(grammar[k]));
 }
