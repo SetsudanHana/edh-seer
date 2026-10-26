@@ -7,6 +7,7 @@
  *  against the stored answers by `instruments/src/grammar-only.ts`. Pure and synchronous. */
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import { interveningIfOf } from "../derive/intervening-if.js";
+import { SELF_REFERENCE } from "../derive/self-reference.js";
 import { segment, STATION_BAR } from "../segment.js";
 import { amountOf, parseActions, unreadPhrases, type ActionReading } from "./action.js";
 import { effectText, missedCost, printedPreamble, withoutAbilityWord } from "./preamble.js";
@@ -197,7 +198,13 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
   // "Reveal a card IN YOUR HAND, then put that card onto the battlefield": the reveal is dropped, its
   // zone is the antecedent's (Retraced Image).
   let revealedFrom: string | null = null;
-  for (const r of readings) {
+  for (const reading of readings) {
+    // "It becomes a 0/0 Spirit creature in addition to its other types" (#1352): an animate whose words carry its becomes-phrase. "It" is resolved EXACTLY as the bare
+    // pronoun is (the card itself, or the target the clause named before: Tawnos's Tinkering), and the phrase is put back after the resolved object.
+    const becomesHead = reading.verb === "animate" && reading.text === undefined ? ["it", "that land", "that creature", "that permanent", "that artifact"].find((h) => reading.phrase?.startsWith(`${h} becomes `)) : undefined;
+    const itBecomes = becomesHead !== undefined ? reading.phrase!.slice(becomesHead.length) : "";
+    // "that land becomes ..." keeps its own words when no earlier action names the class (the words are already the object); "it" is re-attached to what it resolves to.
+    const r: ActionReading = becomesHead === "it" ? { ...reading, phrase: "it" } : reading;
     // "Reveal it" is bookkeeping the store drops (canonicalize's DROPPED_VERBS).
     // "reveal the top card of your library. If it's a land card, put it onto the battlefield" (Thrasios).
     if (r.verb === "reveal") { const rv = r.phrase ?? r.text ?? ""; revealedFrom = /\b(?:in|from) your hand\b/i.test(rv) ? "hand" : /\btop (?:\w+ )?cards? of (?:your|their) library\b/i.test(rv) ? "library" : null; continue; }
@@ -294,7 +301,7 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     const pronoun = /^(?:it|them|control of (?:it|them|that creature))$/i.test(object) && !ZONE_VERBS.has(r.verb);
     // "that player" names only a target player, "that creature" only a target creature.
     const noun = /\bthat (creature|player)$/i.exec(object)?.[1];
-    const target = pronoun && out.length > 0 ? [...out].reverse().map((a) => /^((?:up to (?:one|two|three) )?(?:another )?targets? [^,]+)/i.exec(a.object ?? "")?.[1])
+    const target = pronoun && out.length > 0 ? [...out].reverse().map((a) => /^((?:up to (?:one|two|three) )?(?:another )?targets? [^,]+)/i.exec(a.object ?? "")?.[1]?.split(" becomes ")[0])
       .find((t) => t && (!noun || new RegExp(`\\b${noun}`, "i").test(t))) : undefined;
     // "Exile a creature card from the top four cards ... you may cast IT" (Durnan): the exiled card, never the
     // trigger's own card.
@@ -302,7 +309,13 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     const exiledCard = exiledBefore ? `the exiled ${exiledBefore[1] ? `${exiledBefore[1]} ` : ""}card` : undefined;
     const named = target ?? exiledCard ?? (!pronoun ? undefined : out.length > 0 && selfTrigger ? selfTrigger
       : /^(?:enchanted|equipped) [a-z]+$/i.test(triggerSubject ?? "") ? triggerSubject : undefined);
-    const itsAntecedent = named ?? "";
+    // The whole target class, "target artifact, creature, or land you control", less the counter kind a put's object appends: the store's object for the animate.
+    const wholeClass = itBecomes && (becomesHead !== "it" || (named !== undefined && named !== selfTrigger))
+      ? [...out].reverse().map((a) => a.object ?? "").find((o) => /^(?:up to (?:one|two|three) )?(?:another )?targets? /i.test(o))?.split(" becomes ")[0]?.replace(/, (?:[+-]\d+\/[+-]\d+|[\w-]+ counter)$/i, "") : undefined;
+    const itsAntecedent = wholeClass ?? named ?? "";
+    // ...and the card itself when nothing names another: the first action of a clause naming "this <noun>" (the Opal cycle's "if this permanent is an enchantment, it becomes a 3/4
+    // Gargoyle creature"), or an antecedent that already is "this <noun>". The store's spelling is a bare "this".
+    const selfItBecomes = itBecomes !== "" && becomesHead === "it" && (selfOnly(itsAntecedent || object) || (out.length === 0 && !selfTrigger && selfWord !== "this" && !itsAntecedent));
     const tapped = r.verb === "tap" && !object && out.length > 0 ? out[out.length - 1]!.object ?? "" : "";
     // "from your hand and/or graveyard": one move from each, as the store writes it (Worldsoul's Rage).
     // "all cards from all hands and graveyards" (Worldfire) too: one exile from each.
@@ -324,7 +337,7 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     out.push({
       // A proliferate chooses any permanents and players (CR 701.34a), not only yours.
       // "Its controller investigates" (Fateful Absence): the named actor, else you.
-      verb: r.verb, object: itsAntecedent || object || tapped || (NO_OBJECT_YOU.has(r.verb) ? r.actor?.text ?? "you" : r.verb === "proliferate" ? "any" : object),
+      verb: r.verb, object: `${itBecomes && selfItBecomes ? "this" : itsAntecedent || object || tapped || (NO_OBJECT_YOU.has(r.verb) ? r.actor?.text ?? "you" : r.verb === "proliferate" ? "any" : object)}${itBecomes && (becomesHead === "it" || wholeClass !== undefined) ? (selfItBecomes ? itBecomes.replace(/ in addition to (?:its|their) other types$/i, "") : itBecomes) : ""}`,
       fromZone: from, toZone: r.toZone ?? null,
       ...(r.amount !== undefined ? { amount: r.amount } : wordsAmount(r.verb, object) !== undefined ? { amount: wordsAmount(r.verb, object) } : {}),
       optional: r.optional === true,
@@ -333,6 +346,13 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     if (transformed) out.push({ verb: "transform", object, fromZone: null, toZone: null, optional: false } as Action);
   }
   return out;
+}
+
+/** The card itself ("this land", "this creature") and nothing after it. An animate's words open with a bare "this" then, the store's spelling: derive cuts "this land becomes ..." at the
+ *  self-reference and drops the result (`SELF_REFERENCE`, derive.ts). */
+function selfOnly(object: string): boolean {
+  const m = SELF_REFERENCE.exec(object);
+  return m !== null && m[0].length === object.length;
 }
 
 /** A trigger word inside a sentence: the "whenever" of a delayed trigger a chapter creates. */

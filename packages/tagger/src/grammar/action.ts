@@ -12,7 +12,8 @@
  *  - VERB FAMILIES are added one per PR, in the owner's order (2026-10-01): draw/search first. */
 import type { Control, SubjectFilter } from "../schema.js";
 import { counterKindOf, spellMove } from "../derive/subject.js";
-import { KEYWORD_ABILITIES } from "../derive/subtypes.js";
+import { SELF_REFERENCE } from "../derive/self-reference.js";
+import { KEYWORD_ABILITIES, SUBTYPES } from "../derive/subtypes.js";
 import { parse } from "./filter.js";
 import { withoutAbilityWord } from "./preamble.js";
 import { isRestrictionSentence, withoutOncePrefix } from "./restriction.js";
@@ -1110,6 +1111,8 @@ let quotes: string[] = [];
 /** The subject of the last pump or grant read in this sentence: "Target creature gets +2/+2 and gains
  *  flying" -- the "gains flying" phrase is the same creature's. */
 let lastSubject: string | undefined;
+/** Whether the clause being read is a STATIC ability (`parseActions`' type). See `foldable`. */
+let staticAbility = false;
 
 const PT = /^([+-](?:\d+|x))\/([+-](?:\d+|x))$/i;
 const DURATION = / until (?:end of turn|your next turn|the end of your next turn|end of combat)$/i;
@@ -1125,14 +1128,18 @@ function abilitiesOf(text: string): string[] | null {
 }
 
 const KEYWORDS = [...KEYWORD_ABILITIES].map((k) => k.toLowerCase());
-/** A keyword, with its parameter if any ("ward {2}", "protection from red", "toxic 1"), a quoted
- *  ability, or "that ability" (a back-reference derive resolves). */
+/** A keyword, with its parameter if any ("ward {2}", "protection from red", "toxic 1"). */
+function isKeywordAbility(part: string): boolean {
+  const p = part.toLowerCase();
+  return KEYWORDS.some((k) => p === k || (p.startsWith(`${k} `) && p.length - k.length <= (k === "protection" ? 70 : 40) && !/\blife\b|\bcosts?\b/.test(p)));
+}
+/** A keyword (see above), a quoted ability, or "that ability" (a back-reference derive resolves). */
 function isAbility(part: string): boolean {
   const p = part.toLowerCase();
   // "all creature types" (a changeling's reach) is granted like a keyword.
   // "beam me up" (Star Trek, #1349) is granted like a keyword: Scotty, Miracle Worker's "each card in your graveyard has beam me up".
   if (/^"[^"]*"$/.test(part) || /^(?:that|this|those) abilit(?:y|ies)$/.test(p) || p === "all creature types" || p === "beam me up") return true;
-  return KEYWORDS.some((k) => p === k || (p.startsWith(`${k} `) && p.length - k.length <= (k === "protection" ? 70 : 40) && !/\blife\b|\bcosts?\b/.test(p)));
+  return isKeywordAbility(part);
 }
 
 /** "<subject> gets +2/+2 [for each ...] [and gains flying] [until end of turn]", "<subject> has
@@ -1214,8 +1221,75 @@ function pumpOrGrantOne(t: string): ActionReading[] | null {
   return withCondition(have?.[1] ? out.map((a) => ({ ...a, optional: true as const })) : out, condition);
 }
 
+/** An `animate` that CARRIES the becomes-phrase in its object, the way the store writes it ("this as a 3/6 Golem artifact creature"): derive reads `type`, `subtype`, `stats`,
+ *  `colors` and `keyword` off those words (Jade Statue, Simic Keyrune, Gideon; #1352). A bare animate with a separate P/T pump gave a grammar-only card (an upcoming one, no stored
+ *  reading) an animate with no creature type. `kw` are bare keywords folded in as "with ...". No subject text (an Aura's host) keeps the bare animate.
+ *  CEILING: "in addition to its other types" and "loses all other types" are left in the words for derive; this reading does not tell them apart. */
+function animateOf(target: { object: SubjectFilter; text?: string; phrase?: string }, result: string, kw: readonly string[] = [], still = ""): ActionReading {
+  const sub = target.text ?? target.phrase;
+  if (sub === undefined || !foldable(target)) return { verb: "animate", ...target };
+  const addl = / in addition to (?:its|their) other types$/i.test(result);
+  const head = result.replace(/ in addition to (?:its|their) other types$/i, "");
+  // The card itself, or a bare pronoun ("it", "that land"), keeps no "in addition to its other types": derive reads "other" in a subject as NOT the card itself (`isSelfSubject`) and "types" as a
+  // plural class, so the words turn "this becomes a 4/4 Illusion creature" into every Illusion creature (scope all, no self). Only a subject that names its own class ("target land you control")
+  // keeps them. CEILING: that the other types stay is not said for the card itself or a pronoun.
+  const self = isSelfText(sub);
+  // "this Vehicle becomes an artifact creature": it is still a Vehicle (a Vehicle becomes an artifact creature and keeps its subtype), which the store's "this Vehicle" subject read as `subtype: vehicle`.
+  const kept = self && /^this (?:vehicle|equipment)$/i.test(sub) && !/\bstill an?\b/i.test(still) ? ` that's still a ${sub.slice(5).toLowerCase()}` : "";
+  const words = `${self ? "this" : sub} becomes a ${head}${kw.length ? ` with ${kw.join(kw.length > 2 ? ", " : " and ")}` : ""}${addl && !self && target.text !== undefined ? " in addition to its other types" : ""}${still}${kept}`;
+  return { verb: "animate", object: target.object, ...(target.text !== undefined ? { text: words } : { phrase: words }) };
+}
+
+/** The store's own spelling of the card itself in an animate is a bare "this" ("this as a 3/6 Golem artifact creature"). "this artifact becomes ..." would be read by derive as the
+ *  self-reference alone (`SELF_REFERENCE` cuts the object there) and drop every word after it. */
+function isSelfText(sub: string): boolean {
+  return sub === "~" || (SELF_REFERENCE.test(sub) && SELF_REFERENCE.exec(sub)![0].length === sub.length);
+}
+
+/** May the becomes-phrase go into the animate's words? Not for a STATIC ability. Derive drops a static's subject unless it names a class (`namesItsTargets`), and `staticEdges`
+ *  (matcher) takes the subject it keeps as WHO IT APPLIES TO: "All lands are 2/2 creatures that are still lands" with the result in it would be the union creature-or-land, every
+ *  creature in the deck, and Blood Moon's "Nonbasic lands are Mountains" would narrow to the lands that are already Mountains. A self static (Warden of the Wall) loses its subject
+ *  altogether, and the grant folded into it would go with it. Statics keep the target alone and the separate pump and grants, as before. Every other ability forms no such edge.
+ *  CEILING: an upcoming card's static animate ("is a 2/3 Gargoyle artifact creature") therefore still derives no creature type; the pump and the grants carry what they carry. */
+function foldable(target: { text?: string; phrase?: string }): boolean {
+  return (target.text ?? target.phrase) !== undefined && !staticAbility;
+}
+
+const COLOR_WORD = "white|blue|black|red|green|colorless|legendary|basic|snow";
+const NOT_A_RESULT = new RegExp(`^(?:(?:the )?colors? of your choice|(?:the )?creature types? of your choice|(?:no longer )?(?:${COLOR_WORD})(?:,? (?:and )?(?:${COLOR_WORD}))*)$`, "i");
+
+const CARD_TYPES = new Set(["creature", "artifact", "land", "enchantment", "planeswalker", "battle"]);
+/** Does a becomes-phrase name a card type or a subtype, singular or plural ("artifact creature", "Golem", "Swamp", "Warriors")? A plural this does not undo ("Dwarves" is caught, an odd one is not) stays bare: the old reading. */
+function namesType(result: string): boolean {
+  return result.toLowerCase().split(/[^a-z'-]+/).some((w) => [w, ...(w.endsWith("s") ? [w.slice(0, -1)] : []), ...(w.endsWith("es") ? [w.slice(0, -2)] : []), ...(w.endsWith("ves") ? [`${w.slice(0, -3)}f`] : []), ...(w.endsWith("ies") ? [`${w.slice(0, -3)}y`] : [])]
+    .some((c) => CARD_TYPES.has(c) || SUBTYPES.has(c)));
+}
+
+/** The animate and its grants for a becomes/is phrase: the result words go INTO the animate (see `animateOf`), the P/T with them, bare keywords as "with ...". A quoted ability or
+ *  "that ability" stays its own grant. With no subject text the old split stands: a bare animate, a pump of the P/T, a grant per ability. */
+function animateReadings(target: { object: SubjectFilter; text?: string; phrase?: string }, object: SubjectFilter, result: string, pt: string | undefined, withs: readonly string[], still = ""): ActionReading[] {
+  const grants = (list: readonly string[]): ActionReading[] => list.map((a) => ({ verb: "grant-ability", object, text: a }));
+  // A COLOUR, A SUPERTYPE OR A CHOICE IS NOT A RESULT (#1352, claude-mem #33838): "becomes blue", "are colorless", "is basic", "are no longer snow", "becomes the color of your choice" change a
+  // characteristic and make nothing else. The store has no animate shape for them (its objects for these are modify-pt, grant-ability and other), so the words stay out of the animate and it
+  // stays as the grammar always read it: bare. Never a wildcard colour. With a P/T ("becomes blue with base power and toughness 5/4", Surge Engine) it is a result again.
+  // ...and nor is a phrase that names no type, subtype or P/T ("colorless sources of damage", Ghostly Flame): nothing is animated or retyped, so nothing is read into the animate.
+  const plain = result.replace(/ in addition to (?:its|their) other types$/i, "");
+  const bare = !foldable(target) || NOT_A_RESULT.test(plain) || (pt === undefined && !namesType(plain));
+  if (bare) return [{ verb: "animate", ...target }, ...(pt ? [{ verb: "modify-pt", ...target, amount: pt }] : []), ...grants(withs)];
+  // "protection from red" stays a grant: its colour word would read as the animated permanent's colour.
+  // "enchant creature" (Rageform: "it becomes an Aura with enchant creature") is no creature either.
+  const folds = (a: string) => isKeywordAbility(a) && !/^(?:protection|enchant)\b/i.test(a);
+  return [animateOf(target, result, withs.filter(folds), still), ...grants(withs.filter((a) => !folds(a)))];
+}
+
+/** What an animated permanent KEEPS, as the store spells it: "that's still a planeswalker" (Gideon), "it's still a land" (Raging Ravine). */
+function stillOf(pred: string): string {
+  const m = /\bstill (?:an? )?(land|planeswalker|artifact|enchantment|lands)$/i.exec(pred);
+  return m ? ` that's still a ${m[1]!.toLowerCase().replace(/s$/, "")}` : "";
+}
+
 /** One predicate of a pump or grant: a P/T change, a set base P/T, abilities, a type or a goad. */
-function predicateOf(pred: string, object: SubjectFilter, target: { object: SubjectFilter; text?: string }): ActionReading[] | null {
+function predicateOf(pred: string, object: SubjectFilter, target: { object: SubjectFilter; text?: string; phrase?: string }): ActionReading[] | null {
   // "assigns combat damage equal to its toughness rather than its power" (CR 510.1a): the store's
   // modify-pt, the rule its amount.
   // The stored object and amount stand: derive reads this rule as a damage multiplier off them, and a
@@ -1263,8 +1337,11 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
   }
   // "becomes an artifact creature with power and toughness each equal to its mana value".
   const eachEq = /^becomes? an? ([\w -]+?) with power and toughness each equal to (.+)$/i.exec(pred);
-  if (eachEq) return [{ verb: "animate", ...target }, { verb: "modify-pt", ...target, amount: eachEq[2]! }];
-  const becomes = /^becomes? (?:an? )?((?:(?:\d+|x)\/(?:\d+|x) )?[\w /-]+?)(?: with (.+))?$/i.exec(pred.replace(/ that's still an? (?:land|planeswalker|artifact|enchantment)$|,? it's still a land$/i, ""));
+  if (eachEq) return [animateOf(target, eachEq[1]!), { verb: "modify-pt", ...target, amount: eachEq[2]! }];
+  // "... with flying in addition to its other types": the tail belongs to the retyping, not to the last keyword.
+  const ADDITION = / in addition to (?:its|their) other types$/i;
+  const kept = pred.replace(/ that's still an? (?:land|planeswalker|artifact|enchantment)$|,? it's still a land$/i, "");
+  const becomes = /^becomes? (?:an? )?((?:(?:\d+|x)\/(?:\d+|x) )?[\w /-]+?)(?: with (.+))?$/i.exec(kept.replace(ADDITION, ""));
   // "becomes prepared" is a prepare, which derive reads off the clause (Codie): not read here.
   // "becomes blocked" / "becomes unblocked" (Trap Runner, Curtain of Light, Fog Patch; GH #1353) is a combat status,
   // not a retyping: VERB_VOCAB has no block verb and none is invented, so the clause stays unread.
@@ -1276,22 +1353,23 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
     // store's modify-pt, its X defined by the sentence (Sage of the Maze's scaling).
     // "becomes a 3/1 Construct artifact creature": the printed P/T is the store's modify-pt too.
     const xx = /^((?:\d+|x)\/(?:\d+|x)) /i.exec(becomes[1]!);
-    return withs && [{ verb: "animate", ...target }, ...(base ? [{ verb: "modify-pt", ...target, amount: base[1]! }] : xx ? [{ verb: "modify-pt", ...target, amount: xx[1]!.toUpperCase() }] : []), ...withs.map((a) => ({ verb: "grant-ability", object, text: a }))];
+    const result = `${base ? `${base[1]} ${becomes[1]}` : becomes[1]!}${ADDITION.test(kept) ? " in addition to its other types" : ""}`;
+    return withs && animateReadings(target, object, result, base ? base[1]! : xx ? xx[1]!.toUpperCase() : undefined, withs, stillOf(pred));
   }
   // "is an Angel in addition to its other types", "is legendary": a type granted (derive's
   // `type-grant` reads "in addition to its other types").
   // "is a 2/2 blue Elemental creature with flying", "is a Swamp": an Aura's host animated or retyped,
   // the store's animate (and a grant per "with" ability). Not "in addition to": that is a type grant.
   // "is a Golem creature with base power and toughness 5/4 in addition to its other types".
-  const golem = /^(?:is|are) an? [\w -]+? with base power and toughness (\d+\/\d+) in addition to (?:its|their) other types$/i.exec(pred);
-  if (golem) return [{ verb: "animate", ...target }, { verb: "modify-pt", ...target, amount: golem[1]! }];
+  const golem = /^(?:is|are) an? ([\w -]+?) with base power and toughness (\d+\/\d+) in addition to (?:its|their) other types$/i.exec(pred);
+  if (golem) return animateReadings(target, object, `${golem[2]} ${golem[1]} in addition to its other types`, golem[2]!, []);
   // "... with base power and toughness 4/4, flying, and that ability": the set P/T, then grants.
   const basePt = / with base power and toughness (\d+\/\d+)(?:,? (?:and )?(.+))?$/i.exec(pred);
   const animated = /^(?:is an?|are(?: an?)?) ((?:(?:\d+|x)\/(?:\d+|x) )?[\w /-]+?)(?: with (.+))?$/i.exec((basePt ? `${pred.slice(0, basePt.index)}${basePt[2] ? ` with ${basePt[2]}` : ""}` : pred).replace(/ that are still lands$| that's still an? (?:land|artifact|enchantment)$/i, ""));
   if (animated && !/in addition to|\bthe\b/i.test(pred)) {
     const pt = basePt;
     const withs = animated[2] ? abilitiesOf(animated[2]) : [];
-    if (withs) return [{ verb: "animate", ...target }, ...(pt ? [{ verb: "modify-pt", ...target, amount: pt[1]! }] : []), ...withs.map((a) => ({ verb: "grant-ability", object, text: a }))];
+    if (withs) return animateReadings(target, object, pt ? `${pt[1]} ${animated[1]}` : animated[1]!, pt?.[1], withs, stillOf(pred));
   }
   const is = /^(?:is|are) ((?:an? )?[\w -]+ in addition to (?:its|their) other (?:creature |colors and )?types|every creature type|legendary|snow|colorless|white|blue|black|red|green)$/i.exec(pred);
   // No text: the stored object stays. Derive finds a grant's recipient by "has"/"gains", never by
@@ -1461,7 +1539,9 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   // "-X/-0, where X is the number of cards in your graveyard": the store keeps the X's definition.
   // An animation whose X the sentence defines keeps the stored object, which carries the definition
   // derive's scaling reads (Sage of the Maze: "..., where X is twice the number of Gates you control").
-  if (pg) return pg.map((a) => (counted && a.verb === "animate" ? (({ text: _t, ...rest }) => ({ ...rest, object: REF }))(a) : a)).map((a) => ({ ...a, ...(counted && a.amount && /X/.test(a.amount) ? { amount: `${a.amount}, where X is ${counted}` } : {}), ...(condition || a.condition ? { condition: [condition, a.condition].filter(Boolean).join(", ") } : {}) }));
+  // A FOLDED animate (its words hold the becomes-phrase, #1352) carries the definition itself: the stored object it stands in for was the same sentence.
+  const folded = (a: ActionReading) => /\bbecomes a /.test(a.text ?? a.phrase ?? "");
+  if (pg) return pg.map((a) => (counted && a.verb === "animate" ? (folded(a) ? { ...a, ...(a.text !== undefined ? { text: `${a.text}, where X is ${counted}` } : { phrase: `${a.phrase}, where X is ${counted}` }) } : (({ text: _t, ...rest }) => ({ ...rest, object: REF }))(a)) : a)).map((a) => ({ ...a, ...(counted && a.amount && /X/.test(a.amount) ? { amount: `${a.amount}, where X is ${counted}` } : {}), ...(condition || a.condition ? { condition: [condition, a.condition].filter(Boolean).join(", ") } : {}) }));
   // A DAMAGE SOURCE ("~ deals", "this creature deals", "it deals", "enchanted creature deals"): the
   // dealer, which derive reads off the card, not the actor.
   // "you may have it deal 1 damage to any target": the same, optional.
@@ -1644,9 +1724,10 @@ export function unreadPhrases(effect: string, type: string | null, cost?: string
   try { parseActions(effect, type, cost); return unread; } finally { unread = null; }
 }
 
-export function parseActions(effect: string, _type: string | null, cost?: string): ActionReading[] {
+export function parseActions(effect: string, type: string | null, cost?: string): ActionReading[] {
   const out: ActionReading[] = [];
   counterOnSelf = false;
+  staticAbility = type === "static";
   // A mode's or a result's label is not text the action reads: a Spree mode's added cost ("+ {2} —"),
   // a d20 table row ("10—19 |"), a loyalty cost the segmenter left in ("[−9]").
   // An ability word ("Crescent Fang —", "Date Night —") names the ability and does nothing.
