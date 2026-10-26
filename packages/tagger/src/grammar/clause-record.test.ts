@@ -813,3 +813,13 @@ test("'Target opponent blights 2' names the opponent, as the store does", () => 
   expect(g.complete).toBe(true);
   expect(g.records.find((r) => r.id === 2)!.actions!.map((a) => a.object)).toContain("target opponent");
 });
+
+test("poison and loyalty counters are no counters demand; the card's own counters still are", () => {
+  const cares = (c: { name: string; typeLine: string; keywords: string[]; oracleText: string }, clause: number) => grammarDerive(c).tags.abilities.filter((a) => a.clause === clause).flatMap((a) => a.conditionCares ?? []);
+  const dancer = { name: "Sinew Dancer", typeLine: "Creature — Phyrexian Soldier", keywords: ["Corrupted"], oracleText: "{3}{W}, {T}: Tap target creature.\nCorrupted — {W}, {T}: Tap target creature. Activate only if an opponent has three or more poison counters." };
+  expect(cares(dancer, 2)).toEqual([]);
+  const jace = { name: "Jace, Reality Sculptor", typeLine: "Legendary Planeswalker — Jace", keywords: ["Empower Jace"], oracleText: "+1: Empower Jace X, where X is the number of Islands you control.\n\u22123: Until your next turn, whenever a creature attacks you or a planeswalker you control, it gets -5/-0 until end of turn.\n0: Exile all but the bottom card of each opponent's library. Activate only if there are twenty-five or more loyalty counters among Jaces you control." };
+  expect(cares(jace, 3)).toEqual([]);
+  const luxa = { name: "Luxa River Shrine", typeLine: "Artifact", keywords: [], oracleText: "{1}, {T}: You gain 1 life. Put a brick counter on this artifact.\n{T}: You gain 2 life. Activate only if there are three or more brick counters on this artifact." };
+  expect(cares(luxa, 2)).toEqual(["counter-added:any"]);
+});

@@ -158,7 +158,13 @@ export function conditionCares(condition: string): string[] {
   // it". The kind is not read: a subject key of `any` is what the counter theme already uses, and
   // guessing "+1/+1" would claim more than the text says.
   // A NEGATED counter ("if there are no charge counters on it", "if it has no time counters") demands the ABSENCE of counters: no counters deck supplies that.
-  if (/\bcounters?\b/i.test(condition.replace(/\b(?:no|zero)\s+(?:[\w+/-]+\s+){0,2}counters?\b/gi, " "))) out.push("counter-added:any");
+  // NOT THE CARD'S OWN KIND OF COUNTER: poison and loyalty counters, and counters on a PLAYER ("an opponent has three or more poison counters", "you have
+  // two or more energy counters"), are no counters a +1/+1 or charge-counter deck supplies; no poison-supplier key exists to name instead, so nothing is emitted.
+  const countable = condition
+    .replace(/\b(?:no|zero)\s+(?:[\w+/-]+\s+){0,3}counters?\b/gi, " ")
+    .replace(/\b(?:poison|loyalty)\s+counters?\b/gi, " ")
+    .replace(/\b(?:you|an opponent|each opponent|target opponent|that player|a player|your opponents?|they)\s+(?:has|have)\s+(?:[\w+/-]+\s+){0,4}counters?\b/gi, " ");
+  if (/\bcounters?\b/i.test(countable)) out.push("counter-added:any");
   // "if a creature died this turn" (Warlock Class) — the aristocrats demand.
   if (/\b(?:a|another|one or more) creatures? (?:died|has died|have died)\b/i.test(condition)) out.push("dies:creature");
   // "if you attacked this turn" (Alesha) — the aggro demand. `creature`, not `any`: only creatures attack
