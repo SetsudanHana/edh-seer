@@ -99,7 +99,7 @@ const SELF_SUBJECT = /^(?:~|this [a-z]+)$/i;
 const NO_OBJECT_YOU = new Set(["monarch", "initiative", "ring-tempts", "learn", "venture-into-the-dungeon", "manifest-dread", "investigate", "populate", "win-game", "lose-game"]);
 /** Verbs whose stored object can be the PLAYER it happens to ("target player mills two cards" ->
  *  "target player"), the convention derive's `PLAYER_OBJECT_VERBS` reads. */
-const PLAYER_VERBS = new Set(["draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life"]);
+const PLAYER_VERBS = new Set(["draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life", "blight"]); // blight: "target opponent blights 2" names the opponent (Champion of the Weird); your own "blight 2" keeps its amount as the object
 const ZONE_VERBS = new Set(["destroy", "exile", "sacrifice", "return", "put", "shuffle"]);
 // "put that card ON TOP" (Cruel Tutor): where it goes is no part of which card it is.
 const BACK_REFERENCE = /^(?:it|them|him|her|that card|those cards|that creature|that permanent|the card|the cards|one|the other|the rest|one of them|those)(?: on (?:top|the bottom)(?: of (?:your|their|its owner's) library)?)?$/i;
@@ -211,7 +211,7 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     const words = words0.replace(/^(this (?:card|creature|artifact|enchantment|land)) from your graveyard$/i, "$1");
     // "that creature's controller mills two cards" (Riddlekeeper): a player named through an object is
     // named outright too; a bare "that player" leaves the printed words.
-    const object = PLAYER_VERBS.has(r.verb) ? (r.actor?.text !== undefined && (r.actor.scope !== "that" || /'s (?:controller|owner)$/i.test(r.actor.text)) ? r.actor.text : words || "you")
+    const object = PLAYER_VERBS.has(r.verb) ? (r.actor?.text !== undefined && !(r.verb === "blight" && /^you$/i.test(r.actor.text)) && (r.actor.scope !== "that" || /'s (?:controller|owner)$/i.test(r.actor.text)) ? r.actor.text : words || "you")
       : selfTrigger && out.length === 0 && /^(?:it|itself)$/i.test(words) ? selfTrigger
       // "this creature becomes prepared", "it explores" (Jenny): a subject action of the card itself.
       : !words && r.object?.self === true ? selfTrigger ?? selfWord

@@ -757,12 +757,13 @@ test("'Activate only if <cast condition>' demands the cast; a count stays thresh
   const caresOf = (card: Parameters<typeof grammarDerive>[0], clause: number) => grammarDerive(card).tags.abilities.filter((a) => a.clause === clause).flatMap((a) => a.conditionCares ?? []);
   const strange = { name: "Doctor Strange, Master of Magic", typeLine: "Legendary Creature — Human Sorcerer Hero", keywords: ["Flying", "Prowess", "Vigilance"], oracleText: "Flying, vigilance, prowess\n{T}: Draw a card. Activate only if you've cast a noncreature spell this turn." };
   expect(caresOf(strange, 2)).toEqual(["cast:-creature"]);
-  // A count is threshold.ts's fact: "three or more differently named lands" demands nothing; "three or more brick counters" is a count, not a counters demand.
+  // A pure count ("three or more differently named lands") names no demand and keeps its threshold.
   const seven = { name: "Seven of Nine, Unassimilated", typeLine: "Legendary Artifact Creature — Human Officer", keywords: [], oracleText: "At the beginning of your first main phase, draw a card. Then discard a card unless you control five or more differently named lands.\n{6}{U}: Seven of Nine's base power and toughness become 7/9. Activate only if you control seven or more differently named lands." };
   expect(caresOf(seven, 2)).toEqual([]);
   expect(grammarDerive(seven).tags.abilities.find((a) => a.clause === 2)?.threshold).toEqual({ atLeast: 7 });
   const luxa = { name: "Luxa River Shrine", typeLine: "Artifact", keywords: [], oracleText: "{1}, {T}: You gain 1 life. Put a brick counter on this artifact.\n{T}: You gain 2 life. Activate only if there are three or more brick counters on this artifact." };
-  expect(caresOf(luxa, 2)).toEqual([]);
+  // ...but the activation path answers as the trigger path does: a positive counters condition is a counters demand beside its threshold.
+  expect(caresOf(luxa, 2)).toEqual(["counter-added:any"]);
   expect(grammarDerive(luxa).tags.abilities.find((a) => a.clause === 2)?.threshold).toEqual({ atLeast: 3 });
   // The trigger's intervening if is read as before.
   const angel = { name: "Resplendent Angel", typeLine: "Creature — Angel", keywords: ["Flying"], oracleText: "Flying\nAt the beginning of each end step, if you gained 5 or more life this turn, create a 4/4 white Angel creature token with flying and vigilance.\n{3}{W}{W}{W}: Until end of turn, this creature gets +2/+2 and gains lifelink." };
@@ -776,4 +777,39 @@ test("'as though it didn't have defender' grants no defender", () => {
   const grants = bulwark.tags.abilities.flatMap((a) => a.grants ?? []);
   expect(grants).toContain("haste");
   expect(grants).not.toContain("defender");
+});
+
+const REVIEW = {
+  ayli: { name: "Ayli, Eternal Pilgrim", typeLine: "Legendary Creature — Kor Cleric", keywords: ["Deathtouch"], oracleText: "Deathtouch (Any amount of damage this deals to a creature is enough to destroy it.)\n{1}, Sacrifice another creature: You gain life equal to the sacrificed creature's toughness.\n{1}{W}{B}, Sacrifice another creature: Exile target nonland permanent. Activate only if you have at least 10 life more than your starting life total." },
+  speaker: { name: "Speaker of the Heavens", typeLine: "Creature — Human Cleric", keywords: ["Lifelink", "Vigilance"], oracleText: "Vigilance, lifelink (Attacking doesn't cause this creature to tap. Damage dealt by this creature also causes you to gain that much life.)\n{T}: Create a 4/4 white Angel creature token with flying. Activate only if you have at least 7 life more than your starting life total and only as a sorcery." },
+  minas: { name: "Minas Tirith", typeLine: "Legendary Land", keywords: [], oracleText: "Minas Tirith enters tapped unless you control a legendary creature.\n{T}: Add {W}.\n{1}{W}, {T}: Draw a card. Activate only if you attacked with two or more creatures this turn." },
+  amulet: { name: "Jeweled Amulet", typeLine: "Artifact", keywords: [], oracleText: "{1}, {T}: Put a charge counter on this artifact. Note the type of mana spent to pay this activation cost. Activate only if there are no charge counters on this artifact.\n{T}, Remove a charge counter from this artifact: Add one mana of this artifact's last noted type." },
+  artifacts: { name: "Argent Sphinx", typeLine: "Creature — Sphinx", keywords: ["Flying", "Metalcraft"], oracleText: "Flying\nMetalcraft — {U}: Exile this creature. Return it to the battlefield under your control at the beginning of the next end step. Activate only if you control three or more artifacts." },
+};
+
+test("a threshold beside a real demand keeps the demand; a pure count and a negated counter demand nothing", () => {
+  const cares = (c: { name: string; typeLine: string; keywords: string[]; oracleText: string }, clause: number) => grammarDerive(c).tags.abilities.filter((a) => a.clause === clause).flatMap((a) => a.conditionCares ?? []).filter((x, i, all) => all.indexOf(x) === i);
+  expect(cares(REVIEW.ayli, 3)).toEqual(["gain-life:any"]);
+  expect(cares(REVIEW.speaker, 2)).toEqual(["gain-life:any"]);
+  expect(cares(REVIEW.minas, 3)).toEqual(["attacks:creature"]);
+  expect(grammarDerive(REVIEW.minas).tags.abilities.find((a) => a.clause === 3)?.threshold).toEqual({ atLeast: 2 });
+  expect(cares(REVIEW.artifacts, 2)).toEqual([]);
+  expect(grammarDerive(REVIEW.artifacts).tags.abilities.find((a) => a.clause === 2)?.threshold).toEqual({ atLeast: 3 });
+  expect(cares(REVIEW.amulet, 1)).toEqual([]);
+});
+
+test("an 'only if' that places the source in a zone is no rider: the card stays refused", () => {
+  const troll = grammarClauseRecords({ name: "Loathsome Troll", typeLine: "Creature — Troll", oracleText: "{3}{G}: Roll a d20. Activate only if this card is in your graveyard.\n1—9 | Put this card on top of your library.\n10—19 | Return this card to your hand.\n20 | Return this card to the battlefield tapped.", keywords: [] });
+  expect(troll.complete).toBe(false);
+  expect(troll.blocker?.phrase).toBe("activate only if this card is in your graveyard");
+  const boon = grammarClauseRecords({ name: "Skyblade's Boon", typeLine: "Enchantment — Aura", oracleText: "Enchant creature\nEnchanted creature gets +1/+1 and has flying.\n{2}{W}: Return Skyblade's Boon to its owner's hand. Activate only if Skyblade's Boon is on the battlefield or in your graveyard.", keywords: [] });
+  expect(boon.complete).toBe(false);
+  const carrionette = grammarClauseRecords({ name: "Carrionette", typeLine: "Creature — Spirit", oracleText: "{2}{B}{B}: Exile this card and target creature unless that creature's controller pays {2}. Activate only if this card is in your graveyard.", keywords: [] });
+  expect(carrionette.complete).toBe(false);
+});
+
+test("'Target opponent blights 2' names the opponent, as the store does", () => {
+  const g = grammarClauseRecords({ name: "Champion of the Weird", typeLine: "Creature — Goblin Berserker", keywords: ["Blight", "Behold"], oracleText: "As an additional cost to cast this spell, behold a Goblin and exile it. (Exile a Goblin you control or a Goblin card from your hand.)\nPay 1 life, Blight 2: Target opponent blights 2. Activate only as a sorcery.\nWhen this creature leaves the battlefield, return the exiled card to its owner's hand." });
+  expect(g.complete).toBe(true);
+  expect(g.records.find((r) => r.id === 2)!.actions!.map((a) => a.object)).toContain("target opponent");
 });

@@ -3393,9 +3393,10 @@ export function deriveAbilities(
     // The DEMAND an intervening-if condition makes on the deck, recorded in the same one place. Only
     // an ability with a TRIGGER can carry one (CR 603.4 checks the condition when the trigger would
     // fire), so a static or on-cast clause is skipped even if the sentence happens to say "if".
-    // An ACTIVATION RESTRICTION's condition is a demand too ("Activate only if you've cast a noncreature spell this turn", Doctor Strange); a COUNT in it
-    // is `threshold`'s fact and is not also a demand.
-    const activationIf = kind === "activated" && !threshold ? activationConditionOf(text ?? "") : null;
+    // An ACTIVATION RESTRICTION's condition is a demand too ("Activate only if you've cast a noncreature spell this turn", Doctor Strange), read by the
+    // same `conditionCares` as a trigger's intervening if, so one wording gives one answer. A pure count ("control three or more artifacts") names no
+    // tag there and so demands nothing; "at least 10 life more than your starting life total" keeps its lifegain demand beside its threshold.
+    const activationIf = kind === "activated" ? activationConditionOf(text ?? "") : null;
     const conditionCares = interveningIfOf(text) ? conditionCares_(interveningIfOf(text)!) : activationIf ? conditionCares_(activationIf) : [];
     // HOW THE OBJECT ARRIVED. The condition "if none of them were cast or no mana was spent"
     // (Satoru) and the trigger phrase "enters tapped" (Amulet of Vigor, Tiller Engine) are both

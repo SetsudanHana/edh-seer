@@ -41,6 +41,9 @@ test("a sentence that does something besides restrict is no rider", () => {
     "Put a +1/+1 counter on target creature.",
     "Activate only as a sorcery and sacrifice this creature.",
     "Only your opponents may activate this ability and draw a card.",
+    "Activate only if this card is in your graveyard.", // Loathsome Troll, Carrionette
+    "Activate only if ~ is on the battlefield or in your graveyard.", // Skyblade's Boon
+    "Activate only as a sorcery and only if this card is exiled.",
   ]) expect(isRestrictionSentence(s), s).toBe(false);
 });
 

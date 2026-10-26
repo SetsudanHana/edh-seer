@@ -25,6 +25,12 @@ function limitsOf(tail: string): string[] {
   return tail.split(/(?:, and |, | and )(?=only\b|no more than\b)/i);
 }
 
+/** AN "ONLY IF" THAT PLACES THE SOURCE IN A ZONE is not a rider: "Activate only if this card is in your graveyard" (Loathsome Troll,
+ *  Carrionette, Glory), "... Skyblade's Boon is on the battlefield or in your graveyard", "... this card is suspended" says WHERE the ability
+ *  works (CR 113.6), and the effect that follows then moves a card out of that zone, not off the battlefield. The sentence stays unread, so the
+ *  card keeps its stored reading. The card's name arrives as "~" or as itself (a capitalised subject). */
+const SOURCE_ZONE = /^only if (?:this [a-z]+|~|it|[A-Z][\w',-]*(?: [\w',-]+){0,4}) (?:is|are) (?:in |on |exiled|suspended)/;
+
 /** What stands in front of the limits: who is bound, and by what. */
 const HEADS = [
   /^activate(?: this ability)? /i,
@@ -45,7 +51,7 @@ export function isRestrictionSentence(sentence: string): boolean {
     const tail = s.slice(m[0].length);
     // A "may activate this ability" head is followed by its own "and only ..." limits, the others by the limits directly.
     const limits = limitsOf(i === HEADS.length - 1 ? tail.replace(/^and /i, "") : tail);
-    return limits.length > 0 && limits.every((l) => LIMIT.test(l.trim()));
+    return limits.length > 0 && limits.every((l) => LIMIT.test(l.trim()) && !SOURCE_ZONE.test(l.trim()));
   }
   return false;
 }

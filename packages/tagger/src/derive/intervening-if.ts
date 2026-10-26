@@ -157,7 +157,8 @@ export function conditionCares(condition: string): string[] {
   // "if it had one or more counters on it" (Yuna, Iron Apprentice), "if The Ozolith has counters on
   // it". The kind is not read: a subject key of `any` is what the counter theme already uses, and
   // guessing "+1/+1" would claim more than the text says.
-  if (/\bcounters?\b/i.test(condition)) out.push("counter-added:any");
+  // A NEGATED counter ("if there are no charge counters on it", "if it has no time counters") demands the ABSENCE of counters: no counters deck supplies that.
+  if (/\bcounters?\b/i.test(condition.replace(/\b(?:no|zero)\s+(?:[\w+/-]+\s+){0,2}counters?\b/gi, " "))) out.push("counter-added:any");
   // "if a creature died this turn" (Warlock Class) — the aristocrats demand.
   if (/\b(?:a|another|one or more) creatures? (?:died|has died|have died)\b/i.test(condition)) out.push("dies:creature");
   // "if you attacked this turn" (Alesha) — the aggro demand. `creature`, not `any`: only creatures attack
@@ -198,7 +199,8 @@ export function activationConditionOf(text: string): string | null {
   for (const sentence of text.split(/(?<=\.)\s+/)) {
     if (!/^activate\b/i.test(sentence.trim())) continue;
     const m = /\bonly if ([^.]+)/i.exec(sentence);
-    if (m) return m[1]!.trim();
+    // "... and only as a sorcery" is another limit of the same sentence, not part of the condition.
+    if (m) return m[1]!.replace(/\s+and only\b.*$/i, "").trim();
   }
   return null;
 }
