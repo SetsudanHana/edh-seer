@@ -1453,7 +1453,9 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   const heldIf = removeAll ? /^if (?:there are|it has|~ has|this [a-z]+ has) \w+ or more /i.exec(condition ?? "") : null;
   const heldRest = heldIf ? (condition ?? "").slice(heldIf[0].length) : "";
   const heldOn = heldRest.lastIndexOf(" on ");
-  const countedKind = heldIf && heldOn > 0 && /^(?:~|it|her|him|this [a-z]+)$/i.test(heldRest.slice(heldOn + 4)) ? countersOf(heldRest.slice(0, heldOn)) : null;
+  // "it" / "her" / "him" is the card itself only when the counter the sentence just put went on the card itself (`counterOnSelf`); "~" and "this <type>" name it outright.
+  const heldOwner = heldRest.slice(heldOn + 4);
+  const countedKind = heldIf && heldOn > 0 && (/^(?:~|this [a-z]+)$/i.test(heldOwner) || (/^(?:it|her|him)$/i.test(heldOwner) && counterOnSelf)) ? countersOf(heldRest.slice(0, heldOn)) : null;
   if (countedKind) return [{ verb: "remove-counter", object: SELF, counter: countedKind.counter, amount: "all", ...(condition ? { condition } : {}) }];
   const pg = pumpOrGrant(t);
   // "-X/-0, where X is the number of cards in your graveyard": the store keeps the X's definition.
@@ -1474,7 +1476,7 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   // ...and the same with no kind named, "of each of those kinds of counters" (Winding Constrictor, Pir; Brad Boimler's "that many plus one of each of those kinds of counters are put on
   // that permanent instead") and the player's own "put twice that many of each of those kinds of counters on that creature instead" (Vorinclex, Innkeeper's Talent; Dr. Joseph M'Benga).
   // The store writes the phrase itself as the object and no kind or amount, and derive reads the replacement off the printed clause (`replacementOf` / `changeOf`), so this is that.
-  // CEILING: no counter kind is carried ("each of those kinds" is every kind the event had); derive's counter template needs a kind word, so these stay unmarked as replacements, as the stored rows are.
+  // CEILING: no counter kind is carried ("each of those kinds" is every kind the event had); the add-counter carries the words only, and derive's counter replacement template (replacement.ts, kind optional since the follow-up) reads the printed clause for the replacement and its change.
   const KINDS = "of each of those kinds of counters", ON = "(?:it|that creature|that permanent|that permanent or player|them|each of them)", MORE = "that many plus (?:one|two|\\d+)|twice that many|three times that many";
   const eachKind = new RegExp(`^(?:put (twice that many|three times that many) (${KINDS}) on ${ON}|(${MORE}) (${KINDS}) (?:are|is) put on ${ON}|you get (${MORE}) (${KINDS}))$`, "i").exec(t);
   if (eachKind) {
@@ -1625,6 +1627,9 @@ const OPENER = /^(?:then )?(if you do|if you don't|if [^,]+|otherwise|then|as an
  *  the cost's first (as the store writes them), then the effect's. */
 /** Collects the phrases `parseActions` could not read, while `unreadPhrases` runs it. */
 let unread: string[] | null = null;
+/** Whether the last counter placed in this `parseActions` call went on the card itself (read by "remove those counters"). */
+// CEILING: module state like `unread`, reset per call; a nested parseActions (a granted ability's quoted text) can overwrite it, which only ever makes "remove those counters" refuse.
+let counterOnSelf = false;
 
 /** The sentences of a modal ability that choose its modes: "choose one —", "choose one or both —",
  *  "choose any number —", "choose one that hasn't been chosen —" (a Case-like mode memory), "choose up to five {P}
@@ -1641,6 +1646,7 @@ export function unreadPhrases(effect: string, type: string | null, cost?: string
 
 export function parseActions(effect: string, _type: string | null, cost?: string): ActionReading[] {
   const out: ActionReading[] = [];
+  counterOnSelf = false;
   // A mode's or a result's label is not text the action reads: a Spree mode's added cost ("+ {2} —"),
   // a d20 table row ("10—19 |"), a loyalty cost the segmenter left in ("[−9]").
   // An ability word ("Crescent Fang —", "Date Night —") names the ability and does nothing.
@@ -1731,7 +1737,14 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     // "Until end of turn, target creature becomes ...": a duration at the front, not a condition.
     // "Simultaneously, all phased-out creatures phase in and ..." (CR 702.26a): a timing word, no action.
     s = s.replace(/^simultaneously, /i, "");
+    const durationLead = /^(?:until end of turn|until your next turn|until your next upkeep|until the end of your next turn), /i.test(s);
     s = s.replace(/^(?:until end of turn|until your next turn|until your next upkeep|until the end of your next turn|this turn|for as long as [^,]+), /i, "");
+    // A TEMPORARY COUNTER REPLACEMENT ("Until end of turn, if one or more counters would be put on a permanent you control, that many plus one of each of those kinds of counters are put on
+    // that permanent instead", Brad Boimler; Prairie Dog's activated one): read as an add-counter it is a producer of counters on every permanent, which the card never is, and a standing
+    // replacement is wrong too (derive drops the trigger that starts it). Refused: the card keeps this phrase as its blocker.
+    // By index, not one regex over both words (CodeQL polynomial-redos).
+    const lead = s.toLowerCase().startsWith("if ") ? s.slice(0, s.includes(",") ? s.indexOf(",") : s.length) : "";
+    if (durationLead && /\bcounters?\b/i.test(lead) && /\bwould (?:be )?put\b/i.test(lead)) { unread?.push(raw.trim().replace(/\.$/, "")); continue; }
     // Openers stack: "As long as ~ is equipped, if a triggered ability ... triggers, ...".
     for (let open = OPENER.exec(s), k = 0; open && k < 2; open = OPENER.exec(s), k++) {
       if (!/^then$/i.test(open[1]!)) condition = [condition, open[1]!.toLowerCase()].filter(Boolean).join(", ");
@@ -1851,7 +1864,7 @@ export function parseActions(effect: string, _type: string | null, cost?: string
         else if (startsMay) { /* scope already on */ }
         else if (!bareVerbPhrase(alt) || mayEnds(alt)) mayScope = false;
         else if (mayScope && r) r = r.map((a) => ({ ...a, optional: true as const }));
-        if (r) out.push(...r);
+        if (r) { out.push(...r); for (const a of r) if (a.verb === "add-counter") counterOnSelf = a.object?.self === true; }
         else unread?.push(alt.replace(/\uE000(\d+)\uE001/g, (_m, i: string) => quotes[Number(i)]!).trim());
         // The actor carries even past a phrase this grammar does not read yet: "target opponent
         // sacrifices a creature, discards a card, and loses 3 life" -- all three are theirs.

@@ -1470,13 +1470,10 @@ test("'[instead] for each creature <player> controls, create a token that's a co
   }
 });
 
-test("a counter replacement that names no kind is the stored add-counter of its own words: Dr. Joseph M'Benga, Brad Boimler; parity Winding Constrictor", () => {
+test("a counter replacement that names no kind is the stored add-counter of its own words: Dr. Joseph M'Benga; parity Winding Constrictor", () => {
   const mbenga = grammarClauseRecords(DR_JOSEPH_M_BENGA);
   expect(mbenga.blocker).toBeUndefined();
   expect(mbenga.records[1]!.actions).toEqual([expect.objectContaining({ verb: "add-counter", object: "twice that many of each of those kinds of counters on a creature you control" })]);
-  const boimler = grammarClauseRecords(BRAD_BOIMLER_EAGER_ENSIGN);
-  expect(boimler.blocker).toBeUndefined();
-  expect(boimler.records[1]!.actions).toEqual([expect.objectContaining({ verb: "add-counter", object: "that many plus one of each of those kinds of counters on a permanent you control" })]);
   const constrictor = parity(WINDING_CONSTRICTOR, STORED_WINDING_CONSTRICTOR as never);
   // The permanents the replacement hears ride in the words when the condition names them (derive reads the printed clause through the same grammar, so the stored records give the same).
   expect(constrictor.g.records.map((r) => r.actions![0]!.object)).toEqual(["that many plus one of each of those kinds of counters on an artifact or creature you control", "that many plus one of each of those kinds of counters"]);
@@ -1526,7 +1523,7 @@ test("'Then if there are three or more X counters on ~, remove those counters' r
   const g = grammarClauseRecords(BECKETT_MARINER_IMPETUOUS_ENSIGN);
   expect(g.blocker).toBeUndefined();
   expect(g.readings![2]!.actions!.map((a) => [a.verb, a.counter, a.amount])).toEqual([["add-counter", "promotion", "1"], ["remove-counter", "promotion", "all"], ["deal-damage", undefined, "2"]]);
-  // The comma-less "Then if" opener is a condition like any "If": Georgiou's creation is read, the condition kept.
+  // The comma-less "Then if" opener is read like an "If" opener: Georgiou's creation is read (the condition is not carried into the clause records, as for any "If").
   expect(grammarClauseRecords(GEORGIOU_TERRAN_EMPEROR).blocker).toBeUndefined();
   const pig = parity(PRIZE_PIG, STORED_PRIZE_PIG as never);
   expect(lostClaims(pig.a.abilities, pig.b.abilities)).toEqual([]);
@@ -1577,8 +1574,24 @@ test("Vorinclex: its own counters are times 2; the halving for an opponent's cou
   expect(replacementOf("If an opponent would put one or more counters on a permanent or player, they put half that many of each of those kinds of counters on that permanent or player instead, rounded down.")!.change).toBeUndefined();
 });
 
-test("Brad Boimler's replacement lasts until end of turn after he taps: it is not read as a standing counter replacement", () => {
-  // Read as one it would multiply every counter the deck places, while the card does so only after becoming tapped.
+test("Brad Boimler's replacement lasts until end of turn after he taps: it is refused, not read as a counter producer or a standing replacement", () => {
+  const g = grammarClauseRecords(BRAD_BOIMLER_EAGER_ENSIGN);
+  // A refused phrase blocks the card: nothing is claimed, so no counter-added emit (it was a false producer of counters on every permanent you control).
+  expect(g.blocker).toMatchObject({ clause: 2, kind: "action" });
+  expect(g.blocker!.phrase).toContain("that many plus one of each of those kinds of counters");
   expect(replacementOf("Whenever Brad Boimler becomes tapped, until end of turn, if one or more counters would be put on a permanent you control, that many plus one of each of those kinds of counters are put on that permanent instead.")).toBeNull();
-  expect(replacementsOf(BRAD_BOIMLER_EAGER_ENSIGN)).toEqual([]);
+  // The same frame with an active "put" (Prairie Dog's activated ability) stays a blocker too.
+  const dog = grammarClauseRecords({ name: "Prairie Dog", typeLine: "Creature \u2014 Squirrel", keywords: ["Lifelink"], oracleText: "Lifelink\nAt the beginning of your end step, if you haven't cast a spell from your hand this turn, put a +1/+1 counter on this creature.\n{4}{W}: Until end of turn, if you would put one or more +1/+1 counters on a creature you control, put that many plus one +1/+1 counters on it instead." });
+  expect(dog.complete).toBe(false);
+});
+
+test("'remove those counters' takes 'it' as the card itself only when the counter was put on the card itself", () => {
+  // Constructed input: the counter goes on a TARGET creature, so the "it" of the condition is not this card and the removal is refused (a blocker), not read as the card's own.
+  const other = grammarClauseRecords({ name: "Test Card", typeLine: "Creature — Human", keywords: [], oracleText: "Whenever this creature attacks, put a +1/+1 counter on target creature. Then if it has three or more +1/+1 counters on it, remove those counters." });
+  expect(other.complete).toBe(false);
+  expect(other.blocker!.phrase).toContain("remove those counters");
+  // ...and on the card itself it still reads, "it" included (Prize Pig's shape).
+  const self = grammarClauseRecords({ name: "Test Card", typeLine: "Creature — Human", keywords: [], oracleText: "Whenever this creature attacks, put a +1/+1 counter on this creature. Then if it has three or more +1/+1 counters on it, remove those counters." });
+  expect(self.blocker).toBeUndefined();
+  expect(self.records[0]!.actions!.map((a) => a.verb)).toEqual(["add-counter", "remove-counter"]);
 });

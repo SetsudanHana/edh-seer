@@ -859,8 +859,9 @@ test("a mismatched counter kind produces no edge", () => {
   expect(pairReasons(adder, loyalty, H).some((x) => x.tag.startsWith("counter-added"))).toBe(false);
 });
 
-// A KIND-LESS counter replacement (DERIVE row of Winding Constrictor, clause 1): it hears counter-added of ANY kind and nothing else.
-test("a kind-less counter replacement pairs with any counter placer and with nothing that is not a counter", () => {
+// REGRESSION PIN of existing matcher behaviour (no matcher code changed with the kind-less replacement templates): a replacement pairs on its counter-added verb, `counter` is
+// checked only when set. Shape: the DERIVE row of Winding Constrictor, clause 1.
+test("regression pin: a kind-less counter replacement pairs with any counter placer and with nothing that is not a counter", () => {
   const constrictor = base("Winding Constrictor", [{
     kind: "static", repeats: "continuous", replacement: true, change: { op: "plus", value: 1 },
     effect: { kind: "counter-placement" },

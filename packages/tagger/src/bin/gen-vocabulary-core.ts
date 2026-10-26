@@ -127,11 +127,16 @@ export const withCr = (types: CardTypesPayload): CardTypesPayload => ({
   })),
 });
 
+/** Creature types MTGJSON lists that no printed card has (CR 205.3m's creature list, \`rules/MagicCompRules.txt\`, does not hold them) and that are ordinary English words, so matching them in
+ *  free text would read "cards missing from your graveyard" as a subtype demand. Kept in \`subtypeTypes\` (and so in vocabulary.json), out of the free-text sets. */
+const NOT_FREE_TEXT: ReadonlySet<string> = new Set(["missing"]);
+const freeText = (xs: readonly string[]): string[] => lower(xs).filter((s) => !NOT_FREE_TEXT.has(s));
+
 export function buildVocabulary(types: CardTypesPayload, enums: EnumValuesPayload): Vocabulary {
   const sub = (k: string): string[] => types.data[k]?.subTypes ?? [];
   return {
-    permanentSubtypes: lower(PERMANENT_TYPES.flatMap(sub)),
-    creatureSubtypes: lower(sub("creature")),
+    permanentSubtypes: freeText(PERMANENT_TYPES.flatMap(sub)),
+    creatureSubtypes: freeText(sub("creature")),
     planeswalkerSubtypes: lower(sub("planeswalker")),
     spellSubtypes: lower([...sub("instant"), ...sub("sorcery")]),
     planeSubtypes: lower([...sub("plane"), ...sub("phenomenon")]),

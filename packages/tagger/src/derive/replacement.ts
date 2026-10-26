@@ -113,14 +113,15 @@ const TEMPLATES: {
   {
     // The KIND IS OPTIONAL: "if one or more counters would be put on ..." (Winding Constrictor, Pir) names none, meaning any kind, and then the ability carries no `counter`.
     // The receiving class runs to the end of the sentence and is cut at the comma that opens the replacement (`classOf`) ("a creature, Spacecraft, or Planet you control, twice that many ...", Loading Zone).
-    re: /\bif\s+(?:one or more|a|an)\s+(?:([^.]{0,20}?)\s+)?counters?\s+would be (?:put|placed)\s+on ([^.]+)/i,
+    re: /\bif (?:one or more|a|an) (?:([^.]{1,20}?) )?counters? would be (?:put|placed) on ([^.]+)/i,
     verbs: ["counter-added"], kind: "counter-placement", subject: 2, counter: 1,
   },
   // The ACTIVE frame of the same replacement: "If you would put one or more counters on a creature you control, put twice that many of each of those kinds of counters on that creature
   // instead" (Dr. Joseph M'Benga, Vorinclex), "If an effect would put one or more counters on a permanent you control, it puts twice that many ..." (Doubling Season). The actor is
   // the half the engine cannot check: an opponent's counters (Vorinclex's halving) make it `restricted`.
+  // CEILING: the receiving class is the permanents or players the sentence names first; Lae'zel's "or on yourself" (a creature or planeswalker you control OR yourself) is read as the permanents alone, an under-claim.
   {
-    re: /\bif\s+(you|an effect|an opponent|a player|a source)\s+would put\s+(?:one or more|a|an)\s+(?:([^.]{0,20}?)\s+)?counters?\s+on ([^.]+)/i,
+    re: /\bif (you|an effect|an opponent|a player|a source) would put (?:one or more|a|an) (?:([^.]{1,20}?) )?counters? on ([^.]+)/i,
     verbs: ["counter-added"], kind: "counter-placement", subject: 3, counter: 2, actor: 1,
   },
   // "If you would create one or more Treasure tokens, instead create ..."
