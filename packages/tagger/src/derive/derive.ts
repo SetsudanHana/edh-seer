@@ -549,7 +549,7 @@ import { emblemRecipient } from "../emblem.js";
 // 386: #1302 review of 385 -- the COUNT and the CHOICE of a hand-fill are read from the PICK SENTENCE, not from the stored object's spelling (`to-hand.ts` `readToHand`): "You may reveal an instant or sorcery card from among them and put it into your hand" is one pick of a larger look whatever the object says (Augur of Bolas, Boughside Wanderers, Calix, Break Out, Follow the Lumarets' base case: now chosen -> card selection); "a creature card and/or a land card" is two cards (Kiora, Benefaction of Rhonas, In the Presence of Ages, Relentless Pursuit, Gift of the Gargantuan), "a Cleric card, a Rogue card, a Warrior card, and/or a Wizard card" four (Harper Recruiter), "a land card or a card with {X}" one; "any number of <class>" is all (Karumonix, Lead the Stampede, Forging the Anchor, You Meet in a Tavern, Torsten); "until you reveal three nonland cards" is 3 (Fathom Trawl), a reveal-until that lists classes still takes one (An Unearthly Child); the k-th hand-put reads the k-th hand sentence (Follow the Lumarets: one, or two instead); a plural pointer at "each opponent chooses a card" stays all (Manifold Insights). A SEQUENCE of hand-puts with no alternative between them (Memories Returning: one, then one, then the other) is not a pick. An opponent who picks the PILE leaves YOU the pick of a card from it (Truth or Tale: chosen -> card selection); an opponent who picks the CARD does not (Karn). A predicate pick "with the chosen name" is no class (Tamiyo, Collector of Tales is untyped `to-hand` again); a list of classes is one class list (Harper Recruiter: Cleric, Rogue, Warrior, or Wizard); "choose a card that's exactly those colors from among them" has an unreadable class (Niv-Mizzet Reborn). A fallback hand-put points back at the pick sentence it falls back from, nearest "from among" / "until you reveal" within three sentences (Break Out, Songbirds' Blessing, Part in Friendship: now typed digs). All regexes in `to-hand.ts` are linear (bounded classes, `indexOf`): CodeQL js/polynomial-redos, 40k characters in under 200 ms. Measured against 385 (derive-identity): 35 cards differ, all of them the changes above plus the 2 known drift cards.
 // 387: #1302 review of 386 -- a hand-fill (`to-hand`, or a typed dig's `search`) never has a `self` subject: a library card is not the permanent that entered (Niv-Mizzet Reborn's "the chosen cards" read as the card itself and the dig "dug for itself"); and the stored object's trailing "into your hand" is stripped without a quadratic `\s+` regex (ReDoS). Measured: derive-identity against 386 differs on Niv-Mizzet Reborn alone (plus the 2 known drift cards).
 // 388: (owner 2026-10-24) a CR 614 replacement records what it does to the event it hears: `Ability.change` {op: plus|times, value}, read by `replacement.ts` `changeOf` off the matched clause -- triple/three times/thrice x3, double/twice x2, "plus N" / "plus one" / "plus an additional" +N (Fiery Emancipation x3, Anointed Procession x2, Tekuthal x2, Pyromancer's Gauntlet +2, Hardened Scales +1, Xorn +1). Only a stated number: "plus that many Squirrels" and Alhammarret's Archive's "draw two cards instead" stay unset. Set only beside `replacement: true`, so a restricted replacement (Bruvac) carries none.
-// 389: #1349 -- the grammar reads modal intros, short-name/pronoun self-reference and ability restrictions (riders read off the printed text); "Activate only if <condition>" feeds conditionCares like a trigger's intervening if (owner 2026-10-26), negated/poison/loyalty/player counters demand none; "as though it didn't have defender" grants none; the switch keeps a stored animate's type/subtype/stats. Whole-branch review fixes: "becomes blocked" is no animate (Trap Runner, Curtain of Light, Choking Vines, Fog Patch; GH #1353); a grant in a self-animate sentence is the card's own (Skinshifter, Paragon of the Amesha, Dragonsoul Knight); a counter put as a cost names its permanent in the cost (Jessica Jones, Mazemind Tome, Sinking Feeling); a modal header's every trigger reaches each mode (Captain Kirk, Appa, Galadriel, Oracle of Tragedy); a mode's trailing "if" is no unconditional effect (Federation Field Medic).
+// 389: #1349 -- the grammar reads modal intros, short-name/pronoun self-reference and ability restrictions (riders read off the printed text); "Activate only if <condition>" feeds conditionCares like a trigger's intervening if (owner 2026-10-26), negated/poison/loyalty/player counters demand none; "as though it didn't have defender" grants none; the switch keeps a stored animate's type/subtype/stats. Whole-branch review fixes: "becomes blocked" is no animate (Trap Runner, Curtain of Light, Choking Vines, Fog Patch; GH #1353); a grant in a self-animate sentence is the card's own (Skinshifter, Paragon of the Amesha, Dragonsoul Knight); a counter put as a cost names its permanent in the cost (Jessica Jones, Mazemind Tome; a granted ability's, Sinking Feeling, is excluded); a modal header's every trigger reaches each mode (Captain Kirk, Appa, Galadriel, Oracle of Tragedy); a mode's trailing "if" is no unconditional effect (Federation Field Medic).
 export const DERIVE_VERSION = 389;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
@@ -853,21 +853,28 @@ interface ClauseVisit { clause: ClauseRecord; /** The header clauses a mode is r
 function modeVisits(clauses: ClauseRecord[], clauseTexts?: Record<number, string>): ClauseVisit[] {
   const ordered = [...clauses];
   if (clauseTexts) {
-    for (const twin of clauses) {
-      if (!triggerHeaderOnly(twin) || clauseTexts[twin.id as number] !== undefined) continue;
-      const at = ordered.indexOf(twin);
-      let head = -1;
-      for (let i = at - 1; i >= 0; i--) {
-        const c = ordered[i]!;
-        if (triggerHeaderOnly(c) && clauseTexts[c.id as number] !== undefined && c.trigger?.event !== twin.trigger?.event) { head = i; break; }
-      }
-      if (head < 0) continue;
-      // After the header and any twin already placed there; only when the header is a modal one (a bullet follows).
-      let to = head + 1;
-      while (to < ordered.length && to !== at && triggerHeaderOnly(ordered[to]!)) to++;
-      if (to === at || !(ordered[to] && modeBullet(ordered[to]!))) continue;
-      ordered.splice(at, 1);
-      ordered.splice(to, 0, twin);
+    // CEILING: a twin is found by having NO text in `segment()`'s numbering (the grammar's overflow records have none), so a grammar change that
+    // gave them text stops the grouping silently. Twins are paired to modal headers IN ORDER (the grammar appends overflow in header order); when the
+    // counts disagree (a single-trigger modal header beside a multi-trigger one) nothing is moved, and the mode reads under its nearest header only.
+    const modalHead = (i: number): boolean => {
+      if (!triggerHeaderOnly(clauses[i]!) || clauseTexts[clauses[i]!.id as number] === undefined) return false;
+      let j = i + 1;
+      while (j < clauses.length && triggerHeaderOnly(clauses[j]!) && clauseTexts[clauses[j]!.id as number] === undefined) j++;
+      return j < clauses.length && modeBullet(clauses[j]!);
+    };
+    const heads = clauses.filter((_, i) => modalHead(i));
+    const textless = (c: ClauseRecord): boolean => triggerHeaderOnly(c) && clauseTexts[c.id as number] === undefined;
+    const besideHead = (i: number): boolean => { let j = i - 1; while (j >= 0 && textless(clauses[j]!)) j--; return j >= 0 && j < i - 0 && triggerHeaderOnly(clauses[j]!) && j !== i; };
+    const twins = clauses.filter((c, i) => textless(c) && !besideHead(i));
+    if (twins.length > 0 && twins.length === heads.length) {
+      twins.forEach((twin, n) => {
+        const head = heads[n]!;
+        if (head.trigger?.event === twin.trigger?.event) return;
+        ordered.splice(ordered.indexOf(twin), 1);
+        let to = ordered.indexOf(head) + 1;
+        while (to < ordered.length && triggerHeaderOnly(ordered[to]!) && clauseTexts[ordered[to]!.id as number] === undefined) to++;
+        ordered.splice(to, 0, twin);
+      });
     }
   }
   const out: ClauseVisit[] = [];

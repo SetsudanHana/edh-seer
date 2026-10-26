@@ -903,3 +903,15 @@ test("a granted ability's cost counter is the grantee's, never the Aura's: Sinki
   const added = tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "counter-added");
   for (const e of added) expect(e.subject.self).not.toBe(true);
 });
+
+test("two multi-trigger modal headers pair their twins in order; unequal counts move nothing (review of b9a03e31)", () => {
+  const { tags } = deriveGrammar("Foo, Test", "Legendary Creature — Elf", "Whenever Foo enters or attacks, choose one —\n• You gain 3 life.\n• Draw a card.\nWhenever Foo dies or becomes tapped, choose one —\n• Create a Treasure token.\n• Scry 2.");
+  const verbsOf = (clause: number) => tags.abilities.filter((a) => a.clause === clause && a.effect.kind !== "").flatMap((a) => a.trigger?.verbs ?? []).sort();
+  expect(verbsOf(2)).toEqual(["attacks", "enters"]);
+  expect(verbsOf(3)).toEqual(["attacks", "enters"]);
+});
+
+test("a mode's 'if you don't control ...' gates it; only the bare reflexive 'if you do / don't' is exempt: Venser, Corpse Puppet", () => {
+  const { tags } = deriveGrammar("Venser, Corpse Puppet", "Legendary Creature — Phyrexian Zombie Wizard", "Lifelink, toxic 1\nWhenever you proliferate, choose one —\n• If you don't control a creature named The Hollow Sentinel, create The Hollow Sentinel, a legendary 3/3 colorless Phyrexian Golem artifact creature token.\n• Target artifact creature you control gains flying and lifelink until end of turn.");
+  expect(tags.abilities.some((a) => a.effect.kind === "token-generation")).toBe(false);
+});

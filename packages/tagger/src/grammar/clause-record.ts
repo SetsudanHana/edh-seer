@@ -411,8 +411,9 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     // A MODE'S "IF <condition>" GATES ITS EFFECT (#1349 review): "Draw a card if you control a permanent with a counter on it"
     // (Federation Field Medic) is no unconditional draw, and the store has no slot for the condition, so the action would
     // be recorded as a plain draw. The mode is recorded as one `other` action instead, which derive leaves unclaimed and visible.
-    // CEILING: only a mode (a non-modal conditional effect keeps its plain reading, as the stored answer has it: Roadside Reliquary).
-    const gated = c.kind === "mode" ? readingsHere.find((r) => r.condition !== undefined && /^if /i.test(r.condition) && !/^if (?:you|they) (?:do|don't|did|didn't)\b|^if able\b|\bwould\b|\binstead\b/i.test(r.condition)) : undefined;
+    // CEILING: only a mode (a non-modal conditional effect keeps its plain reading, as the stored answer has it: Roadside Reliquary), and the WHOLE
+    // mode becomes the one `other`, its unconditional parts included (What Must Be Done's return is lost): a card with no model answer derives nothing for that mode.
+    const gated = c.kind === "mode" ? readingsHere.find((r) => r.condition !== undefined && /^if /i.test(r.condition) && !/^if (?:you|they) (?:do|don't|did|didn't)\s*(?:[,.]|$)|^if able\b|\bwould\b|\binstead\b/i.test(r.condition)) : undefined;
     if (gated) {
       readings[c.id] = { ...readings[c.id], actions: [] };
       record.actions = [{ verb: "other", object: effect, fromZone: null, toZone: null, optional: false } as Action];
