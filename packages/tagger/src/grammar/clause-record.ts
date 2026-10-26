@@ -83,6 +83,10 @@ export function triggerSubjectText(preamble: string): string {
   const ownGraveyard = caused !== null && !!caused[2] && /\binto your graveyard\b/i.test(caused[3]!);
   const v = EVENT_VERB.exec(rest);
   const head = (v ? rest.slice(0, v.index) : rest).trim();
+  // "a basic land is tapped for mana OF THE CHOSEN COLOR" (Gauntlet of Power): the colour is part of which taps the trigger hears, and the store keeps it in the subject
+  // ("a basic land tapped for mana of the chosen color"). Cut at the verb it was dropped, and the mana line read an unconditional land trigger.
+  const chosen = /\b(?:is|are) (tapped for mana of the chosen colou?r)$/i.exec(rest);
+  if (chosen && v && head !== "" && /^(?:a|an|each) /i.test(head)) return `${head} ${chosen[1]}`;
   if (v && PLAYER.test(head)) {
     // "you cast or cycle ~": the second verb is the event's, not the object's.
     const obj = rest.slice(v.index + v[0].length).trim().replace(/^or \w+ /i, "");

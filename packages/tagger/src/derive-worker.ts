@@ -5,7 +5,7 @@ import { isMainThread } from "node:worker_threads";
 import { serveWorker } from "@edh-seer/data/parallel";
 import { charsFrom, deriveInputOf } from "./derive-input.js";
 import { grammarClauseRecords } from "./grammar/clause-record.js";
-import { deriveDiff, lostAnimateFields, lostClaims, lostTriggerFlags } from "./grammar/derive-diff.js";
+import { deriveDiff, lostAnimateFields, lostClaims, lostTriggerFlags, manaDiffers } from "./grammar/derive-diff.js";
 import triage from "../grammar-only-triage.json" with { type: "json" };
 import { deriveCardTags } from "./derive/derive.js";
 import type { CardClausesDoc, DerivedTagsDoc } from "./clause-store.js";
@@ -33,7 +33,8 @@ export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
       const right = key !== null && (triage.groups as Record<string, { label: string }>)[key]?.label === "grammar right"
         && lostClaims(tags.abilities, grammarTags.abilities).length === 0 && !lostAnimateFields(tags.abilities, grammarTags.abilities)
         && !lostTriggerFlags(tags.abilities, grammarTags.abilities);
-      if (key === null || right) return { tags: grammarTags, fromGrammar: true };
+      // MANA IS NOT IN `deriveDiff`: a card whose grammar reading derives other mana fields keeps the stored answer, identical abilities or not.
+      if ((key === null || right) && !manaDiffers(tags, grammarTags)) return { tags: grammarTags, fromGrammar: true };
     }
   }
   return { tags, fromGrammar: false };

@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Ability } from "../schema.js";
-import { deriveDiff, lostAnimateFields, lostClaims, lostTriggerFlags } from "./derive-diff.js";
+import { deriveDiff, lostAnimateFields, lostClaims, lostTriggerFlags, manaDiffers } from "./derive-diff.js";
 
 const ab = (over: Partial<Ability>): Ability => ({ kind: "static", effect: { kind: "" }, clause: 1, ...over } as Ability);
 
@@ -62,4 +62,13 @@ test("a trigger flag the stored ability carries and the grammar's matching trigg
   expect(lostTriggerFlags([trig({ amount: { op: "gte", value: 5 } }, ["combat-damage"])], [trig({}, ["combat-damage"])])).toBe(true);
   // One batched trigger of two is not covered by the one the grammar kept.
   expect(lostTriggerFlags([stored, stored], [trig({ batched: true }), trig({})])).toBe(true);
+});
+
+test("any difference in the five mana fields is a difference (#1349 review)", () => {
+  const line = { amount: { fixed: 1 } } as never;
+  expect(manaDiffers({}, {})).toBe(false);
+  expect(manaDiffers({ manaLines: [line] }, { manaLines: [line] })).toBe(false);
+  expect(manaDiffers({ manaLines: [line] }, { manaLines: [{ amount: { fixed: 2 } } as never] })).toBe(true);
+  expect(manaDiffers({}, { isOneShot: true })).toBe(true);
+  expect(manaDiffers({ suspendOnly: true }, {})).toBe(true);
 });

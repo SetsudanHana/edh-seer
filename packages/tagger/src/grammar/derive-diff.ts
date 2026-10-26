@@ -1,7 +1,7 @@
 /** G3 FOR #896 TASK 7 (moved from instruments: `derive-corpus` reads it for the per-card switch): does a card derive the same abilities from its grammar-only clause records as from
  *  the stored model answer? A difference is grouped by WHICH ability fields differ -- the H3 grouping
  *  of task 2 -- so a group is labelled once and its members spot-checked, not judged one by one. */
-import type { Ability } from "../schema.js";
+import type { Ability, CardTags } from "../schema.js";
 
 /** Key order is not a difference: two derives that build the same subject in a different order agree. */
 // ...nor an amount's comma before its "where X is" ("+X/+X, where X is ..." reads as "+X/+X where X is ...").
@@ -137,4 +137,12 @@ export function lostTriggerFlags(stored: readonly Ability[], grammar: readonly A
     const g = count(grammar, flag);
     return [...count(stored, flag)].some(([k, n]) => n > (g.get(k) ?? 0));
   });
+}
+
+/** THE MANA FIELDS NO OTHER GATE COMPARES (#1349 review). `manaLines`, `staticFixer`, `landFetch`, `isOneShot` and `suspendOnly` are derived from the clause text AND the abilities,
+ *  and `deriveDiff` reads abilities only, so a card could switch to the grammar with a different mana reading: Gauntlet of Power's land trigger lost "of the chosen color" and
+ *  claimed an extra mana from every basic land; Caged Sun's chosen colour went unread. True when any of the five differs. ANY difference, not only a loss: wrong ramp
+ *  changes land advice, and a gain here is as unjudged as a loss. */
+export function manaDiffers(stored: Pick<CardTags, "manaLines" | "staticFixer" | "landFetch" | "isOneShot" | "suspendOnly">, grammar: Pick<CardTags, "manaLines" | "staticFixer" | "landFetch" | "isOneShot" | "suspendOnly">): boolean {
+  return (["manaLines", "staticFixer", "landFetch", "isOneShot", "suspendOnly"] as const).some((k) => json(stored[k]) !== json(grammar[k]));
 }

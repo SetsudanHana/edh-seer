@@ -1595,3 +1595,19 @@ test("'remove those counters' takes 'it' as the card itself only when the counte
   expect(self.blocker).toBeUndefined();
   expect(self.records[0]!.actions!.map((a) => a.verb)).toEqual(["add-counter", "remove-counter"]);
 });
+
+test("Gauntlet of Power: the land trigger keeps 'of the chosen color', and the switch gate refuses a grammar reading whose mana differs (real oracle text)", async () => {
+  const { manaDiffers } = await import("./derive-diff.js");
+  const gauntlet = { name: "Gauntlet of Power", typeLine: "Artifact", keywords: [] as string[], oracleText: "As this artifact enters, choose a color.\nCreatures of the chosen color get +1/+1.\nWhenever a basic land is tapped for mana of the chosen color, its controller adds an additional one mana of that color." };
+  const stored = [
+    { id: 1, abilityType: "static", actions: [{ verb: "other", object: "choose a color", fromZone: null, toZone: null, amount: null, optional: false }] },
+    { id: 2, abilityType: "static", actions: [{ verb: "modify-pt", object: "creatures of the chosen color", fromZone: null, toZone: null, amount: "+1/+1", optional: false }] },
+    { id: 3, abilityType: "triggered", trigger: { event: "tapped-for-mana", subject: "a basic land tapped for mana of the chosen color", control: "any" }, actions: [{ verb: "add-mana", object: "its controller", fromZone: null, toZone: null, amount: "one mana of that color", optional: false }] },
+  ];
+  const g = grammarClauseRecords(gauntlet);
+  expect(g.records[2]!.trigger!.subject).toBe("a basic land tapped for mana of the chosen color");
+  const a = deriveCardTags(deriveInputOf(gauntlet as never, "x", gauntlet.name, stored as never));
+  const b = deriveCardTags(deriveInputOf(gauntlet as never, "x", gauntlet.name, g.records, undefined, g.readings));
+  // The amount ("an additional one mana of that color") still reads a different floor, so the gate keeps the stored answer.
+  expect(manaDiffers(a, b)).toBe(true);
+});
