@@ -44,9 +44,8 @@ function shortNameAsTilde(preamble: string, name: string): string {
  *  made of words, apostrophes, commas, "?", "!" and hyphens -- never a ".", ":" or a brace, which
  *  would make it a sentence, a cost or a mana symbol. The ONE rule `parseActions` reads too. */
 export function withoutAbilityWord(text: string): string {
-  // A Spacecraft's STATION BAR ("3+ | At the beginning of combat ...") is the same kind of label (CR 721.2a: "{N+}[abilities]" means "as long as
-  // this permanent has N or more charge counters on it, it has [abilities]"). CEILING: the threshold is dropped, as the store drops it --
-  // no ability carries a charge-counter gate, so a row reads as if it held at any count.
+  // A Spacecraft's STATION BAR ("3+ | At the beginning of combat ...") is the same kind of label. Its threshold (CR 721.2a: "{N+}[abilities]"
+  // means "as long as this permanent has N or more charge counters on it, it has [abilities]") is read by derive from the clause text, which keeps the bar.
   text = text.replace(STATION_BAR, "");
   const dash = text.indexOf(" — ");
   return dash > 0 && dash <= 41 && /^[A-Z~][\w' ,~?!-]*$/.test(text.slice(0, dash)) ? text.slice(dash + 3) : text;

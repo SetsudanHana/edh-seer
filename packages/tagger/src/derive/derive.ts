@@ -34,7 +34,7 @@ import { reductionOf } from "./reduction.js";
 import crKeywords from "./cr-keywords.json" with { type: "json" };
 import { paymentOf } from "./payment.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
-import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
+import { stationThresholdFor, thresholdFor, thresholdSubjectFor } from "./threshold.js";
 import { addsManaText, deriveMana, production } from "./mana-lines.js";
 import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
@@ -2950,7 +2950,7 @@ export function deriveAbilities(
       }
       // #1252: "that player loses the game" after damage the card's side deals to a player is the damaged
       // player -- an opponent (Phage, Vorpal Sword, Atemsis). Unresolved ("a creature deals ...") stays `any`.
-      if (action.verb === "lose-game" && /^that player$/i.test((action.object ?? "").trim())
+      if (action.verb === "lose-game" && /^(?:that player|they)$/i.test((action.object ?? "").trim())
         && damagedPlayerIsOpponent(text, trigger?.subject.self === true, cardName)) {
         for (const e of emits) if (e.verb === "loses-game" && e.subject.control === "any") e.subject.control = "opp";
       }
@@ -3452,8 +3452,9 @@ export function deriveAbilities(
     // its kind: a trigger's intervening if, a static's "as long as", an activation's "only if", a
     // restriction's "unless". Once per clause, so `thresholdFor` and `thresholdSubjectFor` cannot
     // disagree between two abilities of one sentence.
-    const threshold = thresholdFor(text);
-    const thresholdSubject = threshold ? thresholdSubjectFor(text) : undefined;
+    const printedThreshold = thresholdFor(text);
+    const threshold = printedThreshold ?? stationThresholdFor(text, cardText);
+    const thresholdSubject = printedThreshold ? thresholdSubjectFor(text) : undefined;
     // A TYPED COUNT IS A DEMAND IN ITS OWN RIGHT, as a trigger is (recall v6 #77, v7 #79). Gadrak
     // "can't attack unless you control four or more artifacts" is a `cant` static whose action maps
     // to no kind, so the clause pushed nothing and the one thing the card asks of its deck --

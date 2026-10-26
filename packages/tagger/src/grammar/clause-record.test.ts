@@ -939,8 +939,8 @@ test("a Station threshold row reads past its 'N+ |' bar: D-7 Battle Cruiser's tr
   expect(g.records[0]).toMatchObject({ id: 1, abilityType: "none" });
   expect(g.records[1]).toMatchObject({ id: 2, abilityType: "triggered", trigger: { event: "begin-combat", control: "you" } });
   expect(g.records[1]!.actions!.map((a) => a.verb)).toEqual(["create", "sacrifice"]);
-  // "8+ | Flying" is the printed keyword the Spacecraft has at 8 charge counters (CR 721.2a), not a static grant it always has.
-  expect(g.records[2]).toMatchObject({ id: 3, abilityType: "none" });
+  // "8+ | Flying" is a static grant gated at 8 charge counters (CR 721.2a), as the store records it; derive stamps the threshold.
+  expect(g.records[2]).toMatchObject({ id: 3, abilityType: "static" });
 });
 
 test("Those Old Scientists: a reminder wrapped mid-sentence is one reminder line; the next blocker is chapter III's 'choose up to two target cards'", () => {
@@ -985,9 +985,55 @@ test("Saga and Station parity: the grammar's records derive what the stored (bou
   expect(b.abilities.map((x) => x.repeats)).toEqual(["once", "once", "once"]);
 });
 
-test("D-7 Battle Cruiser derives its combat token once a round, and claims no flying it has only at 8 charge counters", () => {
+test("a Station row carries its charge-counter threshold, CR 721.2a: D-7 Battle Cruiser's token is gated at 3, its flying at 8", () => {
   const g = grammarClauseRecords(D7);
   const tags = deriveCardTags(deriveInputOf(D7 as never, "x", D7.name, g.records, undefined, g.readings));
-  expect(tags.abilities.filter((a) => a.effect.kind === "token-generation").map((a) => a.repeats)).toEqual(["per-cycle"]);
-  expect(tags.abilities.some((a) => a.effect.kind === "keyword-grant")).toBe(false);
+  const token = tags.abilities.filter((a) => a.clause === 2);
+  expect(token.length).toBeGreaterThan(0);
+  for (const a of token) expect(a.threshold).toEqual({ atLeast: 3 });
+  expect(token.find((a) => a.effect.kind === "token-generation")!.repeats).toBe("per-cycle");
+  const flying = tags.abilities.filter((a) => a.clause === 3);
+  expect(flying.map((a) => a.effect.kind)).toEqual(["keyword-grant"]);
+  expect(flying[0]).toMatchObject({ threshold: { atLeast: 8 }, grants: ["flying"] });
+});
+
+const WEDGELIGHT = { name: "Wedgelight Rammer", typeLine: "Artifact \u2014 Spacecraft", keywords: ["Station"], oracleText: "When this Spacecraft enters, create a 2/2 colorless Robot artifact creature token.\nStation (Tap another creature you control: Put charge counters equal to its power on this Spacecraft. Station only as a sorcery. It's an artifact creature at 9+.)\n9+ | Flying, first strike" };
+const SYNTH = { name: "Synthesizer Labship", typeLine: "Artifact \u2014 Spacecraft", keywords: ["Station"], oracleText: "Station (Tap another creature you control: Put charge counters equal to its power on this Spacecraft. Station only as a sorcery. It's an artifact creature at 9+.)\n2+ | At the beginning of combat on your turn, up to one other target artifact you control becomes an artifact creature with base power and toughness 2/2 and gains flying until end of turn.\n9+ | Flying, vigilance" };
+
+test("a bought Station card and the grammar agree on a keyword row's threshold: Wedgelight Rammer, Synthesizer Labship", () => {
+  const act = (verb: string, object: string, amount: string | null = null) => [{ verb, object, fromZone: null, toZone: null, amount, optional: false }];
+  const stored = [
+    { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this", control: "you" }, actions: act("create", "a 2/2 colorless Robot artifact creature token", "1") },
+    { id: 2, abilityType: "none", actions: [{ verb: "none", object: "Station" }] },
+    { id: 3, abilityType: "static", actions: act("grant-ability", "Flying, first strike") },
+  ];
+  const g = grammarClauseRecords(WEDGELIGHT);
+  const a = deriveCardTags(deriveInputOf(WEDGELIGHT as never, "x", WEDGELIGHT.name, stored as never));
+  const b = deriveCardTags(deriveInputOf(WEDGELIGHT as never, "x", WEDGELIGHT.name, g.records, undefined, g.readings));
+  expect(a.abilities.find((x) => x.effect.kind === "keyword-grant")).toMatchObject({ threshold: { atLeast: 9 }, grants: ["first strike", "flying"] });
+  expect(deriveDiff(a.abilities, b.abilities)).toBeNull();
+  const s = grammarClauseRecords(SYNTH);
+  expect(s.complete).toBe(true);
+  const t = deriveCardTags(deriveInputOf(SYNTH as never, "x", SYNTH.name, s.records, undefined, s.readings));
+  expect(t.abilities.filter((x) => x.clause === 3)).toMatchObject([{ effect: { kind: "keyword-grant" }, threshold: { atLeast: 9 }, grants: ["flying", "vigilance"] }]);
+  for (const x of t.abilities.filter((y) => y.clause === 2)) expect(x.threshold).toEqual({ atLeast: 2 });
+});
+
+test("'time travel' is done by you, 'they lose the game' is the damaged opponent: Girl in the Fireplace, Hidetsugu Consumes All (#1349 part 2)", () => {
+  const girl = deriveGrammar("The Girl in the Fireplace", "Enchantment — Saga", "III — Whenever a creature you control deals combat damage to a player this turn, time travel.");
+  expect(girl.tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "time-travel").map((e) => e.subject.control)).toEqual(["you"]);
+  const hid = deriveGrammar("Hidetsugu Consumes All // Vessel of the All-Consuming", "Enchantment — Saga // Enchantment Creature — Vessel", "Trample\nWhenever this creature deals damage to a player, if it has dealt 10 or more damage to that player this turn, they lose the game.");
+  expect(hid.tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "loses-game").map((e) => e.subject.control)).toEqual(["opp"]);
+});
+
+test("a Station row's keyword list derives ONE gated keyword-grant, not one per keyword: Entropic Battlecruiser's 8+ row", () => {
+  const { tags } = deriveGrammar("Test Craft", "Artifact \u2014 Spacecraft", "Station (Tap another creature you control: Put charge counters equal to its power on this Spacecraft. Station only as a sorcery. It's an artifact creature at 8+.)\n8+ | Flying, deathtouch");
+  const grants = tags.abilities.filter((a) => a.effect.kind === "keyword-grant");
+  expect(grants.length).toBe(1);
+  expect(grants[0]).toMatchObject({ grants: ["deathtouch", "flying"], threshold: { atLeast: 8 } });
+});
+
+test("a d20 table's '15+ |' row is a roll result, not a Station charge count: Gale's Redirection has no threshold", () => {
+  const { tags } = deriveGrammar("Gale's Redirection", "Instant", "Exile target spell, then roll a d20 and add that spell's mana value.\n1—14 | You may cast the exiled card for as long as it remains exiled, and you may spend mana as though it were mana of any color to cast that spell.\n15+ | You may cast the exiled card without paying its mana cost for as long as it remains exiled.");
+  expect(tags.abilities.some((a) => a.threshold !== undefined)).toBe(false);
 });

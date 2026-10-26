@@ -122,6 +122,22 @@ export function thresholdFor(text: string): { atLeast: number } | undefined {
   return m ? { atLeast: m.atLeast } : undefined;
 }
 
+/** A SPACECRAFT OR PLANET ROW's "N+ |" bar (CR 721.2a: "{N+}[abilities]" means "as long as this permanent has N or more charge
+ *  counters on it, it has [abilities]"): the row is gated at N charge counters. The clause text still carries the bar (segment()
+ *  keeps it), so this reads it where every other threshold is read, for the stored answer and the grammar's records alike.
+ *  An N of 1 is kept: unlike "one or more" it is a count of charge counters, not the English plural. A row that also states its own
+ *  numeric condition keeps that one (`selectThreshold` runs first): one slot, and the printed condition is the narrower. No
+ *  `thresholdSubject`: the counted thing is the card's own charge counters, which no SubjectFilter names. */
+const STATION_ROW = /^(\d+)\+\s*\|/;
+/** ONLY ON A STATION CARD (a "Station" keyword line in its text): a d20 table prints "15+ | ..." with the same bar, and that is a roll
+ *  result, not a charge-counter count (Danse Macabre, Druid of the Emerald Grove: 11 cards). */
+const STATION_LINE = /^Station\b/m;
+export function stationThresholdFor(text: string, cardText: string): { atLeast: number } | undefined {
+  if (!STATION_LINE.test(cardText)) return undefined;
+  const m = STATION_ROW.exec(text.trim());
+  return m ? { atLeast: Number(m[1]) } : undefined;
+}
+
 /** A zone-scoped card count is not a battlefield count. "Eight or more permanent cards in your
  *  graveyard" and "thirteen cards in your hand" both name a COUNT of cards sitting in a zone, not a
  *  class of permanents on the battlefield -- and no `SubjectFilter` can say "in your graveyard", so

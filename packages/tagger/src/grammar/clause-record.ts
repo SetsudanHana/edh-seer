@@ -7,7 +7,7 @@
  *  against the stored answers by `instruments/src/grammar-only.ts`. Pure and synchronous. */
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import { interveningIfOf } from "../derive/intervening-if.js";
-import { segment } from "../segment.js";
+import { segment, STATION_BAR } from "../segment.js";
 import { amountOf, parseActions, unreadPhrases, type ActionReading } from "./action.js";
 import { effectText, missedCost, printedPreamble, withoutAbilityWord } from "./preamble.js";
 import { selfAsTilde } from "./self-as-tilde.js";
@@ -96,7 +96,7 @@ export function triggerSubjectText(preamble: string): string {
 
 const SELF_SUBJECT = /^(?:~|this [a-z]+)$/i;
 /** Verbs the player does with nothing after them, whose stored object is "you". */
-const NO_OBJECT_YOU = new Set(["monarch", "initiative", "ring-tempts", "learn", "venture-into-the-dungeon", "manifest-dread", "investigate", "populate", "win-game", "lose-game"]);
+const NO_OBJECT_YOU = new Set(["monarch", "initiative", "ring-tempts", "learn", "venture-into-the-dungeon", "manifest-dread", "investigate", "populate", "win-game", "lose-game", "time-travel"]);
 /** Verbs whose stored object can be the PLAYER it happens to ("target player mills two cards" ->
  *  "target player"), the convention derive's `PLAYER_OBJECT_VERBS` reads. */
 const PLAYER_VERBS = new Set(["draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life", "blight"]); // blight: "target opponent blights 2" names the opponent (Champion of the Weird); your own "blight 2" keeps its amount as the object
@@ -332,6 +332,23 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
 /** A trigger word inside a sentence: the "whenever" of a delayed trigger a chapter creates. */
 const DELAYED_TRIGGER_WORD = /\b(?:whenever|when|at the beginning of|at the end of|at end of)\b/i;
 
+/** A STATION ROW'S "Flying, first strike" is ONE grant of a keyword list, as the store writes it for Wedgelight Rammer: derive reads the whole
+ *  list off each grant-ability action, so one action per keyword derived the same gated keyword-grant once per keyword. Plain keywords, side by side.
+ *  CEILING: only a Station row. Elsewhere the store mostly writes one action per keyword ("gain vigilance, trample, and indestructible" derives the
+ *  grant three times: Song of Freyalise, Entropic Battlecruiser, some 450 bought cards), and merging them made 340 bought cards switch to the grammar
+ *  (measured 2026-10-26, 34 of them losing an ability), so the grammar keeps the duplicates the store has. */
+const PLAIN_KEYWORD = /^[a-z]+(?:, [a-z]+| [a-z]+)*$/i;
+function mergeKeywordGrants(actions: Action[]): Action[] {
+  const merged: Action[] = [];
+  for (const a of actions) {
+    const last = merged[merged.length - 1];
+    if (last && a.verb === "grant-ability" && last.verb === "grant-ability" && PLAIN_KEYWORD.test(a.object ?? "") && PLAIN_KEYWORD.test(last.object ?? "")
+      && a.unless === undefined && last.unless === undefined && a.optional === last.optional) { merged[merged.length - 1] = { ...last, object: `${last.object}, ${a.object}` } as Action; continue; }
+    merged.push(a);
+  }
+  return merged;
+}
+
 export function grammarClauseRecords(card: CardText): GrammarRecords {
   const records: ClauseRecord[] = [];
   const clauses = segment(card.oracleText ?? "", card.keywords ?? [], card.typeLine ?? "");
@@ -454,7 +471,9 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     readings[c.id] = { ...readings[c.id], actions: readingsHere };
     // A KEYWORD LINE the segmenter left as an ability ("Suspend 4—{U}", its reminder stripped): the
     // card's own keywords, which the store records as no action, as it does a keyword clause.
-    if (type !== "triggered" && !cost && readingsHere.length > 0 && !/\b(?:has|have|gains?|gets?|is|are|becomes?)\b/i.test(effect) && !/^equip\b/i.test(c.text)
+    // A STATION ROW'S KEYWORDS ("8+ | Flying") are not the card's own keywords but a grant gated on charge counters (CR 721.2a): a static
+    // grant, as the store records it, and derive stamps the row's threshold on it.
+    if (type !== "triggered" && !cost && readingsHere.length > 0 && !/\b(?:has|have|gains?|gets?|is|are|becomes?)\b/i.test(effect) && !/^equip\b/i.test(c.text) && !STATION_BAR.test(c.text)
       && readingsHere.every((r) => r.verb === "grant-ability" && r.object?.self === true)) {
       records.push({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text } as Action] });
       continue;
@@ -467,6 +486,7 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     // with no trigger noun takes the clause's own "this creature".
     const selfWord = selfNoun && selfNoun !== "~" ? selfNoun : /\bthis (?:creature|artifact|enchantment|land|planeswalker|permanent|vehicle|card|spell|aura|equipment|battle)\b/i.exec(c.text)?.[0] ?? "this";
     record.actions = actionsOf(readingsHere, selfNoun === "~" ? "this" : selfNoun, type, selfWord, record.trigger?.subject, record.trigger?.event);
+    if (STATION_BAR.test(c.text)) record.actions = mergeKeywordGrants(record.actions);
     if (record.actions.length === 0 && type !== "static") record.actions = [{ verb: "none", object: "" } as Action];
     records.push(record);
     for (const o of overflow) if (o.actions!.length === 0 && o.trigger) o.actions = record.actions;
