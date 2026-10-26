@@ -1386,3 +1386,29 @@ test("'it becomes day' is the game's day/night state (CR 731.1), not an animate 
   const tags = deriveCardTags(deriveInputOf(SUNSTREAK_PHOENIX as never, "x", SUNSTREAK_PHOENIX.name, g.records, undefined, g.readings));
   expect(tags.abilities.map((x) => x.effect.kind)).not.toContain("animate");
 });
+
+test("a payment that is not mana stays a blocker: Boulder Jockey's {D} forgoes a land drop (real oracle text)", () => {
+  const jockey = { name: "Boulder Jockey", typeLine: "Creature \u2014 Goblin", keywords: [] as string[], oracleText: "({D} is a land drop. You may give up one potential land drop this turn to pay for {D}.)\nWhenever Boulder Jockey attacks, you may pay {D}. If you do, create a 3/3 colorless Construct artifact creature token named Boulder that's tapped and attacking. Sacrifice that token at the beginning of the next end step." };
+  expect(grammarClauseRecords(jockey).blocker).toEqual({ clause: 2, kind: "action", phrase: "you may pay {D}" });
+  // Mana, hybrid, generic, X and energy still read.
+  for (const pay of ["{1}", "{W/B}{W/B}", "{X}{W}{U}{B}", "{E}{E}"]) {
+    const g = grammarClauseRecords({ name: "Test Card", typeLine: "Creature", keywords: [], oracleText: `Whenever this creature attacks, you may pay ${pay}. If you do, draw a card.` });
+    expect(g.blocker, pay).toBeUndefined();
+  }
+});
+
+test("the switch gate refuses a grammar reading that drops the stored trigger's 'one or more' batch: Kate Stewart", async () => {
+  const { lostTriggerFlags } = await import("./derive-diff.js");
+  const kate = { name: "Kate Stewart", typeLine: "Legendary Creature \u2014 Human Scientist", keywords: [] as string[], oracleText: "Whenever you put one or more time counters on a permanent you control, create a 1/1 white Soldier creature token.\nWhenever Kate Stewart attacks, you may pay {8}. If you do, attacking creatures get +X/+X until end of turn, where X is the number of time counters among permanents you control." };
+  const stored = [
+    { id: 1, abilityType: "triggered", trigger: { event: "counter-added", subject: "one or more time counters on a permanent you control", control: "you" }, actions: [{ verb: "create", object: "a 1/1 white Soldier creature token", amount: "1", optional: false }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "attacks", subject: "Kate Stewart", control: "you" }, actions: [{ verb: "add-counter", object: "attacking creatures +X/+X", optional: true }] },
+  ];
+  const g = grammarClauseRecords(kate);
+  expect(g.complete).toBe(true);
+  const a = deriveCardTags(deriveInputOf(kate as never, "x", kate.name, stored as never));
+  const b = deriveCardTags(deriveInputOf(kate as never, "x", kate.name, g.records, undefined, g.readings));
+  expect(a.abilities.some((x) => x.trigger?.batched)).toBe(true);
+  expect(b.abilities.some((x) => x.trigger?.batched)).toBe(false);
+  expect(lostTriggerFlags(a.abilities, b.abilities)).toBe(true);
+});

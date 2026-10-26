@@ -5,7 +5,7 @@ import { isMainThread } from "node:worker_threads";
 import { serveWorker } from "@edh-seer/data/parallel";
 import { charsFrom, deriveInputOf } from "./derive-input.js";
 import { grammarClauseRecords } from "./grammar/clause-record.js";
-import { deriveDiff, lostAnimateFields, lostClaims } from "./grammar/derive-diff.js";
+import { deriveDiff, lostAnimateFields, lostClaims, lostTriggerFlags } from "./grammar/derive-diff.js";
 import triage from "../grammar-only-triage.json" with { type: "json" };
 import { deriveCardTags } from "./derive/derive.js";
 import type { CardClausesDoc, DerivedTagsDoc } from "./clause-store.js";
@@ -31,7 +31,8 @@ export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
       // A labelled difference switches only when the grammar claims at least what the stored answer
       // claims (`lostClaims`): the label was judged on a few cards, the guard holds for every card.
       const right = key !== null && (triage.groups as Record<string, { label: string }>)[key]?.label === "grammar right"
-        && lostClaims(tags.abilities, grammarTags.abilities).length === 0 && !lostAnimateFields(tags.abilities, grammarTags.abilities);
+        && lostClaims(tags.abilities, grammarTags.abilities).length === 0 && !lostAnimateFields(tags.abilities, grammarTags.abilities)
+        && !lostTriggerFlags(tags.abilities, grammarTags.abilities);
       if (key === null || right) return { tags: grammarTags, fromGrammar: true };
     }
   }

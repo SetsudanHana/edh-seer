@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Ability } from "../schema.js";
-import { deriveDiff, lostAnimateFields, lostClaims } from "./derive-diff.js";
+import { deriveDiff, lostAnimateFields, lostClaims, lostTriggerFlags } from "./derive-diff.js";
 
 const ab = (over: Partial<Ability>): Ability => ({ kind: "static", effect: { kind: "" }, clause: 1, ...over } as Ability);
 
@@ -48,4 +48,18 @@ test("a grammar animate that drops the stored animate's type, subtype or stats i
   expect(lostAnimateFields([ab({})], [grammar])).toBe(false);
   // Another clause's animate does not stand in.
   expect(lostAnimateFields([stored], [{ ...stored, clause: 2 } as Ability])).toBe(true);
+});
+
+test("a trigger flag the stored ability carries and the grammar's matching trigger lacks is lost: Kate Stewart's 'one or more' batch (#1349)", () => {
+  const trig = (extra: Record<string, unknown>, verbs = ["counter-added"]) => ab({ kind: "triggered", trigger: { verbs, subject: { control: "you", token: null }, ...extra } as never });
+  const stored = trig({ batched: true });
+  expect(lostTriggerFlags([stored], [trig({})])).toBe(true);
+  // The flag kept, or the stored side bare, loses nothing; the grammar having no such trigger at all is a loss too (refused, not guessed).
+  expect(lostTriggerFlags([stored], [trig({ batched: true })])).toBe(false);
+  expect(lostTriggerFlags([trig({})], [trig({ batched: true })])).toBe(false);
+  expect(lostTriggerFlags([stored], [trig({}, ["attacks"])])).toBe(true);
+  // An event-size bound is a flag too.
+  expect(lostTriggerFlags([trig({ amount: { op: "gte", value: 5 } }, ["combat-damage"])], [trig({}, ["combat-damage"])])).toBe(true);
+  // One batched trigger of two is not covered by the one the grammar kept.
+  expect(lostTriggerFlags([stored, stored], [trig({ batched: true }), trig({})])).toBe(true);
 });

@@ -117,3 +117,24 @@ export function lostAnimateFields(stored: readonly Ability[], grammar: readonly 
   return stored.some((a) => a.effect?.kind === "animate"
     && fields.some((f) => [...values([a], a.clause, f)].some((v) => !values(grammar, a.clause, f).has(v))));
 }
+
+/** THE TRIGGER FLAGS THE GRAMMAR DROPS (#1349 review). `lostClaims` compares effect kinds and emit verbs, so a labelled "grammar right" group can switch a card whose grammar
+ *  trigger lost a flag the stored one carries: Kate Stewart's "one or more time counters" is `batched` in the stored derive, and the grammar's bare counter-added trigger is not,
+ *  which `edge-magnitude` and `wincon` read as one firing per batch. True when, per trigger event (the verbs), the stored abilities carry more `batched` triggers, or more
+ *  event-size bounds (`amount`), than the grammar's. One-directional and narrow on purpose: a flag only the grammar carries is never a loss. */
+export function lostTriggerFlags(stored: readonly Ability[], grammar: readonly Ability[]): boolean {
+  const count = (abs: readonly Ability[], flag: "batched" | "amount"): Map<string, number> => {
+    const out = new Map<string, number>();
+    for (const a of abs) {
+      const t = a.trigger;
+      if (!t || t[flag] === undefined) continue;
+      const k = `${[...t.verbs].sort().join("+")}|${flag === "amount" ? json(t.amount) : ""}`;
+      out.set(k, (out.get(k) ?? 0) + 1);
+    }
+    return out;
+  };
+  return (["batched", "amount"] as const).some((flag) => {
+    const g = count(grammar, flag);
+    return [...count(stored, flag)].some(([k, n]) => n > (g.get(k) ?? 0));
+  });
+}

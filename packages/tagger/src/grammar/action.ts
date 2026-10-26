@@ -626,6 +626,8 @@ const MANA = /^(?:(?:\{[WUBRGCSX0-9/]+\})+(?:,? (?:or|and) (?:\{[WUBRGCSX0-9/]+\
  *  "an additional one mana of any color", "one mana of any type that land produced", "two mana of
  *  different colors", "X mana in any combination of {B} and/or {R}". The text keeps what it makes. */
 const MANA_ITEM = /^(?:an additional |that much |(?:two|three|four|five|six|seven|eight|nine|ten|x) )?(?:\{[WUBRGCSX0-9/]+\})+$|^(?:an additional )?(?:one|two|three|four|five|six|seven|eight|nine|ten|x|that much|that many)(?: additional)? mana (?:of|in) [^,]+$/i;
+/** A payment this grammar can drop: mana symbols (the MANA pattern above: colours, generic, X, hybrid) or energy. Not {D} (Boulder Jockey's land drop) or any other brace word. */
+const paysMana = (t: string): boolean => /^(?:\{E\})+$/.test(t) || (t.startsWith("{") && MANA.test(t));
 const manaOf = (t: string): boolean => MANA.test(t) || t.split(/,? or (?=\{|an? |one |two |three |x )/i).every((p) => MANA_ITEM.test(p.trim()));
 
 const MANA_TAP: Record<string, [string, Handler]> = {
@@ -1703,7 +1705,7 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     // "You may pay {1}. If you do, <effect>" (Wooden Sphere, Marooned): the payment records no action, as the store has it, and the effect after "If you do" is as
     // optional as the payment (`ifYouDoAfterMay`). Only a mana payment, and only with that reflexive sentence behind it: a payment nothing follows claims nothing here.
     // CEILING: the payment itself (its mana, its energy) is not recorded, as the store drops it too; the effect reads as optional but not as costing anything.
-    if (condition === undefined && /^you may pay (?:\{[^}]+\})+$/i.test(s) && /^if you do, /i.test(sentences[sentenceAt + 1]?.trim() ?? "")) continue;
+    if (condition === undefined && /^you may pay /i.test(s) && paysMana(s.slice("you may pay ".length)) && /^if you do, /i.test(sentences[sentenceAt + 1]?.trim() ?? "")) continue;
     // "You may reveal an artifact card from among them and put it into your hand" (Harald, Courageous Outrider): the dig's pick, read as the put it is
     // ("you may put an artifact card from among them into your hand"); the reveal is bookkeeping the store drops.
     const revealPick = /^you may reveal (.+) from among (them|those cards) and put (?:it|that card) into your hand$/i.exec(s);
