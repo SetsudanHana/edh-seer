@@ -70,7 +70,7 @@
   "packages/tagger/src/derive/recipient.ts": 3,
   "packages/tagger/src/derive/reduction.ts": 1,
   "packages/tagger/src/derive/repeats.ts": 1,
-  "packages/tagger/src/derive/replacement.ts": 4,
+  "packages/tagger/src/derive/replacement.ts": 5,
   "packages/tagger/src/derive/scaling.ts": 3,
   "packages/tagger/src/derive/subject.ts": 3,
   "packages/tagger/src/derive/threshold.ts": 2,

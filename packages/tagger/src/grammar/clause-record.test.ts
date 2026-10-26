@@ -4,6 +4,7 @@ import { deriveInputOf } from "../derive-input.js";
 import { grammarClauseRecords, phaseControl, triggerSubjectText } from "./clause-record.js";
 import { deriveDiff, lostClaims } from "./derive-diff.js";
 import { parseActions } from "./action.js";
+import { replacementOf } from "../derive/replacement.js";
 import { stationThresholdFor } from "../derive/threshold.js";
 import { effectText } from "./preamble.js";
 import { selfAsTilde, selfPronouns } from "./self-as-tilde.js";
@@ -1479,7 +1480,7 @@ test("a counter replacement that names no kind is the stored add-counter of its 
   const constrictor = parity(WINDING_CONSTRICTOR, STORED_WINDING_CONSTRICTOR as never);
   // The permanents the replacement hears ride in the words when the condition names them (derive reads the printed clause through the same grammar, so the stored records give the same).
   expect(constrictor.g.records.map((r) => r.actions![0]!.object)).toEqual(["that many plus one of each of those kinds of counters on an artifact or creature you control", "that many plus one of each of those kinds of counters"]);
-  expect(constrictor.b.abilities[0]!.emits![0]!.subject).toMatchObject({ control: "you", type: ["creature", "artifact"] });
+  expect(constrictor.b.abilities[0]!.trigger!.subject).toMatchObject({ control: "you", type: ["creature", "artifact"] });
   expect(deriveDiff(constrictor.a.abilities, constrictor.b.abilities)).toBeNull();
 });
 
@@ -1536,4 +1537,48 @@ test("Rise from the Nether stops at 'Mindless-One', a creature type the filter v
   // The count itself reads: the same sentence with a known type.
   const known = { ...RISE_FROM_THE_NETHER, oracleText: RISE_FROM_THE_NETHER.oracleText.replace("Mindless-One", "Rat") };
   expect(grammarClauseRecords(known).blocker).toBeUndefined();
+});
+
+// #1349 part 2, task C2 follow-up: the kind-less counter replacement (replacement.ts), derived from real cards.
+const VORINCLEX_MONSTROUS_RAIDER = {"name":"Vorinclex, Monstrous Raider","typeLine":"Legendary Creature — Phyrexian Praetor","keywords":["Haste","Trample"],"oracleText":"Trample, haste\nIf you would put one or more counters on a permanent or player, put twice that many of each of those kinds of counters on that permanent or player instead.\nIf an opponent would put one or more counters on a permanent or player, they put half that many of each of those kinds of counters on that permanent or player instead, rounded down."};
+const STORED_VORINCLEX_MONSTROUS_RAIDER = [{"id":1,"abilityType":"none","actions":[{"verb":"none","object":"Trample, haste","fromZone":null,"toZone":null}]},{"id":2,"abilityType":"static","actions":[{"verb":"add-counter","object":"twice that many of each of those kinds of counters","optional":false,"fromZone":null,"toZone":null}]},{"id":3,"abilityType":"static","actions":[{"verb":"add-counter","object":"half that many of each of those kinds of counters, rounded down","optional":false,"fromZone":null,"toZone":null}]}];
+const DOUBLING_SEASON = {"name":"Doubling Season","typeLine":"Enchantment","keywords":[],"oracleText":"If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.\nIf an effect would put one or more counters on a permanent you control, it puts twice that many of those counters on that permanent instead."};
+const STORED_DOUBLING_SEASON = [{"id":1,"abilityType":"static","actions":[{"verb":"create","object":"twice that many tokens","fromZone":null,"toZone":null,"amount":null,"optional":false}]},{"id":2,"abilityType":"static","actions":[{"verb":"add-counter","object":"twice that many counters","fromZone":null,"toZone":null,"amount":null,"optional":false}]}];
+
+const replacementsOf = (c: { name: string; typeLine: string; keywords: string[]; oracleText: string }, stored?: unknown[]) => {
+  const g = grammarClauseRecords(c);
+  const t = stored
+    ? deriveCardTags(deriveInputOf(c as never, "x", c.name, stored as never))
+    : deriveCardTags(deriveInputOf(c as never, "x", c.name, g.records, undefined, g.readings));
+  return t.abilities.filter((a) => a.replacement === true);
+};
+
+test("a counter replacement that names no kind is a replacement of counter-added with its change: Winding Constrictor (plus 1), Dr. M'Benga (times 2), Doubling Season's counters (times 2, its tokens unchanged)", () => {
+  const constrictor = replacementsOf(WINDING_CONSTRICTOR);
+  expect(constrictor).toHaveLength(1);
+  expect(constrictor[0]).toMatchObject({ clause: 1, change: { op: "plus", value: 1 }, trigger: { verbs: ["counter-added"], subject: { control: "you", type: ["creature", "artifact"] } } });
+  // No kind is invented: the subject carries no `counter`.
+  expect(constrictor[0]!.trigger!.subject.counter).toBeUndefined();
+  const mbenga = replacementsOf(DR_JOSEPH_M_BENGA);
+  expect(mbenga).toHaveLength(1);
+  expect(mbenga[0]).toMatchObject({ change: { op: "times", value: 2 }, trigger: { verbs: ["counter-added"], subject: { control: "you", type: "creature" } } });
+  const season = replacementsOf(DOUBLING_SEASON, STORED_DOUBLING_SEASON);
+  expect(season.map((a) => [a.clause, a.trigger!.verbs[0], a.change])).toEqual([[1, "create-token", { op: "times", value: 2 }], [2, "counter-added", { op: "times", value: 2 }]]);
+  expect(season[0]!.effect).toMatchObject({ kind: "token-doubling", tokenMultiplier: "twice" });
+});
+
+test("Vorinclex: its own counters are times 2; the halving for an opponent's counters is no times 2 and no replacement claim", () => {
+  const v = replacementsOf(VORINCLEX_MONSTROUS_RAIDER, STORED_VORINCLEX_MONSTROUS_RAIDER);
+  expect(v).toHaveLength(1);
+  expect(v[0]).toMatchObject({ clause: 2, change: { op: "times", value: 2 } });
+  // "a permanent or player": both halves of the subject, not permanents alone.
+  expect(v[0]!.trigger!.subject.anyOf).toEqual([{ type: "permanent" }, { player: true }]);
+  expect(replacementOf("If an opponent would put one or more counters on a permanent or player, they put half that many of each of those kinds of counters on that permanent or player instead, rounded down.")).toMatchObject({ restricted: true });
+  expect(replacementOf("If an opponent would put one or more counters on a permanent or player, they put half that many of each of those kinds of counters on that permanent or player instead, rounded down.")!.change).toBeUndefined();
+});
+
+test("Brad Boimler's replacement lasts until end of turn after he taps: it is not read as a standing counter replacement", () => {
+  // Read as one it would multiply every counter the deck places, while the card does so only after becoming tapped.
+  expect(replacementOf("Whenever Brad Boimler becomes tapped, until end of turn, if one or more counters would be put on a permanent you control, that many plus one of each of those kinds of counters are put on that permanent instead.")).toBeNull();
+  expect(replacementsOf(BRAD_BOIMLER_EAGER_ENSIGN)).toEqual([]);
 });

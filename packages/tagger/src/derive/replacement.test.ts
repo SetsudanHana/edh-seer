@@ -129,8 +129,14 @@ test("a replacement says how it changes the event: adds N, or multiplies by N", 
   expect(change("If a red instant or sorcery spell you control would deal damage to a permanent or player, it deals that much damage plus 2 to that permanent or player instead.")).toEqual({ op: "plus", value: 2 });
   expect(change("If one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 counters are put on it instead.")).toEqual({ op: "plus", value: 1 });
   expect(change("If you would create one or more Treasure tokens, instead create those tokens plus an additional Treasure token.")).toEqual({ op: "plus", value: 1 });
-  // Doc Samson's ACTIVE counter frame ("If you would put one or more counters on ...") matches no
-  // template at all, so it is not read as a replacement yet -- a gap in the templates, not here.
+  // The counter kind is optional (any kind), and the ACTIVE frame is a template of its own (Winding Constrictor, Pir, Dr. M'Benga, Doubling Season, Loading Zone).
+  expect(change("If one or more counters would be put on an artifact or creature you control, that many plus one of each of those kinds of counters are put on that permanent instead.")).toEqual({ op: "plus", value: 1 });
+  expect(change("If you would put one or more counters on a creature you control, put twice that many of each of those kinds of counters on that creature instead.")).toEqual({ op: "times", value: 2 });
+  expect(change("If an effect would put one or more counters on a permanent you control, it puts twice that many of those counters on that permanent instead.")).toEqual({ op: "times", value: 2 });
+  expect(replacementOf("If one or more counters would be put on a creature, Spacecraft, or Planet you control, twice that many of each of those kinds of counters are put on it instead.")?.subjectText).toBe("a creature, Spacecraft, or Planet you control");
+  expect(replacementOf("If one or more counters would be put on an artifact or creature you control, that many plus one of each of those kinds of counters are put on that permanent instead.")?.counter).toBeUndefined();
+  // ...and an effect's counters are everyone's, an opponent's are a restricted half.
+  expect(replacementOf("If an effect would put one or more counters on a permanent you control, it puts twice that many of those counters on that permanent instead.")?.restricted).toBeUndefined();
 });
 
 /** NO NUMBER, NO CHANGE: a count that is itself variable is not a size the filter can compare. */

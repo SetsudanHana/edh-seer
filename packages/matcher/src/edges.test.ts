@@ -859,6 +859,30 @@ test("a mismatched counter kind produces no edge", () => {
   expect(pairReasons(adder, loyalty, H).some((x) => x.tag.startsWith("counter-added"))).toBe(false);
 });
 
+// A KIND-LESS counter replacement (DERIVE row of Winding Constrictor, clause 1): it hears counter-added of ANY kind and nothing else.
+test("a kind-less counter replacement pairs with any counter placer and with nothing that is not a counter", () => {
+  const constrictor = base("Winding Constrictor", [{
+    kind: "static", repeats: "continuous", replacement: true, change: { op: "plus", value: 1 },
+    effect: { kind: "counter-placement" },
+    trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, type: ["creature", "artifact"] } },
+  }]);
+  const placer = (name: string, counter: string) => base(name, [{
+    kind: "triggered", repeats: "once",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: false, self: true } },
+    effect: { kind: "counter-placement", subject: { control: "you", token: null, type: "creature", counter } },
+    emits: [{ verb: "counter-added", subject: { control: "you", token: null, type: "creature", counter } }],
+  }]);
+  const heard = (p: ReturnType<typeof base>) => pairReasons(constrictor, p, H).some((x) => x.tag.startsWith("counter-added") && x.producer === "Winding Constrictor" && x.consumer === p.card.name);
+  // +1/+1 and another kind: both are counters (the reason runs replacement -> placer, as for Hardened Scales).
+  expect(heard(placer("Hydra", "+1/+1"))).toBe(true);
+  expect(heard(placer("Stunner", "stun"))).toBe(true);
+  // A card that only draws, and one that makes tokens, place no counters.
+  const drawer = base("Brainstormer", [{ kind: "on-cast", repeats: "once", effect: { kind: "draw-card", subject: { control: "you", token: null } }, emits: [{ verb: "draw", subject: { control: "you", token: null } }] }]);
+  const maker = base("Token Maker", [{ kind: "on-cast", repeats: "once", effect: { kind: "token-generation", subject: { control: "you", token: true, type: "creature" } }, emits: [{ verb: "create-token", subject: { control: "you", token: true, type: "creature" } }] }]);
+  expect(heard(drawer)).toBe(false);
+  expect(heard(maker)).toBe(false);
+});
+
 // Guard 1: an ability whose OWN emits already include counter-added is a producer of that state,
 // not a carer of it -- its effect.subject.counter describes what it places, not a condition it
 // benefits from. Shape lifted from Fathom Mage's real first ability (evolve: put a +1/+1 counter
