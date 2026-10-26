@@ -13,6 +13,7 @@ import type { DeckCard, Hierarchy } from "./types.js";
 
 const ASSERTED = new Set(["111.7", "114.1", "903.3", "712.8d"]);
 const TESTED: Record<string, string> = {
+  "721.2a": "lines.test.ts — a Station row's threshold counts charge counters, so a Station trigger row is no loop line (#1349)",
   "603.1": "partners-core.test.ts — a claimsNothing ability is still a triggered ability: a copier is offered the copies|triggered key (#1253)",
   "113.6": "implied.test.ts — a creature only under a condition enters, attacks and connects as no creature; its cast stays a creature spell (#797)",
   "118.6": "castability.test.ts — a card with no mana cost is refused; a {0} card and a multi-face card are not (#978)",

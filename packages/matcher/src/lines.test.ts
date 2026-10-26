@@ -167,6 +167,12 @@ describe("detectLines", () => {
     expect(linesOf([calendar])).toHaveLength(1);
   });
 
+  test("a Station row's threshold counts charge counters, not firings: a constructed Station trigger row is no line, the same abilities without the Station line are", () => {
+    const row = (oracleText: string) => ({ ...calendar, card: { name: "Test Craft", oracleText } }) as unknown as DeckCard;
+    expect(linesOf([row("Station (Tap another creature you control: Put charge counters equal to its power on this Spacecraft.)\n5+ | Whenever a time counter is put on you, sacrifice this Spacecraft.")])).toEqual([]);
+    expect(linesOf([row("Whenever a time counter is put on you, sacrifice this Spacecraft.")])).toHaveLength(1);
+  });
+
   test("Gogo joins the piece set as unproven copy supply", () => {
     const [l] = linesOf([calendar, gogo]);
     const g = l.pieces.find((p) => p.card === "Gogo, Master of Mimicry");

@@ -373,7 +373,7 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     const type = labelled ? "activated" : c.abilityType ?? "static";
     const record: ClauseRecord = { id: c.id, abilityType: type, actions: [] };
     // A SAGA CHAPTER ("I, II — ...") is fired by the lore counter reaching its number (CR 714.2b: "{rN}—[Effect]"), not by an event the trigger
-    // grammar reads: the store writes `{event: "chapter", subject: <the marker>, control: "you"}` and derive reads the event as "once" (repeats.ts).
+    // grammar reads: the store writes `{event: "chapter", subject: "chapter <marker>", control: "you"}` (385 of 571 stored chapters; 186 write the bare marker) and derive reads the event as "once" (repeats.ts).
     // A chapter whose text OPENS with a trigger word ("II, III — Whenever you cast a noncreature spell this turn, ...") keeps its printed
     // trigger, as before: the store has that chapter's trigger as the cast, not the chapter.
     // CEILING: a chapter that states a trigger further in ("III — Until end of turn, whenever a Salamander deals combat damage to a player,
@@ -393,7 +393,7 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     const reflexiveChapter = c.kind === "chapter" && c.marker === undefined && type === "triggered" && /^(?:when you do,|at the beginning of the next )/i.test(c.text);
     const parentMarker = reflexiveChapter ? [...clauses].reverse().find((p) => p.id < c.id && p.kind === "chapter" && p.marker !== undefined)?.marker : undefined;
     const chapterOnly = bareChapter || (reflexiveChapter && parentMarker !== undefined);
-    if (chapterOnly) record.trigger = { event: "chapter", subject: c.marker ?? parentMarker!, control: "you" };
+    if (chapterOnly) record.trigger = { event: "chapter", subject: `chapter ${c.marker ?? parentMarker!}`, control: "you" };
     // A MODE of a triggered modal ability is typed triggered (the store's convention) but has no trigger of
     // its own: the parent's trigger is its trigger. Only a mode that prints its own ("When ..., ...") reads one.
     if (!chapterOnly && type === "triggered" && !(c.kind === "mode" && !/^\s*(?:whenever|when|at the beginning of|at end of)\b/i.test(c.text))) {

@@ -243,6 +243,10 @@ export function detectLines(deck: readonly DeckCard[], hierarchy: Hierarchy): De
     for (const a of abilities) {
       const threshold = a.threshold?.atLeast;
       if (typeof threshold !== "number" || !a.trigger) continue;
+      // A STATION ROW'S THRESHOLD COUNTS THE CARD'S OWN CHARGE COUNTERS (CR 721.2a), not how often its trigger fires: "5+ | Whenever a creature enters ..."
+      // is not a line that needs five entries. CEILING: every threshold on a Station card is skipped, including a printed numeric condition of its own
+      // (derive keeps one slot per ability, and none of the 42 Station cards prints one beside the bar).
+      if (/^Station\b/m.test(dc.card.oracleText ?? "")) continue;
       const key = triggerKey(a.trigger);
       if (seen.has(key)) continue;
       seen.add(key);

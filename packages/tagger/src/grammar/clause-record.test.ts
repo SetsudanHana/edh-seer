@@ -3,6 +3,7 @@ import { deriveCardTags } from "../derive/derive.js";
 import { deriveInputOf } from "../derive-input.js";
 import { grammarClauseRecords, phaseControl, triggerSubjectText } from "./clause-record.js";
 import { deriveDiff, lostClaims } from "./derive-diff.js";
+import { stationThresholdFor } from "../derive/threshold.js";
 import { effectText } from "./preamble.js";
 import { selfAsTilde, selfPronouns } from "./self-as-tilde.js";
 
@@ -926,7 +927,7 @@ test("a Saga chapter is a triggered clause on the event 'chapter', its marker th
   expect(g.complete).toBe(true);
   // The reminder line is the store's inert record; the chapter is one triggered record with the marker as its subject.
   expect(g.records[0]).toMatchObject({ id: 1, abilityType: "none" });
-  expect(g.records[1]).toMatchObject({ id: 2, abilityType: "triggered", trigger: { event: "chapter", subject: "I, II, III", control: "you" } });
+  expect(g.records[1]).toMatchObject({ id: 2, abilityType: "triggered", trigger: { event: "chapter", subject: "chapter I, II, III", control: "you" } });
   expect(g.records[1]!.actions!.map((a) => a.verb)).toEqual(["draw", "deal-damage"]);
 });
 
@@ -946,7 +947,7 @@ test("a Station threshold row reads past its 'N+ |' bar: D-7 Battle Cruiser's tr
 test("Those Old Scientists: a reminder wrapped mid-sentence is one reminder line; the next blocker is chapter III's 'choose up to two target cards'", () => {
   const g = grammarClauseRecords({ name: "Those Old Scientists", typeLine: "Enchantment \u2014 Saga", keywords: [], oracleText: "(As this Saga enters and after your draw\nstep, add a lore counter. Sacrifice after III.)\nI \u2014 Draw two cards, then discard two cards.\nII \u2014 Return up to one target artifact, instant, or sorcery card from your graveyard to your hand.\nIII \u2014 Choose up to two target cards in graveyards. The owners of those cards shuffle them into their libraries." });
   expect(g.records[0]).toMatchObject({ id: 1, abilityType: "none" });
-  expect(g.records.filter((r) => r.trigger?.event === "chapter").map((r) => r.trigger!.subject)).toEqual(["I", "II"]);
+  expect(g.records.filter((r) => r.trigger?.event === "chapter").map((r) => r.trigger!.subject)).toEqual(["chapter I", "chapter II"]);
   expect(g.blocker).toEqual({ clause: 4, kind: "action", phrase: "choose up to two target cards in graveyards" });
 });
 
@@ -961,20 +962,20 @@ test("a chapter that states its trigger mid-sentence is refused, never read as a
 test("a chapter's reflexive 'When you do' is the chapter's own ability, once: Kraven's Last Hunt", () => {
   const g = grammarClauseRecords({ name: "Kraven's Last Hunt", typeLine: "Enchantment \u2014 Saga", keywords: [], oracleText: "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI \u2014 Mill five cards. When you do, this Saga deals damage equal to the greatest power among creature cards in your graveyard to target creature.\nII \u2014 Target creature you control gets +2/+2 until end of turn.\nIII \u2014 Return target creature card from your graveyard to your hand." });
   expect(g.blocker).toBeUndefined();
-  expect(g.records.filter((r) => r.trigger?.event === "chapter").map((r) => `${r.id}:${r.trigger!.subject}`)).toEqual(["2:I", "3:I", "4:II", "5:III"]);
+  expect(g.records.filter((r) => r.trigger?.event === "chapter").map((r) => `${r.id}:${r.trigger!.subject}`)).toEqual(["2:chapter I", "3:chapter I", "4:chapter II", "5:chapter III"]);
   const tags = deriveCardTags(deriveInputOf({ name: "Kraven's Last Hunt", typeLine: "Enchantment \u2014 Saga", keywords: [] } as never, "x", "Kraven's Last Hunt", g.records, undefined, g.readings));
   expect(tags.abilities.filter((a) => a.effect.kind === "damage").map((a) => a.repeats)).toEqual(["once"]);
 });
 
 test("Saga and Station parity: the grammar's records derive what the stored (bought) clauses derive (The Eldest Reborn, Eternity Elevator-shaped trigger rows)", () => {
-  // The Eldest Reborn, stored clauses as bought (Mongo cardClauses, 2026-10-26).
+  // The Eldest Reborn's clauses in the store's commoner shape (385 of 571 stored chapters write "chapter I"; Eldest Reborn itself has the bare "I", which derive reads the same).
   const card = { name: "The Eldest Reborn", typeLine: "Enchantment \u2014 Saga", keywords: [] as string[], oracleText: "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI \u2014 Each opponent sacrifices a creature or planeswalker of their choice.\nII \u2014 Each opponent discards a card.\nIII \u2014 Put target creature or planeswalker card from a graveyard onto the battlefield under your control." };
   const act = (verb: string, object: string, fromZone: string | null = null, toZone: string | null = null) => [{ verb, object, fromZone, toZone, amount: null, optional: false }];
   const stored = [
     { id: 1, abilityType: "none", actions: [{ verb: "none", object: "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)" }] },
-    { id: 2, abilityType: "triggered", trigger: { event: "chapter", subject: "I", control: "you" }, actions: act("sacrifice", "a creature or planeswalker of their choice") },
-    { id: 3, abilityType: "triggered", trigger: { event: "chapter", subject: "II", control: "you" }, actions: act("discard", "a card") },
-    { id: 4, abilityType: "triggered", trigger: { event: "chapter", subject: "III", control: "you" }, actions: act("put", "target creature or planeswalker card", "graveyard", "battlefield") },
+    { id: 2, abilityType: "triggered", trigger: { event: "chapter", subject: "chapter I", control: "you" }, actions: act("sacrifice", "a creature or planeswalker of their choice") },
+    { id: 3, abilityType: "triggered", trigger: { event: "chapter", subject: "chapter II", control: "you" }, actions: act("discard", "a card") },
+    { id: 4, abilityType: "triggered", trigger: { event: "chapter", subject: "chapter III", control: "you" }, actions: act("put", "target creature or planeswalker card", "graveyard", "battlefield") },
   ];
   const g = grammarClauseRecords(card);
   expect(g.complete).toBe(true);
@@ -1033,7 +1034,38 @@ test("a Station row's keyword list derives ONE gated keyword-grant, not one per 
   expect(grants[0]).toMatchObject({ grants: ["deathtouch", "flying"], threshold: { atLeast: 8 } });
 });
 
-test("a d20 table's '15+ |' row is a roll result, not a Station charge count: Gale's Redirection has no threshold", () => {
-  const { tags } = deriveGrammar("Gale's Redirection", "Instant", "Exile target spell, then roll a d20 and add that spell's mana value.\n1—14 | You may cast the exiled card for as long as it remains exiled, and you may spend mana as though it were mana of any color to cast that spell.\n15+ | You may cast the exiled card without paying its mana cost for as long as it remains exiled.");
-  expect(tags.abilities.some((a) => a.threshold !== undefined)).toBe(false);
+test("a d20 table's '15+ |' row is a roll result, not a Station charge count; a Station card's bar is its N (stationThresholdFor)", () => {
+  const gale = "Exile target spell, then roll a d20 and add that spell's mana value.\n1\u201414 | You may cast the exiled card for as long as it remains exiled, and you may spend mana as though it were mana of any color to cast that spell.\n15+ | You may cast the exiled card without paying its mana cost for as long as it remains exiled.";
+  expect(stationThresholdFor("15+ | You may cast the exiled card without paying its mana cost for as long as it remains exiled.", gale)).toBeUndefined();
+  expect(stationThresholdFor("1\u201414 | You may cast the exiled card for as long as it remains exiled", gale)).toBeUndefined();
+  expect(stationThresholdFor("3+ | At the beginning of combat on your turn, create a 2/1 red Klingon Warrior creature token with haste. Sacrifice it at the beginning of the next end step.", D7.oracleText)).toEqual({ atLeast: 3 });
+});
+
+const ENTROPIC = { name: "Entropic Battlecruiser", typeLine: "Artifact \u2014 Spacecraft", keywords: ["Station"], oracleText: "Station (Tap another creature you control: Put charge counters equal to its power on this Spacecraft. Station only as a sorcery. It's an artifact creature at 8+.)\n1+ | Whenever an opponent discards a card, they lose 3 life.\n8+ | Flying, deathtouch\nWhenever this Spacecraft attacks, each opponent discards a card. Each opponent who can't loses 3 life." };
+
+test("every line under a Station bar takes its N until the next bar: Entropic Battlecruiser's attack trigger is gated at 8, its first row at 1 (CR 721.2)", () => {
+  const act = (verb: string, object: string, amount: string | null = null) => [{ verb, object, fromZone: null, toZone: null, amount, optional: false }];
+  // Stored clauses as bought (Mongo cardClauses, 2026-10-26).
+  const stored = [
+    { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Station" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "discarded", subject: "a card", control: "opponent" }, actions: act("lose-life", "opponent", "3") },
+    { id: 3, abilityType: "static", actions: [...act("grant-ability", "flying"), ...act("grant-ability", "deathtouch")] },
+    { id: 4, abilityType: "triggered", trigger: { event: "attacks", subject: "this Spacecraft", control: "you" }, actions: [...act("discard", "a card"), ...act("lose-life", "each opponent who can't discard", "3")] },
+  ];
+  const tags = deriveCardTags(deriveInputOf(ENTROPIC as never, "x", ENTROPIC.name, stored as never));
+  const at = (clause: number) => [...new Set(tags.abilities.filter((a) => a.clause === clause).map((a) => a.threshold?.atLeast))];
+  expect(at(2)).toEqual([1]);
+  expect(at(3)).toEqual([8]);
+  expect(at(4)).toEqual([8]);
+});
+
+test("lines BEFORE a Station card's first bar get no threshold, the lines after it do: The Seriema", () => {
+  const seriema = { name: "The Seriema", typeLine: "Legendary Artifact \u2014 Spacecraft", keywords: ["Station"], oracleText: "When The Seriema enters, search your library for a legendary creature card, reveal it, put it into your hand, then shuffle.\nStation (Tap another creature you control: Put charge counters equal to its power on this Spacecraft. Station only as a sorcery. It's an artifact creature at 7+.)\n7+ | Flying\nOther tapped legendary creatures you control have indestructible." };
+  const g = grammarClauseRecords(seriema);
+  const tags = deriveCardTags(deriveInputOf(seriema as never, "x", seriema.name, g.records, undefined, g.readings));
+  expect(tags.abilities.filter((a) => a.clause === 1).length).toBeGreaterThan(0);
+  expect(tags.abilities.filter((a) => a.clause === 1).every((a) => a.threshold === undefined)).toBe(true);
+  const after = tags.abilities.filter((a) => (a.clause ?? 0) >= 3);
+  expect(after.length).toBeGreaterThan(0);
+  expect(after.every((a) => a.threshold?.atLeast === 7)).toBe(true);
 });
