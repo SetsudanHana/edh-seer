@@ -118,7 +118,11 @@ export function lostSubjectFields(stored: readonly Ability[], grammar: readonly 
   const lost = new Set<string>();
   for (const a of stored) {
     const kind = a.effect?.kind;
-    if (!kind || !grammar.some((g) => g.clause === a.clause && g.effect?.kind === kind)) continue;
+    const same = grammar.filter((g) => g.clause === a.clause && g.effect?.kind === kind);
+    // Derive drops a subject when the recipient is the card itself (Goddric's "is a Dragon ... and \"{R}: Dragons you control get +1/+0\"": the grant is Goddric's, and the stored
+    // subject {subtype dragon, scope all} is the quoted ability's own class read as the recipient, a self-reference defect). A grammar effect with no subject at all holds nothing to
+    // compare; Hubris' bounce, Savage Offensive's pump and Aether Rift's recursion carry subjects and stay compared.
+    if (same.every((g) => g.effect.subject === undefined)) continue;
     for (const f of SUBJECT_FIELDS) {
       const have = values(grammar, a.clause, kind, f);
       // CEILING: two stored animate types that are not part of the result are met by ANY type the grammar's animate carries. The umbrella "permanent" (Opal Guardian's "this permanent as a 3/4

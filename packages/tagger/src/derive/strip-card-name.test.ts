@@ -23,3 +23,17 @@ test("Command Tower: 'commander's color identity' is not cut to \"er's\" by the 
   const tags = deriveCardTags(deriveInputOf(card, "x", card.name, g.records, undefined, g.readings));
   expect(tags.abilities.find((a) => a.effect.kind === "mana-generation")?.effect.subject).toMatchObject({ commander: true });
 });
+
+// The possessive of the card's own name is the name (Beast of Burden's, Faerie Swarm's): left in, the stored derive read it as a class and gave a static pump on {subtype faerie, scope each}.
+test("a possessive of the whole name is stripped: Beast of Burden's", () => {
+  expect(stripCardName("Beast of Burden's power and toughness", "Beast of Burden")).toBe("'s power and toughness");
+  expect(stripCardName("Faerie Swarm's power and toughness", "Faerie Swarm")).toBe("'s power and toughness");
+  expect(stripCardName("Burden's end", "Beast of Burden")).toBe("Burden's end");
+});
+
+test("Faerie Swarm derives no subtype-faerie class subject from its own name", () => {
+  const card = { name: "Faerie Swarm", typeLine: "Creature — Faerie", oracleText: "Flying\nFaerie Swarm's power and toughness are each equal to the number of blue permanents you control.", keywords: ["Flying"] };
+  const g = grammarClauseRecords(card);
+  const tags = deriveCardTags(deriveInputOf(card, "x", card.name, g.records, undefined, g.readings));
+  expect(tags.abilities.filter((a) => a.effect.subject?.subtype !== undefined && a.effect.subject.self !== true)).toEqual([]);
+});

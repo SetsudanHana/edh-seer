@@ -1056,8 +1056,8 @@ export function stripCardName(text: string, cardName?: string): string {
   let out = text;
   for (const f of [...forms].filter((f) => f !== "").sort((a, b) => b.length - a.length)) {
     // WORD-BOUND (#1352 review): "Command Tower" stripped "Command" out of "commander's" ("er's"), "Me, the Immortal" took the "me" out of "menace", "Chant of the Skifsang" the
-    // "en" out of "enchanted", "I Am Iron Man" every "i" out of "artifact". A name is whole words, as `selfAsTilde` bounds it.
-    out = out.replace(new RegExp(`(?<![\\w'])${f.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\w'])`, "gi"), " ");
+    // "en" out of "enchanted", "I Am Iron Man" every "i" out of "artifact". A name is whole words, as `selfAsTilde` bounds it, and its possessive ("Beast of Burden's") is still the name.
+    out = out.replace(new RegExp(`(?<![\\w'])${f.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?!\\w|'(?!s\\b))`, "gi"), " ");
   }
   return out.replace(/\s+/g, " ").trim();
 }

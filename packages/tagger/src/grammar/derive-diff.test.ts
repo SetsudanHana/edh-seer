@@ -64,12 +64,12 @@ test("a clause where the grammar has no effect of the stored kind is not a lost 
 test("a lost field on ANY effect kind is refused, paired by clause and kind, not by position (#1352)", () => {
   const grant = (subject: Record<string, unknown> | undefined, clause = 2) => ab({ clause, effect: { kind: "keyword-grant", ...(subject ? { subject } : {}) } as never });
   const stored = grant({ control: "any", token: null, subtype: "dragon", scope: "all" });
-  expect(lostSubjectFields([stored], [grant(undefined)])).toEqual(["keyword-grant:subtype"]);
+  expect(lostSubjectFields([stored], [grant({ control: "any", token: null })])).toEqual(["keyword-grant:subtype"]);
   // The same subtype on ANOTHER ability of the same kind in that clause stands in, whatever the order.
   expect(lostSubjectFields([stored], [grant(undefined), grant({ control: "any", token: null, subtype: "dragon" })])).toEqual([]);
   expect(lostSubjectFields([grant(undefined), stored], [grant({ control: "any", token: null, subtype: "dragon" }), grant(undefined)])).toEqual([]);
   // A different clause does not stand in.
-  expect(lostSubjectFields([stored], [grant(undefined), grant({ control: "any", token: null, subtype: "dragon" }, 3)])).toEqual(["keyword-grant:subtype"]);
+  expect(lostSubjectFields([stored], [grant({ control: "any", token: null }), grant({ control: "any", token: null, subtype: "dragon" }, 3)])).toEqual(["keyword-grant:subtype"]);
   // A non-animate loss: Hubris' "all Auras attached to it" bounce, whose subtype the grammar drops, and a token's keyword.
   const bounce = (subject: Record<string, unknown>) => ab({ effect: { kind: "bounce", subject } as never });
   expect(lostSubjectFields([bounce({ control: "any", token: null, type: "creature" }), bounce({ control: "any", token: null, subtype: "aura", scope: "all" })], [bounce({ control: "any", token: null, type: "creature" })]))
@@ -136,4 +136,15 @@ test("a grammar effect that drops a stored amount defined by a count is refused,
   expect(lostScaledAmount([coils], [animate({}, 2)])).toEqual([]);
   expect(lostScaledAmount([animate({ amount: "2" })], [animate({})])).toEqual([]);
   expect(lostScaledAmount([animate({})], [coils])).toEqual([]);
+});
+
+// Goddric, Cloaked Reveler: the stored keyword-grant's subject {subtype dragon, scope all} is the quoted "{R}: Dragons you control get +1/+0" read as the recipient; the grant is the card's own,
+// and derive keeps no subject for it. A grammar effect with no subject holds nothing to compare; one that carries a subject is still compared (Hubris' bounce).
+test("a grammar effect with no subject at all is not a lost field (Goddric); one with a subject is (Hubris)", () => {
+  const grant = (subject?: Record<string, unknown>) => ab({ clause: 2, effect: { kind: "keyword-grant", ...(subject ? { subject } : {}) } as never });
+  const storedGoddric = grant({ control: "you", token: null, subtype: "dragon", scope: "all", abilityKind: ["activated"] });
+  expect(lostSubjectFields([storedGoddric], [grant()])).toEqual([]);
+  expect(lostSubjectFields([storedGoddric], [grant({ control: "you", token: null })])).toEqual(["keyword-grant:subtype"]);
+  const bounce = (subject: Record<string, unknown>) => ab({ effect: { kind: "bounce", subject } as never });
+  expect(lostSubjectFields([bounce({ control: "any", token: null, subtype: "aura", scope: "all" })], [bounce({ control: "any", token: null, type: "creature" })])).toEqual(["bounce:subtype"]);
 });
