@@ -148,7 +148,8 @@ function objectWordsOf(r: ActionReading): string {
   // Not the "to" of "up to four target cards" (Stream of Consciousness).
   // Not "from their graveyard": where it comes from is part of the object, as the store writes it (Exhume).
   // Not the "to" of "up to four target cards" (Stream of Consciousness, Wakka).
-  const at = p.search(/ (?:onto|into|on top of|on the bottom of) |(?<!\bup) to /);
+  // ...and "on the bottom" with no library after it ("Put the rest on the bottom in a random order", There's Coffee in that Nebula): where the rest goes, not which cards.
+  const at = p.search(/ (?:onto|into|on top of|on the bottom(?: of)?) |(?<!\bup) to /);
   return (at > 0 ? p.slice(0, at) : p).replace(/ (?:tapped|face down)$/, "");
 }
 
@@ -157,7 +158,8 @@ function objectWordsOf(r: ActionReading): string {
 function unlessOf(condition: string | undefined): Action["unless"] | undefined {
   const m = condition ? /(?:^|, )unless (.+?) (?:pays?) (.+)$/i.exec(condition) : null;
   // "unless that player pays {1}" (Rhystic Study): the opponent the trigger named.
-  return m ? { cost: m[2]!.trim(), payer: /^you$/i.test(m[1]!) ? "you" : /^(?:that player|that opponent|they)$/i.test(m[1]!) ? "opponent" : "controller" } : undefined;
+  // "unless any player pays {1}" (Rhystic Cave) is anyone's payment, which the schema's closed set names "any" (and the stored answer writes).
+  return m ? { cost: m[2]!.trim(), payer: /^you$/i.test(m[1]!) ? "you" : /^(?:that player|that opponent|they)$/i.test(m[1]!) ? "opponent" : /^any player$/i.test(m[1]!) ? "any" : "controller" } : undefined;
 }
 
 /** The count an object's words state when the reading carries none, as the store writes it: "the top

@@ -494,13 +494,14 @@ test("a modal parent reads as the store records it: the trigger, no action, and 
   expect(tea.complete).toBe(true);
   expect(tea.records.map((r) => r.abilityType)).toEqual(["triggered", "activated", "activated", "activated"]);
   const vger = grammarClauseRecords({ name: "V'Ger, the Intruder", typeLine: "Legendary Artifact Creature — Construct", keywords: ["Flying"], oracleText: "Flying\nWhenever V'Ger enters or attacks, choose one —\n• Look at target opponent's hand, then draw a card.\n• Creatures your opponents control get -1/-0 until your next turn." });
-  // V'Ger's intro reads; the card still waits on its second mode's "look at target opponent's hand".
-  expect(vger.blocker).toMatchObject({ clause: 3, kind: "action", phrase: "look at target opponent's hand" });
+  // V'Ger's intro reads, and since #1349 task C1 so does its first mode's "look at target opponent's hand" (a look claims nothing; the draw after it stays).
+  expect(vger.blocker).toBeUndefined();
   expect(vger.records[1]).toMatchObject({ id: 2, trigger: { event: "enters" }, actions: [{ verb: "none" }] });
 });
 
 test("a choice that is not a modal intro is still unread", () => {
-  for (const text of ["When this land enters, choose a color.", "When this creature enters, choose a creature type.", "When this creature enters, choose one of them at random."]) {
+  // ("choose a color" left this list in #1349 task C1: the store drops that choice, and the later words carry the reference.)
+  for (const text of ["When this creature enters, choose a creature type.", "When this creature enters, choose one of them at random."]) {
     const g = grammarClauseRecords({ name: "X", typeLine: "Creature — Elf", oracleText: text });
     expect(g.complete, text).toBe(false);
     expect(g.blocker, text).toMatchObject({ clause: 1, kind: "action" });
@@ -1228,4 +1229,160 @@ test("the dilemma emit is instant speed where its sibling emits are: an Instant'
   expect(amp[0]!.emits![0]!.instantSpeed).toBeUndefined();
   const prince = dilemmaEmits({ name: "Charming Prince", typeLine: "Creature — Human Noble", keywords: ["Scry"], oracleText: "When this creature enters, choose one —\n• Scry 2.\n• You gain 3 life.\n• Exile another target creature you own. Return it to the battlefield under your control at the beginning of the next end step." });
   expect(prince[0]!.emits![0]!.instantSpeed).toBeUndefined();
+});
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------
+// General grammar phrases, group 1 (#1349 part 2, task C1): paying, looking, revealing, choosing. Each prints on older cards with a bought answer, whose stored
+// clauses are the parity test (copied from Mongo `cardClauses`, 2026-10-26). Oracle text is real (Mongo `cards`).
+const stat = (c: { name: string; typeLine: string; keywords: string[]; oracleText: string }, stored: unknown[]) => {
+  const g = grammarClauseRecords(c);
+  const a = deriveCardTags(deriveInputOf(c as never, "x", c.name, stored as never));
+  const b = deriveCardTags(deriveInputOf(c as never, "x", c.name, g.records, undefined, g.readings));
+  return { g, a, b };
+};
+
+const ANTAGONIST_INCORPORATOR = {"name": "Antagonist Incorporator", "typeLine": "Artifact Creature — Borg", "keywords": [], "oracleText": "Artifact creatures you control have \"Whenever this creature deals combat damage to a player, you may pay {1}. If you do, create a 1/1 colorless Borg artifact creature token.\""};
+const MAROONED = {"name": "Marooned", "typeLine": "Enchantment — Aura", "keywords": ["Enchant"], "oracleText": "Enchant artifact or creature\nWhen this Aura enters, you may pay {3}. If you do, tap enchanted permanent.\nEnchanted permanent doesn't untap during its controller's untap step and can't be beamed up."};
+const BENJAMIN_SISKO__BESIEGED = {"name": "Benjamin Sisko, Besieged", "typeLine": "Legendary Creature — Human Officer", "keywords": [], "oracleText": "Play with the top card of your library revealed.\nYou may play lands and cast creature spells from the top of your library."};
+const CAPTAIN_PIKE__FULLNESS_OF_TIME = {"name": "Captain Pike, Fullness of Time", "typeLine": "Legendary Creature — Human Officer Scout", "keywords": ["Strange new worlds"], "oracleText": "Strange new worlds — Captain Pike's power and toughness are each equal to the number of differently named lands you control.\nYou may look at the top card of your library any time.\nYou may play lands from the top of your library."};
+const DEEP_SPACE_SCAN = {"name": "Deep Space Scan", "typeLine": "Sorcery", "keywords": ["Strange new worlds"], "oracleText": "Strange new worlds — Draw X cards, where X is the number of differently named lands you control. You have no maximum hand size until your next turn."};
+const LIVE_LONG_AND_PROSPER = {"name": "Live Long and Prosper", "typeLine": "Sorcery", "keywords": ["Double"], "oracleText": "This spell can't be countered.\nDouble your life total. Draw cards equal to the number of cards in your hand. You have no maximum hand size until your next turn."};
+const NYOTA_UHURA__COMMUNICATIONS = {"name": "Nyota Uhura, Communications", "typeLine": "Legendary Creature — Human Officer", "keywords": [], "oracleText": "Hailing Frequencies — As Nyota Uhura enters, choose a number between 0 and 10.\nOpen a Channel — Whenever an opponent casts a spell with mana value equal to the chosen number, you draw a card."};
+const RUTHERFORD__UPGRADED_ENSIGN = {"name": "Rutherford, Upgraded Ensign", "typeLine": "Legendary Creature — Human Artificer", "keywords": [], "oracleText": "When Rutherford enters, look at the top six cards of your library. You may reveal an artifact card from among them and put it into your hand. Put the rest on the bottom of your library in a random order.\nWhenever you cast a Spacecraft spell, put a +1/+1 counter on target creature."};
+const SPOCK__ALWAYS_YOUR_FRIEND = {"name": "Spock, Always Your Friend", "typeLine": "Legendary Creature — Vulcan Human Scientist", "keywords": [], "oracleText": "When Spock enters, look at the top four cards of your library. You may reveal a noncreature, nonland card from among them and put it into your hand. Put the rest on the bottom of your library in any order."};
+const THERE_S_COFFEE_IN_THAT_NEBULA = {"name": "There's Coffee in that Nebula", "typeLine": "Sorcery", "keywords": [], "oracleText": "Look at the top five cards of your library. You may reveal a Plains card or nonland permanent card with mana value 3 or less from among them and put it into your hand. Put the rest on the bottom in a random order.\nBeam me up {2}{W} (You may cast this card from your graveyard for {2}{W} if you also return a creature you control to its owner's hand. Then exile this spell.)"};
+const V_GER__THE_INTRUDER = {"name": "V'Ger, the Intruder", "typeLine": "Legendary Artifact Creature — Construct", "keywords": ["Flying"], "oracleText": "Flying\nWhenever V'Ger enters or attacks, choose one —\n• Look at target opponent's hand, then draw a card.\n• Creatures your opponents control get -1/-0 until your next turn."};
+const SALT_VAMPIRE = {"name": "Salt Vampire", "typeLine": "Creature — Vampire Shapeshifter", "keywords": ["Lifelink"], "oracleText": "Lifelink\nWhen this creature enters, look at target opponent's hand. You may choose a nonland card from it. If you do, that player exiles that card, then draws a card."};
+const ZERO__INCORPOREAL_SENSATE = {"name": "Zero, Incorporeal Sensate", "typeLine": "Legendary Artifact Creature — Medusan Scientist", "keywords": ["Lifelink"], "oracleText": "Lifelink\nWhen Zero enters, look at target opponent's hand. You may exile a nonland card from it. For as long as that card remains exiled, its owner may play it. A spell cast this way costs {2} more to cast."};
+const STARFLEET_ACADEMY = {"name": "Starfleet Academy", "typeLine": "Legendary Land", "keywords": [], "oracleText": "{T}: Add {C}.\nFederation — {5}, {T}: Choose a color. Add an amount of mana of that color equal to the number of creature types among non-Borg creatures you control."};
+const SUNSTREAK_PHOENIX = {"name": "Sunstreak Phoenix", "typeLine": "Creature — Phoenix", "keywords": ["Flying"], "oracleText": "Flying\nIf it's neither day nor night, it becomes day as this creature enters.\nWhenever day becomes night or night becomes day, you may pay {1}{R}. If you do, return this card from your graveyard to the battlefield tapped."};
+const WOODEN_SPHERE = {"name": "Wooden Sphere", "typeLine": "Artifact", "keywords": [], "oracleText": "Whenever a player casts a green spell, you may pay {1}. If you do, you gain 1 life."};
+const INGENIOUS_THIEF = {"name": "Ingenious Thief", "typeLine": "Creature — Human Rogue", "keywords": ["Flying"], "oracleText": "Flying\nWhen this creature enters, look at target player's hand."};
+const SORCEROUS_SIGHT = {"name": "Sorcerous Sight", "typeLine": "Sorcery", "keywords": [], "oracleText": "Look at target opponent's hand.\nDraw a card."};
+const SKALLA_WOLF = {"name": "Skalla Wolf", "typeLine": "Creature — Wolf Spirit", "keywords": [], "oracleText": "When this creature enters, look at the top five cards of your library. You may reveal a green card from among them and put it into your hand. Put the rest on the bottom of your library in a random order."};
+const GRACEFUL_ADEPT = {"name": "Graceful Adept", "typeLine": "Creature — Human Wizard", "keywords": [], "oracleText": "You have no maximum hand size."};
+const ENTER_THE_INFINITE = {"name": "Enter the Infinite", "typeLine": "Sorcery", "keywords": [], "oracleText": "Draw cards equal to the number of cards in your library, then put a card from your hand on top of your library. You have no maximum hand size until your next turn."};
+const ASSEMBLE_THE_PLAYERS = {"name": "Assemble the Players", "typeLine": "Enchantment", "keywords": [], "oracleText": "You may look at the top card of your library any time.\nOnce each turn, you may cast a creature spell with power 2 or less from the top of your library."};
+const MAGUS_OF_THE_FUTURE = {"name": "Magus of the Future", "typeLine": "Creature — Human Wizard", "keywords": [], "oracleText": "Play with the top card of your library revealed.\nYou may play lands and cast spells from the top of your library."};
+const RHYSTIC_CAVE = {"name": "Rhystic Cave", "typeLine": "Land", "keywords": [], "oracleText": "{T}: Choose a color. Add one mana of that color unless any player pays {1}. Activate only as an instant."};
+const TALION__THE_KINDLY_LORD = {"name": "Talion, the Kindly Lord", "typeLine": "Legendary Creature — Faerie Noble", "keywords": ["Flying"], "oracleText": "Flying\nAs Talion enters, choose a number between 1 and 10.\nWhenever an opponent casts a spell with mana value, power, or toughness equal to the chosen number, that player loses 2 life and you draw a card."};
+const HERALDIC_BANNER = {"name": "Heraldic Banner", "typeLine": "Artifact", "keywords": [], "oracleText": "As this artifact enters, choose a color.\nCreatures you control of the chosen color get +1/+0.\n{T}: Add one mana of the chosen color."};
+const STORED_WOODEN_SPHERE = [{"id": 1, "abilityType": "triggered", "trigger": {"event": "cast", "subject": "a green spell", "control": "any"}, "actions": [{"verb": "gain-life", "object": "you", "fromZone": null, "toZone": null, "amount": "1", "optional": true}]}];
+const STORED_INGENIOUS_THIEF = [{"id": 1, "abilityType": "none", "actions": [{"verb": "none", "object": "Flying", "fromZone": null, "toZone": null}]}, {"id": 2, "abilityType": "triggered", "trigger": {"event": "enters", "subject": "this creature", "control": "you"}, "actions": [{"verb": "none"}]}];
+const STORED_SORCEROUS_SIGHT = [{"id": 1, "abilityType": "spell", "actions": [{"verb": "none"}]}, {"id": 2, "abilityType": "spell", "actions": [{"verb": "draw", "object": "a card", "fromZone": null, "toZone": null, "amount": null, "optional": false}]}];
+const STORED_SKALLA_WOLF = [{"id": 1, "abilityType": "triggered", "trigger": {"event": "enters", "subject": "this creature", "control": "you"}, "actions": [{"verb": "put", "object": "a green card", "fromZone": "library", "toZone": "hand", "amount": null, "optional": true}, {"verb": "put", "object": "the rest", "fromZone": "library", "toZone": "library", "amount": null, "optional": false}]}];
+const STORED_GRACEFUL_ADEPT = [{"id": 1, "abilityType": "static", "actions": [{"verb": "other", "object": "you have no maximum hand size", "fromZone": null, "toZone": null}]}];
+const STORED_ENTER_THE_INFINITE = [{"id": 1, "abilityType": "spell", "actions": [{"verb": "draw", "object": "cards equal to the number of cards in your library", "fromZone": null, "toZone": null, "amount": null, "optional": false}, {"verb": "put", "object": "a card from your hand", "fromZone": "hand", "toZone": "library", "amount": null, "optional": false}, {"verb": "other", "object": "You have no maximum hand size until your next turn", "fromZone": null, "toZone": null, "amount": null, "optional": false}]}];
+const STORED_ASSEMBLE_THE_PLAYERS = [{"id": 1, "abilityType": "static", "actions": [{"verb": "none"}]}, {"id": 2, "abilityType": "static", "actions": [{"verb": "cast", "object": "a creature spell with power 2 or less from the top of your library", "fromZone": "library", "toZone": null, "amount": null, "optional": true}]}];
+const STORED_MAGUS_OF_THE_FUTURE = [{"id": 1, "abilityType": "static", "actions": [{"verb": "none"}]}, {"id": 2, "abilityType": "static", "actions": [{"verb": "play", "object": "lands from the top of your library", "fromZone": null, "toZone": null, "amount": null, "optional": true}, {"verb": "cast", "object": "spells from the top of your library", "fromZone": "library", "toZone": null, "amount": null, "optional": true}]}];
+const STORED_RHYSTIC_CAVE = [{"id": 1, "abilityType": "activated", "actions": [{"verb": "add-mana", "object": "one mana of the chosen color", "fromZone": null, "toZone": null, "amount": null, "optional": false, "unless": {"cost": "{1}", "payer": "any"}}]}];
+const STORED_TALION__THE_KINDLY_LORD = [{"id": 1, "abilityType": "none", "actions": [{"verb": "none", "object": "Flying", "fromZone": null, "toZone": null}]}, {"id": 2, "abilityType": "static", "actions": [{"verb": "other", "object": "choose a number between 1 and 10", "fromZone": null, "toZone": null}]}, {"id": 3, "abilityType": "triggered", "trigger": {"event": "cast", "subject": "a spell with mana value, power, or toughness equal to the chosen number", "control": "opponent"}, "actions": [{"verb": "lose-life", "object": "that player", "amount": "2", "optional": false, "fromZone": null, "toZone": null}, {"verb": "draw", "object": "you", "amount": "1", "optional": false, "fromZone": null, "toZone": null}]}];
+const STORED_HERALDIC_BANNER = [{"id": 1, "abilityType": "static", "actions": [{"verb": "other", "object": "choose a color", "fromZone": null, "toZone": null}]}, {"id": 2, "abilityType": "static", "actions": [{"verb": "modify-pt", "object": "creatures you control of the chosen color", "amount": "+1/+0", "optional": false, "fromZone": null, "toZone": null}]}, {"id": 3, "abilityType": "activated", "actions": [{"verb": "add-mana", "object": "one mana of the chosen color", "optional": false, "fromZone": null, "toZone": null}]}];
+const parity = (c: Parameters<typeof stat>[0], stored: unknown[]) => {
+  const { g, a, b } = stat(c, stored);
+  expect(g.complete, c.name).toBe(true);
+  // The reviewers' standing check: the same abilities as the bought answer, or at least every claim it makes.
+  expect(deriveDiff(a.abilities, b.abilities) === null || lostClaims(a.abilities, b.abilities).length === 0, c.name).toBe(true);
+  return { g, a, b };
+};
+
+test("'you may pay {N}. If you do, ...' records no payment and makes the effect optional, as the store has it: Antagonist Incorporator, Marooned; parity Wooden Sphere", () => {
+  const ai = grammarClauseRecords(ANTAGONIST_INCORPORATOR);
+  expect(ai.blocker).toBeUndefined();
+  expect(ai.records[1]!.actions).toEqual([expect.objectContaining({ verb: "create", object: "a 1/1 colorless Borg artifact creature token", optional: true })]);
+  const m = grammarClauseRecords(MAROONED);
+  expect(m.blocker).toBeUndefined();
+  expect(m.records[1]).toMatchObject({ abilityType: "triggered", trigger: { event: "enters" }, actions: [{ verb: "tap", object: "enchanted permanent", optional: true }] });
+  const { g, a, b } = parity(WOODEN_SPHERE, STORED_WOODEN_SPHERE);
+  expect(g.records[0]!.actions).toEqual([expect.objectContaining({ verb: "gain-life", object: "you", amount: "1", optional: true })]);
+  expect(deriveDiff(a.abilities, b.abilities)).toBeNull();
+});
+
+test("a payment with no 'If you do' behind it stays unread: it would claim nothing the text states", () => {
+  const g = grammarClauseRecords({ name: "X", typeLine: "Enchantment", oracleText: "Whenever you cast a spell, you may pay {1}. Draw a card." });
+  expect(g.blocker).toMatchObject({ kind: "action", phrase: "you may pay {1}" });
+});
+
+test("'look at target opponent's hand' claims nothing (a lone none), and '..., then draw a card' keeps the draw: V'Ger; Salt Vampire and Zero stop at their next blocker; parity Ingenious Thief, Sorcerous Sight", () => {
+  const v = grammarClauseRecords(V_GER__THE_INTRUDER);
+  expect(v.blocker).toBeUndefined();
+  expect(v.records.find((r) => r.id === 3)!.actions).toEqual([expect.objectContaining({ verb: "draw", object: "a card", amount: "1" })]);
+  expect(grammarClauseRecords(SALT_VAMPIRE).blocker).toEqual({ clause: 2, kind: "action", phrase: "you may choose a nonland card from it" });
+  expect(grammarClauseRecords(ZERO__INCORPOREAL_SENSATE).blocker).toEqual({ clause: 2, kind: "action", phrase: "a spell cast this way costs {2} more to cast" });
+  const thief = parity(INGENIOUS_THIEF, STORED_INGENIOUS_THIEF);
+  expect(thief.g.records[1]!.actions).toEqual([{ verb: "none", object: "" }]);
+  parity(SORCEROUS_SIGHT, STORED_SORCEROUS_SIGHT);
+  // The choice from the hand is not this sentence: it stays unread.
+  const pm = grammarClauseRecords({ name: "Painful Memories", typeLine: "Sorcery", oracleText: "Look at target opponent's hand and choose a card from it. Put that card on top of that player's library." });
+  expect(pm.blocker).toEqual({ clause: 1, kind: "action", phrase: "look at target opponent's hand" });
+});
+
+test("'you may reveal <card> from among them and put it into your hand' is the optional put of a dig: Rutherford, Spock, There's Coffee in that Nebula; parity Skalla Wolf", () => {
+  for (const c of [RUTHERFORD__UPGRADED_ENSIGN, SPOCK__ALWAYS_YOUR_FRIEND, THERE_S_COFFEE_IN_THAT_NEBULA]) {
+    const g = grammarClauseRecords(c);
+    expect(g.blocker, c.name).toBeUndefined();
+    const acts = g.records[0]!.actions!;
+    expect(acts[0], c.name).toMatchObject({ verb: "put", fromZone: "library", toZone: "hand", optional: true });
+    // The rest goes to the bottom of the looked-at library, never a top-of-library set (Coffee prints no library after "on the bottom").
+    expect(acts[1], c.name).toMatchObject({ verb: "put", fromZone: "library", toZone: "library", optional: false });
+    expect(acts[1]!.object, c.name).toMatch(/^the rest of the top \w+ cards of your library$/);
+  }
+  const coffee = grammarClauseRecords(THERE_S_COFFEE_IN_THAT_NEBULA);
+  const tags = deriveCardTags(deriveInputOf(THERE_S_COFFEE_IN_THAT_NEBULA as never, "x", THERE_S_COFFEE_IN_THAT_NEBULA.name, coffee.records, undefined, coffee.readings));
+  expect(tags.abilities.map((x) => x.effect.kind)).not.toContain("top-set");
+  expect(tags.abilities.find((x) => x.effect.kind === "search")).toMatchObject({ toHand: "1", chooses: true });
+  const { a, b } = parity(SKALLA_WOLF, STORED_SKALLA_WOLF);
+  expect(deriveDiff(a.abilities, b.abilities)).toBeNull();
+});
+
+test("'you have no maximum hand size [until your next turn]' is the store's unclaimed `other`: Deep Space Scan, Live Long and Prosper; parity Graceful Adept, Enter the Infinite", () => {
+  for (const c of [DEEP_SPACE_SCAN, LIVE_LONG_AND_PROSPER]) {
+    const g = grammarClauseRecords(c);
+    expect(g.blocker, c.name).toBeUndefined();
+    expect(g.records.at(-1)!.actions!.at(-1), c.name).toMatchObject({ verb: "other", object: "you have no maximum hand size until your next turn" });
+  }
+  const adept = parity(GRACEFUL_ADEPT, STORED_GRACEFUL_ADEPT);
+  expect(adept.b.unclaimed).toEqual([expect.objectContaining({ verb: "other" })]);
+  const infinite = parity(ENTER_THE_INFINITE, STORED_ENTER_THE_INFINITE);
+  expect(deriveDiff(infinite.a.abilities, infinite.b.abilities)).toBeNull();
+});
+
+test("the top card of the library, looked at or revealed, claims nothing: Captain Pike, Benjamin Sisko keep the play they permit; parity Assemble the Players, Magus of the Future", () => {
+  const pike = grammarClauseRecords(CAPTAIN_PIKE__FULLNESS_OF_TIME);
+  expect(pike.blocker).toBeUndefined();
+  expect(pike.records[1]!.actions).toEqual([]);
+  expect(pike.records[2]!.actions).toEqual([expect.objectContaining({ verb: "play", object: "lands from the top of your library", optional: true })]);
+  const sisko = grammarClauseRecords(BENJAMIN_SISKO__BESIEGED);
+  expect(sisko.blocker).toBeUndefined();
+  expect(sisko.records[0]!.actions).toEqual([]);
+  expect(sisko.records[1]!.actions!.map((a) => a.verb)).toEqual(["play", "cast"]);
+  const assemble = parity(ASSEMBLE_THE_PLAYERS, STORED_ASSEMBLE_THE_PLAYERS);
+  expect(deriveDiff(assemble.a.abilities, assemble.b.abilities)).toBeNull();
+  const magus = parity(MAGUS_OF_THE_FUTURE, STORED_MAGUS_OF_THE_FUTURE);
+  expect(deriveDiff(magus.a.abilities, magus.b.abilities)).toBeNull();
+});
+
+test("'choose a color' / 'choose a number between 0 and 10' drop the choice (a replacement's is the store's unclaimed `other`) and the chosen reference rides in the later words: Nyota Uhura; Starfleet Academy's 'of that color' stays unread; parity Rhystic Cave, Talion, Heraldic Banner", () => {
+  const nyota = grammarClauseRecords(NYOTA_UHURA__COMMUNICATIONS);
+  expect(nyota.blocker).toBeUndefined();
+  expect(nyota.records[0]!.actions).toEqual([expect.objectContaining({ verb: "other", object: "choose a number between 0 and 10" })]);
+  expect(nyota.records[1]!.trigger).toMatchObject({ event: "cast", subject: "a spell with mana value equal to the chosen number", control: "opp" });
+  // "that color" is no filter this grammar can carry, so the card stops there rather than reading it as any color.
+  expect(grammarClauseRecords(STARFLEET_ACADEMY).blocker).toEqual({ clause: 2, kind: "action", phrase: "add an amount of mana of that color equal to the number of creature types among non-Borg creatures you control" });
+  const cave = parity(RHYSTIC_CAVE, STORED_RHYSTIC_CAVE);
+  // "unless ANY player pays {1}": anyone's payment, as the stored answer has it, not the controller's.
+  expect(cave.g.records[0]!.actions![0]).toMatchObject({ verb: "add-mana", unless: { cost: "{1}", payer: "any" } });
+  expect(deriveDiff(cave.a.abilities, cave.b.abilities)).toBeNull();
+  const talion = parity(TALION__THE_KINDLY_LORD, STORED_TALION__THE_KINDLY_LORD);
+  expect(deriveDiff(talion.a.abilities, talion.b.abilities)).toBeNull();
+  const banner = parity(HERALDIC_BANNER, STORED_HERALDIC_BANNER);
+  expect(deriveDiff(banner.a.abilities, banner.b.abilities)).toBeNull();
+});
+
+test("'it becomes day' is the game's day/night state (CR 731.1), not an animate of the card: Sunstreak Phoenix stays on its stored answer", () => {
+  const g = grammarClauseRecords(SUNSTREAK_PHOENIX);
+  expect(g.blocker).toBeUndefined();
+  expect(g.records[1]!.actions).toEqual([expect.objectContaining({ verb: "other", object: "it becomes day as this creature enters" })]);
+  const tags = deriveCardTags(deriveInputOf(SUNSTREAK_PHOENIX as never, "x", SUNSTREAK_PHOENIX.name, g.records, undefined, g.readings));
+  expect(tags.abilities.map((x) => x.effect.kind)).not.toContain("animate");
 });

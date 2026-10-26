@@ -1375,6 +1375,12 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   if (who) { condition = [condition, t.slice(who[1]!.length + 1, who[0].length - 1)].filter(Boolean).join(", "); t = `${who[1]} ${t.slice(who[0].length)}`; }
   // "each player ... each draw": the second "each" repeats the actor.
   t = t.replace(/^((?:two|any number of) target (?:players|opponents)) each /i, "$1 ");
+  // "You have no maximum hand size [until your next turn]" (Reliquary Tower, Enter the Infinite): the store's `other` with the sentence as its words, which
+  // derive leaves unclaimed. CR 402.2 is the rule it states.
+  if (/^you have no maximum hand size(?: until your next turn| for the rest of the game)?$/i.test(t)) return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t, ...(condition ? { condition } : {}) }];
+  // "It becomes day [as this creature enters]" (Sunstreak Phoenix, CR 731.1 Day and Night): the game's day/night state, not a permanent that becomes something -- the store's `other`.
+  // Read as a "becomes" it was an animate of the card itself, a claim the text never makes.
+  if (/^it becomes (?:day|night)(?: as (?:~|this [a-z]+) enters)?$/i.test(t)) return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t, ...(condition ? { condition } : {}) }];
   // "you may pay {G} rather than pay this spell's mana cost": an alternative cost, the store's
   // cost-modify, the whole phrase its text. Read before the tail below strips "rather than pay".
   if (/^you may pay (?:\{[^}]+\})+ rather than pay this spell's mana cost$/i.test(t)) return [{ verb: "cost-modify", object: SELF, text: t, optional: true, ...(condition ? { condition } : {}) }];
@@ -1646,7 +1652,8 @@ export function parseActions(effect: string, _type: string | null, cost?: string
   // reveal it and put it into your hand", Domri Rade) is never resolved to the looked-at card, so the clause would read complete with the claim
   // silently missing: an unconsumed look stays an unread phrase and the card blocks.
   let pendingLook: string | null = null;
-  for (const raw of unquoted.split(/(?<=\.)\s+/)) {
+  const sentences = unquoted.split(/(?<=\.)\s+/);
+  for (const [sentenceAt, raw] of sentences.entries()) {
     let s = raw.trim().replace(/\.$/, "");
     if (s === "") continue;
     // "Activate only as a sorcery", "This ability triggers only once each turn": a restriction the store drops and
@@ -1659,6 +1666,23 @@ export function parseActions(effect: string, _type: string | null, cost?: string
     // triggered or activated modal ability. The modes are their own clauses (the segmenter), and the store
     // records the parent with no action of its own, so this sentence reads as nothing.
     if (MODAL_INTRO.test(s)) continue;
+    // THE SENTENCES THAT CLAIM NOTHING (#1349 part 2, task C1), as the store writes them: a lone `none` (or no action at all) beside the clause's real ones.
+    // "You may look at the top card of your library any time" / "Play with the top card of your library revealed" (Courser of Kruphix, Future Sight): the library
+    // stays where it is, and what the revealed card lets you DO is the next sentence's. "Choose a color" / "Choose a number between 0 and 10": the store drops the
+    // choice and keeps the reference in the later words ("of the chosen color", "mana of that color"), which this grammar reads or leaves unread by its own rules.
+    // The store keeps a REPLACEMENT's choice ("As this creature enters, choose a color": 52 of the 90 stored cards that print a choose-a-color, the rest are inside an effect) as an `other` with the choice as its words, which derive lists as unclaimed;
+    // the same choice inside an effect it drops.
+    // CEILING: the choice is never carried: a later "of that color" / "the chosen number" is read (or left unread) by its own words, and "of the chosen color" is the filter's `chosenType`, as for a bought card.
+    if (/^(?:you may look at the top card of your library any time|play with the top card of your library revealed|choose a color|choose a number between \d+ and \d+)$/i.test(s)) { mayBefore = false; continue; }
+    const asEnters = /^as (?:~|this [a-z]+) enters, (choose a color|choose a number between \d+ and \d+)$/i.exec(s);
+    if (asEnters) { mayBefore = false; out.push({ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: asEnters[1]! }); continue; }
+    // "Look at target opponent's hand" (Telepathy, Gitaxian Probe): nothing leaves the hand, so no action; "..., then draw a card" (V'Ger) is the rest of the sentence.
+    const handLook = /^look at (?:target player's|target opponent's|that player's) hand(?:, then (.+))?$/i.exec(s);
+    if (handLook) {
+      mayBefore = false;
+      if (handLook[1] === undefined) continue;
+      s = handLook[1];
+    }
     const look = /^look at (the top (?:card|(?:\w+|\d+) cards) of your library)$/i.exec(s);
     if (look) { if (pendingLook !== null) unread?.push(pendingLook); pendingLook = s; lookedAtLibrary = look[1]!.toLowerCase(); continue; }
     // "You may pay {2}. If you do, draw a card": the draw is as optional as the payment (the store's
@@ -1676,6 +1700,14 @@ export function parseActions(effect: string, _type: string | null, cost?: string
       s = s.slice(open[0].length);
     }
     s = s.replace(/^([A-Z])/, (c) => c.toLowerCase());
+    // "You may pay {1}. If you do, <effect>" (Wooden Sphere, Marooned): the payment records no action, as the store has it, and the effect after "If you do" is as
+    // optional as the payment (`ifYouDoAfterMay`). Only a mana payment, and only with that reflexive sentence behind it: a payment nothing follows claims nothing here.
+    // CEILING: the payment itself (its mana, its energy) is not recorded, as the store drops it too; the effect reads as optional but not as costing anything.
+    if (condition === undefined && /^you may pay (?:\{[^}]+\})+$/i.test(s) && /^if you do, /i.test(sentences[sentenceAt + 1]?.trim() ?? "")) continue;
+    // "You may reveal an artifact card from among them and put it into your hand" (Harald, Courageous Outrider): the dig's pick, read as the put it is
+    // ("you may put an artifact card from among them into your hand"); the reveal is bookkeeping the store drops.
+    const revealPick = /^you may reveal (.+) from among (them|those cards) and put (?:it|that card) into your hand$/i.exec(s);
+    if (revealPick) s = `you may put ${revealPick[1]} from among ${revealPick[2]} into your hand`;
     // BEAM ME UP {COST} (Star Trek; owner 2026-10-26, #1349). Not in the Comprehensive Rules: the card's reminder is the whole definition, "You may cast this
     // card from your graveyard for {cost} if you also return a creature you control to its owner's hand. Then exile this spell." Composed from the shapes
     // that exist: a cast of the card itself from the graveyard (as Gravecrawler's is read) and the return of a creature of yours (the bounce Deprive's

@@ -126,6 +126,8 @@ const TESTED: Record<string, string> = {
   "700.2e": "grammar/clause-record.test.ts — another player choosing the modes (Library of Lat-Nam, 'an opponent chooses one') is not YOUR dilemma and emits none (#1349)",
   "702.172a": "grammar/clause-record.test.ts — Spree means 'Choose one or more modes': the keyword line is a modal header and emits `face-a-dilemma`: Final Showdown (#1349)",
   "702.183a": "grammar/clause-record.test.ts — Tiered means 'Choose one': the keyword line is a modal header and emits `face-a-dilemma`: Thunder Magic (#1349)",
+  "402.2": "grammar/clause-record.test.ts — 'you have no maximum hand size [until your next turn]' states a player's maximum hand size (CR 402 Hand); read as the store's unclaimed `other`: Graceful Adept, Deep Space Scan (#1349)",
+  "731.1": "grammar/clause-record.test.ts — 'it becomes day' / 'it becomes night' is the game gaining the day or night designation, never an animate of the card: Sunstreak Phoenix (#1349)",
   "702.148": "derive.test.ts — the words in a cleave spell's square brackets are removed: Alchemist's Retrieval bounces ANY nonland permanent (#1295)",
 };
 /** A reading in a comment, no fixture. Each carries where the reading lives. */
