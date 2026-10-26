@@ -206,7 +206,8 @@ export function activationConditionOf(text: string): string | null {
     if (!/^activate\b/i.test(sentence.trim())) continue;
     const m = /\bonly if ([^.]+)/i.exec(sentence);
     // "... and only as a sorcery" is another limit of the same sentence, not part of the condition.
-    if (m) return m[1]!.replace(/\s+and only\b.*$/i, "").trim();
+    // A literal cut, not `\s+and only\b.*$`: CodeQL flags that tail as polynomial on runs of spaces.
+    if (m) { const cut = m[1]!.search(/ and only\b/i); return (cut >= 0 ? m[1]!.slice(0, cut) : m[1]!).trim(); }
   }
   return null;
 }
