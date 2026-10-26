@@ -96,3 +96,24 @@ export function lostClaims(stored: readonly Ability[], grammar: readonly Ability
   const g = claims(grammar);
   return [...claims(stored)].filter((c) => !g.has(c)).sort();
 }
+
+/** THE ANIMATE TYPE THE GRAMMAR DROPS. The grammar's `animate` action carries only its target, while the stored model answer often writes the
+ *  "becomes a 3/6 Golem artifact creature" phrase into the object, which derive reads `type`, `subtype` and `stats` from (Jade Statue, Haunted
+ *  Screen, Sage of the Maze). A labelled count-changing group ("abilities:1->2") lets that loss through `lostClaims`, which compares kinds
+ *  and verbs only. True when, in some clause, a stored `animate` effect's subject carries a type, subtype or stat that no `animate` effect of
+ *  the grammar's reading of that clause carries. Narrow on purpose: the animate subject's three fields, nothing else (#1349). */
+export function lostAnimateFields(stored: readonly Ability[], grammar: readonly Ability[]): boolean {
+  const fields = ["type", "subtype", "stats"] as const;
+  const values = (abs: readonly Ability[], clause: number | undefined, f: (typeof fields)[number]): Set<string> => {
+    const out = new Set<string>();
+    for (const a of abs) {
+      if (a.clause !== clause || a.effect?.kind !== "animate") continue;
+      const v = (a.effect.subject as unknown as Record<string, unknown> | undefined)?.[f];
+      if (v === undefined) continue;
+      for (const x of Array.isArray(v) ? v : [v]) out.add(JSON.stringify(canonical(x)));
+    }
+    return out;
+  };
+  return stored.some((a) => a.effect?.kind === "animate"
+    && fields.some((f) => [...values([a], a.clause, f)].some((v) => !values(grammar, a.clause, f).has(v))));
+}

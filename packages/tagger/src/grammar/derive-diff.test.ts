@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Ability } from "../schema.js";
-import { deriveDiff, lostClaims } from "./derive-diff.js";
+import { deriveDiff, lostAnimateFields, lostClaims } from "./derive-diff.js";
 
 const ab = (over: Partial<Ability>): Ability => ({ kind: "static", effect: { kind: "" }, clause: 1, ...over } as Ability);
 
@@ -34,4 +34,18 @@ test("claimsNothing is no difference: it must not move a labelled group key (#12
   const without = deriveDiff([ab({ emits: [ref] } as never)], [ab({ emits: [self] } as never)]);
   expect(withFlag).toBe(without);
   expect(deriveDiff([ab({ claimsNothing: "refused-trigger" as const } as never)], [ab({})])).toBeNull();
+});
+
+// Jade Statue: "{2}: This artifact becomes a 3/6 Golem artifact creature until end of combat. Activate only during combat."
+test("a grammar animate that drops the stored animate's type, subtype or stats is refused (#1349)", () => {
+  const animate = (subject: Record<string, unknown>) => ab({ effect: { kind: "animate", subject } as never, cost: "{2}" });
+  const stored = animate({ control: "any", token: null, type: ["creature", "artifact"], allTypes: ["artifact", "creature"], subtype: "golem", stats: [{ metric: "power", op: "eq", value: 3 }, { metric: "toughness", op: "eq", value: 6 }], self: true });
+  const grammar = animate({ control: "any", token: null, type: "artifact", self: true });
+  expect(lostAnimateFields([stored], [grammar, ab({ effect: { kind: "pump" }, amount: "3/6" })])).toBe(true);
+  // The grammar carrying the same fields, or the stored side being bare, loses nothing.
+  expect(lostAnimateFields([stored], [stored])).toBe(false);
+  expect(lostAnimateFields([grammar], [stored])).toBe(false);
+  expect(lostAnimateFields([ab({})], [grammar])).toBe(false);
+  // Another clause's animate does not stand in.
+  expect(lostAnimateFields([stored], [{ ...stored, clause: 2 } as Ability])).toBe(true);
 });
