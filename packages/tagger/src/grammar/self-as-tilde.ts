@@ -28,7 +28,10 @@ const OTHER_ANTECEDENT = /\b(?:target|chosen|enchanted|equipped|another|other|ea
  *  CEILING: "his" is never converted, and neither is any "her" followed by a lowercase word (it may be a possessive,
  *  "her power", or an object, "return her to the battlefield", Hellcat, Undying Vigilante: the clause is left unread
  *  rather than half converted). "he"/"she" are converted whatever follows and "him" always; "her" is converted
- *  unless a lowercase word other than and/then/or/if/unless/until/for follows. */
+ *  unless a lowercase word other than and/then/or/if/unless/until/for follows.
+ *  The contractions "She's" / "He's" are converted too, to "~'s" (the "she"/"he" is the word, the "'s" stays), which reads as the card's
+ *  possessive ("~'s power") rather than "~ is": Princess Yue, Fang and Bruce Banner print one. All three are model-derived today, so this is inert; a card
+ *  that reaches the grammar with one is read by that possessive. */
 export function selfPronouns(effect: string): string {
   let out = "";
   let last = 0;

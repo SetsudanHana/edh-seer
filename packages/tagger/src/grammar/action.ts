@@ -1261,7 +1261,9 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
   if (eachEq) return [{ verb: "animate", ...target }, { verb: "modify-pt", ...target, amount: eachEq[2]! }];
   const becomes = /^becomes? (?:an? )?((?:(?:\d+|x)\/(?:\d+|x) )?[\w /-]+?)(?: with (.+))?$/i.exec(pred.replace(/ that's still an? (?:land|planeswalker|artifact|enchantment)$|,? it's still a land$/i, ""));
   // "becomes prepared" is a prepare, which derive reads off the clause (Codie): not read here.
-  if (becomes && !/^prepared$/i.test(becomes[1]!)) {
+  // "becomes blocked" / "becomes unblocked" (Trap Runner, Curtain of Light, Fog Patch; GH #1353) is a combat status,
+  // not a retyping: VERB_VOCAB has no block verb and none is invented, so the clause stays unread.
+  if (becomes && !/^(?:un)?blocked$/i.test(becomes[1]!) && !/^prepared$/i.test(becomes[1]!)) {
     // "with base power and toughness 4/4 [and flying]": the set P/T, as the store's modify-pt.
     const base = becomes[2] ? /^base power and toughness (\d+\/\d+)(?:,? and (.+))?$/i.exec(becomes[2]) : null;
     const withs = base ? (base[2] ? abilitiesOf(base[2]) : []) : becomes[2] ? abilitiesOf(becomes[2]) : [];

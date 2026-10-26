@@ -408,6 +408,18 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     // abilities read as one; the card is refused here rather than banked with half of it (the stored answer keeps both).
     const swallowed = readingsHere.find((r) => r.verb === "add-counter" && / and (?:an?|one|two|three|x) [^,]*?counters? on (?:it|them|him|her|~)(?!\w)/.test(r.amount ?? ""));
     if (swallowed) return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: effect } };
+    // A MODE'S "IF <condition>" GATES ITS EFFECT (#1349 review): "Draw a card if you control a permanent with a counter on it"
+    // (Federation Field Medic) is no unconditional draw, and the store has no slot for the condition, so the action would
+    // be recorded as a plain draw. The mode is recorded as one `other` action instead, which derive leaves unclaimed and visible.
+    // CEILING: only a mode (a non-modal conditional effect keeps its plain reading, as the stored answer has it: Roadside Reliquary).
+    const gated = c.kind === "mode" ? readingsHere.find((r) => r.condition !== undefined && /^if /i.test(r.condition) && !/^if (?:you|they) (?:do|don't|did|didn't)\b|^if able\b|\bwould\b|\binstead\b/i.test(r.condition)) : undefined;
+    if (gated) {
+      readings[c.id] = { ...readings[c.id], actions: [] };
+      record.actions = [{ verb: "other", object: effect, fromZone: null, toZone: null, optional: false } as Action];
+      records.push(record);
+      for (const o of overflow) if (o.actions!.length === 0 && o.trigger) o.actions = record.actions;
+      continue;
+    }
     readings[c.id] = { ...readings[c.id], actions: readingsHere };
     // A KEYWORD LINE the segmenter left as an ability ("Suspend 4—{U}", its reminder stripped): the
     // card's own keywords, which the store records as no action, as it does a keyword clause.

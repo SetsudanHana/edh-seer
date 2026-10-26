@@ -823,3 +823,83 @@ test("poison and loyalty counters are no counters demand; the card's own counter
   const luxa = { name: "Luxa River Shrine", typeLine: "Artifact", keywords: [], oracleText: "{1}, {T}: You gain 1 life. Put a brick counter on this artifact.\n{T}: You gain 2 life. Activate only if there are three or more brick counters on this artifact." };
   expect(cares(luxa, 2)).toEqual(["counter-added:any"]);
 });
+
+// #1349 whole-branch review: five rows the branch shipped that claim more than the text.
+const deriveGrammar = (name: string, typeLine: string, oracleText: string) => {
+  const card = { name, typeLine, oracleText, keywords: [] as string[] };
+  const g = grammarClauseRecords(card);
+  return { g, tags: deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)) };
+};
+
+test("'becomes blocked' is a combat status, never an animate (Trap Runner, Curtain of Light, Choking Vines, Fog Patch; GH #1353)", () => {
+  const cards: [string, string, string][] = [
+    ["Trap Runner", "Creature — Human Soldier", "{T}: Target unblocked attacking creature becomes blocked. Activate only during combat after blockers are declared. (This ability works on creatures that can't be blocked.)"],
+    ["Curtain of Light", "Instant", "Cast this spell only during combat after blockers are declared.\nTarget unblocked attacking creature becomes blocked. (This spell works on creatures that can't be blocked.)\nDraw a card."],
+    ["Choking Vines", "Instant", "Cast this spell only during the declare blockers step.\nX target attacking creatures become blocked. Choking Vines deals 1 damage to each of those creatures. (This spell works on creatures that can't be blocked.)"],
+    ["Fog Patch", "Instant", "Cast this spell only during the declare blockers step.\nAttacking creatures become blocked. (This spell works on creatures that can't be blocked.)"],
+  ];
+  for (const [name, typeLine, text] of cards) {
+    const { g, tags } = deriveGrammar(name, typeLine, text);
+    expect(g.records.flatMap((r) => r.actions ?? []).map((a) => a.verb), name).not.toContain("animate");
+    expect(tags.abilities.map((a) => a.effect.kind), name).not.toContain("animate");
+  }
+});
+
+test("a grant in a self-animate sentence is the card's own: Skinshifter, Paragon of the Amesha, Dragonsoul Knight", () => {
+  const cards: [string, string, string][] = [
+    ["Skinshifter", "Creature — Human Shaman", "{G}: Choose one. Activate only once each turn.\n• Until end of turn, this creature becomes a Rhino with base power and toughness 4/4 and gains trample.\n• Until end of turn, this creature becomes a Bird with base power and toughness 2/2 and gains flying.\n• Until end of turn, this creature becomes a Plant with base power and toughness 0/8."],
+    ["Paragon of the Amesha", "Creature — Human Knight", "First strike\n{W}{U}{B}{R}{G}: Until end of turn, this creature becomes an Angel, gets +3/+3, and gains flying and lifelink."],
+    ["Dragonsoul Knight", "Creature — Human Knight", "First strike\n{W}{U}{B}{R}{G}: Until end of turn, this creature becomes a Dragon, gets +5/+3, and gains flying and trample."],
+  ];
+  for (const [name, typeLine, text] of cards) {
+    const { tags } = deriveGrammar(name, typeLine, text);
+    const grants = tags.abilities.filter((a) => a.effect.kind === "keyword-grant");
+    expect(grants.length, name).toBeGreaterThan(0);
+    for (const gr of grants) expect(gr.effect.subject, name).toMatchObject({ self: true });
+  }
+});
+
+test("a counter put as a cost on the card's own name is self: Jessica Jones, Yisan; a cost on 'this creature' too (Mazemind Tome, Sinking Feeling)", () => {
+  const cards: [string, string, string][] = [
+    ["Jessica Jones, Private Eye", "Legendary Creature — Human Detective Hero", "{T}, Put a stun counter on Jessica Jones: Exile the top X cards of your library, where X is Jessica Jones's power. You may play those cards this turn. (If a permanent with a stun counter would become untapped, remove one from it instead.)"],
+    ["Yisan, the Wanderer Bard", "Legendary Creature — Human Rogue Bard", "{2}{G}, {T}, Put a verse counter on Yisan: Search your library for a creature card with mana value equal to the number of verse counters on Yisan, put it onto the battlefield, then shuffle."],
+    ["Mazemind Tome", "Artifact — Book", "{T}, Put a page counter on this artifact: Scry 1. (Look at the top card of your library. You may put that card on the bottom.)\n{2}, {T}, Put a page counter on this artifact: Draw a card."],
+  ];
+  for (const [name, typeLine, text] of cards) {
+    const { tags } = deriveGrammar(name, typeLine, text);
+    const added = tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "counter-added");
+    expect(added.length, name).toBeGreaterThan(0);
+    for (const e of added) expect(e.subject, name).toMatchObject({ self: true });
+  }
+});
+
+test("each mode of a multi-trigger header fires on every trigger of it: Captain Kirk, Appa, Galadriel, Oracle of Tragedy", () => {
+  const cards: [string, string, string, string[]][] = [
+    ["Captain James T. Kirk", "Legendary Creature — Human Officer", "Whenever Captain Kirk enters or attacks, choose one. If you have no cards in hand, choose one or more instead.\n• Discard a card, then draw a card.\n• Create a 1/1 red Officer creature token.\n• Creatures you control get +1/+0 until end of turn.", ["enters", "attacks"]],
+    ["Appa, Loyal Sky Bison", "Legendary Creature — Bison Ally", "Flying\nWhenever Appa enters or attacks, choose one —\n• Target creature you control gains flying until end of turn.\n• Airbend another target nonland permanent you control. (Exile it. While it's exiled, its owner may cast it for {2} rather than its mana cost.)", ["enters", "attacks"]],
+    ["Galadriel, Gift-Giver", "Legendary Creature — Elf Noble", "Whenever Galadriel enters or attacks, choose one —\n• Put a +1/+1 counter on another target creature.\n• Create a Food token. (It's an artifact with \"{2}, {T}, Sacrifice this token: You gain 3 life.\")\n• Create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")", ["enters", "attacks"]],
+    ["Oracle of Tragedy", "Creature — Human Wizard", "When this creature enters or dies, choose one —\n• Draw a card, then discard a card.\n• Shuffle up to four target cards with mana value 3 or greater from your graveyard into your library.", ["enters", "dies"]],
+  ];
+  for (const [name, typeLine, text, events] of cards) {
+    const { tags } = deriveGrammar(name, typeLine, text);
+    // Every clause that does something (a mode) is derived under each of the header's triggers.
+    const modes = tags.abilities.filter((a) => a.effect.kind !== "" || (a.emits ?? []).length > 0);
+    const byClause = new Map<number, Set<string>>();
+    for (const a of modes) byClause.set(a.clause as number, new Set([...(byClause.get(a.clause as number) ?? []), ...(a.trigger?.verbs ?? [])]));
+    expect(byClause.size, name).toBeGreaterThan(0);
+    for (const [clause, verbs] of byClause) expect([...verbs].sort(), `${name} clause ${clause}`).toEqual([...events].sort());
+  }
+});
+
+test("a mode's trailing 'if' condition is never dropped into an unconditional draw: Federation Field Medic stays unclaimed (#1349 review)", () => {
+  const { tags } = deriveGrammar("Federation Field Medic", "Creature — Human Doctor", "Vigilance\nWhen this creature enters, choose one —\n• Put a +1/+1 counter on target creature. It gains vigilance until end of turn.\n• Draw a card if you control a permanent with a counter on it.");
+  expect(tags.abilities.some((a) => a.effect.kind === "draw-card")).toBe(false);
+  expect(tags.abilities.some((a) => a.effect.kind === "counter-placement")).toBe(true);
+  expect(JSON.stringify(tags.unclaimed ?? [])).toContain("permanent with a counter");
+});
+
+test("a granted ability's cost counter is the grantee's, never the Aura's: Sinking Feeling emits no self counter", () => {
+  const { tags } = deriveGrammar("Sinking Feeling", "Enchantment — Aura", "Enchant creature\nEnchanted creature doesn't untap during its controller's untap step.\nEnchanted creature has \"{1}, Put a -1/-1 counter on this creature: Untap this creature.\"");
+  const added = tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "counter-added");
+  for (const e of added) expect(e.subject.self).not.toBe(true);
+});
