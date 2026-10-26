@@ -2,6 +2,8 @@ import { expect, test } from "vitest";
 import { deriveCardTags } from "../derive/derive.js";
 import { deriveInputOf } from "../derive-input.js";
 import { grammarClauseRecords, phaseControl, triggerSubjectText } from "./clause-record.js";
+import { effectText } from "./preamble.js";
+import { selfAsTilde, selfPronouns } from "./self-as-tilde.js";
 
 // #896 task 7: clause records from printed text alone.
 test("a card the grammar reads completely gets one record per clause, in the store's shape", () => {
@@ -572,4 +574,52 @@ test("the modal intros: 'that hasn't been chosen', 'worth of modes', 'one or bot
   const flash = grammarClauseRecords({ name: "Flash Thompson, Spider-Fan", typeLine: "Legendary Creature — Human Citizen", keywords: ["Hero Worship", "Heckle", "Flash"], oracleText: "Flash\nWhen Flash Thompson enters, choose one or both —\n• Heckle — Tap target creature.\n• Hero Worship — Untap target creature." });
   expect(flash.blocker).toBeUndefined();
   expect(flash.records[1]).toMatchObject({ abilityType: "triggered", trigger: { event: "enters" }, actions: [{ verb: "none" }] });
+});
+
+// #1349 task 2: a card's short names and pronouns are the card itself, never a class.
+const selfCard = (name: string, oracleText: string, typeLine = "Legendary Creature — Human") => grammarClauseRecords({ name, typeLine, oracleText });
+
+test("a short name is the card: title + surname, a possessive, a cost, the literal CARDNAME", () => {
+  expect(selfAsTilde("When Captain Archer enters, draw a card.", "Captain Jonathan Archer")).toBe("When ~ enters, draw a card.");
+  expect(selfAsTilde("Put a counter on Dr. Crusher.", "Dr. Beverly Crusher")).toBe("Put a counter on ~.");
+  expect(selfAsTilde("where X is Picard's power", "Picard, Leading by Example")).toBe("where X is ~'s power");
+  expect(selfAsTilde("Seven of Nine's base power", "Seven of Nine, Unassimilated")).toBe("~'s base power");
+  expect(selfAsTilde("put a quest counter on CARDNAME", "Coastal Ren Faire")).toBe("put a quest counter on ~");
+  // A name only as a whole word, and only a possessive 's: "Pickards" and "Picard'" are not the card.
+  expect(selfAsTilde("Picards and Picard'", "Picard, Leading by Example")).toBe("Picards and Picard'");
+});
+
+test("a comma name whose short form is a common word does not turn that word into the card", () => {
+  const storm = selfAsTilde("Whenever Storm deals combat damage to a player, the next instant or sorcery spell you cast this turn has storm.", "Storm, Force of Nature");
+  expect(storm).toBe("Whenever ~ deals combat damage to a player, the next instant or sorcery spell you cast this turn has storm.");
+  // CASE-SENSITIVE, and a title only shortens a title name: no "Captain Dragon" from a plain two-word name.
+  expect(selfAsTilde("Dragon Whelp", "Dragon Whelp")).toBe("~");
+  expect(selfAsTilde("Captain of the Watch", "Captain Jonathan Archer")).toBe("Captain of the Watch");
+});
+
+test("a pronoun is the card only after a self trigger and with no earlier antecedent", () => {
+  expect(selfPronouns("put a promotion counter on her. Then if there are three or more promotion counters on her, remove those counters and she deals 2 damage to each opponent.")).toBe("put a promotion counter on ~. Then if there are three or more promotion counters on ~, remove those counters and ~ deals 2 damage to each opponent.");
+  // A target before the pronoun is its antecedent; a possessive stays.
+  expect(selfPronouns("destroy target creature. Its controller loses life equal to her power.")).toBe("destroy target creature. Its controller loses life equal to her power.");
+  expect(selfPronouns("return target creature card to your hand and put a counter on her")).toBe("return target creature card to your hand and put a counter on her");
+  expect(selfPronouns("you gain life equal to her power")).toBe("you gain life equal to her power");
+  // Not from a trigger on something else: effectText only applies it after "When/Whenever <the name>".
+  expect(effectText("Whenever a creature dies, put a counter on her.", "Beta Ray Bill")).toBe("put a counter on her.");
+  expect(effectText("Whenever Beta Ray Bill attacks, put a counter on him.", "Beta Ray Bill")).toBe("put a counter on ~.");
+});
+
+test("the self-name cards move past their self-reference and stop at the NEXT phrase", () => {
+  const reads = (name: string, text: string) => selfCard(name, text);
+  expect(reads("Captain Jonathan Archer", "When Captain Archer enters, create Porthos, a legendary 1/1 green Dog creature token.").complete).toBe(true);
+  expect(reads("Captain Michael Burnham", "Whenever a land you control enters, Captain Burnham deals 1 damage to each opponent. If this is the second time this ability has resolved this turn, put a +1/+1 counter on Captain Burnham.").complete).toBe(true);
+  expect(reads("Dr. Beverly Crusher", "Whenever you gain life, put a +1/+1 counter on Dr. Crusher.").complete).toBe(true);
+  expect(reads("Beta Ray Bill", "Valiant — Whenever Beta Ray Bill becomes the target of a spell or ability you control for the first time each turn, put a +1/+1 counter on him and up to one target God you control.").complete).toBe(true);
+  expect(reads("Kirk, Commanding Officer", "{2}, Sacrifice Kirk: Destroy target artifact or enchantment.").complete).toBe(true);
+  expect(reads("Coastal Ren Faire", "Whenever you cast a noncreature spell, put a quest counter on CARDNAME. Draw a card. Then discard a card unless there are three or more quest counters on CARDNAME.", "Enchantment").complete).toBe(true);
+  expect(reads("The Darkhold", "{T}: Put a sin counter on The Darkhold. Draw a card for each sin counter on it, then you lose 1 life for each card in your hand.", "Legendary Artifact").complete).toBe(true);
+  // ...and the next blocker, task 4's.
+  expect(reads("Picard, Leading by Example", "{1}, {T}: Another target creature gets +X/+X until end of turn, where X is Picard's power. Activate only as a sorcery.").blocker?.phrase).toBe("activate only as a sorcery");
+  expect(reads("Seven of Nine, Unassimilated", "{6}{U}: Seven of Nine's base power and toughness become 7/9. Activate only if you control seven or more differently named lands.").blocker?.phrase).toBe("activate only if you control seven or more differently named lands");
+  expect(reads("Ensign Pavel Chekov", "Strange new worlds — When Ensign Chekov enters, each opponent exiles the top X cards of their library, where X is the number of differently named lands you control. For each opponent, choose a land card that player owns exiled this way. You may play the chosen cards for as long as they remain exiled.").blocker?.phrase).toBe("for each opponent");
+  expect(reads("Beckett Mariner, Impetuous Ensign", "Reckless Behavior — Whenever Beckett Mariner becomes tapped, put a promotion counter on her. Then if there are three or more promotion counters on her, remove those counters and she deals 2 damage to each opponent.").blocker?.phrase).toBe("then if there are three or more promotion counters on ~, remove those counters");
 });

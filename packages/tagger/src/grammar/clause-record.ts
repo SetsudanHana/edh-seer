@@ -387,7 +387,9 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       const read = [parseTrigger(delayed[1]!, null) ?? []].flat()[0];
       if (read) record.trigger = { event: read.event, subject: triggerSubjectText(delayed[1]!), control: read.control ?? "any" };
     }
-    const cost = labelled ? labelled.cost : c.cost;
+    // The card's own name in its cost ("{2}, Sacrifice Kirk:") is the card: "~", as in the effect.
+    const rawCost = labelled ? labelled.cost : c.cost;
+    const cost = rawCost ? selfAsTilde(rawCost, card.name) : rawCost;
     // AN ACTIVATED COST BEHIND A LABEL THE SEGMENTER MISSED ("Go for the Goal! — {3}, {T}: ..."): it
     // left the clause cost-less and static, and reading the text past the label would drop the cost and
     // bank a static grant. Refused, as before the label strip existed. A cost of mana alone ("I LOVE

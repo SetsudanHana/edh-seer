@@ -320,6 +320,12 @@ const COUNTERS: Record<string, [string, Handler]> = {
       const a = COUNTERS.put![1](left), b = COUNTERS.put![1](right);
       if (a && b) return [...[a].flat(), ...[b].flat()];
     }
+    // "a +1/+1 counter on ~ and up to one target God you control": the same counters on each recipient.
+    const twoWho = /^(.+? counters?) on (.+?) and (up to (?:one|two) (?:other )?target .+)$/.exec(rest);
+    if (twoWho) {
+      const each = [twoWho[2]!, twoWho[3]!].map((r) => COUNTERS.put![1](`${twoWho[1]} on ${r}`));
+      return each.every((e) => e) ? each.flatMap((e) => [e!].flat()) : null;
+    }
     const m = /^(.+? counters?) on (.+?)(?: for each (.+))?$/.exec(rest);
     const cs = m ? counterList(m[1]!) : null;
     const on = m ? objectOf(m[2]!.replace(/^each of /, "")) : null;
