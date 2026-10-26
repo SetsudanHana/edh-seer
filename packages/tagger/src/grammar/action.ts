@@ -1126,7 +1126,8 @@ const KEYWORDS = [...KEYWORD_ABILITIES].map((k) => k.toLowerCase());
 function isAbility(part: string): boolean {
   const p = part.toLowerCase();
   // "all creature types" (a changeling's reach) is granted like a keyword.
-  if (/^"[^"]*"$/.test(part) || /^(?:that|this|those) abilit(?:y|ies)$/.test(p) || p === "all creature types") return true;
+  // "beam me up" (Star Trek, #1349) is granted like a keyword: Scotty, Miracle Worker's "each card in your graveyard has beam me up".
+  if (/^"[^"]*"$/.test(part) || /^(?:that|this|those) abilit(?:y|ies)$/.test(p) || p === "all creature types" || p === "beam me up") return true;
   return KEYWORDS.some((k) => p === k || (p.startsWith(`${k} `) && p.length - k.length <= (k === "protection" ? 70 : 40) && !/\blife\b|\bcosts?\b/.test(p)));
 }
 
@@ -1675,6 +1676,17 @@ export function parseActions(effect: string, _type: string | null, cost?: string
       s = s.slice(open[0].length);
     }
     s = s.replace(/^([A-Z])/, (c) => c.toLowerCase());
+    // BEAM ME UP {COST} (Star Trek; owner 2026-10-26, #1349). Not in the Comprehensive Rules: the card's reminder is the whole definition, "You may cast this
+    // card from your graveyard for {cost} if you also return a creature you control to its owner's hand. Then exile this spell." Composed from the shapes
+    // that exist: a cast of the card itself from the graveyard (as Gravecrawler's is read) and the return of a creature of yours (the bounce Deprive's
+    // additional cost reads). CEILING: the {cost} and the exile afterwards are dropped, as flashback's cost and exile are; the return is stated outright
+    // though it is a cost of the beamed cast only (the owner's ruling is the bounce edge, whatever the cast).
+    if (/^beam me up (?:\{[^}]+\})+$/i.test(s)) {
+      const cast = readPhrase("you may cast this card from your graveyard", condition);
+      const bounce = readPhrase("return a creature you control to its owner's hand", condition);
+      if (cast && bounce) out.push(...cast, ...bounce); else unread?.push(s);
+      continue;
+    }
     // CEILING: "If you do, increase or decrease the result by 1" (Xenosquirrels, CR 706.2) modifies a die
     // result, which no verb expresses; it records no action.
     if (/^increase or decrease the result by \d+$/i.test(s)) continue;

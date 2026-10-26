@@ -1069,3 +1069,48 @@ test("lines BEFORE a Station card's first bar get no threshold, the lines after 
   expect(after.length).toBeGreaterThan(0);
   expect(after.every((a) => a.threshold?.atLeast === 7)).toBe(true);
 });
+
+// #1349 part 2 task B: the Star Trek set mechanics, composed from existing shapes (owner 2026-10-26). None is in the CR copy dated 2026-09-25; the
+// reminder text on the card is the only definition. Real oracle text (Mongo `cards`, 2026-10-26).
+const reminder = (cost: string) => `(You may cast this card from your graveyard for ${cost} if you also return a creature you control to its owner's hand. Then exile this spell.)`;
+const ENERGIZE = { name: "Energize", typeLine: "Sorcery", keywords: [] as string[], oracleText: `Return target creature an opponent controls to its owner's hand.\nBeam me up {3}{U} ${reminder("{3}{U}")}` };
+const deriveOf = (card: { name: string; typeLine: string; keywords: string[]; oracleText: string }) => {
+  const g = grammarClauseRecords(card);
+  return { g, tags: deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings)) };
+};
+
+test("Beam me up is a cast from the graveyard (as flashback is read) plus returning a creature you control: Energize", () => {
+  const { g, tags } = deriveOf(ENERGIZE);
+  expect(g.blocker).toBeUndefined();
+  expect(g.complete).toBe(true);
+  expect(g.records[1]!.actions!.map((a) => `${a.verb}:${a.fromZone}`)).toEqual(["cast:graveyard", "return:battlefield"]);
+  expect(g.records[1]!.actions![1]).toMatchObject({ object: "a creature you control", toZone: "hand" });
+  const beam = tags.abilities.filter((a) => a.clause === 2);
+  // The graveyard cast of the card itself ...
+  expect(beam.some((a) => a.effect.kind === "graveyard-recursion" && a.effect.subject?.self === true && a.emits?.some((e) => e.verb === "cast" && e.subject.fromZone === "graveyard"))).toBe(true);
+  // ... and the bounce of a creature of yours, the ETB-reuse half.
+  expect(beam.some((a) => a.effect.kind === "bounce" && a.effect.subject?.control === "you" && a.effect.subject?.type === "creature")).toBe(true);
+});
+
+test("every Beam me up card reads complete: Adversary by Algorithm, Open Communications, Pure Energy, There's Coffee in that Nebula", () => {
+  const cards = [
+    { name: "Open Communications", typeLine: "Sorcery", oracleText: `Draw a card.\nBeam me up {2}{U} ${reminder("{2}{U}")}` },
+    { name: "Adversary by Algorithm", typeLine: "Sorcery", oracleText: `Create a 3/3 colorless Illusion artifact creature token.\nBeam me up {3}{G} ${reminder("{3}{G}")}` },
+    { name: "Pure Energy", typeLine: "Sorcery", oracleText: `Distribute two +1/+1 counters among one or two target creatures.\nBeam me up {2}{W} ${reminder("{2}{W}")}` },
+  ];
+  for (const c of cards) {
+    const { g, tags } = deriveOf({ ...c, keywords: [] });
+    expect(g.blocker, c.name).toBeUndefined();
+    expect(g.records.at(-1)!.actions!.map((a) => a.verb), c.name).toEqual(["cast", "return"]);
+    // The card's other text prints no "return": the bounce of a creature of yours must survive the printed-verb guard (#1321) on the keyword alone.
+    expect(tags.abilities.some((a) => a.clause === 2 && a.effect.kind === "bounce" && a.effect.subject?.control === "you"), c.name).toBe(true);
+  }
+});
+
+test("Scotty, Miracle Worker: the grant of beam me up reads; the card stops at the cost sentence, the blocker Lier's granted flashback has (no grant-with-a-cost shape in the grammar yet)", () => {
+  const g = grammarClauseRecords({ name: "Scotty, Miracle Worker", typeLine: "Legendary Creature — Human Artificer", keywords: [], oracleText: "During your main phase, each card in your graveyard has beam me up. The beam me up cost is equal to that spell's mana cost. Scotty can't be beamed up to cast a spell this way. (Only instant and sorcery spells can be cast this way. You may cast a card from your graveyard for its beam me up cost if you also return another creature you control to its owner's hand. Then exile that spell.)" });
+  expect(g.complete).toBe(false);
+  expect(g.blocker).toEqual({ clause: 1, kind: "action", phrase: "the beam me up cost is equal to that spell's mana cost" });
+  const lier = grammarClauseRecords({ name: "Lier, Disciple of the Drowned", typeLine: "Legendary Creature — Human Wizard", keywords: [], oracleText: "Spells can't be countered.\nEach instant and sorcery card in your graveyard has flashback. The flashback cost is equal to that card's mana cost." });
+  expect(lier.blocker).toEqual({ clause: 2, kind: "action", phrase: "the flashback cost is equal to that card's mana cost" });
+});
