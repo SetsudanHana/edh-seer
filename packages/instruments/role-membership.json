@@ -18238,7 +18238,6 @@
 "Woolly Thoctar": ["wincon:stompy"],
 "Word of Blasting": ["role:burn","role:targetedRemoval","wincon:burn"],
 "Word of Seizing": ["role:stax"],
-"Word of Undoing": ["role:targetedRemoval"],
 "Words of War": ["answer:creature","answer:planeswalker","role:burn","role:draw","role:targetedRemoval","wincon:burn"],
 "Words of Waste": ["role:draw"],
 "Words of Wilding": ["role:draw","wincon:go-wide"],

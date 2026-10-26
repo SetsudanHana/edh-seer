@@ -245,6 +245,11 @@ test("fragments 1: a back-referenced controller and a set made 'this way' are re
 test("fragments 2: a leading duration, set P/T on becoming, losing abilities, casting restrictions, entering with counters", () => {
   expect(read("Until end of turn, target creature becomes a white Rabbit with base power and toughness 0/1.").map((r) => [r.verb, r.amount]))
     .toEqual([["animate", undefined], ["modify-pt", "0/1"]]);
+  // A TARGET keeps its class alone (#1352): the result type in a `scope: target` subject reads as a creature the spell targets (matcher `spellTargeting`).
+  expect(read("Until end of turn, target creature becomes a white Rabbit with base power and toughness 0/1.")[0]?.text).toBe("target creature");
+  // ...the card itself carries it: the set P/T is in the animate's words, as the store writes it.
+  expect(read("Until end of turn, this creature becomes a white Rabbit with base power and toughness 0/1.").map((r) => r.verb)).toEqual(["animate"]);
+  expect(read("Until end of turn, this creature becomes a white Rabbit with base power and toughness 0/1.")[0]?.text).toBe("this becomes a 0/1 white Rabbit");
   expect(read("Until end of turn, target creature loses all abilities and becomes a blue Frog with base power and toughness 1/1.")[0])
     .toMatchObject({ verb: "cant", text: "have abilities" });
   expect(read("Cast this spell only during the declare attackers step and only if you've been attacked this step.").map((r) => r.text))
@@ -333,7 +338,7 @@ test("fragments 5: then-joints, coloured costs, copies, animated lands, stacked 
   expect(parseActions("copy it twice.", "triggered")[0]).toMatchObject({ verb: "copy", amount: "2" });
   expect(verbs("copy it, except the copy isn't legendary.")).toEqual(["copy", "cant"]);
   expect(verbs("this creature becomes a copy of that card, except it has this ability.")).toEqual(["copy", "grant-ability"]);
-  expect(verbs("that land becomes a 0/0 Elemental creature with haste that's still a land.")).toEqual(["animate", "modify-pt", "grant-ability"]);
+  expect(verbs("that land becomes a 0/0 Elemental creature with haste that's still a land.")).toEqual(["animate"]);
   expect(verbs("Enchanted Forest becomes a 4/4 green Spirit creature until end of turn.", "static")).toEqual(["animate", "modify-pt"]);
   expect(parseActions("During turns other than yours, creatures you control get -0/-2.", "static")[0]).toMatchObject({ verb: "modify-pt", condition: "during turns other than yours" });
   expect(parseActions("Prevent all damage a source of your choice would deal this turn.", "spell")[0]).toMatchObject({ verb: "prevent" });
@@ -474,11 +479,13 @@ test("fragments 13: opponent digs, piles, returns to their hand, animations", ()
   expect(verbs("exile them in a face-down pile.")).toEqual(["exile"]);
   expect(verbs("exile target nonland permanent and the top card of your library.", "spell")).toEqual(["exile", "exile"]);
   expect(parseActions("target player returns a creature card from their graveyard to their hand.", "spell")[0]).toMatchObject({ verb: "return", toZone: "hand" });
-  expect(verbs("~ becomes a legendary 4/4 red Dragon creature with flying, indestructible, and haste.", "activated")).toEqual(["animate", "grant-ability", "grant-ability", "grant-ability"]);
+  expect(verbs("~ becomes a legendary 4/4 red Dragon creature with flying, indestructible, and haste.", "activated")).toEqual(["animate"]);
   expect(verbs("lands you control are 2/2 creatures with first strike.", "static")).toEqual(["animate", "grant-ability"]);
-  // An X the sentence defines keeps the stored animation, which derive's scaling reads.
+  // An X the sentence defines stays in the animate's words, which derive's scaling reads (#1352: the words now carry the whole becomes-phrase).
   expect(parseActions("Until end of turn, target land you control becomes an X/X Citizen creature with haste in addition to its other types, where X is twice the number of Gates you control.", "activated")[0])
     .toMatchObject({ verb: "animate", object: { ref: "sentence" } });
+  expect(parseActions("Until end of turn, this creature becomes an X/X Citizen creature with haste in addition to its other types, where X is twice the number of Gates you control.", "activated")[0])
+    .toMatchObject({ verb: "animate", text: "this becomes a X/X Citizen creature with haste, where X is twice the number of Gates you control" });
   expect(parseActions("it deals 4 damage instead.", "static")[0]).toMatchObject({ verb: "deal-damage", amount: "4" });
 });
 
@@ -568,7 +575,9 @@ test.each([
   ["tokens", ["create", "populate", "amass", "investigate", "incubate"], 0.935],
   // zone 0.937 -> 0.936: "with the same name as" now refused (it read Maelstrom Pulse as a mesh, task 7).
   ["zone", ["destroy", "exile", "sacrifice", "return", "put", "shuffle"], 0.936],
-  ["pump/grant", ["modify-pt", "grant-ability"], 0.935],
+  // pump/grant 0.935 -> 0.934 (#1352): the card itself's P/T and keywords are now INSIDE its animate's words (as the store's "this as a 3/6 Golem artifact creature" writes them), so the
+  // grammar reads no separate modify-pt or keyword grant there. Measured 0.93411 (was 0.93716 before the change: 0.30 point). A target or class animate keeps its pump.
+  ["pump/grant", ["modify-pt", "grant-ability"], 0.934],
   ["mana/tap/cant", ["add-mana", "tap", "untap", "cant"], 0.917],
   ["tail", ["counter-spell", "gain-control", "fight", "goad", "regenerate", "transform", "attach", "copy", "detain", "suspect", "bolster", "adapt",
     "monstrosity", "support", "discover", "collect-evidence", "venture-into-the-dungeon", "manifest-dread", "learn", "monarch", "initiative", "ring-tempts",

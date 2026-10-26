@@ -97,25 +97,65 @@ export function lostClaims(stored: readonly Ability[], grammar: readonly Ability
   return [...claims(stored)].filter((c) => !g.has(c)).sort();
 }
 
-/** THE ANIMATE TYPE THE GRAMMAR DROPS. The grammar's `animate` action carries only its target, while the stored model answer often writes the
- *  "becomes a 3/6 Golem artifact creature" phrase into the object, which derive reads `type`, `subtype` and `stats` from (Jade Statue, Haunted
- *  Screen, Sage of the Maze). A labelled count-changing group ("abilities:1->2") lets that loss through `lostClaims`, which compares kinds
- *  and verbs only. True when, in some clause, a stored `animate` effect's subject carries a type, subtype or stat that no `animate` effect of
- *  the grammar's reading of that clause carries. Narrow on purpose: the animate subject's three fields, nothing else (#1349). */
-export function lostAnimateFields(stored: readonly Ability[], grammar: readonly Ability[]): boolean {
-  const fields = ["type", "subtype", "stats"] as const;
-  const values = (abs: readonly Ability[], clause: number | undefined, f: (typeof fields)[number]): Set<string> => {
+/** THE SUBJECT FIELDS THE GRAMMAR DROPS (#1349 animate, generalised by #1352). `lostClaims` compares effect kinds and emit verbs only, so a labelled group could switch a card whose grammar
+ *  effect lost a `type`, `subtype`, `stats` or `keyword` the stored effect's subject carries: Jade Statue's "becomes a 3/6 Golem artifact creature" (the grammar's animate had only the
+ *  target's type), Goddric's "is a Dragon with base 4/4" (the stored keyword-grant has subtype dragon). Per clause and EFFECT KIND, not per position: each field value of a stored effect's
+ *  subject must be carried by some grammar effect of that same kind in that same clause. A clause where the grammar has NO effect of that kind is not compared here (the grammar split
+ *  it into other kinds: Simic Keyrune's animate, read as a pump and a keyword-grant, is `lostClaims`'s kind loss, not a lost field); comparing against an empty set flagged it twice.
+ *  One-directional: a field only the grammar carries is a gain, never a loss. Returns "kind:field" for each loss, sorted. */
+const SUBJECT_FIELDS = ["type", "subtype", "stats", "keyword"] as const;
+export function lostSubjectFields(stored: readonly Ability[], grammar: readonly Ability[]): string[] {
+  const values = (abs: readonly Ability[], clause: number | undefined, kind: string, f: (typeof SUBJECT_FIELDS)[number]): Set<string> => {
     const out = new Set<string>();
     for (const a of abs) {
-      if (a.clause !== clause || a.effect?.kind !== "animate") continue;
+      if (a.clause !== clause || a.effect?.kind !== kind) continue;
       const v = (a.effect.subject as unknown as Record<string, unknown> | undefined)?.[f];
       if (v === undefined) continue;
       for (const x of Array.isArray(v) ? v : [v]) out.add(JSON.stringify(canonical(x)));
     }
     return out;
   };
-  return stored.some((a) => a.effect?.kind === "animate"
-    && fields.some((f) => [...values([a], a.clause, f)].some((v) => !values(grammar, a.clause, f).has(v))));
+  const lost = new Set<string>();
+  for (const a of stored) {
+    const kind = a.effect?.kind;
+    const same = grammar.filter((g) => g.clause === a.clause && g.effect?.kind === kind);
+    // Derive drops a subject when the recipient is the card itself (Goddric's "is a Dragon ... and \"{R}: Dragons you control get +1/+0\"": the grant is Goddric's, and the stored
+    // subject {subtype dragon, scope all} is the quoted ability's own class read as the recipient, a self-reference defect). A grammar effect with no subject at all holds nothing to
+    // compare; Hubris' bounce, Savage Offensive's pump and Aether Rift's recursion carry subjects and stay compared.
+    if (same.every((g) => g.effect.subject === undefined)) continue;
+    for (const f of SUBJECT_FIELDS) {
+      const have = values(grammar, a.clause, kind, f);
+      // CEILING: two stored animate types that are not part of the result are met by ANY type the grammar's animate carries. The umbrella "permanent" (Opal Guardian's "this permanent as a 3/4
+      // Gargoyle creature": the store's own parse stopped at the noun) names no type of its own; and the card's own printed noun on a SELF animate (Halcyon Glaze's "this enchantment becomes
+      // a 4/4 Illusion creature": stored {type: enchantment, self}) is what the card was, while the grammar's `this` carries what it becomes (a set card type replaces the old one). Only for an animate; elsewhere a bare "permanent" is a real, wider class.
+      // ...and only a lone non-creature noun: a stored type that names "creature" is a result type and is never excused.
+      const stored1 = [...values([a], a.clause, kind, f)];
+      const selfNoun = kind === "animate" && f === "type" && (a.effect.subject as { self?: boolean } | undefined)?.self === true && stored1.length === 1 && stored1[0] !== '"creature"'
+        && grammar.some((g) => g.clause === a.clause && g.effect?.kind === "animate" && (g.effect.subject as { self?: boolean } | undefined)?.self === true);
+      const umbrella = kind === "animate" && f === "type" && have.size > 0;
+      if (stored1.some((v) => !have.has(v) && !(umbrella && (v === '"permanent"' || selfNoun)))) lost.add(`${kind}:${f}`);
+    }
+  }
+  return [...lost].sort();
+}
+
+/** THE SCALED AMOUNT THE GRAMMAR DROPS (#1352 review). A stored effect whose `amount` is defined by a count of the deck's own cards ("becomes an X/X Treefolk, where X is the number of Elves you
+ *  control": Elvish Branchbender's `amount` and `count.scalesWith`) is a claim `lostClaims` and `lostSubjectFields` cannot see: the grammar's effect of the same kind is there, with the same subject, and
+ *  no amount. True per clause and effect kind when the stored ability carries an `amount` with a `count.scalesWith` and no grammar effect of that kind in that clause carries a `scalesWith` that
+ *  keeps it: the grammar has NONE, or has the bare "mana" (a paid X) where the stored one names an object (Bound // Determined: "the number of colors that creature was"). Two scalings that
+ *  are both objects are NOT compared: Winged Portent's carries a `keyword` the stored lacks (more detail, not a loss), and Cavalier of Flame's stored "mana" is the wrong one. One-directional:
+ *  a scaling only the grammar carries is a gain, and a clause where the grammar has no effect of that kind is `lostClaims`'s. */
+export function lostScaledAmount(stored: readonly Ability[], grammar: readonly Ability[]): string[] {
+  const lost = new Set<string>();
+  for (const a of stored) {
+    const kind = a.effect?.kind;
+    const scales = a.count?.scalesWith;
+    if (!kind || a.amount === undefined || scales === undefined) continue;
+    const there = grammar.filter((g) => g.clause === a.clause && g.effect?.kind === kind);
+    const keeps = (g: Ability): boolean => g.count?.scalesWith !== undefined && !(g.count.scalesWith === "mana" && scales !== "mana");
+    if (there.length > 0 && !there.some(keeps)) lost.add(kind);
+  }
+  return [...lost].sort();
 }
 
 /** THE TRIGGER FLAGS THE GRAMMAR DROPS (#1349 review). `lostClaims` compares effect kinds and emit verbs, so a labelled "grammar right" group can switch a card whose grammar
