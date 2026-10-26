@@ -47,13 +47,14 @@ export function selfPronouns(effect: string): string {
  *  one function, so the census and the switch cannot drift apart.
  *
  *  Each face's full name and its short forms (`selfNames`), longest first, whole-word, with a
- *  possessive kept ("Picard's power" is "~'s power"); the literal "CARDNAME" is the name too.
+ *  possessive kept ("Picard's power" is "~'s power"), unless a Capitalised word follows it: "Volo's Journal"
+ *  is another object's name, not the card's; the literal "CARDNAME" is the name too.
  *  CASE-SENSITIVE: Oracle capitalises a name, and Storm, Force of Nature's "has storm" is the keyword,
  *  not the card. */
 export function selfAsTilde(phrase: string, name: string): string {
   let out = phrase.replace(/\bCARDNAME\b/g, "~");
   for (const n of selfNames(name)) {
-    out = out.replace(new RegExp(`(?<![\\w'])${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?!\\w|'(?!s\\b))`, "g"), "~");
+    out = out.replace(new RegExp(`(?<![\\w'])${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?!\\w|'(?!s\\b)|'s [A-Z])`, "g"), "~");
   }
   return out;
 }

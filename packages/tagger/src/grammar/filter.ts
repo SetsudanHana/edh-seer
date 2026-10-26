@@ -38,9 +38,9 @@ import { KEYWORD_ABILITIES, SPELL_SUBTYPES, SUBTYPE_TYPES, SUBTYPES } from "../d
 
 /** A mana symbol, a printed size or counter ("1/1", "+1/+1"), a number, a word (with its
  *  apostrophes and hyphens: "opponent's", "non-dragon", "assembly-worker"), a comma, or "~", the
- *  card's own name, which only a "that targets" clause reads. Anything else — a period, a colon, a
+ *  card's own name ("~'s", its possessive, is one token), which only a "that targets" clause reads. Anything else — a period, a colon, a
  *  parenthesis — fails the lex, and a phrase that does not lex does not parse. */
-const TOKEN = /\{[^}\s]{1,8}\}|[+-]?(?:\d{1,3}|x|\*)\/[+-]?(?:\d{1,3}|x|\*)|\d{1,3}|and\/or|[a-z][a-z'-]*|[,;:]|~/y;
+const TOKEN = /\{[^}\s]{1,8}\}|[+-]?(?:\d{1,3}|x|\*)\/[+-]?(?:\d{1,3}|x|\*)|\d{1,3}|and\/or|[a-z][a-z'-]*|[,;:]|~'s|~/y;
 
 export function lex(text: string): string[] | null {
   const t = text.toLowerCase().replace(/’/g, "'").trim();

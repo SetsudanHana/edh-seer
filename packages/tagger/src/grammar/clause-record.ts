@@ -403,6 +403,11 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     const unread = unreadPhrases(effect, type, cost);
     if (unread.length) return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: unread[0]! } };
     const readingsHere = parseActions(effect, type, cost);
+    // CEILING: one counter amount that swallowed a second counter clause ("a +1/+1 counter on it for each other red
+    // creature you control AND a +1/+1 counter on it for each other green creature you control", Ulasht) is two
+    // abilities read as one; the card is refused here rather than banked with half of it (the stored answer keeps both).
+    const swallowed = readingsHere.find((r) => r.verb === "add-counter" && / and (?:an?|one|two|three|x) [^,]*?counters? on (?:it|them|him|her)\b/.test(r.amount ?? ""));
+    if (swallowed) return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: effect } };
     readings[c.id] = { ...readings[c.id], actions: readingsHere };
     // A KEYWORD LINE the segmenter left as an ability ("Suspend 4—{U}", its reminder stripped): the
     // card's own keywords, which the store records as no action, as it does a keyword clause.

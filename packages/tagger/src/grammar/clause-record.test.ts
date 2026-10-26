@@ -609,7 +609,7 @@ test("a pronoun is the card only after a self trigger and with no earlier antece
 });
 
 test("the self-name cards move past their self-reference and stop at the NEXT phrase", () => {
-  const reads = (name: string, text: string) => selfCard(name, text);
+  const reads = (name: string, text: string, typeLine?: string) => selfCard(name, text, typeLine);
   expect(reads("Captain Jonathan Archer", "When Captain Archer enters, create Porthos, a legendary 1/1 green Dog creature token.").complete).toBe(true);
   expect(reads("Captain Michael Burnham", "Whenever a land you control enters, Captain Burnham deals 1 damage to each opponent. If this is the second time this ability has resolved this turn, put a +1/+1 counter on Captain Burnham.").complete).toBe(true);
   expect(reads("Dr. Beverly Crusher", "Whenever you gain life, put a +1/+1 counter on Dr. Crusher.").complete).toBe(true);
@@ -622,4 +622,36 @@ test("the self-name cards move past their self-reference and stop at the NEXT ph
   expect(reads("Seven of Nine, Unassimilated", "{6}{U}: Seven of Nine's base power and toughness become 7/9. Activate only if you control seven or more differently named lands.").blocker?.phrase).toBe("activate only if you control seven or more differently named lands");
   expect(reads("Ensign Pavel Chekov", "Strange new worlds — When Ensign Chekov enters, each opponent exiles the top X cards of their library, where X is the number of differently named lands you control. For each opponent, choose a land card that player owns exiled this way. You may play the chosen cards for as long as they remain exiled.").blocker?.phrase).toBe("for each opponent");
   expect(reads("Beckett Mariner, Impetuous Ensign", "Reckless Behavior — Whenever Beckett Mariner becomes tapped, put a promotion counter on her. Then if there are three or more promotion counters on her, remove those counters and she deals 2 damage to each opponent.").blocker?.phrase).toBe("then if there are three or more promotion counters on ~, remove those counters");
+});
+
+// #1349 task 2 follow-up: regressions the identity proof found in the self-name work.
+const derivedFrom = (name: string, typeLine: string, oracleText: string) => {
+  const card = { name, typeLine, oracleText, keywords: [] as string[] };
+  const g = grammarClauseRecords(card);
+  return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings));
+};
+
+test("the card's possessive in a filter or trigger is read, not refused", () => {
+  const alesha = derivedFrom("Alesha, Who Laughs at Fate", "Legendary Creature — Human Warrior", "Raid — At the beginning of your end step, if you attacked this turn, return target creature card with mana value less than or equal to Alesha's power from your graveyard to the battlefield.");
+  expect(alesha.abilities[0]!.effect.subject).toMatchObject({ fromZone: "graveyard", stats: [{ metric: "mana-value", op: "lte", variable: true }] });
+  const jackal = derivedFrom("Jackal, Genius Geneticist", "Legendary Creature — Human Mutant Scientist", "Whenever you cast a creature spell with mana value equal to Jackal's power, copy that spell, except the copy isn't legendary. Then put a +1/+1 counter on Jackal.");
+  expect(jackal.abilities[0]!.trigger).toMatchObject({ verbs: ["cast"], subject: { type: "creature", stats: [{ metric: "mana-value", op: "eq", variable: true }] } });
+});
+
+test("a possessive naming ANOTHER object ('Volo's Journal') is not the card", () => {
+  expect(selfAsTilde("create Volo's Journal, a token. Draw a card for each noted for target permanent named Volo's Journal.", "Volo, Itinerant Scholar"))
+    .toBe("create Volo's Journal, a token. Draw a card for each noted for target permanent named Volo's Journal.");
+  expect(selfAsTilde("token named Ajani's Pridemate. exile Ajani and each creature", "Ajani, Strength of the Pride")).toBe("token named Ajani's Pridemate. exile ~ and each creature");
+  expect(selfAsTilde("create Koma's Coil", "Koma, World-Eater")).toBe("create Koma's Coil");
+  expect(selfAsTilde("equal to Gandalf's owner", "Gandalf, Wandering Wizard")).toBe("equal to ~'s owner");
+});
+
+test("a counter on a compound target keeps its subject (Omo), the two-recipient shape is the card and one more", () => {
+  const omo = derivedFrom("Omo, Queen of Vesuva", "Legendary Creature — Elemental Shapeshifter", "Whenever Omo enters or attacks, put an everything counter on each of up to one target land and up to one target creature.");
+  expect(omo.abilities[0]).toMatchObject({ effect: { subject: { type: ["creature", "land"], scope: "target" } }, amount: "1" });
+});
+
+test("Ulasht: one 'enters with' sentence holding two counter clauses is refused, not read as one amount", () => {
+  const g = selfCard("Ulasht, the Hate Seed", "Ulasht enters with a +1/+1 counter on it for each other red creature you control and a +1/+1 counter on it for each other green creature you control.");
+  expect(g.complete).toBe(false);
 });
