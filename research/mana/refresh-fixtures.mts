@@ -71,7 +71,7 @@ const names = (es: Entry[]) => es.map((e) => e.card.name as string);
 const files: { file: string; value: unknown; indent: number }[] = [
   { file: goldfishFile, value: await whole(names(JSON.parse(readFileSync(goldfishFile, "utf8")))), indent: 0 },
   { file: colourFile, indent: 0, value: { cards: await whole(names(colourOld.cards)), gisa: { commanders: colourOld.gisa.commanders, deck: await whole(names(colourOld.gisa.deck)) } } },
-  ...await Promise.all(["ramp-colour.fixtures", "same-job.fixtures", "quality.fixtures", "same-job.labels.cards"].map(async (n) => ({ file: `${M}/${n}.json`, value: await keyed(`${M}/${n}.json`), indent: 1 }))),
+  ...await Promise.all(["ramp-colour.fixtures", "same-job.fixtures", "similar.fixtures", "quality.fixtures", "same-job.labels.cards"].map(async (n) => ({ file: `${M}/${n}.json`, value: await keyed(`${M}/${n}.json`), indent: 1 }))),
 ];
 
 const stale: string[] = [];

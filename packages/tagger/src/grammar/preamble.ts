@@ -4,7 +4,7 @@
  *  was measured on. */
 import { withoutArticle } from "../derive/self-reference.js";
 import { SUBTYPES } from "../derive/subtypes.js";
-import { selfAsTilde } from "./self-as-tilde.js";
+import { selfAsTilde, selfPronouns } from "./self-as-tilde.js";
 
 /** A comma inside a short list ("whenever you cast an instant, sorcery, or Wizard spell,") does not
  *  end the preamble: one followed by list items of one or two words and then ", or" / ", and", one
@@ -88,5 +88,7 @@ export function effectText(text: string, cardName: string): string {
   const named = cardName && !typeName ? selfAsTilde(text, cardName) : text;
   const m = PREAMBLE.exec(named);
   const rest = m ? named.slice(m[0].length).trim() : named.trim();
-  return m ? rest.replace(/^if [^,.]+, /i, "") : rest;
+  // "Whenever Beckett Mariner becomes tapped, put a counter on her": the card named, so its pronoun is the card.
+  const effect = m && /^\s*(?:when|whenever) ~ /i.test(m[0]) ? selfPronouns(rest) : rest;
+  return m ? effect.replace(/^if [^,.]+, /i, "") : effect;
 }

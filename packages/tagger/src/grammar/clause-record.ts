@@ -99,7 +99,7 @@ const SELF_SUBJECT = /^(?:~|this [a-z]+)$/i;
 const NO_OBJECT_YOU = new Set(["monarch", "initiative", "ring-tempts", "learn", "venture-into-the-dungeon", "manifest-dread", "investigate", "populate", "win-game", "lose-game"]);
 /** Verbs whose stored object can be the PLAYER it happens to ("target player mills two cards" ->
  *  "target player"), the convention derive's `PLAYER_OBJECT_VERBS` reads. */
-const PLAYER_VERBS = new Set(["draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life"]);
+const PLAYER_VERBS = new Set(["draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life", "blight"]); // blight: "target opponent blights 2" names the opponent (Champion of the Weird); your own "blight 2" keeps its amount as the object
 const ZONE_VERBS = new Set(["destroy", "exile", "sacrifice", "return", "put", "shuffle"]);
 // "put that card ON TOP" (Cruel Tutor): where it goes is no part of which card it is.
 const BACK_REFERENCE = /^(?:it|them|him|her|that card|those cards|that creature|that permanent|the card|the cards|one|the other|the rest|one of them|those)(?: on (?:top|the bottom)(?: of (?:your|their|its owner's) library)?)?$/i;
@@ -211,7 +211,7 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     const words = words0.replace(/^(this (?:card|creature|artifact|enchantment|land)) from your graveyard$/i, "$1");
     // "that creature's controller mills two cards" (Riddlekeeper): a player named through an object is
     // named outright too; a bare "that player" leaves the printed words.
-    const object = PLAYER_VERBS.has(r.verb) ? (r.actor?.text !== undefined && (r.actor.scope !== "that" || /'s (?:controller|owner)$/i.test(r.actor.text)) ? r.actor.text : words || "you")
+    const object = PLAYER_VERBS.has(r.verb) ? (r.actor?.text !== undefined && !(r.verb === "blight" && /^you$/i.test(r.actor.text)) && (r.actor.scope !== "that" || /'s (?:controller|owner)$/i.test(r.actor.text)) ? r.actor.text : words || "you")
       : selfTrigger && out.length === 0 && /^(?:it|itself)$/i.test(words) ? selfTrigger
       // "this creature becomes prepared", "it explores" (Jenny): a subject action of the card itself.
       : !words && r.object?.self === true ? selfTrigger ?? selfWord
@@ -244,14 +244,27 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
       : r.verb === "return" && r.toZone === "hand" && /^that (?:creature|permanent)$/i.test(object) && before === undefined ? "battlefield"
       // "Shuffle Beacon of Immortality into its owner's library": a spell shuffles itself from the stack.
       : r.verb === "shuffle" && r.object?.self === true && type === "spell" ? "stack" : null);
-    const from = r.fromZone ?? castRef ?? selfBounce ?? (!ZONE_VERBS.has(r.verb) || r.verb === "shuffle" ? null
+    // "put it back on top of your library" (Triumph of Saint Katherine), "put the chosen cards on top of your library"
+    // (Doomsday): the player restacking cards of THEIR library, a library to library put. Read by the DESTINATION
+    // "on top of", never "bottom of": "put each other card exiled this way on the bottom of your library" (Codie) comes from exile.
+    // A bare pronoun needs "back" and a pile shuffled before it: "Exile target creature. Put it on top of its owner's library"
+    // is the exiled creature, from exile, and the back-reference branch below keeps that reading.
+    // CEILING: Gishath's "Dinosaur creature cards from among them" put has no sentence naming its source, so its
+    // fromZone stays null, and Codie's "each other card exiled this way ... bottom" is null by the same strictness.
+    const topPut = r.verb === "put" && r.toZone === "library"
+      && (/^(?:that pile|the chosen cards|those cards)$/i.test(object) || (/^(?:it|them) back$/i.test(object) && out.some((a) => a.verb === "shuffle")))
+      && /\bon top of (?:your|their|its owner's) library\b/i.test(r.phrase ?? r.text ?? "") ? "library" : null;
+    const from = r.fromZone ?? castRef ?? selfBounce ?? topPut ?? (!ZONE_VERBS.has(r.verb) || r.verb === "shuffle" ? null
       : ref ? (before?.verb === "search" ? "library" : before?.verb === "exile" ? (looksAtLibrary && !SINGULAR_REF.test(object) ? "library" : "exile") : before !== undefined ? null
         // "When enchanted creature dies, return that card": the card the trigger put in the graveyard.
         // "Counter target spell. If that spell is countered this way, exile it instead": still on the stack.
         : r.verb === "exile" && out.some((a) => a.verb === "counter-spell") ? "stack"
         : revealedFrom ?? (/^(?:dies|sacrificed|put-into-graveyard|discarded|milled)$/.test(triggerEvent ?? "") && out.length === 0 ? "graveyard" : null))
       // "that many cards from the bottom of your library": the library the words name.
-      : /\b(?:top|bottom) of (?:your|their|its owner's|that player's|target player's) library\b/i.test(r.phrase ?? r.text ?? "") ? "library"
+      // "target exiled card with warp", "target card you own in exile": it leaves exile, wherever it lands.
+      : /\b(?:exiled cards?|in exile)\b/i.test(object) ? "exile"
+      // Only a SOURCE: "on the bottom of its owner's library" is where a card lands, not where it was.
+      : /\bfrom the (?:top|bottom) of (?:your|their|its owner's|that player's|target player's) library\b/i.test(r.phrase ?? r.text ?? "") ? "library"
       // A set the sentence made: cards milled are in the graveyard, cards revealed in the library
       // (Szarekh's "from among the cards milled this way", Glint Raker's "revealed this way" and "the rest").
       : /\bmilled\b/i.test(object) ? "graveyard"
@@ -334,7 +347,9 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     const labelled = !c.cost && (c.abilityType ?? "static") === "static" ? missedCost(c.text) : null;
     const type = labelled ? "activated" : c.abilityType ?? "static";
     const record: ClauseRecord = { id: c.id, abilityType: type, actions: [] };
-    if (type === "triggered") {
+    // A MODE of a triggered modal ability is typed triggered (the store's convention) but has no trigger of
+    // its own: the parent's trigger is its trigger. Only a mode that prints its own ("When ..., ...") reads one.
+    if (type === "triggered" && !(c.kind === "mode" && !/^\s*(?:whenever|when|at the beginning of|at end of)\b/i.test(c.text))) {
       const preamble = printedPreamble(c.text, card.name);
       const read = preamble ? parseTrigger(preamble, interveningIfOf(selfAsTilde(c.text, card.name))) : null;
       if (!read) return { records, complete: false, blocker: { clause: c.id, kind: "trigger", ...(preamble ? { phrase: preamble } : {}) } };
@@ -372,7 +387,9 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       const read = [parseTrigger(delayed[1]!, null) ?? []].flat()[0];
       if (read) record.trigger = { event: read.event, subject: triggerSubjectText(delayed[1]!), control: read.control ?? "any" };
     }
-    const cost = labelled ? labelled.cost : c.cost;
+    // The card's own name in its cost ("{2}, Sacrifice Kirk:") is the card: "~", as in the effect.
+    const rawCost = labelled ? labelled.cost : c.cost;
+    const cost = rawCost ? selfAsTilde(rawCost, card.name) : rawCost;
     // AN ACTIVATED COST BEHIND A LABEL THE SEGMENTER MISSED ("Go for the Goal! — {3}, {T}: ..."): it
     // left the clause cost-less and static, and reading the text past the label would drop the cost and
     // bank a static grant. Refused, as before the label strip existed. A cost of mana alone ("I LOVE
@@ -386,6 +403,24 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     const unread = unreadPhrases(effect, type, cost);
     if (unread.length) return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: unread[0]! } };
     const readingsHere = parseActions(effect, type, cost);
+    // CEILING: one counter amount that swallowed a second counter clause ("a +1/+1 counter on it for each other red
+    // creature you control AND a +1/+1 counter on it for each other green creature you control", Ulasht) is two
+    // abilities read as one; the card is refused here rather than banked with half of it (the stored answer keeps both).
+    const swallowed = readingsHere.find((r) => r.verb === "add-counter" && / and (?:an?|one|two|three|x) [^,]*?counters? on (?:it|them|him|her|~)(?!\w)/.test(r.amount ?? ""));
+    if (swallowed) return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: effect } };
+    // A MODE'S "IF <condition>" GATES ITS EFFECT (#1349 review): "Draw a card if you control a permanent with a counter on it"
+    // (Federation Field Medic) is no unconditional draw, and the store has no slot for the condition, so the action would
+    // be recorded as a plain draw. The mode is recorded as one `other` action instead, which derive leaves unclaimed and visible.
+    // CEILING: only a mode (a non-modal conditional effect keeps its plain reading, as the stored answer has it: Roadside Reliquary), and the WHOLE
+    // mode becomes the one `other`, its unconditional parts included (What Must Be Done's return is lost): a card with no model answer derives nothing for that mode.
+    const gated = c.kind === "mode" ? readingsHere.find((r) => r.condition !== undefined && /^if /i.test(r.condition) && !/^if (?:you|they) (?:do|don't|did|didn't)\s*(?:[,.]|$)|^if able\b|\bwould\b|\binstead\b/i.test(r.condition)) : undefined;
+    if (gated) {
+      readings[c.id] = { ...readings[c.id], actions: [] };
+      record.actions = [{ verb: "other", object: effect, fromZone: null, toZone: null, optional: false } as Action];
+      records.push(record);
+      for (const o of overflow) if (o.actions!.length === 0 && o.trigger) o.actions = record.actions;
+      continue;
+    }
     readings[c.id] = { ...readings[c.id], actions: readingsHere };
     // A KEYWORD LINE the segmenter left as an ability ("Suspend 4—{U}", its reminder stripped): the
     // card's own keywords, which the store records as no action, as it does a keyword clause.

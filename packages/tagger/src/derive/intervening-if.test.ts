@@ -5,6 +5,14 @@ import { conditionCares, interveningIfOf } from "./intervening-if.js";
 // evaluator: the 2026-08-15 refusal stands for the 241 distinct conditions the corpus prints.
 test("a condition contributes the cares tag its text names, and nothing else", () => {
   expect(conditionCares("it had one or more counters on it")).toEqual(["counter-added:any"]);
+  expect(conditionCares("your opponents control no permanents with bounty counters on them")).toEqual([]);
+  expect(conditionCares("an opponent has three or more poison counters")).toEqual([]);
+  expect(conditionCares("there are twenty-five or more loyalty counters among Jaces you control")).toEqual([]);
+  expect(conditionCares("that player has no cards in hand and this enchantment has two or more quest counters on it")).toEqual(["counter-added:any"]);
+  expect(conditionCares("there are three or more brick counters on this artifact")).toEqual(["counter-added:any"]);
+  expect(conditionCares("there are no charge counters on this artifact")).toEqual([]);
+  expect(conditionCares("it has no time counters on it")).toEqual([]);
+  expect(conditionCares("it has no counters on it")).toEqual([]);
   expect(conditionCares("a creature died this turn")).toEqual(["dies:creature"]);
   expect(conditionCares("you attacked this turn")).toEqual(["attacks:creature"]);
   expect(conditionCares("a planeswalker entered the battlefield under your control this turn"))

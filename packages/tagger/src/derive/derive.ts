@@ -12,7 +12,7 @@ import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
 import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
-import { interveningIfOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
+import { interveningIfOf, activationConditionOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
 import { hostEffect } from "./host.js";
 import { librarySearchOwner, printsSearch } from "./library-search.js";
@@ -549,7 +549,8 @@ import { emblemRecipient } from "../emblem.js";
 // 386: #1302 review of 385 -- the COUNT and the CHOICE of a hand-fill are read from the PICK SENTENCE, not from the stored object's spelling (`to-hand.ts` `readToHand`): "You may reveal an instant or sorcery card from among them and put it into your hand" is one pick of a larger look whatever the object says (Augur of Bolas, Boughside Wanderers, Calix, Break Out, Follow the Lumarets' base case: now chosen -> card selection); "a creature card and/or a land card" is two cards (Kiora, Benefaction of Rhonas, In the Presence of Ages, Relentless Pursuit, Gift of the Gargantuan), "a Cleric card, a Rogue card, a Warrior card, and/or a Wizard card" four (Harper Recruiter), "a land card or a card with {X}" one; "any number of <class>" is all (Karumonix, Lead the Stampede, Forging the Anchor, You Meet in a Tavern, Torsten); "until you reveal three nonland cards" is 3 (Fathom Trawl), a reveal-until that lists classes still takes one (An Unearthly Child); the k-th hand-put reads the k-th hand sentence (Follow the Lumarets: one, or two instead); a plural pointer at "each opponent chooses a card" stays all (Manifold Insights). A SEQUENCE of hand-puts with no alternative between them (Memories Returning: one, then one, then the other) is not a pick. An opponent who picks the PILE leaves YOU the pick of a card from it (Truth or Tale: chosen -> card selection); an opponent who picks the CARD does not (Karn). A predicate pick "with the chosen name" is no class (Tamiyo, Collector of Tales is untyped `to-hand` again); a list of classes is one class list (Harper Recruiter: Cleric, Rogue, Warrior, or Wizard); "choose a card that's exactly those colors from among them" has an unreadable class (Niv-Mizzet Reborn). A fallback hand-put points back at the pick sentence it falls back from, nearest "from among" / "until you reveal" within three sentences (Break Out, Songbirds' Blessing, Part in Friendship: now typed digs). All regexes in `to-hand.ts` are linear (bounded classes, `indexOf`): CodeQL js/polynomial-redos, 40k characters in under 200 ms. Measured against 385 (derive-identity): 35 cards differ, all of them the changes above plus the 2 known drift cards.
 // 387: #1302 review of 386 -- a hand-fill (`to-hand`, or a typed dig's `search`) never has a `self` subject: a library card is not the permanent that entered (Niv-Mizzet Reborn's "the chosen cards" read as the card itself and the dig "dug for itself"); and the stored object's trailing "into your hand" is stripped without a quadratic `\s+` regex (ReDoS). Measured: derive-identity against 386 differs on Niv-Mizzet Reborn alone (plus the 2 known drift cards).
 // 388: (owner 2026-10-24) a CR 614 replacement records what it does to the event it hears: `Ability.change` {op: plus|times, value}, read by `replacement.ts` `changeOf` off the matched clause -- triple/three times/thrice x3, double/twice x2, "plus N" / "plus one" / "plus an additional" +N (Fiery Emancipation x3, Anointed Procession x2, Tekuthal x2, Pyromancer's Gauntlet +2, Hardened Scales +1, Xorn +1). Only a stated number: "plus that many Squirrels" and Alhammarret's Archive's "draw two cards instead" stay unset. Set only beside `replacement: true`, so a restricted replacement (Bruvac) carries none.
-export const DERIVE_VERSION = 388;
+// 389: #1349 -- the grammar reads modal intros, short-name/pronoun self-reference and ability restrictions (riders read off the printed text); "Activate only if <condition>" feeds conditionCares like a trigger's intervening if (owner 2026-10-26), negated/poison/loyalty/player counters demand none; "as though it didn't have defender" grants none; the switch keeps a stored animate's type/subtype/stats. Whole-branch review fixes: "becomes blocked" is no animate (Trap Runner, Curtain of Light, Choking Vines, Fog Patch; GH #1353); a grant in a self-animate sentence is the card's own (Skinshifter, Paragon of the Amesha, Dragonsoul Knight); a counter put as a cost names its permanent in the cost (Jessica Jones, Mazemind Tome; a granted ability's, Sinking Feeling, is excluded); a modal header's every trigger reaches each mode (Captain Kirk, Appa, Galadriel, Oracle of Tragedy); a mode's trailing "if" is no unconditional effect (Federation Field Medic).
+export const DERIVE_VERSION = 389;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -615,6 +616,11 @@ const counterRegexes = (prep: "on" | "from") => ({
 const COUNTER_ON = counterRegexes("on");
 const COUNTER_FROM = counterRegexes("from");
 const OTHER_OBJECT = /\b(?:target|another|each other|any other)\b/i;
+/** A counter PUT as a cost ("{T}, Put a stun counter on Jessica Jones:", #1349 review) is the activated clause's add-counter, and its permanent is
+ *  named in the cost, not in the effect text; used only when the effect text states no counter placement of its own, and never in a granted
+ *  ability (Sinking Feeling), whose "this creature" is the grantee. */
+const COUNTER_PUT_AS_COST = /\bput (?:an?|one|two|three|x) [^,:]*?counters? on\b/i;
+const COUNTER_PREP = /\bcounters?\s+on\b/i;
 function counterOnSelf(verb: string | undefined, text: string, cardName?: string, triggerIsSelf = false): boolean {
   if (verb === "adapt" || verb === "monstrosity") return true;
   if ((verb !== "add-counter" && verb !== "remove-counter") || !text) return false;
@@ -833,6 +839,56 @@ const DEALS_DAMAGE_TO_YOU = /\bdeals (?:combat |noncombat )?damage to you\b/i;
 
 function abilityKind(clause: ClauseRecord): AbilityKind {
   return CLAUSE_TO_ABILITY_KIND[clause.abilityType ?? ""] ?? "static";
+}
+
+/** A clause that states a trigger and nothing else: a modal ability's header ("Whenever X enters or attacks, choose one —"). */
+const triggerHeaderOnly = (c: ClauseRecord): boolean => abilityKind(c) === "triggered" && !!c.trigger?.event && (c.actions ?? []).every((a) => !a.verb || a.verb === "none");
+/** A mode bullet: triggered, and stating no trigger of its own. */
+const modeBullet = (c: ClauseRecord): boolean => abilityKind(c) === "triggered" && !c.trigger?.event;
+interface ClauseVisit { clause: ClauseRecord; /** The header clauses a mode is read under, one visit each; absent for a single-trigger header. */ group?: ClauseRecord[]; k?: number }
+/** The order clauses are derived in, and how often. A modal header with more than one trigger ("enters or attacks": Captain Kirk, Appa, Galadriel,
+ *  Elder Gargaroth) is several header-only records. The grammar appends the second AFTER the card's last clause, so it is moved up beside its first
+ *  (found by having no text of its own in `segment()`'s numbering, as the grammar's overflow records have none); then every mode bullet that follows
+ *  is visited once per header, the way a non-modal "enters or attacks" ability splits into one ability per trigger (#1349 review). */
+function modeVisits(clauses: ClauseRecord[], clauseTexts?: Record<number, string>): ClauseVisit[] {
+  const ordered = [...clauses];
+  if (clauseTexts) {
+    // CEILING: a twin is found by having NO text in `segment()`'s numbering (the grammar's overflow records have none), so a grammar change that
+    // gave them text stops the grouping silently. Twins are paired to modal headers IN ORDER (the grammar appends overflow in header order); when the
+    // counts disagree (a single-trigger modal header beside a multi-trigger one) nothing is moved, and the mode reads under its nearest header only.
+    const modalHead = (i: number): boolean => {
+      if (!triggerHeaderOnly(clauses[i]!) || clauseTexts[clauses[i]!.id as number] === undefined) return false;
+      let j = i + 1;
+      while (j < clauses.length && triggerHeaderOnly(clauses[j]!) && clauseTexts[clauses[j]!.id as number] === undefined) j++;
+      return j < clauses.length && modeBullet(clauses[j]!);
+    };
+    const heads = clauses.filter((_, i) => modalHead(i));
+    const textless = (c: ClauseRecord): boolean => triggerHeaderOnly(c) && clauseTexts[c.id as number] === undefined;
+    const besideHead = (i: number): boolean => { let j = i - 1; while (j >= 0 && textless(clauses[j]!)) j--; return j >= 0 && j < i - 0 && triggerHeaderOnly(clauses[j]!) && j !== i; };
+    const twins = clauses.filter((c, i) => textless(c) && !besideHead(i));
+    if (twins.length > 0 && twins.length === heads.length) {
+      twins.forEach((twin, n) => {
+        const head = heads[n]!;
+        if (head.trigger?.event === twin.trigger?.event) return;
+        ordered.splice(ordered.indexOf(twin), 1);
+        let to = ordered.indexOf(head) + 1;
+        while (to < ordered.length && triggerHeaderOnly(ordered[to]!) && clauseTexts[ordered[to]!.id as number] === undefined) to++;
+        ordered.splice(to, 0, twin);
+      });
+    }
+  }
+  const out: ClauseVisit[] = [];
+  let group: ClauseRecord[] = [];
+  let previousWasHeader = false;
+  for (const c of ordered) {
+    // A twin has no text of its own; two headers that each print a sentence ("..., you may pay {1}. When you do, choose one") are not one trigger's limbs.
+    if (triggerHeaderOnly(c)) { group = previousWasHeader && clauseTexts?.[c.id as number] === undefined ? [...group, c] : [c]; previousWasHeader = true; out.push({ clause: c }); continue; }
+    previousWasHeader = false;
+    if (modeBullet(c) && group.length > 1) { for (let k = 0; k < group.length; k++) out.push({ clause: c, group, k }); continue; }
+    if (!modeBullet(c)) group = [];
+    out.push({ clause: c });
+  }
+  return out;
 }
 
 /** VOCAB set for a fast legality check after alias normalization. */
@@ -1300,7 +1356,9 @@ function withoutQuotedAbilities(text: string): string {
   return out;
 }
 function grantedKeywords(objects: string[]): string[] {
-  const text = objects.map(withoutQuotedAbilities).join(" ").toLowerCase();
+  // "can attack as though it didn't have defender", "can block creatures with shadow as though they didn't have shadow" name a keyword the
+  // thing does NOT have, never one it is handed: Walking Bulwark, Mobile Fort and Glade Watcher read "grants defender" (#1349).
+  const text = objects.map(withoutQuotedAbilities).join(" ").toLowerCase().replace(/(?:creatures with \w+ )?as though (?:it|they) (?:didn't|did not) have \w+/g, " ");
   const named = KEYWORD_ABILITIES.filter((k) => new RegExp(`(?:^|[^a-z])${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:$|[^a-z])`).test(text));
   // LANDWALK IS ONE KEYWORD WITH A LAND TYPE (CR 702.14): "islandwalk" and "swampwalk" are instances,
   // not names on the list, so 47 grants named no keyword (S-T1, 2026-10-06).
@@ -1427,6 +1485,13 @@ function effectSubject(
       ? recipientBefore(clauseText, COPIED_INTO)
       : grantRecipient(clauseText);
     if (who) {
+      // A GRANT IN A SELF-ANIMATE SENTENCE IS THE CARD'S OWN (#1349 review): "this creature becomes a Rhino with base power and
+      // toughness 4/4 and gains trample" hands the trample to the card, not to a Rhino class (Skinshifter, Paragon of the Amesha,
+      // Dragonsoul Knight). The recipient text is the animate's own subject, so it inherits the animate's `self`.
+      const becomesLead = action.verb === "grant-ability" ? /^(.*?\S)\s+becomes?\b/i.exec(who)?.[1] : undefined;
+      if (becomesLead !== undefined && (SELF_REFERENCE.test(becomesLead) || isSelfSubject(becomesLead, cardName))) {
+        return { ...subjectFrom(becomesLead, cardName, cardText), self: true };
+      }
       const s = parseSubject(who);
       // A grant EARNS an edge only when it is typal. "Creatures you control gain haste until end of
       // turn" reaches every creature in the deck -- the ordinary-card claim the rubric calls false,
@@ -2128,6 +2193,8 @@ export function deriveAbilities(
   curse?: boolean,
   /** The card's printed type line includes Creature (WAS_A_CREATURE reads only then). */
   creatureCard?: boolean,
+  /** Granted clause id -> the clause that grants it (`DeriveInput.clauseGrants`): a quoted ability's own "this creature" is the grantee. */
+  clauseGrants?: Record<number, number>,
 ): { abilities: Ability[]; unclaimed: Action[]; unclaimedAt: UnclaimedAction[]; unknownTriggers: string[]; twinOf: ReadonlyMap<number | string, number | string>; spliced: ReadonlySet<number | string> } {
   const abilities: Ability[] = [];
   /** Every action nothing claimed, with the clause that printed it (#1299). `unclaimed` is the same list as bare actions. */
@@ -2186,6 +2253,17 @@ export function deriveAbilities(
   let inheritedTrigger: (typeof clauses)[number]["trigger"];
   /** ...and the trigger the header DERIVED, which the bullet takes verbatim. */
   let headerTrigger: Ability["trigger"];
+  /** ...and what the header's trigger REFUSED (`if:attacks`, `narrowing:...`), which each of its modes records again
+   *  instead of re-reading the raw trigger against its own bullet (it has no "if" there: Jin Sakai's modes heard every attack). */
+  let headerRefused: string[] = [];
+
+  /** EVERY TRIGGER OF A MODAL HEADER (#1349 review): "Whenever Captain Kirk enters or attacks, choose one" is two header records (the
+   *  grammar's second is appended at the END of the card; a stored answer has it beside the first), and a bullet inherits the nearest one
+   *  only, so the modes read as firing on entering alone. Each header's own derived state, by clause id, for the visits below. */
+  const headerStates = new Map<number | string, { inheritedTrigger: typeof inheritedTrigger; headerTrigger: Ability["trigger"]; headerRefused: string[] }>();
+  /** The mark at which a duplicate mode visit began: what it pushed to `unclaimed` / `unknownTriggers` repeats its first visit's, so it is cut back. */
+  let dupMark: { unclaimed: number; unknown: number } | undefined;
+  const visits = modeVisits(clauses, clauseTexts);
 
   /** What an earlier clause exiled, for "the exiled card" in a later one (#860). */
   let lastExiled: string | undefined;
@@ -2193,7 +2271,13 @@ export function deriveAbilities(
   const grammarCovered = new Map<string, Map<string, number | string>>();
   /** Re-homed records dropped-if-redundant: clause id -> the id of the record that already read their event off the same sentence. */
   const twinOf = new Map<number | string, number | string>();
-  for (let clause of clauses) {
+  for (const visit of visits) {
+    if (dupMark) { unclaimedHere.length = dupMark.unclaimed; unknownTriggers.length = dupMark.unknown; dupMark = undefined; }
+    if (visit.k) dupMark = { unclaimed: unclaimedHere.length, unknown: unknownTriggers.length };
+    let clause = visit.clause;
+    // A mode of a multi-trigger header is visited once per header trigger, each time under that trigger's own derived state.
+    const headerState = visit.group ? headerStates.get(visit.group[visit.k ?? 0]!.id) : undefined;
+    if (headerState) ({ inheritedTrigger, headerTrigger, headerRefused } = headerState);
     clauseId = clause.id;
     const refusedBefore = unknownTriggers.length;
     // "THE EXILED CARD" IS WHAT AN EARLIER CLAUSE EXILED (#860): see `exiledAcrossClauses`.
@@ -2233,8 +2317,12 @@ export function deriveAbilities(
     // synthesizes the damage trigger it hears (`replacementOf`), and the header's would erase it.
     const inherits = kind === "triggered" && !clause.trigger?.event && inheritedTrigger !== undefined
       && !replacementOf(textForClause(clause, clauseTexts));
-    if (inherits) clause = { ...clause, trigger: inheritedTrigger };
-    else if (!clause.trigger?.event && kind !== "triggered") { inheritedTrigger = undefined; headerTrigger = undefined; }
+    // ...unless the header's trigger was REFUSED: the mode keeps the clause's trigger for the SUBJECT it reads ("It gains X"
+    // is the creature you control), says the same refusal, and derives no trigger below.
+    // ...and not at all under a header trigger the engine has no verb for ("blocks", Elder Gargaroth): it would derive a mode that never fires.
+    if (visit.k && (!inherits || !headerTrigger)) continue;
+    if (inherits) { clause = { ...clause, trigger: inheritedTrigger }; unknownTriggers.push(...headerRefused); }
+    else if (!clause.trigger?.event && kind !== "triggered") { inheritedTrigger = undefined; headerTrigger = undefined; headerRefused = []; }
     // THE RAW TRIGGER EVENT, FOR THE LABELLER ONLY (`repeatsFor`). An event outside the `Verb`
     // union reaches `unknownTriggers` below and the ability derives with no trigger, so this is the
     // one channel through which "at the beginning of your first main phase" can still say it is a
@@ -2653,7 +2741,7 @@ export function deriveAbilities(
         // 4,321 corpus counter emits carried no `self` -- every self-growing creature "fed" every
         // "whenever you put counters on THIS creature" payoff. The recipient is in the clause text.
         // A COUNTER REMOVED AS A COST names its permanent in the cost, not in the effect text.
-        || counterOnSelf(action.verb, action.verb === "remove-counter" && /\bcounters?\b/i.test(cost) ? cost : text, cardName, isSelfSubject(clause.trigger?.subject ?? "", cardName))
+        || counterOnSelf(action.verb, (action.verb === "remove-counter" && /\bcounters?\b/i.test(cost)) || (action.verb === "add-counter" && COUNTER_PUT_AS_COST.test(cost) && !COUNTER_PREP.test(text) && clauseGrants?.[clause.id as number] === undefined) ? cost : text, cardName, isSelfSubject(clause.trigger?.subject ?? "", cardName))
         // A pronoun standing in for the card itself. Tested on the RESOLVED antecedent, because the
         // raw object is "it" and matches none of the spellings above.
         || (PRONOUN_OBJECT.test((action.object ?? "").trim())
@@ -3386,7 +3474,11 @@ export function deriveAbilities(
     // The DEMAND an intervening-if condition makes on the deck, recorded in the same one place. Only
     // an ability with a TRIGGER can carry one (CR 603.4 checks the condition when the trigger would
     // fire), so a static or on-cast clause is skipped even if the sentence happens to say "if".
-    const conditionCares = interveningIfOf(text) ? conditionCares_(interveningIfOf(text)!) : [];
+    // An ACTIVATION RESTRICTION's condition is a demand too ("Activate only if you've cast a noncreature spell this turn", Doctor Strange), read by the
+    // same `conditionCares` as a trigger's intervening if, so one wording gives one answer. A pure count ("control three or more artifacts") names no
+    // tag there and so demands nothing; "at least 10 life more than your starting life total" keeps its lifegain demand beside its threshold.
+    const activationIf = kind === "activated" ? activationConditionOf(text ?? "") : null;
+    const conditionCares = interveningIfOf(text) ? conditionCares_(interveningIfOf(text)!) : activationIf ? conditionCares_(activationIf) : [];
     // HOW THE OBJECT ARRIVED. The condition "if none of them were cast or no mana was spent"
     // (Satoru) and the trigger phrase "enters tapped" (Amulet of Vigor, Tiller Engine) are both
     // properties of the ENTRY, so they narrow the trigger's own subject rather than needing a
@@ -3406,13 +3498,14 @@ export function deriveAbilities(
       // clauses, 3 abilities, every zipped row a lie).
       abilities[i] = { ...abilities[i], clause: clause.id };
       if (inherits && headerTrigger && abilities[i].trigger) abilities[i] = { ...abilities[i], trigger: headerTrigger };
+      else if (inherits && headerRefused.length > 0 && abilities[i].trigger) { const { trigger: _t, ...untriggered } = abilities[i]; abilities[i] = untriggered; }
       const repeats = exhaust ? "once" : delayed?.repeats ?? repeatsFor(abilities[i], text, cost, rawTrigger);
       if (repeats) abilities[i] = { ...abilities[i], repeats };
       if (delayed && abilities[i].trigger) abilities[i] = { ...abilities[i], delayedBy: delayed.delayedBy };
       if (threshold) abilities[i] = { ...abilities[i], threshold, ...(thresholdSubject ? { thresholdSubject } : {}) };
       // A REFUSED trigger still says what the card needs around it (owner 2026-08-20): the cares
       // tags ride on every ability of a triggered clause, claimed or not.
-      if (conditionCares.length > 0 && (abilities[i].trigger || clause.trigger?.event)) {
+      if (conditionCares.length > 0 && (abilities[i].trigger || clause.trigger?.event || activationIf)) {
         abilities[i] = { ...abilities[i], conditionCares };
       }
       // THE MULTIPLIER'S OWN TRIGGER, the one synthesized from the "would ... instead" frame -- see
@@ -3501,8 +3594,11 @@ export function deriveAbilities(
     if (!inherits && clause.trigger?.event) {
       inheritedTrigger = clause.trigger;
       headerTrigger = abilities.slice(before).find((a) => a.trigger)?.trigger;
+      headerRefused = headerTrigger === undefined ? unknownTriggers.slice(refusedBefore) : [];
+      headerStates.set(clause.id, { inheritedTrigger, headerTrigger, headerRefused });
     }
   }
+  if (dupMark) { unclaimedHere.length = dupMark.unclaimed; unknownTriggers.length = dupMark.unknown; }
   // AN OPPONENT'S GRAVEYARD, TAKEN ON THE WAY IN (recall v4 #28, 2026-09-09). Valgavoth, Terror
   // Eater and Dauthi Voidwalker exile what would go to an opponent's graveyard and let you play it,
   // so the card is a recursion payoff over THEIR graveyard fills -- an edict you cast feeds it. Two
@@ -3643,7 +3739,7 @@ export function deriveAbilitiesOf(input: DeriveInput): ReturnType<typeof deriveA
   return deriveAbilities(
     input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken,
     input.clauseFaces, castAtInstantSpeed, input.clauseRequires, input.readings,
-    chars.subtypes.some((t) => t.toLowerCase() === "curse"), chars.types.some((t) => t.toLowerCase() === "creature"));
+    chars.subtypes.some((t) => t.toLowerCase() === "curse"), chars.types.some((t) => t.toLowerCase() === "creature"), input.clauseGrants);
 }
 export function deriveCardTags(input: DeriveInput): CardTags {
   const chars = input.characteristics;

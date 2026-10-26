@@ -5297,6 +5297,7 @@
 "Fault Line": ["role:boardWipe","role:burn","wincon:burn"],
 "Faultgrinder": ["answer:land","role:targetedRemoval"],
 "Fauna Shaman": ["role:tutor"],
+"Faunsbane Troll": ["role:targetedRemoval"],
 "Favor of Jukai": ["wincon:voltron"],
 "Favor of the Mighty": ["role:protection"],
 "Favor of the Overbeing": ["wincon:voltron"],

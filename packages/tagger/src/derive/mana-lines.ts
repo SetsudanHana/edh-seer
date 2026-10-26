@@ -706,7 +706,8 @@ export function selfPutReady(printed: string, counter: string, mv: number, need:
 
 export function deriveMana(input: ManaInput): ManaResult {
   const { chars, abilities, clauses } = input;
-  const selfNames = [(input.name ?? "").toLowerCase(), ...(input.name ?? "").split(" // ").map((n) => n.split(",")[0]!.trim().toLowerCase())].filter(Boolean);
+  // "~" is the card too: the grammar path writes its own name that way ("~'s toughness", #1349).
+  const selfNames = ["~", (input.name ?? "").toLowerCase(), ...(input.name ?? "").split(" // ").map((n) => n.split(",")[0]!.trim().toLowerCase())].filter(Boolean);
   const faceMV = (face: number): number => (input.manaCosts ? manaValueOf(input.manaCosts[face] ?? input.manaCosts[0]) : chars.cmc);
   const lines: ManaLine[] = [];
   const removalAura = chars.subtypes.some((t) => t.toLowerCase() === "aura") && (ENCHANTS_OPPONENTS.test(input.oracleText ?? "") || STRIPS_CARD_TYPES.test(input.oracleText ?? "") || PACIFISM.test(input.oracleText ?? ""));

@@ -486,3 +486,14 @@ test("the last fourteen: relations one card states, things not on the battlefiel
   expect(parse("one or more cards from graveyards and/or the battlefield")!.anyOf).toEqual([{ fromZone: "graveyard" }, { fromZone: "battlefield" }]);
 });
 
+
+// #1349 task 2 follow-up: the card's own name is "~", and its possessive "~'s" is one token.
+test("the card's possessive '~'s' lexes as one token and is a variable stat bound", () => {
+  expect(lex("power less than ~'s")).toEqual(["power", "less", "than", "~'s"]);
+  expect(parse("target creature card with mana value less than or equal to ~'s power from your graveyard")).toMatchObject({
+    type: "creature", stats: [{ metric: "mana-value", op: "lte", variable: true }], fromZone: "graveyard", control: "you", scope: "target",
+  });
+  expect(parse("target creature card with power less than ~'s from your graveyard")).toMatchObject({
+    stats: [{ metric: "power", op: "lt", variable: true }], fromZone: "graveyard",
+  });
+});

@@ -157,7 +157,14 @@ export function conditionCares(condition: string): string[] {
   // "if it had one or more counters on it" (Yuna, Iron Apprentice), "if The Ozolith has counters on
   // it". The kind is not read: a subject key of `any` is what the counter theme already uses, and
   // guessing "+1/+1" would claim more than the text says.
-  if (/\bcounters?\b/i.test(condition)) out.push("counter-added:any");
+  // A NEGATED counter ("if there are no charge counters on it", "if it has no time counters") demands the ABSENCE of counters: no counters deck supplies that.
+  // NOT THE CARD'S OWN KIND OF COUNTER: poison and loyalty counters, and counters on a PLAYER ("an opponent has three or more poison counters", "you have
+  // two or more energy counters"), are no counters a +1/+1 or charge-counter deck supplies; no poison-supplier key exists to name instead, so nothing is emitted.
+  const countable = condition
+    .replace(/\b(?:no|zero)\s+(?:[\w+/-]+\s+){0,3}counters?\b/gi, " ")
+    .replace(/\b(?:poison|loyalty)\s+counters?\b/gi, " ")
+    .replace(/\b(?:you|an opponent|each opponent|target opponent|that player|a player|your opponents?|they)\s+(?:has|have)\s+(?:[\w+/-]+\s+){0,4}counters?\b/gi, " ");
+  if (/\bcounters?\b/i.test(countable)) out.push("counter-added:any");
   // "if a creature died this turn" (Warlock Class) — the aristocrats demand.
   if (/\b(?:a|another|one or more) creatures? (?:died|has died|have died)\b/i.test(condition)) out.push("dies:creature");
   // "if you attacked this turn" (Alesha) — the aggro demand. `creature`, not `any`: only creatures attack
@@ -188,4 +195,19 @@ export function conditionCares(condition: string): string[] {
   if (CAST_NONCREATURE.test(condition)) out.push("cast:-creature");
   if (CAST_INSTANT_SORCERY.test(condition)) out.push("cast:instant", "cast:sorcery");
   return [...new Set(out)];
+}
+
+/** THE CONDITION OF AN ACTIVATION RESTRICTION: "Activate only if you've cast a noncreature spell this turn" (Doctor Strange),
+ *  "Activate only as a sorcery and only if ...", "Activate this ability only if ...". CR 602.5 makes it a restriction on
+ *  the activated ability; like an intervening if it names a deck demand, so it feeds the same `conditionCares`. Null when the
+ *  text prints none. Reads one sentence at a time: the "only if" must sit in a sentence that opens "Activate". */
+export function activationConditionOf(text: string): string | null {
+  for (const sentence of text.split(/(?<=\.)\s+/)) {
+    if (!/^activate\b/i.test(sentence.trim())) continue;
+    const m = /\bonly if ([^.]+)/i.exec(sentence);
+    // "... and only as a sorcery" is another limit of the same sentence, not part of the condition.
+    // A literal cut, not `\s+and only\b.*$`: CodeQL flags that tail as polynomial on runs of spaces.
+    if (m) { const cut = m[1]!.search(/ and only\b/i); return (cut >= 0 ? m[1]!.slice(0, cut) : m[1]!).trim(); }
+  }
+  return null;
 }

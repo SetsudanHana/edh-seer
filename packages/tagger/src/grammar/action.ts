@@ -15,6 +15,7 @@ import { counterKindOf, spellMove } from "../derive/subject.js";
 import { KEYWORD_ABILITIES } from "../derive/subtypes.js";
 import { parse } from "./filter.js";
 import { withoutAbilityWord } from "./preamble.js";
+import { isRestrictionSentence, withoutOncePrefix } from "./restriction.js";
 
 export interface ActionReading {
   verb: string;
@@ -319,6 +320,15 @@ const COUNTERS: Record<string, [string, Handler]> = {
       if (!/ on /.test(left) || !/ on /.test(right)) continue;
       const a = COUNTERS.put![1](left), b = COUNTERS.put![1](right);
       if (a && b) return [...[a].flat(), ...[b].flat()];
+    }
+    // "a +1/+1 counter on ~ and up to one target God you control": the same counters on each recipient. The first
+    // recipient is the card or a pronoun (~, it, him, her, this X); "each of up to one target land and up to one target
+    // creature" is one compound object and is not this shape. A "for each" on the second recipient would bind to it alone: refused.
+    const twoWho = /^(.+? counters?) on (~|it|him|her|this [a-z]+) and (up to (?:one|two) (?:other )?target .+)$/.exec(rest);
+    if (twoWho && / for each /.test(twoWho[3]!)) return null;
+    if (twoWho) {
+      const each = [twoWho[2]!, twoWho[3]!].map((r) => COUNTERS.put![1](`${twoWho[1]} on ${r}`));
+      return each.every((e) => e) ? each.flatMap((e) => [e!].flat()) : null;
     }
     const m = /^(.+? counters?) on (.+?)(?: for each (.+))?$/.exec(rest);
     const cs = m ? counterList(m[1]!) : null;
@@ -844,7 +854,11 @@ function subjectAction(t: string): ActionReading[] | null {
     if (options.every((o) => /^(?:an? )?(?:\d+\/\d+)(?: [\w ]+?)?(?: with [\w ]+)?$/i.test(o))) return options.map(() => ({ verb: "animate", object: SELF }));
   }
   // "two target players exchange life totals".
-  if (/^(?:two target players|you and target (?:player|opponent)) exchange life totals$|^exchange life totals with target (?:player|opponent)$/i.test(t)) return [{ verb: "exchange" }];
+  // "Exchange life totals with target opponent" (Magus of the Mirror, Mirror Universe): the store's object names the player, and derive's
+  // exchange subject is that target opponent; read bare it lost the opponent (control "any", no scope). The two-player forms stay bare.
+  const swapWith = /^exchange life totals with (target (?:player|opponent))$/i.exec(t);
+  if (swapWith) return [{ verb: "exchange", text: `life totals with ${swapWith[1]!.toLowerCase()}` }];
+  if (/^(?:two target players|you and target (?:player|opponent)) exchange life totals$/i.test(t)) return [{ verb: "exchange" }];
   // A CHARACTERISTIC-DEFINING ABILITY (CR 604.3): "Titania's power and toughness are each equal to the
   // number of lands you control", "~'s power is equal to ...". The card's own name, short or full, so
   // a few capitalised words; the store's modify-pt on the card, the count its amount.
@@ -1247,7 +1261,9 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
   if (eachEq) return [{ verb: "animate", ...target }, { verb: "modify-pt", ...target, amount: eachEq[2]! }];
   const becomes = /^becomes? (?:an? )?((?:(?:\d+|x)\/(?:\d+|x) )?[\w /-]+?)(?: with (.+))?$/i.exec(pred.replace(/ that's still an? (?:land|planeswalker|artifact|enchantment)$|,? it's still a land$/i, ""));
   // "becomes prepared" is a prepare, which derive reads off the clause (Codie): not read here.
-  if (becomes && !/^prepared$/i.test(becomes[1]!)) {
+  // "becomes blocked" / "becomes unblocked" (Trap Runner, Curtain of Light, Fog Patch; GH #1353) is a combat status,
+  // not a retyping: VERB_VOCAB has no block verb and none is invented, so the clause stays unread.
+  if (becomes && !/^(?:un)?blocked$/i.test(becomes[1]!) && !/^prepared$/i.test(becomes[1]!)) {
     // "with base power and toughness 4/4 [and flying]": the set P/T, as the store's modify-pt.
     const base = becomes[2] ? /^base power and toughness (\d+\/\d+)(?:,? and (.+))?$/i.exec(becomes[2]) : null;
     const withs = base ? (base[2] ? abilitiesOf(base[2]) : []) : becomes[2] ? abilitiesOf(becomes[2]) : [];
@@ -1568,6 +1584,12 @@ const OPENER = /^(if you do|if you don't|if [^,]+|otherwise|then|as an additiona
 /** Collects the phrases `parseActions` could not read, while `unreadPhrases` runs it. */
 let unread: string[] | null = null;
 
+/** The sentences of a modal ability that choose its modes: "choose one —", "choose one or both —",
+ *  "choose any number —", "choose one that hasn't been chosen —" (a Case-like mode memory), "choose up to five {P}
+ *  worth of modes" with its "You may choose the same mode more than once", and an override that widens the choice
+ *  ("If you have no cards in hand, choose one or more instead", Captain James T. Kirk). */
+const MODAL_INTRO = /^(?:(?:if [^,]{1,80}, )?choose (?:(?:one|two|three|four|five|up to \w+)(?: or (?:more|both))?(?: that hasn't been chosen)?|any number|up to \w+ (?:\{P\})+ worth of modes)(?: instead)?(?: —)?|you may choose the same mode more than once)$/i;
+
 /** DIAGNOSTIC (instruments only): the action phrases of a clause the grammar did not read, as
  *  printed -- what `packages/instruments/src/action-blockers.ts` clusters to rank the next work. */
 export function unreadPhrases(effect: string, type: string | null, cost?: string): string[] {
@@ -1626,7 +1648,16 @@ export function parseActions(effect: string, _type: string | null, cost?: string
   for (const raw of unquoted.split(/(?<=\.)\s+/)) {
     let s = raw.trim().replace(/\.$/, "");
     if (s === "") continue;
+    // "Activate only as a sorcery", "This ability triggers only once each turn": a restriction the store drops and
+    // derive reads off the printed clause (restriction.ts). It claims no action and is not unread.
+    if (isRestrictionSentence(s)) continue;
+    // "Once during each of your turns, you may cast ...": the permission is the action, the prefix is dropped as the store does.
+    s = withoutOncePrefix(s);
     if (/^you may reveal this card from your opening hand$/i.test(s)) { gameStart = true; continue; }
+    // A MODAL INTRO ("When this creature enters, choose one —", "{2}, {T}: Choose one —"): the parent of a
+    // triggered or activated modal ability. The modes are their own clauses (the segmenter), and the store
+    // records the parent with no action of its own, so this sentence reads as nothing.
+    if (MODAL_INTRO.test(s)) continue;
     const look = /^look at (the top (?:card|(?:\w+|\d+) cards) of your library)$/i.exec(s);
     if (look) { if (pendingLook !== null) unread?.push(pendingLook); pendingLook = s; lookedAtLibrary = look[1]!.toLowerCase(); continue; }
     // "You may pay {2}. If you do, draw a card": the draw is as optional as the payment (the store's
