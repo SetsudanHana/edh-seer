@@ -3431,9 +3431,16 @@ export function deriveAbilities(
     // instructs, so it is pushed here with the header's own kind, trigger and cost, and the labelling below stamps its clause, repeats and count like any other. A spell's
     // header carries no ability type of its own (static, or none), and a modal spell is cast: on-cast. A triggered header whose trigger was REFUSED derives no trigger
     // and would claim an event that never fires, so it emits nothing (a missing edge, never a wrong one).
+    // CEILING: that refusal leaves genuinely modal cards with no dilemma emit: 14 of 758 headers (Black Market Connections "first main phase", Hylda of the Icy Crown and Voltstorm
+    // Angel "When you do" reflexives, Life of Toshiro Umezawa's chapter, Jin Sakai and Tetsuo "if" riders, "second spell each turn"). Their modes are still derived; the dilemma is not.
     if (facesDilemma && !(kind === "triggered" && !trigger)) {
-      abilities.push({ kind: kind === "static" || clause.abilityType === "none" || clause.abilityType === undefined ? "on-cast" : kind, effect: { kind: "" }, ...(trigger ? { trigger } : {}),
-        emits: [{ verb: "face-a-dilemma", subject: { control: "you", token: null } }], ...(kind === "activated" ? { cost } : {}), ...(face ? { face } : {}) });
+      const dilemmaKind: AbilityKind = kind === "static" || clause.abilityType === "none" || clause.abilityType === undefined ? "on-cast" : kind;
+      // The same instant-speed rule as the emits beside it (above): an activated ability not limited to sorcery speed, or an instant's / flash spell's cast.
+      const dilemmaInstant = dilemmaKind === "activated"
+        ? !SORCERY_SPEED.test(clauseText ?? "") && paymentOf(cost, cardName)?.loyalty === undefined
+        : dilemmaKind === "on-cast" && castAtInstantSpeed === true;
+      abilities.push({ kind: dilemmaKind, effect: { kind: "" }, ...(trigger ? { trigger } : {}),
+        emits: [{ verb: "face-a-dilemma", subject: { control: "you", token: null }, ...(dilemmaInstant ? { instantSpeed: true as const } : {}) }], ...(kind === "activated" ? { cost } : {}), ...(face ? { face } : {}) });
     }
     const toughnessDamage = toughnessDamageAbility(text);
     if (toughnessDamage) { if (face) toughnessDamage.face = face; abilities.push(toughnessDamage); }

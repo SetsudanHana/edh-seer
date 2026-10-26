@@ -1203,3 +1203,29 @@ test("Spree and Tiered are modal (CR 702.172a, 702.183a) and emit it; a choice t
   expect(dilemmaEmits({ name: "Umaro, Raging Yeti", typeLine: "Legendary Creature — Yeti Berserker", keywords: ["Trample"], oracleText: "Trample\nAt the beginning of combat on your turn, choose one at random —\n• Other creatures you control get +3/+0 and gain trample until end of turn.\n• Discard your hand, then draw four cards.\n• Umaro deals 5 damage to any target." })).toEqual([]);
   expect(dilemmaEmits({ name: "Library of Lat-Nam", typeLine: "Sorcery", keywords: [], oracleText: "An opponent chooses one —\n• You draw three cards at the beginning of the next turn's upkeep.\n• You search your library for a card, put that card into your hand, then shuffle." })).toEqual([]);
 });
+
+// Review fixes for "face a dilemma" (#1349).
+test("a face-down trigger subject keeps its words: the 'face' of 'face-down' is no dilemma verb (Trail of Mystery)", () => {
+  const g = grammarClauseRecords({ name: "Trail of Mystery", typeLine: "Enchantment", keywords: [], oracleText: "Whenever a face-down creature you control enters, you may search your library for a basic land card, reveal it, put it into your hand, then shuffle.\nWhenever a permanent you control is turned face up, if it's a creature, it gets +2/+2 until end of turn." });
+  expect(g.records[0]!.trigger).toMatchObject({ event: "enters", subject: "a face-down creature you control" });
+});
+
+test("'choose one at random' is no dilemma even when a later sentence lets you choose: Typhoid Mary, Fractured (stored records: the grammar stops at 'choose one at random')", () => {
+  const card = { name: "Typhoid Mary, Fractured", typeLine: "Legendary Creature \u2014 Mutant Villain", keywords: ["Mary", "Typhoid Mary", "Bloody Mary", "Treasure"], oracleText: "Whenever Typhoid Mary attacks, choose one at random. If you discarded a card this turn, you choose one instead.\n\u2022 Mary \u2014 Create a Treasure token.\n\u2022 Typhoid Mary \u2014 Draw a card.\n\u2022 Bloody Mary \u2014 Each opponent loses 2 life and you gain 2 life." };
+  const stored = [
+    { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "~", control: "you" }, actions: [{ verb: "none", object: "" }] },
+    { id: 2, abilityType: "triggered", actions: [{ verb: "create", object: "a Treasure token", amount: "1" }] },
+    { id: 3, abilityType: "triggered", actions: [{ verb: "draw", object: "a card", amount: "1" }] },
+  ];
+  const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, stored as never));
+  expect(tags.abilities.some((a) => a.emits?.some((e) => e.verb === "face-a-dilemma"))).toBe(false);
+});
+
+test("the dilemma emit is instant speed where its sibling emits are: an Instant's cast, an activated ability, not a creature's enters trigger", () => {
+  const kc = dilemmaEmits({ name: "Kolaghan's Command", typeLine: "Instant", keywords: [], oracleText: "Choose two —\n• Return target creature card from your graveyard to your hand.\n• Target player discards a card.\n• Destroy target artifact.\n• Kolaghan's Command deals 2 damage to any target." });
+  expect(kc[0]!.emits![0]!.instantSpeed).toBe(true);
+  const amp = dilemmaEmits({ name: "Aetheric Amplifier", typeLine: "Artifact", keywords: ["Double"], oracleText: "{T}: Add one mana of any color.\n{4}, {T}: Choose one. Activate only as a sorcery.\n• Double the number of each kind of counter on target permanent.\n• Double the number of each kind of counter you have." });
+  expect(amp[0]!.emits![0]!.instantSpeed).toBeUndefined();
+  const prince = dilemmaEmits({ name: "Charming Prince", typeLine: "Creature — Human Noble", keywords: ["Scry"], oracleText: "When this creature enters, choose one —\n• Scry 2.\n• You gain 3 life.\n• Exile another target creature you own. Return it to the battlefield under your control at the beginning of the next end step." });
+  expect(prince[0]!.emits![0]!.instantSpeed).toBeUndefined();
+});

@@ -386,3 +386,8 @@ test("derivedRow is the fresh tags plus bookkeeping only, so a key derive stoppe
 test("derivedRow marks a token row", () => {
   expect(derivedRow(rowTags, { ...rowMeta, isToken: true }).isToken).toBe(true);
 });
+
+test("the face-a-dilemma cue wants 'face a dilemma', not any 'dilemma': Tivit's Council's dilemma cannot vouch for a hallucinated trigger (#1349)", () => {
+  expect(triggerHasCue("face-a-dilemma", "Whenever you face a dilemma, draw a card.")).toBe(true);
+  expect(triggerHasCue("face-a-dilemma", "Council's dilemma — Whenever Tivit enters or deals combat damage to a player, starting with you, each player votes for evidence or bribery.")).toBe(false);
+});
