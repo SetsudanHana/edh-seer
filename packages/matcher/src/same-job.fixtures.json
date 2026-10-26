@@ -104,7 +104,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "manaLines": [
     {
      "amount": {
@@ -235,7 +235,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "489a60f1-83f8-465b-918f-7d63d4f76d14",
@@ -255,7 +255,7 @@
     "G"
    ],
    "commanderLegality": "legal",
-   "edhrecRank": 217,
+   "edhrecRank": 219,
    "gameChanger": true,
    "keywords": [],
    "layout": "normal",
@@ -437,7 +437,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -582,7 +582,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "manaLines": [
     {
      "amount": {
@@ -791,7 +791,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -946,7 +946,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "4e183439-17d2-47ff-9d99-5e22821d91e3",
@@ -1079,8 +1079,8 @@
      "artifact"
     ]
    },
-   "clauseSource": "model",
-   "deriveVersion": 388,
+   "clauseSource": "grammar",
+   "deriveVersion": 389,
    "manaLines": [
     {
      "amount": {
@@ -1169,7 +1169,7 @@
    "unclaimed": [
     {
      "clause": 1,
-     "object": "this",
+     "object": "This artifact",
      "verb": "tap"
     }
    ]
@@ -1399,7 +1399,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -1571,7 +1571,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "24882fa2-3fe9-4c1b-aa3d-0e6488b9db27",
@@ -1591,7 +1591,7 @@
     "R"
    ],
    "commanderLegality": "legal",
-   "edhrecRank": 106,
+   "edhrecRank": 107,
    "gameChanger": true,
    "keywords": [],
    "layout": "normal",
@@ -1708,7 +1708,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "isOneShot": true,
    "manaLines": [
     {
@@ -1769,7 +1769,7 @@
    "colorIdentity": [],
    "colors": [],
    "commanderLegality": "legal",
-   "edhrecRank": 741,
+   "edhrecRank": 742,
    "gameChanger": true,
    "keywords": [],
    "layout": "normal",
@@ -1829,6 +1829,45 @@
    "_id": "6a932a51f6eb344af19393e0",
    "abilities": [
     {
+     "amount": "all",
+     "clause": 1,
+     "cost": "Discard your hand, Sacrifice this artifact",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "instantSpeed": true,
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "verb": "discard"
+      }
+     ],
+     "kind": "activated",
+     "payment": {
+      "discard": [
+       {
+        "amount": "all",
+        "subject": {
+         "control": "you",
+         "token": null
+        }
+       }
+      ],
+      "sacrifice": [
+       {
+        "amount": "1",
+        "subject": {
+         "self": true
+        }
+       }
+      ]
+     },
+     "repeats": "once"
+    },
+    {
      "amount": "1",
      "clause": 1,
      "cost": "Discard your hand, Sacrifice this artifact",
@@ -1859,45 +1898,6 @@
         "type": "artifact"
        },
        "verb": "dies"
-      }
-     ],
-     "kind": "activated",
-     "payment": {
-      "discard": [
-       {
-        "amount": "all",
-        "subject": {
-         "control": "you",
-         "token": null
-        }
-       }
-      ],
-      "sacrifice": [
-       {
-        "amount": "1",
-        "subject": {
-         "self": true
-        }
-       }
-      ]
-     },
-     "repeats": "once"
-    },
-    {
-     "amount": "all",
-     "clause": 1,
-     "cost": "Discard your hand, Sacrifice this artifact",
-     "effect": {
-      "kind": ""
-     },
-     "emits": [
-      {
-       "instantSpeed": true,
-       "subject": {
-        "control": "you",
-        "token": null
-       },
-       "verb": "discard"
       }
      ],
      "kind": "activated",
@@ -1974,8 +1974,8 @@
      "artifact"
     ]
    },
-   "clauseSource": "model",
-   "deriveVersion": 388,
+   "clauseSource": "grammar",
+   "deriveVersion": 389,
    "isOneShot": true,
    "manaLines": [
     {
@@ -2035,7 +2035,7 @@
    "colorIdentity": [],
    "colors": [],
    "commanderLegality": "legal",
-   "edhrecRank": 152,
+   "edhrecRank": 153,
    "gameChanger": true,
    "keywords": [],
    "layout": "normal",
@@ -2195,7 +2195,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "manaLines": [
     {
      "amount": {
@@ -2249,6 +2249,14 @@
  },
  "Mind Stone": {
   "card": {
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Boisterous Clique",
+     "printingId": "4474b1fc-5c62-41cf-90cd-e781bd7fa804",
+     "typeLine": "Creature — Faerie Warlock"
+    }
+   ],
    "colorIdentity": [],
    "colors": [],
    "commanderLegality": "legal",
@@ -2394,7 +2402,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "manaLines": [
     {
      "amount": {
@@ -2443,7 +2451,7 @@
    "colorIdentity": [],
    "colors": [],
    "commanderLegality": "legal",
-   "edhrecRank": 248,
+   "edhrecRank": 247,
    "gameChanger": true,
    "keywords": [],
    "layout": "normal",
@@ -2607,7 +2615,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "manaLines": [
     {
      "amount": {
@@ -2718,8 +2726,8 @@
      "artifact"
     ]
    },
-   "clauseSource": "model",
-   "deriveVersion": 388,
+   "clauseSource": "grammar",
+   "deriveVersion": 389,
    "manaLines": [
     {
      "amount": {
@@ -2864,8 +2872,8 @@
      "artifact"
     ]
    },
-   "clauseSource": "model",
-   "deriveVersion": 388,
+   "clauseSource": "grammar",
+   "deriveVersion": 389,
    "manaLines": [
     {
      "amount": {
@@ -2931,7 +2939,7 @@
     "B"
    ],
    "commanderLegality": "legal",
-   "edhrecRank": 1733,
+   "edhrecRank": 1743,
    "gameChanger": false,
    "keywords": [
     "Converge"
@@ -3061,7 +3069,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "58a2d15f-1b4b-4303-b524-8cc0d1b3e7d2",
@@ -3309,7 +3317,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "manaLines": [
     {
      "amount": {
@@ -3448,6 +3456,7 @@
       "kind": "counter-placement",
       "subject": {
        "control": "any",
+       "counter": "brick",
        "token": null
       }
      },
@@ -3473,6 +3482,9 @@
     {
      "amount": "3",
      "clause": 2,
+     "conditionCares": [
+      "counter-added:any"
+     ],
      "cost": "{T}",
      "count": {
       "ceiling": 3,
@@ -3509,8 +3521,8 @@
      "artifact"
     ]
    },
-   "clauseSource": "model",
-   "deriveVersion": 388,
+   "clauseSource": "grammar",
+   "deriveVersion": 389,
    "manaLines": [
     {
      "amount": {
@@ -3743,7 +3755,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "model": "derived",
    "normalizeVersion": 21,
    "oracleId": "53236dd7-845a-444c-96d5-f41ed7325d8f",
@@ -3941,8 +3953,8 @@
      "artifact"
     ]
    },
-   "clauseSource": "model",
-   "deriveVersion": 388,
+   "clauseSource": "grammar",
+   "deriveVersion": 389,
    "manaLines": [
     {
      "amount": {
@@ -4111,8 +4123,8 @@
      "artifact"
     ]
    },
-   "clauseSource": "model",
-   "deriveVersion": 388,
+   "clauseSource": "grammar",
+   "deriveVersion": 389,
    "manaLines": [
     {
      "amount": {
@@ -4422,7 +4434,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -4619,7 +4631,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "65986c1b-8e51-4604-b685-d82fa7d1263a",
@@ -4687,7 +4699,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "manaLines": [
     {
      "amount": {
@@ -4900,7 +4912,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "9a107e48-3d50-4941-95b1-10f2b29a4245",
@@ -5005,7 +5017,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "model": "derived",
    "normalizeVersion": 22,
    "oracleId": "9381b4a5-a8e0-412d-bc7f-ae15afa0f135",
@@ -5251,7 +5263,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "3aa83ed2-f48b-4ce6-a614-2c54ddf50538",
@@ -5331,7 +5343,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 388,
+   "deriveVersion": 389,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "41d16975-d6c0-4343-bea2-4f360ead9a1c",
