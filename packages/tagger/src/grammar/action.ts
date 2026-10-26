@@ -15,6 +15,7 @@ import { counterKindOf, spellMove } from "../derive/subject.js";
 import { KEYWORD_ABILITIES } from "../derive/subtypes.js";
 import { parse } from "./filter.js";
 import { withoutAbilityWord } from "./preamble.js";
+import { isRestrictionSentence, withoutOncePrefix } from "./restriction.js";
 
 export interface ActionReading {
   verb: string;
@@ -853,7 +854,11 @@ function subjectAction(t: string): ActionReading[] | null {
     if (options.every((o) => /^(?:an? )?(?:\d+\/\d+)(?: [\w ]+?)?(?: with [\w ]+)?$/i.test(o))) return options.map(() => ({ verb: "animate", object: SELF }));
   }
   // "two target players exchange life totals".
-  if (/^(?:two target players|you and target (?:player|opponent)) exchange life totals$|^exchange life totals with target (?:player|opponent)$/i.test(t)) return [{ verb: "exchange" }];
+  // "Exchange life totals with target opponent" (Magus of the Mirror, Mirror Universe): the store's object names the player, and derive's
+  // exchange subject is that target opponent; read bare it lost the opponent (control "any", no scope). The two-player forms stay bare.
+  const swapWith = /^exchange life totals with (target (?:player|opponent))$/i.exec(t);
+  if (swapWith) return [{ verb: "exchange", text: `life totals with ${swapWith[1]!.toLowerCase()}` }];
+  if (/^(?:two target players|you and target (?:player|opponent)) exchange life totals$/i.test(t)) return [{ verb: "exchange" }];
   // A CHARACTERISTIC-DEFINING ABILITY (CR 604.3): "Titania's power and toughness are each equal to the
   // number of lands you control", "~'s power is equal to ...". The card's own name, short or full, so
   // a few capitalised words; the store's modify-pt on the card, the count its amount.
@@ -1641,6 +1646,11 @@ export function parseActions(effect: string, _type: string | null, cost?: string
   for (const raw of unquoted.split(/(?<=\.)\s+/)) {
     let s = raw.trim().replace(/\.$/, "");
     if (s === "") continue;
+    // "Activate only as a sorcery", "This ability triggers only once each turn": a restriction the store drops and
+    // derive reads off the printed clause (restriction.ts). It claims no action and is not unread.
+    if (isRestrictionSentence(s)) continue;
+    // "Once during each of your turns, you may cast ...": the permission is the action, the prefix is dropped as the store does.
+    s = withoutOncePrefix(s);
     if (/^you may reveal this card from your opening hand$/i.test(s)) { gameStart = true; continue; }
     // A MODAL INTRO ("When this creature enters, choose one —", "{2}, {T}: Choose one —"): the parent of a
     // triggered or activated modal ability. The modes are their own clauses (the segmenter), and the store

@@ -617,9 +617,10 @@ test("the self-name cards move past their self-reference and stop at the NEXT ph
   expect(reads("Kirk, Commanding Officer", "{2}, Sacrifice Kirk: Destroy target artifact or enchantment.").complete).toBe(true);
   expect(reads("Coastal Ren Faire", "Whenever you cast a noncreature spell, put a quest counter on CARDNAME. Draw a card. Then discard a card unless there are three or more quest counters on CARDNAME.", "Enchantment").complete).toBe(true);
   expect(reads("The Darkhold", "{T}: Put a sin counter on The Darkhold. Draw a card for each sin counter on it, then you lose 1 life for each card in your hand.", "Legendary Artifact").complete).toBe(true);
-  // ...and the next blocker, task 4's.
-  expect(reads("Picard, Leading by Example", "{1}, {T}: Another target creature gets +X/+X until end of turn, where X is Picard's power. Activate only as a sorcery.").blocker?.phrase).toBe("activate only as a sorcery");
-  expect(reads("Seven of Nine, Unassimilated", "{6}{U}: Seven of Nine's base power and toughness become 7/9. Activate only if you control seven or more differently named lands.").blocker?.phrase).toBe("activate only if you control seven or more differently named lands");
+  // ...and their restriction sentence, which task 3 reads as a rider (no action, nothing unread).
+  expect(reads("Picard, Leading by Example", "{1}, {T}: Another target creature gets +X/+X until end of turn, where X is Picard's power. Activate only as a sorcery.").complete).toBe(true);
+  expect(reads("Seven of Nine, Unassimilated", "{6}{U}: Seven of Nine's base power and toughness become 7/9. Activate only if you control seven or more differently named lands.").complete).toBe(true);
+  // ...and the next blocker.
   expect(reads("Ensign Pavel Chekov", "Strange new worlds — When Ensign Chekov enters, each opponent exiles the top X cards of their library, where X is the number of differently named lands you control. For each opponent, choose a land card that player owns exiled this way. You may play the chosen cards for as long as they remain exiled.").blocker?.phrase).toBe("for each opponent");
   expect(reads("Beckett Mariner, Impetuous Ensign", "Reckless Behavior — Whenever Beckett Mariner becomes tapped, put a promotion counter on her. Then if there are three or more promotion counters on her, remove those counters and she deals 2 damage to each opponent.").blocker?.phrase).toBe("then if there are three or more promotion counters on ~, remove those counters");
 });
@@ -680,4 +681,73 @@ test("Vhal: the card's own toughness in '~'s toughness still sets the mana floor
   expect(g.complete).toBe(true);
   const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings));
   expect(tags.abilities.find((a) => a.effect.kind === "mana-generation")?.count).toMatchObject({ floor: 3 });
+});
+
+// #1349 task 3: ability restrictions. Oracle text is the corpus's (2026-10-26).
+const GRETA = { name: "Greta, Sweettooth Scourge", typeLine: "Legendary Creature — Human Warrior", keywords: ["Food"], oracleText: "When Greta enters, create a Food token. (It's an artifact with \"{2}, {T}, Sacrifice this token: You gain 3 life.\")\n{G}, Sacrifice a Food: Put a +1/+1 counter on target creature. Activate only as a sorcery.\n{1}{B}, Sacrifice a Food: You draw a card and you lose 1 life." };
+const grammarDerive = (card: { name: string; typeLine: string; keywords: string[]; oracleText: string }) => {
+  const g = grammarClauseRecords(card);
+  return { g, tags: deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings)) };
+};
+
+test("a restriction sentence claims no action, and is not unclaimed", () => {
+  const { g } = grammarDerive(GRETA);
+  expect(g.complete).toBe(true);
+  // The store's own answer for clause 2: the cost's sacrifice and the counter, nothing for "Activate only as a sorcery".
+  expect(g.records.find((r) => r.id === 2)!.actions!.map((a) => a.verb)).toEqual(["sacrifice", "add-counter"]);
+});
+
+test("the target cards of the restriction family read, or stop on their next blocker", () => {
+  const cards: [string, string, string, string[], string][] = [
+    ["Captain Jonathan Archer", "Legendary Creature — Human Officer", "When Captain Archer enters, create Porthos, a legendary 1/1 green Dog creature token.\nFederation — {G}, {T}: Target creature you control gets +X/+X until end of turn, where X is the number of creature types among non-Borg creatures you control. Activate only as a sorcery.", [], "complete"],
+    ["Picard, Leading by Example", "Legendary Creature — Human Officer", "{1}, {T}: Another target creature gets +X/+X until end of turn, where X is Picard's power. Activate only as a sorcery.", [], "complete"],
+    ["The Darkhold", "Legendary Artifact — Book", "{T}: Put a sin counter on The Darkhold. Draw a card for each sin counter on it, then you lose 1 life for each card in your hand.\n{6}{B}{B}, {T}: Each player's life total becomes the lowest life total among all players. Activate only as a sorcery.", [], "complete"],
+    ["Warp Core", "Artifact", "When this artifact enters, you may search your library for a basic land card, reveal it, put it into your hand, then shuffle.\n{1}, {T}: Put two charge counters on target Spacecraft. Activate only as a sorcery.", [], "complete"],
+    ["Worf, Honor-Bound Warrior", "Legendary Creature — Klingon Warrior Officer", "Whenever you attack while creatures you control have total power 8 or greater, double Worf's power until end of turn.\nTap two untapped artifacts and/or creatures you control: Put a +1/+1 counter on Worf. Activate only as a sorcery.", ["Double"], "complete"],
+    ["DOT-7 Repair Squad", "Artifact Creature — Robot", "Flying\n{1}{W}: Untap target creature. Activate only as a sorcery and only once each turn.", ["Flying"], "complete"],
+    ["Doctor Strange, Master of Magic", "Legendary Creature — Human Sorcerer Hero", "Flying, vigilance, prowess\n{T}: Draw a card. Activate only if you've cast a noncreature spell this turn.", ["Flying", "Prowess", "Vigilance"], "complete"],
+    ["Seven of Nine, Unassimilated", "Legendary Artifact Creature — Human Officer", "At the beginning of your first main phase, draw a card. Then discard a card unless you control five or more differently named lands.\n{6}{U}: Seven of Nine's base power and toughness become 7/9. Activate only if you control seven or more differently named lands.", [], "complete"],
+    ["Battle-Scarred Survivalist", "Creature — Klingon Scout", "Menace (This creature can't be blocked except by two or more creatures.)\nWhenever another creature dies, put a +1/+1 counter on this creature. This ability triggers only once each turn.", ["Menace"], "complete"],
+    ["Hologram Stalker", "Creature — Hirogen Warrior", "When this creature enters, return target permanent card from your graveyard to your hand.\nWhenever a card leaves your graveyard, create a 3/3 colorless Illusion artifact creature token. This ability triggers only once each turn.", [], "complete"],
+    ["Vash, Freelance Archaeologist", "Legendary Creature — Human Rogue Scientist", "At the beginning of your upkeep, surveil 1. (Look at the top card of your library. You may put it into your graveyard.)\nWhenever a card leaves your graveyard, draw a card. This ability triggers only once each turn.", ["Surveil"], "complete"],
+    // Hela's restriction reads; the card stops on Dark Tutor's "put it into your hand or graveyard", a different shape.
+    ["Hela, Mistress of Darkness // Dark Tutor", "Legendary Creature — God Sorcerer Villain // Sorcery — Vengeance", "Whenever a player loses life during your turn, you may create that many tapped 2/2 black Zombie creature tokens. Do this only once each turn.\n//\n(Cast only from your graveyard. Then exile it.)\nSearch your library for a card, put it into your hand or graveyard, then shuffle. You lose 3 life.", [], "put it into your hand or graveyard"],
+    // The Holodeck: the "once during each of your turns" prefix reads; "from outside the game" is the next shape.
+    ["The Holodeck", "Legendary Artifact", "Once during each of your turns, you may play a permanent card you own from outside the game or from your graveyard.", [], "you may play a permanent card you own from outside the game or from your graveyard"],
+  ];
+  for (const [name, typeLine, oracleText, keywords, want] of cards) {
+    const g = grammarClauseRecords({ name, typeLine, oracleText, keywords });
+    expect(g.complete ? "complete" : g.blocker?.phrase, name).toBe(want);
+  }
+});
+
+test("derive still reads the restriction off the printed clause on the grammar path", () => {
+  // "Activate only as a sorcery": the counter is not an instant-speed emit; the sibling ability with no restriction is.
+  const greta = grammarDerive(GRETA).tags.abilities;
+  expect(greta.find((a) => a.effect.kind === "counter-placement")?.emits?.[0]?.instantSpeed).toBeUndefined();
+  expect(greta.find((a) => a.effect.kind === "draw-card")?.emits?.[0]?.instantSpeed).toBe(true);
+  // The same card without the sentence would be instant speed: the sentence is what moved it.
+  const bare = grammarDerive({ ...GRETA, oracleText: GRETA.oracleText.replace(" Activate only as a sorcery.", "") }).tags.abilities;
+  expect(bare.find((a) => a.effect.kind === "counter-placement")?.emits?.[0]?.instantSpeed).toBe(true);
+
+  // "Activate only once each turn" / "This ability triggers only once each turn": repeats.ts reads them from the clause text.
+  const stalker = { name: "Vash, Freelance Archaeologist", typeLine: "Legendary Creature — Human Rogue Scientist", keywords: ["Surveil"], oracleText: "At the beginning of your upkeep, surveil 1. (Look at the top card of your library. You may put it into your graveyard.)\nWhenever a card leaves your graveyard, draw a card. This ability triggers only once each turn." };
+  expect(grammarDerive(stalker).tags.abilities.find((a) => a.effect.kind === "draw-card")?.repeats).toBe("per-turn");
+  const unlimited = grammarDerive({ ...stalker, oracleText: stalker.oracleText.replace(" This ability triggers only once each turn.", "") }).tags.abilities.find((a) => a.effect.kind === "draw-card")?.repeats;
+  expect(unlimited).not.toBe("per-turn");
+  const squad = grammarDerive({ name: "DOT-7 Repair Squad", typeLine: "Artifact Creature — Robot", keywords: ["Flying"], oracleText: "Flying\n{1}{W}: Untap target creature. Activate only as a sorcery and only once each turn." });
+  expect(squad.tags.abilities.find((a) => a.kind === "activated")?.repeats).toBe("per-turn");
+
+  // "Activate only if you control seven or more differently named lands": the count is threshold.ts's, read off the printed clause.
+  const seven = grammarDerive({ name: "Seven of Nine, Unassimilated", typeLine: "Legendary Artifact Creature — Human Officer", keywords: [], oracleText: "At the beginning of your first main phase, draw a card. Then discard a card unless you control five or more differently named lands.\n{6}{U}: Seven of Nine's base power and toughness become 7/9. Activate only if you control seven or more differently named lands." });
+  expect(seven.tags.abilities.find((a) => a.kind === "activated")?.threshold).toEqual({ atLeast: 7 });
+});
+
+test("'exchange life totals with target opponent' keeps the opponent", () => {
+  const magus = grammarDerive({ name: "Magus of the Mirror", typeLine: "Creature — Human Wizard", keywords: [], oracleText: "{T}, Sacrifice this creature: Exchange life totals with target opponent. Activate only during your upkeep." });
+  expect(magus.g.complete).toBe(true);
+  const exchange = magus.tags.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "exchange");
+  expect(exchange?.subject).toMatchObject({ control: "opp", scope: "target" });
+  // "Activate only during your upkeep" is not sorcery speed: the exchange stays instant speed (the printed clause still says so).
+  expect(exchange?.instantSpeed).toBe(true);
 });
