@@ -317,6 +317,8 @@ export const VERB_PHRASES: Record<string, string> = {
   "ring-tempts": "has the Ring tempt you",
   // CR 722.3a, Reality Fracture.
   prepared: "becomes prepared",
+  // Star Trek (#1349): a modal spell or ability is the card that poses it.
+  "face-a-dilemma": "poses a dilemma",
   "loses-game": "makes a player lose the game",
   "gain-life": "gains life",
   "lose-life": "makes a player lose life",

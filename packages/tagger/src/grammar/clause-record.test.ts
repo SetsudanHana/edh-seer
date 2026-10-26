@@ -885,7 +885,8 @@ test("each mode of a multi-trigger header fires on every trigger of it: Captain 
   for (const [name, typeLine, text, events] of cards) {
     const { tags } = deriveGrammar(name, typeLine, text);
     // Every clause that does something (a mode) is derived under each of the header's triggers.
-    const modes = tags.abilities.filter((a) => a.effect.kind !== "" || (a.emits ?? []).length > 0);
+    // ...not the header's own `face-a-dilemma` (it is the header, once per trigger under its own clause).
+    const modes = tags.abilities.filter((a) => (a.effect.kind !== "" || (a.emits ?? []).length > 0) && !(a.emits ?? []).some((e) => e.verb === "face-a-dilemma"));
     const byClause = new Map<number, Set<string>>();
     for (const a of modes) byClause.set(a.clause as number, new Set([...(byClause.get(a.clause as number) ?? []), ...(a.trigger?.verbs ?? [])]));
     expect(byClause.size, name).toBeGreaterThan(0);
@@ -1143,4 +1144,62 @@ test("Scotty, Miracle Worker: the grant of beam me up reads; the card stops at t
   expect(g.blocker).toEqual({ clause: 1, kind: "action", phrase: "the beam me up cost is equal to that spell's mana cost" });
   const lier = grammarClauseRecords({ name: "Lier, Disciple of the Drowned", typeLine: "Legendary Creature — Human Wizard", keywords: [], oracleText: "Spells can't be countered.\nEach instant and sorcery card in your graveyard has flashback. The flashback cost is equal to that card's mana cost." });
   expect(lier.blocker).toEqual({ clause: 2, kind: "action", phrase: "the flashback cost is equal to that card's mana cost" });
+});
+
+// "Face a dilemma" (Star Trek; owner 2026-10-26, #1349): "You face a dilemma as you choose one or more modes for a spell or ability." A new trigger event,
+// fed by EVERY modal spell or ability (CR 700.2: a bulleted list preceded by an instruction to choose a number of options). Real oracle text (Mongo `cards`, 2026-10-26).
+const SEVEN = { name: "Seven of Nine", typeLine: "Legendary Artifact Creature — Human Scientist", keywords: ["Face a dilemma"], oracleText: "Whenever you face a dilemma, draw a card. (You face a dilemma as you choose one or more modes for a spell or ability.)" };
+const dilemmaEmits = (card: Parameters<typeof deriveOf>[0]) => deriveOf(card).tags.abilities.filter((a) => a.emits?.some((e) => e.verb === "face-a-dilemma"));
+
+test("Seven of Nine: 'whenever you face a dilemma' is a trigger on the event face-a-dilemma, yours, and the card derives complete", () => {
+  const { g, tags } = deriveOf(SEVEN);
+  expect(g.blocker).toBeUndefined();
+  expect(g.records[0]).toMatchObject({ abilityType: "triggered", trigger: { event: "face-a-dilemma", control: "you" } });
+  expect(tags.abilities).toHaveLength(1);
+  expect(tags.abilities[0]).toMatchObject({ kind: "triggered", trigger: { verbs: ["face-a-dilemma"], subject: { control: "you" } }, effect: { kind: "draw-card" } });
+  expect(tags.unknownTriggers ?? []).toEqual([]);
+});
+
+test("the other three dilemma cards read their trigger (Elim Garak, Obsidian Order Operative); Tinkerer stops at its '+1/1' counter, the next blocker", () => {
+  for (const [name, typeLine, text, keywords] of [
+    ["Elim Garak, Simple Tailor", "Legendary Creature — Cardassian Rogue", "Menace\nWhenever you face a dilemma, each opponent loses 2 life and you gain 2 life. (You face a dilemma as you choose one or more modes for a spell or ability.)", ["Face a dilemma", "Menace"]],
+    ["Obsidian Order Operative", "Creature — Cardassian Officer Spy", "Whenever you face a dilemma, each opponent loses 1 life and you gain 1 life. (You face a dilemma as you choose one or more modes for a spell or ability.)", ["Face a dilemma"]],
+  ] as const) {
+    const { g, tags } = deriveOf({ name, typeLine, oracleText: text, keywords: [...keywords] });
+    expect(g.blocker, name).toBeUndefined();
+    expect(tags.abilities.some((a) => a.trigger?.verbs.includes("face-a-dilemma")), name).toBe(true);
+  }
+  const tinkerer = grammarClauseRecords({ name: "\"Tinkerer (Not the Urza's Saga-er one)\"", typeLine: "Legendary Creature — Human Artificer", keywords: ["Surveil", "Face a dilemma"], oracleText: "Whenever CARDNAME becomes tapped, surveil 1. If its power is 4 or greater, instead draw a card.\nWhenever you face a dilemma, put a +1/1 counter on CARDNAME." });
+  // The trigger reads (its record is the one the blocker stops at); the card's own counter, "+1/1" on the printed card, is no counter kind the grammar knows.
+  expect(tinkerer.complete).toBe(false);
+  expect(tinkerer.blocker).toEqual({ clause: 2, kind: "action", phrase: "put a +1/1 counter on ~" });
+});
+
+test("a modal spell emits face-a-dilemma once, from its header: Kolaghan's Command; a spell with no modes does not: Lightning Bolt", () => {
+  const kc = dilemmaEmits({ name: "Kolaghan's Command", typeLine: "Instant", keywords: [], oracleText: "Choose two —\n• Return target creature card from your graveyard to your hand.\n• Target player discards a card.\n• Destroy target artifact.\n• Kolaghan's Command deals 2 damage to any target." });
+  expect(kc).toHaveLength(1);
+  expect(kc[0]).toMatchObject({ kind: "on-cast", repeats: "once", emits: [{ verb: "face-a-dilemma", subject: { control: "you" } }] });
+  expect(dilemmaEmits({ name: "Lightning Bolt", typeLine: "Instant", keywords: [], oracleText: "Lightning Bolt deals 3 damage to any target." })).toEqual([]);
+});
+
+test("a modal TRIGGERED ability emits it under its own trigger, once per header: Charming Prince; Captain Kirk's 'enters or attacks' once per trigger", () => {
+  const prince = dilemmaEmits({ name: "Charming Prince", typeLine: "Creature — Human Noble", keywords: ["Scry"], oracleText: "When this creature enters, choose one —\n• Scry 2.\n• You gain 3 life.\n• Exile another target creature you own. Return it to the battlefield under your control at the beginning of the next end step." });
+  expect(prince).toHaveLength(1);
+  expect(prince[0]).toMatchObject({ kind: "triggered", trigger: { verbs: ["enters"] } });
+  const kirk = dilemmaEmits({ name: "Captain James T. Kirk", typeLine: "Legendary Creature — Human Officer", keywords: [], oracleText: "Whenever Captain Kirk enters or attacks, choose one. If you have no cards in hand, choose one or more instead.\n• Discard a card, then draw a card.\n• Create a 1/1 red Officer creature token.\n• Creatures you control get +1/+0 until end of turn." });
+  expect(kirk.map((a) => a.trigger?.verbs[0]).sort()).toEqual(["attacks", "enters"]);
+});
+
+test("an ACTIVATED modal ability emits it with its cost: Aetheric Amplifier", () => {
+  const amp = dilemmaEmits({ name: "Aetheric Amplifier", typeLine: "Artifact", keywords: ["Double"], oracleText: "{T}: Add one mana of any color.\n{4}, {T}: Choose one. Activate only as a sorcery.\n• Double the number of each kind of counter on target permanent.\n• Double the number of each kind of counter you have." });
+  expect(amp).toHaveLength(1);
+  expect(amp[0]).toMatchObject({ kind: "activated" });
+});
+
+test("Spree and Tiered are modal (CR 702.172a, 702.183a) and emit it; a choice that is no mode does not: a Siege's 'choose Abzan or Mardu', 'choose one at random', an opponent's choice", () => {
+  expect(dilemmaEmits({ name: "Final Showdown", typeLine: "Instant", keywords: ["Spree"], oracleText: "Spree (Choose one or more additional costs.)\n+ {1} — All creatures lose all abilities until end of turn.\n+ {1} — Choose a creature you control. It gains indestructible until end of turn.\n+ {3}{W}{W} — Destroy all creatures." })).toHaveLength(1);
+  expect(dilemmaEmits({ name: "Thunder Magic", typeLine: "Instant", keywords: ["Thunder", "Thundaga", "Tiered", "Thundara"], oracleText: "Tiered (Choose one additional cost.)\n• Thunder — {0} — Thunder Magic deals 2 damage to target creature.\n• Thundara — {3} — Thunder Magic deals 4 damage to target creature.\n• Thundaga — {5}{R} — Thunder Magic deals 8 damage to target creature." })).toHaveLength(1);
+  expect(dilemmaEmits({ name: "Barrensteppe Siege", typeLine: "Enchantment", keywords: [], oracleText: "As this enchantment enters, choose Abzan or Mardu.\n• Abzan — At the beginning of your end step, put a +1/+1 counter on each creature you control.\n• Mardu — At the beginning of your end step, if a creature died under your control this turn, each opponent sacrifices a creature of their choice." })).toEqual([]);
+  expect(dilemmaEmits({ name: "Umaro, Raging Yeti", typeLine: "Legendary Creature — Yeti Berserker", keywords: ["Trample"], oracleText: "Trample\nAt the beginning of combat on your turn, choose one at random —\n• Other creatures you control get +3/+0 and gain trample until end of turn.\n• Discard your hand, then draw four cards.\n• Umaro deals 5 damage to any target." })).toEqual([]);
+  expect(dilemmaEmits({ name: "Library of Lat-Nam", typeLine: "Sorcery", keywords: [], oracleText: "An opponent chooses one —\n• You draw three cards at the beginning of the next turn's upkeep.\n• You search your library for a card, put that card into your hand, then shuffle." })).toEqual([]);
 });

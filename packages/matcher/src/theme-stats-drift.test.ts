@@ -27,7 +27,10 @@ test("every canonical verb family appears in the committed theme-stats artifact"
   // `detain` (AC11 batch 3, 2026-09-09): the corpus has 12 cards that detain and none that trigger
   // on it, so no card carries a detain theme tag and absence proves nothing about freshness.
   // `city-blessing` (#1321, DERIVE 380): a RECALL GAP, not a structural absence. The only two corpus cards that emitted it (Court of Ire, Starscream) "become the monarch" and are now guarded out; Ascend (CR 702.131), printed on 28 cards, is the real producer and derive never emits it for them (#1322).
-  const STRUCTURAL = new Set(["dice-rolled", "detain", "city-blessing"]);
+  // `face-a-dilemma` (#1349, Star Trek): derive's modal pass supplies it from every modal spell and ability, but the artifact is built from the DERIVED rows, and none carries
+  // it until the corpus is re-derived at the version this ships in. REMOVE it from this set when theme-stats.json is regenerated after that derive (bin/gen-theme-stats.ts):
+  // the family then appears and this exclusion is dead weight.
+  const STRUCTURAL = new Set(["dice-rolled", "detain", "city-blessing", "face-a-dilemma"]);
   const missing = VERB_VOCAB.filter((v) => !STRUCTURAL.has(v) && !families.has(v));
   expect(missing).toEqual([]);
 });

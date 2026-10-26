@@ -5,6 +5,7 @@
  *  `bin/derive-corpus.ts`. */
 import { extractCharacteristics } from "./characteristics.js";
 import { clauseRequiresOf } from "./derive/markers.js";
+import { modalHeaderIds } from "./derive/modal.js";
 import type { Requirement } from "./schema.js";
 import { grantedToOwnEmblem, grantedToOwnToken, segment } from "./segment.js";
 import { hasEmblemPart } from "./emblem.js";
@@ -60,6 +61,11 @@ export function clauseGrants(doc: { oracleText?: string; keywords?: string[]; ty
   const out: Record<number, number> = {};
   for (const c of segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "")) if (c.kind === "granted" && c.parentId !== undefined) out[c.id] = c.parentId;
   return out;
+}
+
+/** The clause ids that are a modal spell's or ability's header, from the same `segment()` call: the `face-a-dilemma` event is emitted from each (Star Trek, #1349). */
+export function modalHeads(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): ReadonlySet<number> {
+  return modalHeaderIds(segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? ""));
 }
 
 /** The printed mana cost of each face (index = face), "" for a face that prints none. */
@@ -151,6 +157,7 @@ export function deriveInputOf(card: CardDocLike, oracleId: string, name: string,
     clauseCosts: clauseCosts(card, activatedIds),
     clauseFaces: clauseFaces(card),
     clauseGrants: clauseGrants(card),
+    modalHeads: modalHeads(card),
     manaCosts: faceManaCosts(card),
     ...(faceLoyalties(card) ? { startLoyalty: faceLoyalties(card)! } : {}),
     oracleText: card.oracleText,

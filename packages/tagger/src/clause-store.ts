@@ -355,6 +355,7 @@ const TRIGGER_CUES: Record<string, RegExp> = {
   "collect-evidence": /\bcollect evidence/i,
   "venture-into-the-dungeon": /\bventure/i,
   "face-a-villainous-choice": /\bvillainous choice/i,
+  "face-a-dilemma": /\bdilemma/i,
   airbend: /\bairbend/i,
   waterbend: /\bwaterbend/i,
   foretell: /\bforetell/i,

@@ -44,10 +44,12 @@ test("VERB_VOCAB is a closed, unique verb list", () => {
   // 74 -> 75 on 2026-09-27 for `prepared` (CR 722.3a, Reality Fracture): the owner ruled that a
   // preparer joins every card with a prepare spell, and a blink joins every creature that enters
   // prepared. The emit was OPEN in verb-accounting since #668, awaiting that ruling.
-  expect(VERB_VOCAB).toHaveLength(75);
+  // 75 -> 76 on 2026-10-26 for `face-a-dilemma` (Star Trek, #1349; owner ruling): "you face a dilemma as you choose one or more modes", a trigger event fed by every
+  // modal spell or ability. Seven of Nine, Elim Garak, Obsidian Order Operative and Tinkerer watch it; derive's modal pass (derive/modal.ts) supplies it.
+  expect(VERB_VOCAB).toHaveLength(76);
   expect(VERB_VOCAB).toContain("damaged");
   expect(VERB_VOCAB).toContain("exiled");
-  for (const v of ["monarch", "initiative", "ring-tempts", "flip-coin"]) expect(VERB_VOCAB).toContain(v);
+  for (const v of ["monarch", "initiative", "ring-tempts", "flip-coin", "face-a-dilemma"]) expect(VERB_VOCAB).toContain(v);
   for (const v of ["goad", "explore", "clash", "vote", "venture-into-the-dungeon", "foretell"]) expect(VERB_VOCAB).toContain(v);
   for (const v of ["shuffle", "transform", "turned-face-up", "attached", "gains-control", "prevented"]) expect(VERB_VOCAB).toContain(v);
   expect(VERB_VOCAB).toContain("counter-removed");

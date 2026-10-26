@@ -121,6 +121,11 @@ const TESTED: Record<string, string> = {
   "714.3": "grammar/clause-record.test.ts — a Saga's reminder line (lore counters, sacrifice after the last chapter) is the store's inert record: Year of Hell, The Eldest Reborn (#1349)",
   "721.2": "grammar/clause-record.test.ts — every line under a Station bar, to the next bar or the card's end, is gated at that bar's N; lines before the first bar are not: Entropic Battlecruiser, Seriema (#1349)",
   "721.2a": "grammar/clause-record.test.ts — a Station row's 'N+ |' bar is read past and its row GATED at N charge counters (threshold {atLeast: N}): D-7 Battle Cruiser, Wedgelight Rammer (#1349)",
+  "700.2": "grammar/clause-record.test.ts — a spell or ability with a bulleted list of options preceded by an instruction to choose a number of them is modal and supplies `face-a-dilemma` once, from its header: Kolaghan's Command, Charming Prince, Aetheric Amplifier (#1349)",
+  "700.2a": "grammar/clause-record.test.ts — a modal spell or activated ability has its modes chosen as it is cast or activated: the header's emit is on-cast / activated with its cost (#1349)",
+  "700.2e": "grammar/clause-record.test.ts — another player choosing the modes (Library of Lat-Nam, 'an opponent chooses one') is not YOUR dilemma and emits none (#1349)",
+  "702.172a": "grammar/clause-record.test.ts — Spree means 'Choose one or more modes': the keyword line is a modal header and emits `face-a-dilemma`: Final Showdown (#1349)",
+  "702.183a": "grammar/clause-record.test.ts — Tiered means 'Choose one': the keyword line is a modal header and emits `face-a-dilemma`: Thunder Magic (#1349)",
   "702.148": "derive.test.ts — the words in a cleave spell's square brackets are removed: Alchemist's Retrieval bounces ANY nonland permanent (#1295)",
 };
 /** A reading in a comment, no fixture. Each carries where the reading lives. */

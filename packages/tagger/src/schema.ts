@@ -622,7 +622,12 @@ export type Verb =
   /** CR 722.3a, Reality Fracture (owner ruling 2026-09-27): a permanent with a prepare spell gains
    *  the prepared designation -- "enters prepared", "becomes prepared". Its consumers are the card's
    *  own implied self-trigger (a preparer joins every prepare card) and nothing else; see implied.ts. */
-  | "prepared";
+  | "prepared"
+  /** "You face a dilemma as you choose one or more modes for a spell or ability" (Star Trek; owner ruling 2026-10-26, #1349). Not in the Comprehensive Rules copy of
+   *  2026-09-25: the reminder text of Seven of Nine, Elim Garak, Obsidian Order Operative and Tinkerer is its only definition. The EVENT is every modal spell or ability
+   *  (CR 700.2: a bulleted list preceded by an instruction to choose a number of options, Spree and Tiered included), emitted once from the header by derive's modal
+   *  pass (`derive/modal.ts`), never from a clause verb: it is nothing a card instructs. The actor is you, as `face-a-villainous-choice`'s is. */
+  | "face-a-dilemma";
 
 export const VERB_VOCAB: readonly Verb[] = [
   "enters",
@@ -722,6 +727,7 @@ export const VERB_VOCAB: readonly Verb[] = [
   "city-blessing",
   "ring-tempts",
   "prepared",
+  "face-a-dilemma",
 ];
 
 /** THE CLASS A VERB IMPLIES (owner ruling 2026-10-10, #1166). A trigger or condition subject that

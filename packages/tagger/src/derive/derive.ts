@@ -2195,6 +2195,8 @@ export function deriveAbilities(
   creatureCard?: boolean,
   /** Granted clause id -> the clause that grants it (`DeriveInput.clauseGrants`): a quoted ability's own "this creature" is the grantee. */
   clauseGrants?: Record<number, number>,
+  /** Clause ids that are a modal spell's or ability's header (`derive/modal.ts`): each is supplied the `face-a-dilemma` event once (Star Trek, #1349). Absent: none is. */
+  modalHeads?: ReadonlySet<number>,
 ): { abilities: Ability[]; unclaimed: Action[]; unclaimedAt: UnclaimedAction[]; unknownTriggers: string[]; twinOf: ReadonlyMap<number | string, number | string>; spliced: ReadonlySet<number | string> } {
   const abilities: Ability[] = [];
   /** Every action nothing claimed, with the clause that printed it (#1299). `unclaimed` is the same list as bare actions. */
@@ -2264,6 +2266,8 @@ export function deriveAbilities(
   /** The mark at which a duplicate mode visit began: what it pushed to `unclaimed` / `unknownTriggers` repeats its first visit's, so it is cut back. */
   let dupMark: { unclaimed: number; unknown: number } | undefined;
   const visits = modeVisits(clauses, clauseTexts);
+  /** The last header visited was a modal one: a textless twin right after it (the grammar's "enters or attacks" overflow record) is the same modal ability under its other trigger. */
+  let modalOpen = false;
 
   /** What an earlier clause exiled, for "the exiled card" in a later one (#860). */
   let lastExiled: string | undefined;
@@ -2275,6 +2279,10 @@ export function deriveAbilities(
     if (dupMark) { unclaimedHere.length = dupMark.unclaimed; unknownTriggers.length = dupMark.unknown; dupMark = undefined; }
     if (visit.k) dupMark = { unclaimed: unclaimedHere.length, unknown: unknownTriggers.length };
     let clause = visit.clause;
+    // FACE A DILEMMA (Star Trek, #1349): a modal header, or the textless twin of one, supplies the event once per trigger.
+    const modalTwin: boolean = modalOpen && !visit.k && triggerHeaderOnly(clause) && clauseTexts?.[clause.id as number] === undefined;
+    const facesDilemma: boolean = !visit.k && (modalHeads?.has(clause.id as number) === true || modalTwin);
+    if (!visit.k) modalOpen = facesDilemma;
     // A mode of a multi-trigger header is visited once per header trigger, each time under that trigger's own derived state.
     const headerState = visit.group ? headerStates.get(visit.group[visit.k ?? 0]!.id) : undefined;
     if (headerState) ({ inheritedTrigger, headerTrigger, headerRefused } = headerState);
@@ -3419,6 +3427,14 @@ export function deriveAbilities(
 
     const drain = drainAbility(clause, kind, trigger, cost);
     if (drain) { if (face) drain.face = face; abilities.push(drain); }
+    // THE MODAL HEADER SUPPLIES THE EVENT ITSELF (`derive/modal.ts`): "you face a dilemma as you choose one or more modes for a spell or ability" is no verb a clause
+    // instructs, so it is pushed here with the header's own kind, trigger and cost, and the labelling below stamps its clause, repeats and count like any other. A spell's
+    // header carries no ability type of its own (static, or none), and a modal spell is cast: on-cast. A triggered header whose trigger was REFUSED derives no trigger
+    // and would claim an event that never fires, so it emits nothing (a missing edge, never a wrong one).
+    if (facesDilemma && !(kind === "triggered" && !trigger)) {
+      abilities.push({ kind: kind === "static" || clause.abilityType === "none" || clause.abilityType === undefined ? "on-cast" : kind, effect: { kind: "" }, ...(trigger ? { trigger } : {}),
+        emits: [{ verb: "face-a-dilemma", subject: { control: "you", token: null } }], ...(kind === "activated" ? { cost } : {}), ...(face ? { face } : {}) });
+    }
     const toughnessDamage = toughnessDamageAbility(text);
     if (toughnessDamage) { if (face) toughnessDamage.face = face; abilities.push(toughnessDamage); }
     // THE MODEL LEFT BOLAS'S CITADEL'S PERMISSION EMPTY (verb `none`); the printed sentence still says
@@ -3715,6 +3731,8 @@ export interface DeriveInput {
   /** Granted clause id -> the clause that grants it (`segment()`'s `parentId` on a `granted` clause): Chromatic Lantern's
    *  quoted "{T}: Add one mana of any color" -> "Lands you control have that ability". Read by `manaLines`. */
   clauseGrants?: Record<number, number>;
+  /** Clause ids that are a modal spell's or ability's header, from `segment()` (`modalHeaderIds`): the `face-a-dilemma` event is emitted from each, once (Star Trek, #1349). */
+  modalHeads?: ReadonlySet<number>;
   /** The printed mana cost of each face, index = face, "" when it prints none (Mox Tantalite). Read by `manaLines` for the
    *  cost of a spell and for `suspendOnly`. Absent: only `characteristics.cmc` is known. */
   manaCosts?: string[];
@@ -3740,7 +3758,7 @@ export function deriveAbilitiesOf(input: DeriveInput): ReturnType<typeof deriveA
   return deriveAbilities(
     input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken,
     input.clauseFaces, castAtInstantSpeed, input.clauseRequires, input.readings,
-    chars.subtypes.some((t) => t.toLowerCase() === "curse"), chars.types.some((t) => t.toLowerCase() === "creature"), input.clauseGrants);
+    chars.subtypes.some((t) => t.toLowerCase() === "curse"), chars.types.some((t) => t.toLowerCase() === "creature"), input.clauseGrants, input.modalHeads);
 }
 export function deriveCardTags(input: DeriveInput): CardTags {
   const chars = input.characteristics;

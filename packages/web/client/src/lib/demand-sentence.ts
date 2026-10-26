@@ -150,6 +150,8 @@ export const DEMAND_SUBJECTLESS: Record<string, string> = {
   initiative: "taking the initiative",
   "city-blessing": "gaining the city's blessing",
   "ring-tempts": "the Ring tempting you",
+  // Star Trek (#1349): a player event, no permanent subject.
+  "face-a-dilemma": "a dilemma",
 };
 
 /** THE SAME EVENT, AS A CLAUSE (roadmap AK4, owner 2026-09-19: "this is not how mtg players say
@@ -242,6 +244,7 @@ export const SUBJECTLESS_CLAUSE: Record<string, string> = {
   initiative: "you take the initiative",
   "city-blessing": "you gain the city's blessing",
   "ring-tempts": "the Ring tempts you",
+  "face-a-dilemma": "you face a dilemma",
 };
 
 /** WHAT A CARD DOES, IN A PLAYER'S WORDS (roadmap AK4, owner's ruling: "draw a card").

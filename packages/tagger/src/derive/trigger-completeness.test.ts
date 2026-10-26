@@ -157,6 +157,8 @@ const CR_EVENTS: Row[] = [
   row("701.54a", "chooses a Ring-bearer (part of the Ring tempting)", "ring-tempts"),
   row("722.3a", "becomes prepared (a designation)", "prepared"),
   row("722.3b", "becomes unprepared", "unprepared"),
+  // --- Star Trek (owner ruling 2026-10-26, #1349): not in the CR copy of 2026-09-25; the card's reminder is the definition. The producer is every modal spell (CR 700.2).
+  row("700.2 (reminder text)", "you face a dilemma (choose one or more modes for a spell or ability)", "face-a-dilemma"),
   // --- excluded on legality, never on count.
   excluded("123", "puts a sticker on", "Unfinity sticker sheets, the same footing as Attractions", 9),
   excluded("901", "chaos ensues / planeswalks", "Planechase; no plane is ever in a decklist", 238),
