@@ -655,3 +655,29 @@ test("Ulasht: one 'enters with' sentence holding two counter clauses is refused,
   const g = selfCard("Ulasht, the Hate Seed", "Ulasht enters with a +1/+1 counter on it for each other red creature you control and a +1/+1 counter on it for each other green creature you control.");
   expect(g.complete).toBe(false);
 });
+
+// #1349 task 2 review fixes.
+test("the two-recipient counter shape: Beta Ray Bill's two actions; a 'for each' on the second recipient refuses", async () => {
+  const { parseActions } = await import("./action.js");
+  const bill = parseActions("put a +1/+1 counter on ~ and up to one target God you control", "triggered");
+  expect(bill).toHaveLength(2);
+  expect(bill.map((a) => a.verb)).toEqual(["add-counter", "add-counter"]);
+  expect(bill.map((a) => a.counter)).toEqual(["+1/+1", "+1/+1"]);
+  expect(bill[0]!.object).toMatchObject({ self: true });
+  expect(bill[1]!.object).toMatchObject({ scope: "target" });
+  expect(parseActions("put a +1/+1 counter on it and up to one target creature you control for each creature you control", "triggered")).toEqual([]);
+});
+
+test("a swallowed second counter clause blocks whether the recipient reads 'it' or '~'", () => {
+  const g = selfCard("Ulasht, the Hate Seed", "Ulasht enters with a +1/+1 counter on ~ for each other red creature you control and a +1/+1 counter on ~ for each other green creature you control.");
+  expect(g.complete).toBe(false);
+});
+
+test("Vhal: the card's own toughness in '~'s toughness still sets the mana floor, and the cant rider is kept", () => {
+  const card = { name: "Vhal, Candlekeep Researcher", typeLine: "Legendary Creature — Human Cleric", power: "0", toughness: "3", keywords: ["Vigilance"] as string[],
+    oracleText: "Vigilance\n{T}: Add an amount of {C} equal to Vhal's toughness. This mana can't be spent to cast spells from your hand." };
+  const g = grammarClauseRecords(card);
+  expect(g.complete).toBe(true);
+  const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings));
+  expect(tags.abilities.find((a) => a.effect.kind === "mana-generation")?.count).toMatchObject({ floor: 3 });
+});

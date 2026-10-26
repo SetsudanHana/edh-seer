@@ -321,8 +321,10 @@ const COUNTERS: Record<string, [string, Handler]> = {
       if (a && b) return [...[a].flat(), ...[b].flat()];
     }
     // "a +1/+1 counter on ~ and up to one target God you control": the same counters on each recipient. The first
-    // recipient is the card ("each of up to one target land and up to one target creature" is one compound object).
+    // recipient is the card or a pronoun (~, it, him, her, this X); "each of up to one target land and up to one target
+    // creature" is one compound object and is not this shape. A "for each" on the second recipient would bind to it alone: refused.
     const twoWho = /^(.+? counters?) on (~|it|him|her|this [a-z]+) and (up to (?:one|two) (?:other )?target .+)$/.exec(rest);
+    if (twoWho && / for each /.test(twoWho[3]!)) return null;
     if (twoWho) {
       const each = [twoWho[2]!, twoWho[3]!].map((r) => COUNTERS.put![1](`${twoWho[1]} on ${r}`));
       return each.every((e) => e) ? each.flatMap((e) => [e!].flat()) : null;

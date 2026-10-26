@@ -25,8 +25,10 @@ const OTHER_ANTECEDENT = /\b(?:target|chosen|enchanted|equipped|another|other|ea
 
 /** The card's pronouns in `effect` as "~" (see PRONOUN). The caller vouches that the clause's subject is
  *  the card's own name.
- *  CEILING: "his"/"her" as a possessive ("her power") is left alone -- only the object and subject forms
- *  "him"/"her" after a preposition or verb, and "he"/"she" before a verb, are the card. */
+ *  CEILING: "his" is never converted, and neither is any "her" followed by a lowercase word (it may be a possessive,
+ *  "her power", or an object, "return her to the battlefield", Hellcat, Undying Vigilante: the clause is left unread
+ *  rather than half converted). "he"/"she" are converted whatever follows and "him" always; "her" is converted
+ *  unless a lowercase word other than and/then/or/if/unless/until/for follows. */
 export function selfPronouns(effect: string): string {
   let out = "";
   let last = 0;
