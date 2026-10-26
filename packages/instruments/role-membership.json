@@ -14493,7 +14493,7 @@
 "Somnophore": ["role:stax"],
 "Sonar Strike": ["role:targetedRemoval"],
 "Song of Creation": ["role:draw"],
-"Song of Eärendil": ["role:cardSelection","role:draw","role:ramp"],
+"Song of Eärendil": ["role:cardSelection","role:draw","role:ramp","wincon:go-wide"],
 "Song of Freyalise": ["role:protection","role:ramp"],
 "Song of Totentanz": ["wincon:go-wide"],
 "Song-Mad Treachery // Song-Mad Ruins": ["role:lands"],

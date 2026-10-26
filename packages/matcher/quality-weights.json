@@ -1,20 +1,20 @@
 {
-  "deriveVersion": 389,
+  "deriveVersion": 390,
   "rulesVersion": 36,
   "roles": {
     "ramp": {
       "weights": {
-        "manaValue": -0.17855971537075496,
-        "frequency": 0.3170559531745109,
-        "timing": 0.05712837692718298,
-        "extraValue": 0.49943947734589517,
-        "restriction": -0.008828519515849198,
-        "amount": 0.000014541285300007091,
-        "rateFloor": 0.3012396838570712,
-        "rateCeiling": 0.36161270435047227
+        "manaValue": -0.17505340214305912,
+        "frequency": 0.34004688738352284,
+        "timing": 0.06824116447835164,
+        "extraValue": 0.3142011922247776,
+        "restriction": -0.006011836875993874,
+        "amount": 0.000029885936268653213,
+        "rateFloor": 0.28636996969823136,
+        "rateCeiling": 0.3557297903362104
       },
       "pairs": 474,
-      "heldOutAccuracy": 0.6443158620244952,
+      "heldOutAccuracy": 0.6228813055640466,
       "baselineAccuracy": 0.601776016485017,
       "fallbackAccuracy": 0.5464104564024783,
       "fallback": false
@@ -39,7 +39,7 @@
         "manaValue": -2,
         "timing": 0.5
       },
-      "pairs": 30,
+      "pairs": 29,
       "heldOutAccuracy": 0,
       "baselineAccuracy": 0.01719466531833356,
       "fallbackAccuracy": 0.5849318160464851,
