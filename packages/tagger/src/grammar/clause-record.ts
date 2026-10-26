@@ -329,6 +329,9 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
   return out;
 }
 
+/** A trigger word inside a sentence: the "whenever" of a delayed trigger a chapter creates. */
+const DELAYED_TRIGGER_WORD = /\b(?:whenever|when|at the beginning of|at the end of|at end of)\b/i;
+
 export function grammarClauseRecords(card: CardText): GrammarRecords {
   const records: ClauseRecord[] = [];
   const clauses = segment(card.oracleText ?? "", card.keywords ?? [], card.typeLine ?? "");
@@ -341,15 +344,42 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
   let nextId = Math.max(0, ...clauses.map((c) => c.id)) + 1;
   const readings: Record<number, { trigger?: TriggerReading[]; actions?: ActionReading[] }> = {};
   for (const c of clauses) {
-    if (c.kind === "reminder") continue;
+    // A SAGA'S REMINDER LINE ("(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)") is the store's
+    // inert record, the text as printed (CR 714.3 and 704.5s are what it reminds of). Any other reminder-only line states nothing and has no record.
+    if (c.kind === "reminder") {
+      if (/^\(As this Saga enters\b/.test(c.text)) records.push({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text } as Action] });
+      continue;
+    }
     if (c.kind === "keyword") { records.push({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text } as Action] }); continue; }
     // A mana cost behind a label the segmenter missed makes the clause ACTIVATED, carrying that cost.
     const labelled = !c.cost && (c.abilityType ?? "static") === "static" ? missedCost(c.text) : null;
     const type = labelled ? "activated" : c.abilityType ?? "static";
     const record: ClauseRecord = { id: c.id, abilityType: type, actions: [] };
+    // A SAGA CHAPTER ("I, II — ...") is fired by the lore counter reaching its number (CR 714.2b: "{rN}—[Effect]"), not by an event the trigger
+    // grammar reads: the store writes `{event: "chapter", subject: <the marker>, control: "you"}` and derive reads the event as "once" (repeats.ts).
+    // A chapter whose text OPENS with a trigger word ("II, III — Whenever you cast a noncreature spell this turn, ...") keeps its printed
+    // trigger, as before: the store has that chapter's trigger as the cast, not the chapter.
+    // CEILING: a chapter that states a trigger further in ("III — Until end of turn, whenever a Salamander deals combat damage to a player,
+    // it deals that much damage ...", Nightmares and Daydreams) is REFUSED, not read as a chapter: read so, its effect would fire at the chapter
+    // with the "whenever" dropped, a claim the text does not make (the stored answer keeps it unclaimed or triggered).
+    const bareChapter = c.kind === "chapter" && type === "triggered" && c.marker !== undefined && printedPreamble(c.text, card.name) === null;
+    const delayedWord = bareChapter ? DELAYED_TRIGGER_WORD.exec(c.text.replace(/"[^"]*"/g, " ")) : null;
+    if (delayedWord) {
+      const rest = c.text.slice(c.text.toLowerCase().indexOf(delayedWord[0].toLowerCase()));
+      const comma = rest.indexOf(",");
+      return { records, complete: false, blocker: { clause: c.id, kind: "trigger", phrase: comma > 0 ? rest.slice(0, comma) : rest } };
+    }
+    // A REFLEXIVE "When you do" after a chapter's first sentence ("I — Mill five cards. When you do, this Saga deals damage ...", Kraven's Last
+    // Hunt; the segmenter makes it a clause of its own) is that chapter's own ability (CR 603.12), so once: the chapter's trigger, as the store has it.
+    // So is the ONE delayed trigger the chapter sets up ("... At the beginning of the next combat this turn, gain control of that creature", The Wrath
+    // of Khan): read as a phase trigger on anyone's combat it fired every turn (per-turn), where it fires the once.
+    const reflexiveChapter = c.kind === "chapter" && c.marker === undefined && type === "triggered" && /^(?:when you do,|at the beginning of the next )/i.test(c.text);
+    const parentMarker = reflexiveChapter ? [...clauses].reverse().find((p) => p.id < c.id && p.kind === "chapter" && p.marker !== undefined)?.marker : undefined;
+    const chapterOnly = bareChapter || (reflexiveChapter && parentMarker !== undefined);
+    if (chapterOnly) record.trigger = { event: "chapter", subject: c.marker ?? parentMarker!, control: "you" };
     // A MODE of a triggered modal ability is typed triggered (the store's convention) but has no trigger of
     // its own: the parent's trigger is its trigger. Only a mode that prints its own ("When ..., ...") reads one.
-    if (type === "triggered" && !(c.kind === "mode" && !/^\s*(?:whenever|when|at the beginning of|at end of)\b/i.test(c.text))) {
+    if (!chapterOnly && type === "triggered" && !(c.kind === "mode" && !/^\s*(?:whenever|when|at the beginning of|at end of)\b/i.test(c.text))) {
       const preamble = printedPreamble(c.text, card.name);
       const read = preamble ? parseTrigger(preamble, interveningIfOf(selfAsTilde(c.text, card.name))) : null;
       if (!read) return { records, complete: false, blocker: { clause: c.id, kind: "trigger", ...(preamble ? { phrase: preamble } : {}) } };

@@ -118,6 +118,8 @@ const TESTED: Record<string, string> = {
   "603.7a": "delayed-trigger.test.ts — a delayed trigger's rate is its creator's: a chapter, a spell, an activation",
   "603.7b": "delayed-trigger.test.ts — \"when you next\" fires once per creation, so a chapter's or a spell's is once",
   "119.5": "derive.test.ts — a life total set is neither damage nor life loss: The Golden Throne, Arbiter of Knollridge (#1266)",
+  "714.3": "grammar/clause-record.test.ts — a Saga's reminder line (lore counters, sacrifice after the last chapter) is the store's inert record: Year of Hell, The Eldest Reborn (#1349)",
+  "721.2a": "grammar/clause-record.test.ts — a Station row's 'N+ |' bar is read past and its charge-counter threshold dropped, not gated: D-7 Battle Cruiser (#1349)",
   "702.148": "derive.test.ts — the words in a cleave spell's square brackets are removed: Alchemist's Retrieval bounces ANY nonland permanent (#1295)",
 };
 /** A reading in a comment, no fixture. Each carries where the reading lives. */

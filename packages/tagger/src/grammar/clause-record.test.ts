@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import { deriveCardTags } from "../derive/derive.js";
 import { deriveInputOf } from "../derive-input.js";
 import { grammarClauseRecords, phaseControl, triggerSubjectText } from "./clause-record.js";
+import { deriveDiff, lostClaims } from "./derive-diff.js";
 import { effectText } from "./preamble.js";
 import { selfAsTilde, selfPronouns } from "./self-as-tilde.js";
 
@@ -914,4 +915,79 @@ test("two multi-trigger modal headers pair their twins in order; unequal counts 
 test("a mode's 'if you don't control ...' gates it; only the bare reflexive 'if you do / don't' is exempt: Venser, Corpse Puppet", () => {
   const { tags } = deriveGrammar("Venser, Corpse Puppet", "Legendary Creature — Phyrexian Zombie Wizard", "Lifelink, toxic 1\nWhenever you proliferate, choose one —\n• If you don't control a creature named The Hollow Sentinel, create The Hollow Sentinel, a legendary 3/3 colorless Phyrexian Golem artifact creature token.\n• Target artifact creature you control gains flying and lifelink until end of turn.");
   expect(tags.abilities.some((a) => a.effect.kind === "token-generation")).toBe(false);
+});
+
+// #1349 part 2: Saga chapters and Station thresholds. Real oracle text (Mongo `cards`, 2026-10-26).
+const YEAR_OF_HELL = { name: "Year of Hell", typeLine: "Enchantment \u2014 Saga", keywords: [] as string[], oracleText: "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II, III \u2014 Each player draws a card. This Saga deals 2 damage to each player." };
+
+test("a Saga chapter is a triggered clause on the event 'chapter', its marker the subject (Year of Hell: I, II, III)", () => {
+  const g = grammarClauseRecords(YEAR_OF_HELL);
+  expect(g.blocker).toBeUndefined();
+  expect(g.complete).toBe(true);
+  // The reminder line is the store's inert record; the chapter is one triggered record with the marker as its subject.
+  expect(g.records[0]).toMatchObject({ id: 1, abilityType: "none" });
+  expect(g.records[1]).toMatchObject({ id: 2, abilityType: "triggered", trigger: { event: "chapter", subject: "I, II, III", control: "you" } });
+  expect(g.records[1]!.actions!.map((a) => a.verb)).toEqual(["draw", "deal-damage"]);
+});
+
+const D7 = { name: "D-7 Battle Cruiser", typeLine: "Artifact \u2014 Spacecraft", keywords: ["Station"], oracleText: "Station (Tap another creature you control: Put charge counters equal to its power on this Spacecraft. Station only as a sorcery. It's an artifact creature at 8+.)\n3+ | At the beginning of combat on your turn, create a 2/1 red Klingon Warrior creature token with haste. Sacrifice it at the beginning of the next end step.\n8+ | Flying" };
+
+test("a Station threshold row reads past its 'N+ |' bar: D-7 Battle Cruiser's trigger and its bare keyword row", () => {
+  const g = grammarClauseRecords(D7);
+  expect(g.blocker).toBeUndefined();
+  expect(g.complete).toBe(true);
+  expect(g.records[0]).toMatchObject({ id: 1, abilityType: "none" });
+  expect(g.records[1]).toMatchObject({ id: 2, abilityType: "triggered", trigger: { event: "begin-combat", control: "you" } });
+  expect(g.records[1]!.actions!.map((a) => a.verb)).toEqual(["create", "sacrifice"]);
+  // "8+ | Flying" is the printed keyword the Spacecraft has at 8 charge counters (CR 721.2a), not a static grant it always has.
+  expect(g.records[2]).toMatchObject({ id: 3, abilityType: "none" });
+});
+
+test("Those Old Scientists: a reminder wrapped mid-sentence is one reminder line; the next blocker is chapter III's 'choose up to two target cards'", () => {
+  const g = grammarClauseRecords({ name: "Those Old Scientists", typeLine: "Enchantment \u2014 Saga", keywords: [], oracleText: "(As this Saga enters and after your draw\nstep, add a lore counter. Sacrifice after III.)\nI \u2014 Draw two cards, then discard two cards.\nII \u2014 Return up to one target artifact, instant, or sorcery card from your graveyard to your hand.\nIII \u2014 Choose up to two target cards in graveyards. The owners of those cards shuffle them into their libraries." });
+  expect(g.records[0]).toMatchObject({ id: 1, abilityType: "none" });
+  expect(g.records.filter((r) => r.trigger?.event === "chapter").map((r) => r.trigger!.subject)).toEqual(["I", "II"]);
+  expect(g.blocker).toEqual({ clause: 4, kind: "action", phrase: "choose up to two target cards in graveyards" });
+});
+
+test("a chapter that states its trigger mid-sentence is refused, never read as a plain chapter: Nightmares and Daydreams, The Sea Devils", () => {
+  const nightmares = grammarClauseRecords({ name: "Nightmares and Daydreams", typeLine: "Enchantment \u2014 Saga", keywords: [], oracleText: "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after IV.)\nI, II, III \u2014 Until your next turn, whenever you cast an instant or sorcery spell, target player mills cards equal to that spell's mana value.\nIV \u2014 Draw a card. If a graveyard has twenty or more cards in it, draw three cards instead." });
+  expect(nightmares.complete).toBe(false);
+  expect(nightmares.blocker).toEqual({ clause: 2, kind: "trigger", phrase: "whenever you cast an instant or sorcery spell" });
+  const devils = grammarClauseRecords({ name: "The Sea Devils", typeLine: "Enchantment \u2014 Saga", keywords: [], oracleText: "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI, II \u2014 Create a 2/2 green Alien Salamander creature token with islandwalk. (It can't be blocked as long as defending player controls an Island.)\nIII \u2014 Until end of turn, whenever a Salamander deals combat damage to a player, it deals that much damage to target creature that player controls." });
+  expect(devils.blocker).toEqual({ clause: 3, kind: "trigger", phrase: "whenever a Salamander deals combat damage to a player" });
+});
+
+test("a chapter's reflexive 'When you do' is the chapter's own ability, once: Kraven's Last Hunt", () => {
+  const g = grammarClauseRecords({ name: "Kraven's Last Hunt", typeLine: "Enchantment \u2014 Saga", keywords: [], oracleText: "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI \u2014 Mill five cards. When you do, this Saga deals damage equal to the greatest power among creature cards in your graveyard to target creature.\nII \u2014 Target creature you control gets +2/+2 until end of turn.\nIII \u2014 Return target creature card from your graveyard to your hand." });
+  expect(g.blocker).toBeUndefined();
+  expect(g.records.filter((r) => r.trigger?.event === "chapter").map((r) => `${r.id}:${r.trigger!.subject}`)).toEqual(["2:I", "3:I", "4:II", "5:III"]);
+  const tags = deriveCardTags(deriveInputOf({ name: "Kraven's Last Hunt", typeLine: "Enchantment \u2014 Saga", keywords: [] } as never, "x", "Kraven's Last Hunt", g.records, undefined, g.readings));
+  expect(tags.abilities.filter((a) => a.effect.kind === "damage").map((a) => a.repeats)).toEqual(["once"]);
+});
+
+test("Saga and Station parity: the grammar's records derive what the stored (bought) clauses derive (The Eldest Reborn, Eternity Elevator-shaped trigger rows)", () => {
+  // The Eldest Reborn, stored clauses as bought (Mongo cardClauses, 2026-10-26).
+  const card = { name: "The Eldest Reborn", typeLine: "Enchantment \u2014 Saga", keywords: [] as string[], oracleText: "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI \u2014 Each opponent sacrifices a creature or planeswalker of their choice.\nII \u2014 Each opponent discards a card.\nIII \u2014 Put target creature or planeswalker card from a graveyard onto the battlefield under your control." };
+  const act = (verb: string, object: string, fromZone: string | null = null, toZone: string | null = null) => [{ verb, object, fromZone, toZone, amount: null, optional: false }];
+  const stored = [
+    { id: 1, abilityType: "none", actions: [{ verb: "none", object: "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "chapter", subject: "I", control: "you" }, actions: act("sacrifice", "a creature or planeswalker of their choice") },
+    { id: 3, abilityType: "triggered", trigger: { event: "chapter", subject: "II", control: "you" }, actions: act("discard", "a card") },
+    { id: 4, abilityType: "triggered", trigger: { event: "chapter", subject: "III", control: "you" }, actions: act("put", "target creature or planeswalker card", "graveyard", "battlefield") },
+  ];
+  const g = grammarClauseRecords(card);
+  expect(g.complete).toBe(true);
+  const a = deriveCardTags(deriveInputOf(card as never, "x", card.name, stored as never));
+  const b = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings));
+  expect(deriveDiff(a.abilities, b.abilities)).toBeNull();
+  expect(lostClaims(a.abilities, b.abilities)).toEqual([]);
+  expect(b.abilities.map((x) => x.repeats)).toEqual(["once", "once", "once"]);
+});
+
+test("D-7 Battle Cruiser derives its combat token once a round, and claims no flying it has only at 8 charge counters", () => {
+  const g = grammarClauseRecords(D7);
+  const tags = deriveCardTags(deriveInputOf(D7 as never, "x", D7.name, g.records, undefined, g.readings));
+  expect(tags.abilities.filter((a) => a.effect.kind === "token-generation").map((a) => a.repeats)).toEqual(["per-cycle"]);
+  expect(tags.abilities.some((a) => a.effect.kind === "keyword-grant")).toBe(false);
 });
