@@ -3,6 +3,7 @@ import { deriveCardTags } from "../derive/derive.js";
 import { deriveInputOf } from "../derive-input.js";
 import { grammarClauseRecords, phaseControl, triggerSubjectText } from "./clause-record.js";
 import { deriveDiff, lostClaims } from "./derive-diff.js";
+import { parseActions } from "./action.js";
 import { stationThresholdFor } from "../derive/threshold.js";
 import { effectText } from "./preamble.js";
 import { selfAsTilde, selfPronouns } from "./self-as-tilde.js";
@@ -623,9 +624,9 @@ test("the self-name cards move past their self-reference and stop at the NEXT ph
   // ...and their restriction sentence, which task 3 reads as a rider (no action, nothing unread).
   expect(reads("Picard, Leading by Example", "{1}, {T}: Another target creature gets +X/+X until end of turn, where X is Picard's power. Activate only as a sorcery.").complete).toBe(true);
   expect(reads("Seven of Nine, Unassimilated", "{6}{U}: Seven of Nine's base power and toughness become 7/9. Activate only if you control seven or more differently named lands.").complete).toBe(true);
-  // ...and the next blocker.
-  expect(reads("Ensign Pavel Chekov", "Strange new worlds — When Ensign Chekov enters, each opponent exiles the top X cards of their library, where X is the number of differently named lands you control. For each opponent, choose a land card that player owns exiled this way. You may play the chosen cards for as long as they remain exiled.").blocker?.phrase).toBe("for each opponent");
-  expect(reads("Beckett Mariner, Impetuous Ensign", "Reckless Behavior — Whenever Beckett Mariner becomes tapped, put a promotion counter on her. Then if there are three or more promotion counters on her, remove those counters and she deals 2 damage to each opponent.").blocker?.phrase).toBe("then if there are three or more promotion counters on ~, remove those counters");
+  // ...and the next blocker (Chekov's "For each opponent," is read since task C2; Beckett Mariner's "Then if ..., remove those counters" too).
+  expect(reads("Ensign Pavel Chekov", "Strange new worlds — When Ensign Chekov enters, each opponent exiles the top X cards of their library, where X is the number of differently named lands you control. For each opponent, choose a land card that player owns exiled this way. You may play the chosen cards for as long as they remain exiled.").blocker?.phrase).toBe("choose a land card that player owns exiled this way");
+  expect(reads("Beckett Mariner, Impetuous Ensign", "Reckless Behavior — Whenever Beckett Mariner becomes tapped, put a promotion counter on her. Then if there are three or more promotion counters on her, remove those counters and she deals 2 damage to each opponent.").complete).toBe(true);
 });
 
 // #1349 task 2 follow-up: regressions the identity proof found in the self-name work.
@@ -1411,4 +1412,128 @@ test("the switch gate refuses a grammar reading that drops the stored trigger's 
   expect(a.abilities.some((x) => x.trigger?.batched)).toBe(true);
   expect(b.abilities.some((x) => x.trigger?.batched)).toBe(false);
   expect(lostTriggerFlags(a.abilities, b.abilities)).toBe(true);
+});
+
+// #1349 part 2, task C2: the general counting and counter phrases. Real oracle text from the corpus; the STORED_ clauses are the bought answers.
+const ENSIGN_PAVEL_CHEKOV = {"name":"Ensign Pavel Chekov","typeLine":"Legendary Creature — Human Pilot","keywords":["Strange new worlds"],"oracleText":"Strange new worlds — When Ensign Chekov enters, each opponent exiles the top X cards of their library, where X is the number of differently named lands you control. For each opponent, choose a land card that player owns exiled this way. You may play the chosen cards for as long as they remain exiled."};
+const WORF_INTELLIGENCE_CONTRACTOR = {"name":"Worf, Intelligence Contractor","typeLine":"Legendary Creature — Klingon Warrior Spy","keywords":[],"oracleText":"When Worf enters, for each opponent, gain control of up to one target creature that player controls with mana value 3 or less until end of turn. Untap those creatures. Until end of turn, they become Warriors in addition to their other types and gain haste."};
+const MIRROR_UNIVERSE_INTRUSION = {"name":"Mirror Universe Intrusion","typeLine":"Sorcery","keywords":["Kicker"],"oracleText":"Kicker {4}{U}{B} (You may pay an additional 4 as you cast this spell.)\nCreate a token that's a copy of target creature an opponent controls, except it has menace. If this spell was kicked, instead for each creature target opponent controls, create a token that's a copy of that creature, except it has menace."};
+const DR_JOSEPH_M_BENGA = {"name":"Dr. Joseph M'Benga","typeLine":"Legendary Creature — Human Doctor","keywords":[],"oracleText":"Other creatures you control with counters on them have hexproof.\nIf you would put one or more counters on a creature you control, put twice that many of each of those kinds of counters on that creature instead."};
+const BRAD_BOIMLER_EAGER_ENSIGN = {"name":"Brad Boimler, Eager Ensign","typeLine":"Legendary Creature — Human Officer","keywords":["Lifelink"],"oracleText":"Lifelink\nWhenever Brad Boimler becomes tapped, until end of turn, if one or more counters would be put on a permanent you control, that many plus one of each of those kinds of counters are put on that permanent instead."};
+const DOMINION_SABOTEUR = {"name":"Dominion Saboteur","typeLine":"Creature — Shapeshifter","keywords":[],"oracleText":"You may have this creature enter as a copy of any artifact or creature on the battlefield, except it isn't legendary. If you do, it enters with additional counters on it equal to the same number and kinds of counters the copied permanent has on it."};
+const BRANCHING_TIMELINE = {"name":"Branching Timeline","typeLine":"Sorcery","keywords":["Strange new worlds"],"oracleText":"Strange new worlds — Reveal the top X cards of your library, where X is the number of differently named lands you control. Put all permanent cards revealed this way onto the battlefield tapped and the rest on the bottom of your library in a random order."};
+const HOSHI_SATO_EXOLINGUIST = {"name":"Hoshi Sato, Exolinguist","typeLine":"Legendary Creature — Human Scientist","keywords":[],"oracleText":"Federation — When Hoshi Sato enters, look at the top X cards of your library, where X is the number of creature types among non-Borg creatures you control. Put one of them into your hand and the rest on the bottom of your library in a random order."};
+const LIEUTENANT_COMMANDER_DATA = {"name":"Lieutenant Commander Data","typeLine":"Legendary Artifact Creature — Android Scientist","keywords":[],"oracleText":"Whenever a player casts a noncreature spell, put a +1/+1 counter on Lieutenant Commander Data.\n{1}, Remove three counters from among creatures you control: Draw a card."};
+const CAPTAIN_JEAN_LUC_PICARD = {"name":"Captain Jean-Luc Picard","typeLine":"Legendary Creature — Human Officer","keywords":[],"oracleText":"Other creatures you control get +1/+1.\nWhenever you cast a creature or Spacecraft spell, create a 1/1 red Officer creature token.\nTap seven untapped Officers you control: Search your library for a Spacecraft card, put it onto the battlefield with seven charge counters on it, then shuffle."};
+const BECKETT_MARINER_IMPETUOUS_ENSIGN = {"name":"Beckett Mariner, Impetuous Ensign","typeLine":"Legendary Creature — Human Officer","keywords":["First strike"],"oracleText":"First strike\nReckless Behavior — Whenever Beckett Mariner becomes tapped, put a promotion counter on her. Then if there are three or more promotion counters on her, remove those counters and she deals 2 damage to each opponent."};
+const RISE_FROM_THE_NETHER = {"name":"Rise from the Nether","typeLine":"Sorcery — Arcane","keywords":[],"oracleText":"Create a 3/1 black Mindless-One creature token for each noncreature, nonland card in your graveyard."};
+const GEORGIOU_TERRAN_EMPEROR = {"name":"Georgiou, Terran Emperor","typeLine":"Legendary Creature — Human Rogue Noble","keywords":[],"oracleText":"You don't lose the game for having 0 or less life.\nAt the beginning of your end step, you lose 3 life and draw a card. Then if your life total is 0 or less, create ten 1/1 red Officer creature tokens."};
+const FRENZIED_GORESPAWN = {"name":"Frenzied Gorespawn","typeLine":"Creature — Horror","keywords":["Goad"],"oracleText":"When this creature enters, for each opponent, goad target creature that player controls. (Until your next turn, those creatures attack each combat if able and attack a player other than you if able.)\nWhenever one or more creatures attack one of your opponents, those creatures gain menace until end of turn."};
+const STORED_FRENZIED_GORESPAWN = [{"id":1,"abilityType":"triggered","trigger":{"event":"enters","subject":"this creature","control":"you"},"actions":[{"verb":"goad","object":"target creature that player controls","optional":false,"fromZone":null,"toZone":null}]},{"id":2,"abilityType":"triggered","trigger":{"event":"attacks","subject":"one or more creatures","control":"you"},"actions":[{"verb":"grant-ability","object":"menace until end of turn","optional":false,"fromZone":null,"toZone":null}]}];
+const TEMPTED_BY_THE_ORIQ = {"name":"Tempted by the Oriq","typeLine":"Sorcery","keywords":[],"oracleText":"For each opponent, gain control of up to one target creature or planeswalker that player controls with mana value 3 or less."};
+const STORED_TEMPTED_BY_THE_ORIQ = [{"id":1,"abilityType":"spell","actions":[{"verb":"gain-control","object":"up to one target creature or planeswalker that player controls with mana value 3 or less","fromZone":null,"toZone":null,"amount":null,"optional":true}]}];
+const CLONE_LEGION = {"name":"Clone Legion","typeLine":"Sorcery","keywords":[],"oracleText":"For each creature target player controls, create a token that's a copy of that creature."};
+const STORED_CLONE_LEGION = [{"id":1,"abilityType":"spell","actions":[{"verb":"create","object":"a token that's a copy of that creature","fromZone":null,"toZone":null,"amount":null,"optional":false}]}];
+const MULTIVERSAL_INCURSION = {"name":"Multiversal Incursion","typeLine":"Sorcery","keywords":[],"oracleText":"For each nontoken creature you control, create a token that's a copy of that creature, except it isn't legendary."};
+const STORED_MULTIVERSAL_INCURSION = [{"id":1,"abilityType":"spell","actions":[{"verb":"create","object":"a token that's a copy of that creature, except it isn't legendary","fromZone":null,"toZone":null,"amount":null,"optional":false}]}];
+const WINDING_CONSTRICTOR = {"name":"Winding Constrictor","typeLine":"Creature — Snake","keywords":[],"oracleText":"If one or more counters would be put on an artifact or creature you control, that many plus one of each of those kinds of counters are put on that permanent instead.\nIf you would get one or more counters, you get that many plus one of each of those kinds of counters instead."};
+const STORED_WINDING_CONSTRICTOR = [{"id":1,"abilityType":"static","actions":[{"verb":"add-counter","object":"that many plus one of each of those kinds of counters","fromZone":null,"toZone":null,"amount":null,"optional":false}]},{"id":2,"abilityType":"static","actions":[{"verb":"add-counter","object":"that many plus one of each of those kinds of counters","fromZone":null,"toZone":null,"amount":null,"optional":false}]}];
+const WORLDLY_COUNSEL = {"name":"Worldly Counsel","typeLine":"Instant","keywords":["Domain"],"oracleText":"Domain — Look at the top X cards of your library, where X is the number of basic land types among lands you control. Put one of those cards into your hand and the rest on the bottom of your library in any order."};
+const STORED_WORLDLY_COUNSEL = [{"id":1,"abilityType":"spell","actions":[{"verb":"put","object":"one of those cards","fromZone":"library","toZone":"hand","amount":null,"optional":false},{"verb":"put","object":"the rest","fromZone":"library","toZone":"library","amount":null,"optional":false}]}];
+const PRIZE_PIG = {"name":"Prize Pig","typeLine":"Creature — Boar","keywords":[],"oracleText":"Whenever you gain life, put that many ribbon counters on this creature. Then if there are three or more ribbon counters on this creature, remove those counters and untap it.\n{T}: Add one mana of any color."};
+const STORED_PRIZE_PIG = [{"id":1,"abilityType":"triggered","trigger":{"event":"life-gained","subject":"you","control":"you"},"actions":[{"verb":"add-counter","object":"ribbon counter","fromZone":null,"toZone":null,"amount":"that many","optional":false},{"verb":"remove-counter","object":"ribbon counter","fromZone":null,"toZone":null,"amount":"three or more","optional":false},{"verb":"untap","object":"this","fromZone":null,"toZone":null,"amount":null,"optional":false}]},{"id":2,"abilityType":"activated","actions":[{"verb":"add-mana","object":"one mana of any color","fromZone":null,"toZone":null,"amount":null,"optional":false}]}];
+const TAYAM_LUMINOUS_ENIGMA = {"name":"Tayam, Luminous Enigma","typeLine":"Legendary Creature — Nightmare Beast","keywords":["Mill"],"oracleText":"Each other creature you control enters with an additional vigilance counter on it.\n{3}, Remove three counters from among creatures you control: Mill three cards, then return a permanent card with mana value 3 or less from your graveyard to the battlefield."};
+const STORED_TAYAM_LUMINOUS_ENIGMA = [{"id":1,"abilityType":"static","actions":[{"verb":"add-counter","object":"vigilance","optional":false,"fromZone":null,"toZone":null}]},{"id":2,"abilityType":"activated","actions":[{"verb":"remove-counter","object":"any","optional":false,"fromZone":null,"toZone":null},{"verb":"mill","object":"three cards","amount":"3","optional":false,"fromZone":null,"toZone":null},{"verb":"return","object":"a permanent card with mana value 3 or less from your graveyard","fromZone":"graveyard","toZone":"battlefield","optional":false}]}];
+const BRASS_S_BOUNTY = {"name":"Brass's Bounty","typeLine":"Sorcery","keywords":["Treasure"],"oracleText":"For each land you control, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")"};
+
+test("'For each opponent, <verb phrase>' is the verb phrase alone, as the store has it: Worf; Chekov reads it and stops at his next phrase; parity Frenzied Gorespawn, Tempted by the Oriq", () => {
+  const worf = grammarClauseRecords(WORF_INTELLIGENCE_CONTRACTOR);
+  expect(worf.blocker).toBeUndefined();
+  expect(worf.records[0]!.actions![0]).toMatchObject({ verb: "gain-control", object: expect.stringContaining("up to one target creature that player controls with mana value 3 or less") });
+  expect(grammarClauseRecords(ENSIGN_PAVEL_CHEKOV).blocker).toEqual({ clause: 1, kind: "action", phrase: "choose a land card that player owns exiled this way" });
+  for (const [c, stored] of [[FRENZIED_GORESPAWN, STORED_FRENZIED_GORESPAWN], [TEMPTED_BY_THE_ORIQ, STORED_TEMPTED_BY_THE_ORIQ]] as const) {
+    const p = parity(c, stored as never);
+    expect(deriveDiff(p.a.abilities, p.b.abilities), c.name).toBeNull();
+  }
+});
+
+test("'[instead] for each creature <player> controls, create a token that's a copy of that creature' is the copy alone: Mirror Universe Intrusion; any other per-object creation stays unread (Brass's Bounty); parity Clone Legion, Multiversal Incursion", () => {
+  const mirror = grammarClauseRecords(MIRROR_UNIVERSE_INTRUSION);
+  expect(mirror.blocker).toBeUndefined();
+  // The kicked sentence's per-creature creation is the copy alone, beside the unkicked one's copy of the target.
+  expect(mirror.records.at(-1)!.actions!.map((a) => [a.verb, a.object])).toEqual([["create", "a token that's a copy of target creature an opponent controls, except it has menace"], ["create", "a token that's a copy of that creature, except it has menace"]]);
+  expect(grammarClauseRecords(BRASS_S_BOUNTY).blocker).toEqual({ clause: 1, kind: "action", phrase: "for each land you control" });
+  for (const [c, stored] of [[CLONE_LEGION, STORED_CLONE_LEGION], [MULTIVERSAL_INCURSION, STORED_MULTIVERSAL_INCURSION]] as const) {
+    const p = parity(c, stored as never);
+    expect(deriveDiff(p.a.abilities, p.b.abilities), c.name).toBeNull();
+  }
+});
+
+test("a counter replacement that names no kind is the stored add-counter of its own words: Dr. Joseph M'Benga, Brad Boimler; parity Winding Constrictor", () => {
+  const mbenga = grammarClauseRecords(DR_JOSEPH_M_BENGA);
+  expect(mbenga.blocker).toBeUndefined();
+  expect(mbenga.records[1]!.actions).toEqual([expect.objectContaining({ verb: "add-counter", object: "twice that many of each of those kinds of counters on a creature you control" })]);
+  const boimler = grammarClauseRecords(BRAD_BOIMLER_EAGER_ENSIGN);
+  expect(boimler.blocker).toBeUndefined();
+  expect(boimler.records[1]!.actions).toEqual([expect.objectContaining({ verb: "add-counter", object: "that many plus one of each of those kinds of counters on a permanent you control" })]);
+  const constrictor = parity(WINDING_CONSTRICTOR, STORED_WINDING_CONSTRICTOR as never);
+  // The permanents the replacement hears ride in the words when the condition names them (derive reads the printed clause through the same grammar, so the stored records give the same).
+  expect(constrictor.g.records.map((r) => r.actions![0]!.object)).toEqual(["that many plus one of each of those kinds of counters on an artifact or creature you control", "that many plus one of each of those kinds of counters"]);
+  expect(constrictor.b.abilities[0]!.emits![0]!.subject).toMatchObject({ control: "you", type: ["creature", "artifact"] });
+  expect(deriveDiff(constrictor.a.abilities, constrictor.b.abilities)).toBeNull();
+});
+
+test("a clone's 'enters with additional counters on it equal to the same number and kinds of counters the copied permanent has on it' is counters on the card itself: Dominion Saboteur", () => {
+  const g = grammarClauseRecords(DOMINION_SABOTEUR);
+  expect(g.blocker).toBeUndefined();
+  expect(g.records[0]!.actions!.at(-1)).toMatchObject({ verb: "add-counter", object: "this creature", amount: "the same number and kinds of counters the copied permanent has on it" });
+  const tags = deriveCardTags(deriveInputOf(DOMINION_SABOTEUR as never, "x", DOMINION_SABOTEUR.name, g.records, undefined, g.readings));
+  expect(tags.abilities.map((a) => a.effect.kind)).toEqual(["clone", "enters-with-counters"]);
+});
+
+test("'where X is the number of ...' on a look or a reveal is no claim of its own: Hoshi Sato, Branching Timeline; Chekov's exile keeps the 'differently named' count the way Emil's counters do; parity Worldly Counsel", () => {
+  const hoshi = grammarClauseRecords(HOSHI_SATO_EXOLINGUIST);
+  expect(hoshi.blocker).toBeUndefined();
+  // The look claims nothing; what is put into the hand is the sentence after, from that library.
+  expect(hoshi.records[0]!.actions!.map((a) => a.verb)).toEqual(["put", "put"]);
+  const timeline = grammarClauseRecords(BRANCHING_TIMELINE);
+  expect(timeline.blocker).toBeUndefined();
+  expect(timeline.records[0]!.actions!.some((a) => a.verb === "reveal")).toBe(false);
+  // Chekov's exile (the card stops later, at his "choose"): the count rides in the amount, as the stored Emil, Vastlands Roamer has it.
+  expect(parseActions("Each opponent exiles the top X cards of their library, where X is the number of differently named lands you control.", null)[0]).toMatchObject({ verb: "exile", amount: "the number of differently named lands you control" });
+  const counsel = parity(WORLDLY_COUNSEL, STORED_WORLDLY_COUNSEL as never);
+  expect(deriveDiff(counsel.a.abilities, counsel.b.abilities)).toBeNull();
+});
+
+test("'Remove three counters from among creatures you control' is the stored outlet cost: Lieutenant Commander Data; parity Tayam, Luminous Enigma", () => {
+  const data = grammarClauseRecords(LIEUTENANT_COMMANDER_DATA);
+  expect(data.blocker).toBeUndefined();
+  const tags = deriveCardTags(deriveInputOf(LIEUTENANT_COMMANDER_DATA as never, "x", LIEUTENANT_COMMANDER_DATA.name, data.records, undefined, data.readings));
+  expect(tags.abilities.find((a) => a.payment?.removeCounter)!.payment!.removeCounter).toEqual([{ amount: "3", subject: { control: "you", token: null, type: "creature" } }]);
+  const tayam = parity(TAYAM_LUMINOUS_ENIGMA, STORED_TAYAM_LUMINOUS_ENIGMA as never);
+  expect(tayam.a.abilities.find((a) => a.payment?.removeCounter)!.payment, "the payment is read off the cost text, the same either way").toEqual(tayam.b.abilities.find((a) => a.payment?.removeCounter)!.payment);
+});
+
+test("'put it onto the battlefield with seven charge counters on it' is a put and the counters: Captain Jean-Luc Picard", () => {
+  const g = grammarClauseRecords(CAPTAIN_JEAN_LUC_PICARD);
+  expect(g.blocker).toBeUndefined();
+  expect(g.records[2]!.actions!.slice(-3).map((a) => [a.verb, a.object])).toEqual([["put", "it"], ["add-counter", "charge counter"], ["shuffle", "your library"]]);
+  expect(g.records[2]!.actions!.find((a) => a.verb === "add-counter")!.amount).toBe("7");
+});
+
+test("'Then if there are three or more X counters on ~, remove those counters' removes every counter of X's kind: Beckett Mariner; Prize Pig's stored threshold-as-amount is a claim loss the grammar does not make", () => {
+  const g = grammarClauseRecords(BECKETT_MARINER_IMPETUOUS_ENSIGN);
+  expect(g.blocker).toBeUndefined();
+  expect(g.readings![2]!.actions!.map((a) => [a.verb, a.counter, a.amount])).toEqual([["add-counter", "promotion", "1"], ["remove-counter", "promotion", "all"], ["deal-damage", undefined, "2"]]);
+  // The comma-less "Then if" opener is a condition like any "If": Georgiou's creation is read, the condition kept.
+  expect(grammarClauseRecords(GEORGIOU_TERRAN_EMPEROR).blocker).toBeUndefined();
+  const pig = parity(PRIZE_PIG, STORED_PRIZE_PIG as never);
+  expect(lostClaims(pig.a.abilities, pig.b.abilities)).toEqual([]);
+});
+
+test("Rise from the Nether stops at 'Mindless-One', a creature type the filter vocabulary does not hold (reported, not added)", () => {
+  expect(grammarClauseRecords(RISE_FROM_THE_NETHER).blocker).toEqual({ clause: 1, kind: "action", phrase: "create a 3/1 black Mindless-One creature token for each noncreature, nonland card in your graveyard" });
+  // The count itself reads: the same sentence with a known type.
+  const known = { ...RISE_FROM_THE_NETHER, oracleText: RISE_FROM_THE_NETHER.oracleText.replace("Mindless-One", "Rat") };
+  expect(grammarClauseRecords(known).blocker).toBeUndefined();
 });
