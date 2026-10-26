@@ -40,6 +40,8 @@ export interface ActionReading {
    *  cards of your library"): "the rest", "two of them", "a land card from among them" are cards of
    *  THAT library, yours, and the store writes the object with it. */
   lookedAt?: string;
+  /** For an animate whose words fold a pronoun's becomes-phrase: the unfolded readings (bare animate, pump, grants) to use when the pronoun is not the card itself. */
+  alt?: ActionReading[];
 }
 
 const NUMBER: Record<string, string> = {
@@ -1225,18 +1227,16 @@ function pumpOrGrantOne(t: string): ActionReading[] | null {
  *  `colors` and `keyword` off those words (Jade Statue, Simic Keyrune, Gideon; #1352). A bare animate with a separate P/T pump gave a grammar-only card (an upcoming one, no stored
  *  reading) an animate with no creature type. `kw` are bare keywords folded in as "with ...". No subject text (an Aura's host) keeps the bare animate.
  *  CEILING: "in addition to its other types" and "loses all other types" are left in the words for derive; this reading does not tell them apart. */
-function animateOf(target: { object: SubjectFilter; text?: string; phrase?: string }, result: string, kw: readonly string[] = [], still = ""): ActionReading {
+function animateOf(target: { object: SubjectFilter; text?: string; phrase?: string }, result: string, kw: readonly string[] = [], still = "", phraseOk = false): ActionReading {
   const sub = target.text ?? target.phrase;
-  if (sub === undefined || !foldable(target)) return { verb: "animate", ...target };
-  const addl = / in addition to (?:its|their) other types$/i.test(result);
+  if (sub === undefined || !foldable(target) || (target.phrase !== undefined && !phraseOk)) return { verb: "animate", ...target };
+  // Only the card itself or a pronoun is folded, and neither keeps "in addition to its other types": derive reads "other" in a subject as NOT the card itself (`isSelfSubject`) and
+  // "types" as a plural class, so the words turn "this becomes a 4/4 Illusion creature" into every Illusion creature (scope all, no self). CEILING: that the other types stay is not said.
   const head = result.replace(/ in addition to (?:its|their) other types$/i, "");
-  // The card itself, or a bare pronoun ("it", "that land"), keeps no "in addition to its other types": derive reads "other" in a subject as NOT the card itself (`isSelfSubject`) and "types" as a
-  // plural class, so the words turn "this becomes a 4/4 Illusion creature" into every Illusion creature (scope all, no self). Only a subject that names its own class ("target land you control")
-  // keeps them. CEILING: that the other types stay is not said for the card itself or a pronoun.
-  const self = isSelfText(sub);
+  const self = isSelfText(sub) || target.object.self === true;
   // "this Vehicle becomes an artifact creature": it is still a Vehicle (a Vehicle becomes an artifact creature and keeps its subtype), which the store's "this Vehicle" subject read as `subtype: vehicle`.
   const kept = self && /^this (?:vehicle|equipment)$/i.test(sub) && !/\bstill an?\b/i.test(still) ? ` that's still a ${sub.slice(5).toLowerCase()}` : "";
-  const words = `${self ? "this" : sub} becomes a ${head}${kw.length ? ` with ${kw.join(kw.length > 2 ? ", " : " and ")}` : ""}${addl && !self && target.text !== undefined ? " in addition to its other types" : ""}${still}${kept}`;
+  const words = `${self ? "this" : sub} becomes a ${head}${kw.length ? ` with ${kw.join(kw.length > 2 ? ", " : " and ")}` : ""}${still}${kept}`;
   return { verb: "animate", object: target.object, ...(target.text !== undefined ? { text: words } : { phrase: words }) };
 }
 
@@ -1246,13 +1246,19 @@ function isSelfText(sub: string): boolean {
   return sub === "~" || (SELF_REFERENCE.test(sub) && SELF_REFERENCE.exec(sub)![0].length === sub.length);
 }
 
-/** May the becomes-phrase go into the animate's words? Not for a STATIC ability. Derive drops a static's subject unless it names a class (`namesItsTargets`), and `staticEdges`
- *  (matcher) takes the subject it keeps as WHO IT APPLIES TO: "All lands are 2/2 creatures that are still lands" with the result in it would be the union creature-or-land, every
- *  creature in the deck, and Blood Moon's "Nonbasic lands are Mountains" would narrow to the lands that are already Mountains. A self static (Warden of the Wall) loses its subject
- *  altogether, and the grant folded into it would go with it. Statics keep the target alone and the separate pump and grants, as before. Every other ability forms no such edge.
- *  CEILING: an upcoming card's static animate ("is a 2/3 Gargoyle artifact creature") therefore still derives no creature type; the pump and the grants carry what they carry. */
-function foldable(target: { text?: string; phrase?: string }): boolean {
-  return (target.text ?? target.phrase) !== undefined && !staticAbility;
+/** May the becomes-phrase go into the animate's words? ONLY FOR THE CARD ITSELF (the store's self-with-result convention, 130 animates), or a bare pronoun that clause-record may
+ *  resolve to the card (`alt` below puts the old split back when it does not). Never for a TARGET or a CLASS ("target land you control becomes a 3/3 Elemental creature", "lands you
+ *  control become 2/2 creatures"): the result type would sit in a `scope: target` subject, which `spellTargeting` (matcher) reads as "the spell targets a creature you control" (Brave the
+ *  Wilds targets a land; Leyline of Resonance and the heroic consumers met it), and the store keeps the target CLASS alone for those (stored Brave the Wilds: `type land`). Nor for a
+ *  STATIC ability: `staticEdges` takes a static's subject as who it applies to, so the result words would widen "All lands are 2/2 creatures" to every creature in the deck, or narrow
+ *  Blood Moon to the lands that are already Mountains; a self static also loses its subject in derive, and a grant folded into it would go too. Those keep the target alone and the
+ *  separate pump and grants. CEILING: the result of a target or class animate (and of any static) is not in the animate's subject; the separate pump and grants carry the P/T and keywords,
+ *  and an upcoming card's "target land becomes a 3/3 Elemental creature" still derives an animate with the land type only.
+ *  An Aura host is a class too. */
+function foldable(target: { object?: SubjectFilter; text?: string; phrase?: string }): boolean {
+  if (staticAbility) return false;
+  if (target.text !== undefined) return isSelfText(target.text) || target.object?.self === true;
+  return target.phrase !== undefined;
 }
 
 const COLOR_WORD = "white|blue|black|red|green|colorless|legendary|basic|snow";
@@ -1274,12 +1280,15 @@ function animateReadings(target: { object: SubjectFilter; text?: string; phrase?
   // stays as the grammar always read it: bare. Never a wildcard colour. With a P/T ("becomes blue with base power and toughness 5/4", Surge Engine) it is a result again.
   // ...and nor is a phrase that names no type, subtype or P/T ("colorless sources of damage", Ghostly Flame): nothing is animated or retyped, so nothing is read into the animate.
   const plain = result.replace(/ in addition to (?:its|their) other types$/i, "");
+  const unfolded: ActionReading[] = [{ verb: "animate", ...target }, ...(pt ? [{ verb: "modify-pt", ...target, amount: pt }] : []), ...grants(withs)];
   const bare = !foldable(target) || NOT_A_RESULT.test(plain) || (pt === undefined && !namesType(plain));
-  if (bare) return [{ verb: "animate", ...target }, ...(pt ? [{ verb: "modify-pt", ...target, amount: pt }] : []), ...grants(withs)];
+  if (bare) return unfolded;
   // "protection from red" stays a grant: its colour word would read as the animated permanent's colour.
   // "enchant creature" (Rageform: "it becomes an Aura with enchant creature") is no creature either.
   const folds = (a: string) => isKeywordAbility(a) && !/^(?:protection|enchant)\b/i.test(a);
-  return [animateOf(target, result, withs.filter(folds), still), ...grants(withs.filter((a) => !folds(a)))];
+  const folded = animateOf(target, result, withs.filter(folds), still, true);
+  // A pronoun is not known to be the card here: `alt` is what clause-record puts in its place when it resolves to a target class instead.
+  return [target.phrase !== undefined ? { ...folded, alt: unfolded } : folded, ...grants(withs.filter((a) => !folds(a)))];
 }
 
 /** What an animated permanent KEEPS, as the store spells it: "that's still a planeswalker" (Gideon), "it's still a land" (Raging Ravine). */
@@ -1541,7 +1550,12 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   // derive's scaling reads (Sage of the Maze: "..., where X is twice the number of Gates you control").
   // A FOLDED animate (its words hold the becomes-phrase, #1352) carries the definition itself: the stored object it stands in for was the same sentence.
   const folded = (a: ActionReading) => /\bbecomes a /.test(a.text ?? a.phrase ?? "");
-  if (pg) return pg.map((a) => (counted && a.verb === "animate" ? (folded(a) ? { ...a, ...(a.text !== undefined ? { text: `${a.text}, where X is ${counted}` } : { phrase: `${a.phrase}, where X is ${counted}` }) } : (({ text: _t, ...rest }) => ({ ...rest, object: REF }))(a)) : a)).map((a) => ({ ...a, ...(counted && a.amount && /X/.test(a.amount) ? { amount: `${a.amount}, where X is ${counted}` } : {}), ...(condition || a.condition ? { condition: [condition, a.condition].filter(Boolean).join(", ") } : {}) }));
+  const withDefinition = (a: ActionReading): ActionReading => {
+    const x: ActionReading = counted && a.verb === "animate" ? (folded(a) ? { ...a, ...(a.text !== undefined ? { text: `${a.text}, where X is ${counted}` } : { phrase: `${a.phrase}, where X is ${counted}` }) } : (({ text: _t, ...rest }) => ({ ...rest, object: REF }))(a)) : a;
+    return { ...x, ...(counted && x.amount && /X/.test(x.amount) ? { amount: `${x.amount}, where X is ${counted}` } : {}), ...(condition || x.condition ? { condition: [condition, x.condition].filter(Boolean).join(", ") } : {}),
+      ...(x.alt ? { alt: x.alt.map(withDefinition) } : {}) };
+  };
+  if (pg) return pg.map(withDefinition);
   // A DAMAGE SOURCE ("~ deals", "this creature deals", "it deals", "enchanted creature deals"): the
   // dealer, which derive reads off the card, not the actor.
   // "you may have it deal 1 damage to any target": the same, optional.

@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Ability } from "../schema.js";
-import { deriveDiff, lostClaims, lostSubjectFields, lostTriggerFlags, manaDiffers } from "./derive-diff.js";
+import { deriveDiff, lostClaims, lostScaledAmount, lostSubjectFields, lostTriggerFlags, manaDiffers } from "./derive-diff.js";
 
 const ab = (over: Partial<Ability>): Ability => ({ kind: "static", effect: { kind: "" }, clause: 1, ...over } as Ability);
 
@@ -116,4 +116,20 @@ test("any difference in the five mana fields is a difference (#1349 review)", ()
   expect(manaDiffers({ manaLines: [line] }, { manaLines: [{ amount: { fixed: 2 } } as never] })).toBe(true);
   expect(manaDiffers({}, { isOneShot: true })).toBe(true);
   expect(manaDiffers({ suspendOnly: true }, {})).toBe(true);
+});
+
+// Elvish Branchbender ("becomes an X/X Treefolk, where X is the number of Elves you control") and Chimeric Coils ("{X}{1}: ... an X/X Construct"): the grammar's effect of the same kind is there,
+// with the same subject, and no amount; the old labelled groups "amount,count" and "abilities:3->2" let them switch.
+test("a grammar effect that drops a stored amount defined by a count is refused, per clause and kind (#1352)", () => {
+  const animate = (over: Record<string, unknown>, clause = 1) => ab({ clause, effect: { kind: "animate", subject: { control: "any", token: null } } as never, ...over } as never);
+  const branchbender = animate({ amount: "the number of Elves you control", count: { floor: 0, ceiling: null, scalesWith: { control: "you", token: null, subtype: "elf", scope: "all" } } });
+  const coils = animate({ amount: "X/X", count: { floor: 0, ceiling: null, scalesWith: "mana" } });
+  expect(lostScaledAmount([branchbender], [animate({})])).toEqual(["animate"]);
+  expect(lostScaledAmount([coils], [animate({})])).toEqual(["animate"]);
+  // The same scaling kept, in any grammar effect of that kind in that clause; or a clause where the grammar has no effect of the kind (lostClaims's), or no stored scaling: nothing lost.
+  expect(lostScaledAmount([coils], [animate({}), animate({ count: { floor: 0, ceiling: null, scalesWith: "mana" } })])).toEqual([]);
+  expect(lostScaledAmount([coils], [ab({ effect: { kind: "pump" } as never })])).toEqual([]);
+  expect(lostScaledAmount([coils], [animate({}, 2)])).toEqual([]);
+  expect(lostScaledAmount([animate({ amount: "2" })], [animate({})])).toEqual([]);
+  expect(lostScaledAmount([animate({})], [coils])).toEqual([]);
 });

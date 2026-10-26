@@ -227,15 +227,15 @@
     },
     "effect.subject(+allTypes +stats +subtype ~type)": {
       "label": "grammar right",
-      "why": "An ARTIFACT'S SELF-ANIMATE the store left at {type: artifact}: the grammar reads the whole result, \"{3}: This artifact becomes a 2/2 Beast artifact creature\" (Darksteel Brute), Eye of Malcator, Jade Idol, Mimic, Stalking Stones, and a target artifact's \"0/0 Construct artifact creature\" (Lifecraft Awakening): type [creature, artifact], the subtype and the P/T. Measured 2026-10-26 (#1352): the grammar's animate now carries the becomes-phrase the way the stored model answer writes it (\"this as a 3/6 Golem artifact creature\"), so the group is gains only (no field of the stored subject is lost: lostSubjectFields guards that on every card). Every card's oracle text read."
+      "why": "An ARTIFACT'S SELF-ANIMATE the store left at {type: artifact}: the grammar reads the whole result, \"{3}: This artifact becomes a 2/2 Beast artifact creature\" (Darksteel Brute), Eye of Malcator, Jade Idol, Mimic, Stalking Stones: type [creature, artifact], the subtype and the P/T. Measured 2026-10-26 (#1352): the grammar's animate now carries the becomes-phrase the way the stored model answer writes it (\"this as a 3/6 Golem artifact creature\"), so the group is gains only (no field of the stored subject is lost: lostSubjectFields guards that on every card). Every card's oracle text read."
     },
     "effect.subject(+keyword +stats +subtype ~type)": {
       "label": "grammar right",
-      "why": "A LAND'S OR ENCHANTMENT'S ANIMATE the store left at {type: land}: \"that land becomes a 0/0 Elemental creature with haste that's still a land\" (Cyclone Sire, Noyan Dar, Wall of Resurgence) reads type [creature, land], the subtype, the P/T and the keyword. Measured 2026-10-26 (#1352): the grammar's animate now carries the becomes-phrase the way the stored model answer writes it (\"this as a 3/6 Golem artifact creature\"), so the group is gains only (no field of the stored subject is lost: lostSubjectFields guards that on every card). Every card's oracle text read."
+      "why": "A PERMANENT'S SELF-ANIMATE with a keyword: \"this enchantment becomes a 4/4 Illusion creature with flying\" (Halcyon Glaze, Reptilian Reflection, Daxos's Torment, Veiled Apparition), the Opal Archangel and Champion, Hidden Guerrillas: the result's type, subtype, P/T and keyword. Re-verified after the target animates were unfolded. Measured 2026-10-26 (#1352) (#1352): the grammar's animate now carries the becomes-phrase the way the stored model answer writes it (\"this as a 3/6 Golem artifact creature\"), so the group is gains only (no field of the stored subject is lost: lostSubjectFields guards that on every card). Every card's oracle text read."
     },
     "effect.subject(+stats +subtype ~type)": {
       "label": "grammar right",
-      "why": "A TARGET'S ANIMATE the store left at the target's own type: \"If it isn't a creature, it becomes a 0/0 Robot creature in addition to its other types\" (Donatello, Mutant Mechanic; Does Machines), \"That land becomes a 0/0 Elemental creature\" (Rootwise Survivor): the result's type, subtype and P/T are added to the target class. Measured 2026-10-26 (#1352): the grammar's animate now carries the becomes-phrase the way the stored model answer writes it (\"this as a 3/6 Golem artifact creature\"), so the group is gains only (no field of the stored subject is lost: lostSubjectFields guards that on every card). Every card's oracle text read."
+      "why": "A PERMANENT'S SELF-ANIMATE the store left at its own noun: \"This enchantment becomes a 4/3 Centaur creature in addition to its other types\" (Still Life), the Opal and Hidden enchantments (\"if this permanent is an enchantment, it becomes a 5/5 Treefolk creature\": Hidden Ancients, Hidden Gibbons, Hidden Herd, Lurking Jackals, Opal Caryatid, Opal Titan): the result's type, subtype and P/T. Re-verified after the target animates were unfolded (a target keeps its class alone). Measured 2026-10-26 (#1352) (#1352): the grammar's animate now carries the becomes-phrase the way the stored model answer writes it (\"this as a 3/6 Golem artifact creature\"), so the group is gains only (no field of the stored subject is lost: lostSubjectFields guards that on every card). Every card's oracle text read."
     },
     "effect.subject(+keyword +stats +subtype +type)": {
       "label": "grammar right",
@@ -247,11 +247,11 @@
     },
     "effect.subject(+allTypes +colors +keyword +stats +subtype ~type)": {
       "label": "grammar right",
-      "why": "A MONUMENT'S ANIMATE the store left at {type: artifact}: \"This artifact becomes a 4/4 white and blue Dragon artifact creature with flying\" (Ojutai Monument), Azorius Keyrune, Foriysian Totem. Measured 2026-10-26 (#1352): the grammar's animate now carries the becomes-phrase the way the stored model answer writes it (\"this as a 3/6 Golem artifact creature\"), so the group is gains only (no field of the stored subject is lost: lostSubjectFields guards that on every card). Every card's oracle text read."
+      "why": "A MONUMENT'S ANIMATE the store left at {type: artifact}: \"This artifact becomes a 4/4 white and blue Dragon artifact creature with flying\" (Ojutai Monument), Azorius Keyrune, Dromoka Monument, Foriysian Totem. Measured 2026-10-26 (#1352): the grammar's animate now carries the becomes-phrase the way the stored model answer writes it (\"this as a 3/6 Golem artifact creature\"), so the group is gains only (no field of the stored subject is lost: lostSubjectFields guards that on every card). Every card's oracle text read."
     },
     "effect.subject(+allTypes +type)": {
       "label": "grammar right",
-      "why": "A VEHICLE'S ANIMATE the store left at {subtype: vehicle}: \"This Vehicle becomes an artifact creature until end of turn\" (Earthrumbler, Marshals' Pathcruiser, Spire Mechcycle): the artifact creature it becomes, the Vehicle subtype kept. Measured 2026-10-26 (#1352): the grammar's animate now carries the becomes-phrase the way the stored model answer writes it (\"this as a 3/6 Golem artifact creature\"), so the group is gains only (no field of the stored subject is lost: lostSubjectFields guards that on every card). Every card's oracle text read."
+      "why": "A VEHICLE'S ANIMATE the store left at {subtype: vehicle}: \"This Vehicle becomes an artifact creature until end of turn\" (Earthrumbler, Marshals' Pathcruiser, Spire Mechcycle, Fleetwheel Cruiser, Gastal Thrillroller): the artifact creature it becomes, the Vehicle subtype kept. Measured 2026-10-26 (#1352): the grammar's animate now carries the becomes-phrase the way the stored model answer writes it (\"this as a 3/6 Golem artifact creature\"), so the group is gains only (no field of the stored subject is lost: lostSubjectFields guards that on every card). Every card's oracle text read."
     },
     "effect.subject(+allTypes +keyword +stats +subtype ~type)": {
       "label": "grammar right",
@@ -277,17 +277,13 @@
       "label": "grammar right",
       "why": "Firdoch Core: \"This artifact becomes a 4/4 artifact creature until end of turn\", the store left {type: artifact}. Measured 2026-10-26 (#1352): the grammar's animate now carries the becomes-phrase the way the stored model answer writes it (\"this as a 3/6 Golem artifact creature\"), so the group is gains only (no field of the stored subject is lost: lostSubjectFields guards that on every card). Every card's oracle text read."
     },
-    "effect.subject(+keyword +scope +stats +subtype ~type)": {
-      "label": "grammar right",
-      "why": "Wall of Resurgence: \"that land becomes a 0/0 Elemental creature with haste that's still a land\", the land the earlier \"target land you control\" named (scope target), now with its result. Measured 2026-10-26 (#1352): the grammar's animate now carries the becomes-phrase the way the stored model answer writes it (\"this as a 3/6 Golem artifact creature\"), so the group is gains only (no field of the stored subject is lost: lostSubjectFields guards that on every card). Every card's oracle text read."
-    },
     "effect.subject(+allTypes +subtype ~type)": {
       "label": "grammar right",
       "why": "Slumbering Tora: \"This artifact becomes an X/X Cat artifact creature until end of turn\", the store left {type: artifact}; the grammar reads type [creature, artifact] and the subtype (the X/X is a scaling the sentence defines, in the words). Measured 2026-10-26 (#1352): the grammar's animate now carries the becomes-phrase the way the stored model answer writes it (\"this as a 3/6 Golem artifact creature\"), so the group is gains only (no field of the stored subject is lost: lostSubjectFields guards that on every card). Every card's oracle text read."
     },
     "effect.subject(+stats +subtype ~type),effect.subject(~type)": {
       "label": "grammar right",
-      "why": "Opal Acrolith: \"if this permanent is an enchantment, it becomes a 2/4 Soldier creature\" reads type creature, the subtype and the P/T (the store left {type: permanent}), and \"This permanent becomes an enchantment\" reads type enchantment. Measured 2026-10-26 (#1352): the grammar's animate now carries the becomes-phrase the way the stored model answer writes it (\"this as a 3/6 Golem artifact creature\"), so the group is gains only (no field of the stored subject is lost: lostSubjectFields guards that on every card). Every card's oracle text read."
+      "why": "Opal Acrolith and Hidden Stag: \"if this permanent is an enchantment, it becomes a 2/4 Soldier creature\" reads type creature, the subtype and the P/T (the store left {type: permanent}), and \"This permanent becomes an enchantment\" reads type enchantment. Measured 2026-10-26 (#1352) (#1352): the grammar's animate now carries the becomes-phrase the way the stored model answer writes it (\"this as a 3/6 Golem artifact creature\"), so the group is gains only (no field of the stored subject is lost: lostSubjectFields guards that on every card). Every card's oracle text read."
     }
   }
 }

@@ -1037,7 +1037,7 @@ const SELF_DISJUNCT =
  *  "Donna Noble or a creature it's paired with" keeps the creature half a deck can actually supply.
  *  Longest form first — the full name before the short one, or "Omnath" would strip out of
  *  "Omnath, Locus of the Roil" and leave ", Locus of the Roil" still carrying `locus`. */
-function stripCardName(text: string, cardName?: string): string {
+export function stripCardName(text: string, cardName?: string): string {
   if (!cardName || text === "") return text;
   const forms = new Set<string>();
   for (const face of cardName.split(" // ")) {
@@ -1054,7 +1054,9 @@ function stripCardName(text: string, cardName?: string): string {
   }
   let out = text;
   for (const f of [...forms].filter((f) => f !== "").sort((a, b) => b.length - a.length)) {
-    out = out.replace(new RegExp(f.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), " ");
+    // WORD-BOUND (#1352 review): "Command Tower" stripped "Command" out of "commander's" ("er's"), "Me, the Immortal" took the "me" out of "menace", "Chant of the Skifsang" the
+    // "en" out of "enchanted", "I Am Iron Man" every "i" out of "artifact". A name is whole words, as `selfAsTilde` bounds it.
+    out = out.replace(new RegExp(`(?<![\\w'])${f.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\w'])`, "gi"), " ");
   }
   return out.replace(/\s+/g, " ").trim();
 }

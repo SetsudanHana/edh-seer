@@ -135,6 +135,22 @@ export function lostSubjectFields(stored: readonly Ability[], grammar: readonly 
   return [...lost].sort();
 }
 
+/** THE SCALED AMOUNT THE GRAMMAR DROPS (#1352 review). A stored effect whose `amount` is defined by a count of the deck's own cards ("becomes an X/X Treefolk, where X is the number of Elves you
+ *  control": Elvish Branchbender's `amount` and `count.scalesWith`) is a claim `lostClaims` and `lostSubjectFields` cannot see: the grammar's effect of the same kind is there, with the same subject, and
+ *  no amount. True per clause and effect kind when the stored ability carries an `amount` with a `count.scalesWith` and no grammar effect of that kind in that clause carries the same
+ *  `scalesWith`. Narrow and one-directional: a scaling only the grammar carries is a gain, and a clause where the grammar has no effect of that kind is `lostClaims`'s. */
+export function lostScaledAmount(stored: readonly Ability[], grammar: readonly Ability[]): string[] {
+  const lost = new Set<string>();
+  for (const a of stored) {
+    const kind = a.effect?.kind;
+    const scales = a.count?.scalesWith;
+    if (!kind || a.amount === undefined || scales === undefined) continue;
+    const there = grammar.filter((g) => g.clause === a.clause && g.effect?.kind === kind);
+    if (there.length > 0 && !there.some((g) => g.count?.scalesWith !== undefined && json(g.count.scalesWith) === json(scales))) lost.add(kind);
+  }
+  return [...lost].sort();
+}
+
 /** THE TRIGGER FLAGS THE GRAMMAR DROPS (#1349 review). `lostClaims` compares effect kinds and emit verbs, so a labelled "grammar right" group can switch a card whose grammar
  *  trigger lost a flag the stored one carries: Kate Stewart's "one or more time counters" is `batched` in the stored derive, and the grammar's bare counter-added trigger is not,
  *  which `edge-magnitude` and `wincon` read as one firing per batch. True when, per trigger event (the verbs), the stored abilities carry more `batched` triggers, or more

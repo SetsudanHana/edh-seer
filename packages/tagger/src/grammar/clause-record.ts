@@ -198,7 +198,10 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
   // "Reveal a card IN YOUR HAND, then put that card onto the battlefield": the reveal is dropped, its
   // zone is the antecedent's (Retraced Image).
   let revealedFrom: string | null = null;
-  for (const reading of readings) {
+  // A folded pronoun animate carries its unfolded readings (`alt`): used in its place when the pronoun is not the card itself.
+  const work = [...readings];
+  for (let wi = 0; wi < work.length; wi++) {
+    const reading = work[wi]!;
     // "It becomes a 0/0 Spirit creature in addition to its other types" (#1352): an animate whose words carry its becomes-phrase. "It" is resolved EXACTLY as the bare
     // pronoun is (the card itself, or the target the clause named before: Tawnos's Tinkering), and the phrase is put back after the resolved object.
     const becomesHead = reading.verb === "animate" && reading.text === undefined ? ["it", "that land", "that creature", "that permanent", "that artifact"].find((h) => reading.phrase?.startsWith(`${h} becomes `)) : undefined;
@@ -309,13 +312,13 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     const exiledCard = exiledBefore ? `the exiled ${exiledBefore[1] ? `${exiledBefore[1]} ` : ""}card` : undefined;
     const named = target ?? exiledCard ?? (!pronoun ? undefined : out.length > 0 && selfTrigger ? selfTrigger
       : /^(?:enchanted|equipped) [a-z]+$/i.test(triggerSubject ?? "") ? triggerSubject : undefined);
-    // The whole target class, "target artifact, creature, or land you control", less the counter kind a put's object appends: the store's object for the animate.
-    const wholeClass = itBecomes && (becomesHead !== "it" || (named !== undefined && named !== selfTrigger))
-      ? [...out].reverse().map((a) => a.object ?? "").find((o) => /^(?:up to (?:one|two|three) )?(?:another )?targets? /i.test(o))?.split(" becomes ")[0]?.replace(/, (?:[+-]\d+\/[+-]\d+|[\w-]+ counter)$/i, "") : undefined;
-    const itsAntecedent = wholeClass ?? named ?? "";
+    const itsAntecedent = named ?? "";
     // ...and the card itself when nothing names another: the first action of a clause naming "this <noun>" (the Opal cycle's "if this permanent is an enchantment, it becomes a 3/4
     // Gargoyle creature"), or an antecedent that already is "this <noun>". The store's spelling is a bare "this".
     const selfItBecomes = itBecomes !== "" && becomesHead === "it" && (selfOnly(itsAntecedent || object) || (out.length === 0 && !selfTrigger && selfWord !== "this" && !itsAntecedent));
+    // Not the card: the target class stays alone and the P/T and keywords are the separate readings they were (a target's result type in a `scope: target` subject reads as a
+    // creature the spell targets, edges.ts `spellTargeting`).
+    if (reading.alt && !selfItBecomes) { work.splice(wi + 1, 0, ...reading.alt); continue; }
     const tapped = r.verb === "tap" && !object && out.length > 0 ? out[out.length - 1]!.object ?? "" : "";
     // "from your hand and/or graveyard": one move from each, as the store writes it (Worldsoul's Rage).
     // "all cards from all hands and graveyards" (Worldfire) too: one exile from each.
@@ -337,7 +340,7 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     out.push({
       // A proliferate chooses any permanents and players (CR 701.34a), not only yours.
       // "Its controller investigates" (Fateful Absence): the named actor, else you.
-      verb: r.verb, object: `${itBecomes && selfItBecomes ? "this" : itsAntecedent || object || tapped || (NO_OBJECT_YOU.has(r.verb) ? r.actor?.text ?? "you" : r.verb === "proliferate" ? "any" : object)}${itBecomes && (becomesHead === "it" || wholeClass !== undefined) ? (selfItBecomes ? itBecomes.replace(/ in addition to (?:its|their) other types$/i, "") : itBecomes) : ""}`,
+      verb: r.verb, object: `${itBecomes && selfItBecomes ? "this" : itsAntecedent || object || tapped || (NO_OBJECT_YOU.has(r.verb) ? r.actor?.text ?? "you" : r.verb === "proliferate" ? "any" : object)}${itBecomes && becomesHead === "it" ? (selfItBecomes ? itBecomes.replace(/ in addition to (?:its|their) other types$/i, "") : itBecomes) : ""}`,
       fromZone: from, toZone: r.toZone ?? null,
       ...(r.amount !== undefined ? { amount: r.amount } : wordsAmount(r.verb, object) !== undefined ? { amount: wordsAmount(r.verb, object) } : {}),
       optional: r.optional === true,
