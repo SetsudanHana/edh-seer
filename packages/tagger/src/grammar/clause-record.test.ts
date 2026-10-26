@@ -751,3 +751,21 @@ test("'exchange life totals with target opponent' keeps the opponent", () => {
   // "Activate only during your upkeep" is not sorcery speed: the exchange stays instant speed (the printed clause still says so).
   expect(exchange?.instantSpeed).toBe(true);
 });
+
+// An activation restriction's condition is a deck demand, as an intervening if's is (CR 602.5).
+test("'Activate only if <cast condition>' demands the cast; a count stays threshold's; a trigger's intervening if is unchanged", () => {
+  const caresOf = (card: Parameters<typeof grammarDerive>[0], clause: number) => grammarDerive(card).tags.abilities.filter((a) => a.clause === clause).flatMap((a) => a.conditionCares ?? []);
+  const strange = { name: "Doctor Strange, Master of Magic", typeLine: "Legendary Creature — Human Sorcerer Hero", keywords: ["Flying", "Prowess", "Vigilance"], oracleText: "Flying, vigilance, prowess\n{T}: Draw a card. Activate only if you've cast a noncreature spell this turn." };
+  expect(caresOf(strange, 2)).toEqual(["cast:-creature"]);
+  // A count is threshold.ts's fact: "three or more differently named lands" demands nothing; "three or more brick counters" is a count, not a counters demand.
+  const seven = { name: "Seven of Nine, Unassimilated", typeLine: "Legendary Artifact Creature — Human Officer", keywords: [], oracleText: "At the beginning of your first main phase, draw a card. Then discard a card unless you control five or more differently named lands.\n{6}{U}: Seven of Nine's base power and toughness become 7/9. Activate only if you control seven or more differently named lands." };
+  expect(caresOf(seven, 2)).toEqual([]);
+  expect(grammarDerive(seven).tags.abilities.find((a) => a.clause === 2)?.threshold).toEqual({ atLeast: 7 });
+  const luxa = { name: "Luxa River Shrine", typeLine: "Artifact", keywords: [], oracleText: "{1}, {T}: You gain 1 life. Put a brick counter on this artifact.\n{T}: You gain 2 life. Activate only if there are three or more brick counters on this artifact." };
+  expect(caresOf(luxa, 2)).toEqual([]);
+  expect(grammarDerive(luxa).tags.abilities.find((a) => a.clause === 2)?.threshold).toEqual({ atLeast: 3 });
+  // The trigger's intervening if is read as before.
+  const angel = { name: "Resplendent Angel", typeLine: "Creature — Angel", keywords: ["Flying"], oracleText: "Flying\nAt the beginning of each end step, if you gained 5 or more life this turn, create a 4/4 white Angel creature token with flying and vigilance.\n{3}{W}{W}{W}: Until end of turn, this creature gets +2/+2 and gains lifelink." };
+  expect(caresOf(angel, 2)).toContain("gain-life:any");
+  expect(caresOf(angel, 3)).toEqual([]);
+});

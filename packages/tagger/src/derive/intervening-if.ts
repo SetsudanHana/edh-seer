@@ -189,3 +189,16 @@ export function conditionCares(condition: string): string[] {
   if (CAST_INSTANT_SORCERY.test(condition)) out.push("cast:instant", "cast:sorcery");
   return [...new Set(out)];
 }
+
+/** THE CONDITION OF AN ACTIVATION RESTRICTION: "Activate only if you've cast a noncreature spell this turn" (Doctor Strange),
+ *  "Activate only as a sorcery and only if ...", "Activate this ability only if ...". CR 602.5 makes it a restriction on
+ *  the activated ability; like an intervening if it names a deck demand, so it feeds the same `conditionCares`. Null when the
+ *  text prints none. Reads one sentence at a time: the "only if" must sit in a sentence that opens "Activate". */
+export function activationConditionOf(text: string): string | null {
+  for (const sentence of text.split(/(?<=\.)\s+/)) {
+    if (!/^activate\b/i.test(sentence.trim())) continue;
+    const m = /\bonly if ([^.]+)/i.exec(sentence);
+    if (m) return m[1]!.trim();
+  }
+  return null;
+}

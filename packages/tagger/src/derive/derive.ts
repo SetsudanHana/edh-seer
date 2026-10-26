@@ -12,7 +12,7 @@ import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
 import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
-import { interveningIfOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
+import { interveningIfOf, activationConditionOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
 import { hostEffect } from "./host.js";
 import { librarySearchOwner, printsSearch } from "./library-search.js";
@@ -3391,7 +3391,10 @@ export function deriveAbilities(
     // The DEMAND an intervening-if condition makes on the deck, recorded in the same one place. Only
     // an ability with a TRIGGER can carry one (CR 603.4 checks the condition when the trigger would
     // fire), so a static or on-cast clause is skipped even if the sentence happens to say "if".
-    const conditionCares = interveningIfOf(text) ? conditionCares_(interveningIfOf(text)!) : [];
+    // An ACTIVATION RESTRICTION's condition is a demand too ("Activate only if you've cast a noncreature spell this turn", Doctor Strange); a COUNT in it
+    // is `threshold`'s fact and is not also a demand.
+    const activationIf = kind === "activated" && !threshold ? activationConditionOf(text ?? "") : null;
+    const conditionCares = interveningIfOf(text) ? conditionCares_(interveningIfOf(text)!) : activationIf ? conditionCares_(activationIf) : [];
     // HOW THE OBJECT ARRIVED. The condition "if none of them were cast or no mana was spent"
     // (Satoru) and the trigger phrase "enters tapped" (Amulet of Vigor, Tiller Engine) are both
     // properties of the ENTRY, so they narrow the trigger's own subject rather than needing a
@@ -3418,7 +3421,7 @@ export function deriveAbilities(
       if (threshold) abilities[i] = { ...abilities[i], threshold, ...(thresholdSubject ? { thresholdSubject } : {}) };
       // A REFUSED trigger still says what the card needs around it (owner 2026-08-20): the cares
       // tags ride on every ability of a triggered clause, claimed or not.
-      if (conditionCares.length > 0 && (abilities[i].trigger || clause.trigger?.event)) {
+      if (conditionCares.length > 0 && (abilities[i].trigger || clause.trigger?.event || activationIf)) {
         abilities[i] = { ...abilities[i], conditionCares };
       }
       // THE MULTIPLIER'S OWN TRIGGER, the one synthesized from the "would ... instead" frame -- see
