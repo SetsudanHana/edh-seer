@@ -1242,7 +1242,7 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
   // "has base power and toughness 9/9": the store's modify-pt with the set value as its amount.
   const base = /^(?:has|have) base power and toughness ((?:\d+|x)\/(?:\d+|x))$/i.exec(pred);
   if (base) return [{ verb: "modify-pt", ...target, amount: base[1]! }];
-  if (/^is goaded$/i.test(pred)) return [{ verb: "goad", ...target }];
+  if (/^(?:is|are) goaded$/i.test(pred)) return [{ verb: "goad", ...target }];
   // "can't block", "can't be blocked this turn", "attacks each combat if able": a restriction.
   // "doesn't untap during its controller's untap step": a restriction, as restrictionOf reads it.
   const doesnt = /^(?:doesn't|don't) (.+)$/i.exec(pred);
