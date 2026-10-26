@@ -155,6 +155,14 @@ export function demoteWatchlessSupertypeHeadline(
   return [ranked[next], ...ranked.filter((_, i) => i !== next)];
 }
 
+/** VERBS THAT ARE A PRODUCER-ONLY EVENT: a deck's cards supply them incidentally, and with no card
+ *  that CONSUMES the event the tag names nothing the deck is about. Owner ruling 2026-10-26.
+ *  `face-a-dilemma` is emitted by derive's modal pass from every modal spell or ability (modal.ts),
+ *  so 21 Charms, Commands and Wills made it Codie's headline; only Seven of Nine, Elim Garak,
+ *  Obsidian Order Operative and Tinkerer care. CEILING: one verb, not "any subjectless player event
+ *  nobody consumes" -- the wider rule was not measured against every other event. */
+const PRODUCER_ONLY_VERBS: ReadonlySet<string> = new Set(["face-a-dilemma"]);
+
 /** A tag that is TRUE of the deck and says nothing a deckbuilder can act on.
  *
  *  Two kinds, both measured on the 71 calibration decks rather than guessed:
@@ -172,11 +180,13 @@ export function demoteWatchlessSupertypeHeadline(
  *  A DEMOTION, NOT A DELETION: the tag keeps its place in the ranked list and only loses the HEAD,
  *  the same shape as the promotion rule above. The deck still reports the tag among its themes; it
  *  just cannot be what the report NAMES the deck. */
-function isUnrankableHeadline(tag: string, suppliedPhases: ReadonlySet<string> = new Set()): boolean {
+function isUnrankableHeadline(tag: string, suppliedPhases: ReadonlySet<string> = new Set(), cared?: ReadonlySet<string>): boolean {
   const parts = split(tag);
   if (!parts) return false;
   const [verb, value] = parts;
   if (value === "__none__") return true;
+  // A producer-only event nothing in the deck consumes. Only when the caller says what the deck cares about.
+  if (cared !== undefined && PRODUCER_ONLY_VERBS.has(verb) && !cared.has(tag)) return true;
   if (!PHASE_VERBS.has(verb)) return false;
   // UNLESS THE DECK SUPPLIES THE STEP, which is the whole reason a timing key is normally empty --
   // and one deck of the 71 does. `obeka-upkeep-shenanigans` runs Obeka, Splitter of Seconds
@@ -202,10 +212,11 @@ const PHASE_SUPPLY: Record<string, string[]> = {
 export function demoteUnrankableHeadline(
   ranked: readonly string[],
   suppliedPhases: ReadonlySet<string> = new Set(),
+  cared?: ReadonlySet<string>,
 ): string[] {
   const head = ranked[0];
-  if (head === undefined || !isUnrankableHeadline(head, suppliedPhases)) return [...ranked];
-  const first = ranked.findIndex((t) => !isUnrankableHeadline(t, suppliedPhases));
+  if (head === undefined || !isUnrankableHeadline(head, suppliedPhases, cared)) return [...ranked];
+  const first = ranked.findIndex((t) => !isUnrankableHeadline(t, suppliedPhases, cared));
   if (first === -1) return [...ranked]; // every tag is unrankable -- say the true thing, not nothing
   return [ranked[first], ...ranked.filter((_, i) => i !== first)];
 }
@@ -229,12 +240,13 @@ export function demoteThinHeadline(
   carriers: ReadonlyMap<string, number>,
   deckSize: number,
   suppliedPhases: ReadonlySet<string> = new Set(),
+  cared?: ReadonlySet<string>,
 ): string[] {
   const floor = headlineFloor(deckSize);
   const carried = (t: string) => (carriers.get(t) ?? 0) >= floor;
   const head = ranked[0];
   if (head === undefined || carried(head)) return [...ranked];
-  const first = ranked.findIndex((t) => carried(t) && !isUnrankableHeadline(t, suppliedPhases));
+  const first = ranked.findIndex((t) => carried(t) && !isUnrankableHeadline(t, suppliedPhases, cared));
   if (first === -1) return [...ranked];
   return [ranked[first], ...ranked.filter((_, i) => i !== first)];
 }

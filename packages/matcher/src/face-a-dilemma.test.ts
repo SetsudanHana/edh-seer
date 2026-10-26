@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { deriveCardTags, deriveInputOf, grammarClauseRecords } from "@edh-seer/tagger";
 import type { CardTags } from "@edh-seer/tagger";
-import { loadHierarchy, pairReasons } from "./index.js";
+import { loadHierarchy, pairReasons, analyzeDeckStructured } from "./index.js";
 import type { DeckCard } from "./types.js";
 
 /** "Face a dilemma" (Star Trek; owner ruling 2026-10-26, #1349): "You face a dilemma as you choose one or more modes for a spell or ability." Seven of Nine, Elim Garak,
@@ -34,4 +34,21 @@ test("...and with a modal triggered ability: Charming Prince", () => {
 
 test("...but not with a spell that has no modes: Lightning Bolt", () => {
   expect(pairReasons(bolt, seven, H).some((r) => r.tag.startsWith("face-a-dilemma"))).toBe(false);
+});
+
+// OWNER RULING 2026-10-26: a producer-only event names no theme without a payoff. Every modal card
+// emits face-a-dilemma, so a deck of Charms and Commands with no Seven of Nine is not a "face a
+// dilemma" deck; with one, it is.
+const modals = Array.from({ length: 8 }, (_, i) => fromText(`Command ${i}`, "Instant",
+  "Choose two —\n• Return target creature card from your graveyard to your hand.\n• Target player discards a card.\n• Destroy target artifact.\n• Command " + i + " deals 2 damage to any target."));
+const head = (cards: DeckCard[]) => analyzeDeckStructured(cards, []).themes[0]?.tag;
+
+test("a deck of modal spells with no dilemma payoff is not headlined face-a-dilemma", () => {
+  expect(head(modals)).not.toMatch(/^face-a-dilemma/);
+  // ...but the tag is still reported among its themes: a demotion, not a deletion.
+  expect(analyzeDeckStructured(modals, []).themes.some((t) => t.tag.startsWith("face-a-dilemma"))).toBe(true);
+});
+
+test("with Seven of Nine in the deck, face-a-dilemma can headline", () => {
+  expect(head([...modals, seven])).toMatch(/^face-a-dilemma/);
 });

@@ -166,3 +166,19 @@ test("the supertype demotion never hands the head to a timing tag (#1098)", () =
   const membership = [m("enters:legendary", 0), m("upkeep:any", 1)];
   expect(orderHeadline(ranked, freq, membership, 3, new Set())[0]).toBe("enters:legendary");
 });
+
+// Owner ruling 2026-10-26: a producer-only event (face-a-dilemma) names no theme without a payoff.
+test("face-a-dilemma is demoted behind the next tag unless a deck card consumes it", () => {
+  const ranked = ["face-a-dilemma:any", "shuffle:any", "draw:any"];
+  expect(demoteUnrankableHeadline(ranked, new Set(), new Set())).toEqual(["shuffle:any", "face-a-dilemma:any", "draw:any"]);
+  expect(demoteUnrankableHeadline(ranked, new Set(), new Set(["face-a-dilemma:any"]))).toEqual(ranked);
+  // Only that verb: any other uncared head stands.
+  expect(demoteUnrankableHeadline(["shuffle:any", "draw:any"], new Set(), new Set())).toEqual(["shuffle:any", "draw:any"]);
+  // Nothing else to name the deck: the true thing, not nothing.
+  expect(demoteUnrankableHeadline(["face-a-dilemma:any"], new Set(), new Set())).toEqual(["face-a-dilemma:any"]);
+});
+
+test("the thin-headline pass does not hand the head to an uncared face-a-dilemma", () => {
+  const freq = new Map([["shuffle:permanent", 1], ["face-a-dilemma:any", 21], ["shuffle:any", 12]]);
+  expect(demoteThinHeadline(["shuffle:permanent", "face-a-dilemma:any", "shuffle:any"], freq, 100, new Set(), new Set())[0]).toBe("shuffle:any");
+});
