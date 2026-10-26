@@ -2,7 +2,8 @@ import { expect, test } from "vitest";
 import { deriveCardTags } from "../derive/derive.js";
 import { deriveInputOf } from "../derive-input.js";
 import { grammarClauseRecords } from "./clause-record.js";
-import { lostSubjectFields } from "./derive-diff.js";
+import type { Ability } from "../schema.js";
+import { lostScaledAmount, lostSubjectFields } from "./derive-diff.js";
 
 /** #1352: the grammar's `animate` carries the becomes-phrase, as the stored model answer writes it ("this as a 3/6 Golem artifact creature"). Oracle text is the corpus's (Scryfall), the
  *  expected subjects the STORED derive's, read from Mongo `cardTagsDerived` before the change (clauseSource model) unless a case says it is an improvement. */
@@ -128,4 +129,22 @@ test("Opal Guardian: the stored {type: permanent} is rescued by the grammar's cr
   const self = (type: string) => ({ kind: "static", clause: 1, effect: { kind: "animate", subject: { control: "any", token: null, type, self: true } } }) as never;
   expect(lostSubjectFields([self("creature")], [self("artifact")])).toEqual(["animate:type"]);
   expect(lostSubjectFields([self("enchantment")], [self("artifact")])).toEqual([]);
+});
+
+// Real oracle text: the grammar side is derived from the printed words; the stored side is that ability with the stored reading's `scalesWith` (read from the stored rows).
+const withScaling = (tags: ReturnType<typeof deriveCardTags>, kind: string, scalesWith: unknown) =>
+  tags.abilities.map((a) => (a.effect.kind === kind && a.count?.scalesWith !== undefined ? { ...a, count: { ...a.count, scalesWith } } : a)) as Ability[];
+const grammarTags = (name: string, typeLine: string, oracleText: string) => {
+  const card = { name, typeLine, oracleText, keywords: [] as string[] };
+  const g = grammarClauseRecords(card);
+  expect(g.complete, name).toBe(true);
+  return deriveCardTags(deriveInputOf(card, name, name, g.records, undefined, g.readings));
+};
+test("lostScaledAmount: Cavalier of Flame's grammar scaling is right and the stored 'mana' is wrong (not a loss); Bound // Determined's 'mana' is a loss", () => {
+  const cavalier = grammarTags("Cavalier of Flame", "Creature — Elemental Knight", "{1}{R}: Creatures you control get +1/+0 and gain haste until end of turn.\nWhen this creature enters, discard any number of cards, then draw that many cards.\nWhen this creature dies, it deals X damage to each opponent and each planeswalker they control, where X is the number of land cards in your graveyard.");
+  expect(cavalier.abilities.find((a) => a.effect.kind === "damage")?.count?.scalesWith).toMatchObject({ control: "you", type: "land" });
+  expect(lostScaledAmount(withScaling(cavalier, "damage", "mana"), cavalier.abilities)).toEqual([]);
+  const bound = grammarTags("Bound // Determined", "Instant // Instant", "Sacrifice a creature. Return up to X cards from your graveyard to your hand, where X is the number of colors that creature was. Exile this card.\n//\nOther spells you control can't be countered this turn.\nDraw a card.");
+  expect(bound.abilities.find((a) => a.effect.kind === "graveyard-recursion")?.count?.scalesWith).toBe("mana");
+  expect(lostScaledAmount(withScaling(bound, "graveyard-recursion", { control: "you", token: null, type: "creature" }), bound.abilities)).toEqual(["graveyard-recursion"]);
 });

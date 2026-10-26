@@ -128,6 +128,10 @@ test("a grammar effect that drops a stored amount defined by a count is refused,
   expect(lostScaledAmount([coils], [animate({})])).toEqual(["animate"]);
   // The same scaling kept, in any grammar effect of that kind in that clause; or a clause where the grammar has no effect of the kind (lostClaims's), or no stored scaling: nothing lost.
   expect(lostScaledAmount([coils], [animate({}), animate({ count: { floor: 0, ceiling: null, scalesWith: "mana" } })])).toEqual([]);
+  // Two scalings that are both objects are not compared; "mana" in the grammar against a stored object is a loss.
+  const objectScaling = (extra: Record<string, unknown>) => animate({ amount: "X", count: { floor: 0, ceiling: null, scalesWith: { control: "you", token: null, type: "creature", ...extra } } });
+  expect(lostScaledAmount([objectScaling({})], [objectScaling({ keyword: ["flying"] })])).toEqual([]);
+  expect(lostScaledAmount([objectScaling({})], [coils])).toEqual(["animate"]);
   expect(lostScaledAmount([coils], [ab({ effect: { kind: "pump" } as never })])).toEqual([]);
   expect(lostScaledAmount([coils], [animate({}, 2)])).toEqual([]);
   expect(lostScaledAmount([animate({ amount: "2" })], [animate({})])).toEqual([]);

@@ -137,8 +137,10 @@ export function lostSubjectFields(stored: readonly Ability[], grammar: readonly 
 
 /** THE SCALED AMOUNT THE GRAMMAR DROPS (#1352 review). A stored effect whose `amount` is defined by a count of the deck's own cards ("becomes an X/X Treefolk, where X is the number of Elves you
  *  control": Elvish Branchbender's `amount` and `count.scalesWith`) is a claim `lostClaims` and `lostSubjectFields` cannot see: the grammar's effect of the same kind is there, with the same subject, and
- *  no amount. True per clause and effect kind when the stored ability carries an `amount` with a `count.scalesWith` and no grammar effect of that kind in that clause carries the same
- *  `scalesWith`. Narrow and one-directional: a scaling only the grammar carries is a gain, and a clause where the grammar has no effect of that kind is `lostClaims`'s. */
+ *  no amount. True per clause and effect kind when the stored ability carries an `amount` with a `count.scalesWith` and no grammar effect of that kind in that clause carries a `scalesWith` that
+ *  keeps it: the grammar has NONE, or has the bare "mana" (a paid X) where the stored one names an object (Bound // Determined: "the number of colors that creature was"). Two scalings that
+ *  are both objects are NOT compared: Winged Portent's carries a `keyword` the stored lacks (more detail, not a loss), and Cavalier of Flame's stored "mana" is the wrong one. One-directional:
+ *  a scaling only the grammar carries is a gain, and a clause where the grammar has no effect of that kind is `lostClaims`'s. */
 export function lostScaledAmount(stored: readonly Ability[], grammar: readonly Ability[]): string[] {
   const lost = new Set<string>();
   for (const a of stored) {
@@ -146,7 +148,8 @@ export function lostScaledAmount(stored: readonly Ability[], grammar: readonly A
     const scales = a.count?.scalesWith;
     if (!kind || a.amount === undefined || scales === undefined) continue;
     const there = grammar.filter((g) => g.clause === a.clause && g.effect?.kind === kind);
-    if (there.length > 0 && !there.some((g) => g.count?.scalesWith !== undefined && json(g.count.scalesWith) === json(scales))) lost.add(kind);
+    const keeps = (g: Ability): boolean => g.count?.scalesWith !== undefined && !(g.count.scalesWith === "mana" && scales !== "mana");
+    if (there.length > 0 && !there.some(keeps)) lost.add(kind);
   }
   return [...lost].sort();
 }
