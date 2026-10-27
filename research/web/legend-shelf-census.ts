@@ -32,7 +32,10 @@ for (const file of files) {
   const diffs: string[] = [];
   for (const p of parents) {
     const physical = new Set(nodes.filter((n) => (n.roles ?? []).some((r) => p.leaves.includes(r))).map((n) => n.cardName ?? n.id));
-    if (physical.size !== p.count) diffs.push(`${p.key} nodes ${physical.size} | shelf ${p.count}`);
+    // The shelf's MEMBER set (cards with a role of the parent), not `p.count`, which is a weighted sum and is fractional when a member is conditional (#1357).
+    const members = new Set(((report as unknown as { cards?: { cardName?: string; name: string; roles?: string[]; face?: number }[] }).cards ?? [])
+      .filter((c) => !c.face && (c.roles ?? []).some((r) => p.leaves.includes(r))).map((c) => c.cardName ?? c.name));
+    if (physical.size !== members.size) diffs.push(`${p.key} nodes ${physical.size} | shelf ${members.size}`);
   }
   if (diffs.length || colliding.length) {
     if (diffs.length) affected++;

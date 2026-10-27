@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { BUILD_CATEGORY_LABEL } from "../lib/build-category-labels.js";
 import type { RunDiff } from "../lib/run-diff.js";
+import { fmtCount } from "../lib/format-count.js";
 
 // This line reads inline ("ramp 6 -> 7"), not as a standalone heading, so it wants the shared label
 // lower-cased rather than a second copy of the map's words -- verified every entry survives a plain
@@ -101,7 +102,7 @@ export function RunDiffLine({ diff }: { diff: RunDiff | null }) {
     parts.push(
       <span key={c.category}>
         {inlineLabel(c.category)}{" "}
-        <span className="text-(--foreground) stat-num">{c.from} &rarr; {c.to}</span>
+        <span className="text-(--foreground) stat-num">{fmtCount(c.from)} &rarr; {fmtCount(c.to)}</span>
       </span>,
     );
   }

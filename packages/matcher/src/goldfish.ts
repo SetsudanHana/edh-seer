@@ -10,7 +10,8 @@ import { staticFixer } from "./static-fixers.js";
 import { classifyLand, entersTapped, type LandCondition } from "./land-conditions.js";
 import { FETCH_UNTAPS, FETCH_UNTAP_LANDS, fetchableLands } from "./fetch-land.js";
 import { DEFAULT_POD_SIZE, opponents } from "./format.js";
-import { ratesOf } from "./rate.js";
+import { hasConditionBesidesIf, ratesOf } from "./rate.js";
+import type { GateWeigher } from "./effect-gate-weight.js";
 import { TABLE_LIFE } from "./pressure.js";
 import { characteristicsSubject } from "./edges.js";
 import { subjectMatches } from "./subject.js";
@@ -830,18 +831,25 @@ const TO_GRAVEYARD = /\b(?:it|that card|them|those cards) into your graveyard\b/
  *  activation that costs only mana. CEILING: a draw on any other event (Rhystic Study, "whenever a
  *  creature enters") never fires, because there is no opponent and no event board; a conditional
  *  draw, one an opponent can pay to stop, and one whose cost is more than mana are left out too. */
-export function drawOf(dc: DeckCard): CardDraw | null {
+export function drawOf(dc: DeckCard, gates?: GateWeigher): CardDraw | null {
   const abilities = dc.tags?.abilities ?? [];
   const out: CardDraw = { once: 0, upkeep: 0 };
   for (const a of abilities) {
     if (a.effect?.kind !== "draw-card") continue;
     const own = { ...dc, tags: { ...dc.tags!, abilities: abilities.filter((b) => b === a || b.effect?.kind !== "draw-card") } };
     const r = ratesOf(own).find((x) => x.family === "cards");
-    if (!r || r.amount <= 0 || r.conditional || r.extraCost || r.fallback) continue;
+    // A GATED DRAW COUNTS AT ITS WEIGHT (#1357 task 2; owner 2026-10-27): the draw behind a trailing "if" is read in expectation, the amount times the chance the deck meets the condition. `ratesOf` flags a
+    // NON-trigger conditional from the card's whole text and leaves it out; a gated one is read when the gate is the only condition on the card. A triggered draw was never flagged and counted in full (Beza, Garna):
+    // it now counts at its weight too.
+    // CEILING: a gated draw on a card that ALSO prints another condition word (choose one, unless, kicked ...) is still left out where `ratesOf` flags it, as before.
+    const gated = gates !== undefined && a.gate !== undefined;
+    const w = gated ? gates.of(a, dc).weight : 1;
+    const readable = !r?.conditional || (gated && !hasConditionBesidesIf(dc.card.oracleText));
+    if (!r || r.amount <= 0 || !readable || r.extraCost || r.fallback || w <= 0) continue;
     const verbs: readonly string[] = a.trigger?.verbs ?? [];
-    if (r.kind === "on-cast" || (r.kind === "triggered" && a.trigger?.subject?.self === true && verbs.includes("enters"))) out.once += r.amount;
-    else if (r.kind === "triggered" && a.trigger?.subject?.control !== "opp" && (verbs.includes("upkeep") || verbs.includes("end-step"))) out.upkeep += r.amount;
-    else if (r.kind === "activated" && r.repeats !== "once") out.activated = { mana: r.mana, amount: r.amount, delayed: r.delayed === true };
+    if (r.kind === "on-cast" || (r.kind === "triggered" && a.trigger?.subject?.self === true && verbs.includes("enters"))) out.once += r.amount * w;
+    else if (r.kind === "triggered" && a.trigger?.subject?.control !== "opp" && (verbs.includes("upkeep") || verbs.includes("end-step"))) out.upkeep += r.amount * w;
+    else if (r.kind === "activated" && r.repeats !== "once") out.activated = { mana: r.mana, amount: r.amount * w, delayed: r.delayed === true };
   }
   return out.once > 0 || out.upkeep > 0 || out.activated ? out : null;
 }
@@ -879,6 +887,9 @@ export interface SimulateOptions {
   /** Cards to PRICE without shuffling in — a commander, which is not in the library (CR 903.6) and
    *  is still the one card a reader looks for by name. */
   alsoPrice?: readonly DeckCard[];
+  /** HOW LIKELY EACH GATED DRAW IS TO HAPPEN IN THIS DECK (#1357 task 2): a gated draw is the amount times the weight, which is 0 for a readable condition the deck cannot meet and a fixed partial weight for one nothing can read. Absent: a
+   *  non-trigger gated draw is left out and a triggered one counts in full, as before it existed. */
+  gates?: GateWeigher;
   /** POOLING OFF, for the one test that has to disagree with it. Pooling is a claim about the model
    *  -- that a non-accelerant nonland reaches the trajectory ONLY through its pips -- and a claim
    *  nothing can contradict is not a claim. `goldfish.pooled.test.ts` runs both arms at high trial
@@ -1080,7 +1091,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       ...(ritual.length > 0 ? { ritual } : {}),
       ...(oppRitual > 0 ? { ritualPerOppCard: oppRitual } : {}),
       ...(attackOf(dc) ? { attack: attackOf(dc)! } : {}),
-      ...(!isLand && drawOf(dc) ? { draw: drawOf(dc)! } : {}),
+      ...(!isLand && drawOf(dc, opts.gates) ? { draw: drawOf(dc, opts.gates)! } : {}),
     };
   });
   // WHAT EACH TUTOR MAY FIND, asked once per deck: the card's printed characteristics against the
@@ -1289,7 +1300,16 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     // turn, an activation from the next when it taps a creature (`delayed`).
     const engines: { slot: DeckSlot; turn: number }[] = [];
     const take = (c: DeckSlot): void => { hand.push(c); drawn.add(c.name); seenNow[kindOf(c)]++; };
-    const drawCards = (n: number): void => { for (let k = 0; k < n && library.length > 0; k++) take(library.shift()!); };
+    // A FRACTIONAL DRAW (a gated draw at its weight, `drawOf`) is carried across the game and paid out as the whole cards it adds up to. The carry STARTS at a stratified offset, (t + 0.5) / trials, so a lone
+    // 0.5 draw pays in exactly the half of the games whose offset reaches it and the expectation over the trials is exact (owner ruling 2026-10-27). No random number is spent, and a whole draw leaves the carry at its
+    // offset (floor(offset + n) = n for an offset below 1), so a deck with no gated draw plays byte for byte as before.
+    let drawCarry = (t + 0.5) / trials;
+    const drawCards = (n: number): void => {
+      drawCarry += n;
+      const whole = Math.floor(drawCarry + 1e-9);
+      drawCarry -= whole;
+      for (let k = 0; k < whole && library.length > 0; k++) take(library.shift()!);
+    };
     const lands: OnBoardLand[] = [];
     // THE PERMANENTS ON THE BATTLEFIELD, as a board-count gate reads them (see `boardGates`), and the proxies already counted in them.
     const perms: Perm[] = [];
@@ -1928,7 +1948,7 @@ function turnQuartiles(xs: readonly number[]): { early?: number; typical?: numbe
  *  running four simulations for two answers off the same trials would be pure waste. */
 export function manaModel(
   deck: readonly DeckCard[],
-  opts: { trials?: number; turns?: number; seed?: number; alsoPrice?: readonly DeckCard[] } = {},
+  opts: { trials?: number; turns?: number; seed?: number; alsoPrice?: readonly DeckCard[]; gates?: GateWeigher } = {},
 ): ManaModel {
   const trials = opts.trials ?? REPORT_TRIALS;
   const seed = opts.seed ?? 20260822;
@@ -1942,8 +1962,8 @@ export function manaModel(
   const turns = opts.turns ?? Math.min(MAX_PRICED_TURN, Math.max(ROW_TURNS, biggest));
   // THE GREEDY ARM PLAYS ON TO TURN 20 FOR ITS COMBAT ONLY: the table's kill turn sits past the
   // twelve priced turns for most decks, and only the combat runs out there.
-  const greedy = simulate(deck, { trials, turns, seed, alsoPrice, combatTo: 20 });
-  const held = simulate(deck, { trials, turns, seed, holdUp: 2, alsoPrice });
+  const greedy = simulate(deck, { trials, turns, seed, alsoPrice, combatTo: 20, gates: opts.gates });
+  const held = simulate(deck, { trials, turns, seed, holdUp: 2, alsoPrice, gates: opts.gates });
   const rows: ManaAvailabilityRow[] = [];
   for (let t = 1; t <= Math.min(ROW_TURNS, turns); t++) {
     const g = quantiles(greedy.manaAt[t - 1]);
@@ -2033,8 +2053,8 @@ export function manaModel(
     if (F === 0) continue;
     forcedRuns++;
     const fseed = seed + 7919 * forcedRuns;
-    const fg = simulate(deck, { trials: F, turns: turn, seed: fseed, alsoPrice, forceName: name, forceTurn: turn });
-    const fh = simulate(deck, { trials: F, turns: turn, seed: fseed, holdUp: 2, alsoPrice, forceName: name, forceTurn: turn });
+    const fg = simulate(deck, { trials: F, turns: turn, seed: fseed, alsoPrice, gates: opts.gates, forceName: name, forceTurn: turn });
+    const fh = simulate(deck, { trials: F, turns: turn, seed: fseed, holdUp: 2, alsoPrice, gates: opts.gates, forceName: name, forceTurn: turn });
     const comb = (base: SimulateResult, forced: SimulateResult, map: "byCardCastable" | "byCard"): number => {
       const bHeld = base.byCardHeld.get(name)![turn - 1];
       const bHits = Math.round((base[map].get(name)![turn - 1] ?? 0) * bHeld);

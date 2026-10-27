@@ -1,3 +1,4 @@
+import { gapOver } from "./format-count.js";
 /** DECK SUGGESTIONS, THE PURE HALF (spec docs/superpowers/specs/2026-09-24-deck-suggestions-design.md,
  *  roadmap AO3). The browser orchestrator (`suggest-static.ts`) feeds these from the static
  *  artifacts; nothing here fetches or reads the engine.
@@ -203,7 +204,8 @@ export async function pairReplacements(
     // double-duty card is "really" doing, and the order is the report's own.
     const g = groups.find((x) => x.leaves.some((l) => cut.roles.includes(l)));
     let pick: Replacement | undefined;
-    if (g && count.get(g.name)! > g.target) {
+    // A surplus under one card is no spare slot: the group must stay at its target after giving one up.
+    if (g && gapOver(count.get(g.name)!, g.target) >= 1) {
       const short = groups
         .filter((u) => u !== g && u.target > 0 && count.get(u.name)! < u.target)
         .sort((a, b) => shortBy(b) - shortBy(a))[0];

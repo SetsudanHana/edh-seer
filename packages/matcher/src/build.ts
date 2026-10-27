@@ -1,12 +1,14 @@
 import type { DeckCard } from "./types.js";
 import { ARCHETYPE_FLOOR, ARCHETYPE_LABELS, ARCHETYPE_LEAD_FLOOR, type Archetype, type ArchetypeRanking } from "./archetypes.js";
 import TEMPLATE from "./template-targets.json" with { type: "json" };
-import { answerClassesOf, loadRules, ruleMatches } from "./rules.js";
+import { answerClassesOf, loadRules, ruleMatches, type Rule, type RuleClause } from "./rules.js";
 import { answerCoverage, COVERAGE_CLASSES, type CoverageResult } from "./answer-coverage.js";
 import { countsAsLand } from "./typeline.js";
 import { cardLines } from "./mana-lines.js";
 import { gateMet } from "./gate.js";
 import { ROLE_PARENTS } from "./role-parents.js";
+import { formatCount } from "./format-count.js";
+import type { EffectBasis, EffectWeight, GateWeigher } from "./effect-gate-weight.js";
 
 /** Functional build categories (the "does the deck have enough ramp/draw/interaction" layer). */
 export type BuildCategory =
@@ -114,6 +116,83 @@ const RULE_CATEGORY = new Map<string, string>(
   loadRules().rules.filter((r) => r.category).map((r) => [r.id, r.category as string]),
 );
 
+/** A ROLE MEMBER THAT COUNTS FOR LESS THAN ONE (#1357 task 2): its role is carried by an effect behind a condition, and the deck decides how likely the condition is. */
+export interface ConditionalRole { card: string; category: BuildCategory; weight: number; basis: Exclude<EffectBasis, "ungated">; needs: string }
+/** Category -> card -> the weight that member counts for, ONLY for members below 1. Membership is `detectBuildCategories`' and does not move: a gated draw card is still a draw card. */
+export type RoleWeights = Map<BuildCategory, Map<string, EffectWeight>>;
+
+/** The rule reads the card's derived abilities (`effectKind`, `emits`, `hostEffect`), so a view of the card without a gated ability can change its answer. A rule over the printed text, the type line or the keywords cannot. */
+function readsAbilities(clauses: readonly RuleClause[] | undefined): boolean {
+  return (clauses ?? []).some((c) => c.op === "effectKind" || c.op === "emits" || c.op === "hostEffect"
+    || ((c.op === "anyOf" || c.op === "allOf") && readsAbilities(c.clauses)) || (c.op === "not" && readsAbilities([c.clause])));
+}
+
+/** HOW MUCH ONE RULE'S MATCH IS WORTH FOR THIS CARD: 1, or the weight of the gated effect the rule leans on. The rule is re-asked of the card with its gated abilities taken away, from the least conditional
+ *  level up: the first level at which the rule still holds is the card's weight, and the gated ability that sets that level is the condition the report names. A rule that holds without any gated ability
+ *  (the card draws through an ungated clause too) is worth 1. A rule that holds only through an ability whose condition is on the TARGET (`target`, owner ruling 2026-10-27 C) is worth 1 but is returned so the
+ *  report can call the card a narrow answer.
+ *  AN ORACLE-ONLY RULE (`boardWipe.text`, `stax.text`, the `oracle` leg of `removal.targeted` ...) reads no ability, so a view cannot weigh it: it takes the best weight among the card's abilities when EVERY ability of
+ *  the card is gated, and is worth 1 as soon as one is not.
+ *  CEILING: a clause that looks at a SIBLING ability (`notPairedTarget`, `notFlickered`, `notOwnedByYou` over the same clause) sees the filtered list, so taking a gated ability away can change its answer. CEILING: an
+ *  oracle-only rule on a card with a gated and an ungated ability is worth 1 whichever of them the printed text belongs to. */
+function ruleWeight(rule: Rule, dc: DeckCard, gates: GateWeigher): EffectWeight | null {
+  const abilities = dc.tags?.abilities ?? [];
+  const entries = abilities.filter((a) => a.gate !== undefined).map((a) => ({ a, w: gates.of(a, dc) }));
+  if (entries.length === 0) return null;
+  if (!readsAbilities(rule.match) && !readsAbilities(rule.not)) {
+    if (entries.length < abilities.length) return null;
+    const top = entries.reduce((x, y) => (y.w.weight > x.w.weight ? y : x));
+    return top.w.weight < 1 || top.w.basis === "target" ? top.w : null;
+  }
+  const partial = entries.filter((x) => x.w.weight < 1);
+  const without = (dropped: Set<unknown>): DeckCard => ({ ...dc, tags: { ...dc.tags!, abilities: abilities.filter((a) => !dropped.has(a)) } });
+  if (partial.length > 0) {
+    const levels = [...new Set(partial.map((x) => x.w.weight))].sort((x, y) => y - x);
+    for (const level of [1, ...levels]) {
+      if (ruleMatches(rule, without(new Set(partial.filter((x) => x.w.weight < level).map((x) => x.a))))) {
+        if (level < 1) return partial.find((x) => x.w.weight === level)!.w;
+        break;
+      }
+    }
+  }
+  const narrow = entries.filter((x) => x.w.basis === "target");
+  if (narrow.length > 0 && !ruleMatches(rule, without(new Set(narrow.map((x) => x.a))))) return narrow[0]!.w;
+  return null;
+}
+
+/** THE MEMBERS OF EACH ROLE THAT COUNT FOR LESS THAN ONE, under `gates`. A card in a category through several rules takes the best of them. Only cards with a gated ability are looked at. */
+export function detectBuildWeights(cards: readonly DeckCard[], gates: GateWeigher): RoleWeights {
+  const out: RoleWeights = new Map();
+  const set = loadRules();
+  for (const dc of cards) {
+    if (!dc.tags?.abilities.some((a) => a.gate !== undefined)) continue;
+    const best = new Map<BuildCategory, EffectWeight | null>();
+    for (const rule of set.rules) {
+      if (!rule.category || !ruleMatches(rule, dc, set)) continue;
+      const cat = rule.category as BuildCategory;
+      const w = ruleWeight(rule, dc, gates);
+      const have = best.get(cat);
+      if (have === null) continue;
+      if (w === null || have === undefined || w.weight > have.weight) best.set(cat, w);
+    }
+    for (const [cat, w] of best) {
+      if (w === null) continue;
+      let m = out.get(cat);
+      if (!m) { m = new Map(); out.set(cat, m); }
+      m.set(dc.card.name, w);
+    }
+  }
+  return out;
+}
+
+/** THE EXACT COUNT OF A ROLE: its members, each at its weight (two decimals). With no weights this is the member count. */
+export function weightedSum(names: Iterable<string>, weights?: ReadonlyMap<string, { weight: number }>): number {
+  let n = 0;
+  for (const name of names) n += weights?.get(name)?.weight ?? 1;
+  return Math.round(n * 100) / 100;
+}
+export { formatCount } from "./format-count.js";
+
 /** The cards covering one answer class, split by mode. Name SETS rather than counters: a set is
  *  what lets a later panel say which card, and it makes double-matching harmless -- every exile
  *  removal matches both the class rule and the exile rule (design §3.2). */
@@ -124,6 +203,8 @@ export interface AnswerClassMembers {
   /** Those that keep answering. Graveyard hate only, by construction -- no other rule carries
    *  `mode: "recurring"`, so the other five classes come out empty without a special case. */
   recurring: Set<string>;
+  /** Those that answer only a narrow set of the class: every clause of theirs that reaches it carries a stat or state condition on the target (Fatal Push's mana value). They cover the class. */
+  narrow: Set<string>;
 }
 
 /** Answer coverage: which classes of threat this deck can actually answer, and with how many
@@ -141,10 +222,11 @@ export function detectAnswerClasses(cards: DeckCard[]): Map<string, AnswerClassM
   for (const dc of cards) {
     for (const [cls, marks] of answerClassesOf(dc)) {
       let e = m.get(cls);
-      if (!e) { e = { cards: new Set(), exiling: new Set(), recurring: new Set() }; m.set(cls, e); }
+      if (!e) { e = { cards: new Set(), exiling: new Set(), recurring: new Set(), narrow: new Set() }; m.set(cls, e); }
       e.cards.add(dc.card.name);
       if (marks.exile) e.exiling.add(dc.card.name);
       if (marks.recurring) e.recurring.add(dc.card.name);
+      if (marks.narrow) e.narrow.add(dc.card.name);
     }
   }
   return m;
@@ -687,6 +769,9 @@ export interface BuildResult {
   /** How the Ramp parent's cards would survive being attacked. Reported beside the count and never
    *  folded into it -- see `RampResilience`. */
   rampResilience: RampResilience;
+  /** THE ROLE MEMBERS THAT COUNT FOR LESS THAN ONE (#1357 task 2): a gated effect still counts, weighted by how likely its condition is to hold in this deck, and the report says so ("counts as 0.4 draw: needs
+   *  ..."). Absent when none does. The counts above already include these weights; membership does not change. */
+  conditionalRoles?: ConditionalRole[];
 }
 
 /** `landsTarget` is `land-count.ts`'s `recommendedLands(...).target` -- `landTarget`'s answer for
@@ -707,8 +792,11 @@ export function computeBuild(
   /** `detectArchetypes`' ranked list, for the template blend. A caller that has only `primary`
    *  (the tests) gets that one archetype at full confidence, which reads its row. */
   strategies?: readonly ArchetypeRanking[],
+  /** HOW LIKELY EACH GATED EFFECT IS TO HAPPEN IN THIS DECK (#1357 task 2). Absent: every effect counts in full, as before it existed. */
+  gates?: GateWeigher,
 ): BuildResult {
   const members = detectBuildCategories(cards);
+  const roleWeights: RoleWeights = gates ? detectBuildWeights(cards, gates) : new Map();
   const template = templateBlend(
     strategies ?? (primary ? [{ name: primary, label: ARCHETYPE_LABELS[primary], confidence: 1 }] : []),
   );
@@ -718,14 +806,14 @@ export function computeBuild(
   // deck's ~24 basics register as ~24, not 1. Every other category is singleton in Commander, so
   // distinct-name membership size already equals the copy count.
   const landCount = cards.reduce((n, dc) => n + (isLand(dc) ? 1 : 0), 0);
-  const countOf = (c: BuildCategory): number => (c === "lands" ? landCount : members.get(c)?.size ?? 0);
+  const countOf = (c: BuildCategory): number => (c === "lands" ? landCount : weightedSum(members.get(c) ?? [], roleWeights.get(c)));
 
   const facets = detectBuildFacets(cards);
   const facetsOf = (c: BuildCategory): Record<string, number> | undefined => {
     const byName = facets.get(c);
     if (!byName) return undefined;
     const inCategory = members.get(c) ?? new Set<string>();
-    return Object.fromEntries([...byName].map(([name, s]) => [name, [...s].filter((n) => inCategory.has(n)).length]));
+    return Object.fromEntries([...byName].map(([name, s]) => [name, weightedSum([...s].filter((n) => inCategory.has(n)), roleWeights.get(c))]));
   };
   const buildCategories = BUILD_CATEGORIES.map((c) => {
     const f = facetsOf(c);
@@ -754,8 +842,16 @@ export function computeBuild(
   // can call `countOf` on a leaf directly; widened to the public shape only at the return below.
   const parentsWithCount = parentTargets.map((p) => {
     const union = new Set<string>();
-    for (const leaf of p.leaves) for (const name of members.get(leaf) ?? []) union.add(name);
-    return { ...p, count: union.size };
+    // A card in two leaves of a parent counts once, at the better of its weights.
+    const unionWeights = new Map<string, EffectWeight>();
+    const full: EffectWeight = { weight: 1, conditional: false, basis: "ungated" };
+    for (const leaf of p.leaves) for (const name of members.get(leaf) ?? []) {
+      const w = roleWeights.get(leaf)?.get(name) ?? full;
+      const have = unionWeights.get(name);
+      if (have === undefined || w.weight > have.weight) unionWeights.set(name, w);
+      union.add(name);
+    }
+    return { ...p, count: weightedSum(union, unionWeights) };
   });
 
   const scoreInputs: BuildScoreInputs = {
@@ -787,7 +883,16 @@ export function computeBuild(
     ...suggestionsOf(buildSuggestions(parentsWithCount, countOf, targets)),
     answerCoverage: coverage,
     rampResilience: rampResilience(cards),
+    ...conditionalRolesOf(roleWeights),
   };
+}
+
+/** The report's list of members that count for less than one, `{}` when there are none. */
+function conditionalRolesOf(weights: RoleWeights): { conditionalRoles?: ConditionalRole[] } {
+  const rows: ConditionalRole[] = [];
+  for (const [category, byCard] of weights) for (const [card, w] of byCard) rows.push({ card, category, weight: Math.round(w.weight * 100) / 100, basis: w.basis as ConditionalRole["basis"], needs: w.needs ?? "" });
+  rows.sort((a, b) => a.category.localeCompare(b.category) || a.card.localeCompare(b.card));
+  return rows.length > 0 ? { conditionalRoles: rows } : {};
 }
 
 /** Concrete, few, actionable — ranked by gap size, top 4. Never scolding.
@@ -820,7 +925,7 @@ function buildSuggestions(
     const text =
       p.count === 0 && p.key === "boardWipes"
         ? `No board wipe (target ${p.target})${band}`
-        : `${p.name} ${p.count}/${p.target} — add ~${Math.ceil(p.target - p.count)}${band}`;
+        : `${p.name} ${formatCount(p.count)}/${p.target} — add ~${Math.ceil(p.target - p.count)}${band}`;
     gaps.push({ gap: p.target - p.count, text, key: p.key });
   }
   const landsTarget = targets.lands;

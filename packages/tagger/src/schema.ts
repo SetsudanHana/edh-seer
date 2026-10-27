@@ -1433,6 +1433,14 @@ export interface Ability {
    *  Not an evaluable condition and deliberately not one: see `conditionCares`. It records only the
    *  DEMAND, so `cardCaresTags` can put the card on the right axis. Forms no edge, ever. */
   conditionCares?: string[];
+  /** THE CONDITION THIS ABILITY'S EFFECT IS GATED ON, from a trailing "if <condition>" in its own sentence (#1357, owner 2026-10-27): "Draw a card if an opponent has cast a blue or black spell this turn" (Veil of Summer,
+   *  `turn-event`), "Then draw a card if it has seven or more phyresis counters on it" (Weatherlight Compleated, `counter`), "Create two 1/1 blue Fish creature tokens if an opponent controls more creatures than you"
+   *  (Beza, `unknown`). PARSED BY THE SAME `parseGate` AS A MANA LINE'S GATE: one grammar, the kinds of `Gate`. A gated effect STILL COUNTS and keeps its edges; the gate says how likely it is to happen, and a
+   *  condition derive cannot read is `unknown`, which IS the "flagged conditional" state: never a sure effect, never zero. `conditionCares` beside it names the deck demand the condition makes, from the same
+   *  `conditionCares()` the trigger and activation paths use. Only the ability the condition gates carries it (an ungated action of the same clause does not). ABSENT: no trailing "if" in the ability's sentence,
+   *  and also the leading form ("If you control a Dragon, draw a card", "Then if ..."), a verb whose printed word derive cannot find, and the exempt "if you do" / "if able" / "if you pay" / "instead" / "would".
+   *  Weighed by the matcher (`effect-gate-weight.ts`, #1357 task 2): the role counts, the land recommendation and the goldfish's draw count the effect at the chance its condition holds in the deck. */
+  gate?: Gate;
   /** A CR 614 multiplier ("if you would draw a card ... draw two instead", Hardened Scales, Doubling
    *  Season): its trigger hears another card's event and makes that event BETTER. Owner, 2026-09-29:
    *  "replacement effects make the effects better, not the other way around" -- so the matcher
@@ -1557,7 +1565,9 @@ export type ManaLineSource = "activated" | "trigger" | "static-grant" | "aura-tr
 export type ManaAnyColour = "any" | "identity" | "chosen" | "opponent-lands" | "lands-you-could" | "among" | "grantee";
 
 
-/** THE CONDITION A MANA LINE HOLDS UNDER, PARSED ONCE IN DERIVE (`parseGate`, derive/gate.ts; #1191). Every kind keeps `text`, the verbatim lowercase gate, so a display reads it.
+/** THE CONDITION A MANA LINE OR AN EFFECT HOLDS UNDER, PARSED ONCE IN DERIVE (`parseGate`, derive/gate.ts; #1191, and #1357 for the effect on `Ability.gate`). Every kind keeps `text`, the verbatim lowercase gate, so a display reads it.
+ *  ONE TYPE FOR BOTH (#1357): the kinds an effect's trailing "if" needs are the ones a mana line's gate already has (a board count, a graveyard count, counters on the card, something this turn, or nothing a decklist settles), so
+ *  the type is `Gate` and `ManaGate` is its old name, kept for the mana-line readers.
  *  `control`: "you control a dragon" / "three or more artifacts" / "a plains or a swamp" -- `need` permanents among `nouns` (card types and subtypes, lowercase); `basic` when the noun is
  *  a BASIC land ("if you control a basic land"); `minPower` for "a creature with power N or greater". `same-name`: N lands with one name. `tron`: two named lands ("an urza's mine and an
  *  urza's tower"; the subtypes as printed). `speed`: "speed 4". `initiative`.
@@ -1565,9 +1575,10 @@ export type ManaAnyColour = "any" | "identity" | "chosen" | "opponent-lands" | "
  *  `counter`: N counters of one kind ON THE CARD ITSELF ("has a +1/+1 counter on it", Incubation Druid). `put` says where they come from when the card's own words say so: `{by: "self", readyTurn, activation}` the card
  *  puts them on itself by its own ACTIVATED ability or keyword (Pyramid of the Pantheon's brick, Tablet of Compleation's oil; Adapt, Monstrosity, Outlast; a trigger such as Charitable Levy's, and Evolve, give no `put`), all `need` of them at the
  *  earliest on turn `readyTurn`; `activation` prices ONE activation of the put (owner ruling 2026-10-20, #1279: the goldfish pays for it like an accelerant cast): `mana` its cost's mana value, `refund` the mana the same ability adds back (Pyramid's "Add one mana of any color" 1; unread 0), `taps` whether the cost has {T}, `activations` how many reach `need`; `{by: "opening-hand"}` only as it begins the game on the battlefield (Gemstone Caverns's luck counter). Absent: nothing in the card puts them there, and the gate is unmet.
- *  `turn-event`: something that happened earlier THIS TURN (Famished Foragers's "an opponent lost life this turn"). `unknown`: everything no decklist settles (game state, a trigger, "it was bargained"), unmet everywhere. */
-export type TurnEvent = "opponent-lost-life" | "entered-this-turn" | "creature-died" | "permanent-left" | "attacked" | "land-played";
-export type ManaGate =
+ *  `turn-event`: something that happened earlier THIS TURN (Famished Foragers's "an opponent lost life this turn"; `opponent-cast`, "an opponent has cast a blue or black spell this turn", Veil of Summer: nothing in a decklist supplies it). `unknown`: everything no decklist settles (game state, a trigger, "it was bargained"), unmet everywhere. */
+export type TurnEvent = "opponent-lost-life" | "entered-this-turn" | "creature-died" | "permanent-left" | "attacked" | "land-played" | "opponent-cast";
+export type ManaGate = Gate;
+export type Gate =
   | { kind: "control"; need: number; nouns: string[]; basic?: true; minPower?: number; text: string }
   | { kind: "same-name"; need: number; text: string }
   | { kind: "tron"; names: string[]; text: string }

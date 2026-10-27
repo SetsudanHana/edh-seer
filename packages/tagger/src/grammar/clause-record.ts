@@ -6,6 +6,7 @@
  *  model answer kept only as the fallback for the rest. Until that switch this module is measured
  *  against the stored answers by `instruments/src/grammar-only.ts`. Pure and synchronous. */
 import type { Action, ClauseRecord } from "../canonicalize.js";
+import { effectGates } from "../derive/effect-gate.js";
 import { interveningIfOf } from "../derive/intervening-if.js";
 import { SELF_REFERENCE } from "../derive/self-reference.js";
 import { segment, STATION_BAR } from "../segment.js";
@@ -484,13 +485,14 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     // abilities read as one; the card is refused here rather than banked with half of it (the stored answer keeps both).
     const swallowed = readingsHere.find((r) => r.verb === "add-counter" && / and (?:an?|one|two|three|x) [^,]*?counters? on (?:it|them|him|her|~)(?!\w)/.test(r.amount ?? ""));
     if (swallowed) return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: effect } };
-    // A MODE'S "IF <condition>" GATES ITS EFFECT (#1349 review): "Draw a card if you control a permanent with a counter on it"
-    // (Federation Field Medic) is no unconditional draw, and the store has no slot for the condition, so the action would
-    // be recorded as a plain draw. The mode is recorded as one `other` action instead, which derive leaves unclaimed and visible.
-    // CEILING: only a mode (a non-modal conditional effect keeps its plain reading, as the stored answer has it: Roadside Reliquary), and the WHOLE
-    // mode becomes the one `other`, its unconditional parts included (What Must Be Done's return is lost): a card with no model answer derives nothing for that mode.
+    // A MODE'S "IF <condition>" GATES ITS EFFECT (#1349 review, #1357): "Draw a card if you control a permanent with a counter on it" (Federation Field Medic) is no unconditional draw. The record has no slot for the
+    // condition; derive reads it off the printed sentence (`effectGates`) and carries it on the ability the action makes, so a mode whose every gating "if" is TRAILING and found by some action's verb is read normally.
+    // CEILING: a mode with a gating "if" derive cannot attach is recorded as one `other` action instead, which derive leaves unclaimed and visible, and the WHOLE mode goes with it, its unconditional parts included
+    // (What Must Be Done's return was lost until #1357). Those are: a mode that OPENS with its condition ("If you don't control a creature named The Hollow Sentinel, create ...", Venser, Corpse Puppet; "Then if ..."),
+    // whose condition can govern several clauses and an "Otherwise"; and a trailing one whose sentence no action's verb finds (a verb with no printed word in `printedVerbWord`).
+    // Only a mode: a non-modal conditional effect keeps its plain reading, as the stored answer has it, and derive gates it by the same read.
     const gated = c.kind === "mode" ? readingsHere.find((r) => r.condition !== undefined && /^if /i.test(r.condition) && !/^if (?:you|they) (?:do|don't|did|didn't)\s*(?:[,.]|$)|^if able\b|\bwould\b|\binstead\b/i.test(r.condition)) : undefined;
-    if (gated) {
+    if (gated && effectGates(effect, readingsHere.map((r) => r.verb)).refused) {
       readings[c.id] = { ...readings[c.id], actions: [] };
       record.actions = [{ verb: "other", object: effect, fromZone: null, toZone: null, optional: false } as Action];
       records.push(record);

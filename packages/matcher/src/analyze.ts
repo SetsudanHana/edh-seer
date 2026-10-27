@@ -20,6 +20,7 @@ import type { DeckCard, Hierarchy } from "./types.js";
 import { faceDeckCards } from "./faces.js";
 import { deckCoverage } from "./coverage.js";
 import { loadHierarchy, subsumptionMap } from "./hierarchy.js";
+import { makeGateWeigher } from "./effect-gate-weight.js";
 import { deckSentence } from "./deck-sentence.js";
 import { applyAnthems, applyState, reachableMarkers } from "./layers.js";
 import { pairReasons, cardThemeTags, axisThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason, revenantToughness, type ReasonOptions } from "./edges.js";
@@ -762,7 +763,9 @@ export function analyzeDeckStructured(
   // from the shuffle and PRICED anyway through `alsoPrice` — "can I cast my commander on turn six"
   // is the one card a reader looks for by name.
   const simLibrary = resolved.filter((dc) => !commanderSet.has(dc.card.name));
-  const manaSim = opts.skipSimulation ? undefined : manaModel(simLibrary, { alsoPrice: resolved.filter((dc) => commanderSet.has(dc.card.name)) });
+  // A GATED EFFECT COUNTS AT THE CHANCE ITS CONDITION HOLDS IN THIS DECK (#1357 task 2): one weigher, read by the goldfish's draw, the role counts and the land recommendation alike.
+  const gates = makeGateWeigher(resolved, hierarchy);
+  const manaSim = opts.skipSimulation ? undefined : manaModel(simLibrary, { alsoPrice: resolved.filter((dc) => commanderSet.has(dc.card.name)), gates });
   const castByName = new Map(
     (manaSim ? deckCastability(resolved, manaSim.curves).cards : [])
       .map((r: CardCastability) => [r.name, { turn: r.turn, castable: r.castable!, mana: r.mana! }] as const),
@@ -962,6 +965,7 @@ export function analyzeDeckStructured(
   // build scores against, read here first so the land target and the Ramp row agree on "enough".
   const roleTargetsOf = adjustedParentTargets(templateBlend(strategies));
   const landRec = recommendedLands(resolved, {
+    gates,
     commanderNames: [...commanderSet],
     roleTargets: {
       ramp: roleTargetsOf.find((p) => p.key === "ramp")?.target,
@@ -980,9 +984,9 @@ export function analyzeDeckStructured(
   );
   const {
     buildScore, buildCategories, buildParents, template, suggestions, suggestionByKey, answerCoverage: coverage, rampResilience,
-    landsImpact, answersImpact,
+    landsImpact, answersImpact, conditionalRoles,
   } =
-    computeBuild(resolved, strategies[0]?.name, landRec.target, identity, graveyardVulnerability, strategies);
+    computeBuild(resolved, strategies[0]?.name, landRec.target, identity, graveyardVulnerability, strategies, gates);
 
   // THE CUT LIST -- a join over what is already computed, never new analysis. It reads the rated
   // cards, the axis weights, the BUILD roles and the per-category surplus, and names CANDIDATES
@@ -1155,6 +1159,7 @@ export function analyzeDeckStructured(
     suggestionByKey,
     answerCoverage: coverage,
     rampResilience,
+    ...(conditionalRoles ? { conditionalRoles } : {}),
     cutList,
     unjudged,
     slack,

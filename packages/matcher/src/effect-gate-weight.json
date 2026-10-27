@@ -1,0 +1,4 @@
+{
+  "_comment": "WHAT A GATED EFFECT COUNTS FOR WHEN NO DECKLIST SETTLES ITS CONDITION (#1357 task 2, owner ruling 2026-10-27: 'a gated effect still counts, weighted by how likely its condition is to hold; a condition the deck cannot supply or the engine cannot read counts at a FIXED partial weight, flagged conditional, never a sure effect; a readable condition with no support in the deck weighs exactly 0 (ruling A)'). Data, not a literal in code, so a different value ships without a code change. 0.5 is the repo's own 'more often than not' bar (REQUIRED_CONFIDENCE): a coin flip is the honest prior for a condition nothing here can read. Not fitted.",
+  "unreadable": 0.5
+}

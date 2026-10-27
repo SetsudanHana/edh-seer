@@ -1,5 +1,6 @@
 import { LAND_BAND, LAND_FALLOFF } from "@edh-seer/matcher/build";
 import { scoreBand, type ScoreTone, type ScoreKind } from "./score-band.js";
+import { fmtCount, gapOver, gapShort, tenths } from "./format-count.js";
 
 export type GaugeTone = "danger" | "warning" | "success" | "neutral";
 
@@ -37,11 +38,13 @@ export const TONE_OF_SCORE: Record<ScoreTone, GaugeTone> = {
  *  before/after over the 71 calibration decks -- see the spec, section 3.1. */
 export function floorState(count: number, target: number): GaugeReading {
   if (target <= 0) return { state: "on-target", label: "no floor set", tone: "neutral", position: 0 };
-  const d = count - target;
-  if (d <= -3) return { state: "far-under", label: `${-d} short`, tone: "danger", position: -1 };
-  if (d < 0) return { state: "under", label: `${-d} short`, tone: "warning", position: -0.5 };
-  if (d <= FLOOR_SLACK) return { state: "on-target", label: d === 0 ? "on target" : `${d} over, on target`, tone: "success", position: 0 };
-  return { state: "room", label: `${d} over target`, tone: "neutral", position: 1 };
+  // From the SHOWN count (floored, never rounded up): 9.96 of 10 is 0.1 short and 10.04 is on target, not "0 over".
+  const short = gapShort(count, target), d = gapOver(count, target);
+  if (short >= 3) return { state: "far-under", label: `${fmtCount(short)} short`, tone: "danger", position: -1 };
+  if (short > 0) return { state: "under", label: `${fmtCount(short)} short`, tone: "warning", position: -0.5 };
+  if (d <= 0) return { state: "on-target", label: "on target", tone: "success", position: 0 };
+  if (d <= FLOOR_SLACK) return { state: "on-target", label: `${fmtCount(d)} over, on target`, tone: "success", position: 0 };
+  return { state: "room", label: `${fmtCount(d)} over target`, tone: "neutral", position: 1 };
 }
 
 /** HOW FAR OVER A FLOOR STILL READS AS ON IT. One number for the tile and the shelf under it (#980):
@@ -55,12 +58,12 @@ export const FLOOR_SLACK = 2;
  *  the room is in the cards that make mana once or under a condition, and the cost reducers. A ramp LAND cannot be cut for room and is not counted in it. Said, or "4 over: room to cut" read as spare ramp
  *  beside "8 of your 17 ramp cards that keep producing mana". */
 export function overNote(count: number, target: number, oneShots = 0): string | null {
-  const d = count - target;
+  const d = gapOver(count, target);
   if (target <= 0 || d <= 0) return null;
-  if (d <= FLOOR_SLACK) return `${d} over, on target`;
+  if (d <= FLOOR_SLACK) return `${fmtCount(d)} over, on target`;
   return oneShots > 0 && oneShots < count
-    ? `${d} over: cut from the ${oneShots} that add${oneShots === 1 ? "s" : ""} little to the land count first; the land count relies on the other ${count - oneShots}`
-    : `${d} over: room to cut`;
+    ? `${fmtCount(d)} over: cut from the ${fmtCount(oneShots)} that add${tenths(oneShots) === 10 ? "s" : ""} little to the land count first; the land count relies on the other ${fmtCount(count - oneShots)}`
+    : `${fmtCount(d)} over: room to cut`;
 }
 
 /** THE ONE TWO-SIDED GAUGE. Over is wrong for lands in a way it is not for a role floor, and the

@@ -509,7 +509,7 @@ export async function suggestForDeck(input: {
   const buildRanked = groups
     .filter((g) => g.target > 0 && g.count < g.target)
     .map((g) => {
-      const n = g.target - g.count + SPARES;
+      const n = Math.ceil(g.target - g.count) + SPARES;
       return [g.key, g.name, shortlist(gapList(pool, g.leaves, g.costBand, Infinity), n * SHORTLIST, g.costBand), n, g.costBand, stapleList(index, g.leaves, g.costBand, n, admissible)] as const;
     });
   const answersRanked = (report.deckMath?.answers ?? [])

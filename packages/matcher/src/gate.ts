@@ -226,6 +226,7 @@ function counterProbability(g: Extract<ManaGate, { kind: "counter" }>, f: DeckFa
  *   - `creature-died`: a repeatable outlet that sacrifices a CREATURE you control, seen and cast, AND a creature other than the holder on the board (the two taken as independent: their product).
  *     CEILING: a creature dying in combat or to removal is not counted.
  *   - `permanent-left`: a repeatable outlet that sacrifices a permanent (a creature, a land, an artifact, any permanent). CEILING: bounce and blink, which also leave the battlefield, are not counted.
+ *   - `opponent-cast` (#1357, Veil of Summer's "an opponent has cast a blue or black spell this turn"): an opponent's spell, which no decklist supplies: 0 (unmet) always. Only an effect's gate carries it so far.
  *   - `entered-this-turn` (Mirrex): true only on the turn the land enters, and the evaluator has no entry turn: 0 (unmet) always. CEILING: an under-claim of the entry turn, as Gleaming Bastion's. */
 function turnEventProbability(event: TurnEvent, f: DeckFacts, by?: number): number {
   const turn = by ?? CORPUS_MEDIAN_CLOCK;
@@ -240,6 +241,8 @@ function turnEventProbability(event: TurnEvent, f: DeckFacts, by?: number): numb
     case "creature-died": return seenAtLeast(1, f.creatureOutlets, turn, f.size) * attackers();
     case "permanent-left": return seenAtLeast(1, f.permanentOutlets, turn, f.size);
     case "entered-this-turn": return 0;
+    // An opponent's spell: nothing the deck holds supplies it. Unmet, as every gate no decklist settles (an EFFECT's weight for it is #1357 task 2's).
+    case "opponent-cast": return 0;
   }
 }
 /** THE CHANCE OF A PARSED BOARD-COUNT GATE (`gateProbability`'s board branch): by the median clock over every card, or with `by` by that turn. */

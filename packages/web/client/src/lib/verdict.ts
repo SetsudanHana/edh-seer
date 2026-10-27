@@ -1,6 +1,7 @@
 import type { DeckReport } from "../types.js";
 import { scoreBand } from "./score-band.js";
 import { findings, rankedFindings, type Finding } from "./findings.js";
+import { fmtCount } from "./format-count.js";
 
 /** A short basic, in the words the verdict says it in. */
 export const GAP_WORD_BY_KEY: Record<string, string> = { consistency: "card advantage", ramp: "ramp", interaction: "answers", boardWipes: "board wipes" };
@@ -31,7 +32,7 @@ export function headerGaps(report: DeckReport): ShortRole[] {
  *  when nothing is short. */
 export function gapText(gaps: readonly ShortRole[]): string {
   const first = gaps[0];
-  return first ? `${first.short} short on ${first.shelfWord}${gaps.length > 1 ? ` and ${gaps.length - 1} more` : ""}` : "";
+  return first ? `${fmtCount(first.short)} short on ${first.shelfWord}${gaps.length > 1 ? ` and ${gaps.length - 1} more` : ""}` : "";
 }
 
 function rolesOf(report: DeckReport, list: readonly Finding[]): ShortRole[] {
@@ -60,7 +61,7 @@ function rolesOf(report: DeckReport, list: readonly Finding[]): ShortRole[] {
 
 /** Each gap as the verdict says it, with its numbers where the role has them. */
 function gaps(report: DeckReport): string[] {
-  return shortRoles(report).map((g) => (Number.isNaN(g.target) ? g.word : `${g.word} (${g.count} of ${g.target})`));
+  return shortRoles(report).map((g) => (Number.isNaN(g.target) ? g.word : `${g.word} (${fmtCount(g.count)} of ${g.target})`));
 }
 
 /** "IS MY DECK GOOD?" IN ONE SENTENCE (appeal review 2026-09-26). The top of the report showed

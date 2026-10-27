@@ -3,6 +3,7 @@ import { CHAPTERS, type ChapterId } from "../lib/chapters.js";
 import type { DeckReport } from "../types.js";
 import { mainTheme } from "../lib/main-theme.js";
 import { WIN_PHRASE } from "@edh-seer/matcher/deck-sentence";
+import { fmtCount } from "../lib/format-count.js";
 
 /** WHAT THE RAIL SAYS FOR EACH CHAPTER (owner, 2026-09-29, drawer option B: "which has by default
  *  those information and changes between chapters").
@@ -101,7 +102,7 @@ function Roles({ report }: { report: DeckReport }) {
   if (parents.length === 0) return null;
   return (
     <div className="flex flex-col gap-2">
-      {parents.map((p) => <Row key={p.name} label={p.name} value={`${p.count} of ${p.target}`} />)}
+      {parents.map((p) => <Row key={p.name} label={p.name} value={`${fmtCount(p.count)} of ${p.target}`} />)}
     </div>
   );
 }
@@ -111,7 +112,7 @@ function Improve({ report, cutCount }: { report: DeckReport; cutCount: number })
   return (
     <div className="flex flex-col gap-2">
       <Row label="Possible cuts" value={cutCount} />
-      {over.map((s) => <Row key={s.category} label={`${s.category} over its target`} value={`by ${s.over}`} />)}
+      {over.map((s) => <Row key={s.category} label={`${s.category} over its target`} value={`by ${fmtCount(s.over)}`} />)}
     </div>
   );
 }

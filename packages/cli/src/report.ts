@@ -1,5 +1,6 @@
 import { dedupeReasonsByText, type DeckReport } from "@edh-seer/engine";
 import { percent, policyBand, POLICY_LEGEND } from "@edh-seer/engine/percent";
+import { formatCount } from "@edh-seer/matcher/format-count";
 
 /** SHARED WITH THE WEB, one copy (roadmap N6). This file floored a probability at 1% and
  *  `CardList.tsx` did not, so a measured-impossible cast read "1%" here and "0%" there. The floor
@@ -229,7 +230,7 @@ export function formatReport(report: DeckReport, trim = 0): string {
     lines.push("  runs and not what it needs. The category, never a member — nothing here ranks two ramp");
     lines.push("  cards against each other.");
     for (const s of report.slack) {
-      lines.push(`  ${s.category}: ${s.count}/${s.target} (+${s.over})`);
+      lines.push(`  ${s.category}: ${formatCount(s.count)}/${s.target} (+${formatCount(s.over)})`);
     }
   }
 

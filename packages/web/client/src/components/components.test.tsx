@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { render, screen, fireEvent, within, cleanup } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import { POLICY_LEGEND } from "@edh-seer/engine/percent";
 import userEvent from "@testing-library/user-event";
@@ -1014,6 +1014,20 @@ test("leaf shares total 100% even when a card fills two leaves, and the header s
   const header = screen.getByTestId("role-group-total-Card advantage");
   expect(header).toHaveTextContent("9 counted across 8 cards");
   expect(header).toHaveTextContent(/some fill two of these roles/);
+});
+
+// OWNER RULING 2026-10-27: leaf and parent counts come from ONE frame (the exact weighted sum). Two half-weight cards, one in each leaf, are a whole card of each; that is not an overlap.
+test("two half-weight cards in two leaves are not an overlap, and the decimal shows", () => {
+  const categories = [{ category: "draw", count: 4.5, target: 0 }, { category: "cardSelection", count: 2.5, target: 0 }] as unknown as typeof SAMPLE.report.buildCategories;
+  const parents = [{ name: "Card advantage", key: "consistency", count: 7, target: 10, leaves: ["draw", "cardSelection"] }] as unknown as typeof SAMPLE.report.buildParents;
+  render(<BuildBenchmarks categories={categories} parents={parents} />);
+  expect(screen.getByTestId("role-group-total-Card advantage")).toHaveTextContent(/^7 cards$/);
+  expect(screen.getByLabelText(/^Draw 4\.5, 64% of Card advantage/)).toBeInTheDocument();
+  // one card in both leaves at half weight IS an overlap: 4.5 + 2.5 across 6.5
+  cleanup();
+  const overlapped = [{ name: "Card advantage", key: "consistency", count: 6.5, target: 10, leaves: ["draw", "cardSelection"] }] as unknown as typeof SAMPLE.report.buildParents;
+  render(<BuildBenchmarks categories={categories} parents={overlapped} />);
+  expect(screen.getByTestId("role-group-total-Card advantage")).toHaveTextContent("7 counted across 6.5 cards");
 });
 
 // #735 (axe, list): a `<li role="presentation">` group header among the leaf rows broke the list.

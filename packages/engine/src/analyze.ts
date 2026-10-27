@@ -607,6 +607,12 @@ export interface DeckReport {
    *  that parent would otherwise silently unwire the panel's coverage note while the score kept
    *  docking it). */
   buildParents?: { name: string; key: string; count: number; target: number; leaves: string[]; impact?: number; coverageWeighted?: true }[];
+  /** THE ROLE MEMBERS THAT SIT BEHIND A CONDITION (#1357 task 2, owner 2026-10-27): "a gated effect still counts, weighted by how likely its condition is to hold in THIS deck". One row per card and role. `weight` in [0, 1] is
+   *  what it counts for in `buildCategories` / `buildParents`, whose `count` already holds the EXACT sum (decimals, never rounded up into a sure card). `needs` is the condition verbatim and `basis` where the weight came
+   *  from: `evaluated` (the deck's chance of meeting a condition a decklist settles; exactly 0 when it has nothing to meet it with), `supply` (the deck's chance of holding a card that supplies the demand the condition
+   *  names; exactly 0 with none), `unread` (a condition nothing here settles, counted at one fixed partial weight) or `target` (a condition on the card's own target: weight 1, a NARROW answer, not a chance). Absent
+   *  when no member is conditional. Membership never changes: a gated draw card is still a draw card. */
+  conditionalRoles?: { card: string; category: string; weight: number; basis: "evaluated" | "supply" | "unread" | "target"; needs: string }[];
   /** WHICH THEME ROW(S) THE PARENT TARGETS CAME FROM (owner ruling 2026-09-06, spec
    *  `2026-09-06-theme-template-proposal.md`): the detected primary and, when strong enough, the
    *  secondary, each with its EDHREC-population row keyed by `buildParents[].key`, plus the

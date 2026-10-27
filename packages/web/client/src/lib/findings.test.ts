@@ -539,3 +539,43 @@ test("a colour finding says when sources could not be read, naming them", () => 
   expect(mk(["Meteor Crater"])[0]!.detail).toContain(" Not counted: Meteor Crater (its mana could not be read), so the count may be short.");
   expect(mk(["A", "B", "C"])[0]!.detail).toContain("Not counted: A, B and 1 other card (their mana could not be read)");
 });
+
+/** OWNER RULING 2026-10-27: a card that only half works counts half, and 9.5 of 10 is a finding that names the card, with one decimal and no ".0" on a whole number. */
+test("a role short by a half card fires, shows the decimal and names the conditional card with what it needs", () => {
+  const [f] = findings(report({
+    buildParents: [{ name: "Card advantage", key: "consistency", count: 9.5, target: 10, leaves: ["draw"] }],
+    conditionalRoles: [{ card: "Garna, Bloodfist of Keld", category: "draw", weight: 0.5, basis: "unread", needs: "it was attacking" }],
+  }));
+  expect(f.figure).toBe("9.5/10");
+  expect(f.detail).toBe("You run 9.5, against a target of 10. Garna, Bloodfist of Keld counts half: it only works if it was attacking.");
+});
+
+test("a whole count prints without .0, a narrow answer is not listed, and a card that counts for nothing says so", () => {
+  const [f] = findings(report({
+    buildParents: [{ name: "Interaction", key: "interaction", count: 8, target: 10, leaves: ["targetedRemoval"] }],
+    conditionalRoles: [
+      { card: "Pyroblast", category: "targetedRemoval", weight: 1, basis: "target", needs: "it's blue" },
+      { card: "Federation Field Medic", category: "targetedRemoval", weight: 0, basis: "supply", needs: "you control a permanent with a counter on it" },
+    ],
+  }));
+  expect(f.figure).toBe("8/10");
+  expect(f.detail).toBe("You run 8, against a target of 10. Federation Field Medic counts for nothing: it only works if you control a permanent with a counter on it.");
+});
+
+test("a surplus under one card is no slot: the donor line stays out for a half-card of slack, and the slot trade says less than one", () => {
+  const slackRow = { category: "Ramp", key: "ramp", count: 12.5, target: 12, over: 0.5 };
+  const rows = findings(report({
+    buildParents: [{ name: "Card advantage", key: "consistency", count: 8, target: 10, leaves: ["draw"] }],
+    suggestionByKey: { consistency: "Card advantage 8/10 — add ~2" },
+    slack: [slackRow],
+  }));
+  expect(rows[0].action).toBe("Add ~2");
+  expect(rows[0].action).not.toMatch(/spare slots|Take /);
+  expect(slotTrade(report({ slack: [slackRow] }), rows)).toContain("less than one slot is spare");
+});
+
+test("a count a hair under its target is a finding that says 0.1 short, never rounded up to on target", () => {
+  const [f] = findings(report({ buildParents: [{ name: "Card advantage", key: "consistency", count: 9.96, target: 10, leaves: ["draw"] }] }));
+  expect(f.figure).toBe("9.9/10");
+  expect(f.detail).toBe("You run 9.9, against a target of 10.");
+});

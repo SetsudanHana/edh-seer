@@ -20,6 +20,20 @@ import { makeFold } from "./theme-fold.js";
  *  dying. A card with no condition, or one whose demand the deck meets, reports nothing.
  *  Returns the unmet demand tags by physical card name. */
 export function unmetConditionTags(resolved: readonly DeckCard[], hierarchy: Hierarchy): Map<string, string[]> {
+  const supply = conditionSupply(resolved, hierarchy);
+  const unmetByCard = new Map<string, string[]>();
+  for (const dc of resolved) {
+    if (!dc.tags) continue;
+    const wants = [...new Set(dc.tags.abilities.flatMap((a) => a.conditionCares ?? []))];
+    const unmet = wants.filter((w) => [...supply(w)].every((n) => n === dc.card.name));
+    if (unmet.length > 0) unmetByCard.set(dc.card.name, unmet);
+  }
+  return unmetByCard;
+}
+
+/** WHO IN THE DECK SUPPLIES A CONDITION'S DEMAND, folded and subsumed exactly as `unmetConditionTags` reads it (#1357 task 2 asks the same question to WEIGH a gated effect). Returns the card names
+ *  that supply `want`, the holder included: a caller excludes its own card. Built once per deck. */
+export function conditionSupply(resolved: readonly DeckCard[], hierarchy: Hierarchy): (want: string) => Set<string> {
   const foldFit = makeFold(hierarchy);
   const suppliedTags = new Map<string, Set<string>>();
   for (const dc of resolved) {
@@ -34,16 +48,9 @@ export function unmetConditionTags(resolved: readonly DeckCard[], hierarchy: Hie
   }
   const allWants = resolved.flatMap((dc) => (dc.tags?.abilities ?? []).flatMap((a) => a.conditionCares ?? []));
   const narrower = subsumptionMap([...suppliedTags.keys(), ...allWants]);
-  const unmetByCard = new Map<string, string[]>();
-  for (const dc of resolved) {
-    if (!dc.tags) continue;
-    const wants = [...new Set(dc.tags.abilities.flatMap((a) => a.conditionCares ?? []))];
-    const unmet = wants.filter((w) => {
-      const suppliers = new Set(suppliedTags.get(w));
-      for (const t of narrower.get(w) ?? []) for (const n of suppliedTags.get(t) ?? []) suppliers.add(n);
-      return [...suppliers].every((n) => n === dc.card.name);
-    });
-    if (unmet.length > 0) unmetByCard.set(dc.card.name, unmet);
-  }
-  return unmetByCard;
+  return (want) => {
+    const suppliers = new Set(suppliedTags.get(want));
+    for (const t of narrower.get(want) ?? []) for (const n of suppliedTags.get(t) ?? []) suppliers.add(n);
+    return suppliers;
+  };
 }

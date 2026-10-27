@@ -8,6 +8,8 @@ import { recommendedLands } from "@edh-seer/matcher/land-count";
 import { winconReport } from "@edh-seer/matcher/wincon";
 import { measuredClock, pressureCurve } from "@edh-seer/matcher/pressure";
 import { manaModel } from "@edh-seer/matcher/goldfish";
+import { makeGateWeigher } from "@edh-seer/matcher/effect-gate-weight";
+import { loadHierarchy } from "@edh-seer/matcher";
 import type { DeckCard } from "@edh-seer/matcher/types";
 
 /** Build-category membership across the calibration decks, as one number per category plus the
@@ -139,8 +141,11 @@ async function main(): Promise<void> {
       const tags = await cardTags.findOne(String(doc._id));
       inputs.push({ card: docToCard(doc), tags });
     }
+    // THE WEIGHTS THE REPORT READS (#1357 task 2): each deck is judged against its own list. Membership snapshots and the cost bands below stay unweighted on purpose: they say which cards are in a role, which a gated
+    // effect does not change.
+    const gates = makeGateWeigher(inputs, loadHierarchy());
     if (landsMode) {
-      const rec = recommendedLands(inputs, { commanderNames: sections.commanders });
+      const rec = recommendedLands(inputs, { commanderNames: sections.commanders, gates });
       landRows.push({
         deck: file.replace(/\.txt$/, ""), actual: rec.actual, target: rec.target,
         avg: rec.avgManaValue, ramp: rec.rampPlusDraw, fast: rec.fastMana,
@@ -181,6 +186,7 @@ async function main(): Promise<void> {
     const cmd = new Set(sections.commanders);
     const sim = manaModel(inputs.filter((dc) => !cmd.has(dc.card.name)), {
       alsoPrice: inputs.filter((dc) => cmd.has(dc.card.name)),
+      gates,
     });
     // The SAME odds the report's clock reads: the mana budget AND what a kept hand has seen.
     const clockOpts = { commanderNames: sections.commanders, manaBudget: sim.manaMedian, seen: sim.seenShare };
