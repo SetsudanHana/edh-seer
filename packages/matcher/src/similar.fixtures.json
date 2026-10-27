@@ -1540,7 +1540,6 @@
      "repeats": "once"
     },
     {
-     "amount": "flying until end of turn",
      "clause": 2,
      "cost": "{2}{W}, Sacrifice this artifact",
      "effect": {
@@ -1622,7 +1621,7 @@
      "artifact"
     ]
    },
-   "clauseSource": "model",
+   "clauseSource": "grammar",
    "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
