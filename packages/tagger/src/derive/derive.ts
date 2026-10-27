@@ -557,7 +557,7 @@ import { emblemRecipient } from "../emblem.js";
 // 392: #1357 -- an effect's trailing gating "if <condition>" is `Ability.gate`, parsed by the one gate parser (gate.ts: control / threshold / counter / turn-event / unknown), attached per conjunct (an "except ... if" rider never gates the clone); a suppliable condition adds `conditionCares` (no counter demand for a counter the card places on itself); the grammar reads a gated mode instead of refusing it (What Must Be Done keeps its return); TRON needs two Urza's lands. The matcher weighs gated contributions by deck likelihood (owner 2026-10-27).
 // 393: #1357 part 2 -- a LEADING condition gates its own sentence ("If X, A and B" gates both; ", then if" / "Then if"); "Otherwise," / "If not," carry an unknown gate negating the earlier condition(s) (gate.otherwise), with `otherwiseAlike` when the stored reading lost a same-effect sibling; reflexive follow-ups, "instead", replacements, alternative costs, the trigger-doubler frame and shuffle-after-search are no gate; triggers' intervening ifs stay the trigger path's.
 // 394: #1373 (owner ruling 2026-10-27) -- `blocks` is an engine verb (CR 509.1a: only creatures block): a "whenever ... blocks" trigger derives instead of being dropped (192 stored rows carried the clause event, 249 corpus cards print it), a modal header's "attacks or blocks" (Elder Gargaroth) gives its modes the blocks visit as well as the attacks one, and the blocking state of a blocks trigger's subject is the event (as the attacking state is on an attack). `blocks` joins PERMANENT_EVENT_VERBS; a self blocks trigger refuses a bare clause `you` the way attacks does.
-// 395: #1373 review -- a textless `blocks` record beside the record whose grammar reading already covers "attacks or blocks" (Howling Golem, Jedit Ojanen, Sapphire Dragon, Goblin Psychopath: 48 cards) is folded into it when it derives an IDENTICAL ability (`identicalTwinOf`), instead of a second blocks ability.
+// 395: #1373 review -- a textless `blocks` record beside the record whose grammar reading already covers "attacks or blocks" (Howling Golem, Jedit Ojanen, Sapphire Dragon, Goblin Psychopath: 48 cards change, 43 pure removals, 5 take the grammar reading through the card-by-card switch) is folded into it, all or nothing per clause, when EVERY ability it derives has an exact match among the covering clause's (`identicalTwinOf`), instead of a second blocks ability.
 export const DERIVE_VERSION = 395;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
@@ -2503,7 +2503,7 @@ export function deriveAbilities(
     // A TEXTLESS RECORD (#1373 review) that adopted a sentence an earlier record's grammar reading already read this record's event off ("attacks or blocks" stored as two
     // records: Howling Golem, Jedit Ojanen) is that record's twin too -- but only an ability IDENTICAL to one of the covering clause's is folded (`identicalTwin`, below),
     // so a record that says more than its partner (a sibling sentence's effect numbered here) is never lost.
-    // CEILING: `blocks` only. Measured over the stored 394 with derive-identity: the same fold on EVERY event changes 260 cards (222 pure removals, 38 where the surviving twin differs in clause id, amount spelling or, on ~8, effect/emits/cost), `blocks` alone 48 cards (42 pure removals, 6 amount-spelling swaps).
+    // CEILING: `blocks` only, and all-or-nothing per clause (see the fold below). Measured over the stored 394 with derive-identity: 48 cards change, 43 pure removals of exact duplicates; the other 5 (Doran, Freelance Muscle, Dusk Urchins, Clockwork Vorrac, Clockwork Dragon) are NOT lost facts of the fold but `deriveRow`'s card-by-card switch: with the duplicate gone the stored and grammar readings agree, so the grammar reading (its amount spelling, no `amount` on a counter placement, other clauses' own grammar differences) is taken. The same fold on every event changes 260 cards, not all provably duplicate removals.
     else if (!misplaced && text && clause.trigger?.event && clauseTexts && clauseTexts[clause.id as number] === undefined && Number.isInteger(clause.id) && clause.trigger.event === "blocks") {
       const covering = grammarCovered.get(text)?.get(normalizeTriggerVerb(clause.trigger.event) ?? "");
       if (covering !== undefined && covering !== clause.id) identicalTwinOf.set(clause.id, covering);
@@ -3710,15 +3710,16 @@ export function deriveAbilities(
   // prints its cue". A card whose record numbering drifts in a way neither sees keeps its stored trigger over the sentence its own text prints.
   const spliced = new Set<number | string>();
   if (identicalTwinOf.size > 0) {
-    const folded = new Set<number | string>();
     const sameAbility = (a: Ability, b: Ability): boolean => JSON.stringify({ ...a, clause: 0 }) === JSON.stringify({ ...b, clause: 0 });
-    for (let i = abilities.length - 1; i >= 0; i--) {
-      const a = abilities[i]!;
-      const partnerId = a.clause !== undefined ? identicalTwinOf.get(a.clause) : undefined;
-      if (partnerId !== undefined && abilities.some((b) => b !== a && b.clause === partnerId && sameAbility(a, b))) { abilities.splice(i, 1); folded.add(a.clause!); }
+    // ALL OR NOTHING PER CLAUSE (#1373 review): a textless clause is folded only when EVERY one of its abilities has an exact match among its covering clause's, so a fold is
+    // always a pure removal. A per-ability fold dropped Velukan Dragon's identical dice-rolled copy while its pump (read without the covering clause's comma) stayed.
+    for (const [twin, covering] of identicalTwinOf) {
+      const mine = abilities.filter((a) => a.clause === twin);
+      const theirs = abilities.filter((b) => b.clause === covering);
+      if (mine.length === 0 || !mine.every((a) => theirs.some((b) => sameAbility(a, b)))) continue;
+      for (let i = abilities.length - 1; i >= 0; i--) if (abilities[i]!.clause === twin) abilities.splice(i, 1);
+      spliced.add(twin);
     }
-    // The clause is `:spliced` only when nothing of it is left.
-    for (const id of folded) if (!abilities.some((x) => x.clause === id)) spliced.add(id);
   }
   if (twinOf.size > 0) {
     const emitKey = (e: { verb: string; subject: SubjectFilter }): string => [e.verb, JSON.stringify(e.subject.type ?? null), e.subject.subtype ?? "", e.subject.counter ?? "", e.subject.self ?? ""].join("|");

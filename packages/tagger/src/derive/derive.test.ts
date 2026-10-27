@@ -6494,3 +6494,28 @@ test("a textless 'blocks' record beside the 'attacks' record that already reads 
   expect(draws.filter((a) => a.trigger?.verbs.includes("blocks" as never))).toHaveLength(1);
   expect(r.spliced.has(2)).toBe(true);
 });
+
+// #1373 review of the fold: a textless blocks record is folded ONLY when every one of its abilities has an exact match among the covering clause's, so a fold is always a
+// pure removal. Velukan Dragon's blocks record read the pump amount without the comma the covering clause's reading has, so the dice-rolled copy (identical) used to be
+// dropped while the pump stayed: a half fold that changed which readings survive.
+test("a textless blocks record with ANY ability the covering clause lacks is not folded at all (Velukan Dragon)", () => {
+  const text = "Whenever this creature attacks or blocks, roll a six-sided die. This creature gets +X/+0 until end of turn, where X is the result minus 1.";
+  const acts = (amount: string) => [
+    { verb: "roll-dice", object: "a six-sided die", fromZone: null, toZone: null, amount: null, optional: false },
+    { verb: "modify-pt", object: "this creature", amount, fromZone: null, toZone: null, optional: false },
+  ];
+  const run = (blocksAmount: string) => deriveAbilities([
+    { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: acts("+X/+0, where X is the result minus 1") },
+    { id: 2, abilityType: "triggered", trigger: { event: "blocks", subject: "this creature", control: "you" }, actions: acts(blocksAmount) },
+  ], "Velukan Dragon", { 1: text }, undefined, text);
+  const clause2 = (r: ReturnType<typeof run>) => r.abilities.filter((a) => a.clause === 2).length;
+  // Control: both records read alike, so the whole textless clause folds.
+  const alike = run("+X/+0, where X is the result minus 1");
+  expect(clause2(alike)).toBe(0);
+  expect(alike.spliced.has(2)).toBe(true);
+  // One ability of the textless clause has no exact match: NOTHING of it is folded, the dice-rolled copy included.
+  const differs = run("+X/+0 where X is the result minus 1");
+  expect(clause2(differs)).toBeGreaterThan(0);
+  expect(differs.abilities.some((a) => a.clause === 2 && (a.emits ?? []).some((e) => e.verb === "dice-rolled"))).toBe(true);
+  expect(differs.spliced.has(2)).toBe(false);
+});
