@@ -39,6 +39,8 @@ const REAL: Record<string, { records?: unknown[]; keywords?: string[]; typeLine:
   "Poison the Cup": { keywords: ["Foretell", "Scry"], typeLine: "Instant", manaValue: 3, manaCost: "{1}{B}{B}", oracleText: "Destroy target creature. If this spell was foretold, scry 2.\nForetell {1}{B} (During your turn, you may pay {2} and exile this card from your hand face down. Cast it on a later turn for its foretell cost.)" },
   "Full Bore": { typeLine: "Instant", manaValue: 1, manaCost: "{R}", oracleText: "Target creature you control gets +3/+2 until end of turn. If that creature was cast for its warp cost, it also gains trample and haste until end of turn." },
   "Approach of the Second Sun": { records: [{ id: 1, abilityType: "spell", actions: [{ verb: "win-game", object: "you", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "put", object: "Approach of the Second Sun", fromZone: "stack", toZone: "library", amount: null, optional: false }, { verb: "gain-life", object: "you", fromZone: null, toZone: null, amount: "7", optional: false }] }], typeLine: "Sorcery", manaValue: 7, manaCost: "{6}{W}", oracleText: "If this spell was cast from your hand and you've cast another spell named Approach of the Second Sun this game, you win the game. Otherwise, put Approach of the Second Sun into its owner's library seventh from the top and you gain 7 life." },
+  "Protection Racket": { records: [{ id: 1, abilityType: "triggered", trigger: { event: "upkeep", subject: "your upkeep", control: "you" }, actions: [{ verb: "reveal", object: "the top card of your library", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "exile", object: "that card", fromZone: "library", toZone: "exile", amount: null, optional: true }, { verb: "put", object: "that card", fromZone: "library", toZone: "hand", amount: null, optional: false }] }], typeLine: "Enchantment", manaValue: 3, manaCost: "{2}{B}", oracleText: "At the beginning of your upkeep, repeat the following process for each opponent in turn order. Reveal the top card of your library. That player may pay life equal to that card's mana value. If they do, exile that card. Otherwise, put it into your hand." },
+  "Sin Prodder": { records: [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Menace" }] }, { id: 2, abilityType: "triggered", trigger: { event: "upkeep", subject: "you", control: "you" }, actions: [{ verb: "reveal", object: "the top card of your library", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "put", object: "that card", fromZone: "library", toZone: "graveyard", amount: null, optional: true }, { verb: "deal-damage", object: "that player", fromZone: null, toZone: null, amount: "that card's mana value", optional: false }, { verb: "put", object: "that card", fromZone: "library", toZone: "hand", amount: null, optional: false }] }], keywords: ["Menace"], typeLine: "Creature \u2014 Devil", manaValue: 3, manaCost: "{2}{R}", oracleText: "Menace\nAt the beginning of your upkeep, reveal the top card of your library. Any opponent may have you put that card into your graveyard. If a player does, this creature deals damage to that player equal to that card's mana value. Otherwise, put that card into your hand." },
   "Mind Stone": { typeLine: "Artifact", manaValue: 2, oracleText: "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card." },
 };
 const make = (realName: string, asName = realName): DeckCard => {
@@ -441,5 +443,13 @@ test("prowl, surge, warp and foretold are optional-cost choices too, each said i
     const d = make(name);
     const [a] = d.tags!.abilities.filter((x) => x.gate !== undefined);
     expect(makeGateWeigher(deckOf([d])).of(a!, d), name).toEqual({ weight: 1, conditional: true, basis: "choice", needs });
+  }
+});
+
+test("a LONE Otherwise is no exhaustive set: the opponent chooses, and only the Otherwise puts a card into your hand (Protection Racket, Sin Prodder)", () => {
+  for (const name of ["Protection Racket", "Sin Prodder"]) {
+    const d = make(name);
+    expect(d.tags!.abilities.filter((a) => a.gate !== undefined).map((a) => a.gate!.kind === "unknown" && a.gate!.otherwise), name).toEqual([true]);
+    expect(roleRow([d], d.card.name, "handFill"), name).toMatchObject({ weight: 0.5, basis: "unread" });
   }
 });

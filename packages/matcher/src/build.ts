@@ -155,7 +155,9 @@ function ruleWeight(rule: Rule, dc: DeckCard, gates: GateWeigher): EffectWeight 
   const clauses = new Set(entries.map((x) => x.a.clause));
   for (const c of clauses) {
     const members = entries.filter((x) => x.a.clause === c);
-    if (members.some((x) => x.a.gate?.kind === "unknown" && x.a.gate.otherwise === true)
+    const isOther = (x: (typeof members)[number]): boolean => x.a.gate?.kind === "unknown" && x.a.gate.otherwise === true;
+    // BOTH SIDES: an if-branch AND its Otherwise. A LONE Otherwise (its "if" was a reflexive "if they do / if a player does", Protection Racket, Sin Prodder) is the unread other half of a choice someone else makes.
+    if (members.some(isOther) && members.some((x) => !isOther(x))
       && members.every((m) => ruleMatches(rule, without(new Set(entries.filter((o) => o !== m).map((o) => o.a)))))) for (const m of members) exhaustive.add(m.a);
   }
   const partial = entries.filter((x) => x.w.weight < 1 && !exhaustive.has(x.a));
