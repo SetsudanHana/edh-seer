@@ -85,9 +85,8 @@ const ONE_LIFE_VERBS = new Set(["dies", "leaves", "enters-graveyard", "sacrifice
  *  enchanted player casts a spell" (Curse of Echoes) and "whenever enchanted creature deals damage"
  *  (Curiosity) fire as often as it happens, and stay with rule 9. */
 const ONE_COMBAT_VERBS = new Set(["attacks", "blocks", "becomes-blocked", "combat-damage"]);
-/** "Whenever [a creature] becomes blocked BY <creatures>" triggers once for EACH blocker (CR 509.3d); without "by" it triggers once each combat however many block (CR 509.3c). */
-// CEILING: every "becomes blocked by ..." reads as once per blocker (CR 509.3d). CR 509.3e (a threshold, "by two or more creatures") and "by one or more creatures" trigger ONCE, so they read repeatable here. Latent until #1381 lifts the narrowing refusal that keeps those triggers from deriving at all.
-const BLOCKED_BY = /\bbecomes? blocked by\b/i;
+/** "Whenever [a creature] becomes blocked BY <creatures>" triggers once for EACH blocker (CR 509.3d); without "by" it triggers once each combat however many block (CR 509.3c), and so does "by one or more <class>" or a threshold (CR 509.3e): `trigger.blocker` without `batched` is the per-blocker one (#1381). */
+const perBlocker = (t: NonNullable<Ability["trigger"]>): boolean => t.blocker !== undefined && t.batched !== true;
 /** The trigger phrase without a printed ABILITY-WORD label in front of it. `segment.ts` keeps the
  *  label on a trigger clause's text ("Inquisition Agents — Whenever equipped creature attacks",
  *  Inquisitorial Rosette), so a phrase anchored at the start would miss it. */
@@ -188,7 +187,7 @@ export function repeatsFor(ability: Ability, clauseText: string, cost = "", raw?
       // A creature blocks only in somebody else's combat, so "you" is the blocker's side, not whose turn it is: once a turn (as rule 8c, #1373).
       if (verbs.includes("blocks")) return "per-turn";
       // CR 509.3d: "becomes blocked by a creature" fires once per blocker, so it is no once-a-combat bound: it falls through.
-      if (verbs.some((v) => ONE_COMBAT_VERBS.has(v)) && !(verbs.includes("becomes-blocked") && BLOCKED_BY.test(text))) return trigger.subject.control === "you" ? "per-cycle" : "per-turn";
+      if (verbs.some((v) => ONE_COMBAT_VERBS.has(v)) && !(verbs.includes("becomes-blocked") && perBlocker(trigger))) return trigger.subject.control === "you" ? "per-cycle" : "per-turn";
     }
     // 6-7: a phase trigger fires once per turn; `control` says whose turns count. An ordinal
     // "first/second/... each turn" trigger is bounded the same way even when the verb isn't a
@@ -200,7 +199,7 @@ export function repeatsFor(ability: Ability, clauseText: string, cost = "", raw?
     // 8c (#1373): THIS creature blocks at most once a combat, and only in somebody else's: once a turn, never once a round (control "you" is the blocker's, not whose turn it is).
     if (verbs.includes("blocks") && trigger.subject.self === true) return "per-turn";
     // 8d (#1375): THIS creature becomes blocked at most once a combat (CR 509.3c) and only when it attacks, on its controller's turn (CR 508.1a): the selfAttacks split. "By <creatures>" is once per blocker (CR 509.3d), no bound.
-    const selfBlocked = verbs.includes("becomes-blocked") && trigger.subject.self === true && !BLOCKED_BY.test(text);
+    const selfBlocked = verbs.includes("becomes-blocked") && trigger.subject.self === true && !perBlocker(trigger);
     if (verbs.some((v) => PHASE_VERBS.has(v)) || selfAttacks || selfBlocked || ORDINAL_EACH_TURN.test(text)) {
       return trigger.subject.control === "you" ? "per-cycle" : "per-turn";
     }

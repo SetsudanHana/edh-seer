@@ -58,9 +58,33 @@ test("damage: the direction is the event, the kind rides beside it", () => {
   expect(one("Whenever a source you control deals noncombat damage to an opponent")).toMatchObject({ event: "damage-dealt", damage: "noncombat" });
 });
 
-test("CR 509.1a: only a creature blocks, so 'by a creature' narrows nothing; another blocker class is a narrowing", () => {
-  expect(one("Whenever this creature becomes blocked by a creature")).not.toHaveProperty("narrowing");
-  expect(one("Whenever this creature becomes blocked by a white creature").narrowing).toBe("by a white creature");
+test("CR 509.3c-e (#1381): 'becomes blocked by ...' is read into the blocker filter; what cannot be read stays a narrowing", () => {
+  const byCreature = one("Whenever this creature becomes blocked by a creature");
+  expect(byCreature).not.toHaveProperty("narrowing");
+  expect(byCreature.blocker).toEqual({ control: "any", token: null, type: "creature" });
+  expect(byCreature).not.toHaveProperty("batched");
+  expect(one("Whenever this creature becomes blocked by a white creature").blocker).toMatchObject({ type: "creature", colors: ["W"] });
+  expect(one("Whenever this creature becomes blocked by a non-Wall creature").blocker).toMatchObject({ notSubtype: ["wall"] });
+  expect(one("Whenever this creature becomes blocked by a nonblack creature").blocker).toMatchObject({ notColors: ["B"] });
+  expect(one("Whenever this creature becomes blocked by a Vampire").blocker).toMatchObject({ subtype: "vampire" });
+  expect(one("Whenever this creature becomes blocked by a green or white creature").blocker).toMatchObject({ colors: ["W", "G"] });
+  expect(one("Whenever this creature becomes blocked by a creature with power 1 or less").blocker).toMatchObject({ stats: [{ metric: "power", op: "lte", value: 1 }] });
+  // CR 509.3e / 603.2c: once per combat, however many match.
+  const oneOrMore = one("Whenever this creature becomes blocked by one or more black creatures");
+  expect(oneOrMore).toMatchObject({ batched: true, blocker: { colors: ["B"] } });
+  expect(oneOrMore).not.toHaveProperty("narrowing");
+  expect(one("Whenever this creature becomes blocked by two or more creatures")).toMatchObject({ batched: true, blocker: { type: "creature" } });
+  // Unreadable: the card or its host as the blocker, a dropped negation, a relative stat, a state.
+  for (const bad of ["by this creature", "by it", "by equipped creature", "by a nonartifact", "by a creature with lesser power", "by a creature that has been dealt damage this turn", "by a creature this combat"]) {
+    const r = one(`Whenever this creature becomes blocked ${bad}`);
+    expect(r.narrowing, bad).toBe(bad);
+    expect(r.blocker, bad).toBeUndefined();
+  }
+  // "blocks or becomes blocked by a creature": the blocks half stays a plain block; a class's "by" still narrows it.
+  const both = [parseTrigger("Whenever this creature blocks or becomes blocked by a creature", null)].flat() as TriggerReading[];
+  expect(both.map((r) => [r.event, r.narrowing, r.blocker?.type])).toEqual([["blocks", undefined, undefined], ["becomes-blocked", undefined, "creature"]]);
+  const cls = [parseTrigger("Whenever this creature blocks or becomes blocked by one or more black creatures", null)].flat() as TriggerReading[];
+  expect(cls.map((r) => [r.event, r.narrowing])).toEqual([["blocks", "by one or more black creatures"], ["becomes-blocked", undefined]]);
 });
 
 test("CR 702.6a: an Equipment's host is yours; an Aura's is anyone's", () => {

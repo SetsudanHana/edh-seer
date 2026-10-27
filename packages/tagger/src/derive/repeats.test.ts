@@ -255,16 +255,27 @@ test("rule 8c (#1373): 'blocks' is once per TURN when SELF (it blocks on an oppo
   expect(repeatsFor(triggered(["blocks"], { control: "you", type: "creature" }), "Whenever equipped creature blocks, it gets +1/+1 until end of turn.")).toBe("per-turn");
 });
 
-test("rule 8c (#1375): 'becomes blocked' is once a combat for ONE creature, once per BLOCKER when 'by' names the blockers (CR 509.3c, 509.3d)", () => {
+// `blocker` / `batched` (#1381) carry what the clause text used to: the helper puts them on the trigger beside the subject.
+const blockedBy = (subject: Record<string, unknown>, blocker?: Record<string, unknown>, batched?: true): Ability => {
+  const a = triggered(["becomes-blocked"], subject);
+  return blocker ? { ...a, trigger: { ...a.trigger!, blocker: { control: "any", token: null, ...blocker } as never, ...(batched ? { batched } : {}) } } : a;
+};
+
+test("rule 8c (#1375, #1381): 'becomes blocked' is once a combat for ONE creature, once per BLOCKER when `blocker` names them, once a combat again when `batched` (CR 509.3c, 509.3d, 509.3e)", () => {
+  const text = "ignored: the fields decide, not the text";
   // Self: only the active player attacks (CR 508.1a), so control `you` is once a round, as selfAttacks.
-  expect(repeatsFor(triggered(["becomes-blocked"], { control: "you", self: true, type: "creature" }), "Whenever this creature becomes blocked, it gets +2/+2 until end of turn.")).toBe("per-cycle");
-  expect(repeatsFor(triggered(["becomes-blocked"], { control: "opp", self: true, type: "creature" }), "Whenever this creature becomes blocked, it gets +2/+2 until end of turn.")).toBe("per-turn");
-  // CR 509.3d: "becomes blocked by a creature" fires once for each blocker: not once a combat.
-  expect(repeatsFor(triggered(["becomes-blocked"], { control: "you", self: true, type: "creature" }), "Whenever this creature becomes blocked by a creature, destroy that creature at end of combat.")).toBe("repeatable");
-  expect(repeatsFor(triggered(["becomes-blocked"], { control: "you", self: true, type: "creature" }), "Whenever this creature becomes blocked by a white creature, it gets +1/+1 until end of turn.")).toBe("repeatable");
+  expect(repeatsFor(blockedBy({ control: "you", self: true, type: "creature" }), text)).toBe("per-cycle");
+  expect(repeatsFor(blockedBy({ control: "opp", self: true, type: "creature" }), text)).toBe("per-turn");
+  // CR 509.3d: "becomes blocked by a/an <class>" fires once for each blocker: not once a combat.
+  expect(repeatsFor(blockedBy({ control: "you", self: true, type: "creature" }, { type: "creature" }), text)).toBe("repeatable");
+  expect(repeatsFor(blockedBy({ control: "you", self: true, type: "creature" }, { type: "creature", colors: ["W"] }), text)).toBe("repeatable");
+  // CR 509.3e / 603.2c: "by one or more <class>" (or a threshold) fires once, so it is bounded like a plain becomes-blocked.
+  expect(repeatsFor(blockedBy({ control: "you", self: true, type: "creature" }, { type: "creature", colors: ["B"] }, true), text)).toBe("per-cycle");
+  expect(repeatsFor(blockedBy({ control: "opp", self: true, type: "creature" }, { type: "creature" }, true), text)).toBe("per-turn");
   // ONE OBJECT (rule 7b): an equipped or enchanted creature is one object, so the same split as self.
-  expect(repeatsFor(triggered(["becomes-blocked"], { control: "you", type: "creature" }), "Whenever equipped creature becomes blocked, it gets +1/+1 until end of turn.")).toBe("per-cycle");
-  expect(repeatsFor(triggered(["becomes-blocked"], { control: "you", type: "creature" }), "Whenever enchanted creature becomes blocked by a creature, that creature gets -1/-1 until end of turn.")).toBe("repeatable");
+  expect(repeatsFor(blockedBy({ control: "you", type: "creature" }), "Whenever equipped creature becomes blocked, it gets +1/+1 until end of turn.")).toBe("per-cycle");
+  expect(repeatsFor(blockedBy({ control: "you", type: "creature" }, { type: "creature" }), "Whenever enchanted creature becomes blocked by a creature, that creature gets -1/-1 until end of turn.")).toBe("repeatable");
+  expect(repeatsFor(blockedBy({ control: "you", type: "creature" }, { type: "creature", colors: ["C"] }, true), "Whenever equipped creature becomes blocked by one or more colorless creatures, it gains deathtouch until end of turn.")).toBe("per-cycle");
   // A class: once per creature that becomes blocked.
-  expect(repeatsFor(triggered(["becomes-blocked"], { control: "you", type: "creature" }), "Whenever a creature you control becomes blocked, draw a card.")).toBe("repeatable");
+  expect(repeatsFor(blockedBy({ control: "you", type: "creature" }), "Whenever a creature you control becomes blocked, draw a card.")).toBe("repeatable");
 });

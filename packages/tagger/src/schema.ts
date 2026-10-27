@@ -1241,9 +1241,16 @@ export interface Ability {
   trigger?: {
     verbs: Verb[];
     subject: SubjectFilter;
-    /** "Whenever ONE OR MORE ... enter": one firing per batch, however many objects it holds
-     *  (CR 603.2c). Read on the trigger SUBJECT only. */
+    /** One firing per batch, however many objects it holds (CR 603.2c). Two meanings: "Whenever ONE OR MORE ... enter" batches the trigger SUBJECT, and on a `becomes-blocked`
+     *  trigger "by one or more <class>" / "by two or more creatures" batches the BLOCKERS (CR 509.3e; see `blocker`). One flag cannot say both, so a becomes-blocked trigger
+     *  that prints "one or more" in its subject AND a "by <class>" phrase is REFUSED (`narrowing:becomes-blocked`) rather than guessed. */
     batched?: true;
+    /** WHO BLOCKS (#1381): the filter on the BLOCKING creature(s) of a `becomes-blocked` trigger that prints "by ..." -- "becomes blocked by an artifact creature" (Ogre Leadfoot),
+     *  "by a creature" (`{type: "creature"}`, the class that can block at all, CR 509.1a). The trigger `subject` stays the creature that BECOMES blocked. Absent on a plain "becomes blocked"
+     *  (CR 509.3c: once a combat, however many block) and on every other trigger. With `batched` it fires once however many matching creatures block ("by one or more black
+     *  creatures", "by two or more creatures": CR 509.3e); without it, once per blocker (CR 509.3d). A threshold other than one ("two or more") is not carried, only that the
+     *  trigger is once a combat. Becomes-blocked has no producer (owner 2026-10-27), so no edge reads this: `repeats` does. */
+    blocker?: SubjectFilter;
     /** HOW BIG THE EVENT MUST BE: Ghyrson Starn's "deals exactly 1 damage" (`eq` 1), Dragonborn
      *  Champion's "deals 5 or more damage" (`gte` 5). Damage triggers only, read off the printed
      *  trigger head (`derive/event-amount.ts`). The matcher compares it with a damage producer's
