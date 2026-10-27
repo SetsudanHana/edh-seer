@@ -147,7 +147,7 @@ const COMPOUND_TYPE = new RegExp(
  *  artifact or creature, except it's an artifact in addition" (Molten Duplication) is at least the listed types together: the list
  *  `type` carries is a sweep of the words, which reads as either. Stamped on the TOKEN only -- on a target ("target land becomes an
  *  artifact in addition to its other types") the list is the OR of what may be chosen, and a result that "loses all other card types"
- *  (Espers to Magicite) is not an addition. The strict reading never forms a false edge against a negating consumer. Known simplification: the copy
+ *  (Espers to Magicite) is not an addition. The strict reading never forms a false edge against a negating consumer. CEILING: the copy
  *  of "artifact or creature" is stamped as both although only the added type is certain -- a missing edge, never a false one. */
 function conferredTypes(t: string, out: SubjectFilter): string[] | undefined {
   if (out.token !== true || !Array.isArray(out.type) || !/\bin addition to (?:its|their) other types\b/.test(t)) return undefined;
