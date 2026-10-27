@@ -6895,8 +6895,9 @@ describe("a multi-type emit names the member the trigger heard (#1224)", () => {
 });
 
 // A REFUSED TRIGGER CLAIMS NOTHING (#1253). Cunning Evasion's "Whenever a creature you control becomes
-// blocked, you may return IT to its owner's hand": the grammar refuses `becomes-blocked`, so the ability
-// derives with no trigger and a `leaves` emit that is `ref: "trigger"` over a creature -- which reads as
+// blocked, you may return IT to its owner's hand": the fixture below sets the refused flag by hand
+// (since #1375 the card derives a live, repeatable becomes-blocked trigger), so the test holds for any refused trigger: the ability
+// has no trigger and a `leaves` emit that is `ref: "trigger"` over a creature -- which reads as
 // every creature leaving. `claimsNothing` keeps the ability (and its kind) and claims no cards.
 describe("claimsNothing: an ability whose trigger was refused claims nothing", () => {
   const leavesWatcher = () => base("Blood Artist Analogue", [{

@@ -4520,6 +4520,21 @@ test("a trigger about THIS card makes its 'it' the card itself (#1253, Goblin Ca
   }
 });
 
+test("a STILL-refused trigger about THIS card makes its 'it' the card itself, and withdraws nothing (#1253, Tar Pit Warrior; `becomes-target` has no engine verb)", () => {
+  const text = "When this creature becomes the target of a spell or ability, sacrifice it.";
+  const { abilities, unknownTriggers } = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-target", subject: "this creature", control: "you" },
+      actions: [{ verb: "sacrifice", object: "it", fromZone: null, toZone: null, amount: null, optional: false }] }],
+    "Tar Pit Warrior",
+    { 1: text },
+  );
+  expect(unknownTriggers).toContain("becomes-target");
+  const emits = abilities.flatMap((a) => a.emits ?? []);
+  expect(emits.length).toBeGreaterThan(0);
+  for (const a of abilities) { expect(a.trigger).toBeUndefined(); expect(a.claimsNothing).toBeUndefined(); }
+  for (const e of emits) { expect(e.subject.self).toBe(true); expect(e.subject.ref).toBeUndefined(); }
+});
+
 test("Goblin Cadets' 'blocks or becomes blocked' derives BOTH halves as live self triggers (#1373, #1375)", () => {
   const text = "Whenever this creature blocks or becomes blocked, target opponent gains control of it. (This removes this creature from combat.)";
   const { abilities, unknownTriggers } = deriveAbilities(
