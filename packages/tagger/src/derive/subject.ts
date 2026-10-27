@@ -142,6 +142,19 @@ const COMPOUND_TYPE = new RegExp(
   "i",
 );
 
+/** A COPY TOKEN THAT GAINS A TYPE IS BOTH (#1385). "create a token that's a copy of target artifact you control, except it's a 1/1
+ *  Soldier creature IN ADDITION TO ITS OTHER TYPES" (Urza, Prince of Kroog) is an artifact AND a creature, and "...a copy of target
+ *  artifact or creature, except it's an artifact in addition" (Molten Duplication) is at least the listed types together: the list
+ *  `type` carries is a sweep of the words, which reads as either. Stamped on the TOKEN only -- on a target ("target land becomes an
+ *  artifact in addition to its other types") the list is the OR of what may be chosen, and a result that "loses all other card types"
+ *  (Espers to Magicite) is not an addition. The strict reading never forms a false edge against a negating consumer. Known simplification: the copy
+ *  of "artifact or creature" is stamped as both although only the added type is certain -- a missing edge, never a false one. */
+function conferredTypes(t: string, out: SubjectFilter): string[] | undefined {
+  if (out.token !== true || !Array.isArray(out.type) || !/\bin addition to (?:its|their) other types\b/.test(t)) return undefined;
+  const cards = out.type.filter((x) => (CARD_TYPES as readonly string[]).includes(x)).sort();
+  return cards.length >= 2 ? cards : undefined;
+}
+
 function compoundTypes(t: string): string[] | undefined {
   const m = t.match(COMPOUND_TYPE);
   if (!m) return undefined;
@@ -837,7 +850,7 @@ export function parseSubject(text: string): SubjectFilter {
   const notSubtype = parseNotSubtypes(t);
   if (notSubtype) out.notSubtype = notSubtype;
   if (umbrella) out.umbrella = umbrella;
-  const all = compoundTypes(t);
+  const all = compoundTypes(t) ?? conferredTypes(t, out);
   if (all) out.allTypes = all;
   if (subtype) out.subtype = subtype;
   if (scope) out.scope = scope;

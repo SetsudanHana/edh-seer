@@ -872,3 +872,16 @@ test("type words inside a token's quoted ability are not the token's types (#138
 test("a quoted ability cut open by a count phrase is still cut (Moira Brown, #1385)", () => {
   expect(parseSubject('a colorless Book Equipment artifact token named Wasteland Survival Guide with "Equipped creature gets +1/+1 for each quest counter among permanents you control"').type).toBe("artifact");
 });
+
+test("a copy token that gains a type in addition to its others is a conjunction (#1385)", () => {
+  // Urza, Prince of Kroog: the token is an artifact (the copy) AND a creature (the Soldier).
+  expect(parseSubject("a token that's a copy of target artifact you control, except it's a 1/1 Soldier creature in addition to its other types"))
+    .toMatchObject({ token: true, allTypes: ["artifact", "creature"] });
+  // Molten Duplication: strict reading, the listed types together.
+  expect(parseSubject("a token that's a copy of target artifact or creature you control, except it's an artifact in addition to its other types").allTypes)
+    .toContain("artifact");
+  // Stolen Identity names no added type: its list is the OR of what may be copied.
+  expect(parseSubject("a token that's a copy of target artifact or creature")).not.toHaveProperty("allTypes");
+  // a plain "or" list that is not a token result stays unmarked ("target artifact or creature you control")
+  expect(parseSubject("target artifact or creature you control, except it's an artifact in addition to its other types")).not.toHaveProperty("allTypes");
+});
