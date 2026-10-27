@@ -33,6 +33,7 @@ const TESTED: Record<string, string> = {
   "509.1h": "schema.test.ts — only an attacking creature becomes blocked, so a becomes-blocked trigger naming no class implies creature (VERB_IMPLIED_CLASS, #1375)",
   "509.3c": "derive/repeats.test.ts — 'whenever [a creature] becomes blocked' triggers once each combat for that creature: a self / equipped creature is once a combat (#1375)",
   "509.3d": "derive/repeats.test.ts — 'becomes blocked by a creature' triggers once for EACH blocker: no once-a-combat bound (#1375)",
+  "509.3e": "derive/repeats.ts CEILING — a threshold ('by two or more creatures') triggers once, which BLOCKED_BY reads as once per blocker; latent until #1381 lifts the narrowing refusal",
   "702.6a": "grammar/trigger.test.ts — equip attaches to a creature you control, so an Equipment's host is yours (#896 task 5)",
   "110.2": "scaling.test.ts — a permanent's owner and controller differ: Zedruu counts permanents you own that your opponents control",
   "105.2a": "grammar/filter.test.ts — 'monocolored' is exactly one colour (`colorCount: mono`, #896)",

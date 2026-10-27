@@ -86,6 +86,7 @@ const ONE_LIFE_VERBS = new Set(["dies", "leaves", "enters-graveyard", "sacrifice
  *  (Curiosity) fire as often as it happens, and stay with rule 9. */
 const ONE_COMBAT_VERBS = new Set(["attacks", "blocks", "becomes-blocked", "combat-damage"]);
 /** "Whenever [a creature] becomes blocked BY <creatures>" triggers once for EACH blocker (CR 509.3d); without "by" it triggers once each combat however many block (CR 509.3c). */
+// CEILING: every "becomes blocked by ..." reads as once per blocker (CR 509.3d). CR 509.3e (a threshold, "by two or more creatures") and "by one or more creatures" trigger ONCE, so they read repeatable here. Latent until #1381 lifts the narrowing refusal that keeps those triggers from deriving at all.
 const BLOCKED_BY = /\bbecomes? blocked by\b/i;
 /** The trigger phrase without a printed ABILITY-WORD label in front of it. `segment.ts` keeps the
  *  label on a trigger clause's text ("Inquisition Agents — Whenever equipped creature attacks",

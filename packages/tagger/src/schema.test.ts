@@ -49,7 +49,7 @@ test("VERB_VOCAB is a closed, unique verb list", () => {
   // 76 -> 77 on 2026-10-27 for `blocks` (#1373; owner ruling): "whenever this creature blocks" had a clause word and 192 stored rows (249 corpus cards print it) but no engine verb, so
   // `normalizeTriggerVerb` dropped the trigger and Elder Gargaroth's "attacks or blocks" modes read under the attacks visit only. Consumed from card text, supplied by every creature (implied.ts, CR 509.1a).
   // 77 -> 78 on 2026-10-27 for `becomes-blocked` (#1375; owner ruling): "whenever this creature becomes blocked" had a clause word and 168 stored rows (233 corpus cards print it) but no engine verb, so `normalizeTriggerVerb`
-  // dropped the trigger and the second half of "blocks or becomes blocked" (92 cards: Goblin Cadets, Aisling Leprechaun) derived nothing. Consumed from card text only: NO producer (CR 509.1h: the game makes a creature blocked).
+  // dropped the trigger and the second half of "blocks or becomes blocked" (55 cards outside reminder text: Goblin Cadets, Aisling Leprechaun) derived nothing. Consumed from card text only: NO producer (CR 509.1h: the game makes a creature blocked).
   expect(VERB_VOCAB).toHaveLength(78);
   expect(VERB_VOCAB).toContain("damaged");
   expect(VERB_VOCAB).toContain("exiled");

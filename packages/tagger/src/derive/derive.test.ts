@@ -4535,6 +4535,27 @@ test("a STILL-refused trigger about THIS card makes its 'it' the card itself, an
   for (const e of emits) { expect(e.subject.self).toBe(true); expect(e.subject.ref).toBeUndefined(); }
 });
 
+// #1375 review: Mirror Shield's granted "Whenever a creature with deathtouch blocks or becomes blocked BY THIS CREATURE": the watched creature is the opposing one and "this creature" is the blocker.
+// The stored clause 3 reads `becomes-blocked` with subject "this creature", which would be a live self trigger on an Equipment. The trigger is refused instead.
+test("Mirror Shield's 'becomes blocked by this creature' is refused, never a live self trigger (#1375)", () => {
+  const text = "Equipped creature gets +0/+2 and has hexproof and \"Whenever a creature with deathtouch blocks or becomes blocked by this creature, destroy that creature.\"\nEquip {2} ({2}: Attach to target creature you control. Equip only as a sorcery.)";
+  const stored = [
+    { id: 1, abilityType: "static", actions: [{ verb: "modify-pt", object: "equipped creature", amount: "+0/+2" }, { verb: "grant-ability", object: "hexproof" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "blocks", subject: "a creature with deathtouch", control: "any" }, actions: [{ verb: "destroy", object: "that creature" }] },
+    { id: 3, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "this creature", control: "you" }, actions: [{ verb: "destroy", object: "a creature with deathtouch blocking this creature" }] },
+    { id: 3, abilityType: "none", actions: [{ verb: "none", object: "Equip {2}" }] },
+  ] as never;
+  const card = { name: "Mirror Shield", typeLine: "Artifact — Equipment", oracleText: text, keywords: [] as string[] };
+  const g = grammarClauseRecords(card as never);
+  for (const [path, records] of [["model", stored], ["grammar", g.records]] as const) {
+    const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, records as never, undefined, path === "grammar" ? g.readings : undefined));
+    const live = tags.abilities.filter((a) => a.trigger?.verbs?.includes("becomes-blocked" as never));
+    expect(live, path).toHaveLength(0);
+    expect(tags.unknownTriggers ?? [], path).not.toEqual([]);
+    if (path === "model") expect(tags.unknownTriggers).toContain("blocked-by-self"); // the grammar path refuses the same phrase as a narrowing
+  }
+});
+
 test("Goblin Cadets' 'blocks or becomes blocked' derives BOTH halves as live self triggers (#1373, #1375)", () => {
   const text = "Whenever this creature blocks or becomes blocked, target opponent gains control of it. (This removes this creature from combat.)";
   const { abilities, unknownTriggers } = deriveAbilities(

@@ -1989,6 +1989,12 @@ function grammarTriggersOf(text: string, cardName: string | undefined, storedEve
   return chosen.map((r) => grammarTriggerFrom(r, text, preamble, cardName, cardText, curse, creatureCard));
 }
 
+/** "...becomes blocked by this creature / by it / by equipped creature / by enchanted creature / by <the card's name>": the card (or its host) is the BLOCKER, not the creature the trigger watches. */
+function blockedBySelf(text: string, cardName?: string): boolean {
+  const name = cardName ? cardName.split(" // ")[0]!.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&") : "";
+  return new RegExp(`\\bbecomes? blocked by (?:this creature|it|equipped creature|enchanted creature${name ? `|${name}` : ""})(?![\\w'])`, "i").test(text);
+}
+
 function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, cardName: string | undefined, cardText: string, curse?: boolean, creatureCard?: boolean): GrammarTrigger {
   // A CURSE'S ENCHANTED PLAYER IS AN OPPONENT (owner 2026-10-07): Maddening Hex's "whenever enchanted
   // player casts a noncreature spell" was refused as a narrowing to one player, so its damage had
@@ -2010,6 +2016,9 @@ function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, c
   if (verb === "enters" && /\btransformed\b/.test(r.narrowing ?? "")) return { refused: "enters-transformed", subject };
   if (r.condition && !classifyCondition(r.condition.text, { threshold: thresholdFor(text) !== undefined, selfDiesOnCreatureCard: verb === "dies" && subject.self === true && creatureCard === true }).represented) return { refused: `if:${r.event}`, subject };
   if (r.narrowing && !narrowingRepresented(r, text)) return { refused: `narrowing:${r.event}`, subject };
+  // "Whenever a creature with deathtouch blocks or becomes blocked BY THIS CREATURE" (Mirror Shield, granted to the host): the watched creature is the OPPOSING one and the named blocker is the host or the card, so the
+  // stored subject "this creature" would be a live self trigger on the wrong object. Refused rather than guessed (#1375 review).
+  if (verb === "becomes-blocked" && blockedBySelf(text, cardName)) return { refused: "blocked-by-self", subject };
   if (verb === "leaves" && WITHOUT_DYING.test(text)) subject.withoutDying = true;
   if (r.condition && SAME_NAME.test(r.condition.text)) subject.uniqueName = true;
   // "An enchanted / equipped creature" is CR 700.9's `modified`, the field producers state.
@@ -2609,6 +2618,9 @@ export function deriveAbilities(
         // is free and works even when the money fix cannot: a re-ask whose answer the persist gate
         // REFUSES leaves the older, wrong doc standing, so the clause layer alone cannot fix it.
         unknownTriggers.push(`phantom:${verb}`);
+      } else if (verb === "becomes-blocked" && isSelfSubject(clause.trigger.subject ?? "", cardName) && blockedBySelf(cardText, cardName)) {
+        // The stored record is numbered into another sentence (Mirror Shield: clause 3 is "Equip {2}"), so the printed phrase is read off the whole card: the stored "this creature" is the BLOCKER (#1375 review).
+        unknownTriggers.push("blocked-by-self");
       } else if (verb) {
         const subject = subjectFrom(clause.trigger.subject ?? "", cardName, enchantText);
         const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];

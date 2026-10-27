@@ -1,4 +1,5 @@
 import type { CardTags, GameEvent, SubjectFilter, Verb } from "@edh-seer/tagger";
+import { CONSUMER_ONLY } from "@edh-seer/tagger/verb-accounting";
 import type { Hierarchy } from "./types.js";
 import { COMBAT_VERBS, combatNarrowsByType, combatSelfSupplied, eventMatches, producerEvents } from "./edges.js";
 import { WILDCARD_SUBJECT, normalizeZoneEvent, zoneEventKeyRaw } from "./zones.js";
@@ -225,7 +226,9 @@ export function buildCensus(
     // `consumerKey` marks only COMBAT verbs, so no key moves here — the flag changes what the row
     // MEANS to `deckAvailability` (`available: null`, a refusal rather than a probability), not
     // which row it is.
+    // A CONSUMER-ONLY ENGINE VERB has no producer by owner ruling (`becomes-blocked`, CR 509.1h, #1375): the game or an opponent's blockers supply it, so a payoff is never an unmet demand.
     const selfSupplied = c.event.subject.self === true
+      || CONSUMER_ONLY.includes(c.event.verb)
       || combatSelfSupplied(impliedCombatProducer(c.event.verb), c.event);
     return { key: consumerKey(c.event, selfSupplied), cards: c.cards, counterpart, selfSupplied, authored: true };
   });
