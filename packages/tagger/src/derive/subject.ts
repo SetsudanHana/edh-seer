@@ -193,8 +193,8 @@ function parseTypes(
   // \"EQUIPPED CREATURE gets +1/+0\"") were swept into `type`, so the Prydwen's Knight read as an artifact creature and every
   // Equipment token as a creature. Quoted text is cut before any sweep -- only after the word "token", since an emblem's quoted text IS its subject (Kaito's
   // Ninjas); a quoted NAME stays.
-  // Left alone on purpose: only the TYPE sweep is cut. The same quoted text also leaks scope, control and subtype words (Country Roads' Pilot token
-  // gains Mount and Vehicle; Vernal Sovereign's scope), left for a separate fix so this change moves types alone.
+  // CEILING: only the TYPE sweep is cut. The same quoted text also leaks scope, control and subtype words (Country Roads' Pilot token
+  // gains Mount and Vehicle; Vernal Sovereign's scope), left for #1387 so this change moves types alone.
   // `plural` is still read off the whole text so `scope` does not move with this change.
   const head = stripTokenAbility(t);
   for (const ty of TYPES) {
@@ -725,8 +725,9 @@ const TARGETS_ONLY = /\btargets? only\b/i;
 const ATTACHED_TO = /\battached to\b/i;
 /** Cut the quoted ability off a token description; any other text is returned untouched. */
 function stripTokenAbility(text: string): string {
-  const q = text.search(/["']/);
-  if (q < 0 || !/\btokens?\b/i.test(text.slice(0, q === 0 ? 0 : q))) return text;
+  // The first DOUBLE quote or `with '`, never a bare apostrophe: "Volo's Journal, a ... token" has one before the word "token".
+  const q = text.search(/"|\bwith\s+'/i);
+  if (q < 0 || !/\btokens?\b/i.test(text.slice(0, q))) return text;
   return text.replace(QUOTED_ABILITY, " ");
 }
 /** A double-quoted span not introduced by "named", or a single-quoted ability after "with" (nested inside a quote). An UNCLOSED quote runs

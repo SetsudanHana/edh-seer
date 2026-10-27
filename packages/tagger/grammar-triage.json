@@ -6,7 +6,7 @@
       "distinct": 83,
       "label": "grammar right",
       "rule": "CR 112.2",
-      "why": "Two shapes, both right. (1) 'spells you cast' (70 of 73): a spell's controller is the player who put it on the stack, so the caster is the controller -- parseSubject's control regex knows 'you control' and 'your' but not 'you cast', and answered any. (2) 'of an opponent's choice' / 'of your choice' (6): the chooser is not the controller; parseSubject read 'opponent'/'your' anywhere and answered opp/you. A Clue, Food or Treasure 'of your choice' is created under the creator's control by CONTROLLER_DEFAULT, not by this word. The 'that targets only' member names the TARGET's controller, not the spell's, and the subject is refused (restricted) either way. 'a token that's a copy of a permanent you control': 'you control' names the ORIGINAL, not the token, which CONTROLLER_DEFAULT gives its creator (CR 111.2). (3) 'a spell that targets only a single creature you control' (was group control,type, #1385): the type no longer differs, since parseSubject now cuts a token's quoted ability and a restricted subject carries no type either way; control belongs to the target in the relative clause."
+      "why": "Two shapes, both right. (1) 'spells you cast' (70 of 73): a spell's controller is the player who put it on the stack, so the caster is the controller -- parseSubject's control regex knows 'you control' and 'your' but not 'you cast', and answered any. (2) 'of an opponent's choice' / 'of your choice' (6): the chooser is not the controller; parseSubject read 'opponent'/'your' anywhere and answered opp/you. A Clue, Food or Treasure 'of your choice' is created under the creator's control by CONTROLLER_DEFAULT, not by this word. The 'that targets only' member names the TARGET's controller, not the spell's, and the subject is refused (restricted) either way. 'a token that's a copy of a permanent you control': 'you control' names the ORIGINAL, not the token, which CONTROLLER_DEFAULT gives its creator (CR 111.2). (3) 'a 2/2 white Human Knight creature token with \"...under your control this turn.\"' (The Prydwen, Steel Flagship; this phrase was group control,type before #1385): the type difference is gone, since parseSubject now cuts a token's quoted ability from the type sweep. What remains is control: parseSubject still reads 'your control' inside the quote and answers you, the grammar answers any. That is the quote leak of #1387, and the grammar is right."
     },
     "scope": {
       "distinct": 87,
@@ -1914,7 +1914,7 @@
       "distinct": 1,
       "label": "grammar right",
       "rule": "CR 112.2, CR 115.1, printed text",
-      "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive or relative clause names another object's controller; counter: an energy amount inside a stat's rhs is not the subject's counter; type: the type is the head noun's: not a word from a targets-only clause or a token's quoted ability."
+      "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive or relative clause names another object's controller; counter: an energy amount inside a stat's rhs is not the subject's counter."
     }
   }
 }
