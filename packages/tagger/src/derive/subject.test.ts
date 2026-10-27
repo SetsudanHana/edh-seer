@@ -312,9 +312,9 @@ test("a negation is RECORDED as itself, not only as the types it leaves", () => 
     notType: ["creature"],
   });
   expect(parseSubject("target nonland permanent").notType).toEqual(["land"]);
-  // A negation that narrows nothing ("nonartifact creature" is still a creature) leaves the subject
-  // alone, and must not claim a constraint the matcher is not applying.
-  expect(parseSubject("target nonartifact creature").notType).toBeUndefined();
+  // A negation that narrows nothing ("nonartifact creature" is still a creature) is recorded all the
+  // same (#1383): the matcher applies `notType` as an exclusion (8cdb0d7b).
+  expect(parseSubject("target nonartifact creature").notType).toEqual(["artifact"]);
   expect(parseSubject("target creature").notType).toBeUndefined();
 });
 
@@ -845,4 +845,12 @@ test("'except it isn't legendary' on a non-token subject does not demand a nonle
   // a created token copy IS the result: it keeps legendary:false
   expect(parseSubject("a token that's a copy of equipped creature, except the token isn't legendary").legendary).toBe(false);
   expect(parseSubject("a nonlegendary artifact").legendary).toBe(false);
+});
+
+test("a negated card type beside a head type is recorded as notType (#1383)", () => {
+  expect(parseSubject("all nonartifact creatures")).toMatchObject({ type: "creature", notType: ["artifact"] });
+  expect(parseSubject("target nonenchantment creature")).toMatchObject({ type: "creature", notType: ["enchantment"] });
+  expect(parseSubject("a noncreature artifact")).toMatchObject({ type: "artifact", notType: ["creature"] });
+  expect(parseSubject("target nonland permanent").notType).toEqual(["land"]);
+  expect(parseSubject("a nonblack creature").notType).toBeUndefined();
 });

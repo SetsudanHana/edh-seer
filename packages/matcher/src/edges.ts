@@ -652,7 +652,8 @@ function loneTypeNarrows(s: SubjectFilter): boolean {
   // the six remaining types, every one outside the whole board, and read as a type list it reached
   // 63 cards in a spellslinger deck on the first derive-143 measurement. Same rank
   // `themeSubjectKey` gives it: the negation outranks the list it resolves to.
-  if ((s.notType?.length ?? 0) > 0) return false;
+  // ...but a negation beside ONE type ("a noncreature artifact card", #1383) names that type.
+  if ((s.notType?.length ?? 0) > 0 && list(s.type).length !== 1) return false;
   const types = [...list(s.type), ...(s.anyOf ?? []).flatMap((b) => list(b.type))];
   return types.length > 0 && types.every((t) => !WHOLE_DECK_TYPES.has(t));
 }
