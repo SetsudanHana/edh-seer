@@ -4640,15 +4640,20 @@ describe("becomes blocked by <creatures> (#1381, CR 509.3c-e)", () => {
     expect(tags.unknownTriggers).toContain("narrowing:becomes-blocked");
   });
 
-  test("the stored path reads the printed phrase too (the stored subject can be the blocker: Ogre Leadfoot)", () => {
-    const text = "Whenever this creature becomes blocked by an artifact creature, destroy that creature.";
-    const card = { name: "Ogre Leadfoot", typeLine: "Creature — Ogre Soldier", oracleText: text, keywords: [] as string[] };
-    const stored = [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "an artifact creature", control: "any" }, actions: [{ verb: "destroy", object: "that creature" }] }] as never;
-    const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, stored, undefined, undefined));
+  test("the STORED branch (no printed trigger word, so the grammar reads nothing) sets the blocker off the printed phrase, once per blocker, and refuses an unreadable one", () => {
+    const mk = (name: string, oracleText: string) => {
+      const card = { name, typeLine: "Creature — Ogre Soldier", oracleText, keywords: [] as string[] };
+      const stored = [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "this creature", control: "you" }, actions: [{ verb: "destroy", object: "that creature" }] }] as never;
+      return deriveCardTags(deriveInputOf(card as never, "x", name, stored, undefined, undefined));
+    };
+    const tags = mk("Ogre Leadfoot", "This creature becomes blocked by an artifact creature, destroy that creature.");
     const [t] = blocked(tags);
     expect(t!.trigger!.blocker).toMatchObject({ type: expect.arrayContaining(["creature", "artifact"]) });
-    const bad = deriveCardTags(deriveInputOf({ ...card, name: "X", oracleText: "Whenever this creature becomes blocked by a creature with lesser power, destroy that creature." } as never, "x", "X", stored, undefined, undefined));
+    expect(t!.trigger!.batched).toBeUndefined();
+    expect(t!.repeats).toBe("repeatable");
+    const bad = mk("X", "This creature becomes blocked by a creature with lesser power, destroy that creature.");
     expect(blocked(bad)).toHaveLength(0);
+    expect(bad.unknownTriggers).toContain("narrowing:becomes-blocked");
   });
 });
 
