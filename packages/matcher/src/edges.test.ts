@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { isManaRock, pairReasons, pairReasonsAcrossFaces, directedReasons, revenantToughness, cardThemeTags, cardSupplyTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons } from "./edges.js";
+import { isManaRock, pairReasons, pairReasonsAcrossFaces, directedReasons, revenantToughness, cardThemeTags, cardSupplyTags, themeSubjectKey, eventTagKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons } from "./edges.js";
 import { normalizeZoneEvent } from "./zones.js";
 import { faceDeckCards } from "./faces.js";
 import { fixtureDeckCard } from "./fixture-cards.js";
@@ -7037,4 +7037,12 @@ describe("a damage emit split per half (#1266)", () => {
     expect(reasons.length).toBeGreaterThan(0);
     for (const r of reasons) { expect(r.text).toContain("a player is dealt damage thanks to Lava Spike"); expect(r.text).not.toMatch(/When Lava Spike is dealt damage/); }
   });
+});
+
+test("a subject naming ONE type beside a negation keys as the type; a negated list keeps the negation (#1383)", () => {
+  const dies = (subject: Partial<SubjectFilter>) => eventTagKey({ verb: "dies", subject: { control: "any", token: null, ...subject } } as GameEvent, undefined);
+  expect(dies({ type: "creature", notType: ["artifact"] })).toBe("dies:creature");
+  expect(themeSubjectKey({ type: "artifact", notType: ["creature"] })).toBe("artifact");
+  expect(themeSubjectKey({ type: ["artifact", "enchantment", "instant"], notType: ["creature"] })).toBe("-creature");
+  expect(themeSubjectKey({ type: ["creature", "artifact", "enchantment", "planeswalker", "battle"], notType: ["land"] })).toBe("-land");
 });

@@ -36,6 +36,9 @@ const PARTY = ["cleric", "rogue", "warrior", "wizard"];
 /** Keywords whose second instance on one object adds nothing (CR 702, generated: `cr-keywords.json`). */
 const REDUNDANT_KEYWORDS: ReadonlySet<string> = new Set(crKeywords.redundant);
 
+/** Subjects `keyedOn` cut from a negated type list down to one member: they still key as the negation. */
+const NARROWED_FROM_NEGATION = new WeakSet<object>();
+
 /** A short human/grouping key for a subject: its subtype, else its type, else "any". */
 export function themeSubjectKey(s: Partial<SubjectFilter>): string {
   // A NEGATION outranks the list it resolves to. `type` holds the six types "noncreature spell"
@@ -47,7 +50,11 @@ export function themeSubjectKey(s: Partial<SubjectFilter>): string {
   // gets. Only 10 clauses in the derived corpus carry one, so the theme fragmentation this could
   // cause is bounded, and a name really is its own theme where it appears.
   if (s.named !== undefined) return s.named;
-  const negated = s.notType ?? [];
+  // ...except a subject that NAMES one concrete type beside its negation ("nonartifact creature",
+  // "noncreature artifact", #1383): its `type` is the class, and `notType` only narrows it, so it keys
+  // as the type. A subject `keyedOn` cut from a negated LIST is not that (the single type is one
+  // leftover of the negation), and `NARROWED_FROM_NEGATION` marks it.
+  const negated = (s.notType?.length ?? 0) > 0 && list(s.type).length === 1 && !NARROWED_FROM_NEGATION.has(s) ? [] : s.notType ?? [];
   // A DISJUNCTION holds its type/subtype in the branches, so a subject with `anyOf` has neither on
   // the outside and would key as "any" — turning Prowl's `enters:creature` into `enters:any` and
   // regrouping it with every untyped trigger. The first branch is the one the text names first.
@@ -673,7 +680,10 @@ function keyedOn(subject: SubjectFilter, found: SubjectFilter): SubjectFilter {
   const types = list(subject.type);
   if (subs.length > 0 || types.length < 2) return subject;
   const hit = types.find((t) => list(found.type).includes(t));
-  return hit === undefined ? subject : { ...subject, type: hit };
+  if (hit === undefined) return subject;
+  const narrowed = { ...subject, type: hit };
+  if ((subject.notType?.length ?? 0) > 0) NARROWED_FROM_NEGATION.add(narrowed);
+  return narrowed;
 }
 
 /** THE BRANCH OF AN `anyOf` THE CONSUMER ASKED FOR, for the sentence only (#750): Bloodstained Mire's
