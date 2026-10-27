@@ -254,9 +254,11 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
       // artifact or creature" (Reactor Raid), "target nonland permanent" (Stroke of Midnight), "a copy of target artifact or
       // creature" (Stolen Identity) -- and is refused only when EVERY alternative is excluded: a noncreature artifact is a
       // legal sacrifice, so Jaws hears Reactor Raid. A single type is its own list and is refused when excluded.
-      // CEILING: an unmarked conjunction reads as an OR, which admits a false edge against a negating consumer. Derive marks every
-      // conjunction it can see (a copy token takes the copied object's class, not the `tokenTypeFor` union; a self-named "exiled with this
-      // artifact" is cut). The residue is a sweep of type words read as alternatives -- Goblin Kaboomist's "Land Mine" token NAME, [artifact, land].
+      // CEILING: an unmarked conjunction reads as an OR, which admits a false edge against a negating consumer. Derive marks the conjunctions it can
+      // see and the matcher stamps every printed type line it builds (`printedAllTypes`: selfSubject, selfLeavesTypes, selfFillTypes, faceClass,
+      // characteristicsSubject). What remains is a sweep of type words read as alternatives: Rise and Shine's counter-added `[creature, artifact]`
+      // ("each artifact that became a creature", latent -- no consumer reads it today), Goblin Kaboomist's "Land Mine" token NAME `[artifact, land]`,
+      // and the "becomes an artifact creature" results (Earthrumbler, Suit Up); none forms an edge in the 2026-10 probes.
       const andList = (producer.allTypes?.length ?? 0) > 0;
       if (producerTokens.length > 1 && !andList ? producerTokens.every((t) => excluded([t])) : excluded(producerTokens)) return false;
     }

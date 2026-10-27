@@ -64,7 +64,7 @@
   "packages/tagger/src/derive/derive.ts": 42,
   "packages/tagger/src/derive/effect-gate.ts": 9,
   "packages/tagger/src/derive/effect-kind.ts": 9,
-  "packages/tagger/src/derive/emits.ts": 6,
+  "packages/tagger/src/derive/emits.ts": 7,
   "packages/tagger/src/derive/event-count.ts": 1,
   "packages/tagger/src/derive/gate.ts": 2,
   "packages/tagger/src/derive/graveyard-replacement.ts": 1,

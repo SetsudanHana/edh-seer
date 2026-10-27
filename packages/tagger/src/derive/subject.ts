@@ -155,6 +155,17 @@ function conferredTypes(t: string, out: SubjectFilter): string[] | undefined {
   return cards.length >= 2 ? cards : undefined;
 }
 
+/** A COPY TOKEN THAT "LOSES ALL OTHER CARD TYPES" IS ONLY WHAT IT GAINS (#1385 review). "...a copy of that card, except it's an artifact and it
+ *  loses all other card types" (Espers to Magicite) and "...it's a Food artifact ... and it loses all other card types" (Shelob) are artifacts and
+ *  nothing else; the sweep also read the copied creature. The conferred types are the card types between "except" and "loses". */
+function lostOtherTypes(t: string, out: SubjectFilter): string | string[] | undefined {
+  if (out.token !== true || !Array.isArray(out.type)) return undefined;
+  const m = /\bexcept\s+(?:it|they)(?:'s|'re|\s+is|\s+are)\b(.*?)\bloses?\s+all\s+other\s+card\s+types\b/.exec(t);
+  if (!m) return undefined;
+  const kept = out.type.filter((x) => (CARD_TYPES as readonly string[]).includes(x) && new RegExp(`\\b${x}s?\\b`).test(m[1]!));
+  return kept.length === 0 ? undefined : kept.length === 1 ? kept[0] : kept;
+}
+
 function compoundTypes(t: string): string[] | undefined {
   const m = t.match(COMPOUND_TYPE);
   if (!m) return undefined;
@@ -862,6 +873,8 @@ export function parseSubject(text: string): SubjectFilter {
   const notSubtype = parseNotSubtypes(t);
   if (notSubtype) out.notSubtype = notSubtype;
   if (umbrella) out.umbrella = umbrella;
+  const lost = lostOtherTypes(t, out);
+  if (lost !== undefined) out.type = lost;
   const all = compoundTypes(t) ?? conferredTypes(t, out);
   if (all) out.allTypes = all;
   if (subtype) out.subtype = subtype;

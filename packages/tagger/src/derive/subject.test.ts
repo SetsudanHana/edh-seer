@@ -899,3 +899,14 @@ test("a type word in 'exiled with this artifact' names the card itself, not the 
   // the subject itself is still a type: "this creature or another creature you control"
   expect(parseSubject("this creature or another creature you control").type).toBe("creature");
 });
+
+test("a copy token that 'loses all other card types' is only the conferred type (#1385 review)", () => {
+  // Espers to Magicite: "a token that's a copy of that card, except it's an artifact and it loses all other card types".
+  expect(parseSubject("a token that's a copy of that card, except it's an artifact and it loses all other card types")).toMatchObject({ token: true, type: "artifact" });
+  // Shelob, Child of Ungoliant: a Food artifact.
+  const food = parseSubject("a token that's a copy of that creature, except it's a Food artifact with that ability and it loses all other card types and all creature types");
+  expect(food.type).toBe("artifact");
+  expect(food).not.toHaveProperty("allTypes");
+  // not a loss: still the copy's own types plus the added one
+  expect(parseSubject("a token that's a copy of target creature, except it's an artifact in addition to its other types").allTypes).toEqual(["artifact", "creature"]);
+});

@@ -673,3 +673,22 @@ describe("a copy token takes its type from what it copies (#1385)", () => {
     expect(enters("a token that's a copy of target Elemental you control", "Create a token that's a copy of target Elemental you control.").subject.type).toBe("creature");
   });
 });
+
+// #1385 review: "cast any number of spells from among cards exiled with this artifact" is typed `spell` once the self-named artifact is cut, which feeds
+// every "whenever you cast a creature spell" payoff (Beast Whisperer). The class is what the card's OWN exile clause printed.
+import { narrowSelfExiledSpell } from "./emits.js";
+describe("spells exiled with this card take the class of the card's own exile clause (#1385)", () => {
+  const cast = [{ verb: "cast", subject: { control: "you", token: null, type: "spell" } }] as never;
+  const clause = "{X}, {T}, Sacrifice this artifact: You may cast any number of spells from among cards exiled with this artifact with total mana value X or less without paying their mana costs.";
+  test("Rod of Absorption: instants and sorceries", () => {
+    const out = narrowSelfExiledSpell(cast, clause, "Whenever a player casts an instant or sorcery spell, exile it instead of putting it into a graveyard as it resolves.\n" + clause);
+    expect(out[0]!.subject.type).toEqual(["instant", "sorcery"]);
+  });
+  test("Knowledge Pool: the exile clause names no class, so it stays a spell", () => {
+    const text = "Whenever a player casts a spell from their hand, that player exiles it. If the player does, they may cast a spell from among other cards exiled with this artifact without paying its mana cost.";
+    expect(narrowSelfExiledSpell(cast, text, text)[0]!.subject.type).toBe("spell");
+  });
+  test("a clause that is not about its own exiled cards is untouched", () => {
+    expect(narrowSelfExiledSpell(cast, "You may cast a spell.", "Exile an instant.")[0]!.subject.type).toBe("spell");
+  });
+});

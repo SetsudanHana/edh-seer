@@ -581,9 +581,13 @@ export function selfLeavesTypes(events: GameEvent[], chars: Characteristics): Ga
     if (!SELF_TYPED_VERBS.has(e.verb) || e.subject.self !== true) return e;
     const types = chars.types.map((t) => t.toLowerCase());
     const subtypes = chars.subtypes.map((t) => t.toLowerCase());
+    // The printed line is a conjunction (#1385): a stale `allTypes` from the clause's noun goes with the type it described.
+    const { allTypes: _noun, ...rest } = e.subject;
+    const allTypes = printedAllTypes(types);
     return { ...e, subject: {
-      ...e.subject,
+      ...(types.length ? rest : e.subject),
       ...(types.length ? { type: types } : {}),
+      ...(allTypes ? { allTypes } : {}),
       ...(subtypes.length ? { subtype: subtypes } : {}),
       // ...and whether it is a token: Eldrazi Scion's "Sacrifice this token" is a token's death.
       ...(chars.token ? { token: true } : {}),
@@ -654,10 +658,13 @@ export function selfFillTypes(events: GameEvent[], chars: Characteristics): Game
     const zone = zoneTypes(chars);
     const types = zone.types.map((t) => t.toLowerCase());
     const subtypes = zone.subtypes.map((t) => t.toLowerCase());
+    const { allTypes: _noun, ...rest } = e.subject;
+    const allTypes = printedAllTypes(types);
     return { ...e, subject: {
-      ...e.subject,
+      ...(types.length ? rest : e.subject),
       ...flags,
       ...(types.length ? { type: types } : {}),
+      ...(allTypes ? { allTypes } : {}),
       ...(subtypes.length ? { subtype: subtypes } : {}),
       // A TOKEN IN THE GRAVEYARD IS NO CARD (CR 704.5d: it ceases to exist), so Spawnbed Protector's
       // "return target Eldrazi creature CARD" must not hear Eldrazi Scion's own death (#956).

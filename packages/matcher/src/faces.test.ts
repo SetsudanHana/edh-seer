@@ -149,3 +149,11 @@ test("a face that says 'transformed' but whose re-entry was not marked stays unt
   expect(e.subject.type).toBeUndefined();
   expect(enteringFaceName(front, e)).toBeUndefined();
 });
+
+// #1385 review: Reflection of Kiki-Jiki (Fable of the Mirror-Breaker) is an Enchantment Creature, but a bare [creature, enchantment] list reads as an OR
+// and a noncreature consumer (Builder's Talent) heard it. The back face's printed line is a conjunction.
+test("a transformed self re-entry carries the back face's printed types as allTypes (#1385)", () => {
+  const [front] = faceDeckCards(jill("Exile Jill, then return it to the battlefield transformed.",
+    [{ ...reEntry, subject: { ...reEntry.subject, transformed: true } }]));
+  expect(front.tags!.abilities[0]!.emits![0]!.subject.allTypes).toEqual(["creature", "enchantment"]);
+});

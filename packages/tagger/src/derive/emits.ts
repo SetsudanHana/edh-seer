@@ -518,6 +518,26 @@ export const COPY_TOKEN_HEAD = /^((?:[a-z0-9]+ ){0,3}tokens?(?: that(?:'s| are| 
 const PLAYER_CREATES = /\b(?:opponents?|players?|controllers?|owners?|friends?|foes?)\s+(?:may\s+)?creates?\b/i;
 const COPIED_PHRASE = /\bcop(?:y|ies)\s+of\b[^.]*/i;
 
+/** "cast any number of spells from among cards exiled with this artifact" (Rod of Absorption, Forger's Foundry): the phrase names the card that
+ *  exiled them, not their class, so the subject is the umbrella `spell`, which feeds every creature-spell payoff. The class is what the card's OWN
+ *  exile clause printed ("Whenever a player casts an instant or sorcery spell, exile it ..."). Taken only from a sentence that exiles and names a
+ *  concrete type; a card whose exile clause names none (Knowledge Pool: "casts a spell ... exiles it") keeps the umbrella, which is correct for it. */
+const SELF_EXILED = /\bexiled\s+(?:with|by)\s+this\b/i;
+export function narrowSelfExiledSpell(emits: GameEvent[], clauseText: string, cardText: string): GameEvent[] {
+  if (!SELF_EXILED.test(clauseText) || !emits.some((e) => e.subject.type === "spell")) return emits;
+  const classes = new Set<string>();
+  for (const sentence of cardText.split(/[.\n]/)) {
+    if (SELF_EXILED.test(sentence) || !/\bexiles?\b/i.test(sentence)) continue;
+    // Only the words that qualify "spell" ("an instant or sorcery spell"), never the card's own type ("exile this artifact") or an object ("creature card").
+    for (const m of sentence.matchAll(/((?:\b(?:creature|artifact|enchantment|instant|sorcery|planeswalker|battle)\b[ ,]*(?:or |and )?)+)spells?\b/gi)) {
+      for (const w of m[1]!.toLowerCase().match(/[a-z]+/g) ?? []) if (w !== "or" && w !== "and") classes.add(w);
+    }
+  }
+  if (classes.size === 0) return emits;
+  const type = [...classes];
+  return emits.map((e) => e.subject.type === "spell" ? { ...e, subject: { ...e.subject, type: type.length === 1 ? type[0]! : type } } : e);
+}
+
 /** Does this token copy a CREATURE? The clause names one ("Exile target creature card ... create a token that's a copy of it", Scarab God), or the
  *  copied phrase names the token's own creature subtype ("a copy of target Goblin you control", Grub's Command). Quoted abilities are not the copy. */
 function copiesACreature(object: string, clauseText: string | undefined, subtype: string): boolean {
@@ -726,8 +746,11 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // multi-type fill admits what the token is not -- The Scarab God's Zombie copy of a CREATURE card paired with Builder's Talent
   // ("noncreature, nonland"). So a multi-type fill is only taken for a COPY, and then only as the copied object's class: `creature`
   // when the clause says the copied thing is one ("target creature card"), or when it names a creature subtype ("target Goblin you
-  // control"); anything the text adds ("except it's an artifact in addition") is `allTypes`, stamped in `parseSubject`. A multi-type union
-  // for a token that copies nothing is dropped: an unknown type matches as before, which is the missing edge and not the false one.
+  // control"); anything the text adds ("except it's an artifact in addition") is `allTypes`, stamped in `parseSubject`. CEILING: a multi-type union for a token that copies
+  // nothing is dropped, leaving `type` unset. An unset type is a WILDCARD downstream (implied.ts: "an untyped producer subject is a wildcard that
+  // satisfies every consumer filter"), so this is not obviously the missing edge: it can form a false one. It reaches 0 corpus cards at 399
+  // (derive-identity: dropping it changes nothing), so the direction is unmeasured; the alternative, an OR over the union, is the false edge
+  // this block exists to remove.
   const tableType = subject.token === true && subject.type === undefined
     && typeof subject.subtype === "string"
     ? tokenTypeFor(subject.subtype)

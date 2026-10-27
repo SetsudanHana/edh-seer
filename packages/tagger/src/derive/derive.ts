@@ -11,7 +11,7 @@ import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Char
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
-import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
+import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, narrowSelfExiledSpell, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, activationConditionOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
 import { hostEffect } from "./host.js";
@@ -2848,7 +2848,7 @@ export function deriveAbilities(
       // "tapped") still emits the wildcard `{token:true, scope:all}` tap, because CREATED_TOKEN_REF only
       // resolves when "tapped" is present.
       const tapsCreated = tapMadeHere && TAPPED_WORD.test(effectText(text, cardName ?? "")) && !TAPS_IT.test(effectText(text, cardName ?? ""));
-      const emits = temporaryRider ? [] : actionEmits(antecedent ? { ...action, object: antecedent, ...(zone ? { fromZone: zone } : {}) } : action, text, { self: emitsSelf })
+      const emits = temporaryRider ? [] : narrowSelfExiledSpell(actionEmits(antecedent ? { ...action, object: antecedent, ...(zone ? { fromZone: zone } : {}) } : action, text, { self: emitsSelf }), text, cardText)
         .filter((e) => !(e.verb === "taps" && (tapsCreated || ARRIVES_TAPPED.test(effectText(text, cardName ?? "")))))
         // A SACRIFICE triggered by the card's own LEAVING is drawback, not supply. "When this
         // enchantment leaves the battlefield, that creature's controller sacrifices it" (Necromancy,
