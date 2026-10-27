@@ -1963,7 +1963,7 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
 
 type GrammarTrigger = { verbs: Verb[]; subject: SubjectFilter; blocker?: SubjectFilter; batched?: true } | { refused: string; subject?: SubjectFilter };
 
-function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, split: boolean, precomputed?: TriggerReading[], curse?: boolean, creatureCard?: boolean): GrammarTrigger[] | null {
+function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, split: boolean, precomputed?: TriggerReading[], curse?: boolean, creatureCard?: boolean, textlessSibling?: boolean): GrammarTrigger[] | null {
   // An Aura's "enchanted permanent" is the class its own face's Enchant line names (see subjectFrom).
   const bounded = boundedByEnchantLine(text, enchantText);
   const preamble = printedPreamble(bounded, cardName ?? "");
@@ -1987,7 +1987,14 @@ function grammarTriggersOf(text: string, cardName: string | undefined, storedEve
   const mine = readings.filter((x) => x.event === storedEvent);
   const chosen = !split ? readings : mine.length > 0 ? mine : [readings[0]!];
   if (chosen.some((r) => r.event === "reflexive")) return null;
-  return chosen.map((r) => grammarTriggerFrom(r, text, preamble, cardName, cardText, curse, creatureCard));
+  const out = chosen.map((r) => grammarTriggerFrom(r, text, preamble, cardName, cardText, curse, creatureCard));
+  // "Blocks or becomes blocked by <class>" stored as TWO records (#1381): the blocks half is refused (its class is a narrowing) while the becomes-blocked half is read. Taking every
+  // reading on the first record would make it the live becomes-blocked ability and lose the blocks half's own (refused) ability, which the sibling record then folds away as
+  // a twin. With a blocks / becomes-blocked sibling record (textless, or numbered into this sentence: Gorgon Recluse) and a MIXED answer, each record keeps its own event's reading, as a split compound does.
+  if (!split && textlessSibling && mine.length > 0 && mine.length < readings.length && out.some((g) => "refused" in g) && out.some((g) => !("refused" in g))) {
+    return mine.map((r) => grammarTriggerFrom(r, text, preamble, cardName, cardText, curse, creatureCard));
+  }
+  return out;
 }
 
 /** "...becomes blocked by this creature / by it / by equipped creature / by enchanted creature / by <the card's name>": the card (or its host) is the BLOCKER, not the creature the trigger watches. */
@@ -2525,7 +2532,8 @@ export function deriveAbilities(
     }
     const grammarAll = clause.trigger?.event && text && !misplaced ? grammarTriggersOf(text, cardName, clause.trigger.event, cardText, enchantText,
       clauses.some((c) => c.id !== clause.id && c.trigger?.event && clauseTexts?.[c.id] === clauseText),
-      readings?.[clause.id]?.trigger, curse, creatureCard) : null;
+      readings?.[clause.id]?.trigger, curse, creatureCard,
+      (clause.trigger.event === "blocks" || clause.trigger.event === "becomes-blocked") && clauses.some((c) => c.id !== clause.id && (c.trigger?.event === "blocks" || c.trigger?.event === "becomes-blocked") && c.trigger.event !== clause.trigger!.event)) : null;
     const claimed = (grammarAll ?? []).filter((g): g is { verbs: Verb[]; subject: SubjectFilter } => !("refused" in g));
     if (text && claimed.length > 0) {
       const covered = grammarCovered.get(text) ?? new Map<string, number | string>();
@@ -3619,8 +3627,8 @@ export function deriveAbilities(
       }
       const reduces = abilities[i].effect?.kind === "cost-reduction" ? reductionOf(text ?? "", abilities[i].amount) : undefined;
       if (reduces) abilities[i] = { ...abilities[i], reduces };
-      // A becomes-blocked trigger's stored subject can be the BLOCKER (Ogre Leadfoot: "an artifact creature"), so its `batched` is read off the printed "by ..." (`blocker`), never off the stored subject (#1381).
-      if (abilities[i].trigger && !abilities[i].trigger!.verbs.includes("becomes-blocked") && BATCHED.test(clause.trigger?.subject ?? "")) {
+      // A becomes-blocked trigger's stored subject can be the BLOCKER (Ogre Leadfoot: "an artifact creature"), so a trigger with a `blocker` has its `batched` read off the printed "by ...", never off the stored subject (#1381). A plain "one or more creatures you control become blocked" (Hezrou) keeps it.
+      if (abilities[i].trigger && !abilities[i].trigger!.blocker && BATCHED.test(clause.trigger?.subject ?? "")) {
         abilities[i] = { ...abilities[i], trigger: { ...abilities[i].trigger!, batched: true } };
       }
       // A GAME-STATE REQUIREMENT: from the ability word the segmenter stripped ("Max speed —"),

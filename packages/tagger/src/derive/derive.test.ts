@@ -4596,6 +4596,24 @@ describe("becomes blocked by <creatures> (#1381, CR 509.3c-e)", () => {
     expect(tags.unknownTriggers ?? []).toEqual([]);
   });
 
+  test("Cockatrice: the blocks half stays its OWN refused ability beside the live becomes-blocked half", () => {
+    const tags = viaGrammar("Cockatrice", "Creature — Cockatrice", "Flying\nWhenever this creature blocks or becomes blocked by a non-Wall creature, destroy that creature at end of combat.");
+    const [t] = blocked(tags);
+    expect(t!.trigger!.blocker).toMatchObject({ type: "creature", notSubtype: ["wall"] });
+    const dies = tags.abilities.filter((a) => a.emits?.some((e) => e.verb === "dies"));
+    expect(dies).toHaveLength(2);
+    const half = dies.find((a) => a !== t)!;
+    expect(half.trigger).toBeUndefined();
+    expect(half.claimsNothing).toBeUndefined(); // as at 396: no `ref: trigger` in its emits, so no claimsNothing
+    expect(tags.unknownTriggers).toEqual(["narrowing:blocks"]);
+  });
+
+  test("Hezrou: a plain 'one or more creatures you control become blocked' stays batched (no blocker)", () => {
+    const [t] = blocked(viaGrammar("Test Hezrou", "Creature — Demon", "Whenever one or more creatures you control become blocked, each blocking creature gets -1/-1 until end of turn."));
+    expect(t!.trigger!.batched).toBe(true);
+    expect(t!.trigger!.blocker).toBeUndefined();
+  });
+
   test("a plain 'becomes blocked' has no blocker and stays once a round", () => {
     const [t] = blocked(viaGrammar("Test Charger", "Creature — Elephant", "Whenever this creature becomes blocked, it gets +2/+2 until end of turn."));
     expect(t!.trigger!.blocker).toBeUndefined();
