@@ -269,6 +269,8 @@ export const VERB_PHRASES: Record<string, string> = {
   attacks: "attacks",
   // CR 509.1a: only a creature blocks. #1373.
   blocks: "blocks",
+  // CR 509.1h: an attacking creature with blockers declared for it becomes blocked. #1375.
+  "becomes-blocked": "becomes blocked",
   taps: "becomes tapped",
   untaps: "untaps",
   "counter-added": "gets a counter",

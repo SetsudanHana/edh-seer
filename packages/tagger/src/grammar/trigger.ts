@@ -251,7 +251,7 @@ const OBJECT_VERBS: [RegExp, string, VerbPatch?][] = [
   [/^attacks?$/, "attacks"],
   [/^blocks?(?: a creature)?$/, "blocks"],
   [/^blocks? (?<n>(?:a|an|one or more|two or more) .+)$/, "blocks"],
-  // Only a creature can block (CR 509.1a), so "by a creature" narrows nothing.
+  // Only a creature can block (CR 509.1a), so "by a creature" names no narrowing. It is still not redundant: "becomes blocked" fires once per combat (CR 509.3c), "becomes blocked by a creature" once per blocker (CR 509.3d), which repeats.ts reads off the clause text.
   [/^becomes? blocked(?: by a creature)?$/, "becomes-blocked"],
   [/^becomes? blocked (?<n>by .+)$/, "becomes-blocked"],
   [/^(?:leaves?|leave) the battlefield$/, "leaves"],

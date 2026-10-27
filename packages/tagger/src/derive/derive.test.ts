@@ -4464,14 +4464,16 @@ test("a refusal that read only timing or a count keeps the exact class and the c
   expect(sq.abilities.length).toBeGreaterThan(0);
   expect(sq.abilities.every((a) => a.trigger === undefined && a.claimsNothing === undefined)).toBe(true);
   expect(sq.abilities.flatMap((a) => a.emits ?? []).every((e) => e.subject.ref === "trigger" && e.subject.type === "creature")).toBe(true);
-  // becomes blocked: "return it" is a creature you control.
+  // becomes blocked (#1375: now a live trigger): "return it" is a creature you control.
   const { abilities } = deriveAbilities(
     [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "a creature you control", control: "you" },
       actions: [{ verb: "return", object: "it", fromZone: "battlefield", toZone: "hand", amount: null, optional: true }] }],
     "Cunning Evasion",
     { 1: "Whenever a creature you control becomes blocked, you may return it to its owner's hand." },
   );
-  expect(abilities.every((a) => a.trigger === undefined && a.claimsNothing === undefined)).toBe(true);
+  // #1375: `becomes-blocked` is a verb, so the trigger is LIVE and bounds the 'it' (a ref to the trigger over a creature you control) instead of a refused trigger leaving it loose.
+  expect(abilities.every((a) => a.trigger?.verbs[0] === "becomes-blocked" && a.claimsNothing === undefined)).toBe(true);
+  expect(abilities.flatMap((a) => a.emits ?? []).every((e) => e.subject.ref === "trigger" && e.subject.type === "creature")).toBe(true);
 });
 
 test("an `if:` refusal flags a typed object: Koll's 'if it was enchanted or equipped' return", () => {
@@ -4498,8 +4500,8 @@ test("a refused 'deals damage to you' destroys an OPPONENT's creature (No Mercy)
   expect(abilities.every((a) => a.claimsNothing === undefined)).toBe(true);
 });
 
-test("a refused trigger about THIS card makes its 'it' the card itself, and withdraws nothing (#1253, Goblin Cadets' becomes-blocked half)", () => {
-  // #1373: the printed "blocks or becomes blocked" now has a live `blocks` half (see the next test); this is the half that stays refused.
+test("a trigger about THIS card makes its 'it' the card itself (#1253, Goblin Cadets' becomes-blocked half)", () => {
+  // #1375: `becomes-blocked` is an engine verb, so the trigger derives and the 'it' is the card itself through the self subject.
   const text = "Whenever this creature becomes blocked, target opponent gains control of it. (This removes this creature from combat.)";
   const { abilities, unknownTriggers } = deriveAbilities(
     [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "this creature", control: "you" },
@@ -4507,16 +4509,54 @@ test("a refused trigger about THIS card makes its 'it' the card itself, and with
     "Goblin Cadets",
     { 1: text },
   );
-  expect(unknownTriggers).toContain("becomes-blocked");
+  expect(unknownTriggers ?? []).not.toContain("becomes-blocked");
   expect(abilities.length).toBeGreaterThan(0);
   for (const a of abilities) {
-    expect(a.trigger).toBeUndefined();
+    expect(a.trigger?.verbs).toEqual(["becomes-blocked"]);
+    expect(a.trigger?.subject.self).toBe(true);
     expect(a.claimsNothing).toBeUndefined();
-    for (const e of a.emits ?? []) { expect(e.subject.self).toBe(true); expect(e.subject.ref).toBeUndefined(); }
+    // The live self trigger bounds the 'it': a ref to the trigger, whose subject is the card itself.
+    for (const e of a.emits ?? []) expect(e.subject.ref).toBe("trigger");
   }
 });
 
-test("Goblin Cadets' 'blocks or becomes blocked': the blocks half is a live self trigger, the becomes-blocked half is still refused (#1373)", () => {
+test("a STILL-refused trigger about THIS card makes its 'it' the card itself, and withdraws nothing (#1253, Tar Pit Warrior; `becomes-target` has no engine verb)", () => {
+  const text = "When this creature becomes the target of a spell or ability, sacrifice it.";
+  const { abilities, unknownTriggers } = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-target", subject: "this creature", control: "you" },
+      actions: [{ verb: "sacrifice", object: "it", fromZone: null, toZone: null, amount: null, optional: false }] }],
+    "Tar Pit Warrior",
+    { 1: text },
+  );
+  expect(unknownTriggers).toContain("becomes-target");
+  const emits = abilities.flatMap((a) => a.emits ?? []);
+  expect(emits.length).toBeGreaterThan(0);
+  for (const a of abilities) { expect(a.trigger).toBeUndefined(); expect(a.claimsNothing).toBeUndefined(); }
+  for (const e of emits) { expect(e.subject.self).toBe(true); expect(e.subject.ref).toBeUndefined(); }
+});
+
+// #1375 review: Mirror Shield's granted "Whenever a creature with deathtouch blocks or becomes blocked BY THIS CREATURE": the watched creature is the opposing one and "this creature" is the blocker.
+// The stored clause 3 reads `becomes-blocked` with subject "this creature", which would be a live self trigger on an Equipment. The trigger is refused instead.
+test("Mirror Shield's 'becomes blocked by this creature' is refused, never a live self trigger (#1375)", () => {
+  const text = "Equipped creature gets +0/+2 and has hexproof and \"Whenever a creature with deathtouch blocks or becomes blocked by this creature, destroy that creature.\"\nEquip {2} ({2}: Attach to target creature you control. Equip only as a sorcery.)";
+  const stored = [
+    { id: 1, abilityType: "static", actions: [{ verb: "modify-pt", object: "equipped creature", amount: "+0/+2" }, { verb: "grant-ability", object: "hexproof" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "blocks", subject: "a creature with deathtouch", control: "any" }, actions: [{ verb: "destroy", object: "that creature" }] },
+    { id: 3, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "this creature", control: "you" }, actions: [{ verb: "destroy", object: "a creature with deathtouch blocking this creature" }] },
+    { id: 3, abilityType: "none", actions: [{ verb: "none", object: "Equip {2}" }] },
+  ] as never;
+  const card = { name: "Mirror Shield", typeLine: "Artifact — Equipment", oracleText: text, keywords: [] as string[] };
+  const g = grammarClauseRecords(card as never);
+  for (const [path, records] of [["model", stored], ["grammar", g.records]] as const) {
+    const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, records as never, undefined, path === "grammar" ? g.readings : undefined));
+    const live = tags.abilities.filter((a) => a.trigger?.verbs?.includes("becomes-blocked" as never));
+    expect(live, path).toHaveLength(0);
+    expect(tags.unknownTriggers ?? [], path).not.toEqual([]);
+    if (path === "model") expect(tags.unknownTriggers).toContain("blocked-by-self"); // the grammar path refuses the same phrase as a narrowing
+  }
+});
+
+test("Goblin Cadets' 'blocks or becomes blocked' derives BOTH halves as live self triggers (#1373, #1375)", () => {
   const text = "Whenever this creature blocks or becomes blocked, target opponent gains control of it. (This removes this creature from combat.)";
   const { abilities, unknownTriggers } = deriveAbilities(
     [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "this creature", control: "you" },
@@ -4524,10 +4564,23 @@ test("Goblin Cadets' 'blocks or becomes blocked': the blocks half is a live self
     "Goblin Cadets",
     { 1: text },
   );
-  expect(unknownTriggers).toContain("becomes-blocked");
-  const live = abilities.filter((a) => a.trigger?.verbs.includes("blocks" as never));
-  expect(live).toHaveLength(1);
-  expect(live[0]!.trigger!.subject.self).toBe(true);
+  expect(unknownTriggers ?? []).not.toContain("becomes-blocked");
+  for (const verb of ["blocks", "becomes-blocked"]) {
+    const live = abilities.filter((a) => a.trigger?.verbs.includes(verb as never));
+    expect(live, verb).toHaveLength(1);
+    expect(live[0]!.trigger!.subject.self, verb).toBe(true);
+  }
+});
+
+test("a pure 'Whenever this creature becomes blocked' card derives a self becomes-blocked trigger (#1375)", () => {
+  const card = { name: "Test Charger", typeLine: "Creature — Elephant", oracleText: "Whenever this creature becomes blocked, it gets +2/+2 until end of turn.", keywords: [] as string[] };
+  const g = grammarClauseRecords(card as never);
+  const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings));
+  const t = tags.abilities.find((a) => a.trigger?.verbs?.includes("becomes-blocked" as never));
+  expect(t).toBeDefined();
+  expect(t!.trigger!.subject.self).toBe(true);
+  expect(t!.trigger!.subject.type).toBe("creature");
+  expect(tags.unknownTriggers ?? []).not.toContain("becomes-blocked");
 });
 
 test("Sacred Ground's returned land is YOURS: control you, not the opponent whose spell caused it (#1253)", () => {
@@ -6477,6 +6530,20 @@ describe("#1373 the blocks trigger", () => {
     expect(abilities[0]!.trigger?.verbs).toEqual(["blocks"]);
     expect(abilities[0]!.trigger?.subject.combat).toBeUndefined();
   });
+});
+
+// #1375: "blocks or becomes blocked" is stored as two records too (Escaped Null, Slinking Giant: the keyword line before it shifts the numbering, so the second record has no text of its own).
+test("a textless 'becomes-blocked' record beside the 'blocks' record that already reads both halves derives ONE becomes-blocked ability (Escaped Null)", () => {
+  const text = "Whenever this creature blocks or becomes blocked, it gets +5/+0 until end of turn.";
+  const pump = { verb: "modify-pt", object: "it", amount: "+5/+0", fromZone: null, toZone: null, optional: false };
+  const r = deriveAbilities([
+    { id: 2, abilityType: "triggered", trigger: { event: "blocks", subject: "this creature", control: "you" }, actions: [pump] },
+    { id: 3, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "this creature", control: "you" }, actions: [pump] },
+  ], "Escaped Null", { 1: "Lifelink", 2: text }, undefined, `Lifelink\n${text}`);
+  const mine = (verb: string) => r.abilities.filter((a) => a.trigger?.verbs.includes(verb as never));
+  expect(mine("blocks")).toHaveLength(1);
+  expect(mine("becomes-blocked")).toHaveLength(1);
+  expect(r.spliced.has(3)).toBe(true);
 });
 
 // #1373 review: the model stores "attacks or blocks" as TWO records (Howling Golem, Jedit Ojanen, Sapphire Dragon, Goblin Psychopath: 50 cards); `segment()` numbers the

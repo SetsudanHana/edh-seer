@@ -495,6 +495,8 @@ export type Verb =
   | "attacks"
   /** A creature blocks (CR 509.1a: only creatures block). The defending side of `attacks`; "attacks or blocks" (Elder Gargaroth) is two triggers. Owner ruling 2026-10-27, #1373. */
   | "blocks"
+  /** An attacking creature becomes blocked (CR 509.1h: only an attacking creature does). Consumed from card text only: the game makes a creature blocked, so NO card supplies it (verb-accounting NO_PRODUCER). "Blocks or becomes blocked" is two triggers. Owner ruling 2026-10-27, #1375. */
+  | "becomes-blocked"
   | "taps"
   | "non-combat-damage"
   | "combat-damage"
@@ -639,6 +641,7 @@ export const VERB_VOCAB: readonly Verb[] = [
   "cast",
   "attacks",
   "blocks",
+  "becomes-blocked",
   "taps",
   "non-combat-damage",
   "combat-damage",
@@ -741,6 +744,7 @@ export const VERB_VOCAB: readonly Verb[] = [
  *   - combat-damage -> creature, the DEALER (CR 510.1a);
  *   - attacks -> creature (CR 508.1a; folds in #1088's special case);
  *   - blocks -> creature (CR 509.1a: only creatures block);
+ *   - becomes-blocked -> creature (CR 509.1h: only an attacking creature becomes blocked);
  *   - dies -> creature (owner: only a creature dies; the CR glossary says "a creature or planeswalker
  *     dies", so a subject TYPED planeswalker keeps planeswalker -- this fills the untyped one only).
  *  A subject that does name a class keeps it, and a token is the class plus the token flag. `any` is
@@ -754,6 +758,7 @@ export const VERB_IMPLIED_CLASS: Readonly<Partial<Record<Verb, string>>> = {
   dies: "creature",
   attacks: "creature",
   blocks: "creature",
+  "becomes-blocked": "creature",
 };
 
 /** THE GENERAL CLASS OF A VERB'S TAG FAMILY: the widest subject its tags are ranked under, which a
@@ -780,6 +785,7 @@ export const VERB_ALIASES: Readonly<Record<string, Verb>> = {
   etb: "enters",
   attack: "attacks",
   block: "blocks",
+  "become-blocked": "becomes-blocked",
   tap: "taps",
   "add-counter": "counter-added",
   "counter-add": "counter-added",

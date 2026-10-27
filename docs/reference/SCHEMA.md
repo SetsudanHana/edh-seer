@@ -25,7 +25,7 @@ one of these re-buys the corpus and the rest are free.
 | `NORMALIZE_MIN_COMPATIBLE` | **3** | The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an accident. |
 | `VOCAB_VERSION` | **24** | The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed. **Bump this ONLY when one of those lists changes** — never for a prose rule. |
 | `TRIGGER_VOCAB_VERSION` | **24** | The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION. |
-| `DERIVE_VERSION` | **395** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
+| `DERIVE_VERSION` | **396** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
 
 See [`docs/RUNBOOK.md`](../RUNBOOK.md) for the procedure behind each bump.
 
@@ -68,11 +68,11 @@ Derivation maps the model's words onto these. The two lists are **not** the same
 be: the clause vocabulary describes what a sentence says, the engine vocabulary describes what the
 matcher can join on.
 
-### VERB_VOCAB — 77 members
+### VERB_VOCAB — 78 members
 
 The events a card can supply or watch for. Defined in [`VERB_VOCAB`](../../packages/tagger/src/schema.ts).
 
-`enters`, `enters-graveyard`, `dies`, `leaves`, `cast`, `attacks`, `blocks`, `taps`, `non-combat-damage`, `combat-damage`, `damaged`, `exiled`, `draw`, `discard`, `mill`, `gain-life`, `lose-life`, `sacrifice`, `create-token`, `counter-added`, `land-play`, `untaps`, `proliferate`, `unlock`, `upkeep`, `begin-combat`, `end-step`, `dice-rolled`, `scry`, `surveil`, `search`, `counter-spell`, `counter-removed`, `loses-game`, `shuffle`, `transform`, `turned-face-up`, `copy`, `reveal`, `attached`, `unattached`, `gains-control`, `phases-out`, `regenerate`, `prevented`, `exchange`, `double`, `triple`, `goad`, `exert`, `detain`, `suspect`, `harness`, `vote`, `clash`, `fateseal`, `behold`, `heal`, `convert`, `explore`, `endure`, `learn`, `forage`, `time-travel`, `collect-evidence`, `venture-into-the-dungeon`, `face-a-villainous-choice`, `airbend`, `waterbend`, `foretell`, `flip-coin`, `monarch`, `initiative`, `city-blessing`, `ring-tempts`, `prepared`, `face-a-dilemma`
+`enters`, `enters-graveyard`, `dies`, `leaves`, `cast`, `attacks`, `blocks`, `becomes-blocked`, `taps`, `non-combat-damage`, `combat-damage`, `damaged`, `exiled`, `draw`, `discard`, `mill`, `gain-life`, `lose-life`, `sacrifice`, `create-token`, `counter-added`, `land-play`, `untaps`, `proliferate`, `unlock`, `upkeep`, `begin-combat`, `end-step`, `dice-rolled`, `scry`, `surveil`, `search`, `counter-spell`, `counter-removed`, `loses-game`, `shuffle`, `transform`, `turned-face-up`, `copy`, `reveal`, `attached`, `unattached`, `gains-control`, `phases-out`, `regenerate`, `prevented`, `exchange`, `double`, `triple`, `goad`, `exert`, `detain`, `suspect`, `harness`, `vote`, `clash`, `fateseal`, `behold`, `heal`, `convert`, `explore`, `endure`, `learn`, `forage`, `time-travel`, `collect-evidence`, `venture-into-the-dungeon`, `face-a-villainous-choice`, `airbend`, `waterbend`, `foretell`, `flip-coin`, `monarch`, `initiative`, `city-blessing`, `ring-tempts`, `prepared`, `face-a-dilemma`
 
 
 ### EFFECT_KINDS — 51 members
@@ -99,7 +99,7 @@ Answers that mean an existing member are folded onto it rather than refused.
 
 | map | folds |
 |---|---|
-| [`VERB_ALIASES`](../../packages/tagger/src/schema.ts) | `enters-the-battlefield`→`enters`, `add-counter`→`counter-added`, `counter-add`→`counter-added`, `beginning-of-upkeep`→`upkeep`, `your-upkeep`→`upkeep`, `upkeep-step`→`upkeep`, `beginning-of-combat`→`begin-combat`, `combat-begins`→`begin-combat`, `beginning-of-end-step`→`end-step`, `end-of-turn`→`end-step`, `play-land`→`land-play`, `create-tokens`→`create-token` |
+| [`VERB_ALIASES`](../../packages/tagger/src/schema.ts) | `enters-the-battlefield`→`enters`, `become-blocked`→`becomes-blocked`, `add-counter`→`counter-added`, `counter-add`→`counter-added`, `beginning-of-upkeep`→`upkeep`, `your-upkeep`→`upkeep`, `upkeep-step`→`upkeep`, `beginning-of-combat`→`begin-combat`, `combat-begins`→`begin-combat`, `beginning-of-end-step`→`end-step`, `end-of-turn`→`end-step`, `play-land`→`land-play`, `create-tokens`→`create-token` |
 | [`EFFECT_ALIASES`](../../packages/tagger/src/schema.ts) | `counter-added`→`counter-placement`, `counter-placed`→`counter-placement`, `player-damage`→`damage`, `noncombat-damage`→`damage`, `non-combat-damage`→`damage`, `life-loss`→`player-life-loss`, `exile-and-return`→`flicker` |
 | [`SCALING_ALIASES`](../../packages/tagger/src/schema.ts) | `for-each-creature`→`per-creature`, `per-creature-you-control`→`per-creature`, `for-each-permanent`→`per-permanent`, `for-each-artifact`→`per-permanent`, `per-graveyard-creature`→`per-graveyard`, `per-spell`→`per-cast-or-spell`, `for-each-opponent`→`per-opponent`, `per-player`→`per-opponent` |
 

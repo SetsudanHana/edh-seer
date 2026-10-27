@@ -802,6 +802,24 @@ describe("blocks: implied supply follows attacks (#1373)", () => {
   });
 });
 
+// #1375 (owner ruling 2026-10-27): `becomes-blocked` is an engine verb with NO producer (CR 509.1h: the game makes an attacking creature blocked). A payoff forms no supply edges.
+describe("becomes-blocked: a consumer with no producer (#1375)", () => {
+  const payoff = (subject: Record<string, unknown>) => base("Becomes-Blocked Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["becomes-blocked"], subject: { control: "you", token: null, ...subject } as never },
+    effect: { kind: "draw-card" },
+  }]);
+  const tags = (supplier: ReturnType<typeof base>, consumer: ReturnType<typeof base>) =>
+    directedReasons(supplier, consumer, H).filter((r) => r.tag.startsWith("becomes-blocked"));
+
+  test("no creature supplies it: not a generic payoff, not a self one, not a typal one", () => {
+    const bear = base("Vanilla Bear", [], ["bear"]);
+    expect(tags(bear, payoff({ type: "creature" }))).toEqual([]);
+    expect(tags(bear, payoff({ type: "creature", self: true }))).toEqual([]);
+    expect(tags(bear, payoff({ type: "creature", subtype: "bear" }))).toEqual([]);
+  });
+});
+
 test("an event reason records which card consumes it and which supplies it", () => {
   const maker = base("Fathom Mage", [{
     kind: "triggered",
@@ -6877,8 +6895,9 @@ describe("a multi-type emit names the member the trigger heard (#1224)", () => {
 });
 
 // A REFUSED TRIGGER CLAIMS NOTHING (#1253). Cunning Evasion's "Whenever a creature you control becomes
-// blocked, you may return IT to its owner's hand": the grammar refuses `becomes-blocked`, so the ability
-// derives with no trigger and a `leaves` emit that is `ref: "trigger"` over a creature -- which reads as
+// blocked, you may return IT to its owner's hand": the fixture below sets the refused flag by hand
+// (since #1375 the card derives a live, repeatable becomes-blocked trigger), so the test holds for any refused trigger: the ability
+// has no trigger and a `leaves` emit that is `ref: "trigger"` over a creature -- which reads as
 // every creature leaving. `claimsNothing` keeps the ability (and its kind) and claims no cards.
 describe("claimsNothing: an ability whose trigger was refused claims nothing", () => {
   const leavesWatcher = () => base("Blood Artist Analogue", [{

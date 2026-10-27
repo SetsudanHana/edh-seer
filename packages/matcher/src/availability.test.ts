@@ -215,3 +215,17 @@ test("a trigger watching OTHER cards is still a real demand", () => {
   const row = deckAvailability([classEtb], H).find((r) => r.key.startsWith("enters"));
   expect(row!.selfSupplied).toBe(false);
 });
+
+// #1375 review: `becomes-blocked` is an engine verb NO card supplies (CR 509.1h: the game makes an attacking creature blocked, an opponent's blockers do it). A payoff for it is not an unmet
+// demand: it reads `available: null` ("happens on its own"), so no "nothing in the deck does it" finding or benchmark warning fires.
+test("a becomes-blocked payoff is self-supplied: no unmet demand row (available null), however many want it", () => {
+  const payoffCard = (name: string, subject: Record<string, unknown>) => deckCard(name, [{
+    kind: "triggered",
+    trigger: { verbs: ["becomes-blocked"], subject: { control: "you", token: null, ...subject } as never },
+    effect: { kind: "lifegain" },
+  }]);
+  const deck = fillTo(100, [payoffCard("Generic", { type: "creature" }), payoffCard("Goblin", { type: "creature", subtype: "goblin" }), payoffCard("Self", { type: "creature", self: true })]);
+  const rows = deckAvailability(deck, H, { turn: 5 }).filter((r) => r.key.startsWith("becomes-blocked"));
+  expect(rows.length).toBeGreaterThan(0);
+  for (const r of rows) { expect(r.selfSupplied, r.key).toBe(true); expect(r.available, r.key).toBeNull(); }
+});

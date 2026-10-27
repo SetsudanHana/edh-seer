@@ -14,6 +14,7 @@
     "./subtypes": "./src/derive/subtypes.ts",
     "./token-kinds": "./src/derive/token-kinds.ts",
     "./characteristics": "./src/characteristics.ts",
+    "./verb-accounting": "./src/derive/verb-accounting.ts",
     "./gate": "./src/derive/gate.ts",
     "./emblem": "./src/emblem.ts",
     "./segment": "./src/segment.ts",

@@ -218,7 +218,7 @@ const PLAYER_ONLY =
 /** Events whose subject SHOULD be a thing, not a person. A phase trigger ("at the beginning of your
  *  upkeep") names a player and is right to. */
 const THING_EVENTS: ReadonlySet<string> = new Set([
-  "cast", "enters", "dies", "draw", "mill", "discard", "sacrifice", "attacks", "blocks", "leaves",
+  "cast", "enters", "dies", "draw", "mill", "discard", "sacrifice", "attacks", "blocks", "becomes-blocked", "leaves",
   "counter-added", "counter-removed", "create-token", "land-play", "untaps", "taps",
   "transform", "turned-face-up", "attached", "unattached", "gains-control", "phases-out", "regenerate", "copy",
   "goad", "exert", "detain", "suspect", "harness", "explore", "endure", "convert", "heal", "airbend", "foretell",
@@ -267,6 +267,10 @@ const TRIGGER_CUES: Record<string, RegExp> = {
   attacks: /\battack(s|ed|ing)?\b/i,
   // #1373, measured 2026-10-27 over the stored cardClauses: 191 non-token clauses on 190 cards carry event "blocks"; this cue clears all 191 against the card's printed text, none is refused.
   blocks: /\bblock(s|ed|ing)?\b/i,
+  // #1375, measured 2026-10-27 over the stored cardClauses: 170 non-token clauses on 168 cards carry event "becomes-blocked"; this cue clears 168 of them against the card's printed text. The 2 it refuses are phantoms
+  // (Noxious Assault "Whenever a creature blocks this turn", Heat of Battle "Whenever a creature blocks": the model wrote the wrong event), so the phantom-trigger guard drops them instead of deriving a becomes-blocked trigger the card does not have. 0 of the 1,410 cards that print "be blocked"
+  // without "becomes blocked" ("can't be blocked", "must be blocked") are admitted: the cue wants the verb, not the participle.
+  "becomes-blocked": /\bbecomes? blocked\b/i,
   taps: /\btap(s|ped|ping)?\b/i,
   untaps: /\buntap/i,
   draw: /\bdraws?\b|\bdrew\b/i,
