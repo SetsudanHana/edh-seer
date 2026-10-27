@@ -1,6 +1,5 @@
 import { normalizeName } from "@edh-seer/data/names";
-import { commanderBoxProblem, parseDecklistSections } from "@edh-seer/data/sections";
-import { parseDecklistText } from "@edh-seer/data/decklist";
+import { commanderBoxProblem, parseCommanderBox, parseDecklistSections } from "@edh-seer/data/sections";
 import { resolveNames, type CardLookup } from "@edh-seer/data/resolve";
 import { detectCommanders } from "@edh-seer/data/commander";
 import { docToCard } from "@edh-seer/data/docs";
@@ -228,17 +227,13 @@ export interface DeckAnalysis {
 
 async function resolveDecklist(decklist: string, commanders: string | undefined, makeSources: (names: string[]) => Promise<AnalysisSources>) {
   const sections = parseDecklistSections(decklist);
-  const commanderNames = commanders?.trim() ? parseDecklistText(commanders) : sections.commanders;
+  const boxUsed = !!commanders?.trim();
+  const commanderNames = boxUsed ? parseCommanderBox(commanders!) : sections.commanders;
   // BEFORE makeSources: a whole list in the Commander box is refused without fetching a card (#1369).
-  const problem = commanderBoxProblem(commanderNames);
+  const problem = commanderBoxProblem(commanderNames, boxUsed ? "box" : "section");
   if (problem) throw new Error(problem);
   const sources = await makeSources([...commanderNames, ...sections.deck, ...sections.companions].map(normalizeName));
   const resolved = await resolveDeck(commanderNames, sections.deck, sources.lookup, sections.companions);
-  // No library: `minCopies` throws on an empty one, in words a player cannot act on (#1369).
-  const cmd = new Set(resolved.commanderResolved.map(normalizeName));
-  if (!resolved.cards.some((c) => !cmd.has(normalizeName(c.name)))) {
-    throw new Error("No cards in the deck besides the commander. Paste the rest of the list in Decklist.");
-  }
   return { sections, commanderNames, sources, resolved };
 }
 

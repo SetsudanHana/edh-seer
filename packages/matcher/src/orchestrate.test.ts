@@ -85,8 +85,27 @@ test("a Commander box holding the whole list is refused before any card is fetch
   expect(fetched).toBe(false);
 });
 
-test("a list with nothing but the commander is refused in plain words, not by the maths", async () => {
-  const lookup = lookupOf([doc("Krenko", ["R"], "Legendary Creature — Goblin")]);
-  const makeSources = async () => ({ lookup }) as never;
-  await expect(analyzeDecklist("1 Krenko", "1 Krenko", makeSources)).rejects.toThrow(/No cards in the deck besides the commander/);
+test("the Commander box and the Commander section are blamed by their own names", async () => {
+  const makeSources = async () => ({}) as never;
+  const list = ["Commander", ...Array.from({ length: 5 }, (_, i) => `1 Card ${i}`)].join("\n");
+  await expect(analyzeDecklist(list, undefined, makeSources)).rejects.toThrow(/Commander section of your list holds 5 cards.*blank line/);
+  await expect(analyzeDecklist("", list, makeSources)).rejects.toThrow(/Commander box holds 5 cards/);
+});
+
+test("a partner pair in the Commander box analyses, with or without a header line", async () => {
+  const lookup = lookupOf([
+    doc("Thrasios", ["G", "U"], "Legendary Creature — Merfolk"),
+    doc("Tymna the Weaver", ["B", "W"], "Legendary Creature — Human"),
+    doc("Island", [], "Basic Land — Island"),
+  ]);
+  const makeSources = async () => ({
+    lookup,
+    tagsLookup: { findOne: async () => null },
+    tokenTags: () => null,
+    tokenArt: async () => new Map(),
+  }) as never;
+  for (const box of ["1 Thrasios\n1 Tymna the Weaver", "Commander\n1 Thrasios\n1 Tymna the Weaver"]) {
+    const r = await analyzeDecklist("4 Island", box, makeSources);
+    expect(r.missing).toEqual([]);
+  }
 });

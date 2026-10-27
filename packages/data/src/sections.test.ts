@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { commanderBoxProblem, parseDecklistSections } from "./sections.js";
+import { commanderBoxProblem, parseCommanderBox, parseDecklistSections } from "./sections.js";
 
 test("splits a Commander section from the deck", () => {
   const text = [
@@ -145,4 +145,13 @@ test("the Commander box takes at most two cards (a partner pair)", () => {
   expect(commanderBoxProblem(["A"])).toBeUndefined();
   expect(commanderBoxProblem(["A", "B"])).toBeUndefined();
   expect(commanderBoxProblem(["A", "B", "C"])).toMatch(/Commander box holds 3 cards/);
+});
+
+test("the Commander box is read without its section header", () => {
+  expect(parseCommanderBox("Commander:\n1 Thrasios, the Tidal Sage\nTymna the Weaver\n")).toEqual(["Thrasios, the Tidal Sage", "Tymna the Weaver"]);
+  expect(parseCommanderBox("2 Mountain (M21) 12")).toEqual(["Mountain", "Mountain"]);
+});
+
+test("the problem names the Commander section when the box was empty", () => {
+  expect(commanderBoxProblem(["A", "B", "C"], "section")).toMatch(/Commander section of your list holds 3 cards.*blank line/);
 });
