@@ -1,5 +1,5 @@
 import type { Ability, CardTags, Characteristics, GameEvent, SubjectFilter } from "@edh-seer/tagger";
-import { parseSubject } from "@edh-seer/tagger/subject";
+import { CARD_TYPES, parseSubject } from "@edh-seer/tagger/subject";
 import { parseStat } from "./stats.js";
 
 const PERMANENT_TYPES = new Set(["creature", "artifact", "enchantment", "planeswalker", "battle", "land"]);
@@ -28,6 +28,14 @@ export function isOutlaw(subtypes: string[]): boolean {
   return subtypes.some((s) => OUTLAW_SUBTYPES.includes(s));
 }
 
+/** A PRINTED TYPE LINE IS A CONJUNCTION (#1385). "Artifact Creature" is an artifact AND a creature, but `type: [artifact, creature]` reads
+ *  as either, and an unmarked multi-type producer list now reads as an OR. The concrete card types of a type line, sorted, when there are
+ *  two or more -- supertypes ("legendary") are not card types. Undefined for a one-type card. */
+export function printedAllTypes(types: readonly string[]): string[] | undefined {
+  const cards = [...new Set(types.map((t) => t.toLowerCase()).filter((t) => (CARD_TYPES as readonly string[]).includes(t)))].sort();
+  return cards.length >= 2 ? cards : undefined;
+}
+
 function selfSubject(chars: Characteristics): SubjectFilter {
   const types = chars.types.map((t) => t.toLowerCase());
   const subtypes = chars.subtypes.map((t) => t.toLowerCase());
@@ -41,6 +49,8 @@ function selfSubject(chars: Characteristics): SubjectFilter {
   const subtype = collapse(subtypes);
   if (type !== undefined) out.type = type;
   if (subtype !== undefined) out.subtype = subtype;
+  const allTypes = printedAllTypes(types);
+  if (allTypes) out.allTypes = allTypes;
   if (isHistoric(types, subtypes)) out.historic = true;
   if (isOutlaw(subtypes)) out.outlaw = true;
   if (chars.anyNumber === true) out.multiples = true;

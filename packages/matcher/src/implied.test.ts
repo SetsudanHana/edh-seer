@@ -769,3 +769,13 @@ test("a creature only under a condition enters, attacks and connects as no creat
   expect(ev.some((e) => e.verb === "attacks" || e.verb === "combat-damage")).toBe(false);
   expect([ev.find((e) => e.verb === "cast")!.subject.type].flat()).toContain("creature");
 });
+
+// #1385: a printed two-type line is a CONJUNCTION. An unmarked multi-type producer now reads as an OR, so the printed subject carries allTypes.
+test("a printed artifact creature implies events that carry allTypes; a one-type card and supertypes do not", () => {
+  const ev = impliedEvents(chars(["legendary", "artifact", "creature"], ["golem"]));
+  for (const verb of ["cast", "enters"] as const) {
+    expect(ev.find((e) => e.verb === verb)!.subject.allTypes).toEqual(["artifact", "creature"]);
+  }
+  const plain = impliedEvents(chars(["legendary", "creature"], ["human"]));
+  expect(plain.find((e) => e.verb === "enters")!.subject.allTypes).toBeUndefined();
+});

@@ -7046,3 +7046,15 @@ test("a subject naming ONE type beside a negation keys as the type; a negated li
   expect(themeSubjectKey({ type: ["artifact", "enchantment", "instant"], notType: ["creature"] })).toBe("-creature");
   expect(themeSubjectKey({ type: ["creature", "artifact", "enchantment", "planeswalker", "battle"], notType: ["land"] })).toBe("-land");
 });
+
+// #1385: the printed subject of an Artifact Creature (Solemn Simulacrum) is both, so a "nonartifact" consumer refuses it now that an unmarked list reads as an OR.
+test("characteristicsSubject marks a two-type printed line as allTypes (#1385)", async () => {
+  const { characteristicsSubject } = await import("./edges.js");
+  const tags = (types: string[]): CardTags => ({
+    oracleId: "x", abilities: [],
+    characteristics: { types, subtypes: [], colors: [], identity: [], cmc: 4, power: "2", toughness: "2", token: false, keywords: [] },
+  }) as unknown as CardTags;
+  expect(characteristicsSubject(tags(["artifact", "creature"])).allTypes).toEqual(["artifact", "creature"]);
+  expect(characteristicsSubject(tags(["legendary", "creature"])).allTypes).toBeUndefined();
+  expect(characteristicsSubject(tags(["land"])).allTypes).toBeUndefined();
+});

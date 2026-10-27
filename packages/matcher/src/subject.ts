@@ -248,21 +248,19 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
         const has = expandTypes(tokens, arr(producer.subtype), h);
         return negated.some((t) => has.has(t.toLowerCase()));
       };
-      // A producer list with its OWN `notType` came from a negation over an umbrella ("destroy target
-      // nonland permanent"): it means ANY of those types, so a nonartifact creature is among its
-      // victims and Missy hears Stroke of Midnight. It is excluded only when EVERY alternative is.
-      // Every other multi-type producer keeps the strict exclusion: a printed type line is a
-      // conjunction (Laserbeak), and so is a copy token that gained a type (Urza, Prince of Kroog:
-      // `{token, type: [creature, artifact]}`), which read as "either" falsely paired with Cloudstone
-      // Curio and Builder's Talent. CEILING: a real OR with no notType of its own is refused -- a
-      // missing edge, never a false one. Against a consumer that already carried notType (Stolen
-      // Identity x Curio) that is unchanged; against the consumers #1383 newly gives notType it is a
-      // NEW loss: Midgar, City of Mako // Reactor Raid ("sacrifice an artifact or creature") x Jaws,
-      // Relentless Predator ("a noncreature artifact is sacrificed") joined at 397 and is refused
-      // now. Derive does not mark OR from AND (27 two-type and 6 three-type token:true create-token
-      // emits carry no allTypes, #1383 review census); #1385 marks them and lifts this.
-      const orList = producerTokens.length > 1 && (producer.notType?.length ?? 0) > 0 && (producer.allTypes?.length ?? 0) === 0;
-      if (orList ? producerTokens.every((t) => excluded([t])) : excluded(producerTokens)) return false;
+      // THE PRODUCER'S LIST IS AN OR UNLESS DERIVE MARKED IT AN AND (#1385). `allTypes` is the conjunction: a printed
+      // "Artifact Creature" (`printedAllTypes`), a copy token that gained a type (Urza, Prince of Kroog), "artifact creature
+      // token". It is refused when ANY of its types is excluded. Every other multi-type list is alternatives -- "sacrifice an
+      // artifact or creature" (Reactor Raid), "target nonland permanent" (Stroke of Midnight), "a copy of target artifact or
+      // creature" (Stolen Identity) -- and is refused only when EVERY alternative is excluded: a noncreature artifact is a
+      // legal sacrifice, so Jaws hears Reactor Raid. A single type is its own list and is refused when excluded.
+      // CEILING: an unmarked conjunction reads as an OR, which admits a false edge against a negating consumer. Derive marks every
+      // conjunction it can see; the residue is the token-table union `tokenTypeFor` fills for a copy token named by subtype (The Scarab
+      // God, God-Pharaoh's Gift, Hashaton: a 4/4 Zombie copy of a CREATURE card is `[artifact, creature, enchantment]`; Grub's and
+      // Ashling's Command likewise), which now pairs with a noncreature consumer (Builder's Talent), and a sweep of type words read as
+      // alternatives (Goblin Kaboomist's "Land Mine" token name, [artifact, land]).
+      const andList = (producer.allTypes?.length ?? 0) > 0;
+      if (producerTokens.length > 1 && !andList ? producerTokens.every((t) => excluded([t])) : excluded(producerTokens)) return false;
     }
   }
   // subtype: an array on the consumer means OR — at least one named subtype must be a
