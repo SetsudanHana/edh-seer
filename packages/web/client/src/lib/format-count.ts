@@ -45,11 +45,16 @@ export function conditionalNote(rows: readonly Conditional[] | undefined, leaves
 
 /** "when kicked": the choice a condition names (the report's wording; the matcher flags the basis `choice`). */
 function choiceWords(needs: string): string {
+  const negated = needs.toLowerCase().startsWith("it is not the case that ");
+  const words = positiveChoiceWords(negated ? needs.slice("it is not the case that ".length) : needs);
+  return negated ? words.replace(/^when /, "when not ") : words;
+}
+function positiveChoiceWords(needs: string): string {
   const t = needs.toLowerCase();
   if (t.includes("gift was promised")) return "when the gift is promised";
   const cost = /\b(prowl|surge) cost was paid\b/.exec(t);
   if (cost) return `when ${cost[1]} is paid`;
-  const warp = /\bcast for its (warp|prowl|surge) cost\b/.exec(t);
+  const warp = /\bwas cast for its (warp|prowl|surge) cost\b/.exec(t);
   if (warp) return `when cast for its ${warp[1]} cost`;
   const m = /\b(?:was|were) (kicked|multikicked|bargained|overloaded|evoked|foretold)\b/.exec(t);
   return m ? `when ${m[1]}` : "when the extra cost is paid";

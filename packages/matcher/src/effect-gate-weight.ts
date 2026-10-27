@@ -84,7 +84,8 @@ export function makeGateWeigher(deck: readonly DeckCard[], hierarchy: Hierarchy 
         const p = gateProbability(g, deck);
         if (p !== null) return { weight: clamp(p), conditional: true, basis: "evaluated", needs };
       }
-      const wants = a.conditionCares ?? [];
+      // THE GATE'S OWN DEMAND (`gate.cares`), never `Ability.conditionCares`: that field also merges the trigger's intervening-if demand, which is not what this condition asks (Frodo, Ayara's Oathsworn).
+      const wants = g.kind === "unknown" ? g.cares ?? [] : [];
       if (g.kind === "unknown" && wants.length > 0) {
         const chances = wants.map((w) => pAtLeast(1, suppliers(w, holder), seen(CORPUS_MEDIAN_CLOCK), deck.length));
         return { weight: clamp(Math.min(...chances)), conditional: true, basis: "supply", needs };

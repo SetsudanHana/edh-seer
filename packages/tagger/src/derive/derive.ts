@@ -3328,11 +3328,15 @@ export function deriveAbilities(
       const gateText = gateReads?.gates[(clause.actions ?? []).indexOf(action)];
       if (gateText) {
         const otherwise = isOtherwiseGate(gateText);
-        const selfName = (cardName ?? "").split(" // ")[0] ?? "";
-        ability.gate = otherwise ? { kind: "unknown", text: gateText.replaceAll("~", selfName).toLowerCase(), otherwise: true } : parseGate(gateText.replaceAll("~", (cardName ?? "").split(" // ")[0] ?? ""));
+        // THE FACE THE ABILITY IS PRINTED ON names itself: "~" in a back face's ability is the back face (Bruce Banner // The Incredible Hulk), never the front.
+        const faceNames = (cardName ?? "").split(" // ");
+        const selfName = faceNames[face ?? 0] ?? faceNames[0] ?? "";
+        const parsedGate = otherwise ? { kind: "unknown" as const, text: gateText.replaceAll("~", selfName).toLowerCase(), otherwise: true as const } : parseGate(gateText.replaceAll("~", selfName));
         // A counter the card places on itself is no counters demand (#1357 review): no deck supplies a "phyresis" or "hunger" counter, and the false demand reached edges.ts' dies-trigger guard.
         // The OTHER branch of an "if" asks nothing of the deck: the demand is the condition's, and this branch is its opposite (#1357 part 2).
         const gateCares = otherwise ? [] : conditionCares_(gateText).filter((tag) => !(tag === "counter-added:any" && counterIsTheCardsOwn(gateText, cardText)));
+        // The gate's OWN demand rides on the gate (the weigher reads only this); `conditionCares` below is the merged themes/ratings field, which also takes the trigger's intervening-if demand.
+        ability.gate = parsedGate.kind === "unknown" && gateCares.length > 0 ? { ...parsedGate, cares: gateCares } : parsedGate;
         if (gateCares.length > 0) ability.conditionCares = gateCares;
         if (!otherwise && alike?.[(clause.actions ?? []).indexOf(action)]) ability.otherwiseAlike = true;
       }

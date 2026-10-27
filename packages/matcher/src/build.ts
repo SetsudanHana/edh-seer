@@ -121,6 +121,15 @@ export interface ConditionalRole { card: string; category: BuildCategory; weight
 /** Category -> card -> the weight that member counts for, ONLY for members below 1. Membership is `detectBuildCategories`' and does not move: a gated draw card is still a draw card. */
 export type RoleWeights = Map<BuildCategory, Map<string, EffectWeight>>;
 
+/** The two halves of an explicit pair of conditions, as "kind:side": a coin flip, or whose turn it is. Anything else is null. */
+function complementSide(text: string): string | null {
+  const t = text.toLowerCase().replace(/[\u2019]/g, "'");
+  const flip = /^you (win|lose) the flip$/.exec(t);
+  if (flip) return `flip:${flip[1] === "win" ? 0 : 1}`;
+  const turn = /^it(?:'s| is)( not)? your turn$/.exec(t);
+  return turn ? `turn:${turn[1] ? 1 : 0}` : null;
+}
+
 /** The bases that weigh a whole 1 and are still reported: a condition on the target (a narrow answer) and an optional-cost choice ("when kicked"). */
 const WHOLE_FLAGGED: ReadonlySet<string> = new Set(["target", "choice"]);
 
@@ -156,8 +165,11 @@ function ruleWeight(rule: Rule, dc: DeckCard, gates: GateWeigher): EffectWeight 
   for (const c of clauses) {
     const members = entries.filter((x) => x.a.clause === c);
     const isOther = (x: (typeof members)[number]): boolean => x.a.gate?.kind === "unknown" && x.a.gate.otherwise === true;
-    // BOTH SIDES: an if-branch AND its Otherwise. A LONE Otherwise (its "if" was a reflexive "if they do / if a player does", Protection Racket, Sin Prodder) is the unread other half of a choice someone else makes.
-    if (members.some(isOther) && members.some((x) => !isOther(x))
+    // BOTH SIDES: an if-branch AND its Otherwise, or the two explicit halves of a pair (a coin flip's "you win / you lose the flip", "it's your turn / it's not your turn"). A LONE Otherwise (its "if" was a
+    // reflexive "if they do / if a player does", Protection Racket, Sin Prodder) is the unread other half of a choice someone else makes.
+    const sides = new Set(members.map((x) => complementSide(x.a.gate?.text ?? "")).filter((v): v is string => v !== null));
+    const pair = [...sides].some((k) => sides.has(k.replace(/:[01]$/, ":0")) && sides.has(k.replace(/:[01]$/, ":1")));
+    if (((members.some(isOther) && members.some((x) => !isOther(x))) || pair)
       && members.every((m) => ruleMatches(rule, without(new Set(entries.filter((o) => o !== m).map((o) => o.a)))))) for (const m of members) exhaustive.add(m.a);
   }
   const partial = entries.filter((x) => x.w.weight < 1 && !exhaustive.has(x.a));
@@ -174,7 +186,8 @@ function ruleWeight(rule: Rule, dc: DeckCard, gates: GateWeigher): EffectWeight 
     }
   }
   const narrow = entries.filter((x) => WHOLE_FLAGGED.has(x.w.basis));
-  if (narrow.length > 0 && !ruleMatches(rule, without(new Set(narrow.map((x) => x.a))))) return narrow[0]!.w;
+  // ...and the one the rule LEANS ON is named (Thunderous Debut's hand-fill is its not-bargained branch, never the bargained one).
+  if (narrow.length > 0 && !ruleMatches(rule, without(new Set(narrow.map((x) => x.a))))) return (narrow.find((x) => !ruleMatches(rule, without(new Set([x.a])))) ?? narrow[0]!).w;
   return null;
 }
 

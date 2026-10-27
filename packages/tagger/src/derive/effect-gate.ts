@@ -113,6 +113,9 @@ function leadingEnd(lower: string, from: number): number {
   while (comma >= 0) {
     const rest = lower.slice(comma + 1).trimStart();
     const skipped = lower.length - comma - 1 - rest.length;
+    // AN ADJECTIVE LIST ("a noncreature, nonland card", Druidic Satchel, Narset Transcendent): a comma between two "non" words does not end the condition.
+    const word = lower.slice(0, comma).slice(lower.slice(0, comma).lastIndexOf(" ") + 1);
+    if (/^non-?[a-z]+$/.test(word) && /^non-?[a-z]/.test(rest)) { comma = lower.indexOf(",", comma + 1 + skipped); continue; }
     if (LIST_LAST.test(rest)) { comma = comma + 1 + skipped + rest.indexOf(",", 1 + rest.indexOf(" ")); break; }
     if (!LIST_MORE.test(rest)) break;
     comma = lower.indexOf(",", comma + 1 + skipped);
@@ -173,19 +176,37 @@ export function sentenceGate(sentence: string): SentenceGate {
 const CONJUNCT_BOUNDARY = [", then ", ", and ", " and ", ", "];
 
 /** The gate text of the OTHER BRANCH of an "if" ("Otherwise, draw a card"): derive makes it an `unknown` gate (the parser has no negation) and asks no deck demand of it. The report prints a gate after "it only works if", so the text
- *  is a clause that reads there: "it only works if it is not the case that it was attacking" / "...if the condition before it does not hold" (no earlier condition found). */
+ *  is a clause that reads there: "it only works if it is not the case that it was attacking" / "...if the card's other branch doesn't happen" (no earlier condition found). */
 const NOT_THE_CASE = "it is not the case that ";
-const NO_EARLIER = "the condition before it does not hold";
+const NO_EARLIER = "the card's other branch doesn't happen";
 const NONE_OF = "none of these holds: ";
 const ANSWER_TO = 'the answer to "';
 const DO_HAVE = /^you don't (control|have) /;
 const PRONOUN_LED = /^(?:it|its|that|those|they|their)\b/;
 export const isOtherwiseGate = (condition: string): boolean =>
-  condition.startsWith(NOT_THE_CASE) || condition.startsWith(NONE_OF) || condition.startsWith(ANSWER_TO) || condition.startsWith("you do control ") || condition.startsWith("you do have ") || condition === NO_EARLIER;
+  condition === NO_PAY || condition === NO_DEAL || condition === DECLINE || condition.startsWith(NOT_THE_CASE) || condition.startsWith(NONE_OF) || condition.startsWith(ANSWER_TO) || condition.startsWith("you do control ") || condition.startsWith("you do have ") || condition === NO_EARLIER;
 /** The text of the other branch of a chain of conditions: one negated in words that read after "it only works if" ("you don't control X" turns positive, a pronoun-led condition is quoted because its "it" has no antecedent here), several as "none of these holds". */
-function otherBranch(chain: readonly string[]): string {
+/** WHO DECIDES a lone Otherwise whose "if" was an exempt reflexive ("That player may pay life ... If they do, exile that card. Otherwise, put it into your hand", Protection Racket; "Any opponent may have you put that card
+ *  into your graveyard. If a player does, ... Otherwise, ...", Sin Prodder), read from the nearest earlier printed "may" clause. CEILING: only an opponent or "you" as the subject, and "pay" is the one verb named. */
+const NO_PAY = "no opponent pays to stop it";
+const NO_DEAL = "no opponent takes the deal";
+const DECLINE = "you decline";
+const OPPONENT_SUBJECT = /^(?:that player|any opponent|an opponent|each opponent|target opponent|that opponent|they)$/;
+function decider(sentences: readonly string[], before: number): string | null {
+  for (let j = before - 1; j >= 0; j--) {
+    const lower = sentences[j]!.toLowerCase();
+    const at = lower.indexOf(" may ");
+    if (at < 0) continue;
+    const subject = lower.slice(0, at).trim();
+    const verb = lower.slice(at + 5).split(" ")[0];
+    if (OPPONENT_SUBJECT.test(subject)) return verb === "pay" ? NO_PAY : NO_DEAL;
+    return subject === "you" ? DECLINE : null;
+  }
+  return null;
+}
+function otherBranch(chain: readonly string[], sentences: readonly string[], at: number): string {
   const conds = chain.filter((c) => c !== "").map((c) => c.toLowerCase());
-  if (conds.length === 0) return NO_EARLIER;
+  if (conds.length === 0) return decider(sentences, at) ?? NO_EARLIER;
   if (conds.length > 1) return `${NONE_OF}${conds.join("; ")}`;
   const c = conds[0]!;
   if (DO_HAVE.test(c)) return c.replace(DO_HAVE, "you do $1 ");
@@ -279,7 +300,7 @@ export function effectGates(body: string, verbs: readonly string[]): EffectGates
   const gates = where.map((w, j) => {
     if (w === null) return null;
     // THE OTHER BRANCH: unread, whatever "if" the sentence also holds (CEILING in the header).
-    if (otherwise[w.sentence]) { for (const f of parsed[w.sentence]!) taken.add(`${w.sentence}:${f.at}`); return otherBranch(branchOf[w.sentence]!); }
+    if (otherwise[w.sentence]) { for (const f of parsed[w.sentence]!) taken.add(`${w.sentence}:${f.at}`); return otherBranch(branchOf[w.sentence]!, sentences, w.sentence); }
     const next = parsed[w.sentence]!.find((f) => f.shape === "trailing" && f.at > w.offset);
     if (next) {
       const lower = sentences[w.sentence]!.toLowerCase();
@@ -316,5 +337,7 @@ export function counterIsTheCardsOwn(condition: string, cardText: string): boole
   if (kinds.size === 0) return false;
   const aboutTheCard = /^(?:it|this [a-z]+|~) (?:has|had)\b/.test(lower);
   const places = (kind: string): boolean => new RegExp(`\\b(?:put|puts|moves?|enters?(?: [a-z ]{0,20})? with)\\b[^.]{0,80}${escapeRe(kind)} counters?`).test(text);
+  // LORE COUNTERS ON A SAGA are added by the rules (CR 714.3), nobody's to supply: "If Ifrit has three or more lore counters on it" (Clive // Ifrit) is the card's own.
+  if ([...kinds].every((k) => k === "lore") && /add a lore counter/.test(text)) return true;
   return [...kinds].every((kind) => /^[+-]/.test(kind) ? aboutTheCard && places(kind) : places(kind));
 }

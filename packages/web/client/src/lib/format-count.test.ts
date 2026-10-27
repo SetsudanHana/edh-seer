@@ -60,3 +60,11 @@ test("an Otherwise gate names the card in its printed case, never '~' (Approach 
   expect(conditionalNote([{ card: "Approach of the Second Sun", category: "lifegain", weight: 0.5, basis: "unread" as const, needs }], ["lifegain"]))
     .toBe("Approach of the Second Sun counts half: it only works if it is not the case that this spell was cast from your hand and you've cast another spell named Approach of the Second Sun this game.");
 });
+
+test("the Otherwise of a choice is said 'when not kicked / not bargained', and a lone opponent's-choice Otherwise reads plainly", () => {
+  const row = (card: string, needs: string, weight = 1, basis: "choice" | "unread" = "choice") => ({ card, category: "handFill", weight, basis, needs });
+  expect(conditionalNote([row("Thunderous Debut", "it is not the case that this spell was bargained")], ["handFill"])).toBe("Thunderous Debut counts whole when not bargained.");
+  expect(conditionalNote([row("Sheoldred's Restoration", "it is not the case that this spell was kicked")], ["handFill"])).toBe("Sheoldred's Restoration counts whole when not kicked.");
+  expect(conditionalNote([row("Protection Racket", "no opponent pays to stop it", 0.5, "unread")], ["handFill"])).toBe("Protection Racket counts half: it only works if no opponent pays to stop it.");
+  expect(conditionalNote([row("Sin Prodder", "no opponent takes the deal", 0.5, "unread")], ["handFill"])).toBe("Sin Prodder counts half: it only works if no opponent takes the deal.");
+});

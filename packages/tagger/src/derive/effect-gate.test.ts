@@ -213,7 +213,7 @@ describe("derive stamps Ability.gate on the ability its sentence made, with cond
     expect(g.complete).toBe(true);
     const draw = byKind(tags, "draw-card");
     expect(draw).toHaveLength(1);
-    expect(draw[0]!.gate).toEqual({ kind: "unknown", text: "you control a permanent with a counter on it" });
+    expect(draw[0]!.gate).toEqual({ kind: "unknown", text: "you control a permanent with a counter on it", cares: ["counter-added:any"] });
     expect(draw[0]!.conditionCares).toEqual(["counter-added:any"]);
     expect(byKind(tags, "counter-placement").every((a) => a.gate === undefined)).toBe(true);
     expect(JSON.stringify(tags.unclaimed ?? [])).not.toContain("permanent with a counter");
@@ -309,7 +309,7 @@ describe("a LEADING condition gates the effect it governs (#1357 part 2)", () =>
   it("'Then if' (Oil-Gorger Troll, a trigger's effect): the draw is gated on the oil counter, the life gain before it is not; the demand is the counters one", () => {
     const { g, tags } = viaGrammar(OIL_GORGER);
     expect(g.complete).toBe(true);
-    expect(byKind(tags, "draw-card").map((a) => a.gate)).toEqual([{ kind: "unknown", text: "you control a permanent with an oil counter on it" }]);
+    expect(byKind(tags, "draw-card").map((a) => a.gate)).toEqual([{ kind: "unknown", text: "you control a permanent with an oil counter on it", cares: ["counter-added:any"] }]);
     expect(byKind(tags, "lifegain").every((a) => a.gate === undefined)).toBe(true);
   });
   it("'Then if' ends its condition at the comma, not at the sentence (Heaven Sent)", () => {
@@ -330,7 +330,7 @@ describe("a LEADING condition gates the effect it governs (#1357 part 2)", () =>
     expect(annex.abilities.filter((a) => a.conditionCares !== undefined && a.gate?.text.startsWith("it is not the case"))).toEqual([]);
     expect(effectGates("Mill a card. If a land card was milled this way, you gain 1 life. Otherwise, this enchantment deals 1 damage to each opponent.", ["mill", "gain-life", "deal-damage"]).gates)
       .toEqual([null, "a land card was milled this way", "it is not the case that a land card was milled this way"]);
-    expect(effectGates("If not, draw a card.", ["draw"]).gates).toEqual(["the condition before it does not hold"]);
+    expect(effectGates("If not, draw a card.", ["draw"]).gates).toEqual(["the card's other branch doesn't happen"]);
   });
   it("an 'Otherwise' after a trailing 'if' is the branch of that condition too (Zurgo Stormrender)", () => {
     expect(effectGates("Draw a card if it was attacking. Otherwise, each opponent loses 1 life.", ["draw", "lose-life"]).gates).toEqual(["it was attacking", 'the answer to "it was attacking" is no']);
@@ -418,5 +418,55 @@ describe("the Otherwise text (review of b7c231f7)", () => {
     // the same verb on a different object is another effect (Kianne: put it into your hand / put a study counter on it), and life is directional (Unholy Annex)
     expect(branchesAlike("If it's a land card, put it into your hand. Otherwise, put a study counter on it.", ["put"])).toEqual([false]);
     expect(branchesAlike("If you control a Demon, each opponent loses 2 life. Otherwise, you lose 2 life.", ["lose-life"])).toEqual([false]);
+  });
+});
+
+describe("whole-branch review of 0f01e53b (#1357)", () => {
+  const FRODO = card("Frodo, Adventurous Hobbit", "Legendary Creature \u2014 Halfling Scout", "Partner with Sam, Loyal Attendant\nVigilance\nWhenever Frodo attacks, if you gained 3 or more life this turn, the Ring tempts you. Then if Frodo is your Ring-bearer and the Ring has tempted you two or more times this game, draw a card.", ["Partner with", "Vigilance", "Partner"]);
+  const CLIVE = card("Clive, Ifrit's Dominant // Ifrit, Warden of Inferno", "Legendary Creature \u2014 Human Noble Warrior // Legendary Enchantment Creature \u2014 Saga Demon", "When Clive enters, you may discard your hand, then draw cards equal to your devotion to red. (Each {R} in the mana costs of permanents you control counts toward your devotion to red.)\n{4}{R}{R}, {T}: Exile Clive, then return it to the battlefield transformed under its owner's control. Activate only as a sorcery.\n//\n(As this Saga enters and after your draw step, add a lore counter.)\nI \u2014 Lunge \u2014 Ifrit fights up to one other target creature.\nII, III \u2014 Brimstone \u2014 Add {R}{R}{R}{R}. If Ifrit has three or more lore counters on it, exile it, then return it to the battlefield (front face up).", ["Transform", "Fight"]);
+  it("a gate keeps its OWN demand apart from the trigger's intervening-if demand (Frodo: lifegain is the trigger's, the draw's condition has none)", () => {
+    const records: ClauseRecord[] = [
+      { id: 1, abilityType: "static", actions: [act("other", "Partner with Sam, Loyal Attendant")] },
+      { id: 2, abilityType: "none", actions: [{ verb: "none", object: "Vigilance" } as never] },
+      { id: 3, abilityType: "triggered", trigger: { event: "attacks", subject: "Frodo", control: "you" }, actions: [act("ring-tempts", "you"), act("draw", "a card", { amount: "1" })] },
+    ];
+    const draw = byKind(viaModel(FRODO, records), "draw-card")[0]!;
+    expect(draw.gate).toMatchObject({ kind: "unknown" });
+    expect((draw.gate as { cares?: string[] }).cares).toBeUndefined();
+    expect(draw.conditionCares).toContain("gain-life:any");
+  });
+  it("a gate's own demand rides on the gate (Federation Field Medic: counters)", () => {
+    const draw = byKind(viaGrammar(FEDERATION).tags, "draw-card")[0]!;
+    expect((draw.gate as { cares?: string[] }).cares).toEqual(["counter-added:any"]);
+  });
+  it("lore counters on a Saga are the card's own: no counters demand (Clive // Ifrit)", () => {
+    const { tags } = viaGrammar(CLIVE);
+    const gated = tags.abilities.filter((a) => a.gate !== undefined);
+    expect(gated.length).toBeGreaterThan(0);
+    expect(gated.every((a) => a.conditionCares === undefined && (a.gate as { cares?: string[] }).cares === undefined)).toBe(true);
+  });
+  it("a back face's '~' is the BACK face's name (Bruce Banner // The Incredible Hulk: 'If he's attacking')", () => {
+    const hulk = card("Bruce Banner // The Incredible Hulk", "Legendary Creature \u2014 Human Scientist Hero // Legendary Creature \u2014 Gamma Berserker Hero", "{X}{X}, {T}: Draw X cards. Activate only as a sorcery.\n{2}{R}{R}{G}{G}: Transform Bruce Banner. Activate only as a sorcery.\n//\nReach, trample\nEnrage \u2014 Whenever The Incredible Hulk is dealt damage, put a +1/+1 counter on him. If he's attacking, untap him and there is an additional combat phase after this phase.", ["Reach", "Enrage", "Transform", "Trample"]);
+    const records: ClauseRecord[] = [
+      { id: 1, abilityType: "activated", actions: [act("draw", "you", { amount: "X" })] },
+      { id: 2, abilityType: "activated", actions: [act("transform", "this")] },
+      { id: 3, abilityType: "none", actions: [{ verb: "none", object: "Reach, trample" } as never] },
+      { id: 4, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "The Incredible Hulk", control: "you" }, actions: [act("add-counter", "+1/+1", { amount: "1" }), act("untap", "this", { optional: true }), act("extra-combat", "this", { optional: true })] },
+    ];
+    const texts = viaModel(hulk, records).abilities.filter((a) => a.gate !== undefined).map((a) => a.gate!.text);
+    expect(texts).toEqual(["the incredible hulk's attacking"]);
+  });
+  it("an adjective list is not cut at its comma: 'a noncreature, nonland card' (Druidic Satchel, Narset Transcendent)", () => {
+    expect(effectGates("If it's a noncreature, nonland card, you gain 2 life.", ["gain-life"]).gates).toEqual(["it's a noncreature, nonland card"]);
+    expect(effectGates("Look at the top card of your library. If it's a noncreature, nonland card, you may reveal it and put it into your hand.", ["look", "put"]).gates[1]).toBe("it's a noncreature, nonland card");
+  });
+  it("a lone Otherwise says what decides it, from the printed 'may' clause (Protection Racket, Sin Prodder)", () => {
+    expect(effectGates("Reveal the top card of your library. That player may pay life equal to that card's mana value. If they do, exile that card. Otherwise, put it into your hand.", ["reveal", "exile", "put"]).gates)
+      .toEqual([null, null, "no opponent pays to stop it"]);
+    expect(effectGates("Reveal the top card of your library. Any opponent may have you put that card into your graveyard. If a player does, this creature deals damage to that player equal to that card's mana value. Otherwise, put that card into your hand.", ["reveal", "put", "deal-damage", "put"]).gates)
+      .toEqual([null, null, null, "no opponent takes the deal"]);
+    expect(isOtherwiseGate("no opponent pays to stop it")).toBe(true);
+    expect(isOtherwiseGate("no opponent takes the deal")).toBe(true);
+    expect(effectGates("You may pay {1}. If you do, draw a card. Otherwise, gain 1 life.", ["draw", "gain-life"]).gates[1]).toBe("you decline");
   });
 });

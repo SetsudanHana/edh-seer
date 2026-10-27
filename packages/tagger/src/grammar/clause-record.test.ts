@@ -901,7 +901,7 @@ test("a mode's trailing 'if' condition rides on its draw as a gate, never an unc
   const { tags } = deriveGrammar("Federation Field Medic", "Creature — Human Doctor", "Vigilance\nWhen this creature enters, choose one —\n• Put a +1/+1 counter on target creature. It gains vigilance until end of turn.\n• Draw a card if you control a permanent with a counter on it.");
   const draws = tags.abilities.filter((a) => a.effect.kind === "draw-card");
   expect(draws).toHaveLength(1);
-  expect(draws[0]!.gate).toEqual({ kind: "unknown", text: "you control a permanent with a counter on it" });
+  expect(draws[0]!.gate).toEqual({ kind: "unknown", text: "you control a permanent with a counter on it", cares: ["counter-added:any"] });
   expect(draws[0]!.conditionCares).toEqual(["counter-added:any"]);
   expect(tags.abilities.some((a) => a.effect.kind === "counter-placement")).toBe(true);
   expect(JSON.stringify(tags.unclaimed ?? [])).not.toContain("permanent with a counter");

@@ -41,6 +41,10 @@ const REAL: Record<string, { records?: unknown[]; keywords?: string[]; typeLine:
   "Approach of the Second Sun": { records: [{ id: 1, abilityType: "spell", actions: [{ verb: "win-game", object: "you", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "put", object: "Approach of the Second Sun", fromZone: "stack", toZone: "library", amount: null, optional: false }, { verb: "gain-life", object: "you", fromZone: null, toZone: null, amount: "7", optional: false }] }], typeLine: "Sorcery", manaValue: 7, manaCost: "{6}{W}", oracleText: "If this spell was cast from your hand and you've cast another spell named Approach of the Second Sun this game, you win the game. Otherwise, put Approach of the Second Sun into its owner's library seventh from the top and you gain 7 life." },
   "Protection Racket": { records: [{ id: 1, abilityType: "triggered", trigger: { event: "upkeep", subject: "your upkeep", control: "you" }, actions: [{ verb: "reveal", object: "the top card of your library", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "exile", object: "that card", fromZone: "library", toZone: "exile", amount: null, optional: true }, { verb: "put", object: "that card", fromZone: "library", toZone: "hand", amount: null, optional: false }] }], typeLine: "Enchantment", manaValue: 3, manaCost: "{2}{B}", oracleText: "At the beginning of your upkeep, repeat the following process for each opponent in turn order. Reveal the top card of your library. That player may pay life equal to that card's mana value. If they do, exile that card. Otherwise, put it into your hand." },
   "Sin Prodder": { records: [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Menace" }] }, { id: 2, abilityType: "triggered", trigger: { event: "upkeep", subject: "you", control: "you" }, actions: [{ verb: "reveal", object: "the top card of your library", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "put", object: "that card", fromZone: "library", toZone: "graveyard", amount: null, optional: true }, { verb: "deal-damage", object: "that player", fromZone: null, toZone: null, amount: "that card's mana value", optional: false }, { verb: "put", object: "that card", fromZone: "library", toZone: "hand", amount: null, optional: false }] }], keywords: ["Menace"], typeLine: "Creature \u2014 Devil", manaValue: 3, manaCost: "{2}{R}", oracleText: "Menace\nAt the beginning of your upkeep, reveal the top card of your library. Any opponent may have you put that card into your graveyard. If a player does, this creature deals damage to that player equal to that card's mana value. Otherwise, put that card into your hand." },
+  "Frodo, Adventurous Hobbit": { records: [{ id: 1, abilityType: "static", actions: [{ verb: "other", object: "Partner with Sam, Loyal Attendant", fromZone: null, toZone: null, amount: null, optional: false }] }, { id: 2, abilityType: "none", actions: [{ verb: "none", object: "Vigilance" }] }, { id: 3, abilityType: "triggered", trigger: { event: "attacks", subject: "Frodo", control: "you" }, actions: [{ verb: "ring-tempts", object: "you", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "draw", object: "a card", fromZone: null, toZone: null, amount: "1", optional: false }] }], keywords: ["Partner with", "Vigilance", "Partner"], typeLine: "Legendary Creature \u2014 Halfling Scout", manaValue: 2, manaCost: "{W}{B}", oracleText: "Partner with Sam, Loyal Attendant\nVigilance\nWhenever Frodo attacks, if you gained 3 or more life this turn, the Ring tempts you. Then if Frodo is your Ring-bearer and the Ring has tempted you two or more times this game, draw a card." },
+  "Ayara's Oathsworn": { records: [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Menace" }] }, { id: 2, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "this creature", control: "you" }, actions: [{ verb: "add-counter", object: "+1/+1", fromZone: null, toZone: null, amount: "1", optional: false }, { verb: "search", object: "a card", fromZone: "library", toZone: null, amount: null, optional: false }, { verb: "put", object: "a card", fromZone: "library", toZone: "hand", amount: null, optional: false }, { verb: "shuffle", object: "your library", fromZone: null, toZone: null, amount: null, optional: false }] }], keywords: ["Menace"], typeLine: "Creature \u2014 Human Knight", manaValue: 2, manaCost: "{1}{B}", oracleText: "Menace\nWhenever this creature deals combat damage to a player, if it has fewer than four +1/+1 counters on it, put a +1/+1 counter on it. Then if it has exactly four +1/+1 counters on it, search your library for a card, put it into your hand, then shuffle." },
+  "Thunderous Debut": { records: [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Bargain" }] }, { id: 2, abilityType: "spell", actions: [{ verb: "shuffle", object: "your library", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "reveal", object: "up to two creature cards from the top twenty cards of your library", fromZone: null, toZone: null, amount: null, optional: true }, { verb: "put", object: "the revealed cards", fromZone: "library", toZone: "battlefield", amount: null, optional: false }, { verb: "put", object: "the revealed cards", fromZone: "library", toZone: "hand", amount: null, optional: false }, { verb: "shuffle", object: "your library", fromZone: null, toZone: null, amount: null, optional: false }] }], keywords: ["Bargain"], typeLine: "Sorcery", manaValue: 8, manaCost: "{6}{G}{G}", oracleText: "Bargain (You may sacrifice an artifact, enchantment, or token as you cast this spell.)\nLook at the top twenty cards of your library. You may reveal up to two creature cards from among them. If this spell was bargained, put the revealed cards onto the battlefield. Otherwise, put the revealed cards into your hand. Then shuffle." },
+  "Invert Polarity": { records: [{ id: 1, abilityType: "spell", actions: [{ verb: "flip-coin", object: "a coin", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "gain-control", object: "that spell", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "counter-spell", object: "that spell", fromZone: null, toZone: null, amount: null, optional: false }] }], typeLine: "Instant", manaValue: 3, manaCost: "{U}{U}{R}", oracleText: "Choose target spell, then flip a coin. If you win the flip, gain control of that spell and you may choose new targets for it. If you lose the flip, counter that spell." },
   "Mind Stone": { typeLine: "Artifact", manaValue: 2, oracleText: "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card." },
 };
 const make = (realName: string, asName = realName): DeckCard => {
@@ -439,7 +443,7 @@ test("Ertai's Trickery ('Counter target spell if it was kicked') is a condition 
 });
 
 test("prowl, surge, warp and foretold are optional-cost choices too, each said in its own word", () => {
-  for (const [name, needs] of [["Morsel Theft", "this spell's prowl cost was paid"], ["Crush of Tentacles", "this spell's surge cost was paid"], ["Poison the Cup", "this spell was foretold"], ["Full Bore", "that creature was cast for its warp cost"]] as const) {
+  for (const [name, needs] of [["Morsel Theft", "this spell's prowl cost was paid"], ["Crush of Tentacles", "this spell's surge cost was paid"], ["Poison the Cup", "this spell was foretold"]] as const) {
     const d = make(name);
     const [a] = d.tags!.abilities.filter((x) => x.gate !== undefined);
     expect(makeGateWeigher(deckOf([d])).of(a!, d), name).toEqual({ weight: 1, conditional: true, basis: "choice", needs });
@@ -452,4 +456,55 @@ test("a LONE Otherwise is no exhaustive set: the opponent chooses, and only the 
     expect(d.tags!.abilities.filter((a) => a.gate !== undefined).map((a) => a.gate!.kind === "unknown" && a.gate!.otherwise), name).toEqual([true]);
     expect(roleRow([d], d.card.name, "handFill"), name).toMatchObject({ weight: 0.5, basis: "unread" });
   }
+});
+
+// WHOLE-BRANCH REVIEW of 0f01e53b
+test("an unknown gate is weighed by ITS OWN demand, never the trigger's intervening-if demand (Frodo: lifegain is the trigger's; Ayara's Oathsworn: its own counters)", () => {
+  for (const [name, kind] of [["Frodo, Adventurous Hobbit", "draw-card"], ["Ayara's Oathsworn", "search"]] as const) {
+    const d = make(name);
+    const a = d.tags!.abilities.find((x) => x.effect.kind === kind && x.gate !== undefined)!;
+    expect(a.conditionCares, name).toBeDefined();
+    expect(makeGateWeigher(deckOf([d])).of(a, d), name).toMatchObject({ weight: UNREAD_WEIGHT, basis: "unread" });
+  }
+});
+
+test("the Otherwise of a choice is a choice: Thunderous Debut's not-bargained branch counts whole, said 'when not bargained'", () => {
+  const d = make("Thunderous Debut");
+  const gated = d.tags!.abilities.filter((a) => a.gate !== undefined);
+  expect(gated.map((a) => a.gate!.text)).toEqual(["this spell was bargained", "it is not the case that this spell was bargained"]);
+  for (const a of gated) expect(makeGateWeigher(deckOf([d])).of(a, d)).toMatchObject({ weight: 1, basis: "choice" });
+  // the report names the branch the role leans on: the hand-fill is the NOT-bargained one
+  expect(roleRow([d], d.card.name, "handFill")).toMatchObject({ weight: 1, basis: "choice", needs: "it is not the case that this spell was bargained" });
+});
+
+test("a coin flip's two sides are exhaustive branches, like if/Otherwise: Invert Polarity answers the spell whichever way it lands", () => {
+  const d = make("Invert Polarity");
+  expect(d.tags!.abilities.filter((a) => a.gate !== undefined).map((a) => a.gate!.text).sort()).toEqual(["you lose the flip", "you win the flip"]);
+  const deck = deckOf([d]);
+  const row = computeBuild(deck, undefined, undefined, undefined, 0, undefined, makeGateWeigher(deck)).conditionalRoles?.find((r) => r.card === d.card.name && r.category === "stackInteraction");
+  expect(row).toBeUndefined();
+});
+
+test("a goldfish draw whose printed Otherwise draws too is not a chance (Predict: draws two, otherwise one)", () => {
+  const printed = { name: "Predict", typeLine: "Instant", keywords: ["Mill"], oracleText: "Choose a card name, then target player mills a card. If a card with the chosen name was milled this way, you draw two cards. Otherwise, you draw a card." };
+  const a = (verb: string, object: string, amount: string | null) => ({ verb, object, fromZone: null, toZone: null, amount, optional: false }) as never;
+  const records = [{ id: 1, abilityType: "spell", actions: [a("mill", "target player", "1"), a("draw", "you", "2")] }] as never;
+  const d: DeckCard = { card: { ...printed, manaValue: 2, manaCost: "{1}{U}" } as never, tags: deriveCardTags(deriveInputOf(printed as never, "x", printed.name, records)) };
+  const draw = d.tags!.abilities.find((x) => x.effect.kind === "draw-card")!;
+  expect(draw.otherwiseAlike).toBe(true);
+  expect(drawOf(d, makeGateWeigher(deckOf([d])))).toEqual({ once: 2, upkeep: 0 });
+});
+
+test("an Otherwise whose 'if' was an opponent's choice is said by what decides it (Protection Racket, Sin Prodder)", () => {
+  for (const [name, said] of [["Protection Racket", "no opponent pays to stop it"], ["Sin Prodder", "no opponent takes the deal"]] as const) {
+    const d = make(name);
+    const row = roleRow([d], d.card.name, "handFill");
+    expect(row, name).toMatchObject({ weight: 0.5, basis: "unread", needs: said });
+  }
+});
+
+test("a condition on ANOTHER object's casting is not this card's optional cost: Full Bore's 'that creature was cast for its warp cost' stays unread", () => {
+  const d = make("Full Bore");
+  const [a] = d.tags!.abilities.filter((x) => x.gate !== undefined);
+  expect(makeGateWeigher(deckOf([d])).of(a!, d)).toMatchObject({ weight: UNREAD_WEIGHT, basis: "unread" });
 });
