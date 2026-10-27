@@ -4641,7 +4641,7 @@ describe("becomes blocked by <creatures> (#1381, CR 509.3c-e)", () => {
     expect(tags.unknownTriggers ?? []).not.toContain("narrowing:becomes-blocked");
   });
 
-  test("the negation tripwire stays: a 'non-' word the filter cannot carry still refuses", () => {
+  test("readBlocker's guard counts only notType / notSubtype / notColors: a legendary or token negation (carried by parse as legendary:false / token:false) still refuses", () => {
     const tags = viaGrammar("Test Charger", "Creature — Ogre", "Whenever this creature becomes blocked by a nonlegendary creature, destroy that creature.");
     expect(blocked(tags)).toHaveLength(0);
     expect(tags.unknownTriggers).toContain("narrowing:becomes-blocked");

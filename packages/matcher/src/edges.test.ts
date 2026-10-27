@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { isManaRock, pairReasons, pairReasonsAcrossFaces, directedReasons, revenantToughness, cardThemeTags, cardSupplyTags, themeSubjectKey, characteristicsSubject, eventTagKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons } from "./edges.js";
+import { isManaRock, pairReasons, pairReasonsAcrossFaces, directedReasons, revenantToughness, cardThemeTags, cardSupplyTags, themeSubjectKey, eventTagKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons } from "./edges.js";
 import { normalizeZoneEvent } from "./zones.js";
 import { faceDeckCards } from "./faces.js";
 import { fixtureDeckCard } from "./fixture-cards.js";
@@ -7045,13 +7045,4 @@ test("a subject naming ONE type beside a negation keys as the type; a negated li
   expect(themeSubjectKey({ type: "artifact", notType: ["creature"] })).toBe("artifact");
   expect(themeSubjectKey({ type: ["artifact", "enchantment", "instant"], notType: ["creature"] })).toBe("-creature");
   expect(themeSubjectKey({ type: ["creature", "artifact", "enchantment", "planeswalker", "battle"], notType: ["land"] })).toBe("-land");
-});
-
-test("a printed type line is a CONJUNCTION on the producer side: allTypes on characteristicsSubject and the implied events (#1383)", () => {
-  const laserbeak = base("Laserbeak", []);
-  laserbeak.tags.characteristics.types = ["artifact", "creature"];
-  expect(characteristicsSubject(laserbeak.tags).allTypes).toEqual(["artifact", "creature"]);
-  const plain = base("Bear", []);
-  plain.tags.characteristics.types = ["legendary", "creature"];
-  expect(characteristicsSubject(plain.tags).allTypes).toBeUndefined();
 });

@@ -248,10 +248,17 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
         const has = expandTypes(tokens, arr(producer.subtype), h);
         return negated.some((t) => has.has(t.toLowerCase()));
       };
-      // `type` is an OR list on an emit and a CONJUNCTION on a printed type line (`allTypes`, stamped
-      // by `characteristicsSubject` / `selfSubject`). "Destroy target nonland permanent" can destroy
-      // a nonartifact creature, so Missy hears it; Laserbeak IS an artifact and she does not (#1383).
-      const orList = producerTokens.length > 1 && (producer.allTypes?.length ?? 0) === 0;
+      // A producer list with its OWN `notType` came from a negation over an umbrella ("destroy target
+      // nonland permanent"): it means ANY of those types, so a nonartifact creature is among its
+      // victims and Missy hears Stroke of Midnight. It is excluded only when EVERY alternative is.
+      // Every other multi-type producer keeps the strict exclusion: a printed type line is a
+      // conjunction (Laserbeak), and so is a copy token that gained a type (Urza, Prince of Kroog:
+      // `{token, type: [creature, artifact]}`), which read as "either" falsely paired with Cloudstone
+      // Curio and Builder's Talent. CEILING: a real OR with no notType of its own ("a copy of target
+      // artifact or creature", Stolen Identity) stays refused as before this change -- a missing
+      // edge, not a false one. Derive does not mark the two apart: 27 two-type and 6 three-type
+      // token:true create-token emits carry no allTypes (#1383 review census).
+      const orList = producerTokens.length > 1 && (producer.notType?.length ?? 0) > 0 && (producer.allTypes?.length ?? 0) === 0;
       if (orList ? producerTokens.every((t) => excluded([t])) : excluded(producerTokens)) return false;
     }
   }

@@ -106,7 +106,15 @@ function hits(subjects: readonly Subject[]): Set<string> {
   }
   return out;
 }
-const limits = (subjects: readonly Subject[]) => new Set(subjects.flatMap((s) => LIMITS.filter((k) => s[k] !== undefined && s[k] !== null)));
+const UMBRELLA_NOUNS: ReadonlySet<string> = new Set(["permanent", "spell", "card"]);
+/** A NEGATION BESIDE ONE CONCRETE TYPE is a limit ("nonartifact creature", #1383: Phyrexian Scriptures
+ *  spares your artifact creatures, Wrath does not). A negated LIST or an umbrella ("nonland permanent")
+ *  is the types the negation leaves, already counted by `hits`. */
+const typeLimits = (s: Subject): string[] => {
+  const types = [s.type ?? []].flat().map((x) => String(x).toLowerCase());
+  return types.length === 1 && !UMBRELLA_NOUNS.has(types[0]!) ? [s.notType ?? []].flat().map((t) => `notType:${String(t).toLowerCase()}`) : [];
+};
+const limits = (subjects: readonly Subject[]) => new Set(subjects.flatMap((s) => [...LIMITS.filter((k) => s[k] !== undefined && s[k] !== null), ...typeLimits(s)]));
 /** AN ANSWER THAT DOES THE CUT'S JOB: it hits every card type the cut hits, with no limit the cut
  *  lacks (Erase and Thraben Exorcism are not Crib Swap). */
 export function answerCovers(cut: readonly Subject[], add: readonly Subject[]): boolean {

@@ -547,15 +547,20 @@ test("a nonartifact creature consumer refuses an artifact creature producer (#13
   expect(subjectMatches(s({ control: "any", type: "creature" }), consumer, H)).toBe(true);
 });
 
-// #1383 follow-up: `type` on an EMIT is an OR list, on a printed card an AND. Missy ("another
-// nonartifact creature dies") must still hear Stroke of Midnight ("destroy target nonland
-// permanent"), which can destroy a nonartifact creature, and must not hear an artifact creature.
-test("a nonartifact creature consumer: an OR-list producer is excluded only if EVERY alternative is, a printed artifact creature always", () => {
+// #1383 follow-up: a producer list that came from a NEGATION over an umbrella ("destroy target nonland
+// permanent", so it carries its own `notType`) is an OR: Missy ("another nonartifact creature dies")
+// hears Stroke of Midnight, which can destroy a nonartifact creature. Every other multi-type producer
+// is a CONJUNCTION or unknown (a printed type line; a copy token that gained a type, Urza, Prince of
+// Kroog) and keeps the strict exclusion.
+test("a nonartifact consumer: only a producer with its own notType is an OR list", () => {
   const missy = parseSubject("another nonartifact creature") as SubjectFilter;
   const stroke = s({ control: "any", type: ["creature", "artifact", "enchantment", "planeswalker", "battle"], notType: ["land"] });
   expect(subjectMatches(stroke, missy, H)).toBe(true);
-  expect(subjectMatches(s({ control: "any", type: ["artifact", "creature"] }), missy, H)).toBe(true); // "destroy target artifact or creature"
-  expect(subjectMatches(s({ control: "any", type: ["artifact", "enchantment"] }), missy, H)).toBe(false);
-  const laserbeak = s({ control: "any", type: ["artifact", "creature"], allTypes: ["artifact", "creature"] });
-  expect(subjectMatches(laserbeak, missy, H)).toBe(false);
+  expect(subjectMatches(s({ control: "any", type: ["artifact", "enchantment"], notType: ["land"] }), missy, H)).toBe(false);
+  // Laserbeak, a printed artifact creature, and Urza's copy token (creature in addition to artifact).
+  expect(subjectMatches(s({ control: "any", type: ["artifact", "creature"] }), missy, H)).toBe(false);
+  const curio = parseSubject("a nonartifact permanent you control") as SubjectFilter;
+  expect(subjectMatches(s({ control: "you", token: true, type: ["creature", "artifact"] }), curio, H)).toBe(false);
+  const talent = parseSubject("a noncreature, nonland permanent you control") as SubjectFilter;
+  expect(subjectMatches(s({ control: "you", token: true, type: ["creature", "artifact"] }), talent, H)).toBe(false);
 });
