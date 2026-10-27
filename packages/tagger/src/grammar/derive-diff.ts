@@ -27,7 +27,9 @@ function byClause(abilities: readonly Ability[]): Map<number, Ability[]> {
   // key, so an edict's emits sorted ahead of or behind the abilities beside it differently on the two sides and paired the wrong
   // abilities (Archon of Cruelty's `discard` against its `sacrifice`: a labelled "emits.subject(~control +scope)" group became an
   // unlabelled "emits", and the card un-switched from the grammar's reading to the model's, which says `discard: any`).
-  const order = (a: Ability): string => json(a).replace(/"edict":true,?|"victimMay":true,?|"redirect":true,?/g, "");
+  // ...AND THE #1357 GATE: `gate` and `conditionCares` are the same on both sides when the reading agrees, but a gated and an ungated ability of one clause differ in the key first, so a side that gated one more
+  // action sorted the pair the wrong way round (Imoen's two draws) and the difference read as every field.
+  const order = (a: Ability): string => { const { gate: _g, conditionCares: _c, ...rest } = a; return json(rest).replace(/"edict":true,?|"victimMay":true,?|"redirect":true,?/g, ""); };
   for (const list of out.values()) list.sort((x, y) => (order(x) < order(y) ? -1 : order(x) > order(y) ? 1 : 0));
   return out;
 }

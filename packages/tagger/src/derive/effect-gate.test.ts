@@ -47,6 +47,13 @@ describe("parseGate reads an effect's condition by the same words as a mana line
   });
 });
 
+describe("parseGate (#1357 review): tron is the Urza lands only", () => {
+  it("two kinds of permanent are a control count of neither, an Urza land pair is tron", () => {
+    expect(parseGate("you control an artifact and an enchantment")).toEqual({ kind: "unknown", text: "you control an artifact and an enchantment" });
+    expect(parseGate("you control an urza's mine and an urza's tower")).toMatchObject({ kind: "tron" });
+  });
+});
+
 describe("sentenceGate: the trailing condition of one sentence, and what is no gate", () => {
   it("a trailing if is the condition, verbatim", () => {
     expect(sentenceGate("Draw a card if an opponent has cast a blue or black spell this turn")).toEqual({ shape: "trailing", condition: "an opponent has cast a blue or black spell this turn" });
@@ -75,8 +82,8 @@ describe("sentenceGate: the trailing condition of one sentence, and what is no g
   it("an if inside a quoted ability belongs to the grant, not to the sentence", () => {
     expect(sentenceGate("Creatures you control gain \"Whenever this creature attacks, draw a card if you control a Dragon\" until end of turn")).toEqual({ shape: "none" });
   });
-  it("two ifs in a sentence are one unreadable condition, the tail from the first", () => {
-    expect(sentenceGate("Creatures your opponents control get -1/-0 until end of turn if {U} was spent to cast this spell, and creatures you control get +1/+0 until end of turn if {R} was spent to cast this spell")).toMatchObject({ shape: "trailing", condition: expect.stringMatching(/^\{U\} was spent .* if \{R\} was spent/) });
+  it("two ifs in a sentence are two conditions, each cut at the conjunct that ends it (Unnerving Assault)", () => {
+    expect(sentenceGate("Creatures your opponents control get -1/-0 until end of turn if {U} was spent to cast this spell, and creatures you control get +1/+0 until end of turn if {R} was spent to cast this spell")).toEqual({ shape: "trailing", condition: "{U} was spent to cast this spell" });
   });
 });
 
@@ -92,6 +99,34 @@ describe("effectGates: which action's verb finds the gated sentence", () => {
   it("a restriction and a static grant are found by the words they print (can't, has), not by the condition's own words", () => {
     expect(effectGates("This creature can't be blocked if you've cast two or more spells this turn.", ["cant"])).toEqual({ gates: ["you've cast two or more spells this turn"], refused: false });
     expect(effectGates("Draw a card if an opponent has cast a blue or black spell this turn. You and permanents you control gain hexproof.", ["draw", "grant-ability"]).gates).toEqual(["an opponent has cast a blue or black spell this turn", null]);
+  });
+  // Real oracle text, Mongo `cards` 2026-10-27. #1357 review: an "if" gates the action of ITS conjunct, not every action in its sentence.
+  it("Quag Feast: the mill is not gated, the destroy after ', then' is", () => {
+    const body = "Mill two cards, then destroy the chosen permanent if its mana value is less than or equal to the number of cards in your graveyard.";
+    expect(effectGates(body, ["mill", "destroy"]).gates).toEqual([null, "its mana value is less than or equal to the number of cards in your graveyard"]);
+  });
+  it("Ouphe Vandals: the counter-spell is not gated, the destroy is", () => {
+    expect(effectGates("Counter target activated ability from an artifact source and destroy that artifact if it's on the battlefield.", ["counter-spell", "destroy"]).gates).toEqual([null, "it's on the battlefield"]);
+  });
+  it("Aurelia: each 'gains' takes its own if and the pump takes none", () => {
+    const body = "Until end of turn, that creature gets +2/+0, gains trample if it's red, and gains vigilance if it's white.";
+    expect(effectGates(body, ["modify-pt", "grant-ability", "grant-ability"])).toEqual({ gates: [null, "it's red", "it's white"], refused: false });
+  });
+  it("Savage Punch: 'before it fights' is a modifier of the pump, not a conjunct, so the pump keeps its gate", () => {
+    const body = "The creature you control gets +2/+2 until end of turn before it fights if you control a creature with power 4 or greater.";
+    expect(effectGates(body, ["modify-pt", "fight"]).gates).toEqual(["you control a creature with power 4 or greater", "you control a creature with power 4 or greater"]);
+  });
+  it("Lucy MacLean: the token is not gated, the draw after ', then' is", () => {
+    const body = "you may have target player other than its controller create a token that's a copy of it, then you draw a card if an opponent created a token this way.";
+    expect(effectGates(body, ["create", "draw"]).gates).toEqual([null, "an opponent created a token this way"]);
+  });
+  it("a clone's ', except ... if' rider never gates the copy: Spark Double (each counter its own if), Undercover Operative, Flesh Duplicate, Double Major; Vizier's 'except if' is no gate", () => {
+    expect(effectGates("You may have this creature enter as a copy of a creature or planeswalker you control, except it enters with an additional +1/+1 counter on it if it's a creature, it enters with an additional loyalty counter on it if it's a planeswalker, and it isn't legendary.", ["copy", "add-counter", "add-counter"]).gates)
+      .toEqual([null, "it's a creature", "it's a planeswalker"]);
+    expect(effectGates("You may have this creature enter as a copy of any creature on the battlefield, except it enters with a shield counter on it if you control that creature.", ["copy", "add-counter"]).gates).toEqual([null, "you control that creature"]);
+    expect(effectGates("You may have this creature enter as a copy of any creature on the battlefield, except it has vanishing 3 if that creature doesn't have vanishing.", ["copy"]).gates).toEqual([null]);
+    expect(effectGates("Copy target creature spell you control, except it isn't legendary if the spell is legendary.", ["copy"]).gates).toEqual([null]);
+    expect(effectGates("You may have this creature enter as a copy of any creature on the battlefield, except if this creature was embalmed, the token has no mana cost, it's white, and it's a Zombie in addition to its other types.", ["copy"])).toEqual({ gates: [null], refused: false });
   });
   it("a gated sentence no action finds, and a leading condition, are reported as refused", () => {
     expect(effectGates("Draw a card if you control an artifact.", ["gain-life"]).refused).toBe(true);
@@ -123,8 +158,29 @@ describe("derive stamps Ability.gate on the ability its sentence made, with cond
       const gated = tags.abilities.filter((a) => a.gate !== undefined);
       expect(gated.map((a) => a.effect.kind)).toEqual(["draw-card"]);
       expect(gated[0]!.gate).toEqual({ kind: "counter", counter: "phyresis", need: 7, text: "it has seven or more phyresis counters on it" });
-      expect(gated[0]!.conditionCares).toEqual(["counter-added:any"]);
+      // The counter is the card's OWN kind ("put a phyresis counter on Weatherlight Compleated"): no deck supplies it, so no counters demand (#1357 review; the false demand also reached edges.ts' dies-trigger guard).
+      expect(gated[0]!.conditionCares).toBeUndefined();
     }
+  });
+  it("a counter demand is kept only where a deck can supply the counter: Federation (generic), Marcus (another creature's +1/+1), Aven Courier; dropped where the card places its own: Fasting, Steel Dromedary", () => {
+    const marcus = viaGrammar(card("Marcus, Mutant Mayor", "Legendary Creature — Mutant Human", "Vigilance, trample\nWhenever a creature you control deals combat damage to a player, draw a card if that creature has a +1/+1 counter on it. If it doesn't, put a +1/+1 counter on it.", ["Vigilance", "Trample"])).tags;
+    expect(marcus.abilities.find((a) => a.effect.kind === "draw-card")!.conditionCares).toEqual(["counter-added:any"]);
+    const fasting = viaGrammar(card("Fasting", "Enchantment", "At the beginning of your upkeep, put a hunger counter on this enchantment. Then destroy this enchantment if it has five or more hunger counters on it.\nIf you would begin your draw step, you may skip that step instead. If you do, you gain 2 life.\nWhen you draw a card, destroy this enchantment.")).tags;
+    expect(fasting.abilities.filter((a) => a.gate !== undefined).every((a) => a.conditionCares === undefined)).toBe(true);
+    const dromedary = viaGrammar(card("Steel Dromedary", "Creature — Camel", "This creature enters tapped with two +1/+1 counters on it.\nThis creature doesn't untap during your untap step if it has a +1/+1 counter on it.\nAt the beginning of combat on your turn, you may move a +1/+1 counter from this creature onto target creature.")).tags;
+    expect(dromedary.abilities.filter((a) => a.gate !== undefined).every((a) => a.conditionCares === undefined)).toBe(true);
+  });
+  it("Quag Feast and Aurelia derive the gate on the right ability only", () => {
+    const quag = viaGrammar(card("Quag Feast", "Sorcery", "Choose target creature, planeswalker, or Vehicle. Mill two cards, then destroy the chosen permanent if its mana value is less than or equal to the number of cards in your graveyard.")).tags;
+    expect(quag.abilities.filter((a) => a.gate !== undefined).map((a) => a.effect.kind)).not.toContain("mill");
+    const aureliaCard = card("Aurelia, Exemplar of Justice", "Legendary Creature — Angel", "Flying\nMentor (Whenever this creature attacks, put a +1/+1 counter on target attacking creature with lesser power.)\nAt the beginning of combat on your turn, choose up to one target creature you control. Until end of turn, that creature gets +2/+0, gains trample if it's red, and gains vigilance if it's white.", ["Flying", "Mentor"]);
+    const aurelia = viaModel(aureliaCard, [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Flying" } as never] },
+      { id: 2, abilityType: "none", actions: [{ verb: "none", object: "Mentor" } as never] },
+      { id: 3, abilityType: "triggered", trigger: { event: "begin-combat", subject: "you", control: "you" }, actions: [act("modify-pt", "that creature", { amount: "+2/+0" }), act("grant-ability", "that creature", { amount: "trample" }), act("grant-ability", "that creature", { amount: "vigilance" })] },
+    ]);
+    expect(aurelia.abilities.filter((a) => a.effect.kind === "pump").every((a) => a.gate === undefined)).toBe(true);
+    expect(aurelia.abilities.filter((a) => a.gate !== undefined).map((a) => a.gate!.text).sort()).toEqual(["it's red", "it's white"]);
   });
   it("Beza: four effects, four unknown gates (an opponent comparison), each its own sentence's text", () => {
     const { tags } = viaGrammar(BEZA);

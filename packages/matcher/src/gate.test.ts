@@ -323,6 +323,15 @@ test("turn-event: 'this land entered this turn' is the entry turn only, and the 
   }
 });
 
+test("turn-event: a spell an opponent cast this turn is supplied by no decklist: unmet by every turn in every deck (Veil of Summer; #1357)", () => {
+  const g = parseGate("an opponent has cast a blue or black spell this turn");
+  expect(g).toMatchObject({ kind: "turn-event", event: "opponent-cast" });
+  for (const deck of [landsDeck([]), landsDeck(copies(30, (i) => creature(i)))]) {
+    expect(gateProbability(g, deck)).toBe(0);
+    expect(gateProbability(g, deck, 3)).toBe(0);
+  }
+});
+
 test("the estimated kinds are named (the goldfish does not play them per game)", () => {
   for (const [g, yes] of [["there is a card in your graveyard", true], ["this creature has a +1/+1 counter on it", true], ["you attacked this turn", true], ["you control a dragon", false], ["speed 4", false], ["you win", false]] as const)
     expect(isEstimatedGate(parseGate(g)), g).toBe(yes);

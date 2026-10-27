@@ -8,7 +8,8 @@
  *  job in an earlier sentence can shift a later action's sentence (`effectGates` reports a gated sentence no action took, and the grammar refuses a mode over it).
  *  CEILING: ONLY A TRAILING "if". A sentence that OPENS with the condition ("If you control a Dragon, draw a card", "Then if ...") stays ungated: its condition can govern several following clauses and an "Otherwise"
  *  branch, and which of the sentence's actions it gates is not a word-level question. The grammar keeps refusing a MODE that opens with one (`effectGates().refused`).
- *  CEILING: a sentence with two ifs ("... if {U} was spent, and ... if {R} was spent", Unnerving Assault) is one condition, the whole tail from the first "if": `unknown`, flagged on every action of the sentence.
+ *  CEILING: AN "IF" GATES THE ACTION OF ITS OWN CONJUNCT ONLY, found by the printed verb words (see `effectGates`): in "Create a Treasure token and draw a card if X" the draw is gated and the Treasure is not, which
+ *  under-gates a sentence whose "if" the writer meant for both; and a comma list inside a condition ("if you control a Dragon, an Elf, and a Goblin") ends it at ", and ".
  *  Bounded literals and `indexOf` only, no `\s*...$` tail and no nested quantifier (CodeQL js/polynomial-redos). */
 
 /** The printed word(s) an action verb reads as, where they differ from the verb's name ("modify-pt" is "gets", "deal-damage" is "deals"). The default is the verb's first word, with its plural/third-person ending:
@@ -68,9 +69,9 @@ const INSTEAD = /\binstead\b/i;
 /** A sentence that restricts WHEN the card or ability may be used or what it costs, not what it does (part 1 of #1349 owns the activation restriction). "costs {2} less to cast if it targets ...", "costs {1} less to activate". */
 const COST_CHANGE = /\bcosts? [^,]{0,80}\b(?:less|more) to (?:cast|activate)\b/i;
 const RESTRICTION_OPENER = /^(?:activate|cast this|use this|any player may activate|you may activate|you may cast this)\b/i;
-/** What stands before the "if" when the sentence is NOT "<effect> if <condition>": a bare connective, or an "only"/"as"/"even" the "if" belongs to ("only if", "as if", "even if"). */
+/** What stands before the "if" when the sentence is NOT "<effect> if <condition>": a bare connective, or an "only"/"as"/"even"/"except" the "if" belongs to ("only if", "as if", "even if", "except if this creature was embalmed"). */
 const BARE_LEAD = new Set(["then", "and", "also", "otherwise"]);
-const IF_BELONGS_TO_PREVIOUS = /(?:^|\s)(?:only|as|even|what)$/i;
+const IF_BELONGS_TO_PREVIOUS = /(?:^|\s)(?:only|as|even|what|except)$/i;
 
 export type SentenceGate =
   | { shape: "none" }
@@ -79,63 +80,125 @@ export type SentenceGate =
   | { shape: "leading" }
   | { shape: "trailing"; condition: string };
 
-/** What one sentence says about a gate: the verbatim condition after its first trailing "if", or why it has none. */
-export function sentenceGate(sentence: string): SentenceGate {
-  const s = sentence.replace(/"[^"]*"/g, " ").trim();
-  if (s === "") return { shape: "none" };
-  const lower = s.toLowerCase();
-  const opens = lower.startsWith("if ");
-  const at = opens ? 0 : lower.indexOf(" if ");
-  if (at < 0) return { shape: "none" };
-  if (RESTRICTION_OPENER.test(s) || COST_CHANGE.test(s) || INSTEAD.test(s)) return { shape: "exempt" };
-  const pre = opens ? "" : s.slice(0, at).trim();
-  const condition = s.slice(at + (opens ? 3 : 4)).trim();
-  if (REPLACEMENT_WORDS.test(condition) || notAGate(condition)) return { shape: "exempt" };
-  if (opens) return { shape: "leading" };
-  if (IF_BELONGS_TO_PREVIOUS.test(pre)) return { shape: "exempt" };
-  // "Then if X, do Y" and "Until end of turn, if X, ..." and "Before the game begins, if ...": the condition leads, whatever the words before it.
-  // ...and the same joined to an earlier effect: "create a Rat token, then if you control five or more Rats, each Rat gets +2/+0" (Ogre Chitterlord).
-  const lastWord = pre.slice(pre.lastIndexOf(" ") + 1).replace(/,$/, "").toLowerCase();
-  if (BARE_LEAD.has(lastWord) || pre.endsWith(",")) return { shape: "leading" };
-  return condition === "" ? { shape: "none" } : { shape: "trailing", condition };
+/** One gating "if" of a sentence: where it stands (`at`, the index of its "i"), the verbatim condition and where that condition ends (`end`, an index in the sentence). */
+export interface SentenceIf { at: number; shape: "leading" | "trailing"; condition: string; start: number; end: number }
+
+/** Where a condition that begins at `from` ends: at the first ", then " / ", and " (the next conjunct), or at the last comma before the NEXT "if" (a second "if" of its own conjunct), else at the sentence's end.
+ *  A leading condition ends at its comma. A comma inside a list in a condition ("a Dragon, an Elf, and a Goblin") is cut at ", and ": CEILING below. */
+function conditionEnd(lower: string, from: number, leading: boolean): number {
+  if (leading) { const comma = lower.indexOf(",", from); return comma < 0 ? lower.length : comma; }
+  let end = lower.length;
+  for (const cut of [", then ", ", and "]) { const i = lower.indexOf(cut, from); if (i >= 0 && i < end) end = i; }
+  const next = lower.indexOf(" if ", from);
+  if (next >= 0 && next < end) { const comma = lower.lastIndexOf(", ", next); if (comma >= from) end = comma; }
+  return end;
 }
 
-/** The words of a sentence that say what happens: a trailing condition is cut at its first " if ", a leading one ("If X, do Y") through its comma. */
-function effectPart(sentence: string): string {
-  const lower = sentence.toLowerCase();
-  if (lower.trimStart().startsWith("if ")) { const comma = sentence.indexOf(","); return comma < 0 ? "" : sentence.slice(comma + 1); }
-  const at = lower.indexOf(" if ");
-  return at < 0 ? sentence : sentence.slice(0, at);
+/** The gating ifs of one sentence, in order. A sentence that restricts use or cost, or says "instead", has none; an "if" that is a follow-up, a replacement or belongs to "only/as/even/except" is skipped. */
+export function sentenceIfs(sentence: string): SentenceIf[] {
+  const s = sentence.replace(/"[^"]*"/g, " ");
+  const lower = s.toLowerCase();
+  if (RESTRICTION_OPENER.test(s.trim()) || COST_CHANGE.test(s) || INSTEAD.test(s)) return [];
+  const lead = lower.length - lower.trimStart().length;
+  const starts: number[] = lower.startsWith("if ", lead) ? [lead] : [];
+  for (let p = lower.indexOf(" if "); p >= 0; p = lower.indexOf(" if ", p + 1)) starts.push(p + 1);
+  const out: SentenceIf[] = [];
+  let ended = 0;
+  for (const at of starts) {
+    // An "if" inside the previous condition ("it's a creature or if {G}{W} was spent") is part of it.
+    if (at < ended) continue;
+    const opens = at === lead && lower.startsWith("if ", lead);
+    const start = at + 3;
+    const end = conditionEnd(lower, start, opens);
+    const condition = s.slice(start, end).trim();
+    const pre = s.slice(0, at).trim();
+    ended = end;
+    if (condition === "" || REPLACEMENT_WORDS.test(condition) || notAGate(condition)) continue;
+    if (opens) { out.push({ at, shape: "leading", condition, start, end }); continue; }
+    if (IF_BELONGS_TO_PREVIOUS.test(pre)) continue;
+    // "Then if X, do Y" and "Until end of turn, if X, ..." and "Before the game begins, if ...": the condition leads, whatever the words before it.
+    // ...and the same joined to an earlier effect: "create a Rat token, then if you control five or more Rats, each Rat gets +2/+0" (Ogre Chitterlord).
+    const lastWord = pre.slice(pre.lastIndexOf(" ") + 1).replace(/,$/, "").toLowerCase();
+    if (BARE_LEAD.has(lastWord) || pre.endsWith(",")) { out.push({ at, shape: "leading", condition, start, end: conditionEnd(lower, start, true) }); continue; }
+    out.push({ at, shape: "trailing", condition, start, end });
+  }
+  return out;
 }
+
+/** What one sentence says about its FIRST gating if: the verbatim condition of a trailing one, or why it has none. */
+export function sentenceGate(sentence: string): SentenceGate {
+  const first = sentenceIfs(sentence)[0];
+  if (first) return first.shape === "leading" ? { shape: "leading" } : { shape: "trailing", condition: first.condition };
+  const plain = sentence.replace(/"[^"]*"/g, " ");
+  return plain.toLowerCase().includes(" if ") || plain.trimStart().toLowerCase().startsWith("if ") ? { shape: "exempt" } : { shape: "none" };
+}
+
+/** What starts a new conjunct between two verbs of one sentence. */
+const CONJUNCT_BOUNDARY = [", then ", ", and ", " and ", ", "];
 
 export interface EffectGates {
-  /** Per action, in order: the verbatim trailing condition of the sentence that action's verb finds, or null. */
+  /** Per action, in order: the verbatim trailing condition of the "if" that belongs to that action's own conjunct, or null. */
   gates: (string | null)[];
   /** Some sentence carries a gating "if" that no action took: it opens with its condition, or no action's verb finds it. The grammar refuses a mode over it. */
   refused: boolean;
 }
 
-/** THE GATE OF EACH ACTION of an effect body (the clause's text after its trigger preamble, cost and ability word; the card's own name may be "~" or printed). `verbs` are the clause's action verbs in order. */
+/** THE GATE OF EACH ACTION of an effect body (the clause's text after its trigger preamble, cost and ability word; the card's own name may be "~" or printed). `verbs` are the clause's action verbs in order.
+ *  AN "IF" BELONGS TO ITS OWN CONJUNCT (#1357 review): an action takes the first trailing "if" that follows its verb's printed word, unless another action's word stands between them ("Mill two cards, then
+ *  destroy ... if ..." gates the destroy, "gets +2/+0, gains trample if it's red, and gains vigilance if it's white" gives each grant its own) or a ", except" rider does (a clone's "except it enters with a
+ *  counter on it if ..." gates the counter, never the copy). A condition ends at its conjunct's ", then " / ", and " (or at the comma before the next "if"). */
 export function effectGates(body: string, verbs: readonly string[]): EffectGates {
   const plain = body.replace(/"[^"]*"/g, " ");
   const sentences = plain.split(".");
-  // A verb's printed word is looked for in what the sentence DOES, never in its condition: "Draw a card if an opponent HAS cast a blue or black spell" is no grant (`has`), and "... if you control a creature
-  // that DREW" is no draw. The same sentences, the condition cut off.
-  const doing = sentences.map(effectPart).join(".");
-  const taken = new Set<number>();
-  const gates = verbs.map((verb, i) => {
+  const parsed = sentences.map(sentenceIfs);
+  // A verb's printed word is looked for in what the sentence DOES, never in its condition: "Draw a card if an opponent HAS cast a blue or black spell" is no grant (`has`). The same sentences, conditions blanked.
+  const doing = sentences.map((sentence, i) => parsed[i]!.reduce((acc, f) => acc.slice(0, f.start) + " ".repeat(f.end - f.start) + acc.slice(f.end), sentence));
+  const where = verbs.map((verb, i): { sentence: number; offset: number } | null => {
     if (verb === "" || verb === "none" || verb === "other") return null;
     const k = verbs.slice(0, i).filter((v) => v === verb).length;
-    const at = nthSentenceIndex(doing, printedVerbWord(verb, true), k);
-    if (at < 0) return null;
-    const g = sentenceGate(sentences[at]!);
-    if (g.shape !== "trailing") return null;
-    taken.add(at);
-    return g.condition;
+    let seen = 0;
+    for (let at = 0; at < doing.length; at++) {
+      for (const m of doing[at]!.matchAll(new RegExp(printedVerbWord(verb, true), "gi"))) {
+        if (seen === k) return { sentence: at, offset: m.index };
+        seen++;
+      }
+    }
+    return null;
   });
-  const refused = sentences.some((sentence, at) => {
-    const g = sentenceGate(sentence);
-    return g.shape === "leading" || (g.shape === "trailing" && !taken.has(at));
+  const taken = new Set<string>();
+  const gates = where.map((w, j) => {
+    if (w === null) return null;
+    const next = parsed[w.sentence]!.find((f) => f.shape === "trailing" && f.at > w.offset);
+    if (!next) return null;
+    const lower = sentences[w.sentence]!.toLowerCase();
+    // Another action's word in a LATER conjunct between this one's and the "if": the "if" is that action's. A word inside the same conjunct is a modifier ("gets +2/+2 until end of turn BEFORE IT FIGHTS if you
+    // control a creature with power 4 or greater", Savage Punch) and shares the "if".
+    if (where.some((o, i) => i !== j && o !== null && o.sentence === w.sentence && o.offset > w.offset && o.offset < next.at && CONJUNCT_BOUNDARY.some((b) => lower.slice(w.offset, o.offset).includes(b)))) return null;
+    if (lower.slice(w.offset, next.at).includes(" except ")) return null;
+    taken.add(`${w.sentence}:${next.at}`);
+    return next.condition;
   });
+  const refused = parsed.some((ifs, at) => ifs.some((f) => f.shape === "leading" || !taken.has(`${at}:${f.at}`)));
   return { gates, refused };
+}
+
+// ---- THE COUNTER A GATE NAMES --------------------------------------------------------------------------------------------------------------
+/** Words before "counter(s)" that name no kind of counter. */
+const NOT_A_KIND = new Set(["a", "an", "the", "more", "no", "any", "of", "that", "those", "its", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "twenty", "other", "additional", "such", "each", "same", "many", "fewer", "or", "and", "kind", "total", "number"]);
+const escapeRe = (w: string): string => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** DOES THE CONDITION'S COUNTER COME FROM THE CARD ITSELF, so that no deck supplies it? "it has five or more hunger counters on it" (Fasting: "put a hunger counter on this enchantment"), "exiled cards with hit counters on them"
+ *  (Etrata: "put a hit counter on that card"), "it had a death counter on it" (Bogardan Phoenix): a named kind the card's own text puts is nobody else's, so the condition makes no counters demand. A +1/+1 counter
+ *  is every counters deck's, so it is the card's own only when the condition is about the card ("it has a +1/+1 counter on it", Steel Dromedary: "enters tapped with two +1/+1 counters on it"); "that creature has a
+ *  +1/+1 counter on it" (Marcus) and a counter with no kind ("a permanent with a counter on it", Federation Field Medic) stay demands.
+ *  CEILING: reads the card's whole text, not the clause, and the card's own pronoun "it" is taken to be the card (a trigger about another object saying "it has a +1/+1 counter" would lose its demand). */
+export function counterIsTheCardsOwn(condition: string, cardText: string): boolean {
+  const lower = condition.toLowerCase();
+  const text = cardText.toLowerCase();
+  const kinds = new Set<string>();
+  for (const m of lower.matchAll(/([+-]\d+\/[+-]\d+|[a-z][a-z-]{1,20}) counters?\b/g)) if (!NOT_A_KIND.has(m[1]!)) kinds.add(m[1]!);
+  if (kinds.size === 0) return false;
+  const aboutTheCard = /^(?:it|this [a-z]+|~) (?:has|had)\b/.test(lower);
+  const places = (kind: string): boolean => new RegExp(`\\b(?:put|puts|moves?|enters?(?: [a-z ]{0,20})? with)\\b[^.]{0,80}${escapeRe(kind)} counters?`).test(text);
+  return [...kinds].every((kind) => /^[+-]/.test(kind) ? aboutTheCard && places(kind) : places(kind));
 }

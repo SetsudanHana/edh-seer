@@ -27,7 +27,7 @@ import { effectText, printedPreamble } from "../grammar/preamble.js";
 import { alignVerbs, parseActions, type ActionReading } from "../grammar/action.js";
 import { parseTrigger, type TriggerReading } from "../grammar/trigger.js";
 import { conditionalReturn, delaysIn, flipBranch, returnDelay, untilSourceLeaves } from "./delay.js";
-import { effectGates, FLIP_VERB_WORDS, nthSentenceMatching, printedVerbWord } from "./effect-gate.js";
+import { counterIsTheCardsOwn, effectGates, FLIP_VERB_WORDS, nthSentenceMatching, printedVerbWord } from "./effect-gate.js";
 import { parseGate } from "./gate.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
@@ -3325,7 +3325,8 @@ export function deriveAbilities(
       const gateText = gateReads?.gates[(clause.actions ?? []).indexOf(action)];
       if (gateText) {
         ability.gate = parseGate(gateText.replaceAll("~", (cardName ?? "").split(" // ")[0] ?? ""));
-        const gateCares = conditionCares_(gateText);
+        // A counter the card places on itself is no counters demand (#1357 review): no deck supplies a "phyresis" or "hunger" counter, and the false demand reached edges.ts' dies-trigger guard.
+        const gateCares = conditionCares_(gateText).filter((tag) => !(tag === "counter-added:any" && counterIsTheCardsOwn(gateText, cardText)));
         if (gateCares.length > 0) ability.conditionCares = gateCares;
       }
       // A RETURN THAT LANDS LATER (#801, Shirei): read on THIS action's own sentence, so an immediate
