@@ -86,7 +86,7 @@ const GROUPS: { group: EventGroup; verbs: string[] }[] = [
   { group: { id: "life", label: "Life", glyph: "ability-lifelink" }, verbs: ["gain-life", "lose-life", "loses-game"] },
   { group: { id: "tokens", label: "Tokens and counters", glyph: "token" }, verbs: ["create-token", "counter-added", "counter-removed", "proliferate"] },
   { group: { id: "cast", label: "Casting spells", glyph: "instant" }, verbs: ["cast", "copy", "copies", "counter-spell"] },
-  { group: { id: "combat", label: "Combat and damage", glyph: "power" }, verbs: ["attacks", "blocks", "combat-damage", "non-combat-damage", "damaged", "begin-combat", "exert", "prevented"] },
+  { group: { id: "combat", label: "Combat and damage", glyph: "power" }, verbs: ["attacks", "blocks", "becomes-blocked", "combat-damage", "non-combat-damage", "damaged", "begin-combat", "exert", "prevented"] },
   { group: { id: "board", label: "Enters, leaves, sacrificed", glyph: "creature" }, verbs: ["enters", "leaves", "exiled", "sacrifice", "fodder", "taps", "untaps", "attached", "transform", "turned-face-up", "phases-out", "meld"] },
   { group: { id: "cards", label: "Cards and lands", glyph: "library" }, verbs: ["draw", "search", "reveal", "scry", "explore", "shuffle", "land-play"] },
   { group: { id: "static", label: "What it boosts or counts", glyph: "ability-static" }, verbs: ["applies", "counts"] },

@@ -51,7 +51,7 @@ export const OPEN: Record<string, { cards: number; note: string }> = {
  *  and `VERB_ALIASES`, kept explicit so a producer can never exist without a consumer word. */
 export const ENGINE_TO_TRIGGER: Record<string, string> = {
   enters: "enters", "enters-graveyard": "put-into-graveyard", dies: "dies", leaves: "leaves", cast: "cast",
-  attacks: "attacks", blocks: "blocks", taps: "taps", "non-combat-damage": "damage-dealt", "combat-damage": "damage-dealt",
+  attacks: "attacks", blocks: "blocks", "becomes-blocked": "becomes-blocked", taps: "taps", "non-combat-damage": "damage-dealt", "combat-damage": "damage-dealt",
   // The receiving side (AF7d, 2026-09-16). Consumer-only: no emit row, a damage emit's VICTIM supplies it.
   damaged: "damaged",
   // A card put into exile (AF7b, 2026-09-16): every exile action emits it.
@@ -116,10 +116,15 @@ const NO_PRODUCER = ["becomes-blocked", "becomes-target", "level-up", "chapter",
   "day-night", "activate", "phases-in", "loses-control", "becomes-crewed", "tapped-for-mana", "cycled",
   "mutates", "exploit", "firebend", "reflexive", "state", "mana-spent", "returned-to-hand", "put-into-library",
   "becomes-renowned", "becomes-saddled", "plotted", "give-gift", "mentors", "solved", "resolves", "evolve"];
+/** NO_PRODUCER words that ARE engine verbs: a card's text consumes them (a payoff derives), but no action supplies one, so they stay listed as having no producer
+ *  (#1375, owner ruling 2026-10-27: `becomes-blocked`, CR 509.1h -- the game makes a creature blocked). The banking test skips them. */
+export const CONSUMER_ONLY: readonly string[] = ["becomes-blocked"];
 export const TRIGGER_REFUSED: Record<string, string> = Object.fromEntries([
   ...PHASE_WORDS.map((w) => [w, "a phase or step: the turn supplies it, no card emits it"]),
   ...TEXT_SPLIT.map((w) => [w, "split into combat-damage / non-combat-damage by derive.ts reading the clause text"]),
   ...AWAITING_EMIT.map((w) => [w, "the consumer side of an OPEN verb; joins when the emit row lands (AC11)"]),
   ...PRIMITIVE_EMITTED.map((w) => [w, "the action emits its rules primitive; an emit named after the action itself is the AC11 row"]),
-  ...NO_PRODUCER.map((w) => [w, "no action supplies it yet (a state, an opponent's act, or a keyword's own trigger); refused into unknownTriggers rather than near-missed"]),
+  ...NO_PRODUCER.map((w) => [w, CONSUMER_ONLY.includes(w)
+    ? "an engine verb a card's text consumes and no action supplies (no producer by owner ruling)"
+    : "no action supplies it yet (a state, an opponent's act, or a keyword's own trigger); refused into unknownTriggers rather than near-missed"]),
 ]);

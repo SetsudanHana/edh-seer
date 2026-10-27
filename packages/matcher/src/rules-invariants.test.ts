@@ -51,6 +51,7 @@ const TESTED: Record<string, string> = {
   "704.5b": "wincon.test.ts — a player loses on the draw from an empty library, so a library at 0 is the mill kill (#1056)",
   "508.1a": "commander-damage.test.ts, zones.test.ts — a creature attacks only with haste or controlled since the turn began, so the commander-damage turn assumes haste and says so (#1056); only a creature attacks, so no tag is attacks:any (#1088)",
   "509.1a": "edges.test.ts — only a creature blocks, so every creature supplies `blocks` (implied.ts) and a generic or self blocks trigger needs no supplier (#1373)",
+  "509.1h": "edges.test.ts — the game makes an attacking creature blocked, so no card supplies `becomes-blocked` and a becomes-blocked payoff forms no edge (#1375)",
   "802.2": "deck-math.test.ts — attackers split across opponents, so three opponents' 40 is a floor for the board's combat speed (#1056)",
   "702.9c": "edges.test.ts — a redundant keyword (flying) the card already prints is not granted again; dethrone stacks",
   "702.108a": "edges.test.ts — prowess reads as the creature getting +1/+1, and only a noncreature spell feeds it",

@@ -7,7 +7,7 @@ import { TRIGGERS, VERBS } from "../normalize-prompt.js";
 import { VERB_VOCAB } from "../schema.js";
 import { normalizeTriggerVerb } from "./derive.js";
 import { actionEmits } from "./emits.js";
-import { ENGINE_TO_TRIGGER, NOT_AN_EVENT, OPEN, TRIGGER_REFUSED } from "./verb-accounting.js";
+import { CONSUMER_ONLY, ENGINE_TO_TRIGGER, NOT_AN_EVENT, OPEN, TRIGGER_REFUSED } from "./verb-accounting.js";
 
 /** Does the verb emit an event of its OWN on any representative shape? A generic object covers
  *  most verbs; zoned put/return emit `enters`. On the zoned shapes `leaves` is discounted — every
@@ -48,7 +48,7 @@ test("every engine event has a consumer word, and every consumer word maps or is
     if (t === "other" || t === "none") continue;
     const maps = normalizeTriggerVerb(t) !== null || t === "damage-dealt";
     if (!maps && !(t in TRIGGER_REFUSED)) unaccounted.push(t);
-    if (maps && t in TRIGGER_REFUSED && t !== "damage-dealt") banked.push(t);
+    if (maps && t in TRIGGER_REFUSED && t !== "damage-dealt" && !CONSUMER_ONLY.includes(t)) banked.push(t);
   }
   expect(unaccounted, "TRIGGERS words with no engine verb and no reason").toEqual([]);
   expect(banked, "refused words that now map — remove them from TRIGGER_REFUSED").toEqual([]);

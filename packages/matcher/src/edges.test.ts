@@ -802,6 +802,24 @@ describe("blocks: implied supply follows attacks (#1373)", () => {
   });
 });
 
+// #1375 (owner ruling 2026-10-27): `becomes-blocked` is an engine verb with NO producer (CR 509.1h: the game makes an attacking creature blocked). A payoff forms no supply edges.
+describe("becomes-blocked: a consumer with no producer (#1375)", () => {
+  const payoff = (subject: Record<string, unknown>) => base("Becomes-Blocked Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["becomes-blocked"], subject: { control: "you", token: null, ...subject } as never },
+    effect: { kind: "draw-card" },
+  }]);
+  const tags = (supplier: ReturnType<typeof base>, consumer: ReturnType<typeof base>) =>
+    directedReasons(supplier, consumer, H).filter((r) => r.tag.startsWith("becomes-blocked"));
+
+  test("no creature supplies it: not a generic payoff, not a self one, not a typal one", () => {
+    const bear = base("Vanilla Bear", [], ["bear"]);
+    expect(tags(bear, payoff({ type: "creature" }))).toEqual([]);
+    expect(tags(bear, payoff({ type: "creature", self: true }))).toEqual([]);
+    expect(tags(bear, payoff({ type: "creature", subtype: "bear" }))).toEqual([]);
+  });
+});
+
 test("an event reason records which card consumes it and which supplies it", () => {
   const maker = base("Fathom Mage", [{
     kind: "triggered",

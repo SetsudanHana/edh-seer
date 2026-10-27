@@ -48,10 +48,12 @@ test("VERB_VOCAB is a closed, unique verb list", () => {
   // modal spell or ability. Seven of Nine, Elim Garak, Obsidian Order Operative and Tinkerer watch it; derive's modal pass (derive/modal.ts) supplies it.
   // 76 -> 77 on 2026-10-27 for `blocks` (#1373; owner ruling): "whenever this creature blocks" had a clause word and 192 stored rows (249 corpus cards print it) but no engine verb, so
   // `normalizeTriggerVerb` dropped the trigger and Elder Gargaroth's "attacks or blocks" modes read under the attacks visit only. Consumed from card text, supplied by every creature (implied.ts, CR 509.1a).
-  expect(VERB_VOCAB).toHaveLength(77);
+  // 77 -> 78 on 2026-10-27 for `becomes-blocked` (#1375; owner ruling): "whenever this creature becomes blocked" had a clause word and 168 stored rows (233 corpus cards print it) but no engine verb, so `normalizeTriggerVerb`
+  // dropped the trigger and the second half of "blocks or becomes blocked" (92 cards: Goblin Cadets, Aisling Leprechaun) derived nothing. Consumed from card text only: NO producer (CR 509.1h: the game makes a creature blocked).
+  expect(VERB_VOCAB).toHaveLength(78);
   expect(VERB_VOCAB).toContain("damaged");
   expect(VERB_VOCAB).toContain("exiled");
-  for (const v of ["monarch", "initiative", "ring-tempts", "flip-coin", "face-a-dilemma", "blocks"]) expect(VERB_VOCAB).toContain(v);
+  for (const v of ["monarch", "initiative", "ring-tempts", "flip-coin", "face-a-dilemma", "blocks", "becomes-blocked"]) expect(VERB_VOCAB).toContain(v);
   for (const v of ["goad", "explore", "clash", "vote", "venture-into-the-dungeon", "foretell"]) expect(VERB_VOCAB).toContain(v);
   for (const v of ["shuffle", "transform", "turned-face-up", "attached", "gains-control", "prevented"]) expect(VERB_VOCAB).toContain(v);
   expect(VERB_VOCAB).toContain("counter-removed");
@@ -120,6 +122,7 @@ test("VERB_IMPLIED_CLASS is the owner's ruling, one table", () => {
     dies: "creature", // owner: only a creature dies (a typed planeswalker subject keeps its own class)
     attacks: "creature", // CR 508.1a
     blocks: "creature", // CR 509.1a: only creatures block (#1373)
+    "becomes-blocked": "creature", // CR 509.1h: only an attacking creature becomes blocked (#1375)
   });
   for (const v of Object.keys(VERB_IMPLIED_CLASS)) expect(VERB_VOCAB).toContain(v);
 });
