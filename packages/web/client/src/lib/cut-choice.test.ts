@@ -35,7 +35,7 @@ test("the main theme argues for a card instead of hiding it, and sorts it after 
   // THE LINK BY NAME (#981): "its strongest link is to your main theme" named no card, word for
   // word under two cards on Rani, and stopped the plan-seeker.
   expect(cuts[2]!.keeps).toHaveLength(1);
-  expect(cuts[2]!.keeps[0]).toMatch(/^its strongest link: /);
+  expect(cuts[2]!.keeps[0]).toMatch(/^its best pairing: /);
 });
 
 /** A CARD THE TABLE IS WARNED ABOUT IS NOT A SILENT CUT (#982): Treasure Nabber was "Heads-up: it
@@ -103,7 +103,7 @@ test("a cut that a win plan counts says so, and is still a cut", () => {
   const raise = cuts.find((c) => c.name === "Raise Once")!;
   // The plan, and (#981) the link it would keep, so the reason names a card.
   expect(raise.keeps).toContain("it is one of the cards your win plan of attacking with a wide board counts");
-  expect(raise.keeps[0]).toMatch(/^its strongest link: /);
+  expect(raise.keeps[0]).toMatch(/^its best pairing: /);
   expect(cuts.map((c) => c.name)).toEqual(["Vanilla", "Raise Once", "Sidekick"]);
 });
 

@@ -36,18 +36,18 @@ const row = (name: string) => screen.getAllByTestId("plan-lens-row").find((r) =>
 test("each card's row says what feeds it and how many of those links keep working, with the sentence", () => {
   lens();
   expect(screen.getByText("Damage or drain, on the map")).toBeInTheDocument();
-  expect(row("Leech")).toHaveTextContent("1 mana · Black · fed by 2, 1 lasting");
-  expect(row("Leech")).toHaveTextContent("Keeps working: When Leech enters thanks to Kitten, it drains");
+  expect(row("Leech")).toHaveTextContent("1 mana · Black · fed by 2, 1 repeatable");
+  expect(row("Leech")).toHaveTextContent("Repeatable: When Leech enters thanks to Kitten, it drains");
   // The Curse feeds Leech once; its attack link runs the other way and is not counted.
-  expect(row("Curse")).toHaveTextContent("feeds 1, 0 lasting");
+  expect(row("Curse")).toHaveTextContent("feeds 1, 0 repeatable");
 });
 
 test("'Why each one' lists every partner with its sentence", () => {
   lens();
   fireEvent.click(within(row("Leech")).getByRole("button", { name: /Why each one/ }));
   const links = within(row("Leech")).getByTestId("plan-lens-links");
-  expect(links).toHaveTextContent("Kitten keeps working");
-  expect(links).toHaveTextContent("Curse once");
+  expect(links).toHaveTextContent("Kitten repeatable");
+  expect(links).toHaveTextContent("Curse one-shot");
   expect(links).toHaveTextContent("When Curse enters, Leech drains");
 });
 
@@ -56,24 +56,24 @@ test("tapping a card reads it; cutting it says what each plan card keeps", () =>
   const kitten = screen.getAllByTestId("plan-lens-card").find((g) => g.getAttribute("data-card") === "Kitten")!;
   fireEvent.click(kitten);
   // What it feeds in each plan first; the either-way count after, saying it is one (round 6).
-  expect(screen.getByTestId("plan-lens-across")).toHaveTextContent("It feeds 2 cards in this plan (1 lasting). Counting links in either direction, it works with 2 of your 2 plan cards, 1 of them with links that keep working.");
+  expect(screen.getByTestId("plan-lens-across")).toHaveTextContent("It feeds 2 cards in this plan (1 repeatable). Counting both ways, it works with 2 of your 2 plan cards, 1 of them repeatably.");
   fireEvent.click(screen.getByRole("button", { name: "What if I cut Kitten?" }));
-  expect(screen.getByTestId("plan-lens-cut-summary")).toHaveTextContent("Leech loses a lasting link. Leech would have no lasting link left.");
+  expect(screen.getByTestId("plan-lens-cut-summary")).toHaveTextContent("Leech loses a repeatable pairing. Leech would have nothing repeatable left.");
   expect(screen.getByRole("button", { name: "Cut: Kitten ✕" })).toBeInTheDocument();
 });
 
 test("lasting links only hides the dashed lines and the once-only chips", () => {
   lens();
   const before = screen.getAllByTestId("plan-lens-line").length;
-  fireEvent.click(screen.getByRole("button", { name: "Lasting links only" }));
+  fireEvent.click(screen.getByRole("button", { name: "Repeatable only" }));
   expect(screen.getAllByTestId("plan-lens-line").length).toBeLessThan(before);
   expect(screen.getAllByTestId("plan-lens-line").every((l) => l.hasAttribute("data-lasting"))).toBe(true);
-  expect(row("Leech")).toHaveTextContent("+1 once, hidden");
+  expect(row("Leech")).toHaveTextContent("+1 one-shot, hidden");
 });
 
 test("an opened row lists every reason, even with Lasting links only on", () => {
   lens();
-  fireEvent.click(screen.getByRole("button", { name: "Lasting links only" }));
+  fireEvent.click(screen.getByRole("button", { name: "Repeatable only" }));
   fireEvent.click(within(row("Curse")).getByRole("button", { name: /Why each one/ }));
-  expect(within(row("Curse")).getByTestId("plan-lens-links")).toHaveTextContent("Leech once");
+  expect(within(row("Curse")).getByTestId("plan-lens-links")).toHaveTextContent("Leech one-shot");
 });

@@ -103,7 +103,7 @@ page.on("pageerror", (e) => console.error("page error:", e.message));
 
 await page.goto(base + "/", { waitUntil: "networkidle" });
 await page.fill("textarea[aria-label='Decklist']", readFileSync(DECK, "utf8"));
-await page.click("button:has-text('Analyse deck')");
+await page.click("button:has-text('Analyze deck')");
 await page.waitForSelector("h2:has-text('Deck at a glance')", { timeout: 90_000 });
 // Art and mana symbols arrive after the report; a frame taken before them is a frame of spinners.
 await page.waitForLoadState("networkidle");

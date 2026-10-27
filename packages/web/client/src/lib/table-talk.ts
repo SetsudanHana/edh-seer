@@ -1,7 +1,7 @@
 import { comboWinsItself } from "@edh-seer/matcher/brackets";
 import { WIN_PHRASE } from "@edh-seer/matcher/deck-sentence";
 import type { CardGraph, DeckReport } from "../types.js";
-import { infiniteCombos } from "./bracket-why.js";
+import { BAND_NAME, infiniteCombos } from "./bracket-why.js";
 import { fastestRoute, noFinisherClause, speedRoutes } from "./speed.js";
 
 /** WHAT TO SAY AT THE TABLE, IN ONE BREATH (owner, 2026-09-26: the phone and one-line answer is a
@@ -68,7 +68,7 @@ export function tableTalk(report: DeckReport, graph: CardGraph | undefined, mana
   // not a second time in the heads-up.
   const allowed = !cheap && combos[0] ? combos[0] : undefined;
   if (allowed) why.push(`an infinite combo that ${allowed.cards.length > 2 ? `needs ${allowed.cards.length} cards` : "comes together late"} (${allowed.cards.map(front).join(" + ")})${kill(allowed, "and")}`);
-  const bracket = `Bracket ${band}${why.length ? `, for ${list(why)}` : b.band === "1-2" ? ": no Game Changers and no infinite combo" : ""}.`;
+  const bracket = `Bracket ${band} (${BAND_NAME[b.band]})${why.length ? `, for ${list(why)}` : b.band === "1-2" ? ": no Game Changers and no infinite combo" : ""}.`;
 
   const classes = report.deckMath?.wincons.classes ?? [];
   const primary = classes[0];

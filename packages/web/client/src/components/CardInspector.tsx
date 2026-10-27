@@ -366,8 +366,8 @@ export function CardInspector({
         *  summary above says what a player reads; every link is still one tap away. */}
       {sorted.length === 0 ? (
         <div className="border-t border-(--separator) pt-2 flex flex-col gap-2">
-          <h4 className="eyebrow text-(--muted)">Links</h4>
-          <p className="text-(--muted)">No links: nothing else in the deck works with this card.</p>
+          <h4 className="eyebrow text-(--muted)">Works with</h4>
+          <p className="text-(--muted)">Nothing else in the deck works with this card.</p>
         </div>
       ) : (
         <details className="border-t border-(--separator) pt-2" data-testid="inspector-links">

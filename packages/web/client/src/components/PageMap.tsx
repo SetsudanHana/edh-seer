@@ -141,7 +141,7 @@ export function PageMap({ page: ownPage, slug: ownSlug, rows: ownRows, base, pai
       <div className="max-w-[min(100%,calc((100svh-12rem)*1.2222))]">
         <Constellation model={world.current} orbit={map.orbit} trail={trail} lit={sel ?? hover} still={still || paused} narrow={narrow}
           onTap={tap} onHover={setHover} onBlank={blank} menuFor={menuFor} pick={pickRoundRobin}
-          label={`${page.name} and ${shown} of the cards it works well with, coloured by the groups below`} />
+          label={`${page.name} and ${shown} of the cards it works well with, colored by the groups below`} />
       </div>
       {/* THE COLOURS' KEY, WHERE THE MAP IS (persona round, 2026-09-27: "each colour is one of the
         *  groups below" pointed at groups a screen away). Each chip is a group drawn on the map. */}
@@ -150,7 +150,7 @@ export function PageMap({ page: ownPage, slug: ownSlug, rows: ownRows, base, pai
         return { key: g.event, name: g.name, hue: g.hue, count: sector ? countText(sector.partners.length, sector.partners.filter((p) => p.once).length) : undefined };
       })} />
       <figcaption className="max-w-[65ch] text-sm text-(--muted)">
-        {pair ? <>{pair.name} is in pink. </> : null}Each colour is a group, named just above{away ? "" : " and again in the list below"}, and {shown === map.orbit.direct ? "every card in them is here" : `the map shows ${shown} of their ${map.orbit.direct} cards${countNote && !away ? ` ${countNote}` : ""}, a few from each`}.
+        {pair ? <>{pair.name} is in pink. </> : null}Each color is a group, named just above{away ? "" : " and again in the list below"}, and {shown === map.orbit.direct ? "every card in them is here" : `the map shows ${shown} of their ${map.orbit.direct} cards${countNote && !away ? ` ${countNote}` : ""}, a few from each`}.
         {" "}{still || paused ? "Arrows point" : "Moving dashes run along each line"} from the card that makes it happen to the card that uses it. {loadPage && hrefOf
           ? <>Tap a card to see it; tap it again to walk to it on the map, and the cards you walked through stay on it, joined by a gold line. The list below stays {ownPage.name.split(",")[0]}&rsquo;s.</>
           : <>Tap a card to see it; tap it again to go to its page{walks ? ", and the map comes with you: the cards you walked through stay on it, joined by a gold line" : ""}.</>}

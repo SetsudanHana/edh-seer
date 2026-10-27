@@ -164,7 +164,7 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
         <p className="text-xs text-(--muted) max-w-[62ch]">
           Read from the{" "}
           <span className="stat-num text-(--foreground)">{coverage.derived}</span> cards of{" "}
-          <span className="stat-num">{coverage.resolved}</span> the engine could read. The other{" "}
+          <span className="stat-num">{coverage.resolved}</span> we could read. The other{" "}
           {unread} card{unread === 1 ? "" : "s"} {unread === 1 ? "signals" : "signal"} no strategy
           and still {unread === 1 ? "counts" : "count"} in the share below, so every percentage here
           is a floor.

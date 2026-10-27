@@ -126,7 +126,7 @@ export function DeckInput({
             aria-busy={loading}
             onClick={onAnalyze}
           >
-            {loading ? "Analysing…" : "Re-analyse"}
+            {loading ? "Analyzing…" : "Re-analyze"}
           </button>
         </div>
         {narrow && moreOpen ? (
@@ -227,7 +227,7 @@ export function DeckInput({
           aria-busy={loading}
           onClick={onAnalyze}
         >
-          {loading ? "Analysing…" : "Analyse deck"}
+          {loading ? "Analyzing…" : "Analyze deck"}
         </button>
       </div>
     </div>
@@ -322,7 +322,7 @@ export function DeckActions({
       </button>
       {/* In flight is not disabled, as on the bar: it keeps its strength and says so. */}
       <button type="button" className={`btn-primary ${small}`} disabled={loading} aria-busy={loading} onClick={onAnalyze}>
-        {loading ? "Analysing…" : "Re-analyse"}
+        {loading ? "Analyzing…" : "Re-analyze"}
       </button>
       {open ? (
         <div

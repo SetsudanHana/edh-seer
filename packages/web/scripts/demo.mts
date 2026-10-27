@@ -185,7 +185,7 @@ async function deckStory(): Promise<void> {
 
   // The analysis runs in real time and is cut; the clock stops again the moment the report is up,
   // so the map's entrance is filmed from its start.
-  await click("button:has-text('Analyse deck')");
+  await click("button:has-text('Analyze deck')");
   await offCamera(() => page.waitForSelector("h2:has-text('Deck at a glance')", { timeout: 90_000 }));
   await page.waitForLoadState("networkidle");
 

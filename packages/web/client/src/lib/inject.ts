@@ -306,7 +306,7 @@ export const causeCountTail = (rows: InjectableCard["partners"], subject?: strin
   // colours can cause this, Inalla, Archmage Ritualist among them" ran to five lines over a one-card
   // group and pushed its tiles out of line with the row.
   const short = (name: string): string => name.split(" // ")[0]!.split(",")[0]!;
-  const where = commander ? `in ${short(commander)}'s colours` : "in the game";
+  const where = commander ? `in ${short(commander)}'s colors` : "in the game";
   return subject && rows.every((r) => r.producer !== true && !/^While you control /i.test(r.reason))
     ? `${where} can cause this (${short(subject)} is one)`
     : `${where} can cause this`;

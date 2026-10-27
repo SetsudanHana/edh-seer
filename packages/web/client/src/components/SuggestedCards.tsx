@@ -121,12 +121,12 @@ export function StrengthenLists({ routes, plan }: {
 }) {
   if (routes === undefined || plan === undefined) return <SuggestedCards cards={undefined} empty="" />;
   if (routes.length === 0 && plan.length === 0) {
-    return <p className="text-sm text-(--muted) max-w-[70ch]">Nothing outside the deck connects to two or more of its cards.</p>;
+    return <p className="text-sm text-(--muted) max-w-[70ch]">No card outside the deck works with two or more of its cards.</p>;
   }
   return (
     <div className="flex flex-col gap-6">
       {routes.length > 0 ? <SuggestedCards cards={routes} empty="" label="Opens a route" /> : null}
-      {plan.length > 0 ? <SuggestedCards cards={plan} empty="" label="Connects to your plan" /> : null}
+      {plan.length > 0 ? <SuggestedCards cards={plan} empty="" label="Fits your plan" /> : null}
     </div>
   );
 }

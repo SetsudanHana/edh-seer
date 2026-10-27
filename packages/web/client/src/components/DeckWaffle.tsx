@@ -173,7 +173,7 @@ export function DeckWaffle({ squares, slices, lands, mdfc }: {
           `${squares.length} cards: ` +
           ordered.map((s) => `${s.count} ${s.type}`).join(", ") +
           (lands !== undefined ? `, ${lands} lands` : "") +
-          (unread > 0 ? `. ${unread} the engine could not read` : "") +
+          (unread > 0 ? `. ${unread} we could not read` : "") +
           (unresolved > 0 ? `. ${unresolved} not found at all` : "")
         }
       >

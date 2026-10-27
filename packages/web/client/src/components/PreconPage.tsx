@@ -108,7 +108,7 @@ function PreconBody({ page: p, siblings }: { page: Page; siblings: PreconRecord[
           </div>
           <p className="max-w-[60ch] text-lg">
             {/* SAID AS WHAT IT IS: an engine that reads no link is not a deck with none (Yidris, Zedruu). */}
-            {p.commanderLinks > 0 ? `${p.commanders[0]} works with ${p.commanderLinks} of its cards.` : `No card in it links to ${p.commanders[0]} in a way the engine reads yet.`}
+            {p.commanderLinks > 0 ? `${p.commanders[0]} works with ${p.commanderLinks} of its cards.` : `We can't yet see how any of its cards work with ${p.commanders[0]}.`}
             {upgrades && opening ? ` ${heroUpgradesLine(spell(upgrades), upgrades, opening)}` : ""}
           </p>
           <div className="flex flex-wrap gap-2">

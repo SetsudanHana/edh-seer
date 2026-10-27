@@ -38,7 +38,7 @@ test("a first tap picks the card without the pair box, a second puts it in the m
 
 test("the cards it doesn't reach are listed by name", () => {
   view();
-  expect(screen.getByText(/don't connect to Payoff A/)).toBeInTheDocument();
+  expect(screen.getByText(/don't work with Payoff A/)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Vanilla" })).toBeInTheDocument();
 });
 
@@ -196,7 +196,7 @@ test("with reduced motion nothing runs, and arrows carry the direction", async (
     const shown = (id: string) => [...container.querySelectorAll(`[data-testid=${id}]`)].filter((e) => (e as SVGElement).style.display !== "none");
     expect(shown("constellation-tick").length).toBe(0);
     expect(shown("constellation-arrow").length).toBeGreaterThan(0);
-    expect(screen.getByText(/A solid line keeps working; a dashed line works once; the thicker the line, the better the two work together\./)).toBeInTheDocument();
+    expect(screen.getByText(/A solid line is a repeatable pairing and a dashed line is a one-shot\. The thicker the line, the better the two work together\./)).toBeInTheDocument();
   } finally { window.matchMedia = mm; }
 });
 

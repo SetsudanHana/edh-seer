@@ -30,7 +30,7 @@ test("each plan's tile carries the turn its route can win by, and the fastest le
   expect(screen.getByTestId("win-plans-headline")).toHaveTextContent("Fastest: attacking with a wide board, around turn 7. Spread about evenly across 2 plans.");
   const [wide, burn] = screen.getAllByTestId("win-plan");
   expect(wide).toHaveTextContent("Attacking with a wide boardturn 73 cards");
-  expect(burn).toHaveTextContent("Damage or drainspeed not modelled2 cards");
+  expect(burn).toHaveTextContent("Damage or drainno speed estimate2 cards");
   expect(screen.getByTestId("win-plan-detail")).toHaveTextContent("Can win around turn 7; about 11 power of creatures in play by turn 5.");
   fireEvent.click(burn!);
   expect(screen.getByTestId("win-plan-detail")).toHaveTextContent("No turn: nothing in the report models how fast this route kills");
@@ -99,7 +99,7 @@ test("a combo no card here finishes says it needs a finisher, not that its speed
   const routes = [{ kind: "combo", label: "a combo: A + B", cards: ["A", "B"], needsFinisher: true, caveat: "the loop needs a finisher: no card here was found to turn what it repeats into a win" }] as never;
   render(<WinPlans wincons={wincons} routes={routes} />);
   expect(screen.getByTestId("win-plan")).toHaveTextContent("needs a finisher");
-  expect(screen.getByTestId("win-plan")).not.toHaveTextContent("speed not modelled");
+  expect(screen.getByTestId("win-plan")).not.toHaveTextContent("no speed estimate");
   // The caveat already says so; the detail does not print the "No card here was found" line as well.
   expect(screen.getByTestId("win-plan-detail")).not.toHaveTextContent("No card here was found that turns");
 });
@@ -124,15 +124,15 @@ test("a timed combo whose result is not a loop says it can win, not go infinite"
 });
 
 /** A COMBO THAT KILLS BUT HAS NO TURN SAYS WHY ON ITS TILE (#1139): the phone seat read Inalla's
- *  "A combo · speed not modelled" beside the Say-this box's "its pieces cost 14 mana together", and
+ *  "A combo · no speed estimate" beside the Say-this box's "its pieces cost 14 mana together", and
  *  could not say how fast the deck's real plan wins. The tile carries the reason, as the box does. */
-test("an untimed combo that kills shows the mana its pieces cost, not 'speed not modelled'", () => {
+test("an untimed combo that kills shows the mana its pieces cost, not 'no speed estimate'", () => {
   const wincons = { focus: 0.5, primary: "combo", classes: [{ class: "combo", count: 3, share: 1, cards: ["A", "B", "C"] }] } as never;
   const routes = [{ kind: "combo", label: "a combo: A + B + C", mana: 14, cards: ["A", "B", "C"], payoffs: ["P"], caveat: "not timed: its pieces cost 14 mana together, which half our test games have not reached by turn 8" }] as never;
   render(<WinPlans wincons={wincons} routes={routes} />);
   const tile = screen.getByTestId("win-plan");
   expect(tile).toHaveTextContent("14 mana, not timed");
-  expect(tile).not.toHaveTextContent("speed not modelled");
+  expect(tile).not.toHaveTextContent("no speed estimate");
 });
 
 /** NO ROUTE FINISHES (#1223): the headline says so instead of "Spread about evenly across 2 plans". */

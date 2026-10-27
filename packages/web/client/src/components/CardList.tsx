@@ -115,8 +115,8 @@ function GridCard({
           // A BARE NUMBER IN A CORNER IS NOT A DATUM. Every persona who reached the grid on
           // 2026-08-27 asked what it counted, because the only legend sat BELOW the grid where
           // nobody scrolled to it. The label travels with the badge now, and the legend moved above.
-          title={`${count} other ${count === 1 ? "card connects" : "cards connect"} to ${shown}`}
-          aria-label={`${count} connected cards`}
+          title={`${count} other ${count === 1 ? "card works" : "cards work"} with ${shown}`}
+          aria-label={`Works with ${count} cards`}
           className={`absolute top-1.5 right-1.5 min-w-[22px] h-[22px] px-1.5 grid place-items-center
           rounded-full border stat-num text-[11px] bg-(--background)/80 backdrop-blur-[2px] ${
           dim ? "border-(--separator) text-(--muted)" : "border-(--accent) text-(--accent)"}`}
@@ -309,7 +309,7 @@ export function CardList({ cards, artByName, coverage }: {
       {/* THE COST COLUMN'S OWN SCALE. "49% – 69% by T5" was explained in a footnote on a different
         *  tab, so on this one it was two unlabelled numbers. */}
       <Explain label="what the cost figures mean">
-        The chance you have the mana, in the right colours, to cast the card on time. We shuffle
+        The chance you have the mana, in the right colors, to cast the card on time. We shuffle
         and deal your deck 2,000 times to find out. It is a range because it depends on how you
         play. {POLICY_LEGEND} &ldquo;On time&rdquo; is the turn matching the
         card&rsquo;s mana value, so a 5-drop is checked on turn 5. Lands, and costs we cannot
@@ -319,7 +319,7 @@ export function CardList({ cards, artByName, coverage }: {
       {shapes.shared.length > 0 ? (
         <div className="text-xs text-(--muted) max-w-[65ch] flex flex-col gap-0.5">
           <span>
-            Your {shapes.shared.length === 1 ? "most common link" : `${shapes.shared.length} most common links`},
+            Your {shapes.shared.length === 1 ? "most common pairing" : `${shapes.shared.length} most common pairings`},
             shown once instead of on every row:
           </span>
           {shapes.shared.map((sh) => (
@@ -367,7 +367,7 @@ export function CardList({ cards, artByName, coverage }: {
           <p className="text-xs text-(--muted) max-w-[65ch]">
             <span className="inline-grid place-items-center align-middle min-w-[22px] h-[22px] px-1.5 mr-1.5
               rounded-full border border-(--accent) text-(--accent) stat-num text-[11px]">n</span>
-            is how many other cards in the deck connect to it.{" "}
+            is how many other cards in the deck work with it.{" "}
             <span className="text-(--foreground)">Grid trades the rank, the roles and the cost for
             recognition</span> — the faster way to answer &ldquo;which cards are these&rdquo;, the
             slower way to answer &ldquo;which one do I cut&rdquo;.
@@ -554,8 +554,8 @@ export function CardList({ cards, artByName, coverage }: {
           </div>
           <p className="text-sm text-(--muted) max-w-[65ch]">
             {coverage?.caveat
-              ?? "These resolved fine and count toward the mana, the curve, the land maths and legality. "
-                + "They carry no synergy reading, so nothing above speaks for them."}
+              ?? "We found these cards, and they count toward the mana, the curve, the land math and legality. "
+                + "We can't tell yet how they work with the rest of your deck, so the scores above leave them out."}
           </p>
           <div className="grid gap-3 sm:gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(112px, 1fr))" }}>
             {unreadCards.map((c) => (

@@ -86,7 +86,7 @@ test("over 100, the list leads with exactly as many cuts as the deck is over, we
   const cuts = [cut("Maybe 1", { keeps: ["rates 1.5 of 5 in this deck"], ...read }), cut("Clear 1", read), cut("Clear 2", read), cut("Maybe 2", { keeps: ["rates 1.5 of 5 in this deck"], ...read })];
   render(<MemoryRouter><CutList cuts={cuts} slack={[]} deckSize={103}
     pairs={[{ cut: "Clear 1", add: add("Swap In"), rule: "no-role", counts: [], cutConnections: 0, cutStrength: { strength: 1, partners: 0, onTheme: 0, commander: false }, addStrength: { strength: 2, partners: 4, onTheme: 1, commander: false } }]} /></MemoryRouter>);
-  expect(screen.getByTestId("cuts-over")).toHaveTextContent("Your list has 103 cards, 3 over 100. These 3 lose no link when cut, even all together: every link they make, another card makes too. Take them out and it is 100.");
+  expect(screen.getByTestId("cuts-over")).toHaveTextContent("Your list has 103 cards, 3 over 100. These 3 lose nothing when cut, even all together: every pairing they have, another card has too. Take them out and it is 100.");
   expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent?.replace(/(\d+(\.\d+)? synergy · )?2 mana$/, ""))).toEqual(["Clear 1", "Clear 2", "Maybe 1"]);
   expect(screen.getByText(/If you would rather keep one of these,/).parentElement).toHaveTextContent("the next weakest is Maybe 2.");
   // A deck over its size needs cards out, not swaps.
@@ -103,7 +103,7 @@ test("within a group, the cuts read in the order of the score they print", () =>
 });
 
 /** WHAT A CUT LOSES COMES FIRST (owner 2026-10-07, #981): Roaming Throne led Krenko's cuts at 1.6
- *  while losing 20 links no other card makes, ahead of six that lose nothing. */
+ *  while losing 20 pairings no other card has, ahead of six that lose nothing. */
 test("a cut that loses nothing comes before one that does, whatever the score", () => {
   const row = (loses: string[]) => ({ partners: 3, why: "Works with 3 other cards.", loses: loses.map((text) => ({ from: "a", to: "b", tag: "t", text, repeat: "static" })), covers: [] }) as never;
   const score = (n: string) => [`it scores ${n} for synergy, where 5 is this deck's best card`];
@@ -112,9 +112,9 @@ test("a cut that loses nothing comes before one that does, whatever the score", 
   render(<MemoryRouter><CutList cuts={cuts} slack={[]} deckSize={103} /></MemoryRouter>);
   expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent?.replace(/(\d+(\.\d+)? synergy · )?2 mana$/, ""))).toEqual(["Mid", "High", "This one costs something to cut, so it is not counted", "Throne"]);
   // ONLY THE LOSS-FREE COUNT TOWARD 100 (owner 2026-10-07): Throne is listed, not counted.
-  expect(screen.getByTestId("cuts-over")).toHaveTextContent("These 2 lose no link when cut, even all together: every link they make, another card makes too. The other 1 has to come from the one below that costs something to cut, or the cards you like least.");
+  expect(screen.getByTestId("cuts-over")).toHaveTextContent("These 2 lose nothing when cut, even all together: every pairing they have, another card has too. The other 1 has to come from the one below that costs something to cut, or the cards you like least.");
   const throne = screen.getByRole("heading", { name: /Throne/ }).closest("li")!;
-  expect(within(throne).getByTestId("cut-loses")).toHaveTextContent("Why you might keep it: cutting it loses 3 links no other card makes: Kreat's triggers trigger twice; Taunter's too");
+  expect(within(throne).getByTestId("cut-loses")).toHaveTextContent("Why you might keep it: cutting it loses 3 pairings no other card has: Kreat's triggers trigger twice; Taunter's too");
   expect(within(throne).getByText("and 1 more")).toBeInTheDocument();
   expect(within(screen.getByRole("heading", { name: /Mid/ }).closest("li")!).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses nothing");
 });
@@ -127,10 +127,10 @@ test("of two cuts that cover each other only one counts, and the other says what
   const row = (other: string) => ({ partners: 1, why: "Works with 1 other card.", loses: [], covers: [{ link, by: [other], partner: "Payoff" }] }) as never;
   render(<MemoryRouter><CutList cuts={[cut("Elf", { row: row("Druid") }), cut("Druid", { row: row("Elf") }), cut("Spare", { row: row("Nobody") })]} slack={[]} deckSize={102} /></MemoryRouter>);
   const li = (name: string) => screen.getByRole("heading", { name: new RegExp(`^${name}`) }).closest("li")!;
-  expect(within(li("Elf")).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses nothing: another card makes every link it makes. Druid alone covers it.");
+  expect(within(li("Elf")).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses nothing: another card has every pairing it has. Druid alone covers it.");
   expect(screen.getByRole("region", { name: /something to cut/ })).toContainElement(li("Druid"));
-  expect(within(li("Druid")).getByTestId("cut-loses")).toHaveTextContent("Why you might keep it: with Elf cut too, cutting it loses the one link no other card makes: When an Elf enters, Payoff draws.");
-  expect(screen.getByTestId("cuts-over")).toHaveTextContent("These 2 lose no link when cut, even all together: every link they make, another card makes too. Take them out and it is 100.");
+  expect(within(li("Druid")).getByTestId("cut-loses")).toHaveTextContent("Why you might keep it: with Elf cut too, cutting it loses the one pairing no other card has: When an Elf enters, Payoff draws.");
+  expect(screen.getByTestId("cuts-over")).toHaveTextContent("These 2 lose nothing when cut, even all together: every pairing they have, another card has too. Take them out and it is 100.");
 });
 
 /** ONE VERDICT PER CUT (persona round 2026-10-07): "Cutting it loses nothing" beside a green "Why
@@ -144,7 +144,7 @@ test("a cut that loses nothing names what covers it and argues for itself only w
   const keeps = ["its strongest link: Lackey is fodder for Trashmaster", "it scores 2.8 for synergy, where 5 is this deck's best card"];
   const { unmount } = render(<MemoryRouter><CutList cuts={[cut("Lackey", { keeps, row, rating: 2.8 })]} slack={[]} /></MemoryRouter>);
   const lackey = screen.getByRole("heading", { name: /Lackey/ }).closest("li")!;
-  expect(within(lackey).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses nothing: another card makes every link it makes. Chieftain alone covers all 2 cards involved.");
+  expect(within(lackey).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses nothing: another card has every pairing it has. Chieftain alone covers all 2 cards involved.");
   expect(within(lackey).queryByText(/Why you might keep it/)).toBeNull();
   // The score the order reads is in the header now.
   expect(within(lackey).getByRole("heading", { level: 4 })).toHaveTextContent("2.8 synergy · 2 mana");
@@ -164,9 +164,9 @@ test("at 100, two cuts that cover each other are not both clear: one is, the oth
   const { unmount } = render(<MemoryRouter><CutList cuts={[cut("Elf", { row: row("Druid") }), cut("Druid", { row: row("Elf") })]} slack={[]} deckSize={100} /></MemoryRouter>);
   const liOf = (name: string) => screen.getByRole("heading", { name: new RegExp(name) }).closest("li")!;
   expect(screen.getByRole("region", { name: "Nothing argues for keeping these" })).toContainElement(liOf("Elf"));
-  expect(within(liOf("Elf")).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses nothing: another card makes every link it makes. Druid alone covers it.");
+  expect(within(liOf("Elf")).getByTestId("cut-loses")).toHaveTextContent("Cutting it loses nothing: another card has every pairing it has. Druid alone covers it.");
   expect(screen.getByRole("region", { name: "Weak here, but something argues for them" })).toContainElement(liOf("Druid"));
-  expect(within(liOf("Druid")).getByTestId("cut-loses")).toHaveTextContent("Why you might keep it: with Elf cut too, cutting it loses the one link no other card makes: When an Elf enters, Payoff draws.");
+  expect(within(liOf("Druid")).getByTestId("cut-loses")).toHaveTextContent("Why you might keep it: with Elf cut too, cutting it loses the one pairing no other card has: When an Elf enters, Payoff draws.");
   unmount();
   const lone = { partners: 0, why: "Works with nothing else in this deck.", loses: [], covers: [] } as never;
   render(<MemoryRouter><CutList cuts={[cut("Lone", { row: lone, rating: 0.4, keeps: ["it scores 0.4 for synergy, where 5 is this deck's best card"] })]} slack={[]} /></MemoryRouter>);
@@ -177,7 +177,7 @@ test("at 100, two cuts that cover each other are not both clear: one is, the oth
 
 test("at 100, 'cut together, these still lose nothing' is said of two or more read clear cuts, not one or an unread one", () => {
   const rowFor = (n: string) => ({ partners: 1, why: "w", loses: [], covers: [{ link: { from: n, to: "P", tag: "t", text: `${n} link`, repeat: "static" }, by: ["Outside"], partner: "P" }] }) as never;
-  const line = "Cut together, these still lose nothing: every link they make, another card makes too.";
+  const line = "Cut together, these still lose nothing: every pairing they have, another card has too.";
   const { unmount } = render(<MemoryRouter><CutList cuts={[cut("A", { row: rowFor("A") }), cut("B", { row: rowFor("B") })]} slack={[]} deckSize={100} /></MemoryRouter>);
   expect(screen.getByText(line)).toBeInTheDocument();
   unmount();
@@ -194,7 +194,7 @@ test("with own and together losses, the count is the own losses and a second lin
   const mixed = { partners: 1, why: "w", loses: [lk("Own link")], covers: [{ link: lk("Together link"), by: ["Elf"], partner: "P" }] } as never;
   render(<MemoryRouter><CutList cuts={[cut("Elf", { row: free }), cut("Mixed", { row: mixed, keeps: ["rates 1.5 of 5 in this deck"] })]} slack={[]} deckSize={100} /></MemoryRouter>);
   const v = within(screen.getByRole("heading", { name: /^Mixed/ }).closest("li")!).getByTestId("cut-loses");
-  expect(v).toHaveTextContent("Why you might keep it: cutting it loses the one link no other card makes: Own link.");
+  expect(v).toHaveTextContent("Why you might keep it: cutting it loses the one pairing no other card has: Own link.");
   expect(v).toHaveTextContent("With Elf cut too, it also loses: Together link");
 });
 
@@ -207,7 +207,7 @@ test("a card left out because it would break a picked card says whose link, not 
   render(<MemoryRouter><CutList cuts={[a, cut("M", { row: plain }), cut("C", { row: plain })]} slack={[]} deckSize={100} model={model} /></MemoryRouter>);
   const v = within(screen.getByRole("heading", { name: /^C/ }).closest("li")!).getByTestId("cut-loses");
   expect(v).not.toHaveTextContent("Cutting it loses nothing");
-  expect(v).toHaveTextContent("Why you might keep it: cut with the cards above, A loses the one link no other card makes: A pays off.");
+  expect(v).toHaveTextContent("Why you might keep it: cut with the cards above, A loses the one pairing no other card has: A pays off.");
 });
 
 /** A TOKEN TWO CARDS MAKE (#1153): cutting C with M takes the Goblin from every card it covers. */
@@ -225,27 +225,27 @@ test("over 100, a card that would break a counted card is not a free spare: it c
   tokenDeck([{ name: "A", links: ["A pays off"] }], 102);
   expect(screen.queryByText(/If you would rather keep one of these,/)).toBeNull();
   expect(screen.getByRole("region", { name: /something to cut/ })).toContainElement(screen.getByRole("heading", { name: /^C/ }));
-  expect(verdictOf(/^C/)).toHaveTextContent("cut with the cards above, A loses the one link no other card makes: A pays off.");
+  expect(verdictOf(/^C/)).toHaveTextContent("cut with the cards above, A loses the one pairing no other card has: A pays off.");
 });
 
 test("a card that breaks three picked cards says 3 of them lose, and two say both names", () => {
   const { unmount } = tokenDeck([{ name: "A1", links: ["l1"] }, { name: "A2", links: ["l2"] }, { name: "A3", links: ["l3"] }], 100);
-  expect(verdictOf(/^C/)).toHaveTextContent("cut with the cards above, 3 of them lose 3 links no other card makes: l1; l2");
+  expect(verdictOf(/^C/)).toHaveTextContent("cut with the cards above, 3 of them lose 3 pairings no other card has: l1; l2");
   unmount();
   tokenDeck([{ name: "A", links: ["l1"] }, { name: "B", links: ["l2"] }], 100);
-  expect(verdictOf(/^C/)).toHaveTextContent("cut with the cards above, A and B lose 2 links no other card makes: l1; l2.");
+  expect(verdictOf(/^C/)).toHaveTextContent("cut with the cards above, A and B lose 2 pairings no other card has: l1; l2.");
 });
 
 test("a breaks verdict with more than two links opens the rest", () => {
   tokenDeck([{ name: "A", links: ["l1", "l2"] }, { name: "B", links: ["l3"] }], 100);
-  expect(verdictOf(/^C/)).toHaveTextContent("A and B lose 3 links no other card makes: l1; l2");
+  expect(verdictOf(/^C/)).toHaveTextContent("A and B lose 3 pairings no other card has: l1; l2");
   expect(within(verdictOf(/^C/)).getByText("and 1 more")).toBeInTheDocument();
 });
 
 test("over 100, 'even all together' is not said of cuts the graph has not read", () => {
   render(<CutList cuts={[cut("A"), cut("B")]} slack={[]} deckSize={102} />);
   expect(screen.getByTestId("cuts-over")).not.toHaveTextContent("even all together");
-  expect(screen.getByTestId("cuts-over")).toHaveTextContent("These 2 lose no link when cut: every link");
+  expect(screen.getByTestId("cuts-over")).toHaveTextContent("These 2 lose nothing when cut: every pairing");
 });
 
 test("a together-loss on two cards names both", () => {
@@ -253,28 +253,28 @@ test("a together-loss on two cards names both", () => {
   const free = (n: string) => cut(n, { row: { partners: 1, why: "w", loses: [], covers: [{ link: lk(`${n} link`), by: ["Outside"], partner: "P" }] } as never });
   const z = cut("Z", { row: { partners: 1, why: "w", loses: [], covers: ["A", "B"].map((b) => ({ link: lk(`Z via ${b}`), by: [b], partner: "P" })) } as never });
   render(<MemoryRouter><CutList cuts={[free("A"), free("B"), z]} slack={[]} deckSize={100} /></MemoryRouter>);
-  expect(within(screen.getByRole("heading", { name: /^Z/ }).closest("li")!).getByTestId("cut-loses")).toHaveTextContent("with A and B cut too, cutting it loses 2 links");
+  expect(within(screen.getByRole("heading", { name: /^Z/ }).closest("li")!).getByTestId("cut-loses")).toHaveTextContent("with A and B cut too, cutting it loses 2 pairings");
 });
 
 test("a together-loss names at most two cards, then counts them", () => {
   const mk = (n: string, by: string[]) => cut(n, { row: { partners: 1, why: "w", loses: [], covers: by.map((b) => ({ link: { from: n, to: "P", tag: "t", text: `${n} via ${b}`, repeat: "static" }, by: [b], partner: "P" })) } as never });
   render(<MemoryRouter><CutList cuts={[mk("A", []), mk("B", []), mk("C", []), mk("Z", ["A", "B", "C"])]} slack={[]} deckSize={100} /></MemoryRouter>);
-  expect(within(screen.getByRole("heading", { name: /^Z/ }).closest("li")!).getByTestId("cut-loses")).toHaveTextContent("with 3 of the cards above cut too, cutting it loses 3 links");
+  expect(within(screen.getByRole("heading", { name: /^Z/ }).closest("li")!).getByTestId("cut-loses")).toHaveTextContent("with 3 of the cards above cut too, cutting it loses 3 pairings");
 });
 
 test("over 100 with too few cuts, the list says how many are still to find and where", () => {
   const surplus = [{ name: "Card advantage", count: 16, target: 13, over: 3, cards: [] }];
   const { unmount } = render(<CutList cuts={[cut("Only One")]} slack={[]} surplus={surplus} deckSize={108} />);
-  expect(screen.getByTestId("cuts-over")).toHaveTextContent("This one loses no link when cut: every link it makes, another card makes too. The other 7 have to come from a role you run more of than you need, below, or the cards you like least.");
+  expect(screen.getByTestId("cuts-over")).toHaveTextContent("This one loses nothing when cut: every pairing it has, another card has too. The other 7 have to come from a role you run more of than you need, below, or the cards you like least.");
   unmount();
   // NO ROLE OVER ITS TARGET, NO POINTER TO ONE (persona round 2026-09-27: a dead end).
   const { unmount: gone } = render(<CutList cuts={[cut("Only One")]} slack={[]} deckSize={108} />);
-  expect(screen.getByTestId("cuts-over")).toHaveTextContent("This one loses no link when cut: every link it makes, another card makes too. The other 7 have to come from the cards you like least.");
+  expect(screen.getByTestId("cuts-over")).toHaveTextContent("This one loses nothing when cut: every pairing it has, another card has too. The other 7 have to come from the cards you like least.");
   gone();
   // THE PLACES NAMED (persona round 2026-09-29: the eighth cut was found by hand in "Fits no theme").
   const read = { row: { partners: 1, why: "w", loses: [], covers: [] } as never };
   render(<CutList cuts={[cut("A", read), cut("B", read)]} slack={[]} deckSize={103} fillFrom={["Brightstone Ritual", "Patriar's Seal"]} />);
-  expect(screen.getByTestId("cuts-over")).toHaveTextContent("These 2 lose no link when cut, even all together: every link they make, another card makes too. The other 1 has to come from the cards that fit no theme and are neither interaction nor protection (Brightstone Ritual, Patriar's Seal), or the cards you like least.");
+  expect(screen.getByTestId("cuts-over")).toHaveTextContent("These 2 lose nothing when cut, even all together: every pairing they have, another card has too. The other 1 has to come from the cards that fit no theme and are neither interaction nor protection (Brightstone Ritual, Patriar's Seal), or the cards you like least.");
 });
 
 test("at deck size, a swap for a role card sits under the cuts; over 100 it does not", () => {
@@ -347,7 +347,7 @@ test("cutting a card and the maker of the token that covers it counts as a loss"
   const rowB = { partners: 1, why: "w", loses: [], covers: [] } as never;
   const model = { cards: new Map([["token:Goblin", tok]]) } as never;
   render(<MemoryRouter><CutList cuts={[cut("A", { row }), cut("B", { row: rowB })]} slack={[]} deckSize={102} model={model} /></MemoryRouter>);
-  expect(screen.getByTestId("cuts-over")).toHaveTextContent("This one loses no link when cut");
+  expect(screen.getByTestId("cuts-over")).toHaveTextContent("This one loses nothing when cut");
 });
 
 /** A MAKER'S FACE NAME IS NOT ITS CUT NAME (review, #981): madeBy holds "Maker", the cut list "Maker // Flip". */
@@ -360,7 +360,7 @@ test("a token made by a double-faced card goes when that card is cut", () => {
   const rowM = { partners: 1, why: "w", loses: [], covers: [] } as never;
   const model = { cards: new Map([["token:Goblin", tok], ["Maker", maker]]) } as never;
   render(<MemoryRouter><CutList cuts={[cut("A", { row }), cut("Maker // Flip", { row: rowM })]} slack={[]} deckSize={102} model={model} /></MemoryRouter>);
-  expect(screen.getByTestId("cuts-over")).toHaveTextContent("This one loses no link when cut");
+  expect(screen.getByTestId("cuts-over")).toHaveTextContent("This one loses nothing when cut");
 });
 
 // THE LAND COUNT IS FOR THE FINISHED 100 (#1152): the cuts are all spells, so the page says where

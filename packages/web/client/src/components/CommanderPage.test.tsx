@@ -89,7 +89,7 @@ test("a self-supplied demand is not listed as a gap", async () => {
   at("krenko-mob-boss", async () => ({ ...KRENKO, demands: ["enters|creature|-|-"] }));
   const heading = await screen.findByText(/it cares about/i);
   const section = heading.parentElement!;
-  expect(within(section).getByText(/answers every event it watches/i)).toBeInTheDocument();
+  expect(within(section).getByText(/nothing it can.t set up on its own/i)).toBeInTheDocument();
   expect(within(section).queryByText(/entering the battlefield/)).toBeNull();
 });
 
@@ -153,7 +153,7 @@ test("picking a partner widens the identity and merges both halves' lists at tha
   expect(screen.getByRole("link", { name: /Golgari Payoff/ })).toBeInTheDocument();
   expect(screen.queryByRole("link", { name: /Green Payoff/ })).not.toBeInTheDocument();
   // The identity line itself, not the Golgari Payoff link, reads the pair's combined identity.
-  expect(screen.getByText("colour identity").parentElement).toHaveTextContent(/Golgari/);
+  expect(screen.getByText("color identity").parentElement).toHaveTextContent(/Golgari/);
 });
 
 test("a colour chooser offers five colours and ranks over the chosen one", async () => {
@@ -188,7 +188,7 @@ test("a partner who chooses a colour brings the colour picker to the lead's page
   expect(await screen.findByRole("link", { name: /Jeskai Payoff/ })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: /Clara Jeskai/ })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: /^blue$/i })).toHaveAttribute("href", "/commanders/the-ninth-doctor?with=clara-oswald&color=U");
-  expect(screen.getByText("colour identity").parentElement).toHaveTextContent(/Jeskai/);
+  expect(screen.getByText("color identity").parentElement).toHaveTextContent(/Jeskai/);
 });
 
 /** A CARD THE ENGINE READ NOTHING ON SAYS SO, in place of three sentences that are only true of a
@@ -258,5 +258,5 @@ test("the commander page lists commanderSimilar, not the card page's list, and s
   expect(await screen.findByRole("heading", { level: 2, name: "Similar cards" })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Right Card" })).toHaveAttribute("href", "/cards/right-card");
   expect(screen.queryByRole("link", { name: "Wrong List" })).toBeNull();
-  expect(screen.getByText(/within this commander.s colour identity/i)).toBeInTheDocument();
+  expect(screen.getByText(/within this commander.s color identity/i)).toBeInTheDocument();
 });

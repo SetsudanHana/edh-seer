@@ -104,12 +104,12 @@ export function PlanLens({ report, graph, model, plan: planClass, planCards, pla
         {TURNS.map((t) => <Chip key={t} on={turn === t} onClick={() => setTurn(turn === t ? null : t)}>{t}</Chip>)}
         <Chip on={turn === null} onClick={() => setTurn(null)}>Any</Chip>
         {deckColours.length > 1 || colour ? <>
-          <span className="ml-2 text-(--muted)">Colour</span>
+          <span className="ml-2 text-(--muted)">Color</span>
           {deckColours.map((k) => <Chip key={k} on={colour === k} onClick={() => setColour(colour === k ? null : k)}><Dot k={k} />{COLOUR[k]}</Chip>)}
           <Chip on={colour === null} onClick={() => setColour(null)}>All</Chip>
         </> : null}
         <span className="ml-2" />
-        <Chip on={lastingOnly} onClick={() => setLastingOnly(!lastingOnly)}>Lasting links only</Chip>
+        <Chip on={lastingOnly} onClick={() => setLastingOnly(!lastingOnly)}>Repeatable only</Chip>
         {cut ? <Chip on onClick={() => setCut(null)}>Cut: {front(cut)} ✕</Chip> : null}
       </div>
       {turnMana !== null ? <p className="text-xs text-(--muted)">Turn {turn}: {turnMana} mana in a typical game. Cards that cost more are faded.</p> : null}
@@ -119,9 +119,9 @@ export function PlanLens({ report, graph, model, plan: planClass, planCards, pla
             onTap={(n) => { setTap(tap === n ? null : n); setOpen(null); }} />
           <p className="text-xs text-(--muted) max-w-[75ch]" data-testid="plan-lens-key">
             Inner ring: the cards in this plan. Outer ring: the cards that set them up. A line runs from a card to a plan card it feeds:
-            solid keeps working, dashed works once, thicker works better together.{hasCombo ? " Gold is a combo: the two loop." : ""} The
+            solid is repeatable, dashed is a one-shot, thicker works better together.{hasCombo ? " Gold is a combo: the two loop." : ""} The
             number on a card is its mana value; the dots above it are its colours. Under each card: how many cards feed it (or it
-            feeds), and how many of those links keep working. Tap a card to read it.
+            feeds), and how many of those pairings are repeatable. Tap a card to read it.
             {drawn.length < lens.setup.length ? ` The map draws the ${drawn.length} strongest cards that set it up; all ${lens.setup.length} are in the list.` : ""}
           </p>
         </div>
@@ -180,7 +180,7 @@ function LensMap({ lens, setup, wide, card, colours, manaValueOf, tap, cut, last
     const k = counts(partnersOf(lens, n, cut)), before = counts(partnersOf(lens, n));
     const alone = win && before.lasting > 0 && k.lasting === 0;
     const label = front(card.get(n)?.name ?? n);
-    const count = cut.has(n) ? "cut" : alone ? "no lasting link left" : lastingOnly ? `${k.lasting} lasting` : `${win ? "fed by" : "feeds"} ${k.all} · ${k.lasting} lasting`;
+    const count = cut.has(n) ? "cut" : alone ? "nothing repeatable left" : lastingOnly ? `${k.lasting} repeatable` : `${win ? "fed by" : "feeds"} ${k.all} · ${k.lasting} repeatable`;
     const half = Math.max(label.length * NAME_PX(wide) * 0.29, count.length * COUNT_PX(wide) * 0.28) + 4;
     const lx = Math.max(half, Math.min(W - half, x));
     // Under the disc: name baseline r+15 below its centre, count 14 under that. Above: clear of the
@@ -277,7 +277,7 @@ function Panel({ lens, phrase, card, colours, manaValueOf, model, allPlanCards, 
   const inPlan = new Set(lens.plan);
   const meta = (n: string) => {
     const mv = manaValueOf(n) ?? manaValueOf(front(n));
-    const cs = (colours.get(n) ?? []).map((k) => COLOUR[k]).join(", ") || "Colourless";
+    const cs = (colours.get(n) ?? []).map((k) => COLOUR[k]).join(", ") || "Colorless";
     return `${mv !== undefined ? `${mv} mana · ` : ""}${cs}`;
   };
   const box = "flex flex-col gap-2 rounded-(--radius) border border-(--separator) bg-(--surface) p-4 text-sm";
@@ -292,12 +292,12 @@ function Panel({ lens, phrase, card, colours, manaValueOf, model, allPlanCards, 
     return (
       <div className={box} data-testid="plan-lens-panel">
         <h4 className="text-base font-semibold">What if you cut {front(cut)}?</h4>
-        <p className="text-xs text-(--muted)">{phrase}: what each card in the plan keeps, in links that keep working.</p>
+        <p className="text-xs text-(--muted)">{phrase}: the repeatable pairings each card in the plan keeps.</p>
         <p data-testid="plan-lens-cut-summary">
-          {p.lose.length ? <>{names(p.lose)} {p.lose.length > 1 ? "lose" : "loses"} a lasting link. </> : "No card in the plan loses a lasting link. "}
-          {p.left.length ? <b className="text-(--danger)">{names(p.left)} would have no lasting link left. </b>
+          {p.lose.length ? <>{names(p.lose)} {p.lose.length > 1 ? "lose" : "loses"} a repeatable pairing. </> : "No card in the plan loses a repeatable pairing. "}
+          {p.left.length ? <b className="text-(--danger)">{names(p.left)} would have nothing repeatable left. </b>
             : p.lose.length ? (p.lose.length > 1 ? "Each still has another. " : "It still has others. ") : null}
-          {p.never.length ? <>{names(p.never)} {p.never.length > 1 ? "have" : "has"} no lasting link with or without {front(cut)}: every link {p.never.length > 1 ? "they make" : "it makes"} works once{loopy ? " (or is part of a combo loop)" : ""}.</> : null}
+          {p.never.length ? <>{names(p.never)} {p.never.length > 1 ? "have" : "has"} no repeatable pairing with or without {front(cut)}: every pairing {p.never.length > 1 ? "they have" : "it has"} is a one-shot{loopy ? " (or is part of a combo loop)" : ""}.</> : null}
         </p>
         <ul className="flex flex-col gap-2">
           {p.rows.map((r) => (
@@ -305,7 +305,7 @@ function Panel({ lens, phrase, card, colours, manaValueOf, model, allPlanCards, 
               {card.get(r.name) ? <Art card={card.get(r.name)!} size={28} /> : null}
               <div className="flex flex-col gap-1">
                 <span><b><CardName name={r.name} /></b></span>
-                <span className="text-xs text-(--muted)">lasting links: {r.before} → {r.after}{r.after === 0 && r.before > 0 ? " · none left" : ""}</span>
+                <span className="text-xs text-(--muted)">repeatable pairings: {r.before} → {r.after}{r.after === 0 && r.before > 0 ? " · none left" : ""}</span>
                 <Chips ps={partnersOf(lens, r.name, cutSet)} lastingOnly={lastingOnly} />
               </div>
             </li>
@@ -335,12 +335,12 @@ function Panel({ lens, phrase, card, colours, manaValueOf, model, allPlanCards, 
           *  feeds come first, each plan named; the either-way count follows and says it is one. */}
         <p data-testid="plan-lens-across">
           {win
-            ? <>In this plan {k.all} {k.all === 1 ? "card feeds" : "cards feed"} it, {k.lasting} of them with links that keep working. </>
+            ? <>In this plan {k.all} {k.all === 1 ? "card feeds" : "cards feed"} it, {k.lasting} of them repeatably. </>
             : (() => {
               const fed = perPlan.map((p) => ({ ...p, k: counts(partnersOf(p.lens, tap)) })).filter((p) => p.k.all);
-              return fed.length ? <>It feeds {and(fed.map((p) => `${p.k.all} ${p.k.all === 1 ? "card" : "cards"} in ${p.here ? "this plan" : `“${cap(p.phrase)}”`} (${p.k.lasting} lasting)`))}. </> : null;
+              return fed.length ? <>It feeds {and(fed.map((p) => `${p.k.all} ${p.k.all === 1 ? "card" : "cards"} in ${p.here ? "this plan" : `“${cap(p.phrase)}”`} (${p.k.lasting} repeatable)`))}. </> : null;
             })()}
-          Counting links in either direction, it works with {x.all} of your {win ? "other " : ""}{x.of} plan cards{x.all ? `, ${x.lasting} of them with links that keep working` : ""}.
+          Counting both ways, it works with {x.all} of your {win ? "other " : ""}{x.of} plan cards{x.all ? `, ${x.lasting} of them repeatably` : ""}.
         </p>
         <button type="button" onClick={() => onCut(tap)} className="self-start min-h-8 text-xs text-(--accent) underline underline-offset-2">What if I cut {front(c?.name ?? tap)}?</button>
         <span className="eyebrow text-(--muted)">{win ? "Fed, in this plan, by" : "Feeds, in this plan"}</span>
@@ -359,10 +359,10 @@ function Panel({ lens, phrase, card, colours, manaValueOf, model, allPlanCards, 
         {card.get(n) ? <Art card={card.get(n)!} size={28} /> : null}
         <div className="flex min-w-0 flex-col gap-1">
           <span><b><CardName name={n} /></b></span>
-          <span className="text-xs text-(--muted)">{meta(n)} · {inPlan.has(n) ? "fed by" : "feeds"} {k.all}, {k.lasting} lasting</span>
+          <span className="text-xs text-(--muted)">{meta(n)} · {inPlan.has(n) ? "fed by" : "feeds"} {k.all}, {k.lasting} repeatable</span>
           <Chips ps={ps} lastingOnly={lastingOnly} />
           {isOpen ? <Links ps={ps} giver={inPlan.has(n) ? null : n} />
-            : top ? <span className="text-xs text-(--muted)">{top.lasting ? "Keeps working: " : ""}{whyOf(top, inPlan.has(n) ? top.name : n)}</span> : null}
+            : top ? <span className="text-xs text-(--muted)">{top.lasting ? "Repeatable: " : ""}{whyOf(top, inPlan.has(n) ? top.name : n)}</span> : null}
           {ps.length ? <button type="button" onClick={() => onOpen(n)} className="self-start min-h-8 text-xs text-(--accent)" aria-expanded={isOpen}>{isOpen ? "Hide the reasons" : "Why each one ›"}</button> : null}
         </div>
       </li>
@@ -373,8 +373,8 @@ function Panel({ lens, phrase, card, colours, manaValueOf, model, allPlanCards, 
       <h4 className="text-base font-semibold">{phrase}</h4>
       <p className="text-xs text-(--muted)">
         {lens.plan.length} cards in the plan, {lens.setup.length} set it up. Each card's partners in this plan:{" "}
-        <Pc kind="last">keeps working</Pc> <Pc kind="once">once</Pc>{hasCombo ? <> <Pc kind="combo">combo</Pc> (the two loop together; a loop is counted apart from lasting links)</> : null}.
-        {lastingOnly ? <> <b>Lasting links only:</b> once-only links are hidden; "Why each one" still lists every reason.</> : null}
+        <Pc kind="last">repeatable</Pc> <Pc kind="once">one-shot</Pc>{hasCombo ? <> <Pc kind="combo">combo</Pc> (the two loop together, counted apart from repeatable pairings)</> : null}.
+        {lastingOnly ? <> <b>Repeatable only:</b> one-shot pairings are hidden. "Why each one" still lists every reason.</> : null}
       </p>
       <span className="eyebrow text-(--muted)">Cards in the plan</span>
       <ul className="flex flex-col gap-3">{lens.plan.map(row)}</ul>
@@ -406,7 +406,7 @@ function Chips({ ps, lastingOnly }: { ps: Partner[]; lastingOnly: boolean }) {
   return (
     <span className="flex flex-wrap gap-1" data-testid="plan-lens-chips">
       {[...strong, ...named].map((p) => <Pc key={p.name} kind={kindOf(p)}>{front(p.name)}</Pc>)}
-      {hidden ? <span className="inline-block rounded border border-dotted border-(--edge) px-1.5 text-xs text-(--muted)">+{hidden} once{lastingOnly ? ", hidden" : " more"}</span> : null}
+      {hidden ? <span className="inline-block rounded border border-dotted border-(--edge) px-1.5 text-xs text-(--muted)">{lastingOnly ? `+${hidden} one-shot, hidden` : `+${hidden} more one-shot`}</span> : null}
     </span>
   );
 }
@@ -425,7 +425,7 @@ function Links({ ps, giver }: { ps: Partner[]; giver: string | null }) {
       {ps.map((p) => (
         <li key={p.name} className={`border-l-2 py-0.5 pl-2 text-xs ${p.combo ? "border-[#D4A63A]" : p.lasting ? "border-(--edge)" : "border-dashed border-(--edge) text-(--muted)"}`}>
           <b className="text-(--foreground)"><CardName name={p.name} /></b>{" "}
-          <span className="font-mono text-[10px] text-(--muted)">{p.combo ? "combo loop" : p.lasting ? "keeps working" : "once"}</span>
+          <span className="font-mono text-[10px] text-(--muted)">{p.combo ? "combo loop" : p.lasting ? "repeatable" : "one-shot"}</span>
           <br />{whyOf(p, giver ?? p.name)}
         </li>
       ))}

@@ -30,7 +30,7 @@ const MODES: [TermOp, string, string][] = [
   ["or", "or", "either this or the other \u201cor\u201d ones"],
   ["not", "but not", "leave out cards that do this"],
 ];
-const COLOUR_WORD: Record<string, string> = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green", C: "Colourless" };
+const COLOUR_WORD: Record<string, string> = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green", C: "Colorless" };
 
 const Glyphs = ({ keyName }: { keyName: string }) => (
   <>{eventGlyphs(keyName).map((g) => <i key={g} aria-hidden="true" className={`ms ms-${g} text-(--muted)`} />)}</>

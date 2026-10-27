@@ -74,7 +74,7 @@ export function RedundancySection({ seed, find, ask = 0 }: { seed: string; find:
           intro={<>Cards that do the same job as {seed} in this deck, best match first. The figure is how many of the same deck cards each one works with.</>}
           empty={state.result.stats?.comparable === false
             ? "This card has no effect the search can compare."
-            : "No card in your colours does the same job as this one."}
+            : "No card in your colors does the same job as this one."}
         />
       ) : (
         <>

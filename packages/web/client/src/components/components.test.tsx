@@ -1236,7 +1236,7 @@ test("a card this run added has its castability row ringed and says so", () => {
 test("a colour short of mana rather than of colour does not read as enough", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={{ ...DECK_MATH, colors: [{ color: "B", supplied: 42, countBound: true }] }} />);
   const row = document.querySelector('li[aria-label^="B, 42 sources"]')!;
-  expect(row.getAttribute("aria-label")).toContain("need more mana, not other colours");
+  expect(row.getAttribute("aria-label")).toContain("need more mana, not other colors");
   expect(row.textContent).not.toMatch(/enough|every cost covered/);
   expect(row.textContent).toContain("the land count is");
 });
@@ -1395,7 +1395,7 @@ test("BuildBenchmarks names the colour pool on a zero row, so the pie is not rea
     answers: DECK_MATH.answers.map((a) => (a.class === "artifact" ? { ...a, pool: 56 } : a)),
   };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={withPool} />);
-  expect(screen.getByText(/your colours have 56 cards that could/i)).toBeInTheDocument();
+  expect(screen.getByText(/your colors have 56 cards that could/i)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks says nothing about a colour's pool when it was never resolved", () => {
@@ -1547,7 +1547,7 @@ test("the Answers header admits the colour pool was unweighted when no commander
       answerCoverage={{ coverage: 1, source: "unweighted", graveyardVulnerability: 0, rows: [] }}
     />,
   );
-  expect(screen.getByText(/colour pool unweighted/i)).toBeInTheDocument();
+  expect(screen.getByText(/color pool unweighted/i)).toBeInTheDocument();
   expect(screen.getByText(/no commander detected/i)).toBeInTheDocument();
   expect(screen.queryByText(/docked for coverage/i)).not.toBeInTheDocument();
 });
@@ -1560,7 +1560,7 @@ test("the Answers header says nothing about the pool when a commander WAS detect
       answerCoverage={{ coverage: 1, source: "weighted", graveyardVulnerability: 0, rows: [] }}
     />,
   );
-  expect(screen.queryByText(/colour pool unweighted/i)).not.toBeInTheDocument();
+  expect(screen.queryByText(/color pool unweighted/i)).not.toBeInTheDocument();
 });
 
 test("BuildBenchmarks shows demand against supply, and refuses a number where none applies", () => {
@@ -1803,7 +1803,7 @@ test("BuildBenchmarks prices the mana base in turns, dearest part first", () => 
   };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={priced} />);
   expect(screen.getByText(/Your mana base loses about/i)).toHaveTextContent(
-    "Your mana base loses about 1.1 of a turn over a game's first 10 turns, against a perfect one for this deck — colours 0.8 · tapped lands 0.2 · land count 0.0",
+    "Your mana base loses about 1.1 of a turn over a game's first 10 turns, against a perfect one for this deck — colors 0.8 · tapped lands 0.2 · land count 0.0",
   );
 });
 
@@ -1855,22 +1855,22 @@ test("BuildBenchmarks says whether you can CAST it, and names colour when that i
   expect(screen.getByLabelText(/Ulamog, 3% – 11% to cast by turn 10/i)).toBeInTheDocument();
   // WHICH PROBLEM IT IS. Damnation's mana is there 70-90% of the time and it casts 61-78%, so the
   // gap is the colours -- a different deck problem from being short on mana, fixed differently.
-  expect(screen.getByLabelText(/Damnation, 61% – 78% to cast by turn 4, ignoring colour 70% – 90%/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/Damnation, 61% – 78% to cast by turn 4, ignoring color 70% – 90%/i)).toBeInTheDocument();
   // Ulamog's colours line up, so it gets no second number: below the gap it would say the same
   // thing twice, which is how a panel stops being read.
-  expect(screen.getByLabelText(/Ulamog/i).textContent).not.toMatch(/ignoring colour/i);
+  expect(screen.getByLabelText(/Ulamog/i).textContent).not.toMatch(/ignoring color/i);
   // THE DEADLINE IS ON SCREEN, not only in the aria-label. Four cards of equal mana value tie at
   // the same percentage by construction, and a bare "3%" repeated down the block was read as a
   // broken readout by three of four player reviews.
   expect(screen.getByText(/3% – 11% to cast by turn 10/i)).toBeInTheDocument();
   // #1226: THE ENDS ARE NAMED IN THE BLOCK, once, and the colour line is explained beside them.
   expect(screen.getByText(/low end holds up two mana/i)).toBeInTheDocument();
-  expect(screen.getByText(/ignoring colour.*same cast with colours waved through/i)).toBeInTheDocument();
+  expect(screen.getByText(/ignoring color.*same cast with colors waved through/i)).toBeInTheDocument();
   expect(document.body.textContent).not.toMatch(/mana alone/i);
   // ...and BEFORE the rows (#1240 persona round): below a long list the reader met "34% – 53%"
   // first and never reached the words that name its ends.
   const firstRow = screen.getByLabelText(/Damnation, 61% – 78% to cast by turn 4/i);
-  for (const legend of [screen.getByText(/low end holds up two mana/i), screen.getByText(/same cast with colours waved through/i)]) {
+  for (const legend of [screen.getByText(/low end holds up two mana/i), screen.getByText(/same cast with colors waved through/i)]) {
     expect(legend.compareDocumentPosition(firstRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   }
 });
@@ -1889,7 +1889,7 @@ test("BuildBenchmarks never prints a range whose two ends are the same figure", 
   } as never;
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={math} />);
   expect(screen.getByText(/31% to cast by turn 1/i)).toBeInTheDocument();
-  expect(screen.getByText(/^ignoring colour 91%$/i)).toBeInTheDocument();
+  expect(screen.getByText(/^ignoring color 91%$/i)).toBeInTheDocument();
   expect(document.body.textContent).not.toMatch(/(\d+)% – \1%/);
   // A block with no range has no ends to name.
   expect(document.body.textContent).not.toMatch(/low end holds up/i);
@@ -2500,7 +2500,7 @@ test("CardList explains the cost range on the tab that prints it", () => {
   render(<CardList cards={SAMPLE.report.cards} />);
   expect(screen.getByText("what the cost figures mean")).toBeInTheDocument();
   // The figure is CASTABILITY now — mana and colours together — and the range is the play policy.
-  expect(screen.getByText(/in the right colours/)).toBeInTheDocument();
+  expect(screen.getByText(/in the right colors/)).toBeInTheDocument();
   expect(screen.getByText(/low end holds up two mana/)).toBeInTheDocument();
 });
 
@@ -2571,7 +2571,7 @@ test("the bracket panel names what put the deck there, and never reads as a grad
   }} />);
   // The EN DASH: this line prints `CELL_LABEL[band]`, not the wire key, so it matches the cells
   // above it. It was rendering "Bracket 4-5" beside a cell reading "4–5" (S14).
-  expect(screen.getByText(/^Bracket 4–5$/)).toBeInTheDocument();
+  expect(screen.getByText(/^Bracket 4–5 \(Optimized or cEDH\)$/)).toBeInTheDocument();
   expect(screen.getByText("casual")).toBeInTheDocument();
   expect(screen.getByText("competitive")).toBeInTheDocument();
   // Named twice on purpose: in the one-sentence reason and in the Game Changers box.

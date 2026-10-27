@@ -52,7 +52,7 @@ export function ManaGlance({ deckMath, manaAvailability, landCount, deckSize }: 
     const short = shorts[0];
     const others = shorts.slice(1);
     tiles.push(short?.worst ? (
-      <Tile key="colours" label="Weakest colour" warn
+      <Tile key="colours" label="Weakest color" warn
         // NO SLASH (#1033): "30 /37" read as 30 of 37 lands even with the line below naming both
         // numbers, so the figure says it in words.
         big={<span className="inline-flex items-center gap-1.5"><ManaSymbols cost={`{${short.color}}`} />{short.worst.available}<span className="text-sm text-(--muted)"> of {short.worst.required} needed</span></span>}
@@ -62,7 +62,7 @@ export function ManaGlance({ deckMath, manaAvailability, landCount, deckSize }: 
         // The tile says which problem it is, in the finding's own words, then the numbers.
         sub={<><ColourVerdict c={short} worst={short.worst} />{others.length > 0 && <> Also short:{others.map((c, i) => <span key={c.color}>{i > 0 && ","} <ManaSymbols cost={`{${c.color}}`} /> {c.worst!.available} of {c.worst!.required} by turn {c.worst!.turn}</span>)}.</>}{unread && <> {unread}.</>}</>} />
     ) : (
-      <Tile key="colours" label="Colours" big={<span className="inline-flex gap-0.5">{colours.map((c) => <ManaSymbols key={c.color} cost={`{${c.color}}`} />)}</span>}
+      <Tile key="colours" label="Colors" big={<span className="inline-flex gap-0.5">{colours.map((c) => <ManaSymbols key={c.color} cost={`{${c.color}}`} />)}</span>}
         sub={unread ? <>enough sources for every card it could read. {unread}.</> : "enough sources for every card"} />
     ));
   }

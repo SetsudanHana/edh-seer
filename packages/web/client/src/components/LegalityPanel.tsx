@@ -58,7 +58,7 @@ export function LegalityPanel({ legality, companions = [], upcoming = [] }: {
         </summary>
         <p className="pt-1">
           Checked against Commander&rsquo;s deck rules, and nothing breaks them: 100 cards, singleton,
-          colour identity, who can lead, partner pairing and the banned list{companionClause}. The
+          color identity, who can lead, partner pairing and the banned list{companionClause}. The
           banned list is as of our card data, so it can lag a fresh announcement.
         </p>
       </details>
