@@ -1998,6 +1998,9 @@ function grammarTriggersOf(text: string, cardName: string | undefined, storedEve
 }
 
 /** "...becomes blocked by this creature / by it / by equipped creature / by enchanted creature / by <the card's name>": the card (or its host) is the BLOCKER, not the creature the trigger watches. */
+/** "Whenever ONE OR MORE creatures you control become blocked BY a creature" (#1381): `batched` would mean both the subject's batch and the blocker's, and one flag cannot say which, so the trigger is refused
+ *  like an unreadable "by" phrase (0 corpus cards, 2026-10-27). Read off the printed trigger phrase: a "one or more" ahead of "becomes blocked by", before the first comma. */
+const BATCHED_SUBJECT_BLOCKED_BY = /^[^,]*\bone or more\b[^,]*?\bbecomes? blocked by\b/i;
 /** The printed "by ..." of a "becomes blocked by ..." trigger, up to the comma that ends the trigger phrase (#1381). */
 const BLOCKED_BY_PHRASE = /\bbecomes? blocked (by [^,.;]+)/i;
 function blockedBySelf(text: string, cardName?: string): boolean {
@@ -2029,6 +2032,7 @@ function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, c
   // "Whenever a creature with deathtouch blocks or becomes blocked BY THIS CREATURE" (Mirror Shield, granted to the host): the watched creature is the OPPOSING one and the named blocker is the host or the card, so the
   // stored subject "this creature" would be a live self trigger on the wrong object. Refused rather than guessed (#1375 review).
   if (verb === "becomes-blocked" && blockedBySelf(text, cardName)) return { refused: "blocked-by-self", subject };
+  if (verb === "becomes-blocked" && r.blocker && BATCHED_SUBJECT_BLOCKED_BY.test(text)) return { refused: "narrowing:becomes-blocked", subject };
   if (verb === "leaves" && WITHOUT_DYING.test(text)) subject.withoutDying = true;
   if (r.condition && SAME_NAME.test(r.condition.text)) subject.uniqueName = true;
   // "An enchanted / equipped creature" is CR 700.9's `modified`, the field producers state.
@@ -2632,7 +2636,7 @@ export function deriveAbilities(
       } else if (verb === "becomes-blocked" && isSelfSubject(clause.trigger.subject ?? "", cardName) && blockedBySelf(cardText, cardName)) {
         // CEILING: reads the whole card text, because the stored record can be numbered into another sentence (Mirror Shield: clause 3 is "Equip {2}"); there the stored "this creature" is the BLOCKER (#1375 review). A card with a real self becomes-blocked trigger AND a "blocked by this creature" sentence elsewhere would be refused (0 in the corpus, 2026-10-27); a refusal, never a wrong edge.
         unknownTriggers.push("blocked-by-self");
-      } else if (verb === "becomes-blocked" && BLOCKED_BY_PHRASE.test(text) && !readBlocker(BLOCKED_BY_PHRASE.exec(text)![1]!)) {
+      } else if (verb === "becomes-blocked" && BLOCKED_BY_PHRASE.test(text) && (!readBlocker(BLOCKED_BY_PHRASE.exec(text)![1]!) || BATCHED_SUBJECT_BLOCKED_BY.test(text))) {
         // The printed "by ..." names a blocker `readBlocker` cannot read exactly (the grammar's own refusal, #1381): the stored subject can be the blocker itself, so no guess.
         unknownTriggers.push("narrowing:becomes-blocked");
       } else if (verb) {

@@ -1241,8 +1241,9 @@ export interface Ability {
   trigger?: {
     verbs: Verb[];
     subject: SubjectFilter;
-    /** "Whenever ONE OR MORE ... enter": one firing per batch, however many objects it holds
-     *  (CR 603.2c). Read on the trigger SUBJECT only. */
+    /** One firing per batch, however many objects it holds (CR 603.2c). Two meanings: "Whenever ONE OR MORE ... enter" batches the trigger SUBJECT, and on a `becomes-blocked`
+     *  trigger "by one or more <class>" / "by two or more creatures" batches the BLOCKERS (CR 509.3e; see `blocker`). One flag cannot say both, so a becomes-blocked trigger
+     *  that prints "one or more" in its subject AND a "by <class>" phrase is REFUSED (`narrowing:becomes-blocked`) rather than guessed. */
     batched?: true;
     /** WHO BLOCKS (#1381): the filter on the BLOCKING creature(s) of a `becomes-blocked` trigger that prints "by ..." -- "becomes blocked by an artifact creature" (Ogre Leadfoot),
      *  "by a creature" (`{type: "creature"}`, the class that can block at all, CR 509.1a). The trigger `subject` stays the creature that BECOMES blocked. Absent on a plain "becomes blocked"

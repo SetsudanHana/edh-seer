@@ -4614,6 +4614,18 @@ describe("becomes blocked by <creatures> (#1381, CR 509.3c-e)", () => {
     expect(t!.trigger!.blocker).toBeUndefined();
   });
 
+  test("a batched SUBJECT and a 'by' phrase on one trigger is refused, not read as one flag (grammar and stored path)", () => {
+    const text = "Whenever one or more creatures you control become blocked by a creature, draw a card.";
+    const tags = viaGrammar("Test Witness", "Enchantment", text);
+    expect(blocked(tags)).toHaveLength(0);
+    expect(tags.unknownTriggers).toContain("narrowing:becomes-blocked");
+    const card = { name: "Test Witness", typeLine: "Enchantment", oracleText: text, keywords: [] as string[] };
+    const stored = [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "one or more creatures you control", control: "you" }, actions: [{ verb: "draw", object: "a card" }] }] as never;
+    const viaStored = deriveCardTags(deriveInputOf(card as never, "x", card.name, stored, undefined, undefined));
+    expect(blocked(viaStored)).toHaveLength(0);
+    expect(viaStored.unknownTriggers).toContain("narrowing:becomes-blocked");
+  });
+
   test("a plain 'becomes blocked' has no blocker and stays once a round", () => {
     const [t] = blocked(viaGrammar("Test Charger", "Creature — Elephant", "Whenever this creature becomes blocked, it gets +2/+2 until end of turn."));
     expect(t!.trigger!.blocker).toBeUndefined();
