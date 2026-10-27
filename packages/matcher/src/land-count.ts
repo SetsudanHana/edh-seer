@@ -1,5 +1,5 @@
 import type { KarstenInputs } from "@edh-seer/engine";
-import { BUILD_PARENTS, detectBuildCategories, detectBuildWeights, weightedCount, type BuildCategory, type RoleWeights } from "./build.js";
+import { BUILD_PARENTS, detectBuildCategories, detectBuildWeights, weightedSum, type BuildCategory, type RoleWeights } from "./build.js";
 import type { GateWeigher } from "./effect-gate-weight.js";
 import { classifyAccelerant, manaOutput, playableLines } from "./goldfish.js";
 import { boardGateProbability, lineGateMetBy } from "./gate.js";
@@ -141,7 +141,7 @@ export function landInputs(
     const weight = viaMana ? 1 : Math.max(...ws);
     if (weight < 1) weightByName.set(name, { weight });
   }
-  const rampPlusDraw = weightedCount(cheapRampPlusDraw.map((dc) => dc.card.name), weightByName);
+  const rampPlusDraw = weightedSum(cheapRampPlusDraw.map((dc) => dc.card.name), weightByName);
 
   return {
     avgManaValue,
@@ -229,7 +229,7 @@ export function recommendedLands(
   const drawCards = detectBuildCategories([...library]).get("draw") ?? new Set<string>();
   // A GATED EFFECT COUNTS AT ITS WEIGHT (#1357 task 2), the weights the build panel's counts carry, so "Ramp 16 of 10" here is still the panel's 16.
   const roleWeights: RoleWeights = opts.gates ? detectBuildWeights(deck, opts.gates) : new Map();
-  const drawPieces = weightedCount(drawCards, roleWeights.get("draw"));
+  const drawPieces = weightedSum(drawCards, roleWeights.get("draw"));
 
   // THE ROLE COUNTS THE BUILD PANEL SHOWS: a parent's count is the union of its leaves over the
   // whole deck, exactly as `computeBuild` counts it, so "Ramp 16 of 10" here is the panel's 16.
@@ -246,7 +246,7 @@ export function recommendedLands(
       const w = roleWeights.get(leaf)?.get(name)?.weight ?? 1;
       if (w > (best.get(name)?.weight ?? 0)) best.set(name, { weight: w });
     }
-    return weightedCount(union, best);
+    return weightedSum(union, best);
   };
 
   // EACH RAMP PIECE AT WHAT IT KEEPS PRODUCING (`RAMP_RESILIENCE`): land ramp whole, a rock 0.7, a

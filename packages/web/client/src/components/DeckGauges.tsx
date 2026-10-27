@@ -6,6 +6,7 @@ import { bandScale, type ScoreKind } from "../lib/score-band.js";
 import { Explain } from "./Explain.js";
 import { gapText, headerGaps } from "../lib/verdict.js";
 import type { RunDiff } from "../lib/run-diff.js";
+import { fmtCount } from "../lib/format-count.js";
 
 /** A COUNT AGAINST ITS REFERENCE, AS A FRACTION OF THE TRACK. The target parks at `TARGET_MARK`,
  *  so the bar runs past it when the count clears it and stops short when it does not -- and every
@@ -306,7 +307,7 @@ export function RoleBars({ data }: { data: AnalyzeResponse }) {
           <Bullet
             key={p.name}
             name={p.name}
-            value={String(p.count)}
+            value={fmtCount(p.count)}
             reading={floorState(p.count, p.target)}
             fill={countFill(p.count, p.target)}
             mark={p.target > 0 ? TARGET_MARK : undefined}

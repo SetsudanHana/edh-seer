@@ -6,6 +6,7 @@ import { BUILD_CATEGORY_LABEL } from "../lib/build-category-labels.js";
 import { overNote } from "../lib/deck-gauge.js";
 import { Art } from "./engine-parts.js";
 import { CardName } from "./card-drawer.js";
+import { fmtCount } from "../lib/format-count.js";
 
 /** THE CARDS IN EACH ROLE, IN THE ROLES CHAPTER (owner, 2026-09-26: "it does not make any sense to
  *  have 2 times the same report"). The Graph tab's Overview had a "Cards judged by their job" box;
@@ -61,7 +62,7 @@ export function RoleShelves({ report, graph }: { report: DeckReport; graph?: Car
               <span className="shrink-0 sm:w-36 sm:pt-2">
                 <b className="block">{label}</b>
                 {target
-                  ? <Against count={cards.length} target={target} oneShots={p?.key === "ramp" ? oneShots : 0} />
+                  ? <Against count={(p && !group ? p.count : report.buildCategories?.find((c) => c.category === category)?.count) ?? cards.length} target={target} oneShots={p?.key === "ramp" ? oneShots : 0} />
                   : <span className="text-(--muted) tabular-nums">{cards.length} card{cards.length === 1 ? "" : "s"}</span>}
               </span>
               {/* CHIPS, NOT CARD IMAGES (owner, 2026-09-27: "less is more"). Full cards ran the shelves to
@@ -92,8 +93,8 @@ export function RoleShelves({ report, graph }: { report: DeckReport; graph?: Car
 function Against({ count, target, oneShots }: { count: number; target: number; oneShots?: number }) {
   return (
     <span className="text-(--muted) tabular-nums">
-      {count} card{count === 1 ? "" : "s"} · aim for {target}
-      {count < target ? <span className="text-(--warning)">{` (${target - count} short)`}</span> : null}
+      {fmtCount(count)} card{count === 1 ? "" : "s"} · aim for {target}
+      {count < target ? <span className="text-(--warning)">{` (${fmtCount(target - count)} short)`}</span> : null}
       {overNote(count, target, oneShots) ? ` (${overNote(count, target, oneShots)})` : null}
     </span>
   );

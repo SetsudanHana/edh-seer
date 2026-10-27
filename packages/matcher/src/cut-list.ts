@@ -134,7 +134,7 @@ export function deckSlack(
     // (`CutList.tsx`'s `BUILD_CATEGORY_LABEL[s.category] ?? s.category`); a parent's NAME
     // ("Interaction", "Board wipes") is already plain English, so the same fallback renders it
     // correctly with no client change.
-    .map((p) => ({ category: p.name, key: p.key, count: p.count, target: p.target, over: p.count - p.target }))
+    .map((p) => ({ category: p.name, key: p.key, count: p.count, target: p.target, over: Math.round((p.count - p.target) * 100) / 100 }))
     .sort((a, b) => b.over - a.over || a.category.localeCompare(b.category));
 }
 
@@ -386,7 +386,7 @@ export function trimOrder(
     }
     if (c.roles.length > 0) {
       const room = [...overGroups.values()]
-        .map((s) => `${s.name} is at ${s.count} against a target of ${s.target}`)
+        .map((s) => `${s.name} is at ${Math.round(s.count * 10) / 10} against a target of ${s.target}`)
         .join(", ");
       protections.push(room ? `fills ${c.roles.join(", ")} — ${room}, so there is room here` : `fills ${c.roles.join(", ")}`);
     }

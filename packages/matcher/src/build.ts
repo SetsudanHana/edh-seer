@@ -1,7 +1,7 @@
 import type { DeckCard } from "./types.js";
 import { ARCHETYPE_FLOOR, ARCHETYPE_LABELS, ARCHETYPE_LEAD_FLOOR, type Archetype, type ArchetypeRanking } from "./archetypes.js";
 import TEMPLATE from "./template-targets.json" with { type: "json" };
-import { answerClassesOf, loadRules, ruleMatches } from "./rules.js";
+import { answerClassesOf, loadRules, ruleMatches, type Rule, type RuleClause } from "./rules.js";
 import { answerCoverage, COVERAGE_CLASSES, type CoverageResult } from "./answer-coverage.js";
 import { countsAsLand } from "./typeline.js";
 import { cardLines } from "./mana-lines.js";
@@ -120,22 +120,42 @@ export interface ConditionalRole { card: string; category: BuildCategory; weight
 /** Category -> card -> the weight that member counts for, ONLY for members below 1. Membership is `detectBuildCategories`' and does not move: a gated draw card is still a draw card. */
 export type RoleWeights = Map<BuildCategory, Map<string, EffectWeight>>;
 
+/** The rule reads the card's derived abilities (`effectKind`, `emits`, `hostEffect`), so a view of the card without a gated ability can change its answer. A rule over the printed text, the type line or the keywords cannot. */
+function readsAbilities(clauses: readonly RuleClause[] | undefined): boolean {
+  return (clauses ?? []).some((c) => c.op === "effectKind" || c.op === "emits" || c.op === "hostEffect"
+    || ((c.op === "anyOf" || c.op === "allOf") && readsAbilities(c.clauses)) || (c.op === "not" && readsAbilities([c.clause])));
+}
+
 /** HOW MUCH ONE RULE'S MATCH IS WORTH FOR THIS CARD: 1, or the weight of the gated effect the rule leans on. The rule is re-asked of the card with its gated abilities taken away, from the least conditional
  *  level up: the first level at which the rule still holds is the card's weight, and the gated ability that sets that level is the condition the report names. A rule that holds without any gated ability
- *  (the card draws through an ungated clause too) is worth 1. Rules that read no ability (`oracle`, `typeLine`, `manaLine`, `keyword`) are unaffected by the view and stay 1.
- *  CEILING: a clause that looks at a SIBLING ability (`notPairedTarget`, `notFlickered`, `notOwnedByYou` over the same clause) sees the filtered list, so taking a gated ability away can change its answer. */
-function ruleWeight(rule: Parameters<typeof ruleMatches>[0], dc: DeckCard, gates: GateWeigher): EffectWeight | null {
+ *  (the card draws through an ungated clause too) is worth 1. A rule that holds only through an ability whose condition is on the TARGET (`target`, owner ruling 2026-10-27 C) is worth 1 but is returned so the
+ *  report can call the card a narrow answer.
+ *  AN ORACLE-ONLY RULE (`boardWipe.text`, `stax.text`, the `oracle` leg of `removal.targeted` ...) reads no ability, so a view cannot weigh it: it takes the best weight among the card's abilities when EVERY ability of
+ *  the card is gated, and is worth 1 as soon as one is not.
+ *  CEILING: a clause that looks at a SIBLING ability (`notPairedTarget`, `notFlickered`, `notOwnedByYou` over the same clause) sees the filtered list, so taking a gated ability away can change its answer. CEILING: an
+ *  oracle-only rule on a card with a gated and an ungated ability is worth 1 whichever of them the printed text belongs to. */
+function ruleWeight(rule: Rule, dc: DeckCard, gates: GateWeigher): EffectWeight | null {
   const abilities = dc.tags?.abilities ?? [];
-  const gated = abilities.filter((a) => a.gate !== undefined).map((a) => ({ a, w: gates.of(a, dc) })).filter((x) => x.w.weight < 1);
-  if (gated.length === 0) return null;
-  const levels = [...new Set(gated.map((x) => x.w.weight))].sort((x, y) => y - x);
-  const dropped = (level: number): Set<unknown> => new Set(gated.filter((x) => x.w.weight < level).map((x) => x.a));
-  // level 1: every gated ability below 1 taken away
-  for (const level of [1, ...levels]) {
-    const out = dropped(level);
-    const view: DeckCard = { ...dc, tags: { ...dc.tags!, abilities: abilities.filter((a) => !out.has(a)) } };
-    if (ruleMatches(rule, view)) return level >= 1 ? null : gated.find((x) => x.w.weight === level)!.w;
+  const entries = abilities.filter((a) => a.gate !== undefined).map((a) => ({ a, w: gates.of(a, dc) }));
+  if (entries.length === 0) return null;
+  if (!readsAbilities(rule.match) && !readsAbilities(rule.not)) {
+    if (entries.length < abilities.length) return null;
+    const top = entries.reduce((x, y) => (y.w.weight > x.w.weight ? y : x));
+    return top.w.weight < 1 || top.w.basis === "target" ? top.w : null;
   }
+  const partial = entries.filter((x) => x.w.weight < 1);
+  const without = (dropped: Set<unknown>): DeckCard => ({ ...dc, tags: { ...dc.tags!, abilities: abilities.filter((a) => !dropped.has(a)) } });
+  if (partial.length > 0) {
+    const levels = [...new Set(partial.map((x) => x.w.weight))].sort((x, y) => y - x);
+    for (const level of [1, ...levels]) {
+      if (ruleMatches(rule, without(new Set(partial.filter((x) => x.w.weight < level).map((x) => x.a))))) {
+        if (level < 1) return partial.find((x) => x.w.weight === level)!.w;
+        break;
+      }
+    }
+  }
+  const narrow = entries.filter((x) => x.w.basis === "target");
+  if (narrow.length > 0 && !ruleMatches(rule, without(new Set(narrow.map((x) => x.a))))) return narrow[0]!.w;
   return null;
 }
 
@@ -170,11 +190,8 @@ export function weightedSum(names: Iterable<string>, weights?: ReadonlyMap<strin
   for (const name of names) n += weights?.get(name)?.weight ?? 1;
   return Math.round(n * 100) / 100;
 }
-/** THE COUNT OF A ROLE AS THE REPORT SHOWS IT: `weightedSum` rounded to a whole card, the unit every reader of a count (and the target, which is a whole card) speaks. The exact sum is `weighted` on the row and is
- *  what the score reads, so a half-weight card moves the score even where it does not move the shown count (8.5 shows as 9: a tie rounds up). */
-export function weightedCount(names: Iterable<string>, weights?: ReadonlyMap<string, { weight: number }>): number {
-  return Math.round(weightedSum(names, weights));
-}
+/** A COUNT AS A PLAYER READS IT (owner ruling 2026-10-27): one decimal, and no ".0" on a whole number. 9.5 stays 9.5 and is never rounded up into a sure card. */
+export const formatCount = (n: number): string => String(Math.round(n * 10) / 10);
 
 /** The cards covering one answer class, split by mode. Name SETS rather than counters: a set is
  *  what lets a later panel say which card, and it makes double-matching harmless -- every exile
@@ -715,7 +732,7 @@ export interface BuildResult {
   /** `facets`: sub-counts said BESIDE a leaf's count, never folded into it -- `draw` carries
    *  `engines` (a draw that comes back) and `unlabelled` (a draw `repeats.ts` refused to label).
    *  Present only on a category some facet rule names; each facet is a subset of the count. */
-  buildCategories: { category: string; count: number; target: number; weighted?: number; facets?: Record<string, number> }[];
+  buildCategories: { category: string; count: number; target: number; facets?: Record<string, number> }[];
   /** One row per `BUILD_PARENTS` entry: archetype-adjusted target, and the UNION of its leaves'
    *  member sets (never the sum -- see `computeBuild`). The client renders the target, ratio and
    *  flag HERE and only count+share on the leaf rows beneath (owner's 2026-08-21 ruling).
@@ -725,7 +742,7 @@ export interface BuildResult {
   /** `impact` is WHAT CLOSING THIS PARENT'S GAP IS WORTH to `buildScore` (roadmap S10) -- the whole
    *  gap, not one card, and a LOWER BOUND, since a real card can carry two of a parent's leaves. 0
    *  for a parent at or over its target, which never surfaces as a finding anyway. */
-  buildParents: { name: string; key: TemplateKey; count: number; target: number; weighted?: number; leaves: string[]; impact: number; coverageWeighted?: true }[];
+  buildParents: { name: string; key: TemplateKey; count: number; target: number; leaves: string[]; impact: number; coverageWeighted?: true }[];
   /** Which theme row(s) the parent targets came from, and the rows themselves, so the report can
    *  show "Voltron runs 19.5 interaction; you run 12" beside the tick (owner ruling 2026-09-06). */
   template: TemplateBlend;
@@ -786,19 +803,18 @@ export function computeBuild(
   // deck's ~24 basics register as ~24, not 1. Every other category is singleton in Commander, so
   // distinct-name membership size already equals the copy count.
   const landCount = cards.reduce((n, dc) => n + (isLand(dc) ? 1 : 0), 0);
-  const countOf = (c: BuildCategory): number => (c === "lands" ? landCount : weightedCount(members.get(c) ?? [], roleWeights.get(c)));
+  const countOf = (c: BuildCategory): number => (c === "lands" ? landCount : weightedSum(members.get(c) ?? [], roleWeights.get(c)));
 
   const facets = detectBuildFacets(cards);
   const facetsOf = (c: BuildCategory): Record<string, number> | undefined => {
     const byName = facets.get(c);
     if (!byName) return undefined;
     const inCategory = members.get(c) ?? new Set<string>();
-    return Object.fromEntries([...byName].map(([name, s]) => [name, weightedCount([...s].filter((n) => inCategory.has(n)), roleWeights.get(c))]));
+    return Object.fromEntries([...byName].map(([name, s]) => [name, weightedSum([...s].filter((n) => inCategory.has(n)), roleWeights.get(c))]));
   };
   const buildCategories = BUILD_CATEGORIES.map((c) => {
     const f = facetsOf(c);
-    const exact = c === "lands" ? landCount : weightedSum(members.get(c) ?? [], roleWeights.get(c));
-    return { category: c, count: countOf(c), target: targets[c], ...(exact !== (members.get(c)?.size ?? 0) && c !== "lands" ? { weighted: exact } : {}), ...(f ? { facets: f } : {}) };
+    return { category: c, count: countOf(c), target: targets[c], ...(f ? { facets: f } : {}) };
   });
 
   // BREADTH, beside the count. `detectAnswerClasses` already lives in this file, so unlike the
@@ -832,14 +848,11 @@ export function computeBuild(
       if (have === undefined || w.weight > have.weight) unionWeights.set(name, w);
       union.add(name);
     }
-    const exact = weightedSum(union, unionWeights);
-    return { ...p, count: Math.round(exact), exact };
+    return { ...p, count: weightedSum(union, unionWeights) };
   });
 
-  // THE SCORE READS THE EXACT COUNT (a half-weight card moves it), the sentences and the rows the whole one.
-  const scoredParents = parentsWithCount.map((p) => ({ ...p, count: p.exact }));
   const scoreInputs: BuildScoreInputs = {
-    parents: scoredParents,
+    parents: parentsWithCount,
     landCount,
     landsTarget: targets.lands,
     coverage: coverage.coverage,
@@ -847,7 +860,7 @@ export function computeBuild(
   const buildScore = scoreBuild(scoreInputs);
   const landsImpact = landsImpactOf(scoreInputs);
   const answersImpact = answersImpactOf(
-    scoredParents, landCount, targets.lands, colorIdentity, answered, graveyardVulnerability,
+    parentsWithCount, landCount, targets.lands, colorIdentity, answered, graveyardVulnerability,
   );
 
   // `coverageWeighted` rides along ONLY when true (whole-branch review IMPORTANT 4) -- the client
@@ -856,7 +869,7 @@ export function computeBuild(
   // this parent can no longer silently unwire the panel's coverage note while the score keeps
   // docking it, the panel/score disagreement class this branch already closed twice.
   const buildParents = parentsWithCount.map((p, i) => ({
-    name: p.name, key: p.key, count: p.count, target: p.target, ...(p.exact !== p.count ? { weighted: p.exact } : {}), leaves: p.leaves as string[],
+    name: p.name, key: p.key, count: p.count, target: p.target, leaves: p.leaves as string[],
     impact: parentImpact(scoreInputs, i),
     ...(p.coverageWeighted ? { coverageWeighted: true } as const : {}),
   }));
@@ -909,7 +922,7 @@ function buildSuggestions(
     const text =
       p.count === 0 && p.key === "boardWipes"
         ? `No board wipe (target ${p.target})${band}`
-        : `${p.name} ${p.count}/${p.target} — add ~${Math.ceil(p.target - p.count)}${band}`;
+        : `${p.name} ${formatCount(p.count)}/${p.target} — add ~${Math.ceil(p.target - p.count)}${band}`;
     gaps.push({ gap: p.target - p.count, text, key: p.key });
   }
   const landsTarget = targets.lands;

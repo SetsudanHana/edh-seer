@@ -8,6 +8,7 @@ import { CardName, useAdded } from "./card-drawer.js";
 import { WinPlans } from "./WinPlans.js";
 import { isPolicyRange, POLICY_LEGEND, policyBand } from "@edh-seer/engine/percent";
 import { bandState } from "../lib/deck-gauge.js";
+import { fmtCount } from "../lib/format-count.js";
 // NOTHING IS VALUE-IMPORTED FROM @edh-seer/matcher HERE -- CRITICAL REGRESSION, FIXED (2026-08-21). A
 // prior deep import of `GRAVEYARD_HATE_SHARE` from `@edh-seer/matcher/src/answer-coverage.js` (reasoned
 // as skipping the barrel's node:fs-touching re-export of `analyze.js`) was itself fatal: that file
@@ -58,7 +59,7 @@ function Caveat({ label = "what this number ignores", children }: { label?: stri
   return <Explain label={label}>{children}</Explain>;
 }
 
-const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n === 1 ? one : many}`;
+const plural = (n: number, one: string, many = `${one}s`): string => `${fmtCount(n)} ${n === 1 ? one : many}`;
 
 // The demand vocabulary now lives in `lib/demand-sentence.ts` so `lib/findings.ts` can reach it
 // without a lib -> component import. Re-exported here because this file is where every existing
@@ -181,7 +182,7 @@ export function BuildBenchmarks({
     const state = flagged ? "under target" : "on target";
     const fill = Math.max(0, Math.min(1, (count / target) * TARGET_MARK));
     return (
-      <li key={key} className="flex flex-col gap-0.5" aria-label={`${ariaName} ${count} of ${target}, ${state}${note}`}>
+      <li key={key} className="flex flex-col gap-0.5" aria-label={`${ariaName} ${fmtCount(count)} of ${target}, ${state}${note}`}>
         <div className="flex items-center gap-3">
           <span className="w-24 shrink-0 text-sm">{label}</span>
           <span className="relative flex-1 h-2 rounded-full bg-(--separator) overflow-hidden">
@@ -197,7 +198,7 @@ export function BuildBenchmarks({
               style={{ left: `${TARGET_MARK * 100}%` }}
             />
           </span>
-          <span className="w-14 shrink-0 text-right text-sm stat-num">{count}/{target}</span>
+          <span className="w-14 shrink-0 text-right text-sm stat-num">{fmtCount(count)}/{target}</span>
           <span className={`w-4 shrink-0 text-sm ${flagged ? "text-(--warning)" : "text-(--success)"}`} aria-hidden>{flagged ? "▲" : "✓"}</span>
         </div>
       </li>
@@ -229,7 +230,7 @@ export function BuildBenchmarks({
     const share = sumOfLeaves > 0 ? Math.round((count / sumOfLeaves) * 100) : 0;
     const facetText = facetTextByLeaf.get(category) || "";
     return (
-      <li key={category} className="flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-0 text-sm text-(--muted)" aria-label={`${name} ${count}, ${share}% of ${parentName}${facetText ? `, ${facetText}` : ""}`}>
+      <li key={category} className="flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-0 text-sm text-(--muted)" aria-label={`${name} ${fmtCount(count)}, ${share}% of ${parentName}${facetText ? `, ${facetText}` : ""}`}>
         {/* FIX F3 (controller review, 2026-08-21): `w-24` with a `pl-3` indent left only 84px for
           *  the label text, and three real leaf names need more -- "Stack interaction" measures
           *  121px, "Graveyard hate" 110px, "Card selection" 105px, all truncating (the graveyard one
@@ -258,7 +259,7 @@ export function BuildBenchmarks({
         {/* BELOW `sm` THE FACET TAKES ITS OWN LINE (D3, 2026-09-06): name + facet + count measured
           *  465px on a 390px phone and the whole PAGE scrolled sideways. */}
         {facetText ? <span className="shrink-0 text-xs stat-num basis-full sm:basis-auto order-last sm:order-none pl-0 sm:pl-0">{facetText}</span> : null}
-        <span className="w-20 shrink-0 text-right stat-num">{count} · {share}%</span>
+        <span className="w-20 shrink-0 text-right stat-num">{fmtCount(count)} · {share}%</span>
       </li>
     );
   };
@@ -320,7 +321,8 @@ export function BuildBenchmarks({
             {scoredParents.map((p) => {
               // Still shared by every leaf beneath this parent (the share denominator) -- see the
               // doc comment on `leafRow` for why it reads this.
-              const sumOfLeaves = p.leaves.reduce((s, l) => s + (countByLeaf.get(l) ?? 0), 0);
+              // ONE FRAME: leaf and parent counts are both exact weighted sums, so two half-weight cards in two roles are a whole card of each, not an overlap. The tolerance is a hundredth of a card (counts are kept to two decimals).
+              const sumOfLeaves = Math.round(p.leaves.reduce((s, l) => s + (countByLeaf.get(l) ?? 0), 0) * 100) / 100;
               // Ordered by the parent's own `leaves` list, never re-sorted -- a parent groups its
               // leaves together on the page regardless of what order the engine happened to report
               // them in. Every leaf renders, including a zero-count one (tutor at 0 IS the finding
@@ -343,9 +345,9 @@ export function BuildBenchmarks({
                       *  differ -- on a parent with no overlap the second clause would be a
                       *  disclosure about nothing. */}
                     <span data-testid={`role-group-total-${p.name}`} className="text-xs text-(--muted)">
-                      {sumOfLeaves > p.count ? (
+                      {sumOfLeaves - p.count > 0.005 ? (
                         <>
-                          <span className="stat-num">{sumOfLeaves}</span>
+                          <span className="stat-num">{fmtCount(sumOfLeaves)}</span>
                           {" counted across "}
                           <span className="tabular-nums">{plural(p.count, "card")}</span>
                           {" — some fill two of these roles"}
@@ -917,13 +919,13 @@ function DeckMathRows({
             *  where the land count would move, so the row says where it goes if the deck trims. */}
           {lands.ifTrimmed?.ramp ? (
             <p className="text-sm">
-              Ramp is {lands.ifTrimmed.ramp.over} over its target: if you cut rocks or dorks to get there,
+              Ramp is {fmtCount(lands.ifTrimmed.ramp.over)} over its target: if you cut rocks or dorks to get there,
               plan for about <span className="stat-num">{lands.ifTrimmed.ramp.target}</span> lands.
             </p>
           ) : null}
           {lands.ifTrimmed?.draw ? (
             <p className="text-sm">
-              {drawGroupName ?? "Card advantage"} is {lands.ifTrimmed.draw.over} over its target: if you cut draw to get there,
+              {drawGroupName ?? "Card advantage"} is {fmtCount(lands.ifTrimmed.draw.over)} over its target: if you cut draw to get there,
               plan for about <span className="stat-num">{lands.ifTrimmed.draw.target}</span> lands.
             </p>
           ) : null}

@@ -1,9 +1,9 @@
 import { deriveCardTags, deriveInputOf, grammarClauseRecords } from "@edh-seer/tagger";
 import { expect, test } from "vitest";
-import { computeBuild, detectBuildCategories } from "./build.js";
+import { computeBuild, detectAnswerClasses, detectBuildCategories } from "./build.js";
 import { makeGateWeigher, UNREAD_WEIGHT } from "./effect-gate-weight.js";
-import { drawOf } from "./goldfish.js";
-import { recommendedLands } from "./land-count.js";
+import { drawOf, simulate } from "./goldfish.js";
+import { landInputs, recommendedLands } from "./land-count.js";
 import type { DeckCard } from "./types.js";
 
 // Real oracle text (Mongo `cards`, 2026-10-27), derived from the printed text by the grammar, as production does for a card it reads completely.
@@ -16,7 +16,9 @@ const REAL: Record<string, { typeLine: string; oracleText: string; manaValue: nu
   "Roadside Reliquary": { typeLine: "Land", manaValue: 0, oracleText: "{T}: Add {C}.\n{2}, {T}, Sacrifice this land: Draw a card if you control an artifact. Draw a card if you control an enchantment." },
   "Inspiring Call": { typeLine: "Instant", manaValue: 3, oracleText: "Draw a card for each creature you control with a +1/+1 counter on it. Those creatures gain indestructible until end of turn. (Damage and effects that say \"destroy\" don't destroy them.)" },
   "Divination": { typeLine: "Sorcery", manaValue: 3, manaCost: "{2}{U}", oracleText: "Draw two cards." },
-  "Managorger Hydra": { typeLine: "Creature — Hydra", manaValue: 3, oracleText: "Trample\nWhenever a player casts a spell, put a +1/+1 counter on this creature.\nThis creature gets +1/+1 for each +1/+1 counter on it." },
+  "Managorger Hydra": { typeLine: "Creature — Hydra", manaValue: 3, oracleText: "Trample\nWhenever a player casts a spell, put a +1/+1 counter on this creature." },
+  "Pyroblast": { typeLine: "Instant", manaValue: 1, manaCost: "{R}", oracleText: "Choose one —\n• Counter target spell if it's blue.\n• Destroy target permanent if it's blue." },
+  "Titan's Presence": { typeLine: "Instant", manaValue: 3, manaCost: "{3}", oracleText: "As an additional cost to cast this spell, reveal a colorless creature card from your hand.\nExile target creature if its power is less than or equal to the revealed card's power." },
   "Mind Stone": { typeLine: "Artifact", manaValue: 2, oracleText: "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card." },
 };
 const make = (realName: string, asName = realName): DeckCard => {
@@ -43,7 +45,7 @@ test("a scaling draw that prints no 'if' has no gate, so it weighs 1 (Inspiring 
   expect(makeGateWeigher(deckOf([d])).of(d.tags!.abilities.find((a) => a.effect.kind === "draw-card")!, d).weight).toBe(1);
 });
 
-test("Federation Field Medic's draw (needs a counter on a permanent) is weighted by the deck's supply of counters: high in a counters deck, low without", () => {
+test("Federation Field Medic's draw (needs a counter on a permanent) is weighted by the deck's supply of counters: high in a counters deck, exactly 0 without (a readable condition with no support, owner ruling A)", () => {
   const medic = make("Federation Field Medic");
   const [draw] = gatedDraw(medic);
   expect(draw!.gate!.kind).toBe("unknown");
@@ -52,7 +54,7 @@ test("Federation Field Medic's draw (needs a counter on a permanent) is weighted
   const without = makeGateWeigher(deckOf([medic])).of(draw!, medic);
   expect(withCounters).toMatchObject({ basis: "supply", conditional: true, needs: "you control a permanent with a counter on it" });
   expect(withCounters.weight).toBeGreaterThan(0.75);
-  expect(without.weight).toBeLessThan(0.05);
+  expect(without.weight).toBe(0);
   expect(without.basis).toBe("supply");
 });
 
@@ -155,15 +157,126 @@ test("the land recommendation counts the draw pieces at the same weights as the 
   expect(recommendedLands(deck, { gates: makeGateWeigher(deck) }).drawPieces).toBe(Math.round(5 + 4 * UNREAD_WEIGHT));
 });
 
-test("the row's count is a whole card and its exact sum rides beside it: a lone half-weight card shows as 6 and weighs 5.5 (the score reads the exact one)", () => {
+test("the count is the EXACT weighted sum, never rounded up into a sure card: one half-weight draw makes 5.5, not 6", () => {
   const deck = deckOf(copies("Divination", 5), copies("Veil of Summer", 1));
   const r = computeBuild(deck, undefined, undefined, undefined, 0, undefined, makeGateWeigher(deck));
-  expect(r.buildCategories.find((c) => c.category === "draw")).toMatchObject({ count: 6, weighted: 5 + UNREAD_WEIGHT });
-  expect(r.buildParents.find((p) => p.key === "consistency")).toMatchObject({ count: 6, weighted: 5 + UNREAD_WEIGHT });
-  // no conditional member, no `weighted`
-  const plain = computeBuild(deck, undefined, undefined, undefined, 0, undefined).buildCategories.find((c) => c.category === "draw")!;
-  expect(plain.weighted).toBeUndefined();
-  // the score moves although the shown count does not
-  const base = computeBuild(deck, undefined, undefined, undefined, 0, undefined).buildScore;
-  expect(r.buildScore).toBeLessThan(base);
+  expect(r.buildCategories.find((c) => c.category === "draw")!.count).toBe(5 + UNREAD_WEIGHT);
+  expect(r.buildParents.find((p) => p.key === "consistency")!.count).toBe(5 + UNREAD_WEIGHT);
+  // the suggestion sentence prints the decimal, one place, no ".0"
+  expect(r.suggestionByKey.consistency).toContain("Card advantage 5.5/");
+  expect(computeBuild(deck, undefined, undefined, undefined, 0, undefined).suggestionByKey.consistency).toContain("Card advantage 6/");
+  // and the score moves
+  expect(r.buildScore).toBeLessThan(computeBuild(deck, undefined, undefined, undefined, 0, undefined).buildScore);
+});
+
+test("ruleWeight's multi-level path: two gated draws at different weights give the better one, and a deck that meets neither makes the card count 0", () => {
+  const land = make("Roadside Reliquary");
+  const div = make("Divination", "Multi Draw");
+  const both: DeckCard = { ...div, tags: { ...div.tags!, abilities: land.tags!.abilities.filter((a) => a.effect.kind === "draw-card") } };
+  const artifacts = Array.from({ length: 25 }, (_, i) => make("Mind Stone", `Mind Stone ${i}`));
+  const rich = deckOf([both], artifacts);
+  const r = computeBuild(rich, undefined, undefined, undefined, 0, undefined, makeGateWeigher(rich));
+  const row = r.conditionalRoles!.find((c) => c.card === "Multi Draw" && c.category === "draw")!;
+  // the artifact draw (met) carries the card; the enchantment draw (never met) does not drag it down
+  expect(row.weight).toBeGreaterThan(0.9);
+  expect(row.weight).toBeLessThan(1);
+  const poor = deckOf([both]);
+  const r0 = computeBuild(poor, undefined, undefined, undefined, 0, undefined, makeGateWeigher(poor));
+  expect(r0.conditionalRoles!.find((c) => c.card === "Multi Draw" && c.category === "draw")!.weight).toBe(0);
+  expect(r0.buildCategories.find((c) => c.category === "draw")!.count).toBe(0);
+  expect(detectBuildCategories(poor).get("draw")!.has("Multi Draw")).toBe(true);
+});
+
+test("an oracle-only role rule weighs a card whose every ability is gated, and leaves a card with a sure ability whole", () => {
+  const veil = make("Veil of Summer");
+  // the protection role is read from the printed text ("hexproof"): Veil's keyword-grant is ungated, so it stays whole there
+  const deck = deckOf([veil]);
+  const r = computeBuild(deck, undefined, undefined, undefined, 0, undefined, makeGateWeigher(deck));
+  expect(r.buildCategories.find((c) => c.category === "protection")!.count).toBe(1);
+  expect(r.buildCategories.find((c) => c.category === "draw")!.count).toBe(UNREAD_WEIGHT);
+});
+
+test("a condition on the TARGET is a narrow answer, not a chance: Pyroblast and Titan's Presence count whole and are named target", () => {
+  for (const name of ["Pyroblast", "Titan's Presence"]) {
+    const dc = make(name);
+    const gated = dc.tags!.abilities.filter((a) => a.gate !== undefined);
+    expect(gated.length, name).toBeGreaterThan(0);
+    for (const a of gated) expect(makeGateWeigher(deckOf([dc])).of(a, dc), name).toMatchObject({ weight: 1, basis: "target", conditional: true });
+  }
+  const pyro = make("Pyroblast");
+  const deck = deckOf([pyro]);
+  const r = computeBuild(deck, undefined, undefined, undefined, 0, undefined, makeGateWeigher(deck));
+  expect(r.buildCategories.find((c) => c.category === "stackInteraction")!.count).toBe(1);
+  expect(r.buildCategories.find((c) => c.category === "targetedRemoval")!.count).toBe(1);
+  expect(r.conditionalRoles!.filter((c) => c.card === "Pyroblast").map((c) => `${c.category}:${c.basis}:${c.weight}`).sort()).toEqual(["stackInteraction:target:1", "targetedRemoval:target:1"]);
+  // answer coverage agrees: neither card covers a class (a colour hoser never did; Titan's Presence now covers no creature class)
+  expect(detectAnswerClasses([pyro]).size).toBe(0);
+  expect(detectAnswerClasses([make("Titan's Presence")]).get("creature")).toBeUndefined();
+  // an effect condition that mentions no target is still a chance (Miles Prower's "if it has flying" is not in this fixture; Veil's is)
+  const veil = make("Veil of Summer");
+  expect(makeGateWeigher(deckOf([veil])).of(gatedDraw(veil)[0]!, veil).basis).toBe("unread");
+});
+
+test("a speed or initiative gate on an effect is unread, not sure", () => {
+  const veil = make("Veil of Summer");
+  const draw = gatedDraw(veil)[0]!;
+  for (const gate of [{ kind: "speed", n: 4, text: "you have max speed" }, { kind: "initiative", text: "you have the initiative" }] as const) {
+    const w = makeGateWeigher(deckOf([veil])).of({ ...draw, gate } as never, { ...veil, card: { ...veil.card, oracleText: "" } });
+    expect(w).toMatchObject({ weight: UNREAD_WEIGHT, basis: "unread" });
+  }
+});
+
+test("the goldfish draws a gated draw in expectation: left out without a weigher (as before), the amount times the weight with one", () => {
+  const veil = make("Veil of Summer");
+  const deck = deckOf([veil]);
+  expect(drawOf(veil)).toBeNull();
+  expect(drawOf(veil, makeGateWeigher(deck))).toEqual({ once: UNREAD_WEIGHT, upkeep: 0 });
+  const div = make("Divination");
+  expect(drawOf(div, makeGateWeigher(deckOf([div])))).toEqual(drawOf(div));
+  // a TRIGGERED gated draw was counted in full before (no weigher: Federation Field Medic's enters trigger); with one it counts at its weight, and at nothing in a deck with no counters
+  const medic = make("Federation Field Medic");
+  expect(drawOf(medic)).toEqual({ once: 1, upkeep: 0 });
+  const counters = drawOf(medic, makeGateWeigher(deckOf([medic], copies("Managorger Hydra", 12))))!;
+  expect(counters.once).toBeGreaterThan(0.75);
+  expect(counters.once).toBeLessThan(1);
+  expect(drawOf(medic, makeGateWeigher(deckOf([medic])))).toBeNull();
+});
+
+test("simulate: a lone fractional draw pays in about its weight's share of the games (stratified carry), and a whole-draw deck is unchanged", () => {
+  const lands = Array.from({ length: 36 }, (_, i) => ({ card: { name: `Forest ${i}`, typeLine: "Basic Land — Forest", oracleText: "{T}: Add {G}.", manaValue: 0 } as never, tags: null }) as DeckCard);
+  const veils = copies("Veil of Summer", 20);
+  const deck = [...lands, ...veils, ...filler(44)];
+  const total = (r: ReturnType<typeof simulate>, t: number): number => 36 * r.seenShare.land[t] + 64 * r.seenShare.cheap[t];
+  const opts = { trials: 3000, turns: 8, seed: 7 };
+  const plain = simulate(deck, opts);
+  const gated = simulate(deck, { ...opts, gates: makeGateWeigher(deck) });
+  const extra = total(gated, 7) - total(plain, 7);
+  // 20 Veils at 0.5 each: several cards more by turn 8 on average, and fewer than the 20 x 1 an unweighted draw would add
+  expect(extra).toBeGreaterThan(0.5);
+  expect(extra).toBeLessThan(10);
+  // a single Veil: its half draw still pays in some games (the old carry started at 0 and a lone 0.5 never paid)
+  const lone = [...lands, ...copies("Veil of Summer", 1), ...filler(63)];
+  const loneOpts = { trials: 4000, turns: 8, seed: 11 };
+  expect(total(simulate(lone, { ...loneOpts, gates: makeGateWeigher(lone) }), 7)).toBeGreaterThan(total(simulate(lone, loneOpts), 7));
+  // no gated draw, no change: the same seed reads the same table with and without a weigher
+  const calm = [...lands, ...copies("Divination", 10), ...filler(54)];
+  expect(simulate(calm, { ...opts, gates: makeGateWeigher(calm) }).seenShare).toEqual(simulate(calm, opts).seenShare);
+});
+
+test("land-count reads the same weights: the Karsten cheap-piece count, the draw credits, the role-over counts and the pieces", () => {
+  const sure = copies("Divination", 5);
+  const veils = copies("Veil of Summer", 4);
+  const deck = deckOf(sure, veils);
+  const gates = makeGateWeigher(deck);
+  // the cheap ramp-plus-draw count: Veil is mana value 1 and a draw card; Divination costs 3 and is not cheap
+  expect(landInputs(deck).rampPlusDraw).toBe(4);
+  expect(landInputs(deck, { gates }).rampPlusDraw).toBe(4 * UNREAD_WEIGHT);
+  // the pieces count and the over count: 9 draw cards against a target of 5 is 4 over; weighted, 7 against 5 is 2 over
+  const plain = recommendedLands(deck, { roleTargets: { consistency: 5 } });
+  const weighted = recommendedLands(deck, { gates, roleTargets: { consistency: 5 } });
+  expect(plain.drawPieces).toBe(9);
+  expect(weighted.drawPieces).toBe(5 + 4 * UNREAD_WEIGHT);
+  // a gated draw saves fewer lands than a sure one: the weighted deck wants at least as many
+  expect(weighted.target).toBeGreaterThanOrEqual(plain.target);
+  if (plain.ifTrimmed?.draw && weighted.ifTrimmed?.draw) expect(weighted.ifTrimmed.draw.over).toBeLessThan(plain.ifTrimmed.draw.over);
 });

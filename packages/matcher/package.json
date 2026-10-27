@@ -38,6 +38,7 @@
     "./brackets": "./src/brackets.ts",
     "./edges": "./src/edges.ts",
     "./goldfish": "./src/goldfish.ts",
+    "./effect-gate-weight": "./src/effect-gate-weight.ts",
     "./land-count": "./src/land-count.ts",
     "./mechanisms": "./src/mechanisms.ts",
     "./mesh": "./src/mesh.ts",

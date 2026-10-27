@@ -887,7 +887,8 @@ export interface SimulateOptions {
   /** Cards to PRICE without shuffling in — a commander, which is not in the library (CR 903.6) and
    *  is still the one card a reader looks for by name. */
   alsoPrice?: readonly DeckCard[];
-  /** HOW LIKELY EACH GATED DRAW IS TO HAPPEN IN THIS DECK (#1357 task 2). Absent: a gated draw is left out, as before it existed. */
+  /** HOW LIKELY EACH GATED DRAW IS TO HAPPEN IN THIS DECK (#1357 task 2): a gated draw is the amount times the weight, which is 0 for a readable condition the deck cannot meet and a fixed partial weight for one nothing can read. Absent: a
+   *  non-trigger gated draw is left out and a triggered one counts in full, as before it existed. */
   gates?: GateWeigher;
   /** POOLING OFF, for the one test that has to disagree with it. Pooling is a claim about the model
    *  -- that a non-accelerant nonland reaches the trajectory ONLY through its pips -- and a claim
@@ -1299,9 +1300,10 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     // turn, an activation from the next when it taps a creature (`delayed`).
     const engines: { slot: DeckSlot; turn: number }[] = [];
     const take = (c: DeckSlot): void => { hand.push(c); drawn.add(c.name); seenNow[kindOf(c)]++; };
-    // A FRACTIONAL DRAW (a gated draw at its weight, `drawOf`) is carried across the game and paid out as the whole cards it adds up to: the expected number of cards, drawn whole, with no random number spent
-    // (a whole draw leaves the carry at 0, so a deck with no gated draw plays exactly as before). CEILING: deterministic per game, so a lone 0.4 draw is never drawn; it is paid only beside others.
-    let drawCarry = 0;
+    // A FRACTIONAL DRAW (a gated draw at its weight, `drawOf`) is carried across the game and paid out as the whole cards it adds up to. The carry STARTS at a stratified offset, (t + 0.5) / trials, so a lone
+    // 0.5 draw pays in exactly the half of the games whose offset reaches it and the expectation over the trials is exact (owner ruling 2026-10-27). No random number is spent, and a whole draw leaves the carry at its
+    // offset (floor(offset + n) = n for an offset below 1), so a deck with no gated draw plays byte for byte as before.
+    let drawCarry = (t + 0.5) / trials;
     const drawCards = (n: number): void => {
       drawCarry += n;
       const whole = Math.floor(drawCarry + 1e-9);

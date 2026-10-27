@@ -84,7 +84,7 @@ export function deckSentence(
     ? `fueled by ${cohesion.theme} (${Math.round(cohesion.score * 100)}% of nonlands)`
     : null;
   const means = interaction
-    ? `${interaction.count} interaction ${interaction.count === 1 ? "card" : "cards"} against a target of ${interaction.target}`
+    ? `${Math.round(interaction.count * 10) / 10} interaction ${interaction.count === 1 ? "card" : "cards"} against a target of ${interaction.target}`
     : null;
   return { win, engine, means };
 }

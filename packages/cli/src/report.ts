@@ -229,7 +229,7 @@ export function formatReport(report: DeckReport, trim = 0): string {
     lines.push("  runs and not what it needs. The category, never a member — nothing here ranks two ramp");
     lines.push("  cards against each other.");
     for (const s of report.slack) {
-      lines.push(`  ${s.category}: ${s.count}/${s.target} (+${s.over})`);
+      lines.push(`  ${s.category}: ${Math.round(s.count * 10) / 10}/${s.target} (+${Math.round(s.over * 10) / 10})`);
     }
   }
 

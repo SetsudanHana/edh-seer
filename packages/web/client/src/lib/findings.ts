@@ -2,6 +2,7 @@ import { LAND_BAND } from "@edh-seer/matcher/build";
 import type { DeckReport } from "../types.js";
 import { demandSentence } from "./demand-sentence.js";
 import { buildFindingId } from "./role-group.js";
+import { conditionalNote, fmtCount } from "./format-count.js";
 
 /** WHAT IS WRONG WITH THIS DECK — the report's eight diagnostic panels, ranked.
  *
@@ -77,7 +78,7 @@ function buildFindings(report: DeckReport): Finding[] {
   const out: Finding[] = [];
   for (const p of parents) {
     if (p.target <= 0 || p.count >= p.target) continue;
-    const missing = p.target - p.count;
+    const missing = Math.round((p.target - p.count) * 100) / 100;
     // The engine's own sentence for this parent, if it wrote one. It carries the cost band
     // (`typically 2–4 mana`) that this module has no business recomputing.
     const suggestion = byKey[p.key];
@@ -87,12 +88,12 @@ function buildFindings(report: DeckReport): Finding[] {
       id: buildFindingId(p.key),
       headline: p.key === "consistency"
         ? "You will run out of cards before you run out of turns."
-        : `You are ${missing} short on ${p.name.toLowerCase()}.`,
+        : `You are ${fmtCount(missing)} short on ${p.name.toLowerCase()}.`,
       // THE HEDGE IS SHORT HERE AND LONG ON THE TICK LEGEND (T1). It was the same twenty words in
       // five places, which is what made the page read as machine-written -- but a finding read on
       // its own still has to say where its target came from, so the provenance stays and the
       // disclaimer goes.
-      detail: `You run ${p.count}, against a target of ${p.target}.`,
+      detail: `You run ${fmtCount(p.count)}, against a target of ${p.target}.${conditionalNote(report.conditionalRoles, p.leaves) ? ` ${conditionalNote(report.conditionalRoles, p.leaves)}` : ""}`,
       // Strip the leading "Name 6/14 — " the CLI sentence carries, since the figure is rendered
       // beside the row already.
       // A parent at zero is the odd one out: the engine says "No board wipe (target 3); most cost 3-5
@@ -103,7 +104,7 @@ function buildFindings(report: DeckReport): Finding[] {
           ? suggestion.replace(/^[^—]*—\s*/, "").replace(/^add/, "Add")
           : `Add ~${Math.ceil(missing)} ${p.name.toLowerCase()}${suggestion.match(/;.*$/)?.[0] ?? ""}`)}${cut}`
         : undefined,
-      figure: `${p.count}/${p.target}`,
+      figure: `${fmtCount(p.count)}/${p.target}`,
       figureLabel: p.name,
       filled: p.count / p.target,
       shortfall: missing / p.target,
@@ -133,13 +134,14 @@ function donorSentences(
 ): Map<string, string> {
   const out = new Map<string, string>();
   if (slack.length === 0) return out;
-  const left = slack.map((s) => ({ ...s, spare: s.count - s.target }));
+  // Only whole cards can be cut: a half-card of surplus is no slot.
+  const left = slack.map((s) => ({ ...s, spare: Math.floor(s.count - s.target) }));
   const short = parents
     .filter((p) => p.target > 0 && p.count < p.target)
     .sort((a, b) => (b.impact ?? -1) - (a.impact ?? -1) || a.name.localeCompare(b.name));
   for (const p of short) {
     const said = byKey[p.key]?.match(/~(\d+)/);
-    const want = said ? Number(said[1]) : p.target - p.count;
+    const want = said ? Number(said[1]) : Math.ceil(p.target - p.count);
     const taken: { category: string; count: number; target: number; n: number }[] = [];
     let need = want;
     for (const d of left) {
@@ -158,12 +160,12 @@ function donorSentences(
     const rest = need > 0 ? `; nothing else runs over its target, so the other ${need} ${need === 1 ? "is" : "are"} yours to find.` : ".";
     if (taken.length === 1 && need === 0) {
       const [d] = taken;
-      out.set(p.key, `. Take the slots from ${d!.category}, where you have ${d!.count} against a target of ${d!.target}.`);
+      out.set(p.key, `. Take the slots from ${d!.category}, where you have ${fmtCount(d!.count)} against a target of ${d!.target}.`);
     } else if (taken.length === 1) {
       const [d] = taken;
-      out.set(p.key, `. Take ${d!.n} of them from ${d!.category}, where you have ${d!.count} against a target of ${d!.target}${rest}`);
+      out.set(p.key, `. Take ${d!.n} of them from ${d!.category}, where you have ${fmtCount(d!.count)} against a target of ${d!.target}${rest}`);
     } else {
-      const parts = taken.map((d) => `${d.n} from ${d.category} (${d.count} against a target of ${d.target})`);
+      const parts = taken.map((d) => `${d.n} from ${d.category} (${fmtCount(d.count)} against a target of ${d.target})`);
       parts[0] = parts[0]!.replace(/^(\d+) from/, "$1 of them from");
       out.set(p.key, `. Take ${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}${rest}`);
     }
@@ -420,8 +422,8 @@ function synergyFinding(report: DeckReport): Finding | null {
  *  twice: the target weighs each Ramp card by what it keeps producing, and a ritual or a Treasure
  *  maker produces once. So the phrase names both numbers and the difference. */
 export function lastingRamp(accelerants: number, rampCards: number | undefined, others?: Record<string, number>): string {
-  if (rampCards === undefined || rampCards <= accelerants) return `${accelerants} rocks, dorks and land ramp`;
-  const rest = rampCards - accelerants;
+  if (rampCards === undefined || rampCards <= accelerants) return `${fmtCount(accelerants)} rocks, dorks and land ramp`;
+  const rest = Math.round((rampCards - accelerants) * 100) / 100;
   const n = (cls: string): number => others?.[cls] ?? 0;
   // THE REST, NAMED BY WHAT IT IS (#1190): it was "one-shots, like a ritual or a Treasure", which Birgi (trigger mana), Phyrexian Altar (a sacrifice outlet), a Medallion (a cost reducer) and a ramp
   // LAND in the role (Myriad Landscape) are not. The land target gives every one of them the same little weight; the sentence says why in the card's own terms.
@@ -432,7 +434,7 @@ export function lastingRamp(accelerants: number, rampCards: number | undefined, 
   if (n("cost-reducer") > 0) parts.push("cost reducers, which save mana rather than make it and replace no land");
   if (conditional.length > 0) parts.push(`mana made only once or under a condition, like ${like}`);
   const what = parts.length === 0 ? "they make mana only once or under a condition" : parts.join("; ");
-  return `${accelerants} of your ${rampCards} ramp cards that keep producing mana (rocks, dorks and land ramp; ${rest === 1 ? "the other one counts" : `the other ${rest} count`} for little: ${what})`;
+  return `${fmtCount(accelerants)} of your ${fmtCount(rampCards)} ramp cards that keep producing mana (rocks, dorks and land ramp; ${rest === 1 ? "the other one counts" : `the other ${fmtCount(rest)} count`} for little: ${what})`;
 }
 
 /** The classes of a Ramp-role card that makes mana only once or under a condition (`NonAccelerantRamp` in the matcher), with the words the sentence uses, in the order a tie resolves. */
@@ -458,7 +460,7 @@ function landFinding(report: DeckReport): Finding | null {
       // THE TARGET IS FOR A PACKAGE (owner, 2026-09-29), so the finding names it, and where the
       // count goes if an over-target role is trimmed back.
       + (lands.accelerants !== undefined
-        ? `, with ${lands.drawPieces ?? 0} draw cards and ${lastingRamp(lands.accelerants, report.buildParents?.find((p) => p.key === "ramp")?.count, lands.rampOther)}`
+        ? `, with ${fmtCount(lands.drawPieces ?? 0)} draw cards and ${lastingRamp(lands.accelerants, report.buildParents?.find((p) => p.key === "ramp")?.count, lands.rampOther)}`
         : "")
       + ". "
       + (lands.ifTrimmed?.ramp ? `Trimming ramp to its target with rocks or dorks moves it to ${lands.ifTrimmed.ramp.target}. ` : "")
@@ -577,13 +579,14 @@ export function slotTrade(report: DeckReport, shortfalls: readonly Finding[]): s
   // "N of those slots are the ones you need" said the OPPOSITE of what it meant — the N are the
   // SURPLUS, which is where the room comes from. The skeptic persona read it three times and stayed
   // unsure (2026-08-27). It names the surplus as a surplus now.
-  return `${top.category} sits at ${top.count} against a target of ${top.target},`
-    + ` so ${top.over === 1 ? "one slot is" : `${top.over} slots are`} spare.`
+  const spare = Math.floor(top.over);
+  return `${top.category} sits at ${fmtCount(top.count)} against a target of ${top.target},`
+    + ` so ${spare === 1 ? "one slot is" : spare === 0 ? "less than one slot is" : `${spare} slots are`} spare.`
     + " You are not short on space; it is all in one place."
     + (asksForSame
       // ONE INSTRUCTION, NOT TWO (#982): the slot line above says "Take the slots from Interaction";
       // "swap within it rather than adding more" read as its opposite, and the seat stopped.
-      ? ` The count is fine; what those ${top.count} cards can hit is not: take the slots from the cards that answer the same things, and keep the ones that answer what nothing else does.`
+      ? ` The count is fine; what those ${fmtCount(top.count)} cards can hit is not: take the slots from the cards that answer the same things, and keep the ones that answer what nothing else does.`
       : "");
 }
 

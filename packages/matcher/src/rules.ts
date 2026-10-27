@@ -5,6 +5,7 @@ import type { DeckCard } from "./types.js";
 import { classifyLand } from "./land-conditions.js";
 import { cardLines, isLoyaltyAbility, usableLoyalty } from "./mana-lines.js";
 import { countsAsLand, transformsIntoLand as transformsIntoLandCard } from "./typeline.js";
+import { isTargetCondition } from "./target-condition.js";
 
 /** A single test against one card. The operator set is CLOSED on purpose: `oracle`, `effectKind`,
  *  `typeLine` and an `anyOf` combinator cover every classifier that exists, and keeping it closed
@@ -725,6 +726,7 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
     if (mode === "recurring") m.recurring = true;
     out.set(cls, m);
   };
+  const targetConditions = (dc.tags?.abilities ?? []).flatMap((a) => (a.gate !== undefined && isTargetCondition(ownText(dc.card), a.gate.text) ? [a.gate.text.toLowerCase()] : []));
   for (const rule of set.rules) {
     if (!ruleMatches(rule, dc, set)) continue;
     if (rule.answerClass) mark(rule.answerClass, rule.mode);
@@ -764,6 +766,9 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
         // to everyone ELSE and stays an answer.
         if (new RegExp(set.patterns.controllerGetsCopies, "i").test(dc.card.oracleText ?? "")) continue;
         if (COLOUR_HOSER.test(phrase)) continue;
+        // A CONDITION ON THE TARGET NARROWS THE ANSWER THE SAME WAY (owner ruling 2026-10-27 C, #1357): Titan's Presence's "exile target creature if its power is less than or equal to the revealed card's power" is no
+        // answer to every creature. The card still counts whole in the role (build.ts); it covers no class here, as a colour hoser covers none.
+        if (targetConditions.some((c) => sentence.toLowerCase().includes(c))) continue;
         for (const word of Object.keys(KNOWN_CLASSES)) {
           // Plural too: "destroy two target creatures" (Curtains' Call) and "exile two target
           // permanents" (Ulamog) read as no answer at all when only the singular matched (issue #581).
