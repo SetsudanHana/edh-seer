@@ -37,7 +37,7 @@ export function NotFound({ slug, kind }: { slug: string; kind: "card" | "command
         </Link>
       </p>
       <p className="text-(--muted) text-sm">
-        If you know this card and expected edges from it,{" "}
+        If you know this card and expected it to pair with others,{" "}
         <a className="text-(--accent) hover:underline" href="https://github.com/SetsudanHana/edh-seer/issues/new"
           target="_blank" rel="noopener noreferrer">open an issue</a>{" "}
         with the card name — a card read badly is a fixable bug rather than an opinion.

@@ -130,7 +130,7 @@ function ReadBack({ commanders, decklist }: { commanders: string; decklist: stri
       <div className="flex flex-col gap-1.5">
         <span className="eyebrow text-(--muted)">What we read</span>
         <h2 className="t-section">A deck link</h2>
-        <p className="max-w-[60ch] text-sm text-(--muted)">Its list is fetched when you analyse the deck.</p>
+        <p className="max-w-[60ch] text-sm text-(--muted)">Its list is fetched when you analyze the deck.</p>
       </div>
     );
   }

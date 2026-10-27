@@ -123,7 +123,7 @@ test("classes with no answer at all collapse into a single finding, and a thin c
   expect(rows[0].figure).toBe("2/4");
   expect(rows[0].figureLabel).toBe("kinds of permanent you can answer");
   expect(rows[0].detail).toContain("You do answer creatures (5 cards) and planeswalkers (2 cards)");
-  expect(rows[0].detail).toContain("Your colours have 56 for artifacts, 40 for enchantments");
+  expect(rows[0].detail).toContain("Your colors have 56 for artifacts, 40 for enchantments");
   expect(rows[0].detail).not.toMatch(/reliable|short/);
   expect(rows[0].detail).toContain("Lands and graveyards are left out");
   expect(rows[0].action).toMatch(/any kind of permanent/);
@@ -481,10 +481,10 @@ test("a gold joint demand is one plain finding, and a report without one has non
     deckMath: { colors: [], gold: { colours: ["W", "U"], pips: [1, 1], turn: 3, names: ["Absorb", "Sphinx's Revelation"], cards: 2, pJoint: 0.7623, pEach: 0.9271 } } as unknown as DeckReport["deckMath"],
   })).filter((f) => f.id === "colour:gold");
   expect(withGold).toHaveLength(1);
-  expect(withGold[0]!.headline).toBe("Your white-blue cards due by turn 3 (Absorb and Sphinx's Revelation) need both colours in the same hand.");
-  expect(withGold[0]!.detail).toBe("Each colour alone is there 92% of the time, both together 76%.");
+  expect(withGold[0]!.headline).toBe("Your white-blue cards due by turn 3 (Absorb and Sphinx's Revelation) need both colors in the same hand.");
+  expect(withGold[0]!.detail).toBe("Each color alone is there 92% of the time, both together 76%.");
   expect(withGold[0]!.figure).toBe("76%");
-  expect(withGold[0]!.action).toBe("Trade a single-colour source for a land that makes both, or cast them later.");
+  expect(withGold[0]!.action).toBe("Trade a single-color source for a land that makes both, or cast them later.");
   expect(findings(report({ deckMath: { colors: [] } as unknown as DeckReport["deckMath"] })).some((f) => f.id === "colour:gold")).toBe(false);
 });
 
@@ -492,9 +492,9 @@ test("a three-colour gold finding says all three colours, and one card reads in 
   const f = findings(report({
     deckMath: { colors: [], gold: { colours: ["W", "U", "B"], pips: [1, 1, 1], turn: 3, names: ["Corrupting Influence"], cards: 1, pJoint: 0.64, pEach: 0.93 } } as unknown as DeckReport["deckMath"],
   })).find((x) => x.id === "colour:gold")!;
-  expect(f.headline).toBe("Your white-blue-black card due by turn 3 (Corrupting Influence) needs all three colours in the same hand.");
-  expect(f.detail).toBe("Each colour alone is there 93% of the time, all together 64%.");
-  expect(f.action).toBe("Trade a single-colour source for a land that makes more than one of them, or cast it later.");
+  expect(f.headline).toBe("Your white-blue-black card due by turn 3 (Corrupting Influence) needs all three colors in the same hand.");
+  expect(f.detail).toBe("Each color alone is there 93% of the time, all together 64%.");
+  expect(f.action).toBe("Trade a single-color source for a land that makes more than one of them, or cast it later.");
 });
 
 /** #1168: THE ASK IS MATCHED TO THE SURPLUS BY THE PARENT'S KEY, never its display name. Rename the

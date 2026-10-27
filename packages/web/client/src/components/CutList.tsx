@@ -227,12 +227,12 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
           <p id="cuts-over" className="text-sm max-w-[65ch]" data-testid="cuts-over">
             Your list has <b className="tabular-nums">{deckSize}</b> cards, <b className="tabular-nums">{over}</b> over 100.{" "}
             {toCut.length === over
-              ? <>{over === 1 ? "This one loses" : `These ${over} lose`} no link when cut{over > 1 && holds ? ", even all together" : ""}: every link {over === 1 ? "it makes" : "they make"}, another card makes too.{landsShort ? "" : <> Take {over === 1 ? "it" : "them"} out and it is 100.</>}</>
+              ? <>{over === 1 ? "This one loses" : `These ${over} lose`} nothing when cut{over > 1 && holds ? ", even all together" : ""}: every pairing {over === 1 ? "it has" : "they have"}, another card has too.{landsShort ? "" : <> Take {over === 1 ? "it" : "them"} out and it is 100.</>}</>
               // "A ROLE YOU RUN MORE OF THAN YOU NEED" ONLY WHEN ONE IS (persona round 2026-09-27: the
               // first-cuts seat looked below for a role over its target and every role was short or
               // on target, a dead end).
               : toCut.length
-                ? <>{toCut.length === 1 ? "This one loses" : `These ${toCut.length} lose`} no link when cut{toCut.length > 1 && holds ? ", even all together" : ""}: every link {toCut.length === 1 ? "it makes" : "they make"}, another card makes too. The other {rest} {rest === 1 ? "has" : "have"} to come from {elsewhere}.</>
+                ? <>{toCut.length === 1 ? "This one loses" : `These ${toCut.length} lose`} nothing when cut{toCut.length > 1 && holds ? ", even all together" : ""}: every pairing {toCut.length === 1 ? "it has" : "they have"}, another card has too. The other {rest} {rest === 1 ? "has" : "have"} to come from {elsewhere}.</>
                 : <>Every card here fills a role or works with your themes, so the {over} have to come from {elsewhere}.</>}
           </p>
           {landsLine ? <p className="text-sm max-w-[65ch]" data-testid="cuts-lands">{landsLine}</p> : null}
@@ -261,13 +261,13 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
       ) : hasCuts && (
         <>
           <p className="text-sm text-(--muted) max-w-[65ch]">
-            The cards working with the fewest others. Suggestions, not verdicts: a link we can&apos;t read
-            looks like one that isn&apos;t there.
+            The cards working with the fewest others. Suggestions, not verdicts: a pairing we can&apos;t read
+            looks the same as no pairing at all.
           </p>
           {clearShown.length ? (
             <section aria-labelledby="cuts-clear" className="flex flex-col gap-2">
               <h4 id="cuts-clear" className="text-base font-semibold">Nothing argues for keeping these</h4>
-              {clearShown.length > 1 && clearShown.every((c) => c.row) ? <p className="text-sm text-(--muted) max-w-[65ch]">Cut together, these still lose nothing: every link they make, another card makes too.</p> : null}
+              {clearShown.length > 1 && clearShown.every((c) => c.row) ? <p className="text-sm text-(--muted) max-w-[65ch]">Cut together, these still lose nothing: every pairing they have, another card has too.</p> : null}
               <ul className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,max(25rem,calc((100%_-_2.25rem)/4))),1fr))]">
                 {[...clearShown].sort(byShown).map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} cover={coverOf(c)} textOf={textOf} />)}
               </ul>
@@ -368,7 +368,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, offThemeHel
         <div className="rounded-(--radius) border border-dashed border-(--separator) px-4 py-5 text-center">
           <p className="text-sm">Nothing here is an easy cut.</p>
           <p className="text-xs text-(--muted) mt-1">
-            Every card the engine could read fills a role, is a theme&apos;s key card or is half of a combo.
+            Every card we could read fills a role, is a theme&apos;s key card or is half of a combo.
           </p>
         </div>
       ) : null}
@@ -469,7 +469,7 @@ function Verdict({ breaks, links, withCut, also: alsoLost, cover, keeps, cut, ow
     const bhead = breaks.links.slice(0, 2), brest = breaks.links.slice(2);
     return (
       <div className="flex flex-col gap-2" data-testid="cut-loses">
-        <p>{keepLabel} cut with the cards above, {who} {breaks.links.length === 1 ? "the one link" : `${breaks.links.length} links`} no other card makes: {bhead.join("; ")}{brest.length ? "" : "."}</p>
+        <p>{keepLabel} cut with the cards above, {who} {breaks.links.length === 1 ? "the one pairing" : `${breaks.links.length} pairings`} no other card has: {bhead.join("; ")}{brest.length ? "" : "."}</p>
         {brest.length ? (
           <details>
             <summary className="cursor-pointer py-1 text-(--muted)">and {brest.length} more</summary>
@@ -491,7 +491,7 @@ function Verdict({ breaks, links, withCut, also: alsoLost, cover, keeps, cut, ow
             and the part, both counted, in that order. */}
         {/* LINKS, NOT "WORKS WITH" (review b): the count beside it is every card it works with,
             background helpers included, and those are not the links a cover is read for. */}
-        <p><span className="font-medium">Cutting it loses nothing:</span> another card makes every link it makes{cover ? <>. <CardName name={cover.name} className="underline underline-offset-2" /> alone covers {cover.n === cover.of ? (cover.of === 1 ? "it" : `all ${cover.of} cards involved`) : `${cover.n} of the ${cover.of} cards involved`}</> : null}.</p>
+        <p><span className="font-medium">Cutting it loses nothing:</span> another card has every pairing it has{cover ? <>. <CardName name={cover.name} className="underline underline-offset-2" /> alone covers {cover.n === cover.of ? (cover.of === 1 ? "it" : `all ${cover.of} cards involved`) : `${cover.n} of the ${cover.of} cards involved`}</> : null}.</p>
         {both ? <ReadCards cards={both} /> : null}
         {also}
       </div>
@@ -500,7 +500,7 @@ function Verdict({ breaks, links, withCut, also: alsoLost, cover, keeps, cut, ow
   const head = links.slice(0, 2), rest = links.slice(2);
   return (
     <div className="flex flex-col gap-2" data-testid="cut-loses">
-      <p>{keepLabel} {withCut?.length ? `${withWords(withCut)} cut too, ` : ""}cutting it loses {links.length === 1 ? "the one link" : `${links.length} links`} no other card makes: {head.join("; ")}{rest.length ? "" : "."}</p>
+      <p>{keepLabel} {withCut?.length ? `${withWords(withCut)} cut too, ` : ""}cutting it loses {links.length === 1 ? "the one pairing" : `${links.length} pairings`} no other card has: {head.join("; ")}{rest.length ? "" : "."}</p>
       {rest.length ? (
         <details>
           <summary className="cursor-pointer py-1 text-(--muted)">and {rest.length} more</summary>

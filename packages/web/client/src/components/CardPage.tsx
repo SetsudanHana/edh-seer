@@ -82,7 +82,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
         <section className="flex flex-col gap-2 max-w-[68ch]">
           <h2 className="t-section">What it does in a deck</h2>
           <p className="text-(--muted) max-w-[65ch]">
-            {jobSentence(page.name, job)} <Link to="/" className="text-(--accent) hover:underline">Analyse a deck</Link>
+            {jobSentence(page.name, job)} <Link to="/" className="text-(--accent) hover:underline">Analyze a deck</Link>
           </p>
         </section>
       )}

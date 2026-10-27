@@ -315,7 +315,7 @@ test("two cards on the map whose names start the same both show their whole name
   expect(labels()).toContain("Krenko, Mob Boss");
   expect(labels()).not.toContain("Krenko");
   // The colours' key is at the map.
-  expect(screen.getByRole("list", { name: "What the colours are" })).toBeInTheDocument();
+  expect(screen.getByRole("list", { name: "What the colors are" })).toBeInTheDocument();
 });
 
 /** A TAP ON THE MAP'S EMPTY SPACE CLEARS THE PICK (owner, 2026-09-27: "you just stay on what you

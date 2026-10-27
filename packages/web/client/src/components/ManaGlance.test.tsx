@@ -22,7 +22,7 @@ test("the manabase opens with one tile per question, flagging what is short", ()
   render(<ManaGlance deckMath={deckMath} manaAvailability={manaAvailability} landCount={34} deckSize={100} />);
   const [lands, colour, hands, mana, cast] = screen.getAllByTestId("mana-tile");
   expect(lands).toHaveTextContent("Lands34wants 37: 3 under, within the normal ±3");
-  expect(colour).toHaveTextContent("Weakest colour");
+  expect(colour).toHaveTextContent("Weakest color");
   // Which number is which (persona round 2026-09-29): usable by then, in the deck, and needed.
   // NO SLASH (#1033): "30 /37 (of 38 in the deck)" read as a fraction of 37 four rounds running.
   expect(colour).toHaveTextContent(/13 of 17 neededShort of black: you run 13 black sources\. A card wanting.*needs 17 by turn 2\.$/);

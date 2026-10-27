@@ -11,7 +11,7 @@ test("MapKey renders name and count per colour, and a button only where the row 
     { key: "a", name: "Creature ETBs", hue: "red", count: "17 with Inalla, 1 of them only once", onPick: pick },
     { key: "b", name: "Go wide", hue: "blue", count: "1 with Inalla" },
   ]} />);
-  const list = screen.getByRole("list", { name: "What the colours are" });
+  const list = screen.getByRole("list", { name: "What the colors are" });
   expect(within(list).getAllByRole("listitem")).toHaveLength(2);
   expect(within(list).getByText("17 with Inalla, 1 of them only once")).toBeInTheDocument();
   expect(within(list).getAllByRole("button")).toHaveLength(1);

@@ -187,7 +187,7 @@ test("a commander link goes to the commander page, not the card page", async () 
  *  choosing "red" has asked a complete question and should not have to type as well. */
 test("an identity facet lists commanders without anything typed", async () => {
   commanders();
-  await addFilter("Colour identity");
+  await addFilter("Color identity");
   await userEvent.click(await screen.findByRole("button", { name: /^Red$/ }));
   expect(await screen.findByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
   // "Red" NAMES THE IDENTITY: mono-red, not everything with red in it. A Grixis commander is a
@@ -202,7 +202,7 @@ test("an identity facet lists commanders without anything typed", async () => {
  *  deck, and the chips answer with that pair and nothing wider. */
 test("the facets name an identity exactly, not the ones that contain it", async () => {
   commanders();
-  await addFilter("Colour identity");
+  await addFilter("Color identity");
   await userEvent.click(await screen.findByRole("button", { name: /^Blue$/ }));
   await userEvent.click(screen.getByRole("button", { name: /^Black$/ }));
   // Two of Kess's three: Kess is Grixis, and Dimir is not Grixis.
@@ -214,7 +214,7 @@ test("the facets name an identity exactly, not the ones that contain it", async 
 
 test("a facet toggles off again", async () => {
   commanders();
-  await addFilter("Colour identity");
+  await addFilter("Color identity");
   const red = await screen.findByRole("button", { name: /^Red$/ });
   await userEvent.click(red);
   expect(await screen.findByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
@@ -234,7 +234,7 @@ test("the card search fits the identity in: a colourless card answers a colour q
   ];
   at(index);
   await screen.findByRole("searchbox");
-  await addFilter("Colour identity");
+  await addFilter("Color identity");
   await userEvent.click(screen.getByRole("button", { name: /^Red$/ }));
   expect(await screen.findByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
   // Playable in a red deck, and the whole point of the reversal.
@@ -276,8 +276,8 @@ test("the count line agrees with itself when there is one result", async () => {
  *  appeared under "Red" and under nothing of their own. */
 test("a colourless facet reaches the commanders no colour can ask for", async () => {
   commanders();
-  await addFilter("Colour identity");
-  await userEvent.click(await screen.findByRole("button", { name: /^Colourless$/ }));
+  await addFilter("Color identity");
+  await userEvent.click(await screen.findByRole("button", { name: /^Colorless$/ }));
   expect(await screen.findByRole("link", { name: /Kozilek/ })).toBeInTheDocument();
   expect(screen.queryByRole("link", { name: /Krenko, Mob Boss/ })).not.toBeInTheDocument();
   expect(screen.queryByRole("link", { name: /Kess/ })).not.toBeInTheDocument();
@@ -288,8 +288,8 @@ test("a colourless facet reaches the commanders no colour can ask for", async ()
  *  empty list. Ticking a colour unticks it, and it unticks every colour. */
 test("ticking a colour unticks colourless, and colourless unticks the colours", async () => {
   commanders();
-  await addFilter("Colour identity");
-  const colourless = await screen.findByRole("button", { name: /^Colourless$/ });
+  await addFilter("Color identity");
+  const colourless = await screen.findByRole("button", { name: /^Colorless$/ });
   await userEvent.click(colourless);
   expect(colourless).toHaveAttribute("aria-pressed", "true");
 
@@ -309,8 +309,8 @@ test("ticking a colour unticks colourless, and colourless unticks the colours", 
  *  rows whose identity had failed to load. */
 test("a colourless row shows the colourless symbol rather than nothing", async () => {
   commanders();
-  await addFilter("Colour identity");
-  await userEvent.click(await screen.findByRole("button", { name: /^Colourless$/ }));
+  await addFilter("Color identity");
+  await userEvent.click(await screen.findByRole("button", { name: /^Colorless$/ }));
   const row = (await screen.findByRole("link", { name: /Kozilek/ })).closest("li")!;
   // `ManaSymbols` labels both the wrapper and the symbol itself, so this asserts presence rather
   // than uniqueness.
@@ -538,11 +538,11 @@ test("nothing is asked, so no filter row is drawn", async () => {
 
 test("a filter is added from the menu, and leaves the menu once it is there", async () => {
   atUrl("/cards");
-  await addFilter("Colour identity");
+  await addFilter("Color identity");
   expect(await screen.findByRole("button", { name: /^Red$/ })).toBeInTheDocument();
   // Offering it twice would be offering a row that already exists.
   await userEvent.click(screen.getByText("Add a filter"));
-  expect(screen.queryByRole("button", { name: "Colour identity" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Color identity" })).toBeNull();
   expect(screen.getByRole("button", { name: "Mana value" })).toBeInTheDocument();
 });
 
@@ -609,7 +609,7 @@ test("a mana value set back to any keeps its select", async () => {
 test("the remove button is still the way a row goes away", async () => {
   atUrl("/cards?colors=R");
   await userEvent.click(await screen.findByRole("button", { name: /^Red$/ }));
-  await userEvent.click(screen.getByRole("button", { name: "Remove the Colour identity filter" }));
+  await userEvent.click(screen.getByRole("button", { name: "Remove the Color identity filter" }));
   expect(screen.queryByRole("button", { name: /^Red$/ })).toBeNull();
 });
 
@@ -700,7 +700,7 @@ test("the menu offers every dimension the corpus can answer", async () => {
   atUrl("/cards");
   await userEvent.click(await screen.findByText("Add a filter"));
   const offered = screen.getAllByRole("button").map((b) => b.textContent?.trim());
-  for (const label of ["Colour identity", "Colour", "Type line", "Keywords", "Mana value", "Power", "Toughness"]) {
+  for (const label of ["Color identity", "Color", "Type line", "Keywords", "Mana value", "Power", "Toughness"]) {
     expect(offered).toContain(label);
   }
   // THE EVENTS ARE THE SENTENCE'S, not the menu's (owner, 2026-09-27).
@@ -836,11 +836,11 @@ test("a keyword row is a typeahead over the keyword table", async () => {
 test("colour and colour identity are separate rows and separate params", async () => {
   const spy = atUrl("/cards?q=a");
   await screen.findByRole("searchbox");
-  await addFilter("Colour identity");
+  await addFilter("Color identity");
   await userEvent.click(await screen.findByRole("button", { name: /^Red$/ }));
-  await addFilter("Colour");
+  await addFilter("Color");
   // Two rows are on screen now, so the colour chips are ambiguous by name -- scope to the fieldset.
-  const own = screen.getByRole("group", { name: "Colour" });
+  const own = screen.getByRole("group", { name: "Color" });
   await userEvent.click(within(own).getByRole("button", { name: /^Blue$/ }));
   expect(spy.search).toContain("colors=R");
   expect(spy.search).toContain("cardcolors=U");

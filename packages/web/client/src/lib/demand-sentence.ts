@@ -646,7 +646,7 @@ const STATIC_REACH: Record<string, string> = {
 };
 
 /** Scryfall's colour letters, as a player says them. */
-const COLOUR_WORD: Record<string, string> = { W: "white", U: "blue", B: "black", R: "red", G: "green", C: "colourless" };
+const COLOUR_WORD: Record<string, string> = { W: "white", U: "blue", B: "black", R: "red", G: "green", C: "colorless" };
 
 const CARD_TYPE_WORDS = new Set(["artifact", "creature", "enchantment", "land", "planeswalker", "instant", "sorcery", "battle", "permanent", "kindred"]);
 

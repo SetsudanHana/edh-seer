@@ -496,9 +496,18 @@ does not know this codebase.
 - **Name the game, not the code.** A card "works with" another, never "connects" or "has an
   edge". An ability "makes something happen", never "emits" or "puts into the game". A score
   comes from "our test games", never "the simulation" or "the model".
-- **Say what a number counts.** "589 cards in Inalla's colours can cause this", never a bare
+- **Say what a number counts.** "589 cards in Inalla's colors can cause this", never a bare
   "589" beside a list of one (#755).
 - **Short sentences, one idea each.** An explanation that needs a semicolon needs two sentences.
+- **American spelling on the page** (owner, 2026-10-27): color, color identity, colorless,
+  analyze. Every peer site (EDHREC, Moxfield, Archidekt, Scryfall, Commander Spellbook) and the
+  comprehensive rules spell it that way, so "colour identity" read as a typo next to them. This
+  file and the code comments keep their British spelling; only what a player reads changes.
+- **A bracket carries Wizards' name** where the report first states it: "Bracket 3 (Upgraded)",
+  "Bracket 1–2 (Exhibition or Core)". Peer sites filter by the names, not the numbers.
+- **"Typal" for a deck built around a creature type** (owner, 2026-10-27): "Cleric typal", not
+  "Cleric tribal" and not "Cleric Kindred". Kindred is only the card type printed on cards; typal
+  is Wizards' word for the deck, and EDHREC's.
 - **Magic's own words are fine**: mana value, ramp, removal, card draw, tokens, EDHREC, bracket.
   Game jargon a player already knows is plain English here; our own vocabulary is not.
 

@@ -90,16 +90,16 @@ const COLOURS: [code: string, label: string][] = [
   // the five colours could ask for them. `C` narrows to exactly them, and is EXCLUSIVE of the five:
   // every identity already contains the colourless cards, so "Red and colourless" is either a
   // redundant question or an empty one. Ticking a colour unticks it, and it unticks every colour.
-  ["C", "Colourless"],
+  ["C", "Colorless"],
 ];
 
 /** WHAT EACH ROW CALLS ITSELF IN THE MENU. British spelling, and the two event rows keep the words
  *  the card pages print -- a reader who clicked through from a partner group meets the same two. */
 const FILTER_LABEL: Record<FilterKind, string> = {
-  colours: "Colour identity",
+  colours: "Color identity",
   // "Colour", NOT "Card colour": beside "Colour identity" the shorter word is already the
   // contrast, and the two sit next to each other in the menu where the pair reads as a pair.
-  cardColours: "Colour",
+  cardColours: "Color",
   typeline: "Type line",
   keywords: "Keywords",
   mv: "Mana value",
@@ -475,7 +475,7 @@ export function CardSearch({
       case "colours":
         return (
           <fieldset className="flex flex-wrap items-center gap-2">
-            <legend className="eyebrow">Colour identity</legend>
+            <legend className="eyebrow">Color identity</legend>
             {COLOURS.map(([code, label]) => {
               const on = colours.includes(code);
               return (
@@ -535,7 +535,7 @@ export function CardSearch({
       case "cardColours":
         return (
           <fieldset className="flex flex-wrap items-center gap-2">
-            <legend className="eyebrow">Colour</legend>
+            <legend className="eyebrow">Color</legend>
             {COLOURS.map(([code, label]) => {
               const on = eventQuery.cardColours.includes(code);
               return (
@@ -644,7 +644,7 @@ export function CardSearch({
         </h1>
         <p className="text-(--muted) max-w-[65ch]">
           {commanderMode
-            ? "Look up any commander to see what it does and the cards in its colours it works best with."
+            ? "Look up any commander to see what it does and the cards in its colors it works best with."
             : "Look up any card to see what it does, what it's looking for, and the cards it's most tightly linked to."}
         </p>
       </header>
@@ -809,9 +809,9 @@ export function CardSearch({
               * name in mind had nowhere to start. The index ships ordered by partner count (#368),
               * so its head IS the most connected cards; no ranking is invented here. */}
             <h2 className="eyebrow text-(--muted) mt-6 sm:mt-8">
-              {commanderMode ? "Most connected commanders" : "Most connected cards"}
+              {commanderMode ? "Commanders that work with the most cards" : "Cards that work with the most others"}
             </h2>
-            <ul ref={browseGrid} aria-label={commanderMode ? "Most connected commanders" : "Most connected cards"} className="grid grid-cols-3 sm:grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-x-3 gap-y-6 sm:gap-x-4 list-none p-0 m-0">
+            <ul ref={browseGrid} aria-label={commanderMode ? "Commanders that work with the most cards" : "Cards that work with the most others"} className="grid grid-cols-3 sm:grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-x-3 gap-y-6 sm:gap-x-4 list-none p-0 m-0">
               {(commanderMode ? index.filter((e) => e.commander) : index).slice(0, browsing).map((e) => (
                 <li key={e.slug} className="min-w-0">
                   <CardTile
@@ -847,8 +847,8 @@ export function CardSearch({
                   * zero-result answer too -- a shared `?sort=name` link that matches nothing had
                   * no way to undo the order it arrived carrying. */}
                 {matches.length === 0
-                  ? <>No {commanderMode ? "commander" : "card"} matches. The engine has read{" "}
-                      {index.length.toLocaleString("en-US")} cards; one it has never read has no page.</>
+                  ? <>No {commanderMode ? "commander" : "card"} matches. We know{" "}
+                      {index.length.toLocaleString("en-US")} cards, and one we don&apos;t know yet has no page.</>
                   : <>{matches.length.toLocaleString("en-US")}{" "}
                       {matches.length === 1
                         ? (commanderMode ? "commander matches" : "card matches")

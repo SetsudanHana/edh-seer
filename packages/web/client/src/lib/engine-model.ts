@@ -226,7 +226,7 @@ export function groupName(tag: string): string {
   // A class's short name: "Artifact", "Noncreature", "Instant and sorcery".
   const S = sub === "instant-sorcery" ? "Instant and sorcery" : sub.startsWith("-") ? `Non${sub.slice(1)}` : T;
   switch (kind) {
-    case "scales": return tribe ? `${T} tribal` : none ? "Cards matter" : `${P} matter`;
+    case "scales": return tribe ? `${T} typal` : none ? "Cards matter" : `${P} matter`;
     case "enters": return sub === "permanent" ? "ETB triggers" : `${S} ETBs`;
     case "cast": return sub === "spell" ? "Cast triggers" : `${S} spells`;
     case "dies": return isPutIntoGraveyardClass(sub) ? `${P} to the graveyard` : `${S} deaths`;
@@ -552,7 +552,7 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
     if (!nb.size) why = "Works with nothing else in this deck.";
     else if (!real && !gives && !givesOnce) why = once
       ? `It works with other cards only once, when it is played: with ${listNames(onceNames, 3)}.${back ? ` ${back.name} can bring it back to do it again.` : ""}`
-      : `Its only links come from cards that make others cheaper, or easier to find or bring back.`;
+      : `It only pairs with cards that make others cheaper, or easier to find or bring back.`;
     else if (!real && !gives) why = `All it does here is help ${givesOnce} card${s(givesOnce)} once, by finding them or bringing them back.`;
     else if (!real) why = `All it does here is help ${gives} card${s(gives)} in the background, by making them cheaper, giving them types, or letting you find or bring them back${givesOnce ? `; it also ${onceHelp}` : ""}.`;
     // ONE MEASURE, BOTH NUMBERS (#980): "Keeps working with only 4" beside the precon page's "Works

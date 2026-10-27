@@ -35,9 +35,9 @@ test("typing reaches the handler", async () => {
  *  and the control says so in the one way the rules allow: opacity plus a real `disabled`. */
 test("the primary action is unavailable until there is a decklist", () => {
   const { rerender } = render(<DeckInput {...props} />);
-  expect(screen.getByRole("button", { name: "Analyse deck" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Analyze deck" })).toBeDisabled();
   rerender(<DeckInput {...props} value="1 Sol Ring" />);
-  expect(screen.getByRole("button", { name: "Analyse deck" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Analyze deck" })).toBeEnabled();
 });
 
 /** LOADING IS NOT DISABLED (components.md rule 8): "Reusing the disabled dimming for an in-flight
@@ -47,7 +47,7 @@ test("the primary action is unavailable until there is a decklist", () => {
  *  separates the two states for the stylesheet and for a screen reader. */
 test("an in-flight analysis keeps the button at full strength and says what it is doing", () => {
   render(<DeckInput {...props} value="1 Sol Ring" loading />);
-  const btn = screen.getByRole("button", { name: "Analysing…" });
+  const btn = screen.getByRole("button", { name: "Analyzing…" });
   expect(btn).toHaveAttribute("aria-busy", "true");
   // Still not submittable twice -- busy is about the LOOK, not about letting the click through.
   expect(btn).toBeDisabled();
@@ -58,7 +58,7 @@ test("an in-flight analysis keeps the button at full strength and says what it i
 test("pressing the primary action runs the analysis once", async () => {
   let runs = 0;
   render(<DeckInput {...props} value="1 Sol Ring" onAnalyze={() => { runs += 1; }} />);
-  await userEvent.click(screen.getByRole("button", { name: "Analyse deck" }));
+  await userEvent.click(screen.getByRole("button", { name: "Analyze deck" }));
   expect(runs).toBe(1);
 });
 
@@ -123,7 +123,7 @@ test("Clear is the neutral variant and Analyze keeps the accent", () => {
   render(<DeckInput {...props} value="1 Sol Ring" />);
   expect(screen.getByRole("button", { name: "Clear" }).className).toContain("btn-secondary");
   expect(screen.getByRole("button", { name: "Clear" }).className).not.toContain("btn-primary");
-  expect(screen.getByRole("button", { name: "Analyse deck" }).className).toContain("btn-primary");
+  expect(screen.getByRole("button", { name: "Analyze deck" }).className).toContain("btn-primary");
 });
 
 /** THE COLLAPSED BAR ALREADY HAS ITS OWN WAY OUT -- `Start over`, which navigates -- and two
@@ -145,7 +145,7 @@ test("a narrow screen keeps Edit and Re-analyse out and folds the rest behind Mo
   try {
     render(<DeckInput {...props} value="1 Sol Ring" collapsed onEdit={() => {}} onStartOver={() => {}} shareLink="https://x/#deck=a" />);
     expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Re-analyse" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Re-analyze" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Start over" })).toBeNull();
     const more = screen.getByRole("button", { name: "More" });
     expect(more).toHaveAttribute("aria-expanded", "false");

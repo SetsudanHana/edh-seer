@@ -15,7 +15,7 @@ const GROUPS: { tier: SimilarItem["tier"]; heading: string }[] = [
   { tier: "same", heading: "Same effect" },
   { tier: "close", heading: "Close variants" },
   { tier: "output", heading: "Same result, different trigger" },
-  { tier: "outcome", heading: "Same outcome, different event" },
+  { tier: "outcome", heading: "Same payoff, different trigger" },
 ];
 
 /** A row as this list draws it. The redundancy search (#1342) reuses the list: its rows may lack a page
@@ -58,7 +58,7 @@ export function SimilarCards({ items, note, title = "Similar cards", id = "simil
         <Head id={id} className={titleClass} tabIndex={level === 2 ? undefined : -1}>{title}</Head>
         <p className="text-(--muted) max-w-[65ch]">
           {items.length === 0 ? empty : intro ?? <>
-            Similar means it produces the same thing first, then the same trigger, amount and how
+            Similar means it does the same thing first, then the same trigger, amount and how
             often it happens. Each card says where it differs.{note ? ` ${note}` : ""}
           </>}
         </p>

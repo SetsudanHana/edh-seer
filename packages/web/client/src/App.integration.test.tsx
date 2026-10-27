@@ -12,7 +12,7 @@ test("typing commander + decklist and clicking Analyze renders the ranked report
   render(<App />);
   await userEvent.type(screen.getByRole("textbox", { name: /commander/i }), "1 Krenko, Mob Boss");
   await userEvent.type(screen.getByRole("textbox", { name: /decklist/i }), "1 Impact Tremors");
-  await userEvent.click(screen.getByRole("button", { name: /analyse/i }));
+  await userEvent.click(screen.getByRole("button", { name: /analyze/i }));
   await waitFor(() => expect(screen.getByTestId("recognition-theme")).toHaveTextContent("Tokens"), { timeout: 5000 }); // first lazy-chunk load runs ~1s under vitest; the default 1s was the whole margin // chapter 1, in the scroll
   expect(screen.getByText(/Beholder's Death Ray/)).toBeInTheDocument(); // unresolved banner
   await userEvent.click(screen.getAllByRole("link", { name: /^Cards/ })[0]!);
@@ -33,7 +33,7 @@ test("the static explainer stops rendering once an analysis is on screen", async
   expect(document.documentElement.dataset.report).toBeUndefined();
   await userEvent.type(screen.getByRole("textbox", { name: /commander/i }), "1 Krenko, Mob Boss");
   await userEvent.type(screen.getByRole("textbox", { name: /decklist/i }), "1 Impact Tremors");
-  await userEvent.click(screen.getByRole("button", { name: /analyse/i }));
+  await userEvent.click(screen.getByRole("button", { name: /analyze/i }));
   await waitFor(() => expect(screen.getByTestId("recognition-theme")).toHaveTextContent("Tokens"), { timeout: 5000 }); // first lazy-chunk load runs ~1s under vitest; the default 1s was the whole margin // chapter 1, in the scroll
   expect(document.documentElement.dataset.report).toBe("1");
   expect(spy).toHaveBeenCalledWith("1 Impact Tremors", "1 Krenko, Mob Boss");
@@ -53,7 +53,7 @@ test("shows an error banner when the api throws", async () => {
   vi.spyOn(api, "analyzeDeck").mockRejectedValue(new Error("Cannot reach MongoDB..."));
   render(<App />);
   await userEvent.type(screen.getByRole("textbox", { name: /decklist/i }), "1 Sol Ring");
-  await userEvent.click(screen.getByRole("button", { name: /analyse/i }));
+  await userEvent.click(screen.getByRole("button", { name: /analyze/i }));
   await waitFor(() => expect(screen.getByText(/Cannot reach MongoDB/)).toBeInTheDocument());
 });
 
@@ -61,7 +61,7 @@ test("input collapses to a summary after a successful analysis", async () => {
   vi.spyOn(api, "analyzeDeck").mockResolvedValue(SAMPLE);
   render(<App />);
   fireEvent.change(screen.getByLabelText("Decklist"), { target: { value: "1 Sol Ring" } });
-  fireEvent.click(screen.getByRole("button", { name: /analyse/i }));
+  fireEvent.click(screen.getByRole("button", { name: /analyze/i }));
   // With a report up, the deck's actions end its summary row rather than sitting in a bar above it
   // (UI review 2026-09-25), so Edit is looked for there.
   const summary = await screen.findByRole("region", { name: "Deck summary" }, { timeout: 4000 });
@@ -84,7 +84,7 @@ test("the paste box closes on the click, not on the answer", async () => {
   window.history.replaceState(null, "", "/");
   render(<App />);
   fireEvent.change(screen.getByLabelText("Decklist"), { target: { value: "1 Sol Ring" } });
-  fireEvent.click(screen.getByRole("button", { name: /analyse/i }));
+  fireEvent.click(screen.getByRole("button", { name: /analyze/i }));
   expect(await screen.findByRole("button", { name: /edit/i })).toBeInTheDocument();
   expect(screen.queryByLabelText("Decklist")).not.toBeInTheDocument();
 });
@@ -124,7 +124,7 @@ test("the first analysis is a history entry, so Back returns to the paste box", 
   window.history.replaceState(null, "", "/");
   render(<App />);
   fireEvent.change(screen.getByLabelText("Decklist"), { target: { value: "1 Sol Ring" } });
-  fireEvent.click(screen.getByRole("button", { name: /analyse/i }));
+  fireEvent.click(screen.getByRole("button", { name: /analyze/i }));
   // WAIT FOR THE HASH, NOT FOR THE BUTTON, because the button is not evidence the hash exists.
   // Read `analyse` (App.tsx): `setEditing(false)` -- which paints Edit -- happens BEFORE
   // `await encodeShare(...)`, and the history write happens after it. So the Edit button resolving
@@ -157,7 +157,7 @@ test("popstate onto a deck hash re-opens that analysis", async () => {
   window.history.replaceState(null, "", "/");
   render(<App />);
   fireEvent.change(screen.getByLabelText("Decklist"), { target: { value: "1 Sol Ring" } });
-  fireEvent.click(screen.getByRole("button", { name: /analyse/i }));
+  fireEvent.click(screen.getByRole("button", { name: /analyze/i }));
   // Same race as the test above -- this one READS the hash it is about to navigate back to, so a
   // premature read left `withDeck` empty and the final assertion passed for the wrong reason.
   await waitFor(() => expect(window.location.hash).toMatch(/^#deck=/));
@@ -194,7 +194,7 @@ test("text that resolved no cards never becomes a URL or a share link", async ()
   window.history.replaceState(null, "", "/");
   render(<App />);
   fireEvent.change(screen.getByLabelText("Decklist"), { target: { value: NOT_A_DECK } });
-  fireEvent.click(screen.getByRole("button", { name: /analyse/i }));
+  fireEvent.click(screen.getByRole("button", { name: /analyze/i }));
   const summary = await screen.findByRole("region", { name: "Deck summary" }, { timeout: 4000 });
   expect(within(summary).getByRole("button", { name: /edit/i })).toBeInTheDocument();
 
@@ -221,7 +221,7 @@ test("a deck link in the decklist box imports into BOTH fields, then analyses", 
     screen.getByLabelText("Decklist"),
     "https://archidekt.com/decks/26039486/teysa",
   );
-  await userEvent.click(screen.getByRole("button", { name: /analyse deck/i }));
+  await userEvent.click(screen.getByRole("button", { name: /analyze deck/i }));
 
   await waitFor(() => expect(analyze).toHaveBeenCalled());
   expect(fetchSpy).toHaveBeenCalledWith("/api/import/archidekt/26039486");
@@ -240,7 +240,7 @@ test("an import failure leaves the link in the box and says what to do", async (
 
   const box = screen.getByLabelText("Decklist");
   await userEvent.type(box, "https://moxfield.com/decks/AbC-123");
-  await userEvent.click(screen.getByRole("button", { name: /analyse deck/i }));
+  await userEvent.click(screen.getByRole("button", { name: /analyze deck/i }));
 
   expect(await screen.findByText(/importer is busy/i)).toBeInTheDocument();
   // The engine was never asked to resolve a URL as a card name, and the link is still there to retry.
@@ -258,7 +258,7 @@ test("an analysis in flight says so instead of leaving the page empty", async ()
   render(<App />);
   await userEvent.type(screen.getByRole("textbox", { name: /commander/i }), "1 Krenko, Mob Boss");
   await userEvent.type(screen.getByRole("textbox", { name: /decklist/i }), "1 Impact Tremors\n1 Sol Ring");
-  await userEvent.click(screen.getByRole("button", { name: /analyse deck/i }));
+  await userEvent.click(screen.getByRole("button", { name: /analyze deck/i }));
   expect(await screen.findByRole("status")).toHaveTextContent("Reading 3 cards for Krenko, Mob Boss");
   expect(screen.queryByRole("link", { name: /how the engine decides/i })).toBeNull();
   window.history.replaceState(null, "", "/");
