@@ -6478,3 +6478,19 @@ describe("#1373 the blocks trigger", () => {
     expect(abilities[0]!.trigger?.subject.combat).toBeUndefined();
   });
 });
+
+// #1373 review: the model stores "attacks or blocks" as TWO records (Howling Golem, Jedit Ojanen, Sapphire Dragon, Goblin Psychopath: 50 cards); `segment()` numbers the
+// sentence once, so the second record has no text of its own and adopts the sentence. The first record's grammar reading already covers both halves, so the second
+// one derived a duplicate blocks ability. It is folded into the covering clause (`spliced`), as a re-homed twin is.
+test("a textless 'blocks' record beside the 'attacks' record that already reads both halves derives ONE blocks ability (Howling Golem)", () => {
+  const text = "Whenever this creature attacks or blocks, each player draws a card.";
+  const draw = { verb: "draw", object: "each player", amount: "1", fromZone: null, toZone: null, optional: false };
+  const r = deriveAbilities([
+    { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: [draw] },
+    { id: 2, abilityType: "triggered", trigger: { event: "blocks", subject: "this creature", control: "you" }, actions: [draw] },
+  ], "Howling Golem", { 1: text }, undefined, text);
+  const draws = r.abilities.filter((a) => a.effect.kind !== "" || (a.emits ?? []).some((e) => e.verb === "draw"));
+  expect(draws.filter((a) => a.trigger?.verbs.includes("attacks" as never))).toHaveLength(1);
+  expect(draws.filter((a) => a.trigger?.verbs.includes("blocks" as never))).toHaveLength(1);
+  expect(r.spliced.has(2)).toBe(true);
+});

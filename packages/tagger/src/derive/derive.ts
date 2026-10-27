@@ -557,7 +557,8 @@ import { emblemRecipient } from "../emblem.js";
 // 392: #1357 -- an effect's trailing gating "if <condition>" is `Ability.gate`, parsed by the one gate parser (gate.ts: control / threshold / counter / turn-event / unknown), attached per conjunct (an "except ... if" rider never gates the clone); a suppliable condition adds `conditionCares` (no counter demand for a counter the card places on itself); the grammar reads a gated mode instead of refusing it (What Must Be Done keeps its return); TRON needs two Urza's lands. The matcher weighs gated contributions by deck likelihood (owner 2026-10-27).
 // 393: #1357 part 2 -- a LEADING condition gates its own sentence ("If X, A and B" gates both; ", then if" / "Then if"); "Otherwise," / "If not," carry an unknown gate negating the earlier condition(s) (gate.otherwise), with `otherwiseAlike` when the stored reading lost a same-effect sibling; reflexive follow-ups, "instead", replacements, alternative costs, the trigger-doubler frame and shuffle-after-search are no gate; triggers' intervening ifs stay the trigger path's.
 // 394: #1373 (owner ruling 2026-10-27) -- `blocks` is an engine verb (CR 509.1a: only creatures block): a "whenever ... blocks" trigger derives instead of being dropped (192 stored rows carried the clause event, 249 corpus cards print it), a modal header's "attacks or blocks" (Elder Gargaroth) gives its modes the blocks visit as well as the attacks one, and the blocking state of a blocks trigger's subject is the event (as the attacking state is on an attack). `blocks` joins PERMANENT_EVENT_VERBS; a self blocks trigger refuses a bare clause `you` the way attacks does.
-export const DERIVE_VERSION = 394;
+// 395: #1373 review -- a textless `blocks` record beside the record whose grammar reading already covers "attacks or blocks" (Howling Golem, Jedit Ojanen, Sapphire Dragon, Goblin Psychopath: 48 cards) is folded into it when it derives an IDENTICAL ability (`identicalTwinOf`), instead of a second blocks ability.
+export const DERIVE_VERSION = 395;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2270,6 +2271,8 @@ export function deriveAbilities(
   const grammarCovered = new Map<string, Map<string, number | string>>();
   /** Re-homed records dropped-if-redundant: clause id -> the id of the record that already read their event off the same sentence. */
   const twinOf = new Map<number | string, number | string>();
+  /** Textless records whose event another clause's grammar reading of the same sentence covers; folded only where an ability is identical (#1373 review). */
+  const identicalTwinOf = new Map<number | string, number | string>();
   for (const visit of visits) {
     if (dupMark) { unclaimedHere.length = dupMark.unclaimed; unknownTriggers.length = dupMark.unknown; dupMark = undefined; }
     if (visit.k) dupMark = { unclaimed: unclaimedHere.length, unknown: unknownTriggers.length };
@@ -2497,6 +2500,14 @@ export function deriveAbilities(
     // Astrid 2 `attacks` on the enters-or-attacks sentence) is that record's twin, not a second ability.
     const partner = misplaced && rehomed ? grammarCovered.get(rehomed)?.get(normalizeTriggerVerb(clause.trigger!.event!) ?? "") : undefined;
     if (partner !== undefined) twinOf.set(clause.id, partner);
+    // A TEXTLESS RECORD (#1373 review) that adopted a sentence an earlier record's grammar reading already read this record's event off ("attacks or blocks" stored as two
+    // records: Howling Golem, Jedit Ojanen) is that record's twin too -- but only an ability IDENTICAL to one of the covering clause's is folded (`identicalTwin`, below),
+    // so a record that says more than its partner (a sibling sentence's effect numbered here) is never lost.
+    // CEILING: `blocks` only. Measured over the stored 394 with derive-identity: the same fold on EVERY event changes 260 cards (222 pure removals, 38 where the surviving twin differs in clause id, amount spelling or, on ~8, effect/emits/cost), `blocks` alone 48 cards (42 pure removals, 6 amount-spelling swaps).
+    else if (!misplaced && text && clause.trigger?.event && clauseTexts && clauseTexts[clause.id as number] === undefined && Number.isInteger(clause.id) && clause.trigger.event === "blocks") {
+      const covering = grammarCovered.get(text)?.get(normalizeTriggerVerb(clause.trigger.event) ?? "");
+      if (covering !== undefined && covering !== clause.id) identicalTwinOf.set(clause.id, covering);
+    }
     const grammarAll = clause.trigger?.event && text && !misplaced ? grammarTriggersOf(text, cardName, clause.trigger.event, cardText, enchantText,
       clauses.some((c) => c.id !== clause.id && c.trigger?.event && clauseTexts?.[c.id] === clauseText),
       readings?.[clause.id]?.trigger, curse, creatureCard) : null;
@@ -3698,6 +3709,17 @@ export function deriveAbilities(
   // CEILING: a cue heuristic -- a twin is "the same verb already claimed on that sentence", and a re-homed record is "the one orphan sentence that
   // prints its cue". A card whose record numbering drifts in a way neither sees keeps its stored trigger over the sentence its own text prints.
   const spliced = new Set<number | string>();
+  if (identicalTwinOf.size > 0) {
+    const folded = new Set<number | string>();
+    const sameAbility = (a: Ability, b: Ability): boolean => JSON.stringify({ ...a, clause: 0 }) === JSON.stringify({ ...b, clause: 0 });
+    for (let i = abilities.length - 1; i >= 0; i--) {
+      const a = abilities[i]!;
+      const partnerId = a.clause !== undefined ? identicalTwinOf.get(a.clause) : undefined;
+      if (partnerId !== undefined && abilities.some((b) => b !== a && b.clause === partnerId && sameAbility(a, b))) { abilities.splice(i, 1); folded.add(a.clause!); }
+    }
+    // The clause is `:spliced` only when nothing of it is left.
+    for (const id of folded) if (!abilities.some((x) => x.clause === id)) spliced.add(id);
+  }
   if (twinOf.size > 0) {
     const emitKey = (e: { verb: string; subject: SubjectFilter }): string => [e.verb, JSON.stringify(e.subject.type ?? null), e.subject.subtype ?? "", e.subject.counter ?? "", e.subject.self ?? ""].join("|");
     const verbsKey = (a: Ability): string => (a.trigger?.verbs ?? []).join(",");
