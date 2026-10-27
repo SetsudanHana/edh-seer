@@ -854,3 +854,21 @@ test("a negated card type beside a head type is recorded as notType (#1383)", ()
   expect(parseSubject("target nonland permanent").notType).toEqual(["land"]);
   expect(parseSubject("a nonblack creature").notType).toBeUndefined();
 });
+
+test("type words inside a token's quoted ability are not the token's types (#1385)", () => {
+  // The Prydwen, Steel Flagship: the token is a creature; "artifact" belongs to its granted ability.
+  expect(parseSubject('a 2/2 white Human Knight creature token with "This token gets +2/+2 as long as an artifact entered the battlefield under your control this turn."'))
+    .toMatchObject({ type: "creature", token: true });
+  // Dáin Ironfoot: an Equipment artifact token; "Equipped creature" is the granted ability's.
+  const axe = parseSubject('a colorless Equipment artifact token named Axe with "Equipped creature gets +1/+0"');
+  expect(axe.type).toBe("artifact");
+  expect(axe.subtype).toBe("equipment");
+  // Ka-Zar of the Savage Land's Zabu
+  expect(parseSubject('Zabu, a legendary 2/2 green Cat creature token with "Landfall — Whenever a land you control enters, put a +1/+1 counter on Zabu."').type).toBe("creature");
+  // a name in quotes is still read as a name
+  expect(parseSubject('a card named "Ancient Tomb"').named).toBeDefined();
+});
+
+test("a quoted ability cut open by a count phrase is still cut (Moira Brown, #1385)", () => {
+  expect(parseSubject('a colorless Book Equipment artifact token named Wasteland Survival Guide with "Equipped creature gets +1/+1 for each quest counter among permanents you control"').type).toBe("artifact");
+});

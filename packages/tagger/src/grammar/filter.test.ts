@@ -513,3 +513,10 @@ test("a negated card type beside a head type is recorded as notType", () => {
   expect(parse("a nonlegendary creature")!.notType).toBeUndefined();
   expect(parse("a nontoken creature")!.notType).toBeUndefined();
 });
+
+test("a token's quoted ability does not add types (#1385)", () => {
+  expect(parse('a 2/2 white Human Knight creature token with "This token gets +2/+2 as long as an artifact entered the battlefield under your control this turn."'))
+    .toMatchObject({ type: "creature", token: true });
+  expect(parse('a colorless Equipment artifact token named Axe with "Equipped creature gets +1/+0"'))
+    .toMatchObject({ type: "artifact", subtype: "equipment", token: true });
+});

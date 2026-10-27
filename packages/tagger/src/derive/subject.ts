@@ -175,11 +175,20 @@ function parseTypes(
 ): { type?: string | string[]; notType?: string[]; umbrella?: string; plural: boolean } {
   const found: string[] = [];
   let plural = false;
+  // A GRANTED ABILITY IS NOT THE SUBJECT'S CLASS (#1385). Type words inside the quoted ability of a TOKEN description
+  // ("a 2/2 Human Knight creature token with \"... as long as an ARTIFACT entered ...\"", "an Equipment artifact token with
+  // \"EQUIPPED CREATURE gets +1/+0\"") were swept into `type`, so the Prydwen's Knight read as an artifact creature and every
+  // Equipment token as a creature. Quoted text is cut before any sweep -- only after the word "token", since an emblem's quoted text IS its subject (Kaito's
+  // Ninjas); a quoted NAME stays.
+  // Left alone on purpose: only the TYPE sweep is cut. The same quoted text also leaks scope, control and subtype words (Country Roads' Pilot token
+  // gains Mount and Vehicle; Vernal Sovereign's scope), left for a separate fix so this change moves types alone.
+  // `plural` is still read off the whole text so `scope` does not move with this change.
+  const head = stripTokenAbility(t);
   for (const ty of TYPES) {
     // "token" and "card" are not card types on their own; they only qualify another noun.
     if (ty === "token" || ty === "card") continue;
-    if (new RegExp(`\\b${ty}s\\b`).test(t)) { found.push(ty); plural = true; }
-    else if (new RegExp(`\\b${ty}\\b`).test(t)) found.push(ty);
+    if (new RegExp(`\\b${ty}s\\b`).test(t)) plural = true;
+    if (new RegExp(`\\b${ty}s\\b`).test(head) || new RegExp(`\\b${ty}\\b`).test(head)) found.push(ty);
   }
 
   const { negated, plural: negPlural } = negatedTypes(t);
@@ -701,6 +710,15 @@ const TARGETS_ONLY = /\btargets? only\b/i;
  *  target creature"), or the Equipment being described ("all Equipment attached to that creature").
  *  33 of the 61 carry a type word in the tail that the head does not. */
 const ATTACHED_TO = /\battached to\b/i;
+/** Cut the quoted ability off a token description; any other text is returned untouched. */
+function stripTokenAbility(text: string): string {
+  const q = text.search(/["']/);
+  if (q < 0 || !/\btokens?\b/i.test(text.slice(0, q === 0 ? 0 : q))) return text;
+  return text.replace(QUOTED_ABILITY, " ");
+}
+/** A double-quoted span not introduced by "named", or a single-quoted ability after "with" (nested inside a quote). An UNCLOSED quote runs
+ *  to the end: `COUNT_PHRASE` cuts "for each quest counter" out of Moira Brown's ability before the sweep sees it. */
+const QUOTED_ABILITY = /(?<!\bnamed\s)"[^"]*(?:"|$)|\bwith\s+'[^']*(?:'|$)/gi;
 
 /** Does the subject name a CLASS -- a type or a subtype, itself or in every one of its alternatives
  *  ("artifact spells and colorless spells" is `anyOf` [artifact, colorless spell] since the filter
