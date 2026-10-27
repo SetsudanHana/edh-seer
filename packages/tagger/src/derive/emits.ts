@@ -538,6 +538,15 @@ export function narrowSelfExiledSpell(emits: GameEvent[], clauseText: string, ca
   return emits.map((e) => e.subject.type === "spell" ? { ...e, subject: { ...e.subject, type: type.length === 1 ? type[0]! : type } } : e);
 }
 
+/** "FOR EACH OPPONENT, choose an artifact or land THAT PLAYER CONTROLS. Destroy the chosen permanents." (Ultimate Magic: Meteor, #1385 review): the distributive
+ *  "that player" is the opponent, so what is chosen and destroyed is the opponents', and it goes to THEIR graveyards. The stored action reads "chosen artifacts or lands"
+ *  with the controller left in the choose clause, so it came out `any`. Applies only when the clause distributes over opponents and the object is that chosen set or
+ *  names "that player controls" itself. */
+const FOR_EACH_OPPONENT = /\bfor each (?:opponent|other player)\b[^.]*?\bthat (?:player|opponent) controls\b/i;
+function distributiveOpponent(object: string, clauseText: string): boolean {
+  return FOR_EACH_OPPONENT.test(clauseText) && (/\bchosen\b/i.test(object) || /\bthat (?:player|opponent) controls\b/i.test(object));
+}
+
 /** Does this token copy a CREATURE? The clause names one ("Exile target creature card ... create a token that's a copy of it", Scarab God), or the
  *  copied phrase names the token's own creature subtype ("a copy of target Goblin you control", Grub's Command). Quoted abilities are not the copy. */
 function copiesACreature(object: string, clauseText: string | undefined, subtype: string): boolean {
@@ -806,6 +815,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     // "that creature's controller loses 2 life" names its player in the object, not as "player"/"opponent" (Banewasp Affliction).
     && !(action.verb === "lose-life" && (isControllerPhrase(action.object ?? "") || OBJECT_NAMES_A_PLAYER.test(action.object ?? "")))
     ? "you" as const
+    : subject.control === "any" && distributiveOpponent(action.object ?? "", clauseText ?? "") ? "opp" as const
     : subject.control;
   // ARRIVED TAPPED, the supply half of `SubjectFilter.entersTapped`. "Search your library for a land
   // card, put it onto the battlefield TAPPED" really does satisfy Amulet of Vigor and Tiller Engine,

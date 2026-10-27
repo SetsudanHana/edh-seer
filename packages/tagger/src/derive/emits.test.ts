@@ -692,3 +692,21 @@ describe("spells exiled with this card take the class of the card's own exile cl
     expect(narrowSelfExiledSpell(cast, "You may cast a spell.", "Exile an instant.")[0]!.subject.type).toBe("spell");
   });
 });
+
+// #1385 review: Ultimate Magic: Meteor -- "for each opponent, choose an artifact or land that player controls. Destroy the chosen permanents." The chosen permanents are
+// the OPPONENTS', so they go to opponents' graveyards, not yours.
+describe("'for each opponent ... that player controls' is an opponent's permanent (#1385)", () => {
+  const clause = "Ultimate Magic: Meteor deals 7 damage to each creature. If this spell was cast from exile, for each opponent, choose an artifact or land that player controls. Destroy the chosen permanents.";
+  test("the chosen permanents are control opp", () => {
+    const dies = actionEmits({ verb: "destroy", object: "chosen artifacts or lands" }, clause).find((e) => e.verb === "dies")!;
+    expect(dies.subject.control).toBe("opp");
+  });
+  test("a destroy with no distributive opponent is untouched", () => {
+    const dies = actionEmits({ verb: "destroy", object: "chosen artifacts or lands" }, "Choose an artifact or land. Destroy the chosen permanents.").find((e) => e.verb === "dies")!;
+    expect(dies.subject.control).toBe("any");
+  });
+  test("the phrase itself, with the opponent and the controller in one sentence", () => {
+    const dies = actionEmits({ verb: "destroy", object: "an artifact or land that player controls" }, "For each opponent, destroy an artifact or land that player controls.").find((e) => e.verb === "dies")!;
+    expect(dies.subject.control).toBe("opp");
+  });
+});

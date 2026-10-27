@@ -166,6 +166,19 @@ function lostOtherTypes(t: string, out: SubjectFilter): string | string[] | unde
   return kept.length === 0 ? undefined : kept.length === 1 ? kept[0] : kept;
 }
 
+/** A COPY OF A CREATURE IS A CREATURE (#1385 review). "a token that's a copy of each creature attacking you or a planeswalker you control" (Mirror Match) is swept to
+ *  [creature, planeswalker], and read as an OR the token is a planeswalker. The copied thing is the head noun phrase after "copy of", up to what qualifies it
+ *  ("attacking", "you control", "that", "except"); when that names the type `creature` and no other, the token is a creature. An added type is `allTypes`
+ *  (left alone), and "an artifact or creature" names two, so it stays the OR it is. */
+function copiedCreature(t: string, out: SubjectFilter): string | undefined {
+  if (out.token !== true || !Array.isArray(out.type) || (out.allTypes?.length ?? 0) > 0) return undefined;
+  const m = /\bcop(?:y|ies)\s+of\s+(.*)$/.exec(t);
+  if (!m) return undefined;
+  const head = m[1]!.split(/\b(?:attacking|blocking|you|your|an?\s+opponent|with|from|exiled|except|and|which|who)\b|\bthat(?:'s|\s+(?:is|are|was|were|has|have|can|would))|,/i)[0]!;
+  const named = (CARD_TYPES as readonly string[]).filter((x) => new RegExp(`\\b${x}s?\\b`).test(head));
+  return named.length === 1 && named[0] === "creature" ? "creature" : undefined;
+}
+
 function compoundTypes(t: string): string[] | undefined {
   const m = t.match(COMPOUND_TYPE);
   if (!m) return undefined;
@@ -877,6 +890,9 @@ export function parseSubject(text: string): SubjectFilter {
   if (lost !== undefined) out.type = lost;
   const all = compoundTypes(t) ?? conferredTypes(t, out);
   if (all) out.allTypes = all;
+  // After the conjunctions are stamped: a copy that gains a type, or loses its others, is not "a copy of a creature" and keeps what those rules set.
+  const copied = lost === undefined ? copiedCreature(t, out) : undefined;
+  if (copied !== undefined) out.type = copied;
   if (subtype) out.subtype = subtype;
   if (scope) out.scope = scope;
   if (stats.length) out.stats = stats;

@@ -254,11 +254,14 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
       // artifact or creature" (Reactor Raid), "target nonland permanent" (Stroke of Midnight), "a copy of target artifact or
       // creature" (Stolen Identity) -- and is refused only when EVERY alternative is excluded: a noncreature artifact is a
       // legal sacrifice, so Jaws hears Reactor Raid. A single type is its own list and is refused when excluded.
-      // CEILING: an unmarked conjunction reads as an OR, which admits a false edge against a negating consumer. Derive marks the conjunctions it can
-      // see and the matcher stamps every printed type line it builds (`printedAllTypes`: selfSubject, selfLeavesTypes, selfFillTypes, faceClass,
-      // characteristicsSubject). What remains is a sweep of type words read as alternatives: Rise and Shine's counter-added `[creature, artifact]`
-      // ("each artifact that became a creature", latent -- no consumer reads it today), Goblin Kaboomist's "Land Mine" token NAME `[artifact, land]`,
-      // and the "becomes an artifact creature" results (Earthrumbler, Suit Up); none forms an edge in the 2026-10 probes.
+      // CEILING: an unmarked conjunction reads as an OR, which admits a false edge against a negating consumer. Derive marks the conjunctions it can see
+      // and the matcher stamps every printed type line it builds (`printedAllTypes`: selfSubject, selfLeavesTypes, selfFillTypes, faceClass,
+      // characteristicsSubject). An independent hunt (22,711 unmarked multi-type producer events x 592 notType consumers, this rule vs the strict one on
+      // the same tags) added 4,600 pairs, removed none; every family was a real OR restored except Mirror Match's swept [creature, planeswalker] and Ultimate
+      // Magic: Meteor's `control: any`, both fixed in derive. What can still slip through is a list that is a SWEEP of type words rather than alternatives
+      // and that derive does not mark: Rise and Shine's counter-added `[creature, artifact]` ("each artifact that became a creature", no consumer reads
+      // it), Goblin Kaboomist's "Land Mine" token name `[artifact, land]`, and the "becomes an artifact creature" results (Earthrumbler, Suit Up). None
+      // formed an edge in the probes; a new one would be a false edge, not a missing one.
       const andList = (producer.allTypes?.length ?? 0) > 0;
       if (producerTokens.length > 1 && !andList ? producerTokens.every((t) => excluded([t])) : excluded(producerTokens)) return false;
     }

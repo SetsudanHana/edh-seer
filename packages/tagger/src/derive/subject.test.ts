@@ -910,3 +910,14 @@ test("a copy token that 'loses all other card types' is only the conferred type 
   // not a loss: still the copy's own types plus the added one
   expect(parseSubject("a token that's a copy of target creature, except it's an artifact in addition to its other types").allTypes).toEqual(["artifact", "creature"]);
 });
+
+// #1385 review: Mirror Match's token is a copy of "each creature attacking you or a planeswalker you control": the planeswalker is what the creature attacks, not what is
+// copied. A copy whose copied head names only a creature is a creature, even when the sweep of the whole sentence set a list.
+test("a copy token whose copied head names only a creature is a creature (#1385 review)", () => {
+  expect(parseSubject("a token that's a copy of each creature attacking you or a planeswalker you control and that's blocking that creature").type).toBe("creature");
+  expect(parseSubject("a token that's a copy of that creature and that's blocking that creature").type).toBe("creature");
+  // two copied types stay a list: Stolen Identity, Molten Duplication
+  expect(parseSubject("a token that's a copy of target artifact or creature").type).toEqual(["creature", "artifact"]);
+  // an added type keeps its conjunction
+  expect(parseSubject("a token that's a copy of target creature, except it's an artifact in addition to its other types").allTypes).toEqual(["artifact", "creature"]);
+});
