@@ -130,7 +130,7 @@ test("when every card connects, the panel lists nothing and says nothing", () =>
 
 test("a group's cards that share one sentence are listed under it once", async () => {
   view();
-  await userEvent.setup().click(screen.getByRole("button", { name: /^Cleric tribal/ }));
+  await userEvent.setup().click(screen.getByRole("button", { name: /^Cleric typal/ }));
   expect(screen.getByText("While you control one of these, Payoff A counts it")).toBeInTheDocument();
   // Once on the ring, once under the sentence.
   expect(screen.getAllByRole("button", { name: "Cleric 1" }).length).toBe(2);

@@ -226,7 +226,7 @@ export function groupName(tag: string): string {
   // A class's short name: "Artifact", "Noncreature", "Instant and sorcery".
   const S = sub === "instant-sorcery" ? "Instant and sorcery" : sub.startsWith("-") ? `Non${sub.slice(1)}` : T;
   switch (kind) {
-    case "scales": return tribe ? `${T} tribal` : none ? "Cards matter" : `${P} matter`;
+    case "scales": return tribe ? `${T} typal` : none ? "Cards matter" : `${P} matter`;
     case "enters": return sub === "permanent" ? "ETB triggers" : `${S} ETBs`;
     case "cast": return sub === "spell" ? "Cast triggers" : `${S} spells`;
     case "dies": return isPutIntoGraveyardClass(sub) ? `${P} to the graveyard` : `${S} deaths`;

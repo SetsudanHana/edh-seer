@@ -505,6 +505,9 @@ does not know this codebase.
   file and the code comments keep their British spelling; only what a player reads changes.
 - **A bracket carries Wizards' name** where the report first states it: "Bracket 3 (Upgraded)",
   "Bracket 1–2 (Exhibition or Core)". Peer sites filter by the names, not the numbers.
+- **"Typal" for a deck built around a creature type** (owner, 2026-10-27): "Cleric typal", not
+  "Cleric tribal" and not "Cleric Kindred". Kindred is only the card type printed on cards; typal
+  is Wizards' word for the deck, and EDHREC's.
 - **Magic's own words are fine**: mana value, ramp, removal, card draw, tokens, EDHREC, bracket.
   Game jargon a player already knows is plain English here; our own vocabulary is not.
 

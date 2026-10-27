@@ -20,7 +20,7 @@ describe("groupName", () => {
     expect(groupName("dies:permanent")).toBe("Permanents to the graveyard");
   });
   test("says what the sentences say, in a player's words", () => {
-    expect(groupName("scales:cleric")).toBe("Cleric tribal");
+    expect(groupName("scales:cleric")).toBe("Cleric typal");
     expect(groupName("cast:-creature")).toBe("Noncreature spells");
     expect(groupName("fodder:goblin")).toBe("Goblin fodder");
     expect(groupName("static:pump")).toBe("Anthems");
@@ -42,7 +42,7 @@ describe("buildEngineModel", () => {
 
   test("draws a many-to-few block once, with the few as the cards that do something extra", () => {
     const g = m.groups.find((x) => x.tag === "scales:cleric")!;
-    expect(g.name).toBe("Cleric tribal");
+    expect(g.name).toBe("Cleric typal");
     expect(g.hubsConsume).toBe(true);
     expect(g.hubs.sort()).toEqual(["Payoff A", "Payoff B"]);
     expect(g.members).toHaveLength(8);
@@ -50,7 +50,7 @@ describe("buildEngineModel", () => {
   });
 
   test("a group whose members repeat one above it says so", () => {
-    expect(m.groups.find((g) => g.tag === "attacks:cleric")!.sameAs).toEqual({ name: "Cleric tribal", extra: [], missing: [] });
+    expect(m.groups.find((g) => g.tag === "attacks:cleric")!.sameAs).toEqual({ name: "Cleric typal", extra: [], missing: [] });
     expect(m.groups.find((g) => g.tag === "scales:cleric")!.sameAs).toBeUndefined();
   });
 
