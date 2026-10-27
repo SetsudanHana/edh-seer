@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { buildWireGraph, resolveDeck } from "./orchestrate.js";
+import { analyzeDecklist, buildWireGraph, resolveDeck } from "./orchestrate.js";
 import type { CardLookup } from "@edh-seer/data/resolve";
 
 const doc = (name: string, colorIdentity: string[] = [], typeLine = "Creature — Human") => ({
@@ -73,4 +73,41 @@ test("the board's edges are the report's edges", async () => {
   const empty = await buildWireGraph(names, new Map(), copies, sources, { edges: [] } as never);
   expect(empty.edges).toHaveLength(0);
   expect(empty.nodes).toHaveLength(2);
+});
+
+/** #1369: the whole list pasted into the Commander box used to reach `minCopies` with an empty library. */
+test("a Commander box holding the whole list is refused before any card is fetched", async () => {
+  let fetched = false;
+  const makeSources = async () => { fetched = true; return {} as never; };
+  const box = Array.from({ length: 5 }, (_, i) => `1 Card ${i}`).join("\n");
+  await expect(analyzeDecklist("", box, makeSources)).rejects.toThrow(/Commander box holds 5 cards/);
+  await expect(analyzeDecklist(box, box, makeSources)).rejects.toThrow(/Commander box holds 5 cards/);
+  expect(fetched).toBe(false);
+});
+
+test("the Commander box and the Commander section are blamed by their own names", async () => {
+  const makeSources = async () => ({}) as never;
+  const list = ["Commander", ...Array.from({ length: 5 }, (_, i) => `1 Card ${i}`)].join("\n");
+  await expect(analyzeDecklist(list, undefined, makeSources)).rejects.toThrow(/Commander section of your list holds 5 cards.*blank line/);
+  await expect(analyzeDecklist("", list, makeSources)).rejects.toThrow(/Commander box holds 5 cards/);
+});
+
+test("a partner pair in the Commander box analyses, with or without a header line", async () => {
+  const lookup = lookupOf([
+    doc("Thrasios", ["G", "U"], "Legendary Creature — Merfolk"),
+    doc("Tymna the Weaver", ["B", "W"], "Legendary Creature — Human"),
+    doc("Island", [], "Basic Land — Island"),
+  ]);
+  const makeSources = async () => ({
+    lookup,
+    tagsLookup: { findOne: async () => null },
+    tokenTags: () => null,
+    tokenArt: async () => new Map(),
+  }) as never;
+  for (const box of ["1 Thrasios\n1 Tymna the Weaver", "Commander\n1 Thrasios\n1 Tymna the Weaver"]) {
+    const r = await analyzeDecklist("4 Island", box, makeSources);
+    expect(r.missing).toEqual([]);
+    expect(r.resolvedCount).toBe(6);
+    expect(r.report.commanders).toEqual(["Thrasios", "Tymna the Weaver"]);
+  }
 });

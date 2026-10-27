@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, type RefObject } from "react";
 import { Link } from "react-router";
-import { parseDecklistSections } from "@edh-seer/data/sections";
-import { parseDecklistText } from "@edh-seer/data/decklist";
+import { commanderBoxProblem, parseCommanderBox, parseDecklistSections } from "@edh-seer/data/sections";
 import { normalizeName } from "@edh-seer/data/names";
 import { deckSourceOf } from "@edh-seer/data/deck-url";
 import { StaticLookup } from "@edh-seer/matcher/static-lookup";
@@ -96,11 +95,13 @@ function StartFrom({ onPick }: { onPick: (commanders: string, decklist: string) 
 /** How long the read-back waits after the last keystroke; a paste settles at once. */
 const READ_SETTLE_MS = 400;
 
-/** THE LIST AS THE REPORT WILL READ IT: `parseDecklistSections` and `parseDecklistText`, as
+/** THE LIST AS THE REPORT WILL READ IT: `parseDecklistSections` and `parseCommanderBox`, as
  *  `analyzeDecklist` calls them, then each name through the same `/static` lookup. */
-export async function readBack(commanders: string, decklist: string, lookup: Pick<StaticLookup, "prefetch" | "findByName">): Promise<{ commanders: string[]; found: string[]; missing: string[]; cards: number }> {
+export async function readBack(commanders: string, decklist: string, lookup: Pick<StaticLookup, "prefetch" | "findByName">): Promise<{ commanders: string[]; found: string[]; missing: string[]; cards: number; problem?: string }> {
   const sections = parseDecklistSections(decklist);
-  const commanderNames = commanders.trim() ? parseDecklistText(commanders) : sections.commanders;
+  const commanderNames = commanders.trim() ? parseCommanderBox(commanders) : sections.commanders;
+  const problem = commanderBoxProblem(commanderNames, commanders.trim() ? "box" : "section");
+  if (problem) return { commanders: commanderNames, found: [], missing: [], cards: 0, problem };
   const names = [...commanderNames, ...sections.deck];
   // NORMALISED FOR THE PREFETCH, as `analyzeDecklist` hands them to its sources.
   await lookup.prefetch(names.map(normalizeName));
@@ -135,6 +136,14 @@ function ReadBack({ commanders, decklist }: { commanders: string; decklist: stri
     );
   }
   if (!read) return <p role="status" aria-busy="true" className="text-sm text-(--muted)">Reading your list</p>;
+  if (read.problem) {
+    return (
+      <div className="flex flex-col gap-1.5" data-testid="read-back">
+        <span className="eyebrow text-(--muted)">What we read</span>
+        <h2 className="t-section" aria-live="polite">{read.problem}</h2>
+      </div>
+    );
+  }
   const unique = [...new Set(read.found)];
   return (
     <div className="flex flex-col gap-4" data-testid="read-back">

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { parseDecklistSections } from "./sections.js";
+import { commanderBoxProblem, parseCommanderBox, parseDecklistSections } from "./sections.js";
 
 test("splits a Commander section from the deck", () => {
   const text = [
@@ -138,4 +138,23 @@ test("a Companion section is its own list, never a card and never part of the de
   const tail = parseDecklistSections("1 Sol Ring\n\nCompanions\n1 Lurrus of the Dream-Den");
   expect(tail.deck).toEqual(["Sol Ring"]);
   expect(tail.companions).toEqual(["Lurrus of the Dream-Den"]);
+});
+
+test("the Commander box takes at most two cards (a partner pair)", () => {
+  expect(commanderBoxProblem([])).toBeUndefined();
+  expect(commanderBoxProblem(["A"])).toBeUndefined();
+  expect(commanderBoxProblem(["A", "B"])).toBeUndefined();
+  expect(commanderBoxProblem(["A", "B", "C"])).toMatch(/Commander box holds 3 cards/);
+});
+
+test("the Commander box is read without its section header", () => {
+  expect(parseCommanderBox("Commander:\n1 Thrasios, the Tidal Sage\nTymna the Weaver\n")).toEqual(["Thrasios, the Tidal Sage", "Tymna the Weaver"]);
+  expect(parseCommanderBox("2 Mountain (M21) 12")).toEqual(["Mountain", "Mountain"]);
+  // A sideboard header drops what sits under it, as in parseDecklistSections: never a silent partner.
+  expect(parseCommanderBox("Krenko, Mob Boss\nSideboard\nThrasios, the Tidal Sage")).toEqual(["Krenko, Mob Boss"]);
+  expect(parseCommanderBox("Maybeboard:\nSol Ring\nCommander\nKrenko, Mob Boss")).toEqual(["Krenko, Mob Boss"]);
+});
+
+test("the problem names the Commander section when the box was empty", () => {
+  expect(commanderBoxProblem(["A", "B", "C"], "section")).toMatch(/Commander section of your list holds 3 cards.*blank line/);
 });

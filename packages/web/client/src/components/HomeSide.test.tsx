@@ -19,3 +19,20 @@ test("the list is read as the report reads it: found cards counted, unknown line
   // Normalised before the prefetch, or every shard key misses (the bug the first cut shipped with).
   expect(prefetched[0]).toContain(normalizeName("Krenko, Mob Boss"));
 });
+
+test("the whole list in the Commander box is reported as a problem, as the report refuses it", async () => {
+  const lookup = { prefetch: async () => {}, findByName: async () => null };
+  const box = Array.from({ length: 5 }, (_, i) => `1 Card ${i}`).join("\n");
+  const r = await readBack(box, "", lookup);
+  expect(r.problem).toMatch(/Commander box holds 5 cards/);
+  expect((await readBack("1 Krenko", "", lookup)).problem).toBeUndefined();
+});
+
+test("a partner pair with its header line is two commanders, not a problem; an empty box blames the section", async () => {
+  const lookup = { prefetch: async () => {}, findByName: async () => null };
+  const pair = await readBack("Commander\n1 Thrasios, the Tidal Sage\n1 Tymna the Weaver", "", lookup);
+  expect(pair.commanders).toEqual(["Thrasios, the Tidal Sage", "Tymna the Weaver"]);
+  expect(pair.problem).toBeUndefined();
+  const list = ["Commander", ...Array.from({ length: 5 }, (_, i) => `1 Card ${i}`)].join("\n");
+  expect((await readBack("", list, lookup)).problem).toMatch(/Commander section of your list/);
+});

@@ -32,6 +32,17 @@ function stripTrailingSeparators(text: string): string {
   return text.slice(0, end);
 }
 
+/** Which section a line opens, or undefined if it is a card line. Case-insensitive; a trailing `:`
+ *  or `=` is allowed. */
+function sectionHeaderOf(line: string): Section | undefined {
+  const header = stripTrailingSeparators(line.toLowerCase()).trim();
+  if (header === "commander" || header === "commanders") return "commander";
+  if (header === "companion" || header === "companions") return "companion";
+  if (header === "deck" || header === "mainboard" || header === "main") return "deck";
+  if (header === "sideboard" || header === "maybeboard" || header === "tokens") return "ignore";
+  return undefined;
+}
+
 function cleanCardLine(line: string): string {
   const capped = line.length > MAX_CARD_LINE ? line.slice(0, MAX_CARD_LINE) : line;
   const withoutQty = capped.replace(/^\d+\s*x?\s+/i, "");
@@ -87,27 +98,10 @@ export function parseDecklistSections(text: string): { commanders: string[]; dec
 
     if (line.startsWith("#") || line.startsWith("//")) continue;
 
-    const header = stripTrailingSeparators(line.toLowerCase()).trim();
-    if (header === "commander" || header === "commanders") {
-      section = "commander";
-      sawHeader = true;
-      sawBlankAfterCommander = false;
-      continue;
-    }
-    if (header === "companion" || header === "companions") {
-      section = "companion";
-      sawHeader = true;
-      sawBlankAfterCommander = false;
-      continue;
-    }
-    if (header === "deck" || header === "mainboard" || header === "main") {
-      section = "deck";
-      sawHeader = true;
-      sawBlankAfterCommander = false;
-      continue;
-    }
-    if (header === "sideboard" || header === "maybeboard" || header === "tokens") {
-      section = "ignore";
+    const opened = sectionHeaderOf(line);
+    if (opened !== undefined) {
+      section = opened;
+      if (opened !== "ignore") sawHeader = true;
       sawBlankAfterCommander = false;
       continue;
     }
@@ -195,4 +189,38 @@ function flatExportCommander(text: string): { commanders: string[]; deck: string
     return { commanders: expand(lines.slice(0, headCount)), deck: expand(lines.slice(headCount)) };
   }
   return undefined;
+}
+
+/** A deck has at most two commanders: a partner pair, or a background, friends forever or doctor's
+ *  companion pairing. */
+export const MAX_COMMANDERS = 2;
+
+/** Why a Commander box cannot be read, or undefined. A whole list pasted there leaves no library,
+ *  and the report's maths has nothing to work on; refuse it rather than guess which line is meant. */
+export function commanderBoxProblem(names: string[], source: "box" | "section" = "box"): string | undefined {
+  if (names.length <= MAX_COMMANDERS) return undefined;
+  if (source === "section") {
+    return `The Commander section of your list holds ${names.length} cards. Put a blank line or a "Deck" line after your commander so the rest reads as the deck.`;
+  }
+  return `The Commander box holds ${names.length} cards. Put only your commander there (two with a partner) and the rest of the list in Decklist, or leave it empty if your list starts with the commander.`;
+}
+
+/** The card names in the Commander box, section-header lines ("Commander:", "Deck") left out: a
+ *  pasted partner pair often keeps its header, and a header is not a card. Header recognition is
+ *  `sectionHeaderOf`'s, the one `parseDecklistSections` uses. */
+export function parseCommanderBox(text: string): string[] {
+  const names: string[] = [];
+  // A sideboard/maybeboard/tokens header drops the lines under it, as in `parseDecklistSections`:
+  // skipping only the header line made the card under it a silent partner commander.
+  let ignoring = false;
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#") || line.startsWith("//")) continue;
+    const opened = sectionHeaderOf(line);
+    if (opened !== undefined) { ignoring = opened === "ignore"; continue; }
+    if (ignoring) continue;
+    const name = cleanCardLine(line);
+    if (name) for (let i = 0; i < cardQty(line); i++) names.push(name);
+  }
+  return names;
 }
