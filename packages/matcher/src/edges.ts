@@ -7,7 +7,7 @@ import crKeywords from "@edh-seer/tagger/cr-keywords" with { type: "json" };
  *  must never be keyed as one -- see `impliedEntryThemeTags`. */
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
-import { enterAsCopyAbilities, impliedEvents, preparedAbilities, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
+import { printedAllTypes, enterAsCopyAbilities, impliedEvents, preparedAbilities, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { normalizeZoneEvent, tagKey, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
@@ -482,6 +482,7 @@ export function characteristicsSubject(tags: CardTags, name?: string): SubjectFi
     // the filter existed) or nothing (after, if only one side were done).
     ...(c.keywords?.length ? { keyword: c.keywords.map((k) => k.toLowerCase()) } : {}),
     type: c.types.length ? c.types.map((t) => t.toLowerCase()) : undefined,
+    ...(printedAllTypes(types) !== undefined ? { allTypes: printedAllTypes(types)! } : {}),
     subtype: c.subtypes.length ? c.subtypes.map((t) => t.toLowerCase()) : undefined,
     colors: c.colors.length ? c.colors : undefined,
     control: "you",

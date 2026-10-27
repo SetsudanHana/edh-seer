@@ -244,8 +244,15 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
     const producerTokens = arr(producer.type);
     const unknowable = producerTokens.some((t) => PSEUDO_TYPE_SETS[t.toLowerCase()] !== undefined);
     if (!unknowable) {
-      const has = expandTypes(producerTokens, arr(producer.subtype), h);
-      if (negated.some((t) => has.has(t.toLowerCase()))) return false;
+      const excluded = (tokens: string[]): boolean => {
+        const has = expandTypes(tokens, arr(producer.subtype), h);
+        return negated.some((t) => has.has(t.toLowerCase()));
+      };
+      // `type` is an OR list on an emit and a CONJUNCTION on a printed type line (`allTypes`, stamped
+      // by `characteristicsSubject` / `selfSubject`). "Destroy target nonland permanent" can destroy
+      // a nonartifact creature, so Missy hears it; Laserbeak IS an artifact and she does not (#1383).
+      const orList = producerTokens.length > 1 && (producer.allTypes?.length ?? 0) === 0;
+      if (orList ? producerTokens.every((t) => excluded([t])) : excluded(producerTokens)) return false;
     }
   }
   // subtype: an array on the consumer means OR — at least one named subtype must be a

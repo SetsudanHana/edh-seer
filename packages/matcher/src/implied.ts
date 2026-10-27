@@ -1,8 +1,18 @@
 import type { Ability, CardTags, Characteristics, GameEvent, SubjectFilter } from "@edh-seer/tagger";
-import { parseSubject } from "@edh-seer/tagger/subject";
+import { parseSubject, CARD_TYPES } from "@edh-seer/tagger/subject";
 import { parseStat } from "./stats.js";
 
 const PERMANENT_TYPES = new Set(["creature", "artifact", "enchantment", "planeswalker", "battle", "land"]);
+
+/** A PRINTED TYPE LINE IS A CONJUNCTION. `type` on a subject is an OR list, which is right for an emit
+ *  ("destroy target artifact or creature") and wrong for a card: Laserbeak is an artifact AND a
+ *  creature. A card's two or more card types are stamped as `allTypes` so a `notType` exclusion can
+ *  tell the two apart (#1383): an OR list is excluded only when every alternative is, a printed type
+ *  line as soon as one type is. Supertypes are not card types and are left out. */
+export function printedAllTypes(types: readonly string[]): string[] | undefined {
+  const card = types.map((t) => t.toLowerCase()).filter((t) => (CARD_TYPES as readonly string[]).includes(t));
+  return card.length >= 2 ? card : undefined;
+}
 
 /** Collapse a string list to undefined (empty), a bare string (one), or the array (many) — the
  *  SubjectFilter convention so "x" and ["x"] compare equal downstream. */
@@ -40,6 +50,8 @@ function selfSubject(chars: Characteristics): SubjectFilter {
   const type = collapse(types);
   const subtype = collapse(subtypes);
   if (type !== undefined) out.type = type;
+  const allTypes = printedAllTypes(types);
+  if (allTypes !== undefined) out.allTypes = allTypes;
   if (subtype !== undefined) out.subtype = subtype;
   if (isHistoric(types, subtypes)) out.historic = true;
   if (isOutlaw(subtypes)) out.outlaw = true;

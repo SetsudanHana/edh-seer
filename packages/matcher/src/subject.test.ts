@@ -543,6 +543,19 @@ test("exclusions: a producer matching one fails", () => {
 test("a nonartifact creature consumer refuses an artifact creature producer (#1383)", () => {
   const consumer = parseSubject("all nonartifact creatures") as SubjectFilter;
   // Solemn Simulacrum: Artifact Creature. A Grizzly Bears: Creature.
-  expect(subjectMatches(s({ control: "any", type: ["artifact", "creature"] }), consumer, H)).toBe(false);
+  expect(subjectMatches(s({ control: "any", type: ["artifact", "creature"], allTypes: ["artifact", "creature"] }), consumer, H)).toBe(false);
   expect(subjectMatches(s({ control: "any", type: "creature" }), consumer, H)).toBe(true);
+});
+
+// #1383 follow-up: `type` on an EMIT is an OR list, on a printed card an AND. Missy ("another
+// nonartifact creature dies") must still hear Stroke of Midnight ("destroy target nonland
+// permanent"), which can destroy a nonartifact creature, and must not hear an artifact creature.
+test("a nonartifact creature consumer: an OR-list producer is excluded only if EVERY alternative is, a printed artifact creature always", () => {
+  const missy = parseSubject("another nonartifact creature") as SubjectFilter;
+  const stroke = s({ control: "any", type: ["creature", "artifact", "enchantment", "planeswalker", "battle"], notType: ["land"] });
+  expect(subjectMatches(stroke, missy, H)).toBe(true);
+  expect(subjectMatches(s({ control: "any", type: ["artifact", "creature"] }), missy, H)).toBe(true); // "destroy target artifact or creature"
+  expect(subjectMatches(s({ control: "any", type: ["artifact", "enchantment"] }), missy, H)).toBe(false);
+  const laserbeak = s({ control: "any", type: ["artifact", "creature"], allTypes: ["artifact", "creature"] });
+  expect(subjectMatches(laserbeak, missy, H)).toBe(false);
 });
