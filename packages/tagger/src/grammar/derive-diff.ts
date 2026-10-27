@@ -171,22 +171,6 @@ export function lostScaledAmount(stored: readonly Ability[], grammar: readonly A
   return [...lost].sort();
 }
 
-/** AN AMOUNT OR COUNT THE GRAMMAR DROPS (#1373 review). `lostScaledAmount` only sees an amount defined by a count of the deck's own cards; a plain `amount: "1"` (Dusk Urchins' "put a -1/-1 counter on it") or
- *  a `count` (Freelance Muscle's scaling) the stored ability carries and the grammar's same ability lacks was a silent loss inside a labelled "amount" group. PRESENCE ONLY, so a spelling difference in an
- *  amount that both carry ("+X/+X, where X" against "+X/+X where X": Doran) is not a loss. True when a stored ability has an `amount` or a `count` and the grammar has an ability of the same clause, kind,
- *  effect kind and trigger verbs, none of which carries it. No such counterpart is `lostClaims`'s business. One-directional: an amount only the grammar carries is a gain. */
-export function lostAmountOrCount(stored: readonly Ability[], grammar: readonly Ability[]): boolean {
-  const shape = (a: Ability): string => `${a.clause ?? -1}|${a.kind}|${a.effect?.kind ?? ""}|${[...(a.trigger?.verbs ?? [])].sort().join("+")}`;
-  const byShape = new Map<string, Ability[]>();
-  for (const g of grammar) (byShape.get(shape(g)) ?? byShape.set(shape(g), []).get(shape(g))!).push(g);
-  return stored.some((a) => {
-    if (a.amount === undefined && a.count === undefined) return false;
-    const there = byShape.get(shape(a));
-    if (!there) return false;
-    return !there.some((g) => (a.amount === undefined || g.amount !== undefined) && (a.count === undefined || g.count !== undefined));
-  });
-}
-
 /** THE TRIGGER FLAGS THE GRAMMAR DROPS (#1349 review). `lostClaims` compares effect kinds and emit verbs, so a labelled "grammar right" group can switch a card whose grammar
  *  trigger lost a flag the stored one carries: Kate Stewart's "one or more time counters" is `batched` in the stored derive, and the grammar's bare counter-added trigger is not,
  *  which `edge-magnitude` and `wincon` read as one firing per batch. True when, per trigger event (the verbs), the stored abilities carry more `batched` triggers, or more

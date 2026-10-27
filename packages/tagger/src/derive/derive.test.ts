@@ -6521,13 +6521,29 @@ test("a textless blocks record with ANY ability the covering clause lacks is not
   expect(richer.spliced.has(2)).toBe(false);
 });
 
-// Dusk Urchins-shaped, exact copy: folds. (The poorer / respelled-amount cover is measured corpus-wide with derive-identity, not unit-built: it arises from the grammar path's own reading.)
-test("an identical textless blocks record folds (Dusk Urchins shape)", () => {
-  const text = "Whenever this creature attacks or blocks, put a -1/-1 counter on it.";
-  const act = (amount: string | null) => [{ verb: "add-counter", object: "a -1/-1 counter on it", amount, fromZone: null, toZone: null, optional: false }];
-  const run = (blocksAmount: string | null) => deriveAbilities([
-    { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: act("1") },
-    { id: 2, abilityType: "triggered", trigger: { event: "blocks", subject: "this creature", control: "you" }, actions: act(blocksAmount) },
-  ], "Dusk Urchins", { 1: text }, undefined, text);
-  expect(run("1").abilities.filter((a) => a.clause === 2)).toHaveLength(0);
+// THE DIRECTION OF THE COVER (#1373 review): a twin is dropped only when the covering clause says at least as much. A twin that carries an amount the covering clause lacks is RICHER and survives;
+// a twin without an amount beside a covering clause that has one is POORER and folds.
+describe("the blocks twin fold covers a poorer twin and never a richer one", () => {
+  const text = "Whenever this creature attacks or blocks, it gains trample until end of turn.";
+  const run = (coveringAmount: string | null, twinAmount: string | null) => {
+    const act = (amount: string | null) => [{ verb: "grant-ability", object: "it gains trample until end of turn", amount, fromZone: null, toZone: null, optional: false }];
+    return deriveAbilities([
+      { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: act(coveringAmount) },
+      { id: 2, abilityType: "triggered", trigger: { event: "blocks", subject: "this creature", control: "you" }, actions: act(twinAmount) },
+    ], "Fold Direction", { 1: text }, undefined, text);
+  };
+  test("(a) a twin with an amount beside a covering record without one is NOT folded, and its amount survives", () => {
+    const r = run(null, "7");
+    expect(r.spliced.has(2)).toBe(false);
+    expect(r.abilities.some((a) => a.clause === 2 && a.amount === "7")).toBe(true);
+  });
+  test("(b) the mirror, a twin without an amount beside a covering record with one, folds", () => {
+    const r = run("7", null);
+    expect(r.spliced.has(2)).toBe(true);
+    expect(r.abilities.filter((a) => a.clause === 2)).toHaveLength(0);
+    expect(r.abilities.some((a) => a.clause === 1 && a.trigger?.verbs.includes("blocks" as never) && a.amount === "7")).toBe(true);
+  });
+  test("an identical twin folds (Dusk Urchins shape)", () => {
+    expect(run("7", "7").spliced.has(2)).toBe(true);
+  });
 });

@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Ability } from "../schema.js";
-import { deriveDiff, lostAmountOrCount, lostClaims, lostScaledAmount, lostSubjectFields, lostTriggerFlags, manaDiffers } from "./derive-diff.js";
+import { deriveDiff, lostClaims, lostScaledAmount, lostSubjectFields, lostTriggerFlags, manaDiffers } from "./derive-diff.js";
 
 const ab = (over: Partial<Ability>): Ability => ({ kind: "static", effect: { kind: "" }, clause: 1, ...over } as Ability);
 
@@ -165,20 +165,4 @@ test("a gate that moved to ANOTHER ability of the same clause is a difference (d
   expect(deriveDiff([ab({ ...draw, gate: g1 }), ab({ ...mill, gate: g2 })], [ab({ ...draw, gate: g2 }), ab({ ...mill, gate: g1 })])).toBe("gate");
   // ...while the same gates on the same kinds, in another order, are none
   expect(deriveDiff([ab({ ...draw, gate: g1 }), ab({ ...mill, gate: g2 })], [ab({ ...mill, gate: g2 }), ab({ ...draw, gate: g1 })])).toBeNull();
-});
-
-// #1373 review: the switch took the grammar reading of Dusk Urchins (its counter placement loses `amount: "1"`) and of Freelance Muscle (loses `count`).
-test("an amount or count the stored ability carries and the grammar's same ability lacks is a loss; a spelling difference is not", () => {
-  const trig = { verbs: ["blocks"], subject: { control: "you", token: null, self: true } } as never;
-  const stored = ab({ kind: "triggered", trigger: trig, effect: { kind: "counter-placement" }, amount: "1" });
-  expect(lostAmountOrCount([stored], [ab({ kind: "triggered", trigger: trig, effect: { kind: "counter-placement" } })])).toBe(true);
-  // Freelance Muscle: both carry an amount, the grammar's has no `count`.
-  const scaled = ab({ kind: "triggered", trigger: trig, effect: { kind: "pump" }, amount: "+X/+X, where X is Y", count: { floor: 0, ceiling: null, scalesWith: "mana" } as never });
-  expect(lostAmountOrCount([scaled], [ab({ kind: "triggered", trigger: trig, effect: { kind: "pump" }, amount: "Y" })])).toBe(true);
-  // Doran: the same ability, the amount spelled without the comma.
-  const doran = ab({ kind: "triggered", trigger: trig, effect: { kind: "pump" }, amount: "+X/+X, where X is Y" });
-  expect(lostAmountOrCount([doran], [{ ...doran, amount: "+X/+X where X is Y" }])).toBe(false);
-  // A gain, another clause's ability, or no counterpart at all (lostClaims' business) are not this loss.
-  expect(lostAmountOrCount([ab({ kind: "triggered", trigger: trig, effect: { kind: "counter-placement" } })], [stored])).toBe(false);
-  expect(lostAmountOrCount([stored], [{ ...stored, amount: undefined, clause: 2 } as Ability])).toBe(false);
 });
