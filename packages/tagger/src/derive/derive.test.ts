@@ -4498,8 +4498,9 @@ test("a refused 'deals damage to you' destroys an OPPONENT's creature (No Mercy)
   expect(abilities.every((a) => a.claimsNothing === undefined)).toBe(true);
 });
 
-test("a refused trigger about THIS card makes its 'it' the card itself, and withdraws nothing (#1253, Goblin Cadets)", () => {
-  const text = "Whenever this creature blocks or becomes blocked, target opponent gains control of it. (This removes this creature from combat.)";
+test("a refused trigger about THIS card makes its 'it' the card itself, and withdraws nothing (#1253, Goblin Cadets' becomes-blocked half)", () => {
+  // #1373: the printed "blocks or becomes blocked" now has a live `blocks` half (see the next test); this is the half that stays refused.
+  const text = "Whenever this creature becomes blocked, target opponent gains control of it. (This removes this creature from combat.)";
   const { abilities, unknownTriggers } = deriveAbilities(
     [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "this creature", control: "you" },
       actions: [{ verb: "gain-control", object: "it", fromZone: null, toZone: null, amount: null, optional: false }] }],
@@ -4513,6 +4514,20 @@ test("a refused trigger about THIS card makes its 'it' the card itself, and with
     expect(a.claimsNothing).toBeUndefined();
     for (const e of a.emits ?? []) { expect(e.subject.self).toBe(true); expect(e.subject.ref).toBeUndefined(); }
   }
+});
+
+test("Goblin Cadets' 'blocks or becomes blocked': the blocks half is a live self trigger, the becomes-blocked half is still refused (#1373)", () => {
+  const text = "Whenever this creature blocks or becomes blocked, target opponent gains control of it. (This removes this creature from combat.)";
+  const { abilities, unknownTriggers } = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "this creature", control: "you" },
+      actions: [{ verb: "gain-control", object: "it", fromZone: null, toZone: null, amount: null, optional: false }] }],
+    "Goblin Cadets",
+    { 1: text },
+  );
+  expect(unknownTriggers).toContain("becomes-blocked");
+  const live = abilities.filter((a) => a.trigger?.verbs.includes("blocks" as never));
+  expect(live).toHaveLength(1);
+  expect(live[0]!.trigger!.subject.self).toBe(true);
 });
 
 test("Sacred Ground's returned land is YOURS: control you, not the opponent whose spell caused it (#1253)", () => {
@@ -6300,7 +6315,8 @@ describe("host: an effect on the attached permanent (#1315)", () => {
     const wand = viaModel("Wand of Orcus", "Whenever equipped creature attacks or blocks, it and Zombies you control gain deathtouch until end of turn.", [
       { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "equipped creature", control: "you" }, actions: [{ verb: "grant-ability", object: "equipped creature and Zombies you control gain deathtouch until end of turn" }] },
     ] as never);
-    expect(hosts(wand)).toEqual(["keyword-grant:false"]);
+    // One per limb of "attacks or blocks" since #1373 made `blocks` a verb (the text reads the second limb): neither is the host.
+    expect(hosts(wand)).toEqual(["keyword-grant:false", "keyword-grant:false"]);
   });
 
   test("review of 41a1da15: a plural class, a grant to another class, and a LOSS are not host (Kor Blademaster, Gemcutter Buccaneer, Earthbind)", () => {
@@ -6424,5 +6440,110 @@ describe("restriction: a host that can't attack or block (#1315, CR 508.1c, 509.
     expect(rs(derive("Vow of Flight", AURA, "Enchant creature\nEnchanted creature gets +2/+2, has flying, and can't attack you or planeswalkers you control."))).toEqual([]);
     expect(rs(derive("Propaganda", "Enchantment", "Creatures can't attack you unless their controller pays {2} for each creature they control that's attacking you."))).toEqual([]);
     expect(derive("Propaganda", "Enchantment", "Creatures can't attack you unless their controller pays {2} for each creature they control that's attacking you.").some((a) => a.effect.kind === "tax")).toBe(true);
+  });
+});
+
+// #1373 (owner ruling 2026-10-27): `blocks` is an engine verb. It was a clause word (and 192 stored rows carried it) with no `VERB_VOCAB` member, so
+// `normalizeTriggerVerb` dropped the trigger and a modal header with "attacks or blocks" (Elder Gargaroth) gave its modes the attacks visit only.
+describe("#1373 the blocks trigger", () => {
+  const deriveText = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings));
+  };
+
+  test("Elder Gargaroth's three modes derive under BOTH the attacks and the blocks visit", () => {
+    const tags = deriveText("Elder Gargaroth", "Creature — Beast", "Reach, vigilance, trample\nWhenever this creature attacks or blocks, choose one —\n• Create a 3/3 green Beast creature token.\n• You gain 3 life.\n• Draw a card.");
+    for (const verb of ["attacks", "blocks"]) {
+      const mine = tags.abilities.filter((a) => a.trigger?.verbs?.includes(verb as never));
+      const kinds = mine.flatMap((a) => (a.emits ?? []).map((e) => e.verb));
+      expect(kinds, verb).toEqual(expect.arrayContaining(["create-token", "gain-life", "draw"]));
+      for (const a of mine) expect(a.trigger?.subject.self, verb).toBe(true);
+    }
+    expect(tags.unknownTriggers ?? []).not.toContain("blocks");
+  });
+
+  test("a pure 'Whenever this creature blocks' card (Goldenglow Moth) derives a self blocks trigger", () => {
+    const tags = deriveText("Goldenglow Moth", "Creature — Insect", "Flying\nWhenever this creature blocks, you may gain 4 life.");
+    const t = tags.abilities.find((a) => a.trigger?.verbs?.includes("blocks" as never));
+    expect(t).toBeDefined();
+    expect(t!.trigger!.subject.self).toBe(true);
+    expect(t!.trigger!.subject.type).toBe("creature");
+    expect(tags.unknownTriggers ?? []).not.toContain("blocks");
+  });
+
+  test("the blocking state is the event on a blocks trigger, as the attacking state is on an attack", () => {
+    const { abilities } = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "blocks", subject: "a blocking creature you control", control: "you" }, actions: [{ verb: "draw", object: "a card" }] }]);
+    expect(abilities[0]!.trigger?.verbs).toEqual(["blocks"]);
+    expect(abilities[0]!.trigger?.subject.combat).toBeUndefined();
+  });
+});
+
+// #1373 review: the model stores "attacks or blocks" as TWO records (Howling Golem, Jedit Ojanen, Sapphire Dragon, Goblin Psychopath: 50 cards); `segment()` numbers the
+// sentence once, so the second record has no text of its own and adopts the sentence. The first record's grammar reading already covers both halves, so the second
+// one derived a duplicate blocks ability. It is folded into the covering clause (`spliced`), as a re-homed twin is.
+test("a textless 'blocks' record beside the 'attacks' record that already reads both halves derives ONE blocks ability (Howling Golem)", () => {
+  const text = "Whenever this creature attacks or blocks, each player draws a card.";
+  const draw = { verb: "draw", object: "each player", amount: "1", fromZone: null, toZone: null, optional: false };
+  const r = deriveAbilities([
+    { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: [draw] },
+    { id: 2, abilityType: "triggered", trigger: { event: "blocks", subject: "this creature", control: "you" }, actions: [draw] },
+  ], "Howling Golem", { 1: text }, undefined, text);
+  const draws = r.abilities.filter((a) => a.effect.kind !== "" || (a.emits ?? []).some((e) => e.verb === "draw"));
+  expect(draws.filter((a) => a.trigger?.verbs.includes("attacks" as never))).toHaveLength(1);
+  expect(draws.filter((a) => a.trigger?.verbs.includes("blocks" as never))).toHaveLength(1);
+  expect(r.spliced.has(2)).toBe(true);
+});
+
+// #1373 review of the fold: a textless blocks record is folded ONLY when every one of its abilities has an exact match among the covering clause's, so a fold is always a
+// pure removal. Velukan Dragon's blocks record read the pump amount without the comma the covering clause's reading has, so the dice-rolled copy (identical) used to be
+// dropped while the pump stayed: a half fold that changed which readings survive.
+test("a textless blocks record with ANY ability the covering clause lacks is not folded at all (Velukan Dragon)", () => {
+  const text = "Whenever this creature attacks or blocks, roll a six-sided die. This creature gets +X/+0 until end of turn, where X is the result minus 1.";
+  const acts = (extra: boolean) => [
+    { verb: "roll-dice", object: "a six-sided die", fromZone: null, toZone: null, amount: null, optional: false },
+    { verb: "modify-pt", object: "this creature", amount: "+X/+0, where X is the result minus 1", fromZone: null, toZone: null, optional: false },
+    ...(extra ? [{ verb: "draw", object: "you", amount: "1", fromZone: null, toZone: null, optional: false }] : []),
+  ];
+  const run = (extra: boolean) => deriveAbilities([
+    { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: acts(false) },
+    { id: 2, abilityType: "triggered", trigger: { event: "blocks", subject: "this creature", control: "you" }, actions: acts(extra) },
+  ], "Velukan Dragon", { 1: text }, undefined, text);
+  const clause2 = (r: ReturnType<typeof run>) => r.abilities.filter((a) => a.clause === 2);
+  // Control: both records read alike, so the whole textless clause folds.
+  const alike = run(false);
+  expect(clause2(alike)).toHaveLength(0);
+  expect(alike.spliced.has(2)).toBe(true);
+  // One ability of the textless clause has no counterpart in the covering clause: NOTHING of it is folded, the identical dice-rolled copy included.
+  const richer = run(true);
+  expect(clause2(richer).some((a) => (a.emits ?? []).some((e) => e.verb === "dice-rolled"))).toBe(true);
+  expect(clause2(richer).some((a) => (a.emits ?? []).some((e) => e.verb === "draw"))).toBe(true);
+  expect(richer.spliced.has(2)).toBe(false);
+});
+
+// THE DIRECTION OF THE COVER (#1373 review): a twin is dropped only when the covering clause says at least as much. A twin that carries an amount the covering clause lacks is RICHER and survives;
+// a twin without an amount beside a covering clause that has one is POORER and folds.
+describe("the blocks twin fold covers a poorer twin and never a richer one", () => {
+  const text = "Whenever this creature attacks or blocks, it gains trample until end of turn.";
+  const run = (coveringAmount: string | null, twinAmount: string | null) => {
+    const act = (amount: string | null) => [{ verb: "grant-ability", object: "it gains trample until end of turn", amount, fromZone: null, toZone: null, optional: false }];
+    return deriveAbilities([
+      { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: act(coveringAmount) },
+      { id: 2, abilityType: "triggered", trigger: { event: "blocks", subject: "this creature", control: "you" }, actions: act(twinAmount) },
+    ], "Fold Direction", { 1: text }, undefined, text);
+  };
+  test("(a) a twin with an amount beside a covering record without one is NOT folded, and its amount survives", () => {
+    const r = run(null, "7");
+    expect(r.spliced.has(2)).toBe(false);
+    expect(r.abilities.some((a) => a.clause === 2 && a.amount === "7")).toBe(true);
+  });
+  test("(b) the mirror, a twin without an amount beside a covering record with one, folds", () => {
+    const r = run("7", null);
+    expect(r.spliced.has(2)).toBe(true);
+    expect(r.abilities.filter((a) => a.clause === 2)).toHaveLength(0);
+    expect(r.abilities.some((a) => a.clause === 1 && a.trigger?.verbs.includes("blocks" as never) && a.amount === "7")).toBe(true);
+  });
+  test("an identical twin folds (Dusk Urchins shape)", () => {
+    expect(run("7", "7").spliced.has(2)).toBe(true);
   });
 });

@@ -46,10 +46,12 @@ test("VERB_VOCAB is a closed, unique verb list", () => {
   // prepared. The emit was OPEN in verb-accounting since #668, awaiting that ruling.
   // 75 -> 76 on 2026-10-26 for `face-a-dilemma` (Star Trek, #1349; owner ruling): "you face a dilemma as you choose one or more modes", a trigger event fed by every
   // modal spell or ability. Seven of Nine, Elim Garak, Obsidian Order Operative and Tinkerer watch it; derive's modal pass (derive/modal.ts) supplies it.
-  expect(VERB_VOCAB).toHaveLength(76);
+  // 76 -> 77 on 2026-10-27 for `blocks` (#1373; owner ruling): "whenever this creature blocks" had a clause word and 192 stored rows (249 corpus cards print it) but no engine verb, so
+  // `normalizeTriggerVerb` dropped the trigger and Elder Gargaroth's "attacks or blocks" modes read under the attacks visit only. Consumed from card text, supplied by every creature (implied.ts, CR 509.1a).
+  expect(VERB_VOCAB).toHaveLength(77);
   expect(VERB_VOCAB).toContain("damaged");
   expect(VERB_VOCAB).toContain("exiled");
-  for (const v of ["monarch", "initiative", "ring-tempts", "flip-coin", "face-a-dilemma"]) expect(VERB_VOCAB).toContain(v);
+  for (const v of ["monarch", "initiative", "ring-tempts", "flip-coin", "face-a-dilemma", "blocks"]) expect(VERB_VOCAB).toContain(v);
   for (const v of ["goad", "explore", "clash", "vote", "venture-into-the-dungeon", "foretell"]) expect(VERB_VOCAB).toContain(v);
   for (const v of ["shuffle", "transform", "turned-face-up", "attached", "gains-control", "prevented"]) expect(VERB_VOCAB).toContain(v);
   expect(VERB_VOCAB).toContain("counter-removed");
@@ -117,6 +119,7 @@ test("VERB_IMPLIED_CLASS is the owner's ruling, one table", () => {
     "combat-damage": "creature", // CR 510.1a: the dealer
     dies: "creature", // owner: only a creature dies (a typed planeswalker subject keeps its own class)
     attacks: "creature", // CR 508.1a
+    blocks: "creature", // CR 509.1a: only creatures block (#1373)
   });
   for (const v of Object.keys(VERB_IMPLIED_CLASS)) expect(VERB_VOCAB).toContain(v);
 });

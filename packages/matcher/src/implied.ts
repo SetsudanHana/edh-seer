@@ -150,6 +150,8 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
     // attacks/combat-damage emit (goad, Mage Slayer, Saskia).
     if (types.includes("creature") && chars.creatureOnlyIf !== true) {
       push("attacks");
+      // CR 509.1a: only creatures block. Supplied for the same reason as `attacks`, and gated the same way (`combatSelfSupplied`). #1373.
+      push("blocks");
       push("combat-damage");
     }
     // A Room can be fully unlocked (CR 709.5i): both doors paid for. It is the only thing that can,

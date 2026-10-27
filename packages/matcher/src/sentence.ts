@@ -267,6 +267,8 @@ export const VERB_PHRASES: Record<string, string> = {
   "leaves-graveyard": "leaves a graveyard",
   cast: "is cast",
   attacks: "attacks",
+  // CR 509.1a: only a creature blocks. #1373.
+  blocks: "blocks",
   taps: "becomes tapped",
   untaps: "untaps",
   "counter-added": "gets a counter",

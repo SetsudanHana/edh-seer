@@ -724,7 +724,7 @@ function combatNarrowsOffType(subject: SubjectFilter): boolean {
 
 /** Is this combat producer/consumer pair satisfied by the game itself rather than by any card?
  *
- *  **REVERSED FOR `attacks` (owner ruling 2026-09-27, #561)**: every creature attacking now feeds an
+ *  **REVERSED FOR `attacks` (owner ruling 2026-09-27, #561) AND `blocks` (2026-10-27)**: every creature attacking now feeds an
  *  attack payoff -- measured +3,810 reasons on the 71 decks, panel and compass unchanged. What
  *  follows is the original argument, and it still governs `combat-damage`.
  *
@@ -751,6 +751,9 @@ export function combatSelfSupplied(producer: GameEvent, consumer: GameEvent): bo
   // Shared Animosity sat under "nothing argues for keeping these" in a go-wide Goblin deck. The
   // ruling above is reversed for `attacks`; combat damage keeps it.
   if (consumer.verb === "attacks") return false;
+  // `blocks` FOLLOWS `attacks` (owner ruling 2026-10-27, extending #561): every creature blocking feeds a block payoff, a keyword-narrowed one ("with defender", Perimeter
+  // Captain) is fed by creatures with that keyword and a typal one by that type. A SELF consumer ("this creature blocks") stays unfed through `selfEtbSelfSupplied`.
+  if (consumer.verb === "blocks") return false;
   if (!producer.implied) return false;
   return !combatConsumerNarrows(consumer.subject);
 }
@@ -1065,7 +1068,7 @@ export function castSelfSupplied(producer: GameEvent, consumer: GameEvent): bool
 
 /** The verbs `combatSelfSupplied` governs -- the ones a creature performs for free. Exported so the
  *  census can ask "is this row one of the ones that gate applies to" without restating the list. */
-export const COMBAT_VERBS: ReadonlySet<string> = new Set(["attacks", "combat-damage"]);
+export const COMBAT_VERBS: ReadonlySet<string> = new Set(["attacks", "blocks", "combat-damage"]);
 
 /** Does the producer's event come from where the consumer's trigger demands?
  *

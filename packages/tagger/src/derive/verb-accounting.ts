@@ -51,7 +51,7 @@ export const OPEN: Record<string, { cards: number; note: string }> = {
  *  and `VERB_ALIASES`, kept explicit so a producer can never exist without a consumer word. */
 export const ENGINE_TO_TRIGGER: Record<string, string> = {
   enters: "enters", "enters-graveyard": "put-into-graveyard", dies: "dies", leaves: "leaves", cast: "cast",
-  attacks: "attacks", taps: "taps", "non-combat-damage": "damage-dealt", "combat-damage": "damage-dealt",
+  attacks: "attacks", blocks: "blocks", taps: "taps", "non-combat-damage": "damage-dealt", "combat-damage": "damage-dealt",
   // The receiving side (AF7d, 2026-09-16). Consumer-only: no emit row, a damage emit's VICTIM supplies it.
   damaged: "damaged",
   // A card put into exile (AF7b, 2026-09-16): every exile action emits it.
@@ -112,7 +112,7 @@ const PRIMITIVE_EMITTED = ["connive", "recruit", "bolster", "support", "adapt", 
   "populate", "incubate", "manifest", "discover", "meld", "cloak", "manifest-dread", "earthbend", "amass", "fight",
   "becomes-monstrous", "empower-jace"];
 /** Events no action supplies: the game or an opponent does. Refused by design, never near-missed. */
-const NO_PRODUCER = ["blocks", "becomes-blocked", "becomes-target", "level-up", "chapter", "crime", "expend", "descended",
+const NO_PRODUCER = ["becomes-blocked", "becomes-target", "level-up", "chapter", "crime", "expend", "descended",
   "day-night", "activate", "phases-in", "loses-control", "becomes-crewed", "tapped-for-mana", "cycled",
   "mutates", "exploit", "firebend", "reflexive", "state", "mana-spent", "returned-to-hand", "put-into-library",
   "becomes-renowned", "becomes-saddled", "plotted", "give-gift", "mentors", "solved", "resolves", "evolve"];

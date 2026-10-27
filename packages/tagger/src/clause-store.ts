@@ -218,7 +218,7 @@ const PLAYER_ONLY =
 /** Events whose subject SHOULD be a thing, not a person. A phase trigger ("at the beginning of your
  *  upkeep") names a player and is right to. */
 const THING_EVENTS: ReadonlySet<string> = new Set([
-  "cast", "enters", "dies", "draw", "mill", "discard", "sacrifice", "attacks", "leaves",
+  "cast", "enters", "dies", "draw", "mill", "discard", "sacrifice", "attacks", "blocks", "leaves",
   "counter-added", "counter-removed", "create-token", "land-play", "untaps", "taps",
   "transform", "turned-face-up", "attached", "unattached", "gains-control", "phases-out", "regenerate", "copy",
   "goad", "exert", "detain", "suspect", "harness", "explore", "endure", "convert", "heal", "airbend", "foretell",
@@ -265,6 +265,8 @@ const TRIGGER_CUES: Record<string, RegExp> = {
   "enters-graveyard": /graveyard|\bdies?\b|\bmill|\bdiscard/i,
   leaves: /\bleaves?\b|\bleave\b|\bdies?\b|put into (a|your|their|its owner's) graveyard|\bexile|returns? .* to (its|their) owner|lose(s)? control/i,
   attacks: /\battack(s|ed|ing)?\b/i,
+  // #1373, measured 2026-10-27 over the stored cardClauses: 191 non-token clauses on 190 cards carry event "blocks"; this cue clears all 191 against the card's printed text, none is refused.
+  blocks: /\bblock(s|ed|ing)?\b/i,
   taps: /\btap(s|ped|ping)?\b/i,
   untaps: /\buntap/i,
   draw: /\bdraws?\b|\bdrew\b/i,

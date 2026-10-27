@@ -556,7 +556,9 @@ import { emblemRecipient } from "../emblem.js";
 // 391: #1352 -- a SELF animate carries its becomes-phrase in its subject (type, subtype, stats, colours, keywords), as the store writes it (Jade Statue, the Keyrune/Monument/Opal/Hidden cycles, Vehicles); a target or class animate keeps its target class alone (spellTargeting would read the result as the target; #1364); the switch gate `lostSubjectFields` pairs by clause and effect kind on any kind (Goddric, the Aura bounces), `lostScaledAmount` refuses a dropped scaling amount; `stripCardName` is word-bound (Command Tower, Dino DNA).
 // 392: #1357 -- an effect's trailing gating "if <condition>" is `Ability.gate`, parsed by the one gate parser (gate.ts: control / threshold / counter / turn-event / unknown), attached per conjunct (an "except ... if" rider never gates the clone); a suppliable condition adds `conditionCares` (no counter demand for a counter the card places on itself); the grammar reads a gated mode instead of refusing it (What Must Be Done keeps its return); TRON needs two Urza's lands. The matcher weighs gated contributions by deck likelihood (owner 2026-10-27).
 // 393: #1357 part 2 -- a LEADING condition gates its own sentence ("If X, A and B" gates both; ", then if" / "Then if"); "Otherwise," / "If not," carry an unknown gate negating the earlier condition(s) (gate.otherwise), with `otherwiseAlike` when the stored reading lost a same-effect sibling; reflexive follow-ups, "instead", replacements, alternative costs, the trigger-doubler frame and shuffle-after-search are no gate; triggers' intervening ifs stay the trigger path's.
-export const DERIVE_VERSION = 393;
+// 394: #1373 (owner ruling 2026-10-27) -- `blocks` is an engine verb (CR 509.1a: only creatures block): a "whenever ... blocks" trigger derives instead of being dropped (192 stored rows carried the clause event, 249 corpus cards print it), a modal header's "attacks or blocks" (Elder Gargaroth) gives its modes the blocks visit as well as the attacks one, and the blocking state of a blocks trigger's subject is the event (as the attacking state is on an attack). `blocks` joins PERMANENT_EVENT_VERBS; a self blocks trigger refuses a bare clause `you` the way attacks does.
+// 395: #1373 review -- a textless `blocks` record beside the record whose grammar reading already covers "attacks or blocks" (Howling Golem, Jedit Ojanen, Sapphire Dragon, Goblin Psychopath: 46 cards, all pure removals) is folded into it, all or nothing per clause, when EVERY ability it derives is covered by one of the covering clause's (`identicalTwinOf`: identical apart from the clause and the amount's spelling, the covering one carrying an amount / count wherever the twin does), instead of a second blocks ability.
+export const DERIVE_VERSION = 395;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -909,7 +911,7 @@ const LEGAL_VERBS = new Set<string>(VERB_VOCAB);
  *  `draw` became a TRIGGERS member in its own right once the persist gate refused Psychosis Crawler
  *  and Underworld Dreams for answering it (250 corpus cards carry such a trigger), and the bridge is
  *  now RETIRED: `draw-step` means the draw step and nothing consumes it.
- *  `damage-dealt`, `blocks`, `main-phase`, `chapter` and friends have no engine verb at all and
+ *  `damage-dealt`, `main-phase`, `chapter` and friends have no engine verb at all and
  *  are deliberately absent: they surface in `unknownTriggers` rather than pick a near-miss. */
 const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
   "life-gained": "gain-life",
@@ -1648,9 +1650,9 @@ const CLAUSE_CONTROL: Record<string, Control> = { you: "you", opponent: "opp", a
 
 /** Verbs whose subject is a PERMANENT, so its controller is the permanent's and not the ability's.
  *  See the trigger branch: a clause `you` with nothing printed behind it is refused on these only.
- *  Every name is a `VERB_VOCAB` member (blocking has no verb; the transform verb is `transform`). */
+ *  Every name is a `VERB_VOCAB` member (the transform verb is `transform`). */
 const PERMANENT_EVENT_VERBS: ReadonlySet<string> = new Set([
-  "dies", "enters", "leaves", "attacks", "taps", "untaps", "counter-added", "counter-removed",
+  "dies", "enters", "leaves", "attacks", "blocks", "taps", "untaps", "counter-added", "counter-removed",
   "enters-graveyard", "sacrifice", "transform", "turned-face-up", "phases-out",
 ]);
 /** Subjects that are the card's own business whatever the printed phrase says: an attached
@@ -2021,6 +2023,7 @@ function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, c
   if (subject.owner && subject.control === "any" && /\bcards?\b/i.test(preamble) && !/\bpermanents?\b/i.test(preamble)) subject.control = subject.owner;
   // On an attack the state is the event (see the stored path).
   if (verb === "attacks" && subject.combat === "attacking") delete subject.combat;
+  if (verb === "blocks" && subject.combat === "blocking") delete subject.combat;
   if (subject.sharesTypeWith === "self" && GRANTED_TO_COMMANDER.test(cardText)) subject.sharesTypeWith = "commander";
   return { verbs: [verb], subject };
 }
@@ -2268,6 +2271,8 @@ export function deriveAbilities(
   const grammarCovered = new Map<string, Map<string, number | string>>();
   /** Re-homed records dropped-if-redundant: clause id -> the id of the record that already read their event off the same sentence. */
   const twinOf = new Map<number | string, number | string>();
+  /** Textless records whose event another clause's grammar reading of the same sentence covers; folded only where an ability is identical (#1373 review). */
+  const identicalTwinOf = new Map<number | string, number | string>();
   for (const visit of visits) {
     if (dupMark) { unclaimedHere.length = dupMark.unclaimed; unknownTriggers.length = dupMark.unknown; dupMark = undefined; }
     if (visit.k) dupMark = { unclaimed: unclaimedHere.length, unknown: unknownTriggers.length };
@@ -2320,7 +2325,7 @@ export function deriveAbilities(
       && !replacementOf(textForClause(clause, clauseTexts));
     // ...unless the header's trigger was REFUSED: the mode keeps the clause's trigger for the SUBJECT it reads ("It gains X"
     // is the creature you control), says the same refusal, and derives no trigger below.
-    // ...and not at all under a header trigger the engine has no verb for ("blocks", Elder Gargaroth): it would derive a mode that never fires.
+    // ...and not at all under a header trigger the engine has no verb for ("becomes-blocked" in "blocks or becomes blocked"): it would derive a mode that never fires.
     if (visit.k && (!inherits || !headerTrigger)) continue;
     if (inherits) { clause = { ...clause, trigger: inheritedTrigger }; unknownTriggers.push(...headerRefused); }
     else if (!clause.trigger?.event && kind !== "triggered") { inheritedTrigger = undefined; headerTrigger = undefined; headerRefused = []; }
@@ -2495,6 +2500,14 @@ export function deriveAbilities(
     // Astrid 2 `attacks` on the enters-or-attacks sentence) is that record's twin, not a second ability.
     const partner = misplaced && rehomed ? grammarCovered.get(rehomed)?.get(normalizeTriggerVerb(clause.trigger!.event!) ?? "") : undefined;
     if (partner !== undefined) twinOf.set(clause.id, partner);
+    // A TEXTLESS RECORD (#1373 review) that adopted a sentence an earlier record's grammar reading already read this record's event off ("attacks or blocks" stored as two
+    // records: Howling Golem, Jedit Ojanen) is that record's twin too -- but only an ability IDENTICAL to one of the covering clause's is folded (`identicalTwin`, below),
+    // so a record that says more than its partner (a sibling sentence's effect numbered here) is never lost.
+    // CEILING: `blocks` only, and all-or-nothing per clause (see the fold below), a twin covered when the covering ability is the same apart from the amount's spelling and carries an amount / count wherever the twin does. Measured over the stored 394 with derive-identity: 46 blocks cards change, every one a pure removal (no `+` line); Clockwork Vorrac and Clockwork Dragon (other abilities) still take the grammar reading through `deriveRow`'s switch. The same fold on every event changes 260 cards, not all provably duplicate removals.
+    else if (!misplaced && text && clause.trigger?.event && clauseTexts && clauseTexts[clause.id as number] === undefined && Number.isInteger(clause.id) && clause.trigger.event === "blocks") {
+      const covering = grammarCovered.get(text)?.get(normalizeTriggerVerb(clause.trigger.event) ?? "");
+      if (covering !== undefined && covering !== clause.id) identicalTwinOf.set(clause.id, covering);
+    }
     const grammarAll = clause.trigger?.event && text && !misplaced ? grammarTriggersOf(text, cardName, clause.trigger.event, cardText, enchantText,
       clauses.some((c) => c.id !== clause.id && c.trigger?.event && clauseTexts?.[c.id] === clauseText),
       readings?.[clause.id]?.trigger, curse, creatureCard) : null;
@@ -2645,6 +2658,8 @@ export function deriveAbilities(
         // the state, so keeping it here would delete every real edge these have. Kept on every
         // other verb -- "an attacking creature DIES" narrows a death the way the verb cannot.
         if (verb === "attacks" && subject.combat === "attacking") delete subject.combat;
+        // The same for a blocker: "a blocking creature you control blocks" is every blocker.
+        if (verb === "blocks" && subject.combat === "blocking") delete subject.combat;
         // A LEAVE HAS A ZONE. CR 603.6c is about the battlefield; "leave your graveyard" is a
         // different event that shares nothing with a death, and "without dying" is a battlefield
         // leave minus `dies`. Both are read off the TEXT because the trigger subject dropped them.
@@ -3694,6 +3709,22 @@ export function deriveAbilities(
   // CEILING: a cue heuristic -- a twin is "the same verb already claimed on that sentence", and a re-homed record is "the one orphan sentence that
   // prints its cue". A card whose record numbering drifts in a way neither sees keeps its stored trigger over the sentence its own text prints.
   const spliced = new Set<number | string>();
+  if (identicalTwinOf.size > 0) {
+    // `b` COVERS `a` when they are the same ability apart from the clause and from HOW the amount is spelled, and `b` carries an amount / count wherever `a` does: removing `a` then loses
+    // nothing (a twin that is POORER than its covering clause, as the grammar's reading of Dusk Urchins' blocks half is, is covered; a RICHER one is never).
+    const strip = (x: Ability): string => { const { clause: _c, amount: _a, count: _n, ...rest } = x; return JSON.stringify(rest); };
+    const sameAbility = (a: Ability, b: Ability): boolean => strip(a) === strip(b)
+      && (a.amount === undefined || b.amount !== undefined) && (a.count === undefined || b.count !== undefined);
+    // ALL OR NOTHING PER CLAUSE (#1373 review): a textless clause is folded only when EVERY one of its abilities has an exact match among its covering clause's, so a fold is
+    // always a pure removal. A per-ability fold dropped Velukan Dragon's identical dice-rolled copy while its pump (read without the covering clause's comma) stayed.
+    for (const [twin, covering] of identicalTwinOf) {
+      const mine = abilities.filter((a) => a.clause === twin);
+      const theirs = abilities.filter((b) => b.clause === covering);
+      if (mine.length === 0 || !mine.every((a) => theirs.some((b) => sameAbility(a, b)))) continue;
+      for (let i = abilities.length - 1; i >= 0; i--) if (abilities[i]!.clause === twin) abilities.splice(i, 1);
+      spliced.add(twin);
+    }
+  }
   if (twinOf.size > 0) {
     const emitKey = (e: { verb: string; subject: SubjectFilter }): string => [e.verb, JSON.stringify(e.subject.type ?? null), e.subject.subtype ?? "", e.subject.counter ?? "", e.subject.self ?? ""].join("|");
     const verbsKey = (a: Ability): string => (a.trigger?.verbs ?? []).join(",");

@@ -144,7 +144,7 @@ export const SECTIONS: Record<string, Status> = {
   "506": { verdict: "MODELLED", note: "combat phase — five step words; `attacks`/`blocks`/`becomes-blocked`/combat damage" },
   "507": { verdict: "MODELLED", note: "beginning of combat — `begin-combat`, an engine verb (301 cards)" },
   "508": { verdict: "MODELLED", note: "declare attackers — `attacks`; 508.4 put onto the battlefield attacking is `enters` with combat: attacking" },
-  "509": { verdict: "MODELLED", note: "declare blockers — `blocks`, `becomes-blocked`; no engine verb for either (no card SUPPLIES a block)" },
+  "509": { verdict: "MODELLED", note: "declare blockers — `blocks` is an engine verb (#1373, owner 2026-10-27; consumed from card text, supplied by matcher implied.ts for every creature, CR 509.1a); `becomes-blocked` has none" },
   "510": { verdict: "MODELLED", note: "combat damage — `combat-damage` engine verb, `combat-damage-step` word; first strike ordering not modelled" },
   "511": { verdict: "MODELLED", note: "end of combat — `end-of-combat`; temporary tokens sacrificed here are `Ability.temporary`" },
   "512": { verdict: "MODELLED", note: "ending phase — `end-step`, `cleanup`" },
