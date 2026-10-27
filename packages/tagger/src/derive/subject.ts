@@ -196,13 +196,21 @@ function parseTypes(
   // CEILING: only the TYPE sweep is cut. The same quoted text also leaks scope, control and subtype words (Country Roads' Pilot token
   // gains Mount and Vehicle; Vernal Sovereign's scope), left for #1387 so this change moves types alone.
   // `plural` is still read off the whole text so `scope` does not move with this change.
-  const head = stripTokenAbility(t);
-  for (const ty of TYPES) {
-    // "token" and "card" are not card types on their own; they only qualify another noun.
-    if (ty === "token" || ty === "card") continue;
-    if (new RegExp(`\\b${ty}s\\b`).test(t)) plural = true;
-    if (new RegExp(`\\b${ty}s\\b`).test(head) || new RegExp(`\\b${ty}\\b`).test(head)) found.push(ty);
-  }
+  // "cards exiled WITH THIS ARTIFACT" names the card that exiled them (Dino DNA, Death in Heaven), not a class of the subject.
+  // ...but only when another type word is left to name the subject: "land cards exiled with this enchantment" is a land, while a phrase with
+  // nothing else ("the cards exiled with this artifact") keeps its sweep rather than become typeless and match everything.
+  const sweep = (head: string): void => {
+    found.length = 0;
+    for (const ty of TYPES) {
+      // "token" and "card" are not card types on their own; they only qualify another noun.
+      if (ty === "token" || ty === "card") continue;
+      if (new RegExp(`\\b${ty}s\\b`).test(t)) plural = true;
+      if (new RegExp(`\\b${ty}s\\b`).test(head) || new RegExp(`\\b${ty}\\b`).test(head)) found.push(ty);
+    }
+  };
+  const quoteCut = stripTokenAbility(t);
+  sweep(quoteCut.replace(EXILED_WITH_SELF, " "));
+  if (found.length === 0) sweep(quoteCut);
 
   const { negated, plural: negPlural } = negatedTypes(t);
   const { negationApplied, ...r } = resolveTypes(found, negated);
@@ -723,6 +731,9 @@ const TARGETS_ONLY = /\btargets? only\b/i;
  *  target creature"), or the Equipment being described ("all Equipment attached to that creature").
  *  33 of the 61 carry a type word in the tail that the head does not. */
 const ATTACHED_TO = /\battached to\b/i;
+/** "exiled with this artifact": the type word is the card's own, not the subject's. */
+const EXILED_WITH_SELF = /\bexiled\s+(?:with|by)\s+this\s+[a-z]+\b/gi;
+
 /** Cut the quoted ability off a token description; any other text is returned untouched. */
 function stripTokenAbility(text: string): string {
   // The first DOUBLE quote or `with '`, never a bare apostrophe: "Volo's Journal, a ... token" has one before the word "token".

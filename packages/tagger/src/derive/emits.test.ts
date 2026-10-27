@@ -657,3 +657,19 @@ test("soleCounterKind: reads and stays linear (CodeQL polynomial-redos)", () => 
   soleCounterKind("a".repeat(50_000));
   expect(performance.now() - t0).toBeLessThan(100);
 });
+
+// #1385: a COPY token's type is the copied object's, not the union of every printed token sharing its subtype. `tokenTypeFor("zombie")` is
+// [artifact, creature, enchantment] and read as an OR it paired The Scarab God's token with Builder's Talent ("noncreature, nonland").
+// A copy of a creature card, or of a Goblin/Elemental on the battlefield, is a creature.
+describe("a copy token takes its type from what it copies (#1385)", () => {
+  const enters = (object: string, clause: string) => actionEmits({ verb: "create", object }, clause).find((e) => e.verb === "enters")!;
+  test("The Scarab God: a Zombie copy of a creature card is a creature", () => {
+    const e = enters("a token that's a copy of it, except it's a 4/4 black Zombie", "Exile target creature card from a graveyard. Create a token that's a copy of it, except it's a 4/4 black Zombie.");
+    expect(e.subject.type).toBe("creature");
+    expect(e.subject.subtype).toBe("zombie");
+  });
+  test("Grub's Command and Ashling's Command: a copy of a Goblin or Elemental is a creature", () => {
+    expect(enters("a token that's a copy of target Goblin you control", "Create a token that's a copy of target Goblin you control.").subject.type).toBe("creature");
+    expect(enters("a token that's a copy of target Elemental you control", "Create a token that's a copy of target Elemental you control.").subject.type).toBe("creature");
+  });
+});

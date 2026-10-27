@@ -891,3 +891,11 @@ test("a copy token that gains a type in addition to its others is a conjunction 
   // a plain "or" list that is not a token result stays unmarked ("target artifact or creature you control")
   expect(parseSubject("target artifact or creature you control, except it's an artifact in addition to its other types")).not.toHaveProperty("allTypes");
 });
+
+test("a type word in 'exiled with this artifact' names the card itself, not the class (#1385)", () => {
+  // Dino DNA: the copy is of a creature card; "this artifact" is Dino DNA. Death in Heaven: "creature cards exiled with this enchantment".
+  expect(parseSubject("a token that's a copy of target creature card exiled with this artifact, except it's a 6/6 green Dinosaur creature with trample").type).toBe("creature");
+  expect(parseSubject("all creature cards exiled with this enchantment").type).toBe("creature");
+  // the subject itself is still a type: "this creature or another creature you control"
+  expect(parseSubject("this creature or another creature you control").type).toBe("creature");
+});

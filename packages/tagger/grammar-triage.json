@@ -495,10 +495,10 @@
       "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
     },
     "nameRelation": {
-      "distinct": 49,
+      "distinct": 51,
       "label": "grammar right",
       "rule": "printed text",
-      "why": "Every member read. nameRelation: 'with the chosen name', 'with that name', 'with the same name as ...', 'with different names'."
+      "why": "Every member read. nameRelation: 'with the chosen name', 'with that name', 'with the same name as ...', 'with different names'. (Two members joined from nameRelation,type in #1385: 'a Vampire spell with the same name as a card exiled with this enchantment', 'target spell with the same name as a card exiled with this creature' -- parseSubject now cuts the self-named card from the type sweep, so the type no longer differs.)"
     },
     "history,zone": {
       "distinct": 22,
@@ -513,7 +513,7 @@
       "why": "Every member read. abilityOf: whose ability: 'a loyalty ability of a Chandra planeswalker', 'from an artifact source'; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
     },
     "nameRelation,type": {
-      "distinct": 20,
+      "distinct": 18,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. nameRelation: 'with the chosen name', 'with that name', 'with the same name as ...', 'with different names'; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
@@ -1568,11 +1568,11 @@
       "rule": "CR 108.3, CR 112.2, CR 115.1",
       "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; targets: what a spell targets (owner 2026-10-01)."
     },
-    "fromZone,shares,type": {
+    "fromZone,shares": {
       "distinct": 1,
       "label": "grammar right",
       "rule": "CR 400.1, printed text",
-      "why": "Every member read. fromZone: the origin ('from the top five cards of your library', 'from outside the game'); shares: 'that shares a creature type / color / card type with ...'; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
+      "why": "Every member read. fromZone: the origin ('from the top five cards of your library', 'from outside the game'); shares: 'that shares a creature type / color / card type with ...'. (Was group fromZone,shares,type until #1385: 'a card exiled with this creature' no longer reads the card's own type as the subject's.)"
     },
     "otherThanRef,scope": {
       "distinct": 1,

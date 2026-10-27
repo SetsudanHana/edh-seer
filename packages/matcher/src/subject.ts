@@ -255,10 +255,8 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
       // creature" (Stolen Identity) -- and is refused only when EVERY alternative is excluded: a noncreature artifact is a
       // legal sacrifice, so Jaws hears Reactor Raid. A single type is its own list and is refused when excluded.
       // CEILING: an unmarked conjunction reads as an OR, which admits a false edge against a negating consumer. Derive marks every
-      // conjunction it can see; the residue is the token-table union `tokenTypeFor` fills for a copy token named by subtype (The Scarab
-      // God, God-Pharaoh's Gift, Hashaton: a 4/4 Zombie copy of a CREATURE card is `[artifact, creature, enchantment]`; Grub's and
-      // Ashling's Command likewise), which now pairs with a noncreature consumer (Builder's Talent), and a sweep of type words read as
-      // alternatives (Goblin Kaboomist's "Land Mine" token name, [artifact, land]).
+      // conjunction it can see (a copy token takes the copied object's class, not the `tokenTypeFor` union; a self-named "exiled with this
+      // artifact" is cut). The residue is a sweep of type words read as alternatives -- Goblin Kaboomist's "Land Mine" token NAME, [artifact, land].
       const andList = (producer.allTypes?.length ?? 0) > 0;
       if (producerTokens.length > 1 && !andList ? producerTokens.every((t) => excluded([t])) : excluded(producerTokens)) return false;
     }

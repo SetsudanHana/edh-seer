@@ -518,6 +518,16 @@ export const COPY_TOKEN_HEAD = /^((?:[a-z0-9]+ ){0,3}tokens?(?: that(?:'s| are| 
 const PLAYER_CREATES = /\b(?:opponents?|players?|controllers?|owners?|friends?|foes?)\s+(?:may\s+)?creates?\b/i;
 const COPIED_PHRASE = /\bcop(?:y|ies)\s+of\b[^.]*/i;
 
+/** Does this token copy a CREATURE? The clause names one ("Exile target creature card ... create a token that's a copy of it", Scarab God), or the
+ *  copied phrase names the token's own creature subtype ("a copy of target Goblin you control", Grub's Command). Quoted abilities are not the copy. */
+function copiesACreature(object: string, clauseText: string | undefined, subtype: string): boolean {
+  const text = (clauseText ?? object).replace(/"[^"]*"/g, " ");
+  const copied = COPIED_PHRASE.exec(object)?.[0] ?? COPIED_PHRASE.exec(text)?.[0];
+  if (copied === undefined) return false;
+  const head = copied.split(/,\s*except\b/i)[0]!;
+  return /\bcreatures?\b/i.test(text) || new RegExp(`\\b${subtype}s?\\b`, "i").test(head);
+}
+
 /** A `gain-control` ACTION WHOSE PRINTED CLAUSE STATES A CONTROL CHANGE (#1318).
  *  The model sometimes files another sentence as `gain-control`: Crown of Awe's "... gain protection from black and from red" (so wincon.voltron refused a protection Aura),
  *  Misleading Signpost's "reselect which player or permanent ... is attacking". Where the clause text is known it has to print one of the control-change wordings:
@@ -712,9 +722,18 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // answers `treasure -> artifact+creature` on the strength of Goldhound being an "Artifact Creature
   // -- Treasure Dog". The tokens collection is the right oracle and says flatly "Token Artifact --
   // Treasure". Only ever FILLS a missing type: an authored one is the card's own words and wins.
-  const tokenType = subject.token === true && subject.type === undefined
+  // THE TABLE IS A UNION ACROSS PRINTINGS (#1385): zombie is [artifact, creature, enchantment], goblin [artifact, creature]. Read as an OR a
+  // multi-type fill admits what the token is not -- The Scarab God's Zombie copy of a CREATURE card paired with Builder's Talent
+  // ("noncreature, nonland"). So a multi-type fill is only taken for a COPY, and then only as the copied object's class: `creature`
+  // when the clause says the copied thing is one ("target creature card"), or when it names a creature subtype ("target Goblin you
+  // control"); anything the text adds ("except it's an artifact in addition") is `allTypes`, stamped in `parseSubject`. A multi-type union
+  // for a token that copies nothing is dropped: an unknown type matches as before, which is the missing edge and not the false one.
+  const tableType = subject.token === true && subject.type === undefined
     && typeof subject.subtype === "string"
     ? tokenTypeFor(subject.subtype)
+    : undefined;
+  const tokenType = !Array.isArray(tableType) ? tableType
+    : tableType.includes("creature") && copiesACreature(action.object ?? "", clauseText, subject.subtype as string) ? "creature"
     : undefined;
   // A CARD WITH A LAND TYPE IS A LAND (CR 205.3i), and an emit that named only the subtype left the
   // type to be guessed downstream. `subjectMatches` resolves a typeless subtype through the CARD
