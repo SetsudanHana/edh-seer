@@ -254,10 +254,13 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
       // Every other multi-type producer keeps the strict exclusion: a printed type line is a
       // conjunction (Laserbeak), and so is a copy token that gained a type (Urza, Prince of Kroog:
       // `{token, type: [creature, artifact]}`), which read as "either" falsely paired with Cloudstone
-      // Curio and Builder's Talent. CEILING: a real OR with no notType of its own ("a copy of target
-      // artifact or creature", Stolen Identity) stays refused as before this change -- a missing
-      // edge, not a false one. Derive does not mark the two apart: 27 two-type and 6 three-type
-      // token:true create-token emits carry no allTypes (#1383 review census).
+      // Curio and Builder's Talent. CEILING: a real OR with no notType of its own is refused -- a
+      // missing edge, never a false one. Against a consumer that already carried notType (Stolen
+      // Identity x Curio) that is unchanged; against the consumers #1383 newly gives notType it is a
+      // NEW loss: Midgar, City of Mako // Reactor Raid ("sacrifice an artifact or creature") x Jaws,
+      // Relentless Predator ("a noncreature artifact is sacrificed") joined at 397 and is refused
+      // now. Derive does not mark OR from AND (27 two-type and 6 three-type token:true create-token
+      // emits carry no allTypes, #1383 review census); #1385 marks them and lifts this.
       const orList = producerTokens.length > 1 && (producer.notType?.length ?? 0) > 0 && (producer.allTypes?.length ?? 0) === 0;
       if (orList ? producerTokens.every((t) => excluded([t])) : excluded(producerTokens)) return false;
     }
