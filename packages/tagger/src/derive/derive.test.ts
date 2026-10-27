@@ -4614,12 +4614,14 @@ describe("becomes blocked by <creatures> (#1381, CR 509.3c-e)", () => {
     expect(t!.trigger!.blocker).toBeUndefined();
   });
 
-  test("a batched SUBJECT and a 'by' phrase on one trigger is refused, not read as one flag (grammar and stored path)", () => {
+  test("a batched SUBJECT and a 'by' phrase on one trigger is refused: grammar path, and the stored branch (no printed trigger word)", () => {
     const text = "Whenever one or more creatures you control become blocked by a creature, draw a card.";
     const tags = viaGrammar("Test Witness", "Enchantment", text);
     expect(blocked(tags)).toHaveLength(0);
     expect(tags.unknownTriggers).toContain("narrowing:becomes-blocked");
-    const card = { name: "Test Witness", typeLine: "Enchantment", oracleText: text, keywords: [] as string[] };
+    // The stored branch is reached only when the grammar reads no preamble: with no printed "Whenever" the model's record is what derives.
+    const bare = "One or more creatures you control become blocked by a creature, draw a card.";
+    const card = { name: "Test Witness", typeLine: "Enchantment", oracleText: bare, keywords: [] as string[] };
     const stored = [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "one or more creatures you control", control: "you" }, actions: [{ verb: "draw", object: "a card" }] }] as never;
     const viaStored = deriveCardTags(deriveInputOf(card as never, "x", card.name, stored, undefined, undefined));
     expect(blocked(viaStored)).toHaveLength(0);
