@@ -1441,6 +1441,8 @@ export interface Ability {
    *  and also the leading form ("If you control a Dragon, draw a card", "Then if ..."), a verb whose printed word derive cannot find, and the exempt "if you do" / "if able" / "if you pay" / "instead" / "would".
    *  Weighed by the matcher (`effect-gate-weight.ts`, #1357 task 2): the role counts, the land recommendation and the goldfish's draw count the effect at the chance its condition holds in the deck. */
   gate?: Gate;
+  /** The printed "Otherwise" branch of this gated effect does the same kind of thing (Jace, the Perfected Mind: draws three, otherwise draws one), but the stored reading kept only this branch: the role happens either way (#1357 part 2). */
+  otherwiseAlike?: true;
   /** A CR 614 multiplier ("if you would draw a card ... draw two instead", Hardened Scales, Doubling
    *  Season): its trigger hears another card's event and makes that event BETTER. Owner, 2026-09-29:
    *  "replacement effects make the effects better, not the other way around" -- so the matcher
@@ -1587,7 +1589,8 @@ export type Gate =
   | { kind: "threshold"; zone: "graveyard"; need: number; types?: string[]; subtypes?: string[]; supertypes?: string[]; text: string }
   | { kind: "counter"; counter: string; need: number; put?: { by: "self"; readyTurn: number; activation: { mana: number; refund: number; taps: boolean; activations: number } } | { by: "opening-hand" }; text: string }
   | { kind: "turn-event"; event: TurnEvent; text: string }
-  | { kind: "unknown"; text: string };
+  /** `otherwise`: the OTHER branch of an "if" (#1357 part 2), which the parser cannot negate; its text says "it is not the case that ...". */
+  | { kind: "unknown"; text: string; otherwise?: true };
 
 /** ONE WAY A CARD PRODUCES MANA (or a mana source, or a land), read once at derive time so no consumer parses
  *  oracle text again (#1169; the inventory found ten detectors disagreeing on real cards). A card carries

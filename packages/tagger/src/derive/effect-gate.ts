@@ -176,7 +176,21 @@ const CONJUNCT_BOUNDARY = [", then ", ", and ", " and ", ", "];
  *  is a clause that reads there: "it only works if it is not the case that it was attacking" / "...if the condition before it does not hold" (no earlier condition found). */
 const NOT_THE_CASE = "it is not the case that ";
 const NO_EARLIER = "the condition before it does not hold";
-export const isOtherwiseGate = (condition: string): boolean => condition.startsWith(NOT_THE_CASE) || condition === NO_EARLIER;
+const NONE_OF = "none of these holds: ";
+const ANSWER_TO = 'the answer to "';
+const DO_HAVE = /^you don't (control|have) /;
+const PRONOUN_LED = /^(?:it|its|that|those|they|their)\b/;
+export const isOtherwiseGate = (condition: string): boolean =>
+  condition.startsWith(NOT_THE_CASE) || condition.startsWith(NONE_OF) || condition.startsWith(ANSWER_TO) || condition.startsWith("you do control ") || condition.startsWith("you do have ") || condition === NO_EARLIER;
+/** The text of the other branch of a chain of conditions: one negated in words that read after "it only works if" ("you don't control X" turns positive, a pronoun-led condition is quoted because its "it" has no antecedent here), several as "none of these holds". */
+function otherBranch(chain: readonly string[]): string {
+  const conds = chain.filter((c) => c !== "").map((c) => c.toLowerCase());
+  if (conds.length === 0) return NO_EARLIER;
+  if (conds.length > 1) return `${NONE_OF}${conds.join("; ")}`;
+  const c = conds[0]!;
+  if (DO_HAVE.test(c)) return c.replace(DO_HAVE, "you do $1 ");
+  return PRONOUN_LED.test(c) ? `${ANSWER_TO}${c}" is no` : `${NOT_THE_CASE}${c}`;
+}
 /** A sentence that is the OTHER branch of the "if" before it. */
 const OTHERWISE_OPENER = /^(?:otherwise|if not)\b/i;
 
@@ -191,7 +205,7 @@ export interface EffectGates {
  *  AN "IF" BELONGS TO ITS OWN CONJUNCT (#1357 review): an action takes the first trailing "if" that follows its verb's printed word, unless another action's word stands between them ("Mill two cards, then
  *  destroy ... if ..." gates the destroy, "gets +2/+0, gains trample if it's red, and gains vigilance if it's white" gives each grant its own) or a ", except" rider does (a clone's "except it enters with a
  *  counter on it if ..." gates the counter, never the copy). A condition ends at its conjunct's ", then " / ", and " (or at the comma before the next "if"). */
-export function effectGates(body: string, verbs: readonly string[]): EffectGates {
+function locate(body: string, verbs: readonly string[]) {
   const plain = body.replace(/"[^"]*"/g, " ");
   const sentences = plain.split(".");
   const parsed = sentences.map(sentenceIfs);
@@ -209,27 +223,63 @@ export function effectGates(body: string, verbs: readonly string[]): EffectGates
     }
     return null;
   });
+  return { sentences, parsed, doing, where };
+}
+
+/** THE OTHER BRANCH THE STORED READING LOST (#1357 review): per action, true when the sentence after its own is an "Otherwise" that prints the same verb more often than any action took it. Jace, the Perfected Mind's stored
+ *  clause has one draw ("if a graveyard has twenty or more cards, you draw three cards. Otherwise, you draw a card"); the printed Otherwise says the effect happens in both branches, so the role is not a chance.
+ *  CEILING: the verb's printed word and the first noun after it ("draw three CARDS" / "draw a CARD"), nothing of who does it; life gain and loss are never alike (directional). */
+/** What the verb is done TO: the first word after the verb's printed word that is not an article, a number or a pronoun, singular ("draw three CARDS" and "draw a CARD" agree; "put IT into your hand" and "put a STUDY counter" do not). */
+const FILLER = new Set(["a", "an", "the", "it", "them", "that", "those", "your", "its", "their", "target", "up", "to", "one", "two", "three", "four", "five", "six", "seven", "x", "another", "each", "all", "any"]);
+function objectWord(text: string, from: number): string {
+  for (const w of text.slice(from, from + 40).toLowerCase().split(/[^a-z0-9+/]+/)) {
+    if (w === "" || FILLER.has(w) || /^[\d+/-]+$/.test(w)) continue;
+    return w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w;
+  }
+  return "";
+}
+export function branchesAlike(body: string, verbs: readonly string[]): boolean[] {
+  const { sentences, doing, where } = locate(body, verbs);
+  return where.map((w, j) => {
+    // Life is directional ("each opponent loses 2 life. Otherwise, you lose 2 life"): never alike.
+    if (w === null || verbs[j] === "lose-life" || verbs[j] === "gain-life" || OTHERWISE_OPENER.test(sentences[w.sentence]!.trimStart())) return false;
+    const next = w.sentence + 1;
+    if (next >= sentences.length || !OTHERWISE_OPENER.test(sentences[next]!.trimStart())) return false;
+    const re = () => new RegExp(printedVerbWord(verbs[j]!, true), "gi");
+    const mine = [...doing[w.sentence]!.matchAll(re())].find((m) => m.index === w.offset);
+    const want = mine ? objectWord(doing[w.sentence]!, mine.index + mine[0].length) : "";
+    const readAt = new Set(where.filter((o, i) => o !== null && o.sentence === next && verbs[i] === verbs[j]).map((o) => o!.offset));
+    return [...doing[next]!.matchAll(re())].some((m) => !readAt.has(m.index) && objectWord(doing[next]!, m.index + m[0].length) === want);
+  });
+}
+
+export function effectGates(body: string, verbs: readonly string[]): EffectGates {
+  const { sentences, parsed, where } = locate(body, verbs);
   const taken = new Set<string>();
-  /** The condition each sentence's "otherwise" would negate: the nearest earlier sentence's first "if", gating or not ("You may pay {1}. If you do, ... Otherwise, ..."). */
-  const branchOf: (string | undefined)[] = [];
-  let latest: string | undefined;
+  /** The conditions each sentence's "otherwise" negates: every "if" of the chain of sentences before it (a plain sentence after an "if" ends the chain), gating or not ("You may pay {1}. If you do, ... Otherwise, ..."). */
+  const branchOf: string[][] = [];
+  let chain: string[] = [];
+  let sawIf = false;
   sentences.forEach((sentence, i) => {
-    branchOf.push(latest);
+    branchOf.push(chain);
     if (OTHERWISE_OPENER.test(sentence.trimStart())) return;
     const first = parsed[i]![0];
     const lowerSentence = sentence.toLowerCase();
     const asLong = lowerSentence.indexOf(" as long as ");
-    if (first) latest = first.condition;
+    let cond: string | undefined;
+    if (first) cond = first.condition;
     // "gets +1/+2 as long as it's white. Otherwise, ..." and "has deathtouch during your turn. Otherwise, ...": the static's own condition is what "otherwise" negates.
-    else if (asLong >= 0) { const from = asLong + " as long as ".length; const comma = lowerSentence.indexOf(",", from); latest = sentence.slice(from, comma < 0 ? undefined : comma).trim(); }
-    else if (lowerSentence.includes(" during your turn")) latest = "it's your turn";
-    else if (sentence.toLowerCase().includes(" if ") || sentence.trimStart().toLowerCase().startsWith("if ")) latest = "";
+    else if (asLong >= 0) { const from = asLong + " as long as ".length; const comma = lowerSentence.indexOf(",", from); cond = sentence.slice(from, comma < 0 ? undefined : comma).trim(); }
+    else if (lowerSentence.includes(" during your turn")) cond = "it's your turn";
+    else if (lowerSentence.includes(" if ") || sentence.trimStart().toLowerCase().startsWith("if ")) cond = "";
+    if (cond !== undefined) { chain = sawIf ? [...chain, cond] : [cond]; sawIf = true; }
+    else if (sawIf) { chain = []; sawIf = false; }
   });
   const otherwise = sentences.map((sentence) => OTHERWISE_OPENER.test(sentence.trimStart()));
   const gates = where.map((w, j) => {
     if (w === null) return null;
     // THE OTHER BRANCH: unread, whatever "if" the sentence also holds (CEILING in the header).
-    if (otherwise[w.sentence]) { for (const f of parsed[w.sentence]!) taken.add(`${w.sentence}:${f.at}`); return branchOf[w.sentence] ? `${NOT_THE_CASE}${branchOf[w.sentence]!.toLowerCase()}` : NO_EARLIER; }
+    if (otherwise[w.sentence]) { for (const f of parsed[w.sentence]!) taken.add(`${w.sentence}:${f.at}`); return otherBranch(branchOf[w.sentence]!); }
     const next = parsed[w.sentence]!.find((f) => f.shape === "trailing" && f.at > w.offset);
     if (next) {
       const lower = sentences[w.sentence]!.toLowerCase();

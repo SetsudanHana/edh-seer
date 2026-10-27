@@ -3,7 +3,7 @@ import type { ClauseRecord } from "../canonicalize.js";
 import { deriveInputOf } from "../derive-input.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import { deriveCardTags } from "./derive.js";
-import { effectGates, sentenceGate } from "./effect-gate.js";
+import { branchesAlike, effectGates, isOtherwiseGate, sentenceGate } from "./effect-gate.js";
 import { parseGate } from "./gate.js";
 
 // Real oracle text (Mongo `cards`, 2026-10-27).
@@ -333,7 +333,7 @@ describe("a LEADING condition gates the effect it governs (#1357 part 2)", () =>
     expect(effectGates("If not, draw a card.", ["draw"]).gates).toEqual(["the condition before it does not hold"]);
   });
   it("an 'Otherwise' after a trailing 'if' is the branch of that condition too (Zurgo Stormrender)", () => {
-    expect(effectGates("Draw a card if it was attacking. Otherwise, each opponent loses 1 life.", ["draw", "lose-life"]).gates).toEqual(["it was attacking", "it is not the case that it was attacking"]);
+    expect(effectGates("Draw a card if it was attacking. Otherwise, each opponent loses 1 life.", ["draw", "lose-life"]).gates).toEqual(["it was attacking", 'the answer to "it was attacking" is no']);
   });
   it("only the 'if's own sentence is gated: a following sentence is not (CEILING)", () => {
     expect(effectGates("If you control a Dragon, draw a card. You gain 2 life.", ["draw", "gain-life"]).gates).toEqual(["you control a Dragon", null]);
@@ -387,8 +387,36 @@ describe("what is still no gate, and where a condition ends (#1357 part 2 follow
     expect(effectGates("If you control a Dragon, a creature you control gets +1/+1 until end of turn.", ["modify-pt"]).gates).toEqual(["you control a Dragon"]);
   });
   it("an 'Otherwise' after an 'as long as' or 'during your turn' takes that condition (Serra's Boon, Armament of Nyx, Hunter's Blowgun)", () => {
-    expect(effectGates("Enchanted creature gets +1/+2 as long as it's white. Otherwise, it gets -2/-1.", ["modify-pt", "modify-pt"]).gates).toEqual([null, "it is not the case that it's white"]);
-    expect(effectGates("Enchanted creature has double strike as long as it's an enchantment. Otherwise, prevent all damage that would be dealt by enchanted creature.", ["grant-ability", "prevent"]).gates[1]).toBe("it is not the case that it's an enchantment");
-    expect(effectGates("Equipped creature has deathtouch during your turn. Otherwise, it has reach.", ["grant-ability", "grant-ability"]).gates[1]).toBe("it is not the case that it's your turn");
+    expect(effectGates("Enchanted creature gets +1/+2 as long as it's white. Otherwise, it gets -2/-1.", ["modify-pt", "modify-pt"]).gates).toEqual([null, 'the answer to "it\'s white" is no']);
+    expect(effectGates("Enchanted creature has double strike as long as it's an enchantment. Otherwise, prevent all damage that would be dealt by enchanted creature.", ["grant-ability", "prevent"]).gates[1]).toBe('the answer to "it\'s an enchantment" is no');
+    expect(effectGates("Equipped creature has deathtouch during your turn. Otherwise, it has reach.", ["grant-ability", "grant-ability"]).gates[1]).toBe('the answer to "it\'s your turn" is no');
+  });
+});
+
+describe("the Otherwise text (review of b7c231f7)", () => {
+  it("after two 'if's it negates every condition of the chain (Misfortune Teller)", () => {
+    const body = "Exile target card from a graveyard. If it was a creature card, create a 2/2 black Rogue creature token. If it was a land card, create a Treasure token. Otherwise, you gain 3 life.";
+    expect(effectGates(body, ["exile", "create", "create", "gain-life"]).gates).toEqual([null, "it was a creature card", "it was a land card", "none of these holds: it was a creature card; it was a land card"]);
+    expect(isOtherwiseGate("none of these holds: it was a creature card; it was a land card")).toBe(true);
+  });
+  it("a pronoun condition is quoted, not re-said with an unresolved 'it' (Shackle Slinger)", () => {
+    expect(effectGates("Choose target creature an opponent controls. If it's tapped, put a stun counter on it. Otherwise, tap it.", ["choose", "add-counter", "tap"]).gates[2]).toBe('the answer to "it\'s tapped" is no');
+    expect(isOtherwiseGate('the answer to "it\'s tapped" is no')).toBe(true);
+  });
+  it("a negative condition is not negated twice (Wick, the Whorled Mind)", () => {
+    const body = "Create a 1/1 black Snail creature token if you don't control a Snail. Otherwise, put a +1/+1 counter on a Snail you control.";
+    expect(effectGates(body, ["create", "add-counter"]).gates).toEqual(["you don't control a Snail", "you do control a snail"]);
+    expect(isOtherwiseGate("you do control a snail")).toBe(true);
+  });
+  it("a branch the stored reading lost is told by the printed Otherwise doing the same verb (Jace: draws three, otherwise draws one)", () => {
+    const body = "Target player mills three cards. Then if a graveyard has twenty or more cards in it, you draw three cards. Otherwise, you draw a card.";
+    expect(branchesAlike(body, ["mill", "draw"])).toEqual([false, true]);
+    // both branches read: nothing is lost, nothing is flagged
+    expect(branchesAlike(body, ["mill", "draw", "draw"])).toEqual([false, false, false]);
+    // a different verb in the Otherwise is another effect, not the same role
+    expect(branchesAlike("If it was a creature card, you gain 3 life. Otherwise, you draw a card.", ["gain-life"])).toEqual([false]);
+    // the same verb on a different object is another effect (Kianne: put it into your hand / put a study counter on it), and life is directional (Unholy Annex)
+    expect(branchesAlike("If it's a land card, put it into your hand. Otherwise, put a study counter on it.", ["put"])).toEqual([false]);
+    expect(branchesAlike("If you control a Demon, each opponent loses 2 life. Otherwise, you lose 2 life.", ["lose-life"])).toEqual([false]);
   });
 });

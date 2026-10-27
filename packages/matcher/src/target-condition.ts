@@ -10,6 +10,7 @@
  *  more creatures than that player" (Unified Will) are target conditions that open with something else; they stay effect conditions at the fixed weight (0.5). Mythos of Nethroi's "if it's a creature or if {G}{W}
  *  was spent" mixes the target with the casting and stays at 0.5 too. CEILING: the clause is found by the gate's verbatim text and split on full stops, line breaks and ", then ", so a gate text that also occurs in an
  *  earlier sentence is judged by that one. */
+const PRONOUN_KICKED = /^it was (?:kicked|multikicked|bargained)\b/;
 const PRONOUN = /^(?:it|its|that|those|their|they)\b/;
 /** Day or night, and the cast itself: not conditions on the target. */
 const NOT_THE_TARGET = /\b(?:night|day)\b|\bspent\b|\bwas (?:kicked|bargained|cast|paid|foretold|gifted)\b|\{| if /;
@@ -26,6 +27,8 @@ function clauseBefore(oracleText: string, gateText: string): string {
 /** The gate is a condition on the effect's own target. */
 export function isTargetCondition(oracleText: string | undefined, gateText: string): boolean {
   const gate = gateText.toLowerCase().replace(/[’]/g, "'");
+  // "Counter target spell if it was kicked" (Ertai's Trickery): "it" is the TARGET spell, which an opponent cast, so its kicker is no choice of the player's. A card's own kicker is printed "this spell was kicked".
+  if (oracleText && PRONOUN_KICKED.test(gate)) return /\btarget\b/.test(clauseBefore(oracleText, gate));
   if (!oracleText || !PRONOUN.test(gate) || NOT_THE_TARGET.test(gate)) return false;
   return /\btarget\b/.test(clauseBefore(oracleText, gate));
 }

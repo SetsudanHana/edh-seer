@@ -158,3 +158,11 @@ test("a gate moves the group key only when the gates DIFFER, never because the p
   expect(deriveDiff([ab({ gate: g1 })], [ab({})])).toBe("gate");
   expect(deriveDiff([ab({ conditionCares: ["counter-added:any"] })], [ab({})])).toBe("conditionCares");
 });
+
+test("a gate that moved to ANOTHER ability of the same clause is a difference (draw(g1) mill(g2) against draw(g2) mill(g1))", () => {
+  const g1 = { kind: "unknown", text: "it's a land card" } as never, g2 = { kind: "unknown", text: "other" } as never;
+  const draw = { effect: { kind: "draw-card" } }, mill = { effect: { kind: "mill" } };
+  expect(deriveDiff([ab({ ...draw, gate: g1 }), ab({ ...mill, gate: g2 })], [ab({ ...draw, gate: g2 }), ab({ ...mill, gate: g1 })])).toBe("gate");
+  // ...while the same gates on the same kinds, in another order, are none
+  expect(deriveDiff([ab({ ...draw, gate: g1 }), ab({ ...mill, gate: g2 })], [ab({ ...mill, gate: g2 }), ab({ ...draw, gate: g1 })])).toBeNull();
+});

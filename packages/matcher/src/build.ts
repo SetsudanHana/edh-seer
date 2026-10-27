@@ -140,21 +140,34 @@ function readsAbilities(clauses: readonly RuleClause[] | undefined): boolean {
  *  oracle-only rule on a card with a gated and an ungated ability is worth 1 whichever of them the printed text belongs to. */
 function ruleWeight(rule: Rule, dc: DeckCard, gates: GateWeigher): EffectWeight | null {
   const abilities = dc.tags?.abilities ?? [];
-  const entries = abilities.filter((a) => a.gate !== undefined).map((a) => ({ a, w: gates.of(a, dc) }));
+  // An ability whose printed Otherwise does the same thing (Jace, the Perfected Mind) is no chance for the role: it happens in both branches.
+  const entries = abilities.filter((a) => a.gate !== undefined && a.otherwiseAlike !== true).map((a) => ({ a, w: gates.of(a, dc) }));
   if (entries.length === 0) return null;
   if (!readsAbilities(rule.match) && !readsAbilities(rule.not)) {
     if (entries.length < abilities.length) return null;
     const top = entries.reduce((x, y) => (y.w.weight > x.w.weight ? y : x));
     return top.w.weight < 1 || WHOLE_FLAGGED.has(top.w.basis) ? top.w : null;
   }
-  const partial = entries.filter((x) => x.w.weight < 1);
   const without = (dropped: Set<unknown>): DeckCard => ({ ...dc, tags: { ...dc.tags!, abilities: abilities.filter((a) => !dropped.has(a)) } });
+  // EXHAUSTIVE BRANCHES COUNT WHOLE: when a clause has an "Otherwise" and the rule holds through EVERY gated ability of that clause alone, the role happens whichever branch is taken (Prisoner's Dilemma: all three
+  // branches are burn). A branch the role does not lean on (Cling to Dust's lifegain beside its draw) breaks it.
+  const exhaustive = new Set<unknown>();
+  const clauses = new Set(entries.map((x) => x.a.clause));
+  for (const c of clauses) {
+    const members = entries.filter((x) => x.a.clause === c);
+    if (members.some((x) => x.a.gate?.kind === "unknown" && x.a.gate.otherwise === true)
+      && members.every((m) => ruleMatches(rule, without(new Set(entries.filter((o) => o !== m).map((o) => o.a)))))) for (const m of members) exhaustive.add(m.a);
+  }
+  const partial = entries.filter((x) => x.w.weight < 1 && !exhaustive.has(x.a));
   if (partial.length > 0) {
     const levels = [...new Set(partial.map((x) => x.w.weight))].sort((x, y) => y - x);
     for (const level of [1, ...levels]) {
-      if (ruleMatches(rule, without(new Set(partial.filter((x) => x.w.weight < level).map((x) => x.a))))) {
-        if (level < 1) return partial.find((x) => x.w.weight === level)!.w;
-        break;
+      const dropped = new Set<unknown>(partial.filter((x) => x.w.weight < level).map((x) => x.a));
+      if (ruleMatches(rule, without(dropped))) {
+        if (level >= 1) break;
+        // THE CONDITION THE ROLE LEANS ON: the one at this level whose removal alone makes the rule stop holding (Cling to Dust's draw is its Otherwise, not the lifegain's "it was a creature card").
+        const here = partial.filter((x) => x.w.weight === level);
+        return (here.find((x) => !ruleMatches(rule, without(new Set([...dropped, x.a])))) ?? here[0]!).w;
       }
     }
   }

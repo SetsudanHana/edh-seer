@@ -9,7 +9,7 @@ import { landInputs, recommendedLands } from "./land-count.js";
 import type { DeckCard } from "./types.js";
 
 // Real oracle text (Mongo `cards`, 2026-10-27), derived from the printed text by the grammar, as production does for a card it reads completely.
-const REAL: Record<string, { keywords?: string[]; typeLine: string; oracleText: string; manaValue: number; manaCost?: string; partial?: true }> = {
+const REAL: Record<string, { records?: unknown[]; keywords?: string[]; typeLine: string; oracleText: string; manaValue: number; manaCost?: string; partial?: true }> = {
   "Federation Field Medic": { typeLine: "Creature — Human Doctor", manaValue: 4, manaCost: "{3}{W}", oracleText: "Vigilance\nWhen this creature enters, choose one —\n• Put a +1/+1 counter on target creature. It gains vigilance until end of turn.\n• Draw a card if you control a permanent with a counter on it." },
   "Veil of Summer": { typeLine: "Instant", manaValue: 1, manaCost: "{G}", oracleText: "Draw a card if an opponent has cast a blue or black spell this turn. Spells you control can't be countered this turn. You and permanents you control gain hexproof from blue and from black until end of turn. (You and they can't be the targets of blue or black spells or abilities your opponents control.)" },
   "Beza, the Bounding Spring": { typeLine: "Legendary Creature — Elemental Elk", manaValue: 4, oracleText: "When Beza enters, create a Treasure token if an opponent controls more lands than you. You gain 4 life if an opponent has more life than you. Create two 1/1 blue Fish creature tokens if an opponent controls more creatures than you. Draw a card if an opponent has more cards in hand than you." },
@@ -31,11 +31,20 @@ const REAL: Record<string, { keywords?: string[]; typeLine: string; oracleText: 
   "Archon's Glory": { keywords: ["Bargain"], typeLine: "Instant", manaValue: 1, manaCost: "{W}", oracleText: "Bargain (You may sacrifice an artifact, enchantment, or token as you cast this spell.)\nTarget creature gets +2/+2 until end of turn. If this spell was bargained, that creature also gains flying and lifelink until end of turn." },
   "Mind Spiral": { keywords: ["Gift"], typeLine: "Sorcery", manaValue: 5, manaCost: "{4}{U}", oracleText: "Gift a tapped Fish (You may promise an opponent a gift as you cast this spell. If you do, they create a tapped 1/1 blue Fish creature token before its other effects.)\nTarget player draws three cards. If the gift was promised, tap target creature an opponent controls and put a stun counter on it. (If a permanent with a stun counter would become untapped, remove one from it instead.)" },
   "Boros Fury-Shield": { typeLine: "Instant", manaValue: 2, manaCost: "{1}{R}", oracleText: "Prevent all combat damage that would be dealt this turn by target attacking or blocking creature. If {R} was spent to cast this spell, Boros Fury-Shield deals damage to that creature's controller equal to the creature's power." },
+  "Cling to Dust": { keywords: ["Escape"], typeLine: "Instant", manaValue: 1, manaCost: "{B}", oracleText: "Exile target card from a graveyard. If it was a creature card, you gain 3 life. Otherwise, you draw a card.\nEscape\u2014{3}{B}, Exile five other cards from your graveyard. (You may cast this card from your graveyard for its escape cost.)" },
+  "Prisoner's Dilemma": { records: [{ id: 1, abilityType: "spell", actions: [{ verb: "deal-damage", object: "each opponent", amount: "4" }, { verb: "deal-damage", object: "each opponent", amount: "8" }, { verb: "deal-damage", object: "each opponent who chose silence", amount: "12" }] }, { id: 2, abilityType: "none", actions: [{ verb: "none", object: "Flashback {5}{R}{R}" }] }], keywords: ["Flashback"], typeLine: "Sorcery", manaValue: 5, manaCost: "{3}{R}{R}", oracleText: "Each opponent secretly chooses silence or snitch, then the choices are revealed. If each opponent chose silence, Prisoner's Dilemma deals 4 damage to each of them. If each opponent chose snitch, Prisoner's Dilemma deals 8 damage to each of them. Otherwise, Prisoner's Dilemma deals 12 damage to each opponent who chose silence.\nFlashback {5}{R}{R}" },
+  "Ertai's Trickery": { typeLine: "Instant", manaValue: 1, manaCost: "{U}", oracleText: "Counter target spell if it was kicked." },
+  "Morsel Theft": { keywords: ["Prowl"], typeLine: "Kindred Sorcery \u2014 Rogue", manaValue: 4, manaCost: "{2}{B}{B}", oracleText: "Prowl {1}{B} (You may cast this for its prowl cost if you dealt combat damage to a player this turn with a Rogue.)\nTarget player loses 3 life and you gain 3 life. If this spell's prowl cost was paid, draw a card." },
+  "Crush of Tentacles": { keywords: ["Surge"], typeLine: "Sorcery", manaValue: 6, manaCost: "{4}{U}{U}", oracleText: "Surge {3}{U}{U} (You may cast this spell for its surge cost if you or a teammate has cast another spell this turn.)\nReturn all nonland permanents to their owners' hands. If this spell's surge cost was paid, create an 8/8 blue Octopus creature token." },
+  "Poison the Cup": { keywords: ["Foretell", "Scry"], typeLine: "Instant", manaValue: 3, manaCost: "{1}{B}{B}", oracleText: "Destroy target creature. If this spell was foretold, scry 2.\nForetell {1}{B} (During your turn, you may pay {2} and exile this card from your hand face down. Cast it on a later turn for its foretell cost.)" },
+  "Full Bore": { typeLine: "Instant", manaValue: 1, manaCost: "{R}", oracleText: "Target creature you control gets +3/+2 until end of turn. If that creature was cast for its warp cost, it also gains trample and haste until end of turn." },
+  "Approach of the Second Sun": { records: [{ id: 1, abilityType: "spell", actions: [{ verb: "win-game", object: "you", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "put", object: "Approach of the Second Sun", fromZone: "stack", toZone: "library", amount: null, optional: false }, { verb: "gain-life", object: "you", fromZone: null, toZone: null, amount: "7", optional: false }] }], typeLine: "Sorcery", manaValue: 7, manaCost: "{6}{W}", oracleText: "If this spell was cast from your hand and you've cast another spell named Approach of the Second Sun this game, you win the game. Otherwise, put Approach of the Second Sun into its owner's library seventh from the top and you gain 7 life." },
   "Mind Stone": { typeLine: "Artifact", manaValue: 2, oracleText: "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card." },
 };
 const make = (realName: string, asName = realName): DeckCard => {
   const c = REAL[realName]!;
   const printed = { name: asName, typeLine: c.typeLine, oracleText: c.oracleText, keywords: c.keywords ?? [] };
+  if (c.records) return { card: { ...printed, manaValue: c.manaValue, manaCost: c.manaCost } as never, tags: deriveCardTags(deriveInputOf(printed as never, "x", asName, c.records as never)) };
   const g = grammarClauseRecords(printed);
   if (!g.complete && !c.partial) throw new Error(`grammar does not read ${realName} completely`);
   return { card: { ...printed, manaValue: c.manaValue, manaCost: c.manaCost } as never, tags: deriveCardTags(deriveInputOf(printed as never, "x", asName, g.records, undefined, g.readings)) };
@@ -376,4 +385,61 @@ test("a kicked draw keeps its role whole, flagged: the card counts 1 in draw and
   const deck = deckOf([d]);
   const rows = computeBuild(deck, undefined, undefined, undefined, 0, undefined, makeGateWeigher(deck)).conditionalRoles ?? [];
   expect(rows.some((r) => r.card === d.card.name && r.category === "draw" && r.basis === "choice" && r.weight === 1)).toBe(true);
+});
+
+// REVIEW OF 16eee43e..b7c231f7 (#1357 part 2)
+const roleRow = (cards: DeckCard[], card: string, category: string) =>
+  computeBuild(deckOf(cards), undefined, undefined, undefined, 0, undefined, makeGateWeigher(deckOf(cards))).conditionalRoles?.find((r) => r.card === card && r.category === category);
+
+test("the report names the condition the role leans on: Cling to Dust's draw is its Otherwise branch, not the lifegain's 'it was a creature card'", () => {
+  const d = make("Cling to Dust");
+  const row = roleRow([d], d.card.name, "draw");
+  expect(row).toMatchObject({ weight: 0.5, basis: "unread" });
+  expect(row!.needs).toBe('the answer to "it was a creature card" is no');
+});
+
+test("an exhaustive set of branches counts whole: every branch of Prisoner's Dilemma is burn, so burn is 1 and no row is listed", () => {
+  const d = make("Prisoner's Dilemma");
+  const deck = deckOf([d]);
+  const burn = computeBuild(deck, undefined, undefined, undefined, 0, undefined, makeGateWeigher(deck)).buildCategories.find((c) => c.category === "burn")!;
+  expect(burn.count).toBe(1);
+  expect(roleRow([d], d.card.name, "burn")).toBeUndefined();
+});
+
+test("a branch the stored reading lost still counts whole when the printed Otherwise does the same (Jace, the Perfected Mind: draws 3, otherwise draws 1)", () => {
+  const printed = { name: "Jace, the Perfected Mind", typeLine: "Legendary Planeswalker \u2014 Jace", keywords: [] as string[], oracleText: "Compleated ({U/P} can be paid with {U} or 2 life. If life was paid, this planeswalker enters with two fewer loyalty counters.)\n+1: Until your next turn, up to one target creature gets -3/-0.\n\u22122: Target player mills three cards. Then if a graveyard has twenty or more cards in it, you draw three cards. Otherwise, you draw a card.\n\u2212X: Target player mills three times X cards." };
+  const a = (verb: string, object: string, amount: string) => ({ verb, object, fromZone: null, toZone: null, amount, optional: false }) as never;
+  const records = [
+    { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Compleated" }] },
+    { id: 2, abilityType: "activated", actions: [a("modify-pt", "up to one target creature", "-3/-0")] },
+    { id: 3, abilityType: "activated", actions: [a("mill", "target player", "3"), a("draw", "you", "3")] },
+    { id: 4, abilityType: "activated", actions: [a("mill", "target player", "3X")] },
+  ] as never;
+  const d: DeckCard = { card: { ...printed, manaValue: 4 } as never, tags: deriveCardTags(deriveInputOf(printed as never, "x", printed.name, records)) };
+  const draw = d.tags!.abilities.find((x) => x.effect.kind === "draw-card")!;
+  expect(draw.gate).toMatchObject({ kind: "unknown", text: "a graveyard has twenty or more cards in it" });
+  expect(draw.otherwiseAlike).toBe(true);
+  const deck = deckOf([d]);
+  expect(computeBuild(deck, undefined, undefined, undefined, 0, undefined, makeGateWeigher(deck)).buildCategories.find((c) => c.category === "draw")!.count).toBe(1);
+});
+
+test("the Otherwise gate names the card, never '~' (Approach of the Second Sun)", () => {
+  const d = make("Approach of the Second Sun");
+  const other = d.tags!.abilities.find((a) => a.gate?.text.startsWith("it is not the case that"))!;
+  expect(other.gate!.text).toBe("it is not the case that this spell was cast from your hand and you've cast another spell named approach of the second sun this game");
+  expect(other.gate!.text).not.toContain("~");
+});
+
+test("Ertai's Trickery ('Counter target spell if it was kicked') is a condition on the TARGET, not the player's choice", () => {
+  const d = make("Ertai's Trickery");
+  const [a] = d.tags!.abilities.filter((x) => x.gate !== undefined);
+  expect(makeGateWeigher(deckOf([d])).of(a!, d)).toMatchObject({ weight: 1, basis: "target" });
+});
+
+test("prowl, surge, warp and foretold are optional-cost choices too, each said in its own word", () => {
+  for (const [name, needs] of [["Morsel Theft", "this spell's prowl cost was paid"], ["Crush of Tentacles", "this spell's surge cost was paid"], ["Poison the Cup", "this spell was foretold"], ["Full Bore", "that creature was cast for its warp cost"]] as const) {
+    const d = make(name);
+    const [a] = d.tags!.abilities.filter((x) => x.gate !== undefined);
+    expect(makeGateWeigher(deckOf([d])).of(a!, d), name).toEqual({ weight: 1, conditional: true, basis: "choice", needs });
+  }
 });

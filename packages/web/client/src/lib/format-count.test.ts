@@ -46,3 +46,17 @@ test("an optional-cost choice counts whole and is said as 'when kicked', never a
   expect(conditionalNote([gift], ["draw"])).toBe("Mind Spiral counts whole when the gift is promised.");
   expect(conditionalNote([kicked], ["ramp"])).toBe("");
 });
+
+test("prowl, surge, warp and foretold are said in their own word", () => {
+  const row = (card: string, needs: string) => ({ card, category: "draw", weight: 1, basis: "choice" as const, needs });
+  expect(conditionalNote([row("Morsel Theft", "this spell's prowl cost was paid")], ["draw"])).toBe("Morsel Theft counts whole when prowl is paid.");
+  expect(conditionalNote([row("Crush of Tentacles", "this spell's surge cost was paid")], ["draw"])).toBe("Crush of Tentacles counts whole when surge is paid.");
+  expect(conditionalNote([row("Full Bore", "that creature was cast for its warp cost")], ["draw"])).toBe("Full Bore counts whole when cast for its warp cost.");
+  expect(conditionalNote([row("Poison the Cup", "this spell was foretold")], ["draw"])).toBe("Poison the Cup counts whole when foretold.");
+});
+
+test("an Otherwise gate names the card in its printed case, never '~' (Approach of the Second Sun)", () => {
+  const needs = "it is not the case that this spell was cast from your hand and you've cast another spell named approach of the second sun this game";
+  expect(conditionalNote([{ card: "Approach of the Second Sun", category: "lifegain", weight: 0.5, basis: "unread" as const, needs }], ["lifegain"]))
+    .toBe("Approach of the Second Sun counts half: it only works if it is not the case that this spell was cast from your hand and you've cast another spell named Approach of the Second Sun this game.");
+});

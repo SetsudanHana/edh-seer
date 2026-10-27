@@ -27,7 +27,7 @@ import { effectText, printedPreamble } from "../grammar/preamble.js";
 import { alignVerbs, parseActions, type ActionReading } from "../grammar/action.js";
 import { parseTrigger, type TriggerReading } from "../grammar/trigger.js";
 import { conditionalReturn, delaysIn, flipBranch, returnDelay, untilSourceLeaves } from "./delay.js";
-import { counterIsTheCardsOwn, effectGates, FLIP_VERB_WORDS, isOtherwiseGate, nthSentenceMatching, printedVerbWord } from "./effect-gate.js";
+import { branchesAlike, counterIsTheCardsOwn, effectGates, FLIP_VERB_WORDS, isOtherwiseGate, nthSentenceMatching, printedVerbWord } from "./effect-gate.js";
 import { parseGate } from "./gate.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
@@ -2699,6 +2699,7 @@ export function deriveAbilities(
     }
     // The trailing "if" of each action's sentence (#1357), read once per clause from the effect body (the text after the trigger preamble, an intervening if and an ability word).
     const gateReads = clauseText ? effectGates(effectText(clauseText, cardName ?? ""), (clause.actions ?? []).map((a) => a.verb ?? "")) : undefined;
+    const alike = clauseText ? branchesAlike(effectText(clauseText, cardName ?? ""), (clause.actions ?? []).map((a) => a.verb ?? "")) : undefined;
     for (const action of clause.actions ?? []) {
       // A PRINTED "Casualty N" keyword line is the spell's own sacrifice outlet (Make Disappear):
       // Scryfall's keyword list drops the N, so the line itself is read. See `casualtySacrifice`.
@@ -3326,11 +3327,13 @@ export function deriveAbilities(
       const gateText = gateReads?.gates[(clause.actions ?? []).indexOf(action)];
       if (gateText) {
         const otherwise = isOtherwiseGate(gateText);
-        ability.gate = otherwise ? { kind: "unknown", text: gateText } : parseGate(gateText.replaceAll("~", (cardName ?? "").split(" // ")[0] ?? ""));
+        const selfName = (cardName ?? "").split(" // ")[0] ?? "";
+        ability.gate = otherwise ? { kind: "unknown", text: gateText.replaceAll("~", selfName).toLowerCase(), otherwise: true } : parseGate(gateText.replaceAll("~", (cardName ?? "").split(" // ")[0] ?? ""));
         // A counter the card places on itself is no counters demand (#1357 review): no deck supplies a "phyresis" or "hunger" counter, and the false demand reached edges.ts' dies-trigger guard.
         // The OTHER branch of an "if" asks nothing of the deck: the demand is the condition's, and this branch is its opposite (#1357 part 2).
         const gateCares = otherwise ? [] : conditionCares_(gateText).filter((tag) => !(tag === "counter-added:any" && counterIsTheCardsOwn(gateText, cardText)));
         if (gateCares.length > 0) ability.conditionCares = gateCares;
+        if (!otherwise && alike?.[(clause.actions ?? []).indexOf(action)]) ability.otherwiseAlike = true;
       }
       // A RETURN THAT LANDS LATER (#801, Shirei): read on THIS action's own sentence, so an immediate
       // return beside a delayed one stays immediate (Gift of Immortality, Swift Warkite; review). The

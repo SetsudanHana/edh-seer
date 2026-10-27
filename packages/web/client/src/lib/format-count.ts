@@ -47,6 +47,10 @@ export function conditionalNote(rows: readonly Conditional[] | undefined, leaves
 function choiceWords(needs: string): string {
   const t = needs.toLowerCase();
   if (t.includes("gift was promised")) return "when the gift is promised";
-  const m = /\b(?:was|were) (kicked|multikicked|bargained|overloaded|evoked)\b/.exec(t);
+  const cost = /\b(prowl|surge) cost was paid\b/.exec(t);
+  if (cost) return `when ${cost[1]} is paid`;
+  const warp = /\bcast for its (warp|prowl|surge) cost\b/.exec(t);
+  if (warp) return `when cast for its ${warp[1]} cost`;
+  const m = /\b(?:was|were) (kicked|multikicked|bargained|overloaded|evoked|foretold)\b/.exec(t);
   return m ? `when ${m[1]}` : "when the extra cost is paid";
 }

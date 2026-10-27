@@ -49,8 +49,9 @@ function subjectMove(x: unknown, y: unknown): string {
 /** The fields two abilities differ in, one level into `effect` and `trigger`; a subject (the effect's,
  *  the trigger's, an emit's) says how it moved. */
 const GATE_FIELDS = ["gate", "conditionCares"] as const;
-const canonicalSet = (abs: readonly Ability[], f: (typeof GATE_FIELDS)[number]): string =>
-  JSON.stringify(abs.map((a) => json((a as unknown as Record<string, unknown>)[f])).sort());
+const kindSet = (abs: readonly Ability[]): string => JSON.stringify(abs.map((a) => a.effect?.kind ?? "").sort());
+const gateSet = (abs: readonly Ability[], f: (typeof GATE_FIELDS)[number]): string =>
+  JSON.stringify(abs.map((a) => json({ kind: a.effect?.kind, v: (a as unknown as Record<string, unknown>)[f] })).sort());
 function fieldsOf(a: Ability, b: Ability): string[] {
   const out = new Set<string>();
   for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {
@@ -85,10 +86,12 @@ export function deriveDiff(stored: readonly Ability[], grammar: readonly Ability
     if (json(x) === json(y)) continue;
     if (x.length !== y.length) { keys.add(`abilities:${x.length}->${y.length}`); continue; }
     x.forEach((ab, i) => { for (const f of fieldsOf(ab, y[i]!)) keys.add(f); });
-    // A GATE IS COMPARED AS A SET PER CLAUSE, NOT PER PAIR (#1357 part 2): the pairing is by the sort of the other fields, so two gated abilities whose other fields differ (a search and a mill, one read with an
-    // amount) can cross and pair a gate with its neighbour's; `gate` then entered the group key and un-switched a labelled "grammar right" group (Traveling Botanist and five more). The gates the clause
-    // carries must still agree, or the switch would change what a card is gated on.
-    for (const f of GATE_FIELDS) if (canonicalSet(x, f) !== canonicalSet(y, f)) keys.add(f);
+    // A GATE IS COMPARED AS A MULTISET OF (effect kind, gate, conditionCares) PER CLAUSE, not per sorted pair (#1357 part 2): the pairing is by the sort of the other fields, so two gated abilities whose other fields
+    // differ (a search and a mill, one read with an amount) can cross and pair a gate with its neighbour's; `gate` then entered the group key and un-switched a labelled "grammar right" group (Traveling Botanist
+    // and five more). Keyed by the effect kind, a gate that MOVED to another ability of the clause (draw(g1) mill(g2) against draw(g2) mill(g1)) is still a difference, and order is not.
+    // CEILING: `emits` is not in the key (the two readings differ in emits by design, which is what the group labels are about); two abilities of one kind in a clause are told apart by their gates only.
+    // (When the kinds themselves differ the key already says so, and the gates would differ only because the kinds do.)
+    if (kindSet(x) === kindSet(y)) for (const f of GATE_FIELDS) if (gateSet(x, f) !== gateSet(y, f)) keys.add(f);
   }
   return keys.size ? [...keys].sort().join(",") : null;
 }
