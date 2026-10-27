@@ -27,6 +27,8 @@ import { effectText, printedPreamble } from "../grammar/preamble.js";
 import { alignVerbs, parseActions, type ActionReading } from "../grammar/action.js";
 import { parseTrigger, type TriggerReading } from "../grammar/trigger.js";
 import { conditionalReturn, delaysIn, flipBranch, returnDelay, untilSourceLeaves } from "./delay.js";
+import { effectGates, FLIP_VERB_WORDS, nthSentenceMatching, printedVerbWord } from "./effect-gate.js";
+import { parseGate } from "./gate.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
 import { countOf } from "./event-count.js";
@@ -1751,25 +1753,10 @@ const RETURN_TO_BATTLEFIELD = /\breturn (?:it|them|him|her|this card|that card|t
 function nthSentenceWith(text: string, verb: string, k: number): string {
   return nthSentenceMatching(text, `\\b${verb}\\b`, k);
 }
-/** The sentence of `text` holding the k-th (0-based) match of the regex source `pattern`; "" when there are fewer. */
-function nthSentenceMatching(text: string, pattern: string, k: number): string {
-  const word = new RegExp(pattern, "gi");
-  let seen = 0;
-  for (const sentence of text.split(".")) {
-    const n = (sentence.match(word) ?? []).length;
-    if (seen + n > k) return sentence;
-    seen += n;
-  }
-  return "";
-}
-/** The printed word(s) an action verb reads as, where they differ from the verb's name ("modify-pt" is "gets", "deal-damage" is "deals"). The default is the verb's first word, with its
- *  plural/third-person ending: "draw" reads "draws", "destroy" reads "destroys". */
-export const FLIP_VERB_WORDS: Record<string, string> = {
-  "modify-pt": "gets?", "deal-damage": "deals?", "gain-life": "gains?", "lose-life": "loses?|lose", "add-counter": "puts?", "remove-counter": "removes?", "gain-control": "gains? control",
-  "counter-spell": "counters?", "extra-turn": "extra turn", "phase-out": "phases? out", "grant-ability": "gains?", "create": "creates?", "sacrifice": "sacrifices?",
-};
+// FLIP_VERB_WORDS, nthSentenceMatching and the printed-word lookup moved to effect-gate.ts (#1357): the gate of an effect and `onFlip` find an action's sentence by one table.
+export { FLIP_VERB_WORDS };
 function flipVerbWord(verb: string): string {
-  return `\\b(?:${FLIP_VERB_WORDS[verb] ?? `${verb.split("-")[0]}(?:s|es)?`})\\b`;
+  return printedVerbWord(verb);
 }
 /** "Whenever ONE OR MORE ...": one firing per batch (CR 603.2c; edge magnitude). */
 const BATCHED = /\bone or more\b/i;
@@ -2709,6 +2696,8 @@ export function deriveAbilities(
         if (GUARDED_VERBS.has(a.verb ?? "") && !guardExempt(a) && verbPrint(a.verb ?? "", clauseText, clauseCosts?.[clause.id as number], oracleText) === "none") misfiled.add(a);
       }
     }
+    // The trailing "if" of each action's sentence (#1357), read once per clause from the effect body (the text after the trigger preamble, an intervening if and an ability word).
+    const gateReads = clauseText ? effectGates(effectText(clauseText, cardName ?? ""), (clause.actions ?? []).map((a) => a.verb ?? "")) : undefined;
     for (const action of clause.actions ?? []) {
       // A PRINTED "Casualty N" keyword line is the spell's own sacrifice outlet (Make Disappear):
       // Scryfall's keyword list drops the N, so the line itself is read. See `casualtySacrifice`.
@@ -3331,6 +3320,14 @@ export function deriveAbilities(
         const onFlip = flipBranch(nthSentenceMatching(text, flipVerbWord(action.verb), k), clauseActions.some((x) => x.verb === "flip-coin"));
         if (onFlip) ability.onFlip = onFlip;
       }
+      // THE CONDITION THIS EFFECT IS GATED ON (#1357, owner 2026-10-27): a trailing "if <condition>" in the action's own sentence, parsed by the one `parseGate` and carried by THIS ability only (an ungated action of the
+      // same clause has none). The deck demand it makes is the existing `conditionCares`, set on the ability itself: an instant has no trigger for the clause-level pass below to hang it on. See effect-gate.ts for what is no gate.
+      const gateText = gateReads?.gates[(clause.actions ?? []).indexOf(action)];
+      if (gateText) {
+        ability.gate = parseGate(gateText.replaceAll("~", (cardName ?? "").split(" // ")[0] ?? ""));
+        const gateCares = conditionCares_(gateText);
+        if (gateCares.length > 0) ability.conditionCares = gateCares;
+      }
       // A RETURN THAT LANDS LATER (#801, Shirei): read on THIS action's own sentence, so an immediate
       // return beside a delayed one stays immediate (Gift of Immortality, Swift Warkite; review). The
       // k-th return/put action is the k-th "return"/"put" in the text. CEILING: a counter "put" in the
@@ -3534,7 +3531,8 @@ export function deriveAbilities(
       // A REFUSED trigger still says what the card needs around it (owner 2026-08-20): the cares
       // tags ride on every ability of a triggered clause, claimed or not.
       if (conditionCares.length > 0 && (abilities[i].trigger || clause.trigger?.event || activationIf)) {
-        abilities[i] = { ...abilities[i], conditionCares };
+        // ...beside the demand of the effect's own gate (#1357), when the ability has one.
+        abilities[i] = { ...abilities[i], conditionCares: [...new Set([...(abilities[i].conditionCares ?? []), ...conditionCares])] };
       }
       // THE MULTIPLIER'S OWN TRIGGER, the one synthesized from the "would ... instead" frame -- see
       // `Ability.replacement`. Matched on the verbs so a clause's other trigger is never marked.

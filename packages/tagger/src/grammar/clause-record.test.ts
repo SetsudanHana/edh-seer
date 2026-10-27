@@ -897,11 +897,14 @@ test("each mode of a multi-trigger header fires on every trigger of it: Captain 
   }
 });
 
-test("a mode's trailing 'if' condition is never dropped into an unconditional draw: Federation Field Medic stays unclaimed (#1349 review)", () => {
+test("a mode's trailing 'if' condition rides on its draw as a gate, never an unconditional draw: Federation Field Medic (#1349 review, #1357)", () => {
   const { tags } = deriveGrammar("Federation Field Medic", "Creature — Human Doctor", "Vigilance\nWhen this creature enters, choose one —\n• Put a +1/+1 counter on target creature. It gains vigilance until end of turn.\n• Draw a card if you control a permanent with a counter on it.");
-  expect(tags.abilities.some((a) => a.effect.kind === "draw-card")).toBe(false);
+  const draws = tags.abilities.filter((a) => a.effect.kind === "draw-card");
+  expect(draws).toHaveLength(1);
+  expect(draws[0]!.gate).toEqual({ kind: "unknown", text: "you control a permanent with a counter on it" });
+  expect(draws[0]!.conditionCares).toEqual(["counter-added:any"]);
   expect(tags.abilities.some((a) => a.effect.kind === "counter-placement")).toBe(true);
-  expect(JSON.stringify(tags.unclaimed ?? [])).toContain("permanent with a counter");
+  expect(JSON.stringify(tags.unclaimed ?? [])).not.toContain("permanent with a counter");
 });
 
 test("a granted ability's cost counter is the grantee's, never the Aura's: Sinking Feeling emits no self counter", () => {
