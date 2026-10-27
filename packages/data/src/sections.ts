@@ -196,3 +196,14 @@ function flatExportCommander(text: string): { commanders: string[]; deck: string
   }
   return undefined;
 }
+
+/** A deck has at most two commanders: a partner pair, or a background, friends forever or doctor's
+ *  companion pairing. */
+export const MAX_COMMANDERS = 2;
+
+/** Why a Commander box cannot be read, or undefined. A whole list pasted there leaves no library,
+ *  and the report's maths has nothing to work on; refuse it rather than guess which line is meant. */
+export function commanderBoxProblem(names: string[]): string | undefined {
+  if (names.length <= MAX_COMMANDERS) return undefined;
+  return `The Commander box holds ${names.length} cards. Put only your commander there (two with a partner) and the rest of the list in Decklist, or leave it empty if your list starts with the commander.`;
+}

@@ -56,12 +56,16 @@ test("a deck analyses end to end against static files alone", async () => {
  *  null, and the report still has to render for the rest of the deck. */
 test("a card with no file lands in missing and the rest still analyses", async () => {
   const f = fetchOf({
-    ...shardsOf({ krenko: card("id-krenko", "Krenko", "Legendary Creature — Goblin", ["R"]) }),
+    ...shardsOf({
+      krenko: card("id-krenko", "Krenko", "Legendary Creature — Goblin", ["R"]),
+      mountain: card("id-mountain", "Mountain", "Basic Land — Mountain", []),
+    }),
     [`/static/${VERSION}/token-tags.json`]: {},
   });
-  const r = await analyzeDeckStatic("Krenko\n\nNot A Real Card", undefined, "/static", f);
+  // A card besides the commander is needed since #1369: a commander-only list has no library.
+  const r = await analyzeDeckStatic("Krenko\n\nMountain\nNot A Real Card", undefined, "/static", f);
   expect(r.missing).toEqual(["Not A Real Card"]);
-  expect(r.resolvedCount).toBe(1);
+  expect(r.resolvedCount).toBe(2);
 });
 
 /** THE KEEPER'S READING (P1) skips the mana simulation and the graph, and must still give the three

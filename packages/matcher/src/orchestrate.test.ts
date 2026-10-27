@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { buildWireGraph, resolveDeck } from "./orchestrate.js";
+import { analyzeDecklist, buildWireGraph, resolveDeck } from "./orchestrate.js";
 import type { CardLookup } from "@edh-seer/data/resolve";
 
 const doc = (name: string, colorIdentity: string[] = [], typeLine = "Creature — Human") => ({
@@ -73,4 +73,20 @@ test("the board's edges are the report's edges", async () => {
   const empty = await buildWireGraph(names, new Map(), copies, sources, { edges: [] } as never);
   expect(empty.edges).toHaveLength(0);
   expect(empty.nodes).toHaveLength(2);
+});
+
+/** #1369: the whole list pasted into the Commander box used to reach `minCopies` with an empty library. */
+test("a Commander box holding the whole list is refused before any card is fetched", async () => {
+  let fetched = false;
+  const makeSources = async () => { fetched = true; return {} as never; };
+  const box = Array.from({ length: 5 }, (_, i) => `1 Card ${i}`).join("\n");
+  await expect(analyzeDecklist("", box, makeSources)).rejects.toThrow(/Commander box holds 5 cards/);
+  await expect(analyzeDecklist(box, box, makeSources)).rejects.toThrow(/Commander box holds 5 cards/);
+  expect(fetched).toBe(false);
+});
+
+test("a list with nothing but the commander is refused in plain words, not by the maths", async () => {
+  const lookup = lookupOf([doc("Krenko", ["R"], "Legendary Creature — Goblin")]);
+  const makeSources = async () => ({ lookup }) as never;
+  await expect(analyzeDecklist("1 Krenko", "1 Krenko", makeSources)).rejects.toThrow(/No cards in the deck besides the commander/);
 });

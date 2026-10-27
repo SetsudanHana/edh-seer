@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { parseDecklistSections } from "./sections.js";
+import { commanderBoxProblem, parseDecklistSections } from "./sections.js";
 
 test("splits a Commander section from the deck", () => {
   const text = [
@@ -138,4 +138,11 @@ test("a Companion section is its own list, never a card and never part of the de
   const tail = parseDecklistSections("1 Sol Ring\n\nCompanions\n1 Lurrus of the Dream-Den");
   expect(tail.deck).toEqual(["Sol Ring"]);
   expect(tail.companions).toEqual(["Lurrus of the Dream-Den"]);
+});
+
+test("the Commander box takes at most two cards (a partner pair)", () => {
+  expect(commanderBoxProblem([])).toBeUndefined();
+  expect(commanderBoxProblem(["A"])).toBeUndefined();
+  expect(commanderBoxProblem(["A", "B"])).toBeUndefined();
+  expect(commanderBoxProblem(["A", "B", "C"])).toMatch(/Commander box holds 3 cards/);
 });
