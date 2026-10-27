@@ -497,3 +497,19 @@ test("the card's possessive '~'s' lexes as one token and is a variable stat boun
     stats: [{ metric: "power", op: "lt", variable: true }], fromZone: "graveyard",
   });
 });
+
+// #1383: a negated card type before ANOTHER card type was dropped ("nonartifact creature" read as any
+// creature). The negation is an exclusion the matcher applies (8cdb0d7b), so it is recorded.
+test("a negated card type beside a head type is recorded as notType", () => {
+  expect(parse("a nonartifact creature")).toMatchObject({ type: "creature", notType: ["artifact"] });
+  expect(parse("target nonartifact creature")).toMatchObject({ type: "creature", notType: ["artifact"], scope: "target" });
+  expect(parse("a nonartifact, nonblack creature")).toMatchObject({ type: "creature", notType: ["artifact"], notColors: ["B"] });
+  expect(parse("a nonenchantment creature")).toMatchObject({ type: "creature", notType: ["enchantment"] });
+  expect(parse("a noncreature artifact")).toMatchObject({ type: "artifact", notType: ["creature"] });
+  // The correct rows stay as they were.
+  expect(parse("a nonartifact permanent")).toMatchObject({ notType: ["artifact"] });
+  expect(parse("a nonblack creature")!.notType).toBeUndefined();
+  expect(parse("a non-Wall creature")!.notType).toBeUndefined();
+  expect(parse("a nonlegendary creature")!.notType).toBeUndefined();
+  expect(parse("a nontoken creature")!.notType).toBeUndefined();
+});

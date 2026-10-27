@@ -244,8 +244,25 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
     const producerTokens = arr(producer.type);
     const unknowable = producerTokens.some((t) => PSEUDO_TYPE_SETS[t.toLowerCase()] !== undefined);
     if (!unknowable) {
-      const has = expandTypes(producerTokens, arr(producer.subtype), h);
-      if (negated.some((t) => has.has(t.toLowerCase()))) return false;
+      const excluded = (tokens: string[]): boolean => {
+        const has = expandTypes(tokens, arr(producer.subtype), h);
+        return negated.some((t) => has.has(t.toLowerCase()));
+      };
+      // A producer list with its OWN `notType` came from a negation over an umbrella ("destroy target
+      // nonland permanent"): it means ANY of those types, so a nonartifact creature is among its
+      // victims and Missy hears Stroke of Midnight. It is excluded only when EVERY alternative is.
+      // Every other multi-type producer keeps the strict exclusion: a printed type line is a
+      // conjunction (Laserbeak), and so is a copy token that gained a type (Urza, Prince of Kroog:
+      // `{token, type: [creature, artifact]}`), which read as "either" falsely paired with Cloudstone
+      // Curio and Builder's Talent. CEILING: a real OR with no notType of its own is refused -- a
+      // missing edge, never a false one. Against a consumer that already carried notType (Stolen
+      // Identity x Curio) that is unchanged; against the consumers #1383 newly gives notType it is a
+      // NEW loss: Midgar, City of Mako // Reactor Raid ("sacrifice an artifact or creature") x Jaws,
+      // Relentless Predator ("a noncreature artifact is sacrificed") joined at 397 and is refused
+      // now. Derive does not mark OR from AND (27 two-type and 6 three-type token:true create-token
+      // emits carry no allTypes, #1383 review census); #1385 marks them and lifts this.
+      const orList = producerTokens.length > 1 && (producer.notType?.length ?? 0) > 0 && (producer.allTypes?.length ?? 0) === 0;
+      if (orList ? producerTokens.every((t) => excluded([t])) : excluded(producerTokens)) return false;
     }
   }
   // subtype: an array on the consumer means OR — at least one named subtype must be a

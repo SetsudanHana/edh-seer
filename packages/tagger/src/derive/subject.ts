@@ -210,18 +210,16 @@ export function resolveTypes(
     // spell" is the permanents that are spells, minus lands.
     const base = concrete.length > 0 ? concrete : [...(umbrellaIntersection(found) ?? CARD_TYPES)];
     const kept = base.filter((ty) => !negated.includes(ty));
-    // A negation that removes nothing from the base ("nonartifact creature" is still a creature)
-    // leaves the subject exactly as it was: the engine cannot say "and not an artifact", and
-    // inventing a narrower filter would be a wrong answer rather than a missing one.
     if (kept.length > 0) {
-      // Record the negation only when it actually REMOVED something. "Nonartifact creature" is still
-      // exactly a creature, so claiming a `notType` there would advertise a constraint the matcher is
-      // not applying -- and the tag would read "a nonartifact ..." about a subject that admits every
-      // creature, artifact ones included.
-      const narrowed = kept.length !== base.length;
+      // The negation is recorded even when it REMOVED nothing from the base: "nonartifact creature"
+      // is `{type: creature, notType: [artifact]}`. It was dropped on the reasoning that the matcher
+      // could not apply it, and that went stale five hours after it was written: 8cdb0d7b made the
+      // matcher treat a `notType` as an EXCLUSION (matcher/subject.ts, abstaining only for an
+      // umbrella producer type), so an artifact creature no longer feeds "destroy all nonartifact
+      // creatures" (Phyrexian Scriptures). Dropping it read wider than the text (#1383).
       return {
         type: kept.length === 1 ? kept[0] : kept,
-        ...(narrowed ? { notType: [...negated] } : {}),
+        notType: [...negated],
         negationApplied: true,
       };
     }

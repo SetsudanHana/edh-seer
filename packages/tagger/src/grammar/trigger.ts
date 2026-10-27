@@ -475,6 +475,7 @@ export function readBlocker(by: string): { blocker: SubjectFilter; batched?: tru
   if (!blocker || blocker.self || blocker.status || blocker.other || blocker.ref) return null;
   if (blocker.stats?.some((x) => (x as { variable?: boolean }).variable)) return null;
   // The filter must have kept every "non-X" the phrase prints, and the phrase must name creatures (or a creature subtype): "a nonartifact" alone reads as every non-artifact card type.
+  // CEILING: only notType, notSubtype and notColors are counted, so a nonlegendary / nontoken blocker (carried by parse as legendary:false / token:false) refuses though the filter could say it: a missing trigger, not a wrong one.
   const negated = (phrase.match(/\bnon-?[a-z]+/gi) ?? []).length;
   if (negated > (blocker.notType?.length ?? 0) + (blocker.notSubtype?.length ?? 0) + (blocker.notColors?.length ?? 0)) return null;
   if (!/\bcreatures?\b/.test(phrase) && !(blocker.subtype !== undefined && blocker.type === undefined)) return null;

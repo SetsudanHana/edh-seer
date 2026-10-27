@@ -93,6 +93,12 @@ test("ramp keeps every colour the cut makes", () => {
   expect(sameJob(mindStone, talisman, "ramp")).toBe(false);
 });
 
+test("a nonartifact-creature answer does not do Wrath's job (#1383, Phyrexian Scriptures)", () => {
+  expect(answerCovers([{ type: "creature" }], [{ type: "creature", notType: ["artifact"] }])).toBe(false);
+  expect(answerCovers([{ type: "creature", notType: ["artifact"] }], [{ type: "creature", notType: ["artifact"] }])).toBe(true);
+  expect(answerCovers([{ type: "creature", notType: ["artifact"] }], [{ type: "creature" }])).toBe(true);
+});
+
 test("an answer covers the cut's card types with no new limit", () => {
   const creature = [{ type: "creature", control: "opp" }];
   expect(answerCovers(creature, [{ type: "permanent", notType: ["land"], control: "opp" }])).toBe(true);

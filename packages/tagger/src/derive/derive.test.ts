@@ -4634,8 +4634,15 @@ describe("becomes blocked by <creatures> (#1381, CR 509.3c-e)", () => {
     expect(t!.repeats).toBe("per-cycle");
   });
 
-  test("a blocker phrase the grammar cannot read exactly still refuses (Catacomb Dragon: 'a nonartifact, non-Dragon creature')", () => {
+  test("a blocker phrase with a negated card type is read in full (Catacomb Dragon: 'a nonartifact, non-Dragon creature', #1383)", () => {
     const tags = viaGrammar("Catacomb Dragon", "Creature — Dragon", "Flying\nWhenever this creature becomes blocked by a nonartifact, non-Dragon creature, that creature gets -X/-0 until end of turn, where X is half the creature's power, rounded down.");
+    expect(blocked(tags)).toHaveLength(1);
+    expect(blocked(tags)[0]!.trigger!.blocker).toMatchObject({ type: "creature", notType: ["artifact"], notSubtype: ["dragon"] });
+    expect(tags.unknownTriggers ?? []).not.toContain("narrowing:becomes-blocked");
+  });
+
+  test("readBlocker's guard counts only notType / notSubtype / notColors: a legendary or token negation (carried by parse as legendary:false / token:false) still refuses", () => {
+    const tags = viaGrammar("Test Charger", "Creature — Ogre", "Whenever this creature becomes blocked by a nonlegendary creature, destroy that creature.");
     expect(blocked(tags)).toHaveLength(0);
     expect(tags.unknownTriggers).toContain("narrowing:becomes-blocked");
   });
