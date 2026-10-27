@@ -27,7 +27,7 @@ import { effectText, printedPreamble } from "../grammar/preamble.js";
 import { alignVerbs, parseActions, type ActionReading } from "../grammar/action.js";
 import { parseTrigger, type TriggerReading } from "../grammar/trigger.js";
 import { conditionalReturn, delaysIn, flipBranch, returnDelay, untilSourceLeaves } from "./delay.js";
-import { counterIsTheCardsOwn, effectGates, FLIP_VERB_WORDS, nthSentenceMatching, printedVerbWord } from "./effect-gate.js";
+import { counterIsTheCardsOwn, effectGates, FLIP_VERB_WORDS, isOtherwiseGate, nthSentenceMatching, printedVerbWord } from "./effect-gate.js";
 import { parseGate } from "./gate.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
@@ -3321,13 +3321,15 @@ export function deriveAbilities(
         const onFlip = flipBranch(nthSentenceMatching(text, flipVerbWord(action.verb), k), clauseActions.some((x) => x.verb === "flip-coin"));
         if (onFlip) ability.onFlip = onFlip;
       }
-      // THE CONDITION THIS EFFECT IS GATED ON (#1357, owner 2026-10-27): a trailing "if <condition>" in the action's own sentence, parsed by the one `parseGate` and carried by THIS ability only (an ungated action of the
+      // THE CONDITION THIS EFFECT IS GATED ON (#1357, owner 2026-10-27): an "if <condition>" that governs the action (trailing, in its own conjunct, or leading its sentence, #1357 part 2), parsed by the one `parseGate` and carried by THIS ability only (an ungated action of the
       // same clause has none). The deck demand it makes is the existing `conditionCares`, set on the ability itself: an instant has no trigger for the clause-level pass below to hang it on. See effect-gate.ts for what is no gate.
       const gateText = gateReads?.gates[(clause.actions ?? []).indexOf(action)];
       if (gateText) {
-        ability.gate = parseGate(gateText.replaceAll("~", (cardName ?? "").split(" // ")[0] ?? ""));
+        const otherwise = isOtherwiseGate(gateText);
+        ability.gate = otherwise ? { kind: "unknown", text: gateText } : parseGate(gateText.replaceAll("~", (cardName ?? "").split(" // ")[0] ?? ""));
         // A counter the card places on itself is no counters demand (#1357 review): no deck supplies a "phyresis" or "hunger" counter, and the false demand reached edges.ts' dies-trigger guard.
-        const gateCares = conditionCares_(gateText).filter((tag) => !(tag === "counter-added:any" && counterIsTheCardsOwn(gateText, cardText)));
+        // The OTHER branch of an "if" asks nothing of the deck: the demand is the condition's, and this branch is its opposite (#1357 part 2).
+        const gateCares = otherwise ? [] : conditionCares_(gateText).filter((tag) => !(tag === "counter-added:any" && counterIsTheCardsOwn(gateText, cardText)));
         if (gateCares.length > 0) ability.conditionCares = gateCares;
       }
       // A RETURN THAT LANDS LATER (#801, Shirei): read on THIS action's own sentence, so an immediate

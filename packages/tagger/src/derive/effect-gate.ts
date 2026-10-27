@@ -6,8 +6,13 @@
  *  WHICH SENTENCE IS AN ACTION'S: the k-th action of a verb takes the k-th sentence carrying that verb's printed word (`FLIP_VERB_WORDS`, the table `onFlip` and the delayed returns read too).
  *  CEILING: a verb whose printed word is not in the table (`other`, `cost-modify`, ...) finds no sentence and its ability is ungated, which is the reading before this existed; a word that also appears for another
  *  job in an earlier sentence can shift a later action's sentence (`effectGates` reports a gated sentence no action took, and the grammar refuses a mode over it).
- *  CEILING: ONLY A TRAILING "if". A sentence that OPENS with the condition ("If you control a Dragon, draw a card", "Then if ...") stays ungated: its condition can govern several following clauses and an "Otherwise"
- *  branch, and which of the sentence's actions it gates is not a word-level question. The grammar keeps refusing a MODE that opens with one (`effectGates().refused`).
+ *  A LEADING CONDITION (#1357 part 2, owner 2026-10-27): a sentence that OPENS with its condition ("If you control a Dragon, draw a card"), "Then if ..." and the mid-sentence ", then if ..." gate every action of the
+ *  sentence that stands AFTER the condition, however the predicate is joined ("If you control a Dragon, draw a card and you gain 2 life" gates both: unlike a trailing "if", a leading one governs the whole predicate).
+ *  An "Otherwise, ..." / "If not, ..." sentence is the other branch of the nearest earlier sentence's "if": its actions get an `unknown` gate that says so (`isOtherwiseGate`), never none, which
+ *  would read as sure. The parser has no negation, so the branch is unread (0.5, flagged), not a copy of the condition (which would read as its opposite).
+ *  CEILING: A LEADING "IF" GOVERNS ITS OWN SENTENCE ONLY. "If X, mill three cards. Put one into your hand." has no printed marker for how far X reaches, so the following sentences stay ungated (an under-gate; the
+ *  "Otherwise" branch is the one continuation that is marked, and is gated).
+ *  CEILING: an action with both a trailing and a leading "if" takes the trailing one (one gate slot); an "Otherwise" sentence takes the unknown branch gate whatever "if" it holds.
  *  CEILING: AN "IF" GATES THE ACTION OF ITS OWN CONJUNCT ONLY, found by the printed verb words (see `effectGates`): in "Create a Treasure token and draw a card if X" the draw is gated and the Treasure is not, which
  *  under-gates a sentence whose "if" the writer meant for both; and a comma list inside a condition ("if you control a Dragon, an Elf, and a Goblin") ends it at ", and ".
  *  Bounded literals and `indexOf` only, no `\s*...$` tail and no nested quantifier (CodeQL js/polynomial-redos). */
@@ -55,19 +60,25 @@ export function nthSentenceMatching(text: string, pattern: string, k: number): s
  *   - "if you do" / "if you don't" / "if you did" / "if they do": the follow-up to an optional cost or choice inside the same effect ("you may pay {1}. If you do, ...");
  *   - "if able" / "if possible": a rules qualifier on an instruction ("attacks each combat if able");
  *   - "if you pay {2} more": the price of an option ("You may cast this spell as though it had flash if you pay {2} more to cast it");
- *   - "if that player does" / "if it does": the same follow-up, about another player or object. */
-const FOLLOW_UP = /^(?:you|they|that player|he|she|it) (do|does|did|don't|doesn't|didn't|can't|cannot|pay|paid)\b/i;
+ *   - "if that player does" / "if it does" / "if no one does" / "if a player does": the same follow-up, about another player or object. */
+const FOLLOW_UP = /^(?:you|they|that player|he|she|it|no one|no player|a player|any player|the player|an opponent|each opponent) (do|does|did|don't|doesn't|didn't|can't|cannot|pay|paid)\b/i;
 function notAGate(condition: string): boolean {
   const m = FOLLOW_UP.exec(condition);
   // "if you don't control a legendary creature" IS a condition (Errand-Rider of Gondor, Raving Oni-Slave): the bare follow-up ends there or at a comma.
   if (m) { const rest = condition.slice(m[0].length).trimStart(); return m[1] === "pay" || m[1] === "paid" || rest === "" || rest.startsWith(","); }
   return /^(?:able|possible)\b/i.test(condition);
 }
-/** "would" in the condition is a replacement (CR 614, `replacement.ts` owns it) and "instead" an alternative of the same effect ("Draw two cards instead if ..."): neither says whether the effect happens. */
-const REPLACEMENT_WORDS = /\bwould\b/i;
+/** "would" in the condition is a replacement (CR 614, `replacement.ts` owns it) and "instead" an alternative of the same effect ("Draw two cards instead if ..."): neither says whether the effect happens.
+ *  So is the frame of a TRIGGER DOUBLER, which prints no "would": "If a permanent entering causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time" (Panharmonicon, Elesh Norn,
+ *  Yarok, Roaming Throne: 7 of the 117 static leading conditions). The condition is the event the doubler modifies, not a chance the doubler does nothing. */
+const REPLACEMENT_WORDS = /\bwould\b|\btriggered abilit(?:y|ies)\b/i;
 const INSTEAD = /\binstead\b/i;
 /** A sentence that restricts WHEN the card or ability may be used or what it costs, not what it does (part 1 of #1349 owns the activation restriction). "costs {2} less to cast if it targets ...", "costs {1} less to activate". */
 const COST_CHANGE = /\bcosts? [^,]{0,80}\b(?:less|more) to (?:cast|activate)\b/i;
+/** An ALTERNATIVE COST or a cast permission the card gives itself ("If an opponent cast a blue spell this turn, you may pay {R} rather than pay this spell's mana cost", the Traps; "If you control a creature with power 4 or greater, you may cast
+ *  this spell as though it had flash", Dragon Grip; "If you control a commander, you may cast this spell without paying its mana cost", Deadly Rollick): a condition on HOW the card is cast, the same family as a cost reduction, and no gate on what it does.
+ *  CEILING: "If it's a nonland card, you may cast it without paying its mana cost" (Unexpected Results) names a cast of ANOTHER card and is a gate; only "this spell/creature/card" is the card's own. */
+const ALT_COST = /\brather than (?:pay|paying)\b|, (?:you may )?cast (?:this spell|this creature|this card)\b[^,.]{0,40}\b(?:as though|without paying)\b/i;
 const RESTRICTION_OPENER = /^(?:activate|cast this|use this|any player may activate|you may activate|you may cast this)\b/i;
 /** What stands before the "if" when the sentence is NOT "<effect> if <condition>": a bare connective, or an "only"/"as"/"even"/"except" the "if" belongs to ("only if", "as if", "even if", "except if this creature was embalmed"). */
 const BARE_LEAD = new Set(["then", "and", "also", "otherwise"]);
@@ -76,8 +87,8 @@ const IF_BELONGS_TO_PREVIOUS = /(?:^|\s)(?:only|as|even|what|except)$/i;
 export type SentenceGate =
   | { shape: "none" }
   | { shape: "exempt" }
-  /** The sentence opens with its condition (or "Then if ..."): not read, see the header. */
-  | { shape: "leading" }
+  /** The sentence opens with its condition (or "Then if ..."): it gates the actions that follow it, see the header. */
+  | { shape: "leading"; condition: string }
   | { shape: "trailing"; condition: string };
 
 /** One gating "if" of a sentence: where it stands (`at`, the index of its "i"), the verbatim condition and where that condition ends (`end`, an index in the sentence). */
@@ -98,7 +109,7 @@ function conditionEnd(lower: string, from: number, leading: boolean): number {
 export function sentenceIfs(sentence: string): SentenceIf[] {
   const s = sentence.replace(/"[^"]*"/g, " ");
   const lower = s.toLowerCase();
-  if (RESTRICTION_OPENER.test(s.trim()) || COST_CHANGE.test(s) || INSTEAD.test(s)) return [];
+  if (RESTRICTION_OPENER.test(s.trim()) || COST_CHANGE.test(s) || ALT_COST.test(s) || INSTEAD.test(s)) return [];
   const lead = lower.length - lower.trimStart().length;
   const starts: number[] = lower.startsWith("if ", lead) ? [lead] : [];
   for (let p = lower.indexOf(" if "); p >= 0; p = lower.indexOf(" if ", p + 1)) starts.push(p + 1);
@@ -109,18 +120,17 @@ export function sentenceIfs(sentence: string): SentenceIf[] {
     if (at < ended) continue;
     const opens = at === lead && lower.startsWith("if ", lead);
     const start = at + 3;
-    const end = conditionEnd(lower, start, opens);
-    const condition = s.slice(start, end).trim();
     const pre = s.slice(0, at).trim();
-    ended = end;
-    if (condition === "" || REPLACEMENT_WORDS.test(condition) || notAGate(condition)) continue;
-    if (opens) { out.push({ at, shape: "leading", condition, start, end }); continue; }
-    if (IF_BELONGS_TO_PREVIOUS.test(pre)) continue;
     // "Then if X, do Y" and "Until end of turn, if X, ..." and "Before the game begins, if ...": the condition leads, whatever the words before it.
     // ...and the same joined to an earlier effect: "create a Rat token, then if you control five or more Rats, each Rat gets +2/+0" (Ogre Chitterlord).
     const lastWord = pre.slice(pre.lastIndexOf(" ") + 1).replace(/,$/, "").toLowerCase();
-    if (BARE_LEAD.has(lastWord) || pre.endsWith(",")) { out.push({ at, shape: "leading", condition, start, end: conditionEnd(lower, start, true) }); continue; }
-    out.push({ at, shape: "trailing", condition, start, end });
+    const leads = opens || (!IF_BELONGS_TO_PREVIOUS.test(pre) && (BARE_LEAD.has(lastWord) || pre.endsWith(",")));
+    const end = conditionEnd(lower, start, leads);
+    const condition = s.slice(start, end).trim();
+    ended = end;
+    if (condition === "" || REPLACEMENT_WORDS.test(condition) || notAGate(condition)) continue;
+    if (!opens && IF_BELONGS_TO_PREVIOUS.test(pre)) continue;
+    out.push({ at, shape: leads ? "leading" : "trailing", condition, start, end });
   }
   return out;
 }
@@ -128,7 +138,7 @@ export function sentenceIfs(sentence: string): SentenceIf[] {
 /** What one sentence says about its FIRST gating if: the verbatim condition of a trailing one, or why it has none. */
 export function sentenceGate(sentence: string): SentenceGate {
   const first = sentenceIfs(sentence)[0];
-  if (first) return first.shape === "leading" ? { shape: "leading" } : { shape: "trailing", condition: first.condition };
+  if (first) return { shape: first.shape, condition: first.condition };
   const plain = sentence.replace(/"[^"]*"/g, " ");
   return plain.toLowerCase().includes(" if ") || plain.trimStart().toLowerCase().startsWith("if ") ? { shape: "exempt" } : { shape: "none" };
 }
@@ -136,10 +146,18 @@ export function sentenceGate(sentence: string): SentenceGate {
 /** What starts a new conjunct between two verbs of one sentence. */
 const CONJUNCT_BOUNDARY = [", then ", ", and ", " and ", ", "];
 
+/** The gate text of the OTHER BRANCH of an "if" ("Otherwise, draw a card"): derive makes it an `unknown` gate (the parser has no negation) and asks no deck demand of it. The report prints a gate after "it only works if", so the text
+ *  is a clause that reads there: "it only works if it is not the case that it was attacking" / "...if the condition before it does not hold" (no earlier condition found). */
+const NOT_THE_CASE = "it is not the case that ";
+const NO_EARLIER = "the condition before it does not hold";
+export const isOtherwiseGate = (condition: string): boolean => condition.startsWith(NOT_THE_CASE) || condition === NO_EARLIER;
+/** A sentence that is the OTHER branch of the "if" before it. */
+const OTHERWISE_OPENER = /^(?:otherwise|if not)\b/i;
+
 export interface EffectGates {
-  /** Per action, in order: the verbatim trailing condition of the "if" that belongs to that action's own conjunct, or null. */
+  /** Per action, in order: the verbatim condition of the "if" that governs that action (its own conjunct's trailing "if", else the leading "if" before it), the other-branch text (`isOtherwiseGate`) of an "Otherwise" sentence, or null. */
   gates: (string | null)[];
-  /** Some sentence carries a gating "if" that no action took: it opens with its condition, or no action's verb finds it. The grammar refuses a mode over it. */
+  /** Some sentence carries a gating "if" that no action took (no action's verb finds it). The grammar refuses a mode over it. */
   refused: boolean;
 }
 
@@ -166,19 +184,36 @@ export function effectGates(body: string, verbs: readonly string[]): EffectGates
     return null;
   });
   const taken = new Set<string>();
+  /** The condition each sentence's "otherwise" would negate: the nearest earlier sentence's first "if", gating or not ("You may pay {1}. If you do, ... Otherwise, ..."). */
+  const branchOf: (string | undefined)[] = [];
+  let latest: string | undefined;
+  sentences.forEach((sentence, i) => {
+    branchOf.push(latest);
+    if (OTHERWISE_OPENER.test(sentence.trimStart())) return;
+    const first = parsed[i]![0];
+    if (first) latest = first.condition;
+    else if (sentence.toLowerCase().includes(" if ") || sentence.trimStart().toLowerCase().startsWith("if ")) latest = "";
+  });
+  const otherwise = sentences.map((sentence) => OTHERWISE_OPENER.test(sentence.trimStart()));
   const gates = where.map((w, j) => {
     if (w === null) return null;
+    // THE OTHER BRANCH: unread, whatever "if" the sentence also holds (CEILING in the header).
+    if (otherwise[w.sentence]) { for (const f of parsed[w.sentence]!) taken.add(`${w.sentence}:${f.at}`); return branchOf[w.sentence] ? `${NOT_THE_CASE}${branchOf[w.sentence]!.toLowerCase()}` : NO_EARLIER; }
     const next = parsed[w.sentence]!.find((f) => f.shape === "trailing" && f.at > w.offset);
-    if (!next) return null;
-    const lower = sentences[w.sentence]!.toLowerCase();
-    // Another action's word in a LATER conjunct between this one's and the "if": the "if" is that action's. A word inside the same conjunct is a modifier ("gets +2/+2 until end of turn BEFORE IT FIGHTS if you
-    // control a creature with power 4 or greater", Savage Punch) and shares the "if".
-    if (where.some((o, i) => i !== j && o !== null && o.sentence === w.sentence && o.offset > w.offset && o.offset < next.at && CONJUNCT_BOUNDARY.some((b) => lower.slice(w.offset, o.offset).includes(b)))) return null;
-    if (lower.slice(w.offset, next.at).includes(" except ")) return null;
-    taken.add(`${w.sentence}:${next.at}`);
-    return next.condition;
+    if (next) {
+      const lower = sentences[w.sentence]!.toLowerCase();
+      // Another action's word in a LATER conjunct between this one's and the "if": the "if" is that action's. A word inside the same conjunct is a modifier ("gets +2/+2 until end of turn BEFORE IT FIGHTS if you
+      // control a creature with power 4 or greater", Savage Punch) and shares the "if".
+      const theirs = where.some((o, i) => i !== j && o !== null && o.sentence === w.sentence && o.offset > w.offset && o.offset < next.at && CONJUNCT_BOUNDARY.some((b) => lower.slice(w.offset, o.offset).includes(b)));
+      if (!theirs && !lower.slice(w.offset, next.at).includes(" except ")) { taken.add(`${w.sentence}:${next.at}`); return next.condition; }
+    }
+    // A LEADING "if" governs every action after it in its sentence (the last one before the action, for ", then if X, ..., then if Y, ...").
+    const lead = parsed[w.sentence]!.filter((f) => f.shape === "leading" && f.end <= w.offset).pop();
+    if (!lead) return null;
+    taken.add(`${w.sentence}:${lead.at}`);
+    return lead.condition;
   });
-  const refused = parsed.some((ifs, at) => ifs.some((f) => f.shape === "leading" || !taken.has(`${at}:${f.at}`)));
+  const refused = parsed.some((ifs, at) => ifs.some((f) => !taken.has(`${at}:${f.at}`)));
   return { gates, refused };
 }
 

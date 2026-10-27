@@ -920,9 +920,10 @@ test("two multi-trigger modal headers pair their twins in order; unequal counts 
   expect(verbsOf(3)).toEqual(["attacks", "enters"]);
 });
 
-test("a mode's 'if you don't control ...' gates it; only the bare reflexive 'if you do / don't' is exempt: Venser, Corpse Puppet", () => {
+test("a mode's 'if you don't control ...' gates its token (#1357 part 2: a leading condition is read, never an unconditional token); only the bare reflexive 'if you do / don't' is exempt: Venser, Corpse Puppet", () => {
   const { tags } = deriveGrammar("Venser, Corpse Puppet", "Legendary Creature — Phyrexian Zombie Wizard", "Lifelink, toxic 1\nWhenever you proliferate, choose one —\n• If you don't control a creature named The Hollow Sentinel, create The Hollow Sentinel, a legendary 3/3 colorless Phyrexian Golem artifact creature token.\n• Target artifact creature you control gains flying and lifelink until end of turn.");
-  expect(tags.abilities.some((a) => a.effect.kind === "token-generation")).toBe(false);
+  const tokens = tags.abilities.filter((a) => a.effect.kind === "token-generation");
+  expect(tokens.map((a) => a.gate)).toEqual([{ kind: "unknown", text: "you don't control a creature named the hollow sentinel" }]);
 });
 
 // #1349 part 2: Saga chapters and Station thresholds. Real oracle text (Mongo `cards`, 2026-10-26).
