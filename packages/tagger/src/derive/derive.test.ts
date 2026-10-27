@@ -6500,22 +6500,34 @@ test("a textless 'blocks' record beside the 'attacks' record that already reads 
 // dropped while the pump stayed: a half fold that changed which readings survive.
 test("a textless blocks record with ANY ability the covering clause lacks is not folded at all (Velukan Dragon)", () => {
   const text = "Whenever this creature attacks or blocks, roll a six-sided die. This creature gets +X/+0 until end of turn, where X is the result minus 1.";
-  const acts = (amount: string) => [
+  const acts = (extra: boolean) => [
     { verb: "roll-dice", object: "a six-sided die", fromZone: null, toZone: null, amount: null, optional: false },
-    { verb: "modify-pt", object: "this creature", amount, fromZone: null, toZone: null, optional: false },
+    { verb: "modify-pt", object: "this creature", amount: "+X/+0, where X is the result minus 1", fromZone: null, toZone: null, optional: false },
+    ...(extra ? [{ verb: "draw", object: "you", amount: "1", fromZone: null, toZone: null, optional: false }] : []),
   ];
-  const run = (blocksAmount: string) => deriveAbilities([
-    { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: acts("+X/+0, where X is the result minus 1") },
-    { id: 2, abilityType: "triggered", trigger: { event: "blocks", subject: "this creature", control: "you" }, actions: acts(blocksAmount) },
+  const run = (extra: boolean) => deriveAbilities([
+    { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: acts(false) },
+    { id: 2, abilityType: "triggered", trigger: { event: "blocks", subject: "this creature", control: "you" }, actions: acts(extra) },
   ], "Velukan Dragon", { 1: text }, undefined, text);
-  const clause2 = (r: ReturnType<typeof run>) => r.abilities.filter((a) => a.clause === 2).length;
+  const clause2 = (r: ReturnType<typeof run>) => r.abilities.filter((a) => a.clause === 2);
   // Control: both records read alike, so the whole textless clause folds.
-  const alike = run("+X/+0, where X is the result minus 1");
-  expect(clause2(alike)).toBe(0);
+  const alike = run(false);
+  expect(clause2(alike)).toHaveLength(0);
   expect(alike.spliced.has(2)).toBe(true);
-  // One ability of the textless clause has no exact match: NOTHING of it is folded, the dice-rolled copy included.
-  const differs = run("+X/+0 where X is the result minus 1");
-  expect(clause2(differs)).toBeGreaterThan(0);
-  expect(differs.abilities.some((a) => a.clause === 2 && (a.emits ?? []).some((e) => e.verb === "dice-rolled"))).toBe(true);
-  expect(differs.spliced.has(2)).toBe(false);
+  // One ability of the textless clause has no counterpart in the covering clause: NOTHING of it is folded, the identical dice-rolled copy included.
+  const richer = run(true);
+  expect(clause2(richer).some((a) => (a.emits ?? []).some((e) => e.verb === "dice-rolled"))).toBe(true);
+  expect(clause2(richer).some((a) => (a.emits ?? []).some((e) => e.verb === "draw"))).toBe(true);
+  expect(richer.spliced.has(2)).toBe(false);
+});
+
+// Dusk Urchins-shaped, exact copy: folds. (The poorer / respelled-amount cover is measured corpus-wide with derive-identity, not unit-built: it arises from the grammar path's own reading.)
+test("an identical textless blocks record folds (Dusk Urchins shape)", () => {
+  const text = "Whenever this creature attacks or blocks, put a -1/-1 counter on it.";
+  const act = (amount: string | null) => [{ verb: "add-counter", object: "a -1/-1 counter on it", amount, fromZone: null, toZone: null, optional: false }];
+  const run = (blocksAmount: string | null) => deriveAbilities([
+    { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: act("1") },
+    { id: 2, abilityType: "triggered", trigger: { event: "blocks", subject: "this creature", control: "you" }, actions: act(blocksAmount) },
+  ], "Dusk Urchins", { 1: text }, undefined, text);
+  expect(run("1").abilities.filter((a) => a.clause === 2)).toHaveLength(0);
 });
