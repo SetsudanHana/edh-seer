@@ -2619,7 +2619,7 @@ export function deriveAbilities(
         // REFUSES leaves the older, wrong doc standing, so the clause layer alone cannot fix it.
         unknownTriggers.push(`phantom:${verb}`);
       } else if (verb === "becomes-blocked" && isSelfSubject(clause.trigger.subject ?? "", cardName) && blockedBySelf(cardText, cardName)) {
-        // The stored record is numbered into another sentence (Mirror Shield: clause 3 is "Equip {2}"), so the printed phrase is read off the whole card: the stored "this creature" is the BLOCKER (#1375 review).
+        // CEILING: reads the whole card text, because the stored record can be numbered into another sentence (Mirror Shield: clause 3 is "Equip {2}"); there the stored "this creature" is the BLOCKER (#1375 review). A card with a real self becomes-blocked trigger AND a "blocked by this creature" sentence elsewhere would be refused (0 in the corpus, 2026-10-27); a refusal, never a wrong edge.
         unknownTriggers.push("blocked-by-self");
       } else if (verb) {
         const subject = subjectFrom(clause.trigger.subject ?? "", cardName, enchantText);
