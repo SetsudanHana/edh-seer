@@ -4556,6 +4556,70 @@ test("Mirror Shield's 'becomes blocked by this creature' is refused, never a liv
   }
 });
 
+// #1381: "becomes blocked by <creatures>" carries the blocker (oracle text from the corpus, 2026-10-27).
+describe("becomes blocked by <creatures> (#1381, CR 509.3c-e)", () => {
+  const viaGrammar = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings));
+  };
+  const blocked = (tags: ReturnType<typeof viaGrammar>) => tags.abilities.filter((a) => a.trigger?.verbs?.includes("becomes-blocked" as never));
+
+  test("Ogre Leadfoot: by an artifact creature, once per blocker", () => {
+    const tags = viaGrammar("Ogre Leadfoot", "Creature — Ogre Soldier", "Whenever this creature becomes blocked by an artifact creature, destroy that creature.");
+    const [t] = blocked(tags);
+    expect(t!.trigger!.blocker).toMatchObject({ type: expect.arrayContaining(["creature", "artifact"]) });
+    expect(t!.trigger!.batched).toBeUndefined();
+    expect(t!.trigger!.subject.self).toBe(true);
+    expect(t!.repeats).toBe("repeatable");
+    expect(tags.unknownTriggers ?? []).not.toContain("narrowing:becomes-blocked");
+  });
+
+  test("Serra Inquisitors: by one or more black creatures is batched, once a combat", () => {
+    const tags = viaGrammar("Serra Inquisitors", "Creature — Human Cleric", "Whenever this creature blocks or becomes blocked by one or more black creatures, this creature gets +2/+0 until end of turn.");
+    const [t] = blocked(tags);
+    expect(t!.trigger!.blocker).toMatchObject({ type: "creature", colors: ["B"] });
+    expect(t!.trigger!.batched).toBe(true);
+    expect(t!.repeats).toBe("per-cycle");
+    // The blocks half is out of scope: it keeps refusing the class.
+    expect(tags.unknownTriggers).toContain("narrowing:blocks");
+    expect(tags.unknownTriggers ?? []).not.toContain("narrowing:becomes-blocked");
+  });
+
+  test("Engulfing Slagwurm: by a creature is {type: creature}, once per blocker, and the blocks half still derives", () => {
+    const tags = viaGrammar("Engulfing Slagwurm", "Creature — Wurm", "Whenever this creature blocks or becomes blocked by a creature, destroy that creature. You gain life equal to that creature's toughness.");
+    const [t] = blocked(tags);
+    expect(t!.trigger!.blocker).toEqual({ control: "any", token: null, type: "creature" });
+    expect(t!.trigger!.batched).toBeUndefined();
+    expect(t!.repeats).toBe("repeatable");
+    expect(tags.abilities.some((a) => a.trigger?.verbs?.includes("blocks" as never) && a.trigger.blocker === undefined)).toBe(true);
+    expect(tags.unknownTriggers ?? []).toEqual([]);
+  });
+
+  test("a plain 'becomes blocked' has no blocker and stays once a round", () => {
+    const [t] = blocked(viaGrammar("Test Charger", "Creature — Elephant", "Whenever this creature becomes blocked, it gets +2/+2 until end of turn."));
+    expect(t!.trigger!.blocker).toBeUndefined();
+    expect(t!.repeats).toBe("per-cycle");
+  });
+
+  test("a blocker phrase the grammar cannot read exactly still refuses (Catacomb Dragon: 'a nonartifact, non-Dragon creature')", () => {
+    const tags = viaGrammar("Catacomb Dragon", "Creature — Dragon", "Flying\nWhenever this creature becomes blocked by a nonartifact, non-Dragon creature, that creature gets -X/-0 until end of turn, where X is half the creature's power, rounded down.");
+    expect(blocked(tags)).toHaveLength(0);
+    expect(tags.unknownTriggers).toContain("narrowing:becomes-blocked");
+  });
+
+  test("the stored path reads the printed phrase too (the stored subject can be the blocker: Ogre Leadfoot)", () => {
+    const text = "Whenever this creature becomes blocked by an artifact creature, destroy that creature.";
+    const card = { name: "Ogre Leadfoot", typeLine: "Creature — Ogre Soldier", oracleText: text, keywords: [] as string[] };
+    const stored = [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "an artifact creature", control: "any" }, actions: [{ verb: "destroy", object: "that creature" }] }] as never;
+    const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, stored, undefined, undefined));
+    const [t] = blocked(tags);
+    expect(t!.trigger!.blocker).toMatchObject({ type: expect.arrayContaining(["creature", "artifact"]) });
+    const bad = deriveCardTags(deriveInputOf({ ...card, name: "X", oracleText: "Whenever this creature becomes blocked by a creature with lesser power, destroy that creature." } as never, "x", "X", stored, undefined, undefined));
+    expect(blocked(bad)).toHaveLength(0);
+  });
+});
+
 test("Goblin Cadets' 'blocks or becomes blocked' derives BOTH halves as live self triggers (#1373, #1375)", () => {
   const text = "Whenever this creature blocks or becomes blocked, target opponent gains control of it. (This removes this creature from combat.)";
   const { abilities, unknownTriggers } = deriveAbilities(

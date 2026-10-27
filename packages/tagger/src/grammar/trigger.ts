@@ -34,6 +34,9 @@ export interface TriggerReading {
   oncePerTurn?: true;
   /** Which damage a damage event is: the store's `damage-dealt` is both, and derive's verbs are not. */
   damage?: "combat" | "noncombat";
+  /** A `becomes-blocked` reading's "by ..." phrase, read (#1381): the filter on the blocking creature(s), and whether the trigger fires once per batch of them. */
+  blocker?: SubjectFilter;
+  batched?: true;
 }
 
 /** A player phrase as an actor: whose the event is, and a narrowing when the phrase picks out one
@@ -251,8 +254,8 @@ const OBJECT_VERBS: [RegExp, string, VerbPatch?][] = [
   [/^attacks?$/, "attacks"],
   [/^blocks?(?: a creature)?$/, "blocks"],
   [/^blocks? (?<n>(?:a|an|one or more|two or more) .+)$/, "blocks"],
-  // Only a creature can block (CR 509.1a), so "by a creature" names no narrowing. It is still not redundant: "becomes blocked" fires once per combat (CR 509.3c), "becomes blocked by a creature" once per blocker (CR 509.3d), which repeats.ts reads off the clause text.
-  [/^becomes? blocked(?: by a creature)?$/, "becomes-blocked"],
+  // "Becomes blocked" fires once per combat (CR 509.3c); "by <creatures>" is read into the trigger's `blocker` by `readBlocker` (#1381), and a "by" phrase it cannot read stays a narrowing.
+  [/^becomes? blocked$/, "becomes-blocked"],
   [/^becomes? blocked (?<n>by .+)$/, "becomes-blocked"],
   [/^(?:leaves?|leave) the battlefield$/, "leaves"],
   [/^(?:leaves?|leave) the battlefield without dying$/, "leaves", { withoutDying: true }],
@@ -457,16 +460,41 @@ function subjectsOf(phrase: string): Loose[] | null {
   return one && [one];
 }
 
+/** WHO BLOCKS (#1381): the "by ..." phrase of a "becomes blocked by ..." trigger, read into the filter on the BLOCKING creatures. Null when it cannot be read EXACTLY, so the caller keeps the narrowing and the
+ *  trigger refuses (a silent wrong answer is worse than a missing one): the card or its host as the blocker (Mirror Shield's "by this creature", `blockedBySelf` in derive), a negation the filter dropped
+ *  ("a nonartifact creature"), a stat that compares with the watched creature ("lesser power"), a state, and anything the filter grammar does not read whole.
+ *  `batched`: "by one or more X" fires once per combat however many match (CR 603.2c), and so does a threshold, "by two or more creatures" (CR 509.3e); "by a/an X" fires once per blocker (CR 509.3d).
+ *  CEILING: a threshold's count ("two") is not carried, only that the trigger is once a combat. */
+const BATCHED_BY = /^(?:one|two|three|four|five) or more /;
+const SELF_BLOCKER = /^(?:this creature|it|~|equipped creature|enchanted creature|this permanent|that creature)$/;
+export function readBlocker(by: string): { blocker: SubjectFilter; batched?: true } | null {
+  const m = /^by (.+)$/.exec(by.trim());
+  if (!m || SELF_BLOCKER.test(m[1]!)) return null;
+  const phrase = m[1]!;
+  const blocker = parse(phrase);
+  if (!blocker || blocker.self || blocker.status || blocker.other || blocker.ref) return null;
+  if (blocker.stats?.some((x) => (x as { variable?: boolean }).variable)) return null;
+  // The filter must have kept every "non-X" the phrase prints, and the phrase must name creatures (or a creature subtype): "a nonartifact" alone reads as every non-artifact card type.
+  const negated = (phrase.match(/\bnon-?[a-z]+/gi) ?? []).length;
+  if (negated > (blocker.notType?.length ?? 0) + (blocker.notSubtype?.length ?? 0) + (blocker.notColors?.length ?? 0)) return null;
+  if (!/\bcreatures?\b/.test(phrase) && !(blocker.subtype !== undefined && blocker.type === undefined)) return null;
+  return { blocker, ...(BATCHED_BY.test(phrase) ? { batched: true as const } : {}) };
+}
+
 function objectReading(rest: string): TriggerReading | TriggerReading[] | null {
   const words = rest.split(" ");
   for (let i = words.length - 1; i >= 1; i--) {
     const verb = words.slice(i).join(" ");
     if (/^(?:or|and) /.test(verb)) continue;
     // The whole phrase first: "becomes the target of a spell OR ability" is one event.
-    const match = (part: string) => {
+    const match = (part: string): { event: string; patch?: VerbPatch; narrowing?: string; by?: string; blocker?: SubjectFilter; batched?: true } | undefined => {
       for (const [re, event, patch] of OBJECT_VERBS_ORDERED) {
         if (!loosePass && re.source.includes("(?<n>.+)")) continue;
         const m = re.exec(part);
+        if (m && event === "becomes-blocked" && m.groups?.n) {
+          const b = readBlocker(m.groups.n);
+          return { event, patch, by: m.groups.n, ...(b ? { blocker: b.blocker, ...(b.batched ? { batched: true as const } : {}) } : { narrowing: m.groups.n }) };
+        }
         if (m) return { event, patch, narrowing: m.groups?.n };
       }
       return undefined;
@@ -478,15 +506,16 @@ function objectReading(rest: string): TriggerReading | TriggerReading[] | null {
     if (!subjects) continue;
     // "blocks or becomes blocked BY A WHITE CREATURE": a blocker printed last covers every part. Any
     // other narrowing is its own part's ("enters or becomes the target of a spell AN OPPONENT CONTROLS").
-    const shared = hits.map((h) => h!.narrowing).find((n) => n?.startsWith("by "));
+    // "By a creature" names no narrowing for the other half (only a creature can block, CR 509.1a), so it is not shared.
+    const shared = hits.map((h) => h!.by ?? h!.narrowing).find((n) => n?.startsWith("by ") && n !== "by a creature");
     const out = subjects.flatMap(({ subject, narrowing: subjectNarrowing }) => {
       return hits.map((h) => {
-        const narrowing = [subjectNarrowing, h!.narrowing ?? shared].filter(Boolean).join(" ");
+        const narrowing = [subjectNarrowing, h!.narrowing ?? (h!.by === undefined ? shared : undefined)].filter(Boolean).join(" ");
         const { event, patch } = h!;
         const control = subject.self ? "you" : patch?.control ?? subject.control;
         const patched = { ...subject, ...(patch?.zone ? { zone: patch.zone } : {}), ...(patch?.fromZone ? { fromZone: patch.fromZone } : {}), ...(patch?.notFromZone ? { notFromZone: patch.notFromZone } : {}), ...(patch?.withoutDying ? { withoutDying: true as const } : {}) };
         const r = reading(event, patched, control);
-        return { ...r, ...(patch?.damage ? { damage: patch.damage } : {}), ...(narrowing ? { narrowing } : {}) };
+        return { ...r, ...(patch?.damage ? { damage: patch.damage } : {}), ...(narrowing ? { narrowing } : {}), ...(h!.blocker ? { blocker: h!.blocker } : {}), ...(h!.batched ? { batched: true as const } : {}) };
       });
     });
     return out.length === 1 ? out[0]! : out;

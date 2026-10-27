@@ -25,7 +25,7 @@ import { memoizeCloned } from "../memo.js";
 import { selfAsTilde } from "../grammar/self-as-tilde.js";
 import { effectText, printedPreamble } from "../grammar/preamble.js";
 import { alignVerbs, parseActions, type ActionReading } from "../grammar/action.js";
-import { parseTrigger, type TriggerReading } from "../grammar/trigger.js";
+import { parseTrigger, readBlocker, type TriggerReading } from "../grammar/trigger.js";
 import { conditionalReturn, delaysIn, flipBranch, returnDelay, untilSourceLeaves } from "./delay.js";
 import { branchesAlike, counterIsTheCardsOwn, effectGates, FLIP_VERB_WORDS, isOtherwiseGate, nthSentenceMatching, printedVerbWord } from "./effect-gate.js";
 import { parseGate } from "./gate.js";
@@ -559,7 +559,8 @@ import { emblemRecipient } from "../emblem.js";
 // 394: #1373 (owner ruling 2026-10-27) -- `blocks` is an engine verb (CR 509.1a: only creatures block): a "whenever ... blocks" trigger derives instead of being dropped (192 stored rows carried the clause event, 249 corpus cards print it), a modal header's "attacks or blocks" (Elder Gargaroth) gives its modes the blocks visit as well as the attacks one, and the blocking state of a blocks trigger's subject is the event (as the attacking state is on an attack). `blocks` joins PERMANENT_EVENT_VERBS; a self blocks trigger refuses a bare clause `you` the way attacks does.
 // 395: #1373 review -- a textless `blocks` record beside the record whose grammar reading already covers "attacks or blocks" (Howling Golem, Jedit Ojanen, Sapphire Dragon, Goblin Psychopath: 46 cards, all pure removals) is folded into it, all or nothing per clause, when EVERY ability it derives is covered by one of the covering clause's (`identicalTwinOf`: identical apart from the clause and the amount's spelling, the covering one carrying an amount / count wherever the twin does), instead of a second blocks ability.
 // 396: #1375 (owner ruling 2026-10-27) -- `becomes-blocked` is an engine verb (CR 509.1h: an attacking creature with blockers declared for it becomes blocked), consumed from card text with NO producer: a "whenever ... becomes blocked" trigger derives instead of being dropped (168 stored rows carried the clause event, 233 corpus cards print it) and the second half of "blocks or becomes blocked" (55 cards print "blocks or becomes blocked" outside reminder text: Goblin Cadets, Aisling Leprechaun, Goblin Flotilla, Engulfing Slagwurm) derives beside the blocks half. `becomes-blocked` joins PERMANENT_EVENT_VERBS; "an attacking creature becomes blocked" states the event, so the attacking state is dropped as it is on an attack. repeats: a self / equipped / enchanted creature becomes blocked once a combat (CR 509.3c), "becomes blocked by <creatures>" once per blocker (CR 509.3d).
-export const DERIVE_VERSION = 396;
+// 397: #1381 -- a "becomes blocked by <creatures>" trigger carries the blocker: `Ability.trigger.blocker` is the filter on the BLOCKING creatures ("by an artifact creature", Ogre Leadfoot; "by a creature" is `{type: creature}`), read by `readBlocker` (grammar/trigger.ts) on both paths. "By one or more <class>" and a threshold ("by two or more creatures") set `batched` (once a combat, CR 603.2c / 509.3e); "by a/an <class>" is once per blocker (CR 509.3d). A phrase it cannot read exactly (the card or its host as blocker, a dropped negation, a relative stat, a state) still refuses as `narrowing:becomes-blocked`. repeats reads the fields, no longer the clause text.
+export const DERIVE_VERSION = 397;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1960,7 +1961,7 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
   return { ...clause, actions: out };
 }
 
-type GrammarTrigger = { verbs: Verb[]; subject: SubjectFilter } | { refused: string; subject?: SubjectFilter };
+type GrammarTrigger = { verbs: Verb[]; subject: SubjectFilter; blocker?: SubjectFilter; batched?: true } | { refused: string; subject?: SubjectFilter };
 
 function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, split: boolean, precomputed?: TriggerReading[], curse?: boolean, creatureCard?: boolean): GrammarTrigger[] | null {
   // An Aura's "enchanted permanent" is the class its own face's Enchant line names (see subjectFrom).
@@ -1990,6 +1991,8 @@ function grammarTriggersOf(text: string, cardName: string | undefined, storedEve
 }
 
 /** "...becomes blocked by this creature / by it / by equipped creature / by enchanted creature / by <the card's name>": the card (or its host) is the BLOCKER, not the creature the trigger watches. */
+/** The printed "by ..." of a "becomes blocked by ..." trigger, up to the comma that ends the trigger phrase (#1381). */
+const BLOCKED_BY_PHRASE = /\bbecomes? blocked (by [^,.;]+)/i;
 function blockedBySelf(text: string, cardName?: string): boolean {
   const name = cardName ? cardName.split(" // ")[0]!.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&") : "";
   return new RegExp(`\\bbecomes? blocked by (?:this creature|it|equipped creature|enchanted creature${name ? `|${name}` : ""})(?![\\w'])`, "i").test(text);
@@ -2037,7 +2040,7 @@ function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, c
   // Only an attacking creature becomes blocked (CR 509.1h): "an attacking creature becomes blocked" states the event, not a narrowing.
   if (verb === "becomes-blocked" && subject.combat === "attacking") delete subject.combat;
   if (subject.sharesTypeWith === "self" && GRANTED_TO_COMMANDER.test(cardText)) subject.sharesTypeWith = "commander";
-  return { verbs: [verb], subject };
+  return { verbs: [verb], subject, ...(verb === "becomes-blocked" && r.blocker ? { blocker: r.blocker, ...(r.batched ? { batched: true as const } : {}) } : {}) };
 }
 
 /** "those tokens" / "the token": not a PRONOUN_OBJECT, so it never resolves and emitted a wildcard token tap (Dog Walker). */
@@ -2621,6 +2624,9 @@ export function deriveAbilities(
       } else if (verb === "becomes-blocked" && isSelfSubject(clause.trigger.subject ?? "", cardName) && blockedBySelf(cardText, cardName)) {
         // CEILING: reads the whole card text, because the stored record can be numbered into another sentence (Mirror Shield: clause 3 is "Equip {2}"); there the stored "this creature" is the BLOCKER (#1375 review). A card with a real self becomes-blocked trigger AND a "blocked by this creature" sentence elsewhere would be refused (0 in the corpus, 2026-10-27); a refusal, never a wrong edge.
         unknownTriggers.push("blocked-by-self");
+      } else if (verb === "becomes-blocked" && BLOCKED_BY_PHRASE.test(text) && !readBlocker(BLOCKED_BY_PHRASE.exec(text)![1]!)) {
+        // The printed "by ..." names a blocker `readBlocker` cannot read exactly (the grammar's own refusal, #1381): the stored subject can be the blocker itself, so no guess.
+        unknownTriggers.push("narrowing:becomes-blocked");
       } else if (verb) {
         const subject = subjectFrom(clause.trigger.subject ?? "", cardName, enchantText);
         const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
@@ -2696,7 +2702,8 @@ export function deriveAbilities(
           subject.sharesTypeWith = GRANTED_TO_COMMANDER.test(cardText) ? "commander" : "self";
         }
         selfLeavesTrigger = subject.self === true && verb === "leaves";
-        trigger = { verbs: [verb], subject };
+        const blockedBy = verb === "becomes-blocked" ? readBlocker(BLOCKED_BY_PHRASE.exec(text)?.[1] ?? "") : null;
+        trigger = { verbs: [verb], subject, ...(blockedBy ? { blocker: blockedBy.blocker, ...(blockedBy.batched ? { batched: true as const } : {}) } : {}) };
       } else {
         unknownTriggers.push(clause.trigger.event);
       }
@@ -3612,7 +3619,8 @@ export function deriveAbilities(
       }
       const reduces = abilities[i].effect?.kind === "cost-reduction" ? reductionOf(text ?? "", abilities[i].amount) : undefined;
       if (reduces) abilities[i] = { ...abilities[i], reduces };
-      if (abilities[i].trigger && BATCHED.test(clause.trigger?.subject ?? "")) {
+      // A becomes-blocked trigger's stored subject can be the BLOCKER (Ogre Leadfoot: "an artifact creature"), so its `batched` is read off the printed "by ..." (`blocker`), never off the stored subject (#1381).
+      if (abilities[i].trigger && !abilities[i].trigger!.verbs.includes("becomes-blocked") && BATCHED.test(clause.trigger?.subject ?? "")) {
         abilities[i] = { ...abilities[i], trigger: { ...abilities[i].trigger!, batched: true } };
       }
       // A GAME-STATE REQUIREMENT: from the ability word the segmenter stripped ("Max speed —"),
