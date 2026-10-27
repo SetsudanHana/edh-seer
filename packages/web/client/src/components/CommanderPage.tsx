@@ -167,7 +167,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
         * container". */}
       <div className="flex flex-col gap-2 max-w-[68ch]">
         <p>
-          <span className="eyebrow text-(--muted)">colour identity </span>
+          <span className="eyebrow text-(--muted)">color identity </span>
           {identityLabel(identity)}
           {/* THE PIPS BESIDE THE NAME (owner, 2026-09-20). "Naya" is the nickname and a reader who
             * does not carry the nicknames has nothing to read; the symbols are the identity itself,
@@ -202,7 +202,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
         <p>
           <span className="eyebrow text-(--muted)">it cares about </span>
           {gaps.length === 0
-            ? <span className="text-(--muted)">nothing. It answers every event it watches</span>
+            ? <span className="text-(--muted)">nothing it can&apos;t set up on its own</span>
             : gaps.map((w) => eventKeyClause(w)).join(" · ")}
         </p>
         </>)}
@@ -214,7 +214,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
           {chooses && (
             <div className="flex flex-col gap-2">
               <p id="pair-colour" className="eyebrow text-(--muted)">
-                {page.choosesColour ? "its colour, chosen before the game" : `${pair!.name}'s colour, chosen before the game`}
+                {page.choosesColour ? "its color, chosen before the game" : `${pair!.name}'s color, chosen before the game`}
               </p>
               <ul className="flex flex-wrap gap-2" aria-labelledby="pair-colour">
                 {COLOURS.map((c) => (
@@ -311,7 +311,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
             ? "No pairings yet: we couldn't read this card's text, so there is nothing to rank them by."
             : "No standout pairings in these colours. Whatever this commander helps, hundreds of other cards help just as well, or none of the possible pairings held up."}
         />
-        <SimilarCards items={page.commanderSimilar ?? []} note="Only cards within this commander's colour identity are listed." />
+        <SimilarCards items={page.commanderSimilar ?? []} note="Only cards within this commander's color identity are listed." />
 
     </CardShell>
   );

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { DeckReport } from "../types.js";
-import { bracketWhy, infiniteCombos, type InfiniteCombo } from "../lib/bracket-why.js";
+import { BAND_NAME, bracketWhy, infiniteCombos, type InfiniteCombo } from "../lib/bracket-why.js";
 import { CardName } from "./card-drawer.js";
 import { ComboLoop } from "./ComboLoop.js";
 import { ComboFeature, comboParts } from "./ComboFeature.js";
@@ -111,7 +111,7 @@ export function BracketPanel({ bracket, combos, manaValueOf, artOf, model }: {
           <span>casual</span><span>competitive</span>
         </div>
         <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="text-sm">Bracket {CELL_LABEL[bracket.band]}</span>
+          <span className="text-sm">Bracket {CELL_LABEL[bracket.band]} ({BAND_NAME[bracket.band]})</span>
           {/* THE PIPS CARRY A WORD, and the word does the addition out loud. BOTH COUNTS, ZEROS
             *  INCLUDED (persona round 2026-09-27: a deck with no combo or no Game Changer said
             *  nothing, and "none found" read as "never looked"). */}

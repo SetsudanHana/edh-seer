@@ -186,7 +186,7 @@ test("renders nothing at all rather than an empty grid", () => {
 // A CARD THAT RESOLVED AND CARRIES NO DERIVED TAGS IS STILL A CREATURE. The hatch rides ON the
 // type fill rather than replacing it -- hiding the type would overstate the gap. Same convention,
 // and the same `hatchImage`, the graph paints (S1).
-test("hatches the cards the engine could not read, over their own type", () => {
+test("hatches the cards we could not read, over their own type", () => {
   render(<DeckWaffle squares={[sq({ state: "unread", type: "enchantment" }), sq({})]} slices={SLICES} />);
   const marked = screen.getAllByTestId("waffle-square").filter((s) => s.dataset.state === "unread");
   expect(marked).toHaveLength(1);
@@ -237,7 +237,7 @@ test("the grid reads out its own census and both coverage states", () => {
   const label = screen.getByTestId("waffle-grid").getAttribute("aria-label")!;
   expect(label).toContain("21 creature");
   expect(label).toContain("34 lands");
-  expect(label).toContain("1 the engine could not read");
+  expect(label).toContain("1 we could not read");
   expect(label).toContain("1 not found at all");
 });
 

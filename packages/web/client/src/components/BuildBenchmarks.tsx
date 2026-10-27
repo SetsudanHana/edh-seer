@@ -509,12 +509,12 @@ function DeckMathRows({
               *  confidently naming the old one. */}
             Docked for coverage: this deck's{coverageWeightedName ? ` ${coverageWeightedName}` : ""}{" "}
             score counts at {pct(answerCoverage!.coverage)} of full credit — {coverageCovered} of{" "}
-            {coverageClasses} answer classes are covered, not every one these colours could reach.
+            {coverageClasses} answer classes are covered, not every one these colors could reach.
           </p>
         ) : null}
         {poolUnweighted ? (
           <p className="text-xs text-(--muted) max-w-[65ch]">
-            Colour pool unweighted — no commander detected, so every colour was scored as if it
+            Color pool unweighted — no commander detected, so every color was scored as if it
             could supply every class.
           </p>
         ) : null}
@@ -540,7 +540,7 @@ function DeckMathRows({
             // the 71 calibration decks, 17 are artifact and their MEDIAN pool is 56 -- the
             // mono-black number. Printing the pool is what separates the colour pie from a gap.
             const odds = none
-              ? a.pool !== undefined ? `your colours have ${a.pool} cards that could` : ""
+              ? a.pool !== undefined ? `your colors have ${a.pool} cards that could` : ""
               : a.fromCommandZone
                 ? "your commander, so every game"
                 : `in hand by turn ${turn} in ${pct(a.available)} of games`;
@@ -654,7 +654,7 @@ function DeckMathRows({
           ) : null}
           {castability.cards.some((c) => c.mana.high - c.castable.high >= COLOUR_GAP) ? (
             <p className="text-xs text-(--muted) max-w-[65ch]">
-              &ldquo;Ignoring colour&rdquo; is the same cast with colours waved through, so a gap
+              &ldquo;Ignoring color&rdquo; is the same cast with colors waved through, so a gap
               between the two figures means colours, not mana, are what hold the card back.
             </p>
           ) : null}
@@ -697,7 +697,7 @@ function DeckMathRows({
                       // THE FIGURE PER ROW, THE MEANING ONCE (review 2026-09-24): the full clause on
                       // every row took the row's width and cut the card NAME to "Wate…" or "C".
                       // What the gap means is said once, under the list.
-                      const note = gap >= COLOUR_GAP ? `ignoring colour ${band(c.mana)}` : "";
+                      const note = gap >= COLOUR_GAP ? `ignoring color ${band(c.mana)}` : "";
                       return (
                         <li
                           key={c.name}
@@ -828,7 +828,7 @@ function DeckMathRows({
   // colours cost more than the land count does, and the sentence should lead with what to fix.
   const manaBase = lands.manaBase;
   const manaBaseParts = manaBase
-    ? ([["colours", manaBase.costs.colour], ["tapped lands", manaBase.costs.tapped], ["land count", manaBase.costs.count]] as const)
+    ? ([["colors", manaBase.costs.colour], ["tapped lands", manaBase.costs.tapped], ["land count", manaBase.costs.count]] as const)
       .slice().sort((a, b) => b[1] - a[1])
     : [];
 
@@ -992,14 +992,14 @@ function DeckMathRows({
   const unread = unreadNote(deckMath.unreadSources);
   const coloursBlock = colors.length > 0 ? (
         <div className="flex flex-col gap-1.5">
-          <h4 className="eyebrow">Colours</h4>
+          <h4 className="eyebrow">Colors</h4>
           <ul className="flex flex-col gap-1">
             {colors.map((c) => {
               // The deadline is the CARD's own mana value, not a chosen turn: a 3-drop wants its
               // pips on turn 3. That is why this row can name a turn without guessing one.
               const label = colourRowLabel(c)
                 ?? (c.countBound
-                  ? `${c.color}, ${c.supplied} sources; its hardest costs need more mana, not other colours`
+                  ? `${c.color}, ${c.supplied} sources; its hardest costs need more mana, not other colors`
                   : `${c.color}, ${c.supplied} sources, enough for every card that costs it`);
               return (
                 <li key={c.color} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm" aria-label={label}>
@@ -1033,7 +1033,7 @@ function DeckMathRows({
                       )
                       // #680: a mono-black deck's four-pip turn-4 card is short of MANA, which the
                       // lands row judges; "every cost covered" said the opposite.
-                      : c.countBound ? "colour isn't the limit; the land count is" : "every cost covered"}
+                      : c.countBound ? "color isn't the limit; the land count is" : "every cost covered"}
                   </span>
                   {/* "23 of 36 sources" and "short 13" were the same subtraction printed twice.
                     *  The pair survives as one cell, coloured: the reader can see the gap and its

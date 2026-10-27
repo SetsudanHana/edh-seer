@@ -52,7 +52,7 @@ export interface OrbitModel {
 }
 
 export const OTHER_HUE = "#6b5f7d";
-const OTHER_NAME = "Other links";
+const OTHER_NAME = "Other pairings";
 /** Sectors on one ring, "Other links" included. */
 const MAX_SECTORS = 7;
 /** Colours for sectors the deck's own groups don't colour: helpers all share one grey in the

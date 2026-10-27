@@ -213,7 +213,7 @@ function answerFinding(report: DeckReport): Finding | null {
       ? `You do answer ${answered.map((a) => `${a.class}s (${a.fromCommandZone ? "your commander" : `${a.count} card${a.count === 1 ? "" : "s"}`})`).join(", ").replace(/, ([^,]*)$/, " and $1")}`
         + `${turn ? `; the Roles chapter says how often one is in hand by turn ${turn}` : ""}. `
       : "")
-      + (pools.length ? `Your colours have ${pools.map((a) => `${a.pool} for ${a.class}s`).join(", ")}. ` : "")
+      + (pools.length ? `Your colors have ${pools.map((a) => `${a.pool} for ${a.class}s`).join(", ")}. ` : "")
       + "Lands and graveyards are left out: most decks run no land removal, and graveyard hate is hate rather than removal.",
     action: absent.length > 1
       ? "One card that can hit any kind of permanent covers all of these at once."
@@ -294,7 +294,7 @@ function goldFindings(report: DeckReport): Finding[] {
   if (!g) return [];
   const names = g.colours.map((c) => NAME[c]?.toLowerCase() ?? c);
   const kinds = names.join("-");
-  const all = g.colours.length === 2 ? "both colours" : "all three colours";
+  const all = g.colours.length === 2 ? "both colors" : "all three colors";
   // Floored: a probability just under the bar must not print as the bar.
   const pct = (p: number): number => Math.floor(p * 100);
   const one = g.cards === 1;
@@ -302,8 +302,8 @@ function goldFindings(report: DeckReport): Finding[] {
     kind: "colour",
     id: "colour:gold",
     headline: `Your ${kinds} ${one ? "card" : "cards"} due by turn ${g.turn} (${cardsSubject(g.names, g.cards)}) ${one ? "needs" : "need"} ${all} in the same hand.`,
-    detail: `Each colour alone is there ${pct(g.pEach)}% of the time, ${g.colours.length === 2 ? "both" : "all"} together ${pct(g.pJoint)}%.`,
-    action: `Trade a single-colour source for a land that makes ${g.colours.length === 2 ? "both" : "more than one of them"}, or cast ${one ? "it" : "them"} later.`,
+    detail: `Each color alone is there ${pct(g.pEach)}% of the time, ${g.colours.length === 2 ? "both" : "all"} together ${pct(g.pJoint)}%.`,
+    action: `Trade a single-color source for a land that makes ${g.colours.length === 2 ? "both" : "more than one of them"}, or cast ${one ? "it" : "them"} later.`,
     figure: `${pct(g.pJoint)}%`,
     figureLabel: `${kinds} together by turn ${g.turn}`,
     filled: g.pJoint / GOLD_TARGET,
@@ -344,7 +344,7 @@ export function unreadNote(names: readonly string[] | undefined): string | null 
  *  "35/37" makes the reader check which 2 that is. */
 const PIP_WORD: Record<number, string> = { 1: "one", 2: "two", 3: "three", 4: "four", 5: "five" };
 
-export const NAME: Record<string, string> = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green", C: "Colourless" };
+export const NAME: Record<string, string> = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green", C: "Colorless" };
 
 /** A DEMAND NOTHING IN THE DECK SUPPLIES — the one finding that comes from the synergy engine
  *  rather than from printed data, and the reason it exists.
@@ -453,7 +453,7 @@ function landFinding(report: DeckReport): Finding | null {
     headline: over
       ? `You are running ${delta} more ${delta === 1 ? "land" : "lands"} than this curve needs.`
       : `You are ${-delta} ${delta === -1 ? "land" : "lands"} short.`,
-    detail: `${lands.actual} lands against a modelled ${lands.target}, at an average cost of `
+    detail: `${lands.actual} lands against a target of ${lands.target}, at an average cost of `
       + `${lands.avgManaValue.toFixed(2)}`
       // THE TARGET IS FOR A PACKAGE (owner, 2026-09-29), so the finding names it, and where the
       // count goes if an over-target role is trimmed back.

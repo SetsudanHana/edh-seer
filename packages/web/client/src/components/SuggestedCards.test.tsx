@@ -87,8 +87,8 @@ const route: SuggestedCard = {
 };
 test("routes come first under their own label, then the plan list", () => {
   inRouter(<StrengthenLists routes={[route]} plan={[chaosWarp]} />);
-  const labels = screen.getAllByText(/^(Opens a route|Connects to your plan)$/).map((e) => e.textContent);
-  expect(labels).toEqual(["Opens a route", "Connects to your plan"]);
+  const labels = screen.getAllByText(/^(Opens a route|Fits your plan)$/).map((e) => e.textContent);
+  expect(labels).toEqual(["Opens a route", "Fits your plan"]);
   const names = screen.getAllByRole("link").map((a) => a.textContent);
   expect(names).toEqual(["Impact Tremors", "Chaos Warp"]);
 });
@@ -96,14 +96,14 @@ test("routes come first under their own label, then the plan list", () => {
 test("an empty part draws no label", () => {
   inRouter(<StrengthenLists routes={[]} plan={[chaosWarp]} />);
   expect(screen.queryByText("Opens a route")).toBeNull();
-  expect(screen.getByText("Connects to your plan")).toBeInTheDocument();
+  expect(screen.getByText("Fits your plan")).toBeInTheDocument();
 });
 
 test("both parts empty is one sentence and no labels", () => {
   inRouter(<StrengthenLists routes={[]} plan={[]} />);
   expect(screen.queryByText("Opens a route")).toBeNull();
-  expect(screen.queryByText("Connects to your plan")).toBeNull();
-  expect(screen.getByText(/Nothing outside the deck connects to two or more of its cards/)).toBeInTheDocument();
+  expect(screen.queryByText("Fits your plan")).toBeNull();
+  expect(screen.getByText(/No card outside the deck works with two or more of its cards/)).toBeInTheDocument();
 });
 
 test("while computing, the section shows the wait once", () => {

@@ -160,7 +160,7 @@ test("an asker group's cause count names this page's card among the causes; a pr
       }]} />
     </MemoryRouter>,
   );
-  expect(screen.getByText(/cards in Inalla's colours can cause this \(Inalla is one\)/)).toBeInTheDocument();
+  expect(screen.getByText(/cards in Inalla's colors can cause this \(Inalla is one\)/)).toBeInTheDocument();
   onCommander.unmount();
   render(
     <MemoryRouter>

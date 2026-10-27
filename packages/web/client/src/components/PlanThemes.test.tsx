@@ -22,14 +22,14 @@ test("says what the deck does as one row per theme, each with one count", () => 
   // A theme made of the same cards as a row above it is a chip under that row (option B).
   const folded = screen.queryAllByTestId("theme-also").flatMap((a) => within(a).getAllByRole("button"));
   expect(screen.getAllByTestId("theme-row").length + folded.length).toBeGreaterThan(1);
-  expect(row("Cleric tribal").textContent).toMatch(/\d+ cards/);
+  expect(row("Cleric typal").textContent).toMatch(/\d+ cards/);
   // The pairs are no longer a section here: the best cards lead "Cards that carry it".
   expect(screen.queryByRole("heading", { name: "The pairs that work best together" })).toBeNull();
 });
 
 test("a closed row names no cards; opened, it lists them, key cards first and none twice", async () => {
   view();
-  const theme = row("Cleric tribal");
+  const theme = row("Cleric typal");
   expect(within(theme).queryByRole("button", { name: /Cleric 1/ })).toBeNull();
   await userEvent.setup().click(within(theme).getByTestId("theme-row"));
   expect(within(theme).getAllByRole("button", { name: /^Payoff A/ })).toHaveLength(1);
@@ -39,7 +39,7 @@ test("a closed row names no cards; opened, it lists them, key cards first and no
 test("tapping a card in an open theme opens it in the one-card view", async () => {
   const onOpenCard = view();
   const user = userEvent.setup();
-  const theme = row("Cleric tribal");
+  const theme = row("Cleric typal");
   await user.click(within(theme).getByTestId("theme-row"));
   await user.click(within(theme).getByRole("button", { name: /Cleric 3/ }));
   expect(onOpenCard).toHaveBeenCalledWith("Cleric 3");
@@ -56,7 +56,7 @@ test("a big theme shows its first cards and the rest behind Show all", async () 
   }
   render(<PlanThemes report={report} graph={graph} onOpenCard={vi.fn()} />);
   const user = userEvent.setup();
-  const theme = row("Cleric tribal");
+  const theme = row("Cleric typal");
   await user.click(within(theme).getByTestId("theme-row"));
   expect(within(theme).queryByRole("button", { name: /Extra Cleric 9/ })).toBeNull();
   await user.click(within(theme).getByRole("button", { name: /^Show all \d+$/ }));
@@ -78,7 +78,7 @@ test("the main theme's own group takes its name, leads and says so", () => {
   const themes = screen.getAllByRole("heading", { level: 4 }).filter((h) => h.id.startsWith("theme-"));
   expect(themes[0]!.textContent).toBe("Clerics");
   expect(within(themes[0]!.closest("li")!).getByText("main theme")).toBeInTheDocument();
-  expect(screen.queryByRole("heading", { name: "Cleric tribal" })).toBeNull();
+  expect(screen.queryByRole("heading", { name: "Cleric typal" })).toBeNull();
 });
 
 test("a main theme no group meets is named in words above the themes", () => {
@@ -90,8 +90,8 @@ test("a main theme no group meets is named in words above the themes", () => {
 
 test("the second theme's own group takes its name and says it is the second theme", () => {
   const { report, graph } = engineDeck();
-  render(<PlanThemes report={report} graph={graph} main={{ name: "Blink", tag: "etb-refire", count: 12, nonland: 60, second: { name: "Cleric tribal", tag: "scales:cleric" } }} />);
-  expect(within(row("Cleric tribal")).getByText("second theme")).toBeInTheDocument();
+  render(<PlanThemes report={report} graph={graph} main={{ name: "Blink", tag: "etb-refire", count: 12, nonland: 60, second: { name: "Cleric typal", tag: "scales:cleric" } }} />);
+  expect(within(row("Cleric typal")).getByText("second theme")).toBeInTheDocument();
 });
 
 /** OPTION B (owner, 2026-09-27: "only if we are able to click and jump to see the cards"): a theme
@@ -139,7 +139,7 @@ test("a bar bigger than the main theme gets the reason, named", () => {
   const why = screen.getByText(/most distinctive/);
   expect(why.textContent).toMatch(/Blink/);
   expect(why.textContent).toMatch(/2 of 16 nonland cards/);
-  expect(why.textContent).toMatch(/Cleric tribal links more cards \(\d+\)/);
+  expect(why.textContent).toMatch(/Cleric typal links more cards \(\d+\)/);
   expect(why.textContent).toMatch(/every card a link touches/);
 });
 

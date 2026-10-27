@@ -43,7 +43,7 @@
       "goal": "set it going and know that it heard me",
       "acts": [
         {
-          "click": "button:has-text('Analyse deck')"
+          "click": "button:has-text('Analyze deck')"
         }
       ]
     },

@@ -17,7 +17,7 @@ export interface MapKeyRow {
   onPick?: () => void;
 }
 
-export function MapKey({ rows, columns = false, label = "What the colours are" }: {
+export function MapKey({ rows, columns = false, label = "What the colors are" }: {
   rows: MapKeyRow[]; columns?: boolean; label?: string;
 }) {
   if (!rows.length) return null;

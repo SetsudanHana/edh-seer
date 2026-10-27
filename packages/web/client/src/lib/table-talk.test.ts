@@ -22,7 +22,7 @@ test("the line says the bracket and why, how it wins and how fast, and what to w
     Bear: "",
   }), (n) => mv[n])!;
   expect(t.text).toBe(
-    "Bracket 3, for Rhystic Study (a Game Changer). It wins mostly by attacking with a wide board, or damage or drain, and its creatures can kill the table around turn 12. "
+    "Bracket 3 (Upgraded), for Rhystic Study (a Game Changer). It wins mostly by attacking with a wide board, or damage or drain, and its creatures can kill the table around turn 12. "
     + "Heads-up: it takes extra turns (Time Warp), steals permanents (Treachery) and can destroy every land (Armageddon).",
   );
 });
@@ -41,7 +41,7 @@ test("a deck spread evenly across its plans is not said to win mostly by one", (
 
 test("a cheap two-card combo is the bracket's reason and the fastest route, and is not repeated as a heads-up", () => {
   const t = tableTalk(report({ band: "4-5", cheap: [["Dualcaster Mage", "Essence Flux"]], combos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB", payoffs: [{ name: "Impact Tremors", on: ["Dualcaster Mage"], effect: "damage" }] }] }), graph({}), (n) => mv[n])!;
-  expect(t.bracket).toBe("Bracket 4–5, for a cheap two-card combo (Dualcaster Mage + Essence Flux) that wins through Impact Tremors.");
+  expect(t.bracket).toBe("Bracket 4–5 (Optimized or cEDH), for a cheap two-card combo (Dualcaster Mage + Essence Flux) that wins through Impact Tremors.");
   expect(t.plan).toMatch(/can combo as early as turn 4\.$/);
   expect(t.headsUp).toEqual([]);
   expect(t.text).toMatch(/Beyond that combo, nothing in it takes extra turns, steals or destroys every land\.$/);
@@ -49,12 +49,12 @@ test("a cheap two-card combo is the bracket's reason and the fastest route, and 
 
 test("a combo bracket 3 still allows is named as the reason, with why it is allowed", () => {
   const t = tableTalk(report({ combos: [{ cards: ["A", "B", "C"], result: "Infinite mana" }] }), graph({}), (n) => mv[n])!;
-  expect(t.bracket).toBe("Bracket 3, for an infinite combo that needs 3 cards (A + B + C) and another card to win.");
+  expect(t.bracket).toBe("Bracket 3 (Upgraded), for an infinite combo that needs 3 cards (A + B + C) and another card to win.");
 });
 
 test("nothing to warn about is said, as what was checked", () => {
   const t = tableTalk(report({ band: "1-2" }), graph({ Bear: "" }), (n) => mv[n])!;
-  expect(t.bracket).toBe("Bracket 1–2: no Game Changers and no infinite combo.");
+  expect(t.bracket).toBe("Bracket 1–2 (Exhibition or Core): no Game Changers and no infinite combo.");
   expect(t.text).toMatch(/Nothing in it takes extra turns, steals, destroys every land or goes infinite\.$/);
 });
 
@@ -67,17 +67,17 @@ test("stealing your own permanent back is not stealing", () => {
  *  cards" wins by itself; the Combos page said "Wins through Impact Tremors", a page away. */
 test("a combo in the table sentence says what turns it into a win, or that something else must", () => {
   const winning = tableTalk(report({ combos: [{ cards: ["A", "B", "C"], result: "Infinite creature ETB", payoffs: [{ name: "Impact Tremors", on: ["A"], effect: "damage" }] }] }), graph({}), (n) => mv[n])!;
-  expect(winning.bracket).toBe("Bracket 3, for an infinite combo that needs 3 cards (A + B + C) and wins through Impact Tremors.");
+  expect(winning.bracket).toBe("Bracket 3 (Upgraded), for an infinite combo that needs 3 cards (A + B + C) and wins through Impact Tremors.");
   const bare = tableTalk(report({ band: "4-5", cheap: [["Dualcaster Mage", "Essence Flux"]], combos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB" }] }), graph({}), (n) => mv[n])!;
-  expect(bare.bracket).toBe("Bracket 4–5, for a cheap two-card combo (Dualcaster Mage + Essence Flux) that needs another card to win.");
+  expect(bare.bracket).toBe("Bracket 4–5 (Optimized or cEDH), for a cheap two-card combo (Dualcaster Mage + Essence Flux) that needs another card to win.");
 });
 
 /** (#1084) A loop whose RESULT is the kill needs no other card; one past the simulated mana says so. */
 test("a combo that wins by itself is not said to need another card", () => {
   const t = tableTalk(report({ band: "4-5", cheap: [["Dualcaster Mage", "Essence Flux"]], combos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite mana, Infinite damage" }] }), graph({}), (n) => mv[n])!;
-  expect(t.bracket).toBe("Bracket 4–5, for a cheap two-card combo (Dualcaster Mage + Essence Flux) that wins by itself.");
+  expect(t.bracket).toBe("Bracket 4–5 (Optimized or cEDH), for a cheap two-card combo (Dualcaster Mage + Essence Flux) that wins by itself.");
   const late = tableTalk(report({ combos: [{ cards: ["A", "B", "C"], result: "Infinite damage" }] }), graph({}), (n) => mv[n])!;
-  expect(late.bracket).toBe("Bracket 3, for an infinite combo that needs 3 cards (A + B + C) and wins by itself.");
+  expect(late.bracket).toBe("Bracket 3 (Upgraded), for an infinite combo that needs 3 cards (A + B + C) and wins by itself.");
 });
 
 test("a killing combo the test games cannot afford is said to be untimed beside another route's turn", () => {

@@ -2,7 +2,7 @@
   "id": "/",
   "name": "EDH Seer",
   "short_name": "EDH Seer",
-  "description": "Oracle-level deck reading for Commander: paste a decklist, get the synergy edges, the mana math and the combos.",
+  "description": "Oracle-level deck reading for Commander: paste a decklist, see which cards work together and why, the mana math and the combos.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

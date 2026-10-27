@@ -32,7 +32,7 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
       {/* THE CIRCLED NUMBER, SAID ONCE (persona round 2026-09-27: three seats met "5.0" with no
         *  scale here, and found it explained only in the cut list). */}
       <p className="text-xs text-(--muted) max-w-[65ch]">
-        The number is each card&rsquo;s synergy score, where 5 is this deck&rsquo;s best-connected card.{anyAnchor ? ` ${cap(ANCHOR_GLOSS)}.` : ""}
+        The number is each card&rsquo;s synergy score, where 5 is the card here that works with the most others.{anyAnchor ? ` ${cap(ANCHOR_GLOSS)}.` : ""}
       </p>
       {/* TWO ACROSS AT xl (roadmap T11). Measured at 1960px: the ink stopped at 567px of a 1782px
         *  row. The rows are short by nature -- a score, a name, one reason -- so the fix is to place

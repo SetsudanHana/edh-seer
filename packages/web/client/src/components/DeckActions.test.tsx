@@ -13,7 +13,7 @@ test("More holds Copy decklist and Start over, and Escape or an outside press cl
         onEdit={() => {}} onStartOver={onStartOver} shareLink="https://edhseer.cards/#deck=x" />
     </div>,
   );
-  for (const name of ["Copy link", "Edit", "Re-analyse"]) expect(screen.getByRole("button", { name })).toBeInTheDocument();
+  for (const name of ["Copy link", "Edit", "Re-analyze"]) expect(screen.getByRole("button", { name })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Start over" })).toBeNull();
 
   const more = screen.getByRole("button", { name: "More" });

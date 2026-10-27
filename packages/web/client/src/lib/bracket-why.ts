@@ -13,6 +13,11 @@ import type { DeckReport } from "../types.js";
  *  Everything here is a JOIN over what the report already carries: the bracket's own band and Game
  *  Changers, the report's full combo list, and each card's mana value. The rule for "infinite" and
  *  the cost ceiling are the matcher's own, so this list and the band cannot disagree. */
+/** WIZARDS' NAMES FOR THE BANDS (2026-10-27): every peer site files decks under Exhibition, Core,
+ *  Upgraded, Optimized and cEDH, so a bare number is the one bracket label a player has to look up.
+ *  The report reads a band, not a bracket, so the outer bands carry both names. */
+export const BAND_NAME: Record<"1-2" | "3" | "4-5", string> = { "1-2": "Exhibition or Core", "3": "Upgraded", "4-5": "Optimized or cEDH" };
+
 export interface InfiniteCombo {
   cards: string[];
   result: string;

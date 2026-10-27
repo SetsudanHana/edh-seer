@@ -95,7 +95,7 @@ function Tile({ plan, route, picked, onPick }: { plan: Wincons["classes"][number
             // A COMBO THAT KILLS BUT HAS NO TURN (#1139): its mana is why, said on the tile as the
             // Say-this box says it, not the generic refusal.
             : route?.kind === "combo" && route.mana !== undefined ? `${route.mana} mana, not timed`
-            : "speed not modelled"}</span>}</span>
+            : "no speed estimate"}</span>}</span>
       ) : null}
       <span className="text-xs stat-num text-(--muted)">{plural(plan.count, "card")}</span>
     </>

@@ -36,9 +36,9 @@ import { SuggestedCards } from "./SuggestedCards.js";
 /** WHAT A FINDING'S LIST SAYS WHEN NOTHING QUALIFIES -- said, never padded with staples (spec,
  *  "a silent wrong answer is worse than a missing one"). */
 const EMPTY: Partial<Record<Finding["kind"], string>> = {
-  build: "Nothing in your colours both fills this role and connects to this deck. Any card that fills the role fits the slot.",
-  answers: "Nothing in your colours both answers these and connects to this deck. Any answer that hits them fits the slot.",
-  synergy: "Nothing in your colours causes this and connects to this deck. Cutting the cards that wait on it frees their slots.",
+  build: "Nothing in your colors both fills this role and works with the rest of your deck. Any card that fills the role fits the slot.",
+  answers: "Nothing in your colors both answers these and works with the rest of your deck. Any answer that hits them fits the slot.",
+  synergy: "Nothing in your colors makes this happen and works with the rest of your deck. Cutting the cards that wait on it frees their slots.",
 };
 
 /** The one number a row is proving, and the bar under it. Right-aligned tabular mono, so a column

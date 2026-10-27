@@ -296,9 +296,8 @@ export function detectKindred(cardSignals: CardSignal[], nonlandCount: number): 
   }
   const confidence = nonlandCount > 0 ? weight / nonlandCount : 0;
   if (confidence < ARCHETYPE_FLOOR) return undefined;
-  // "WARRIOR TRIBAL", NOT "KINDRED: WARRIOR" OR "WARRIOR TYPAL" (look-and-feel review 2026-09-24;
-  // owner, 2026-09-27: "no magic player uses phrasing like ... Wizard typal"). Kindred is the card
-  // TYPE (CR 205.2a) and "typal" is Wizards' rename; at the table a deck built around a creature
-  // type is still "tribal", and that is the word the report says.
-  return { name: "kindred", label: `${titleCase(type)} tribal`, confidence };
+  // "WARRIOR TYPAL", NOT "KINDRED: WARRIOR" (owner, 2026-10-27, reversing the 2026-09-27 "tribal"
+  // ruling: use the official word). Kindred is the card TYPE (CR 205.2a); "typal" is Wizards' word
+  // for a deck built around a creature type, and the one EDHREC files decks under.
+  return { name: "kindred", label: `${titleCase(type)} typal`, confidence };
 }

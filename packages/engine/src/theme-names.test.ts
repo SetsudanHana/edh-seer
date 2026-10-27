@@ -16,15 +16,15 @@ test("a named archetype reads as the name a player uses", () => {
  *  dinosaurs, rats -- and a player names every one of them the same way. */
 test("a creature type entering is tribal, whatever the type is", () => {
   // "Tribal", not "typal" (#616): the word players use, whatever the card type is called now.
-  expect(themeName("enters:wizard", "wizards entering")).toBe("Wizard tribal");
-  expect(themeName("enters:dragon", "dragons entering")).toBe("Dragon tribal");
+  expect(themeName("enters:wizard", "wizards entering")).toBe("Wizard typal");
+  expect(themeName("enters:dragon", "dragons entering")).toBe("Dragon typal");
   // Multi-word types keep both words capitalised; the corpus really does carry this one.
-  expect(themeName("enters:time lord", "time lords entering")).toBe("Time Lord tribal");
+  expect(themeName("enters:time lord", "time lords entering")).toBe("Time Lord typal");
 });
 
 /** #616: a deck that COUNTS a tribe is that tribe's deck too; it read "counts your Clerics". */
 test("a count of a creature type is tribal, and a count of a class is not a tribe", () => {
-  expect(themeName("scales:cleric", "counts your Clerics")).toBe("Cleric tribal");
+  expect(themeName("scales:cleric", "counts your Clerics")).toBe("Cleric typal");
   expect(themeName("scales:creature", "counts your creatures")).toBe("Go wide");
   expect(themeName("scales:land", "counts your lands")).toBe("Lands matter");
   // A party, what you donated, an instant: counted, and no tribe.

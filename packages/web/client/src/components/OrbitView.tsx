@@ -386,8 +386,8 @@ function Summary({ o, paused, onPause, onSector, onCentre }: { o: OrbitModel; pa
         // "Wizards entering 37 cards" in the themes read as a contradiction. These are the cards that
         // work with THIS card, split by what links them.
         <>
-        <p className="text-xs text-(--muted)">Those cards, by what links them to {first}:</p>
-        <MapKey label={`What links them to ${first}`} rows={o.sectors.map((s) => ({
+        <p className="text-xs text-(--muted)">Those cards, by how they work with {first}:</p>
+        <MapKey label={`How they work with ${first}`} rows={o.sectors.map((s) => ({
           key: s.name, name: s.name, hue: s.hue, onPick: () => onSector(s),
           count: countText(s.partners.length, s.partners.filter((p) => p.once).length, first),
         }))} />
@@ -401,7 +401,7 @@ function Summary({ o, paused, onPause, onSector, onCentre }: { o: OrbitModel; pa
         ) : null}
         {/* ONE LINE (owner, 2026-09-27: "less is more"): it was a paragraph on dashes, the gold line
           *  and right-click, which the map shows by doing them. */}
-        Tap a card to read it, tap it again to put it in the middle. A solid line keeps working; a dashed line works once; the thicker the line, the better the two work together.</p>
+        Tap a card to read it, tap it again to put it in the middle. A solid line is a repeatable pairing and a dashed line is a one-shot. The thicker the line, the better the two work together.</p>
       {o.through.length ? (
         <details>
           <summary className="cursor-pointer py-1.5">
@@ -415,7 +415,7 @@ function Summary({ o, paused, onPause, onSector, onCentre }: { o: OrbitModel; pa
       {o.far.length ? (
         <details>
           <summary className="cursor-pointer py-1.5">
-            <b>{o.far.length} card{o.far.length === 1 ? "" : "s"}</b> don't connect to {first}, even through another card
+            <b>{o.far.length} card{o.far.length === 1 ? "" : "s"}</b> don't work with {first}, even through another card
           </summary>
           <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
             {o.far.map((card) => (

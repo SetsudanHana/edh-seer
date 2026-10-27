@@ -91,8 +91,9 @@ export function themeName(tag: Tag, fallback: string): string {
   if (subject.startsWith("-") || NOT_A_TRIBE.has(subject) || !/^[a-z]+( [a-z]+)*$/.test(subject)) return fallback;
   // A deck making one KIND of token is named for the token, not for the act: "goblins created" was
   // the last mechanical phrase left standing over the 71 calibration decks.
-  // "TRIBAL", NOT "TYPAL" (#616): Wizards of the Coast renamed the card type, and players did not.
-  // A deck that counts its Clerics (`scales:cleric`) is a Cleric tribal deck like one that watches
-  // them enter; it read "counts your Clerics".
-  return family === "create-token" ? `${titleCase(subject)} tokens` : `${titleCase(subject)} tribal`;
+  // "TYPAL" (owner, 2026-10-27, reversing #616): Wizards' word for a deck built around a creature
+  // type, as EDHREC files it. "Kindred" is only the card type (CR 205.2a). A deck that counts its
+  // Clerics (`scales:cleric`) is a Cleric typal deck like one that watches them enter; it read
+  // "counts your Clerics".
+  return family === "create-token" ? `${titleCase(subject)} tokens` : `${titleCase(subject)} typal`;
 }

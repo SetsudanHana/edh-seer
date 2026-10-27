@@ -51,7 +51,7 @@ test("the button asks, shows a full-strength 'Finding' state, then the tiers wit
   await act(async () => { done(result(HITS)); });
   expect(await within(d).findByRole("heading", { name: /^Same effect/ })).toBeInTheDocument();
   expect(within(d).getByRole("heading", { name: /^Close variants/ })).toBeInTheDocument();
-  expect(within(d).getByRole("heading", { name: /^Same outcome, different event/ })).toBeInTheDocument();
+  expect(within(d).getByRole("heading", { name: /^Same payoff, different trigger/ })).toBeInTheDocument();
   expect(within(d).getByText("in your deck")).toBeInTheDocument();
   expect(within(d).getByText("works with 2 of 2 of the same deck cards")).toBeInTheDocument();
   const warn = within(d).getByText("loses synergy with Fiery Emancipation");
@@ -88,7 +88,7 @@ test("no hits says no card in the colours does the job, with no empty heading", 
   render(<Host redundancy={async () => result([])} />);
   const d = await drawer();
   await userEvent.click(within(d).getByRole("button", { name: "Find redundancy in this deck" }));
-  expect(await within(d).findByText(/No card in your colours does the same job/)).toBeInTheDocument();
+  expect(await within(d).findByText(/No card in your colors does the same job/)).toBeInTheDocument();
   expect(within(d).queryByRole("heading", { name: /^Same effect/ })).toBeNull();
 });
 

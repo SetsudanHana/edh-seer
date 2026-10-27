@@ -59,7 +59,7 @@ const UNMET = /^its condition needs /;
 export function keepWords(p: string): string {
   const rate = /^rates (\d+(?:\.\d+)?) of 5 in this deck$/.exec(p);
   if (rate) return `it scores ${rate[1]} for synergy, where 5 is this deck's best card`;
-  if (p === "its best edge is on your main theme") return "its strongest link is to your main theme";
+  if (p === "its best edge is on your main theme") return "its best pairing is with your main theme";
   return p;
 }
 const MAIN_EDGE = "its best edge is on your main theme";
@@ -138,7 +138,7 @@ export function chooseCuts(report: DeckReport, model?: EngineModel | null): CutC
       // WARNED AT THE TABLE, SO NOT A SILENT CUT (#982): Treasure Nabber was "Heads-up: it steals
       // permanents" and the second card on the cut list, with nothing linking the two.
       ...warns.map((w) => `you warn the table that it ${w}`)];
-    if (link && (keeps.length || t.protections.includes(MAIN_EDGE))) keeps.unshift(`its strongest link: ${link.text}`);
+    if (link && (keeps.length || t.protections.includes(MAIN_EDGE))) keeps.unshift(`its best pairing: ${link.text}`);
     out.push({
       name: t.name, manaValue: t.manaValue, card, row, rating: t.rating,
       keeps, onPlan: (plansOf.get(t.name) ?? []).length > 0 || warns.length > 0,
