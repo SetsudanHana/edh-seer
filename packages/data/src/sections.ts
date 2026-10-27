@@ -210,10 +210,15 @@ export function commanderBoxProblem(names: string[], source: "box" | "section" =
  *  `sectionHeaderOf`'s, the one `parseDecklistSections` uses. */
 export function parseCommanderBox(text: string): string[] {
   const names: string[] = [];
+  // A sideboard/maybeboard/tokens header drops the lines under it, as in `parseDecklistSections`:
+  // skipping only the header line made the card under it a silent partner commander.
+  let ignoring = false;
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.trim();
     if (!line || line.startsWith("#") || line.startsWith("//")) continue;
-    if (sectionHeaderOf(line) !== undefined) continue;
+    const opened = sectionHeaderOf(line);
+    if (opened !== undefined) { ignoring = opened === "ignore"; continue; }
+    if (ignoring) continue;
     const name = cleanCardLine(line);
     if (name) for (let i = 0; i < cardQty(line); i++) names.push(name);
   }

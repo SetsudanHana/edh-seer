@@ -150,6 +150,9 @@ test("the Commander box takes at most two cards (a partner pair)", () => {
 test("the Commander box is read without its section header", () => {
   expect(parseCommanderBox("Commander:\n1 Thrasios, the Tidal Sage\nTymna the Weaver\n")).toEqual(["Thrasios, the Tidal Sage", "Tymna the Weaver"]);
   expect(parseCommanderBox("2 Mountain (M21) 12")).toEqual(["Mountain", "Mountain"]);
+  // A sideboard header drops what sits under it, as in parseDecklistSections: never a silent partner.
+  expect(parseCommanderBox("Krenko, Mob Boss\nSideboard\nThrasios, the Tidal Sage")).toEqual(["Krenko, Mob Boss"]);
+  expect(parseCommanderBox("Maybeboard:\nSol Ring\nCommander\nKrenko, Mob Boss")).toEqual(["Krenko, Mob Boss"]);
 });
 
 test("the problem names the Commander section when the box was empty", () => {
