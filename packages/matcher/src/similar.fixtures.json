@@ -84,7 +84,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "79189464-9645-4411-8886-68fd40a588ed",
@@ -181,7 +181,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "b1e6921e-e460-4e58-82b0-d98ee31c279d",
@@ -291,7 +291,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "b268fe15-2860-4730-865e-eed7f308fc45",
@@ -383,7 +383,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "95e94dea-5ac0-4d6f-adec-ca147aee861f",
@@ -471,7 +471,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "4a782bf9-4051-4613-8852-33b0d85a0edd",
@@ -574,7 +574,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "manaLines": [
     {
      "amount": {
@@ -690,7 +690,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "3d0d4ba4-d5aa-4d9f-89ab-46687637fecf",
@@ -784,7 +784,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "a74d80ec-9f42-418d-ab98-897acc23c319",
@@ -887,7 +887,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "8da9f975-519d-455a-80c1-2b468cad79a1",
@@ -1025,7 +1025,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "a85ee0cf-39ce-49f2-874a-f6f54ca1775f",
@@ -1121,7 +1121,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "633fd158-19d0-4d97-a076-2ad897bbed19",
@@ -1252,7 +1252,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "82fb9834-de65-41a5-b908-f49668dee3ec",
@@ -1351,7 +1351,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "1bc7d73b-0f54-4807-b13a-3def0c5e5616",
@@ -1540,6 +1540,7 @@
      "repeats": "once"
     },
     {
+     "amount": "flying until end of turn",
      "clause": 2,
      "cost": "{2}{W}, Sacrifice this artifact",
      "effect": {
@@ -1621,8 +1622,8 @@
      "artifact"
     ]
    },
-   "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "clauseSource": "model",
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "43057d84-b424-489c-abec-3fb4cb823d80",
@@ -1716,7 +1717,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "664c1219-acfa-41da-b811-503a63fc8d84",
@@ -1819,7 +1820,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "d8838e16-96ca-4f73-ad61-7e98a76c4baf",
@@ -2046,7 +2047,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "310f141c-7f37-4729-aed6-dd9c09db448d",
@@ -2139,7 +2140,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "a2057118-9fd1-431d-9441-fef198d67ff2",
@@ -2271,7 +2272,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "cef9e0d3-5e28-4c5f-88fc-0d78af5a4db1",
@@ -2378,7 +2379,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "0c936582-d4c0-4da8-bc7e-49da5a433939",
@@ -2541,7 +2542,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "940ba435-7abc-40f8-a5af-c1c653b3284e",
@@ -2634,7 +2635,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "cc65ac73-5bef-4ecb-ad8e-39199084c027",
@@ -2770,7 +2771,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "c5c5f3f4-42e3-4d60-b6b1-8411ac51ce4e",
@@ -2924,7 +2925,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "dec20b18-afe6-405e-b47d-a757a5645c63",
@@ -3048,7 +3049,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "6879f5ce-7a1b-4606-bad1-885779b0d456",
@@ -3146,7 +3147,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "0c77b805-728d-4ae4-88a9-223f4b7b52e0",
@@ -3229,7 +3230,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "ee38377f-8d3a-402e-a5d7-a01cfe3a5322",
@@ -3316,7 +3317,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "058917c1-21ab-488a-9f9c-591c55f3c596",
@@ -3387,7 +3388,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "049d1fb2-cce7-40e7-a633-e84cf9782d89",
@@ -3464,7 +3465,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "59e7f2ae-4535-4191-98be-3e65b6b2befa",
@@ -3547,7 +3548,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "bd8d707d-1201-42c6-bce6-fbda12ce5ea8",
@@ -3643,7 +3644,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "4bf308fc-a54e-4fba-b0fd-3bedb4db3b18",
@@ -3737,7 +3738,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "02acf8b2-6108-4496-9803-7199ca7e199a",
@@ -3829,7 +3830,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "6ca2a89e-7032-4864-b4e9-66f3178f90ab",
@@ -4035,7 +4036,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "landFetch": {
     "kind": "permanent",
     "reach": [
@@ -4212,7 +4213,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "9a0bb238-f832-4b37-97ae-520899798e7a",
@@ -4381,7 +4382,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "manaLines": [
     {
      "amount": {
@@ -4651,7 +4652,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "manaLines": [
     {
      "amount": {
@@ -4778,7 +4779,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "9242cd3e-1a71-4700-8182-9c1005616033",
@@ -4870,7 +4871,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "c7107a2d-2dcf-42e9-9ea9-d0fc0d6d2ec6",
@@ -4953,7 +4954,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "14a21d8a-2097-4150-8af5-8c155049477a",
@@ -5074,7 +5075,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "e4d9c9c9-90e4-4397-9a88-9457fc6854fa",
@@ -5179,7 +5180,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "4457ed35-7c10-48c8-9776-456485fdf070",
@@ -5272,7 +5273,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "manaLines": [
     {
      "amount": {
@@ -5407,7 +5408,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "c62c8006-5650-43cb-8247-da097aa42376",
@@ -5516,7 +5517,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "67a3541c-8408-40c8-b44f-90035b860f57",
@@ -5618,7 +5619,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "0077740a-528b-4ee3-b331-fac321b95302",
@@ -5688,7 +5689,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "c0ea83ab-f62e-43ee-b7ad-ddbbc8916632",
@@ -5829,7 +5830,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "d683d985-9888-4d21-8b5f-69e69ce4a03b",
@@ -5954,7 +5955,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 22,
    "oracleId": "ee579a32-a048-4335-b966-231ba731cdea",
@@ -6474,7 +6475,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 16,
    "oracleId": "9df2e909-ed13-456a-9636-7398732009a9",
@@ -6589,7 +6590,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "c8e53740-c633-42f8-9e02-3434d6dc0b30",
@@ -6752,7 +6753,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "manaLines": [
     {
      "amount": {
@@ -6914,7 +6915,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "14aefe99-fb60-4f1c-a71f-7ffbe94c8b13",
@@ -7127,7 +7128,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "landFetch": {
     "kind": "permanent",
     "reach": [
@@ -7284,7 +7285,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "05861ff2-ec85-43d1-b641-c5d2da819c03",
@@ -7359,7 +7360,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "manaLines": [
     {
      "amount": {
@@ -7488,7 +7489,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "a97f3131-586b-440f-a646-50d65e12e13f",
@@ -7580,7 +7581,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "f3fad295-1af2-4ecc-8546-b121ad6be27b",
@@ -7672,7 +7673,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "045a9d3d-c20d-427f-a77b-0bffc6f55526",
@@ -7768,7 +7769,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "04da8c46-9703-47f2-974b-c144464ec380",
@@ -7896,7 +7897,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "00ab9841-934f-4a66-a98d-68d01661b1c9",
@@ -7992,7 +7993,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "d3491972-44c5-4962-a680-42b79357a189",
@@ -8120,7 +8121,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "c4d36522-3ace-4bfb-bf2d-1a366f458698",
@@ -8232,7 +8233,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "b1544f21-7e98-461b-aed5-e748b0168c52",
@@ -8364,7 +8365,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "0fc64fd6-f057-4056-9dca-47accb7ff036",
@@ -8480,7 +8481,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "3dc8d15a-3ca7-4d1f-a819-c1b7f947a59e",
@@ -8599,7 +8600,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 19,
    "oracleId": "02358f98-99d5-45a3-b7e3-f2cbf08fa52c",
@@ -8711,7 +8712,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "365548fb-5acc-4a8a-b20b-26d28b7d029f",
@@ -8810,7 +8811,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "e8d6084b-9b72-438e-a30a-851b888f3e4d",
@@ -8912,7 +8913,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "34edbf1b-0826-49f1-a04d-15cc8c543b22",
@@ -8993,7 +8994,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "34515b16-c9a4-4f98-8c77-416a7a523407",
@@ -9083,7 +9084,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "69476326-fda5-48c8-a506-e71eb7c81c2f",
@@ -9312,7 +9313,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 394,
+   "deriveVersion": 395,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "76b003e0-15af-4f22-bdf2-1ade5430964a",
