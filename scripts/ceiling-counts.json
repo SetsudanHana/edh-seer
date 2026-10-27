@@ -60,7 +60,7 @@
   "packages/tagger/src/derive-input.ts": 1,
   "packages/tagger/src/derive/damage-recipient.ts": 3,
   "packages/tagger/src/derive/delay.ts": 2,
-  "packages/tagger/src/derive/derive.ts": 39,
+  "packages/tagger/src/derive/derive.ts": 40,
   "packages/tagger/src/derive/effect-gate.ts": 9,
   "packages/tagger/src/derive/effect-kind.ts": 9,
   "packages/tagger/src/derive/emits.ts": 6,

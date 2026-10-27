@@ -461,10 +461,13 @@ describe("whole-branch review of 0f01e53b (#1357)", () => {
     expect(effectGates("Look at the top card of your library. If it's a noncreature, nonland card, you may reveal it and put it into your hand.", ["look", "put"]).gates[1]).toBe("it's a noncreature, nonland card");
   });
   it("a lone Otherwise says what decides it, from the printed 'may' clause (Protection Racket, Sin Prodder)", () => {
-    expect(effectGates("Reveal the top card of your library. That player may pay life equal to that card's mana value. If they do, exile that card. Otherwise, put it into your hand.", ["reveal", "exile", "put"]).gates)
+    expect(effectGates("At the beginning of your upkeep, repeat the following process for each opponent in turn order. Reveal the top card of your library. That player may pay life equal to that card's mana value. If they do, exile that card. Otherwise, put it into your hand.", ["reveal", "exile", "put"]).gates)
       .toEqual([null, null, "no opponent pays to stop it"]);
     expect(effectGates("Reveal the top card of your library. Any opponent may have you put that card into your graveyard. If a player does, this creature deals damage to that player equal to that card's mana value. Otherwise, put that card into your hand.", ["reveal", "put", "deal-damage", "put"]).gates)
       .toEqual([null, null, null, "no opponent takes the deal"]);
+    // "that player" is the player whose upkeep it is, so you too (Fraying Line): no opponent is named, the wording stays neutral
+    expect(effectGates("At the beginning of each player's upkeep, that player may pay {2}. If they do, they put a rope counter on a creature they control. Otherwise, exile this artifact and each creature without a rope counter on it.", ["pay", "put", "exile"]).gates[2]).toBe("the payment isn't made");
+    expect(isOtherwiseGate("the payment isn't made")).toBe(true);
     expect(isOtherwiseGate("no opponent pays to stop it")).toBe(true);
     expect(isOtherwiseGate("no opponent takes the deal")).toBe(true);
     expect(effectGates("You may pay {1}. If you do, draw a card. Otherwise, gain 1 life.", ["draw", "gain-life"]).gates[1]).toBe("you decline");

@@ -184,22 +184,28 @@ const ANSWER_TO = 'the answer to "';
 const DO_HAVE = /^you don't (control|have) /;
 const PRONOUN_LED = /^(?:it|its|that|those|they|their)\b/;
 export const isOtherwiseGate = (condition: string): boolean =>
-  condition === NO_PAY || condition === NO_DEAL || condition === DECLINE || condition.startsWith(NOT_THE_CASE) || condition.startsWith(NONE_OF) || condition.startsWith(ANSWER_TO) || condition.startsWith("you do control ") || condition.startsWith("you do have ") || condition === NO_EARLIER;
+  condition === NO_PAY || condition === NO_DEAL || condition === NO_PAYMENT || condition === NO_OPTION || condition === DECLINE || condition.startsWith(NOT_THE_CASE) || condition.startsWith(NONE_OF) || condition.startsWith(ANSWER_TO) || condition.startsWith("you do control ") || condition.startsWith("you do have ") || condition === NO_EARLIER;
 /** The text of the other branch of a chain of conditions: one negated in words that read after "it only works if" ("you don't control X" turns positive, a pronoun-led condition is quoted because its "it" has no antecedent here), several as "none of these holds". */
 /** WHO DECIDES a lone Otherwise whose "if" was an exempt reflexive ("That player may pay life ... If they do, exile that card. Otherwise, put it into your hand", Protection Racket; "Any opponent may have you put that card
  *  into your graveyard. If a player does, ... Otherwise, ...", Sin Prodder), read from the nearest earlier printed "may" clause. CEILING: only an opponent or "you" as the subject, and "pay" is the one verb named. */
 const NO_PAY = "no opponent pays to stop it";
 const NO_DEAL = "no opponent takes the deal";
+/** "that player" or "they" is YOU on your own turn ("At the beginning of each player's upkeep, that player may pay {2}", Fraying Line): the neutral wording, unless an earlier sentence says "each/target opponent". */
+const NO_PAYMENT = "the payment isn't made";
+const NO_OPTION = "the option isn't taken";
 const DECLINE = "you decline";
-const OPPONENT_SUBJECT = /^(?:that player|any opponent|an opponent|each opponent|target opponent|that opponent|they)$/;
+const OPPONENT_SUBJECT = /^(?:any opponent|an opponent|each opponent|target opponent|that opponent)$/;
+const PLAYER_SUBJECT = /^(?:that player|they)$/;
+const NAMES_AN_OPPONENT = /\b(?:each|target) opponent\b/;
 function decider(sentences: readonly string[], before: number): string | null {
   for (let j = before - 1; j >= 0; j--) {
     const lower = sentences[j]!.toLowerCase();
     const at = lower.indexOf(" may ");
     if (at < 0) continue;
-    const subject = lower.slice(0, at).trim();
+    const subject = lower.slice(0, at).slice(lower.slice(0, at).lastIndexOf(", ") + 1).trim();
     const verb = lower.slice(at + 5).split(" ")[0];
-    if (OPPONENT_SUBJECT.test(subject)) return verb === "pay" ? NO_PAY : NO_DEAL;
+    if (OPPONENT_SUBJECT.test(subject) || (PLAYER_SUBJECT.test(subject) && sentences.slice(0, j).some((t) => NAMES_AN_OPPONENT.test(t.toLowerCase())))) return verb === "pay" ? NO_PAY : NO_DEAL;
+    if (PLAYER_SUBJECT.test(subject)) return verb === "pay" ? NO_PAYMENT : NO_OPTION;
     return subject === "you" ? DECLINE : null;
   }
   return null;

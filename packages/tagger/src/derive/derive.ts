@@ -3330,6 +3330,7 @@ export function deriveAbilities(
         const otherwise = isOtherwiseGate(gateText);
         // THE FACE THE ABILITY IS PRINTED ON names itself: "~" in a back face's ability is the back face (Bruce Banner // The Incredible Hulk), never the front.
         const faceNames = (cardName ?? "").split(" // ");
+        // CEILING: an ADVENTURE half carries `face === undefined` (segment() records a face index for a transforming/modal card, not for the Adventure), so a "~" in an Adventure-half gate resolves to the creature's name; no corpus Adventure gate holds a name today.
         const selfName = faceNames[face ?? 0] ?? faceNames[0] ?? "";
         const parsedGate = otherwise ? { kind: "unknown" as const, text: gateText.replaceAll("~", selfName).toLowerCase(), otherwise: true as const } : parseGate(gateText.replaceAll("~", selfName));
         // A counter the card places on itself is no counters demand (#1357 review): no deck supplies a "phyresis" or "hunger" counter, and the false demand reached edges.ts' dies-trigger guard.

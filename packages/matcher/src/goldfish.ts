@@ -844,9 +844,10 @@ export function drawOf(dc: DeckCard, gates?: GateWeigher): CardDraw | null {
     // CEILING: a gated draw on a card that ALSO prints another condition word (choose one, unless, kicked ...) is still left out where `ratesOf` flags it, as before.
     // A draw whose printed Otherwise draws too (`otherwiseAlike`: Jace, the Perfected Mind, Predict) happens either way: whole, as ruleWeight counts the role.
     // CEILING: at the gated branch's amount (3 or 2), not the smaller branch's; the lost sibling's amount is not stored.
-    const gated = gates !== undefined && a.gate !== undefined && a.otherwiseAlike !== true;
+    const hasGate = gates !== undefined && a.gate !== undefined;
+    const gated = hasGate && a.otherwiseAlike !== true;
     const w = gated ? gates.of(a, dc).weight : 1;
-    const readable = !r?.conditional || ((gated || (gates !== undefined && a.gate !== undefined)) && !hasConditionBesidesIf(dc.card.oracleText));
+    const readable = !r?.conditional || (hasGate && !hasConditionBesidesIf(dc.card.oracleText));
     if (!r || r.amount <= 0 || !readable || r.extraCost || r.fallback || w <= 0) continue;
     const verbs: readonly string[] = a.trigger?.verbs ?? [];
     if (r.kind === "on-cast" || (r.kind === "triggered" && a.trigger?.subject?.self === true && verbs.includes("enters"))) out.once += r.amount * w;
