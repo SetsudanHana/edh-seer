@@ -104,7 +104,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "manaLines": [
     {
      "amount": {
@@ -235,7 +235,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "489a60f1-83f8-465b-918f-7d63d4f76d14",
@@ -437,7 +437,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -582,7 +582,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "manaLines": [
     {
      "amount": {
@@ -791,7 +791,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -946,7 +946,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "4e183439-17d2-47ff-9d99-5e22821d91e3",
@@ -1080,7 +1080,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "manaLines": [
     {
      "amount": {
@@ -1399,7 +1399,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -1571,7 +1571,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "24882fa2-3fe9-4c1b-aa3d-0e6488b9db27",
@@ -1725,7 +1725,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "isOneShot": true,
    "manaLines": [
     {
@@ -1992,7 +1992,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "isOneShot": true,
    "manaLines": [
     {
@@ -2212,7 +2212,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "manaLines": [
     {
      "amount": {
@@ -2419,7 +2419,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "manaLines": [
     {
      "amount": {
@@ -2632,7 +2632,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "manaLines": [
     {
      "amount": {
@@ -2744,7 +2744,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "manaLines": [
     {
      "amount": {
@@ -2890,7 +2890,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "manaLines": [
     {
      "amount": {
@@ -3086,7 +3086,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "58a2d15f-1b4b-4303-b524-8cc0d1b3e7d2",
@@ -3334,7 +3334,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "manaLines": [
     {
      "amount": {
@@ -3539,7 +3539,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "manaLines": [
     {
      "amount": {
@@ -3772,7 +3772,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "model": "derived",
    "normalizeVersion": 21,
    "oracleId": "53236dd7-845a-444c-96d5-f41ed7325d8f",
@@ -3971,7 +3971,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "manaLines": [
     {
      "amount": {
@@ -4141,7 +4141,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "manaLines": [
     {
      "amount": {
@@ -4425,6 +4425,10 @@
        "verb": "enters"
       }
      ],
+     "gate": {
+      "kind": "unknown",
+      "text": "this spell was kicked"
+     },
      "kind": "on-cast",
      "repeats": "once"
     }
@@ -4451,7 +4455,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -4648,7 +4652,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "65986c1b-8e51-4604-b685-d82fa7d1263a",
@@ -4716,7 +4720,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "manaLines": [
     {
      "amount": {
@@ -4929,7 +4933,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "9a107e48-3d50-4941-95b1-10f2b29a4245",
@@ -5034,7 +5038,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "model": "derived",
    "normalizeVersion": 22,
    "oracleId": "9381b4a5-a8e0-412d-bc7f-ae15afa0f135",
@@ -5280,7 +5284,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "3aa83ed2-f48b-4ce6-a614-2c54ddf50538",
@@ -5360,7 +5364,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 392,
+   "deriveVersion": 393,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "41d16975-d6c0-4343-bea2-4f360ead9a1c",

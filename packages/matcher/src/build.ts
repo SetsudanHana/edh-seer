@@ -121,6 +121,18 @@ export interface ConditionalRole { card: string; category: BuildCategory; weight
 /** Category -> card -> the weight that member counts for, ONLY for members below 1. Membership is `detectBuildCategories`' and does not move: a gated draw card is still a draw card. */
 export type RoleWeights = Map<BuildCategory, Map<string, EffectWeight>>;
 
+/** The two halves of an explicit pair of conditions, as "kind:side": a coin flip, or whose turn it is. Anything else is null. */
+function complementSide(text: string): string | null {
+  const t = text.toLowerCase().replace(/[\u2019]/g, "'");
+  const flip = /^you (win|lose) the flip$/.exec(t);
+  if (flip) return `flip:${flip[1] === "win" ? 0 : 1}`;
+  const turn = /^it(?:'s| is)( not)? your turn$/.exec(t);
+  return turn ? `turn:${turn[1] ? 1 : 0}` : null;
+}
+
+/** The bases that weigh a whole 1 and are still reported: a condition on the target (a narrow answer) and an optional-cost choice ("when kicked"). */
+const WHOLE_FLAGGED: ReadonlySet<string> = new Set(["target", "choice"]);
+
 /** The rule reads the card's derived abilities (`effectKind`, `emits`, `hostEffect`), so a view of the card without a gated ability can change its answer. A rule over the printed text, the type line or the keywords cannot. */
 function readsAbilities(clauses: readonly RuleClause[] | undefined): boolean {
   return (clauses ?? []).some((c) => c.op === "effectKind" || c.op === "emits" || c.op === "hostEffect"
@@ -137,26 +149,45 @@ function readsAbilities(clauses: readonly RuleClause[] | undefined): boolean {
  *  oracle-only rule on a card with a gated and an ungated ability is worth 1 whichever of them the printed text belongs to. */
 function ruleWeight(rule: Rule, dc: DeckCard, gates: GateWeigher): EffectWeight | null {
   const abilities = dc.tags?.abilities ?? [];
-  const entries = abilities.filter((a) => a.gate !== undefined).map((a) => ({ a, w: gates.of(a, dc) }));
+  // An ability whose printed Otherwise does the same thing (Jace, the Perfected Mind) is no chance for the role: it happens in both branches.
+  const entries = abilities.filter((a) => a.gate !== undefined && a.otherwiseAlike !== true).map((a) => ({ a, w: gates.of(a, dc) }));
   if (entries.length === 0) return null;
   if (!readsAbilities(rule.match) && !readsAbilities(rule.not)) {
     if (entries.length < abilities.length) return null;
     const top = entries.reduce((x, y) => (y.w.weight > x.w.weight ? y : x));
-    return top.w.weight < 1 || top.w.basis === "target" ? top.w : null;
+    return top.w.weight < 1 || WHOLE_FLAGGED.has(top.w.basis) ? top.w : null;
   }
-  const partial = entries.filter((x) => x.w.weight < 1);
   const without = (dropped: Set<unknown>): DeckCard => ({ ...dc, tags: { ...dc.tags!, abilities: abilities.filter((a) => !dropped.has(a)) } });
+  // EXHAUSTIVE BRANCHES COUNT WHOLE: when a clause has an "Otherwise" and the rule holds through EVERY gated ability of that clause alone, the role happens whichever branch is taken (Prisoner's Dilemma: all three
+  // branches are burn). A branch the role does not lean on (Cling to Dust's lifegain beside its draw) breaks it.
+  const exhaustive = new Set<unknown>();
+  const clauses = new Set(entries.map((x) => x.a.clause));
+  for (const c of clauses) {
+    const members = entries.filter((x) => x.a.clause === c);
+    const isOther = (x: (typeof members)[number]): boolean => x.a.gate?.kind === "unknown" && x.a.gate.otherwise === true;
+    // BOTH SIDES: an if-branch AND its Otherwise, or the two explicit halves of a pair (a coin flip's "you win / you lose the flip", "it's your turn / it's not your turn"). A LONE Otherwise (its "if" was a
+    // reflexive "if they do / if a player does", Protection Racket, Sin Prodder) is the unread other half of a choice someone else makes.
+    const sides = new Set(members.map((x) => complementSide(x.a.gate?.text ?? "")).filter((v): v is string => v !== null));
+    const pair = [...sides].some((k) => sides.has(k.replace(/:[01]$/, ":0")) && sides.has(k.replace(/:[01]$/, ":1")));
+    if (((members.some(isOther) && members.some((x) => !isOther(x))) || pair)
+      && members.every((m) => ruleMatches(rule, without(new Set(entries.filter((o) => o !== m).map((o) => o.a)))))) for (const m of members) exhaustive.add(m.a);
+  }
+  const partial = entries.filter((x) => x.w.weight < 1 && !exhaustive.has(x.a));
   if (partial.length > 0) {
     const levels = [...new Set(partial.map((x) => x.w.weight))].sort((x, y) => y - x);
     for (const level of [1, ...levels]) {
-      if (ruleMatches(rule, without(new Set(partial.filter((x) => x.w.weight < level).map((x) => x.a))))) {
-        if (level < 1) return partial.find((x) => x.w.weight === level)!.w;
-        break;
+      const dropped = new Set<unknown>(partial.filter((x) => x.w.weight < level).map((x) => x.a));
+      if (ruleMatches(rule, without(dropped))) {
+        if (level >= 1) break;
+        // THE CONDITION THE ROLE LEANS ON: the one at this level whose removal alone makes the rule stop holding (Cling to Dust's draw is its Otherwise, not the lifegain's "it was a creature card").
+        const here = partial.filter((x) => x.w.weight === level);
+        return (here.find((x) => !ruleMatches(rule, without(new Set([...dropped, x.a])))) ?? here[0]!).w;
       }
     }
   }
-  const narrow = entries.filter((x) => x.w.basis === "target");
-  if (narrow.length > 0 && !ruleMatches(rule, without(new Set(narrow.map((x) => x.a))))) return narrow[0]!.w;
+  const narrow = entries.filter((x) => WHOLE_FLAGGED.has(x.w.basis));
+  // ...and the one the rule LEANS ON is named (Thunderous Debut's hand-fill is its not-bargained branch, never the bargained one).
+  if (narrow.length > 0 && !ruleMatches(rule, without(new Set(narrow.map((x) => x.a))))) return (narrow.find((x) => !ruleMatches(rule, without(new Set([x.a])))) ?? narrow[0]!).w;
   return null;
 }
 

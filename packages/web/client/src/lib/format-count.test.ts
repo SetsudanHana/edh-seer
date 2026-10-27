@@ -38,3 +38,33 @@ test("a gate cut in the wrong place is said without its text (Firespout), and a 
   const dollar = { card: "Cost $& Card", category: "draw", weight: 0.5, basis: "unread" as const, needs: "it is cost $& card" };
   expect(conditionalNote([dollar], ["draw"])).toContain("if it is Cost $& Card.");
 });
+
+test("an optional-cost choice counts whole and is said as 'when kicked', never as a chance (owner ruling 2026-10-27)", () => {
+  const kicked = { card: "Into the Roil", category: "draw", weight: 1, basis: "choice" as const, needs: "this spell was kicked" };
+  expect(conditionalNote([kicked], ["draw"])).toBe("Into the Roil counts whole when kicked.");
+  const gift = { card: "Mind Spiral", category: "draw", weight: 1, basis: "choice" as const, needs: "the gift was promised" };
+  expect(conditionalNote([gift], ["draw"])).toBe("Mind Spiral counts whole when the gift is promised.");
+  expect(conditionalNote([kicked], ["ramp"])).toBe("");
+});
+
+test("prowl, surge, warp and foretold are said in their own word", () => {
+  const row = (card: string, needs: string) => ({ card, category: "draw", weight: 1, basis: "choice" as const, needs });
+  expect(conditionalNote([row("Morsel Theft", "this spell's prowl cost was paid")], ["draw"])).toBe("Morsel Theft counts whole when prowl is paid.");
+  expect(conditionalNote([row("Crush of Tentacles", "this spell's surge cost was paid")], ["draw"])).toBe("Crush of Tentacles counts whole when surge is paid.");
+  expect(conditionalNote([row("Full Bore", "that creature was cast for its warp cost")], ["draw"])).toBe("Full Bore counts whole when cast for its warp cost.");
+  expect(conditionalNote([row("Poison the Cup", "this spell was foretold")], ["draw"])).toBe("Poison the Cup counts whole when foretold.");
+});
+
+test("an Otherwise gate names the card in its printed case, never '~' (Approach of the Second Sun)", () => {
+  const needs = "it is not the case that this spell was cast from your hand and you've cast another spell named approach of the second sun this game";
+  expect(conditionalNote([{ card: "Approach of the Second Sun", category: "lifegain", weight: 0.5, basis: "unread" as const, needs }], ["lifegain"]))
+    .toBe("Approach of the Second Sun counts half: it only works if it is not the case that this spell was cast from your hand and you've cast another spell named Approach of the Second Sun this game.");
+});
+
+test("the Otherwise of a choice is said 'when not kicked / not bargained', and a lone opponent's-choice Otherwise reads plainly", () => {
+  const row = (card: string, needs: string, weight = 1, basis: "choice" | "unread" = "choice") => ({ card, category: "handFill", weight, basis, needs });
+  expect(conditionalNote([row("Thunderous Debut", "it is not the case that this spell was bargained")], ["handFill"])).toBe("Thunderous Debut counts whole when not bargained.");
+  expect(conditionalNote([row("Sheoldred's Restoration", "it is not the case that this spell was kicked")], ["handFill"])).toBe("Sheoldred's Restoration counts whole when not kicked.");
+  expect(conditionalNote([row("Protection Racket", "no opponent pays to stop it", 0.5, "unread")], ["handFill"])).toBe("Protection Racket counts half: it only works if no opponent pays to stop it.");
+  expect(conditionalNote([row("Sin Prodder", "no opponent takes the deal", 0.5, "unread")], ["handFill"])).toBe("Sin Prodder counts half: it only works if no opponent takes the deal.");
+});

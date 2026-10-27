@@ -27,7 +27,7 @@ import { effectText, printedPreamble } from "../grammar/preamble.js";
 import { alignVerbs, parseActions, type ActionReading } from "../grammar/action.js";
 import { parseTrigger, type TriggerReading } from "../grammar/trigger.js";
 import { conditionalReturn, delaysIn, flipBranch, returnDelay, untilSourceLeaves } from "./delay.js";
-import { counterIsTheCardsOwn, effectGates, FLIP_VERB_WORDS, nthSentenceMatching, printedVerbWord } from "./effect-gate.js";
+import { branchesAlike, counterIsTheCardsOwn, effectGates, FLIP_VERB_WORDS, isOtherwiseGate, nthSentenceMatching, printedVerbWord } from "./effect-gate.js";
 import { parseGate } from "./gate.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
@@ -555,7 +555,8 @@ import { emblemRecipient } from "../emblem.js";
 // 390: #1349 part 2 -- Saga chapters (event "chapter") and Station rows: an "N+ |" bar gates every ability in its striation with threshold {atLeast: N} (CR 721.2/721.2a), on both paths; set mechanics composed per owner 2026-10-26 (Beam me up = graveyard cast + own-creature bounce, Assimilate = put + counter + Borg artifact creature) and the new `face-a-dilemma` event, emitted once per modal header; kind-less counter replacements ("if one or more counters would be put", "if you would put one or more counters") carry replacement + change (Doubling Season, Winding Constrictor, Vorinclex, Pir), a temporary one stays unread; "on the bottom in a random order" is no top-set; time travel is yours, "they lose the game" the damaged opponent; the switch refuses a reading that loses a trigger's `batched`, or that changes any mana field (manaDiffers: Gauntlet of Power lost its chosen-color filter). Goad (unmerged 390, no bump): the plural "are goaded" is a goad like "is goaded" (grammar/action.ts), so Koloth, Tribble Hunter's "All Tribbles get +1/+0 and are goaded" emits goad instead of reading as an animate (whole-corpus grammar diff: Koloth and Baeloth Barrityl only; Baeloth's derived tags are unchanged, only its clauseSource moves model to grammar).
 // 391: #1352 -- a SELF animate carries its becomes-phrase in its subject (type, subtype, stats, colours, keywords), as the store writes it (Jade Statue, the Keyrune/Monument/Opal/Hidden cycles, Vehicles); a target or class animate keeps its target class alone (spellTargeting would read the result as the target; #1364); the switch gate `lostSubjectFields` pairs by clause and effect kind on any kind (Goddric, the Aura bounces), `lostScaledAmount` refuses a dropped scaling amount; `stripCardName` is word-bound (Command Tower, Dino DNA).
 // 392: #1357 -- an effect's trailing gating "if <condition>" is `Ability.gate`, parsed by the one gate parser (gate.ts: control / threshold / counter / turn-event / unknown), attached per conjunct (an "except ... if" rider never gates the clone); a suppliable condition adds `conditionCares` (no counter demand for a counter the card places on itself); the grammar reads a gated mode instead of refusing it (What Must Be Done keeps its return); TRON needs two Urza's lands. The matcher weighs gated contributions by deck likelihood (owner 2026-10-27).
-export const DERIVE_VERSION = 392;
+// 393: #1357 part 2 -- a LEADING condition gates its own sentence ("If X, A and B" gates both; ", then if" / "Then if"); "Otherwise," / "If not," carry an unknown gate negating the earlier condition(s) (gate.otherwise), with `otherwiseAlike` when the stored reading lost a same-effect sibling; reflexive follow-ups, "instead", replacements, alternative costs, the trigger-doubler frame and shuffle-after-search are no gate; triggers' intervening ifs stay the trigger path's.
+export const DERIVE_VERSION = 393;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2699,6 +2700,7 @@ export function deriveAbilities(
     }
     // The trailing "if" of each action's sentence (#1357), read once per clause from the effect body (the text after the trigger preamble, an intervening if and an ability word).
     const gateReads = clauseText ? effectGates(effectText(clauseText, cardName ?? ""), (clause.actions ?? []).map((a) => a.verb ?? "")) : undefined;
+    const alike = clauseText ? branchesAlike(effectText(clauseText, cardName ?? ""), (clause.actions ?? []).map((a) => a.verb ?? "")) : undefined;
     for (const action of clause.actions ?? []) {
       // A PRINTED "Casualty N" keyword line is the spell's own sacrifice outlet (Make Disappear):
       // Scryfall's keyword list drops the N, so the line itself is read. See `casualtySacrifice`.
@@ -3321,14 +3323,23 @@ export function deriveAbilities(
         const onFlip = flipBranch(nthSentenceMatching(text, flipVerbWord(action.verb), k), clauseActions.some((x) => x.verb === "flip-coin"));
         if (onFlip) ability.onFlip = onFlip;
       }
-      // THE CONDITION THIS EFFECT IS GATED ON (#1357, owner 2026-10-27): a trailing "if <condition>" in the action's own sentence, parsed by the one `parseGate` and carried by THIS ability only (an ungated action of the
+      // THE CONDITION THIS EFFECT IS GATED ON (#1357, owner 2026-10-27): an "if <condition>" that governs the action (trailing, in its own conjunct, or leading its sentence, #1357 part 2), parsed by the one `parseGate` and carried by THIS ability only (an ungated action of the
       // same clause has none). The deck demand it makes is the existing `conditionCares`, set on the ability itself: an instant has no trigger for the clause-level pass below to hang it on. See effect-gate.ts for what is no gate.
       const gateText = gateReads?.gates[(clause.actions ?? []).indexOf(action)];
       if (gateText) {
-        ability.gate = parseGate(gateText.replaceAll("~", (cardName ?? "").split(" // ")[0] ?? ""));
+        const otherwise = isOtherwiseGate(gateText);
+        // THE FACE THE ABILITY IS PRINTED ON names itself: "~" in a back face's ability is the back face (Bruce Banner // The Incredible Hulk), never the front.
+        const faceNames = (cardName ?? "").split(" // ");
+        // CEILING: an ADVENTURE half carries `face === undefined` (segment() records a face index for a transforming/modal card, not for the Adventure), so a "~" in an Adventure-half gate resolves to the creature's name; no corpus Adventure gate holds a name today.
+        const selfName = faceNames[face ?? 0] ?? faceNames[0] ?? "";
+        const parsedGate = otherwise ? { kind: "unknown" as const, text: gateText.replaceAll("~", selfName).toLowerCase(), otherwise: true as const } : parseGate(gateText.replaceAll("~", selfName));
         // A counter the card places on itself is no counters demand (#1357 review): no deck supplies a "phyresis" or "hunger" counter, and the false demand reached edges.ts' dies-trigger guard.
-        const gateCares = conditionCares_(gateText).filter((tag) => !(tag === "counter-added:any" && counterIsTheCardsOwn(gateText, cardText)));
+        // The OTHER branch of an "if" asks nothing of the deck: the demand is the condition's, and this branch is its opposite (#1357 part 2).
+        const gateCares = otherwise ? [] : conditionCares_(gateText).filter((tag) => !(tag === "counter-added:any" && counterIsTheCardsOwn(gateText, cardText)));
+        // The gate's OWN demand rides on the gate (the weigher reads only this); `conditionCares` below is the merged themes/ratings field, which also takes the trigger's intervening-if demand.
+        ability.gate = parsedGate.kind === "unknown" && gateCares.length > 0 ? { ...parsedGate, cares: gateCares } : parsedGate;
         if (gateCares.length > 0) ability.conditionCares = gateCares;
+        if (!otherwise && alike?.[(clause.actions ?? []).indexOf(action)]) ability.otherwiseAlike = true;
       }
       // A RETURN THAT LANDS LATER (#801, Shirei): read on THIS action's own sentence, so an immediate
       // return beside a delayed one stays immediate (Gift of Immortality, Swift Warkite; review). The

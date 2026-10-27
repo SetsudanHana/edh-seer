@@ -901,7 +901,7 @@ test("a mode's trailing 'if' condition rides on its draw as a gate, never an unc
   const { tags } = deriveGrammar("Federation Field Medic", "Creature — Human Doctor", "Vigilance\nWhen this creature enters, choose one —\n• Put a +1/+1 counter on target creature. It gains vigilance until end of turn.\n• Draw a card if you control a permanent with a counter on it.");
   const draws = tags.abilities.filter((a) => a.effect.kind === "draw-card");
   expect(draws).toHaveLength(1);
-  expect(draws[0]!.gate).toEqual({ kind: "unknown", text: "you control a permanent with a counter on it" });
+  expect(draws[0]!.gate).toEqual({ kind: "unknown", text: "you control a permanent with a counter on it", cares: ["counter-added:any"] });
   expect(draws[0]!.conditionCares).toEqual(["counter-added:any"]);
   expect(tags.abilities.some((a) => a.effect.kind === "counter-placement")).toBe(true);
   expect(JSON.stringify(tags.unclaimed ?? [])).not.toContain("permanent with a counter");
@@ -920,9 +920,10 @@ test("two multi-trigger modal headers pair their twins in order; unequal counts 
   expect(verbsOf(3)).toEqual(["attacks", "enters"]);
 });
 
-test("a mode's 'if you don't control ...' gates it; only the bare reflexive 'if you do / don't' is exempt: Venser, Corpse Puppet", () => {
+test("a mode's 'if you don't control ...' gates its token (#1357 part 2: a leading condition is read, never an unconditional token); only the bare reflexive 'if you do / don't' is exempt: Venser, Corpse Puppet", () => {
   const { tags } = deriveGrammar("Venser, Corpse Puppet", "Legendary Creature — Phyrexian Zombie Wizard", "Lifelink, toxic 1\nWhenever you proliferate, choose one —\n• If you don't control a creature named The Hollow Sentinel, create The Hollow Sentinel, a legendary 3/3 colorless Phyrexian Golem artifact creature token.\n• Target artifact creature you control gains flying and lifelink until end of turn.");
-  expect(tags.abilities.some((a) => a.effect.kind === "token-generation")).toBe(false);
+  const tokens = tags.abilities.filter((a) => a.effect.kind === "token-generation");
+  expect(tokens.map((a) => a.gate)).toEqual([{ kind: "unknown", text: "you don't control a creature named the hollow sentinel" }]);
 });
 
 // #1349 part 2: Saga chapters and Station thresholds. Real oracle text (Mongo `cards`, 2026-10-26).

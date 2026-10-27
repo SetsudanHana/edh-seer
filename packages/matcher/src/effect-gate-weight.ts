@@ -2,7 +2,7 @@
  *  parsed by the same `parseGate` as a mana line's gate); this module is the ONE place that turns it into a number in [0, 1], so the role counts, the land recommendation and the goldfish cannot disagree about how much
  *  a gated draw is worth in a deck.
  *
- *  FIVE BASES, and the report says which (`EffectWeight.basis`):
+ *  SIX BASES, and the report says which (`EffectWeight.basis`):
  *   - `ungated`: no gate, weight 1, not conditional.
  *   - `evaluated`: a gate a decklist settles (a board count, a graveyard count, an event this turn, counters the card puts on itself): `gateProbability`, the SAME evaluator a mana line's gate uses, at the same median
  *     clock. A READABLE condition the deck has no support for weighs EXACTLY 0 (owner ruling 2026-10-27 A: Roadside Reliquary's enchantment draw with no enchantments "basically does nothing").
@@ -12,6 +12,8 @@
  *   - `unread`: a condition NOTHING here can read (an opponent's board or hand, a spell an opponent cast this turn, a game state, the game's speed or initiative, or one this reader does not parse): the FIXED partial weight
  *     `UNREAD_WEIGHT` (effect-gate-weight.json), flagged conditional. Only an unreadable condition keeps it; it is never a sure effect.
  *   - `target`: a condition on the effect's own TARGET ("counter target spell if it's blue"): a targeting restriction and no weight, whole (`target-condition.ts`). The report marks the card a narrow answer.
+ *
+ *   - `choice`: an optional-cost condition ("if this spell was kicked / bargained", "if the gift was promised"): the PLAYER's choice, weight 1, flagged so the report says "when kicked" (`choice-condition.ts`, owner ruling 2026-10-27).
  *
  *  `speed` and `initiative` are evaluated by `gateProbability` for a MANA LINE (speed 4 from turn 4, initiative if a card takes it) and read as sure when no turn is asked. For an effect they are `unread` instead: an
  *  opponent can take the initiative and speed rises only as opponents lose life, so a sure 1 would be the very thing the ruling forbids.
@@ -26,6 +28,7 @@ import type { Ability, Gate } from "@edh-seer/tagger";
 import { CORPUS_MEDIAN_CLOCK } from "./corpus-clock.js";
 import { conditionSupply } from "./deck-fit.js";
 import config from "./effect-gate-weight.json" with { type: "json" };
+import { isChoiceCondition } from "./choice-condition.js";
 import { gateProbability } from "./gate.js";
 import { isTargetCondition } from "./target-condition.js";
 import type { DeckCard, Hierarchy } from "./types.js";
@@ -33,7 +36,7 @@ import type { DeckCard, Hierarchy } from "./types.js";
 /** The fixed weight of a gated effect nothing settles. */
 export const UNREAD_WEIGHT: number = config.unreadable;
 
-export type EffectBasis = "ungated" | "evaluated" | "supply" | "unread" | "target";
+export type EffectBasis = "ungated" | "evaluated" | "supply" | "unread" | "target" | "choice";
 
 export interface EffectWeight {
   /** In [0, 1]. */
@@ -75,11 +78,14 @@ export function makeGateWeigher(deck: readonly DeckCard[], hierarchy: Hierarchy 
       const needs = g.text;
       // A CONDITION ON THE TARGET RESTRICTS WHAT THE CARD ANSWERS; it does not make the effect chancy (owner ruling 2026-10-27 C): whole weight, flagged `target` so the report names it narrow.
       if (isTargetCondition(holder.card.oracleText, needs)) return { weight: 1, conditional: true, basis: "target", needs };
+      // AN OPTIONAL COST IS A CHOICE, not a chance (owner ruling 2026-10-27): whole, flagged.
+      if (g.kind === "unknown" && isChoiceCondition(needs)) return { weight: 1, conditional: true, basis: "choice", needs };
       if (evaluable(g)) {
         const p = gateProbability(g, deck);
         if (p !== null) return { weight: clamp(p), conditional: true, basis: "evaluated", needs };
       }
-      const wants = a.conditionCares ?? [];
+      // THE GATE'S OWN DEMAND (`gate.cares`), never `Ability.conditionCares`: that field also merges the trigger's intervening-if demand, which is not what this condition asks (Frodo, Ayara's Oathsworn).
+      const wants = g.kind === "unknown" ? g.cares ?? [] : [];
       if (g.kind === "unknown" && wants.length > 0) {
         const chances = wants.map((w) => pAtLeast(1, suppliers(w, holder), seen(CORPUS_MEDIAN_CLOCK), deck.length));
         return { weight: clamp(Math.min(...chances)), conditional: true, basis: "supply", needs };

@@ -1433,14 +1433,21 @@ export interface Ability {
    *  Not an evaluable condition and deliberately not one: see `conditionCares`. It records only the
    *  DEMAND, so `cardCaresTags` can put the card on the right axis. Forms no edge, ever. */
   conditionCares?: string[];
-  /** THE CONDITION THIS ABILITY'S EFFECT IS GATED ON, from a trailing "if <condition>" in its own sentence (#1357, owner 2026-10-27): "Draw a card if an opponent has cast a blue or black spell this turn" (Veil of Summer,
-   *  `turn-event`), "Then draw a card if it has seven or more phyresis counters on it" (Weatherlight Compleated, `counter`), "Create two 1/1 blue Fish creature tokens if an opponent controls more creatures than you"
-   *  (Beza, `unknown`). PARSED BY THE SAME `parseGate` AS A MANA LINE'S GATE: one grammar, the kinds of `Gate`. A gated effect STILL COUNTS and keeps its edges; the gate says how likely it is to happen, and a
-   *  condition derive cannot read is `unknown`, which IS the "flagged conditional" state: never a sure effect, never zero. `conditionCares` beside it names the deck demand the condition makes, from the same
-   *  `conditionCares()` the trigger and activation paths use. Only the ability the condition gates carries it (an ungated action of the same clause does not). ABSENT: no trailing "if" in the ability's sentence,
-   *  and also the leading form ("If you control a Dragon, draw a card", "Then if ..."), a verb whose printed word derive cannot find, and the exempt "if you do" / "if able" / "if you pay" / "instead" / "would".
-   *  Weighed by the matcher (`effect-gate-weight.ts`, #1357 task 2): the role counts, the land recommendation and the goldfish's draw count the effect at the chance its condition holds in the deck. */
+  /** THE CONDITION THIS ABILITY'S EFFECT IS GATED ON (#1357, owner 2026-10-27): "Draw a card if an opponent has cast a blue or black spell this turn" (Veil of Summer, `turn-event`), "Then draw a card if it has seven or more
+   *  phyresis counters on it" (Weatherlight Compleated, `counter`), "Create two 1/1 blue Fish creature tokens if an opponent controls more creatures than you" (Beza, `unknown`). THREE FORMS: a TRAILING "if" gates the
+   *  action of its own conjunct; a LEADING one ("If you control a Dragon, draw a card", "Then if ...", ", then if ...") gates every action AFTER it in its own sentence only (a following sentence is not gated); an
+   *  "Otherwise," / "If not," sentence gets the OTHER BRANCH: an `unknown` gate with `otherwise: true` whose text says what negates ("it is not the case that ...", "none of these holds: ...", "no opponent pays to stop
+   *  it", "the card's other branch doesn't happen"). A trailing "if" wins over a leading one for the same action (one slot). PARSED BY THE SAME `parseGate` AS A MANA LINE'S GATE: one grammar, the kinds of `Gate`.
+   *  A gated effect STILL COUNTS and keeps its edges; the gate says how likely it is to happen, and a condition derive cannot read is `unknown`, which IS the "flagged conditional" state: never a sure effect.
+   *  `gate.cares` (an `unknown` gate) is the deck demand of THIS condition alone, from the same `conditionCares()` the trigger and activation paths use; the weigher reads only it. `conditionCares` on the ability is the MERGED
+   *  field for themes and ratings: it also takes a trigger's intervening-if demand, so it is not the gate's. `otherwiseAlike` marks a gated effect whose printed Otherwise does the same (see below).
+   *  ABSENT: no "if" governs the action, a verb whose printed word derive cannot find, an "if" in a trigger's preamble (the trigger path owns it), and the exempt "if you do" / "if you don't <verb>" / "if able" / "if you pay" /
+   *  "instead" / "would" / alternative costs / trigger-doubler frames / "if you search your library this way".
+   *  Weighed by the matcher (`effect-gate-weight.ts`, #1357 task 2): the role counts, the land recommendation and the goldfish's draw count the effect at the chance its condition holds in the deck; an optional-cost choice
+   *  (kicked, bargained, a promised gift, prowl, surge, foretold, and the Otherwise of one) counts whole as a `choice`. */
   gate?: Gate;
+  /** The printed "Otherwise" branch of this gated effect does the same kind of thing (Jace, the Perfected Mind: draws three, otherwise draws one), but the stored reading kept only this branch: the role happens either way (#1357 part 2). */
+  otherwiseAlike?: true;
   /** A CR 614 multiplier ("if you would draw a card ... draw two instead", Hardened Scales, Doubling
    *  Season): its trigger hears another card's event and makes that event BETTER. Owner, 2026-09-29:
    *  "replacement effects make the effects better, not the other way around" -- so the matcher
@@ -1587,7 +1594,8 @@ export type Gate =
   | { kind: "threshold"; zone: "graveyard"; need: number; types?: string[]; subtypes?: string[]; supertypes?: string[]; text: string }
   | { kind: "counter"; counter: string; need: number; put?: { by: "self"; readyTurn: number; activation: { mana: number; refund: number; taps: boolean; activations: number } } | { by: "opening-hand" }; text: string }
   | { kind: "turn-event"; event: TurnEvent; text: string }
-  | { kind: "unknown"; text: string };
+  /** `otherwise`: the OTHER branch of an "if" (#1357 part 2), which the parser cannot negate; its text says "it is not the case that ...". `cares`: the deck demand of THIS condition alone (`conditionCares` of its text), kept apart from `Ability.conditionCares`, which also merges the trigger's intervening-if demand: the weigher reads only this one. */
+  | { kind: "unknown"; text: string; otherwise?: true; cares?: string[] };
 
 /** ONE WAY A CARD PRODUCES MANA (or a mana source, or a land), read once at derive time so no consumer parses
  *  oracle text again (#1169; the inventory found ten detectors disagreeing on real cards). A card carries

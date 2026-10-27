@@ -148,3 +148,21 @@ test("a grammar effect with no subject at all is not a lost field (Goddric); one
   const bounce = (subject: Record<string, unknown>) => ab({ effect: { kind: "bounce", subject } as never });
   expect(lostSubjectFields([bounce({ control: "any", token: null, subtype: "aura", scope: "all" })], [bounce({ control: "any", token: null, type: "creature" })])).toEqual(["bounce:subtype"]);
 });
+
+test("a gate moves the group key only when the gates DIFFER, never because the pairing crossed two gated abilities (#1357 part 2: Traveling Botanist and five more un-switched)", () => {
+  const g1 = { kind: "unknown", text: "it's a land card" } as never, g2 = { kind: "unknown", text: "you don't put the card into your hand" } as never, g3 = { kind: "unknown", text: "other" } as never;
+  // the sort pairs a(g1) with b(g2) and c(g2) with d(g1): the gates are the same SET on both sides
+  expect(deriveDiff([ab({ effect: { kind: "a" }, gate: g1 }), ab({ effect: { kind: "c" }, gate: g2 })], [ab({ effect: { kind: "d" }, gate: g1 }), ab({ effect: { kind: "b" }, gate: g2 })])).toBe("effect.kind");
+  // a real difference in the gates is still a difference (a switch must not change what a card is gated on)
+  expect(deriveDiff([ab({ gate: g1 })], [ab({ gate: g3 })])).toBe("gate");
+  expect(deriveDiff([ab({ gate: g1 })], [ab({})])).toBe("gate");
+  expect(deriveDiff([ab({ conditionCares: ["counter-added:any"] })], [ab({})])).toBe("conditionCares");
+});
+
+test("a gate that moved to ANOTHER ability of the same clause is a difference (draw(g1) mill(g2) against draw(g2) mill(g1))", () => {
+  const g1 = { kind: "unknown", text: "it's a land card" } as never, g2 = { kind: "unknown", text: "other" } as never;
+  const draw = { effect: { kind: "draw-card" } }, mill = { effect: { kind: "mill" } };
+  expect(deriveDiff([ab({ ...draw, gate: g1 }), ab({ ...mill, gate: g2 })], [ab({ ...draw, gate: g2 }), ab({ ...mill, gate: g1 })])).toBe("gate");
+  // ...while the same gates on the same kinds, in another order, are none
+  expect(deriveDiff([ab({ ...draw, gate: g1 }), ab({ ...mill, gate: g2 })], [ab({ ...mill, gate: g2 }), ab({ ...draw, gate: g1 })])).toBeNull();
+});
