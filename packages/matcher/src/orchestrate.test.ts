@@ -107,5 +107,7 @@ test("a partner pair in the Commander box analyses, with or without a header lin
   for (const box of ["1 Thrasios\n1 Tymna the Weaver", "Commander\n1 Thrasios\n1 Tymna the Weaver"]) {
     const r = await analyzeDecklist("4 Island", box, makeSources);
     expect(r.missing).toEqual([]);
+    expect(r.resolvedCount).toBe(6);
+    expect(r.report.commanders).toEqual(["Thrasios", "Tymna the Weaver"]);
   }
 });
