@@ -921,3 +921,15 @@ test("a copy token whose copied head names only a creature is a creature (#1385 
   // an added type keeps its conjunction
   expect(parseSubject("a token that's a copy of target creature, except it's an artifact in addition to its other types").allTypes).toEqual(["artifact", "creature"]);
 });
+
+test("a copied LIST is not collapsed to its first word (#1385 review)", () => {
+  for (const list of ["target creature, artifact, or planeswalker", "target creature, enchantment, or artifact", "target creature and/or artifact"]) {
+    const t = parseSubject(`a token that's a copy of ${list}`).type;
+    expect(Array.isArray(t), list).toBe(true);
+    expect((t as string[]).length, list).toBeGreaterThanOrEqual(2);
+  }
+  // a clause after a comma still ends the copied phrase
+  expect(parseSubject("a token that's a copy of target creature, except it isn't legendary").type).toBe("creature");
+  expect(parseSubject("a token that's a copy of each creature attacking you or a planeswalker you control and that's blocking that creature").type).toBe("creature");
+  expect(parseSubject("a token that's a copy of target artifact or creature").type).toEqual(["creature", "artifact"]);
+});

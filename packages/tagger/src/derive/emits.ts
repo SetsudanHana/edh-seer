@@ -544,7 +544,9 @@ export function narrowSelfExiledSpell(emits: GameEvent[], clauseText: string, ca
  *  names "that player controls" itself. */
 const FOR_EACH_OPPONENT = /\bfor each (?:opponent|other player)\b[^.]*?\bthat (?:player|opponent) controls\b/i;
 function distributiveOpponent(object: string, clauseText: string): boolean {
-  return FOR_EACH_OPPONENT.test(clauseText) && (/\bchosen\b/i.test(object) || /\bthat (?:player|opponent) controls\b/i.test(object));
+  // "that player controls" must qualify the object's HEAD noun; after "for each" it is a COUNT ("create a Soldier token for each creature that player controls").
+  const headNoun = object.split(/\b(?:for|on) each\b/i)[0]!;
+  return FOR_EACH_OPPONENT.test(clauseText) && (/\bchosen\b/i.test(headNoun) || /\bthat (?:player|opponent) controls\b/i.test(headNoun));
 }
 
 /** Does this token copy a CREATURE? The clause names one ("Exile target creature card ... create a token that's a copy of it", Scarab God), or the

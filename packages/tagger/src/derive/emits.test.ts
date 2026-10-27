@@ -705,6 +705,12 @@ describe("'for each opponent ... that player controls' is an opponent's permanen
     const dies = actionEmits({ verb: "destroy", object: "chosen artifacts or lands" }, "Choose an artifact or land. Destroy the chosen permanents.").find((e) => e.verb === "dies")!;
     expect(dies.subject.control).toBe("any");
   });
+  test("a COUNT after 'for each' is not the object's controller: the tokens and the card are yours", () => {
+    const create = actionEmits({ verb: "create", object: "a 1/1 Soldier token for each creature that player controls" }, "For each opponent, create a 1/1 white Soldier creature token for each creature that player controls.");
+    for (const e of create) expect(e.subject.control, e.verb).not.toBe("opp");
+    const draw = actionEmits({ verb: "draw", object: "a card for each creature that player controls" }, "For each opponent, draw a card for each creature that player controls.");
+    for (const e of draw) expect(e.subject.control, e.verb).not.toBe("opp");
+  });
   test("the phrase itself, with the opponent and the controller in one sentence", () => {
     const dies = actionEmits({ verb: "destroy", object: "an artifact or land that player controls" }, "For each opponent, destroy an artifact or land that player controls.").find((e) => e.verb === "dies")!;
     expect(dies.subject.control).toBe("opp");
