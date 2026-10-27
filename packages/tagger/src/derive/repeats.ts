@@ -182,6 +182,8 @@ export function repeatsFor(ability: Ability, clauseText: string, cost = "", raw?
       if (verbs.some((v) => ONE_LIFE_VERBS.has(v))) {
         return /^(?:when|whenever)\s+(?:equipped|fortified)\s/i.test(withoutAbilityWord(text)) ? "per-cycle" : "once";
       }
+      // A creature blocks only in somebody else's combat, so "you" is the blocker's side, not whose turn it is: once a turn (as rule 8c, #1373).
+      if (verbs.includes("blocks")) return "per-turn";
       if (verbs.some((v) => ONE_COMBAT_VERBS.has(v))) return trigger.subject.control === "you" ? "per-cycle" : "per-turn";
     }
     // 6-7: a phase trigger fires once per turn; `control` says whose turns count. An ordinal

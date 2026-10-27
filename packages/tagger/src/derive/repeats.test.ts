@@ -250,4 +250,7 @@ test("rule 8c (#1373): 'blocks' is once per TURN when SELF (it blocks on an oppo
   expect(repeatsFor(triggered(["blocks"], { control: "you", self: true, type: "creature" }), "Whenever this creature blocks, you may gain 4 life.")).toBe("per-turn");
   // A class of blockers fires once per blocker, like a class of attackers.
   expect(repeatsFor(triggered(["blocks"], { control: "you", type: "creature" }), "Whenever a creature you control blocks, draw a card.")).toBe("repeatable");
+
+  // ONE OBJECT (rule 7b) is the same: an equipped or enchanted creature of mine blocks on opponents' turns, once a turn, not once a round.
+  expect(repeatsFor(triggered(["blocks"], { control: "you", type: "creature" }), "Whenever equipped creature blocks, it gets +1/+1 until end of turn.")).toBe("per-turn");
 });
