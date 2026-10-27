@@ -32,10 +32,21 @@ const readable = (needs: string): boolean => !/[{}]| if /.test(needs);
  *  number here can round to a sure one. A card that answers only a narrow set of targets (`target`) counts whole and is not listed. Three at most, then how many more. Empty when nothing in the role is conditional. */
 export function conditionalNote(rows: readonly Conditional[] | undefined, leaves: readonly string[]): string {
   const seen = new Set<string>();
+  // An optional-cost choice (kicked, bargained, a promised gift) counts whole and is said as the choice it is, after the chances.
+  const chosen = (rows ?? []).filter((r) => r.basis === "choice" && leaves.includes(r.category) && !seen.has(`${r.card}|choice`) && (seen.add(`${r.card}|choice`), true));
   const mine = (rows ?? []).filter((r) => r.basis !== "target" && r.weight < 1 && leaves.includes(r.category) && !seen.has(r.card) && (seen.add(r.card), true));
-  if (mine.length === 0) return "";
+  const choices = chosen.slice(0, 3).map((r) => `${r.card} counts whole ${choiceWords(r.needs)}.`);
+  if (mine.length === 0) return choices.join(" ");
   const how = (w: number): string => (w === 0 ? "for nothing" : w === 0.5 ? "half" : "partly");
   const said = mine.slice(0, 3).map((r) => `${r.card} counts ${how(r.weight)}: ${readable(r.needs) ? `it only works if ${restoreNames(r.needs, r.card)}` : "it only works under a condition on the card"}.`);
   if (mine.length > 3) said.push(`${mine.length - 3} more count for less than a whole card.`);
-  return said.join(" ");
+  return [...said, ...choices].join(" ");
+}
+
+/** "when kicked": the choice a condition names (the report's wording; the matcher flags the basis `choice`). */
+function choiceWords(needs: string): string {
+  const t = needs.toLowerCase();
+  if (t.includes("gift was promised")) return "when the gift is promised";
+  const m = /\b(?:was|were) (kicked|multikicked|bargained|overloaded|evoked)\b/.exec(t);
+  return m ? `when ${m[1]}` : "when the extra cost is paid";
 }

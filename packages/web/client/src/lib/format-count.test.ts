@@ -38,3 +38,11 @@ test("a gate cut in the wrong place is said without its text (Firespout), and a 
   const dollar = { card: "Cost $& Card", category: "draw", weight: 0.5, basis: "unread" as const, needs: "it is cost $& card" };
   expect(conditionalNote([dollar], ["draw"])).toContain("if it is Cost $& Card.");
 });
+
+test("an optional-cost choice counts whole and is said as 'when kicked', never as a chance (owner ruling 2026-10-27)", () => {
+  const kicked = { card: "Into the Roil", category: "draw", weight: 1, basis: "choice" as const, needs: "this spell was kicked" };
+  expect(conditionalNote([kicked], ["draw"])).toBe("Into the Roil counts whole when kicked.");
+  const gift = { card: "Mind Spiral", category: "draw", weight: 1, basis: "choice" as const, needs: "the gift was promised" };
+  expect(conditionalNote([gift], ["draw"])).toBe("Mind Spiral counts whole when the gift is promised.");
+  expect(conditionalNote([kicked], ["ramp"])).toBe("");
+});

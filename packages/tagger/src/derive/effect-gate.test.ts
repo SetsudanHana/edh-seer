@@ -366,3 +366,29 @@ describe("a LEADING condition gates the effect it governs (#1357 part 2)", () =>
     expect(tags.abilities.filter((a) => a.gate !== undefined).map((a) => a.gate)).toEqual(Array(3).fill({ kind: "unknown", text: "it's suspected" }));
   });
 });
+
+describe("what is still no gate, and where a condition ends (#1357 part 2 follow-up)", () => {
+  it("shuffle after a search is no gate (Vraska's Scorn)", () => {
+    const body = "Target opponent loses 4 life. You may search your library and/or graveyard for a card named Vraska, Scheming Gorgon, reveal it, and put it into your hand. If you search your library this way, shuffle.";
+    expect(effectGates(body, ["lose-life", "search", "shuffle"])).toEqual({ gates: [null, null, null], refused: false });
+  });
+  it("'if you don't <verb>' is the follow-up of an optional action, but 'if you don't control/have' is a condition (Traveling Botanist, Errand-Rider)", () => {
+    const body = "Look at the top card of your library. If it's a land card, you may reveal it and put it into your hand. If you don't put the card into your hand, you may put it into your graveyard.";
+    expect(effectGates(body, ["look", "put", "mill"]).gates).toEqual([null, "it's a land card", null]);
+    expect(sentenceGate("If you don't cast it, put it into your hand")).toEqual({ shape: "exempt" });
+    expect(sentenceGate("If you didn't cast it from your hand, exile it with three time counters")).toMatchObject({ shape: "leading" });
+    expect(sentenceGate("If you don't control a Dragon, draw a card")).toMatchObject({ shape: "leading" });
+    expect(sentenceGate("If you don't cast a spell this turn, draw a card")).toMatchObject({ shape: "leading" });
+  });
+  it("a leading list condition ends at the comma before the effect, not at its first comma (Altar of the Pantheon)", () => {
+    expect(effectGates("If you control a God, a Demigod, or a legendary enchantment, you gain 1 life.", ["gain-life"]).gates).toEqual(["you control a God, a Demigod, or a legendary enchantment"]);
+    expect(effectGates("If you control a Dragon, an Elf, and a Goblin, draw a card.", ["draw"]).gates).toEqual(["you control a Dragon, an Elf, and a Goblin"]);
+    // an effect that starts with an article is not a list item
+    expect(effectGates("If you control a Dragon, a creature you control gets +1/+1 until end of turn.", ["modify-pt"]).gates).toEqual(["you control a Dragon"]);
+  });
+  it("an 'Otherwise' after an 'as long as' or 'during your turn' takes that condition (Serra's Boon, Armament of Nyx, Hunter's Blowgun)", () => {
+    expect(effectGates("Enchanted creature gets +1/+2 as long as it's white. Otherwise, it gets -2/-1.", ["modify-pt", "modify-pt"]).gates).toEqual([null, "it is not the case that it's white"]);
+    expect(effectGates("Enchanted creature has double strike as long as it's an enchantment. Otherwise, prevent all damage that would be dealt by enchanted creature.", ["grant-ability", "prevent"]).gates[1]).toBe("it is not the case that it's an enchantment");
+    expect(effectGates("Equipped creature has deathtouch during your turn. Otherwise, it has reach.", ["grant-ability", "grant-ability"]).gates[1]).toBe("it is not the case that it's your turn");
+  });
+});

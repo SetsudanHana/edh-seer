@@ -9,7 +9,7 @@ import { landInputs, recommendedLands } from "./land-count.js";
 import type { DeckCard } from "./types.js";
 
 // Real oracle text (Mongo `cards`, 2026-10-27), derived from the printed text by the grammar, as production does for a card it reads completely.
-const REAL: Record<string, { typeLine: string; oracleText: string; manaValue: number; manaCost?: string; partial?: true }> = {
+const REAL: Record<string, { keywords?: string[]; typeLine: string; oracleText: string; manaValue: number; manaCost?: string; partial?: true }> = {
   "Federation Field Medic": { typeLine: "Creature — Human Doctor", manaValue: 4, manaCost: "{3}{W}", oracleText: "Vigilance\nWhen this creature enters, choose one —\n• Put a +1/+1 counter on target creature. It gains vigilance until end of turn.\n• Draw a card if you control a permanent with a counter on it." },
   "Veil of Summer": { typeLine: "Instant", manaValue: 1, manaCost: "{G}", oracleText: "Draw a card if an opponent has cast a blue or black spell this turn. Spells you control can't be countered this turn. You and permanents you control gain hexproof from blue and from black until end of turn. (You and they can't be the targets of blue or black spells or abilities your opponents control.)" },
   "Beza, the Bounding Spring": { typeLine: "Legendary Creature — Elemental Elk", manaValue: 4, oracleText: "When Beza enters, create a Treasure token if an opponent controls more lands than you. You gain 4 life if an opponent has more life than you. Create two 1/1 blue Fish creature tokens if an opponent controls more creatures than you. Draw a card if an opponent has more cards in hand than you." },
@@ -26,11 +26,16 @@ const REAL: Record<string, { typeLine: string; oracleText: string; manaValue: nu
   "Wolf Strike": { typeLine: "Instant", manaValue: 3, manaCost: "{2}{G}", oracleText: "Target creature you control gets +2/+0 until end of turn if it's night. Then it deals damage equal to its power to target creature you don't control." },
   "Garna, Bloodfist of Keld": { typeLine: "Legendary Creature — Human Berserker", manaValue: 4, manaCost: "{1}{B}{R}{R}", oracleText: "Whenever another creature you control dies, draw a card if it was attacking. Otherwise, Garna deals 1 damage to each opponent." },
   "Miles \"Tails\" Prower": { typeLine: "Legendary Creature — Fox Artificer", manaValue: 4, manaCost: "{1}{W}{U}", oracleText: "Flash\nFlying\nWhenever a Vehicle you control enters, draw a card if it has flying. Otherwise, put a flying counter on it." },
+  "Into the Roil": { keywords: ["Kicker"], typeLine: "Instant", manaValue: 2, manaCost: "{1}{U}", oracleText: "Kicker {1}{U} (You may pay an additional {1}{U} as you cast this spell.)\nReturn target nonland permanent to its owner's hand. If this spell was kicked, draw a card." },
+  "Pixie Illusionist": { keywords: ["Kicker", "Flying"], typeLine: "Creature — Faerie Wizard", manaValue: 1, manaCost: "{U}", oracleText: "Kicker {3}{G} (You may pay an additional {3}{G} as you cast this spell.)\nFlying\nIf this creature was kicked, it enters with two +1/+1 counters on it.\n{T}: Target land you control becomes the basic land type of your choice until end of turn." },
+  "Archon's Glory": { keywords: ["Bargain"], typeLine: "Instant", manaValue: 1, manaCost: "{W}", oracleText: "Bargain (You may sacrifice an artifact, enchantment, or token as you cast this spell.)\nTarget creature gets +2/+2 until end of turn. If this spell was bargained, that creature also gains flying and lifelink until end of turn." },
+  "Mind Spiral": { keywords: ["Gift"], typeLine: "Sorcery", manaValue: 5, manaCost: "{4}{U}", oracleText: "Gift a tapped Fish (You may promise an opponent a gift as you cast this spell. If you do, they create a tapped 1/1 blue Fish creature token before its other effects.)\nTarget player draws three cards. If the gift was promised, tap target creature an opponent controls and put a stun counter on it. (If a permanent with a stun counter would become untapped, remove one from it instead.)" },
+  "Boros Fury-Shield": { typeLine: "Instant", manaValue: 2, manaCost: "{1}{R}", oracleText: "Prevent all combat damage that would be dealt this turn by target attacking or blocking creature. If {R} was spent to cast this spell, Boros Fury-Shield deals damage to that creature's controller equal to the creature's power." },
   "Mind Stone": { typeLine: "Artifact", manaValue: 2, oracleText: "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card." },
 };
 const make = (realName: string, asName = realName): DeckCard => {
   const c = REAL[realName]!;
-  const printed = { name: asName, typeLine: c.typeLine, oracleText: c.oracleText, keywords: [] as string[] };
+  const printed = { name: asName, typeLine: c.typeLine, oracleText: c.oracleText, keywords: c.keywords ?? [] };
   const g = grammarClauseRecords(printed);
   if (!g.complete && !c.partial) throw new Error(`grammar does not read ${realName} completely`);
   return { card: { ...printed, manaValue: c.manaValue, manaCost: c.manaCost } as never, tags: deriveCardTags(deriveInputOf(printed as never, "x", asName, g.records, undefined, g.readings)) };
@@ -335,4 +340,40 @@ test("the trimmed over-count is whole cards: a surplus of 3.5 cuts 3, never 4", 
   const r = recommendedLands(deck, { gates: makeGateWeigher(deck), roleTargets: { consistency: 5 } });
   for (const t of [r.ifTrimmed?.draw, r.ifTrimmed?.ramp]) if (t) expect(Number.isInteger(t.over)).toBe(true);
   expect(r.drawPieces).toBe(5 + 7 * UNREAD_WEIGHT);
+});
+
+// OPTIONAL-COST CHOICES COUNT WHOLE, FLAGGED (owner ruling 2026-10-27): kicked, bargained and a promised gift are the player's choice, not chance.
+test("a kicked draw weighs 1 and is flagged as a choice, not a chance (Into the Roil, Blink of an Eye's text)", () => {
+  for (const name of ["Into the Roil", "Blink of an Eye"]) {
+    const d = make("Into the Roil", name);
+    const [draw] = gatedDraw(d);
+    expect(draw!.gate).toMatchObject({ kind: "unknown", text: "this spell was kicked" });
+    expect(makeGateWeigher(deckOf([d])).of(draw!, d)).toEqual({ weight: 1, conditional: true, basis: "choice", needs: "this spell was kicked" });
+  }
+});
+
+test("'enters with counters if kicked' (Pixie Illusionist), a bargained grant (Archon's Glory) and a promised gift (Mind Spiral) weigh 1, flagged", () => {
+  const pixie = make("Pixie Illusionist");
+  const counters = pixie.tags!.abilities.find((a) => a.effect.kind === "enters-with-counters")!;
+  expect(makeGateWeigher(deckOf([pixie])).of(counters, pixie)).toMatchObject({ weight: 1, basis: "choice", conditional: true });
+  const glory = make("Archon's Glory");
+  const grant = glory.tags!.abilities.find((a) => a.gate !== undefined)!;
+  expect(makeGateWeigher(deckOf([glory])).of(grant, glory)).toMatchObject({ weight: 1, basis: "choice", needs: "this spell was bargained" });
+  const spiral = make("Mind Spiral");
+  const gated = spiral.tags!.abilities.filter((a) => a.gate !== undefined);
+  expect(gated.length).toBeGreaterThan(0);
+  for (const a of gated) expect(makeGateWeigher(deckOf([spiral])).of(a, spiral)).toMatchObject({ weight: 1, basis: "choice", needs: "the gift was promised" });
+});
+
+test("'{R} was spent' is the deck's mana, not an optional cost: it stays unread at the fixed weight (Boros Fury-Shield)", () => {
+  const d = make("Boros Fury-Shield");
+  const gated = d.tags!.abilities.find((a) => a.gate !== undefined)!;
+  expect(makeGateWeigher(deckOf([d])).of(gated, d)).toMatchObject({ weight: UNREAD_WEIGHT, basis: "unread" });
+});
+
+test("a kicked draw keeps its role whole, flagged: the card counts 1 in draw and the report lists the choice (Into the Roil)", () => {
+  const d = make("Into the Roil");
+  const deck = deckOf([d]);
+  const rows = computeBuild(deck, undefined, undefined, undefined, 0, undefined, makeGateWeigher(deck)).conditionalRoles ?? [];
+  expect(rows.some((r) => r.card === d.card.name && r.category === "draw" && r.basis === "choice" && r.weight === 1)).toBe(true);
 });

@@ -62,11 +62,19 @@ export function nthSentenceMatching(text: string, pattern: string, k: number): s
  *   - "if you pay {2} more": the price of an option ("You may cast this spell as though it had flash if you pay {2} more to cast it");
  *   - "if that player does" / "if it does" / "if no one does" / "if a player does": the same follow-up, about another player or object. */
 const FOLLOW_UP = /^(?:you|they|that player|he|she|it|no one|no player|a player|any player|the player|an opponent|each opponent) (do|does|did|don't|doesn't|didn't|can't|cannot|pay|paid)\b/i;
+/** "if you search your library this way, shuffle": the shuffle that closes a search is not a chance (Vraska's Scorn). */
+const SEARCHED = /^(?:you|they|that player) search(?:es)? (?:your|their|his or her) library(?: and\/or graveyard)? this way$/i;
+/** "if you don't put the card into your hand, ..." / "if you didn't cast it": the follow-up of an optional action, by the verb that follows ("you don't CONTROL / HAVE" is a condition, and so is any of these "this turn"). */
+const OPTIONAL_ACTION = /^(?:put|pay|discard|sacrifice|exile|return|reveal|choose|search|tap|untap)\b|^(?:cast|play) (?:it|them|that card|the card)$/i;
 function notAGate(condition: string): boolean {
   const m = FOLLOW_UP.exec(condition);
   // "if you don't control a legendary creature" IS a condition (Errand-Rider of Gondor, Raving Oni-Slave): the bare follow-up ends there or at a comma.
-  if (m) { const rest = condition.slice(m[0].length).trimStart(); return m[1] === "pay" || m[1] === "paid" || rest === "" || rest.startsWith(","); }
-  return /^(?:able|possible)\b/i.test(condition);
+  if (m) {
+    const rest = condition.slice(m[0].length).trimStart();
+    if (m[1] === "pay" || m[1] === "paid" || rest === "" || rest.startsWith(",")) return true;
+    return /^(?:don't|doesn't|didn't)$/.test(m[1]!) && OPTIONAL_ACTION.test(rest) && !/\bthis turn\b/i.test(rest);
+  }
+  return /^(?:able|possible)\b/i.test(condition) || SEARCHED.test(condition);
 }
 /** "would" in the condition is a replacement (CR 614, `replacement.ts` owns it) and "instead" an alternative of the same effect ("Draw two cards instead if ..."): neither says whether the effect happens.
  *  So is the frame of a TRIGGER DOUBLER, which prints no "would": "If a permanent entering causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time" (Panharmonicon, Elesh Norn,
@@ -94,10 +102,28 @@ export type SentenceGate =
 /** One gating "if" of a sentence: where it stands (`at`, the index of its "i"), the verbatim condition and where that condition ends (`end`, an index in the sentence). */
 export interface SentenceIf { at: number; shape: "leading" | "trailing"; condition: string; start: number; end: number }
 
+/** A leading condition ends at its comma, but a LIST inside it ("If you control a God, a Demigod, or a legendary enchantment, you gain 1 life", Altar of the Pantheon) does not: after a comma, an item
+ *  that starts with an article and is followed by another article item or ", and/or" continues the list, and the last item (after "and"/"or") ends at the next comma. An effect that starts with an article
+ *  ("a creature you control gets +1/+1") is no item, as no article item follows it. Bounded items, no nested quantifier.
+ *  CEILING: a list item longer than 40 characters, or an effect that happens to start "a X, and a Y", ends the condition at the wrong comma. */
+const LIST_MORE = /^(?:an?|the|another) [^,]{1,40}, (?:(?:and|or|and\/or) )?(?:an?|the|another) /i;
+const LIST_LAST = /^(?:and|or|and\/or) (?:an?|the|another) [^,]{1,40},/i;
+function leadingEnd(lower: string, from: number): number {
+  let comma = lower.indexOf(",", from);
+  while (comma >= 0) {
+    const rest = lower.slice(comma + 1).trimStart();
+    const skipped = lower.length - comma - 1 - rest.length;
+    if (LIST_LAST.test(rest)) { comma = comma + 1 + skipped + rest.indexOf(",", 1 + rest.indexOf(" ")); break; }
+    if (!LIST_MORE.test(rest)) break;
+    comma = lower.indexOf(",", comma + 1 + skipped);
+  }
+  return comma < 0 ? lower.length : comma;
+}
+
 /** Where a condition that begins at `from` ends: at the first ", then " / ", and " (the next conjunct), or at the last comma before the NEXT "if" (a second "if" of its own conjunct), else at the sentence's end.
  *  A leading condition ends at its comma. A comma inside a list in a condition ("a Dragon, an Elf, and a Goblin") is cut at ", and ": CEILING below. */
 function conditionEnd(lower: string, from: number, leading: boolean): number {
-  if (leading) { const comma = lower.indexOf(",", from); return comma < 0 ? lower.length : comma; }
+  if (leading) return leadingEnd(lower, from);
   let end = lower.length;
   for (const cut of [", then ", ", and "]) { const i = lower.indexOf(cut, from); if (i >= 0 && i < end) end = i; }
   const next = lower.indexOf(" if ", from);
@@ -191,7 +217,12 @@ export function effectGates(body: string, verbs: readonly string[]): EffectGates
     branchOf.push(latest);
     if (OTHERWISE_OPENER.test(sentence.trimStart())) return;
     const first = parsed[i]![0];
+    const lowerSentence = sentence.toLowerCase();
+    const asLong = lowerSentence.indexOf(" as long as ");
     if (first) latest = first.condition;
+    // "gets +1/+2 as long as it's white. Otherwise, ..." and "has deathtouch during your turn. Otherwise, ...": the static's own condition is what "otherwise" negates.
+    else if (asLong >= 0) { const from = asLong + " as long as ".length; const comma = lowerSentence.indexOf(",", from); latest = sentence.slice(from, comma < 0 ? undefined : comma).trim(); }
+    else if (lowerSentence.includes(" during your turn")) latest = "it's your turn";
     else if (sentence.toLowerCase().includes(" if ") || sentence.trimStart().toLowerCase().startsWith("if ")) latest = "";
   });
   const otherwise = sentences.map((sentence) => OTHERWISE_OPENER.test(sentence.trimStart()));

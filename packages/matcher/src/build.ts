@@ -121,6 +121,9 @@ export interface ConditionalRole { card: string; category: BuildCategory; weight
 /** Category -> card -> the weight that member counts for, ONLY for members below 1. Membership is `detectBuildCategories`' and does not move: a gated draw card is still a draw card. */
 export type RoleWeights = Map<BuildCategory, Map<string, EffectWeight>>;
 
+/** The bases that weigh a whole 1 and are still reported: a condition on the target (a narrow answer) and an optional-cost choice ("when kicked"). */
+const WHOLE_FLAGGED: ReadonlySet<string> = new Set(["target", "choice"]);
+
 /** The rule reads the card's derived abilities (`effectKind`, `emits`, `hostEffect`), so a view of the card without a gated ability can change its answer. A rule over the printed text, the type line or the keywords cannot. */
 function readsAbilities(clauses: readonly RuleClause[] | undefined): boolean {
   return (clauses ?? []).some((c) => c.op === "effectKind" || c.op === "emits" || c.op === "hostEffect"
@@ -142,7 +145,7 @@ function ruleWeight(rule: Rule, dc: DeckCard, gates: GateWeigher): EffectWeight 
   if (!readsAbilities(rule.match) && !readsAbilities(rule.not)) {
     if (entries.length < abilities.length) return null;
     const top = entries.reduce((x, y) => (y.w.weight > x.w.weight ? y : x));
-    return top.w.weight < 1 || top.w.basis === "target" ? top.w : null;
+    return top.w.weight < 1 || WHOLE_FLAGGED.has(top.w.basis) ? top.w : null;
   }
   const partial = entries.filter((x) => x.w.weight < 1);
   const without = (dropped: Set<unknown>): DeckCard => ({ ...dc, tags: { ...dc.tags!, abilities: abilities.filter((a) => !dropped.has(a)) } });
@@ -155,7 +158,7 @@ function ruleWeight(rule: Rule, dc: DeckCard, gates: GateWeigher): EffectWeight 
       }
     }
   }
-  const narrow = entries.filter((x) => x.w.basis === "target");
+  const narrow = entries.filter((x) => WHOLE_FLAGGED.has(x.w.basis));
   if (narrow.length > 0 && !ruleMatches(rule, without(new Set(narrow.map((x) => x.a))))) return narrow[0]!.w;
   return null;
 }

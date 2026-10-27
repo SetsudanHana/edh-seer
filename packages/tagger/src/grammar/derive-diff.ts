@@ -48,9 +48,13 @@ function subjectMove(x: unknown, y: unknown): string {
 
 /** The fields two abilities differ in, one level into `effect` and `trigger`; a subject (the effect's,
  *  the trigger's, an emit's) says how it moved. */
+const GATE_FIELDS = ["gate", "conditionCares"] as const;
+const canonicalSet = (abs: readonly Ability[], f: (typeof GATE_FIELDS)[number]): string =>
+  JSON.stringify(abs.map((a) => json((a as unknown as Record<string, unknown>)[f])).sort());
 function fieldsOf(a: Ability, b: Ability): string[] {
   const out = new Set<string>();
   for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {
+    if ((GATE_FIELDS as readonly string[]).includes(k)) continue;
     const x = (a as unknown as Record<string, unknown>)[k], y = (b as unknown as Record<string, unknown>)[k];
     if (json(x) === json(y)) continue;
     if ((k === "effect" || k === "trigger") && x && y && typeof x === "object" && typeof y === "object") {
@@ -81,6 +85,10 @@ export function deriveDiff(stored: readonly Ability[], grammar: readonly Ability
     if (json(x) === json(y)) continue;
     if (x.length !== y.length) { keys.add(`abilities:${x.length}->${y.length}`); continue; }
     x.forEach((ab, i) => { for (const f of fieldsOf(ab, y[i]!)) keys.add(f); });
+    // A GATE IS COMPARED AS A SET PER CLAUSE, NOT PER PAIR (#1357 part 2): the pairing is by the sort of the other fields, so two gated abilities whose other fields differ (a search and a mill, one read with an
+    // amount) can cross and pair a gate with its neighbour's; `gate` then entered the group key and un-switched a labelled "grammar right" group (Traveling Botanist and five more). The gates the clause
+    // carries must still agree, or the switch would change what a card is gated on.
+    for (const f of GATE_FIELDS) if (canonicalSet(x, f) !== canonicalSet(y, f)) keys.add(f);
   }
   return keys.size ? [...keys].sort().join(",") : null;
 }
