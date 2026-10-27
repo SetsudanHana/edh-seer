@@ -7,6 +7,7 @@ import { countsAsLand } from "./typeline.js";
 import { cardLines } from "./mana-lines.js";
 import { gateMet } from "./gate.js";
 import { ROLE_PARENTS } from "./role-parents.js";
+import { formatCount } from "./format-count.js";
 import type { EffectBasis, EffectWeight, GateWeigher } from "./effect-gate-weight.js";
 
 /** Functional build categories (the "does the deck have enough ramp/draw/interaction" layer). */
@@ -190,8 +191,7 @@ export function weightedSum(names: Iterable<string>, weights?: ReadonlyMap<strin
   for (const name of names) n += weights?.get(name)?.weight ?? 1;
   return Math.round(n * 100) / 100;
 }
-/** A COUNT AS A PLAYER READS IT (owner ruling 2026-10-27): one decimal, and no ".0" on a whole number. 9.5 stays 9.5 and is never rounded up into a sure card. */
-export const formatCount = (n: number): string => String(Math.round(n * 10) / 10);
+export { formatCount } from "./format-count.js";
 
 /** The cards covering one answer class, split by mode. Name SETS rather than counters: a set is
  *  what lets a later panel say which card, and it makes double-matching harmless -- every exile
@@ -203,6 +203,8 @@ export interface AnswerClassMembers {
   /** Those that keep answering. Graveyard hate only, by construction -- no other rule carries
    *  `mode: "recurring"`, so the other five classes come out empty without a special case. */
   recurring: Set<string>;
+  /** Those that answer only a narrow set of the class: every clause of theirs that reaches it carries a stat or state condition on the target (Fatal Push's mana value). They cover the class. */
+  narrow: Set<string>;
 }
 
 /** Answer coverage: which classes of threat this deck can actually answer, and with how many
@@ -220,10 +222,11 @@ export function detectAnswerClasses(cards: DeckCard[]): Map<string, AnswerClassM
   for (const dc of cards) {
     for (const [cls, marks] of answerClassesOf(dc)) {
       let e = m.get(cls);
-      if (!e) { e = { cards: new Set(), exiling: new Set(), recurring: new Set() }; m.set(cls, e); }
+      if (!e) { e = { cards: new Set(), exiling: new Set(), recurring: new Set(), narrow: new Set() }; m.set(cls, e); }
       e.cards.add(dc.card.name);
       if (marks.exile) e.exiling.add(dc.card.name);
       if (marks.recurring) e.recurring.add(dc.card.name);
+      if (marks.narrow) e.narrow.add(dc.card.name);
     }
   }
   return m;

@@ -1,5 +1,6 @@
 import type { AnalyzeResponse } from "../types.js";
 import { findings } from "./findings.js";
+import { fmtCount } from "./format-count.js";
 import { currentFindingId } from "./role-group.js";
 
 /** WHAT MOVED SINCE YOUR LAST RUN.
@@ -76,7 +77,7 @@ export function diffRuns(prev: RunSnapshot, next: RunSnapshot): RunDiff | null {
   const added = [...after].filter((n) => !before.has(n)).sort();
   const removed = [...before].filter((n) => !after.has(n)).sort();
   const categories = Object.keys(next.categories)
-    .filter((c) => (prev.categories[c] ?? 0) !== next.categories[c])
+    .filter((c) => fmtCount(prev.categories[c] ?? 0) !== fmtCount(next.categories[c]!))
     .map((c) => ({ category: c, from: prev.categories[c] ?? 0, to: next.categories[c]! }))
     .sort((a, b) => Math.abs(b.to - b.from) - Math.abs(a.to - a.from) || a.category.localeCompare(b.category));
 

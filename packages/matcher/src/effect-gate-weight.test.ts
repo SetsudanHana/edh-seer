@@ -3,11 +3,13 @@ import { expect, test } from "vitest";
 import { computeBuild, detectAnswerClasses, detectBuildCategories } from "./build.js";
 import { makeGateWeigher, UNREAD_WEIGHT } from "./effect-gate-weight.js";
 import { drawOf, simulate } from "./goldfish.js";
+import { isTargetCondition } from "./target-condition.js";
+import type { GateWeigher } from "./effect-gate-weight.js";
 import { landInputs, recommendedLands } from "./land-count.js";
 import type { DeckCard } from "./types.js";
 
 // Real oracle text (Mongo `cards`, 2026-10-27), derived from the printed text by the grammar, as production does for a card it reads completely.
-const REAL: Record<string, { typeLine: string; oracleText: string; manaValue: number; manaCost?: string }> = {
+const REAL: Record<string, { typeLine: string; oracleText: string; manaValue: number; manaCost?: string; partial?: true }> = {
   "Federation Field Medic": { typeLine: "Creature — Human Doctor", manaValue: 4, manaCost: "{3}{W}", oracleText: "Vigilance\nWhen this creature enters, choose one —\n• Put a +1/+1 counter on target creature. It gains vigilance until end of turn.\n• Draw a card if you control a permanent with a counter on it." },
   "Veil of Summer": { typeLine: "Instant", manaValue: 1, manaCost: "{G}", oracleText: "Draw a card if an opponent has cast a blue or black spell this turn. Spells you control can't be countered this turn. You and permanents you control gain hexproof from blue and from black until end of turn. (You and they can't be the targets of blue or black spells or abilities your opponents control.)" },
   "Beza, the Bounding Spring": { typeLine: "Legendary Creature — Elemental Elk", manaValue: 4, oracleText: "When Beza enters, create a Treasure token if an opponent controls more lands than you. You gain 4 life if an opponent has more life than you. Create two 1/1 blue Fish creature tokens if an opponent controls more creatures than you. Draw a card if an opponent has more cards in hand than you." },
@@ -19,13 +21,18 @@ const REAL: Record<string, { typeLine: string; oracleText: string; manaValue: nu
   "Managorger Hydra": { typeLine: "Creature — Hydra", manaValue: 3, oracleText: "Trample\nWhenever a player casts a spell, put a +1/+1 counter on this creature." },
   "Pyroblast": { typeLine: "Instant", manaValue: 1, manaCost: "{R}", oracleText: "Choose one —\n• Counter target spell if it's blue.\n• Destroy target permanent if it's blue." },
   "Titan's Presence": { typeLine: "Instant", manaValue: 3, manaCost: "{3}", oracleText: "As an additional cost to cast this spell, reveal a colorless creature card from your hand.\nExile target creature if its power is less than or equal to the revealed card's power." },
+  "Fatal Push": { partial: true, typeLine: "Instant", manaValue: 1, manaCost: "{B}", oracleText: "Destroy target creature if it has mana value 2 or less.\nRevolt — Destroy that creature if it has mana value 4 or less instead if a permanent left the battlefield under your control this turn." },
+  "Soul Rend": { typeLine: "Instant", manaValue: 2, manaCost: "{1}{B}", oracleText: "Destroy target creature if it's white. A creature destroyed this way can't be regenerated.\nDraw a card at the beginning of the next turn's upkeep." },
+  "Wolf Strike": { typeLine: "Instant", manaValue: 3, manaCost: "{2}{G}", oracleText: "Target creature you control gets +2/+0 until end of turn if it's night. Then it deals damage equal to its power to target creature you don't control." },
+  "Garna, Bloodfist of Keld": { typeLine: "Legendary Creature — Human Berserker", manaValue: 4, manaCost: "{1}{B}{R}{R}", oracleText: "Whenever another creature you control dies, draw a card if it was attacking. Otherwise, Garna deals 1 damage to each opponent." },
+  "Miles \"Tails\" Prower": { typeLine: "Legendary Creature — Fox Artificer", manaValue: 4, manaCost: "{1}{W}{U}", oracleText: "Flash\nFlying\nWhenever a Vehicle you control enters, draw a card if it has flying. Otherwise, put a flying counter on it." },
   "Mind Stone": { typeLine: "Artifact", manaValue: 2, oracleText: "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card." },
 };
 const make = (realName: string, asName = realName): DeckCard => {
   const c = REAL[realName]!;
   const printed = { name: asName, typeLine: c.typeLine, oracleText: c.oracleText, keywords: [] as string[] };
   const g = grammarClauseRecords(printed);
-  if (!g.complete) throw new Error(`grammar does not read ${realName} completely`);
+  if (!g.complete && !c.partial) throw new Error(`grammar does not read ${realName} completely`);
   return { card: { ...printed, manaValue: c.manaValue, manaCost: c.manaCost } as never, tags: deriveCardTags(deriveInputOf(printed as never, "x", asName, g.records, undefined, g.readings)) };
 };
 const copies = (realName: string, n: number): DeckCard[] => Array.from({ length: n }, (_, i) => make(realName, `${realName} ${i}`));
@@ -134,6 +141,30 @@ test("the parent count (Consistency) carries the same weights, so the leaf rows 
   expect(consistency(makeGateWeigher(deck))).toBe(Math.round(5 + 4 * UNREAD_WEIGHT));
 });
 
+test("target classifier negatives: an effect condition that mentions no target is not a target condition (Garna, Miles Prower), nor is the day or night (Wolf Strike)", () => {
+  for (const name of ["Garna, Bloodfist of Keld", "Miles \"Tails\" Prower", "Wolf Strike"]) {
+    const dc = make(name);
+    const gated = dc.tags!.abilities.filter((a) => a.gate !== undefined);
+    expect(gated.length, name).toBeGreaterThan(0);
+    for (const a of gated) {
+      expect(isTargetCondition(dc.card.oracleText, a.gate!.text), `${name}: ${a.gate!.text}`).toBe(false);
+      expect(makeGateWeigher(deckOf([dc])).of(a, dc).basis, name).toBe("unread");
+    }
+  }
+  // the same condition words WITH a target in the clause are a target condition, and the day or night never is
+  expect(isTargetCondition("Destroy target creature if it was attacking.", "it was attacking")).toBe(true);
+  expect(isTargetCondition("Draw a card if it was attacking.", "it was attacking")).toBe(false);
+  expect(isTargetCondition("Target creature gets +2/+0 if it's night.", "it's night")).toBe(false);
+  expect(isTargetCondition("Destroy target nonland permanent if it's a creature or if {G}{W} was spent to cast this spell.", "it's a creature or if {g}{w} was spent to cast this spell")).toBe(false);
+  // curly apostrophes read the same as straight ones
+  expect(isTargetCondition("Counter target spell if it\u2019s blue.", "it's blue")).toBe(true);
+});
+
+test("a stat or state condition on the target is a narrow answer, a colour one covers nothing (Fatal Push, Titan's Presence vs Pyroblast, Soul Rend)", () => {
+  const push = make("Fatal Push");
+  expect(makeGateWeigher(deckOf([push])).of(gatedDraw(push)[0] ?? push.tags!.abilities.find((a) => a.gate !== undefined)!, push)).toMatchObject({ weight: 1, basis: "target" });
+});
+
 test("the goldfish draws a gated draw in expectation: left out without a weigher (as before), the amount times the weight with one", () => {
   const veil = make("Veil of Summer");
   const deck = deckOf([veil]);
@@ -211,7 +242,11 @@ test("a condition on the TARGET is a narrow answer, not a chance: Pyroblast and 
   expect(r.conditionalRoles!.filter((c) => c.card === "Pyroblast").map((c) => `${c.category}:${c.basis}:${c.weight}`).sort()).toEqual(["stackInteraction:target:1", "targetedRemoval:target:1"]);
   // answer coverage agrees: neither card covers a class (a colour hoser never did; Titan's Presence now covers no creature class)
   expect(detectAnswerClasses([pyro]).size).toBe(0);
-  expect(detectAnswerClasses([make("Titan's Presence")]).get("creature")).toBeUndefined();
+  // a STAT condition on the target still covers its class, marked narrow (owner refinement 2026-10-27): Titan's Presence and Fatal Push answer creatures, narrowly; a COLOUR one (Pyroblast, Soul Rend) covers none
+  const titans = make("Titan's Presence"), push = make("Fatal Push");
+  expect(detectAnswerClasses([titans]).get("creature")!.narrow.has(titans.card.name)).toBe(true);
+  expect(detectAnswerClasses([push]).get("creature")!.narrow.has(push.card.name)).toBe(true);
+  expect(detectAnswerClasses([make("Soul Rend")]).get("creature")).toBeUndefined();
   // an effect condition that mentions no target is still a chance (Miles Prower's "if it has flying" is not in this fixture; Veil's is)
   const veil = make("Veil of Summer");
   expect(makeGateWeigher(deckOf([veil])).of(gatedDraw(veil)[0]!, veil).basis).toBe("unread");
@@ -279,4 +314,25 @@ test("land-count reads the same weights: the Karsten cheap-piece count, the draw
   // a gated draw saves fewer lands than a sure one: the weighted deck wants at least as many
   expect(weighted.target).toBeGreaterThanOrEqual(plain.target);
   if (plain.ifTrimmed?.draw && weighted.ifTrimmed?.draw) expect(weighted.ifTrimmed.draw.over).toBeLessThan(plain.ifTrimmed.draw.over);
+});
+
+test("the carry pays in proportion to the weight: three times the expected extra cards at 0.75 as at 0.25 (an always-pay carry would read 1)", () => {
+  const lands = Array.from({ length: 36 }, (_, i) => ({ card: { name: `Forest ${i}`, typeLine: "Basic Land — Forest", oracleText: "{T}: Add {G}.", manaValue: 0 } as never, tags: null }) as DeckCard);
+  const deck = [...lands, ...copies("Veil of Summer", 20), ...filler(44)];
+  const total = (r: ReturnType<typeof simulate>): number => 36 * r.seenShare.land[7] + 64 * r.seenShare.cheap[7];
+  const opts = { trials: 4000, turns: 8, seed: 5 };
+  const base = total(simulate(deck, opts));
+  const flat = (weight: number): GateWeigher => ({ of: () => ({ weight, conditional: true, basis: "unread" }) });
+  const lo = total(simulate(deck, { ...opts, gates: flat(0.25) })) - base;
+  const hi = total(simulate(deck, { ...opts, gates: flat(0.75) })) - base;
+  expect(lo).toBeGreaterThan(0.5);
+  expect(hi / lo).toBeGreaterThan(2.3);
+  expect(hi / lo).toBeLessThan(3.7);
+});
+
+test("the trimmed over-count is whole cards: a surplus of 3.5 cuts 3, never 4", () => {
+  const deck = deckOf(copies("Divination", 5), copies("Veil of Summer", 7));
+  const r = recommendedLands(deck, { gates: makeGateWeigher(deck), roleTargets: { consistency: 5 } });
+  for (const t of [r.ifTrimmed?.draw, r.ifTrimmed?.ramp]) if (t) expect(Number.isInteger(t.over)).toBe(true);
+  expect(r.drawPieces).toBe(5 + 7 * UNREAD_WEIGHT);
 });

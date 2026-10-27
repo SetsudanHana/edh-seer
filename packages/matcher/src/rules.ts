@@ -709,6 +709,8 @@ export interface AnswerMarks {
    *  ability that can be used again. Only graveyard hate carries this today, because it is the one
    *  class §12.3 says does not score on count at all. */
   recurring: boolean;
+  /** EVERY CLAUSE THAT REACHES THE CLASS CARRIES A CONDITION ON ITS TARGET that is not a colour (Fatal Push, Prohibit): the card answers a narrow set of what the class names. Counts whole. */
+  narrow: boolean;
 }
 
 /** Which answer classes a card covers, per `answerClass` / `answerClassFrom`.
@@ -720,8 +722,10 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
   const out = new Map<string, AnswerMarks>();
   // A class can be reached by several rules -- every exile removal matches both `answers.typed` and
   // `answers.typed.exile` -- so marks are OR-ed onto the existing entry, never overwritten.
-  const mark = (cls: string, mode: Rule["mode"]): void => {
-    const m = out.get(cls) ?? { exile: false, recurring: false };
+  const mark = (cls: string, mode: Rule["mode"], narrow = false): void => {
+    // NARROW only while every clause that reaches the class is conditional on its target.
+    const m = out.get(cls) ?? { exile: false, recurring: false, narrow: true };
+    m.narrow = m.narrow && narrow;
     if (mode === "exile") m.exile = true;
     if (mode === "recurring") m.recurring = true;
     out.set(cls, m);
@@ -765,10 +769,10 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
         // sentence, so the card's text is asked, not the clause. Fractured Identity hands the copies
         // to everyone ELSE and stays an answer.
         if (new RegExp(set.patterns.controllerGetsCopies, "i").test(dc.card.oracleText ?? "")) continue;
-        if (COLOUR_HOSER.test(phrase)) continue;
-        // A CONDITION ON THE TARGET NARROWS THE ANSWER THE SAME WAY (owner ruling 2026-10-27 C, #1357): Titan's Presence's "exile target creature if its power is less than or equal to the revealed card's power" is no
-        // answer to every creature. The card still counts whole in the role (build.ts); it covers no class here, as a colour hoser covers none.
-        if (targetConditions.some((c) => sentence.toLowerCase().includes(c))) continue;
+        if (COLOUR_HOSER.test(phrase.replace(/\u2019/g, "'"))) continue;
+        // A STAT OR STATE CONDITION ON THE TARGET STILL COVERS ITS CLASS, MARKED NARROW (owner refinement 2026-10-27 of ruling C): Fatal Push's "if it has mana value 2 or less", Deathbringer Liege's "if it's tapped",
+        // Prohibit's mana value. Only a COLOUR condition drops the card (`COLOUR_HOSER` above: Pyroblast, Soul Rend).
+        const narrow = targetConditions.some((c) => sentence.toLowerCase().includes(c));
         for (const word of Object.keys(KNOWN_CLASSES)) {
           // Plural too: "destroy two target creatures" (Curtains' Call) and "exile two target
           // permanents" (Ulamog) read as no answer at all when only the singular matched (issue #581).
@@ -777,7 +781,7 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
             // "nonland permanent" answers everything except a land, and `permanent` alone expands
             // to all five. Without this a Pongify reads as land interaction.
             if (cls === "land" && /\bnonland\b/.test(phrase)) continue;
-            mark(cls, rule.mode);
+            mark(cls, rule.mode, narrow);
           }
         }
       }

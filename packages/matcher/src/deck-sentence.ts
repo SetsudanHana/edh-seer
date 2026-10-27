@@ -1,5 +1,6 @@
 import type { Cohesion } from "@edh-seer/engine";
 import type { WinconReport } from "./wincon.js";
+import { formatCount } from "./format-count.js";
 
 /** "WHAT IS THIS DECK" IS A THREE-SLOT SENTENCE, NOT A WORD (roadmap A16, Fable's framing after the
  *  owner's ruling that "the theme of the deck is what wins you a game… control is a means").
@@ -84,7 +85,7 @@ export function deckSentence(
     ? `fueled by ${cohesion.theme} (${Math.round(cohesion.score * 100)}% of nonlands)`
     : null;
   const means = interaction
-    ? `${Math.round(interaction.count * 10) / 10} interaction ${interaction.count === 1 ? "card" : "cards"} against a target of ${interaction.target}`
+    ? `${formatCount(interaction.count)} interaction ${interaction.count === 1 ? "card" : "cards"} against a target of ${interaction.target}`
     : null;
   return { win, engine, means };
 }

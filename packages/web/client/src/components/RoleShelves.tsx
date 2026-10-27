@@ -38,7 +38,7 @@ export function RoleShelves({ report, graph }: { report: DeckReport; graph?: Car
   const rampCount = parents.find((x) => x.key === "ramp")?.count;
   // A ramp LAND in the role is not room to cut: the land count holds it (#1190).
   const rampLands = report.deckMath?.lands?.rampOther?.land ?? 0;
-  const oneShots = lasting !== undefined && rampCount !== undefined ? Math.max(0, rampCount - lasting - rampLands) : 0;
+  const oneShots = lasting !== undefined && rampCount !== undefined ? Math.max(0, Math.round((rampCount - lasting - rampLands) * 100) / 100) : 0;
   return (
     <ul className="flex flex-col gap-4 text-sm">
       {shelves.map(({ category, cards, tokens }) => {

@@ -905,8 +905,8 @@ function DeckMathRows({
                 *  what it counts. An older report without the package falls back to its own words. */}
               average mana value {lands.avgManaValue}
               {lands.accelerants !== undefined
-                ? ` · ${lands.drawPieces ?? 0} draw cards · ${lastingRamp(lands.accelerants, rampCards, lands.rampOther)}`
-                : ` · ${lands.rampPlusDraw} cheap mana makers (2 mana or less)`}
+                ? ` · ${fmtCount(lands.drawPieces ?? 0)} draw cards · ${lastingRamp(lands.accelerants, rampCards, lands.rampOther)}`
+                : ` · ${fmtCount(lands.rampPlusDraw)} cheap mana makers (2 mana or less)`}
               {lands.commanderManaValue ? ` · a ${lands.commanderManaValue}-mana commander` : ""}
               {lands.mdfc > 0
                 ? ` · ${lands.mdfc} modal DFC${lands.mdfc === 1 ? "" : "s"} counted as lands, at full weight and with no discount to the target`

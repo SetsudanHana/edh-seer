@@ -288,12 +288,13 @@ export function recommendedLands(
   // cantrips.
   const trims: NonNullable<LandRecommendation["ifTrimmed"]> = {};
   if (rampTarget !== undefined) {
-    const over = roleCount("ramp") - rampTarget;
+    // WHOLE CARDS ONLY: a trim cuts pieces, so a surplus of 3.5 is 3 to cut, and the float noise (6.300000000000001) goes with the floor.
+    const over = Math.floor(Math.round((roleCount("ramp") - rampTarget) * 100) / 100);
     const t = over > 0 ? at(rampWeights.slice(0, Math.max(0, rampWeights.length - over)), drawCredits) : target;
     if (t > target) trims.ramp = { over, target: t };
   }
   if (consistencyTarget !== undefined) {
-    const over = roleCount("consistency") - consistencyTarget;
+    const over = Math.floor(Math.round((roleCount("consistency") - consistencyTarget) * 100) / 100);
     const t = over > 0 ? at(rampWeights, drawCredits.slice(0, Math.max(0, drawCredits.length - over))) : target;
     if (t > target) trims.draw = { over, target: t };
   }

@@ -2,7 +2,7 @@ import { LAND_BAND } from "@edh-seer/matcher/build";
 import type { DeckReport } from "../types.js";
 import { demandSentence } from "./demand-sentence.js";
 import { buildFindingId } from "./role-group.js";
-import { conditionalNote, fmtCount } from "./format-count.js";
+import { conditionalNote, fmtCount, gapOver, gapShort } from "./format-count.js";
 
 /** WHAT IS WRONG WITH THIS DECK — the report's eight diagnostic panels, ranked.
  *
@@ -78,7 +78,7 @@ function buildFindings(report: DeckReport): Finding[] {
   const out: Finding[] = [];
   for (const p of parents) {
     if (p.target <= 0 || p.count >= p.target) continue;
-    const missing = Math.round((p.target - p.count) * 100) / 100;
+    const missing = gapShort(p.count, p.target);
     // The engine's own sentence for this parent, if it wrote one. It carries the cost band
     // (`typically 2–4 mana`) that this module has no business recomputing.
     const suggestion = byKey[p.key];
@@ -135,13 +135,14 @@ function donorSentences(
   const out = new Map<string, string>();
   if (slack.length === 0) return out;
   // Only whole cards can be cut: a half-card of surplus is no slot.
-  const left = slack.map((s) => ({ ...s, spare: Math.floor(s.count - s.target) }));
+  const left = slack.map((s) => ({ ...s, spare: Math.floor(gapOver(s.count, s.target)) })).filter((s) => s.spare >= 1);
+  if (left.length === 0) return out;
   const short = parents
     .filter((p) => p.target > 0 && p.count < p.target)
     .sort((a, b) => (b.impact ?? -1) - (a.impact ?? -1) || a.name.localeCompare(b.name));
   for (const p of short) {
     const said = byKey[p.key]?.match(/~(\d+)/);
-    const want = said ? Number(said[1]) : Math.ceil(p.target - p.count);
+    const want = said ? Number(said[1]) : Math.ceil(gapShort(p.count, p.target));
     const taken: { category: string; count: number; target: number; n: number }[] = [];
     let need = want;
     for (const d of left) {
@@ -579,7 +580,7 @@ export function slotTrade(report: DeckReport, shortfalls: readonly Finding[]): s
   // "N of those slots are the ones you need" said the OPPOSITE of what it meant — the N are the
   // SURPLUS, which is where the room comes from. The skeptic persona read it three times and stayed
   // unsure (2026-08-27). It names the surplus as a surplus now.
-  const spare = Math.floor(top.over);
+  const spare = Math.floor(gapOver(top.count, top.target));
   return `${top.category} sits at ${fmtCount(top.count)} against a target of ${top.target},`
     + ` so ${spare === 1 ? "one slot is" : spare === 0 ? "less than one slot is" : `${spare} slots are`} spare.`
     + " You are not short on space; it is all in one place."

@@ -561,3 +561,21 @@ test("a whole count prints without .0, a narrow answer is not listed, and a card
   expect(f.figure).toBe("8/10");
   expect(f.detail).toBe("You run 8, against a target of 10. Federation Field Medic counts for nothing: it only works if you control a permanent with a counter on it.");
 });
+
+test("a surplus under one card is no slot: the donor line stays out for a half-card of slack, and the slot trade says less than one", () => {
+  const slackRow = { category: "Ramp", key: "ramp", count: 12.5, target: 12, over: 0.5 };
+  const rows = findings(report({
+    buildParents: [{ name: "Card advantage", key: "consistency", count: 8, target: 10, leaves: ["draw"] }],
+    suggestionByKey: { consistency: "Card advantage 8/10 — add ~2" },
+    slack: [slackRow],
+  }));
+  expect(rows[0].action).toBe("Add ~2");
+  expect(rows[0].action).not.toMatch(/spare slots|Take /);
+  expect(slotTrade(report({ slack: [slackRow] }), rows)).toContain("less than one slot is spare");
+});
+
+test("a count a hair under its target is a finding that says 0.1 short, never rounded up to on target", () => {
+  const [f] = findings(report({ buildParents: [{ name: "Card advantage", key: "consistency", count: 9.96, target: 10, leaves: ["draw"] }] }));
+  expect(f.figure).toBe("9.9/10");
+  expect(f.detail).toBe("You run 9.9, against a target of 10.");
+});

@@ -1,3 +1,4 @@
+import { formatCount, gapOver } from "./format-count.js";
 /** THE CUT LIST — "I'm at 104 cards, which 4 go?"
  *
  *  The most-asked deckbuilding question, and every input already existed on the report: a
@@ -129,12 +130,12 @@ export function deckSlack(
   parents: readonly SlackParent[],
 ): { category: string; key: string; count: number; target: number; over: number }[] {
   return parents
-    .filter((p) => p.target > 0 && p.count > p.target)
+    .filter((p) => p.target > 0 && gapOver(p.count, p.target) >= 1)
     // `category` is the field name every reader of `report.slack` already expects
     // (`CutList.tsx`'s `BUILD_CATEGORY_LABEL[s.category] ?? s.category`); a parent's NAME
     // ("Interaction", "Board wipes") is already plain English, so the same fallback renders it
     // correctly with no client change.
-    .map((p) => ({ category: p.name, key: p.key, count: p.count, target: p.target, over: Math.round((p.count - p.target) * 100) / 100 }))
+    .map((p) => ({ category: p.name, key: p.key, count: p.count, target: p.target, over: gapOver(p.count, p.target) }))
     .sort((a, b) => b.over - a.over || a.category.localeCompare(b.category));
 }
 
@@ -386,7 +387,7 @@ export function trimOrder(
     }
     if (c.roles.length > 0) {
       const room = [...overGroups.values()]
-        .map((s) => `${s.name} is at ${Math.round(s.count * 10) / 10} against a target of ${s.target}`)
+        .map((s) => `${s.name} is at ${formatCount(s.count)} against a target of ${s.target}`)
         .join(", ");
       protections.push(room ? `fills ${c.roles.join(", ")} — ${room}, so there is room here` : `fills ${c.roles.join(", ")}`);
     }

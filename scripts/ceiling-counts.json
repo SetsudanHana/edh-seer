@@ -51,7 +51,7 @@
   "packages/matcher/src/suggest-static.ts": 2,
   "packages/matcher/src/suggest.ts": 2,
   "packages/matcher/src/supply-demand.ts": 3,
-  "packages/matcher/src/target-condition.ts": 1,
+  "packages/matcher/src/target-condition.ts": 2,
   "packages/matcher/src/theme-promote.ts": 1,
   "packages/matcher/src/themes.ts": 1,
   "packages/matcher/src/upgrade-sections.ts": 4,
