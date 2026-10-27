@@ -10065,7 +10065,6 @@
 "Mogis's Favor": ["wincon:voltron"],
 "Mogis's Warhound": ["wincon:voltron"],
 "Mogis, God of Slaughter": ["role:burn","wincon:burn","wincon:stompy"],
-"Moira Brown, Guide Author": ["wincon:go-wide"],
 "Mold Shambler": ["answer:artifact","answer:creature","answer:enchantment","answer:land","answer:planeswalker","role:targetedRemoval"],
 "Molder": ["answer:artifact","answer:enchantment","role:targetedRemoval"],
 "Molderhulk": ["role:ramp"],
