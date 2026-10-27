@@ -763,9 +763,9 @@ test("directedReasons: an authored attacks emit matches a generic combat consume
   expect(directedReasons(plainCreature, genericTrigger, H).some((r) => r.tag.startsWith("attacks"))).toBe(true);
 });
 
-// #1373 (owner ruling 2026-10-27): `blocks` is an engine verb and every creature supplies it (implied.ts, CR 509.1a). Unlike `attacks` (reversed by #561) it keeps the
-// original combat-damage argument: a creature can always block, so a generic or self block trigger needs no supplier.
-describe("blocks: implied supply is gated like combat damage (#1373)", () => {
+// #1373 (owner rulings 2026-10-27): `blocks` is an engine verb and every creature supplies it (implied.ts, CR 509.1a). It FOLLOWS `attacks` (#561): a bare or keyword/typal-narrowed
+// blocks consumer is fed by the creatures that satisfy it; only a SELF consumer ("this creature blocks") stays unfed.
+describe("blocks: implied supply follows attacks (#1373)", () => {
   const blockTrigger = (name: string, subject: Record<string, unknown>) => base(name, [{
     kind: "triggered",
     trigger: { verbs: ["blocks"], subject: { control: "you", token: null, ...subject } as never },
@@ -774,15 +774,21 @@ describe("blocks: implied supply is gated like combat damage (#1373)", () => {
   const blockTags = (cards: Array<ReturnType<typeof base>>, consumer: ReturnType<typeof base>) =>
     cards.flatMap((c) => directedReasons(c, consumer, H)).filter((r) => r.tag.startsWith("blocks"));
 
-  test("a vanilla creature forms no edge to a self 'whenever this creature blocks' (Goldenglow Moth)", () => {
+  test("a vanilla creature forms no edge to a self 'whenever this creature blocks' (Elder Gargaroth, Goldenglow Moth)", () => {
     expect(blockTags([base("Vanilla Bear", [])], blockTrigger("Moth", { type: "creature", self: true }))).toEqual([]);
   });
 
-  test("a vanilla creature forms no edge to a generic 'whenever a creature you control blocks'", () => {
-    expect(blockTags([base("Vanilla Bear", [])], blockTrigger("Generic Blocker Payoff", { type: "creature" }))).toEqual([]);
+  test("a vanilla creature feeds a generic 'whenever a creature you control blocks' (Doran, Besieged by Time)", () => {
+    expect(blockTags([base("Vanilla Bear", [])], blockTrigger("Doran-shaped Payoff", { type: "creature" })).length).toBeGreaterThan(0);
   });
 
-  test("a NARROWED blocks trigger still hears the creatures that satisfy it (a typal payoff) and not the ones that do not", () => {
+  test("a keyword-narrowed blocks payoff ('with defender', Perimeter Captain) is fed by a defender and not by a creature without it", () => {
+    const captain = blockTrigger("Perimeter-Captain-shaped Payoff", { type: "creature", keyword: ["defender"] });
+    expect(blockTags([withKeywords(base("Wall of Test", []), ["defender"])], captain).length).toBeGreaterThan(0);
+    expect(blockTags([base("Vanilla Bear", [])], captain)).toEqual([]);
+  });
+
+  test("a typal blocks payoff is fed by that type and not by another", () => {
     const payoff = blockTrigger("Wizard Wall Payoff", { type: "creature", subtype: "wizard" });
     expect(blockTags([base("Wizard Bear", [], ["wizard"])], payoff).length).toBeGreaterThan(0);
     expect(blockTags([base("Vanilla Bear", [])], payoff)).toEqual([]);
