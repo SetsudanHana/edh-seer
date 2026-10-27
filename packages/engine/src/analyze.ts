@@ -596,7 +596,7 @@ export interface DeckReport {
    *  on @edh-seer/matcher — same convention as ArchetypeGroup.category. */
   /** `facets`: sub-counts said beside a leaf's count and never folded into it (draw: `engines`,
    *  `unlabelled`). See `BuildResult.buildCategories` in the matcher, which owns the semantics. */
-  buildCategories?: { category: string; count: number; target: number; facets?: Record<string, number> }[];
+  buildCategories?: { category: string; count: number; target: number; weighted?: number; facets?: Record<string, number> }[];
   /** The four Command-Zone template groups (Consistency, Ramp, Interaction, Board wipes), each
    *  carrying its OWN archetype-adjusted target and the UNION of its leaves' member counts (never
    *  the sum -- a card can carry two leaves). This is what actually scores and flags now; a leaf
@@ -606,7 +606,12 @@ export interface DeckReport {
    *  flag instead of matching `name === "Interaction"` (whole-branch review IMPORTANT 4: a rename of
    *  that parent would otherwise silently unwire the panel's coverage note while the score kept
    *  docking it). */
-  buildParents?: { name: string; key: string; count: number; target: number; leaves: string[]; impact?: number; coverageWeighted?: true }[];
+  buildParents?: { name: string; key: string; count: number; target: number; weighted?: number; leaves: string[]; impact?: number; coverageWeighted?: true }[];
+  /** THE ROLE MEMBERS THAT COUNT FOR LESS THAN ONE (#1357 task 2, owner 2026-10-27): "a gated effect still counts, weighted by how likely its condition is to hold in THIS deck". One row per card and role:
+   *  `weight` in (0, 1) is what it counts for in `buildCategories` / `buildParents`: the row's `count` is the sum rounded to a whole card, and `weighted` (present only on a row with such a member) is the exact sum the score reads, `needs` the condition verbatim, and `basis` where the
+   *  weight came from: `evaluated` (the deck's chance of meeting a condition a decklist settles), `supply` (the deck's chance of holding a card that supplies the demand the condition names) or `unread`
+   *  (a condition nothing here settles, counted at one fixed partial weight). Absent when no member is conditional. Membership never changes: a gated draw card is still a draw card. */
+  conditionalRoles?: { card: string; category: string; weight: number; basis: "evaluated" | "supply" | "unread"; needs: string }[];
   /** WHICH THEME ROW(S) THE PARENT TARGETS CAME FROM (owner ruling 2026-09-06, spec
    *  `2026-09-06-theme-template-proposal.md`): the detected primary and, when strong enough, the
    *  secondary, each with its EDHREC-population row keyed by `buildParents[].key`, plus the

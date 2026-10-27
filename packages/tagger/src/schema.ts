@@ -1439,7 +1439,7 @@ export interface Ability {
    *  condition derive cannot read is `unknown`, which IS the "flagged conditional" state: never a sure effect, never zero. `conditionCares` beside it names the deck demand the condition makes, from the same
    *  `conditionCares()` the trigger and activation paths use. Only the ability the condition gates carries it (an ungated action of the same clause does not). ABSENT: no trailing "if" in the ability's sentence,
    *  and also the leading form ("If you control a Dragon, draw a card", "Then if ..."), a verb whose printed word derive cannot find, and the exempt "if you do" / "if able" / "if you pay" / "instead" / "would".
-   *  Read by nothing yet: the matcher weighs it in a later task. */
+   *  Weighed by the matcher (`effect-gate-weight.ts`, #1357 task 2): the role counts, the land recommendation and the goldfish's draw count the effect at the chance its condition holds in the deck. */
   gate?: Gate;
   /** A CR 614 multiplier ("if you would draw a card ... draw two instead", Hardened Scales, Doubling
    *  Season): its trigger hears another card's event and makes that event BETTER. Owner, 2026-09-29:

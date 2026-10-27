@@ -138,7 +138,10 @@ export function manaOf(cost: string | undefined): number | null {
 
 /** The words that put an amount behind a condition on a card's printed text. A list, not a parse:
  *  the derived ability carries the amount and nothing about what has to be true for it. */
-const CONDITION = /\bif\b|\bunless\b|\binstead\b|\bas long as\b|\blevel up\b|flip a coin|choose one|additional cost|\btiered\b|\bkicked\b|\bup to\b|\bthat many\b/i;
+const CONDITION_BESIDES_IF = /\bunless\b|\binstead\b|\bas long as\b|\blevel up\b|flip a coin|choose one|additional cost|\btiered\b|\bkicked\b|\bup to\b|\bthat many\b/i;
+const CONDITION = new RegExp(`\\bif\\b|${CONDITION_BESIDES_IF.source}`, "i");
+/** The card's text carries a condition OTHER than a plain "if": a gated ability's own "if" is priced by its weight (#1357 task 2), and only a condition beside it still makes the amount unreadable. */
+export const hasConditionBesidesIf = (oracleText: string | undefined): boolean => CONDITION_BESIDES_IF.test(oracleText ?? "");
 
 const integer = (s: string | undefined): number | null => {
   if (s === undefined || s.trim() === "") return null;

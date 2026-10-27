@@ -7,6 +7,7 @@ import { countsAsLand } from "./typeline.js";
 import { cardLines } from "./mana-lines.js";
 import { gateMet } from "./gate.js";
 import { ROLE_PARENTS } from "./role-parents.js";
+import type { EffectBasis, EffectWeight, GateWeigher } from "./effect-gate-weight.js";
 
 /** Functional build categories (the "does the deck have enough ramp/draw/interaction" layer). */
 export type BuildCategory =
@@ -113,6 +114,67 @@ export function detectBuildRules(cards: DeckCard[]): Map<string, Set<string>> {
 const RULE_CATEGORY = new Map<string, string>(
   loadRules().rules.filter((r) => r.category).map((r) => [r.id, r.category as string]),
 );
+
+/** A ROLE MEMBER THAT COUNTS FOR LESS THAN ONE (#1357 task 2): its role is carried by an effect behind a condition, and the deck decides how likely the condition is. */
+export interface ConditionalRole { card: string; category: BuildCategory; weight: number; basis: Exclude<EffectBasis, "ungated">; needs: string }
+/** Category -> card -> the weight that member counts for, ONLY for members below 1. Membership is `detectBuildCategories`' and does not move: a gated draw card is still a draw card. */
+export type RoleWeights = Map<BuildCategory, Map<string, EffectWeight>>;
+
+/** HOW MUCH ONE RULE'S MATCH IS WORTH FOR THIS CARD: 1, or the weight of the gated effect the rule leans on. The rule is re-asked of the card with its gated abilities taken away, from the least conditional
+ *  level up: the first level at which the rule still holds is the card's weight, and the gated ability that sets that level is the condition the report names. A rule that holds without any gated ability
+ *  (the card draws through an ungated clause too) is worth 1. Rules that read no ability (`oracle`, `typeLine`, `manaLine`, `keyword`) are unaffected by the view and stay 1.
+ *  CEILING: a clause that looks at a SIBLING ability (`notPairedTarget`, `notFlickered`, `notOwnedByYou` over the same clause) sees the filtered list, so taking a gated ability away can change its answer. */
+function ruleWeight(rule: Parameters<typeof ruleMatches>[0], dc: DeckCard, gates: GateWeigher): EffectWeight | null {
+  const abilities = dc.tags?.abilities ?? [];
+  const gated = abilities.filter((a) => a.gate !== undefined).map((a) => ({ a, w: gates.of(a, dc) })).filter((x) => x.w.weight < 1);
+  if (gated.length === 0) return null;
+  const levels = [...new Set(gated.map((x) => x.w.weight))].sort((x, y) => y - x);
+  const dropped = (level: number): Set<unknown> => new Set(gated.filter((x) => x.w.weight < level).map((x) => x.a));
+  // level 1: every gated ability below 1 taken away
+  for (const level of [1, ...levels]) {
+    const out = dropped(level);
+    const view: DeckCard = { ...dc, tags: { ...dc.tags!, abilities: abilities.filter((a) => !out.has(a)) } };
+    if (ruleMatches(rule, view)) return level >= 1 ? null : gated.find((x) => x.w.weight === level)!.w;
+  }
+  return null;
+}
+
+/** THE MEMBERS OF EACH ROLE THAT COUNT FOR LESS THAN ONE, under `gates`. A card in a category through several rules takes the best of them. Only cards with a gated ability are looked at. */
+export function detectBuildWeights(cards: readonly DeckCard[], gates: GateWeigher): RoleWeights {
+  const out: RoleWeights = new Map();
+  const set = loadRules();
+  for (const dc of cards) {
+    if (!dc.tags?.abilities.some((a) => a.gate !== undefined)) continue;
+    const best = new Map<BuildCategory, EffectWeight | null>();
+    for (const rule of set.rules) {
+      if (!rule.category || !ruleMatches(rule, dc, set)) continue;
+      const cat = rule.category as BuildCategory;
+      const w = ruleWeight(rule, dc, gates);
+      const have = best.get(cat);
+      if (have === null) continue;
+      if (w === null || have === undefined || w.weight > have.weight) best.set(cat, w);
+    }
+    for (const [cat, w] of best) {
+      if (w === null) continue;
+      let m = out.get(cat);
+      if (!m) { m = new Map(); out.set(cat, m); }
+      m.set(dc.card.name, w);
+    }
+  }
+  return out;
+}
+
+/** THE EXACT COUNT OF A ROLE: its members, each at its weight (two decimals). With no weights this is the member count. */
+export function weightedSum(names: Iterable<string>, weights?: ReadonlyMap<string, { weight: number }>): number {
+  let n = 0;
+  for (const name of names) n += weights?.get(name)?.weight ?? 1;
+  return Math.round(n * 100) / 100;
+}
+/** THE COUNT OF A ROLE AS THE REPORT SHOWS IT: `weightedSum` rounded to a whole card, the unit every reader of a count (and the target, which is a whole card) speaks. The exact sum is `weighted` on the row and is
+ *  what the score reads, so a half-weight card moves the score even where it does not move the shown count (8.5 shows as 9: a tie rounds up). */
+export function weightedCount(names: Iterable<string>, weights?: ReadonlyMap<string, { weight: number }>): number {
+  return Math.round(weightedSum(names, weights));
+}
 
 /** The cards covering one answer class, split by mode. Name SETS rather than counters: a set is
  *  what lets a later panel say which card, and it makes double-matching harmless -- every exile
@@ -653,7 +715,7 @@ export interface BuildResult {
   /** `facets`: sub-counts said BESIDE a leaf's count, never folded into it -- `draw` carries
    *  `engines` (a draw that comes back) and `unlabelled` (a draw `repeats.ts` refused to label).
    *  Present only on a category some facet rule names; each facet is a subset of the count. */
-  buildCategories: { category: string; count: number; target: number; facets?: Record<string, number> }[];
+  buildCategories: { category: string; count: number; target: number; weighted?: number; facets?: Record<string, number> }[];
   /** One row per `BUILD_PARENTS` entry: archetype-adjusted target, and the UNION of its leaves'
    *  member sets (never the sum -- see `computeBuild`). The client renders the target, ratio and
    *  flag HERE and only count+share on the leaf rows beneath (owner's 2026-08-21 ruling).
@@ -663,7 +725,7 @@ export interface BuildResult {
   /** `impact` is WHAT CLOSING THIS PARENT'S GAP IS WORTH to `buildScore` (roadmap S10) -- the whole
    *  gap, not one card, and a LOWER BOUND, since a real card can carry two of a parent's leaves. 0
    *  for a parent at or over its target, which never surfaces as a finding anyway. */
-  buildParents: { name: string; key: TemplateKey; count: number; target: number; leaves: string[]; impact: number; coverageWeighted?: true }[];
+  buildParents: { name: string; key: TemplateKey; count: number; target: number; weighted?: number; leaves: string[]; impact: number; coverageWeighted?: true }[];
   /** Which theme row(s) the parent targets came from, and the rows themselves, so the report can
    *  show "Voltron runs 19.5 interaction; you run 12" beside the tick (owner ruling 2026-09-06). */
   template: TemplateBlend;
@@ -687,6 +749,9 @@ export interface BuildResult {
   /** How the Ramp parent's cards would survive being attacked. Reported beside the count and never
    *  folded into it -- see `RampResilience`. */
   rampResilience: RampResilience;
+  /** THE ROLE MEMBERS THAT COUNT FOR LESS THAN ONE (#1357 task 2): a gated effect still counts, weighted by how likely its condition is to hold in this deck, and the report says so ("counts as 0.4 draw: needs
+   *  ..."). Absent when none does. The counts above already include these weights; membership does not change. */
+  conditionalRoles?: ConditionalRole[];
 }
 
 /** `landsTarget` is `land-count.ts`'s `recommendedLands(...).target` -- `landTarget`'s answer for
@@ -707,8 +772,11 @@ export function computeBuild(
   /** `detectArchetypes`' ranked list, for the template blend. A caller that has only `primary`
    *  (the tests) gets that one archetype at full confidence, which reads its row. */
   strategies?: readonly ArchetypeRanking[],
+  /** HOW LIKELY EACH GATED EFFECT IS TO HAPPEN IN THIS DECK (#1357 task 2). Absent: every effect counts in full, as before it existed. */
+  gates?: GateWeigher,
 ): BuildResult {
   const members = detectBuildCategories(cards);
+  const roleWeights: RoleWeights = gates ? detectBuildWeights(cards, gates) : new Map();
   const template = templateBlend(
     strategies ?? (primary ? [{ name: primary, label: ARCHETYPE_LABELS[primary], confidence: 1 }] : []),
   );
@@ -718,18 +786,19 @@ export function computeBuild(
   // deck's ~24 basics register as ~24, not 1. Every other category is singleton in Commander, so
   // distinct-name membership size already equals the copy count.
   const landCount = cards.reduce((n, dc) => n + (isLand(dc) ? 1 : 0), 0);
-  const countOf = (c: BuildCategory): number => (c === "lands" ? landCount : members.get(c)?.size ?? 0);
+  const countOf = (c: BuildCategory): number => (c === "lands" ? landCount : weightedCount(members.get(c) ?? [], roleWeights.get(c)));
 
   const facets = detectBuildFacets(cards);
   const facetsOf = (c: BuildCategory): Record<string, number> | undefined => {
     const byName = facets.get(c);
     if (!byName) return undefined;
     const inCategory = members.get(c) ?? new Set<string>();
-    return Object.fromEntries([...byName].map(([name, s]) => [name, [...s].filter((n) => inCategory.has(n)).length]));
+    return Object.fromEntries([...byName].map(([name, s]) => [name, weightedCount([...s].filter((n) => inCategory.has(n)), roleWeights.get(c))]));
   };
   const buildCategories = BUILD_CATEGORIES.map((c) => {
     const f = facetsOf(c);
-    return { category: c, count: countOf(c), target: targets[c], ...(f ? { facets: f } : {}) };
+    const exact = c === "lands" ? landCount : weightedSum(members.get(c) ?? [], roleWeights.get(c));
+    return { category: c, count: countOf(c), target: targets[c], ...(exact !== (members.get(c)?.size ?? 0) && c !== "lands" ? { weighted: exact } : {}), ...(f ? { facets: f } : {}) };
   });
 
   // BREADTH, beside the count. `detectAnswerClasses` already lives in this file, so unlike the
@@ -754,12 +823,23 @@ export function computeBuild(
   // can call `countOf` on a leaf directly; widened to the public shape only at the return below.
   const parentsWithCount = parentTargets.map((p) => {
     const union = new Set<string>();
-    for (const leaf of p.leaves) for (const name of members.get(leaf) ?? []) union.add(name);
-    return { ...p, count: union.size };
+    // A card in two leaves of a parent counts once, at the better of its weights.
+    const unionWeights = new Map<string, EffectWeight>();
+    const full: EffectWeight = { weight: 1, conditional: false, basis: "ungated" };
+    for (const leaf of p.leaves) for (const name of members.get(leaf) ?? []) {
+      const w = roleWeights.get(leaf)?.get(name) ?? full;
+      const have = unionWeights.get(name);
+      if (have === undefined || w.weight > have.weight) unionWeights.set(name, w);
+      union.add(name);
+    }
+    const exact = weightedSum(union, unionWeights);
+    return { ...p, count: Math.round(exact), exact };
   });
 
+  // THE SCORE READS THE EXACT COUNT (a half-weight card moves it), the sentences and the rows the whole one.
+  const scoredParents = parentsWithCount.map((p) => ({ ...p, count: p.exact }));
   const scoreInputs: BuildScoreInputs = {
-    parents: parentsWithCount,
+    parents: scoredParents,
     landCount,
     landsTarget: targets.lands,
     coverage: coverage.coverage,
@@ -767,7 +847,7 @@ export function computeBuild(
   const buildScore = scoreBuild(scoreInputs);
   const landsImpact = landsImpactOf(scoreInputs);
   const answersImpact = answersImpactOf(
-    parentsWithCount, landCount, targets.lands, colorIdentity, answered, graveyardVulnerability,
+    scoredParents, landCount, targets.lands, colorIdentity, answered, graveyardVulnerability,
   );
 
   // `coverageWeighted` rides along ONLY when true (whole-branch review IMPORTANT 4) -- the client
@@ -776,7 +856,7 @@ export function computeBuild(
   // this parent can no longer silently unwire the panel's coverage note while the score keeps
   // docking it, the panel/score disagreement class this branch already closed twice.
   const buildParents = parentsWithCount.map((p, i) => ({
-    name: p.name, key: p.key, count: p.count, target: p.target, leaves: p.leaves as string[],
+    name: p.name, key: p.key, count: p.count, target: p.target, ...(p.exact !== p.count ? { weighted: p.exact } : {}), leaves: p.leaves as string[],
     impact: parentImpact(scoreInputs, i),
     ...(p.coverageWeighted ? { coverageWeighted: true } as const : {}),
   }));
@@ -787,7 +867,16 @@ export function computeBuild(
     ...suggestionsOf(buildSuggestions(parentsWithCount, countOf, targets)),
     answerCoverage: coverage,
     rampResilience: rampResilience(cards),
+    ...conditionalRolesOf(roleWeights),
   };
+}
+
+/** The report's list of members that count for less than one, `{}` when there are none. */
+function conditionalRolesOf(weights: RoleWeights): { conditionalRoles?: ConditionalRole[] } {
+  const rows: ConditionalRole[] = [];
+  for (const [category, byCard] of weights) for (const [card, w] of byCard) rows.push({ card, category, weight: Math.round(w.weight * 100) / 100, basis: w.basis as ConditionalRole["basis"], needs: w.needs ?? "" });
+  rows.sort((a, b) => a.category.localeCompare(b.category) || a.card.localeCompare(b.card));
+  return rows.length > 0 ? { conditionalRoles: rows } : {};
 }
 
 /** Concrete, few, actionable — ranked by gap size, top 4. Never scolding.

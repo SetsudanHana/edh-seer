@@ -1,5 +1,6 @@
 import type { KarstenInputs } from "@edh-seer/engine";
-import { BUILD_PARENTS, detectBuildCategories } from "./build.js";
+import { BUILD_PARENTS, detectBuildCategories, detectBuildWeights, weightedCount, type BuildCategory, type RoleWeights } from "./build.js";
+import type { GateWeigher } from "./effect-gate-weight.js";
 import { classifyAccelerant, manaOutput, playableLines } from "./goldfish.js";
 import { boardGateProbability, lineGateMetBy } from "./gate.js";
 import { isManaSource } from "./mana-audit.js";
@@ -74,7 +75,7 @@ const mdfcLandBack = (dc: DeckCard): "untapped" | "tapped" | null => {
  *  when the label was assigned for a different purpose. */
 export function landInputs(
   deck: readonly DeckCard[],
-  opts: { commanderNames?: readonly string[] } = {},
+  opts: { commanderNames?: readonly string[]; gates?: GateWeigher } = {},
 ): Required<KarstenInputs> {
   const commanders = new Set(opts.commanderNames ?? []);
   const library = deck.filter((dc) => !commanders.has(dc.card.name));
@@ -122,12 +123,25 @@ export function landInputs(
   // A CARD THAT TRANSFORMS INTO A LAND IS NOT RAMP (owner 2026-10-10, #1174), and its
   // `producedMana` is its land BACK's -- the same trap as an MDFC's above: Treasure Map read as a
   // cheap rock here while the Ramp role had dropped it.
-  const rampPlusDraw = nonland.filter(
+  const cheapRampPlusDraw = nonland.filter(
     (dc) => accelerants.has(dc.card.name) && dc.card.manaValue <= CHEAP
       && !fastNames.has(dc.card.name) && !transformsIntoLand(dc.card) && dc.tags?.isOneShot !== true
       // A GATED SOURCE THAT IS NOT LIVE BY TURN 2 is not cheap ramp, whichever way it got into `accelerants` (the Ramp role holds Mox Jasper in every deck).
       && !gatedOffClock(dc, deck),
-  ).length;
+  );
+  // A GATED EFFECT COUNTS AT ITS WEIGHT (#1357 task 2): a card in the pool only through a draw or ramp effect behind a condition is worth that condition's chance of a cheap piece. A card that makes repeatable mana
+  // on its own counts in full.
+  const roleWeights: RoleWeights = opts.gates ? detectBuildWeights(library, opts.gates) : new Map();
+  const weightByName = new Map<string, { weight: number }>();
+  for (const dc of cheapRampPlusDraw) {
+    const name = dc.card.name;
+    if (members.get("ramp")?.has(name) !== true && members.get("draw")?.has(name) !== true) continue;
+    const viaMana = nonland.some((x) => x.card.name === name && x.card.manaValue <= CHEAP && makesRepeatableMana(x, deck));
+    const ws = (["ramp", "draw"] as BuildCategory[]).filter((c) => members.get(c)?.has(name)).map((c) => roleWeights.get(c)?.get(name)?.weight ?? 1);
+    const weight = viaMana ? 1 : Math.max(...ws);
+    if (weight < 1) weightByName.set(name, { weight });
+  }
+  const rampPlusDraw = weightedCount(cheapRampPlusDraw.map((dc) => dc.card.name), weightByName);
 
   return {
     avgManaValue,
@@ -205,7 +219,7 @@ export function rampWeight(dc: DeckCard, deck?: readonly DeckCard[]): number | n
  *  in one unit. */
 export function recommendedLands(
   deck: readonly DeckCard[],
-  opts: { commanderNames?: readonly string[]; roleTargets?: RoleTargets } = {},
+  opts: { commanderNames?: readonly string[]; roleTargets?: RoleTargets; gates?: GateWeigher } = {},
 ): LandRecommendation {
   const inputs = landInputs(deck, opts);
   const commanders = new Set(opts.commanderNames ?? []);
@@ -213,7 +227,9 @@ export function recommendedLands(
   const commanderManaValue = Math.max(0, ...deck.filter((dc) => commanders.has(dc.card.name)).map((dc) => dc.card.manaValue));
   const accelerants = library.filter((dc) => classifyAccelerant(dc, deck) !== null).length;
   const drawCards = detectBuildCategories([...library]).get("draw") ?? new Set<string>();
-  const drawPieces = drawCards.size;
+  // A GATED EFFECT COUNTS AT ITS WEIGHT (#1357 task 2), the weights the build panel's counts carry, so "Ramp 16 of 10" here is still the panel's 16.
+  const roleWeights: RoleWeights = opts.gates ? detectBuildWeights(deck, opts.gates) : new Map();
+  const drawPieces = weightedCount(drawCards, roleWeights.get("draw"));
 
   // THE ROLE COUNTS THE BUILD PANEL SHOWS: a parent's count is the union of its leaves over the
   // whole deck, exactly as `computeBuild` counts it, so "Ramp 16 of 10" here is the panel's 16.
@@ -223,7 +239,15 @@ export function recommendedLands(
     for (const leaf of BUILD_PARENTS.find((p) => p.key === key)!.leaves) for (const n of members.get(leaf) ?? []) union.add(n);
     return union;
   };
-  const roleCount = (key: "ramp" | "consistency"): number => roleMembers(key).size;
+  const roleCount = (key: "ramp" | "consistency"): number => {
+    const union = roleMembers(key);
+    const best = new Map<string, { weight: number }>();
+    for (const leaf of BUILD_PARENTS.find((p) => p.key === key)!.leaves) for (const name of members.get(leaf) ?? []) {
+      const w = roleWeights.get(leaf)?.get(name)?.weight ?? 1;
+      if (w > (best.get(name)?.weight ?? 0)) best.set(name, { weight: w });
+    }
+    return weightedCount(union, best);
+  };
 
   // EACH RAMP PIECE AT WHAT IT KEEPS PRODUCING (`RAMP_RESILIENCE`): land ramp whole, a rock 0.7, a
   // dork 0.5, and a Ramp-role card the goldfish does not play as an accelerant at its class's weight (`NON_ACCELERANT_WEIGHT`: 0.15 for every class but a cost reducer (0, owner 2026-10-14), a land none). Copies count, as
@@ -234,7 +258,7 @@ export function recommendedLands(
     if (w !== null) return [w];
     if (!rampRoleNames.has(dc.card.name)) return [];
     const classWeight = NON_ACCELERANT_WEIGHT[nonAccelerantRamp(dc, deck)];
-    return classWeight === null ? [] : [classWeight];
+    return classWeight === null ? [] : [classWeight * (roleWeights.get("ramp")?.get(dc.card.name)?.weight ?? 1)];
   }).sort((x, y) => y - x);
   // THE REST OF THE RAMP ROLE, NAMED (#1190): one count per distinct Ramp-role card that is not an accelerant, over the whole deck as the role count is (the commander included).
   const rampOther: Partial<Record<NonAccelerantRamp, number>> = {};
@@ -247,7 +271,7 @@ export function recommendedLands(
     rampOther[cls] = (rampOther[cls] ?? 0) + 1;
   }
   // EACH DRAW CARD AT WHAT ITS MANA VALUE SAVES (`drawCredit`), best first.
-  const drawCredits = library.filter((dc) => drawCards.has(dc.card.name)).map((dc) => drawCredit(dc.card.manaValue)).sort((x, y) => y - x);
+  const drawCredits = library.filter((dc) => drawCards.has(dc.card.name)).map((dc) => drawCredit(dc.card.manaValue) * (roleWeights.get("draw")?.get(dc.card.name)?.weight ?? 1)).sort((x, y) => y - x);
 
   // UP TO THE ROLE TARGETS, THE STRONGEST PIECES COUNTED FIRST: a deck past its Ramp target is
   // credited for its best ten pieces, not for whichever ten came first.
