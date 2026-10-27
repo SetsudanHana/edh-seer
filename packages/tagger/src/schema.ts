@@ -493,6 +493,8 @@ export type Verb =
   | "leaves"
   | "cast"
   | "attacks"
+  /** A creature blocks (CR 509.1a: only creatures block). The defending side of `attacks`; "attacks or blocks" (Elder Gargaroth) is two triggers. Owner ruling 2026-10-27, #1373. */
+  | "blocks"
   | "taps"
   | "non-combat-damage"
   | "combat-damage"
@@ -636,6 +638,7 @@ export const VERB_VOCAB: readonly Verb[] = [
   "leaves",
   "cast",
   "attacks",
+  "blocks",
   "taps",
   "non-combat-damage",
   "combat-damage",
@@ -737,11 +740,11 @@ export const VERB_VOCAB: readonly Verb[] = [
  *     is sacrificed);
  *   - combat-damage -> creature, the DEALER (CR 510.1a);
  *   - attacks -> creature (CR 508.1a; folds in #1088's special case);
+ *   - blocks -> creature (CR 509.1a: only creatures block);
  *   - dies -> creature (owner: only a creature dies; the CR glossary says "a creature or planeswalker
  *     dies", so a subject TYPED planeswalker keeps planeswalker -- this fills the untyped one only).
  *  A subject that does name a class keeps it, and a token is the class plus the token flag. `any` is
- *  therefore never a stored subject key for these verbs. `blocks` is not an engine verb, so it has
- *  no row. */
+ *  therefore never a stored subject key for these verbs. */
 export const VERB_IMPLIED_CLASS: Readonly<Partial<Record<Verb, string>>> = {
   cast: "spell",
   enters: "permanent",
@@ -750,6 +753,7 @@ export const VERB_IMPLIED_CLASS: Readonly<Partial<Record<Verb, string>>> = {
   "combat-damage": "creature",
   dies: "creature",
   attacks: "creature",
+  blocks: "creature",
 };
 
 /** THE GENERAL CLASS OF A VERB'S TAG FAMILY: the widest subject its tags are ranked under, which a
@@ -775,6 +779,7 @@ export const VERB_ALIASES: Readonly<Record<string, Verb>> = {
   "enters-the-battlefield": "enters",
   etb: "enters",
   attack: "attacks",
+  block: "blocks",
   tap: "taps",
   "add-counter": "counter-added",
   "counter-add": "counter-added",

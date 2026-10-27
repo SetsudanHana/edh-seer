@@ -751,6 +751,8 @@ export function combatSelfSupplied(producer: GameEvent, consumer: GameEvent): bo
   // Shared Animosity sat under "nothing argues for keeping these" in a go-wide Goblin deck. The
   // ruling above is reversed for `attacks`; combat damage keeps it.
   if (consumer.verb === "attacks") return false;
+  // `blocks` (#1373) is NOT reversed: no owner ruling feeds every blocker to a block payoff, so it keeps the original argument with `combat-damage` -- a creature
+  // can always block, a generic "whenever a creature you control blocks" needs no supplier, and only a narrowed one (a typal, a stat) forms an edge.
   if (!producer.implied) return false;
   return !combatConsumerNarrows(consumer.subject);
 }
@@ -1065,7 +1067,7 @@ export function castSelfSupplied(producer: GameEvent, consumer: GameEvent): bool
 
 /** The verbs `combatSelfSupplied` governs -- the ones a creature performs for free. Exported so the
  *  census can ask "is this row one of the ones that gate applies to" without restating the list. */
-export const COMBAT_VERBS: ReadonlySet<string> = new Set(["attacks", "combat-damage"]);
+export const COMBAT_VERBS: ReadonlySet<string> = new Set(["attacks", "blocks", "combat-damage"]);
 
 /** Does the producer's event come from where the consumer's trigger demands?
  *

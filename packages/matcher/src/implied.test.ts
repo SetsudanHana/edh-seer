@@ -119,7 +119,7 @@ test("identical faces collapse rather than emitting the same event twice", () =>
 
 test("without faces the union still drives the implied events", () => {
   const ev = impliedEvents(chars(["creature"], ["wizard"]));
-  expect(ev.map((e) => e.verb).sort()).toEqual(["attacks", "cast", "combat-damage", "enters"]);
+  expect(ev.map((e) => e.verb).sort()).toEqual(["attacks", "blocks", "cast", "combat-damage", "enters"]);
 });
 
 test("a single subtype collapses to a bare string (matches SubjectFilter convention)", () => {
@@ -134,8 +134,8 @@ test("every synthesised baseline event is marked implied", () => {
     cmc: 2, power: "2", toughness: "2", token: false, keywords: [],
   };
   const events = impliedEvents(chars);
-  // cast + enters + attacks + combat-damage
-  expect(events).toHaveLength(4);
+  // cast + enters + attacks + blocks (#1373) + combat-damage
+  expect(events).toHaveLength(5);
   for (const e of events) {
     expect(e.implied, `${e.verb} must be marked implied`).toBe(true);
   }

@@ -244,3 +244,10 @@ test("an ordinal EXCLUDED by 'other than the' is no cap (issue #518)", () => {
   expect(repeatsFor(triggered(["cast"], { control: "opp" }),
     "Whenever enchanted player casts a spell other than the first spell they cast each turn or copies a spell, this Aura deals 2 damage to them.")).toBe("repeatable");
 });
+
+test("rule 8c (#1373): 'blocks' is once per TURN when SELF (it blocks on an opponent's turn, never mine), once per BLOCKER when a class", () => {
+  // Goldenglow Moth: "Whenever this creature blocks, you may gain 4 life." One creature blocks at most once a combat, in somebody else's combat: not once a round.
+  expect(repeatsFor(triggered(["blocks"], { control: "you", self: true, type: "creature" }), "Whenever this creature blocks, you may gain 4 life.")).toBe("per-turn");
+  // A class of blockers fires once per blocker, like a class of attackers.
+  expect(repeatsFor(triggered(["blocks"], { control: "you", type: "creature" }), "Whenever a creature you control blocks, draw a card.")).toBe("repeatable");
+});

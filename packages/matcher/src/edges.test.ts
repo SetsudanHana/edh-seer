@@ -763,6 +763,39 @@ test("directedReasons: an authored attacks emit matches a generic combat consume
   expect(directedReasons(plainCreature, genericTrigger, H).some((r) => r.tag.startsWith("attacks"))).toBe(true);
 });
 
+// #1373 (owner ruling 2026-10-27): `blocks` is an engine verb and every creature supplies it (implied.ts, CR 509.1a). Unlike `attacks` (reversed by #561) it keeps the
+// original combat-damage argument: a creature can always block, so a generic or self block trigger needs no supplier.
+describe("blocks: implied supply is gated like combat damage (#1373)", () => {
+  const blockTrigger = (name: string, subject: Record<string, unknown>) => base(name, [{
+    kind: "triggered",
+    trigger: { verbs: ["blocks"], subject: { control: "you", token: null, ...subject } as never },
+    effect: { kind: "draw-card" },
+  }]);
+  const blockTags = (cards: Array<ReturnType<typeof base>>, consumer: ReturnType<typeof base>) =>
+    cards.flatMap((c) => directedReasons(c, consumer, H)).filter((r) => r.tag.startsWith("blocks"));
+
+  test("a vanilla creature forms no edge to a self 'whenever this creature blocks' (Goldenglow Moth)", () => {
+    expect(blockTags([base("Vanilla Bear", [])], blockTrigger("Moth", { type: "creature", self: true }))).toEqual([]);
+  });
+
+  test("a vanilla creature forms no edge to a generic 'whenever a creature you control blocks'", () => {
+    expect(blockTags([base("Vanilla Bear", [])], blockTrigger("Generic Blocker Payoff", { type: "creature" }))).toEqual([]);
+  });
+
+  test("a NARROWED blocks trigger still hears the creatures that satisfy it (a typal payoff) and not the ones that do not", () => {
+    const payoff = blockTrigger("Wizard Wall Payoff", { type: "creature", subtype: "wizard" });
+    expect(blockTags([base("Wizard Bear", [], ["wizard"])], payoff).length).toBeGreaterThan(0);
+    expect(blockTags([base("Vanilla Bear", [])], payoff)).toEqual([]);
+  });
+
+  test("an AUTHORED blocks emit is real supply for a generic blocks consumer", () => {
+    const forcer = base("Forced Blocker", [{
+      kind: "on-cast", effect: { kind: "" }, emits: [{ verb: "blocks", subject: { control: "opp", type: "creature", token: null } }],
+    }]);
+    expect(blockTags([forcer], blockTrigger("Generic Blocker Payoff", { type: "creature", control: "any" })).length).toBeGreaterThan(0);
+  });
+});
+
 test("an event reason records which card consumes it and which supplies it", () => {
   const maker = base("Fathom Mage", [{
     kind: "triggered",

@@ -556,7 +556,8 @@ import { emblemRecipient } from "../emblem.js";
 // 391: #1352 -- a SELF animate carries its becomes-phrase in its subject (type, subtype, stats, colours, keywords), as the store writes it (Jade Statue, the Keyrune/Monument/Opal/Hidden cycles, Vehicles); a target or class animate keeps its target class alone (spellTargeting would read the result as the target; #1364); the switch gate `lostSubjectFields` pairs by clause and effect kind on any kind (Goddric, the Aura bounces), `lostScaledAmount` refuses a dropped scaling amount; `stripCardName` is word-bound (Command Tower, Dino DNA).
 // 392: #1357 -- an effect's trailing gating "if <condition>" is `Ability.gate`, parsed by the one gate parser (gate.ts: control / threshold / counter / turn-event / unknown), attached per conjunct (an "except ... if" rider never gates the clone); a suppliable condition adds `conditionCares` (no counter demand for a counter the card places on itself); the grammar reads a gated mode instead of refusing it (What Must Be Done keeps its return); TRON needs two Urza's lands. The matcher weighs gated contributions by deck likelihood (owner 2026-10-27).
 // 393: #1357 part 2 -- a LEADING condition gates its own sentence ("If X, A and B" gates both; ", then if" / "Then if"); "Otherwise," / "If not," carry an unknown gate negating the earlier condition(s) (gate.otherwise), with `otherwiseAlike` when the stored reading lost a same-effect sibling; reflexive follow-ups, "instead", replacements, alternative costs, the trigger-doubler frame and shuffle-after-search are no gate; triggers' intervening ifs stay the trigger path's.
-export const DERIVE_VERSION = 393;
+// 394: #1373 (owner ruling 2026-10-27) -- `blocks` is an engine verb (CR 509.1a: only creatures block): a "whenever ... blocks" trigger derives instead of being dropped (192 stored rows carried the clause event, 249 corpus cards print it), a modal header's "attacks or blocks" (Elder Gargaroth) gives its modes the blocks visit as well as the attacks one, and the blocking state of a blocks trigger's subject is the event (as the attacking state is on an attack). `blocks` joins PERMANENT_EVENT_VERBS; a self blocks trigger refuses a bare clause `you` the way attacks does.
+export const DERIVE_VERSION = 394;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -909,7 +910,7 @@ const LEGAL_VERBS = new Set<string>(VERB_VOCAB);
  *  `draw` became a TRIGGERS member in its own right once the persist gate refused Psychosis Crawler
  *  and Underworld Dreams for answering it (250 corpus cards carry such a trigger), and the bridge is
  *  now RETIRED: `draw-step` means the draw step and nothing consumes it.
- *  `damage-dealt`, `blocks`, `main-phase`, `chapter` and friends have no engine verb at all and
+ *  `damage-dealt`, `main-phase`, `chapter` and friends have no engine verb at all and
  *  are deliberately absent: they surface in `unknownTriggers` rather than pick a near-miss. */
 const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
   "life-gained": "gain-life",
@@ -1648,9 +1649,9 @@ const CLAUSE_CONTROL: Record<string, Control> = { you: "you", opponent: "opp", a
 
 /** Verbs whose subject is a PERMANENT, so its controller is the permanent's and not the ability's.
  *  See the trigger branch: a clause `you` with nothing printed behind it is refused on these only.
- *  Every name is a `VERB_VOCAB` member (blocking has no verb; the transform verb is `transform`). */
+ *  Every name is a `VERB_VOCAB` member (the transform verb is `transform`). */
 const PERMANENT_EVENT_VERBS: ReadonlySet<string> = new Set([
-  "dies", "enters", "leaves", "attacks", "taps", "untaps", "counter-added", "counter-removed",
+  "dies", "enters", "leaves", "attacks", "blocks", "taps", "untaps", "counter-added", "counter-removed",
   "enters-graveyard", "sacrifice", "transform", "turned-face-up", "phases-out",
 ]);
 /** Subjects that are the card's own business whatever the printed phrase says: an attached
@@ -2021,6 +2022,7 @@ function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, c
   if (subject.owner && subject.control === "any" && /\bcards?\b/i.test(preamble) && !/\bpermanents?\b/i.test(preamble)) subject.control = subject.owner;
   // On an attack the state is the event (see the stored path).
   if (verb === "attacks" && subject.combat === "attacking") delete subject.combat;
+  if (verb === "blocks" && subject.combat === "blocking") delete subject.combat;
   if (subject.sharesTypeWith === "self" && GRANTED_TO_COMMANDER.test(cardText)) subject.sharesTypeWith = "commander";
   return { verbs: [verb], subject };
 }
@@ -2320,7 +2322,7 @@ export function deriveAbilities(
       && !replacementOf(textForClause(clause, clauseTexts));
     // ...unless the header's trigger was REFUSED: the mode keeps the clause's trigger for the SUBJECT it reads ("It gains X"
     // is the creature you control), says the same refusal, and derives no trigger below.
-    // ...and not at all under a header trigger the engine has no verb for ("blocks", Elder Gargaroth): it would derive a mode that never fires.
+    // ...and not at all under a header trigger the engine has no verb for ("becomes-blocked" in "blocks or becomes blocked"): it would derive a mode that never fires.
     if (visit.k && (!inherits || !headerTrigger)) continue;
     if (inherits) { clause = { ...clause, trigger: inheritedTrigger }; unknownTriggers.push(...headerRefused); }
     else if (!clause.trigger?.event && kind !== "triggered") { inheritedTrigger = undefined; headerTrigger = undefined; headerRefused = []; }
@@ -2645,6 +2647,8 @@ export function deriveAbilities(
         // the state, so keeping it here would delete every real edge these have. Kept on every
         // other verb -- "an attacking creature DIES" narrows a death the way the verb cannot.
         if (verb === "attacks" && subject.combat === "attacking") delete subject.combat;
+        // The same for a blocker: "a blocking creature you control blocks" is every blocker.
+        if (verb === "blocks" && subject.combat === "blocking") delete subject.combat;
         // A LEAVE HAS A ZONE. CR 603.6c is about the battlefield; "leave your graveyard" is a
         // different event that shares nothing with a death, and "without dying" is a battlefield
         // leave minus `dies`. Both are read off the TEXT because the trigger subject dropped them.

@@ -231,6 +231,7 @@ export function groupName(tag: string): string {
     case "cast": return sub === "spell" ? "Cast triggers" : `${S} spells`;
     case "dies": return isPutIntoGraveyardClass(sub) ? `${P} to the graveyard` : `${S} deaths`;
     case "attacks": return sub === "creature" ? "Attack triggers" : `${S} attacks`;
+    case "blocks": return sub === "creature" ? "Block triggers" : `${S} blocks`;
     case "combat-damage": return sub === "creature" ? "Combat damage triggers" : `${S} combat damage`;
     case "non-combat-damage": return "Burn";
     case "counter-added": return none ? "Counters matter" : `Counters on ${p}`;

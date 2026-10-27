@@ -191,6 +191,8 @@ export function repeatsFor(ability: Ability, clauseText: string, cost = "", raw?
     // PHASE_VERBS's comment. A class-scoped attacks trigger (Doran, Besieged by Time: "whenever a
     // creature you control attacks ... it gets +X/+X") skips this branch and falls to rule 9.
     const selfAttacks = verbs.includes("attacks") && trigger.subject.self === true;
+    // 8c (#1373): THIS creature blocks at most once a combat, and only in somebody else's: once a turn, never once a round (control "you" is the blocker's, not whose turn it is).
+    if (verbs.includes("blocks") && trigger.subject.self === true) return "per-turn";
     if (verbs.some((v) => PHASE_VERBS.has(v)) || selfAttacks || ORDINAL_EACH_TURN.test(text)) {
       return trigger.subject.control === "you" ? "per-cycle" : "per-turn";
     }

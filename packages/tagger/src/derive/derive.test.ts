@@ -4498,8 +4498,9 @@ test("a refused 'deals damage to you' destroys an OPPONENT's creature (No Mercy)
   expect(abilities.every((a) => a.claimsNothing === undefined)).toBe(true);
 });
 
-test("a refused trigger about THIS card makes its 'it' the card itself, and withdraws nothing (#1253, Goblin Cadets)", () => {
-  const text = "Whenever this creature blocks or becomes blocked, target opponent gains control of it. (This removes this creature from combat.)";
+test("a refused trigger about THIS card makes its 'it' the card itself, and withdraws nothing (#1253, Goblin Cadets' becomes-blocked half)", () => {
+  // #1373: the printed "blocks or becomes blocked" now has a live `blocks` half (see the next test); this is the half that stays refused.
+  const text = "Whenever this creature becomes blocked, target opponent gains control of it. (This removes this creature from combat.)";
   const { abilities, unknownTriggers } = deriveAbilities(
     [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "this creature", control: "you" },
       actions: [{ verb: "gain-control", object: "it", fromZone: null, toZone: null, amount: null, optional: false }] }],
@@ -4513,6 +4514,20 @@ test("a refused trigger about THIS card makes its 'it' the card itself, and with
     expect(a.claimsNothing).toBeUndefined();
     for (const e of a.emits ?? []) { expect(e.subject.self).toBe(true); expect(e.subject.ref).toBeUndefined(); }
   }
+});
+
+test("Goblin Cadets' 'blocks or becomes blocked': the blocks half is a live self trigger, the becomes-blocked half is still refused (#1373)", () => {
+  const text = "Whenever this creature blocks or becomes blocked, target opponent gains control of it. (This removes this creature from combat.)";
+  const { abilities, unknownTriggers } = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "becomes-blocked", subject: "this creature", control: "you" },
+      actions: [{ verb: "gain-control", object: "it", fromZone: null, toZone: null, amount: null, optional: false }] }],
+    "Goblin Cadets",
+    { 1: text },
+  );
+  expect(unknownTriggers).toContain("becomes-blocked");
+  const live = abilities.filter((a) => a.trigger?.verbs.includes("blocks" as never));
+  expect(live).toHaveLength(1);
+  expect(live[0]!.trigger!.subject.self).toBe(true);
 });
 
 test("Sacred Ground's returned land is YOURS: control you, not the opponent whose spell caused it (#1253)", () => {
@@ -6300,7 +6315,8 @@ describe("host: an effect on the attached permanent (#1315)", () => {
     const wand = viaModel("Wand of Orcus", "Whenever equipped creature attacks or blocks, it and Zombies you control gain deathtouch until end of turn.", [
       { id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "equipped creature", control: "you" }, actions: [{ verb: "grant-ability", object: "equipped creature and Zombies you control gain deathtouch until end of turn" }] },
     ] as never);
-    expect(hosts(wand)).toEqual(["keyword-grant:false"]);
+    // One per limb of "attacks or blocks" since #1373 made `blocks` a verb (the text reads the second limb): neither is the host.
+    expect(hosts(wand)).toEqual(["keyword-grant:false", "keyword-grant:false"]);
   });
 
   test("review of 41a1da15: a plural class, a grant to another class, and a LOSS are not host (Kor Blademaster, Gemcutter Buccaneer, Earthbind)", () => {
@@ -6424,5 +6440,41 @@ describe("restriction: a host that can't attack or block (#1315, CR 508.1c, 509.
     expect(rs(derive("Vow of Flight", AURA, "Enchant creature\nEnchanted creature gets +2/+2, has flying, and can't attack you or planeswalkers you control."))).toEqual([]);
     expect(rs(derive("Propaganda", "Enchantment", "Creatures can't attack you unless their controller pays {2} for each creature they control that's attacking you."))).toEqual([]);
     expect(derive("Propaganda", "Enchantment", "Creatures can't attack you unless their controller pays {2} for each creature they control that's attacking you.").some((a) => a.effect.kind === "tax")).toBe(true);
+  });
+});
+
+// #1373 (owner ruling 2026-10-27): `blocks` is an engine verb. It was a clause word (and 192 stored rows carried it) with no `VERB_VOCAB` member, so
+// `normalizeTriggerVerb` dropped the trigger and a modal header with "attacks or blocks" (Elder Gargaroth) gave its modes the attacks visit only.
+describe("#1373 the blocks trigger", () => {
+  const deriveText = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings));
+  };
+
+  test("Elder Gargaroth's three modes derive under BOTH the attacks and the blocks visit", () => {
+    const tags = deriveText("Elder Gargaroth", "Creature — Beast", "Reach, vigilance, trample\nWhenever this creature attacks or blocks, choose one —\n• Create a 3/3 green Beast creature token.\n• You gain 3 life.\n• Draw a card.");
+    for (const verb of ["attacks", "blocks"]) {
+      const mine = tags.abilities.filter((a) => a.trigger?.verbs?.includes(verb as never));
+      const kinds = mine.flatMap((a) => (a.emits ?? []).map((e) => e.verb));
+      expect(kinds, verb).toEqual(expect.arrayContaining(["create-token", "gain-life", "draw"]));
+      for (const a of mine) expect(a.trigger?.subject.self, verb).toBe(true);
+    }
+    expect(tags.unknownTriggers ?? []).not.toContain("blocks");
+  });
+
+  test("a pure 'Whenever this creature blocks' card (Goldenglow Moth) derives a self blocks trigger", () => {
+    const tags = deriveText("Goldenglow Moth", "Creature — Insect", "Flying\nWhenever this creature blocks, you may gain 4 life.");
+    const t = tags.abilities.find((a) => a.trigger?.verbs?.includes("blocks" as never));
+    expect(t).toBeDefined();
+    expect(t!.trigger!.subject.self).toBe(true);
+    expect(t!.trigger!.subject.type).toBe("creature");
+    expect(tags.unknownTriggers ?? []).not.toContain("blocks");
+  });
+
+  test("the blocking state is the event on a blocks trigger, as the attacking state is on an attack", () => {
+    const { abilities } = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "blocks", subject: "a blocking creature you control", control: "you" }, actions: [{ verb: "draw", object: "a card" }] }]);
+    expect(abilities[0]!.trigger?.verbs).toEqual(["blocks"]);
+    expect(abilities[0]!.trigger?.subject.combat).toBeUndefined();
   });
 });
