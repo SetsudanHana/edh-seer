@@ -53,3 +53,38 @@ test("Cait, Cage Brawler: the defending player's draw and discard are theirs, no
   expect(drawers(cait, stored)).toEqual(["you", "opp"]);
   expect(drawers(cait, stored, "discard")).toEqual(["you", "opp"]);
 });
+
+// #1391 F3: one printed "search <whose> graveyard, hand, and library for X" is ONE search ability (the store, and the grammar's own records, write one search action per zone).
+// Oracle text and stored records dumped from Mongo 2026-10-28.
+const zoneSearch = (object: string, zone: string, toZone: string | null = null) => ({ verb: "search", object, fromZone: zone, toZone, amount: null, optional: false });
+const searchesOf = (source: { name: string; oracleText: string; typeLine: string; keywords: string[] }, canonical: unknown[]) =>
+  deriveRow({ doc: { oracleId: "x", name: source.name, canonical } as never, source: source as never, isToken: false }).tags.abilities.filter((a) => a.effect?.kind === "search");
+test("Eradicate (grammar records): one search, carrying the library search", () => {
+  const source = { name: "Eradicate", typeLine: "Sorcery", keywords: [], oracleText: "Exile target nonblack creature. Search its controller's graveyard, hand, and library for all cards with the same name as that creature and exile them. Then that player shuffles." };
+  const g = grammarClauseRecords(source as never);
+  const searches = searchesOf(source, g.records as never);
+  expect(searches).toHaveLength(1);
+  expect(searches[0]!.librarySearch).toBeDefined();
+});
+test("Extirpate (stored records): one search, not three", () => {
+  const source = { name: "Extirpate", typeLine: "Instant", keywords: ["Split second"], oracleText: "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities that aren't mana abilities.)\nChoose target card in a graveyard other than a basic land card. Search its owner's graveyard, hand, and library for all cards with the same name as that card and exile them. Then that player shuffles." };
+  const o = "all cards with the same name as target card";
+  const stored = [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Split second" }] }, { id: 2, abilityType: "spell", actions: [zoneSearch(o, "graveyard"), zoneSearch(o, "hand"), zoneSearch(o, "library"), { verb: "exile", object: o, fromZone: null, toZone: "exile" }, { verb: "shuffle", object: "that player's library", fromZone: null, toZone: null }] }];
+  expect(searchesOf(source, stored)).toHaveLength(1);
+});
+test("Kassandra, Eagle Bearer (stored records): one search, the library one, yours, onto the battlefield", () => {
+  const source = { name: "Kassandra, Eagle Bearer", typeLine: "Legendary Creature \u2014 Human Assassin Warrior", keywords: ["Haste"], oracleText: "Haste\nWhen Kassandra enters, search your graveyard, hand, and library for a card named The Spear of Leonidas, put it onto the battlefield, then shuffle.\nWhenever a creature you control with a legendary Equipment attached to it deals combat damage to a player, draw a card." };
+  const o = "a card named The Spear of Leonidas";
+  const stored = [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Haste" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "Kassandra, Eagle Bearer", control: "you" }, actions: [zoneSearch(o, "graveyard"), zoneSearch(o, "hand"), zoneSearch(o, "library"), { verb: "put", object: o, fromZone: null, toZone: "battlefield" }, { verb: "shuffle", object: "your library", fromZone: null, toZone: null }] },
+    { id: 3, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "a creature you control with a legendary Equipment attached to it", control: "you" }, actions: [{ verb: "draw", object: "a card", amount: "1" }] }];
+  const searches = searchesOf(source, stored);
+  expect(searches).toHaveLength(1);
+  expect(searches[0]!.librarySearch).toBe("yours");
+});
+test("Increasing Ambition: two separately printed searches in one clause stay two", () => {
+  const source = { name: "Increasing Ambition", typeLine: "Sorcery", keywords: ["Flashback"], oracleText: "Search your library for a card and put that card into your hand. If this spell was cast from a graveyard, instead search your library for two cards and put those cards into your hand. Then shuffle.\nFlashback {7}{B} (You may cast this card from your graveyard for its flashback cost. Then exile it.)" };
+  const stored = [{ id: 1, abilityType: "spell", actions: [zoneSearch("your library for a card", "library"), { verb: "put", object: "that card into your hand", fromZone: "library", toZone: "hand" }, zoneSearch("your library for two cards", "library"), { verb: "put", object: "those cards into your hand", fromZone: "library", toZone: "hand" }, { verb: "shuffle", object: "your library", fromZone: null, toZone: null }] }, { id: 2, abilityType: "none", actions: [{ verb: "none", object: "Flashback {7}{B}" }] }];
+  expect(searchesOf(source, stored)).toHaveLength(2);
+});
+
