@@ -1924,7 +1924,17 @@ export function parseActions(effect: string, type: string | null, cost?: string)
       // abilities that said whose neither was. The store writes either one action or two for the pair; derive's alignment gives the first reading to the first stored action.
       // An other player the actor table does not name ("another target player", "the controller of ...") is read as any player, target / that.
       const named = both[1]!.toLowerCase();
-      const other: NonNullable<ActionReading["actor"]> = { ...(ACTORS.find(([w]) => w === named)?.[1] ?? { control: "any" as const, scope: /^another target/.test(named) ? "target" as const : "that" as const }), text: both[1]! };
+      const table = ACTORS.find(([w]) => w === named)?.[1];
+      // A BACK-REFERENCED player ("that player", "those players", "the controller of ...", "another target player" is a target and not one) is not named outright: derive resolves it, and a
+      // pair read as you + a printed-words object made the damaged player's draw `you` (Diviner Spirit, Black Widow). Those keep the shared any / each actor with no text, as before.
+      if (!table || (table.control === "any" && table.scope === "that") || /^the controller of /.test(named)) {
+        const shared: NonNullable<ActionReading["actor"]> = { control: "any", scope: "each" };
+        for (let k = 0; k < 2; k++) for (const p of phrases(both[2]!)) { const r = readPhrase(p, condition, shared); if (r) out.push(...r); }
+        continue;
+      }
+      // Otherwise one action per player and phrase, the first pass YOURS and the second the named player's (#1391 F2), named outright: "defending player" and "the attacking player" are
+      // definite opponents, so their back-reference scope is dropped and the object is the player, as the store writes it.
+      const other: NonNullable<ActionReading["actor"]> = { control: table.control, ...(table.scope && table.scope !== "that" ? { scope: table.scope } : {}), text: both[1]! };
       const you: NonNullable<ActionReading["actor"]> = { control: "you", text: "you" };
       for (const pair of [you, other]) for (const p of phrases(both[2]!)) { const r = readPhrase(p, condition, pair); if (r) out.push(...r); }
       continue;

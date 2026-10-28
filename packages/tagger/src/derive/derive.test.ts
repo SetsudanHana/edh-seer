@@ -6917,11 +6917,33 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
     expect(abs.map((a) => `${a.effect.kind}:${a.effect.subject?.control}`)).toEqual(["token-generation:you", "token-generation:opp"]);
   });
 
-  test("Cait: draw and discard for you and for the defending player, no identical pair", () => {
-    const abs = run("Cait, Cage Brawler", "attacks", "Whenever Cait attacks, you and defending player each draw a card, then discard a card.",
-      [act("draw", "you"), act("draw", "defending player"), act("discard", "you"), act("discard", "defending player")]);
-    expect(ctl(abs)).toEqual(["draw:you", "draw:opp", "discard:you", "discard:opp"]);
-    expect(new Set(abs.map((a) => JSON.stringify(a))).size).toBe(abs.length);
+  // Real oracle text and real stored records (Mongo cardClauses, 2026-10-28), through BOTH paths: the model's stored answer and the grammar's own records.
+  const both = (name: string, typeLine: string, oracleText: string, stored: unknown[]) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    return [["model", stored], ["grammar", g.records]].map(([path, records]) => [path as string, deriveCardTags(deriveInputOf(card as never, "x", name, records as never, undefined, path === "grammar" ? g.readings : undefined)).abilities] as const);
+  };
+  const players = (abs: ReturnType<typeof run>, verb: string) => abs.flatMap((a) => a.emits ?? []).filter((e) => e.verb === verb).map((e) => e.subject.control);
+
+  test("Cait: draw and discard for you and for the defending player, never the defending player's as yours", () => {
+    const text = "During your turn, Cait has indestructible.\nWhenever Cait attacks, you and defending player each draw a card, then discard a card. Put two +1/+1 counters on Cait if you discarded the card with the greatest mana value among those cards or tied for greatest.";
+    const stored = [
+      { id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "indestructible", fromZone: null, toZone: null }] },
+      { id: 2, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: [act("draw", "you"), act("draw", "defending player"), act("discard", "you"), act("discard", "defending player"), act("add-counter", "+1/+1", "2")] },
+    ];
+    for (const [path, abs] of both("Cait, Cage Brawler", "Legendary Creature — Human Warrior", text, stored)) {
+      expect(players(abs, "draw"), path).toEqual(["you", "opp"]);
+      expect(players(abs, "discard"), path).toEqual(["you", "opp"]);
+    }
+  });
+
+  test("a back-referenced player is never read as you: Diviner Spirit and Black Widow, Intel Expert (#1391 F2 review)", () => {
+    const diviner = both("Diviner Spirit", "Creature — Spirit", "Whenever this creature deals combat damage to a player, you and that player each draw that many cards.",
+      [{ id: 1, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "this creature", control: "you" }, actions: [act("draw", "you", "that many"), act("draw", "that player", "that many")] }]);
+    const widow = both("Black Widow, Intel Expert", "Legendary Creature — Human Spy Hero", "First strike\nWhenever Black Widow deals combat damage to an opponent, you and that player each draw two cards.",
+      [{ id: 2, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "this creature", control: "you" }, actions: [act("draw", "you", "2"), act("draw", "that player", "2")] }]);
+    // The grammar path (the card's own records). The model's raw stored "that player" is read as `you` by derive itself (same at 403); the pipeline's row switch (deriveRow) is tested in derive-worker.test.ts.
+    for (const [path, abs] of [...diviner, ...widow]) if (path === "grammar") expect(players(abs, "draw"), path).toEqual(["any", "any"]);
   });
 
   test("a store that wrote ONE action for the pair keeps it once (nothing doubled, nothing rewritten)", () => {

@@ -31,7 +31,7 @@ test("phrases split on the printed joints; an actor carries to the phrases after
     { verb: "draw", amount: "3", actor: { control: "you", text: "you" } }, { verb: "draw", amount: "3", actor: { control: "opp", scope: "target", text: "target opponent" } },
   ]);
   expect(read("you and those players each draw a card, then discard a card at random.").map((r) => [r.verb, r.actor?.text]))
-    .toEqual([["draw", "you"], ["discard", "you"], ["draw", "those players"], ["discard", "those players"]]);
+    .toEqual([["draw", undefined], ["discard", undefined], ["draw", undefined], ["discard", undefined]]); // a back-referenced player keeps the shared actor, no text (F2 review)
 });
 
 test("conditions are KEPT on the action (owner, 2026-10-01); 'you may' is optional, and so is its 'if you do'", () => {
