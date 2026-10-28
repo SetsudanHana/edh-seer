@@ -1059,3 +1059,13 @@ describe("one printed add across a cast clause and a textless copy clause (#1376
     expect((tags.manaLines ?? []).filter((l) => l.source === "trigger")).toHaveLength(1);
   });
 });
+
+// #1376 review: "enters or attacks" is stored as two records, the second textless. The fold splices its ability, but its Vibranium line is still a PER-CYCLE line beside the enters half's ONCE line (T'Challa, the Black Panther: card fields and stored canonical dumped from Mongo).
+describe("a folded textless twin keeps its token-maker line's repeats (#1376)", () => {
+  it("T'Challa: one token-maker line for enters (once) and one for attacks (per-cycle)", () => {
+    const source = {"oracleText":"Whenever T'Challa enters or attacks, create a tapped Vibranium token. (It's an artifact with indestructible and \"{T}: Add {C}. This mana can't be spent to cast a nonartifact spell.\")\nWhenever you cast an artifact spell with mana value 4 or greater, put two +1/+1 counters on T'Challa.","keywords":[],"typeLine":"Legendary Creature — Human Noble Hero","name":"T'Challa, the Black Panther","manaCost":"{1}{G}{W}","colors":["G","W"],"colorIdentity":["G","W"],"manaValue":3,"power":"2","toughness":"2","layout":"normal"};
+    const canonical = [{"id":1,"abilityType":"triggered","trigger":{"event":"enters","subject":"T'Challa","control":"you"},"actions":[{"verb":"create","object":"a tapped Vibranium token","fromZone":null,"toZone":null,"amount":"1","optional":false}]},{"id":2,"abilityType":"triggered","trigger":{"event":"cast","subject":"an artifact spell with mana value 4 or greater","control":"you"},"actions":[{"verb":"add-counter","object":"+1/+1","fromZone":null,"toZone":null,"amount":"2","optional":false}]},{"id":3,"abilityType":"triggered","trigger":{"event":"attacks","subject":"T'Challa","control":"you"},"actions":[{"verb":"create","object":"a tapped Vibranium token","fromZone":null,"toZone":null,"amount":"1","optional":false}]}];
+    const tags = deriveCardTags(deriveInputOf(source as never, "ae10eb15-28e7-46d1-9a2e-85763d93febf", source.name, canonical as never));
+    expect((tags.manaLines ?? []).filter((l) => l.source === "token-maker").map((l) => l.repeats)).toEqual(["once", "per-cycle"]);
+  });
+});

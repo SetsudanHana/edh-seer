@@ -2243,7 +2243,7 @@ export function deriveAbilities(
   clauseGrants?: Record<number, number>,
   /** Clause ids that are a modal spell's or ability's header (`derive/modal.ts`): each is supplied the `face-a-dilemma` event once (Star Trek, #1349). Absent: none is. */
   modalHeads?: ReadonlySet<number>,
-): { abilities: Ability[]; unclaimed: Action[]; unclaimedAt: UnclaimedAction[]; unknownTriggers: string[]; twinOf: ReadonlyMap<number | string, number | string>; spliced: ReadonlySet<number | string> } {
+): { abilities: Ability[]; unclaimed: Action[]; unclaimedAt: UnclaimedAction[]; unknownTriggers: string[]; twinOf: ReadonlyMap<number | string, number | string>; spliced: ReadonlySet<number | string>; folded: ReadonlyMap<number | string, number | string> } {
   const abilities: Ability[] = [];
   /** Every action nothing claimed, with the clause that printed it (#1299). `unclaimed` is the same list as bare actions. */
   const unclaimedHere: { clause: number | string; action: Action }[] = [];
@@ -3769,6 +3769,8 @@ export function deriveAbilities(
   // CEILING: a cue heuristic -- a twin is "the same verb already claimed on that sentence", and a re-homed record is "the one orphan sentence that
   // prints its cue". A card whose record numbering drifts in a way neither sees keeps its stored trigger over the sentence its own text prints.
   const spliced = new Set<number | string>();
+  /** The textless twins the identical-twin fold removed (a subset of `spliced`), each with its covering clause; `deriveMana` must not rebuild their lines from the clause's actions (#1376). */
+  const folded = new Map<number | string, number | string>();
   if (identicalTwinOf.size > 0) {
     // `b` COVERS `a` when they are the same ability apart from the clause, and `b`'s amount / count COVERS `a`'s: removing `a` then loses nothing (a twin that is POORER than its covering
     // clause, as the grammar's reading of Dusk Urchins' blocks half is, is covered; a RICHER one is never). COMPARE THE VALUES, NOT THEIR PRESENCE (#1380): "1" beside "2" was folded and the
@@ -3784,6 +3786,7 @@ export function deriveAbilities(
       if (mine.length === 0 || !mine.every((a) => theirs.some((b) => sameAbility(a, b)))) continue;
       for (let i = abilities.length - 1; i >= 0; i--) if (abilities[i]!.clause === twin) abilities.splice(i, 1);
       spliced.add(twin);
+      folded.set(twin, covering);
     }
   }
   if (twinOf.size > 0) {
@@ -3798,7 +3801,7 @@ export function deriveAbilities(
       if (partnerId !== undefined && redundant(a, partnerId)) { abilities.splice(i, 1); spliced.add(a.clause!); }
     }
   }
-  return { abilities, unclaimed: unclaimedHere.map((u) => u.action), unclaimedAt: unclaimedHere.map((u) => unclaimedRecord(u.clause, u.action)), unknownTriggers, twinOf, spliced };
+  return { abilities, unclaimed: unclaimedHere.map((u) => u.action), unclaimedAt: unclaimedHere.map((u) => unclaimedRecord(u.clause, u.action)), unknownTriggers, twinOf, spliced, folded };
 }
 const POLYMORPH_VERBS: ReadonlySet<string> = new Set(["dies", "exiled", "leaves", "enters"]);
 
@@ -3973,7 +3976,7 @@ export function deriveCardTags(input: DeriveInput): CardTags {
     abilities: spellOnce,
     // MANA PRODUCTION, read once (#1169). Each key is written only when the card has it.
     ...deriveMana({
-      clauses: input.clauses, abilities: spellOnce, chars, name: input.name,
+      clauses: input.clauses, abilities: spellOnce, chars, name: input.name, foldedClauses: derived.folded,
       textOf: (clause) => withoutAbilityWord(textForClause(clause, input.clauseTexts)),
       ...(input.clauseCosts ? { clauseCosts: input.clauseCosts } : {}),
       ...(input.clauseFaces ? { clauseFaces: input.clauseFaces } : {}),

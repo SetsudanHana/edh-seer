@@ -55,6 +55,8 @@ export interface ManaInput {
   oracleText?: string;
   /** The printed STARTING LOYALTY of each face (index = face, null for a face with none): from the card document, as ingested (owner 2026-10-13). Absent: a card that is no planeswalker. */
   startLoyalty?: (number | null)[];
+  /** Folded twin clause id -> its covering clause id (derive's identical-twin fold, #1376): a folded clause reads no line of its own, its covering clause's token line is one per trigger verb. */
+  foldedClauses?: ReadonlyMap<number | string, number | string>;
 }
 
 export interface ManaResult {
@@ -854,15 +856,18 @@ export function deriveMana(input: ManaInput): ManaResult {
   let fetchKind: LandFetch["kind"] | null = null;
   let fetchTapped = true;
   const reach = new Set<string>();
+  const coveringOfFolded = new Set<number | string>(input.foldedClauses?.values());
   for (const a of abilities) {
     const face = (a.face ?? 0) > 0 ? 1 : 0;
     if (a.effect.kind === "token-generation") {
       const key = tokenKey(a.effect.subject?.subtype, a.effect.subject?.anyOf);
       if (key === null) continue;
       if (opponentOnlyToken(input.oracleText ?? "", key, input.textOf(clauses.find((c) => c.id === a.clause) ?? ({ id: -1 } as ClauseRecord)), a.effect.subject?.control)) continue;
-      const dedupe = `token:${a.clause}:${key}`;
+      // One line per clause, or per clause AND trigger verb when a textless twin was folded into it: the covering "enters or attacks" clause carries both halves (once, per-cycle) now that the attacks twin's own ability is gone (#1376).
+      const dedupe = `token:${a.clause}:${key}${coveringOfFolded.has(a.clause!) ? `:${(a.trigger?.verbs ?? []).join(",")}` : ""}`;
       if (seenClauses.has(dedupe)) continue;
       seenClauses.add(dedupe);
+      seenClauses.add(`token:${a.clause}:${key}`);
       const clause = clauses.find((c) => c.id === a.clause);
       const read = a.amount === undefined && clause ? tokenCountOf(key, input.textOf(clause), (clause.actions ?? []).filter((x) => x.verb === "create").map((x) => x.object ?? "")) : null;
       const amountText = a.amount ?? (read && "scales" in read ? read.scales : undefined);
@@ -948,6 +953,7 @@ export function deriveMana(input: ManaInput): ManaResult {
   // with no subtype (Spiked Pit Trap's 10-20 roll). Read off the clause's own "create" action, under the same recipient and replacement tests as the abilities above.
   // CEILING: a Treasure inside any quoted ability of a token the clause makes is credited to the card that makes the token, as the Aura's is.
   for (const c of clauses) {
+    if (input.foldedClauses?.has(c.id)) continue;
     const text = input.textOf(c);
     const replaces = REPLACES_CREATION.test(text);
     const added = replaces ? replacementAddedToken(text) : null;

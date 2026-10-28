@@ -37,9 +37,11 @@ export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
         && lostClaims(tags.abilities, grammarTags.abilities).length === 0 && lostSubjectFields(tags.abilities, grammarTags.abilities).length === 0 && lostScaledAmount(tags.abilities, grammarTags.abilities).length === 0
         && !lostTriggerFlags(tags.abilities, grammarTags.abilities);
       // MANA IS NOT IN `deriveDiff`: a card whose grammar reading derives other mana fields keeps the stored answer, identical abilities or not.
-      // #1376: the stored answer IS the grammar's abilities with exact duplicates (the grammar has none): the grammar reading drops them.
-      const sameButDoubled = key !== null && dedupe(grammarTags.abilities).length === grammarTags.abilities.length && deriveDiff(dedupe(tags.abilities), grammarTags.abilities) === null;
-      if ((key === null || right || sameButDoubled) && !manaDiffers(tags, grammarTags)) return { tags: grammarTags, fromGrammar: true };
+      // #1376: a grammar reading with exact duplicates of its own (Silverquill Pledgemage's "cast or copy") is never switched to, on any path. The stored answer IS the grammar's abilities
+      // with exact duplicates (`sameButDoubled`): the grammar reading drops them.
+      const grammarClean = dedupe(grammarTags.abilities).length === grammarTags.abilities.length;
+      const sameButDoubled = key !== null && deriveDiff(dedupe(tags.abilities), grammarTags.abilities) === null;
+      if (grammarClean && (key === null || right || sameButDoubled) && !manaDiffers(tags, grammarTags)) return { tags: grammarTags, fromGrammar: true };
     }
   }
   return { tags, fromGrammar: false };
