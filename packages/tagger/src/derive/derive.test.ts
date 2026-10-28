@@ -6754,6 +6754,10 @@ describe("amountCovered / countCovered, the blocks twin fold's value comparison 
   test("X/0 is covered by +X/+0 with its trailing explanation", () => {
     expect(amountCovered("X/0", "+X/+0, where X is the amount of mana spent")).toBe(true);
   });
+  test("the twin that reads only X's definition is covered by the X/X amount that explains it (Freelance Muscle)", () => {
+    expect(amountCovered("the greatest power and/or toughness among other creatures you control", "+X/+X, where X is the greatest power and/or toughness among other creatures you control")).toBe(true);
+    expect(amountCovered("other creatures you control", "+X/+X, where X is the greatest power and/or toughness among other creatures you control")).toBe(false);
+  });
   test("a comma-only respelling is covered", () => {
     expect(amountCovered("+X/+X where X is the number of cards", "+X/+X, where X is the number of cards")).toBe(true);
   });

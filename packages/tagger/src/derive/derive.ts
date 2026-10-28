@@ -562,7 +562,7 @@ import { emblemRecipient } from "../emblem.js";
 // 397: #1381 -- a "becomes blocked by <creatures>" trigger carries the blocker: `Ability.trigger.blocker` is the filter on the BLOCKING creatures ("by an artifact creature", Ogre Leadfoot; "by a creature" is `{type: creature}`), read by `readBlocker` (grammar/trigger.ts) on both paths. "By one or more <class>" and a threshold ("by two or more creatures") set `batched` (once a combat, CR 603.2c / 509.3e); "by a/an <class>" is once per blocker (CR 509.3d). A phrase it cannot read exactly (the card or its host as blocker, a dropped negation, a relative stat, a state) still refuses as `narrowing:becomes-blocked`. repeats reads the fields, no longer the clause text.
 // 398: #1383 -- a negated card type beside a head type is recorded: "nonartifact creature" is `{type: creature, notType: [artifact]}` (was a bare creature), "noncreature artifact" `{type: artifact, notType: [creature]}`. `resolveTypes` dropped a negation that removed nothing from the base on the reasoning that the matcher could not apply it; 8cdb0d7b made the matcher apply `notType` as an exclusion five hours later (Phyrexian Scriptures' "destroy all nonartifact creatures" no longer hits your artifact creatures). themeSubjectKey and loneTypeNarrows treat a negation beside ONE type as that type (keys unchanged).
 // 399: #1385 -- type words inside a token's QUOTED ability are not the token's types: `parseSubject` cuts double-quoted spans (not a quoted name) before any sweep. The Prydwen's Human Knight was `[creature, artifact]`, an Equipment artifact token `[creature, artifact]` ("Equipped creature gets +1/+0"), Ka-Zar's Zabu `[creature, land]`.
-// 400: #1380 -- the blocks twin fold compares amount VALUES, not their presence: equal after normalising (sign kept, "-1/-1" is not "+1/+1") or the twin plus a trailing "where X is ..." (Mana-Charged Dragon's "X/0" inside "+X/+0, where X is ..." still folds; "1" beside "2" or "+1/+1" no longer does); count by equality.
+// 400: #1380 -- the blocks twin fold compares amount VALUES, not their presence: equal after normalising (sign kept, "-1/-1" is not "+1/+1") or the twin plus a trailing "where X is ...", or the twin as the whole of that explanation (Freelance Muscle) (Mana-Charged Dragon's "X/0" inside "+X/+0, where X is ..." still folds; "1" beside "2" or "+1/+1" no longer does); count by equality.
 export const DERIVE_VERSION = 400;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
@@ -2191,12 +2191,13 @@ export function exilesTopOfLibrary(text: string): boolean {
  *  "+X/+0, where X is" -> "x 0 where x is"; "-1/-1" -> "-1 -1"; "+1/+1" -> "1 1". */
 const normaliseAmount = (t: string): string => t.toLowerCase().replace(/\+/g, "").replace(/[^a-z0-9-]+/g, " ").trim();
 /** A twin's amount is covered when absent, or equal to the covering one after normalising, or the covering one is the twin plus a trailing "where X is ..." explanation
- *  (Mana-Charged Dragon's "X/0" inside "+X/+0, where X is ..."). Never a mere sub-run: "1" is not inside "+1/+1", "12" does not hold "1". */
+ *  (Mana-Charged Dragon's "X/0" inside "+X/+0, where X is ..."), or the twin is the whole of that explanation (Freelance Muscle's "the greatest power and/or
+ *  toughness among ..." beside "+X/+X, where X is the greatest power and/or toughness among ..."). Never a mere sub-run: "1" is not inside "+1/+1", "12" does not hold "1". */
 export function amountCovered(twin: string | undefined, covering: string | undefined): boolean {
   if (twin === undefined) return true;
   if (covering === undefined) return false;
   const t = normaliseAmount(String(twin)), c = normaliseAmount(String(covering));
-  return t === c || c.startsWith(`${t} where `);
+  return t === c || c.startsWith(`${t} where `) || c.endsWith(` where x is ${t}`);
 }
 /** A twin's count is covered when absent, or equal to the covering one. */
 export function countCovered(twin: EventCount | undefined, covering: EventCount | undefined): boolean {
