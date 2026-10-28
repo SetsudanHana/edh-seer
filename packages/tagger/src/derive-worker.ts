@@ -18,14 +18,14 @@ export interface DeriveResult { tags: CardTags; fromGrammar: boolean }
 /** Drops exact-duplicate abilities (same JSON, clause included), keeping the first. */
 function dedupe<T>(xs: T[]): T[] { const seen = new Set<string>(); return xs.filter((a) => { const k = JSON.stringify(a); return !seen.has(k) && !!seen.add(k); }); }
 
-/** The keyword-grant twin fold (#1391) applies to whichever tags win, never before the switch. */
-const folded = (t: CardTags): CardTags => ({ ...t, abilities: foldGrantTwins(t.abilities) });
+/** The keyword-grant twin fold (#1391; since F4 also an identical twin in an "instead" clause) applies to whichever tags win, never before the switch. */
+const folded = (t: CardTags, texts?: Record<number, string>): CardTags => ({ ...t, abilities: foldGrantTwins(t.abilities, texts) });
 
 /** The winner of the switch derived with the defaults (zone searches collapsed, grant twins folded). Only a card whose records hold a multi-search clause is derived again; the rest is the decision's tags, folded. */
 function rederived(source: Record<string, unknown>, doc: CardClausesDoc, records: ClauseRecord[], readings: Parameters<typeof deriveInputOf>[5], decided: CardTags, isToken = false): CardTags {
   const searches = (records as ClauseRecord[]).some((c) => (c.actions ?? []).filter((a) => a.verb === "search").length > 1);
-  if (!searches) return folded(decided);
-  return deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, records, isToken ? tokenCharsFrom(source as never) : undefined, readings));
+  const input = deriveInputOf(source as never, doc.oracleId, doc.name, records, isToken ? tokenCharsFrom(source as never) : undefined, readings);
+  return searches ? deriveCardTags(input) : folded(decided, input.clauseTexts);
 }
 
 export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
