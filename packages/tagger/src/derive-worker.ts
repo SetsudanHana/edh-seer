@@ -14,6 +14,9 @@ import type { CardTags } from "./schema.js";
 export interface DeriveItem { doc: CardClausesDoc; source: Record<string, unknown>; isToken: boolean }
 export interface DeriveResult { tags: CardTags; fromGrammar: boolean }
 
+/** Drops exact-duplicate abilities (same JSON, clause included), keeping the first. */
+function dedupe<T>(xs: T[]): T[] { const seen = new Set<string>(); return xs.filter((a) => { const k = JSON.stringify(a); return !seen.has(k) && !!seen.add(k); }); }
+
 export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
   // Always re-read printed characteristics from the card/token document. Reusing the existing
   // derived doc's copy would carry stale colours or a stale type line forward through every
@@ -34,7 +37,9 @@ export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
         && lostClaims(tags.abilities, grammarTags.abilities).length === 0 && lostSubjectFields(tags.abilities, grammarTags.abilities).length === 0 && lostScaledAmount(tags.abilities, grammarTags.abilities).length === 0
         && !lostTriggerFlags(tags.abilities, grammarTags.abilities);
       // MANA IS NOT IN `deriveDiff`: a card whose grammar reading derives other mana fields keeps the stored answer, identical abilities or not.
-      if ((key === null || right) && !manaDiffers(tags, grammarTags)) return { tags: grammarTags, fromGrammar: true };
+      // #1376: the stored answer IS the grammar's abilities with exact duplicates (the grammar has none): the grammar reading drops them.
+      const sameButDoubled = key !== null && dedupe(grammarTags.abilities).length === grammarTags.abilities.length && deriveDiff(dedupe(tags.abilities), grammarTags.abilities) === null;
+      if ((key === null || right || sameButDoubled) && !manaDiffers(tags, grammarTags)) return { tags: grammarTags, fromGrammar: true };
     }
   }
   return { tags, fromGrammar: false };

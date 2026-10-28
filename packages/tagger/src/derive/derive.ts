@@ -20,7 +20,7 @@ import { creatureDamageSource, damageHitsSelf, damageRecipient, playerOnlyRecipi
 import { actionRecipients, damagedPlayerIsOpponent, sacrificerIsTargeted, sentenceNamesAPlayer, thatPlayerIsOpponent, victimDeclines } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { namesAClass, parseSubject, parseCounter } from "./subject.js";
-import { parse as parseFilterRaw } from "../grammar/filter.js";
+import { parse as parseFilterRaw, stableJson } from "../grammar/filter.js";
 import { memoizeCloned } from "../memo.js";
 import { selfAsTilde } from "../grammar/self-as-tilde.js";
 import { effectText, printedPreamble } from "../grammar/preamble.js";
@@ -563,7 +563,8 @@ import { emblemRecipient } from "../emblem.js";
 // 398: #1383 -- a negated card type beside a head type is recorded: "nonartifact creature" is `{type: creature, notType: [artifact]}` (was a bare creature), "noncreature artifact" `{type: artifact, notType: [creature]}`. `resolveTypes` dropped a negation that removed nothing from the base on the reasoning that the matcher could not apply it; 8cdb0d7b made the matcher apply `notType` as an exclusion five hours later (Phyrexian Scriptures' "destroy all nonartifact creatures" no longer hits your artifact creatures). themeSubjectKey and loneTypeNarrows treat a negation beside ONE type as that type (keys unchanged).
 // 399: #1385 -- type words inside a token's QUOTED ability are not the token's types: `parseSubject` cuts double-quoted spans (not a quoted name) before any sweep. The Prydwen's Human Knight was `[creature, artifact]`, an Equipment artifact token `[creature, artifact]` ("Equipped creature gets +1/+0"), Ka-Zar's Zabu `[creature, land]`.
 // 400: #1380 -- the blocks twin fold compares amount VALUES, not their presence: equal after normalising (sign kept, "-1/-1" is not "+1/+1") or the twin plus a trailing "where X is ...", or the twin as the whole of that explanation (Freelance Muscle) (Mana-Charged Dragon's "X/0" inside "+X/+0, where X is ..." still folds; "1" beside "2" or "+1/+1" no longer does); count by equality.
-export const DERIVE_VERSION = 400;
+// 401: #1376 -- the textless-twin fold runs on every event and on split ids (Korvold's 2.1), not only blocks / becomes-blocked on integer ids, and compares abilities key-order-insensitively (Primeval Herald's twin carried the same effect.subject keys in another order); `deriveRow`'s switch also takes the grammar reading when the stored answer is it with exact duplicates. Measured (derive-identity ALL=1 vs stored 400): 226 cards change; 2 are stale before the change (Plan for All Outcomes, Overwrite the Multiverse); 202 are pure removals; 21 switch to the grammar reading; 1 (Mage Hunter) stays unfolded because its twin is richer. In the model path itself the fold adds 0 lines on all 24 non-pure cards.
+export const DERIVE_VERSION = 401;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2187,6 +2188,9 @@ export function exilesTopOfLibrary(text: string): boolean {
   return false;
 }
 
+/** An ability apart from its clause, amount and count, as JSON whose object keys are sorted: the same ability built with its keys in another order (Primeval Herald's twin) compares equal. */
+export function abilityKey(x: Ability): string { const { clause: _c, amount: _a, count: _n, ...rest } = x; return stableJson(rest); }
+
 /** AN AMOUNT SPELLING, NORMALISED FOR THE TWIN FOLD (#1380): lower-case, `+` deleted, `-` kept (the sign of a pump is its meaning), every other non-alphanumeric a space.
  *  "+X/+0, where X is" -> "x 0 where x is"; "-1/-1" -> "-1 -1"; "+1/+1" -> "1 1". */
 const normaliseAmount = (t: string): string => t.toLowerCase().replace(/\+/g, "").replace(/[^a-z0-9-]+/g, " ").trim();
@@ -2549,8 +2553,8 @@ export function deriveAbilities(
     // A TEXTLESS RECORD (#1373 review) that adopted a sentence an earlier record's grammar reading already read this record's event off ("attacks or blocks" stored as two
     // records: Howling Golem, Jedit Ojanen) is that record's twin too -- but only an ability IDENTICAL to one of the covering clause's is folded (`identicalTwin`, below),
     // so a record that says more than its partner (a sibling sentence's effect numbered here) is never lost.
-    // CEILING: `blocks` and `becomes-blocked` only (#1375: "blocks or becomes blocked" is stored as two records too), and all-or-nothing per clause (see the fold below), a twin covered when the covering ability is the same apart from the clause and its amount / count are covered by the covering ability's VALUES (`amountCovered`: equal after case and punctuation, sign kept, or the twin plus a trailing "where X is ...", or the twin as the whole of that explanation (Freelance Muscle); `countCovered`: equal), never by mere presence (#1380). A respelling outside those ("one" beside "1", "where X equals" beside "where X is") is refused, and the duplicate stays. Measured over the stored 394 with derive-identity: 46 blocks cards change, every one a pure removal (no `+` line); Clockwork Vorrac and Clockwork Dragon (other abilities) still take the grammar reading through `deriveRow`'s switch. The same fold on every event changes 260 cards, not all provably duplicate removals.
-    else if (!misplaced && text && clause.trigger?.event && clauseTexts && clauseTexts[clause.id as number] === undefined && Number.isInteger(clause.id) && (clause.trigger.event === "blocks" || clause.trigger.event === "becomes-blocked")) {
+    // CEILING: all-or-nothing per clause (see the fold below: a twin with one richer ability keeps all its duplicates), a twin covered when the covering ability is the same apart from the clause (compared key-order-insensitively, `abilityKey`) and its amount / count are covered by the covering ability's VALUES (`amountCovered`: equal after case and punctuation, sign kept, or the twin plus a trailing "where X is ...", or the twin as the whole of that explanation (Freelance Muscle); `countCovered`: equal), never by mere presence (#1380). A respelling outside those ("one" beside "1", "where X equals" beside "where X is") is refused, and the duplicate stays. Runs on every event and on split ids (Korvold's 2.1: `clauseTexts` has only the integer key) since #1376; measured over the stored 400 with derive-identity: 226 cards change, 202 pure removals, 21 more switch to the grammar reading in `deriveRow`, Mage Hunter stays (its twin is richer: control opp vs any).
+    else if (!misplaced && text && clause.trigger?.event && clauseTexts && clauseTexts[clause.id as number] === undefined) {
       const covering = grammarCovered.get(text)?.get(normalizeTriggerVerb(clause.trigger.event) ?? "");
       if (covering !== undefined && covering !== clause.id) identicalTwinOf.set(clause.id, covering);
     }
@@ -3771,8 +3775,7 @@ export function deriveAbilities(
     // "1" lost. An amount is covered when absent on the twin, or equal after case and punctuation are dropped (sign kept), or the twin plus a trailing "where X is ..." (Mana-Charged Dragon's "X/0"
     // beside "+X/+0, where X is ..."), or the twin as the whole of that explanation (Freelance Muscle). Never a sub-run: "1" is not covered by "+1/+1". A count is covered
     // when absent on the twin or equal. See `amountCovered`.
-    const strip = (x: Ability): string => { const { clause: _c, amount: _a, count: _n, ...rest } = x; return JSON.stringify(rest); };
-    const sameAbility = (a: Ability, b: Ability): boolean => strip(a) === strip(b) && amountCovered(a.amount, b.amount) && countCovered(a.count, b.count);
+    const sameAbility = (a: Ability, b: Ability): boolean => abilityKey(a) === abilityKey(b) && amountCovered(a.amount, b.amount) && countCovered(a.count, b.count);
     // ALL OR NOTHING PER CLAUSE (#1373 review): a textless clause is folded only when EVERY one of its abilities has an exact match among its covering clause's, so a fold is
     // always a pure removal. A per-ability fold dropped Velukan Dragon's identical dice-rolled copy while its pump (read without the covering clause's comma) stayed.
     for (const [twin, covering] of identicalTwinOf) {

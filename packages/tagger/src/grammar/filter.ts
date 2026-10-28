@@ -2511,7 +2511,7 @@ function isPlayerPhrase(toks: string[]): boolean {
 /** Where a new noun phrase can start after "and" / "or": its determiner. */
 const NP_START = new Set(["a", "an", "target", "each", "another", "up", "all", "other", "any", "one", "two", "three", "x", "your"]);
 
-const stableJson = (v: unknown): string => Array.isArray(v) ? `[${v.map(stableJson).join(",")}]`
+export const stableJson = (v: unknown): string => Array.isArray(v) ? `[${v.map(stableJson).join(",")}]`
   : v && typeof v === "object" ? `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${stableJson((v as Record<string, unknown>)[k])}`).join(",")}}`
   : JSON.stringify(v);
 

@@ -842,8 +842,8 @@ export function deriveMana(input: ManaInput): ManaResult {
       };
       // ONE PRINTED ADD, TWO CLAUSES: "Whenever you cast or copy ..." (Ashling) arrives as a cast clause and a copy clause, each with the
       // same add. An identical trigger line is the same add read twice. CEILING: a card printing two identical trigger adds would merge; the
-      // merged line keeps the first clause's `trigger`.
-      const sameAdd = (l: ManaLine): boolean => JSON.stringify({ ...l, trigger: null }) === JSON.stringify({ ...line, trigger: null });
+      // merged line keeps the first clause's `trigger`. `repeats` is not compared (#1376): derive folds the second clause's textless twin ability, so that clause reads no ability of its own.
+      const sameAdd = (l: ManaLine): boolean => JSON.stringify({ ...l, trigger: null, repeats: null }) === JSON.stringify({ ...line, trigger: null, repeats: null });
       if ((source === "trigger" || source === "aura-trigger") && lines.some(sameAdd)) continue;
       lines.push(line);
     }
