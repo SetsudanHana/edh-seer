@@ -38,9 +38,10 @@ export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
         && !lostTriggerFlags(tags.abilities, grammarTags.abilities);
       // MANA IS NOT IN `deriveDiff`: a card whose grammar reading derives other mana fields keeps the stored answer, identical abilities or not.
       // #1376: the stored answer IS the grammar's abilities with exact duplicates (`sameButDoubled`, the grammar having none): the grammar reading drops them.
-      // CEILING: the other two paths still take a grammar reading that carries exact duplicates of its own (one ability per granted keyword or tapped object, each
-      // carrying the whole list: Colossus of Akros' trample twice, Silverquill Pledgemage's cast/copy pair twice), as they did at derive 400: refusing them on every path
-      // reverted 63 such switches (18 even allowing as many duplicates as the stored answer), with real gains lost (Dragon Turtle's taps, Skrelv's toxic). The doubling is the grammar path's (#1391).
+      // Keyword-grant twins (one ability per granted keyword, each carrying the clause's whole list: Colossus of Akros' trample, Silverquill Pledgemage's cast/copy pair)
+      // are folded in derive itself since DERIVE 402 (#1391), on both paths, so they no longer reach this switch.
+      // CEILING: the other two paths still take a grammar reading that carries other exact duplicates of its own (50 grammar cards at derive 402: Dragon Turtle's two
+      // taps, search / token / draw shapes): refusing them on every path reverted 63 switches at derive 401, with real gains lost (Dragon Turtle's taps, Skrelv's toxic).
       const sameButDoubled = key !== null && dedupe(grammarTags.abilities).length === grammarTags.abilities.length && deriveDiff(dedupe(tags.abilities), grammarTags.abilities) === null;
       if ((key === null || right || sameButDoubled) && !manaDiffers(tags, grammarTags)) return { tags: grammarTags, fromGrammar: true };
     }
