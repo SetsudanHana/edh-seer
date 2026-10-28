@@ -564,7 +564,8 @@ import { emblemRecipient } from "../emblem.js";
 // 399: #1385 -- type words inside a token's QUOTED ability are not the token's types: `parseSubject` cuts double-quoted spans (not a quoted name) before any sweep. The Prydwen's Human Knight was `[creature, artifact]`, an Equipment artifact token `[creature, artifact]` ("Equipped creature gets +1/+0"), Ka-Zar's Zabu `[creature, land]`.
 // 400: #1380 -- the blocks twin fold compares amount VALUES, not their presence: equal after normalising (sign kept, "-1/-1" is not "+1/+1") or the twin plus a trailing "where X is ...", or the twin as the whole of that explanation (Freelance Muscle) (Mana-Charged Dragon's "X/0" inside "+X/+0, where X is ..." still folds; "1" beside "2" or "+1/+1" no longer does); count by equality.
 // 401: #1376 -- the textless-twin fold runs on every event and on split ids (Korvold's 2.1), not only blocks / becomes-blocked on integer ids, and compares abilities key-order-insensitively (Primeval Herald's twin carried the same effect.subject keys in another order); `deriveRow`'s switch also takes the grammar reading when the stored answer is it with exact duplicates. Measured (derive-identity ALL=1 vs stored 400): 226 cards change; 2 are stale before the change (Plan for All Outcomes, Overwrite the Multiverse); 202 are pure removals; 21 switch to the grammar reading; 1 (Mage Hunter) stays unfolded because its twin is richer. In the model path itself the fold adds 0 lines on all 24 non-pure cards.
-export const DERIVE_VERSION = 401;
+// 402: #1391 -- a clause with several grant-ability actions (Colossus of Akros' trample + "can attack as though it didn't have defender"; Silverquill Pledgemage's flying + lifelink; the model store's one action per keyword) derived one keyword-grant / speed-increase ability per action, each carrying the whole clause's union of `grants`, so JSON-identical twins; derive keeps the first of each (`foldGrantTwins`, applied last by deriveCardTags; derive-worker's switch decides on the UNFOLDED readings and folds the winner, because folding first changed its count keys and moved 39 cards model -> grammar into labels judged on other cards). Measured (full re-derive): cards with exact-duplicate abilities 557 -> 153 (grammar 361 -> 50, model 196 -> 103); switch decisions identical to 401 (0 cards move); panel precision 100.0% / retention 98.4% (428 held, 7 lost) unchanged; role-ratchet gained 0 lost 0; dropped-clauses 5178 actions / 4530 cards unchanged.
+export const DERIVE_VERSION = 402;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -3637,7 +3638,8 @@ export function deriveAbilities(
       const payment = abilities[i].cost !== undefined ? paymentOf(abilities[i].cost, cardName) : undefined;
       if (payment) abilities[i] = { ...abilities[i], payment };
       // WHICH KEYWORDS A GRANT HANDS OUT (#857): read off the clause's grant objects against the CR
-      // keyword-ability list. CEILING: a clause with two grants gives each ability the union.
+      // keyword-ability list. A clause with two grants gives each ability the union, which is why the
+      // twins are folded at the end (`foldGrantTwins`).
       // A SPEED GRANT TOO (#1079): haste and double strike share `speed-increase`, and without its
       // keywords Chocobo Knights' double strike read "grants haste".
       if (abilities[i].effect?.kind === "keyword-grant" || abilities[i].effect?.kind === "speed-increase") {
@@ -3877,7 +3879,24 @@ export function deriveAbilitiesOf(input: DeriveInput): ReturnType<typeof deriveA
     input.clauseFaces, castAtInstantSpeed, input.clauseRequires, input.readings,
     chars.subtypes.some((t) => t.toLowerCase() === "curse"), chars.types.some((t) => t.toLowerCase() === "creature"), input.clauseGrants, input.modalHeads);
 }
-export function deriveCardTags(input: DeriveInput): CardTags {
+/** THE UNION MAKES THE TWINS (#1391): derive makes one ability per action and every keyword-grant /
+ *  speed-increase ability carries the UNION of its clause's grant-ability actions, so two grants on one
+ *  subject and trigger (Colossus of Akros' trample + "can attack as though it didn't have defender";
+ *  Silverquill Pledgemage's flying + lifelink, once per trigger reading) came out JSON-identical. Keeps
+ *  the first of each. The JSON includes `clause`, so a global pass equals a per-clause one. Only these
+ *  two kinds. CEILING: grants that differ by trigger reading stay, each still carrying the clause's union.
+ *  Run LAST (`deriveCardTags`), and by `deriveRow` on the tags the card-by-card switch picked: the
+ *  switch itself compares UNFOLDED readings. */
+export function foldGrantTwins(abilities: Ability[]): Ability[] {
+  const seen = new Set<string>();
+  return abilities.filter((a) => {
+    const k = a.effect?.kind;
+    if (k !== "keyword-grant" && k !== "speed-increase") return true;
+    const key = stableJson(JSON.parse(JSON.stringify(a)));
+    return !seen.has(key) && !!seen.add(key);
+  });
+}
+export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: boolean } = {}): CardTags {
   const chars = input.characteristics;
   const derived = deriveAbilitiesOf(input);
   const { unknownTriggers, unclaimedAt } = derived;
@@ -3973,7 +3992,7 @@ export function deriveCardTags(input: DeriveInput): CardTags {
     promptVersion: 0,
     model: "derived",
     characteristics: creatureOnlyIf ? { ...input.characteristics, creatureOnlyIf: true } : input.characteristics,
-    abilities: spellOnce,
+    abilities: opts.foldGrantTwins === false ? spellOnce : foldGrantTwins(spellOnce),
     // MANA PRODUCTION, read once (#1169). Each key is written only when the card has it.
     ...deriveMana({
       clauses: input.clauses, abilities: spellOnce, chars, name: input.name, foldedClauses: derived.folded,

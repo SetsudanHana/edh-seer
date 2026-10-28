@@ -7,7 +7,7 @@ import { charsFrom, deriveInputOf } from "./derive-input.js";
 import { grammarClauseRecords } from "./grammar/clause-record.js";
 import { deriveDiff, lostClaims, lostScaledAmount, lostSubjectFields, lostTriggerFlags, manaDiffers } from "./grammar/derive-diff.js";
 import triage from "../grammar-only-triage.json" with { type: "json" };
-import { deriveCardTags } from "./derive/derive.js";
+import { deriveCardTags, foldGrantTwins } from "./derive/derive.js";
 import type { CardClausesDoc, DerivedTagsDoc } from "./clause-store.js";
 import type { CardTags } from "./schema.js";
 
@@ -17,11 +17,14 @@ export interface DeriveResult { tags: CardTags; fromGrammar: boolean }
 /** Drops exact-duplicate abilities (same JSON, clause included), keeping the first. */
 function dedupe<T>(xs: T[]): T[] { const seen = new Set<string>(); return xs.filter((a) => { const k = JSON.stringify(a); return !seen.has(k) && !!seen.add(k); }); }
 
+/** The keyword-grant twin fold (#1391) applies to whichever tags win, never before the switch. */
+const folded = (t: CardTags): CardTags => ({ ...t, abilities: foldGrantTwins(t.abilities) });
+
 export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
   // Always re-read printed characteristics from the card/token document. Reusing the existing
   // derived doc's copy would carry stale colours or a stale type line forward through every
   // re-derive, which is the opposite of what a free rebuild is for.
-  const tags = deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, doc.canonical, isToken ? tokenCharsFrom(source as never) : undefined));
+  const tags = deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, doc.canonical, isToken ? tokenCharsFrom(source as never) : undefined), { foldGrantTwins: false });
   // THE CARD-BY-CARD SWITCH (#896 task 7, owner 2026-10-02, option 1): a card the grammar reads
   // completely derives from its printed text alone -- no model answer in the loop -- when that gives
   // the same abilities as the stored answer, or a difference whose group is labelled "grammar right"
@@ -29,7 +32,7 @@ export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
   if (!isToken) {
     const g = grammarClauseRecords(source as never);
     if (g.complete) {
-      const grammarTags = deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, g.records, undefined, g.readings));
+      const grammarTags = deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, g.records, undefined, g.readings), { foldGrantTwins: false });
       const key = deriveDiff(tags.abilities, grammarTags.abilities);
       // A labelled difference switches only when the grammar claims at least what the stored answer
       // claims (`lostClaims`): the label was judged on a few cards, the guard holds for every card.
@@ -38,14 +41,16 @@ export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
         && !lostTriggerFlags(tags.abilities, grammarTags.abilities);
       // MANA IS NOT IN `deriveDiff`: a card whose grammar reading derives other mana fields keeps the stored answer, identical abilities or not.
       // #1376: the stored answer IS the grammar's abilities with exact duplicates (`sameButDoubled`, the grammar having none): the grammar reading drops them.
-      // CEILING: the other two paths still take a grammar reading that carries exact duplicates of its own (one ability per granted keyword or tapped object, each
-      // carrying the whole list: Colossus of Akros' trample twice, Silverquill Pledgemage's cast/copy pair twice), as they did at derive 400: refusing them on every path
-      // reverted 63 such switches (18 even allowing as many duplicates as the stored answer), with real gains lost (Dragon Turtle's taps, Skrelv's toxic). The doubling is the grammar path's (#1391).
+      // Keyword-grant twins (one ability per granted keyword, each carrying the clause's whole list: Colossus of Akros' trample, Silverquill Pledgemage's cast/copy pair)
+      // are folded (#1391) AFTER this switch, on the tags it picks: the switch compares UNFOLDED readings. Folding first changed the `abilities:N->M` diff keys, so labelled
+      // "grammar right" count keys took new members judged on other cards (39 cards model->grammar, 4 grammar->model vs derive 401, wrong readings among them).
+      // CEILING: the other two paths still take a grammar reading that carries other exact duplicates of its own (50 grammar cards at derive 402: Dragon Turtle's two
+      // taps, search / token / draw shapes): refusing them on every path reverted 63 switches at derive 401, with real gains lost (Dragon Turtle's taps, Skrelv's toxic).
       const sameButDoubled = key !== null && dedupe(grammarTags.abilities).length === grammarTags.abilities.length && deriveDiff(dedupe(tags.abilities), grammarTags.abilities) === null;
-      if ((key === null || right || sameButDoubled) && !manaDiffers(tags, grammarTags)) return { tags: grammarTags, fromGrammar: true };
+      if ((key === null || right || sameButDoubled) && !manaDiffers(tags, grammarTags)) return { tags: folded(grammarTags), fromGrammar: true };
     }
   }
-  return { tags, fromGrammar: false };
+  return { tags: folded(tags), fromGrammar: false };
 }
 
 /** Same shape as `charsFrom`, plus `token: true` -- or, for a layout-`emblem` row, `emblem: true`

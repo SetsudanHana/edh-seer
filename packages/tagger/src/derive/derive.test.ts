@@ -6803,3 +6803,32 @@ describe("amountCovered / countCovered, the blocks twin fold's value comparison 
     expect(countCovered({ floor: 1, ceiling: 1 }, undefined)).toBe(false);
   });
 });
+
+// #1391: a clause with several grant-ability actions gives each keyword-grant ability the UNION of the grants, so
+// the abilities were JSON-identical twins; the first is kept.
+describe("keyword-grant twins from one clause fold (#1391)", () => {
+  const grammarAbilities = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities;
+  };
+  test("Colossus of Akros: two grant-ability actions on a static clause derive ONE grant", () => {
+    const ab = grammarAbilities("Colossus of Akros", "Artifact Creature — Golem", "As long as this creature is monstrous, it has trample and can attack as though it didn't have defender.");
+    const grants = ab.filter((a) => a.effect?.kind === "keyword-grant");
+    expect(grants).toHaveLength(1);
+    expect(grants[0]!.grants).toEqual(["trample"]);
+  });
+  test("Silverquill Pledgemage: cast and copy readings, one grant each (2 abilities, not 4)", () => {
+    const ab = grammarAbilities("Silverquill Pledgemage", "Creature — Human Warlock", "Whenever you cast or copy an instant or sorcery spell, this creature gains your choice of flying or lifelink until end of turn.");
+    const grants = ab.filter((a) => a.effect?.kind === "keyword-grant");
+    expect(grants).toHaveLength(2);
+    expect(grants.map((a) => a.trigger?.verbs?.join("|")).sort()).toEqual(["cast", "copy"]);
+    for (const a of grants) expect(a.grants).toEqual(["flying", "lifelink"]);
+  });
+  test("grants in DIFFERENT clauses are not folded (the fold is per clause)", () => {
+    const ab = grammarAbilities("Test Anthem", "Creature — Elf", "Whenever this creature attacks, it gains flying until end of turn.\nWhenever this creature blocks, it gains flying until end of turn.");
+    const grants = ab.filter((a) => a.effect?.kind === "keyword-grant");
+    expect(grants).toHaveLength(2);
+    expect(new Set(grants.map((a) => a.clause)).size).toBe(2);
+  });
+});
