@@ -6699,6 +6699,8 @@ test("abilityKey compares objects regardless of key order and ignores clause / a
   const a = { clause: 1, amount: "1", effect: { kind: "x", subject: { control: "you", token: true, basic: true, type: ["land"] } } } as never;
   const b = { clause: 2, count: 3, effect: { subject: { control: "you", token: true, type: ["land"], basic: true }, kind: "x" } } as never;
   expect(abilityKey(a)).toBe(abilityKey(b));
+  // JSON.stringify drops an explicit-undefined field; so must the key.
+  expect(abilityKey({ clause: 1, effect: { kind: "x", gate: undefined } } as never)).toBe(abilityKey({ clause: 1, effect: { kind: "x" } } as never));
   expect(abilityKey({ clause: 1, effect: { kind: "y" } } as never)).not.toBe(abilityKey({ clause: 1, effect: { kind: "z" } } as never));
 });
 

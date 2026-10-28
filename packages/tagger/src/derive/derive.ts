@@ -2189,7 +2189,7 @@ export function exilesTopOfLibrary(text: string): boolean {
 }
 
 /** An ability apart from its clause, amount and count, as JSON whose object keys are sorted: the same ability built with its keys in another order (Primeval Herald's twin) compares equal. */
-export function abilityKey(x: Ability): string { const { clause: _c, amount: _a, count: _n, ...rest } = x; return stableJson(rest); }
+export function abilityKey(x: Ability): string { const { clause: _c, amount: _a, count: _n, ...rest } = x; return stableJson(JSON.parse(JSON.stringify(rest))); }
 
 /** AN AMOUNT SPELLING, NORMALISED FOR THE TWIN FOLD (#1380): lower-case, `+` deleted, `-` kept (the sign of a pump is its meaning), every other non-alphanumeric a space.
  *  "+X/+0, where X is" -> "x 0 where x is"; "-1/-1" -> "-1 -1"; "+1/+1" -> "1 1". */

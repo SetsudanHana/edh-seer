@@ -1050,3 +1050,12 @@ describe("token makers: Vibranium and Heartwood (#1282)", () => {
     expect(replacementAddedToken("If you would create a Treasure token, instead create a Treasure token and a Vibranium token.")).toBe("vibranium");
   });
 });
+
+// #1376: the textless copy clause of "cast or copy" is folded by derive's twin fold, so it reads no ability of its own (`repeats` null beside the cast clause's value); the merge must still see ONE add.
+describe("one printed add across a cast clause and a textless copy clause (#1376)", () => {
+  it("Ashling, Flame Dancer: one trigger line", () => {
+    const fx = (fixtures as unknown as Record<string, { card: Record<string, unknown> & { _id: string; name: string }; clauses: never[] }>)["Ashling, Flame Dancer"]!;
+    const tags = deriveCardTags(deriveInputOf(fx.card as never, fx.card._id, fx.card.name, fx.clauses));
+    expect((tags.manaLines ?? []).filter((l) => l.source === "trigger")).toHaveLength(1);
+  });
+});
