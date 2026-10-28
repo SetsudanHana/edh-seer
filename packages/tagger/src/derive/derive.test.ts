@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from "vitest";
-import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, amountCovered, countCovered, exilesTopOfLibrary, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
+import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, abilityKey, amountCovered, countCovered, exilesTopOfLibrary, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import { targetsASpellEarlier } from "./emits.js";
 import { exileNamesOnlyGraveyards } from "./effect-kind.js";
@@ -6668,6 +6668,40 @@ test("a textless 'blocks' record beside the 'attacks' record that already reads 
   expect(draws.filter((a) => a.trigger?.verbs.includes("attacks" as never))).toHaveLength(1);
   expect(draws.filter((a) => a.trigger?.verbs.includes("blocks" as never))).toHaveLength(1);
   expect(r.spliced.has(2)).toBe(true);
+});
+
+// #1376: the fold runs on EVERY event, not only blocks / becomes-blocked.
+test("a textless 'attacks' record beside the 'enters' record that already reads 'enters or attacks' derives ONE attacks ability", () => {
+  const text = "Whenever this creature enters or attacks, draw a card.";
+  const draw = { verb: "draw", object: "you", amount: "1", fromZone: null, toZone: null, optional: false };
+  const r = deriveAbilities([
+    { id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [draw] },
+    { id: 2, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: [draw] },
+  ], "Enter Attacker", { 1: text }, undefined, text);
+  expect(r.abilities.filter((a) => a.trigger?.verbs.includes("attacks" as never))).toHaveLength(1);
+  expect(r.spliced.has(2)).toBe(true);
+});
+
+// The model stores a split sub-record under a fractional id (Korvold: "enters or attacks" is 2 and 2.1); clauseTexts only has the integer key.
+test("a textless twin with a split id (2.1) folds into its covering clause", () => {
+  const text = "Whenever this creature enters or attacks, draw a card.";
+  const draw = { verb: "draw", object: "you", amount: "1", fromZone: null, toZone: null, optional: false };
+  const r = deriveAbilities([
+    { id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [draw] },
+    { id: 2.1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: [draw] },
+  ], "Split Id", { 2: text }, undefined, text);
+  expect(r.abilities.filter((a) => a.trigger?.verbs.includes("attacks" as never))).toHaveLength(1);
+  expect(r.spliced.has(2.1)).toBe(true);
+});
+
+// Primeval Herald's twin carried the same effect.subject keys in another order; JSON.stringify called them different and the duplicates stayed.
+test("abilityKey compares objects regardless of key order and ignores clause / amount / count", () => {
+  const a = { clause: 1, amount: "1", effect: { kind: "x", subject: { control: "you", token: true, basic: true, type: ["land"] } } } as never;
+  const b = { clause: 2, count: 3, effect: { subject: { control: "you", token: true, type: ["land"], basic: true }, kind: "x" } } as never;
+  expect(abilityKey(a)).toBe(abilityKey(b));
+  // JSON.stringify drops an explicit-undefined field; so must the key.
+  expect(abilityKey({ clause: 1, effect: { kind: "x", gate: undefined } } as never)).toBe(abilityKey({ clause: 1, effect: { kind: "x" } } as never));
+  expect(abilityKey({ clause: 1, effect: { kind: "y" } } as never)).not.toBe(abilityKey({ clause: 1, effect: { kind: "z" } } as never));
 });
 
 // #1373 review of the fold: a textless blocks record is folded ONLY when every one of its abilities has an exact match among the covering clause's, so a fold is always a

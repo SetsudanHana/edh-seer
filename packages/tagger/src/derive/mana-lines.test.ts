@@ -1050,3 +1050,29 @@ describe("token makers: Vibranium and Heartwood (#1282)", () => {
     expect(replacementAddedToken("If you would create a Treasure token, instead create a Treasure token and a Vibranium token.")).toBe("vibranium");
   });
 });
+
+// #1376: the textless copy clause of "cast or copy" is folded by derive's twin fold, so it reads no ability of its own (`repeats` null beside the cast clause's value); the merge must still see ONE add.
+describe("one printed add across a cast clause and a textless copy clause (#1376)", () => {
+  it("Ashling, Flame Dancer: one trigger line", () => {
+    const fx = (fixtures as unknown as Record<string, { card: Record<string, unknown> & { _id: string; name: string }; clauses: never[] }>)["Ashling, Flame Dancer"]!;
+    const tags = deriveCardTags(deriveInputOf(fx.card as never, fx.card._id, fx.card.name, fx.clauses));
+    expect((tags.manaLines ?? []).filter((l) => l.source === "trigger")).toHaveLength(1);
+  });
+});
+
+// #1376 review: "enters or attacks" is stored as two records, the second textless. The fold splices its ability, but its Vibranium line is still a PER-CYCLE line beside the enters half's ONCE line (T'Challa, the Black Panther: card fields and stored canonical dumped from Mongo).
+describe("a folded textless twin keeps its token-maker line's repeats (#1376)", () => {
+  it("T'Challa: one token-maker line for enters (once) and one for attacks (per-cycle)", () => {
+    const source = {"oracleText":"Whenever T'Challa enters or attacks, create a tapped Vibranium token. (It's an artifact with indestructible and \"{T}: Add {C}. This mana can't be spent to cast a nonartifact spell.\")\nWhenever you cast an artifact spell with mana value 4 or greater, put two +1/+1 counters on T'Challa.","keywords":[],"typeLine":"Legendary Creature — Human Noble Hero","name":"T'Challa, the Black Panther","manaCost":"{1}{G}{W}","colors":["G","W"],"colorIdentity":["G","W"],"manaValue":3,"power":"2","toughness":"2","layout":"normal"};
+    const canonical = [{"id":1,"abilityType":"triggered","trigger":{"event":"enters","subject":"T'Challa","control":"you"},"actions":[{"verb":"create","object":"a tapped Vibranium token","fromZone":null,"toZone":null,"amount":"1","optional":false}]},{"id":2,"abilityType":"triggered","trigger":{"event":"cast","subject":"an artifact spell with mana value 4 or greater","control":"you"},"actions":[{"verb":"add-counter","object":"+1/+1","fromZone":null,"toZone":null,"amount":"2","optional":false}]},{"id":3,"abilityType":"triggered","trigger":{"event":"attacks","subject":"T'Challa","control":"you"},"actions":[{"verb":"create","object":"a tapped Vibranium token","fromZone":null,"toZone":null,"amount":"1","optional":false}]}];
+    const tags = deriveCardTags(deriveInputOf(source as never, "ae10eb15-28e7-46d1-9a2e-85763d93febf", source.name, canonical as never));
+    expect((tags.manaLines ?? []).filter((l) => l.source === "token-maker").map((l) => l.repeats)).toEqual(["once", "per-cycle"]);
+  });
+  // The fetch line keys the same way (Primeval Herald: card fields and stored canonical dumped from Mongo; record 3 is the textless attacks twin).
+  it("Primeval Herald: one fetch line for enters (once) and one for attacks (per-cycle)", () => {
+    const source = {"oracleText":"Trample (This creature can deal excess combat damage to the player or planeswalker it's attacking.)\nWhenever this creature enters or attacks, you may search your library for a basic land card, put it onto the battlefield tapped, then shuffle.","keywords":["Trample"],"typeLine":"Creature — Elf Scout","name":"Primeval Herald","manaCost":"{3}{G}","colors":["G"],"colorIdentity":["G"],"manaValue":4,"power":"3","toughness":"1","layout":"normal"};
+    const canonical = [{"id":1,"abilityType":"none","actions":[{"verb":"none","object":"Trample","fromZone":null,"toZone":null}]},{"id":2,"abilityType":"triggered","trigger":{"event":"enters","subject":"this creature","control":"you"},"actions":[{"verb":"search","object":"your library for a basic land card","fromZone":"library","toZone":null,"amount":null,"optional":true},{"verb":"put","object":"it","fromZone":"library","toZone":"battlefield","amount":null,"optional":false},{"verb":"tap","object":"it","fromZone":null,"toZone":null,"amount":null,"optional":false},{"verb":"shuffle","object":"your library","fromZone":null,"toZone":null,"amount":null,"optional":false}]},{"id":3,"abilityType":"triggered","trigger":{"event":"attacks","subject":"this creature","control":"you"},"actions":[{"verb":"search","object":"your library for a basic land card","fromZone":"library","toZone":null,"amount":null,"optional":true},{"verb":"put","object":"it","fromZone":"library","toZone":"battlefield","amount":null,"optional":false},{"verb":"tap","object":"it","fromZone":null,"toZone":null,"amount":null,"optional":false},{"verb":"shuffle","object":"your library","fromZone":null,"toZone":null,"amount":null,"optional":false}]}];
+    const tags = deriveCardTags(deriveInputOf(source as never, "primeval-herald", source.name, canonical as never));
+    expect((tags.manaLines ?? []).filter((l) => l.source === "fetch").map((l) => l.repeats)).toEqual(["once", "per-cycle"]);
+  });
+});

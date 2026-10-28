@@ -363,7 +363,7 @@ describe("a LEADING condition gates the effect it governs (#1357 part 2)", () =>
       { id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "Agrus Kos", control: "you" }, actions: [act("exile", "target creature", { toZone: "exile", optional: true })] },
       { id: 3, abilityType: "triggered", trigger: { event: "attacks", subject: "Agrus Kos", control: "you" }, actions: [act("exile", "target creature", { toZone: "exile", optional: true })] },
     ]);
-    expect(tags.abilities.filter((a) => a.gate !== undefined).map((a) => a.gate)).toEqual(Array(3).fill({ kind: "unknown", text: "it's suspected" }));
+    expect(tags.abilities.filter((a) => a.gate !== undefined).map((a) => a.gate)).toEqual(Array(2).fill({ kind: "unknown", text: "it's suspected" })); // enters + attacks; the textless attacks record 3 is a folded twin (#1376)
   });
 });
 
