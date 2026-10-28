@@ -640,6 +640,16 @@ const OTHER_OBJECT = /\b(?:target|another|each other|any other)\b/i;
  *  ability (Sinking Feeling), whose "this creature" is the grantee. */
 const COUNTER_PUT_AS_COST = /\bput (?:an?|one|two|three|x) [^,:]*?counters? on\b/i;
 const COUNTER_PREP = /\bcounters?\s+on\b/i;
+/** ONE COUNTER PLACEMENT PER RECIPIENT (#1391 F5): "put a +1/+1 counter on that creature and a +1/+1 counter on this creature" (Juniper Order Ranger, Sumala Sentry) stores two add-counter actions whose objects name no
+ *  recipient, and the clause text read whole made both "on that" (not self). When the clause has as many `counter(s) on <X>` phrases as add-counter actions, the nth action reads its own phrase.
+ *  CEILING: only a clause whose phrase count equals its add-counter action count; "a counter on each of two creatures" or a list the store split otherwise reads the whole text, as before. */
+function ownCounterPhrase(action: Action, actions: Action[], text: string): string {
+  if (action.verb !== "add-counter") return text;
+  const mine = actions.filter((a) => a.verb === "add-counter");
+  if (mine.length < 2) return text;
+  const phrases = [...text.matchAll(/\bcounters?\s+on\s+[^,.;]*?(?=\s+and\s+(?:an?|one|two|three|four|five|x|\d+)\s+[^,.;]*?counters?\s+on\b|[,.;]|$)/gi)].map((m) => m[0]);
+  return phrases.length === mine.length ? phrases[mine.indexOf(action)]! : text;
+}
 function counterOnSelf(verb: string | undefined, text: string, cardName?: string, triggerIsSelf = false): boolean {
   if (verb === "adapt" || verb === "monstrosity") return true;
   if ((verb !== "add-counter" && verb !== "remove-counter") || !text) return false;
@@ -2876,7 +2886,7 @@ export function deriveAbilities(
         // 4,321 corpus counter emits carried no `self` -- every self-growing creature "fed" every
         // "whenever you put counters on THIS creature" payoff. The recipient is in the clause text.
         // A COUNTER REMOVED AS A COST names its permanent in the cost, not in the effect text.
-        || counterOnSelf(action.verb, (action.verb === "remove-counter" && /\bcounters?\b/i.test(cost)) || (action.verb === "add-counter" && COUNTER_PUT_AS_COST.test(cost) && !COUNTER_PREP.test(text) && clauseGrants?.[clause.id as number] === undefined) ? cost : text, cardName, isSelfSubject(clause.trigger?.subject ?? "", cardName))
+        || counterOnSelf(action.verb, (action.verb === "remove-counter" && /\bcounters?\b/i.test(cost)) || (action.verb === "add-counter" && COUNTER_PUT_AS_COST.test(cost) && !COUNTER_PREP.test(text) && clauseGrants?.[clause.id as number] === undefined) ? cost : ownCounterPhrase(action, clause.actions ?? [], text), cardName, isSelfSubject(clause.trigger?.subject ?? "", cardName))
         // A pronoun standing in for the card itself. Tested on the RESOLVED antecedent, because the
         // raw object is "it" and matches none of the spellings above.
         || (PRONOUN_OBJECT.test((action.object ?? "").trim())

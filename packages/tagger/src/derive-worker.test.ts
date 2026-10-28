@@ -137,3 +137,10 @@ test("Arachnus Web (stored attack / block / activated-abilities actions): one re
 test("Faith's Fetters (grammar): the 'unless they're mana abilities' rider is the ability-loss's alone, so the restriction derives", () => {
   expect(kinds(f567("Faith's Fetters", "grammar"))).toEqual(["ability-loss", "restriction"]);
 });
+
+// F5: "put a +1/+1 counter on that creature and a +1/+1 counter on this creature" is one placement on the trigger's creature and one on the card itself.
+const counterEmits = (row: ReturnType<typeof deriveRow>) => row.tags.abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.verb === "counter-added").map((e) => e.subject.self === true));
+test("Juniper Order Ranger (grammar) and Sumala Sentry (stored): one counter on the trigger's permanent, one on self", () => {
+  expect(counterEmits(f567("Juniper Order Ranger", "grammar"))).toEqual([false, true]);
+  expect(counterEmits(f567("Sumala Sentry", "model"))).toEqual([false, true]);
+});
