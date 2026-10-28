@@ -1922,7 +1922,18 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
   const readings = (precomputed ?? parseActions(effectText(text, cardName ?? ""), clause.abilityType ?? null, cost))
     .filter((r) => GRAMMAR_ACTION_VERBS.has(r.verb));
   if (readings.length === 0) return clause;
-  const stored = clause.actions;
+  // THE STORE WRITES "can't attack or block" AS TWO ACTIONS (attack, block) where the grammar reads ONE phrase (#1391 F7, Arachnus Web: attack, block, activated abilities against attack-or-block, activate): aligned by
+  // position the grammar's second phrase took the BLOCK action's place and the real activated-abilities action was left over, so one restriction and TWO ability-loss derived. A stored bare "block" / "attack"
+  // that an earlier stored bare combat action's reading already covers ("attack or block") is dropped before the alignment.
+  const combatWords = (o: string | undefined): string[] => (/^(?:attack|block)(?: or (?:attack|block))?$/i.exec((o ?? "").trim()) ? (o ?? "").toLowerCase().match(/attack|block/g)! : []);
+  const coveredByReading = new Set(readings.filter((r) => r.verb === "cant").flatMap((r) => combatWords(r.text)));
+  let seenCombat = false;
+  const stored = clause.actions.filter((a) => {
+    if (a.verb !== "cant" || !/^(?:attack|block)$/i.test((a.object ?? "").trim())) return true;
+    const dup = seenCombat && coveredByReading.has((a.object ?? "").trim().toLowerCase());
+    seenCombat = true;
+    return !dup;
+  });
   // The store files "becomes prepared" as a grant of "prepared" (Codie): a prepare, not a grant, so it
   // takes no grant's reading ("becomes prepared and gains hexproof" would hand it "hexproof").
   const verbOf = (a: Action): string => (a.verb === "grant-ability" && /^prepared$/i.test((a.object ?? "").trim()) ? "prepare" : a.verb ?? "");

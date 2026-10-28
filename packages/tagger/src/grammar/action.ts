@@ -1527,9 +1527,13 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   const rs = restrictionOf(t);
   // A restriction's "unless" is part of it: "can't attack you unless their controller pays {2}" is a
   // tax, which derive reads off the restriction's own words.
+  // ...but "unless they're mana abilities" belongs to the activated-abilities phrase ALONE (#1391 F7, Faith's Fetters: "can't attack or block, and its activated abilities can't be activated unless they're mana
+  // abilities"): on the attack-or-block phrase it hid the restriction. The rider is read off the sentence, so a list's first phrase takes none.
+  const abilitiesRider = (rs?.length ?? 0) > 1 && /^unless (?:they're|they are) mana abilities$/i.test(condition ?? "");
   if (rs) return rs.map((a) => {
-    const unless = a.verb === "cant" && condition?.startsWith("unless ") ? condition : undefined;
-    const cond = [unless ? undefined : condition, a.condition].filter(Boolean).join(", ");
+    const ridden = abilitiesRider && !/\babilit/i.test(a.text ?? "");
+    const unless = a.verb === "cant" && condition?.startsWith("unless ") && !ridden ? condition : undefined;
+    const cond = [unless || ridden ? undefined : condition, a.condition].filter(Boolean).join(", ");
     return { ...a, ...(unless ? { text: `${a.text} ${unless}` } : {}), ...(cond ? { condition: cond } : {}) };
   });
   // "Then if there are three or more promotion counters on ~, remove those counters" (Beckett Mariner, Prize Pig): every counter of the kind the condition counts, on

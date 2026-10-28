@@ -200,7 +200,9 @@ export function restrictedActions(object: string, clauseText = "", occurrence = 
     if (/\b(?:as long as|if|while)\b/i.test(head)) return undefined;
     const after = clauseText.slice(hit.index + hit[0].length);
     const end = after.indexOf(". ");
-    if (/\b(?:unless|if|as long as|only|alone|except|while)\b/i.test(end < 0 ? after : after.slice(0, end))) return undefined;
+    // ...up to a trailing "and its activated abilities can't be activated unless they're mana abilities" (Faith's Fetters, #1391 F7): that rider is the OTHER phrase's, the ability-loss.
+    const sentence = (end < 0 ? after : after.slice(0, end)).split(/,? and (?:its|their) activated abilities\b/i)[0]!;
+    if (/\b(?:unless|if|as long as|only|alone|except|while)\b/i.test(sentence)) return undefined;
   }
   const out = [m[1]!.toLowerCase(), ...(m[2] ? [m[2].toLowerCase()] : [])] as ("attack" | "block")[];
   return [...new Set(out)];
