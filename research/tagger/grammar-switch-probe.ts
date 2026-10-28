@@ -14,8 +14,9 @@ for await (const doc of store.db.collection<any>("cardClauses").find(filter)) {
   const src = await store.cards.findOne({ _id: doc.oracleId } as never) as any;
   const g = grammarClauseRecords(src);
   if (!g.complete) continue;
-  const m = deriveCardTags(deriveInputOf(src, doc.oracleId, doc.name, doc.canonical));
-  const gr = deriveCardTags(deriveInputOf(src, doc.oracleId, doc.name, g.records, undefined, g.readings));
+  // Instrument and switch must key the same readings: the switch compares UNFOLDED abilities (see the #1391 comment in derive-worker.ts).
+  const m = deriveCardTags(deriveInputOf(src, doc.oracleId, doc.name, doc.canonical), { foldGrantTwins: false });
+  const gr = deriveCardTags(deriveInputOf(src, doc.oracleId, doc.name, g.records, undefined, g.readings), { foldGrantTwins: false });
   const key = deriveDiff(m.abilities, gr.abilities);
   if (key === null) continue;
   const hand = JSON.stringify(m.abilities.concat(gr.abilities)).match(/"to-hand"|"toHand"/);
