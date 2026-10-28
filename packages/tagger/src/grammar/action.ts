@@ -1925,8 +1925,10 @@ export function parseActions(effect: string, type: string | null, cost?: string)
       // An other player the actor table does not name ("another target player", "the controller of ...") is read as any player, target / that.
       const named = both[1]!.toLowerCase();
       const table = ACTORS.find(([w]) => w === named)?.[1];
-      // A BACK-REFERENCED player ("that player", "those players", "the controller of ...", "another target player" is a target and not one) is not named outright: derive resolves it, and a
-      // pair read as you + a printed-words object made the damaged player's draw `you` (Diviner Spirit, Black Widow). Those keep the shared any / each actor with no text, as before.
+      // A BACK-REFERENCED player ("that player", "those players", "the controller of ...", "another target player" is a target and not one) is not named outright: a pair read as you + a
+      // printed-words object made the damaged player's draw `you` (Diviner Spirit, Black Widow). Those keep the shared any / each actor with no text, as before.
+      // CEILING: both halves read `any`, your own half too, until derive can name the back-referenced player (Master of Ceremonies' Treasure, Diviner Spirit's, Sergeant John Benton's,
+      // Black Widow's and Tenuous Truce's draws are never claimed as yours).
       if (!table || (table.control === "any" && table.scope === "that") || /^the controller of /.test(named)) {
         const shared: NonNullable<ActionReading["actor"]> = { control: "any", scope: "each" };
         for (let k = 0; k < 2; k++) for (const p of phrases(both[2]!)) { const r = readPhrase(p, condition, shared); if (r) out.push(...r); }
