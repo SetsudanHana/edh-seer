@@ -6864,7 +6864,7 @@ describe("two records sharing one id are a split compound (#1391)", () => {
       trig(2, "attacks", "this creature", [act("create", "a Treasure token", { amount: "1" })]),
       trig(2, "becomes-target", "this creature", [act("create", "a Treasure token", { amount: "1" })]),
     ], "Goldspan Dragon", { 1: "Flying, haste", 2: text }, undefined, `Flying, haste\n${text}`);
-    // The becomes-target half has no engine verb: it derives exactly what a lone becomes-target record does, a TRIGGER-LESS token-generation (no `claimsNothing`: nothing in it points back at the trigger), and
+    // The becomes-target half has no engine verb: like a refused-only record (Curator of Mysteries, Desert Warfare), it derives a TRIGGER-LESS token-generation (no `claimsNothing`: nothing in it points back at the trigger), and
     // "becomes-target" lands in unknownTriggers. The attacks half is one live token-generation, not two.
     expect(r.abilities.map((a) => [a.trigger?.verbs, a.effect.kind])).toEqual([[["attacks"], "token-generation"], [undefined, "token-generation"]]);
     expect(r.unknownTriggers).toContain("becomes-target");
