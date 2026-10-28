@@ -924,7 +924,8 @@ export function deriveMana(input: ManaInput): ManaResult {
       // A land: typed so, a basic, an "X or Desert card" (anyOf), or a basic land TYPE ("a Mountain card", Alpine Guide).
       const landish = (f?: SubjectFilter) => f !== undefined && (f.type === "land" || f.basic === true || (f.anyOf ?? []).some((o) => o.type === "land"));
       if (!(landish(subject) || landish(found) || named.some((n) => n in BASIC_COLOUR))) continue;
-      const dedupe = `fetch:${a.clause}:${JSON.stringify(subject)}`;
+      // Per trigger verb too on a clause a twin was folded into, as for token lines above (#1376: Primeval Herald's "enters or attacks" fetch is once AND per-cycle).
+      const dedupe = `fetch:${a.clause}:${JSON.stringify(subject)}${coveringOfFolded.has(a.clause!) ? `:${(a.trigger?.verbs ?? []).join(",")}` : ""}`;
       if (seenClauses.has(dedupe)) continue;
       seenClauses.add(dedupe);
       // "Search your library for a Forest card and a Plains card, put them onto the battlefield" (Krosan Verge) names two cards and carries no amount: one land per "a <X> card" conjunct.

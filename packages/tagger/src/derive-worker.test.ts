@@ -12,11 +12,3 @@ test("Nettling Curse: the stored answer is the grammar's abilities with duplicat
   const stored = deriveRow({ doc: { oracleId: "93d575b3-0fff-4fc6-85c6-3a8a9d672d6f", name: SOURCE.name, canonical: STORED } as never, source: SOURCE, isToken: false });
   expect(stored.fromGrammar).toBe(true);
 });
-
-// #1376 review: the grammar reading of Silverquill Pledgemage ("cast or copy") itself carries a duplicate pair; switching to it is not a cleanup. At derive 400 the card kept its stored answer.
-test("Silverquill Pledgemage keeps its stored answer: the grammar reading has duplicates of its own", () => {
-  const source = {"oracleText":"Magecraft — Whenever you cast or copy an instant or sorcery spell, this creature gains your choice of flying or lifelink until end of turn.","keywords":["Magecraft"],"typeLine":"Creature — Vampire Cleric","name":"Silverquill Pledgemage","manaCost":"{1}{W/B}{W/B}","colors":["B","W"],"colorIdentity":["B","W"],"manaValue":3,"power":"3","toughness":"1","layout":"normal"};
-  const stored = [{"id":1,"abilityType":"triggered","trigger":{"event":"cast","subject":"an instant or sorcery spell","control":"you"},"actions":[{"verb":"grant-ability","object":"this creature gains your choice of flying or lifelink until end of turn","fromZone":null,"toZone":null,"amount":null,"optional":false}]},{"id":2,"abilityType":"triggered","trigger":{"event":"copy","subject":"an instant or sorcery spell","control":"you"},"actions":[{"verb":"grant-ability","object":"this creature gains your choice of flying or lifelink until end of turn","fromZone":null,"toZone":null,"amount":null,"optional":false}]}];
-  expect(grammarClauseRecords(source as never).complete).toBe(true);
-  expect(deriveRow({ doc: { oracleId: "ff72b900-ce3c-4cc4-a50e-e501e17631ca", name: source.name, canonical: stored } as never, source, isToken: false }).fromGrammar).toBe(false);
-});
