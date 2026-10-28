@@ -6861,11 +6861,22 @@ describe("two records sharing one id are a split compound (#1391)", () => {
   test("Goldspan Dragon: 'attacks or becomes the target of a spell' derives attacks once, not twice", () => {
     const text = "Whenever this creature attacks or becomes the target of a spell, create a Treasure token.";
     const r = deriveAbilities([
-      trig(2, "attacks", "this creature", [act("create-token", "a Treasure token")]),
-      trig(2, "becomes-target", "this creature", [act("create-token", "a Treasure token")]),
+      trig(2, "attacks", "this creature", [act("create", "a Treasure token", { amount: "1" })]),
+      trig(2, "becomes-target", "this creature", [act("create", "a Treasure token", { amount: "1" })]),
     ], "Goldspan Dragon", { 1: "Flying, haste", 2: text }, undefined, `Flying, haste\n${text}`);
-    // The becomes-target half has no engine verb: it is refused (as a lone becomes-target record is), not read as a second attacks.
-    expect(verbsOf(r)).toEqual(["attacks"]);
+    // The becomes-target half has no engine verb: it derives exactly what a lone becomes-target record does, a TRIGGER-LESS token-generation (no `claimsNothing`: nothing in it points back at the trigger), and
+    // "becomes-target" lands in unknownTriggers. The attacks half is one live token-generation, not two.
+    expect(r.abilities.map((a) => [a.trigger?.verbs, a.effect.kind])).toEqual([[["attacks"], "token-generation"], [undefined, "token-generation"]]);
     expect(r.unknownTriggers).toContain("becomes-target");
+  });
+
+  test("Ultron's Auxiliary: stored 'dies' + 'exiled' keeps both limbs, each once (the second record must not borrow 'dies')", () => {
+    const text = "Whenever another artifact is put into your graveyard from the battlefield or an artifact card is put into your graveyard from anywhere other than the battlefield, put a +1/+1 counter on this creature.";
+    const counter = act("add-counter", "+1/+1", { amount: "1" });
+    const r = deriveAbilities([
+      trig(2, "dies", "another artifact", [counter]),
+      trig(2, "exiled", "an artifact card from anywhere other than the battlefield", [counter]),
+    ], "Ultron's Auxiliary", { 1: "Menace", 2: text }, undefined, `Menace\n${text}`);
+    expect(verbsOf(r)).toEqual(["dies", "enters-graveyard"]);
   });
 });

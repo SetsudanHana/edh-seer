@@ -1969,7 +1969,7 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
 
 type GrammarTrigger = { verbs: Verb[]; subject: SubjectFilter; blocker?: SubjectFilter; batched?: true } | { refused: string; subject?: SubjectFilter };
 
-function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, split: boolean, precomputed?: TriggerReading[], curse?: boolean, creatureCard?: boolean, textlessSibling?: boolean): GrammarTrigger[] | null {
+function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, siblingEvents: string[], precomputed?: TriggerReading[], curse?: boolean, creatureCard?: boolean, textlessSibling?: boolean): GrammarTrigger[] | null {
   // An Aura's "enchanted permanent" is the class its own face's Enchant line names (see subjectFrom).
   const bounded = boundedByEnchantLine(text, enchantText);
   const preamble = printedPreamble(bounded, cardName ?? "");
@@ -1990,8 +1990,16 @@ function grammarTriggersOf(text: string, cardName: string | undefined, storedEve
   // another artifact you control is put into a graveyard from the battlefield", Scrap Trawler). One
   // the store kept as ONE clause takes every reading: Bilbo's "enters or leaves the battlefield" was
   // a single `enters` clause, and its leave was lost.
-  const mine = readings.filter((x) => x.event === storedEvent);
-  const chosen = !split ? readings : mine.length > 0 ? mine : [readings[0]!];
+  // Events compare as NORMALIZED verbs: the store's `put-into-graveyard` is the grammar's `enters-graveyard`.
+  const verbOf = (e: string): string => normalizeTriggerVerb(e) ?? e;
+  const split = siblingEvents.length > 0;
+  const mine = readings.filter((x) => verbOf(x.event) === verbOf(storedEvent));
+  // A split record whose own event the grammar did not read takes the readings NO sibling record claims (Ultron's Auxiliary: stored `dies` + `exiled`, the grammar reads dies and the
+  // graveyard limb), never a sibling's: borrowing `readings[0]` made the second record a second `dies` and lost the other limb (#1391). When every reading is claimed by a
+  // sibling (a non-same-id split whose events all matched elsewhere) the old fallback, the first reading, stands.
+  const claimedBySibling = new Set(siblingEvents.map(verbOf));
+  const unclaimed = readings.filter((x) => !claimedBySibling.has(verbOf(x.event)));
+  const chosen = !split ? readings : mine.length > 0 ? mine : unclaimed.length > 0 ? unclaimed : [readings[0]!];
   if (chosen.some((r) => r.event === "reflexive")) return null;
   const out = chosen.map((r) => grammarTriggerFrom(r, text, preamble, cardName, cardText, curse, creatureCard));
   // "Blocks or becomes blocked by <class>" stored as TWO records (#1381): the blocks half is refused (its class is a narrowing) while the becomes-blocked half is read. Taking every
@@ -2562,7 +2570,7 @@ export function deriveAbilities(
     }
     // A sibling is another record of the sentence with a different id OR (same id, #1391) a different event: the model stores "X or Y" as two records under one id.
     const grammarAll = clause.trigger?.event && text && !misplaced ? grammarTriggersOf(text, cardName, clause.trigger.event, cardText, enchantText,
-      clauses.some((c) => (c.id !== clause.id || c.trigger?.event !== clause.trigger?.event) && c.trigger?.event && clauseTexts?.[c.id] === clauseText),
+      clauses.filter((c) => (c.id !== clause.id || c.trigger?.event !== clause.trigger?.event) && c.trigger?.event && clauseTexts?.[c.id] === clauseText).map((c) => c.trigger!.event!),
       readings?.[clause.id]?.trigger, curse, creatureCard,
       (clause.trigger.event === "blocks" || clause.trigger.event === "becomes-blocked") && clauses.some((c) => c.id !== clause.id && (c.trigger?.event === "blocks" || c.trigger?.event === "becomes-blocked") && c.trigger.event !== clause.trigger!.event)) : null;
     const claimed = (grammarAll ?? []).filter((g): g is { verbs: Verb[]; subject: SubjectFilter } => !("refused" in g));
