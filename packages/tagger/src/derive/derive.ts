@@ -564,7 +564,8 @@ import { emblemRecipient } from "../emblem.js";
 // 399: #1385 -- type words inside a token's QUOTED ability are not the token's types: `parseSubject` cuts double-quoted spans (not a quoted name) before any sweep. The Prydwen's Human Knight was `[creature, artifact]`, an Equipment artifact token `[creature, artifact]` ("Equipped creature gets +1/+0"), Ka-Zar's Zabu `[creature, land]`.
 // 400: #1380 -- the blocks twin fold compares amount VALUES, not their presence: equal after normalising (sign kept, "-1/-1" is not "+1/+1") or the twin plus a trailing "where X is ...", or the twin as the whole of that explanation (Freelance Muscle) (Mana-Charged Dragon's "X/0" inside "+X/+0, where X is ..." still folds; "1" beside "2" or "+1/+1" no longer does); count by equality.
 // 401: #1376 -- the textless-twin fold runs on every event and on split ids (Korvold's 2.1), not only blocks / becomes-blocked on integer ids, and compares abilities key-order-insensitively (Primeval Herald's twin carried the same effect.subject keys in another order); `deriveRow`'s switch also takes the grammar reading when the stored answer is it with exact duplicates. Measured (derive-identity ALL=1 vs stored 400): 226 cards change; 2 are stale before the change (Plan for All Outcomes, Overwrite the Multiverse); 202 are pure removals; 21 switch to the grammar reading; 1 (Mage Hunter) stays unfolded because its twin is richer. In the model path itself the fold adds 0 lines on all 24 non-pure cards.
-export const DERIVE_VERSION = 401;
+// 402: #1391 -- a clause with several grant-ability actions (Colossus of Akros' trample + "can attack as though it didn't have defender"; Silverquill Pledgemage's flying + lifelink; the model store's one action per keyword) derived one keyword-grant / speed-increase ability per action, each carrying the whole clause's union of `grants`, so JSON-identical twins; derive keeps the first of each within the clause. MEASURED: TBD
+export const DERIVE_VERSION = 402;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -3637,7 +3638,8 @@ export function deriveAbilities(
       const payment = abilities[i].cost !== undefined ? paymentOf(abilities[i].cost, cardName) : undefined;
       if (payment) abilities[i] = { ...abilities[i], payment };
       // WHICH KEYWORDS A GRANT HANDS OUT (#857): read off the clause's grant objects against the CR
-      // keyword-ability list. CEILING: a clause with two grants gives each ability the union.
+      // keyword-ability list. A clause with two grants gives each ability the union, which is why the
+      // twins are folded after this loop.
       // A SPEED GRANT TOO (#1079): haste and double strike share `speed-increase`, and without its
       // keywords Chocobo Knights' double strike read "grants haste".
       if (abilities[i].effect?.kind === "keyword-grant" || abilities[i].effect?.kind === "speed-increase") {
@@ -3703,6 +3705,23 @@ export function deriveAbilities(
       const damageTrigger = abilities[i].trigger;
       const eventAmount = damageTrigger?.verbs.some((v) => v.includes("damage")) ? eventAmountFor(text) : undefined;
       if (damageTrigger && eventAmount) abilities[i] = { ...abilities[i], trigger: { ...damageTrigger, amount: eventAmount } };
+    }
+    // THE UNION MAKES THE TWINS (#1391): derive makes one ability per action and every keyword-grant /
+    // speed-increase ability above carries the UNION of the clause's grant-ability actions, so two grants
+    // on one subject and trigger (Colossus of Akros' trample + "can attack as though it didn't have
+    // defender"; Silverquill Pledgemage's flying + lifelink, once per trigger reading) came out as
+    // JSON-identical abilities. Keep the first of each. Only these two kinds: the grant is the one place
+    // derive itself multiplies abilities. CEILING: grants on DIFFERENT subjects or triggers in one clause
+    // differ in the ability, so both stay, each still carrying the whole clause's union.
+    {
+      const seen = new Set<string>();
+      for (let i = before; i < abilities.length; i++) {
+        const k = abilities[i].effect?.kind;
+        if (k !== "keyword-grant" && k !== "speed-increase") continue;
+        const key = stableJson(JSON.parse(JSON.stringify(abilities[i])));
+        if (seen.has(key)) abilities.splice(i--, 1);
+        else seen.add(key);
+      }
     }
     // A clause that states its own trigger is the header any following bullets inherit (#846).
     if (!inherits && clause.trigger?.event) {
