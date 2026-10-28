@@ -144,3 +144,10 @@ test("Juniper Order Ranger (grammar) and Sumala Sentry (stored): one counter on 
   expect(counterEmits(f567("Juniper Order Ranger", "grammar"))).toEqual([false, true]);
   expect(counterEmits(f567("Sumala Sentry", "model"))).toEqual([false, true]);
 });
+
+// F6: "it becomes your choice of A, B, or C" is one either/or animate; the grammar writes one animate action per alternative, folded as an "instead" twin is.
+test("Primal Clay and Aquamorph Entity (grammar): one animate, not one per alternative; Molten Sentry's coin flip keeps its two", () => {
+  expect(f567("Primal Clay", "grammar").tags.abilities.filter((a) => a.effect?.kind === "animate")).toHaveLength(1);
+  expect(f567("Aquamorph Entity", "grammar").tags.abilities.filter((a) => a.effect?.kind === "animate")).toHaveLength(1);
+  expect(f567("Molten Sentry", "model").tags.abilities.filter((a) => a.effect?.kind === "animate")).toHaveLength(2);
+});
