@@ -6879,4 +6879,22 @@ describe("two records sharing one id are a split compound (#1391)", () => {
     ], "Ultron's Auxiliary", { 1: "Menace", 2: text }, undefined, `Menace\n${text}`);
     expect(verbsOf(r)).toEqual(["dies", "enters-graveyard"]);
   });
+
+  test("Balor: a modal header stored as two same-id records reaches each mode under BOTH limbs, once each", () => {
+    const head = "Whenever this creature attacks or dies, choose one or more. Each mode must target a different player.";
+    const none = [{ verb: "none" }];
+    const r = deriveAbilities([
+      { id: 2, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: none },
+      { id: 2, abilityType: "triggered", trigger: { event: "dies", subject: "this creature", control: "you" }, actions: none },
+      { id: 3, abilityType: "triggered", actions: [act("draw", "target opponent", { amount: "3" }), act("discard", "target opponent", { amount: "3" })] },
+      { id: 4, abilityType: "triggered", actions: [act("sacrifice", "a nontoken artifact of target opponent's choice")] },
+      { id: 5, abilityType: "triggered", actions: [act("deal-damage", "target opponent", { amount: "the number of cards in target opponent's hand" })] },
+    ] as never, "Balor", {
+      1: "Flying", 2: head, 3: "Target opponent draws three cards, then discards three cards at random.",
+      4: "Target opponent sacrifices a nontoken artifact of their choice.", 5: "This creature deals damage to target opponent equal to the number of cards in their hand.",
+    }, undefined, `Flying\n${head}\n• Target opponent draws three cards, then discards three cards at random.\n• Target opponent sacrifices a nontoken artifact of their choice.\n• This creature deals damage to target opponent equal to the number of cards in their hand.`);
+    const under = (verb: string, id: number) => r.abilities.filter((a) => a.clause === id && a.trigger?.verbs.includes(verb as never)).length;
+    // Mode 3 has two actions (draw, discard): one ability each per limb.
+    for (const [id, n] of [[3, 2], [4, 1], [5, 1]] as const) { expect(under("attacks", id), `mode ${id} attacks`).toBe(n); expect(under("dies", id), `mode ${id} dies`).toBe(n); }
+  });
 });

@@ -898,7 +898,8 @@ function modeVisits(clauses: ClauseRecord[], clauseTexts?: Record<number, string
   let previousWasHeader = false;
   for (const c of ordered) {
     // A twin has no text of its own; two headers that each print a sentence ("..., you may pay {1}. When you do, choose one") are not one trigger's limbs.
-    if (triggerHeaderOnly(c)) { group = previousWasHeader && clauseTexts?.[c.id as number] === undefined ? [...group, c] : [c]; previousWasHeader = true; out.push({ clause: c }); continue; }
+    // ...or two records of ONE id with different events (the model's "attacks or dies" header, Balor: both limbs have the sentence's text, #1391).
+    if (triggerHeaderOnly(c)) { group = previousWasHeader && (clauseTexts?.[c.id as number] === undefined || (group.at(-1)!.id === c.id && group.at(-1)!.trigger?.event !== c.trigger?.event)) ? [...group, c] : [c]; previousWasHeader = true; out.push({ clause: c }); continue; }
     previousWasHeader = false;
     if (modeBullet(c) && group.length > 1) { for (let k = 0; k < group.length; k++) out.push({ clause: c, group, k }); continue; }
     if (!modeBullet(c)) group = [];
@@ -2318,7 +2319,9 @@ export function deriveAbilities(
   /** EVERY TRIGGER OF A MODAL HEADER (#1349 review): "Whenever Captain Kirk enters or attacks, choose one" is two header records (the
    *  grammar's second is appended at the END of the card; a stored answer has it beside the first), and a bullet inherits the nearest one
    *  only, so the modes read as firing on entering alone. Each header's own derived state, by clause id, for the visits below. */
-  const headerStates = new Map<number | string, { inheritedTrigger: typeof inheritedTrigger; headerTrigger: Ability["trigger"]; headerRefused: string[] }>();
+  /** By id AND event: a header stored as two same-id records (Balor) must not collide. */
+  const headerKey = (c: ClauseRecord): string => `${c.id}|${c.trigger?.event ?? ""}`;
+  const headerStates = new Map<string, { inheritedTrigger: typeof inheritedTrigger; headerTrigger: Ability["trigger"]; headerRefused: string[] }>();
   /** The mark at which a duplicate mode visit began: what it pushed to `unclaimed` / `unknownTriggers` repeats its first visit's, so it is cut back. */
   let dupMark: { unclaimed: number; unknown: number } | undefined;
   const visits = modeVisits(clauses, clauseTexts);
@@ -2342,7 +2345,7 @@ export function deriveAbilities(
     const facesDilemma: boolean = !visit.k && (modalHeads?.has(clause.id as number) === true || modalTwin);
     if (!visit.k) modalOpen = facesDilemma;
     // A mode of a multi-trigger header is visited once per header trigger, each time under that trigger's own derived state.
-    const headerState = visit.group ? headerStates.get(visit.group[visit.k ?? 0]!.id) : undefined;
+    const headerState = visit.group ? headerStates.get(headerKey(visit.group[visit.k ?? 0]!)) : undefined;
     if (headerState) ({ inheritedTrigger, headerTrigger, headerRefused } = headerState);
     clauseId = clause.id;
     const refusedBefore = unknownTriggers.length;
@@ -3721,7 +3724,7 @@ export function deriveAbilities(
       inheritedTrigger = clause.trigger;
       headerTrigger = abilities.slice(before).find((a) => a.trigger)?.trigger;
       headerRefused = headerTrigger === undefined ? unknownTriggers.slice(refusedBefore) : [];
-      headerStates.set(clause.id, { inheritedTrigger, headerTrigger, headerRefused });
+      headerStates.set(headerKey(clause), { inheritedTrigger, headerTrigger, headerRefused });
     }
   }
   if (dupMark) { unclaimedHere.length = dupMark.unclaimed; unknownTriggers.length = dupMark.unknown; }
