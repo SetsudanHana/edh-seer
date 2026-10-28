@@ -6832,3 +6832,69 @@ describe("keyword-grant twins from one clause fold (#1391)", () => {
     expect(new Set(grants.map((a) => a.clause)).size).toBe(2);
   });
 });
+
+// #1391 part 2: the model stores an "X or Y" trigger as TWO records with the SAME id (62 stored cards). They are each other's sibling, so each takes only its own event's reading.
+describe("two records sharing one id are a split compound (#1391)", () => {
+  const act = (verb: string, object: string, extra: object = {}) => ({ verb, object, amount: null, fromZone: null, toZone: null, optional: false, ...extra });
+  const trig = (id: number, event: string, subject: string, actions: object[]) => ({ id, abilityType: "triggered", trigger: { event, subject, control: "you" }, actions });
+  const verbsOf = (r: ReturnType<typeof deriveAbilities>) => r.abilities.map((a) => a.trigger?.verbs.join("+"));
+
+  test("Duggan: 'enters or attacks' stored as two id-2 records derives one enters and one attacks ability", () => {
+    const text = "Whenever Duggan, Private Detective enters or attacks, investigate.";
+    const r = deriveAbilities([
+      trig(2, "enters", "Duggan", [act("investigate", "a Clue")]),
+      trig(2, "attacks", "Duggan", [act("investigate", "a Clue")]),
+    ], "Duggan, Private Detective", { 1: "Duggan, Private Detective gets +1/+1 as long as you've drawn two or more cards this turn.", 2: text }, undefined, text);
+    expect(verbsOf(r)).toEqual(["enters", "attacks"]);
+  });
+
+  test("Derevi: 'enters and whenever a creature you control deals combat damage to a player' derives four abilities", () => {
+    const text = "When Derevi, Empyrial Tactician enters and whenever a creature you control deals combat damage to a player, you may tap or untap target permanent.";
+    const r = deriveAbilities([
+      trig(2, "enters", "Derevi, Empyrial Tactician", [act("tap", "target permanent", { optional: true }), act("untap", "target permanent", { optional: true })]),
+      trig(2, "damage-dealt", "a creature you control", [act("tap", "target permanent", { optional: true }), act("untap", "target permanent", { optional: true })]),
+    ], "Derevi, Empyrial Tactician", { 2: text }, undefined, text);
+    expect(r.abilities).toHaveLength(4);
+    expect(verbsOf(r).filter((v) => v === "enters")).toHaveLength(2);
+  });
+
+  test("Goldspan Dragon: 'attacks or becomes the target of a spell' derives attacks once, not twice", () => {
+    const text = "Whenever this creature attacks or becomes the target of a spell, create a Treasure token.";
+    const r = deriveAbilities([
+      trig(2, "attacks", "this creature", [act("create", "a Treasure token", { amount: "1" })]),
+      trig(2, "becomes-target", "this creature", [act("create", "a Treasure token", { amount: "1" })]),
+    ], "Goldspan Dragon", { 1: "Flying, haste", 2: text }, undefined, `Flying, haste\n${text}`);
+    // The becomes-target half has no engine verb: like a refused-only record (Curator of Mysteries, Desert Warfare), it derives a TRIGGER-LESS token-generation (no `claimsNothing`: nothing in it points back at the trigger), and
+    // "becomes-target" lands in unknownTriggers. The attacks half is one live token-generation, not two.
+    expect(r.abilities.map((a) => [a.trigger?.verbs, a.effect.kind])).toEqual([[["attacks"], "token-generation"], [undefined, "token-generation"]]);
+    expect(r.unknownTriggers).toContain("becomes-target");
+  });
+
+  test("Ultron's Auxiliary: stored 'dies' + 'exiled' keeps both limbs, each once (the second record must not borrow 'dies')", () => {
+    const text = "Whenever another artifact is put into your graveyard from the battlefield or an artifact card is put into your graveyard from anywhere other than the battlefield, put a +1/+1 counter on this creature.";
+    const counter = act("add-counter", "+1/+1", { amount: "1" });
+    const r = deriveAbilities([
+      trig(2, "dies", "another artifact", [counter]),
+      trig(2, "exiled", "an artifact card from anywhere other than the battlefield", [counter]),
+    ], "Ultron's Auxiliary", { 1: "Menace", 2: text }, undefined, `Menace\n${text}`);
+    expect(verbsOf(r)).toEqual(["dies", "enters-graveyard"]);
+  });
+
+  test("Balor: a modal header stored as two same-id records reaches each mode under BOTH limbs, once each", () => {
+    const head = "Whenever this creature attacks or dies, choose one or more. Each mode must target a different player.";
+    const none = [{ verb: "none" }];
+    const r = deriveAbilities([
+      { id: 2, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: none },
+      { id: 2, abilityType: "triggered", trigger: { event: "dies", subject: "this creature", control: "you" }, actions: none },
+      { id: 3, abilityType: "triggered", actions: [act("draw", "target opponent", { amount: "3" }), act("discard", "target opponent", { amount: "3" })] },
+      { id: 4, abilityType: "triggered", actions: [act("sacrifice", "a nontoken artifact of target opponent's choice")] },
+      { id: 5, abilityType: "triggered", actions: [act("deal-damage", "target opponent", { amount: "the number of cards in target opponent's hand" })] },
+    ] as never, "Balor", {
+      1: "Flying", 2: head, 3: "Target opponent draws three cards, then discards three cards at random.",
+      4: "Target opponent sacrifices a nontoken artifact of their choice.", 5: "This creature deals damage to target opponent equal to the number of cards in their hand.",
+    }, undefined, `Flying\n${head}\n• Target opponent draws three cards, then discards three cards at random.\n• Target opponent sacrifices a nontoken artifact of their choice.\n• This creature deals damage to target opponent equal to the number of cards in their hand.`);
+    const under = (verb: string, id: number) => r.abilities.filter((a) => a.clause === id && a.trigger?.verbs.includes(verb as never)).length;
+    // Mode 3 has two actions (draw, discard): one ability each per limb.
+    for (const [id, n] of [[3, 2], [4, 1], [5, 1]] as const) { expect(under("attacks", id), `mode ${id} attacks`).toBe(n); expect(under("dies", id), `mode ${id} dies`).toBe(n); }
+  });
+});

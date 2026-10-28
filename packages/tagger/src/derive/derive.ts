@@ -565,7 +565,8 @@ import { emblemRecipient } from "../emblem.js";
 // 400: #1380 -- the blocks twin fold compares amount VALUES, not their presence: equal after normalising (sign kept, "-1/-1" is not "+1/+1") or the twin plus a trailing "where X is ...", or the twin as the whole of that explanation (Freelance Muscle) (Mana-Charged Dragon's "X/0" inside "+X/+0, where X is ..." still folds; "1" beside "2" or "+1/+1" no longer does); count by equality.
 // 401: #1376 -- the textless-twin fold runs on every event and on split ids (Korvold's 2.1), not only blocks / becomes-blocked on integer ids, and compares abilities key-order-insensitively (Primeval Herald's twin carried the same effect.subject keys in another order); `deriveRow`'s switch also takes the grammar reading when the stored answer is it with exact duplicates. Measured (derive-identity ALL=1 vs stored 400): 226 cards change; 2 are stale before the change (Plan for All Outcomes, Overwrite the Multiverse); 202 are pure removals; 21 switch to the grammar reading; 1 (Mage Hunter) stays unfolded because its twin is richer. In the model path itself the fold adds 0 lines on all 24 non-pure cards.
 // 402: #1391 -- a clause with several grant-ability actions (Colossus of Akros' trample + "can attack as though it didn't have defender"; Silverquill Pledgemage's flying + lifelink; the model store's one action per keyword) derived one keyword-grant / speed-increase ability per action, each carrying the whole clause's union of `grants`, so JSON-identical twins; derive keeps the first of each (`foldGrantTwins`, applied last by deriveCardTags; derive-worker's switch decides on the UNFOLDED readings and folds the winner, because folding first changed its count keys and moved 39 cards model -> grammar into labels judged on other cards). Measured (full re-derive): cards with exact-duplicate abilities 557 -> 153 (grammar 361 -> 50, model 196 -> 103); switch decisions identical to 401 (0 cards move); panel precision 100.0% / retention 98.4% (428 held, 7 lost) unchanged; role-ratchet gained 0 lost 0; dropped-clauses 5178 actions / 4530 cards unchanged.
-export const DERIVE_VERSION = 402;
+// 403: #1391 part 2 -- two stored records that share one id (the model's "X or Y" trigger: Duggan's enters + attacks, Derevi's enters + combat damage, Goldspan Dragon's attacks + becomes-target; 62 stored cards) are each other's split siblings: each takes its own event's grammar reading instead of every reading, so each limb's ability appears once (was twice) and Goldspan's becomes-target half is refused, as a refused-only record is, not a second attacks. Measured (full re-derive): cards with exact-duplicate abilities 153 -> 129 (model 103 -> 79, grammar 50); 24 cards lose 54 doubled abilities (Derevi 9 -> 5, Sephiroth 15 -> 11, Rocco 9 -> 5, Eluge 10 -> 6); Kaya the Inexorable's ghostform `exiled` record no longer borrows the `dies` return (graveyard-recursion on exile was the double reading); Goldspan's refused becomes-target half derives a trigger-less token-generation, as a refused-only record does (was a second `attacks`); Ultron's Auxiliary keeps both limbs (a record whose event the text does not read takes the readings no sibling claims). Also: a modal header stored as two same-id records is one header group (`modeVisits`, header state keyed by id + event): Balor's modes derive under attacks AND dies (402: attacks only; the only such corpus card). Octavia's limbs are cast + copy (was cast twice), Mystic Barrier's enters + upkeep (was enters twice); Desert Warfare, Curator of Mysteries and Protector of the Wastes' unread second limb is refused rather than borrowing a live trigger; Cryoshatter (a different-id split) reads `damaged` for clause 4 (was `taps`). Grammar-only cards: 0 change. Switch: 3 cards move -- Shrine of Loyal Legions and Shrine of Piercing Vision to the model reading (now clean, the grammar's has an extra cast), Treacherous Vampire to the grammar reading (same abilities plus an empty keyword-grant for its quoted ability; dropped-clauses +5:spliced, banked). Panel precision 100.0% / retention 98.4% (428 held, 7 lost) unchanged; role-ratchet gained 0 lost 0; dropped-clauses 5178 -> 5179.
+export const DERIVE_VERSION = 403;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -897,7 +898,8 @@ function modeVisits(clauses: ClauseRecord[], clauseTexts?: Record<number, string
   let previousWasHeader = false;
   for (const c of ordered) {
     // A twin has no text of its own; two headers that each print a sentence ("..., you may pay {1}. When you do, choose one") are not one trigger's limbs.
-    if (triggerHeaderOnly(c)) { group = previousWasHeader && clauseTexts?.[c.id as number] === undefined ? [...group, c] : [c]; previousWasHeader = true; out.push({ clause: c }); continue; }
+    // ...or two records of ONE id with different events (the model's "attacks or dies" header, Balor: both limbs have the sentence's text, #1391).
+    if (triggerHeaderOnly(c)) { group = previousWasHeader && (clauseTexts?.[c.id as number] === undefined || (group.at(-1)!.id === c.id && group.at(-1)!.trigger?.event !== c.trigger?.event)) ? [...group, c] : [c]; previousWasHeader = true; out.push({ clause: c }); continue; }
     previousWasHeader = false;
     if (modeBullet(c) && group.length > 1) { for (let k = 0; k < group.length; k++) out.push({ clause: c, group, k }); continue; }
     if (!modeBullet(c)) group = [];
@@ -1968,7 +1970,7 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
 
 type GrammarTrigger = { verbs: Verb[]; subject: SubjectFilter; blocker?: SubjectFilter; batched?: true } | { refused: string; subject?: SubjectFilter };
 
-function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, split: boolean, precomputed?: TriggerReading[], curse?: boolean, creatureCard?: boolean, textlessSibling?: boolean): GrammarTrigger[] | null {
+function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, siblingEvents: string[], precomputed?: TriggerReading[], curse?: boolean, creatureCard?: boolean, textlessSibling?: boolean): GrammarTrigger[] | null {
   // An Aura's "enchanted permanent" is the class its own face's Enchant line names (see subjectFrom).
   const bounded = boundedByEnchantLine(text, enchantText);
   const preamble = printedPreamble(bounded, cardName ?? "");
@@ -1989,8 +1991,16 @@ function grammarTriggersOf(text: string, cardName: string | undefined, storedEve
   // another artifact you control is put into a graveyard from the battlefield", Scrap Trawler). One
   // the store kept as ONE clause takes every reading: Bilbo's "enters or leaves the battlefield" was
   // a single `enters` clause, and its leave was lost.
-  const mine = readings.filter((x) => x.event === storedEvent);
-  const chosen = !split ? readings : mine.length > 0 ? mine : [readings[0]!];
+  // Events compare as NORMALIZED verbs: the store's `put-into-graveyard` is the grammar's `enters-graveyard`.
+  const verbOf = (e: string): string => normalizeTriggerVerb(e) ?? e;
+  const split = siblingEvents.length > 0;
+  const mine = readings.filter((x) => verbOf(x.event) === verbOf(storedEvent));
+  // A split record whose own event the grammar did not read takes the readings NO sibling record claims (Ultron's Auxiliary: stored `dies` + `exiled`, the grammar reads dies and the
+  // graveyard limb), never a sibling's: borrowing `readings[0]` made the second record a second `dies` and lost the other limb (#1391). When every reading is claimed by a
+  // sibling (a non-same-id split whose events all matched elsewhere) the old fallback, the first reading, stands.
+  const claimedBySibling = new Set(siblingEvents.map(verbOf));
+  const unclaimed = readings.filter((x) => !claimedBySibling.has(verbOf(x.event)));
+  const chosen = !split ? readings : mine.length > 0 ? mine : unclaimed.length > 0 ? unclaimed : [readings[0]!];
   if (chosen.some((r) => r.event === "reflexive")) return null;
   const out = chosen.map((r) => grammarTriggerFrom(r, text, preamble, cardName, cardText, curse, creatureCard));
   // "Blocks or becomes blocked by <class>" stored as TWO records (#1381): the blocks half is refused (its class is a narrowing) while the becomes-blocked half is read. Taking every
@@ -2309,7 +2319,9 @@ export function deriveAbilities(
   /** EVERY TRIGGER OF A MODAL HEADER (#1349 review): "Whenever Captain Kirk enters or attacks, choose one" is two header records (the
    *  grammar's second is appended at the END of the card; a stored answer has it beside the first), and a bullet inherits the nearest one
    *  only, so the modes read as firing on entering alone. Each header's own derived state, by clause id, for the visits below. */
-  const headerStates = new Map<number | string, { inheritedTrigger: typeof inheritedTrigger; headerTrigger: Ability["trigger"]; headerRefused: string[] }>();
+  /** By id AND event: a header stored as two same-id records (Balor) must not collide. */
+  const headerKey = (c: ClauseRecord): string => `${c.id}|${c.trigger?.event ?? ""}`;
+  const headerStates = new Map<string, { inheritedTrigger: typeof inheritedTrigger; headerTrigger: Ability["trigger"]; headerRefused: string[] }>();
   /** The mark at which a duplicate mode visit began: what it pushed to `unclaimed` / `unknownTriggers` repeats its first visit's, so it is cut back. */
   let dupMark: { unclaimed: number; unknown: number } | undefined;
   const visits = modeVisits(clauses, clauseTexts);
@@ -2333,7 +2345,7 @@ export function deriveAbilities(
     const facesDilemma: boolean = !visit.k && (modalHeads?.has(clause.id as number) === true || modalTwin);
     if (!visit.k) modalOpen = facesDilemma;
     // A mode of a multi-trigger header is visited once per header trigger, each time under that trigger's own derived state.
-    const headerState = visit.group ? headerStates.get(visit.group[visit.k ?? 0]!.id) : undefined;
+    const headerState = visit.group ? headerStates.get(headerKey(visit.group[visit.k ?? 0]!)) : undefined;
     if (headerState) ({ inheritedTrigger, headerTrigger, headerRefused } = headerState);
     clauseId = clause.id;
     const refusedBefore = unknownTriggers.length;
@@ -2559,8 +2571,9 @@ export function deriveAbilities(
       const covering = grammarCovered.get(text)?.get(normalizeTriggerVerb(clause.trigger.event) ?? "");
       if (covering !== undefined && covering !== clause.id) identicalTwinOf.set(clause.id, covering);
     }
+    // A sibling is another record of the sentence with a different id OR (same id, #1391) a different event: the model stores "X or Y" as two records under one id.
     const grammarAll = clause.trigger?.event && text && !misplaced ? grammarTriggersOf(text, cardName, clause.trigger.event, cardText, enchantText,
-      clauses.some((c) => c.id !== clause.id && c.trigger?.event && clauseTexts?.[c.id] === clauseText),
+      clauses.filter((c) => (c.id !== clause.id || c.trigger?.event !== clause.trigger?.event) && c.trigger?.event && clauseTexts?.[c.id] === clauseText).map((c) => c.trigger!.event!),
       readings?.[clause.id]?.trigger, curse, creatureCard,
       (clause.trigger.event === "blocks" || clause.trigger.event === "becomes-blocked") && clauses.some((c) => c.id !== clause.id && (c.trigger?.event === "blocks" || c.trigger?.event === "becomes-blocked") && c.trigger.event !== clause.trigger!.event)) : null;
     const claimed = (grammarAll ?? []).filter((g): g is { verbs: Verb[]; subject: SubjectFilter } => !("refused" in g));
@@ -3711,7 +3724,7 @@ export function deriveAbilities(
       inheritedTrigger = clause.trigger;
       headerTrigger = abilities.slice(before).find((a) => a.trigger)?.trigger;
       headerRefused = headerTrigger === undefined ? unknownTriggers.slice(refusedBefore) : [];
-      headerStates.set(clause.id, { inheritedTrigger, headerTrigger, headerRefused });
+      headerStates.set(headerKey(clause), { inheritedTrigger, headerTrigger, headerRefused });
     }
   }
   if (dupMark) { unclaimedHere.length = dupMark.unclaimed; unknownTriggers.length = dupMark.unknown; }
