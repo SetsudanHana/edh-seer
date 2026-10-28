@@ -111,9 +111,16 @@ test("Bane's Contingency: one counter-spell; Academy Manufactor: one token-doubl
   expect(withEmit(f4Row("Bane's Contingency", "model"), "counter-spell")).toHaveLength(1);
   expect(f4Row("Academy Manufactor", "model").tags.abilities.filter((a) => a.effect?.kind === "token-doubling")).toHaveLength(1);
 });
-test("Wicked Slumber: 'instead' only in reminder text, so the two stun counters stay two", () => {
+test("Wicked Slumber (negative control): no 'instead' reaches its clause text, so the two stun counters stay two", () => {
   expect(f4Row("Wicked Slumber", "model").tags.abilities.filter((a) => a.effect?.kind === "counter-placement")).toHaveLength(2);
 });
 test("the switch decides on unfolded readings: fromGrammar is as at derive 405", () => {
   expect(["Grow from the Ashes", "Primal Growth", "Bane's Contingency", "Academy Manufactor"].map((n) => f4Row(n, "model").fromGrammar)).toEqual([false, true, true, false]);
+});
+
+// The fold strips parenthesised text itself (segment() already drops reminder text, so this is the only place it fires): an "instead" in parentheses is no alternative.
+test("foldGrantTwins: an 'instead' only in parentheses folds nothing; outside them it folds the identical twin (#1391 F4)", () => {
+  const twin = { kind: "on-cast", effect: { kind: "" }, emits: [{ verb: "shuffle", subject: { control: "you", token: null } }], clause: 1, repeats: "once" } as never;
+  expect(foldGrantTwins([twin, twin], { 1: "Shuffle. Then shuffle. (If it would untap, remove one instead.)" })).toHaveLength(2);
+  expect(foldGrantTwins([twin, twin], { 1: "Shuffle. If kicked, instead shuffle." })).toHaveLength(1);
 });
