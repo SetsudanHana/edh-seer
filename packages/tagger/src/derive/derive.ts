@@ -3639,7 +3639,7 @@ export function deriveAbilities(
       if (payment) abilities[i] = { ...abilities[i], payment };
       // WHICH KEYWORDS A GRANT HANDS OUT (#857): read off the clause's grant objects against the CR
       // keyword-ability list. A clause with two grants gives each ability the union, which is why the
-      // twins are folded after this loop.
+      // twins are folded at the end (`foldGrantTwins`).
       // A SPEED GRANT TOO (#1079): haste and double strike share `speed-increase`, and without its
       // keywords Chocobo Knights' double strike read "grants haste".
       if (abilities[i].effect?.kind === "keyword-grant" || abilities[i].effect?.kind === "speed-increase") {
@@ -3705,23 +3705,6 @@ export function deriveAbilities(
       const damageTrigger = abilities[i].trigger;
       const eventAmount = damageTrigger?.verbs.some((v) => v.includes("damage")) ? eventAmountFor(text) : undefined;
       if (damageTrigger && eventAmount) abilities[i] = { ...abilities[i], trigger: { ...damageTrigger, amount: eventAmount } };
-    }
-    // THE UNION MAKES THE TWINS (#1391): derive makes one ability per action and every keyword-grant /
-    // speed-increase ability above carries the UNION of the clause's grant-ability actions, so two grants
-    // on one subject and trigger (Colossus of Akros' trample + "can attack as though it didn't have
-    // defender"; Silverquill Pledgemage's flying + lifelink, once per trigger reading) came out as
-    // JSON-identical abilities. Keep the first of each. Only these two kinds: the grant is the one place
-    // derive itself multiplies abilities. CEILING: grants on DIFFERENT subjects or triggers in one clause
-    // differ in the ability, so both stay, each still carrying the whole clause's union.
-    {
-      const seen = new Set<string>();
-      for (let i = before; i < abilities.length; i++) {
-        const k = abilities[i].effect?.kind;
-        if (k !== "keyword-grant" && k !== "speed-increase") continue;
-        const key = stableJson(JSON.parse(JSON.stringify(abilities[i])));
-        if (seen.has(key)) abilities.splice(i--, 1);
-        else seen.add(key);
-      }
     }
     // A clause that states its own trigger is the header any following bullets inherit (#846).
     if (!inherits && clause.trigger?.event) {
@@ -3896,7 +3879,24 @@ export function deriveAbilitiesOf(input: DeriveInput): ReturnType<typeof deriveA
     input.clauseFaces, castAtInstantSpeed, input.clauseRequires, input.readings,
     chars.subtypes.some((t) => t.toLowerCase() === "curse"), chars.types.some((t) => t.toLowerCase() === "creature"), input.clauseGrants, input.modalHeads);
 }
-export function deriveCardTags(input: DeriveInput): CardTags {
+/** THE UNION MAKES THE TWINS (#1391): derive makes one ability per action and every keyword-grant /
+ *  speed-increase ability carries the UNION of its clause's grant-ability actions, so two grants on one
+ *  subject and trigger (Colossus of Akros' trample + "can attack as though it didn't have defender";
+ *  Silverquill Pledgemage's flying + lifelink, once per trigger reading) came out JSON-identical. Keeps
+ *  the first of each. The JSON includes `clause`, so a global pass equals a per-clause one. Only these
+ *  two kinds. CEILING: grants that differ by trigger reading stay, each still carrying the clause's union.
+ *  Run LAST (`deriveCardTags`), and by `deriveRow` on the tags the card-by-card switch picked: the
+ *  switch itself compares UNFOLDED readings. */
+export function foldGrantTwins(abilities: Ability[]): Ability[] {
+  const seen = new Set<string>();
+  return abilities.filter((a) => {
+    const k = a.effect?.kind;
+    if (k !== "keyword-grant" && k !== "speed-increase") return true;
+    const key = stableJson(JSON.parse(JSON.stringify(a)));
+    return !seen.has(key) && !!seen.add(key);
+  });
+}
+export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: boolean } = {}): CardTags {
   const chars = input.characteristics;
   const derived = deriveAbilitiesOf(input);
   const { unknownTriggers, unclaimedAt } = derived;
@@ -3992,7 +3992,7 @@ export function deriveCardTags(input: DeriveInput): CardTags {
     promptVersion: 0,
     model: "derived",
     characteristics: creatureOnlyIf ? { ...input.characteristics, creatureOnlyIf: true } : input.characteristics,
-    abilities: spellOnce,
+    abilities: opts.foldGrantTwins === false ? spellOnce : foldGrantTwins(spellOnce),
     // MANA PRODUCTION, read once (#1169). Each key is written only when the card has it.
     ...deriveMana({
       clauses: input.clauses, abilities: spellOnce, chars, name: input.name, foldedClauses: derived.folded,
