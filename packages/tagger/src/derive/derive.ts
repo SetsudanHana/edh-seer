@@ -567,7 +567,8 @@ import { emblemRecipient } from "../emblem.js";
 // 402: #1391 -- a clause with several grant-ability actions (Colossus of Akros' trample + "can attack as though it didn't have defender"; Silverquill Pledgemage's flying + lifelink; the model store's one action per keyword) derived one keyword-grant / speed-increase ability per action, each carrying the whole clause's union of `grants`, so JSON-identical twins; derive keeps the first of each (`foldGrantTwins`, applied last by deriveCardTags; derive-worker's switch decides on the UNFOLDED readings and folds the winner, because folding first changed its count keys and moved 39 cards model -> grammar into labels judged on other cards). Measured (full re-derive): cards with exact-duplicate abilities 557 -> 153 (grammar 361 -> 50, model 196 -> 103); switch decisions identical to 401 (0 cards move); panel precision 100.0% / retention 98.4% (428 held, 7 lost) unchanged; role-ratchet gained 0 lost 0; dropped-clauses 5178 actions / 4530 cards unchanged.
 // 403: #1391 part 2 -- two stored records that share one id (the model's "X or Y" trigger: Duggan's enters + attacks, Derevi's enters + combat damage, Goldspan Dragon's attacks + becomes-target; 62 stored cards) are each other's split siblings: each takes its own event's grammar reading instead of every reading, so each limb's ability appears once (was twice) and Goldspan's becomes-target half is refused, as a refused-only record is, not a second attacks. Measured (full re-derive): cards with exact-duplicate abilities 153 -> 129 (model 103 -> 79, grammar 50); 24 cards lose 54 doubled abilities (Derevi 9 -> 5, Sephiroth 15 -> 11, Rocco 9 -> 5, Eluge 10 -> 6); Kaya the Inexorable's ghostform `exiled` record no longer borrows the `dies` return (graveyard-recursion on exile was the double reading); Goldspan's refused becomes-target half derives a trigger-less token-generation, as a refused-only record does (was a second `attacks`); Ultron's Auxiliary keeps both limbs (a record whose event the text does not read takes the readings no sibling claims). Also: a modal header stored as two same-id records is one header group (`modeVisits`, header state keyed by id + event): Balor's modes derive under attacks AND dies (402: attacks only; the only such corpus card). Octavia's limbs are cast + copy (was cast twice), Mystic Barrier's enters + upkeep (was enters twice); Desert Warfare, Curator of Mysteries and Protector of the Wastes' unread second limb is refused rather than borrowing a live trigger; Cryoshatter (a different-id split) reads `damaged` for clause 4 (was `taps`). Grammar-only cards: 0 change. Switch: 3 cards move -- Shrine of Loyal Legions and Shrine of Piercing Vision to the model reading (now clean, the grammar's has an extra cast), Treacherous Vampire to the grammar reading (same abilities plus an empty keyword-grant for its quoted ability; dropped-clauses +5:spliced, banked). Panel precision 100.0% / retention 98.4% (428 held, 7 lost) unchanged; role-ratchet gained 0 lost 0; dropped-clauses 5178 -> 5179.
 // 404: #1391 part 2 F2 -- "you and <player> each <verb>" (Farsight Adept, Thran Spider, Cait, Bloodroot Apothecary; 16 cards change, below) reads the first pass as YOU and the second as the named player (`action.ts` `both`), not two JSON-identical `any` actors: a stored draw / discard pair takes the player's own object, and a `create` pair carries the player on `Action.actor` so the token-generation subject is yours and theirs. A store that wrote ONE action for the pair is unchanged (the grammar reads more draws than it holds, so it is left as stored). Measured (full re-derive): cards with exact-duplicate abilities 129 -> 115 (model 79 -> 72, grammar 50 -> 43); 16 cards change (full-corpus deriveRow diff, 31,667 cards). 5 are single-actor creates, intentionally widened (`Action.actor` applies to any `create` with a named, non-back-referenced actor): Kamber, the Plunderer, Lotho, Corrupt Shirriff, Rocco, Street Chef, Seize the Spotlight (you) and Ingenious Mastery (opp), each `any` before. 11 lose a false twin: Farsight Adept, Teyo, Love Song of Night and Day (draw you + target opponent), Thran Spider, Bloodroot Apothecary, Oath of the Grey Host (token you + opponent), Cait, Cage Brawler (the defending player's draw and discard were `you`), Karazikar, Tempt with Bunnies / Reflections / Vengeance (the opponents' tokens are theirs; the "for each opponent who does" repeat stays). A back-referenced player ("that player": Diviner Spirit, Sergeant John Benton, Xyris, Black Widow) keeps the 403 pair, both `any`. Switch: 7 cards move model -> grammar, each because the two readings are now identical (Flumph, Loran of the Third Path, Sky Crier, Secret Rendezvous, Joined Researchers, Your Temple Is Under Attack, Karazikar). Panel precision 100.0% / retention 98.4% (428 held, 7 lost) unchanged; role-ratchet gained 0 lost 0; dropped-clauses 5179 unchanged. Still a `you` for another player (same at 403, #1395): Angel of Destiny, Benevolent Offering, Eumidian Wastewaker, Twist Allegiance, Reins of Power.
-export const DERIVE_VERSION = 404;
+// 405: #1391 part 2 F3 -- one printed search over several zones ("Search its owner's graveyard, hand, and library for ...": Eradicate, Extirpate, Kassandra, Gate to the Afterlife, ~27 cards) is ONE search ability, not one per zone (the graveyard and hand ones were JSON-identical, no emits): `collapseZoneSearches` merges a run of same-object searches that differ only in `fromZone`, keeping the library member so the `search` emit and `librarySearch` survive. Measured (full re-derive): cards with exact-duplicate abilities 115 -> 93 (model 72 -> 56, grammar 43 -> 37). 77 cards change, each a search-count drop (no mana or unclaimed field moves): the "graveyard, hand, and library" hate and named-card searches 3 -> 1 (Extirpate, Eradicate, Surgical Extraction, Memoricide, Deadly Cover-Up ... librarySearch "other", subject `any`; Kassandra, Gate to the Afterlife, Shaun & Rebecca "yours"), ~40 "library and/or graveyard" searches 2 -> 1 (Ethereal Elk, The First Doctor, Chandra's Outburst ...); Vraska's Scorn, Jace's Ruse, Liberating Combustion 3 -> 2 and Nissa's Encouragement 6 -> 5 (CEILING). The kept "yours" search's subject reads `you` (was `any`), and on Chandra's Flame Wave, Vraska's Scorn, Ecological Appreciation and Turtles Forever its `search` emit too: every corpus consumer of a search event is an opponent's (River Song, Archivist of Oghma, Ob Nixilis, Unshackled, Wan Shi Tong, Librarian), so `any` matched them -- a false edge, now gone: with one search action left, a stated-nowhere searcher defaults to you (`ACTOR_DEFAULTS_TO_YOU`); "other" searches stay `any`. The card-by-card switch decides with both dedupes off (`collapseZoneSearches: false`, `foldGrantTwins: false`): 0 cards move (collapsing first moved 5, Finale of Devastation onto a library-only reading). Panel precision 100.0% / retention 98.4% (428 held, 7 lost) unchanged; role-ratchet gained 0 lost 0; dropped-clauses 5179 unchanged (measured after a forced re-derive at this code: the first measurement read a same-version derive that had not re-run).
+export const DERIVE_VERSION = 405;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1882,6 +1883,29 @@ const PLAYER_OBJECT_VERBS: ReadonlySet<string> = new Set(["draw", "mill", "disca
  *  the card's class, which its object carries. */
 const UNNAMED_IS_YOU: ReadonlySet<string> = new Set(["draw", "mill", "scry", "surveil"]);
 
+/** ONE PRINTED SEARCH OVER SEVERAL ZONES IS ONE SEARCH ABILITY (#1391 F3). "Search its owner's graveyard, hand, and library for all cards with that name" (Eradicate, Extirpate, Kassandra) is stored as one `search` action per zone,
+ *  same object, differing only in `fromZone`; the model's store and the grammar's own records both write it so. A run of CONSECUTIVE searches with the same object, amount and optionality and pairwise-different zones collapses
+ *  to one, keeping the library member (its `search` emit and `librarySearch` are the event "whenever you search your library" hears), else the first. Two separately printed searches never match: they differ in object, or
+ *  repeat a zone (Increasing Ambition, Tempt with Discovery).
+ *  CEILING: the graveyard and hand zones are not carried on the collapsed action (nothing reads a zone list). The fold depends on `withGrammarActions` having rewritten the per-zone stored objects to the ONE printed object
+ *  first (Deadly Cover-Up writes each zone's own phrase; Ethereal Elk "your library" / "your graveyard"): a clause with no printed text keeps per-zone objects and is not folded. Not folded either: Vraska's Scorn, Jace's Ruse,
+ *  Liberating Combustion (model path: the `put` of the found card derives a second `search` kind, 3 -> 2 abilities) and Nissa's Encouragement (three named cards, one pair of six folds: 6 -> 5).
+ */
+function collapseZoneSearches(clause: ClauseRecord): ClauseRecord {
+  const acts = clause.actions ?? [];
+  const out: Action[] = [];
+  for (let i = 0; i < acts.length;) {
+    const a = acts[i]!;
+    if (a.verb !== "search") { out.push(a); i++; continue; }
+    let j = i + 1;
+    const zones = new Set([a.fromZone ?? ""]);
+    while (j < acts.length && acts[j]!.verb === "search" && acts[j]!.object === a.object && (acts[j]!.amount ?? null) === (a.amount ?? null) && (acts[j]!.optional ?? false) === (a.optional ?? false) && !zones.has(acts[j]!.fromZone ?? "")) { zones.add(acts[j]!.fromZone ?? ""); j++; }
+    out.push(j - i > 1 ? (acts.slice(i, j).find((x) => x.fromZone === "library") ?? a) : a);
+    i = j;
+  }
+  return out.length === acts.length ? clause : { ...clause, actions: out };
+}
+
 /** THE ACTION GRAMMAR WINS (owner, 2026-10-01): a clause's stored actions of a taken-over family are
  *  rewritten from the printed text where the grammar read the phrase completely -- object, amount,
  *  optional, zones and the kept condition. The rest of derive reads the rewritten record exactly as
@@ -2258,6 +2282,8 @@ export function deriveAbilities(
   clauseGrants?: Record<number, number>,
   /** Clause ids that are a modal spell's or ability's header (`derive/modal.ts`): each is supplied the `face-a-dilemma` event once (Star Trek, #1349). Absent: none is. */
   modalHeads?: ReadonlySet<number>,
+  /** Collapse one printed search over several zones into one action (`collapseZoneSearches`). Off only for the grammar switch's DECISION (derive-worker.ts). */
+  collapseSearches = true,
 ): { abilities: Ability[]; unclaimed: Action[]; unclaimedAt: UnclaimedAction[]; unknownTriggers: string[]; twinOf: ReadonlyMap<number | string, number | string>; spliced: ReadonlySet<number | string>; folded: ReadonlyMap<number | string, number | string> } {
   const abilities: Ability[] = [];
   /** Every action nothing claimed, with the clause that printed it (#1299). `unclaimed` is the same list as bare actions. */
@@ -2368,6 +2394,7 @@ export function deriveAbilities(
     // sentence's effect was Kratos at 314: a `dies` trigger carrying the end-step's +1/+1 counters.
     const rehomed = homeOfMisplaced(clause, clauses, clauseTexts);
     clause = withGrammarActions(clause, rehomed ?? clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName, readings?.[clause.id]?.actions);
+    if (collapseSearches) clause = collapseZoneSearches(clause);
     // WHICH FACE PRINTS THIS CLAUSE. Stamped onto every ability the clause derives below, so the
     // matcher can stop reading a back-face ability against the card's UNION of types.
     const face = clauseFaces?.[clause.id];
@@ -3887,14 +3914,14 @@ export function stampSelfLoss(a: Ability): Ability {
  *  from the card document -- derivation never asks a model for what the database already knows. */
 /** `deriveAbilities` called the way `deriveCardTags` calls it. Exported so an instrument reads `twinOf` (which clause a spliced twin
  *  was folded into) from the SAME run, not a re-implementation of the twin detection. */
-export function deriveAbilitiesOf(input: DeriveInput): ReturnType<typeof deriveAbilities> {
+export function deriveAbilitiesOf(input: DeriveInput, opts: { collapseZoneSearches?: boolean } = {}): ReturnType<typeof deriveAbilities> {
   const chars = input.characteristics;
   const castAtInstantSpeed = chars.types.some((t) => t.toLowerCase() === "instant")
     || (chars.keywords ?? []).some((k) => k.toLowerCase() === "flash");
   return deriveAbilities(
     input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken,
     input.clauseFaces, castAtInstantSpeed, input.clauseRequires, input.readings,
-    chars.subtypes.some((t) => t.toLowerCase() === "curse"), chars.types.some((t) => t.toLowerCase() === "creature"), input.clauseGrants, input.modalHeads);
+    chars.subtypes.some((t) => t.toLowerCase() === "curse"), chars.types.some((t) => t.toLowerCase() === "creature"), input.clauseGrants, input.modalHeads, opts.collapseZoneSearches !== false);
 }
 /** THE UNION MAKES THE TWINS (#1391): derive makes one ability per action and every keyword-grant /
  *  speed-increase ability carries the UNION of its clause's grant-ability actions, so two grants on one
@@ -3913,9 +3940,9 @@ export function foldGrantTwins(abilities: Ability[]): Ability[] {
     return !seen.has(key) && !!seen.add(key);
   });
 }
-export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: boolean } = {}): CardTags {
+export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: boolean; collapseZoneSearches?: boolean } = {}): CardTags {
   const chars = input.characteristics;
-  const derived = deriveAbilitiesOf(input);
+  const derived = deriveAbilitiesOf(input, opts);
   const { unknownTriggers, unclaimedAt } = derived;
   // AN AURA ON AN OPPONENT'S CREATURE WATCHES THE OPPONENT'S CREATURE (owner 2026-09-23, AN7).
   // Nurgle's Rot prints "Enchant creature an opponent controls / When enchanted creature dies": the

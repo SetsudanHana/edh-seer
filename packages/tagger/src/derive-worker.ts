@@ -10,6 +10,7 @@ import triage from "../grammar-only-triage.json" with { type: "json" };
 import { deriveCardTags, foldGrantTwins } from "./derive/derive.js";
 import type { CardClausesDoc, DerivedTagsDoc } from "./clause-store.js";
 import type { CardTags } from "./schema.js";
+import type { ClauseRecord } from "./canonicalize.js";
 
 export interface DeriveItem { doc: CardClausesDoc; source: Record<string, unknown>; isToken: boolean }
 export interface DeriveResult { tags: CardTags; fromGrammar: boolean }
@@ -20,11 +21,18 @@ function dedupe<T>(xs: T[]): T[] { const seen = new Set<string>(); return xs.fil
 /** The keyword-grant twin fold (#1391) applies to whichever tags win, never before the switch. */
 const folded = (t: CardTags): CardTags => ({ ...t, abilities: foldGrantTwins(t.abilities) });
 
+/** The winner of the switch derived with the defaults (zone searches collapsed, grant twins folded). Only a card whose records hold a multi-search clause is derived again; the rest is the decision's tags, folded. */
+function rederived(source: Record<string, unknown>, doc: CardClausesDoc, records: ClauseRecord[], readings: Parameters<typeof deriveInputOf>[5], decided: CardTags, isToken = false): CardTags {
+  const searches = (records as ClauseRecord[]).some((c) => (c.actions ?? []).filter((a) => a.verb === "search").length > 1);
+  if (!searches) return folded(decided);
+  return deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, records, isToken ? tokenCharsFrom(source as never) : undefined, readings));
+}
+
 export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
   // Always re-read printed characteristics from the card/token document. Reusing the existing
   // derived doc's copy would carry stale colours or a stale type line forward through every
   // re-derive, which is the opposite of what a free rebuild is for.
-  const tags = deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, doc.canonical, isToken ? tokenCharsFrom(source as never) : undefined), { foldGrantTwins: false });
+  const tags = deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, doc.canonical, isToken ? tokenCharsFrom(source as never) : undefined), { foldGrantTwins: false, collapseZoneSearches: false });
   // THE CARD-BY-CARD SWITCH (#896 task 7, owner 2026-10-02, option 1): a card the grammar reads
   // completely derives from its printed text alone -- no model answer in the loop -- when that gives
   // the same abilities as the stored answer, or a difference whose group is labelled "grammar right"
@@ -32,7 +40,7 @@ export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
   if (!isToken) {
     const g = grammarClauseRecords(source as never);
     if (g.complete) {
-      const grammarTags = deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, g.records, undefined, g.readings), { foldGrantTwins: false });
+      const grammarTags = deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, g.records, undefined, g.readings), { foldGrantTwins: false, collapseZoneSearches: false });
       const key = deriveDiff(tags.abilities, grammarTags.abilities);
       // A labelled difference switches only when the grammar claims at least what the stored answer
       // claims (`lostClaims`): the label was judged on a few cards, the guard holds for every card.
@@ -47,10 +55,12 @@ export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
       // CEILING: the other two paths still take a grammar reading that carries other exact duplicates of its own (50 grammar cards at derive 402: Dragon Turtle's two
       // taps, search / token / draw shapes): refusing them on every path reverted 63 switches at derive 401, with real gains lost (Dragon Turtle's taps, Skrelv's toxic).
       const sameButDoubled = key !== null && dedupe(grammarTags.abilities).length === grammarTags.abilities.length && deriveDiff(dedupe(tags.abilities), grammarTags.abilities) === null;
-      if ((key === null || right || sameButDoubled) && !manaDiffers(tags, grammarTags)) return { tags: folded(grammarTags), fromGrammar: true };
+      // The zone-search collapse (#1391 F3, one printed "search its graveyard, hand, and library" is one search ability) is likewise OFF for the decision: it changed the diff keys and flipped 5 cards
+      // model->grammar, Finale of Devastation among them onto a reading whose enters emit claims the library only. The winner is RE-DERIVED with both dedupes on.
+      if ((key === null || right || sameButDoubled) && !manaDiffers(tags, grammarTags)) return { tags: rederived(source, doc, g.records, g.readings, grammarTags), fromGrammar: true };
     }
   }
-  return { tags: folded(tags), fromGrammar: false };
+  return { tags: rederived(source, doc, doc.canonical as ClauseRecord[], undefined, tags, isToken), fromGrammar: false };
 }
 
 /** Same shape as `charsFrom`, plus `token: true` -- or, for a layout-`emblem` row, `emblem: true`
