@@ -88,3 +88,13 @@ test("Increasing Ambition: two separately printed searches in one clause stay tw
   expect(searchesOf(source, stored)).toHaveLength(2);
 });
 
+
+// #1391 F3 review: the zone-search collapse, like the grant-twin fold, applies to the tags the switch picks and never to the readings it compares (it flipped Finale of Devastation to a
+// grammar reading whose enters emit claims the library only, and Chandra's Flame Wave to one that splits its damage). Real record dumped from Mongo 2026-10-28.
+test("Finale of Devastation keeps its model reading, with one search (the switch compares uncollapsed readings)", () => {
+  const source = { name: "Finale of Devastation", typeLine: "Sorcery", keywords: [], oracleText: "Search your library and/or graveyard for a creature card with mana value X or less and put it onto the battlefield. If you search your library this way, shuffle. If X is 10 or more, creatures you control get +X/+X and gain haste until end of turn." };
+  const stored = [{ id: 1, abilityType: "spell", actions: [zoneSearch("your library and/or graveyard", null as never), { verb: "put", object: "a creature card with mana value X or less", fromZone: null, toZone: "battlefield" }, { verb: "shuffle", object: "your library", fromZone: null, toZone: null }, { verb: "modify-pt", object: "creatures you control", amount: "+X/+X" }, { verb: "grant-ability", object: "creatures you control" }] }];
+  const row = deriveRow({ doc: { oracleId: "x", name: source.name, canonical: stored } as never, source: source as never, isToken: false });
+  expect(row.fromGrammar).toBe(false);
+  expect(row.tags.abilities.filter((a) => a.effect?.kind === "search")).toHaveLength(1);
+});

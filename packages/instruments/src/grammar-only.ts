@@ -25,8 +25,8 @@ for (const doc of docs as unknown as { oracleId: string; name: string; canonical
   if (!g.complete) { const k = g.blocker!.kind; blockers[k] = (blockers[k] ?? 0) + 1; continue; }
   complete++;
   // Instrument and switch must key the same readings: the switch compares UNFOLDED abilities (see the #1391 comment in derive-worker.ts).
-  const stored = deriveCardTags(deriveInputOf(card as never, doc.oracleId, doc.name, doc.canonical), { foldGrantTwins: false }).abilities;
-  const grammar = deriveCardTags(deriveInputOf(card as never, doc.oracleId, doc.name, g.records, undefined, g.readings), { foldGrantTwins: false }).abilities;
+  const stored = deriveCardTags(deriveInputOf(card as never, doc.oracleId, doc.name, doc.canonical), { foldGrantTwins: false, collapseZoneSearches: false }).abilities;
+  const grammar = deriveCardTags(deriveInputOf(card as never, doc.oracleId, doc.name, g.records, undefined, g.readings), { foldGrantTwins: false, collapseZoneSearches: false }).abilities;
   const key = deriveDiff(stored, grammar);
   if (key === null) { same++; continue; }
   (groups.get(key) ?? groups.set(key, []).get(key)!).push(doc.name);

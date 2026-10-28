@@ -1883,17 +1883,14 @@ const PLAYER_OBJECT_VERBS: ReadonlySet<string> = new Set(["draw", "mill", "disca
  *  the card's class, which its object carries. */
 const UNNAMED_IS_YOU: ReadonlySet<string> = new Set(["draw", "mill", "scry", "surveil"]);
 
-/** THE ACTION GRAMMAR WINS (owner, 2026-10-01): a clause's stored actions of a taken-over family are
- *  rewritten from the printed text where the grammar read the phrase completely -- object, amount,
- *  optional, zones and the kept condition. The rest of derive reads the rewritten record exactly as
- *  it read the stored one. CEILING: a phrase the store left out (the "reveal it" of a tutor) is not
- *  ADDED: an inserted action becomes the antecedent of the "it" after it, and the references
- *  resolver (#900) reads the revealed card's class off the text, not off an action. */
 /** ONE PRINTED SEARCH OVER SEVERAL ZONES IS ONE SEARCH ABILITY (#1391 F3). "Search its owner's graveyard, hand, and library for all cards with that name" (Eradicate, Extirpate, Kassandra) is stored as one `search` action per zone,
  *  same object, differing only in `fromZone`; the model's store and the grammar's own records both write it so. A run of CONSECUTIVE searches with the same object, amount and optionality and pairwise-different zones collapses
  *  to one, keeping the library member (its `search` emit and `librarySearch` are the event "whenever you search your library" hears), else the first. Two separately printed searches never match: they differ in object, or
  *  repeat a zone (Increasing Ambition, Tempt with Discovery).
- *  CEILING: the graveyard and hand zones are not carried on the collapsed action (nothing reads a zone list); Deadly Cover-Up writes each zone's own phrase as the object, so its three searches are not folded. */
+ *  CEILING: the graveyard and hand zones are not carried on the collapsed action (nothing reads a zone list). The fold depends on `withGrammarActions` having rewritten the per-zone stored objects to the ONE printed object
+ *  first (Deadly Cover-Up writes each zone's own phrase; Ethereal Elk "your library" / "your graveyard"): a clause with no printed text keeps per-zone objects and is not folded. Not folded either: Vraska's Scorn, Jace's Ruse,
+ *  Liberating Combustion (model path: the `put` of the found card derives a second `search` kind, 3 -> 2 abilities) and Nissa's Encouragement (three named cards, one pair of six folds: 6 -> 5).
+ */
 function collapseZoneSearches(clause: ClauseRecord): ClauseRecord {
   const acts = clause.actions ?? [];
   const out: Action[] = [];
@@ -1909,6 +1906,12 @@ function collapseZoneSearches(clause: ClauseRecord): ClauseRecord {
   return out.length === acts.length ? clause : { ...clause, actions: out };
 }
 
+/** THE ACTION GRAMMAR WINS (owner, 2026-10-01): a clause's stored actions of a taken-over family are
+ *  rewritten from the printed text where the grammar read the phrase completely -- object, amount,
+ *  optional, zones and the kept condition. The rest of derive reads the rewritten record exactly as
+ *  it read the stored one. CEILING: a phrase the store left out (the "reveal it" of a tutor) is not
+ *  ADDED: an inserted action becomes the antecedent of the "it" after it, and the references
+ *  resolver (#900) reads the revealed card's class off the text, not off an action. */
 function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost: string | undefined, cardName: string | undefined, precomputed?: ActionReading[]): ClauseRecord {
   if (!text || !clause.actions?.length) return clause;
   // PRECOMPUTED READINGS (G-T3): `grammarClauseRecords` already ran `parseActions` on this exact
@@ -2279,6 +2282,8 @@ export function deriveAbilities(
   clauseGrants?: Record<number, number>,
   /** Clause ids that are a modal spell's or ability's header (`derive/modal.ts`): each is supplied the `face-a-dilemma` event once (Star Trek, #1349). Absent: none is. */
   modalHeads?: ReadonlySet<number>,
+  /** Collapse one printed search over several zones into one action (`collapseZoneSearches`). Off only for the grammar switch's DECISION (derive-worker.ts). */
+  collapseSearches = true,
 ): { abilities: Ability[]; unclaimed: Action[]; unclaimedAt: UnclaimedAction[]; unknownTriggers: string[]; twinOf: ReadonlyMap<number | string, number | string>; spliced: ReadonlySet<number | string>; folded: ReadonlyMap<number | string, number | string> } {
   const abilities: Ability[] = [];
   /** Every action nothing claimed, with the clause that printed it (#1299). `unclaimed` is the same list as bare actions. */
@@ -2388,7 +2393,8 @@ export function deriveAbilities(
     // effect read off that sentence); none-or-several leave it NO printed text (the stored reading alone). Mixing the stored trigger with another
     // sentence's effect was Kratos at 314: a `dies` trigger carrying the end-step's +1/+1 counters.
     const rehomed = homeOfMisplaced(clause, clauses, clauseTexts);
-    clause = collapseZoneSearches(withGrammarActions(clause, rehomed ?? clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName, readings?.[clause.id]?.actions));
+    clause = withGrammarActions(clause, rehomed ?? clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName, readings?.[clause.id]?.actions);
+    if (collapseSearches) clause = collapseZoneSearches(clause);
     // WHICH FACE PRINTS THIS CLAUSE. Stamped onto every ability the clause derives below, so the
     // matcher can stop reading a back-face ability against the card's UNION of types.
     const face = clauseFaces?.[clause.id];
@@ -3908,14 +3914,14 @@ export function stampSelfLoss(a: Ability): Ability {
  *  from the card document -- derivation never asks a model for what the database already knows. */
 /** `deriveAbilities` called the way `deriveCardTags` calls it. Exported so an instrument reads `twinOf` (which clause a spliced twin
  *  was folded into) from the SAME run, not a re-implementation of the twin detection. */
-export function deriveAbilitiesOf(input: DeriveInput): ReturnType<typeof deriveAbilities> {
+export function deriveAbilitiesOf(input: DeriveInput, opts: { collapseZoneSearches?: boolean } = {}): ReturnType<typeof deriveAbilities> {
   const chars = input.characteristics;
   const castAtInstantSpeed = chars.types.some((t) => t.toLowerCase() === "instant")
     || (chars.keywords ?? []).some((k) => k.toLowerCase() === "flash");
   return deriveAbilities(
     input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken,
     input.clauseFaces, castAtInstantSpeed, input.clauseRequires, input.readings,
-    chars.subtypes.some((t) => t.toLowerCase() === "curse"), chars.types.some((t) => t.toLowerCase() === "creature"), input.clauseGrants, input.modalHeads);
+    chars.subtypes.some((t) => t.toLowerCase() === "curse"), chars.types.some((t) => t.toLowerCase() === "creature"), input.clauseGrants, input.modalHeads, opts.collapseZoneSearches !== false);
 }
 /** THE UNION MAKES THE TWINS (#1391): derive makes one ability per action and every keyword-grant /
  *  speed-increase ability carries the UNION of its clause's grant-ability actions, so two grants on one
@@ -3934,9 +3940,9 @@ export function foldGrantTwins(abilities: Ability[]): Ability[] {
     return !seen.has(key) && !!seen.add(key);
   });
 }
-export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: boolean } = {}): CardTags {
+export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: boolean; collapseZoneSearches?: boolean } = {}): CardTags {
   const chars = input.characteristics;
-  const derived = deriveAbilitiesOf(input);
+  const derived = deriveAbilitiesOf(input, opts);
   const { unknownTriggers, unclaimedAt } = derived;
   // AN AURA ON AN OPPONENT'S CREATURE WATCHES THE OPPONENT'S CREATURE (owner 2026-09-23, AN7).
   // Nurgle's Rot prints "Enchant creature an opponent controls / When enchanted creature dies": the
