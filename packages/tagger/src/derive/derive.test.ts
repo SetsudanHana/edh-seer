@@ -6898,3 +6898,35 @@ describe("two records sharing one id are a split compound (#1391)", () => {
     for (const [id, n] of [[3, 2], [4, 1], [5, 1]] as const) { expect(under("attacks", id), `mode ${id} attacks`).toBe(n); expect(under("dies", id), `mode ${id} dies`).toBe(n); }
   });
 });
+
+// #1391 F2: "you and <player> each <verb>" is one action per player, yours and theirs, not two JSON-identical `any` abilities.
+describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
+  const act = (verb: string, object: string, amount: string | null = null) => ({ verb, object, amount, fromZone: null, toZone: null, optional: false });
+  const run = (name: string, event: string, text: string, actions: ReturnType<typeof act>[]) =>
+    deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event, subject: "this creature", control: "you" }, actions }] as never, name, { 1: text }, undefined, text).abilities;
+  const ctl = (abs: ReturnType<typeof run>) => abs.map((a) => `${a.emits?.[0]?.verb}:${a.emits?.[0]?.subject.control}`);
+
+  test("Farsight Adept (stored draw x2): your draw and the target opponent's", () => {
+    const abs = run("Farsight Adept", "enters", "When this creature enters, you and target opponent each draw a card.", [act("draw", "a card", "1"), act("draw", "a card", "1")]);
+    expect(ctl(abs)).toEqual(["draw:you", "draw:opp"]);
+    expect(abs[1]?.effect.subject?.scope).toBe("target");
+  });
+
+  test("Thran Spider (stored create x2): your Powerstone and the target opponent's", () => {
+    const abs = run("Thran Spider", "enters", "When this creature enters, you and target opponent each create a tapped Powerstone token.", [act("create", "a tapped Powerstone token", "1"), act("create", "a tapped Powerstone token", "1")]);
+    expect(abs.map((a) => `${a.effect.kind}:${a.effect.subject?.control}`)).toEqual(["token-generation:you", "token-generation:opp"]);
+  });
+
+  test("Cait: draw and discard for you and for the defending player, no identical pair", () => {
+    const abs = run("Cait, Cage Brawler", "attacks", "Whenever Cait attacks, you and defending player each draw a card, then discard a card.",
+      [act("draw", "you"), act("draw", "defending player"), act("discard", "you"), act("discard", "defending player")]);
+    expect(ctl(abs)).toEqual(["draw:you", "draw:opp", "discard:you", "discard:opp"]);
+    expect(new Set(abs.map((a) => JSON.stringify(a))).size).toBe(abs.length);
+  });
+
+  test("a store that wrote ONE action for the pair keeps it once (nothing doubled, nothing rewritten)", () => {
+    const abs = run("Farsight Adept", "enters", "When this creature enters, you and target opponent each draw a card.", [act("draw", "a card", "1")]);
+    expect(abs).toHaveLength(1);
+  });
+});
+

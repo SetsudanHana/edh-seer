@@ -26,12 +26,12 @@ test("phrases split on the printed joints; an actor carries to the phrases after
   expect(read("Target opponent draws a card. You draw two cards.")).toMatchObject([
     { verb: "draw", actor: { control: "opp" } }, { verb: "draw", actor: { control: "you" } },
   ]);
-  // "you and X each": one action per player, no actor text (the store writes the pair as one or two).
+  // "you and X each": one action per player, the first pass yours and the second the named player's (#1391 F2).
   expect(read("You and target opponent each draw three cards.")).toMatchObject([
-    { verb: "draw", amount: "3", actor: { control: "any", scope: "each" } }, { verb: "draw", amount: "3", actor: { control: "any", scope: "each" } },
+    { verb: "draw", amount: "3", actor: { control: "you", text: "you" } }, { verb: "draw", amount: "3", actor: { control: "opp", scope: "target", text: "target opponent" } },
   ]);
   expect(read("you and those players each draw a card, then discard a card at random.").map((r) => [r.verb, r.actor?.text]))
-    .toEqual([["draw", undefined], ["discard", undefined], ["draw", undefined], ["discard", undefined]]);
+    .toEqual([["draw", "you"], ["discard", "you"], ["draw", "those players"], ["discard", "those players"]]);
 });
 
 test("conditions are KEPT on the action (owner, 2026-10-01); 'you may' is optional, and so is its 'if you do'", () => {

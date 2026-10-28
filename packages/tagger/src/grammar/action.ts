@@ -1920,11 +1920,13 @@ export function parseActions(effect: string, type: string | null, cost?: string)
     // "you and target opponent each draw three cards": one action per player.
     const both = /^you and (another target player|target opponent|target player|that player|those players|each opponent|each other player|defending player|the attacking player|the controller of [^,]{1,40}) each (.+)$/i.exec(s);
     if (both) {
-      // One action per player and phrase -- the store writes either one or two -- and no actor text,
-      // so each keeps its stored object: neither "you" nor the other player alone is right for a
-      // store that wrote the pair as one action.
-      const pair: NonNullable<ActionReading["actor"]> = { control: "any", scope: "each" };
-      for (let k = 0; k < 2; k++) for (const p of phrases(both[2]!)) { const r = readPhrase(p, condition, pair); if (r) out.push(...r); }
+      // One action per player and phrase, the first pass YOURS and the second the named player's (#1391 F2): with one shared "any / each" actor the pair read as two JSON-identical
+      // abilities that said whose neither was. The store writes either one action or two for the pair; derive's alignment gives the first reading to the first stored action.
+      // An other player the actor table does not name ("another target player", "the controller of ...") is read as any player, target / that.
+      const named = both[1]!.toLowerCase();
+      const other: NonNullable<ActionReading["actor"]> = { ...(ACTORS.find(([w]) => w === named)?.[1] ?? { control: "any" as const, scope: /^another target/.test(named) ? "target" as const : "that" as const }), text: both[1]! };
+      const you: NonNullable<ActionReading["actor"]> = { control: "you", text: "you" };
+      for (const pair of [you, other]) for (const p of phrases(both[2]!)) { const r = readPhrase(p, condition, pair); if (r) out.push(...r); }
       continue;
     }
     // "You and Humans you control have hexproof" (Sigarda): the class's grant is read; the player's
