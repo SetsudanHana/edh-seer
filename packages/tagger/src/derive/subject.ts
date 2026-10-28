@@ -172,11 +172,12 @@ function lostOtherTypes(t: string, out: SubjectFilter): string | string[] | unde
  *  (left alone), and "an artifact or creature" names two, so it stays the OR it is. */
 function copiedCreature(t: string, out: SubjectFilter): string | undefined {
   if (out.token !== true || !Array.isArray(out.type) || (out.allTypes?.length ?? 0) > 0) return undefined;
-  const m = /\bcop(?:y|ies)\s+of\s+(.*)$/.exec(t);
+  const m = /\bcop(?:y|ies)\s+of\b/.exec(t);
   if (!m) return undefined;
+  const rest = t.slice(m.index + m[0].length);
   // The head ends at a QUALIFIER or a following clause, never at a list separator: "a copy of target creature, artifact, or planeswalker" and "creature and/or
   // artifact" are lists of what may be copied. "and" ends it only when a clause follows ("and that's blocking"), a comma only before a clause word.
-  const head = m[1]!.split(/\b(?:attacking|blocking|you|your|an?\s+opponent|with|from|exiled|except|which|who)\b|\band\s+(?:that|it|they|those|attach)\b|\bthat(?:'s|\s+(?:is|are|was|were|has|have|can|would))|,\s*(?:except|tapped|that|which|who|with|then|and\s+(?:that|it|they))\b/i)[0]!;
+  const head = rest.split(/\b(?:attacking|blocking|you|your|an?\s+opponent|with|from|exiled|except|which|who)\b|\band\s+(?:that|it|they|those|attach)\b|\bthat(?:'s|\s+(?:is|are|was|were|has|have|can|would))|,\s*(?:except|tapped|that|which|who|with|then|and\s+(?:that|it|they))\b/i)[0]!;
   const named = (CARD_TYPES as readonly string[]).filter((x) => new RegExp(`\\b${x}s?\\b`).test(head));
   return named.length === 1 && named[0] === "creature" ? "creature" : undefined;
 }
