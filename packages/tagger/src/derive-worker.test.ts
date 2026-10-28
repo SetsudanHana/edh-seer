@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { deriveRow } from "./derive-worker.js";
 import { grammarClauseRecords } from "./grammar/clause-record.js";
 import { deriveCardTags, foldGrantTwins } from "./derive/derive.js";
@@ -150,4 +150,19 @@ test("Primal Clay and Aquamorph Entity (grammar): one animate, not one per alter
   expect(f567("Primal Clay", "grammar").tags.abilities.filter((a) => a.effect?.kind === "animate")).toHaveLength(1);
   expect(f567("Aquamorph Entity", "grammar").tags.abilities.filter((a) => a.effect?.kind === "animate")).toHaveLength(1);
   expect(f567("Molten Sentry", "model").tags.abilities.filter((a) => a.effect?.kind === "animate")).toHaveLength(2);
+});
+
+// F7 review: two SEPARATE restrictions in one clause keep both (only a reading covering BOTH words makes a stored bare combat action redundant). Synthetic Auras: no corpus card has the shape.
+describe("separate can't-attack / can't-block restrictions both survive (#1391 F7 review)", () => {
+  const cant = (o: string) => ({ verb: "cant", object: o, fromZone: null, toZone: null, optional: false });
+  const restricts = (row: ReturnType<typeof deriveRow>) => row.tags.abilities.filter((a) => a.effect?.kind === "restriction").flatMap((a) => a.restricts ?? []).sort();
+  for (const sentence of ["Enchanted creature can't attack. Enchanted creature can't block.", "Enchanted creature can't attack, and it can't block."]) {
+    test(sentence, () => {
+      const source = { name: "Synthetic Aura", typeLine: "Enchantment — Aura", keywords: [] as string[], oracleText: `Enchant creature\n${sentence}` };
+      const model = deriveRow({ doc: { oracleId: "x", name: source.name, canonical: [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant creature" }] }, { id: 2, abilityType: "static", actions: [cant("attack"), cant("block")] }] } as never, source: source as never, isToken: false });
+      expect(restricts(model)).toEqual(["attack", "block"]);
+      const grammar = deriveRow({ doc: { oracleId: "x", name: source.name, canonical: grammarClauseRecords(source as never).records } as never, source: source as never, isToken: false });
+      expect(restricts(grammar)).toEqual(["attack", "block"]);
+    });
+  }
 });

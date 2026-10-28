@@ -1941,7 +1941,8 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
   // position the grammar's second phrase took the BLOCK action's place and the real activated-abilities action was left over, so one restriction and TWO ability-loss derived. A stored bare "block" / "attack"
   // that an earlier stored bare combat action's reading already covers ("attack or block") is dropped before the alignment.
   const combatWords = (o: string | undefined): string[] => (/^(?:attack|block)(?: or (?:attack|block))?$/i.exec((o ?? "").trim()) ? (o ?? "").toLowerCase().match(/attack|block/g)! : []);
-  const coveredByReading = new Set(readings.filter((r) => r.verb === "cant").flatMap((r) => combatWords(r.text)));
+  // Only a reading that covers BOTH words ("attack or block") makes the second stored bare action redundant; two separate restrictions ("can't attack. ... can't block.") keep both.
+  const coveredByReading = new Set(readings.filter((r) => r.verb === "cant").map((r) => combatWords(r.text)).filter((w) => w.length === 2).flat());
   let seenCombat = false;
   const stored = clause.actions.filter((a) => {
     if (a.verb !== "cant" || !/^(?:attack|block)$/i.test((a.object ?? "").trim())) return true;
