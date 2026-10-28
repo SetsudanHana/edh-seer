@@ -562,7 +562,8 @@ import { emblemRecipient } from "../emblem.js";
 // 397: #1381 -- a "becomes blocked by <creatures>" trigger carries the blocker: `Ability.trigger.blocker` is the filter on the BLOCKING creatures ("by an artifact creature", Ogre Leadfoot; "by a creature" is `{type: creature}`), read by `readBlocker` (grammar/trigger.ts) on both paths. "By one or more <class>" and a threshold ("by two or more creatures") set `batched` (once a combat, CR 603.2c / 509.3e); "by a/an <class>" is once per blocker (CR 509.3d). A phrase it cannot read exactly (the card or its host as blocker, a dropped negation, a relative stat, a state) still refuses as `narrowing:becomes-blocked`. repeats reads the fields, no longer the clause text.
 // 398: #1383 -- a negated card type beside a head type is recorded: "nonartifact creature" is `{type: creature, notType: [artifact]}` (was a bare creature), "noncreature artifact" `{type: artifact, notType: [creature]}`. `resolveTypes` dropped a negation that removed nothing from the base on the reasoning that the matcher could not apply it; 8cdb0d7b made the matcher apply `notType` as an exclusion five hours later (Phyrexian Scriptures' "destroy all nonartifact creatures" no longer hits your artifact creatures). themeSubjectKey and loneTypeNarrows treat a negation beside ONE type as that type (keys unchanged).
 // 399: #1385 -- type words inside a token's QUOTED ability are not the token's types: `parseSubject` cuts double-quoted spans (not a quoted name) before any sweep. The Prydwen's Human Knight was `[creature, artifact]`, an Equipment artifact token `[creature, artifact]` ("Equipped creature gets +1/+0"), Ka-Zar's Zabu `[creature, land]`.
-export const DERIVE_VERSION = 399;
+// 400: #1380 -- the blocks twin fold compares amount VALUES, not their presence (Mana-Charged Dragon's "X/0" inside "+X/+0, where X is ..." still folds; "1" beside "2" no longer does) and count by equality.
+export const DERIVE_VERSION = 400;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -3748,11 +3749,20 @@ export function deriveAbilities(
   // prints its cue". A card whose record numbering drifts in a way neither sees keeps its stored trigger over the sentence its own text prints.
   const spliced = new Set<number | string>();
   if (identicalTwinOf.size > 0) {
-    // `b` COVERS `a` when they are the same ability apart from the clause and from HOW the amount is spelled, and `b` carries an amount / count wherever `a` does: removing `a` then loses
-    // nothing (a twin that is POORER than its covering clause, as the grammar's reading of Dusk Urchins' blocks half is, is covered; a RICHER one is never).
+    // `b` COVERS `a` when they are the same ability apart from the clause, and `b`'s amount / count COVERS `a`'s: removing `a` then loses nothing (a twin that is POORER than its covering
+    // clause, as the grammar's reading of Dusk Urchins' blocks half is, is covered; a RICHER one is never). COMPARE THE VALUES, NOT THEIR PRESENCE (#1380): "1" beside "2" was folded and the
+    // "1" lost. An amount is covered when absent on the twin, or equal / a whole-word run inside the covering one after punctuation and case are dropped (Mana-Charged Dragon's "X/0" inside
+    // "+X/+0, where X is ..."); a count is covered when absent on the twin or equal.
     const strip = (x: Ability): string => { const { clause: _c, amount: _a, count: _n, ...rest } = x; return JSON.stringify(rest); };
-    const sameAbility = (a: Ability, b: Ability): boolean => strip(a) === strip(b)
-      && (a.amount === undefined || b.amount !== undefined) && (a.count === undefined || b.count !== undefined);
+    const words = (t: string): string => t.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const amountCovered = (twin: string | undefined, covering: string | undefined): boolean => {
+      if (twin === undefined) return true;
+      if (covering === undefined) return false;
+      const t = words(String(twin)), c = words(String(covering));
+      return t === c || ` ${c} `.includes(` ${t} `);
+    };
+    const countCovered = (twin: Ability["count"], covering: Ability["count"]): boolean => twin === undefined || JSON.stringify(twin) === JSON.stringify(covering);
+    const sameAbility = (a: Ability, b: Ability): boolean => strip(a) === strip(b) && amountCovered(a.amount, b.amount) && countCovered(a.count, b.count);
     // ALL OR NOTHING PER CLAUSE (#1373 review): a textless clause is folded only when EVERY one of its abilities has an exact match among its covering clause's, so a fold is
     // always a pure removal. A per-ability fold dropped Velukan Dragon's identical dice-rolled copy while its pump (read without the covering clause's comma) stayed.
     for (const [twin, covering] of identicalTwinOf) {

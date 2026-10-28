@@ -6721,4 +6721,18 @@ describe("the blocks twin fold covers a poorer twin and never a richer one", () 
   test("an identical twin folds (Dusk Urchins shape)", () => {
     expect(run("7", "7").spliced.has(2)).toBe(true);
   });
+  test("a twin with amount '1' beside a covering '2' is NOT folded and its '1' survives (#1380)", () => {
+    const r = run("2", "1");
+    expect(r.spliced.has(2)).toBe(false);
+    expect(r.abilities.some((a) => a.clause === 2 && a.amount === "1")).toBe(true);
+  });
+  test("a comma-only respelling folds (#1380)", () => {
+    expect(run("+X/+X, where X is the number of cards in your hand", "+X/+X where X is the number of cards in your hand").spliced.has(2)).toBe(true);
+  });
+  test("the Mana-Charged Dragon shape folds: the twin's X/0 sits inside the covering +X/+0 (#1380)", () => {
+    expect(run("+X/+0, where X is the amount of mana spent", "X/0").spliced.has(2)).toBe(true);
+  });
+  test("a covering amount holding the twin's only as a sub-token does not fold (#1380)", () => {
+    expect(run("12", "1").spliced.has(2)).toBe(false);
+  });
 });
