@@ -1,5 +1,5 @@
 import type { Ability, CardTags, Characteristics, GameEvent, SubjectFilter } from "@edh-seer/tagger";
-import { parseSubject } from "@edh-seer/tagger/subject";
+import { CARD_TYPES, parseSubject } from "@edh-seer/tagger/subject";
 import { parseStat } from "./stats.js";
 
 const PERMANENT_TYPES = new Set(["creature", "artifact", "enchantment", "planeswalker", "battle", "land"]);
@@ -28,6 +28,14 @@ export function isOutlaw(subtypes: string[]): boolean {
   return subtypes.some((s) => OUTLAW_SUBTYPES.includes(s));
 }
 
+/** A PRINTED TYPE LINE IS A CONJUNCTION (#1385). "Artifact Creature" is an artifact AND a creature, but `type: [artifact, creature]` reads
+ *  as either, and an unmarked multi-type producer list now reads as an OR. The concrete card types of a type line, sorted, when there are
+ *  two or more -- supertypes ("legendary") are not card types. Undefined for a one-type card. */
+export function printedAllTypes(types: readonly string[]): string[] | undefined {
+  const cards = [...new Set(types.map((t) => t.toLowerCase()).filter((t) => (CARD_TYPES as readonly string[]).includes(t)))].sort();
+  return cards.length >= 2 ? cards : undefined;
+}
+
 function selfSubject(chars: Characteristics): SubjectFilter {
   const types = chars.types.map((t) => t.toLowerCase());
   const subtypes = chars.subtypes.map((t) => t.toLowerCase());
@@ -41,6 +49,8 @@ function selfSubject(chars: Characteristics): SubjectFilter {
   const subtype = collapse(subtypes);
   if (type !== undefined) out.type = type;
   if (subtype !== undefined) out.subtype = subtype;
+  const allTypes = printedAllTypes(types);
+  if (allTypes) out.allTypes = allTypes;
   if (isHistoric(types, subtypes)) out.historic = true;
   if (isOutlaw(subtypes)) out.outlaw = true;
   if (chars.anyNumber === true) out.multiples = true;
@@ -571,9 +581,13 @@ export function selfLeavesTypes(events: GameEvent[], chars: Characteristics): Ga
     if (!SELF_TYPED_VERBS.has(e.verb) || e.subject.self !== true) return e;
     const types = chars.types.map((t) => t.toLowerCase());
     const subtypes = chars.subtypes.map((t) => t.toLowerCase());
+    // The printed line is a conjunction (#1385): a stale `allTypes` from the clause's noun goes with the type it described.
+    const { allTypes: _noun, ...rest } = e.subject;
+    const allTypes = printedAllTypes(types);
     return { ...e, subject: {
-      ...e.subject,
+      ...(types.length ? rest : e.subject),
       ...(types.length ? { type: types } : {}),
+      ...(allTypes ? { allTypes } : {}),
       ...(subtypes.length ? { subtype: subtypes } : {}),
       // ...and whether it is a token: Eldrazi Scion's "Sacrifice this token" is a token's death.
       ...(chars.token ? { token: true } : {}),
@@ -644,10 +658,13 @@ export function selfFillTypes(events: GameEvent[], chars: Characteristics): Game
     const zone = zoneTypes(chars);
     const types = zone.types.map((t) => t.toLowerCase());
     const subtypes = zone.subtypes.map((t) => t.toLowerCase());
+    const { allTypes: _noun, ...rest } = e.subject;
+    const allTypes = printedAllTypes(types);
     return { ...e, subject: {
-      ...e.subject,
+      ...(types.length ? rest : e.subject),
       ...flags,
       ...(types.length ? { type: types } : {}),
+      ...(allTypes ? { allTypes } : {}),
       ...(subtypes.length ? { subtype: subtypes } : {}),
       // A TOKEN IN THE GRAVEYARD IS NO CARD (CR 704.5d: it ceases to exist), so Spawnbed Protector's
       // "return target Eldrazi creature CARD" must not hear Eldrazi Scion's own death (#956).

@@ -3,10 +3,10 @@
   "parsed": 6820,
   "groups": {
     "control": {
-      "distinct": 82,
+      "distinct": 83,
       "label": "grammar right",
       "rule": "CR 112.2",
-      "why": "Two shapes, both right. (1) 'spells you cast' (70 of 73): a spell's controller is the player who put it on the stack, so the caster is the controller -- parseSubject's control regex knows 'you control' and 'your' but not 'you cast', and answered any. (2) 'of an opponent's choice' / 'of your choice' (6): the chooser is not the controller; parseSubject read 'opponent'/'your' anywhere and answered opp/you. A Clue, Food or Treasure 'of your choice' is created under the creator's control by CONTROLLER_DEFAULT, not by this word. The 'that targets only' member names the TARGET's controller, not the spell's, and the subject is refused (restricted) either way. 'a token that's a copy of a permanent you control': 'you control' names the ORIGINAL, not the token, which CONTROLLER_DEFAULT gives its creator (CR 111.2)."
+      "why": "Two shapes, both right. (1) 'spells you cast' (70 of 73): a spell's controller is the player who put it on the stack, so the caster is the controller -- parseSubject's control regex knows 'you control' and 'your' but not 'you cast', and answered any. (2) 'of an opponent's choice' / 'of your choice' (6): the chooser is not the controller; parseSubject read 'opponent'/'your' anywhere and answered opp/you. A Clue, Food or Treasure 'of your choice' is created under the creator's control by CONTROLLER_DEFAULT, not by this word. The 'that targets only' member names the TARGET's controller, not the spell's, and the subject is refused (restricted) either way. 'a token that's a copy of a permanent you control': 'you control' names the ORIGINAL, not the token, which CONTROLLER_DEFAULT gives its creator (CR 111.2). (3) 'a 2/2 white Human Knight creature token with \"...under your control this turn.\"' (The Prydwen, Steel Flagship; this phrase was group control,type before #1385): the type difference is gone, since parseSubject now cuts a token's quoted ability from the type sweep. What remains is control: parseSubject still reads 'your control' inside the quote and answers you, the grammar answers any. That is the quote leak of #1387, and the grammar is right."
     },
     "scope": {
       "distinct": 87,
@@ -68,12 +68,6 @@
       "rule": "printed text",
       "why": "'an instant or sorcery spell that targets only this creature': the type is the spell's; 'creature' is what it targets. Refused (restricted) either way, so no claim moves. 'target nonland permanent if it's a creature or ...': the head is the nonland permanent; parseSubject took 'creature' from the condition."
     },
-    "control,type": {
-      "distinct": 1,
-      "label": "grammar right",
-      "rule": "printed text",
-      "why": "'a spell that targets only a single creature you control': type and control both belong to the target in the relative clause, not to the spell. Refused (restricted) either way."
-    },
     "notType,type": {
       "distinct": 2,
       "label": "grammar right",
@@ -123,7 +117,7 @@
       "why": "'a creature other than this creature': singular, so no mass scope; parseSubject's scope reads the word 'other' as a class-minus-this. The grammar says `other`, which is what the words mean."
     },
     "keyword": {
-      "distinct": 21,
+      "distinct": 30,
       "label": "grammar right",
       "rule": "printed text",
       "why": "'a spell that has convoke', 'another spell that has flash': the keyword the spell has, the same demand as 'a spell with convoke'. parseSubject reads keywords only after 'with'."
@@ -446,12 +440,6 @@
       "rule": "printed text",
       "why": "Every member read. colors: a colour inside 'protection from white' is the keyword's, not the token's; keyword: keyword lists joined by commas ('flanking, protection from white, and haste') and 'that has convoke'."
     },
-    "control,counter,type": {
-      "distinct": 1,
-      "label": "grammar right",
-      "rule": "CR 112.2, CR 115.1, printed text",
-      "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive or relative clause names another object's controller; counter: an energy amount inside a stat's rhs is not the subject's counter; type: the type is the head noun's: not a word from a targets-only clause or a token's quoted ability."
-    },
     "control,scope,subtype": {
       "distinct": 2,
       "label": "grammar right",
@@ -507,10 +495,10 @@
       "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
     },
     "nameRelation": {
-      "distinct": 49,
+      "distinct": 51,
       "label": "grammar right",
       "rule": "printed text",
-      "why": "Every member read. nameRelation: 'with the chosen name', 'with that name', 'with the same name as ...', 'with different names'."
+      "why": "Every member read. nameRelation: 'with the chosen name', 'with that name', 'with the same name as ...', 'with different names'. (Two members joined from nameRelation,type in #1385: 'a Vampire spell with the same name as a card exiled with this enchantment', 'target spell with the same name as a card exiled with this creature' -- parseSubject now cuts the self-named card from the type sweep, so the type no longer differs.)"
     },
     "history,zone": {
       "distinct": 22,
@@ -525,7 +513,7 @@
       "why": "Every member read. abilityOf: whose ability: 'a loyalty ability of a Chandra planeswalker', 'from an artifact source'; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
     },
     "nameRelation,type": {
-      "distinct": 20,
+      "distinct": 18,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. nameRelation: 'with the chosen name', 'with that name', 'with the same name as ...', 'with different names'; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
@@ -1340,12 +1328,6 @@
       "rule": "printed text",
       "why": "Every member read. condition: a condition on a player or on an object's controller (controls X, life/poison/hand counts, the punisher's 'who doesn't', a vote or choice, a coin) that parseSubject dropped or read as a class; the matcher refuses it."
     },
-    "keyword,type": {
-      "distinct": 9,
-      "label": "grammar right",
-      "rule": "printed text",
-      "why": "Every member read. keyword: keyword lists with commas and 'protection from X', 'that has convoke', 'with a cycling ability'; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
-    },
     "condition,type": {
       "distinct": 5,
       "label": "grammar right",
@@ -1377,7 +1359,7 @@
       "why": "Every member read. condition: a condition on a player or on an object's controller (controls X, life/poison/hand counts, the punisher's 'who doesn't', a vote or choice, a coin) that parseSubject dropped or read as a class; the matcher refuses it; subtype: a word inside a name, a counter kind, a Role's name or a token's quoted ability is not a subtype; Adventure is a card's layout (`status`), not its subtype; a planeswalker subtype counts before 'planeswalker'."
     },
     "keyword,scope": {
-      "distinct": 2,
+      "distinct": 3,
       "label": "grammar right",
       "rule": "CR 115.1, printed text",
       "why": "Every member read. keyword: keyword lists with commas and 'protection from X', 'that has convoke', 'with a cycling ability'; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject."
@@ -1502,12 +1484,6 @@
       "rule": "CR 111.4, CR 115.1, CR 715, printed text",
       "why": "Every member read. history: what happened to it this turn: dealt damage (by whom), attacked, blocked, entered, died, put into a graveyard (from where), milled, crewed/saddled it; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; subtype: a word inside a name, a counter kind, a Role's name or a token's quoted ability is not a subtype; Adventure is a card's layout (`status`), not its subtype; a planeswalker subtype counts before 'planeswalker'."
     },
-    "keyword,scope,type": {
-      "distinct": 1,
-      "label": "grammar right",
-      "rule": "CR 115.1, printed text",
-      "why": "Every member read. keyword: keyword lists with commas and 'protection from X', 'that has convoke', 'with a cycling ability'; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
-    },
     "other,printedIn": {
       "distinct": 1,
       "label": "grammar right",
@@ -1592,11 +1568,11 @@
       "rule": "CR 108.3, CR 112.2, CR 115.1",
       "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; targets: what a spell targets (owner 2026-10-01)."
     },
-    "fromZone,shares,type": {
+    "fromZone,shares": {
       "distinct": 1,
       "label": "grammar right",
       "rule": "CR 400.1, printed text",
-      "why": "Every member read. fromZone: the origin ('from the top five cards of your library', 'from outside the game'); shares: 'that shares a creature type / color / card type with ...'; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
+      "why": "Every member read. fromZone: the origin ('from the top five cards of your library', 'from outside the game'); shares: 'that shares a creature type / color / card type with ...'. (Was group fromZone,shares,type until #1385: 'a card exiled with this creature' no longer reads the card's own type as the subject's.)"
     },
     "otherThanRef,scope": {
       "distinct": 1,
@@ -1933,6 +1909,12 @@
       "label": "grammar right",
       "rule": "printed text",
       "why": "'target spell, nonland permanent, or card in a graveyard': three alternatives, the grammar's branches each with its own class (the nonland permanent carries its notType); parseSubject read one nonland permanent and dropped the other two."
+    },
+    "control,counter": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "CR 112.2, CR 115.1, printed text",
+      "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive or relative clause names another object's controller; counter: an energy amount inside a stat's rhs is not the subject's counter."
     }
   }
 }

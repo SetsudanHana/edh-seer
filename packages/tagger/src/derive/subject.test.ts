@@ -854,3 +854,82 @@ test("a negated card type beside a head type is recorded as notType (#1383)", ()
   expect(parseSubject("target nonland permanent").notType).toEqual(["land"]);
   expect(parseSubject("a nonblack creature").notType).toBeUndefined();
 });
+
+test("type words inside a token's quoted ability are not the token's types (#1385)", () => {
+  // The Prydwen, Steel Flagship: the token is a creature; "artifact" belongs to its granted ability.
+  expect(parseSubject('a 2/2 white Human Knight creature token with "This token gets +2/+2 as long as an artifact entered the battlefield under your control this turn."'))
+    .toMatchObject({ type: "creature", token: true });
+  // Dáin Ironfoot: an Equipment artifact token; "Equipped creature" is the granted ability's.
+  const axe = parseSubject('a colorless Equipment artifact token named Axe with "Equipped creature gets +1/+0"');
+  expect(axe.type).toBe("artifact");
+  expect(axe.subtype).toBe("equipment");
+  // Ka-Zar of the Savage Land's Zabu
+  expect(parseSubject('Zabu, a legendary 2/2 green Cat creature token with "Landfall — Whenever a land you control enters, put a +1/+1 counter on Zabu."').type).toBe("creature");
+  // a name in quotes is still read as a name
+  expect(parseSubject('a card named "Ancient Tomb"').named).toBeDefined();
+});
+
+test("a quoted ability with no closing quote (cut open by a count phrase) is still cut (Moira Brown, #1385)", () => {
+  // COUNT_PHRASE removes "for each quest counter ..." and with it the closing quote.
+  expect(parseSubject('a colorless Book Equipment artifact token named Wasteland Survival Guide with "Equipped creature gets +1/+1').type).toBe("artifact");
+});
+
+test("an apostrophe in a token's name does not defeat the cut (Volo's Journal, #1385)", () => {
+  expect(parseSubject('Volo\'s Journal, a legendary colorless Book artifact token with hexproof and "Whenever you cast a creature spell, note one of its creature types that has not been noted.').type).toBe("artifact");
+  expect(parseSubject('Volo\'s Journal, a legendary colorless Book artifact token with hexproof and "Whenever you cast a creature spell, note one of its creature types that has not been noted."').type).toBe("artifact");
+});
+
+test("a copy token that gains a type in addition to its others is a conjunction (#1385)", () => {
+  // Urza, Prince of Kroog: the token is an artifact (the copy) AND a creature (the Soldier).
+  expect(parseSubject("a token that's a copy of target artifact you control, except it's a 1/1 Soldier creature in addition to its other types"))
+    .toMatchObject({ token: true, allTypes: ["artifact", "creature"] });
+  // Molten Duplication: strict reading, the listed types together.
+  expect(parseSubject("a token that's a copy of target artifact or creature you control, except it's an artifact in addition to its other types").allTypes)
+    .toEqual(["artifact", "creature"]);
+  // Stolen Identity names no added type: its list is the OR of what may be copied.
+  expect(parseSubject("a token that's a copy of target artifact or creature")).not.toHaveProperty("allTypes");
+  // a plain "or" list that is not a token result stays unmarked ("target artifact or creature you control")
+  expect(parseSubject("target artifact or creature you control, except it's an artifact in addition to its other types")).not.toHaveProperty("allTypes");
+});
+
+test("a type word in 'exiled with this artifact' names the card itself, not the class (#1385)", () => {
+  // Dino DNA: the copy is of a creature card; "this artifact" is Dino DNA. Death in Heaven: "creature cards exiled with this enchantment".
+  expect(parseSubject("a token that's a copy of target creature card exiled with this artifact, except it's a 6/6 green Dinosaur creature with trample").type).toBe("creature");
+  expect(parseSubject("all creature cards exiled with this enchantment").type).toBe("creature");
+  // the subject itself is still a type: "this creature or another creature you control"
+  expect(parseSubject("this creature or another creature you control").type).toBe("creature");
+});
+
+test("a copy token that 'loses all other card types' is only the conferred type (#1385 review)", () => {
+  // Espers to Magicite: "a token that's a copy of that card, except it's an artifact and it loses all other card types".
+  expect(parseSubject("a token that's a copy of that card, except it's an artifact and it loses all other card types")).toMatchObject({ token: true, type: "artifact" });
+  // Shelob, Child of Ungoliant: a Food artifact.
+  const food = parseSubject("a token that's a copy of that creature, except it's a Food artifact with that ability and it loses all other card types and all creature types");
+  expect(food.type).toBe("artifact");
+  expect(food).not.toHaveProperty("allTypes");
+  // not a loss: still the copy's own types plus the added one
+  expect(parseSubject("a token that's a copy of target creature, except it's an artifact in addition to its other types").allTypes).toEqual(["artifact", "creature"]);
+});
+
+// #1385 review: Mirror Match's token is a copy of "each creature attacking you or a planeswalker you control": the planeswalker is what the creature attacks, not what is
+// copied. A copy whose copied head names only a creature is a creature, even when the sweep of the whole sentence set a list.
+test("a copy token whose copied head names only a creature is a creature (#1385 review)", () => {
+  expect(parseSubject("a token that's a copy of each creature attacking you or a planeswalker you control and that's blocking that creature").type).toBe("creature");
+  expect(parseSubject("a token that's a copy of that creature and that's blocking that creature").type).toBe("creature");
+  // two copied types stay a list: Stolen Identity, Molten Duplication
+  expect(parseSubject("a token that's a copy of target artifact or creature").type).toEqual(["creature", "artifact"]);
+  // an added type keeps its conjunction
+  expect(parseSubject("a token that's a copy of target creature, except it's an artifact in addition to its other types").allTypes).toEqual(["artifact", "creature"]);
+});
+
+test("a copied LIST is not collapsed to its first word (#1385 review)", () => {
+  for (const list of ["target creature, artifact, or planeswalker", "target creature, enchantment, or artifact", "target creature and/or artifact"]) {
+    const t = parseSubject(`a token that's a copy of ${list}`).type;
+    expect(Array.isArray(t), list).toBe(true);
+    expect((t as string[]).length, list).toBeGreaterThanOrEqual(2);
+  }
+  // a clause after a comma still ends the copied phrase
+  expect(parseSubject("a token that's a copy of target creature, except it isn't legendary").type).toBe("creature");
+  expect(parseSubject("a token that's a copy of each creature attacking you or a planeswalker you control and that's blocking that creature").type).toBe("creature");
+  expect(parseSubject("a token that's a copy of target artifact or creature").type).toEqual(["creature", "artifact"]);
+});

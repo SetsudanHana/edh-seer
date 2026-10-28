@@ -2,6 +2,7 @@ import type { Card, CardFace } from "@edh-seer/engine";
 import type { CardTags, GameEvent } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 import { parseTypeLine } from "./typeline.js";
+import { printedAllTypes } from "./implied.js";
 
 /** The printed faces of a card. `Card.faces` when the document carries it; otherwise the combined
  *  type line split on " // ", which is a no-op for a genuinely single-faced line. An absent `faces`
@@ -73,11 +74,13 @@ export function enteringFaceName(p: DeckCard, e: GameEvent): string | undefined 
   return /\btransformed\b/i.test(faces[p.face]?.oracleText ?? "") ? undefined : faces[0]?.name;
 }
 
-function faceClass(face: CardFace | undefined): { type?: string[]; subtype?: string[] } {
+function faceClass(face: CardFace | undefined): { type?: string[]; subtype?: string[]; allTypes?: string[] } {
   if (!face) return {};
   const p = parseTypeLine(face.typeLine);
   const types = [...p.supertypes, ...p.types];
-  return { ...(types.length ? { type: types } : {}), ...(p.subtypes.length ? { subtype: p.subtypes } : {}) };
+  // A printed two-type line is a conjunction (#1385): an unmarked list would read as an OR.
+  const allTypes = printedAllTypes(types);
+  return { ...(types.length ? { type: types } : {}), ...(allTypes ? { allTypes } : {}), ...(p.subtypes.length ? { subtype: p.subtypes } : {}) };
 }
 
 /** One `DeckCard` per printed face. A single-face card and a token are returned unchanged, so a

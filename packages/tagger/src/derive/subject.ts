@@ -142,6 +142,46 @@ const COMPOUND_TYPE = new RegExp(
   "i",
 );
 
+/** A COPY TOKEN THAT GAINS A TYPE IS BOTH (#1385). "create a token that's a copy of target artifact you control, except it's a 1/1
+ *  Soldier creature IN ADDITION TO ITS OTHER TYPES" (Urza, Prince of Kroog) is an artifact AND a creature, and "...a copy of target
+ *  artifact or creature, except it's an artifact in addition" (Molten Duplication) is at least the listed types together: the list
+ *  `type` carries is a sweep of the words, which reads as either. Stamped on the TOKEN only -- on a target ("target land becomes an
+ *  artifact in addition to its other types") the list is the OR of what may be chosen, and a result that "loses all other card types"
+ *  (Espers to Magicite) is not an addition. The strict reading never forms a false edge against a negating consumer. CEILING: the copy
+ *  of "artifact or creature" is stamped as both although only the added type is certain -- a missing edge, never a false one. */
+function conferredTypes(t: string, out: SubjectFilter): string[] | undefined {
+  if (out.token !== true || !Array.isArray(out.type) || !/\bin addition to (?:its|their) other types\b/.test(t)) return undefined;
+  const cards = out.type.filter((x) => (CARD_TYPES as readonly string[]).includes(x)).sort();
+  return cards.length >= 2 ? cards : undefined;
+}
+
+/** A COPY TOKEN THAT "LOSES ALL OTHER CARD TYPES" IS ONLY WHAT IT GAINS (#1385 review). "...a copy of that card, except it's an artifact and it
+ *  loses all other card types" (Espers to Magicite) and "...it's a Food artifact ... and it loses all other card types" (Shelob) are artifacts and
+ *  nothing else; the sweep also read the copied creature. The conferred types are the card types between "except" and "loses". */
+function lostOtherTypes(t: string, out: SubjectFilter): string | string[] | undefined {
+  if (out.token !== true || !Array.isArray(out.type)) return undefined;
+  const m = /\bexcept\s+(?:it|they)(?:'s|'re|\s+is|\s+are)\b(.*?)\bloses?\s+all\s+other\s+card\s+types\b/.exec(t);
+  if (!m) return undefined;
+  const kept = out.type.filter((x) => (CARD_TYPES as readonly string[]).includes(x) && new RegExp(`\\b${x}s?\\b`).test(m[1]!));
+  return kept.length === 0 ? undefined : kept.length === 1 ? kept[0] : kept;
+}
+
+/** A COPY OF A CREATURE IS A CREATURE (#1385 review). "a token that's a copy of each creature attacking you or a planeswalker you control" (Mirror Match) is swept to
+ *  [creature, planeswalker], and read as an OR the token is a planeswalker. The copied thing is the head noun phrase after "copy of", up to what qualifies it
+ *  ("attacking", "you control", "that", "except"); when that names the type `creature` and no other, the token is a creature. An added type is `allTypes`
+ *  (left alone), and "an artifact or creature" names two, so it stays the OR it is. */
+function copiedCreature(t: string, out: SubjectFilter): string | undefined {
+  if (out.token !== true || !Array.isArray(out.type) || (out.allTypes?.length ?? 0) > 0) return undefined;
+  const m = /\bcop(?:y|ies)\s+of\b/.exec(t);
+  if (!m) return undefined;
+  const rest = t.slice(m.index + m[0].length);
+  // The head ends at a QUALIFIER or a following clause, never at a list separator: "a copy of target creature, artifact, or planeswalker" and "creature and/or
+  // artifact" are lists of what may be copied. "and" ends it only when a clause follows ("and that's blocking"), a comma only before a clause word.
+  const head = rest.split(/\b(?:attacking|blocking|you|your|an?\s+opponent|with|from|exiled|except|which|who)\b|\band\s+(?:that|it|they|those|attach)\b|\bthat(?:'s|\s+(?:is|are|was|were|has|have|can|would))|,\s*(?:except|tapped|that|which|who|with|then|and\s+(?:that|it|they))\b/i)[0]!;
+  const named = (CARD_TYPES as readonly string[]).filter((x) => new RegExp(`\\b${x}s?\\b`).test(head));
+  return named.length === 1 && named[0] === "creature" ? "creature" : undefined;
+}
+
 function compoundTypes(t: string): string[] | undefined {
   const m = t.match(COMPOUND_TYPE);
   if (!m) return undefined;
@@ -175,12 +215,29 @@ function parseTypes(
 ): { type?: string | string[]; notType?: string[]; umbrella?: string; plural: boolean } {
   const found: string[] = [];
   let plural = false;
-  for (const ty of TYPES) {
-    // "token" and "card" are not card types on their own; they only qualify another noun.
-    if (ty === "token" || ty === "card") continue;
-    if (new RegExp(`\\b${ty}s\\b`).test(t)) { found.push(ty); plural = true; }
-    else if (new RegExp(`\\b${ty}\\b`).test(t)) found.push(ty);
-  }
+  // A GRANTED ABILITY IS NOT THE SUBJECT'S CLASS (#1385). Type words inside the quoted ability of a TOKEN description
+  // ("a 2/2 Human Knight creature token with \"... as long as an ARTIFACT entered ...\"", "an Equipment artifact token with
+  // \"EQUIPPED CREATURE gets +1/+0\"") were swept into `type`, so the Prydwen's Knight read as an artifact creature and every
+  // Equipment token as a creature. Quoted text is cut before any sweep -- only after the word "token", since an emblem's quoted text IS its subject (Kaito's
+  // Ninjas); a quoted NAME stays.
+  // CEILING: only the TYPE sweep is cut. The same quoted text also leaks scope, control and subtype words (Country Roads' Pilot token
+  // gains Mount and Vehicle; Vernal Sovereign's scope), left for #1387 so this change moves types alone.
+  // `plural` is still read off the whole text so `scope` does not move with this change.
+  // "cards exiled WITH THIS ARTIFACT" names the card that exiled them (Dino DNA, Death in Heaven), not a class of the subject.
+  // ...but only when another type word is left to name the subject: "land cards exiled with this enchantment" is a land, while a phrase with
+  // nothing else ("the cards exiled with this artifact") keeps its sweep rather than become typeless and match everything.
+  const sweep = (head: string): void => {
+    found.length = 0;
+    for (const ty of TYPES) {
+      // "token" and "card" are not card types on their own; they only qualify another noun.
+      if (ty === "token" || ty === "card") continue;
+      if (new RegExp(`\\b${ty}s\\b`).test(t)) plural = true;
+      if (new RegExp(`\\b${ty}s\\b`).test(head) || new RegExp(`\\b${ty}\\b`).test(head)) found.push(ty);
+    }
+  };
+  const quoteCut = stripTokenAbility(t);
+  sweep(quoteCut.replace(EXILED_WITH_SELF, " "));
+  if (found.length === 0) sweep(quoteCut);
 
   const { negated, plural: negPlural } = negatedTypes(t);
   const { negationApplied, ...r } = resolveTypes(found, negated);
@@ -701,6 +758,19 @@ const TARGETS_ONLY = /\btargets? only\b/i;
  *  target creature"), or the Equipment being described ("all Equipment attached to that creature").
  *  33 of the 61 carry a type word in the tail that the head does not. */
 const ATTACHED_TO = /\battached to\b/i;
+/** "exiled with this artifact": the type word is the card's own, not the subject's. */
+const EXILED_WITH_SELF = /\bexiled\s+(?:with|by)\s+this\s+[a-z]+\b/gi;
+
+/** Cut the quoted ability off a token description; any other text is returned untouched. */
+function stripTokenAbility(text: string): string {
+  // The first DOUBLE quote or `with '`, never a bare apostrophe: "Volo's Journal, a ... token" has one before the word "token".
+  const q = text.search(/"|\bwith\s+'/i);
+  if (q < 0 || !/\btokens?\b/i.test(text.slice(0, q))) return text;
+  return text.replace(QUOTED_ABILITY, " ");
+}
+/** A double-quoted span not introduced by "named", or a single-quoted ability after "with" (nested inside a quote). An UNCLOSED quote runs
+ *  to the end: `COUNT_PHRASE` cuts "for each quest counter" out of Moira Brown's ability before the sweep sees it. */
+const QUOTED_ABILITY = /(?<!\bnamed\s)"[^"]*(?:"|$)|\bwith\s+'[^']*(?:'|$)/gi;
 
 /** Does the subject name a CLASS -- a type or a subtype, itself or in every one of its alternatives
  *  ("artifact spells and colorless spells" is `anyOf` [artifact, colorless spell] since the filter
@@ -819,8 +889,13 @@ export function parseSubject(text: string): SubjectFilter {
   const notSubtype = parseNotSubtypes(t);
   if (notSubtype) out.notSubtype = notSubtype;
   if (umbrella) out.umbrella = umbrella;
-  const all = compoundTypes(t);
+  const lost = lostOtherTypes(t, out);
+  if (lost !== undefined) out.type = lost;
+  const all = compoundTypes(t) ?? conferredTypes(t, out);
   if (all) out.allTypes = all;
+  // After the conjunctions are stamped: a copy that gains a type, or loses its others, is not "a copy of a creature" and keeps what those rules set.
+  const copied = lost === undefined ? copiedCreature(t, out) : undefined;
+  if (copied !== undefined) out.type = copied;
   if (subtype) out.subtype = subtype;
   if (scope) out.scope = scope;
   if (stats.length) out.stats = stats;

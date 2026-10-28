@@ -547,20 +547,28 @@ test("a nonartifact creature consumer refuses an artifact creature producer (#13
   expect(subjectMatches(s({ control: "any", type: "creature" }), consumer, H)).toBe(true);
 });
 
-// #1383 follow-up: a producer list that came from a NEGATION over an umbrella ("destroy target nonland
-// permanent", so it carries its own `notType`) is an OR: Missy ("another nonartifact creature dies")
-// hears Stroke of Midnight, which can destroy a nonartifact creature. Every other multi-type producer
-// is a CONJUNCTION or unknown (a printed type line; a copy token that gained a type, Urza, Prince of
-// Kroog) and keeps the strict exclusion.
-test("a nonartifact consumer: only a producer with its own notType is an OR list", () => {
+// #1385: derive marks the conjunction (`allTypes`), so an UNMARKED multi-type producer list is an OR and is
+// excluded only when EVERY alternative is. A marked one is an AND, excluded when any of its types is.
+test("a producer type list with allTypes is an AND; without it, an OR (#1385)", () => {
   const missy = parseSubject("another nonartifact creature") as SubjectFilter;
+  // Stroke of Midnight: "destroy target nonland permanent" -- an OR carrying its own notType.
   const stroke = s({ control: "any", type: ["creature", "artifact", "enchantment", "planeswalker", "battle"], notType: ["land"] });
   expect(subjectMatches(stroke, missy, H)).toBe(true);
   expect(subjectMatches(s({ control: "any", type: ["artifact", "enchantment"], notType: ["land"] }), missy, H)).toBe(false);
-  // Laserbeak, a printed artifact creature, and Urza's copy token (creature in addition to artifact).
-  expect(subjectMatches(s({ control: "any", type: ["artifact", "creature"] }), missy, H)).toBe(false);
-  const curio = parseSubject("a nonartifact permanent you control") as SubjectFilter;
-  expect(subjectMatches(s({ control: "you", token: true, type: ["creature", "artifact"] }), curio, H)).toBe(false);
-  const talent = parseSubject("a noncreature, nonland permanent you control") as SubjectFilter;
-  expect(subjectMatches(s({ control: "you", token: true, type: ["creature", "artifact"] }), talent, H)).toBe(false);
+  // Laserbeak: a printed artifact creature carries allTypes, so it is both and is refused.
+  expect(subjectMatches(s({ control: "any", type: ["artifact", "creature"], allTypes: ["artifact", "creature"] }), missy, H)).toBe(false);
+  // Urza's copy token (creature in addition to artifact) carries allTypes too.
+  const urzaToken = s({ control: "you", token: true, type: ["creature", "artifact"], allTypes: ["artifact", "creature"] });
+  expect(subjectMatches(urzaToken, parseSubject("a nonartifact permanent you control") as SubjectFilter, H)).toBe(false);
+  expect(subjectMatches(urzaToken, parseSubject("a noncreature, nonland permanent you control") as SubjectFilter, H)).toBe(false);
+  // Midgar, City of Mako // Reactor Raid: "sacrifice an artifact or creature" is an OR with no mark; a noncreature
+  // artifact is a legal sacrifice, so Jaws ("a noncreature artifact is sacrificed") hears it.
+  const sacrifice = s({ control: "you", type: ["creature", "artifact"] });
+  expect(subjectMatches(sacrifice, parseSubject("a noncreature artifact") as SubjectFilter, H)).toBe(true);
+  // ...but not when every alternative is excluded.
+  expect(subjectMatches(s({ control: "you", type: ["creature", "artifact"] }), parseSubject("a noncreature, nonartifact permanent") as SubjectFilter, H)).toBe(false);
+  // Stolen Identity: "a copy of target artifact or creature" is a real OR, so a nonartifact consumer is met by the creature.
+  expect(subjectMatches(s({ control: "you", token: true, type: ["creature", "artifact"] }), parseSubject("a nonartifact permanent you control") as SubjectFilter, H)).toBe(true);
+  // A single-type producer is refused when that type is excluded, as before.
+  expect(subjectMatches(s({ control: "any", type: "artifact" }), parseSubject("a nonartifact permanent") as SubjectFilter, H)).toBe(false);
 });

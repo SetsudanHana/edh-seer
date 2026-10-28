@@ -657,3 +657,62 @@ test("soleCounterKind: reads and stays linear (CodeQL polynomial-redos)", () => 
   soleCounterKind("a".repeat(50_000));
   expect(performance.now() - t0).toBeLessThan(100);
 });
+
+// #1385: a COPY token's type is the copied object's, not the union of every printed token sharing its subtype. `tokenTypeFor("zombie")` is
+// [artifact, creature, enchantment] and read as an OR it paired The Scarab God's token with Builder's Talent ("noncreature, nonland").
+// A copy of a creature card, or of a Goblin/Elemental on the battlefield, is a creature.
+describe("a copy token takes its type from what it copies (#1385)", () => {
+  const enters = (object: string, clause: string) => actionEmits({ verb: "create", object }, clause).find((e) => e.verb === "enters")!;
+  test("The Scarab God: a Zombie copy of a creature card is a creature", () => {
+    const e = enters("a token that's a copy of it, except it's a 4/4 black Zombie", "Exile target creature card from a graveyard. Create a token that's a copy of it, except it's a 4/4 black Zombie.");
+    expect(e.subject.type).toBe("creature");
+    expect(e.subject.subtype).toBe("zombie");
+  });
+  test("Grub's Command and Ashling's Command: a copy of a Goblin or Elemental is a creature", () => {
+    expect(enters("a token that's a copy of target Goblin you control", "Create a token that's a copy of target Goblin you control.").subject.type).toBe("creature");
+    expect(enters("a token that's a copy of target Elemental you control", "Create a token that's a copy of target Elemental you control.").subject.type).toBe("creature");
+  });
+});
+
+// #1385 review: "cast any number of spells from among cards exiled with this artifact" is typed `spell` once the self-named artifact is cut, which feeds
+// every "whenever you cast a creature spell" payoff (Beast Whisperer). The class is what the card's OWN exile clause printed.
+import { narrowSelfExiledSpell } from "./emits.js";
+describe("spells exiled with this card take the class of the card's own exile clause (#1385)", () => {
+  const cast = [{ verb: "cast", subject: { control: "you", token: null, type: "spell" } }] as never;
+  const clause = "{X}, {T}, Sacrifice this artifact: You may cast any number of spells from among cards exiled with this artifact with total mana value X or less without paying their mana costs.";
+  test("Rod of Absorption: instants and sorceries", () => {
+    const out = narrowSelfExiledSpell(cast, clause, "Whenever a player casts an instant or sorcery spell, exile it instead of putting it into a graveyard as it resolves.\n" + clause);
+    expect(out[0]!.subject.type).toEqual(["instant", "sorcery"]);
+  });
+  test("Knowledge Pool: the exile clause names no class, so it stays a spell", () => {
+    const text = "Whenever a player casts a spell from their hand, that player exiles it. If the player does, they may cast a spell from among other cards exiled with this artifact without paying its mana cost.";
+    expect(narrowSelfExiledSpell(cast, text, text)[0]!.subject.type).toBe("spell");
+  });
+  test("a clause that is not about its own exiled cards is untouched", () => {
+    expect(narrowSelfExiledSpell(cast, "You may cast a spell.", "Exile an instant.")[0]!.subject.type).toBe("spell");
+  });
+});
+
+// #1385 review: Ultimate Magic: Meteor -- "for each opponent, choose an artifact or land that player controls. Destroy the chosen permanents." The chosen permanents are
+// the OPPONENTS', so they go to opponents' graveyards, not yours.
+describe("'for each opponent ... that player controls' is an opponent's permanent (#1385)", () => {
+  const clause = "Ultimate Magic: Meteor deals 7 damage to each creature. If this spell was cast from exile, for each opponent, choose an artifact or land that player controls. Destroy the chosen permanents.";
+  test("the chosen permanents are control opp", () => {
+    const dies = actionEmits({ verb: "destroy", object: "chosen artifacts or lands" }, clause).find((e) => e.verb === "dies")!;
+    expect(dies.subject.control).toBe("opp");
+  });
+  test("a destroy with no distributive opponent is untouched", () => {
+    const dies = actionEmits({ verb: "destroy", object: "chosen artifacts or lands" }, "Choose an artifact or land. Destroy the chosen permanents.").find((e) => e.verb === "dies")!;
+    expect(dies.subject.control).toBe("any");
+  });
+  test("a COUNT after 'for each' is not the object's controller: the tokens and the card are yours", () => {
+    const create = actionEmits({ verb: "create", object: "a 1/1 Soldier token for each creature that player controls" }, "For each opponent, create a 1/1 white Soldier creature token for each creature that player controls.");
+    for (const e of create) expect(e.subject.control, e.verb).not.toBe("opp");
+    const draw = actionEmits({ verb: "draw", object: "a card for each creature that player controls" }, "For each opponent, draw a card for each creature that player controls.");
+    for (const e of draw) expect(e.subject.control, e.verb).not.toBe("opp");
+  });
+  test("the phrase itself, with the opponent and the controller in one sentence", () => {
+    const dies = actionEmits({ verb: "destroy", object: "an artifact or land that player controls" }, "For each opponent, destroy an artifact or land that player controls.").find((e) => e.verb === "dies")!;
+    expect(dies.subject.control).toBe("opp");
+  });
+});

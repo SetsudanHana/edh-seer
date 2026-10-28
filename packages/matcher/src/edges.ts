@@ -7,7 +7,7 @@ import crKeywords from "@edh-seer/tagger/cr-keywords" with { type: "json" };
  *  must never be keyed as one -- see `impliedEntryThemeTags`. */
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
-import { enterAsCopyAbilities, impliedEvents, preparedAbilities, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
+import { enterAsCopyAbilities, impliedEvents, preparedAbilities, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, printedAllTypes, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { normalizeZoneEvent, tagKey, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
@@ -482,6 +482,8 @@ export function characteristicsSubject(tags: CardTags, name?: string): SubjectFi
     // the filter existed) or nothing (after, if only one side were done).
     ...(c.keywords?.length ? { keyword: c.keywords.map((k) => k.toLowerCase()) } : {}),
     type: c.types.length ? c.types.map((t) => t.toLowerCase()) : undefined,
+    // A printed two-type line is both (#1385): an unmarked multi-type producer list reads as an OR in `subjectMatches`.
+    ...(printedAllTypes(types) ? { allTypes: printedAllTypes(types)! } : {}),
     subtype: c.subtypes.length ? c.subtypes.map((t) => t.toLowerCase()) : undefined,
     colors: c.colors.length ? c.colors : undefined,
     control: "you",
@@ -4059,7 +4061,8 @@ export function createsForYou(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
     return p.tags.abilities.some((pa) => !isRefusedTrigger(pa) && pa.effect.kind === "emblem" && pa.effect.subject?.control !== "opp");
   }
   if (c.tags.characteristics.token !== true) return false;
-  const consumerSubject = characteristicsSubject(c.tags, c.card.name);
+  // The token card is the CONSUMER argument here: the creator's emit may state one of its types only (#1385), so its printed conjunction is not demanded.
+  const { allTypes: _printedAll, ...consumerSubject } = characteristicsSubject(c.tags, c.card.name);
   return p.tags.abilities.some((pa) => !isRefusedTrigger(pa) &&
     (pa.emits ?? []).some((e) =>
       e.verb === "create-token" && e.subject.control !== "opp" && subjectMatches(consumerSubject, e.subject, h)));
@@ -4092,7 +4095,8 @@ export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[]
   if (!p.tags || !c.tags) return [];
   if (c.tags.characteristics.emblem === true) return emblemReasons(p, c);
   if (c.tags.characteristics.token !== true) return [];
-  const consumerSubject = characteristicsSubject(c.tags, c.card.name);
+  // The token card is the CONSUMER argument here: the creator's emit may state one of its types only (#1385), so its printed conjunction is not demanded.
+  const { allTypes: _printedAll, ...consumerSubject } = characteristicsSubject(c.tags, c.card.name);
   const reasons: Reason[] = [];
   for (const [pi, pa] of p.tags.abilities.entries()) {
     if (isRefusedTrigger(pa)) continue;

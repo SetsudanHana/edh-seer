@@ -11,7 +11,7 @@ import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Char
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
-import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
+import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, narrowSelfExiledSpell, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, activationConditionOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
 import { hostEffect } from "./host.js";
@@ -561,7 +561,8 @@ import { emblemRecipient } from "../emblem.js";
 // 396: #1375 (owner ruling 2026-10-27) -- `becomes-blocked` is an engine verb (CR 509.1h: an attacking creature with blockers declared for it becomes blocked), consumed from card text with NO producer: a "whenever ... becomes blocked" trigger derives instead of being dropped (168 stored rows carried the clause event, 233 corpus cards print it) and the second half of "blocks or becomes blocked" (55 cards print "blocks or becomes blocked" outside reminder text: Goblin Cadets, Aisling Leprechaun, Goblin Flotilla, Engulfing Slagwurm) derives beside the blocks half. `becomes-blocked` joins PERMANENT_EVENT_VERBS; "an attacking creature becomes blocked" states the event, so the attacking state is dropped as it is on an attack. repeats: a self / equipped / enchanted creature becomes blocked once a combat (CR 509.3c), "becomes blocked by <creatures>" once per blocker (CR 509.3d).
 // 397: #1381 -- a "becomes blocked by <creatures>" trigger carries the blocker: `Ability.trigger.blocker` is the filter on the BLOCKING creatures ("by an artifact creature", Ogre Leadfoot; "by a creature" is `{type: creature}`), read by `readBlocker` (grammar/trigger.ts) on both paths. "By one or more <class>" and a threshold ("by two or more creatures") set `batched` (once a combat, CR 603.2c / 509.3e); "by a/an <class>" is once per blocker (CR 509.3d). A phrase it cannot read exactly (the card or its host as blocker, a dropped negation, a relative stat, a state) still refuses as `narrowing:becomes-blocked`. repeats reads the fields, no longer the clause text.
 // 398: #1383 -- a negated card type beside a head type is recorded: "nonartifact creature" is `{type: creature, notType: [artifact]}` (was a bare creature), "noncreature artifact" `{type: artifact, notType: [creature]}`. `resolveTypes` dropped a negation that removed nothing from the base on the reasoning that the matcher could not apply it; 8cdb0d7b made the matcher apply `notType` as an exclusion five hours later (Phyrexian Scriptures' "destroy all nonartifact creatures" no longer hits your artifact creatures). themeSubjectKey and loneTypeNarrows treat a negation beside ONE type as that type (keys unchanged).
-export const DERIVE_VERSION = 398;
+// 399: #1385 -- type words inside a token's QUOTED ability are not the token's types: `parseSubject` cuts double-quoted spans (not a quoted name) before any sweep. The Prydwen's Human Knight was `[creature, artifact]`, an Equipment artifact token `[creature, artifact]` ("Equipped creature gets +1/+0"), Ka-Zar's Zabu `[creature, land]`.
+export const DERIVE_VERSION = 399;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2847,7 +2848,7 @@ export function deriveAbilities(
       // "tapped") still emits the wildcard `{token:true, scope:all}` tap, because CREATED_TOKEN_REF only
       // resolves when "tapped" is present.
       const tapsCreated = tapMadeHere && TAPPED_WORD.test(effectText(text, cardName ?? "")) && !TAPS_IT.test(effectText(text, cardName ?? ""));
-      const emits = temporaryRider ? [] : actionEmits(antecedent ? { ...action, object: antecedent, ...(zone ? { fromZone: zone } : {}) } : action, text, { self: emitsSelf })
+      const emits = temporaryRider ? [] : narrowSelfExiledSpell(actionEmits(antecedent ? { ...action, object: antecedent, ...(zone ? { fromZone: zone } : {}) } : action, text, { self: emitsSelf }), text, cardText)
         .filter((e) => !(e.verb === "taps" && (tapsCreated || ARRIVES_TAPPED.test(effectText(text, cardName ?? "")))))
         // A SACRIFICE triggered by the card's own LEAVING is drawback, not supply. "When this
         // enchantment leaves the battlefield, that creature's controller sacrifices it" (Necromancy,
