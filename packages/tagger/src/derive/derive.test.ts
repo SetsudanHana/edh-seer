@@ -6832,3 +6832,40 @@ describe("keyword-grant twins from one clause fold (#1391)", () => {
     expect(new Set(grants.map((a) => a.clause)).size).toBe(2);
   });
 });
+
+// #1391 part 2: the model stores an "X or Y" trigger as TWO records with the SAME id (62 stored cards). They are each other's sibling, so each takes only its own event's reading.
+describe("two records sharing one id are a split compound (#1391)", () => {
+  const act = (verb: string, object: string, extra: object = {}) => ({ verb, object, amount: null, fromZone: null, toZone: null, optional: false, ...extra });
+  const trig = (id: number, event: string, subject: string, actions: object[]) => ({ id, abilityType: "triggered", trigger: { event, subject, control: "you" }, actions });
+  const verbsOf = (r: ReturnType<typeof deriveAbilities>) => r.abilities.map((a) => a.trigger?.verbs.join("+"));
+
+  test("Duggan: 'enters or attacks' stored as two id-2 records derives one enters and one attacks ability", () => {
+    const text = "Whenever Duggan, Private Detective enters or attacks, investigate.";
+    const r = deriveAbilities([
+      trig(2, "enters", "Duggan", [act("investigate", "a Clue")]),
+      trig(2, "attacks", "Duggan", [act("investigate", "a Clue")]),
+    ], "Duggan, Private Detective", { 1: "Duggan, Private Detective gets +1/+1 as long as you've drawn two or more cards this turn.", 2: text }, undefined, text);
+    expect(verbsOf(r)).toEqual(["enters", "attacks"]);
+  });
+
+  test("Derevi: 'enters and whenever a creature you control deals combat damage to a player' derives four abilities", () => {
+    const text = "When Derevi, Empyrial Tactician enters and whenever a creature you control deals combat damage to a player, you may tap or untap target permanent.";
+    const r = deriveAbilities([
+      trig(2, "enters", "Derevi, Empyrial Tactician", [act("tap", "target permanent", { optional: true }), act("untap", "target permanent", { optional: true })]),
+      trig(2, "damage-dealt", "a creature you control", [act("tap", "target permanent", { optional: true }), act("untap", "target permanent", { optional: true })]),
+    ], "Derevi, Empyrial Tactician", { 2: text }, undefined, text);
+    expect(r.abilities).toHaveLength(4);
+    expect(verbsOf(r).filter((v) => v === "enters")).toHaveLength(2);
+  });
+
+  test("Goldspan Dragon: 'attacks or becomes the target of a spell' derives attacks once, not twice", () => {
+    const text = "Whenever this creature attacks or becomes the target of a spell, create a Treasure token.";
+    const r = deriveAbilities([
+      trig(2, "attacks", "this creature", [act("create-token", "a Treasure token")]),
+      trig(2, "becomes-target", "this creature", [act("create-token", "a Treasure token")]),
+    ], "Goldspan Dragon", { 1: "Flying, haste", 2: text }, undefined, `Flying, haste\n${text}`);
+    // The becomes-target half has no engine verb: it is refused (as a lone becomes-target record is), not read as a second attacks.
+    expect(verbsOf(r)).toEqual(["attacks"]);
+    expect(r.unknownTriggers).toContain("becomes-target");
+  });
+});

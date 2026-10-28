@@ -565,7 +565,8 @@ import { emblemRecipient } from "../emblem.js";
 // 400: #1380 -- the blocks twin fold compares amount VALUES, not their presence: equal after normalising (sign kept, "-1/-1" is not "+1/+1") or the twin plus a trailing "where X is ...", or the twin as the whole of that explanation (Freelance Muscle) (Mana-Charged Dragon's "X/0" inside "+X/+0, where X is ..." still folds; "1" beside "2" or "+1/+1" no longer does); count by equality.
 // 401: #1376 -- the textless-twin fold runs on every event and on split ids (Korvold's 2.1), not only blocks / becomes-blocked on integer ids, and compares abilities key-order-insensitively (Primeval Herald's twin carried the same effect.subject keys in another order); `deriveRow`'s switch also takes the grammar reading when the stored answer is it with exact duplicates. Measured (derive-identity ALL=1 vs stored 400): 226 cards change; 2 are stale before the change (Plan for All Outcomes, Overwrite the Multiverse); 202 are pure removals; 21 switch to the grammar reading; 1 (Mage Hunter) stays unfolded because its twin is richer. In the model path itself the fold adds 0 lines on all 24 non-pure cards.
 // 402: #1391 -- a clause with several grant-ability actions (Colossus of Akros' trample + "can attack as though it didn't have defender"; Silverquill Pledgemage's flying + lifelink; the model store's one action per keyword) derived one keyword-grant / speed-increase ability per action, each carrying the whole clause's union of `grants`, so JSON-identical twins; derive keeps the first of each (`foldGrantTwins`, applied last by deriveCardTags; derive-worker's switch decides on the UNFOLDED readings and folds the winner, because folding first changed its count keys and moved 39 cards model -> grammar into labels judged on other cards). Measured (full re-derive): cards with exact-duplicate abilities 557 -> 153 (grammar 361 -> 50, model 196 -> 103); switch decisions identical to 401 (0 cards move); panel precision 100.0% / retention 98.4% (428 held, 7 lost) unchanged; role-ratchet gained 0 lost 0; dropped-clauses 5178 actions / 4530 cards unchanged.
-export const DERIVE_VERSION = 402;
+// 403: #1391 part 2 -- two stored records that share one id (the model's "X or Y" trigger: Duggan's enters + attacks, Derevi's enters + combat damage, Goldspan Dragon's attacks + becomes-target; 62 stored cards) are each other's split siblings: each takes its own event's grammar reading instead of every reading, so each limb's ability appears once (was twice) and Goldspan's becomes-target half is refused as a lone one is, not a second attacks. MEASURED: TBD
+export const DERIVE_VERSION = 403;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2559,8 +2560,9 @@ export function deriveAbilities(
       const covering = grammarCovered.get(text)?.get(normalizeTriggerVerb(clause.trigger.event) ?? "");
       if (covering !== undefined && covering !== clause.id) identicalTwinOf.set(clause.id, covering);
     }
+    // A sibling is another record of the sentence with a different id OR (same id, #1391) a different event: the model stores "X or Y" as two records under one id.
     const grammarAll = clause.trigger?.event && text && !misplaced ? grammarTriggersOf(text, cardName, clause.trigger.event, cardText, enchantText,
-      clauses.some((c) => c.id !== clause.id && c.trigger?.event && clauseTexts?.[c.id] === clauseText),
+      clauses.some((c) => (c.id !== clause.id || c.trigger?.event !== clause.trigger?.event) && c.trigger?.event && clauseTexts?.[c.id] === clauseText),
       readings?.[clause.id]?.trigger, curse, creatureCard,
       (clause.trigger.event === "blocks" || clause.trigger.event === "becomes-blocked") && clauses.some((c) => c.id !== clause.id && (c.trigger?.event === "blocks" || c.trigger?.event === "becomes-blocked") && c.trigger.event !== clause.trigger!.event)) : null;
     const claimed = (grammarAll ?? []).filter((g): g is { verbs: Verb[]; subject: SubjectFilter } => !("refused" in g));
