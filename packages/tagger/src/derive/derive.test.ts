@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from "vitest";
-import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, exilesTopOfLibrary, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
+import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, amountCovered, countCovered, exilesTopOfLibrary, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import { targetsASpellEarlier } from "./emits.js";
 import { exileNamesOnlyGraveyards } from "./effect-kind.js";
@@ -6720,5 +6720,52 @@ describe("the blocks twin fold covers a poorer twin and never a richer one", () 
   });
   test("an identical twin folds (Dusk Urchins shape)", () => {
     expect(run("7", "7").spliced.has(2)).toBe(true);
+  });
+  test("a twin with amount '1' beside a covering '2' is NOT folded and its '1' survives (#1380)", () => {
+    const r = run("2", "1");
+    expect(r.spliced.has(2)).toBe(false);
+    expect(r.abilities.some((a) => a.clause === 2 && a.amount === "1")).toBe(true);
+  });
+  test("a comma-only respelling folds (#1380)", () => {
+    expect(run("+X/+X, where X is the number of cards in your hand", "+X/+X where X is the number of cards in your hand").spliced.has(2)).toBe(true);
+  });
+  test("the Mana-Charged Dragon shape folds: the twin's X/0 sits inside the covering +X/+0 (#1380)", () => {
+    expect(run("+X/+0, where X is the amount of mana spent", "X/0").spliced.has(2)).toBe(true);
+  });
+  test("a covering amount holding the twin's only as a sub-token does not fold (#1380)", () => {
+    expect(run("12", "1").spliced.has(2)).toBe(false);
+  });
+});
+
+describe("amountCovered / countCovered, the blocks twin fold's value comparison (#1380)", () => {
+  test("an absent twin amount is covered; an absent covering one is not", () => {
+    expect(amountCovered(undefined, undefined)).toBe(true);
+    expect(amountCovered(undefined, "2")).toBe(true);
+    expect(amountCovered("1", undefined)).toBe(false);
+  });
+  test("the sign is kept: -1/-1 is not covered by +1/+1", () => {
+    expect(amountCovered("-1/-1", "+1/+1")).toBe(false);
+  });
+  test("a bare 1 is not covered by +1/+1, nor 2 by 0/2", () => {
+    expect(amountCovered("1", "+1/+1")).toBe(false);
+    expect(amountCovered("2", "0/2")).toBe(false);
+    expect(amountCovered("1", "12")).toBe(false);
+  });
+  test("X/0 is covered by +X/+0 with its trailing explanation", () => {
+    expect(amountCovered("X/0", "+X/+0, where X is the amount of mana spent")).toBe(true);
+  });
+  test("the twin that reads only X's definition is covered by the X/X amount that explains it (Freelance Muscle)", () => {
+    expect(amountCovered("the greatest power and/or toughness among other creatures you control", "+X/+X, where X is the greatest power and/or toughness among other creatures you control")).toBe(true);
+    expect(amountCovered("other creatures you control", "+X/+X, where X is the greatest power and/or toughness among other creatures you control")).toBe(false);
+  });
+  test("a comma-only respelling is covered", () => {
+    expect(amountCovered("+X/+X where X is the number of cards", "+X/+X, where X is the number of cards")).toBe(true);
+  });
+  test("an absent twin count is covered; equal counts are; differing or absent covering ones are not", () => {
+    expect(countCovered(undefined, undefined)).toBe(true);
+    expect(countCovered(undefined, { floor: 1, ceiling: 1 })).toBe(true);
+    expect(countCovered({ floor: 1, ceiling: 1 }, { floor: 1, ceiling: 1 })).toBe(true);
+    expect(countCovered({ floor: 1, ceiling: 1 }, { floor: 2, ceiling: 2 })).toBe(false);
+    expect(countCovered({ floor: 1, ceiling: 1 }, undefined)).toBe(false);
   });
 });
