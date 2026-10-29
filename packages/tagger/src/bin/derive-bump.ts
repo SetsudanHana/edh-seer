@@ -14,6 +14,7 @@
 import { spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { MongoClient } from "mongodb";
 import { loadConfig } from "@edh-seer/data";
 import { parseArgs, planSteps, rewriteDeriveVersion, type Step } from "./derive-bump-core.js";
 
@@ -24,7 +25,31 @@ const WRITTEN = [DERIVE_TS, "docs/reference/SCHEMA.md", "packages/matcher", "pac
 
 const show = (s: Step) => `${s.cwd ? `(cd ${s.cwd}) ` : ""}${s.cmd} ${s.args.join(" ")}`;
 
-function main(): number {
+/** Host and db name only -- never the URI, which may carry credentials. */
+function describeTarget(uri: string, db: string): string {
+  try {
+    return `host ${new URL(uri).host.split("@").pop()}, db ${db}`;
+  } catch {
+    return `db ${db}`;
+  }
+}
+
+/** CEILING: a raw MongoClient rather than `connect()` from @edh-seer/data -- that one has no
+ *  timeout knob (30 s server selection) and creates an index, a write, before returning. */
+async function mongoReachable(uri: string, dbName: string): Promise<boolean> {
+  const client = new MongoClient(uri, { serverSelectionTimeoutMS: 3000 });
+  try {
+    await client.connect();
+    await client.db(dbName).command({ ping: 1 });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    await client.close().catch(() => {});
+  }
+}
+
+async function main(): Promise<number> {
   let args;
   try {
     args = parseArgs(process.argv.slice(2));
@@ -57,11 +82,10 @@ function main(): number {
     return 0;
   }
 
-  // Fail fast on the same config error every Mongo-backed bin would hit, before editing anything.
-  try {
-    loadConfig();
-  } catch (e) {
-    console.error(`derive-bump: ${(e as Error).message}`);
+  // Preflight BEFORE the bump edit: a down Mongo or unsourced env must not leave derive.ts bumped.
+  const cfg = loadConfig();
+  if (!(await mongoReachable(cfg.mongoUri, cfg.dbName))) {
+    console.error(`derive-bump: Mongo unreachable (${describeTarget(cfg.mongoUri, cfg.dbName)}) -- source packages/tagger/.env and start Mongo; nothing was changed`);
     return 2;
   }
 
@@ -98,4 +122,4 @@ function main(): number {
   return results.some((r) => r.code !== 0) ? 1 : 0;
 }
 
-process.exit(main());
+process.exit(await main());
