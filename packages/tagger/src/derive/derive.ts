@@ -3246,7 +3246,7 @@ export function deriveAbilities(
       // sentence-wide actor default below refuses when the clause names another player, which is
       // exactly Priest of Forgotten Gods' shape, so the cost's own sacrifice -- the FIRST sacrifice
       // action, since the clause lists cost actions first -- is pinned here (recall v4, 2026-09-09).
-      // CEILING: unlike `costDiscard`, this pin does not look at WHO may activate ("Any player may activate this ability", Volrath's Dungeon) -- an opponent's cost sacrifice reads `you`; left as it was (#1395).
+      // CEILING: unlike `costDiscard`, this pin does not look at WHO may activate ("Any player may activate this ability") -- an opponent's cost sacrifice reads `you`; left as it was (#1395).
       const costSacrifice = action.verb === "sacrifice" && /\bsacrifice\b/i.test(cost)
         && (clause.actions ?? []).find((x) => x.verb === "sacrifice") === action;
       if (costSacrifice) {
@@ -3255,7 +3255,7 @@ export function deriveAbilities(
       }
       // A COST DISCARD IS THE CONTROLLER'S TOO ("{2}{B}, {T}, Discard a card: Each other player loses 2 life", Urborg Syphon-Mage), pinned like the cost sacrifice above: the clause-wide
       // `NAMES_A_PLAYER` guard reads the effect's "other player" and would leave it `any`. CEILING: the FIRST discard only, and only when the cost text holds a discard.
-      // NOT where someone else pays it: "Only your opponents may activate this ability" (Soul Ransom) and "Any player may activate" (Volrath's Dungeon, Lightning Storm) leave the payer `any`.
+      // NOT where someone else pays it: "Only your opponents may activate this ability" (Soul Ransom) and "Any player may activate" (Lightning Storm, Saproling Cluster) leave the payer `any`.
       const costDiscard = action.verb === "discard" && /\bdiscard\b/i.test(cost) && (clause.actions ?? []).find((x) => x.verb === "discard") === action
         && !/\b(?:only your opponents|any player|any opponent|an opponent) may activate\b/i.test(clauseText);
       // A SEARCH OF YOUR OWN LIBRARY is yours whatever player the sentence also names ("if defending player controls more lands than you, search your library", Aerial Surveyor, Loyal Warhound, Tithe): the
