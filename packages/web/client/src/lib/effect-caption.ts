@@ -1,4 +1,4 @@
-import { factPasses, isEmptyFilter, isUnjudgedFact, unpackFact, type FactFilter, type MemberFact } from "@edh-seer/matcher/member-facts";
+import { factPasses, isEmptyFilter, isUnjudgedFact, memberUndecided, unpackFact, type FactFilter, type MemberFact } from "@edh-seer/matcher/member-facts";
 import type { EventMembers } from "./partners.js";
 
 /** WHY A TILE PASSED THE EFFECT ROWS, IN THE CARD'S OWN ABILITY (#1405 C). The short form of the
@@ -20,6 +20,8 @@ function repeatsWord(f: MemberFact): string | undefined {
 }
 
 export const BY_WHAT_IT_IS = "by what it is, not an ability";
+/** AN ABILITY WHOSE REPEATS DERIVE COULD NOT LABEL, against a minimum above "once" (`memberUndecided`). */
+export const TIMING_UNKNOWN = "how often isn't known";
 
 /** Which parts of a fact the reader filtered ON THIS SIDE: the kind whenever any row is set, the rest
  *  only if the side's own filter uses them (an asker's amount counts only with a change op). The
@@ -56,6 +58,9 @@ export function effectCaption(
   if (!own) return "";
   if (own.length === 0) return BY_WHAT_IT_IS;
   const passing = own.filter((n) => !isUnjudgedFact(n)).map(unpackFact).filter((f) => factPasses(f, filter));
-  if (passing.length === 0) return own.some(isUnjudgedFact) ? BY_WHAT_IT_IS : "";
+  if (passing.length === 0) {
+    if (own.some(isUnjudgedFact)) return BY_WHAT_IT_IS;
+    return memberUndecided(own, filter) ? TIMING_UNKNOWN : "";
+  }
   return [...new Set(passing.map((f) => factWords(f, filter)))].slice(0, 2).join(" / ");
 }

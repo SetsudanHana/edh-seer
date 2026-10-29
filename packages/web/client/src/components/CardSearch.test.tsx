@@ -1015,7 +1015,7 @@ test("the cards the ability filters cannot judge are counted beside the result",
     k === MILL ? { p: [1, 2, 0], c: [], pf: [[millTwoOnce], [pingOne], []], cf: [] } : MEMBERS[k] ?? null;
   atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered`, { members: withUnjudged });
   expect(await screen.findByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
-  expect(screen.getByText(/1 more card matches because of what it is/)).toBeInTheDocument();
+  expect(screen.getByText(/1 more card matches but these filters can.t judge it: it matches because of what it is/)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Show this card" })).toBeInTheDocument();
 });
 
@@ -1109,7 +1109,7 @@ test("a once-or-more minimum drops the cards no ability describes, and says so",
   atUrl(`/cards?produce=${encodeURIComponent(MILL)}&repeats=once`, { members: UNJUDGED_MILL });
   expect(await screen.findByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
   expect(screen.queryByRole("link", { name: /Fathom Mage/ })).toBeNull();
-  expect(screen.getByText(/1 more card matches because of what it is/)).toBeInTheDocument();
+  expect(screen.getByText(/1 more card matches but these filters can.t judge it: it matches because of what it is/)).toBeInTheDocument();
 });
 
 /** THE TILE SAYS WHY IT PASSED (#1405 C): the facts of the ability that met the effect rows. */
@@ -1180,7 +1180,7 @@ test("an or-term whose ability failed is not named as a reason", async () => {
     k === MILL ? { p: [2], c: [], pf: [[pingOne]], cf: [] } : k === DIES ? { p: [2], c: [], pf: [[millTwoOnce]], cf: [] } : null;
   atUrl(`/cards?orproduce=${encodeURIComponent(MILL)}&orproduce=${encodeURIComponent(DIES)}&ability=spell`, { members });
   const text = await captionOf(/Skullclamp/);
-  expect(text).toContain("spell");
+  expect(text).toContain("a creature dies (spell)");
   expect(text).not.toContain("mill a card");
   expect(text).not.toContain("triggered");
 });
@@ -1190,4 +1190,30 @@ test("a cares-about caption words the replacement's change, and only with a chan
     k === DIES ? { p: [], c: [0, 1], pf: [], cf: [[torbran], [furnace]] } : null;
   atUrl(`/cards?consume=${encodeURIComponent(DIES)}&amtop=plus&amtmin=2&amtmax=2`, { members });
   expect(await captionOf(/Fathom Mage/)).toContain("adds 2 · replacement");
+});
+
+test("an or-term the card is on only by what it is is not a reason outside the skipped view", async () => {
+  const members = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === MILL ? { p: [2], c: [], pf: [[pingOne]], cf: [] } : k === DIES ? { p: [2], c: [], pf: [[]], cf: [] } : null;
+  atUrl(`/cards?orproduce=${encodeURIComponent(MILL)}&orproduce=${encodeURIComponent(DIES)}&ability=triggered`, { members });
+  const text = await captionOf(/Skullclamp/);
+  expect(text).toContain("mill a card (triggered)");
+  expect(text).not.toContain("a creature dies");
+});
+
+/** TWO KINDS LEFT OUT (#1405): a card there by what it is, and an ability whose timing derive could not label. */
+const unlabelled = packFact({ kind: "triggered", repeats: undefined, amount: { kind: "unstated" } });
+const timingMembers = async (_b: string, k: string): Promise<EventMembers | null> =>
+  k === MILL ? { p: [2, 0, 1], c: [], pf: [[pingOne], [unlabelled], []], cf: [] } : MEMBERS[k] ?? null;
+
+test("the left-out note covers both kinds, and each skipped tile says which", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&repeats=per-turn&skipped=1`, { members: timingMembers });
+  expect(await captionOf(/Fathom Mage/)).toContain("how often isn't known");
+  expect(await captionOf(/Inspiring Call/)).toContain("by what it is, not an ability");
+  expect(screen.getByRole("button", { name: /Back to the/ })).toBeInTheDocument();
+});
+
+test("the left-out note says they match by what they are or by an ability whose timing is unknown", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&repeats=per-turn`, { members: timingMembers });
+  expect(await screen.findByText(/2 more cards match but these filters can.t judge them: they match because of what they are \(a keyword like lifelink, or simply entering or being cast\), or by an ability whose timing we can.t tell\./)).toBeInTheDocument();
 });

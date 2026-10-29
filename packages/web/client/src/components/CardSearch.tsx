@@ -5,7 +5,7 @@ import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/par
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
 import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, factFilterOf, orderOf, withoutFilterKind, EFFECT_KINDS, FILTER_KINDS, NATURAL_DIR, type EventQuery, type FilterKind } from "../lib/facets.js";
-import { effectCaption } from "../lib/effect-caption.js";
+import { BY_WHAT_IT_IS, TIMING_UNKNOWN, effectCaption } from "../lib/effect-caption.js";
 import { isEmptyFilter } from "@edh-seer/matcher/member-facts";
 import { membersPassing, unjudgedLeftOut } from "../lib/effect-filter.js";
 import { AbilityKindRow, AmountRow, RepeatsRow } from "./EffectRows.js";
@@ -877,9 +877,10 @@ export function CardSearch({
                       {matches.length > shown ? `, showing the first ${shown}` : ""}.</>}
                 {(unjudgedCount > 0 || showSkipped) && (showSkipped
                   ? (matches.length === 0 ? null : <>{" "}These are the ones the ability filters skipped.</>)
-                  : <>{" "}{unjudgedCount.toLocaleString("en-US")} more {unjudgedCount === 1 ? "card matches" : "cards match"} because
+                  : <>{" "}{unjudgedCount.toLocaleString("en-US")} more {unjudgedCount === 1 ? "card matches" : "cards match"} but
+                    these filters can&apos;t judge {unjudgedCount === 1 ? "it" : "them"}: {unjudgedCount === 1 ? "it matches" : "they match"} because
                     of what {unjudgedCount === 1 ? "it is" : "they are"} (a keyword like lifelink, or simply entering or being
-                    cast) rather than an ability, so these filters skip {unjudgedCount === 1 ? "it" : "them"}.</>)}
+                    cast), or by an ability whose timing we can&apos;t tell.</>)}
               </p>
               {(unjudgedCount > 0 || showSkipped) && (
                 <button
@@ -960,15 +961,18 @@ export function CardSearch({
                 // both terms by one failing ability must not name the failing one.
                 const orTerms = terms.filter((t) => t.op === "or"
                   && (t.side === "makes" ? lists.get(t.key)?.p : lists.get(t.key)?.c)?.includes(pos)
-                  && (!whyOf(t).filter || whyOf(t).why !== ""));
+                  && (!whyOf(t).filter || (whyOf(t).why !== "" && (showSkipped || (whyOf(t).why !== BY_WHAT_IT_IS && whyOf(t).why !== TIMING_UNKNOWN)))));
                 const shownTerms = [...andTerms, ...orTerms];
+                // BARE FACTS ONLY WHEN THE QUERY ITSELF HAS ONE TERM (the sentence above names it); with
+                // several, a surviving term keeps its name so the reader can tell which one the card met.
+                const oneTermQuery = terms.filter((t) => t.op !== "not").length === 1;
                 // FACTS FIRST, because a three-across phone tile clips the end (#1405 C review). One term
                 // is already in the sentence above, so the facts stand alone; several are named, in
                 // parentheses, and joined by semicolons so two terms never read as one run.
                 const caption = shownTerms.map((t) => {
                   const { why } = whyOf(t);
                   if (why === "") return termWords(t);
-                  return shownTerms.length === 1 ? why : `${termWords(t)} (${why.replaceAll(" · ", ", ")})`;
+                  return oneTermQuery ? why : `${termWords(t)} (${why.replaceAll(" · ", ", ")})`;
                 });
                 return (
                   <li key={e.slug} className="min-w-0">
