@@ -793,6 +793,108 @@
    "segmentHash": "79c94ae48fa414b1f47fc4cb506f585cb40a785eb9d5cea23363515f96bc1721"
   }
  },
+ "Archfiend of Despair": {
+  "card": {
+   "colorIdentity": [
+    "B"
+   ],
+   "colors": [
+    "B"
+   ],
+   "gameChanger": false,
+   "keywords": [
+    "Flying"
+   ],
+   "layout": "normal",
+   "manaCost": "{6}{B}{B}",
+   "manaValue": 8,
+   "name": "Archfiend of Despair",
+   "oracleText": "Flying\nYour opponents can't gain life.\nAt the beginning of each end step, each opponent loses life equal to the life that player lost this turn. (Damage causes loss of life.)",
+   "power": "6",
+   "toughness": "6",
+   "typeLine": "Creature — Demon"
+  },
+  "tags": {
+   "_id": "6a932a51f6eb344af1939490",
+   "oracleId": "9c36760b-57c5-488b-afc9-ef141942c6ab",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "demon"
+    ],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 8,
+    "power": "6",
+    "toughness": "6",
+    "token": false,
+    "keywords": [
+     "flying"
+    ]
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "player-life-loss",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each"
+      },
+      "scaling": "per-life-lost",
+      "scalingSubject": {
+       "control": "opp",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "end-step"
+      ],
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "amount": "the life that player lost this turn",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "scope": "each"
+       }
+      }
+     ],
+     "clause": 3,
+     "repeats": "per-turn"
+    }
+   ],
+   "unclaimed": [
+    {
+     "clause": 2,
+     "verb": "cant",
+     "object": "gain life"
+    }
+   ],
+   "deriveVersion": 408,
+   "normalizeVersion": 14,
+   "segmentHash": "89369b0ad09998386aab120e1efed5ab53eeeeb7b8a2df408bc2d3c746c79e47",
+   "clauseSource": "grammar"
+  }
+ },
  "Assembly Hall": {
   "card": {
    "colorIdentity": [],
@@ -4432,6 +4534,106 @@
    ]
   }
  },
+ "Gempalm Polluter": {
+  "card": {
+   "colorIdentity": [
+    "B"
+   ],
+   "colors": [
+    "B"
+   ],
+   "gameChanger": false,
+   "keywords": [
+    "Cycling"
+   ],
+   "layout": "normal",
+   "manaCost": "{5}{B}",
+   "manaValue": 6,
+   "name": "Gempalm Polluter",
+   "oracleText": "Cycling {B}{B} ({B}{B}, Discard this card: Draw a card.)\nWhen you cycle this card, you may have target player lose life equal to the number of Zombies on the battlefield.",
+   "power": "4",
+   "toughness": "3",
+   "typeLine": "Creature — Zombie"
+  },
+  "tags": {
+   "_id": "6a932a56f6eb344af193e3a4",
+   "oracleId": "bd532f8d-789f-4ee1-a2f3-ae30e8282c76",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "zombie"
+    ],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 6,
+    "power": "4",
+    "toughness": "3",
+    "token": false,
+    "keywords": [
+     "cycling"
+    ]
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "player-life-loss",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "scalingSubject": {
+       "control": "any",
+       "token": null,
+       "subtype": "zombie",
+       "scope": "all",
+       "zone": "battlefield"
+      }
+     },
+     "amount": "the number of Zombies on the battlefield",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "scope": "target"
+       }
+      }
+     ],
+     "clause": 2,
+     "count": {
+      "floor": 0,
+      "ceiling": null,
+      "scalesWith": {
+       "control": "any",
+       "token": null,
+       "subtype": "zombie",
+       "scope": "all"
+      }
+     }
+    }
+   ],
+   "unknownTriggers": [
+    "cycled"
+   ],
+   "deriveVersion": 408,
+   "normalizeVersion": 14,
+   "segmentHash": "bf0ec47cc0ad449abd0b932af2652891afe419c6f15640cc0cf1a21ed029094c",
+   "clauseSource": "grammar"
+  }
+ },
  "Ghost Quarter": {
   "card": {
    "colorIdentity": [],
@@ -7193,6 +7395,90 @@
    ]
   }
  },
+ "Sarevok, Deathbringer": {
+  "card": {
+   "colorIdentity": [
+    "B"
+   ],
+   "colors": [
+    "B"
+   ],
+   "gameChanger": false,
+   "keywords": [
+    "Choose a background"
+   ],
+   "layout": "normal",
+   "manaCost": "{3}{B}",
+   "manaValue": 4,
+   "name": "Sarevok, Deathbringer",
+   "oracleText": "At the beginning of each player's end step, if no permanents left the battlefield this turn, that player loses X life, where X is Sarevok's power.\nChoose a Background (You can have a Background as a second commander.)",
+   "power": "3",
+   "toughness": "4",
+   "typeLine": "Legendary Creature — Human Knight"
+  },
+  "tags": {
+   "_id": "6a736acaf6eb344af1223c02",
+   "oracleId": "4e215ede-e4ac-482a-a2e1-cacb20affa70",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "legendary",
+     "creature"
+    ],
+    "subtypes": [
+     "human",
+     "knight"
+    ],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 4,
+    "power": "3",
+    "toughness": "4",
+    "token": false,
+    "keywords": [
+     "choose a background"
+    ]
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "player-life-loss",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "amount": "~'s power",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "any",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "per-turn"
+    }
+   ],
+   "unknownTriggers": [
+    "if:end-step"
+   ],
+   "deriveVersion": 408,
+   "normalizeVersion": 13,
+   "segmentHash": "d4b267ec80baaeb77ef9767ae56672d5bbae8c6e963aac893ba4cde7bad429f8",
+   "clauseSource": "grammar"
+  }
+ },
  "Shackles": {
   "card": {
    "colorIdentity": [
@@ -7298,6 +7584,86 @@
      "verb": "cant"
     }
    ]
+  }
+ },
+ "Shrieking Affliction": {
+  "card": {
+   "colorIdentity": [
+    "B"
+   ],
+   "colors": [
+    "B"
+   ],
+   "gameChanger": false,
+   "keywords": [],
+   "layout": "normal",
+   "manaCost": "{B}",
+   "manaValue": 1,
+   "name": "Shrieking Affliction",
+   "oracleText": "At the beginning of each opponent's upkeep, if that player has one or fewer cards in hand, they lose 3 life.",
+   "power": null,
+   "toughness": null,
+   "typeLine": "Enchantment"
+  },
+  "tags": {
+   "_id": "6a932a4ef6eb344af19363c0",
+   "oracleId": "9e3f5d0b-103f-40e2-beb5-26b1fcb136f3",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "player-life-loss",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "amount": "3",
+     "emits": [
+      {
+       "verb": "lose-life",
+       "subject": {
+        "control": "any",
+        "token": null
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "per-turn",
+     "count": {
+      "floor": 3,
+      "ceiling": 3
+     }
+    }
+   ],
+   "unknownTriggers": [
+    "if:upkeep"
+   ],
+   "deriveVersion": 408,
+   "normalizeVersion": 14,
+   "segmentHash": "ea95cf7dec0ed8ea0b45380f2a28ec57e8ac92fa1022608b6f67927b0bb8d908",
+   "clauseSource": "grammar"
   }
  },
  "Sol Ring": {

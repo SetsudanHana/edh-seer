@@ -20,11 +20,14 @@
  *  - `same`:   same output, kind, trigger verbs and subject, amount and repeats, same card types, and
  *              neither card has an output or keyword the other lacks. `other` ("another creature") and a
  *              "may" are ignored: Soul Warden and Soul's Attendant are the same job.
- *  - `close`:  same output and the same trigger verbs (or both untriggered), differing in trigger
+ *  - `close`:  same output and the same trigger verbs (or both untriggered, which is not "both unread": see below), differing in trigger
  *              subject, amount, repeats, ability kind or card type, or the cards differ in extra
  *              outputs / keywords (Auriok Champion: + protection).
  *  - `output`: same output, a different trigger verb or an untriggered/triggered split (Blood Artist
- *              gains life when a creature DIES, not when one enters).
+ *              gains life when a creature DIES, not when one enters). AN UNREAD TRIGGER (#1406) lands here too: a
+ *              `triggered` ability that derive left without a trigger is not untriggered, and two of them are not
+ *              the same trigger (Sarevok's end step against Gempalm Polluter's cycling). We cannot claim a match we
+ *              cannot read; its chip says "a trigger we can't read yet".
  *
  *  - `outcome`: DECK CONTEXT ONLY (#1342), never produced by `similarIndex` or a card page; `compareCards` yields it
  *              only when asked (`drainIsDamage`) and only when the plain comparison found nothing. The same job by a
@@ -80,8 +83,11 @@ interface Output { key: string; who: Who | null; scope: "one" | "many" | null; e
   orig?: GameEvent }
 export interface AbilitySig {
   kind: FactKind;
-  /** Sorted trigger verbs, null on an untriggered ability. */
+  /** Sorted trigger verbs, null on an untriggered ability AND on a triggered one whose trigger derive did not read (`unread`). */
   verbs: string[] | null;
+  /** A TRIGGERED ability with no trigger on it (derive never read it: 4,421 of 23,558 in the corpus). NOT the same as untriggered, and
+   *  not equal to another unread one either: we cannot say the two fire on the same event. */
+  unread: boolean;
   subject: SubjectFilter | null;
   outputs: Output[];
   amount: Amount;
@@ -251,6 +257,7 @@ function sigOf(card: SimilarCard): CardSig {
     abilities.push({
       kind: factKindOf(a),
       verbs: a.trigger ? [...a.trigger.verbs].sort() : null,
+      unread: !a.trigger && a.kind === "triggered" && a.replacement !== true,
       subject: a.trigger?.subject ?? null,
       outputs: [...own.values()],
       amount: amountOf(a),
@@ -324,7 +331,9 @@ const PLAYER_EVENT: Record<string, [string, string, string]> = {
   "begin-combat": ["at the beginning of combat on your turn", "at the beginning of combat on an opponent's turn", "at the beginning of each combat"],
 };
 
+const UNREAD_TRIGGER_LABEL = "a trigger we can't read yet";
 function triggerLabel(sig: AbilitySig): string {
+  if (sig.unread) return UNREAD_TRIGGER_LABEL;
   if (!sig.verbs || !sig.subject) return KIND_LABEL[sig.kind];
   const s = sig.subject;
   const phrase = sig.verbs.length === 1 ? PLAYER_EVENT[sig.verbs[0]!] : undefined;
@@ -397,12 +406,18 @@ function verbDistance(a: AbilitySig, b: AbilitySig): number {
   return 2 + subjectFacets(a.subject, b.subject) + (zone(a.verbs) === zone(b.verbs) ? 0 : 2);
 }
 
+/** SAME TRIGGER VERBS, or both genuinely untriggered. An unread trigger equals nothing, itself included. */
+function sameTrigger(a: AbilitySig, b: AbilitySig): boolean {
+  if (a.unread || b.unread) return false;
+  return (a.verbs === null && b.verbs === null) || (a.verbs !== null && b.verbs !== null && sameSet(a.verbs, b.verbs));
+}
+
 interface Pair { tier: SimilarTier; score: number; shared: Output; mine: Output }
 
 /** NUMERIC ONLY: no label is built here. Called for every candidate in a bucket. */
 function evalPair(a: AbilitySig, b: AbilitySig, shared: Output, mine: Output, sameTypes: boolean): Pair {
   let score = 0;
-  const verbsEqual = (a.verbs === null && b.verbs === null) || (a.verbs !== null && b.verbs !== null && sameSet(a.verbs, b.verbs));
+  const verbsEqual = sameTrigger(a, b);
   let differs = false;
   const scopeDiffers = mine.scope !== null && shared.scope !== null && mine.scope !== shared.scope;
   if (scopeDiffers) score += 4;
@@ -420,7 +435,7 @@ function evalPair(a: AbilitySig, b: AbilitySig, shared: Output, mine: Output, sa
 
 function pairChips(a: AbilitySig, b: AbilitySig, p: Pair, sameTypes: boolean, typeChip: string): Chip[] {
   const chips: Chip[] = [];
-  const verbsEqual = (a.verbs === null && b.verbs === null) || (a.verbs !== null && b.verbs !== null && sameSet(a.verbs, b.verbs));
+  const verbsEqual = sameTrigger(a, b);
   if (verbsEqual) {
     if (a.subject && b.subject && subjectFacets(a.subject, b.subject) > 0) chips.push({ dim: "trigger", label: subjectLabel(b.subject) });
     if (a.kind !== b.kind) chips.push({ dim: "kind", label: KIND_LABEL[b.kind] });
@@ -429,7 +444,7 @@ function pairChips(a: AbilitySig, b: AbilitySig, p: Pair, sameTypes: boolean, ty
     chips.push({ dim: "scope", label: p.shared.scope === "many" ? `each ${subjectWords(p.shared.event.subject, false)}` : "one target" });
   }
   if (amountDistance(a.amount, b.amount) > 0) chips.push({ dim: "amount", label: amountLabel(b.amount, (p.shared.orig ?? p.shared.event).verb) });
-  if (repeatsDistance(a.repeats, b.repeats) > 0) chips.push({ dim: "repeats", label: b.repeats === undefined ? "repeat rate not stated" : (REPEAT_LABEL[b.repeats] ?? b.repeats) });
+  if (repeatsDistance(a.repeats, b.repeats) > 0) chips.push({ dim: "repeats", label: b.repeats === undefined ? "we can't tell how often" : (REPEAT_LABEL[b.repeats] ?? b.repeats) });
   if (p.mine.who !== p.shared.who && p.shared.who !== null) chips.push({ dim: "recipient", label: RECIPIENT_LABEL[p.shared.who] });
   if (!sameTypes) chips.push({ dim: "type", label: typeChip });
   return chips;

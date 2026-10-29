@@ -464,3 +464,46 @@ describe("outcome tier: damage and life loss are one job in a deck (#1342)", () 
     expect(all.some((r) => r.tier === "outcome")).toBe(false);
   });
 });
+
+describe("an unread trigger is not an untriggered ability (#1406)", () => {
+  // Derive left `trigger` null on these three triggered abilities (Sarevok at end steps, Gempalm on cycling, Shrieking Affliction at upkeep).
+  const sarevok = card("Sarevok, Deathbringer");
+  test("the fixtures are what the bug needs: triggered, no trigger read", () => {
+    for (const n of ["Sarevok, Deathbringer", "Gempalm Polluter", "Shrieking Affliction"] as const) {
+      const a = card(n).tags!.abilities[0]!;
+      expect([a.kind, a.trigger ?? null]).toEqual(["triggered", null]);
+    }
+  });
+  test.each(["Gempalm Polluter", "Shrieking Affliction"] as const)("Sarevok against %s is output, with a trigger chip we cannot read", (n) => {
+    const r = compareCards(sarevok, card(n))!;
+    expect(r.tier).toBe("output");
+    expect(r.chips).toContainEqual({ dim: "trigger", label: "a trigger we can't read yet" });
+  });
+  test("both directions, and the whole page index, keep them out of close", () => {
+    expect(compareCards(card("Gempalm Polluter"), sarevok)!.tier).toBe("output");
+    const hits = similarIndex(cards).similarTo(sarevok.id);
+    for (const n of ["Gempalm Polluter", "Shrieking Affliction"]) expect(hits.find((h) => h.name === n)!.tier).toBe("output");
+  });
+  test("a read trigger against an unread seed shows the candidate's own trigger", () => {
+    const r = compareCards(sarevok, card("Archfiend of Despair"))!;
+    expect(r.tier).toBe("output");
+    expect(r.chips).toContainEqual({ dim: "trigger", label: "at the beginning of each end step" });
+  });
+  test("two untriggered abilities still compare as before", () => {
+    const strip = (c: SimilarCard, kind: string): SimilarCard => {
+      const tags = structuredClone(c.tags!) as CardTags;
+      for (const a of tags.abilities) { a.kind = kind as never; delete (a as { trigger?: unknown }).trigger; }
+      return { ...c, tags };
+    };
+    const twin = (c: SimilarCard): SimilarCard => ({ ...c, id: 77, name: "Twin", tags: structuredClone(c.tags!) as CardTags });
+    expect(compareCards(strip(sarevok, "static"), twin(strip(sarevok, "static")))!.tier).toBe("same");
+    expect(compareCards(strip(card("Shrieking Affliction"), "static"), twin(strip(card("Shrieking Affliction"), "static")))!.tier).toBe("same");
+    // different repeats on two on-cast abilities: close, as before
+    expect(compareCards(strip(sarevok, "on-cast"), strip(card("Shrieking Affliction"), "on-cast"))!.tier).toBe("close");
+    expect(compareCards(strip(card("Gempalm Polluter"), "on-cast"), strip(card("Shrieking Affliction"), "on-cast"))!.tier).toBe("close");
+  });
+  test("missing repeat rate reads as missing data", () => {
+    const r = compareCards(sarevok, card("Gempalm Polluter"))!;
+    expect(r.chips).toContainEqual({ dim: "repeats", label: "we can't tell how often" });
+  });
+});
