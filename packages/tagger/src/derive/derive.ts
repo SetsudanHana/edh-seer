@@ -2002,11 +2002,17 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
         : (ACTION_FAMILY[r.verb] === "zone" || ACTION_FAMILY[r.verb] === "pump" || ACTION_FAMILY[r.verb] === "tail" || r.verb === "tap" || r.verb === "untap") && (r.object?.self === true || base.object === "~" || /^this\b/i.test(base.object ?? "")
           || (r.text !== undefined && (base.object ?? "").startsWith(`${r.text} from `))) ? base.object
         : r.text ?? base.object;
-    // A TOKEN MAKER NAMES ITS PLAYER ONLY ON THE READING (the store's object is the token): "you and target opponent each create ..." (#1391 F2). Only "you" and an opponent.
-    const tokenActor: "you" | "opp" | undefined = r.verb === "create" && r.actor?.text !== undefined && r.actor.scope !== "that" && (r.actor.control === "you" || r.actor.control === "opp") ? r.actor.control : undefined;
+    // A NAMED PLAYER RIDES ON THE READING (a token maker's stored object is only the token, #1391 F2; and `actorFor` refuses a clause with two actions of one verb, so the other player's
+    // half of "you and defending player each discard ..." / an edict after a sacrifice cost was left to the controller default, #1395). Only "you" and an opponent. An opponent is carried
+    // for every verb; "you" only for a create, or where the same verb is read for an opponent too (the pair's own half) -- a lone named "you" ("you may cast ...") already defaults to you.
+    // "each other player" is the players OTHER THAN the one the sentence is about: yours when you act, but "Whenever a player casts ..., each other player copies that spell" (Hive Mind) and
+    // "Whenever enchanted player casts ..." (Curse of Echoes) leave YOU among them, so a trigger that is not yours keeps it `any`. A gain of control is the later "who gains it" task.
+    const otherThanSomeoneElse = /\bother player\b/i.test(r.actor?.text ?? "") && clause.trigger != null && clause.trigger.control !== "you";
+    const named1 = r.actor?.text !== undefined && r.actor.scope !== "that" && !otherThanSomeoneElse && r.verb !== "gains-control" && (r.actor.control === "you" || r.actor.control === "opp") ? r.actor.control : undefined;
+    const namedActor: "you" | "opp" | undefined = named1 === "opp" || (named1 === "you" && (r.verb === "create" || readings.some((o) => o.verb === r.verb && o.actor?.text !== undefined && o.actor.scope !== "that" && o.actor.control === "opp"))) ? named1 : undefined;
     out[i] = ({
       ...base,
-      ...(tokenActor ? { actor: tokenActor } : {}),
+      ...(namedActor ? { actor: namedActor } : {}),
       ...(object !== undefined ? { object } : {}),
       ...(r.amount !== undefined ? { amount: r.amount } : {}),
       ...(r.fromZone !== undefined ? { fromZone: r.fromZone } : {}),
@@ -3252,7 +3258,11 @@ export function deriveAbilities(
       // A STATED "you" INSIDE A GRANTED ABILITY IS THE RECIPIENT'S CONTROLLER (Hellish Rebuke: "You
       // lose 2 life" is said by the opponent's permanent), the same flip line 1154 applied to the
       // object's own "you" -- the actor cue runs after it and must not undo it.
-      const stated = actorFor(action.verb) ?? (action.verb === "create" ? action.actor : undefined);
+      const cued = actorFor(action.verb);
+      const stated = cued ?? action.actor;
+      // The grammar's named player FILLS what is unknown and never overrides a stated one (a `create` keeps its F2 override): "an opponent chooses a permanent YOU control and exiles it" (Wormfang Crab)
+      // exiles your permanent, which the object already said.
+      const readingFills = cued === undefined && action.actor !== undefined && action.verb !== "create";
       const actor = stated === "you" && grantedTo ? grantedTo.control : stated;
       if (actor) {
         // A PUT'S OBJECT MAY NAME ITS OWN CONTROLLER, and that outranks the actor: Visions of Dread's
@@ -3265,9 +3275,9 @@ export function deriveAbilities(
         // graveyard it leaves, and writing `you` there turned the recursion into one over your own
         // graveyard (10 pairs lost on the first derive-152 diff). The enters emit still takes it:
         // the card lands under your control, which is the fact the actor states.
-        const fillOnly = action.verb === "put";
+        const fillOnly = action.verb === "put" || readingFills;
         for (const e of emits) if (!fillOnly || e.subject.control === "any") e.subject.control = actor;
-        if (subject && (!fillOnly || (subject.control === "any" && stated !== "you"))) subject.control = actor;
+        if (subject && (!fillOnly || (subject.control === "any" && (stated !== "you" || (readingFills && action.verb !== "put"))))) subject.control = actor;
       } else if (ACTOR_DEFAULTS_TO_YOU.has(action.verb ?? "") && clauseText !== ""
         && (clause.actions ?? []).filter((a) => a.verb === action.verb).length === 1
         && !sentenceNamesAPlayer(clauseText, action.verb ?? "")) {

@@ -1729,6 +1729,9 @@ let unread: string[] | null = null;
 // CEILING: module state like `unread`, reset per call; a nested parseActions (a granted ability's quoted text) can overwrite it, which only ever makes "remove those counters" refuse.
 let counterOnSelf = false;
 
+/** "discard a card or sacrifice a permanent", "sacrifice a creature or discard a card": where one phrase offers two actions (also inside "you and X each ...", #1395). */
+const OR_ALTERNATIVE = / or (?=(?:pay|sacrifice|discard|draw|mill|exile|lose|reveal|search)\b)/;
+
 /** The sentences of a modal ability that choose its modes: "choose one —", "choose one or both —",
  *  "choose any number —", "choose one that hasn't been chosen —" (a Case-like mode memory), "choose up to five {P}
  *  worth of modes" with its "You may choose the same mode more than once", and an override that widens the choice
@@ -1935,14 +1938,14 @@ export function parseActions(effect: string, type: string | null, cost?: string)
       // Black Widow's and Tenuous Truce's draws are never claimed as yours).
       if (!table || (table.control === "any" && table.scope === "that") || /^the controller of /.test(named)) {
         const shared: NonNullable<ActionReading["actor"]> = { control: "any", scope: "each" };
-        for (let k = 0; k < 2; k++) for (const p of phrases(both[2]!)) { const r = readPhrase(p, condition, shared); if (r) out.push(...r); }
+        for (let k = 0; k < 2; k++) for (const p of phrases(both[2]!)) for (const alt of p.split(OR_ALTERNATIVE)) { const r = readPhrase(alt, condition, shared); if (r) out.push(...r); }
         continue;
       }
       // Otherwise one action per player and phrase, the first pass YOURS and the second the named player's (#1391 F2), named outright: "defending player" and "the attacking player" are
       // definite opponents, so their back-reference scope is dropped and the object is the player, as the store writes it.
       const other: NonNullable<ActionReading["actor"]> = { control: table.control, ...(table.scope && table.scope !== "that" ? { scope: table.scope } : {}), text: both[1]! };
       const you: NonNullable<ActionReading["actor"]> = { control: "you", text: "you" };
-      for (const pair of [you, other]) for (const p of phrases(both[2]!)) { const r = readPhrase(p, condition, pair); if (r) out.push(...r); }
+      for (const pair of [you, other]) for (const p of phrases(both[2]!)) for (const alt of p.split(OR_ALTERNATIVE)) { const r = readPhrase(alt, condition, pair); if (r) out.push(...r); }
       continue;
     }
     // "You and Humans you control have hexproof" (Sigarda): the class's grant is read; the player's
@@ -1969,7 +1972,7 @@ export function parseActions(effect: string, type: string | null, cost?: string)
       const pay = payment && !thatPlayerPaysLife ? readPhrase(payment, "unless")?.map((a) => ({ ...a, optional: true as const })) ?? null : null;
       const mainCondition = payment && !pay ? [condition, `unless ${payment}`].filter(Boolean).join(", ") : condition;
       // "discard a card or pay {2}", "sacrifice a creature or discard a card": either is an action.
-      for (const alt of main!.split(/ or (?=(?:pay|sacrifice|discard|draw|mill|exile|lose|reveal|search)\b)/)) {
+      for (const alt of main!.split(OR_ALTERNATIVE)) {
         let r = readPhrase(alt, mainCondition, carried);
         const startsMay = /^(?:(?:then|also) )?(?:you )?may /i.test(alt.trim());
         if (startsMay) mayScope = true;

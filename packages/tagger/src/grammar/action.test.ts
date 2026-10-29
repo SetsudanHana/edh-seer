@@ -673,3 +673,9 @@ test("a plural subject's \"are goaded\" is a goad, not an animate", () => {
   const r = read("All Tribbles get +1/+0 and are goaded.");
   expect(r.map((x) => x.verb)).toEqual(["modify-pt", "goad"]);
 });
+
+// #1395: an or-choice inside "you and <player> each ..." is two alternatives, one pass per player.
+test("'you and defending player each discard a card or sacrifice a permanent' reads both alternatives for both players", () => {
+  const r = parseActions("you and defending player each discard a card or sacrifice a permanent.", "triggered");
+  expect(r.map((x) => `${x.verb}:${x.actor?.control}`)).toEqual(["discard:you", "sacrifice:you", "discard:opp", "sacrifice:opp"]);
+});

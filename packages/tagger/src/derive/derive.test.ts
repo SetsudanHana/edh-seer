@@ -6950,5 +6950,25 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
     const abs = run("Farsight Adept", "enters", "When this creature enters, you and target opponent each draw a card.", [act("draw", "a card", "1")]);
     expect(abs).toHaveLength(1);
   });
+  test("#1395: another player's half is never yours", () => {
+    const sac = (o: string) => act("sacrifice", o);
+    const shatter = both("Shattergang Brothers", "Legendary Creature — Goblin", "{2}{B}, Sacrifice a creature: Each other player sacrifices a creature.",
+      [{ id: 1, abilityType: "activated", cost: "{2}{B}, Sacrifice a creature", actions: [sac("a creature"), sac("a creature")] }]);
+    for (const [path, abs] of shatter) expect(players(abs, "sacrifice"), `Shattergang ${path}`).toEqual(["you", "opp"]);
+    const text = "Whenever this creature attacks, you and defending player each discard a card or sacrifice a permanent. You draw a card for each land card put into a graveyard this way.";
+    const eum = both("Eumidian Wastewaker", "Creature — Human Wizard", text,
+      [{ id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: [{ ...act("discard", "a card"), optional: true }, { ...act("sacrifice", "a permanent"), optional: true }, act("discard", "a card"), act("sacrifice", "a permanent"), act("draw", "a card", "for each land card put into a graveyard this way")] }]);
+    for (const [path, abs] of eum) {
+      expect(players(abs, "discard"), `Eumidian discard ${path}`).toEqual(["you", "opp"]);
+      expect(players(abs, "sacrifice"), `Eumidian sacrifice ${path}`).toEqual(["you", "opp"]);
+      expect(players(abs, "draw"), `Eumidian draw ${path}`).toEqual(["you"]);
+    }
+    const wow = both("Words of Wisdom", "Instant", "You draw two cards, then each other player draws a card.",
+      [{ id: 1, abilityType: "spell", actions: [act("draw", "two cards", "2"), act("draw", "a card", "1")] }]);
+    for (const [path, abs] of wow) expect(players(abs, "draw"), `Words of Wisdom ${path}`).toEqual(["you", "opp"]);
+    const savra = both("Savra, Queen of the Golgari", "Legendary Creature — Elf Shaman", "Whenever you sacrifice a black creature, you may pay 2 life. If you do, each other player sacrifices a creature of their choice.",
+      [{ id: 1, abilityType: "triggered", trigger: { event: "sacrifice", subject: "a black creature", control: "you" }, actions: [{ ...act("pay-life", "2 life", "2"), optional: true }, act("sacrifice", "a creature of their choice")] }]);
+    for (const [path, abs] of savra) expect(players(abs, "sacrifice"), `Savra ${path}`).toEqual(["opp"]);
+  });
 });
 
