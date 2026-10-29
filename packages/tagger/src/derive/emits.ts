@@ -490,7 +490,7 @@ function yourOwnObject(object: string): boolean {
 
 /** A CONTROL CHANGE HANDED TO ANOTHER PLAYER: "target opponent gains control of", "target player
  *  gains control of" (Donate prints `player`; giving yourself your own permanent does nothing). */
-const OTHER_GAINS_CONTROL = /\b(?:(?:target|an|each|that) (?:opponent|player)|the player to your (?:left|right)) gains? control of\b/i;
+const OTHER_GAINS_CONTROL = /\b(?:(?:target|an|each|that) (?:opponent|player)(?: of your choice)?|the player to your (?:left|right)) gains? control of\b/i;
 
 const RECIPIENT_VERBS: ReadonlySet<string> = new Set([
   "draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life", "loses-game",

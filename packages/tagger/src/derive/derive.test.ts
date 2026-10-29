@@ -6962,6 +6962,21 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
     expect(grammarClauseRecords({ name: "Twist Allegiance", typeLine: "Instant", oracleText: text, keywords: [] } as never).complete).toBe(true);
   });
 
+  test("#1403: Game of Chaos keeps the opponent's life loss and gain (an unreadable tail never shifts the aligned readings)", () => {
+    const text = "Flip a coin. If you win the flip, you gain 1 life and target opponent loses 1 life, and you decide whether to flip again. If you lose the flip, you lose 1 life and that opponent gains 1 life, and that player decides whether to flip again. Double the life stakes with each flip.";
+    const stored = [{ id: 1, abilityType: "spell", actions: [rec("flip-coin", "a coin"), rec("gain-life", "you", { amount: "1" }), rec("lose-life", "target opponent", { amount: "1" }), rec("other", "you decide whether to flip again"), rec("lose-life", "you", { amount: "1" }), rec("gain-life", "that opponent", { amount: "1" }), rec("other", "that player decides whether to flip again"), rec("double", "the life stakes")] }];
+    all(both("Game of Chaos", "Sorcery", text, stored).filter(([path]) => path === "model"), (path, abs) => { // the card is not grammar-complete: only the model path derives, and it reads the printed text with parseActions
+      expect(players(abs, "gain-life"), `Game of Chaos gain ${path}`).toEqual(["you", "opp"]);
+      expect(players(abs, "lose-life"), `Game of Chaos lose ${path}`).toEqual(["opp", "you"]);
+    });
+  });
+
+  test("#1403: 'an opponent of your choice gains control of it' is the opponent's gain (Khârn the Betrayer)", () => {
+    const text = "Berzerker — Khârn the Betrayer attacks or blocks each combat if able.\nSigil of Corruption — When you lose control of Khârn the Betrayer, draw two cards.\nThe Betrayer — If damage would be dealt to Khârn the Betrayer, prevent that damage and an opponent of your choice gains control of it.";
+    const stored = [{ id: 1, abilityType: "static", actions: [rec("cant", "not attack or block")] }, { id: 2, abilityType: "triggered", trigger: { event: "loses-control", subject: "Khârn the Betrayer", control: "you" }, actions: [rec("draw", "card", { amount: "2" })] }, { id: 3, abilityType: "static", actions: [rec("prevent", "damage to Khârn the Betrayer"), rec("gain-control", "Khârn the Betrayer")] }];
+    all(both("Khârn the Betrayer", "Legendary Creature — Astartes Berserker", text, stored).filter(([path]) => path === "model"), (path, abs) => expect(players(abs, "gains-control"), `Khârn ${path}`).toEqual(["opp"]));
+  });
+
   test("#1395: another player's half is never yours", () => {
     all(both("Shattergang Brothers", "Legendary Creature — Goblin Artificer", "{2}{B}, Sacrifice a creature: Each other player sacrifices a creature.\n{2}{R}, Sacrifice an artifact: Each other player sacrifices an artifact.\n{2}{G}, Sacrifice an enchantment: Each other player sacrifices an enchantment.",
       [1, 2, 3].map((id, k) => ({ id, abilityType: "activated", actions: [rec("sacrifice", ["a creature", "an artifact", "an enchantment"][k]!), rec("sacrifice", ["a creature", "an artifact", "an enchantment"][k]!)] }))),

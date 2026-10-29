@@ -63,7 +63,7 @@ export function amountOf(word: string): string | undefined {
 const ACTORS: [string, ActionReading["actor"]][] = ([
   ["each player", { control: "any", scope: "each" }], ["each opponent", { control: "opp", scope: "each" }],
   ["target opponent", { control: "opp", scope: "target" }], ["target player", { control: "any", scope: "target" }],
-  ["that player", { control: "any", scope: "that" }], ["an opponent", { control: "opp" }], ["you", { control: "you" }],
+  ["that player", { control: "any", scope: "that" }], ["that opponent", { control: "opp", scope: "that" }], ["an opponent", { control: "opp" }], ["you", { control: "you" }],
   ["its controller", { control: "any", scope: "that" }], ["its owner", { control: "any", scope: "that" }],
   ["defending player", { control: "opp", scope: "that" }],
   ["that spell's controller", { control: "any", scope: "that" }], ["that creature's controller", { control: "any", scope: "that" }],
@@ -1070,7 +1070,7 @@ const VERB_FORMS: [RegExp, string][] = Object.keys(HANDLERS).map((v) => [new Reg
 
 /** Every verb word a phrase can open with, for splitting -- wider than the handled ones, so a joint
  *  before an unhandled verb ("..., then shuffle") still splits. */
-const ANY_VERB = /^(?:(?:all|each|target) [a-z -]{1,50}? phases? (?:in|out)$|(?:it|that creature|those creatures|they) (?:doesn't|don't|can't|gains?|gets?) |(?:up to one )?(?:other |another )?target [a-z]+(?: [a-z]+)? gets?(?= )|(?:you |each player |each opponent |target player |target opponent |that player |its controller |they )?(?:may )?(?:draws?|discards?|mills?|scry|scries|surveils?|search(?:es)?|reveals?|puts?|shuffles?|returns?|exiles?|destroys?|sacrifices?|creates?|gains?|loses?|deals?|taps?|untaps?|adds?|counters?|copies|copy|casts?|plays?|attach(?:es)?|transforms?|investigates?|proliferate|populate|exchanges?|chooses?|look|looks|pays?|gets?|has|have|regenerates?|fights?|goads?|explores?|connives?|amass(?:es)?|manifest|venture|removes? (?=it|them|that|all)|double (?=the|its|that|target|each)|blight|convert|repeat this process|(?:~|this [a-z]+) (?:gets?|gains?|can't|deals?|endures|explores|connives)(?= )|defending player (?=loses|gains|sacrifices|discards)))\b/i;
+const ANY_VERB = /^(?:(?:all|each|target) [a-z -]{1,50}? phases? (?:in|out)$|(?:it|that creature|those creatures|they) (?:doesn't|don't|can't|gains?|gets?) |(?:up to one )?(?:other |another )?target [a-z]+(?: [a-z]+)? gets?(?= )|(?:you |each player |each opponent |target player |target opponent |that player |its controller |they )?(?:may )?(?:draws?|discards?|mills?|scry|scries|surveils?|search(?:es)?|reveals?|puts?|shuffles?|returns?|exiles?|destroys?|sacrifices?|creates?|gains?|loses?|deals?|taps?|untaps?|adds?|counters?|copies|copy|casts?|plays?|attach(?:es)?|transforms?|investigates?|proliferate|populate|exchanges?|chooses?|decides?(?= whether)|look|looks|pays?|gets?|has|have|regenerates?|fights?|goads?|explores?|connives?|amass(?:es)?|manifest|venture|removes? (?=it|them|that|all)|double (?=the|its|that|target|each)|blight|convert|repeat this process|(?:~|this [a-z]+) (?:gets?|gains?|can't|deals?|endures|explores|connives)(?= )|defending player (?=loses|gains|sacrifices|discards)))\b/i;
 
 /** "gain control of all creatures the other controls", the body of "you and X each ...". */
 const EXCHANGE = /^gain control of ((?:all|each) [a-z -]{1,40}?) the other controls\b/i;
@@ -1991,7 +1991,7 @@ export function parseActions(effect: string, type: string | null, cost?: string)
       // ...except a LIFE payment by "that player" of a "For each opponent, you ..." sentence ("... return that card from your graveyard to your hand unless that player pays 3 life",
       // Sivriss): read as a separate lose-life, derive takes its recipient off a sentence that opens with "you", and the payment becomes yours. It stays the main action's `unless`, as the stored answer has it.
       // CEILING: only after "For each opponent,"; "they" / "its controller" pay (Tyrannize, Wand of Ith) keep the separate lose-life the stored rows also carry, and a granted ability's "that player" (Nazgul Battle-Mace) is not touched.
-      const thatPlayerPaysLife = forEachOpponent && payment !== undefined && /^that (?:player|opponent) pays? .+ life$/i.test(payment);
+      const thatPlayerPaysLife = payment !== undefined && (forEachOpponent && /^that player pays? .+ life$/i.test(payment) || /^that opponent pays? .+ life$/i.test(payment));
       const pay = payment && !thatPlayerPaysLife ? readPhrase(payment, "unless")?.map((a) => ({ ...a, optional: true as const })) ?? null : null;
       const mainCondition = payment && !pay ? [condition, `unless ${payment}`].filter(Boolean).join(", ") : condition;
       // "discard a card or pay {2}", "sacrifice a creature or discard a card": either is an action.

@@ -57,6 +57,12 @@ test("a player's own phrase after 'and' is split off, not swallowed into the obj
   expect(read("Exile target creature and an opponent gains 2 life.").map((r) => r.verb)).toEqual(["exile", "gain-life"]);
 });
 
+test("'that opponent' is an actor, and an 'unless that opponent pays N life' stays the main action's condition (#1403, Prince of Thralls)", () => {
+  expect(read("That opponent discards a card.")).toMatchObject([{ verb: "discard", actor: { control: "opp", scope: "that" } }]);
+  expect(read("Put that card onto the battlefield under your control unless that opponent pays 3 life.").map((r) => r.verb)).toEqual(["put"]);
+  expect(read("If you lose the flip, you lose 1 life and that opponent gains 1 life, and that player decides whether to flip again.").map((r) => [r.verb, r.actor?.control])).toEqual([["lose-life", "you"], ["gain-life", "opp"]]);
+});
+
 test("conditions are KEPT on the action (owner, 2026-10-01); 'you may' is optional, and so is its 'if you do'", () => {
   expect(read("you may pay {2}. If you do, draw a card.")).toMatchObject([{ verb: "draw", condition: "if you do", optional: true }]);
   expect(read("Draw a card at the beginning of the next turn's upkeep.")).toMatchObject([{ verb: "draw", condition: "at the beginning of the next turn's upkeep" }]);
