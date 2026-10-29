@@ -190,6 +190,9 @@ export function CardSearch({
   // is honest -- the same rule the colour chips have followed since they moved out of local state.
   const eventQuery = useMemo(() => eventsFromParams(params), [params]);
   const setEvents = (next: EventQuery) => setParams(eventsToParams(next, params), { replace: true });
+  // THE SKIPPED VIEW BELONGS TO ONE SET OF TERMS AND EFFECT ROWS: change either and it is dropped, or
+  // it would stay armed and reopen on the skipped list when the filters next leave something out.
+  const setEffects = (next: EventQuery) => { const { skipped: _s, ...rest } = next; setEvents(rest); };
   const colours = eventQuery.colours;
   const setColours = (f: (cs: string[]) => string[]) => setEvents({ ...eventQuery, colours: f(colours) });
   const terms = useMemo(() => termsOf(eventQuery), [eventQuery]);
@@ -219,7 +222,7 @@ export function CardSearch({
   // REMOVING A ROW CLEARS ITS QUESTION AND FORGETS THE ROW. Doing only the first would leave an
   // empty control standing where a reader had just said they were finished with it.
   const dropKind = (kind: FilterKind): void => {
-    setEvents(withoutFilterKind(eventQuery, kind));
+    setEffects(withoutFilterKind(eventQuery, kind));
     setPending((ks) => ks.filter((k) => k !== kind));
   };
   useEffect(() => {
@@ -336,9 +339,9 @@ export function CardSearch({
       .map((id) => index[id]).filter((e): e is NameIndexEntry => e !== undefined);
   }, [terms, lists, eventQuery, index, asked, keptIds]);
   const unjudgedCount = useMemo(() => fitCard(leftOut).length, [leftOut, fitCard]);
-  // A LINK THAT ASKS FOR THE SKIPPED VIEW AFTER THE FILTERS CHANGED UNDER IT shows the normal list:
-  // an empty "skipped" list would read as "nothing matches".
-  const showSkipped = eventQuery.skipped === true && unjudgedCount > 0;
+  // THE SKIPPED VIEW STAYS ON through a name or colour change (an empty one says so); it applies only
+  // while something is left out at all, and `setEffects` drops it when the terms or effect rows change.
+  const showSkipped = eventQuery.skipped === true && leftOut.length > 0;
   const unanswerable = effectUnanswerable || (chosenKeys.length > 0 && chosenKeys.every((k) => lists.has(k))
     && chosenKeys.some((k) => lists.get(k) === null));
 
@@ -596,14 +599,14 @@ export function CardSearch({
         return (
           <AbilityKindRow
             chosen={eventQuery.abilityKinds ?? []}
-            onChange={(next) => { const { abilityKinds: _a, ...rest } = eventQuery; setEvents(next.length > 0 ? { ...rest, abilityKinds: next } : rest); }}
+            onChange={(next) => { const { abilityKinds: _a, ...rest } = eventQuery; setEffects(next.length > 0 ? { ...rest, abilityKinds: next } : rest); }}
           />
         );
       case "repeats":
         return (
           <RepeatsRow
             min={eventQuery.repeatsMin}
-            onChange={(next) => { const { repeatsMin: _a, ...rest } = eventQuery; setEvents(next !== undefined ? { ...rest, repeatsMin: next } : rest); }}
+            onChange={(next) => { const { repeatsMin: _a, ...rest } = eventQuery; setEffects(next !== undefined ? { ...rest, repeatsMin: next } : rest); }}
           />
         );
       case "amount":
@@ -614,7 +617,7 @@ export function CardSearch({
             caresAbout={terms.some((t) => t.side === "pays" && t.op !== "not")}
             onChange={(r) => {
               const { amountMin: _a, amountMax: _b, amountVariable: _c, amountChange: _d, ...rest } = eventQuery;
-              setEvents({ ...rest, ...(r.min !== undefined ? { amountMin: r.min } : {}),
+              setEffects({ ...rest, ...(r.min !== undefined ? { amountMin: r.min } : {}),
                 ...(r.max !== undefined ? { amountMax: r.max } : {}), ...(r.variable ? { amountVariable: true } : {}),
                 ...(r.change !== undefined ? { amountChange: r.change } : {}) });
             }}
@@ -711,7 +714,7 @@ export function CardSearch({
         makesCount={countOf}
         paysCount={consumeCountOf}
         demand={consumeCountOf}
-        onChange={(next) => setEvents(withTerms(eventQuery, next))}
+        onChange={(next) => setEffects(withTerms(eventQuery, next))}
         onRemoveColour={(c) => setColours((cs) => cs.filter((x) => x !== c))}
         onOpen={() => setSentenceOpened(true)}
       />
@@ -860,7 +863,9 @@ export function CardSearch({
                 {/* THE REFUSAL SITS WHERE THE COUNT SITS, so the order control is reachable on a
                   * zero-result answer too -- a shared `?sort=name` link that matches nothing had
                   * no way to undo the order it arrived carrying. */}
-                {matches.length === 0
+                {matches.length === 0 && showSkipped
+                  ? <>None of the skipped cards fit these filters.</>
+                  : matches.length === 0
                   ? <>No {commanderMode ? "commander" : "card"} matches. We know{" "}
                       {index.length.toLocaleString("en-US")} cards, and one we don&apos;t know yet has no page.</>
                   : <>{matches.length.toLocaleString("en-US")}{" "}
@@ -868,13 +873,13 @@ export function CardSearch({
                         ? (commanderMode ? "commander matches" : "card matches")
                         : (commanderMode ? "commanders match" : "cards match")}
                       {matches.length > shown ? `, showing the first ${shown}` : ""}.</>}
-                {unjudgedCount > 0 && (showSkipped
+                {(unjudgedCount > 0 || showSkipped) && (showSkipped
                   ? <>{" "}These are the ones the ability filters skipped.</>
                   : <>{" "}{unjudgedCount.toLocaleString("en-US")} more {unjudgedCount === 1 ? "card matches" : "cards match"} because
                     of what {unjudgedCount === 1 ? "it is" : "they are"} (a keyword like lifelink, or simply entering or being
                     cast) rather than an ability, so these filters skip {unjudgedCount === 1 ? "it" : "them"}.</>)}
               </p>
-              {unjudgedCount > 0 && (
+              {(unjudgedCount > 0 || showSkipped) && (
                 <button
                   type="button" className="chip"
                   onClick={() => {
@@ -883,7 +888,7 @@ export function CardSearch({
                   }}
                 >
                   {showSkipped
-                    ? `Back to the ${normalCount.toLocaleString("en-US")} ${normalCount === 1 ? "match" : "matches"}`
+                    ? (normalCount === 0 ? "Back to the results" : `Back to the ${normalCount.toLocaleString("en-US")} ${normalCount === 1 ? "match" : "matches"}`)
                     : unjudgedCount === 1 ? "Show this card" : `Show these ${unjudgedCount.toLocaleString("en-US")}`}
                 </button>
               )}

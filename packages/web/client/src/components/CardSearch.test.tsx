@@ -1052,7 +1052,7 @@ test("the how-often options say what each keeps", async () => {
   const select = await screen.findByLabelText("How often");
   expect(select).toHaveValue("repeatable");
   expect(within(select).getAllByRole("option").map((o) => o.textContent)).toEqual([
-    "Any", "Once or more", "At least once a round", "At least every turn", "As often as you like, or always on", "Always on",
+    "Any", "Once or more (by an ability)", "At least once a round", "At least every turn", "As often as you like, or always on", "Always on",
   ]);
   expect(screen.queryByText("at least")).toBeNull();
 });
@@ -1078,4 +1078,36 @@ test("an amtop in the link with no cares-about event is kept in the URL, not dro
   const q = new URLSearchParams(spy.search);
   expect(q.get("amtop")).toBe("plus");
   expect(q.get("amtvar")).toBe("1");
+});
+
+const UNJUDGED_MILL = async (_b: string, k: string): Promise<EventMembers | null> =>
+  k === MILL ? { p: [1, 2, 0], c: [], pf: [[millTwoOnce], [pingOne], []], cf: [] } : MEMBERS[k] ?? null;
+
+/** THE SKIPPED VIEW BELONGS TO ITS FILTERS (#1405 B review): changing an effect row drops it. */
+test("changing an effect filter drops the skipped view", async () => {
+  const spy = atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered&skipped=1`, { members: UNJUDGED_MILL });
+  expect(await screen.findByRole("link", { name: /Fathom Mage/ })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Spell" }));
+  await waitFor(() => expect(new URLSearchParams(spy.search).get("skipped")).toBeNull());
+});
+
+test("a colour no skipped card fits keeps the skipped view and says it is empty", async () => {
+  const spy = atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered&skipped=1&colors=W`, { members: UNJUDGED_MILL });
+  expect(await screen.findByText(/None of the skipped cards fit these filters\./)).toBeInTheDocument();
+  expect(new URLSearchParams(spy.search).get("skipped")).toBe("1");
+  expect(screen.getByRole("button", { name: "Back to the 1 match" })).toBeInTheDocument();
+});
+
+/** "Once or more" IS NOT "Any": a minimum runs the ability check, so a card on the key by what it
+ *  is (no ability fact) is dropped and counted as left out. */
+test("with no minimum the cards no ability describes are kept", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}`, { members: UNJUDGED_MILL });
+  expect(await screen.findByRole("link", { name: /Fathom Mage/ })).toBeInTheDocument();
+});
+
+test("a once-or-more minimum drops the cards no ability describes, and says so", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&repeats=once`, { members: UNJUDGED_MILL });
+  expect(await screen.findByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Fathom Mage/ })).toBeNull();
+  expect(screen.getByText(/1 more card matches because of what it is/)).toBeInTheDocument();
 });

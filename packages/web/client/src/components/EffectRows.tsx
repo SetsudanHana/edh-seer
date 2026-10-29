@@ -20,10 +20,13 @@ export const ABILITY_KIND_LABEL: Record<FactKind, string> = {
 /** THE LADDER IN A PLAYER'S WORDS, EACH OPTION SAYING WHAT IT KEEPS (#1405 B). The filter is a
  *  minimum on the ladder, so every rung keeps the ones above it: a bare "at least" beside "Any number
  *  of times" read as no limit, which is the opposite -- the top rung. `per-cycle` is once a round
- *  (your turn, or one use of a tap ability); `per-turn` fires on every player's turn; `repeatable`
+ *  (your turn, or one use of a tap ability); `per-turn` fires on every player's turn; `once` is NOT
+ *  "Any": any minimum runs `memberPasses`, so a card on the event by being cast, entering or a keyword
+ *  (no ability fact) fails it, and the left-out note counts it -- the same restriction the Ability type
+ *  row expresses, kept as a rung because a shared `?repeats=once` link must still select. `repeatable`
  *  keeps `continuous` too (`factPasses` compares ladder positions), so it says so. */
 export const REPEATS_LABEL: Record<(typeof REPEATS_LADDER)[number], string> = {
-  once: "Once or more",
+  once: "Once or more (by an ability)",
   "per-cycle": "At least once a round",
   "per-turn": "At least every turn",
   repeatable: "As often as you like, or always on",
