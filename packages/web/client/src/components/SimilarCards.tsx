@@ -59,9 +59,12 @@ export function SimilarCards({ items, note, title = "Similar cards", id = "simil
         <p className="text-(--muted) max-w-[65ch]">
           {items.length === 0 ? empty : intro ?? <>
             Similar means it does the same thing first, then the same trigger, amount and how
-            often it happens. Each card says where it differs. Right-click or long-press a name for its menu: open its card page or copy the name.{note ? ` ${note}` : ""}
+            often it happens. Each card says where it differs.{note ? ` ${note}` : ""}
           </>}
         </p>
+        {items.some((i) => i.slug !== undefined) && (
+          <p className="text-(--muted) max-w-[65ch]">Right-click or long-press a linked name for its menu: open its card page or copy the name.</p>
+        )}
       </div>
       <div className="grid gap-x-8 gap-y-5 grid-cols-[repeat(auto-fit,minmax(min(100%,22rem),1fr))]">
         {GROUPS.map(({ tier, heading }) => {
@@ -73,9 +76,9 @@ export function SimilarCards({ items, note, title = "Similar cards", id = "simil
           return (
             <div key={tier} data-tier={tier} className="flex flex-col gap-2 min-w-0">
               <Sub className={tierClass}>{heading}{deckView ? ` · ${rows.length}` : ""}{same ? ` · all work with ${figures[0]!.n} of ${figures[0]!.of}` : ""}</Sub>
-              <ul className="block columns-[22rem] gap-x-8">
+              <ul className="grid gap-x-8 grid-cols-[repeat(auto-fill,minmax(min(100%,22rem),1fr))]">
                 {(folded ? rows.slice(0, fold) : rows).map((r) => (
-                  <li key={r.slug ?? r.name} className="break-inside-avoid flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-(--separator) py-2 first:border-t-0 min-h-11">
+                  <li key={r.slug ?? r.name} className="flex flex-wrap items-center content-center gap-x-3 gap-y-1 border-b border-(--separator) py-2 min-h-11">
                     {r.slug !== undefined
                       ? <Link to={`/cards/${r.slug}`} data-card={r.name} data-card-slug={r.slug} className="text-(--accent) hover:underline inline-flex items-center min-h-6 [@media(pointer:coarse)_and_(not_(any-pointer:fine))]:min-h-11">{r.name}</Link>
                       : <span>{r.name}</span>}

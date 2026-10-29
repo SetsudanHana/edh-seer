@@ -17,8 +17,14 @@ const app = (start: string[]) => (
   </MemoryRouter>
 );
 let scroll: ReturnType<typeof vi.fn>;
-beforeEach(() => { scroll = vi.fn(); window.scrollTo = scroll as unknown as typeof window.scrollTo; });
-afterEach(() => vi.restoreAllMocks());
+// The tests redefine these on the shared window; put back whatever was there so no test inherits another's page.
+const WATCHED = [[window, "scrollY"], [window, "innerHeight"], [document.documentElement, "scrollHeight"]] as const;
+const originals = WATCHED.map(([o, k]) => Object.getOwnPropertyDescriptor(o, k));
+beforeEach(() => { sessionStorage.clear(); scroll = vi.fn(); window.scrollTo = scroll as unknown as typeof window.scrollTo; });
+afterEach(() => {
+  vi.restoreAllMocks();
+  WATCHED.forEach(([o, k], i) => { const d = originals[i]; if (d) Object.defineProperty(o, k, d); else delete (o as unknown as Record<string, unknown>)[k]; });
+});
 
 test("a link to another page scrolls to the top", () => {
   render(app(["/cards/a"]));
@@ -94,6 +100,72 @@ test("the offset is re-applied while the page is still settling, until the reade
   } finally { vi.useRealTimers(); }
 });
 
+test("a saved 0 is restored: A at its top, B scrolled, back shows A at 0", () => {
+  vi.useFakeTimers();
+  try {
+    Object.defineProperty(window, "innerHeight", { value: 800, configurable: true });
+    height(5000);
+    render(app(["/cards/a"]));
+    scrolled(0);
+    fireEvent.click(screen.getByText("to b"));
+    scrolled(3000);
+    scroll.mockClear();
+    fireEvent.click(screen.getByText("back"));
+    vi.advanceTimersByTime(50);
+    expect(scroll).toHaveBeenCalledWith(0, 0);
+  } finally { vi.useRealTimers(); }
+});
+
+test("the report and a card page have no shared ReportShell: leaving and returning are ours", () => {
+  vi.useFakeTimers();
+  try {
+    Object.defineProperty(window, "innerHeight", { value: 800, configurable: true });
+    height(5000);
+    render(<MemoryRouter initialEntries={["/"]}>
+      <ScrollToTop /><Link to="/cards/b">to card</Link><Back /><Routes><Route path="*" element={null} /></Routes>
+    </MemoryRouter>);
+    scrolled(3000);
+    fireEvent.click(screen.getByText("to card"));
+    expect(scroll).toHaveBeenCalledWith(0, 0);
+    scrolled(0);
+    scroll.mockClear();
+    fireEvent.click(screen.getByText("back"));
+    vi.advanceTimersByTime(50);
+    expect(scroll).toHaveBeenCalledWith(0, 3000);
+  } finally { vi.useRealTimers(); }
+});
+
+test("two pages that both have ReportShell are left to its own memory", () => {
+  render(<MemoryRouter initialEntries={["/"]}>
+    <ScrollToTop /><Link to="/analysis/combos">go</Link><Routes><Route path="*" element={null} /></Routes>
+  </MemoryRouter>);
+  fireEvent.click(screen.getByText("go"));
+  expect(scroll).not.toHaveBeenCalled();
+});
+
+test("offsets survive a reload: a fresh mount on the same entry restores from sessionStorage", () => {
+  vi.useFakeTimers();
+  try {
+    Object.defineProperty(window, "innerHeight", { value: 800, configurable: true });
+    height(5000);
+    const first = render(app(["/cards/a"]));
+    scrolled(3000);
+    fireEvent.click(screen.getByText("to b"));
+    first.unmount();
+    scrolled(0);
+    scroll.mockClear();
+    render(app(["/cards/a"]));
+    vi.advanceTimersByTime(50);
+    expect(scroll).toHaveBeenCalledWith(0, 3000);
+  } finally { vi.useRealTimers(); }
+});
+
+test("a stored offset belongs to its page: another page on the same key is not restored", () => {
+  sessionStorage.setItem("edh-seer:scroll-offsets", JSON.stringify([["default", { path: "/cards/other", y: 900 }]]));
+  render(app(["/cards/a"]));
+  expect(scroll).not.toHaveBeenCalled();
+});
+
 test("a restore that never becomes possible gives up", () => {
   vi.useFakeTimers();
   try {
@@ -121,8 +193,3 @@ test("a hash-only change does not scroll", () => {
   expect(scroll).not.toHaveBeenCalled();
 });
 
-test("the report keeps its own memory: no reset into or out of /", () => {
-  render(app(["/"]));
-  fireEvent.click(screen.getByText("to b"));
-  expect(scroll).not.toHaveBeenCalled();
-});

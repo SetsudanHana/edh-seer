@@ -100,6 +100,7 @@
   "packages/web/client/src/components/Constellation.tsx": 1,
   "packages/web/client/src/components/DeckGauges.tsx": 1,
   "packages/web/client/src/components/ReportShell.tsx": 1,
+  "packages/web/client/src/components/ScrollToTop.tsx": 1,
   "packages/web/client/src/components/art-cache.ts": 1,
   "packages/web/client/src/components/card-drawer.tsx": 1,
   "packages/web/client/src/lib/deck-gauge.ts": 1,
