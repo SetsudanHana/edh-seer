@@ -656,9 +656,9 @@ function ownCounterText(action: Action, actions: Action[], text: string): string
   // ...and the two are joined by the FIRST "and <a / a number>" between them, in one sentence (a third phrase in a where-clause, Communal Brewing, or a sentence break reads the whole text).
   const [a, b] = starts as [number, number];
   if (stop(a) < b) return text;
-  const join = /\s+and\s+(?=(?:an?|one|two|three|four|five|x|\d+)\s)/i.exec(text.slice(a, b));
+  const join = /(?<=\s)and\s+(?=(?:an?|one|two|three|four|five|x|\d+)\s)/i.exec(text.slice(a, b));
   if (!join) return text;
-  const phrases = [text.slice(a, a + join.index), text.slice(b, stop(b))];
+  const phrases = [text.slice(a, a + join.index).trimEnd(), text.slice(b, stop(b))];
   const own = mine.indexOf(action);
   return phrases.reduce((t, ph, i) => (i === own ? t : t.replace(ph, "")), text);
 }
