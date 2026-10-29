@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deriveCardTags, deriveInputOf, grammarClauseRecords } from "@edh-seer/tagger";
 import {
-  CONSTANT_FIELDS, FIELD_KIND, chooseMatcher, classifyRows, compareRow, diffReasons, fieldDiff, formatSummary, grammarReport, matcherCodeFiles, nodeModulesHash,
+  CONSTANT_FIELDS, FIELD_KIND, formatRatchets, ratchetReport, chooseMatcher, classifyRows, compareRow, diffReasons, fieldDiff, formatSummary, grammarReport, matcherCodeFiles, nodeModulesHash,
   pairsReport, pick, sampleIds, snapOf, tagFamily, treeVerdict, type ImpactReport, type RowSnap,
 } from "./derive-impact-core.js";
 
@@ -156,6 +156,7 @@ describe("formatSummary", () => {
     ] },
     grammar: { completeBase: 28417, completeHead: 28423, gained: ["a"], lost: [], recordsChanged: ["b", "c"] },
     pairs: sec(), sample: sec({ cards: 150, gained: 9 }), tokens: { docs: 1096, withRow: 527, nodesBase: 530, nodesHead: 531 },
+    ratchets: ratchetReport({ dropped: { A: ["1:tap"], B: ["2:cant", "3:cant"] }, roles: { A: ["role:ramp"] } }, { dropped: { A: ["1:tap"], B: ["2:cant"] }, roles: { A: ["role:ramp", "role:draw"] } }, { dropped: { A: ["1:tap"], B: ["2:cant", "3:cant"] }, roles: { A: ["role:ramp"] } }),
   };
   it("is one paste-ready block with versions, dirty flag, counts and the open ends", () => {
     const s = formatSummary(report);
@@ -169,10 +170,19 @@ describe("formatSummary", () => {
     expect(s).toContain("MATCHER CODE DIFFERS (1 file(s)): pair reasons below cover changed rows only; matcher-only effects are measured on the sample");
     expect(s).toContain("matcher sample, seeded (150 cards)");
     expect(s).toContain("not paired (1): Tokeny (no maker)");
-    expect(s).toContain("ratchets: not run (task 2)");
+    expect(s).toContain("role-ratchet gained 1, lost 0 (1 -> 2 memberships); gained: A +role:draw; against the banked snapshot: gained 1, lost 0");
+    expect(s).toContain("dropped-clauses 3 -> 2 (new 0, fixed 1: B -3:cant); against the banked snapshot: new 0, fixed 1");
     expect(s).toContain("tokens: 1,096 token docs, 527 with a derived row and 569 synthesized as the engine does; token nodes the cards create: BASE 530, HEAD 531");
     expect(s).toContain("token-vs-token pairs are not covered");
     expect(s).toContain("pair options: deck-specific landTypes / enterWatchers / revenantToughness are off");
+  });
+  it("says ratchets were not run when they were not", () => { expect(formatSummary({ ...report, ratchets: undefined })).toContain("ratchets: not run"); });
+  it("reports zeros as zeros", () => {
+    const z = { dropped: { A: ["1:tap"] }, roles: { A: ["role:ramp"] } };
+    expect(formatRatchets(ratchetReport(z, z, z))).toEqual([
+      "role-ratchet gained 0, lost 0 (1 -> 1 memberships); against the banked snapshot: gained 0, lost 0",
+      "dropped-clauses 1 -> 1 (new 0, fixed 0); against the banked snapshot: new 0, fixed 0",
+    ]);
   });
   it("is silent about the matcher when its code is the same, and says so when pairs did not run", () => {
     const s = formatSummary({ ...report, matcherCode: [], pairs: undefined, sample: undefined, head: { ...report.head, dirty: false } });

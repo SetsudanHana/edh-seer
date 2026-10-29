@@ -12,7 +12,8 @@ import { parseArgs } from "node:util";
 import { connect, docToCard, isStickerCard, loadConfig, type CardDoc } from "@edh-seer/data";
 import { createTagsLookup, DERIVE_VERSION } from "@edh-seer/tagger";
 import { detectAnswerClasses, detectBuildCategories, detectWincons, type DeckCard } from "@edh-seer/matcher";
-import { diffMembership, mergeMembership, serialiseSnapshot, versionDrift, type Membership, type VersionGroup } from "./role-ratchet-core.js";
+import { measureRoles, type RoleDetectors } from "./ratchet-measure.js";
+import { diffMembership, serialiseSnapshot, versionDrift, type Membership, type VersionGroup } from "./role-ratchet-core.js";
 
 const SNAPSHOT = "packages/instruments/role-membership.json";
 const { values } = parseArgs({ options: { bank: { type: "boolean", default: false } }, strict: true });
@@ -45,16 +46,9 @@ for (let i = 0; i < inEngine.length; i += 200) {
   }));
 }
 const untagged = dc.filter((d) => d.tags === null).map((d) => d.card.name);
-const m = new Map<string, string[]>();
-const add = (n: string, k: string): void => { m.set(n, [...(m.get(n) ?? []), k]); };
-for (const [cat, set] of detectBuildCategories(dc)) for (const n of set) add(n, `role:${cat}`);
-for (const [cls, mem] of detectAnswerClasses(dc)) for (const n of mem.cards) add(n, `answer:${cls}`);
-// detectWincons is per card too: each rule's `winconClass` plus `go-wide` (creature-token makers), no deck threshold.
-for (const [cls, set] of detectWincons(dc)) for (const n of set) add(n, `wincon:${cls}`);
-const perDeck = [m];
 await store.close();
 
-const measured = mergeMembership(perDeck);
+const measured = measureRoles(dc, { detectBuildCategories, detectAnswerClasses, detectWincons } as unknown as RoleDetectors);
 const memberships = Object.values(measured).reduce((n, k) => n + k.length, 0);
 const summary = `${Object.keys(measured).length} cards, ${memberships} memberships, of ${dc.length} commander-legal cards (${docs.length - inEngine.length} stickers skipped); ${untagged.length} untagged`;
 // A card with no derived row matches nothing: it would read as "no role" and bank as such. Untagged is ratcheted

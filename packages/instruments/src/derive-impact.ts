@@ -3,11 +3,12 @@
  *  Mongo is read (`cards`, `cardClauses`, `tokens`) and never written; the stored `cardTagsDerived` is not read at all,
  *  so the numbers do not depend on what the last derive-corpus left there.
  *
- *  Usage: npx tsx packages/instruments/src/derive-impact.ts <BASE-ref> [--cards "A|B"] [--json out.json] [--pairs N] [--no-pairs] [--pair-sample N] [--matcher own|head]
+ *  Usage: npx tsx packages/instruments/src/derive-impact.ts <BASE-ref> [--cards "A|B"] [--json out.json] [--pairs N] [--no-pairs] [--no-ratchets] [--pair-sample N] [--matcher own|head]
  *    --cards        restrict what is REPORTED to these card names (every row is still derived: pair reasons need the other cards)
  *    --pairs N      pair reasons for at most N changed rows (default all); --no-pairs skips them (and the sample)
  *    --pair-sample N  pair reasons for N seeded, stable cards, changed or not: what a MATCHER-only change does. Default: SAMPLE_DEFAULT when the
  *                   matcher's code differs between BASE and the working tree, else 0
+ *    --no-ratchets  skip the in-memory role-ratchet and dropped-clauses (BASE -> HEAD, and HEAD against the banked snapshots)
  *    --workers N    worker threads for the pair phase (default: every core but one); the output does not depend on it
  *    --matcher      `own` (default): each side's own matcher, which is the truth. `head`: HEAD's on both sides, to isolate what the rows alone did
  *
@@ -21,12 +22,13 @@ import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
-import { connect, docToCard, loadConfig } from "@edh-seer/data";
+import { connect, docToCard, isStickerCard, loadConfig } from "@edh-seer/data";
 import { createPool, defaultWorkers } from "@edh-seer/data/parallel";
 import {
-  chooseMatcher, classifyRows, formatReport, grammarReport, matcherCodeFiles, nodeModulesHash, pairsReport, sampleIds, snapOf, treeVerdict,
-  type CardPairs, type GrammarEntry, type ImpactReport, type PairSection, type RowSnap,
+  chooseMatcher, classifyRows, formatReport, ratchetReport, grammarReport, matcherCodeFiles, nodeModulesHash, pairsReport, sampleIds, snapOf, treeVerdict,
+  type CardPairs, type GrammarEntry, type RatchetInputs, type ImpactReport, type PairSection, type RowSnap,
 } from "./derive-impact-core.js";
+import { measureDropped, measureRoles, type DroppedTagger, type RoleDetectors } from "./ratchet-measure.js";
 import type { PairItem, PairResult, Setup } from "./derive-impact-worker.js";
 
 /** Cards in the matcher sample when the matcher's code differs. About 1.3 s per card (both sides, against every card). */
@@ -36,9 +38,9 @@ const git = (...args: string[]): string => execFileSync("git", args, { cwd: REPO
 
 const { positionals, values } = parseArgs({
   allowPositionals: true, strict: true,
-  options: { cards: { type: "string" }, json: { type: "string" }, pairs: { type: "string" }, "no-pairs": { type: "boolean", default: false }, "pair-sample": { type: "string" }, workers: { type: "string" }, matcher: { type: "string" } },
+  options: { cards: { type: "string" }, json: { type: "string" }, pairs: { type: "string" }, "no-pairs": { type: "boolean", default: false }, "no-ratchets": { type: "boolean", default: false }, "pair-sample": { type: "string" }, workers: { type: "string" }, matcher: { type: "string" } },
 });
-if (positionals.length !== 1) { console.error('usage: derive-impact.ts <BASE-ref> [--cards "A|B"] [--json out.json] [--pairs N] [--no-pairs] [--pair-sample N] [--workers N] [--matcher own|head]'); process.exit(2); }
+if (positionals.length !== 1) { console.error('usage: derive-impact.ts <BASE-ref> [--cards "A|B"] [--json out.json] [--pairs N] [--no-pairs] [--no-ratchets] [--pair-sample N] [--workers N] [--matcher own|head]'); process.exit(2); }
 const only = values.cards ? new Set(values.cards.split("|").map((s) => s.trim()).filter(Boolean)) : null;
 const num = (v: string | undefined, dflt: number, flag: string): number => {
   if (v === undefined) return dflt;
@@ -111,14 +113,17 @@ interface Side {
   deriveScopeFilter: () => Record<string, unknown>;
   segmentHash: (t: string, ty: string, k: string[]) => string;
   deriveVersion: number;
+  tagger: DroppedTagger;
+  matcher: RoleDetectors;
 }
 async function loadSide(root: string): Promise<Side> {
   const imp = (rel: string): Promise<any> => import(pathToFileURL(join(root, rel)).href);
-  const [w, g, d, i, s, sc] = await Promise.all([
+  const [w, g, d, i, s, sc, tg, mt] = await Promise.all([
     imp("packages/tagger/src/derive-worker.ts"), imp("packages/tagger/src/grammar/clause-record.ts"), imp("packages/tagger/src/derive/derive.ts"),
     imp("packages/tagger/src/derive-input.ts"), imp("packages/tagger/src/clause-store.ts"), imp("packages/tagger/src/derive-scope.ts"),
+    imp("packages/tagger/src/index.ts"), imp("packages/matcher/src/index.ts"),
   ]);
-  return { deriveRow: w.deriveRow, grammarClauseRecords: g.grammarClauseRecords, deriveCardTags: d.deriveCardTags, deriveInputOf: i.deriveInputOf, segmentHash: s.segmentHash, deriveScopeFilter: sc.deriveScopeFilter, deriveVersion: d.DERIVE_VERSION };
+  return { deriveRow: w.deriveRow, grammarClauseRecords: g.grammarClauseRecords, deriveCardTags: d.deriveCardTags, deriveInputOf: i.deriveInputOf, segmentHash: s.segmentHash, deriveScopeFilter: sc.deriveScopeFilter, deriveVersion: d.DERIVE_VERSION, tagger: tg, matcher: mt };
 }
 const [B, H] = [await loadSide(baseRoot), await loadSide(REPO)];
 
@@ -182,6 +187,22 @@ const snaps = (m: RowMap): Map<string, RowSnap> => new Map([...m].filter(([, r])
 const rows = classifyRows(snaps(rowsB), snaps(rowsH));
 const grammar = grammarReport(grammarEntries.filter((e) => keep(e.name)));
 
+// ---- the two by-name ratchets, in memory (the bins' own measuring functions, each commit's own tagger / matcher, no Mongo write) ----
+let ratchets: ReturnType<typeof ratchetReport> | undefined;
+if (!values["no-ratchets"]) {
+  // The bins' population: every commander-legal card, stickers skipped, by name.
+  const inEngine = allCards.filter((c) => c.legalities?.commander === "legal" && !isStickerCard(c)).sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  const canonical = new Map(clauseDocs.filter((d) => !d.isToken).map((d) => [d.oracleId as string, d.canonical]));
+  const measure = (side: Side, rowsOf: RowMap, detectors: RoleDetectors): RatchetInputs => {
+    const dropped = measureDropped(inEngine, (id) => { const r = rowsOf.get(id); return r ? { ...r.tags, clauseSource: r.snap.fromGrammar ? "grammar" : "model" } : undefined; }, (id) => canonical.get(id), side.tagger).measured;
+    const dc = inEngine.map((d) => ({ card: docToCard(d as never), tags: rowsOf.get(d._id)?.tags ?? null }));
+    return { dropped, roles: measureRoles(dc, detectors) };
+  };
+  const bank = (f: string): unknown => JSON.parse(readFileSync(join(REPO, "packages/instruments", f), "utf8"));
+  ratchets = ratchetReport(measure(B, rowsB, matcherMode === "own" ? B.matcher : H.matcher), measure(H, rowsH, H.matcher), { dropped: bank("dropped-clauses.json") as never, roles: bank("role-membership.json") as never });
+  log(`ratchets measured: dropped-clauses ${ratchets.dropped.base.actions} -> ${ratchets.dropped.head.actions}, role-ratchet gained ${ratchets.roles.gained.length} lost ${ratchets.roles.lost.length}`);
+}
+
 // ---- pair reasons, spread over worker threads (results come back in input order, so the report equals a one-worker run) ----
 let pairs: PairSection | undefined, sample: PairSection | undefined, tokens: ImpactReport["tokens"];
 const pairDetail: CardPairs[] = [], sampleDetail: CardPairs[] = [];
@@ -220,7 +241,7 @@ if (!values["no-pairs"]) {
 
 const report: ImpactReport = {
   base: { ref: positionals[0]!, sha: baseSha.slice(0, 8), deriveVersion: B.deriveVersion }, head: { ref: "HEAD", sha: headSha, deriveVersion: H.deriveVersion, dirty },
-  matcher: matcherMode, matcherCode, rows, grammar, ...(pairs ? { pairs } : {}), ...(sample ? { sample } : {}), ...(tokens ? { tokens } : {}),
+  matcher: matcherMode, matcherCode, rows, grammar, ...(pairs ? { pairs } : {}), ...(sample ? { sample } : {}), ...(tokens ? { tokens } : {}), ...(ratchets ? { ratchets } : {}),
 };
 console.log(formatReport(report));
 if (values.json) writeFileSync(values.json, JSON.stringify({ ...report, pairDetail, sampleDetail }, null, 1));

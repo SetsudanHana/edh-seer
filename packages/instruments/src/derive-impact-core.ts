@@ -5,6 +5,8 @@
  *  PAIR REASONS (membership tag|producer|consumer, with magnitude and attribute moves apart), and the paste-ready SUMMARY. */
 import { createHash } from "node:crypto";
 import type { CardTags } from "@edh-seer/tagger/schema";
+import type { Dropped } from "./dropped-clauses-core.js";
+import { diffMembership, type Membership } from "./role-ratchet-core.js";
 
 /** EVERY FIELD OF A DERIVED ROW IS COMPARED except these, which are constants of the pipeline (not derived from the card's text). */
 export const CONSTANT_FIELDS = ["oracleId", "schemaVersion", "promptVersion", "model", "pinned"] as const;
@@ -242,6 +244,37 @@ export const nodeModulesHash = (names: string[]): string => createHash("sha1").u
 
 // ---- summary ----
 
+// ---- ratchets ----
+
+/** What the two by-name ratchets measure on one commit's rows. */
+export interface RatchetInputs { dropped: Dropped; roles: Membership }
+type Pair = [string, string];
+export interface RatchetReport {
+  dropped: { base: { cards: number; actions: number }; head: { cards: number; actions: number }; newKeys: Pair[]; fixedKeys: Pair[]; vsBank: { gained: number; lost: number } };
+  roles: { base: { cards: number; memberships: number }; head: { cards: number; memberships: number }; gained: Pair[]; lost: Pair[]; vsBank: { gained: number; lost: number } };
+}
+const countDropped = (d: Dropped): { cards: number; actions: number } => ({ cards: Object.keys(d).length, actions: Object.values(d).reduce((a, k) => a + k.length, 0) });
+const countRoles = (m: Membership): { cards: number; memberships: number } => ({ cards: Object.keys(m).length, memberships: Object.values(m).reduce((a, k) => a + k.length, 0) });
+
+/** BASE -> HEAD for both ratchets (set-based, by card, as the bins diff), and HEAD against the banked snapshots: what `--bank` would change. */
+export function ratchetReport(base: RatchetInputs, head: RatchetInputs, banked: RatchetInputs): RatchetReport {
+  const d = diffMembership(head.dropped, base.dropped), r = diffMembership(head.roles, base.roles);
+  const bd = diffMembership(head.dropped, banked.dropped), br = diffMembership(head.roles, banked.roles);
+  return {
+    dropped: { base: countDropped(base.dropped), head: countDropped(head.dropped), newKeys: d.gained, fixedKeys: d.lost, vsBank: { gained: bd.gained.length, lost: bd.lost.length } },
+    roles: { base: countRoles(base.roles), head: countRoles(head.roles), gained: r.gained, lost: r.lost, vsBank: { gained: br.gained.length, lost: br.lost.length } },
+  };
+}
+const some = (xs: Pair[], sign: "+" | "-", max = 5): string => xs.slice(0, max).map(([c, k]) => `${c} ${sign}${k}`).join("; ") + (xs.length > max ? `; ... (+${xs.length - max} more)` : "");
+
+export function formatRatchets(r: RatchetReport): string[] {
+  const d = r.dropped, o = r.roles;
+  return [
+    `role-ratchet gained ${o.gained.length}, lost ${o.lost.length} (${n(o.base.memberships)} -> ${n(o.head.memberships)} memberships)${o.gained.length ? `; gained: ${some(o.gained, "+")}` : ""}${o.lost.length ? `; lost: ${some(o.lost, "-")}` : ""}; against the banked snapshot: gained ${o.vsBank.gained}, lost ${o.vsBank.lost}`,
+    `dropped-clauses ${n(d.base.actions)} -> ${n(d.head.actions)} (new ${d.newKeys.length}, fixed ${d.fixedKeys.length}${d.newKeys.length + d.fixedKeys.length ? `: ${[d.newKeys.length ? some(d.newKeys, "+") : "", d.fixedKeys.length ? some(d.fixedKeys, "-") : ""].filter(Boolean).join("; ")}` : ""}); against the banked snapshot: new ${d.vsBank.gained}, fixed ${d.vsBank.lost}`,
+  ];
+}
+
 export interface SideInfo { ref: string; sha: string; deriveVersion: number }
 export interface PairSection extends PairsReport { cards: number; skipped: string[] }
 export interface ImpactReport {
@@ -257,6 +290,8 @@ export interface ImpactReport {
   sample?: PairSection;
   /** What the token nodes cover: token docs, those with a derived row (the rest are synthesized), and the nodes the cards' allParts yield on each side. */
   tokens?: { docs: number; withRow: number; nodesBase: number; nodesHead: number };
+  /** In-memory role-ratchet and dropped-clauses, BASE -> HEAD and against the banked snapshots. */
+  ratchets?: RatchetReport;
 }
 
 const n = (x: number): string => x.toLocaleString("en-US");
@@ -288,7 +323,7 @@ export function formatSummary(r: ImpactReport, topChanged = 10): string {
   if (r.sample) lines.push(pairLine("matcher sample, seeded", r.sample));
   if (r.tokens) lines.push(`tokens: ${n(r.tokens.docs)} token docs, ${n(r.tokens.withRow)} with a derived row and ${n(r.tokens.docs - r.tokens.withRow)} synthesized as the engine does; token nodes the cards create: BASE ${n(r.tokens.nodesBase)}, HEAD ${n(r.tokens.nodesHead)}; a changed token row is paired against every card, makers against the nodes; token-vs-token pairs are not covered`);
   if (r.pairs) lines.push("pair options: deck-specific landTypes / enterWatchers / revenantToughness are off (the card-page reading); face names are disambiguated corpus-wide");
-  lines.push("ratchets: not run (task 2)");
+  lines.push(...(r.ratchets ? formatRatchets(r.ratchets) : ["ratchets: not run"]));
   return lines.join("\n");
 }
 
@@ -324,6 +359,13 @@ export function formatReport(r: ImpactReport): string {
   r.grammar.recordsChanged.forEach((x) => out.push(`  ~ records: ${x}`));
   if (r.pairs) pairBlock(out, `== PAIR REASONS OF CHANGED ROWS (${r.pairs.cards} cards, matcher: ${r.matcher}) ==`, r.pairs);
   if (r.sample) pairBlock(out, `== MATCHER SAMPLE (${r.sample.cards} seeded cards, matcher: ${r.matcher}) ==`, r.sample);
+  if (r.ratchets) {
+    out.push("", "== RATCHETS (BASE -> HEAD; against the banked snapshots: what --bank would change) ==");
+    r.ratchets.roles.gained.forEach(([c, k]) => out.push(`  role-ratchet  ${c}  +${k}`));
+    r.ratchets.roles.lost.forEach(([c, k]) => out.push(`  role-ratchet  ${c}  -${k}`));
+    r.ratchets.dropped.newKeys.forEach(([c, k]) => out.push(`  dropped-clauses  ${c}  +${k}`));
+    r.ratchets.dropped.fixedKeys.forEach(([c, k]) => out.push(`  dropped-clauses  ${c}  -${k}`));
+  }
   out.push("", "== SUMMARY ==", formatSummary(r));
   return out.join("\n");
 }

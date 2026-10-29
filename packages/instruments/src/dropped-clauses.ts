@@ -18,7 +18,8 @@ import { parseArgs } from "node:util";
 import { connect, isStickerCard, loadConfig, type CardDoc } from "@edh-seer/data";
 import { DERIVE_VERSION, INERT_VERBS, deriveAbilitiesOf, deriveInputOf, clauseTexts, grantedTokenClauses, grammarClauseRecords, segmentHash, type ClauseRecord } from "@edh-seer/tagger";
 import { diffMembership, listSome, serialiseSnapshot, versionDrift, type VersionGroup } from "./role-ratchet-core.js";
-import { droppedKeys, groupSplit, partialKeys, partitionKinds, splitReported, type Dropped, type UnclaimedLike } from "./dropped-clauses-core.js";
+import { groupSplit, partitionKinds, splitReported, type Dropped, type UnclaimedLike } from "./dropped-clauses-core.js";
+import { measureDropped, type DroppedTagger } from "./ratchet-measure.js";
 
 const SNAPSHOT = "packages/instruments/dropped-clauses.json";
 const { values } = parseArgs({ options: { bank: { type: "boolean", default: false }, silent: { type: "boolean", default: false } }, strict: true });
@@ -59,39 +60,10 @@ if (stale.length > 0) {
   process.exit(1);
 }
 
-const measured: Dropped = {};
-const underivedNames: string[] = [], noRecordNames: string[] = [];
-/** Per card, the clause ids derive REPORTED in `CardTags.unclaimed` (task 2). */
-const reportedBy: Record<string, ReadonlySet<string>> = {};
-let underived = 0, noRecords = 0, actions = 0;
-for (const d of inEngine) {
-  const row = rows.get(d._id);
-  if (!row) { underived++; underivedNames.push(d.name); continue; }
-  const g = row.clauseSource === "grammar" ? grammarClauseRecords(d as never) : undefined;
-  const records = g ? g.records : clauseDocs.get(d._id)?.canonical;
-  if (!records) { noRecords++; noRecordNames.push(d.name); continue; }
-  const abilityClauses = new Set((row.abilities ?? []).flatMap((a) => (a.clause === undefined ? [] : [a.clause])));
-  const granted = grantedTokenClauses(d as never);
-  const hasManaLines = (row.manaLines?.length ?? 0) > 0;
-  const texts = clauseTexts(d as never);
-  const isLand = /\bLand\b/.test(d.typeLine ?? "");
-  const homes = { abilityClauses, granted, hasManaLines, spliced: new Set<number | string>(), isLand, texts, cardName: d.name };
-  // PARTIAL drops: derive's own `unclaimed` entries on a clause that carries an ability (Condemn's tuck beside its gain-life).
-  const partial = partialKeys(records, row.unclaimed ?? [], homes);
-  // The spliced set is derive's own: a clause with no ability is the only one that can have been spliced, so derive again just for those cards.
-  let keys = droppedKeys(records, homes);
-  // Gate on ANY clause with a real action and no ability, before any exclusion, so a `:spliced` key never depends on an unrelated drop.
-  const mayBeSpliced = records.some((r) => !abilityClauses.has(r.id) && !granted.has(r.id) && (r.actions ?? []).some((a) => !INERT_VERBS.has(a.verb ?? "")));
-  if (mayBeSpliced) {
-    const { spliced } = deriveAbilitiesOf(deriveInputOf(d as never, d._id, d.name, records, undefined, g?.readings));
-    keys = droppedKeys(records, { ...homes, spliced });
-  }
-  keys = [...keys, ...partial].sort();
-  if (keys.length > 0) {
-    measured[d.name] = keys; actions += keys.length;
-    reportedBy[d.name] = new Set((row.unclaimed ?? []).map((u) => String(u.clause)));
-  }
-}
+const { measured, reportedBy, underived, noRecords, actions, underivedNames, noRecordNames } = measureDropped(
+  inEngine, (id) => rows.get(id), (id) => clauseDocs.get(id)?.canonical,
+  { grammarClauseRecords, deriveAbilitiesOf, deriveInputOf, grantedTokenClauses, clauseTexts, INERT_VERBS } as unknown as DroppedTagger,
+);
 if (underived + noRecords > 0) console.log(`underived: ${listSome(underivedNames)}; no clause records: ${listSome(noRecordNames)}`);
 const cards = Object.keys(measured).length;
 const summary = `${cards} cards, ${actions} dropped actions, of ${inEngine.length} commander-legal cards (${docs.length - inEngine.length} stickers skipped); ${underived} underived, ${noRecords} with no clause records`;
