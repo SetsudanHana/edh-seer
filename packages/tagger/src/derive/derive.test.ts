@@ -7000,9 +7000,11 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
       (path, abs) => expect(players(abs, "search"), `Surveyor ${path}`).toEqual(["you"]));
   });
 
-  test("#1395: a lone named 'you' is not carried onto a verb that defaults to you anyway", () => {
-    const abs = run("Some Caster", "enters", "When this creature enters, you may cast a spell from your graveyard.", [act("cast", "a spell from your graveyard")]);
-    expect(abs.every((a) => a.emits?.every((e) => e.subject.control !== "opp"))).toBe(true);
+  test("#1395: Soul Ransom's cost discard is the opponent's, so it stays any (only your opponents may activate)", () => {
+    all(both("Soul Ransom", "Enchantment — Aura", "Enchant creature\nYou control enchanted creature.\nDiscard two cards: This Aura's controller sacrifices it, then draws two cards. Only your opponents may activate this ability.",
+      [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant creature" }] }, { id: 2, abilityType: "static", actions: [rec("gain-control", "enchanted creature")] },
+        { id: 3, abilityType: "activated", actions: [rec("discard", "two cards"), rec("draw", "cards", { amount: "2" }), rec("sacrifice", "this Aura")] }]),
+      (path, abs) => expect(players(abs, "discard"), `Soul Ransom ${path}`).not.toContain("you"));
   });
 });
 
