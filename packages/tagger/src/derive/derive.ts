@@ -1903,6 +1903,9 @@ const ACTION_FAMILY: Record<string, string> = {
 const GRAMMAR_ACTION_VERBS: ReadonlySet<string> = new Set(Object.keys(ACTION_FAMILY));
 /** Verbs whose OBJECT, on derive's string path, is the player it happens to ("target player mills two
  *  cards" -> object "target player"); see `RECIPIENT_VERBS` in emits.ts. */
+/** An amount that points back at an earlier one rather than counting. */
+const BACK_REF_AMOUNT = /^(?:that (?:many|much)(?: [a-z]+)?|the same(?: amount| number)?|it)$/i;
+
 /** Verbs that move a card from one place to another: the player who does them need not own the card (see `withGrammarActions`' reading fill, #1395). */
 const CARD_MOVING_VERBS: ReadonlySet<string> = new Set(["exile", "destroy", "return", "put"]);
 const PLAYER_OBJECT_VERBS: ReadonlySet<string> = new Set(["draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life"]);
@@ -2024,7 +2027,8 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
       ...base,
       ...(namedActor ? { actor: namedActor } : {}),
       ...(object !== undefined ? { object } : {}),
-      ...(r.amount !== undefined ? { amount: r.amount } : {}),
+      // A BACK-REFERENCED amount ("that many", "that much life", "the same amount") names an earlier count the stored amount already resolves ("the number of -1/-1 counters on it", Oft-Nabbed Goat): it never replaces one.
+      ...(r.amount !== undefined && !(BACK_REF_AMOUNT.test(r.amount) && base.amount != null && !BACK_REF_AMOUNT.test(base.amount)) ? { amount: r.amount } : {}),
       ...(r.fromZone !== undefined ? { fromZone: r.fromZone } : {}),
       ...(r.toZone !== undefined ? { toZone: r.toZone } : {}),
       optional: r.optional === true,

@@ -6971,6 +6971,16 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
     });
   });
 
+  test("#1403: a back-referenced amount never replaces the stored one (Oft-Nabbed Goat)", () => {
+    const text = "{1}: Draw a card. Gain control of this creature and put a -1/-1 counter on it. Only your opponents may activate this ability and only as a sorcery.\nWhen this creature dies, if it had one or more -1/-1 counters on it, its owner draws that many cards and each other player loses that much life.";
+    const stored = [{ id: 1, abilityType: "activated", actions: [rec("draw", "a card"), rec("gain-control", "this creature"), rec("add-counter", "-1/-1")] }, { id: 2, abilityType: "triggered", trigger: { event: "dies", subject: "this creature", control: "any" }, actions: [rec("draw", "its owner", { amount: "the number of -1/-1 counters on it" }), rec("lose-life", "each other player", { amount: "the number of -1/-1 counters on it" })] }];
+    all(both("Oft-Nabbed Goat", "Creature — Goat", text, stored).filter(([path]) => path === "model"), (path, abs) => {
+      const c2 = abs.filter((a) => a.clause === 2);
+      expect(c2.map((a) => a.amount), path).toEqual(["the number of -1/-1 counters on it", "the number of -1/-1 counters on it"]);
+      expect(c2.every((a) => (a.count?.scalesWith as { counter?: string } | undefined)?.counter === "-1/-1"), path).toBe(true);
+    });
+  });
+
   test("#1403: 'an opponent of your choice gains control of it' is the opponent's gain (Khârn the Betrayer)", () => {
     const text = "Berzerker — Khârn the Betrayer attacks or blocks each combat if able.\nSigil of Corruption — When you lose control of Khârn the Betrayer, draw two cards.\nThe Betrayer — If damage would be dealt to Khârn the Betrayer, prevent that damage and an opponent of your choice gains control of it.";
     const stored = [{ id: 1, abilityType: "static", actions: [rec("cant", "not attack or block")] }, { id: 2, abilityType: "triggered", trigger: { event: "loses-control", subject: "Khârn the Betrayer", control: "you" }, actions: [rec("draw", "card", { amount: "2" })] }, { id: 3, abilityType: "static", actions: [rec("prevent", "damage to Khârn the Betrayer"), rec("gain-control", "Khârn the Betrayer")] }];
