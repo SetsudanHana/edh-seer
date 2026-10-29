@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { Link, MemoryRouter, Route, Routes, useNavigate } from "react-router";
+import { Link, MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { ScrollToTop } from "./ScrollToTop.js";
 
@@ -173,19 +173,28 @@ test("a hash-only change does not scroll", () => {
   expect(scroll).not.toHaveBeenCalled();
 });
 
-test("the first entry of a document (key default) is not told apart from its siblings, so it is left to the browser", () => {
+function Key() { return <output data-testid="key">{useLocation().key}</output>; }
+
+test("a mount on the landing entry (key default) ends with a keyed entry, and nothing scrolls", () => {
+  render(<MemoryRouter initialEntries={["/cards/a#h"]}><ScrollToTop /><Key /><Routes><Route path="*" element={null} /></Routes></MemoryRouter>);
+  expect(screen.getByTestId("key").textContent).not.toBe("default");
+  expect(scroll).not.toHaveBeenCalled();
+});
+
+test("landing, then a similar click, then Back restores the landing offset", () => {
   vi.useFakeTimers();
   try {
     Object.defineProperty(window, "innerHeight", { value: 800, configurable: true });
     height(5000);
-    render(app(["/cards/a"])); // key "default"
+    render(app(["/cards/a"])); // key "default" until the mount re-keys it
     scrolled(3000);
     fireEvent.click(screen.getByText("to b"));
+    expect(scroll).toHaveBeenLastCalledWith(0, 0);
     scrolled(0);
     scroll.mockClear();
     act(() => { void nav(-1); });
     vi.advanceTimersByTime(50);
-    expect(scroll).not.toHaveBeenCalled();
+    expect(scroll).toHaveBeenCalledWith(0, 3000);
   } finally { vi.useRealTimers(); }
 });
 

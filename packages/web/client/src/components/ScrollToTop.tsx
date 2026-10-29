@@ -1,5 +1,5 @@
-import { useLayoutEffect, useRef } from "react";
-import { useLocation, useNavigationType } from "react-router";
+import { useEffect, useLayoutEffect, useRef } from "react";
+import { useLocation, useNavigate, useNavigationType } from "react-router";
 
 /** A GIVE-UP for a restore whose page never grows tall enough (a card that failed to load). */
 const RESTORE_MS = 2000;
@@ -29,13 +29,22 @@ const inShell = (path: string) => !/^\/(cards|commanders|precons|browse)(\/|$)/.
  *  The report ("/") and /analysis/* both have ReportShell, whose `useScrollMemory` owns moves between them; every
  *  other move is ours.
  *
+ *  THE LANDING ENTRY gets a key of its own. The router names the document's first entry "default", as it does every
+ *  entry without keyed state, so it could not be told from its siblings; on mount a same-URL replace mints it a real
+ *  key. That is the page a reader arrives on from a search engine, then clicks a similar card and comes Back to.
+ *
  *  ACCEPTED COSTS, owner-approved simplification: the map is in memory, so a reload of a deep card page (or a Back
- *  from another site) gets whatever the browser does; and an entry with key "default" (the document's first entry,
- *  native fragment entries, the report's own `pushState`) cannot be told apart from its siblings, so it is neither
- *  saved nor restored here. */
+ *  from another site) gets whatever the browser does; and an entry that stays "default" (native fragment entries,
+ *  the report's own `pushState`) is neither saved nor restored here. */
 export function ScrollToTop(): null {
-  const { pathname, key } = useLocation();
+  const { pathname, key, search, hash, state } = useLocation();
   const type = useNavigationType();
+  const navigate = useNavigate();
+  // Same URL, same state, no new entry: the pathname is unchanged, so nothing below scrolls.
+  useEffect(() => {
+    if (key === "default") navigate({ pathname, search, hash }, { replace: true, state });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const previous = useRef(pathname);
   const saved = useRef(new Map<string, number>());
   // THE OFFSET IS TAKEN IN RENDER, when the pathname changes: the old page is still in the DOM, so scrollY is what the
