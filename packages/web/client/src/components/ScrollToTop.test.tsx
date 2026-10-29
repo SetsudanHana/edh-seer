@@ -51,6 +51,25 @@ test("back restores the remembered offset once the page is tall enough", () => {
   } finally { vi.useRealTimers(); }
 });
 
+test("the offset saved is the one at the click, not the clamp the route swap causes", () => {
+  vi.useFakeTimers();
+  try {
+    Object.defineProperty(window, "innerHeight", { value: 800, configurable: true });
+    height(5935 + 800);
+    render(app(["/cards/a"]));
+    scrolled(5774);
+    fireEvent.click(screen.getByText("to b"));
+    height(1500); // the shorter page replaces it; the browser clamps and fires scroll
+    scrolled(700);
+    scrolled(0);
+    scroll.mockClear();
+    height(5935 + 800);
+    fireEvent.click(screen.getByText("back"));
+    vi.advanceTimersByTime(50);
+    expect(scroll).toHaveBeenCalledWith(0, 5774);
+  } finally { vi.useRealTimers(); }
+});
+
 test("a restore that never becomes possible gives up", () => {
   vi.useFakeTimers();
   try {

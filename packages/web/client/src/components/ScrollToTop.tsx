@@ -12,49 +12,48 @@ const RESTORE_MS = 2000;
  *
  *  POP: the browser's own restore runs on popstate, before the async card page has its full height, so the offset
  *  is clamped. So `history.scrollRestoration` is "manual", the offset is remembered per history entry
- *  (`location.key`) as the reader scrolls, and a POP writes it back once the page is tall enough (frames, up to
+ *  (`location.key`) when the reader leaves it, and a POP writes it back once the page is tall enough (frames, up to
  *  RESTORE_MS). The report ("/") keeps its own memory (`useScrollMemory` in ReportShell), so any move to or from
  *  "/" is skipped here rather than handled twice. */
 export function ScrollToTop(): null {
   const { pathname, key } = useLocation();
   const type = useNavigationType();
   const previous = useRef(pathname);
-  const current = useRef(key);
   const saved = useRef(new Map<string, number>());
-  const restoring = useRef(false);
+  // THE OFFSET IS TAKEN IN RENDER, when the location key changes: the old page is still in the DOM, so scrollY is
+  // what the reader left. A scroll listener recorded the browser's CLAMP instead (the document shrinks as the
+  // route swaps, the browser pulls scrollY in, a scroll event fires): 5774 came back as 5530.
+  const rendered = useRef(key);
+  if (rendered.current !== key) {
+    saved.current.set(rendered.current, window.scrollY);
+    rendered.current = key;
+  }
 
   useEffect(() => {
     const old = history.scrollRestoration;
     history.scrollRestoration = "manual";
-    // While a restore is pending the page is clamped to a shorter height; that is not where the reader was.
-    const note = () => { if (!restoring.current) saved.current.set(current.current, window.scrollY); };
-    window.addEventListener("scroll", note, { passive: true });
-    return () => { window.removeEventListener("scroll", note); history.scrollRestoration = old; };
+    return () => { history.scrollRestoration = old; };
   }, []);
 
   useLayoutEffect(() => {
     const from = previous.current;
     previous.current = pathname;
-    current.current = key;
-    restoring.current = false;
     if (from === pathname || from === "/" || pathname === "/") return;
     if (type !== "POP") { window.scrollTo(0, 0); return; }
     const target = saved.current.get(key);
     if (!target) return;
-    restoring.current = true;
     const until = performance.now() + RESTORE_MS;
     let frame = 0;
     const step = () => {
       const tall = document.documentElement.scrollHeight - window.innerHeight >= target;
       if (tall || performance.now() >= until) {
         window.scrollTo(0, target);
-        restoring.current = false;
         return;
       }
       frame = requestAnimationFrame(step);
     };
     step();
-    return () => { cancelAnimationFrame(frame); restoring.current = false; };
+    return () => cancelAnimationFrame(frame);
   }, [pathname, key, type]);
   return null;
 }
