@@ -45,3 +45,10 @@ test("the optional note is printed", () => {
   show(ITEMS, "Only cards within this commander's colours.");
   expect(screen.getByText(/within this commander's colours/)).toBeInTheDocument();
 });
+
+test("a linked row opens the card menu: it carries the name and the slug", () => {
+  show(ITEMS);
+  const a = screen.getByRole("link", { name: "Beta" });
+  expect(a).toHaveAttribute("data-card", "Beta");
+  expect(a).toHaveAttribute("data-card-slug", "beta");
+});

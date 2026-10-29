@@ -8,6 +8,7 @@ import { PageFoot } from "./components/PageFoot.js";
 import { InstallButton } from "./components/InstallButton.js";
 import { LegacyDeckRedirect } from "./components/LegacyDeckRedirect.js";
 import { RouteMarker } from "./components/RouteMarker.js";
+import { ScrollToTop } from "./components/ScrollToTop.js";
 import { HeaderSearch } from "./components/HeaderSearch.js";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
@@ -395,6 +396,7 @@ export default function App() {
       * edge of the viewport. Caught on a screenshot, which is the only way that class of defect is
       * ever caught: every test passed, because a test asks what is on the page and not where. */}
     <RouteMarker />
+    <ScrollToTop />
     {/* THE SEARCH FIELD ON EVERY APP PAGE (spec 2026-09-08 part 1). Outside `<Routes>`, because it
       *  is the header's, not any page's; a portal, because the header is static HTML. */}
     <HeaderSearch />
