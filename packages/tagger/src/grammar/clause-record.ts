@@ -228,7 +228,10 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     const words = words0.replace(/^(this (?:card|creature|artifact|enchantment|land)) from your graveyard$/i, "$1");
     // "that creature's controller mills two cards" (Riddlekeeper): a player named through an object is
     // named outright too; a bare "that player" leaves the printed words.
-    const object = PLAYER_VERBS.has(r.verb) ? (r.actor?.text !== undefined && !(r.verb === "blight" && /^you$/i.test(r.actor.text)) && (r.actor.scope !== "that" || /'s (?:controller|owner)$/i.test(r.actor.text)) ? r.actor.text : words || "you")
+    // The SHARED any / each actor of a back-referenced pair ("you and that player each gain that much life", Angel of Destiny; the both-branch CEILING in action.ts) names no one: the life
+    // verbs' fallback object "you" would put both halves on you (#1395), so they read `each player`.
+    const object = (r.verb === "gain-life" || r.verb === "lose-life") && r.actor?.control === "any" && r.actor.scope === "each" && r.actor.text === undefined && !words ? "each player"
+      : PLAYER_VERBS.has(r.verb) ? (r.actor?.text !== undefined && !(r.verb === "blight" && /^you$/i.test(r.actor.text)) && (r.actor.scope !== "that" || /'s (?:controller|owner)$/i.test(r.actor.text)) ? r.actor.text : words || "you")
       : selfTrigger && out.length === 0 && /^(?:it|itself)$/i.test(words) ? selfTrigger
       // "this creature becomes prepared", "it explores" (Jenny): a subject action of the card itself.
       : !words && r.object?.self === true ? selfTrigger ?? selfWord

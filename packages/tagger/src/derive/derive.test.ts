@@ -7006,5 +7006,23 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
         { id: 3, abilityType: "activated", actions: [rec("discard", "two cards"), rec("draw", "cards", { amount: "2" }), rec("sacrifice", "this Aura")] }]),
       (path, abs) => expect(players(abs, "discard"), `Soul Ransom ${path}`).not.toContain("you"));
   });
+  test("#1395: 'that player' is never the controller: Angel of Destiny and Benevolent Offering gain life for you and for them", () => {
+    all(both("Angel of Destiny", "Creature — Angel Cleric", "Flying, double strike\nWhenever a creature you control deals combat damage to a player, you and that player each gain that much life.\nAt the beginning of your end step, if you have at least 15 life more than your starting life total, each player this creature attacked this turn loses the game.",
+      [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Flying, double strike" }] }, trig("damage-dealt", "a creature you control", "you", [rec("gain-life", "you", { amount: "that much" }), rec("gain-life", "that player", { amount: "that much" })], 2),
+        trig("end-step", "you", "you", [rec("lose-game", "each player this creature attacked this turn")], 3)]),
+      // CEILING: the grammar path reads the pair's shared any / each actor for both halves (action.ts both-branch), so your own half is `any` there, never `you`.
+      (path, abs) => expect(players(abs, "gain-life"), `Angel ${path}`).toEqual(path === "model" ? ["you", "any"] : ["any", "any"]));
+    all(both("Benevolent Offering", "Instant", "Choose an opponent. You and that player each create three 1/1 white Spirit creature tokens with flying.\nChoose an opponent. You gain 2 life for each creature you control and that player gains 2 life for each creature they control.",
+      [{ id: 1, abilityType: "spell", actions: [rec("create", "1/1 white Spirit creature token with flying", { amount: "3" })] },
+        { id: 2, abilityType: "spell", actions: [rec("gain-life", "you", { amount: "2 for each creature you control" }), rec("gain-life", "chosen opponent", { amount: "2 for each creature they control" })] }]),
+      // The grammar does not read "Choose an opponent." clauses, so its path derives no gain-life here; the stored (model) answer is the one that counts.
+      (path, abs) => { if (path === "model") expect(players(abs, "gain-life"), `Benevolent ${path}`).toEqual(["you", "opp"]); });
+  });
+
+  test("#1395: 'that player' still inherits an opponent antecedent (Suspended Sentence)", () => {
+    all(both("Suspended Sentence", "Instant", "Destroy target creature an opponent controls. That player loses 3 life. Exile Suspended Sentence with three time counters on it.\nSuspend 3—{1}{B} (Rather than cast this card from your hand, you may pay {1}{B} and exile it with three time counters on it. At the beginning of your upkeep, remove a time counter. When the last is removed, you may cast it without paying its mana cost.)",
+      [{ id: 1, abilityType: "spell", actions: [rec("destroy", "target creature an opponent controls"), rec("lose-life", "that player", { amount: "3" }), rec("exile", "Suspended Sentence"), rec("add-counter", "time", { amount: "3" })] }, { id: 2, abilityType: "spell", actions: [rec("other", "Suspend 3—{1}{B}")] }]),
+      (path, abs) => expect(players(abs, "lose-life"), `Suspended Sentence ${path}`).toEqual(["opp"]));
+  });
 });
 

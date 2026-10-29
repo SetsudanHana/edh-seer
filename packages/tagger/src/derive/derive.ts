@@ -1753,6 +1753,8 @@ const ACTOR_DEFAULTS_TO_YOU = new Set(["draw", "cast", "play", "discard", "mill"
 const DEATH_REPLACEMENT = /\bwould (?:die|be destroyed|be put into a graveyard)\b[^.]*\binstead\b/i;
 const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
 const THAT_PLAYER = /^that (?:player|opponent)$/i;
+/** A PLAYER back-reference: never the controller themself, so it never inherits `you` from the nearest earlier object (Angel of Destiny: "you and that player each gain that much life"). */
+const PLAYER_BACKREF = /^(?:that (?:player|opponent)|those (?:players|opponents))$/i;
 /** The count an antecedent object states up front: "up to five Doctor cards", "two basic land cards". */
 // Never an open threshold: "two or more creature cards" is no fixed two (review).
 const ANTECEDENT_COUNT = /^(?:up to )?(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|x|\d+)\b(?! or (?:more|fewer|less|greater))/i;
@@ -1993,6 +1995,9 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
     // back-reference keeps the stored object: derive's self logic reads it.
     const object = r.counter !== undefined
       ? (r.text !== undefined && r.object?.self !== true ? `${r.text}, ${r.counter}` : base.object)
+      // A BACK-REFERENCED life reading ("that player gains 2 life", Benevolent Offering) keeps a stored "chosen opponent" / "chosen player" rather than the grammar's "that player" (the choice is the antecedent, Benevolent Offering).
+      // CEILING: only the chosen-player wording. Any other stored object (a pronoun, "that player") keeps the grammar text: keeping "they" typed a life loss as a spell (Rug of Smothering), measured and reverted.
+      : (r.verb === "gain-life" || r.verb === "lose-life") && r.actor?.scope === "that" && /^(?:the )?chosen (?:opponent|player)$/i.test((base.object ?? "").trim()) ? base.object
       : PLAYER_OBJECT_VERBS.has(r.verb) && r.verb !== "gain-life" && r.verb !== "lose-life"
         // NO ACTOR IS YOU (#697): Esper Sentinel's "Whenever an opponent casts ..., draw a card unless
         // that player pays {X}" and Veil of Summer's "Draw a card if an opponent has cast ..." name an
@@ -3156,7 +3161,7 @@ export function deriveAbilities(
       if (THAT_TYPED.test(objectText) && !PRONOUN_OBJECT.test(objectText) && !thatPlayerHit && !playerList) {
         const ante = antecedentFor((clause.actions ?? []).indexOf(action));
         const inherited = ante ? subjectFrom(ante, cardName, enchantText).control : undefined;
-        if (inherited && inherited !== "any") {
+        if (inherited && inherited !== "any" && !(inherited === "you" && PLAYER_BACKREF.test(objectText))) {
           for (const e of emits) if (e.subject.control === "any") e.subject.control = inherited;
           if (subject && subject.control === "any") subject.control = inherited;
         }
