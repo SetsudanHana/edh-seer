@@ -7070,3 +7070,13 @@ test("characteristicsSubject marks a two-type printed line as allTypes (#1385)",
   expect(characteristicsSubject(tags(["legendary", "creature"])).allTypes).toBeUndefined();
   expect(characteristicsSubject(tags(["land"])).allTypes).toBeUndefined();
 });
+
+// #1403: Khârn the Betrayer's "If damage would be dealt to Khârn, prevent that damage" is damage to a PERMANENT; Selfless Squire watches damage to YOU.
+test("a self 'prevented' producer does not feed a 'prevented' consumer about the player (Khârn -> Selfless Squire)", () => {
+  const khârn = { verb: "prevented", subject: { control: "any", token: null, self: true } } as never as GameEvent;
+  const squire = { verb: "prevented", subject: { control: "you", token: null } } as never as GameEvent;
+  expect(eventMatches(khârn, squire, H)).toBe(false);
+  // Damage to anything prevented (the five untyped `any` consumers) and another card's prevention still match.
+  expect(eventMatches(khârn, { verb: "prevented", subject: { control: "any" as const, token: null } }, H)).toBe(true);
+  expect(eventMatches({ verb: "prevented", subject: { control: "any", token: null } } as never, squire, H)).toBe(true);
+});
