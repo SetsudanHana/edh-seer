@@ -467,7 +467,9 @@ const OBJECT_NAMES_A_PLAYER = /\b(?:controllers?|owners?|players?|opponents?)\b|
  *  ambiguous), "each player" (48), "players" (14), "a player" (7), "any player" (3). */
 /** Where a COUNT begins — the same cue `derive/subject.ts` cuts on, exported from there so one
  *  edit moves both readers. */
-const NAMES_A_PLAYER = /\b(?:each|target|another|any|that|those|a) player\b|\bplayers\b|\bopponents?\b/i;
+// CEILING: clause-wide -- one player named anywhere in the sentence declines the controller default for EVERY action in it, so a cost the effect's player never touches ("Discard a card:
+// Each other player loses 2 life") goes `any` unless derive pins it (`costDiscard`, `ownSearch`).
+const NAMES_A_PLAYER = /\b(?:each|target|another|any|that|those|a|other|defending|the attacking) player\b|\bplayers\b|\bopponents?\b/i;
 
 /** Verbs whose object names WHO the thing happens to, not WHAT it happens to. The same list
  *  `CONTROLLER_DEFAULT` pins to the controller, for the same reason: the rules make the player the
@@ -477,9 +479,18 @@ const NAMES_A_PLAYER = /\b(?:each|target|another|any|that|those|a) player\b|\bpl
  *  opponent" is your clash, "each opponent faces a villainous choice" is your effect. The consumer
  *  watches the actor ("whenever you clash"), so the emit says `you`. */
 const ACTOR_IS_THE_EVENT: ReadonlySet<string> = new Set(["gains-control", "clash", "face-a-villainous-choice"]);
+/** The object of a control change that IS something you control: its HEAD noun phrase (cut at the first " with ", " whose " or " that ") ends in "you control" ("all creatures you control", "any number
+ *  of target permanents you control", "a creature you control of their choice", "the creature you control with the greatest mana value"). A "you control" inside a QUALIFIER ("target creature with power
+ *  less than or equal to the number of creatures you control", Beguiler of Wills; Vedalken Shackles, Dominating Vampire) is a limit on what YOU take, so the head is "target creature" and the gain is yours.
+ *  An exchange (Juxtapose) gives its "you control" half away, so that half is the opponent's gain and the half "target player controls" is yours. Not cut at " of ": "any number of target permanents". */
+function yourOwnObject(object: string): boolean {
+  const head = object.split(/ (?:with|whose|that) /i)[0]!.trim();
+  return /\byou control(?: of their choice)?$/i.test(head);
+}
+
 /** A CONTROL CHANGE HANDED TO ANOTHER PLAYER: "target opponent gains control of", "target player
  *  gains control of" (Donate prints `player`; giving yourself your own permanent does nothing). */
-const OTHER_GAINS_CONTROL = /\b(?:target|an|each|that) (?:opponent|player) gains control of\b/i;
+const OTHER_GAINS_CONTROL = /\b(?:(?:target|an|each|that) (?:opponent|player)|the player to your (?:left|right)) gains? control of\b/i;
 
 const RECIPIENT_VERBS: ReadonlySet<string> = new Set([
   "draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life", "loses-game",
@@ -809,7 +820,15 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // `parseControl` makes one file over, so the two cannot disagree about where a sentence's head
   // ends. Four cards: Call the Coppercoats, Rose, Hylda's Crown of Winter, Kaito.
   const head = (copyHead ? clauseText?.replace(COPIED_PHRASE, "") : clauseText)?.split(COUNT_PHRASE)[0];
-  const sentenceHead = head && head.trim().length > 0 ? head : clauseText;
+  const wholeHead = head && head.trim().length > 0 ? head : clauseText;
+  // ANOTHER PLAYER'S PHRASE JOINED TO THIS ACTION'S OWN ("its owner draws that many cards AND EACH OTHER PLAYER loses that much life", Oft-Nabbed Goat) is not this action's actor: the named-player guard reads
+  // the head up to that join, unless this action's verb is in the tail (then the tail is its own, "Draw a card and each other player discards a card" keeps the guard for the discard). The join is a
+  // compound subject, which is what makes the cut principled: the clause is two predicates and the guard asks who does THIS one.
+  // CEILING: the verb test is the first word of the action verb ("lose" for lose-life), and only "and / then each other / defending / the attacking player" is a join.
+  // Single literal spaces and no tail group: the tail is sliced by index, so the match stays linear (CodeQL polynomial-redos).
+  const otherPlayerJoin = /,? (?:and|then) (?:each other|defending|the attacking) player\b/i.exec(wholeHead ?? "");
+  const joinTail = otherPlayerJoin ? wholeHead!.slice(otherPlayerJoin.index) : "";
+  const sentenceHead = otherPlayerJoin && !new RegExp(`\\b${(action.verb ?? "").split("-")[0]}`, "i").test(joinTail) ? wholeHead!.slice(0, otherPlayerJoin.index) : wholeHead;
   const control = !!clauseText
     && subject.control === "any"
     && CONTROLLER_DEFAULT.has(action.verb ?? "")
@@ -850,9 +869,11 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       // ("whenever you gain control of a permanent", Zidane) watches who has it AFTER. So the
       // emit says `you` -- unless the sentence hands it to someone else: "target opponent gains
       // control of ..." (Donate, Harmless Offering, Goblin Cadets) is the OPPONENT'S gain (#681).
-      // CEILING: read per clause, so an exchange ("you and that opponent each gain control",
-      // Reins of Power) stays yours on both halves.
-      control: verb === "gains-control" && OTHER_GAINS_CONTROL.test(clauseText ?? "") ? "opp" as const
+      // YOU CANNOT GAIN CONTROL OF WHAT YOU ALREADY CONTROL: an object that literally says "you control" ("you and target opponent each gain control of all creatures the other controls",
+      // Twist Allegiance's "all creatures you control"; Iroh's "target permanent you control") is handed to someone else, so the gainer is the opponent.
+      // CEILING: a literal word match on the object, not a parse (a parse reads "cards in your graveyard" and "a creature of your choice that player controls" as yours, and they ARE gained by you);
+      // "you own but don't control" does not match, and "each land they own that you control" goes to the opponent. A gift of an object that does not say so ("gain control of it") reads per clause.
+      control: verb === "gains-control" && (OTHER_GAINS_CONTROL.test(clauseText ?? "") || yourOwnObject(action.object ?? "")) ? "opp" as const
         : ACTOR_IS_THE_EVENT.has(verb) ? "you" as const : control,
       ...(createsAToken && subject.token !== true ? { token: true as const } : {}),
       ...(arrivesTapped && verb === "enters" ? { entersTapped: true as const } : {}),

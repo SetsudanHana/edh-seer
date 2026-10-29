@@ -51,8 +51,8 @@ export interface Action {
    *  artifact", "instead"): KEPT, and the action still claims (owner, 2026-10-01, #896 task 6). Set at
    *  derive time, never stored; nothing reads it yet. */
   condition?: string;
-  /** WHO DOES A `create` THE GRAMMAR READ WITH A NAMED PLAYER ("you and target opponent each create a Treasure token", #1391 F2): the stored object is only the token, so the player
-   *  rides here. Set at derive time (`withGrammarActions`), never stored; read where derive settles an action's controller. */
+  /** WHO DOES AN ACTION THE GRAMMAR READ WITH A NAMED PLAYER ("you and target opponent each create a Treasure token", #1391 F2; "each other player sacrifices a creature", #1395): a
+   *  `create`'s stored object is only the token, and a clause with two actions of one verb has no single actor to cue, so the player rides here. Set at derive time (`withGrammarActions`), never stored; read where derive settles an action's controller. */
   actor?: "you" | "opp";
 }
 

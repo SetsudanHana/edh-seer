@@ -1,7 +1,7 @@
 import { describe, expect, it, test } from "vitest";
 import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, abilityKey, amountCovered, countCovered, exilesTopOfLibrary, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
-import { targetsASpellEarlier } from "./emits.js";
+import { targetsASpellEarlier, actionEmits } from "./emits.js";
 import { exileNamesOnlyGraveyards } from "./effect-kind.js";
 import { victimDeclines } from "./recipient.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
@@ -6949,6 +6949,143 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
   test("a store that wrote ONE action for the pair keeps it once (nothing doubled, nothing rewritten)", () => {
     const abs = run("Farsight Adept", "enters", "When this creature enters, you and target opponent each draw a card.", [act("draw", "a card", "1")]);
     expect(abs).toHaveLength(1);
+  });
+  // Real oracle text and the real stored records (Mongo cardClauses, dumped 2026-10-29).
+  const rec = (verb: string, object: string, extra: Record<string, unknown> = {}) => ({ verb, object, ...extra });
+  const trig = (event: string, subject: string, control: string, actions: unknown[], id = 1) => ({ id, abilityType: "triggered", trigger: { event, subject, control }, actions });
+  const all = (c: ReturnType<typeof both>, check: (path: string, abs: ReturnType<typeof run>) => void) => { for (const [path, abs] of c) check(path, abs); };
+
+  test("#1395: another player's half is never yours", () => {
+    all(both("Shattergang Brothers", "Legendary Creature — Goblin Artificer", "{2}{B}, Sacrifice a creature: Each other player sacrifices a creature.\n{2}{R}, Sacrifice an artifact: Each other player sacrifices an artifact.\n{2}{G}, Sacrifice an enchantment: Each other player sacrifices an enchantment.",
+      [1, 2, 3].map((id, k) => ({ id, abilityType: "activated", actions: [rec("sacrifice", ["a creature", "an artifact", "an enchantment"][k]!), rec("sacrifice", ["a creature", "an artifact", "an enchantment"][k]!)] }))),
+      (path, abs) => expect(players(abs, "sacrifice"), `Shattergang ${path}`).toEqual(["you", "opp", "you", "opp", "you", "opp"]));
+    const text = "Whenever this creature attacks, you and defending player each discard a card or sacrifice a permanent. You draw a card for each land card put into a graveyard this way.\nEncore {6}{B}{B} ({6}{B}{B}, Exile this card from your graveyard: For each opponent, create a token copy that attacks that opponent this turn if able. They gain haste. Sacrifice them at the beginning of the next end step. Activate only as a sorcery.)";
+    all(both("Eumidian Wastewaker", "Creature — Insect Cleric", text, [trig("attacks", "this creature", "you", [rec("discard", "a card", { optional: true }), rec("sacrifice", "a permanent", { optional: true }), rec("discard", "a card", { optional: true }), rec("sacrifice", "a permanent", { optional: true }), rec("draw", "a card", { amount: "for each land card put into a graveyard this way" })])]),
+      (path, abs) => {
+        expect(players(abs, "discard"), `Eumidian discard ${path}`).toEqual(["you", "opp"]);
+        expect(players(abs, "sacrifice"), `Eumidian sacrifice ${path}`).toEqual(["you", "opp"]);
+        expect(players(abs, "draw"), `Eumidian draw ${path}`).toEqual(["you"]);
+      });
+    all(both("Words of Wisdom", "Instant", "You draw two cards, then each other player draws a card.", [{ id: 1, abilityType: "spell", actions: [rec("draw", "you", { amount: "2" }), rec("draw", "each other player", { amount: "1" })] }]),
+      (path, abs) => expect(players(abs, "draw"), `Words of Wisdom ${path}`).toEqual(["you", "opp"]));
+    all(both("Savra, Queen of the Golgari", "Legendary Creature — Elf Shaman", "Whenever you sacrifice a black creature, you may pay 2 life. If you do, each other player sacrifices a creature of their choice.\nWhenever you sacrifice a green creature, you may gain 2 life.",
+      [trig("sacrificed", "a black creature", "you", [rec("sacrifice", "a creature of their choice", { optional: true })]), trig("sacrificed", "a green creature", "you", [rec("gain-life", "you", { amount: "2", optional: true })], 2)]),
+      (path, abs) => expect(players(abs, "sacrifice"), `Savra ${path}`).toEqual(["opp"]));
+  });
+
+  test("#1395: 'each other player' under a trigger that is not yours includes you, so it stays any (Hive Mind, Curse of Echoes)", () => {
+    all(both("Hive Mind", "Enchantment", "Whenever a player casts an instant or sorcery spell, each other player copies that spell. Each of those players may choose new targets for their copy.",
+      [trig("cast", "an instant or sorcery spell", "any", [rec("copy", "that spell")])]),
+      (path, abs) => expect(players(abs, "copy"), `Hive Mind ${path}`).not.toContain("opp"));
+    all(both("Curse of Echoes", "Enchantment — Aura Curse", "Enchant player\nWhenever enchanted player casts an instant or sorcery spell, each other player may copy that spell and may choose new targets for the copy they control.",
+      [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant player" }] }, trig("cast", "an instant or sorcery spell", "opponent", [rec("copy", "that spell", { optional: true })], 2)]),
+      (path, abs) => expect(players(abs, "copy"), `Curse of Echoes ${path}`).not.toContain("opp"));
+  });
+
+  test("#1395: the reading never overrides a stated control, and a chooser does not own the card (Wormfang Crab, Allure of the Unknown)", () => {
+    all(both("Wormfang Crab", "Creature — Nightmare Crab", "This creature can't be blocked.\nWhen this creature enters, an opponent chooses a permanent you control other than this creature and exiles it.\nWhen this creature leaves the battlefield, return the exiled card to the battlefield under its owner's control.",
+      [{ id: 1, abilityType: "static", actions: [rec("cant", "be blocked")] }, trig("enters", "this creature", "you", [rec("exile", "a permanent you control other than this creature", { fromZone: "battlefield", toZone: "exile" })], 2), trig("leaves", "this creature", "you", [rec("return", "the exiled card", { fromZone: "exile", toZone: "battlefield" })], 3)]),
+      (path, abs) => expect(players(abs, "exiled"), `Wormfang ${path}`).not.toContain("opp"));
+    all(both("Allure of the Unknown", "Sorcery", "Reveal the top six cards of your library. An opponent exiles a nonland card from among them, then you put the rest into your hand. That opponent may cast the exiled card without paying its mana cost.",
+      [{ id: 1, abilityType: "spell", actions: [rec("reveal", "the top six cards of your library"), rec("exile", "a nonland card from among them"), rec("put", "the rest", { fromZone: "library", toZone: "hand" }), rec("cast", "the exiled card", { fromZone: "exile", toZone: "stack", optional: true })] }]),
+      (path, abs) => expect(players(abs, "exiled"), `Allure ${path}`).not.toContain("opp"));
+  });
+
+  test("#1395: a cost discard and 'search your library' stay yours beside another player's name (Urborg Syphon-Mage, Aerial Surveyor)", () => {
+    all(both("Urborg Syphon-Mage", "Creature — Human Spellshaper", "{2}{B}, {T}, Discard a card: Each other player loses 2 life. You gain life equal to the life lost this way.",
+      [{ id: 1, abilityType: "activated", actions: [rec("discard", "a card"), rec("lose-life", "each other player", { amount: "2" }), rec("gain-life", "you", { amount: "equal to the life lost this way" })] }]),
+      (path, abs) => expect(players(abs, "discard"), `Syphon-Mage ${path}`).toEqual(["you"]));
+    all(both("Aerial Surveyor", "Artifact — Vehicle", "Flying\nWhenever this Vehicle attacks, if defending player controls more lands than you, search your library for a basic Plains card, put it onto the battlefield tapped, then shuffle.\nCrew 2",
+      [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Flying" }] }, trig("attacks", "this", "you", [rec("search", "your library for a basic Plains card", { fromZone: "library" }), rec("put", "it", { fromZone: "library", toZone: "battlefield" }), rec("tap", "it"), rec("shuffle", "your library")], 2), { id: 3, abilityType: "none", actions: [{ verb: "none", object: "Crew 2" }] }]),
+      (path, abs) => expect(players(abs, "search"), `Surveyor ${path}`).toEqual(["you"]));
+  });
+
+  test("#1395: Soul Ransom's cost discard is the opponent's, so it stays any (only your opponents may activate)", () => {
+    all(both("Soul Ransom", "Enchantment — Aura", "Enchant creature\nYou control enchanted creature.\nDiscard two cards: This Aura's controller sacrifices it, then draws two cards. Only your opponents may activate this ability.",
+      [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant creature" }] }, { id: 2, abilityType: "static", actions: [rec("gain-control", "enchanted creature")] },
+        { id: 3, abilityType: "activated", actions: [rec("discard", "two cards"), rec("draw", "cards", { amount: "2" }), rec("sacrifice", "this Aura")] }]),
+      (path, abs) => expect(players(abs, "discard"), `Soul Ransom ${path}`).not.toContain("you"));
+  });
+  test("#1395: 'that player' is never the controller: Angel of Destiny and Benevolent Offering gain life for you and for them", () => {
+    all(both("Angel of Destiny", "Creature — Angel Cleric", "Flying, double strike\nWhenever a creature you control deals combat damage to a player, you and that player each gain that much life.\nAt the beginning of your end step, if you have at least 15 life more than your starting life total, each player this creature attacked this turn loses the game.",
+      [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Flying, double strike" }] }, trig("damage-dealt", "a creature you control", "you", [rec("gain-life", "you", { amount: "that much" }), rec("gain-life", "that player", { amount: "that much" })], 2),
+        trig("end-step", "you", "you", [rec("lose-game", "each player this creature attacked this turn")], 3)]),
+      // CEILING: the grammar path reads the pair's shared any / each actor for both halves (action.ts both-branch), so your own half is `any` there, never `you`.
+      (path, abs) => expect(players(abs, "gain-life"), `Angel ${path}`).toEqual(path === "model" ? ["you", "any"] : ["any", "any"]));
+    all(both("Benevolent Offering", "Instant", "Choose an opponent. You and that player each create three 1/1 white Spirit creature tokens with flying.\nChoose an opponent. You gain 2 life for each creature you control and that player gains 2 life for each creature they control.",
+      [{ id: 1, abilityType: "spell", actions: [rec("create", "1/1 white Spirit creature token with flying", { amount: "3" })] },
+        { id: 2, abilityType: "spell", actions: [rec("gain-life", "you", { amount: "2 for each creature you control" }), rec("gain-life", "chosen opponent", { amount: "2 for each creature they control" })] }]),
+      // The grammar does not read "Choose an opponent." clauses, so its path derives no gain-life here; the stored (model) answer is the one that counts.
+      (path, abs) => { if (path === "model") expect(players(abs, "gain-life"), `Benevolent ${path}`).toEqual(["you", "opp"]); });
+  });
+
+  test("#1395: 'that player' still inherits an opponent antecedent (Suspended Sentence)", () => {
+    all(both("Suspended Sentence", "Instant", "Destroy target creature an opponent controls. That player loses 3 life. Exile Suspended Sentence with three time counters on it.\nSuspend 3—{1}{B} (Rather than cast this card from your hand, you may pay {1}{B} and exile it with three time counters on it. At the beginning of your upkeep, remove a time counter. When the last is removed, you may cast it without paying its mana cost.)",
+      [{ id: 1, abilityType: "spell", actions: [rec("destroy", "target creature an opponent controls"), rec("lose-life", "that player", { amount: "3" }), rec("exile", "Suspended Sentence"), rec("add-counter", "time", { amount: "3" })] }, { id: 2, abilityType: "spell", actions: [rec("other", "Suspend 3—{1}{B}")] }]),
+      (path, abs) => expect(players(abs, "lose-life"), `Suspended Sentence ${path}`).toEqual(["opp"]));
+  });
+  test("#1395: the gainer of a control change is not you when the object is yours (Twist Allegiance, Reins of Power, Iroh, Donate), and stays you when it is not", () => {
+    const gc = (o: string) => rec("gain-control", o);
+    all(both("Twist Allegiance", "Sorcery", "You and target opponent each gain control of all creatures the other controls until end of turn. Untap those creatures. Those creatures gain haste until end of turn.",
+      [{ id: 1, abilityType: "spell", actions: [gc("all creatures target opponent controls"), gc("all creatures you control")] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Twist Allegiance ${path}`).toEqual(["you", "opp"]); });
+    all(both("Reins of Power", "Instant", "Untap all creatures you control and all creatures target opponent controls. You and that opponent each gain control of all creatures the other controls until end of turn. Those creatures gain haste until end of turn.",
+      [{ id: 1, abilityType: "spell", actions: [gc("all creatures the target opponent controls"), gc("all creatures you control")] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Reins of Power ${path}`).toEqual(["you", "opp"]); });
+    all(both("Iroh, Tea Master", "Legendary Creature — Human Citizen Ally", "When Iroh enters, create a Food token.\nAt the beginning of combat on your turn, you may have target opponent gain control of target permanent you control. When you do, create a 1/1 white Ally creature token. Put a +1/+1 counter on that token for each permanent you own that your opponents control.",
+      [trig("enters", "Iroh, Tea Master", "you", []), trig("begin-combat", "you", "you", [rec("gain-control", "target permanent you control", { optional: true })], 2), trig("other", "you giving control of a permanent to an opponent", "you", [], 3)]),
+      (path, abs) => expect(players(abs, "gains-control"), `Iroh ${path}`).toEqual(["opp"]));
+    all(both("Donate", "Sorcery", "Target player gains control of target permanent you control.", [{ id: 1, abilityType: "spell", actions: [gc("target permanent you control")] }]),
+      (path, abs) => expect(players(abs, "gains-control"), `Donate ${path}`).toEqual(["opp"]));
+    all(both("Temporary Insanity", "Instant", "Untap target creature with power less than the number of cards in your graveyard and gain control of it until end of turn. That creature gains haste until end of turn.",
+      [{ id: 1, abilityType: "spell", actions: [gc("target creature with power less than the number of cards in your graveyard")] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Temporary Insanity ${path}`).toEqual(["you"]); });
+    all(both("Coveted Falcon", "Artifact Creature — Bird", "Flying\nWhenever this creature attacks, gain control of target permanent you own but don't control.\nDisguise {1}{U}\nWhen this creature is turned face up, target opponent gains control of any number of target permanents you control. Draw a card for each one they gained control of this way.",
+      [trig("attacks", "this creature", "you", [gc("target permanent you own but don't control")], 2), trig("turned-face-up", "this creature", "you", [gc("any number of target permanents you control")], 4)]),
+      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Coveted Falcon ${path}`).toEqual(["you", "opp"]); });
+  });
+  test("#1395: control-change branches that moved cards (Hithlain Rope, Assault Suit, Infernal Denizen, Juxtapose, Coveted Falcon's own object)", () => {
+    const gc = (o: string) => rec("gain-control", o);
+    all(both("Hithlain Rope", "Artifact", "This artifact can't be sacrificed.\n{1}, {T}: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle. The player to your right gains control of this artifact.\n{2}, {T}: Draw a card. The player to your right gains control of this artifact.",
+      [{ id: 2, abilityType: "activated", actions: [rec("search", "a basic land card", { fromZone: "library" }), rec("put", "it", { fromZone: "library", toZone: "battlefield" }), rec("shuffle", "your library"), gc("this artifact")] },
+        { id: 3, abilityType: "activated", actions: [rec("draw", "a card", { amount: "1" }), gc("this artifact")] }]),
+      (path, abs) => expect(players(abs, "gains-control"), `Hithlain Rope ${path}`).toEqual(["opp", "opp"]));
+    all(both("Assault Suit", "Artifact — Equipment", "Equipped creature gets +2/+2, has haste, can't attack you or planeswalkers you control, and can't be sacrificed.\nAt the beginning of each opponent's upkeep, you may have that player gain control of equipped creature until end of turn. If you do, untap it.\nEquip {3}",
+      [trig("upkeep", "you", "opponent", [rec("gain-control", "equipped creature", { optional: true }), rec("untap", "equipped creature")], 2)]),
+      (path, abs) => expect(players(abs, "gains-control"), `Assault Suit ${path}`).toEqual(["opp"]));
+    all(both("Infernal Denizen", "Creature — Demon", "At the beginning of your upkeep, sacrifice two Swamps. If you can't, tap this creature, and an opponent may gain control of a creature you control of their choice for as long as this creature remains on the battlefield.\n{T}: Gain control of target creature for as long as this creature remains on the battlefield.",
+      [trig("upkeep", "you", "you", [rec("sacrifice", "two Swamps"), rec("tap", "this creature"), rec("gain-control", "a creature you control of their choice", { optional: true })]), { id: 2, abilityType: "activated", actions: [gc("target creature")] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Infernal Denizen ${path}`).toEqual(["opp", "you"]); });
+    all(both("Juxtapose", "Sorcery", "You and target player exchange control of the creature you each control with the greatest mana value. Then exchange control of artifacts the same way. If two or more permanents a player controls are tied for greatest, their controller chooses one of them.",
+      [{ id: 1, abilityType: "spell", actions: [gc("the creature you control with the greatest mana value"), gc("the creature target player controls with the greatest mana value"), gc("an artifact you control"), gc("an artifact target player controls")] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Juxtapose ${path}`).toEqual(["opp", "you", "opp", "you"]); });
+    // The own-object rule alone, with NO clause text to lean on (Coveted Falcon's turned-face-up half).
+    expect(actionEmits(gc("any number of target permanents you control") as never)[0]?.subject.control).toBe("opp");
+    expect(actionEmits(gc("target creature with power less than or equal to the number of creatures you control") as never)[0]?.subject.control).toBe("you");
+  });
+  test("#1395: a textless twin takes its partner's reading, so Wernog keeps one ability set per limb (grammar records, 6 abilities)", () => {
+    const text = "When Wernog, Rider's Chaplain enters or leaves the battlefield, each opponent may investigate. Each opponent who doesn't loses 1 life. You investigate X times, where X is one plus the number of opponents who investigated this way.\nPartner—Friends forever (You can have two commanders if both have this ability.)";
+    const card = { name: "Wernog, Rider's Chaplain", typeLine: "Legendary Creature — Human", oracleText: text, keywords: ["Investigate", "Partner"] };
+    const g = grammarClauseRecords(card as never);
+    const abs = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records as never, undefined, g.readings)).abilities;
+    expect(abs).toHaveLength(6);
+    expect(abs.filter((a) => a.emits?.some((e) => e.verb === "create-token" && e.subject.control === "any"))).toHaveLength(0);
+  });
+
+  test("#1395: another player's phrase joined by 'and each other player' is not the owner's draw (Oft-Nabbed Goat)", () => {
+    all(both("Oft-Nabbed Goat", "Creature — Goat", "{1}: Draw a card. Gain control of this creature and put a -1/-1 counter on it. Only your opponents may activate this ability and only as a sorcery.\nWhen this creature dies, if it had one or more -1/-1 counters on it, its owner draws that many cards and each other player loses that much life.",
+      [{ id: 1, abilityType: "activated", actions: [rec("draw", "you", { amount: "1" }), rec("gain-control", "this creature"), rec("add-counter", "-1/-1", { amount: "1" })] },
+        trig("dies", "this creature", "you", [rec("draw", "its owner", { amount: "the number of -1/-1 counters on it" }), rec("lose-life", "each other player", { amount: "the number of -1/-1 counters on it" })], 2)]),
+      (path, abs) => { if (path === "model") expect(abs.filter((a) => a.clause === 2).flatMap((a) => a.emits ?? []).filter((e) => e.verb === "draw").map((e) => e.subject.control), `Goat ${path}`).toEqual(["you"]); });
+  });
+  test("#1395: a textless record borrows the reading of the sibling whose sentence names ITS event, not the first identical one (Tome of Legends)", () => {
+    const text = "This artifact enters with a page counter on it.\nWhenever your commander enters or attacks, put a page counter on this artifact.\n{1}, {T}, Remove a page counter from this artifact: Draw a card.";
+    const card = { name: "Tome of Legends", typeLine: "Artifact — Book", oracleText: text, keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    const abs = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records as never, undefined, g.readings)).abilities;
+    const limb = (verb: string) => abs.filter((a) => a.trigger?.verbs.includes(verb as never)).map((a) => JSON.stringify([a.emits, a.effect, a.amount]));
+    expect(limb("attacks")).toHaveLength(1);
+    expect(limb("attacks")).toEqual(limb("enters"));
   });
 });
 

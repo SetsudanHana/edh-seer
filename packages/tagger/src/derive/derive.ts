@@ -570,7 +570,8 @@ import { emblemRecipient } from "../emblem.js";
 // 405: #1391 part 2 F3 -- one printed search over several zones ("Search its owner's graveyard, hand, and library for ...": Eradicate, Extirpate, Kassandra, Gate to the Afterlife, ~27 cards) is ONE search ability, not one per zone (the graveyard and hand ones were JSON-identical, no emits): `collapseZoneSearches` merges a run of same-object searches that differ only in `fromZone`, keeping the library member so the `search` emit and `librarySearch` survive. Measured (full re-derive): cards with exact-duplicate abilities 115 -> 93 (model 72 -> 56, grammar 43 -> 37). 77 cards change, each a search-count drop (no mana or unclaimed field moves): the "graveyard, hand, and library" hate and named-card searches 3 -> 1 (Extirpate, Eradicate, Surgical Extraction, Memoricide, Deadly Cover-Up ... librarySearch "other", subject `any`; Kassandra, Gate to the Afterlife, Shaun & Rebecca "yours"), ~40 "library and/or graveyard" searches 2 -> 1 (Ethereal Elk, The First Doctor, Chandra's Outburst ...); Vraska's Scorn, Jace's Ruse, Liberating Combustion 3 -> 2 and Nissa's Encouragement 6 -> 5 (CEILING). The kept "yours" search's subject reads `you` (was `any`), and on Chandra's Flame Wave, Vraska's Scorn, Ecological Appreciation and Turtles Forever its `search` emit too: every corpus consumer of a search event is an opponent's (River Song, Archivist of Oghma, Ob Nixilis, Unshackled, Wan Shi Tong, Librarian), so `any` matched them -- a false edge, now gone: with one search action left, a stated-nowhere searcher defaults to you (`ACTOR_DEFAULTS_TO_YOU`); "other" searches stay `any`. The card-by-card switch decides with both dedupes off (`collapseZoneSearches: false`, `foldGrantTwins: false`): 0 cards move (collapsing first moved 5, Finale of Devastation onto a library-only reading). Panel precision 100.0% / retention 98.4% (428 held, 7 lost) unchanged; role-ratchet gained 0 lost 0; dropped-clauses 5179 unchanged (measured after a forced re-derive at this code: the first measurement read a same-version derive that had not re-run).
 // 406: #1391 part 2 F4 -- the post-switch twin fold also drops an ability JSON-identical to an earlier one of the SAME clause when that clause's printed text (reminder text stripped) says "instead": an alternative branch that repeats the base branch (Grow from the Ashes' and Primal Growth's shuffle, Bane's Contingency's counter-spell, Academy Manufactor's token-doubling, Galadriel's Dismissal, Wildfire Howl, Bilbo) is one either/or effect. Measured (derive-corpus --force): cards with exact-duplicate abilities 93 -> 77 (model 56 -> 49, grammar 37 -> 28). 17 cards change, each only losing an identical either/or twin (oracle read for all 17): Academy Manufactor 3 -> 1 token-doubling, Bilbo, Fellow Conspirator, Szadek, Lord of Secrets, Bane's Contingency (counter-spell), Galadriel's Dismissal (phases-out), River of Tears and A-Town (mana-generation), Finale of Revelation and Careful Consideration (the shared draw; Careful Consideration's 3 vs 2 discards stay), Wildfire Howl (the shared 2 damage to each creature), Grow from the Ashes, Primal Growth, Entish Restoration, Sadistic Sacrament (the shared shuffle; the searches differ and stay), Burning Curiosity (exiled), Ceta Sanctuary (discard; grammar-only, no stored answer), Goblin Psychopath 4 -> 2 (its two stored limbs derived as clause 1 each doubled; one attacks and one blocks remain). Switch: 0 cards move. Panel precision 100.0% / retention 98.4% (428 held, 7 lost) unchanged; role-ratchet gained 0 lost 0; dropped-clauses 5179 unchanged.
 // 407: #1391 part 2 F5-F7 -- (F7) "can't attack or block, and its activated abilities can't be activated" (Arachnus Web, Volrath's Curse, Faith's Fetters, Realmbreaker's Grasp): a stored bare combat action the grammar's "attack or block" already covers is dropped before alignment (it took the activated-abilities phrase's place: restriction + TWO ability-loss), the "unless they're mana abilities" rider scopes to the abilities phrase, and `restrictedActions` ignores it; (F5) two counter placements in one clause read their own "counter on <X>" phrase, so "on that creature and on this creature" (Juniper Order Ranger, Sumala Sentry) is one on the trigger's permanent and one on self; (F6) the post-switch twin fold treats "your choice of" like "instead" (Primal Clay, Primal Plasma, Corrupted Shapeshifter, Aquamorph Entity: one animate per alternative on the grammar path). Measured (derive-corpus --force): cards with exact-duplicate abilities 77 -> 63 (model 49 -> 46, grammar 28 -> 17). 19 cards change (full deriveRow diff, tokens and grammar-only included; reviewer re-ran it): F7 Arachnus Web, Volrath's Curse, Academic Probation lose a duplicate ability-loss; Faith's Fetters, Realmbreaker's Grasp gain the restriction and lose the duplicate; Bound in Gold loses the duplicate (its "attack, block, or crew Vehicles" stays unread: dropped-clauses +2:cant, banked); F6 Primal Clay, Primal Plasma, Corrupted Shapeshifter 3 -> 1 animate, Aquamorph Entity 2 -> 1; F5 the self counter: Juniper Order Ranger, Captain America, Team Leader, X-23, Deadly Weapon (second), Sumala Sentry (was both self), Drillworks Mole, Trygon Prime, Ich-Tekik, Serrated Biskelion (first), Claim the Kingdom (plan counter). Switch: Arachnus Web moves model -> grammar (its readings are now identical). Panel precision 100.0% / retention 98.4% (428 held, 7 lost) unchanged; role-ratchet gained 0 lost 0; dropped-clauses 5179 -> 5180.
-export const DERIVE_VERSION = 407;
+// 408: #1395 -- another player's half of a printed action is no longer yours: a reading's named actor rides on every verb (was `create` only), "you and X each" splits or-alternatives, "each other player" / "defending player" stop the controller default, a player back-reference never inherits `you`, and a control change of something you control is another player's gain. Measured (derive-corpus --force; whole cardTagsDerived snapshot 407 vs 408, 32,797 rows): 103 rows change, none added or removed -- 101 stored cards (derive-identity vs 407 rows; the stale pair Plan for All Outcomes / Overwrite the Multiverse unchanged), Kaito Shizuki Emblem (own-library search any -> you) and Wernog, Rider's Chaplain (grammar-only: its own investigate any -> you; its textless leaves twin takes the enters limb's reading when that sentence names the twin's event, so the twin fold holds, 6 abilities; Tomebound Lich's and MACH-1's textless limbs read you the same way, their older duplicate limbs as at 407). The #1395 cards: Angel of Destiny gain-life you,you -> you,any; Benevolent Offering you,you -> you,opp; Eumidian Wastewaker the defending player's discard + sacrifice you -> opp; Twist Allegiance and Reins of Power gains-control you,you -> you,opp; Shattergang Brothers each other player's sacrifice you -> opp; also Words of Wisdom and Savra. The rest, each another player's half: sacrifice edicts any -> opp (Desecration Demon, Fatal Grudge, Will of the Abzan ...), the Tempt cycle's opponent halves, control changes of what you control (Iroh, Juxtapose, Stardew Valley, Hithlain Rope ...; `scales:donated` skips an until-end-of-turn/combat gift), and any -> you pins (a cost discard you pay, a search of your own library whose sentence names another player). Corpus event-match diff (branch review, every changed row x every card, pairReasonsAcrossFaces BASE vs HEAD, at the pre-review-fix head): 40,456 claims lost, every sampled family a false edge removed (recursion from YOUR graveyard of an opponent's card 17,908; self dies/ETB/leaves fed by an opponent's edict ~15,400; 'creature you control dies' 1,817), 487 gained, at least 19 false (Oft-Nabbed Goat 13; loans counted as gifts, Reins of Power / Twist Allegiance / Assault Suit / Tahngarth into Zedruu and Iroh 8, of which Assault Suit and Tahngarth -> Iroh certainly false). After the review fixes (c1727419 -> fixed head): 0 gained, 51 lost (Goat draw 13, Tomebound Lich 13, MACH-1 15, scales:donated loans 10 incl. Domineering Will), 2 text changes. Panel precision 100.0% [99.2, 100.0] / retention 98.4% (428 held, 7 lost) unchanged; role-ratchet gained 0 lost 0; dropped-clauses 5180 unchanged.
+export const DERIVE_VERSION = 408;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1753,6 +1754,8 @@ const ACTOR_DEFAULTS_TO_YOU = new Set(["draw", "cast", "play", "discard", "mill"
 const DEATH_REPLACEMENT = /\bwould (?:die|be destroyed|be put into a graveyard)\b[^.]*\binstead\b/i;
 const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
 const THAT_PLAYER = /^that (?:player|opponent)$/i;
+/** A PLAYER back-reference: never the controller themself, so it never inherits `you` from the nearest earlier object (Angel of Destiny: "you and that player each gain that much life"). */
+const PLAYER_BACKREF = /^(?:that (?:player|opponent)|those (?:players|opponents))$/i;
 /** The count an antecedent object states up front: "up to five Doctor cards", "two basic land cards". */
 // Never an open threshold: "two or more creature cards" is no fixed two (review).
 const ANTECEDENT_COUNT = /^(?:up to )?(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|x|\d+)\b(?! or (?:more|fewer|less|greater))/i;
@@ -1900,6 +1903,8 @@ const ACTION_FAMILY: Record<string, string> = {
 const GRAMMAR_ACTION_VERBS: ReadonlySet<string> = new Set(Object.keys(ACTION_FAMILY));
 /** Verbs whose OBJECT, on derive's string path, is the player it happens to ("target player mills two
  *  cards" -> object "target player"); see `RECIPIENT_VERBS` in emits.ts. */
+/** Verbs that move a card from one place to another: the player who does them need not own the card (see `withGrammarActions`' reading fill, #1395). */
+const CARD_MOVING_VERBS: ReadonlySet<string> = new Set(["exile", "destroy", "return", "put"]);
 const PLAYER_OBJECT_VERBS: ReadonlySet<string> = new Set(["draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life"]);
 /** ...of which these name only a COUNT of cards, so a reading with no actor is the controller's own
  *  ("Draw a card": CR 608.2c, the controller follows its instructions). Not discard: "discard a creature card" names
@@ -1991,6 +1996,9 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
     // back-reference keeps the stored object: derive's self logic reads it.
     const object = r.counter !== undefined
       ? (r.text !== undefined && r.object?.self !== true ? `${r.text}, ${r.counter}` : base.object)
+      // A BACK-REFERENCED life reading ("that player gains 2 life", Benevolent Offering) keeps a stored "chosen opponent" / "chosen player" rather than the grammar's "that player" (the choice is the antecedent, Benevolent Offering).
+      // CEILING: only the chosen-player wording. Any other stored object (a pronoun, "that player") keeps the grammar text: keeping "they" typed a life loss as a spell (Rug of Smothering), measured and reverted.
+      : (r.verb === "gain-life" || r.verb === "lose-life") && r.actor?.scope === "that" && /^(?:the )?chosen (?:opponent|player)$/i.test((base.object ?? "").trim()) ? base.object
       : PLAYER_OBJECT_VERBS.has(r.verb) && r.verb !== "gain-life" && r.verb !== "lose-life"
         // NO ACTOR IS YOU (#697): Esper Sentinel's "Whenever an opponent casts ..., draw a card unless
         // that player pays {X}" and Veil of Summer's "Draw a card if an opponent has cast ..." name an
@@ -2002,11 +2010,19 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
         : (ACTION_FAMILY[r.verb] === "zone" || ACTION_FAMILY[r.verb] === "pump" || ACTION_FAMILY[r.verb] === "tail" || r.verb === "tap" || r.verb === "untap") && (r.object?.self === true || base.object === "~" || /^this\b/i.test(base.object ?? "")
           || (r.text !== undefined && (base.object ?? "").startsWith(`${r.text} from `))) ? base.object
         : r.text ?? base.object;
-    // A TOKEN MAKER NAMES ITS PLAYER ONLY ON THE READING (the store's object is the token): "you and target opponent each create ..." (#1391 F2). Only "you" and an opponent.
-    const tokenActor: "you" | "opp" | undefined = r.verb === "create" && r.actor?.text !== undefined && r.actor.scope !== "that" && (r.actor.control === "you" || r.actor.control === "opp") ? r.actor.control : undefined;
+    // A NAMED PLAYER RIDES ON THE READING (a token maker's stored object is only the token, #1391 F2; and `actorFor` refuses a clause with two actions of one verb, so the other player's
+    // half of "you and defending player each discard ..." / an edict after a sacrifice cost was left to the controller default, #1395). Only "you" and an opponent. An opponent is carried
+    // for every verb; CEILING: "you" only for a create, or where the same verb is read for an opponent too (the pair's own half) -- a lone named "you" ("you may cast ...") already defaults to you.
+    // "each other player" is the players OTHER THAN the one the sentence is about: yours when you act, but "Whenever a player casts ..., each other player copies that spell" (Hive Mind) and
+    // "Whenever enchanted player casts ..." (Curse of Echoes) leave YOU among them, so a trigger that is not yours keeps it `any`. A gain of control is the later "who gains it" task.
+    // CEILING: "each other player" is "other than the sentence's subject", and only a trigger that is not yours is guarded. "Target player draws two cards. Each other player discards a card." reads the
+    // second half `opp` although you can be in that set (no corpus card is shaped so, 2026-10-29). A gain of control is deferred to its own task (#1395), not read here.
+    const otherThanSomeoneElse = /\bother player\b/i.test(r.actor?.text ?? "") && clause.trigger != null && clause.trigger.control !== "you";
+    const named1 = r.actor?.text !== undefined && r.actor.scope !== "that" && !otherThanSomeoneElse && r.verb !== "gains-control" && (r.actor.control === "you" || r.actor.control === "opp") ? r.actor.control : undefined;
+    const namedActor: "you" | "opp" | undefined = named1 === "opp" || (named1 === "you" && (r.verb === "create" || readings.some((o) => o.verb === r.verb && o.actor?.text !== undefined && o.actor.scope !== "that" && o.actor.control === "opp"))) ? named1 : undefined;
     out[i] = ({
       ...base,
-      ...(tokenActor ? { actor: tokenActor } : {}),
+      ...(namedActor ? { actor: namedActor } : {}),
       ...(object !== undefined ? { object } : {}),
       ...(r.amount !== undefined ? { amount: r.amount } : {}),
       ...(r.fromZone !== undefined ? { fromZone: r.fromZone } : {}),
@@ -2428,7 +2444,14 @@ export function deriveAbilities(
     // effect read off that sentence); none-or-several leave it NO printed text (the stored reading alone). Mixing the stored trigger with another
     // sentence's effect was Kratos at 314: a `dies` trigger carrying the end-step's +1/+1 counters.
     const rehomed = homeOfMisplaced(clause, clauses, clauseTexts);
-    clause = withGrammarActions(clause, rehomed ?? clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName, readings?.[clause.id]?.actions);
+    // A TEXTLESS TWIN TAKES ITS PARTNER'S READING (#1395, Wernog): the grammar's "enters or leaves" records are two with IDENTICAL actions, the reading keyed to the first only. Unread, the twin kept
+    // the stored `any` actor beside its partner's `you`, the identical-twin fold (exact abilityKey) no longer matched, and the card grew duplicate abilities. Only an identical-action sibling whose own sentence names THIS record's event is used (Tome of Legends' attacks record is not a twin of its page-counter sentence).
+    const twinSource = rehomed === undefined && clauseTexts?.[clause.id] === undefined && readings?.[clause.id] === undefined && clause.trigger?.event
+      ? clauses.find((c) => c.id !== clause.id && readings?.[c.id] !== undefined && clauseTexts?.[c.id] !== undefined && triggerHasCue(clause.trigger!.event!, clauseTexts[c.id]!) && JSON.stringify(c.actions) === JSON.stringify(clause.actions))
+      : undefined;
+    clause = twinSource
+      ? withGrammarActions(clause, clauseTexts![twinSource.id], clauseCosts?.[twinSource.id], cardName, readings![twinSource.id]?.actions)
+      : withGrammarActions(clause, rehomed ?? clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName, readings?.[clause.id]?.actions);
     if (collapseSearches) clause = collapseZoneSearches(clause);
     // WHICH FACE PRINTS THIS CLAUSE. Stamped onto every ability the clause derives below, so the
     // matcher can stop reading a back-face ability against the card's UNION of types.
@@ -3146,7 +3169,7 @@ export function deriveAbilities(
       if (THAT_TYPED.test(objectText) && !PRONOUN_OBJECT.test(objectText) && !thatPlayerHit && !playerList) {
         const ante = antecedentFor((clause.actions ?? []).indexOf(action));
         const inherited = ante ? subjectFrom(ante, cardName, enchantText).control : undefined;
-        if (inherited && inherited !== "any") {
+        if (inherited && inherited !== "any" && !(inherited === "you" && PLAYER_BACKREF.test(objectText))) {
           for (const e of emits) if (e.subject.control === "any") e.subject.control = inherited;
           if (subject && subject.control === "any") subject.control = inherited;
         }
@@ -3236,9 +3259,23 @@ export function deriveAbilities(
       // sentence-wide actor default below refuses when the clause names another player, which is
       // exactly Priest of Forgotten Gods' shape, so the cost's own sacrifice -- the FIRST sacrifice
       // action, since the clause lists cost actions first -- is pinned here (recall v4, 2026-09-09).
+      // CEILING: unlike `costDiscard`, this pin does not look at WHO may activate ("Any player may activate this ability") -- an opponent's cost sacrifice reads `you`; left as it was (#1395).
       const costSacrifice = action.verb === "sacrifice" && /\bsacrifice\b/i.test(cost)
         && (clause.actions ?? []).find((x) => x.verb === "sacrifice") === action;
       if (costSacrifice) {
+        for (const e of emits) if (e.subject.control === "any") e.subject.control = "you";
+        if (subject && subject.control === "any") subject.control = "you";
+      }
+      // A COST DISCARD IS THE CONTROLLER'S TOO ("{2}{B}, {T}, Discard a card: Each other player loses 2 life", Urborg Syphon-Mage), pinned like the cost sacrifice above: the clause-wide
+      // `NAMES_A_PLAYER` guard reads the effect's "other player" and would leave it `any`. CEILING: the FIRST discard only, and only when the cost text holds a discard.
+      // NOT where someone else pays it: "Only your opponents may activate this ability" (Soul Ransom) and "Any player may activate" (Lightning Storm, Saproling Cluster) leave the payer `any`.
+      const costDiscard = action.verb === "discard" && /\bdiscard\b/i.test(cost) && (clause.actions ?? []).find((x) => x.verb === "discard") === action
+        && !/\b(?:only your opponents|any player|any opponent|an opponent) may activate\b/i.test(clauseText);
+      // A SEARCH OF YOUR OWN LIBRARY is yours whatever player the sentence also names ("if defending player controls more lands than you, search your library", Aerial Surveyor, Loyal Warhound, Tithe): the
+      // same `librarySearchOwner` reading that sets `Ability.librarySearch`, so the emit and that field agree.
+      const ownSearch = action.verb === "search" && clauseText !== "" && printsSearch(clauseText)
+        && librarySearchOwner(action, clauseText, (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).filter((x) => x.verb === "search").length) === "yours";
+      if (costDiscard || ownSearch) {
         for (const e of emits) if (e.subject.control === "any") e.subject.control = "you";
         if (subject && subject.control === "any") subject.control = "you";
       }
@@ -3252,7 +3289,18 @@ export function deriveAbilities(
       // A STATED "you" INSIDE A GRANTED ABILITY IS THE RECIPIENT'S CONTROLLER (Hellish Rebuke: "You
       // lose 2 life" is said by the opponent's permanent), the same flip line 1154 applied to the
       // object's own "you" -- the actor cue runs after it and must not undo it.
-      const stated = actorFor(action.verb) ?? (action.verb === "create" ? action.actor : undefined);
+      const cued = actorFor(action.verb);
+      // THE ACTOR OWNS WHAT IT ACTS ON only for sacrifice, discard, draw, mill, search, counters and life. For a verb that MOVES a card between zones, "an opponent exiles a nonland card from among
+      // them" (Allure of the Unknown) chooses, and the card is still yours: the reading's player is written only where the object or zone names theirs ("from their hand", "that player controls").
+      // CEILING: a word list on the stored object / zone, not a parse; a chooser whose phrase names no owner stays `any`.
+      const mover = action.verb !== undefined && CARD_MOVING_VERBS.has(action.verb);
+      const namesTheirs = /\b(?:their|that player'?s|his or her|opponents?'s?|they control|that player controls)\b/i.test(action.object ?? "") || action.fromZone === "hand" || action.fromZone === "graveyard" || action.fromZone === "library";
+      const viaReading = cued === undefined && action.actor !== undefined && action.verb !== "create";
+      const readingOk = !viaReading || !mover || namesTheirs;
+      const stated = cued ?? (readingOk ? action.actor : undefined);
+      // The grammar's named player FILLS what is unknown and never overrides a stated one (a `create` keeps its F2 override): "an opponent chooses a permanent YOU control and exiles it" (Wormfang Crab)
+      // exiles your permanent, which the object already said.
+      const readingFills = viaReading && readingOk;
       const actor = stated === "you" && grantedTo ? grantedTo.control : stated;
       if (actor) {
         // A PUT'S OBJECT MAY NAME ITS OWN CONTROLLER, and that outranks the actor: Visions of Dread's
@@ -3265,9 +3313,9 @@ export function deriveAbilities(
         // graveyard it leaves, and writing `you` there turned the recursion into one over your own
         // graveyard (10 pairs lost on the first derive-152 diff). The enters emit still takes it:
         // the card lands under your control, which is the fact the actor states.
-        const fillOnly = action.verb === "put";
+        const fillOnly = action.verb === "put" || readingFills;
         for (const e of emits) if (!fillOnly || e.subject.control === "any") e.subject.control = actor;
-        if (subject && (!fillOnly || (subject.control === "any" && stated !== "you"))) subject.control = actor;
+        if (subject && (!fillOnly || (subject.control === "any" && (stated !== "you" || (readingFills && action.verb !== "put"))))) subject.control = actor;
       } else if (ACTOR_DEFAULTS_TO_YOU.has(action.verb ?? "") && clauseText !== ""
         && (clause.actions ?? []).filter((a) => a.verb === action.verb).length === 1
         && !sentenceNamesAPlayer(clauseText, action.verb ?? "")) {
