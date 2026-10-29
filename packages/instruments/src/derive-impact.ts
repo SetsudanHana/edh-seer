@@ -132,8 +132,14 @@ async function loadSide(root: string): Promise<Side> {
 const [B, H] = [await loadSide(baseRoot), await loadSide(REPO)];
 
 // ---- did code the pair / role path RUNS change? (tracked changes AND new files; the import graph, in both trees) ----
-const PAIR_ROLE_ENTRIES = ["edges", "faces", "tokens", "token-tags", "hierarchy", "build", "wincon", "types"].map((f) => `packages/matcher/src/${f}.ts`);
-/** CEILING: analyze.ts is on the path for `collectTokenNodes` / `disambiguateFaceNames` only, but its imports are not followed (they are the whole deck pipeline), so an edit anywhere in analyze.ts counts as on-path. */
+// The tool's own call sites are entries too: each side's docToCard / isStickerCard (packages/data/src/docs.ts), and the analyze.ts helpers
+// it uses for token nodes (`collectTokenNodes` uses perspective.ts's flipPerspective for an opponent's emblem; `disambiguateFaceNames` uses face-key.ts).
+const PAIR_ROLE_ENTRIES = [
+  ...["edges", "faces", "tokens", "token-tags", "hierarchy", "build", "wincon", "types", "perspective", "face-key"].map((f) => `packages/matcher/src/${f}.ts`),
+  "packages/data/src/docs.ts",
+];
+/** CEILING: analyze.ts is on the path for `collectTokenNodes` / `disambiguateFaceNames` only, and its imports are not followed (they are the whole deck pipeline): the
+ *  helpers those two use (perspective.ts, face-key.ts) are listed as entries by hand, so a new import of theirs is missed, and an edit anywhere in analyze.ts counts as on-path. */
 const ANALYZE = "packages/matcher/src/analyze.ts";
 function reachIn(root: string): Set<string> {
   const pkgExports = new Map<string, { exports?: Record<string, string>; main?: string }>();
