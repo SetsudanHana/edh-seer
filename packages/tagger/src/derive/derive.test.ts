@@ -7078,5 +7078,14 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
         trig("dies", "this creature", "you", [rec("draw", "its owner", { amount: "the number of -1/-1 counters on it" }), rec("lose-life", "each other player", { amount: "the number of -1/-1 counters on it" })], 2)]),
       (path, abs) => { if (path === "model") expect(abs.filter((a) => a.clause === 2).flatMap((a) => a.emits ?? []).filter((e) => e.verb === "draw").map((e) => e.subject.control), `Goat ${path}`).toEqual(["you"]); });
   });
+  test("#1395: a textless record borrows the reading of the sibling whose sentence names ITS event, not the first identical one (Tome of Legends)", () => {
+    const text = "This artifact enters with a page counter on it.\nWhenever your commander enters or attacks, put a page counter on this artifact.\n{1}, {T}, Remove a page counter from this artifact: Draw a card.";
+    const card = { name: "Tome of Legends", typeLine: "Artifact — Book", oracleText: text, keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    const abs = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records as never, undefined, g.readings)).abilities;
+    const limb = (verb: string) => abs.filter((a) => a.trigger?.verbs.includes(verb as never)).map((a) => JSON.stringify([a.emits, a.effect, a.amount]));
+    expect(limb("attacks")).toHaveLength(1);
+    expect(limb("attacks")).toEqual(limb("enters"));
+  });
 });
 

@@ -2445,9 +2445,9 @@ export function deriveAbilities(
     // sentence's effect was Kratos at 314: a `dies` trigger carrying the end-step's +1/+1 counters.
     const rehomed = homeOfMisplaced(clause, clauses, clauseTexts);
     // A TEXTLESS TWIN TAKES ITS PARTNER'S READING (#1395, Wernog): the grammar's "enters or leaves" records are two with IDENTICAL actions, the reading keyed to the first only. Unread, the twin kept
-    // the stored `any` actor beside its partner's `you`, the identical-twin fold (exact abilityKey) no longer matched, and the card grew duplicate abilities. Only an identical-action sibling is used.
+    // the stored `any` actor beside its partner's `you`, the identical-twin fold (exact abilityKey) no longer matched, and the card grew duplicate abilities. Only an identical-action sibling whose own sentence names THIS record's event is used (Tome of Legends' attacks record is not a twin of its page-counter sentence).
     const twinSource = rehomed === undefined && clauseTexts?.[clause.id] === undefined && readings?.[clause.id] === undefined && clause.trigger?.event
-      ? clauses.find((c) => c.id !== clause.id && readings?.[c.id] !== undefined && clauseTexts?.[c.id] !== undefined && JSON.stringify(c.actions) === JSON.stringify(clause.actions))
+      ? clauses.find((c) => c.id !== clause.id && readings?.[c.id] !== undefined && clauseTexts?.[c.id] !== undefined && triggerHasCue(clause.trigger!.event!, clauseTexts[c.id]!) && JSON.stringify(c.actions) === JSON.stringify(clause.actions))
       : undefined;
     clause = twinSource
       ? withGrammarActions(clause, clauseTexts![twinSource.id], clauseCosts?.[twinSource.id], cardName, readings![twinSource.id]?.actions)
