@@ -481,7 +481,14 @@ const NAMES_A_PLAYER = /\b(?:each|target|another|any|that|those|a|other|defendin
 const ACTOR_IS_THE_EVENT: ReadonlySet<string> = new Set(["gains-control", "clash", "face-a-villainous-choice"]);
 /** A CONTROL CHANGE HANDED TO ANOTHER PLAYER: "target opponent gains control of", "target player
  *  gains control of" (Donate prints `player`; giving yourself your own permanent does nothing). */
-const OTHER_GAINS_CONTROL = /\b(?:target|an|each|that) (?:opponent|player) gains control of\b/i;
+/** The object of a control change that IS something you control ("all creatures you control", "target permanent you control", "a creature you control of their choice"): its "you control" closes the
+ *  noun phrase. A "you control" inside a QUALIFIER ("power less than or equal to the number of creatures you control", Beguiler of Wills; "...Islands you control", Vedalken Shackles) is a limit on
+ *  what YOU take, and an exchange ("the creature you control with the greatest mana value", Juxtapose) has a half of each. */
+function yourOwnObject(object: string): boolean {
+  return /\byou control(?: of their choice)?$/i.test(object.trim()) && !/\b(?:number of|power|toughness|mana value|less than|greater than|equal to|with the)\b/i.test(object);
+}
+
+const OTHER_GAINS_CONTROL = /\b(?:(?:target|an|each|that) (?:opponent|player)|the player to your (?:left|right)) gains? control of\b/i;
 
 const RECIPIENT_VERBS: ReadonlySet<string> = new Set([
   "draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life", "loses-game",
@@ -852,9 +859,11 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       // ("whenever you gain control of a permanent", Zidane) watches who has it AFTER. So the
       // emit says `you` -- unless the sentence hands it to someone else: "target opponent gains
       // control of ..." (Donate, Harmless Offering, Goblin Cadets) is the OPPONENT'S gain (#681).
-      // CEILING: read per clause, so an exchange ("you and that opponent each gain control",
-      // Reins of Power) stays yours on both halves.
-      control: verb === "gains-control" && OTHER_GAINS_CONTROL.test(clauseText ?? "") ? "opp" as const
+      // YOU CANNOT GAIN CONTROL OF WHAT YOU ALREADY CONTROL: an object that literally says "you control" ("you and target opponent each gain control of all creatures the other controls",
+      // Twist Allegiance's "all creatures you control"; Iroh's "target permanent you control") is handed to someone else, so the gainer is the opponent.
+      // CEILING: a literal word match on the object, not a parse (a parse reads "cards in your graveyard" and "a creature of your choice that player controls" as yours, and they ARE gained by you);
+      // "you own but don't control" does not match, and "each land they own that you control" goes to the opponent. A gift of an object that does not say so ("gain control of it") reads per clause.
+      control: verb === "gains-control" && (OTHER_GAINS_CONTROL.test(clauseText ?? "") || yourOwnObject(action.object ?? "")) ? "opp" as const
         : ACTOR_IS_THE_EVENT.has(verb) ? "you" as const : control,
       ...(createsAToken && subject.token !== true ? { token: true as const } : {}),
       ...(arrivesTapped && verb === "enters" ? { entersTapped: true as const } : {}),

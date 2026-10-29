@@ -7024,5 +7024,25 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
       [{ id: 1, abilityType: "spell", actions: [rec("destroy", "target creature an opponent controls"), rec("lose-life", "that player", { amount: "3" }), rec("exile", "Suspended Sentence"), rec("add-counter", "time", { amount: "3" })] }, { id: 2, abilityType: "spell", actions: [rec("other", "Suspend 3—{1}{B}")] }]),
       (path, abs) => expect(players(abs, "lose-life"), `Suspended Sentence ${path}`).toEqual(["opp"]));
   });
+  test("#1395: the gainer of a control change is not you when the object is yours (Twist Allegiance, Reins of Power, Iroh, Donate), and stays you when it is not", () => {
+    const gc = (o: string) => rec("gain-control", o);
+    all(both("Twist Allegiance", "Sorcery", "You and target opponent each gain control of all creatures the other controls until end of turn. Untap those creatures. Those creatures gain haste until end of turn.",
+      [{ id: 1, abilityType: "spell", actions: [gc("all creatures target opponent controls"), gc("all creatures you control")] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Twist Allegiance ${path}`).toEqual(["you", "opp"]); });
+    all(both("Reins of Power", "Instant", "Untap all creatures you control and all creatures target opponent controls. You and that opponent each gain control of all creatures the other controls until end of turn. Those creatures gain haste until end of turn.",
+      [{ id: 1, abilityType: "spell", actions: [gc("all creatures the target opponent controls"), gc("all creatures you control")] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Reins of Power ${path}`).toEqual(["you", "opp"]); });
+    all(both("Iroh, Tea Master", "Legendary Creature — Human Citizen Ally", "When Iroh enters, create a Food token.\nAt the beginning of combat on your turn, you may have target opponent gain control of target permanent you control. When you do, create a 1/1 white Ally creature token. Put a +1/+1 counter on that token for each permanent you own that your opponents control.",
+      [trig("enters", "Iroh, Tea Master", "you", []), trig("begin-combat", "you", "you", [rec("gain-control", "target permanent you control", { optional: true })], 2), trig("other", "you giving control of a permanent to an opponent", "you", [], 3)]),
+      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Iroh ${path}`).toEqual(["opp"]); });
+    all(both("Donate", "Sorcery", "Target player gains control of target permanent you control.", [{ id: 1, abilityType: "spell", actions: [gc("target permanent you control")] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Donate ${path}`).toEqual(["opp"]); });
+    all(both("Temporary Insanity", "Instant", "Untap target creature with power less than the number of cards in your graveyard and gain control of it until end of turn. That creature gains haste until end of turn.",
+      [{ id: 1, abilityType: "spell", actions: [gc("target creature with power less than the number of cards in your graveyard")] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Temporary Insanity ${path}`).toEqual(["you"]); });
+    all(both("Coveted Falcon", "Artifact Creature — Bird", "Flying\nWhenever this creature attacks, gain control of target permanent you own but don't control.\nDisguise {1}{U}\nWhen this creature is turned face up, target opponent gains control of any number of target permanents you control. Draw a card for each one they gained control of this way.",
+      [trig("attacks", "this creature", "you", [gc("target permanent you own but don't control")], 2), trig("turned-face-up", "this creature", "you", [gc("any number of target permanents you control")], 4)]),
+      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Coveted Falcon ${path}`).toEqual(["you", "opp"]); });
+  });
 });
 
