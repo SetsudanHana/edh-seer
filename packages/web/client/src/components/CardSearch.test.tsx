@@ -1111,3 +1111,39 @@ test("a once-or-more minimum drops the cards no ability describes, and says so",
   expect(screen.queryByRole("link", { name: /Fathom Mage/ })).toBeNull();
   expect(screen.getByText(/1 more card matches because of what it is/)).toBeInTheDocument();
 });
+
+/** THE TILE SAYS WHY IT PASSED (#1405 C): the facts of the ability that met the effect rows. */
+const captionOf = async (name: RegExp): Promise<string> =>
+  (await screen.findByRole("link", { name })).closest("li")!.textContent ?? "";
+
+test("a filtered tile's caption carries the passing ability's facts", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&amtmin=1&amtmax=1&repeats=per-cycle`, factProps);
+  expect(await captionOf(/Skullclamp/)).toContain("mill a card · triggered · as often as you like · 1 each time");
+});
+
+test("an unfiltered tile's caption is unchanged", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}`, factProps);
+  const text = await captionOf(/Skullclamp/);
+  expect(text).toContain("mill a card");
+  expect(text).not.toMatch(/triggered|each time/);
+});
+
+test("on the skipped list the caption says it is there by what it is", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered&skipped=1`, { members: UNJUDGED_MILL });
+  expect(await captionOf(/Fathom Mage/)).toContain("mill a card · by what it is, not an ability");
+});
+
+test("an or-term card shows only the facts of the term it matched", async () => {
+  const members = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === MILL ? { p: [1], c: [], pf: [[pingOne]], cf: [] }
+      : k === DIES ? { p: [2], c: [], pf: [[millTwoOnce]], cf: [] } : null;
+  atUrl(`/cards?orproduce=${encodeURIComponent(MILL)}&orproduce=${encodeURIComponent(DIES)}&ability=triggered&ability=spell`, { members });
+  const text = await captionOf(/Skullclamp/);
+  expect(text).toContain("spell");
+  expect(text).not.toContain("triggered");
+});
+
+test("an empty skipped view does not also say these are the skipped ones", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered&skipped=1&colors=W`, { members: UNJUDGED_MILL });
+  expect(await screen.findByText(/None of the skipped cards fit these filters\./)).not.toHaveTextContent(/These are the ones/);
+});

@@ -5,6 +5,7 @@ import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/par
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
 import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, factFilterOf, orderOf, withoutFilterKind, EFFECT_KINDS, FILTER_KINDS, NATURAL_DIR, type EventQuery, type FilterKind } from "../lib/facets.js";
+import { effectCaption } from "../lib/effect-caption.js";
 import { membersPassing, unjudgedLeftOut } from "../lib/effect-filter.js";
 import { AbilityKindRow, AmountRow, RepeatsRow } from "./EffectRows.js";
 import { EventSentence, termWords } from "./EventSentence.js";
@@ -874,7 +875,7 @@ export function CardSearch({
                         : (commanderMode ? "commanders match" : "cards match")}
                       {matches.length > shown ? `, showing the first ${shown}` : ""}.</>}
                 {(unjudgedCount > 0 || showSkipped) && (showSkipped
-                  ? <>{" "}These are the ones the ability filters skipped.</>
+                  ? (matches.length === 0 ? null : <>{" "}These are the ones the ability filters skipped.</>)
                   : <>{" "}{unjudgedCount.toLocaleString("en-US")} more {unjudgedCount === 1 ? "card matches" : "cards match"} because
                     of what {unjudgedCount === 1 ? "it is" : "they are"} (a keyword like lifelink, or simply entering or being
                     cast) rather than an ability, so these filters skip {unjudgedCount === 1 ? "it" : "them"}.</>)}
@@ -946,9 +947,16 @@ export function CardSearch({
                 // THE `or` TERMS THAT HOLD FOR THIS CARD, not all of them: at least one does, and the
                 // caption names which. `not` terms are absences and are not a reason.
                 const pos = positionOf.get(e) ?? -1;
+                // WITH AN EFFECT ROW SET, each term also says how this card does it: the facts of the
+                // ability that passed, or that it is there by what it is (#1405 C).
+                const effectSet = askedKinds.some((k) => EFFECT_KINDS.includes(k));
+                const say = (t: (typeof terms)[number]): string => {
+                  const why = effectSet ? effectCaption(lists.get(t.key), t.side, pos, factFilterOf(eventQuery, t.side), eventQuery) : "";
+                  return why ? `${termWords(t)} · ${why}` : termWords(t);
+                };
                 const caption = [
-                  ...terms.filter((t) => t.op === "and").map(termWords),
-                  ...terms.filter((t) => t.op === "or" && (t.side === "makes" ? lists.get(t.key)?.p : lists.get(t.key)?.c)?.includes(pos)).map(termWords),
+                  ...terms.filter((t) => t.op === "and").map(say),
+                  ...terms.filter((t) => t.op === "or" && (t.side === "makes" ? lists.get(t.key)?.p : lists.get(t.key)?.c)?.includes(pos)).map(say),
                 ];
                 return (
                   <li key={e.slug} className="min-w-0">
