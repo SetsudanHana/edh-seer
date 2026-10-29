@@ -9,26 +9,31 @@ import { hasSubject, pairContext, reasonsOf, type MatcherModule, type PairContex
 
 export interface Setup {
   baseRoot: string; repo: string; ownMatcher: boolean;
-  tagsB: Map<string, any>; tagsH: Map<string, any>; cards: Map<string, any>; tokenIds: Set<string>; printingToToken: Map<string, string>;
+  tagsB: Map<string, any>; tagsH: Map<string, any>; cards: Map<string, any>; tokenDocs: { _id: string; printingIds?: string[] }[];
 }
-export interface PairItem { id: string; name: string; isToken: boolean }
-export interface PairResult { detail: CardPairs; present: boolean }
+export interface PairItem { id: string; name: string; isToken: boolean; /** ask for the size of the worlds instead of pairing */ info?: true }
+export interface PairResult { detail: CardPairs; present: boolean; info?: { nodesBase: number; nodesHead: number } }
 
 let ctxB: PairContext, ctxH: PairContext;
-const matcherAt = async (root: string): Promise<MatcherModule> => import(pathToFileURL(join(root, "packages/matcher/src/index.ts")).href);
+/** The matcher's public index plus the two modules the pair loop needs that it does not re-export (`disambiguateFaceNames`, `synthesizeTokenTags`), all from `root`. */
+const matcherAt = async (root: string): Promise<MatcherModule> => {
+  const at = (rel: string): Promise<Record<string, unknown>> => import(pathToFileURL(join(root, rel)).href);
+  const [index, analyze, tokenTags] = await Promise.all([at("packages/matcher/src/index.ts"), at("packages/matcher/src/analyze.ts"), at("packages/matcher/src/token-tags.ts")]);
+  return { ...index, disambiguateFaceNames: analyze.disambiguateFaceNames, synthesizeTokenTags: tokenTags.synthesizeTokenTags } as unknown as MatcherModule;
+};
 
 export async function setup(s: Setup): Promise<void> {
   const head = await matcherAt(s.repo);
   const base = s.ownMatcher ? await matcherAt(s.baseRoot) : head;
-  ctxB = pairContext(base, s.tagsB, s.cards, s.tokenIds, s.printingToToken);
-  ctxH = pairContext(head, s.tagsH, s.cards, s.tokenIds, s.printingToToken);
+  ctxB = pairContext(base, s.tagsB, s.cards, s.tokenDocs);
+  ctxH = pairContext(head, s.tagsH, s.cards, s.tokenDocs);
 }
 export function pairOne(item: PairItem): PairResult {
+  if (item.info) return { present: true, detail: { id: "", name: "", gained: [], lost: [], magnitude: [], attrs: [] }, info: { nodesBase: ctxB.nodes.length, nodesHead: ctxH.nodes.length } };
   return {
     present: hasSubject(ctxB, item.id, item.isToken) || hasSubject(ctxH, item.id, item.isToken),
     detail: { id: item.id, name: item.name, ...diffReasons(reasonsOf(ctxB, item.id, item.isToken), reasonsOf(ctxH, item.id, item.isToken)) },
   };
 }
-export const sizes = (): string => `BASE ${ctxB.cards.size} cards + ${ctxB.nodes.length} token nodes, HEAD ${ctxH.cards.size} cards + ${ctxH.nodes.length} token nodes`;
 
 if (!isMainThread) serveWorker<PairItem, PairResult>(pairOne, (msg: Setup) => setup(msg));

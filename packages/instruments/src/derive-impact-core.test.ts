@@ -155,7 +155,7 @@ describe("formatSummary", () => {
       { id: "1", name: "Alpha", status: "changed", fields: { abilities: { removed: ["x"], added: [] } } }, { id: "2", name: "Beta", status: "changed", fields: { abilities: { removed: ["x"], added: ["y", "z"] } } }, { id: "3", name: "Gamma", status: "flip-only", fields: {} },
     ] },
     grammar: { completeBase: 28417, completeHead: 28423, gained: ["a"], lost: [], recordsChanged: ["b", "c"] },
-    pairs: sec(), sample: sec({ cards: 150, gained: 9 }),
+    pairs: sec(), sample: sec({ cards: 150, gained: 9 }), tokens: { docs: 1096, withRow: 527, nodesBase: 530, nodesHead: 531 },
   };
   it("is one paste-ready block with versions, dirty flag, counts and the open ends", () => {
     const s = formatSummary(report);
@@ -170,7 +170,9 @@ describe("formatSummary", () => {
     expect(s).toContain("matcher sample, seeded (150 cards)");
     expect(s).toContain("not paired (1): Tokeny (no maker)");
     expect(s).toContain("ratchets: not run (task 2)");
+    expect(s).toContain("tokens: 1,096 token docs, 527 with a derived row and 569 synthesized as the engine does; token nodes the cards create: BASE 530, HEAD 531");
     expect(s).toContain("token-vs-token pairs are not covered");
+    expect(s).toContain("pair options: deck-specific landTypes / enterWatchers / revenantToughness are off");
   });
   it("is silent about the matcher when its code is the same, and says so when pairs did not run", () => {
     const s = formatSummary({ ...report, matcherCode: [], pairs: undefined, sample: undefined, head: { ...report.head, dirty: false } });

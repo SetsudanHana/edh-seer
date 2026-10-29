@@ -13,7 +13,8 @@
  *
  *  The pure diffs are in derive-impact-core.ts. Rows mirror derive-corpus: a card with no answered clause doc that the grammar reads completely
  *  derives from its printed text (`clauseSource: "grammar"`); every other clause doc goes through `deriveRow`. Pair reasons are over every other
- *  derived card AND the token nodes `collectTokenNodes` builds from them (the maker->token `creates` reasons too), tags from the in-memory rows of that side. */
+ *  derived card AND the token nodes `collectTokenNodes` builds from them (the maker->token `creates` reasons too; a token with no derived row is synthesized as the engine does),
+ *  tags from the in-memory rows of that side. */
 import { execFileSync } from "node:child_process";
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -140,8 +141,6 @@ const clauseDocs = await store.db.collection("cardClauses").find({}).toArray() a
 const tokenIds = clauseDocs.filter((d) => d.isToken).map((d) => d.oracleId as string);
 const tokenDocs = await store.db.collection("tokens").find({}).toArray() as any[];
 const tokenSrc = new Map(tokenDocs.map((t) => [t._id as string, t]));
-const printingToToken = new Map<string, string>();
-for (const t of tokenDocs) for (const p of (t.printingIds ?? []) as string[]) printingToToken.set(p, t._id);
 const scopeOf = async (s: Side): Promise<Set<string>> => new Set((await store.cards.find(s.deriveScopeFilter() as never).project({ _id: 1 }).toArray() as any[]).map((c) => c._id as string));
 const [scopeB, scopeH] = [await scopeOf(B), await scopeOf(H)];
 const allCards = await store.cards.find({}).toArray() as any[];
@@ -184,17 +183,19 @@ const rows = classifyRows(snaps(rowsB), snaps(rowsH));
 const grammar = grammarReport(grammarEntries.filter((e) => keep(e.name)));
 
 // ---- pair reasons, spread over worker threads (results come back in input order, so the report equals a one-worker run) ----
-let pairs: PairSection | undefined, sample: PairSection | undefined;
+let pairs: PairSection | undefined, sample: PairSection | undefined, tokens: ImpactReport["tokens"];
 const pairDetail: CardPairs[] = [], sampleDetail: CardPairs[] = [];
 if (!values["no-pairs"]) {
   const tagsOf = (m: RowMap) => new Map([...m].map(([id, r]) => [id, r.tags]));
   const cards = new Map<string, any>();
   for (const id of new Set([...rowsB.keys(), ...rowsH.keys()])) if (cardById.has(id) && !tokenSrc.has(id)) cards.set(id, docToCard(cardById.get(id) as never));
-  const setup: Setup = { baseRoot, repo: REPO, ownMatcher: matcherMode === "own", tagsB: tagsOf(rowsB), tagsH: tagsOf(rowsH), cards, tokenIds: new Set(tokenSrc.keys()), printingToToken };
+  const setup: Setup = { baseRoot, repo: REPO, ownMatcher: matcherMode === "own", tagsB: tagsOf(rowsB), tagsH: tagsOf(rowsH), cards, tokenDocs };
   const pool = createPool<PairItem, PairResult>(new URL("./derive-impact-worker.ts", import.meta.url), { workers: num(values.workers, defaultWorkers(), "--workers"), heapMb: 8192 });
   try {
     await pool.broadcast(setup);
-    log("pair worlds built in the workers");
+    const world = (await pool.map([{ id: "", name: "", isToken: false, info: true }]))[0]!.info!;
+    tokens = { docs: tokenDocs.length, withRow: tokenIds.length, nodesBase: world.nodesBase, nodesHead: world.nodesHead };
+    log(`pair worlds built in the workers (token nodes: BASE ${world.nodesBase}, HEAD ${world.nodesHead})`);
     const skipped: string[] = [];
     const changedRows = rows.changes.filter((c) => c.status === "changed" || c.status === "added" || c.status === "removed").slice(0, pairCap);
     const items: PairItem[] = changedRows.map((c) => ({ id: c.id, name: c.name, isToken: tokenSrc.has(c.id) }));
@@ -219,7 +220,7 @@ if (!values["no-pairs"]) {
 
 const report: ImpactReport = {
   base: { ref: positionals[0]!, sha: baseSha.slice(0, 8), deriveVersion: B.deriveVersion }, head: { ref: "HEAD", sha: headSha, deriveVersion: H.deriveVersion, dirty },
-  matcher: matcherMode, matcherCode, rows, grammar, ...(pairs ? { pairs } : {}), ...(sample ? { sample } : {}),
+  matcher: matcherMode, matcherCode, rows, grammar, ...(pairs ? { pairs } : {}), ...(sample ? { sample } : {}), ...(tokens ? { tokens } : {}),
 };
 console.log(formatReport(report));
 if (values.json) writeFileSync(values.json, JSON.stringify({ ...report, pairDetail, sampleDetail }, null, 1));

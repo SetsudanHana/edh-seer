@@ -255,6 +255,8 @@ export interface ImpactReport {
   pairs?: PairSection;
   /** Pair reasons of a seeded sample of cards, changed or not: what a matcher-only change does. */
   sample?: PairSection;
+  /** What the token nodes cover: token docs, those with a derived row (the rest are synthesized), and the nodes the cards' allParts yield on each side. */
+  tokens?: { docs: number; withRow: number; nodesBase: number; nodesHead: number };
 }
 
 const n = (x: number): string => x.toLocaleString("en-US");
@@ -284,7 +286,8 @@ export function formatSummary(r: ImpactReport, topChanged = 10): string {
     if (r.pairs.skipped.length) lines.push(`  not paired (${r.pairs.skipped.length}): ${r.pairs.skipped.slice(0, 8).join("; ")}${r.pairs.skipped.length > 8 ? "; ..." : ""}`);
   } else lines.push("pair reasons: not run");
   if (r.sample) lines.push(pairLine("matcher sample, seeded", r.sample));
-  lines.push("tokens: a changed token row is paired against every card, and makers against token nodes (collectTokenNodes); token-vs-token pairs are not covered");
+  if (r.tokens) lines.push(`tokens: ${n(r.tokens.docs)} token docs, ${n(r.tokens.withRow)} with a derived row and ${n(r.tokens.docs - r.tokens.withRow)} synthesized as the engine does; token nodes the cards create: BASE ${n(r.tokens.nodesBase)}, HEAD ${n(r.tokens.nodesHead)}; a changed token row is paired against every card, makers against the nodes; token-vs-token pairs are not covered`);
+  if (r.pairs) lines.push("pair options: deck-specific landTypes / enterWatchers / revenantToughness are off (the card-page reading); face names are disambiguated corpus-wide");
   lines.push("ratchets: not run (task 2)");
   return lines.join("\n");
 }
