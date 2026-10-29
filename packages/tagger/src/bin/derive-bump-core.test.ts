@@ -52,6 +52,11 @@ describe("parseArgs", () => {
   it("refuses a newline in the note", () => {
     expect(() => parseArgs(["--issue", "1", "--note", "a\nb"])).toThrow(/newline/);
   });
+  it("refuses a flag where a value belongs", () => {
+    expect(() => parseArgs(["--issue", "1412", "--note", "--dry-run"])).toThrow(/--note/);
+    expect(() => parseArgs(["--issue", "--note", "x"])).toThrow(/--issue/);
+    expect(() => parseArgs(["--issue", "1", "--note"])).toThrow(/--note/);
+  });
   it("refuses an unknown flag", () => {
     expect(() => parseArgs(["--issue", "1", "--note", "x", "--bogus"])).toThrow(/unknown/);
   });

@@ -25,8 +25,12 @@ export function parseArgs(argv: string[]): Args {
     const a = argv[i];
     if (a === "--restamp") restamp = true;
     else if (a === "--dry-run") dryRun = true;
-    else if (a === "--issue") issue = argv[++i];
-    else if (a === "--note") note = argv[++i];
+    else if (a === "--issue" || a === "--note") {
+      const v = argv[++i];
+      if (v === undefined || v.startsWith("--")) throw new Error(`${a} needs a value, got ${v === undefined ? "nothing" : `"${v}"`}`);
+      if (a === "--issue") issue = v;
+      else note = v;
+    }
     else throw new Error(`unknown argument: ${a}`);
   }
   if (restamp) return { mode: "restamp", dryRun };

@@ -61,6 +61,7 @@
   "packages/matcher/src/theme-promote.ts": 1,
   "packages/matcher/src/themes.ts": 1,
   "packages/matcher/src/upgrade-sections.ts": 4,
+  "packages/tagger/src/bin/derive-bump.ts": 1,
   "packages/tagger/src/bin/gen-schema-docs.ts": 1,
   "packages/tagger/src/derive-input.ts": 1,
   "packages/tagger/src/derive-worker.ts": 2,
