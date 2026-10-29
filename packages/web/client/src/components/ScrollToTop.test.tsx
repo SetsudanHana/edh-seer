@@ -70,6 +70,30 @@ test("the offset saved is the one at the click, not the clamp the route swap cau
   } finally { vi.useRealTimers(); }
 });
 
+test("the offset is re-applied while the page is still settling, until the reader scrolls", () => {
+  vi.useFakeTimers();
+  try {
+    Object.defineProperty(window, "innerHeight", { value: 800, configurable: true });
+    height(5000);
+    render(app(["/cards/a"]));
+    scrolled(3000);
+    fireEvent.click(screen.getByText("to b"));
+    scrolled(0);
+    fireEvent.click(screen.getByText("back"));
+    vi.advanceTimersByTime(50);
+    scroll.mockClear();
+    scrolled(2800); // content above grew after the restore; scroll anchoring moved the page
+    height(5200);
+    vi.advanceTimersByTime(50);
+    expect(scroll).toHaveBeenCalledWith(0, 3000);
+    scroll.mockClear();
+    fireEvent.wheel(window);
+    scrolled(2000);
+    vi.advanceTimersByTime(1000);
+    expect(scroll).not.toHaveBeenCalled();
+  } finally { vi.useRealTimers(); }
+});
+
 test("a restore that never becomes possible gives up", () => {
   vi.useFakeTimers();
   try {

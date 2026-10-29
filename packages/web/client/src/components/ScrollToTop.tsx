@@ -3,6 +3,9 @@ import { useLocation, useNavigationType } from "react-router";
 
 /** A GIVE-UP for a restore whose page never grows tall enough (a card that failed to load). */
 const RESTORE_MS = 2000;
+/** How long the height must stand still before the restore lets go, the most it may hold on, and what ends it. */
+const SETTLE_MS = 400, HARD_MS = 4000;
+const INPUT = ["wheel", "touchstart", "keydown", "pointerdown"] as const;
 
 /** A NEW PAGE OPENS AT ITS TOP, AND BACK RETURNS YOU TO WHERE YOU WERE (#1405). React Router changes the DOM
  *  without touching scroll, so a click on a similar card opened the next card page at the old offset.
@@ -42,18 +45,26 @@ export function ScrollToTop(): null {
     if (type !== "POP") { window.scrollTo(0, 0); return; }
     const target = saved.current.get(key);
     if (!target) return;
-    const until = performance.now() + RESTORE_MS;
-    let frame = 0;
+    const start = performance.now();
+    let lastHeight = -1, lastChange = start, frame = 0;
+    // THE PAGE KEEPS MOVING AFTER IT IS TALL ENOUGH: the strips above the similar list settle after the first paint,
+    // and the browser's scroll anchoring then follows them (Soul Warden came back at 5530 for 5774, steady). So the
+    // offset is re-applied each frame until the height has been still for SETTLE_MS, and the reader's own input
+    // ends it at once.
+    const stop = () => { cancelAnimationFrame(frame); for (const e of INPUT) window.removeEventListener(e, stop, true); };
+    for (const e of INPUT) window.addEventListener(e, stop, { capture: true, passive: true });
     const step = () => {
-      const tall = document.documentElement.scrollHeight - window.innerHeight >= target;
-      if (tall || performance.now() >= until) {
-        window.scrollTo(0, target);
-        return;
-      }
+      const now = performance.now(), height = document.documentElement.scrollHeight;
+      if (height !== lastHeight) { lastHeight = height; lastChange = now; }
+      const tall = height - window.innerHeight >= target;
+      if (tall) {
+        if (Math.abs(window.scrollY - target) > 1) window.scrollTo(0, target);
+        if (now - lastChange >= SETTLE_MS || now - start >= HARD_MS) return stop();
+      } else if (now - start >= RESTORE_MS) { window.scrollTo(0, target); return stop(); }
       frame = requestAnimationFrame(step);
     };
     step();
-    return () => cancelAnimationFrame(frame);
+    return stop;
   }, [pathname, key, type]);
   return null;
 }
