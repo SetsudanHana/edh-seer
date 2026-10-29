@@ -1,0 +1,103 @@
+{
+  "surface": "search-similar",
+  "baseUrl": "http://localhost:5173",
+  "keyScreens": [
+    {
+      "id": "search-filtered",
+      "path": "/cards?produce=dies%7Ccreature%7C-%7C-&ability=activated&repeats=repeatable"
+    },
+    {
+      "id": "card-similar",
+      "path": "/cards/soul-warden"
+    }
+  ],
+  "measure": [
+    "h1",
+    "h2",
+    "h3",
+    "p.eyebrow",
+    ".eyebrow",
+    ".chip",
+    "fieldset legend",
+    "fieldset button",
+    "input",
+    "section[aria-labelledby='similar-cards'] a",
+    "section[aria-labelledby='similar-cards'] li",
+    "section[aria-labelledby='similar-cards'] button"
+  ],
+  "steps": [
+    {
+      "id": "search-start",
+      "path": "/cards",
+      "goal": "find cards that kill my own creatures for value, but only ones I can use over and over"
+    },
+    {
+      "id": "search-dies",
+      "path": "/cards?produce=dies%7Ccreature%7C-%7C-",
+      "goal": "I have asked for cards that make a creature die; now narrow it to ones I can do again and again"
+    },
+    {
+      "id": "search-dies-narrowed",
+      "path": "/cards?produce=dies%7Ccreature%7C-%7C-&ability=activated&repeats=repeatable",
+      "goal": "check this list is only things I can activate as often as I like, and tell what changed from before"
+    },
+    {
+      "id": "search-mill-amount",
+      "path": "/cards?produce=mill%7C-%7C-%7C-&amtmin=3",
+      "goal": "find cards that mill at least three cards each time, not one at a time"
+    },
+    {
+      "id": "search-mill-amount-variable",
+      "path": "/cards?produce=mill%7C-%7C-%7C-&amtmin=3&amtvar=1",
+      "goal": "also include the ones where the amount is X or depends on something"
+    },
+    {
+      "id": "card-similar",
+      "path": "/cards/soul-warden",
+      "goal": "I like this card; find other cards that do the same job so I can run more of them",
+      "through": "section[aria-labelledby='similar-cards']",
+      "regions": [
+        "section[aria-labelledby='similar-cards']"
+      ],
+      "acts": [
+        {
+          "click": "section[aria-labelledby='similar-cards'] h2"
+        }
+      ]
+    },
+    {
+      "id": "card-similar-clicked",
+      "goal": "I clicked one of the similar cards; did I land on it, and can I tell where I am and get back?",
+      "acts": [
+        {
+          "click": "section[aria-labelledby='similar-cards'] a"
+        }
+      ],
+      "ready": "h1"
+    },
+    {
+      "id": "commander-similar",
+      "path": "/commanders/sarevok-deathbringer",
+      "goal": "find other commanders or cards in these colors that do what this commander does",
+      "through": "section[aria-labelledby='similar-cards']",
+      "regions": [
+        "section[aria-labelledby='similar-cards']"
+      ],
+      "acts": [
+        {
+          "click": "section[aria-labelledby='similar-cards'] h2"
+        }
+      ]
+    },
+    {
+      "id": "commander-similar-clicked",
+      "goal": "I clicked a similar card from the commander's page; where did that take me, and is it what I expected?",
+      "acts": [
+        {
+          "click": "section[aria-labelledby='similar-cards'] a"
+        }
+      ],
+      "ready": "h1"
+    }
+  ]
+}
