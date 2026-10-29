@@ -6955,6 +6955,13 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
   const trig = (event: string, subject: string, control: string, actions: unknown[], id = 1) => ({ id, abilityType: "triggered", trigger: { event, subject, control }, actions });
   const all = (c: ReturnType<typeof both>, check: (path: string, abs: ReturnType<typeof run>) => void) => { for (const [path, abs] of c) check(path, abs); };
 
+  test("#1403: Twist Allegiance's exchange reads you, then the opponent, on both paths", () => {
+    const text = "You and target opponent each gain control of all creatures the other controls until end of turn. Untap those creatures. Those creatures gain haste until end of turn.";
+    const stored = [{ id: 1, abilityType: "spell", actions: [rec("gain-control", "all creatures target opponent controls"), rec("gain-control", "all creatures you control"), rec("untap", "those creatures"), rec("grant-ability", "haste")] }];
+    all(both("Twist Allegiance", "Instant", text, stored), (path, abs) => expect(players(abs, "gains-control"), `Twist Allegiance ${path}`).toEqual(["you", "opp"]));
+    expect(grammarClauseRecords({ name: "Twist Allegiance", typeLine: "Instant", oracleText: text, keywords: [] } as never).complete).toBe(true);
+  });
+
   test("#1395: another player's half is never yours", () => {
     all(both("Shattergang Brothers", "Legendary Creature — Goblin Artificer", "{2}{B}, Sacrifice a creature: Each other player sacrifices a creature.\n{2}{R}, Sacrifice an artifact: Each other player sacrifices an artifact.\n{2}{G}, Sacrifice an enchantment: Each other player sacrifices an enchantment.",
       [1, 2, 3].map((id, k) => ({ id, abilityType: "activated", actions: [rec("sacrifice", ["a creature", "an artifact", "an enchantment"][k]!), rec("sacrifice", ["a creature", "an artifact", "an enchantment"][k]!)] }))),

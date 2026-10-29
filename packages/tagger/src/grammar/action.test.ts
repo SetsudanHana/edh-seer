@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import { expect, test } from "vitest";
-import { alignVerbs, parseActions } from "./action.js";
+import { alignVerbs, parseActions, unreadPhrases } from "./action.js";
 
 // Every effect below is printed text from the action census (`packages/tagger/actions.jsonl.gz`).
 const read = (effect: string, cost?: string) => parseActions(effect, "spell", cost);
@@ -32,6 +32,29 @@ test("phrases split on the printed joints; an actor carries to the phrases after
   ]);
   expect(read("you and those players each draw a card, then discard a card at random.").map((r) => [r.verb, r.actor?.text]))
     .toEqual([["draw", undefined], ["discard", undefined], ["draw", undefined], ["discard", undefined]]); // a back-referenced player keeps the shared actor, no text (F2 review)
+});
+
+// #1403: a "you and X each" phrase the grammar cannot read is unread (the card is incomplete), and an exchange of control is read as the pair it is.
+test("'you and X each gain control of ... the other controls' is two gain-controls, yours then theirs (#1403)", () => {
+  expect(read("You and target opponent each gain control of all creatures the other controls until end of turn.")).toMatchObject([
+    { verb: "gain-control", text: "all creatures target opponent controls", actor: { control: "you" } },
+    { verb: "gain-control", text: "all creatures you control", actor: { control: "opp", scope: "target" } },
+  ]);
+  // A back-referenced player cannot be told apart from you by one shared actor: refused, not read as one player's gain.
+  expect(unreadPhrases("You and that player each gain control of all creatures the other controls until end of turn.", "spell")).toEqual(["gain control of all creatures the other controls until end of turn"]);
+});
+
+test("a phrase of 'you and X each' that reads to nothing is unread, so the card is not complete (#1403)", () => {
+  expect(unreadPhrases("You and target opponent each frobnicate a card.", "spell")).toEqual(["frobnicate a card"]);
+  expect(unreadPhrases("You and that player each frobnicate a card.", "spell")).toEqual(["frobnicate a card"]);
+  expect(unreadPhrases("You and target opponent each draw a card.", "spell")).toEqual([]);
+});
+
+test("a player's own phrase after 'and' is split off, not swallowed into the object before it (#1403, Khârn the Betrayer)", () => {
+  const khârn = unreadPhrases("If damage would be dealt to ~, prevent that damage and an opponent of your choice gains control of it.", "static");
+  expect(read("Prevent that damage and an opponent of your choice gains control of it.")).toMatchObject([{ verb: "prevent", text: "that damage" }]);
+  expect(khârn).toEqual(["an opponent of your choice gains control of it"]); // its own phrase and refused (no actor for it), so the card is not complete
+  expect(read("Exile target creature and an opponent gains 2 life.").map((r) => r.verb)).toEqual(["exile", "gain-life"]);
 });
 
 test("conditions are KEPT on the action (owner, 2026-10-01); 'you may' is optional, and so is its 'if you do'", () => {
