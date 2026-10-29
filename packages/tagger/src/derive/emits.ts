@@ -825,8 +825,10 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // the head up to that join, unless this action's verb is in the tail (then the tail is its own, "Draw a card and each other player discards a card" keeps the guard for the discard). The join is a
   // compound subject, which is what makes the cut principled: the clause is two predicates and the guard asks who does THIS one.
   // CEILING: the verb test is the first word of the action verb ("lose" for lose-life), and only "and / then each other / defending / the attacking player" is a join.
-  const otherPlayerJoin = /,?\s+(?:and|then)\s+(?:each other|defending|the attacking)\s+player\b[\s\S]*$/i.exec(wholeHead ?? "");
-  const sentenceHead = otherPlayerJoin && !new RegExp(`\\b${(action.verb ?? "").split("-")[0]}`, "i").test(otherPlayerJoin[0]) ? wholeHead!.slice(0, otherPlayerJoin.index) : wholeHead;
+  // Single literal spaces and no tail group: the tail is sliced by index, so the match stays linear (CodeQL polynomial-redos).
+  const otherPlayerJoin = /,? (?:and|then) (?:each other|defending|the attacking) player\b/i.exec(wholeHead ?? "");
+  const joinTail = otherPlayerJoin ? wholeHead!.slice(otherPlayerJoin.index) : "";
+  const sentenceHead = otherPlayerJoin && !new RegExp(`\\b${(action.verb ?? "").split("-")[0]}`, "i").test(joinTail) ? wholeHead!.slice(0, otherPlayerJoin.index) : wholeHead;
   const control = !!clauseText
     && subject.control === "any"
     && CONTROLLER_DEFAULT.has(action.verb ?? "")
