@@ -12,6 +12,7 @@
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "oxlint --deny-warnings packages research scripts",
+    "derive:bump": "tsx packages/tagger/src/bin/derive-bump.ts",
     "lint:bins": "node scripts/check_bin_placement.mjs --self-test && node scripts/check_bin_placement.mjs",
     "lint:ceilings": "node scripts/check_ceiling_count.mjs --self-test && node scripts/check_ceiling_count.mjs",
     "lint:deadkeys": "node scripts/check_dead_keys.mjs --self-test && node scripts/check_dead_keys.mjs",
