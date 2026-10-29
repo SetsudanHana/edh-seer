@@ -263,3 +263,19 @@ test("an analysis in flight says so instead of leaving the page empty", async ()
   expect(screen.queryByRole("link", { name: /how the engine decides/i })).toBeNull();
   window.history.replaceState(null, "", "/");
 });
+
+/** THE ROUTER NAMES A HISTORY ENTRY BY `history.state.key` AND `idx`. `replaceState(null)` wiped both, and the entry then
+ *  read as "default" to every later popstate -- the name of the document's first entry, so scroll memory (ScrollToTop)
+ *  and anything else keyed on the entry confused them. Opening a shared link re-writes the hash with a replace. */
+test("opening a shared link re-writes the hash without wiping the router's key and idx", async () => {
+  vi.spyOn(api, "analyzeDeck").mockResolvedValue(SAMPLE);
+  const { encodeShare } = await import("./lib/share-link.js");
+  const payload = await encodeShare({ commanders: "1 Krenko, Mob Boss", decklist: "1 Impact Tremors" });
+  const state = { usr: null, key: "k1", idx: 3 };
+  window.history.replaceState(state, "", `/#deck=${payload}`);
+  render(<App />);
+  await waitFor(() => expect(screen.getByTestId("recognition-theme")).toHaveTextContent("Tokens"), { timeout: 5000 });
+  await waitFor(() => expect(window.location.hash).toMatch(/^#deck=/));
+  expect(window.history.state).toEqual(state);
+  window.history.replaceState(null, "", "/");
+});

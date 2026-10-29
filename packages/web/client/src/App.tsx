@@ -8,6 +8,7 @@ import { PageFoot } from "./components/PageFoot.js";
 import { InstallButton } from "./components/InstallButton.js";
 import { LegacyDeckRedirect } from "./components/LegacyDeckRedirect.js";
 import { RouteMarker } from "./components/RouteMarker.js";
+import { ScrollToTop } from "./components/ScrollToTop.js";
 import { HeaderSearch } from "./components/HeaderSearch.js";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
@@ -194,7 +195,9 @@ export default function App() {
       setLink(payload ? shareUrl(window.location.origin, window.location.pathname, payload) : null);
       if (payload) {
         const write = payloadFromHash(window.location.hash) ? "replaceState" : "pushState";
-        window.history[write](null, "", `#deck=${payload}`);
+        // The state is passed through: `replaceState(null)` wiped the router's own `key`/`idx`, and the entry came back as
+        // "default" to every later popstate.
+        window.history[write](write === "pushState" ? null : window.history.state, "", `#deck=${payload}`);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -213,7 +216,7 @@ export default function App() {
   // state, and the hash (the deck) is untouched. `ReportShell` keys its "go home" on the deck's
   // cards, so the reader also stays on whatever surface they were on.
   const writeStateUrl = (s: GameState) =>
-    window.history.replaceState(null, "", `${window.location.pathname}${searchWithState(window.location.search, s)}${window.location.hash}`);
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${searchWithState(window.location.search, s)}${window.location.hash}`);
   const onState = (next: GameState) => {
     const previous = stateRef.current;
     setState(next);
@@ -395,6 +398,7 @@ export default function App() {
       * edge of the viewport. Caught on a screenshot, which is the only way that class of defect is
       * ever caught: every test passed, because a test asks what is on the page and not where. */}
     <RouteMarker />
+    <ScrollToTop />
     {/* THE SEARCH FIELD ON EVERY APP PAGE (spec 2026-09-08 part 1). Outside `<Routes>`, because it
       *  is the header's, not any page's; a portal, because the header is static HTML. */}
     <HeaderSearch />

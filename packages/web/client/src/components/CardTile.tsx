@@ -17,7 +17,7 @@ import { peekOnPlainClick, usePeek } from "./peek.js";
  *  THE WHOLE TILE IS THE LINK, so the target is the tile and not a line of text, and a plain click
  *  peeks while every other click navigates (`peekOnPlainClick`, the one click rule). Lazy: a page
  *  can carry sixty of these and none of them is the paint the page waits for. */
-export function CardTile({ slug, name, art, identity, to, caption, note }: {
+export function CardTile({ slug, name, art, identity, to, caption, captionLines, note }: {
   slug: string;
   name: string;
   /** Scryfall printing id; absent when the card has no image. */
@@ -28,6 +28,8 @@ export function CardTile({ slug, name, art, identity, to, caption, note }: {
   to?: string;
   /** One line under the name -- the payoff, the reason, or the matched facet terms. */
   caption?: string;
+  /** Lines the caption may take; a filtered caption carries facts and gets three. The full text is the title. */
+  captionLines?: 2 | 3;
   /** A stated limit beside the caption, in the eyebrow voice ("engine did not read what it does"). */
   note?: string;
 }) {
@@ -81,7 +83,7 @@ export function CardTile({ slug, name, art, identity, to, caption, note }: {
           <span className="text-xs"><ManaSymbols cost={pips} /></span>
         </p>
       </Link>
-      {caption && <p className="text-(--muted) text-sm leading-snug line-clamp-2">{caption}</p>}
+      {caption && <p title={caption} className={`text-(--muted) text-sm leading-snug ${captionLines === 3 ? "line-clamp-3" : "line-clamp-2"}`}>{caption}</p>}
       {note && <p className="text-xs text-(--muted)">{note}</p>}
     </div>
   );

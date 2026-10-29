@@ -86,6 +86,10 @@ export interface EventQuery {
   amountVariable?: boolean;
   /** A replacement's change only: adds ("plus") or multiplies ("times"). */
   amountChange?: "plus" | "times";
+  /** Show only the cards the ability filters skipped without judging (`unjudgedLeftOut`), in the
+   *  order the normal list would use. Not a question and not a filter row: a way to look at what the
+   *  filters left out, so it survives reload and share. */
+  skipped?: boolean;
   /** How the kept rows are ordered. Absent means `orderOf`'s default. `effect` is HOW MUCH THE
    *  CARD DOES at what it was asked to cause (owner 2026-09-23, AN3): the deck-build run found rare
    *  events outranking good cards -- Ashnod's Altar 242nd on "sacrifices a creature" -- and reached
@@ -176,6 +180,7 @@ function effectFromParams(p: URLSearchParams): Partial<EventQuery> {
     ...((REPEATS_LADDER as readonly string[]).includes(repeats) ? { repeatsMin: repeats as Repeats } : {}),
     ...(amountMin !== undefined ? { amountMin } : {}),
     ...(amountMax !== undefined ? { amountMax } : {}),
+    ...(p.get("skipped") === "1" ? { skipped: true } : {}),
     ...(p.get("amtvar") === "1" ? { amountVariable: true } : {}),
     ...(p.get("amtop") === "plus" || p.get("amtop") === "times" ? { amountChange: p.get("amtop") as "plus" | "times" } : {}),
   };
@@ -206,7 +211,7 @@ export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchPara
     // `mv` IS DELETED AND NEVER WRITTEN. It is read for the links that already carry it and
     // rewritten as `mvmax`, so the legacy spelling does not propagate into new ones.
     "mv", "mvmin", "mvmax", "powmin", "powmax", "toumin", "toumax",
-    "ability", "repeats", "amtmin", "amtmax", "amtvar", "amtop",
+    "ability", "repeats", "amtmin", "amtmax", "amtvar", "amtop", "skipped",
   ]) out.delete(k);
   for (const k of q.produce) out.append("produce", k);
   for (const k of q.consume) out.append("consume", k);
@@ -226,6 +231,7 @@ export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchPara
   if (q.amountMax !== undefined) out.set("amtmax", String(q.amountMax));
   if (q.amountVariable === true) out.set("amtvar", "1");
   if (q.amountChange !== undefined) out.set("amtop", q.amountChange);
+  if (q.skipped === true) out.set("skipped", "1");
   // THE DEFAULT IS NOT WRITTEN DOWN. `?sort=partners` in every shared link is noise, and it would
   // pin the order against a future change of default. The default depends on the query (a cause
   // makes it `effect`), so it is compared against the query's own.

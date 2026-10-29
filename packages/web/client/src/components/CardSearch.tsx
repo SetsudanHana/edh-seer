@@ -5,6 +5,8 @@ import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/par
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
 import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, factFilterOf, orderOf, withoutFilterKind, EFFECT_KINDS, FILTER_KINDS, NATURAL_DIR, type EventQuery, type FilterKind } from "../lib/facets.js";
+import { BY_WHAT_IT_IS, TIMING_UNKNOWN, effectCaption } from "../lib/effect-caption.js";
+import { isEmptyFilter } from "@edh-seer/matcher/member-facts";
 import { membersPassing, unjudgedLeftOut } from "../lib/effect-filter.js";
 import { AbilityKindRow, AmountRow, RepeatsRow } from "./EffectRows.js";
 import { EventSentence, termWords } from "./EventSentence.js";
@@ -190,6 +192,9 @@ export function CardSearch({
   // is honest -- the same rule the colour chips have followed since they moved out of local state.
   const eventQuery = useMemo(() => eventsFromParams(params), [params]);
   const setEvents = (next: EventQuery) => setParams(eventsToParams(next, params), { replace: true });
+  // THE SKIPPED VIEW BELONGS TO ONE SET OF TERMS AND EFFECT ROWS: change either and it is dropped, or
+  // it would stay armed and reopen on the skipped list when the filters next leave something out.
+  const setEffects = (next: EventQuery) => { const { skipped: _s, ...rest } = next; setEvents(rest); };
   const colours = eventQuery.colours;
   const setColours = (f: (cs: string[]) => string[]) => setEvents({ ...eventQuery, colours: f(colours) });
   const terms = useMemo(() => termsOf(eventQuery), [eventQuery]);
@@ -219,7 +224,7 @@ export function CardSearch({
   // REMOVING A ROW CLEARS ITS QUESTION AND FORGETS THE ROW. Doing only the first would leave an
   // empty control standing where a reader had just said they were finished with it.
   const dropKind = (kind: FilterKind): void => {
-    setEvents(withoutFilterKind(eventQuery, kind));
+    setEffects(withoutFilterKind(eventQuery, kind));
     setPending((ks) => ks.filter((k) => k !== kind));
   };
   useEffect(() => {
@@ -328,12 +333,17 @@ export function CardSearch({
   }, [needle, query, eventQuery, vocabulary, carriesColours, commanderMode, colours, mode]);
   // HOW MANY CARDS THE FILTERS COULD NOT JUDGE (review of 160d353): on an asked event by what they
   // are -- cast, entering, lifelink -- rather than by an ability. Left out, and said so.
-  const unjudgedCount = useMemo(() => {
-    if (index === null || !asked || keptIds === undefined) return 0;
-    const left = unjudgedLeftOut(terms, lists, eventQuery)
+  // THE CARDS THE FILTERS LEFT OUT, as index rows (before the card predicates). The count, and the
+  // list when `skipped` is set, both start from these, so the two cannot disagree.
+  const leftOut = useMemo((): NameIndexEntry[] => {
+    if (index === null || !asked || keptIds === undefined) return [];
+    return unjudgedLeftOut(terms, lists, eventQuery)
       .map((id) => index[id]).filter((e): e is NameIndexEntry => e !== undefined);
-    return fitCard(left).length;
-  }, [terms, lists, eventQuery, index, asked, keptIds, fitCard]);
+  }, [terms, lists, eventQuery, index, asked, keptIds]);
+  const unjudgedCount = useMemo(() => fitCard(leftOut).length, [leftOut, fitCard]);
+  // THE SKIPPED VIEW STAYS ON through a name or colour change (an empty one says so); it applies only
+  // while something is left out at all, and `setEffects` drops it when the terms or effect rows change.
+  const showSkipped = eventQuery.skipped === true && leftOut.length > 0;
   const unanswerable = effectUnanswerable || (chosenKeys.length > 0 && chosenKeys.every((k) => lists.has(k))
     && chosenKeys.some((k) => lists.get(k) === null));
 
@@ -342,7 +352,7 @@ export function CardSearch({
   const matches = useMemo((): NameIndexEntry[] | null => {
     if (index === null || !asked) return [];
     if (keptIds === undefined) return null;
-    const base = keptIds === null ? index
+    const base = showSkipped ? leftOut : keptIds === null ? index
       : (keptIds.keep === null ? index : [...keptIds.keep].map((id) => index[id]))
         .filter((e): e is NameIndexEntry => e !== undefined)
         .filter((e) => keptIds.drop.size === 0 || !keptIds.drop.has(positionOf.get(e) ?? -1));
@@ -385,7 +395,15 @@ export function CardSearch({
         : order === "tou" ? byNumber((e) => e.tou)
         : byNumber((e) => e.partners ?? 0),
     );
-  }, [index, keptIds, asked, eventQuery, lists, positionOf, fitCard]);
+  }, [index, keptIds, asked, eventQuery, lists, positionOf, fitCard, showSkipped, leftOut]);
+  // WHAT "Back to the N matches" RETURNS TO: the normal list's size, without sorting it.
+  const normalCount = useMemo((): number => {
+    if (!showSkipped || index === null || keptIds === undefined || keptIds === null) return 0;
+    const base = (keptIds.keep === null ? index : [...keptIds.keep].map((id) => index[id]))
+      .filter((e): e is NameIndexEntry => e !== undefined)
+      .filter((e) => keptIds.drop.size === 0 || !keptIds.drop.has(positionOf.get(e) ?? -1));
+    return fitCard(base).length;
+  }, [showSkipped, index, keptIds, positionOf, fitCard]);
 
   // WHAT THE PICKERS OFFER, AND WHAT EACH ROW COSTS TO SAY.
   //
@@ -583,14 +601,14 @@ export function CardSearch({
         return (
           <AbilityKindRow
             chosen={eventQuery.abilityKinds ?? []}
-            onChange={(next) => { const { abilityKinds: _a, ...rest } = eventQuery; setEvents(next.length > 0 ? { ...rest, abilityKinds: next } : rest); }}
+            onChange={(next) => { const { abilityKinds: _a, ...rest } = eventQuery; setEffects(next.length > 0 ? { ...rest, abilityKinds: next } : rest); }}
           />
         );
       case "repeats":
         return (
           <RepeatsRow
             min={eventQuery.repeatsMin}
-            onChange={(next) => { const { repeatsMin: _a, ...rest } = eventQuery; setEvents(next !== undefined ? { ...rest, repeatsMin: next } : rest); }}
+            onChange={(next) => { const { repeatsMin: _a, ...rest } = eventQuery; setEffects(next !== undefined ? { ...rest, repeatsMin: next } : rest); }}
           />
         );
       case "amount":
@@ -598,9 +616,10 @@ export function CardSearch({
           <AmountRow
             min={eventQuery.amountMin} max={eventQuery.amountMax} variable={eventQuery.amountVariable === true}
             change={eventQuery.amountChange}
+            caresAbout={terms.some((t) => t.side === "pays" && t.op !== "not")}
             onChange={(r) => {
               const { amountMin: _a, amountMax: _b, amountVariable: _c, amountChange: _d, ...rest } = eventQuery;
-              setEvents({ ...rest, ...(r.min !== undefined ? { amountMin: r.min } : {}),
+              setEffects({ ...rest, ...(r.min !== undefined ? { amountMin: r.min } : {}),
                 ...(r.max !== undefined ? { amountMax: r.max } : {}), ...(r.variable ? { amountVariable: true } : {}),
                 ...(r.change !== undefined ? { amountChange: r.change } : {}) });
             }}
@@ -697,7 +716,7 @@ export function CardSearch({
         makesCount={countOf}
         paysCount={consumeCountOf}
         demand={consumeCountOf}
-        onChange={(next) => setEvents(withTerms(eventQuery, next))}
+        onChange={(next) => setEffects(withTerms(eventQuery, next))}
         onRemoveColour={(c) => setColours((cs) => cs.filter((x) => x !== c))}
         onOpen={() => setSentenceOpened(true)}
       />
@@ -846,7 +865,9 @@ export function CardSearch({
                 {/* THE REFUSAL SITS WHERE THE COUNT SITS, so the order control is reachable on a
                   * zero-result answer too -- a shared `?sort=name` link that matches nothing had
                   * no way to undo the order it arrived carrying. */}
-                {matches.length === 0
+                {matches.length === 0 && showSkipped
+                  ? <>None of the skipped cards fit these filters.</>
+                  : matches.length === 0
                   ? <>No {commanderMode ? "commander" : "card"} matches. We know{" "}
                       {index.length.toLocaleString("en-US")} cards, and one we don&apos;t know yet has no page.</>
                   : <>{matches.length.toLocaleString("en-US")}{" "}
@@ -854,12 +875,26 @@ export function CardSearch({
                         ? (commanderMode ? "commander matches" : "card matches")
                         : (commanderMode ? "commanders match" : "cards match")}
                       {matches.length > shown ? `, showing the first ${shown}` : ""}.</>}
-                {unjudgedCount > 0 && (
-                  <>{" "}{unjudgedCount.toLocaleString("en-US")} more {unjudgedCount === 1 ? "is" : "are"} on these
-                    events by what {unjudgedCount === 1 ? "it is" : "they are"} (being cast, entering, a keyword like
-                    lifelink) rather than by an ability, so the ability filters can't judge {unjudgedCount === 1 ? "it" : "them"} and leave {unjudgedCount === 1 ? "it" : "them"} out.</>
-                )}
+                {(unjudgedCount > 0 || showSkipped) && (showSkipped
+                  ? (matches.length === 0 ? null : <>{" "}These are the ones the ability filters skipped.</>)
+                  : <>{" "}{unjudgedCount.toLocaleString("en-US")} more {unjudgedCount === 1 ? "card matches" : "cards match"} but
+                    these filters can&apos;t judge {unjudgedCount === 1 ? "it" : "them"}: {unjudgedCount === 1 ? "it matches" : "they match"} because
+                    of what {unjudgedCount === 1 ? "it is" : "they are"} (a keyword like lifelink, or simply entering or being
+                    cast), or by an ability whose timing we can&apos;t tell.</>)}
               </p>
+              {(unjudgedCount > 0 || showSkipped) && (
+                <button
+                  type="button" className="chip"
+                  onClick={() => {
+                    const { skipped: _s, ...rest } = eventQuery;
+                    setEvents(showSkipped ? rest : { ...rest, skipped: true });
+                  }}
+                >
+                  {showSkipped
+                    ? (normalCount === 0 ? "Back to the results" : `Back to the ${normalCount.toLocaleString("en-US")} ${normalCount === 1 ? "match" : "matches"}`)
+                    : unjudgedCount === 1 ? "Show this card" : `Show these ${unjudgedCount.toLocaleString("en-US")}`}
+                </button>
+              )}
               {/* THE ORDER NAMES ITS AXIS AND THE DIRECTION IS ITS OWN CONTROL (owner 2026-09-22):
                 * "biggest first" did not say whether it meant power or toughness, and there was no
                 * way to turn any order round. Changing the axis resets the direction to its
@@ -914,16 +949,38 @@ export function CardSearch({
                 // THE `or` TERMS THAT HOLD FOR THIS CARD, not all of them: at least one does, and the
                 // caption names which. `not` terms are absences and are not a reason.
                 const pos = positionOf.get(e) ?? -1;
-                const caption = [
-                  ...terms.filter((t) => t.op === "and").map(termWords),
-                  ...terms.filter((t) => t.op === "or" && (t.side === "makes" ? lists.get(t.key)?.p : lists.get(t.key)?.c)?.includes(pos)).map(termWords),
-                ];
+                // WITH AN EFFECT ROW SET, each term also says how this card does it: the facts of the
+                // ability that passed, or that it is there by what it is (#1405 C).
+                const effectSet = askedKinds.some((k) => EFFECT_KINDS.includes(k));
+                const whyOf = (t: (typeof terms)[number]): { filter: boolean; why: string } => {
+                  const filter = factFilterOf(eventQuery, t.side);
+                  return { filter: effectSet && !isEmptyFilter(filter), why: effectSet ? effectCaption(lists.get(t.key), t.side, pos, filter) : "" };
+                };
+                const andTerms = terms.filter((t) => t.op === "and");
+                // AN `or` TERM IS A REASON ONLY IF ITS ABILITY PASSED: with an effect row set, a card in
+                // both terms by one failing ability must not name the failing one.
+                const orTerms = terms.filter((t) => t.op === "or"
+                  && (t.side === "makes" ? lists.get(t.key)?.p : lists.get(t.key)?.c)?.includes(pos)
+                  && (!whyOf(t).filter || (whyOf(t).why !== "" && (showSkipped || (whyOf(t).why !== BY_WHAT_IT_IS && whyOf(t).why !== TIMING_UNKNOWN)))));
+                const shownTerms = [...andTerms, ...orTerms];
+                // BARE FACTS ONLY WHEN THE QUERY ITSELF HAS ONE TERM (the sentence above names it); with
+                // several, a surviving term keeps its name so the reader can tell which one the card met.
+                const oneTermQuery = terms.filter((t) => t.op !== "not").length === 1;
+                // FACTS FIRST, because a three-across phone tile clips the end (#1405 C review). One term
+                // is already in the sentence above, so the facts stand alone; several are named, in
+                // parentheses, and joined by semicolons so two terms never read as one run.
+                const caption = shownTerms.map((t) => {
+                  const { why } = whyOf(t);
+                  if (why === "") return termWords(t);
+                  return oneTermQuery ? why : `${termWords(t)} (${why.replaceAll(" · ", ", ")})`;
+                });
                 return (
                   <li key={e.slug} className="min-w-0">
                     <CardTile
                       slug={e.slug} name={e.name} art={e.art} identity={e.identity}
                       to={`${commanderMode ? "/commanders" : "/cards"}/${e.slug}`}
-                      caption={caption.length > 0 ? caption.join(" · ") : undefined}
+                      caption={caption.length > 0 ? caption.join("; ") : undefined}
+                      captionLines={effectSet ? 3 : 2}
                       note={!commanderMode && e.commander ? "commander" : undefined}
                     />
                   </li>

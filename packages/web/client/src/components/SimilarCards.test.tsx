@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { expect, test } from "vitest";
 import type { SimilarItem } from "@edh-seer/matcher/similar-shard";
-import { SimilarCards } from "./SimilarCards.js";
+import { SimilarCards, type SimilarRow } from "./SimilarCards.js";
 
 const ITEMS: SimilarItem[] = [
   { name: "Gamble", slug: "gamble", tier: "output", chips: [{ dim: "trigger", label: "when it dies" }] },
@@ -44,4 +44,19 @@ test("an empty list renders nothing", () => {
 test("the optional note is printed", () => {
   show(ITEMS, "Only cards within this commander's colours.");
   expect(screen.getByText(/within this commander's colours/)).toBeInTheDocument();
+});
+
+test("a linked row opens the card menu: it carries the name and the slug", () => {
+  show(ITEMS);
+  const a = screen.getByRole("link", { name: "Beta" });
+  expect(a).toHaveAttribute("data-card", "Beta");
+  expect(a).toHaveAttribute("data-card-slug", "beta");
+});
+
+test("the menu hint shows once when any row is linked, and survives a custom intro", () => {
+  const { unmount } = render(<MemoryRouter><SimilarCards items={ITEMS} intro="Custom." /></MemoryRouter>);
+  expect(screen.getAllByText(/Right-click or long-press a linked name/)).toHaveLength(1);
+  unmount();
+  show([{ name: "Plain", tier: "same", chips: [] } as SimilarRow as SimilarItem]);
+  expect(screen.queryByText(/Right-click or long-press/)).toBeNull();
 });

@@ -1015,5 +1015,205 @@ test("the cards the ability filters cannot judge are counted beside the result",
     k === MILL ? { p: [1, 2, 0], c: [], pf: [[millTwoOnce], [pingOne], []], cf: [] } : MEMBERS[k] ?? null;
   atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered`, { members: withUnjudged });
   expect(await screen.findByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
-  expect(screen.getByText(/1 more is on these events by what it is/)).toBeInTheDocument();
+  expect(screen.getByText(/1 more card matches but these filters can.t judge it: it matches because of what it is/)).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Show this card" })).toBeInTheDocument();
+});
+
+/** THE LEFT-OUT NOTE CAN BE CHECKED (#1405 B): a control lists exactly those cards, the URL carries
+ *  it, and the way back names the normal count. */
+test("the skipped cards can be listed, and the list goes back", async () => {
+  const withUnjudged = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === MILL ? { p: [1, 2, 0], c: [], pf: [[millTwoOnce], [pingOne], []], cf: [] } : MEMBERS[k] ?? null;
+  const spy = atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered`, { members: withUnjudged });
+  expect(await screen.findByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Fathom Mage/ })).toBeNull();
+  await userEvent.click(screen.getByRole("button", { name: "Show this card" }));
+  expect(await screen.findByRole("link", { name: /Fathom Mage/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Skullclamp/ })).toBeNull();
+  expect(new URLSearchParams(spy.search).get("skipped")).toBe("1");
+  await userEvent.click(screen.getByRole("button", { name: "Back to the 1 match" }));
+  expect(await screen.findByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Fathom Mage/ })).toBeNull();
+  expect(new URLSearchParams(spy.search).get("skipped")).toBeNull();
+});
+
+test("a link carrying skipped opens on the skipped cards", async () => {
+  const withUnjudged = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === MILL ? { p: [1, 2, 0], c: [], pf: [[millTwoOnce], [pingOne], []], cf: [] } : MEMBERS[k] ?? null;
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered&skipped=1`, { members: withUnjudged });
+  expect(await screen.findByRole("link", { name: /Fathom Mage/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Skullclamp/ })).toBeNull();
+});
+
+/** "HOW OFTEN" SAYS WHAT IT KEEPS (#1405 B): a bare "at least" beside "Any number of times" read as
+ *  no limit, which is the top rung. `repeatable` keeps always-on too (the ladder's last rung). */
+test("the how-often options say what each keeps", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&repeats=repeatable`, factProps);
+  const select = await screen.findByLabelText("How often");
+  expect(select).toHaveValue("repeatable");
+  expect(within(select).getAllByRole("option").map((o) => o.textContent)).toEqual([
+    "Any", "Once or more (by an ability)", "At least once a round", "At least every turn", "No limit, or always on", "Always on",
+  ]);
+  expect(screen.queryByText("at least")).toBeNull();
+});
+
+/** THE REPLACEMENT CONTROL EXISTS ONLY FOR "CARES ABOUT" (#1405 B); both seats skipped it otherwise. */
+test("the amount row offers the replacement only beside a cares-about event", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&amtmin=1&amtmax=1`, factProps);
+  expect(await screen.findByLabelText("Amount, each time, from")).toHaveValue("1");
+  expect(screen.getByText("How many each time it happens.")).toBeInTheDocument();
+  expect(screen.queryByLabelText("A replacement that")).toBeNull();
+});
+
+test("with a cares-about event the amount row explains the replacement in a player's words", async () => {
+  atUrl(`/cards?consume=${encodeURIComponent(DIES)}&amtmin=1&amtmax=1`, factProps);
+  expect(await screen.findByLabelText("A replacement that")).toBeInTheDocument();
+  expect(screen.getByText("For cards that change it, like Torbran (+2 damage) or a doubler (×2): how much they add or multiply.")).toBeInTheDocument();
+});
+
+test("an amtop in the link with no cares-about event is kept in the URL, not dropped", async () => {
+  const spy = atUrl(`/cards?produce=${encodeURIComponent(MILL)}&amtmin=1&amtop=plus`, factProps);
+  await screen.findByLabelText("Amount, each time, from");
+  await userEvent.click(screen.getByLabelText("Include variable amounts (X, “equal to its power”)"));
+  const q = new URLSearchParams(spy.search);
+  expect(q.get("amtop")).toBe("plus");
+  expect(q.get("amtvar")).toBe("1");
+});
+
+const UNJUDGED_MILL = async (_b: string, k: string): Promise<EventMembers | null> =>
+  k === MILL ? { p: [1, 2, 0], c: [], pf: [[millTwoOnce], [pingOne], []], cf: [] } : MEMBERS[k] ?? null;
+
+/** THE SKIPPED VIEW BELONGS TO ITS FILTERS (#1405 B review): changing an effect row drops it. */
+test("changing an effect filter drops the skipped view", async () => {
+  const spy = atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered&skipped=1`, { members: UNJUDGED_MILL });
+  expect(await screen.findByRole("link", { name: /Fathom Mage/ })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Spell" }));
+  await waitFor(() => expect(new URLSearchParams(spy.search).get("skipped")).toBeNull());
+});
+
+test("a colour no skipped card fits keeps the skipped view and says it is empty", async () => {
+  const spy = atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered&skipped=1&colors=W`, { members: UNJUDGED_MILL });
+  expect(await screen.findByText(/None of the skipped cards fit these filters\./)).toBeInTheDocument();
+  expect(new URLSearchParams(spy.search).get("skipped")).toBe("1");
+  expect(screen.getByRole("button", { name: "Back to the 1 match" })).toBeInTheDocument();
+});
+
+/** "Once or more" IS NOT "Any": a minimum runs the ability check, so a card on the key by what it
+ *  is (no ability fact) is dropped and counted as left out. */
+test("with no minimum the cards no ability describes are kept", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}`, { members: UNJUDGED_MILL });
+  expect(await screen.findByRole("link", { name: /Fathom Mage/ })).toBeInTheDocument();
+});
+
+test("a once-or-more minimum drops the cards no ability describes, and says so", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&repeats=once`, { members: UNJUDGED_MILL });
+  expect(await screen.findByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Fathom Mage/ })).toBeNull();
+  expect(screen.getByText(/1 more card matches but these filters can.t judge it: it matches because of what it is/)).toBeInTheDocument();
+});
+
+/** THE TILE SAYS WHY IT PASSED (#1405 C): the facts of the ability that met the effect rows. */
+const captionOf = async (name: RegExp): Promise<string> =>
+  (await screen.findByRole("link", { name })).closest("li")!.textContent ?? "";
+
+test("a filtered tile's caption carries the passing ability's facts", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&amtmin=1&amtmax=1&repeats=per-cycle`, factProps);
+  expect(await captionOf(/Skullclamp/)).toContain("1 each time · every time it happens · triggered");
+});
+
+test("an unfiltered tile's caption is unchanged", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}`, factProps);
+  const text = await captionOf(/Skullclamp/);
+  expect(text).toContain("mill a card");
+  expect(text).not.toMatch(/triggered|each time/);
+});
+
+test("on the skipped list the caption says it is there by what it is", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered&skipped=1`, { members: UNJUDGED_MILL });
+  expect(await captionOf(/Fathom Mage/)).toContain("by what it is, not an ability");
+});
+
+test("an or-term card shows only the facts of the term it matched", async () => {
+  const members = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === MILL ? { p: [1], c: [], pf: [[pingOne]], cf: [] }
+      : k === DIES ? { p: [2], c: [], pf: [[millTwoOnce]], cf: [] } : null;
+  atUrl(`/cards?orproduce=${encodeURIComponent(MILL)}&orproduce=${encodeURIComponent(DIES)}&ability=triggered&ability=spell`, { members });
+  const text = await captionOf(/Skullclamp/);
+  expect(text).toContain("spell");
+  expect(text).not.toContain("triggered");
+});
+
+test("an empty skipped view does not also say these are the skipped ones", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered&skipped=1&colors=W`, { members: UNJUDGED_MILL });
+  expect(await screen.findByText(/None of the skipped cards fit these filters\./)).not.toHaveTextContent(/These are the ones/);
+});
+
+const activatedFree = packFact({ kind: "activated", repeats: "repeatable", amount: { kind: "variable" } });
+const torbran = packFact({ kind: "replacement", repeats: "continuous", amount: { kind: "plus", value: 2 } });
+const furnace = packFact({ kind: "replacement", repeats: "continuous", amount: { kind: "times", value: 2 } });
+
+test("an activated ability reads 'as often as you like' and a variable amount 'varies'", async () => {
+  const members = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === MILL ? { p: [2], c: [], pf: [[activatedFree]], cf: [] } : null;
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&repeats=repeatable&amtvar=1&amtmin=1`, { members });
+  expect(await captionOf(/Skullclamp/)).toContain("varies · as often as you like · activated");
+});
+
+const triggeredUnstated = packFact({ kind: "triggered", repeats: "repeatable", amount: { kind: "unstated" } });
+
+test("with variable amounts included, an ability with no stated amount says so instead of nothing", async () => {
+  const members = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === MILL ? { p: [2], c: [], pf: [[triggeredUnstated]], cf: [] } : null;
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&amtvar=1&amtmin=3`, { members });
+  expect(await captionOf(/Skullclamp/)).toContain("amount not stated · triggered");
+});
+
+test("two and-terms are separated by semicolons, each with its own facts", async () => {
+  const members = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === MILL ? { p: [2], c: [], pf: [[pingOne]], cf: [] } : k === DIES ? { p: [2], c: [], pf: [[millTwoOnce]], cf: [] } : null;
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&produce=${encodeURIComponent(DIES)}&ability=triggered&ability=spell`, { members });
+  expect(await captionOf(/Skullclamp/)).toContain("mill a card (triggered); a creature dies (spell)");
+});
+
+test("an or-term whose ability failed is not named as a reason", async () => {
+  const members = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === MILL ? { p: [2], c: [], pf: [[pingOne]], cf: [] } : k === DIES ? { p: [2], c: [], pf: [[millTwoOnce]], cf: [] } : null;
+  atUrl(`/cards?orproduce=${encodeURIComponent(MILL)}&orproduce=${encodeURIComponent(DIES)}&ability=spell`, { members });
+  const text = await captionOf(/Skullclamp/);
+  expect(text).toContain("a creature dies (spell)");
+  expect(text).not.toContain("mill a card");
+  expect(text).not.toContain("triggered");
+});
+
+test("a cares-about caption words the replacement's change, and only with a change op", async () => {
+  const members = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === DIES ? { p: [], c: [0, 1], pf: [], cf: [[torbran], [furnace]] } : null;
+  atUrl(`/cards?consume=${encodeURIComponent(DIES)}&amtop=plus&amtmin=2&amtmax=2`, { members });
+  expect(await captionOf(/Fathom Mage/)).toContain("adds 2 · replacement");
+});
+
+test("an or-term the card is on only by what it is is not a reason outside the skipped view", async () => {
+  const members = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === MILL ? { p: [2], c: [], pf: [[pingOne]], cf: [] } : k === DIES ? { p: [2], c: [], pf: [[]], cf: [] } : null;
+  atUrl(`/cards?orproduce=${encodeURIComponent(MILL)}&orproduce=${encodeURIComponent(DIES)}&ability=triggered`, { members });
+  const text = await captionOf(/Skullclamp/);
+  expect(text).toContain("mill a card (triggered)");
+  expect(text).not.toContain("a creature dies");
+});
+
+/** TWO KINDS LEFT OUT (#1405): a card there by what it is, and an ability whose timing derive could not label. */
+const unlabelled = packFact({ kind: "triggered", repeats: undefined, amount: { kind: "unstated" } });
+const timingMembers = async (_b: string, k: string): Promise<EventMembers | null> =>
+  k === MILL ? { p: [2, 0, 1], c: [], pf: [[pingOne], [unlabelled], []], cf: [] } : MEMBERS[k] ?? null;
+
+test("the left-out note covers both kinds, and each skipped tile says which", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&repeats=per-turn&skipped=1`, { members: timingMembers });
+  expect(await captionOf(/Fathom Mage/)).toContain("how often isn't known");
+  expect(await captionOf(/Inspiring Call/)).toContain("by what it is, not an ability");
+  expect(screen.getByRole("button", { name: /Back to the/ })).toBeInTheDocument();
+});
+
+test("the left-out note says they match by what they are or by an ability whose timing is unknown", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&repeats=per-turn`, { members: timingMembers });
+  expect(await screen.findByText(/2 more cards match but these filters can.t judge them: they match because of what they are \(a keyword like lifelink, or simply entering or being cast\), or by an ability whose timing we can.t tell\./)).toBeInTheDocument();
 });

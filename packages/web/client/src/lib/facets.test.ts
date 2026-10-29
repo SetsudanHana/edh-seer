@@ -484,3 +484,13 @@ describe("the effect filters", () => {
     expect(withoutFilterKind(q, "amount").amountChange).toBeUndefined();
   });
 });
+
+/** THE "show what the filters skipped" VIEW SURVIVES THE URL (#1405 B); only `1` turns it on. */
+test("the skipped view round-trips, and any other value is dropped", () => {
+  const base = { produce: ["mill|-|-|-"], consume: [], colours: [], types: [], subtypes: [], keywords: [], cardColours: [] };
+  const on = eventsToParams({ ...base, skipped: true }, new URLSearchParams());
+  expect(on.get("skipped")).toBe("1");
+  expect(eventsFromParams(on).skipped).toBe(true);
+  expect(eventsToParams(base, on).get("skipped")).toBeNull();
+  for (const bad of ["0", "true", "2", ""]) expect(eventsFromParams(new URLSearchParams({ skipped: bad })).skipped).toBeUndefined();
+});
