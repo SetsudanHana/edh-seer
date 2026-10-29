@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deriveCardTags, deriveInputOf, grammarClauseRecords } from "@edh-seer/tagger";
 import {
-  CONSTANT_FIELDS, FIELD_KIND, formatRatchets, ratchetReport, chooseMatcher, classifyRows, compareRow, diffReasons, fieldDiff, formatSummary, grammarReport, matcherCodeFiles, nodeModulesHash,
+  CONSTANT_FIELDS, FIELD_KIND, formatRatchets, ratchetReport, chooseMatcher, classifyRows, compareRow, diffReasons, fieldDiff, formatSummary, grammarReport, instrumentFor, nodeModulesHash, NOT_MEASURED, sampleCoverage, splitMatcherCode,
   pairsReport, pick, sampleIds, snapOf, tagFamily, treeVerdict, type ImpactReport, type RowSnap,
 } from "./derive-impact-core.js";
 
@@ -16,6 +16,12 @@ describe("fieldDiff", () => {
   it("reads an object field per key", () => {
     const d = fieldDiff(JSON.stringify({ characteristics: { colors: ["R"], token: false } }), JSON.stringify({ characteristics: { colors: ["U"], token: false } }));
     expect(d.characteristics).toEqual({ removed: ['colors: ["R"]'], added: ['colors: ["U"]'] });
+  });
+  it("diffs multisets: a deduped duplicate is a removal, even beside another change", () => {
+    expect(fieldDiff('{"abilities":["X","X"]}'.replace(/"X"/g, '{"v":1}'), '{"abilities":[{"v":1}]}')).toEqual({ abilities: { removed: ['{"v":1}'], added: [] } });
+    const d = fieldDiff('{"abilities":[1,1,2]}', '{"abilities":[1,3]}');
+    expect(d.abilities).toEqual({ removed: ["1", "2"], added: ["3"] });
+    expect(fieldDiff('{"abilities":[1]}', '{"abilities":[1,1,1]}').abilities).toEqual({ removed: [], added: ["1", "1"] });
   });
   it("keeps a pure reorder visible", () => {
     const d = fieldDiff(JSON.stringify({ abilities: [1, 2] }), JSON.stringify({ abilities: [2, 1] }));
@@ -89,14 +95,30 @@ describe("matcher selection, sample, cache", () => {
     expect(chooseMatcher("head")).toBe("head");
     expect(() => chooseMatcher("auto")).toThrow(/own or head/);
   });
-  it("counts matcher, engine, data and pair-time tagger sources, not tests, fixtures, tables or other tagger files", () => {
-    const tagger = ["packages/tagger/src/derive/subject.ts", "packages/tagger/src/schema.ts"];
-    const files = matcherCodeFiles([
+  it("splits changed files into on-path (reachable) and off-path with their instrument; tests, fixtures and tables are neither", () => {
+    const reachable = new Set(["packages/matcher/src/edges.ts", "packages/tagger/src/derive/subject.ts", "packages/matcher/rules.json"]);
+    const r = splitMatcherCode([
       "packages/matcher/src/edges.ts", "packages/matcher/src/edges.test.ts", "packages/matcher/src/same-job.fixtures.json", "packages/matcher/rules.json",
-      "packages/matcher/quality-weights.json", "packages/matcher/src/bin/build-static.ts", "packages/engine/src/synergy.ts", "packages/engine/scripts/gen-tag-weights.ts", "packages/data/src/docs.ts",
-      "packages/tagger/src/derive/subject.ts", "packages/tagger/src/derive/derive.ts", "docs/x.md",
-    ], tagger);
-    expect(files).toEqual(["packages/data/src/docs.ts", "packages/engine/src/synergy.ts", "packages/matcher/rules.json", "packages/matcher/src/edges.ts", "packages/tagger/src/derive/subject.ts"]);
+      "packages/matcher/quality-weights.json", "packages/matcher/src/similar.ts", "packages/matcher/src/redundancy.ts", "packages/matcher/src/bin/build-static-core.ts",
+      "packages/matcher/src/bin/build-static.ts", "packages/matcher/src/bin/cs-categories.ts", "packages/matcher/src/card-strength.ts", "packages/tagger/src/derive/subject.ts", "packages/tagger/src/derive/derive.ts", "docs/x.md",
+    ], reachable);
+    expect(r.onPath).toEqual(["packages/matcher/rules.json", "packages/matcher/src/edges.ts", "packages/tagger/src/derive/subject.ts"]);
+    expect(r.offPath).toEqual([
+      { file: "packages/matcher/src/bin/build-static-core.ts", instrument: "research/matcher/static-parity.ts (+ the static-out snapshot)" },
+      { file: "packages/matcher/src/bin/build-static.ts", instrument: "research/matcher/static-parity.ts (+ the static-out snapshot)" },
+      { file: "packages/matcher/src/card-strength.ts", instrument: "none in this report" },
+      { file: "packages/matcher/src/redundancy.ts", instrument: "research/matcher/similar-census.ts" },
+      { file: "packages/matcher/src/similar.ts", instrument: "research/matcher/similar-census.ts" },
+    ]);
+    expect(instrumentFor("packages/matcher/src/similar-shard.ts")).toBe("research/matcher/similar-census.ts");
+  });
+  it("states what a sample can and cannot see", () => {
+    const c = sampleCoverage(150, 32270);
+    expect(c).toContain("sample of 150 of 32,270 cards (0.46%)");
+    expect(c).toContain("a move touching 1 card is missed 100%");
+    expect(c).toContain("100 cards 63%");
+    expect(c).toContain("fewer than ~643 cards touched is likely (>5%) missed");
+    expect(sampleCoverage(0, 10)).toBe("no sample");
   });
   it("samples a stable, seeded subset", () => {
     const ids = Array.from({ length: 100 }, (_, i) => `id${i}`);
@@ -151,12 +173,13 @@ describe("formatSummary", () => {
   const sec = (over = {}) => ({ cards: 2, gained: 5, lost: 7, magnitude: 3, attrs: 1, attrFields: [{ field: "perTurn", count: 1 }], families: [{ family: "prevented", gained: 0, lost: 7 }], top: [], byCounterpart: [], skipped: ["Tokeny (no maker)"], ...over });
   const report: ImpactReport = {
     base: { ref: "abc1234", sha: "abc12345", deriveVersion: 405 }, head: { ref: "HEAD", sha: "def67890", deriveVersion: 406, dirty: true }, matcher: "own", matcherCode: ["packages/matcher/src/edges.ts"],
+    matcherOffPath: [{ file: "packages/matcher/src/similar.ts", instrument: "research/matcher/similar-census.ts" }], samplePopulation: 32270,
     rows: { totals: { same: 100, changed: 2, added: 0, removed: 0, sourceFlipped: 1, sourceFlippedIdenticalTags: 1 }, changes: [
       { id: "1", name: "Alpha", status: "changed", fields: { abilities: { removed: ["x"], added: [] } } }, { id: "2", name: "Beta", status: "changed", fields: { abilities: { removed: ["x"], added: ["y", "z"] } } }, { id: "3", name: "Gamma", status: "flip-only", fields: {} },
     ] },
     grammar: { completeBase: 28417, completeHead: 28423, gained: ["a"], lost: [], recordsChanged: ["b", "c"] },
     pairs: sec(), sample: sec({ cards: 150, gained: 9 }), tokens: { docs: 1096, withRow: 527, nodesBase: 530, nodesHead: 531 },
-    ratchets: ratchetReport({ dropped: { A: ["1:tap"], B: ["2:cant", "3:cant"] }, roles: { A: ["role:ramp"] } }, { dropped: { A: ["1:tap"], B: ["2:cant"] }, roles: { A: ["role:ramp", "role:draw"] } }, { dropped: { A: ["1:tap"], B: ["2:cant", "3:cant"] }, roles: { A: ["role:ramp"] } }),
+    ratchets: ratchetReport({ dropped: { A: ["1:tap"], B: ["2:cant", "3:cant"] }, roles: { A: ["role:ramp"] }, untagged: ["U1"] }, { dropped: { A: ["1:tap"], B: ["2:cant"] }, roles: { A: ["role:ramp", "role:draw"] }, untagged: ["U1", "U2"] }, { dropped: { A: ["1:tap"], B: ["2:cant", "3:cant"] }, roles: { A: ["role:ramp"] }, untagged: ["U1"] }),
   };
   it("is one paste-ready block with versions, dirty flag, counts and the open ends", () => {
     const s = formatSummary(report);
@@ -167,10 +190,13 @@ describe("formatSummary", () => {
     expect(s).not.toContain("Gamma");
     expect(s).toContain("28,417 -> 28,423");
     expect(s).toContain("membership +5 gained, -7 lost; magnitude-only 3; attributes changed 1 [perTurn x1]");
-    expect(s).toContain("MATCHER CODE DIFFERS (1 file(s)): pair reasons below cover changed rows only; matcher-only effects are measured on the sample");
+    expect(s).toContain("MATCHER CODE DIFFERS on the pair/role path (1 file(s): packages/matcher/src/edges.ts): pair reasons below cover changed rows only; matcher-only effects are measured on the sample");
+    expect(s).toContain("changed but NOT on the pair/role path, not measured here: packages/matcher/src/similar.ts (instrument: research/matcher/similar-census.ts)");
+    expect(s).toContain("matcher-only coverage: sample of 150 of 32,270 cards");
+    for (const x of NOT_MEASURED) expect(s).toContain(x);
     expect(s).toContain("matcher sample, seeded (150 cards)");
     expect(s).toContain("not paired (1): Tokeny (no maker)");
-    expect(s).toContain("role-ratchet gained 1, lost 0 (1 -> 2 memberships); gained: A +role:draw; against the banked snapshot: gained 1, lost 0");
+    expect(s).toContain("role-ratchet gained 1, lost 0 (1 -> 2 memberships); gained: A +role:draw; against the banked snapshot: gained 1, lost 0; untagged 1 -> 2 (newly 1: U2, tagged now 0), against the banked list 1 new / 0 tagged now");
     expect(s).toContain("dropped-clauses 3 -> 2 (new 0, fixed 1: B -3:cant); against the banked snapshot: new 0, fixed 1");
     expect(s).toContain("tokens: 1,096 token docs, 527 with a derived row and 569 synthesized as the engine does; token nodes the cards create: BASE 530, HEAD 531");
     expect(s).toContain("token-vs-token pairs are not covered");
@@ -178,14 +204,14 @@ describe("formatSummary", () => {
   });
   it("says ratchets were not run when they were not", () => { expect(formatSummary({ ...report, ratchets: undefined })).toContain("ratchets: not run"); });
   it("reports zeros as zeros", () => {
-    const z = { dropped: { A: ["1:tap"] }, roles: { A: ["role:ramp"] } };
+    const z = { dropped: { A: ["1:tap"] }, roles: { A: ["role:ramp"] }, untagged: ["U1"] };
     expect(formatRatchets(ratchetReport(z, z, z))).toEqual([
-      "role-ratchet gained 0, lost 0 (1 -> 1 memberships); against the banked snapshot: gained 0, lost 0",
+      "role-ratchet gained 0, lost 0 (1 -> 1 memberships); against the banked snapshot: gained 0, lost 0; untagged 1 -> 1, against the banked list 0 new / 0 tagged now",
       "dropped-clauses 1 -> 1 (new 0, fixed 0); against the banked snapshot: new 0, fixed 0",
     ]);
   });
   it("is silent about the matcher when its code is the same, and says so when pairs did not run", () => {
-    const s = formatSummary({ ...report, matcherCode: [], pairs: undefined, sample: undefined, head: { ...report.head, dirty: false } });
+    const s = formatSummary({ ...report, matcherCode: [], matcherOffPath: [], pairs: undefined, sample: undefined, head: { ...report.head, dirty: false } });
     expect(s).not.toContain("MATCHER CODE DIFFERS");
     expect(s).toContain("pair reasons: not run");
     expect(s).toContain("def67890 working tree (DERIVE_VERSION");

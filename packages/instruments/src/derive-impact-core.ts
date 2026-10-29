@@ -28,24 +28,27 @@ export const snapOf = (name: string, tags: Record<string, unknown>, fromGrammar:
 
 export interface FieldDiff { removed: string[]; added: string[] }
 
-/** The entries of one field as JSON strings: an array's members, an object's `key: value` pairs, a scalar itself; absent is none. */
+/** The entries of one field as JSON strings: an array's members, an object's `key: value` pairs, a scalar itself; absent is none. Duplicates are kept. */
 function entriesOf(v: unknown): string[] {
   if (v === undefined || v === null) return [];
   if (Array.isArray(v)) return v.map((x) => JSON.stringify(x));
   if (typeof v === "object") return Object.entries(v as Record<string, unknown>).map(([k, x]) => `${k}: ${JSON.stringify(x)}`);
   return [JSON.stringify(v)];
 }
+const counts = (xs: string[]): Map<string, number> => { const m = new Map<string, number>(); for (const x of xs) m.set(x, (m.get(x) ?? 0) + 1); return m; };
 
-/** Per field, the entries only BEFORE (removed) and only AFTER (added). A field with no change is absent. Set-based, as derive-identity is.
- *  CEILING: set-based, so a duplicate entry added or removed, or a pure reorder of an array, is not an entry diff (a reorder is listed as `(reordered)`; a changed count of an identical entry is invisible). */
+/** Per field, the entries only BEFORE (removed) and only AFTER (added), as MULTISETS: `[X, X] -> [X]` removes one X (the #1391 dedupe shape), an entry that moved from two
+ *  copies to three adds one. A field with no change is absent. Entries that are the same multiset in another order are a permutation, listed as `(reordered)`.
+ *  CEILING: an object-valued field is compared per key, so a reorder of its keys is invisible (JSON key order is not a derive fact). */
 export function fieldDiff(before: string, after: string): Record<string, FieldDiff> {
   const a = JSON.parse(before) as Record<string, unknown>, b = JSON.parse(after) as Record<string, unknown>;
   const out: Record<string, FieldDiff> = {};
   for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {
-    const was = new Set(entriesOf(a[k])), now = new Set(entriesOf(b[k]));
-    const removed = [...was].filter((x) => !now.has(x)), added = [...now].filter((x) => !was.has(x));
-    // Same entries in another order, or a scalar that moved to undefined: the JSON differs and no entry does. Keep it visible.
-    if (removed.length === 0 && added.length === 0 && JSON.stringify(a[k]) !== JSON.stringify(b[k])) { out[k] = { removed: [`(reordered) ${JSON.stringify(a[k])?.slice(0, 200)}`], added: [`(reordered) ${JSON.stringify(b[k])?.slice(0, 200)}`] }; continue; }
+    const was = counts(entriesOf(a[k])), now = counts(entriesOf(b[k]));
+    const removed: string[] = [], added: string[] = [];
+    for (const [e, c] of was) for (let i = now.get(e) ?? 0; i < c; i++) removed.push(e);
+    for (const [e, c] of now) for (let i = was.get(e) ?? 0; i < c; i++) added.push(e);
+    if (removed.length === 0 && added.length === 0 && Array.isArray(a[k]) && JSON.stringify(a[k]) !== JSON.stringify(b[k])) { out[k] = { removed: [`(reordered) ${JSON.stringify(a[k])?.slice(0, 200)}`], added: [`(reordered) ${JSON.stringify(b[k])?.slice(0, 200)}`] }; continue; }
     if (removed.length || added.length) out[k] = { removed, added };
   }
   return out;
@@ -209,19 +212,25 @@ export function chooseMatcher(flag: string | undefined): MatcherMode {
   throw new Error(`--matcher takes own or head, not ${flag}`);
 }
 
-/** Files, from a list of changed paths (repo-relative), whose change alters what `pairReasons` says: matcher sources and the data it reads,
- *  the engine and data sources it imports, and the tagger modules it calls at pair time (`taggerPairTime`: the tagger's export-map targets bar the barrel).
- *  Tests, fixtures, snapshots and the scoring tables (weights, stats) are not pair-time code.
- *  CEILING: tagger modules the exported ones import in turn are not followed; a change only there reads as "matcher code same". `--pair-sample N` forces the sample. */
-export function matcherCodeFiles(paths: string[], taggerPairTime: string[]): string[] {
-  const test = (f: string): boolean => /\.test\.ts$/.test(f) || /\/fixtures\//.test(f) || /\.(fixtures|labels)[.\w-]*\.json$/.test(f);
+/** Pair-reason and role code that is not a matcher file the report measures: files NAMED here changed but no instrument of this report reads them. */
+export const OFF_PATH_INSTRUMENTS: { test: RegExp; instrument: string }[] = [
+  { test: /\/(similar|redundan)[\w-]*\.ts$/, instrument: "research/matcher/similar-census.ts" },
+  { test: /\/build-static[\w-]*\.ts$/, instrument: "research/matcher/static-parity.ts (+ the static-out snapshot)" },
+];
+/** The instrument that does read an off-path matcher file, or a plain statement that none does. */
+export const instrumentFor = (file: string): string => OFF_PATH_INSTRUMENTS.find((o) => o.test.test(file))?.instrument ?? "none in this report";
+
+export interface MatcherCodeSplit { onPath: string[]; offPath: { file: string; instrument: string }[] }
+/** Split the changed paths (repo-relative) that are matcher, engine or data source into those the pair / role code IMPORTS (`reachable`, from the import graph) and those it does not.
+ *  Tests, fixtures, snapshots and the scoring tables are neither: they are not code the pair reasons run. A changed file that is reachable counts wherever it lives (a tagger module too). */
+export function splitMatcherCode(paths: string[], reachable: ReadonlySet<string>): MatcherCodeSplit {
+  const nonCode = (f: string): boolean => /\.test\.ts$/.test(f) || /\/fixtures\//.test(f) || /\.(fixtures|labels)[.\w-]*\.json$/.test(f);
   const table = /(compass-report|theme-stats|rate-stats|quality-weights|staples|VALIDATION)/;
-  return paths.filter((f) => {
-    if (test(f)) return false;
-    if (f.startsWith("packages/matcher/")) return (f.endsWith(".ts") && !f.includes("/bin/")) || (f.endsWith(".json") && !table.test(f));
-    if (f.startsWith("packages/engine/src/") || f.startsWith("packages/data/src/")) return f.endsWith(".ts") && !f.includes("/bin/");
-    return taggerPairTime.includes(f);
-  }).sort();
+  const onPath = paths.filter((f) => !nonCode(f) && reachable.has(f)).sort();
+  const offPath = paths
+    .filter((f) => !nonCode(f) && !reachable.has(f) && !table.test(f) && f.endsWith(".ts") && /^packages\/(matcher\/src|engine\/src|data\/src)\//.test(f) && (!f.includes("/bin/") || instrumentFor(f) !== "none in this report"))
+    .sort().map((file) => ({ file, instrument: instrumentFor(file) }));
+  return { onPath, offPath };
 }
 
 /** A stable, seeded sample of ids: ranked by an FNV-1a hash of `seed + id`, so adding a card moves at most one member. */
@@ -247,11 +256,13 @@ export const nodeModulesHash = (names: string[]): string => createHash("sha1").u
 // ---- ratchets ----
 
 /** What the two by-name ratchets measure on one commit's rows. */
-export interface RatchetInputs { dropped: Dropped; roles: Membership }
+export interface RatchetInputs { dropped: Dropped; roles: Membership; /** commander-legal cards with no derived row (role-ratchet's untagged gate) */ untagged: string[] }
 type Pair = [string, string];
 export interface RatchetReport {
   dropped: { base: { cards: number; actions: number }; head: { cards: number; actions: number }; newKeys: Pair[]; fixedKeys: Pair[]; vsBank: { gained: number; lost: number } };
   roles: { base: { cards: number; memberships: number }; head: { cards: number; memberships: number }; gained: Pair[]; lost: Pair[]; vsBank: { gained: number; lost: number } };
+  /** The untagged gate `role-ratchet` also fails on: cards with no derived row. newly = untagged at HEAD not at BASE (or the bank); nowTagged the reverse. */
+  untagged: { base: number; head: number; newly: string[]; nowTagged: string[]; vsBankNew: string[]; vsBankTagged: string[] };
 }
 const countDropped = (d: Dropped): { cards: number; actions: number } => ({ cards: Object.keys(d).length, actions: Object.values(d).reduce((a, k) => a + k.length, 0) });
 const countRoles = (m: Membership): { cards: number; memberships: number } => ({ cards: Object.keys(m).length, memberships: Object.values(m).reduce((a, k) => a + k.length, 0) });
@@ -259,18 +270,20 @@ const countRoles = (m: Membership): { cards: number; memberships: number } => ({
 /** BASE -> HEAD for both ratchets (set-based, by card, as the bins diff), and HEAD against the banked snapshots: what `--bank` would change. */
 export function ratchetReport(base: RatchetInputs, head: RatchetInputs, banked: RatchetInputs): RatchetReport {
   const d = diffMembership(head.dropped, base.dropped), r = diffMembership(head.roles, base.roles);
+  const minus = (x: string[], y: string[]): string[] => { const o = new Set(y); return [...new Set(x)].filter((n) => !o.has(n)).sort(); };
   const bd = diffMembership(head.dropped, banked.dropped), br = diffMembership(head.roles, banked.roles);
   return {
     dropped: { base: countDropped(base.dropped), head: countDropped(head.dropped), newKeys: d.gained, fixedKeys: d.lost, vsBank: { gained: bd.gained.length, lost: bd.lost.length } },
     roles: { base: countRoles(base.roles), head: countRoles(head.roles), gained: r.gained, lost: r.lost, vsBank: { gained: br.gained.length, lost: br.lost.length } },
+    untagged: { base: new Set(base.untagged).size, head: new Set(head.untagged).size, newly: minus(head.untagged, base.untagged), nowTagged: minus(base.untagged, head.untagged), vsBankNew: minus(head.untagged, banked.untagged), vsBankTagged: minus(banked.untagged, head.untagged) },
   };
 }
 const some = (xs: Pair[], sign: "+" | "-", max = 5): string => xs.slice(0, max).map(([c, k]) => `${c} ${sign}${k}`).join("; ") + (xs.length > max ? `; ... (+${xs.length - max} more)` : "");
 
 export function formatRatchets(r: RatchetReport): string[] {
-  const d = r.dropped, o = r.roles;
+  const d = r.dropped, o = r.roles, u = r.untagged;
   return [
-    `role-ratchet gained ${o.gained.length}, lost ${o.lost.length} (${n(o.base.memberships)} -> ${n(o.head.memberships)} memberships)${o.gained.length ? `; gained: ${some(o.gained, "+")}` : ""}${o.lost.length ? `; lost: ${some(o.lost, "-")}` : ""}; against the banked snapshot: gained ${o.vsBank.gained}, lost ${o.vsBank.lost}`,
+    `role-ratchet gained ${o.gained.length}, lost ${o.lost.length} (${n(o.base.memberships)} -> ${n(o.head.memberships)} memberships)${o.gained.length ? `; gained: ${some(o.gained, "+")}` : ""}${o.lost.length ? `; lost: ${some(o.lost, "-")}` : ""}; against the banked snapshot: gained ${o.vsBank.gained}, lost ${o.vsBank.lost}; untagged ${u.base} -> ${u.head}${u.newly.length || u.nowTagged.length ? ` (newly ${u.newly.length}${u.newly.length ? `: ${u.newly.slice(0, 5).join(", ")}` : ""}, tagged now ${u.nowTagged.length}${u.nowTagged.length ? `: ${u.nowTagged.slice(0, 5).join(", ")}` : ""})` : ""}, against the banked list ${u.vsBankNew.length} new / ${u.vsBankTagged.length} tagged now`,
     `dropped-clauses ${n(d.base.actions)} -> ${n(d.head.actions)} (new ${d.newKeys.length}, fixed ${d.fixedKeys.length}${d.newKeys.length + d.fixedKeys.length ? `: ${[d.newKeys.length ? some(d.newKeys, "+") : "", d.fixedKeys.length ? some(d.fixedKeys, "-") : ""].filter(Boolean).join("; ")}` : ""}); against the banked snapshot: new ${d.vsBank.gained}, fixed ${d.vsBank.lost}`,
   ];
 }
@@ -280,8 +293,12 @@ export interface PairSection extends PairsReport { cards: number; skipped: strin
 export interface ImpactReport {
   base: SideInfo; head: SideInfo & { dirty: boolean };
   matcher: MatcherMode;
-  /** Matcher / engine / data / tagger-at-pair-time files that differ between BASE and the working tree. */
+  /** Files the pair / role code imports (import graph) that differ between BASE and the working tree. */
   matcherCode: string[];
+  /** Matcher / engine / data source files that differ and are NOT on that path, with the instrument that does read them. */
+  matcherOffPath: { file: string; instrument: string }[];
+  /** How many cards the sample drew from. */
+  samplePopulation?: number;
   rows: { totals: RowTotals; changes: RowChange[] };
   grammar: GrammarReport;
   /** Pair reasons of the changed rows (and the cards that make them). */
@@ -294,6 +311,22 @@ export interface ImpactReport {
   ratchets?: RatchetReport;
 }
 
+/** WHAT THIS REPORT DOES NOT MEASURE. A 0 printed beside any of these is silence, not a measurement: say so in the report and the summary. */
+export const NOT_MEASURED: string[] = [
+  "similar / redundancy ranking (research/matcher/similar-census.ts)",
+  "build-static / static-out shape (research/matcher/static-parity.ts and the static-out snapshot)",
+  "deck-level analyze outputs: support / feeder scores, commander boost, archetypes and themes, deck math, per-deck roles and token roles, combos, anthems under a state, the deck-specific reason options",
+  "reason text and claimCount",
+  "token-vs-token pairs",
+  "scoring tables: quality weights, theme-stats, rate-stats, staples",
+  "normalize / segment changes (cardClauses is a fixed input)",
+  "panel, recall, compass, pair-calibration",
+  "packages/web and packages/cli",
+  "upcoming (not_legal) spoilers in the two ratchets, which keep the raw commander-legal filter",
+  "stale Mongo rows derive-corpus never deletes: a card 'removed' here is still served there",
+  "matcher-only effects outside the sample (see its coverage line), and matcher imports the graph cannot see (dynamic paths, generated files)",
+];
+
 const n = (x: number): string => x.toLocaleString("en-US");
 const headName = (r: ImpactReport): string => `${r.head.sha} working tree${r.head.dirty ? " (dirty)" : ""}`;
 
@@ -301,6 +334,14 @@ function pairLine(label: string, p: PairSection): string {
   const fields = p.attrFields.length ? ` [${p.attrFields.map((f) => `${f.field} x${f.count}`).join(", ")}]` : "";
   return `${label} (${p.cards} cards): membership +${n(p.gained)} gained, -${n(p.lost)} lost; magnitude-only ${n(p.magnitude)}; attributes changed ${n(p.attrs)}${fields}`
     + (p.families.length ? `; by family ${p.families.slice(0, 5).map((f) => `${f.family} +${f.gained}/-${f.lost}`).join(", ")}` : "");
+}
+
+/** The plain statement of what a sample of `k` cards out of `population` can see: a matcher-only move touching m cards is missed with probability (1-k/N)^m. */
+export function sampleCoverage(k: number, population: number): string {
+  if (population <= 0 || k <= 0) return "no sample";
+  const p = k / population, miss = (m: number): string => `${Math.round(Math.pow(1 - p, m) * 100)}%`;
+  const m95 = Math.ceil(Math.log(0.05) / Math.log(1 - p));
+  return `sample of ${n(k)} of ${n(population)} cards (${(p * 100).toFixed(2)}%); a move touching 1 card is missed ${miss(1)}, 10 cards ${miss(10)}, 100 cards ${miss(100)}; fewer than ~${n(m95)} cards touched is likely (>5%) missed`;
 }
 
 /** The paste-ready block for a commit message or the DERIVE_VERSION comment. */
@@ -315,14 +356,19 @@ export function formatSummary(r: ImpactReport, topChanged = 10): string {
   const changed = r.rows.changes.filter((c) => c.status !== "flip-only").sort((a, b) => size(b) - size(a) || a.name.localeCompare(b.name));
   if (changed.length) lines.push(`top changed: ${changed.slice(0, topChanged).map((c) => c.name).join("; ")}${changed.length > topChanged ? `; +${changed.length - topChanged} more` : ""}`);
   lines.push(`grammar complete: ${n(r.grammar.completeBase)} -> ${n(r.grammar.completeHead)} (${r.grammar.gained.length} gained, ${r.grammar.lost.length} lost, ${r.grammar.recordsChanged.length} with changed records)`);
-  if (r.matcherCode.length) lines.push(`MATCHER CODE DIFFERS (${r.matcherCode.length} file(s)): pair reasons below cover changed rows only; matcher-only effects are measured on the sample`);
+  if (r.matcherCode.length) lines.push(`MATCHER CODE DIFFERS on the pair/role path (${r.matcherCode.length} file(s): ${r.matcherCode.slice(0, 4).join(", ")}${r.matcherCode.length > 4 ? ", ..." : ""}): pair reasons below cover changed rows only; matcher-only effects are measured on the sample`);
+  for (const o of r.matcherOffPath) lines.push(`  changed but NOT on the pair/role path, not measured here: ${o.file} (instrument: ${o.instrument})`);
   if (r.pairs) {
     lines.push(pairLine("pair reasons of changed rows", r.pairs));
     if (r.pairs.skipped.length) lines.push(`  not paired (${r.pairs.skipped.length}): ${r.pairs.skipped.slice(0, 8).join("; ")}${r.pairs.skipped.length > 8 ? "; ..." : ""}`);
   } else lines.push("pair reasons: not run");
-  if (r.sample) lines.push(pairLine("matcher sample, seeded", r.sample));
+  if (r.sample) {
+    lines.push(pairLine("matcher sample, seeded", r.sample));
+    lines.push(`matcher-only coverage: ${sampleCoverage(r.sample.cards, r.samplePopulation ?? 0)}`);
+  }
   if (r.tokens) lines.push(`tokens: ${n(r.tokens.docs)} token docs, ${n(r.tokens.withRow)} with a derived row and ${n(r.tokens.docs - r.tokens.withRow)} synthesized as the engine does; token nodes the cards create: BASE ${n(r.tokens.nodesBase)}, HEAD ${n(r.tokens.nodesHead)}; a changed token row is paired against every card, makers against the nodes; token-vs-token pairs are not covered`);
   if (r.pairs) lines.push("pair options: deck-specific landTypes / enterWatchers / revenantToughness are off (the card-page reading); face names are disambiguated corpus-wide");
+  lines.push(`NOT measured: ${NOT_MEASURED.join("; ")}`);
   lines.push(...(r.ratchets ? formatRatchets(r.ratchets) : ["ratchets: not run"]));
   return lines.join("\n");
 }
@@ -343,6 +389,7 @@ function pairBlock(out: string[], title: string, p: PairSection): void {
 /** The whole human-readable report: per changed card, grammar lists, pairs, then the summary. */
 export function formatReport(r: ImpactReport): string {
   const out: string[] = [];
+  out.push("== NOT MEASURED BY THIS REPORT ==", ...NOT_MEASURED.map((x) => `  - ${x}`), "");
   out.push("== ROWS ==");
   for (const c of r.rows.changes) {
     const src = c.sourceBefore !== c.sourceAfter && c.sourceBefore && c.sourceAfter ? ` [${c.sourceBefore} -> ${c.sourceAfter}]` : "";

@@ -19,20 +19,21 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import { join, posix, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
-import { connect, docToCard, isStickerCard, loadConfig } from "@edh-seer/data";
+import { connect, loadConfig } from "@edh-seer/data";
 import { createPool, defaultWorkers } from "@edh-seer/data/parallel";
 import {
-  chooseMatcher, classifyRows, formatReport, ratchetReport, grammarReport, matcherCodeFiles, nodeModulesHash, pairsReport, sampleIds, snapOf, treeVerdict,
+  chooseMatcher, classifyRows, formatReport, ratchetReport, grammarReport, nodeModulesHash, pairsReport, sampleIds, snapOf, splitMatcherCode, treeVerdict,
   type CardPairs, type GrammarEntry, type RatchetInputs, type ImpactReport, type PairSection, type RowSnap,
 } from "./derive-impact-core.js";
+import { reach } from "./derive-impact-graph.js";
 import { measureDropped, measureRoles, type DroppedTagger, type RoleDetectors } from "./ratchet-measure.js";
 import type { PairItem, PairResult, Setup } from "./derive-impact-worker.js";
 
-/** Cards in the matcher sample when the matcher's code differs. About 1.3 s per card (both sides, against every card). */
-const SAMPLE_DEFAULT = 150;
+/** Cards in the matcher sample when the matcher's code differs. About 0.4 s per card on 9 workers (both sides, against every card). */
+const SAMPLE_DEFAULT = 300;
 const REPO = resolve(import.meta.dirname, "../../..");
 const git = (...args: string[]): string => execFileSync("git", args, { cwd: REPO, encoding: "utf8", maxBuffer: 1 << 28 }).trim();
 
@@ -115,29 +116,49 @@ interface Side {
   deriveVersion: number;
   tagger: DroppedTagger;
   matcher: RoleDetectors;
+  /** packages/data docs.ts of THAT commit: a change to how a card document becomes a Card is part of what is measured. */
+  docToCard: (d: never) => unknown;
+  isStickerCard: (d: never) => boolean;
 }
 async function loadSide(root: string): Promise<Side> {
   const imp = (rel: string): Promise<any> => import(pathToFileURL(join(root, rel)).href);
-  const [w, g, d, i, s, sc, tg, mt] = await Promise.all([
+  const [w, g, d, i, s, sc, tg, mt, dt] = await Promise.all([
     imp("packages/tagger/src/derive-worker.ts"), imp("packages/tagger/src/grammar/clause-record.ts"), imp("packages/tagger/src/derive/derive.ts"),
     imp("packages/tagger/src/derive-input.ts"), imp("packages/tagger/src/clause-store.ts"), imp("packages/tagger/src/derive-scope.ts"),
-    imp("packages/tagger/src/index.ts"), imp("packages/matcher/src/index.ts"),
+    imp("packages/tagger/src/index.ts"), imp("packages/matcher/src/index.ts"), imp("packages/data/src/docs.ts"),
   ]);
-  return { deriveRow: w.deriveRow, grammarClauseRecords: g.grammarClauseRecords, deriveCardTags: d.deriveCardTags, deriveInputOf: i.deriveInputOf, segmentHash: s.segmentHash, deriveScopeFilter: sc.deriveScopeFilter, deriveVersion: d.DERIVE_VERSION, tagger: tg, matcher: mt };
+  return { deriveRow: w.deriveRow, grammarClauseRecords: g.grammarClauseRecords, deriveCardTags: d.deriveCardTags, deriveInputOf: i.deriveInputOf, segmentHash: s.segmentHash, deriveScopeFilter: sc.deriveScopeFilter, deriveVersion: d.DERIVE_VERSION, tagger: tg, matcher: mt, docToCard: dt.docToCard, isStickerCard: dt.isStickerCard };
 }
 const [B, H] = [await loadSide(baseRoot), await loadSide(REPO)];
 
-// ---- did the matcher's code change? (tracked changes AND new files) ----
-const taggerExports = (JSON.parse(readFileSync(join(REPO, "packages/tagger/package.json"), "utf8")) as { exports: Record<string, string> }).exports;
-const taggerPairTime = Object.entries(taggerExports).filter(([k]) => k !== ".").map(([, v]) => `packages/tagger/${v.replace(/^\.\//, "")}`);
+// ---- did code the pair / role path RUNS change? (tracked changes AND new files; the import graph, in both trees) ----
+const PAIR_ROLE_ENTRIES = ["edges", "faces", "tokens", "token-tags", "hierarchy", "build", "wincon", "types"].map((f) => `packages/matcher/src/${f}.ts`);
+/** CEILING: analyze.ts is on the path for `collectTokenNodes` / `disambiguateFaceNames` only, but its imports are not followed (they are the whole deck pipeline), so an edit anywhere in analyze.ts counts as on-path. */
+const ANALYZE = "packages/matcher/src/analyze.ts";
+function reachIn(root: string): Set<string> {
+  const pkgExports = new Map<string, { exports?: Record<string, string>; main?: string }>();
+  const pkg = (name: string) => { let p = pkgExports.get(name); if (!p) { try { p = JSON.parse(readFileSync(join(root, "packages", name, "package.json"), "utf8")); } catch { p = {}; } pkgExports.set(name, p!); } return p!; };
+  const resolveSpec = (from: string, spec: string): string | undefined => {
+    if (spec.startsWith(".")) { const t = posix.normalize(posix.join(posix.dirname(from), spec.replace(/\.js$/, ".ts"))); return existsSync(join(root, t)) ? t : undefined; }
+    const m = /^@edh-seer\/([\w-]+)(\/.*)?$/.exec(spec);
+    if (!m) return undefined;
+    const p = pkg(m[1]!), key = m[2] ? `.${m[2]}` : ".";
+    const target = p.exports?.[key] ?? (key === "." ? p.main : undefined);
+    return target ? `packages/${m[1]}/${target.replace(/^\.\//, "")}` : undefined;
+  };
+  const r = reach(PAIR_ROLE_ENTRIES, (rel) => { try { return readFileSync(join(root, rel), "utf8"); } catch { return undefined; } }, resolveSpec);
+  r.add(ANALYZE);
+  return r;
+}
+const reachable = new Set([...reachIn(REPO), ...reachIn(baseRoot)]);
 const changedPaths = [...new Set([
   ...git("diff", "--name-only", baseSha, "--", "packages").split("\n"),
   ...git("ls-files", "--others", "--exclude-standard", "--", "packages").split("\n"),
 ].filter(Boolean))];
-const matcherCode = matcherCodeFiles(changedPaths, taggerPairTime);
+const { onPath: matcherCode, offPath: matcherOffPath } = splitMatcherCode(changedPaths, reachable);
 const headSha = git("rev-parse", "--short=8", "HEAD");
 const dirty = git("status", "--porcelain", "--", "packages").length > 0;
-log(`matcher: ${matcherMode}; matcher code ${matcherCode.length ? `DIFFERS (${matcherCode.length} file(s): ${matcherCode.slice(0, 5).join(", ")})` : "is the same"}`);
+log(`matcher: ${matcherMode}; ${reachable.size} files on the pair/role path; changed on it: ${matcherCode.length ? `${matcherCode.length} (${matcherCode.slice(0, 5).join(", ")})` : "none"}; changed off it: ${matcherOffPath.length}`);
 const sampleN = values["no-pairs"] ? 0 : num(values["pair-sample"], matcherCode.length ? SAMPLE_DEFAULT : 0, "--pair-sample");
 
 // ---- Mongo, read-only ----
@@ -187,30 +208,32 @@ const snaps = (m: RowMap): Map<string, RowSnap> => new Map([...m].filter(([, r])
 const rows = classifyRows(snaps(rowsB), snaps(rowsH));
 const grammar = grammarReport(grammarEntries.filter((e) => keep(e.name)));
 
-// ---- the two by-name ratchets, in memory (the bins' own measuring functions, each commit's own tagger / matcher, no Mongo write) ----
+// ---- the two by-name ratchets, in memory (the bins' own measuring functions, each commit's own tagger / matcher / docs.ts, no Mongo write) ----
 let ratchets: ReturnType<typeof ratchetReport> | undefined;
 if (!values["no-ratchets"]) {
-  // The bins' population: every commander-legal card, stickers skipped, by name.
-  const inEngine = allCards.filter((c) => c.legalities?.commander === "legal" && !isStickerCard(c)).sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
   const canonical = new Map(clauseDocs.filter((d) => !d.isToken).map((d) => [d.oracleId as string, d.canonical]));
   const measure = (side: Side, rowsOf: RowMap, detectors: RoleDetectors): RatchetInputs => {
+    // The bins' population: every commander-legal card, stickers skipped (by THIS commit's isStickerCard), by name.
+    const inEngine = allCards.filter((c) => c.legalities?.commander === "legal" && !side.isStickerCard(c as never)).sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
     const dropped = measureDropped(inEngine, (id) => { const r = rowsOf.get(id); return r ? { ...r.tags, clauseSource: r.snap.fromGrammar ? "grammar" : "model" } : undefined; }, (id) => canonical.get(id), side.tagger).measured;
-    const dc = inEngine.map((d) => ({ card: docToCard(d as never), tags: rowsOf.get(d._id)?.tags ?? null }));
-    return { dropped, roles: measureRoles(dc, detectors) };
+    const dc = inEngine.map((d) => ({ card: side.docToCard(d as never), tags: rowsOf.get(d._id)?.tags ?? null }));
+    return { dropped, roles: measureRoles(dc, detectors), untagged: dc.filter((x) => x.tags === null).map((x) => (x.card as { name: string }).name) };
   };
   const bank = (f: string): unknown => JSON.parse(readFileSync(join(REPO, "packages/instruments", f), "utf8"));
-  ratchets = ratchetReport(measure(B, rowsB, matcherMode === "own" ? B.matcher : H.matcher), measure(H, rowsH, H.matcher), { dropped: bank("dropped-clauses.json") as never, roles: bank("role-membership.json") as never });
-  log(`ratchets measured: dropped-clauses ${ratchets.dropped.base.actions} -> ${ratchets.dropped.head.actions}, role-ratchet gained ${ratchets.roles.gained.length} lost ${ratchets.roles.lost.length}`);
+  const bankedDropped = bank("dropped-clauses.json") as RatchetInputs["dropped"], bankedRoles = bank("role-membership.json") as RatchetInputs["roles"], bankedUntagged = bank("role-membership-untagged.json") as string[];
+  ratchets = ratchetReport(measure(B, rowsB, matcherMode === "own" ? B.matcher : H.matcher), measure(H, rowsH, H.matcher), { dropped: bankedDropped, roles: bankedRoles, untagged: bankedUntagged });
+  log(`ratchets measured: dropped-clauses ${ratchets.dropped.base.actions} -> ${ratchets.dropped.head.actions}, role-ratchet gained ${ratchets.roles.gained.length} lost ${ratchets.roles.lost.length}, untagged ${ratchets.untagged.base} -> ${ratchets.untagged.head}`);
 }
 
 // ---- pair reasons, spread over worker threads (results come back in input order, so the report equals a one-worker run) ----
+let samplePopulation: number | undefined;
 let pairs: PairSection | undefined, sample: PairSection | undefined, tokens: ImpactReport["tokens"];
 const pairDetail: CardPairs[] = [], sampleDetail: CardPairs[] = [];
 if (!values["no-pairs"]) {
   const tagsOf = (m: RowMap) => new Map([...m].map(([id, r]) => [id, r.tags]));
-  const cards = new Map<string, any>();
-  for (const id of new Set([...rowsB.keys(), ...rowsH.keys()])) if (cardById.has(id) && !tokenSrc.has(id)) cards.set(id, docToCard(cardById.get(id) as never));
-  const setup: Setup = { baseRoot, repo: REPO, ownMatcher: matcherMode === "own", tagsB: tagsOf(rowsB), tagsH: tagsOf(rowsH), cards, tokenDocs };
+  const docs = new Map<string, any>();
+  for (const id of new Set([...rowsB.keys(), ...rowsH.keys()])) if (cardById.has(id) && !tokenSrc.has(id)) docs.set(id, cardById.get(id));
+  const setup: Setup = { baseRoot, repo: REPO, ownMatcher: matcherMode === "own", tagsB: tagsOf(rowsB), tagsH: tagsOf(rowsH), docs, tokenDocs };
   const pool = createPool<PairItem, PairResult>(new URL("./derive-impact-worker.ts", import.meta.url), { workers: num(values.workers, defaultWorkers(), "--workers"), heapMb: 8192 });
   try {
     await pool.broadcast(setup);
@@ -231,7 +254,9 @@ if (!values["no-pairs"]) {
     log(`pair reasons of ${pairDetail.length} changed rows done`);
     if (sampleN > 0) {
       const taken = new Set(items.map((i) => i.id));
-      const ids = sampleIds([...cards.keys()].filter((id) => rowsH.has(id) && !taken.has(id)), sampleN);
+      const candidates = [...docs.keys()].filter((id) => rowsH.has(id) && !taken.has(id));
+      samplePopulation = candidates.length;
+      const ids = sampleIds(candidates, sampleN);
       for (const r of await pool.map(ids.map((id): PairItem => ({ id, name: (cardById.get(id) as { name: string }).name, isToken: false })))) sampleDetail.push(r.detail);
       sample = { ...pairsReport(sampleDetail), cards: ids.length, skipped: [] };
       log(`matcher sample of ${ids.length} cards done`);
@@ -241,7 +266,7 @@ if (!values["no-pairs"]) {
 
 const report: ImpactReport = {
   base: { ref: positionals[0]!, sha: baseSha.slice(0, 8), deriveVersion: B.deriveVersion }, head: { ref: "HEAD", sha: headSha, deriveVersion: H.deriveVersion, dirty },
-  matcher: matcherMode, matcherCode, rows, grammar, ...(pairs ? { pairs } : {}), ...(sample ? { sample } : {}), ...(tokens ? { tokens } : {}), ...(ratchets ? { ratchets } : {}),
+  matcher: matcherMode, matcherCode, matcherOffPath, ...(samplePopulation ? { samplePopulation } : {}), rows, grammar, ...(pairs ? { pairs } : {}), ...(sample ? { sample } : {}), ...(tokens ? { tokens } : {}), ...(ratchets ? { ratchets } : {}),
 };
 console.log(formatReport(report));
 if (values.json) writeFileSync(values.json, JSON.stringify({ ...report, pairDetail, sampleDetail }, null, 1));

@@ -1,8 +1,10 @@
 {
   "packages/data/src/scryfall.ts": 3,
   "packages/instruments/src/action-blockers-core.ts": 1,
-  "packages/instruments/src/derive-impact-core.ts": 3,
+  "packages/instruments/src/derive-impact-core.ts": 2,
+  "packages/instruments/src/derive-impact-graph.ts": 1,
   "packages/instruments/src/derive-impact-pairs.ts": 2,
+  "packages/instruments/src/derive-impact.ts": 1,
   "packages/instruments/src/dropped-clauses-core.ts": 3,
   "packages/matcher/src/analyze.ts": 4,
   "packages/matcher/src/answer-coverage.ts": 1,

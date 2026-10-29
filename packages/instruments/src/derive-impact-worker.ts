@@ -9,24 +9,26 @@ import { hasSubject, pairContext, reasonsOf, type MatcherModule, type PairContex
 
 export interface Setup {
   baseRoot: string; repo: string; ownMatcher: boolean;
-  tagsB: Map<string, any>; tagsH: Map<string, any>; cards: Map<string, any>; tokenDocs: { _id: string; printingIds?: string[] }[];
+  tagsB: Map<string, any>; tagsH: Map<string, any>; /** raw card documents: each side builds its Cards with ITS OWN docs.ts */ docs: Map<string, any>; tokenDocs: { _id: string; printingIds?: string[] }[];
 }
 export interface PairItem { id: string; name: string; isToken: boolean; /** ask for the size of the worlds instead of pairing */ info?: true }
 export interface PairResult { detail: CardPairs; present: boolean; info?: { nodesBase: number; nodesHead: number } }
 
 let ctxB: PairContext, ctxH: PairContext;
-/** The matcher's public index plus the two modules the pair loop needs that it does not re-export (`disambiguateFaceNames`, `synthesizeTokenTags`), all from `root`. */
+/** The matcher's public index plus the two modules the pair loop needs that it does not re-export (`disambiguateFaceNames`, `synthesizeTokenTags`, `createsForYou`), all from `root`. */
 const matcherAt = async (root: string): Promise<MatcherModule> => {
   const at = (rel: string): Promise<Record<string, unknown>> => import(pathToFileURL(join(root, rel)).href);
-  const [index, analyze, tokenTags] = await Promise.all([at("packages/matcher/src/index.ts"), at("packages/matcher/src/analyze.ts"), at("packages/matcher/src/token-tags.ts")]);
-  return { ...index, disambiguateFaceNames: analyze.disambiguateFaceNames, synthesizeTokenTags: tokenTags.synthesizeTokenTags } as unknown as MatcherModule;
+  const [index, analyze, tokenTags, edges] = await Promise.all([at("packages/matcher/src/index.ts"), at("packages/matcher/src/analyze.ts"), at("packages/matcher/src/token-tags.ts"), at("packages/matcher/src/edges.ts")]);
+  return { ...index, disambiguateFaceNames: analyze.disambiguateFaceNames, synthesizeTokenTags: tokenTags.synthesizeTokenTags, createsForYou: edges.createsForYou } as unknown as MatcherModule;
 };
 
 export async function setup(s: Setup): Promise<void> {
   const head = await matcherAt(s.repo);
   const base = s.ownMatcher ? await matcherAt(s.baseRoot) : head;
-  ctxB = pairContext(base, s.tagsB, s.cards, s.tokenDocs);
-  ctxH = pairContext(head, s.tagsH, s.cards, s.tokenDocs);
+  const docToCardAt = async (root: string): Promise<(d: unknown) => unknown> => (await import(pathToFileURL(join(root, "packages/data/src/docs.ts")).href)).docToCard;
+  const cardsOf = (docToCard: (d: unknown) => unknown, tags: Map<string, unknown>): Map<string, unknown> => new Map([...tags.keys()].flatMap((id) => (s.docs.has(id) ? [[id, docToCard(s.docs.get(id))] as const] : [])));
+  ctxB = pairContext(base, s.tagsB, cardsOf(await docToCardAt(s.ownMatcher ? s.baseRoot : s.repo), s.tagsB), s.tokenDocs);
+  ctxH = pairContext(head, s.tagsH, cardsOf(await docToCardAt(s.repo), s.tagsH), s.tokenDocs);
 }
 export function pairOne(item: PairItem): PairResult {
   if (item.info) return { present: true, detail: { id: "", name: "", gained: [], lost: [], magnitude: [], attrs: [] }, info: { nodesBase: ctxB.nodes.length, nodesHead: ctxH.nodes.length } };
