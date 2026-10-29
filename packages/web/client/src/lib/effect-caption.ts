@@ -32,6 +32,9 @@ function factWords(f: MemberFact, filter: FactFilter): string {
     const a = f.amount;
     if (a.kind === "fixed") parts.push(`${a.value} each time`);
     else if (a.kind === "variable") parts.push("varies");
+    // "Include variable amounts" also keeps an ability whose amount the card does not print as a number we read
+    // (factPasses: anything not fixed passes with includeVariable), so the tile says so rather than nothing.
+    else if (a.kind === "unstated" && filter.includeVariable === true) parts.push("amount not stated");
     else if (a.kind === "plus") parts.push(`adds ${a.value}`);
     else if (a.kind === "times") parts.push(a.value === 2 ? "doubles" : a.value === 3 ? "triples" : `×${a.value}`);
   }

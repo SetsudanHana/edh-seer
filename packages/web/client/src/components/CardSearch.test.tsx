@@ -1159,6 +1159,15 @@ test("an activated ability reads 'as often as you like' and a variable amount 'v
   expect(await captionOf(/Skullclamp/)).toContain("varies · as often as you like · activated");
 });
 
+const triggeredUnstated = packFact({ kind: "triggered", repeats: "repeatable", amount: { kind: "unstated" } });
+
+test("with variable amounts included, an ability with no stated amount says so instead of nothing", async () => {
+  const members = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === MILL ? { p: [2], c: [], pf: [[triggeredUnstated]], cf: [] } : null;
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&amtvar=1&amtmin=3`, { members });
+  expect(await captionOf(/Skullclamp/)).toContain("amount not stated · triggered");
+});
+
 test("two and-terms are separated by semicolons, each with its own facts", async () => {
   const members = async (_b: string, k: string): Promise<EventMembers | null> =>
     k === MILL ? { p: [2], c: [], pf: [[pingOne]], cf: [] } : k === DIES ? { p: [2], c: [], pf: [[millTwoOnce]], cf: [] } : null;
