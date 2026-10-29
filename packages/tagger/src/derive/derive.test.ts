@@ -6955,6 +6955,56 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
   const trig = (event: string, subject: string, control: string, actions: unknown[], id = 1) => ({ id, abilityType: "triggered", trigger: { event, subject, control }, actions });
   const all = (c: ReturnType<typeof both>, check: (path: string, abs: ReturnType<typeof run>) => void) => { for (const [path, abs] of c) check(path, abs); };
 
+  test("#1403: Twist Allegiance's exchange reads you, then the opponent, on both paths", () => {
+    const text = "You and target opponent each gain control of all creatures the other controls until end of turn. Untap those creatures. Those creatures gain haste until end of turn.";
+    const stored = [{ id: 1, abilityType: "spell", actions: [rec("gain-control", "all creatures target opponent controls"), rec("gain-control", "all creatures you control"), rec("untap", "those creatures"), rec("grant-ability", "haste")] }];
+    all(both("Twist Allegiance", "Instant", text, stored), (path, abs) => expect(players(abs, "gains-control"), `Twist Allegiance ${path}`).toEqual(["you", "opp"]));
+    expect(grammarClauseRecords({ name: "Twist Allegiance", typeLine: "Instant", oracleText: text, keywords: [] } as never).complete).toBe(true);
+  });
+
+  test("#1403: Game of Chaos keeps the opponent's life loss and gain (an unreadable tail never shifts the aligned readings)", () => {
+    const text = "Flip a coin. If you win the flip, you gain 1 life and target opponent loses 1 life, and you decide whether to flip again. If you lose the flip, you lose 1 life and that opponent gains 1 life, and that player decides whether to flip again. Double the life stakes with each flip.";
+    const stored = [{ id: 1, abilityType: "spell", actions: [rec("flip-coin", "a coin"), rec("gain-life", "you", { amount: "1" }), rec("lose-life", "target opponent", { amount: "1" }), rec("other", "you decide whether to flip again"), rec("lose-life", "you", { amount: "1" }), rec("gain-life", "that opponent", { amount: "1" }), rec("other", "that player decides whether to flip again"), rec("double", "the life stakes")] }];
+    all(both("Game of Chaos", "Sorcery", text, stored).filter(([path]) => path === "model"), (path, abs) => { // the card is not grammar-complete: only the model path derives, and it reads the printed text with parseActions
+      expect(players(abs, "gain-life"), `Game of Chaos gain ${path}`).toEqual(["you", "opp"]);
+      expect(players(abs, "lose-life"), `Game of Chaos lose ${path}`).toEqual(["opp", "you"]);
+    });
+  });
+
+  test("#1403: a back-referenced amount never replaces the stored one (Oft-Nabbed Goat)", () => {
+    const text = "{1}: Draw a card. Gain control of this creature and put a -1/-1 counter on it. Only your opponents may activate this ability and only as a sorcery.\nWhen this creature dies, if it had one or more -1/-1 counters on it, its owner draws that many cards and each other player loses that much life.";
+    const stored = [{ id: 1, abilityType: "activated", actions: [rec("draw", "a card"), rec("gain-control", "this creature"), rec("add-counter", "-1/-1")] }, { id: 2, abilityType: "triggered", trigger: { event: "dies", subject: "this creature", control: "any" }, actions: [rec("draw", "its owner", { amount: "the number of -1/-1 counters on it" }), rec("lose-life", "each other player", { amount: "the number of -1/-1 counters on it" })] }];
+    all(both("Oft-Nabbed Goat", "Creature — Goat", text, stored).filter(([path]) => path === "model"), (path, abs) => {
+      const c2 = abs.filter((a) => a.clause === 2);
+      expect(c2.map((a) => a.amount), path).toEqual(["the number of -1/-1 counters on it", "the number of -1/-1 counters on it"]);
+      expect(c2.every((a) => (a.count?.scalesWith as { counter?: string } | undefined)?.counter === "-1/-1"), path).toBe(true);
+    });
+  });
+
+  test("#1403: a granted 'prevent damage to this creature' is not the granting card's self reference (Torrent of Lava, Caduceus)", () => {
+    const torrent = "Torrent of Lava deals X damage to each creature without flying.\nAs long as Torrent of Lava is on the stack, each creature has \"{T}: Prevent the next 1 damage that would be dealt to this creature by Torrent of Lava this turn.\"";
+    const tStored = [{ id: 1, abilityType: "spell", actions: [rec("deal-damage", "each creature without flying", { amount: "X" })] }, { id: 2, abilityType: "spell", actions: [rec("grant-ability", "each creature: Prevent the next 1 damage that would be dealt to this creature by Torrent of Lava this turn.")] }, { id: 3, abilityType: "activated", actions: [rec("prevent", "the next 1 damage that would be dealt to this creature by Torrent of Lava this turn")] }];
+    const cad = "Equipped creature has lifelink.\nAs long as you have 30 or more life, equipped creature gets +5/+5 and has indestructible and \"Prevent all damage that would be dealt to this creature.\"\nEquip {W}{W}";
+    const cStored = [{ id: 1, abilityType: "static", actions: [rec("grant-ability", "lifelink")] }, { id: 2, abilityType: "static", actions: [rec("modify-pt", "equipped creature", { amount: "+5/+5" }), rec("grant-ability", "indestructible"), rec("prevent", "all damage that would be dealt to this creature")] }, { id: 3, abilityType: "none", actions: [rec("none", "Equip {W}{W}")] }];
+    // Torrent of Lava is grammar-complete (both paths); Caduceus is model-only.
+    for (const [name, typeLine, text, stored, paths] of [["Torrent of Lava", "Sorcery", torrent, tStored, ["model", "grammar"]], ["Caduceus, Staff of Hermes", "Legendary Artifact — Equipment", cad, cStored, ["model"]]] as const) {
+      all(both(name, typeLine, text, stored as never).filter(([path]) => (paths as readonly string[]).includes(path)), (path, abs) => {
+        const prevented = abs.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "prevented");
+        expect(prevented.length, `${name} ${path} emits a prevented`).toBeGreaterThan(0);
+        expect(prevented.map((e) => e.subject.self), `${name} ${path}`).toEqual(prevented.map(() => undefined));
+      });
+    }
+  });
+
+  test("#1403: 'an opponent of your choice gains control of it' is the opponent's gain (Khârn the Betrayer)", () => {
+    const text = "Berzerker — Khârn the Betrayer attacks or blocks each combat if able.\nSigil of Corruption — When you lose control of Khârn the Betrayer, draw two cards.\nThe Betrayer — If damage would be dealt to Khârn the Betrayer, prevent that damage and an opponent of your choice gains control of it.";
+    const stored = [{ id: 1, abilityType: "static", actions: [rec("cant", "not attack or block")] }, { id: 2, abilityType: "triggered", trigger: { event: "loses-control", subject: "Khârn the Betrayer", control: "you" }, actions: [rec("draw", "card", { amount: "2" })] }, { id: 3, abilityType: "static", actions: [rec("prevent", "damage to Khârn the Betrayer"), rec("gain-control", "Khârn the Betrayer")] }];
+    all(both("Khârn the Betrayer", "Legendary Creature — Astartes Berserker", text, stored).filter(([path]) => path === "model"), (path, abs) => expect(players(abs, "gains-control"), `Khârn ${path}`).toEqual(["opp"]));
+    // The damage prevented is dealt to Khârn itself: a self reference, so a "damage dealt to YOU is prevented" payoff (Selfless Squire) is not fed by it.
+    all(both("Khârn the Betrayer", "Legendary Creature — Astartes Berserker", text, stored).filter(([path]) => path === "model"), (path, abs) =>
+      expect(abs.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "prevented").map((e) => e.subject.self), `Khârn prevented ${path}`).toEqual([true]));
+  });
+
   test("#1395: another player's half is never yours", () => {
     all(both("Shattergang Brothers", "Legendary Creature — Goblin Artificer", "{2}{B}, Sacrifice a creature: Each other player sacrifices a creature.\n{2}{R}, Sacrifice an artifact: Each other player sacrifices an artifact.\n{2}{G}, Sacrifice an enchantment: Each other player sacrifices an enchantment.",
       [1, 2, 3].map((id, k) => ({ id, abilityType: "activated", actions: [rec("sacrifice", ["a creature", "an artifact", "an enchantment"][k]!), rec("sacrifice", ["a creature", "an artifact", "an enchantment"][k]!)] }))),

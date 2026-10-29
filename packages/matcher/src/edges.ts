@@ -1220,6 +1220,12 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // counters (Incubation Druid -> Evolution Witness, owner-judged FALSE 2026-08-22); entries and
   // combat have their own gates above.
   if (SELF_BOTH_REFUSED.has(producer.verb) && producer.subject.self === true && consumer.subject.self === true) return false;
+  // DAMAGE PREVENTED FROM A PERMANENT IS NOT DAMAGE PREVENTED FROM A PLAYER (#1403): Khârn the Betrayer's "If damage would be dealt to Khârn, prevent that damage" is a self reference, and
+  // Selfless Squire's "whenever damage that would be dealt to YOU is prevented" is an untyped `you` subject (the trigger subject has no player flag). A self producer never feeds it.
+  // CEILING: an untyped `you` consumer is read as the player; the one corpus consumer shaped so (2026-10-29) is Selfless Squire's.
+  // CEILING: a TYPED prevented producer is not refused: about 30 keep one subject for "you and creatures you control" (Safe Passage, Endure, Heavy Fog), which really feed it, so the granted "this creature" prevention
+  // of Torrent of Lava and Caduceus still does too -- a prevented emit carries no player-vs-permanent flag. Telling them apart needs `player: true` on prevented subjects, as damage has (derive 381).
+  if (producer.verb === "prevented" && producer.subject.self === true && consumer.subject.control === "you" && consumer.subject.type === undefined && consumer.subject.self !== true) return false;
   // A removal is compared the way a placement is: by the counter KIND first (AC11 batch 1).
   if (producer.verb === "counter-added" || producer.verb === "counter-removed") return counterAddMatches(producer.subject, consumer.subject, h);
   // A DAMAGE EVENT HAS TWO PARTICIPANTS, AND A DEALER MUST BE COMPARED AGAINST A DEALER.

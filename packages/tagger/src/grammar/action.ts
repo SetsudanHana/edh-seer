@@ -63,7 +63,7 @@ export function amountOf(word: string): string | undefined {
 const ACTORS: [string, ActionReading["actor"]][] = ([
   ["each player", { control: "any", scope: "each" }], ["each opponent", { control: "opp", scope: "each" }],
   ["target opponent", { control: "opp", scope: "target" }], ["target player", { control: "any", scope: "target" }],
-  ["that player", { control: "any", scope: "that" }], ["an opponent", { control: "opp" }], ["you", { control: "you" }],
+  ["that player", { control: "any", scope: "that" }], ["that opponent", { control: "opp", scope: "that" }], ["an opponent", { control: "opp" }], ["you", { control: "you" }],
   ["its controller", { control: "any", scope: "that" }], ["its owner", { control: "any", scope: "that" }],
   ["defending player", { control: "opp", scope: "that" }],
   ["that spell's controller", { control: "any", scope: "that" }], ["that creature's controller", { control: "any", scope: "that" }],
@@ -1070,7 +1070,18 @@ const VERB_FORMS: [RegExp, string][] = Object.keys(HANDLERS).map((v) => [new Reg
 
 /** Every verb word a phrase can open with, for splitting -- wider than the handled ones, so a joint
  *  before an unhandled verb ("..., then shuffle") still splits. */
-const ANY_VERB = /^(?:(?:all|each|target) [a-z -]{1,50}? phases? (?:in|out)$|(?:it|that creature|those creatures|they) (?:doesn't|don't|can't|gains?|gets?) |(?:up to one )?(?:other |another )?target [a-z]+(?: [a-z]+)? gets?(?= )|(?:you |each player |each opponent |target player |target opponent |that player |its controller |they )?(?:may )?(?:draws?|discards?|mills?|scry|scries|surveils?|search(?:es)?|reveals?|puts?|shuffles?|returns?|exiles?|destroys?|sacrifices?|creates?|gains?|loses?|deals?|taps?|untaps?|adds?|counters?|copies|copy|casts?|plays?|attach(?:es)?|transforms?|investigates?|proliferate|populate|exchanges?|chooses?|look|looks|pays?|gets?|has|have|regenerates?|fights?|goads?|explores?|connives?|amass(?:es)?|manifest|venture|removes? (?=it|them|that|all)|double (?=the|its|that|target|each)|blight|convert|repeat this process|(?:~|this [a-z]+) (?:gets?|gains?|can't|deals?|endures|explores|connives)(?= )|defending player (?=loses|gains|sacrifices|discards)))\b/i;
+const ANY_VERB = /^(?:(?:all|each|target) [a-z -]{1,50}? phases? (?:in|out)$|(?:it|that creature|those creatures|they) (?:doesn't|don't|can't|gains?|gets?) |(?:up to one )?(?:other |another )?target [a-z]+(?: [a-z]+)? gets?(?= )|(?:you |each player |each opponent |target player |target opponent |that player |its controller |they )?(?:may )?(?:draws?|discards?|mills?|scry|scries|surveils?|search(?:es)?|reveals?|puts?|shuffles?|returns?|exiles?|destroys?|sacrifices?|creates?|gains?|loses?|deals?|taps?|untaps?|adds?|counters?|copies|copy|casts?|plays?|attach(?:es)?|transforms?|investigates?|proliferate|populate|exchanges?|chooses?|decides?(?= whether)|look|looks|pays?|gets?|has|have|regenerates?|fights?|goads?|explores?|connives?|amass(?:es)?|manifest|venture|removes? (?=it|them|that|all)|double (?=the|its|that|target|each)|blight|convert|repeat this process|(?:~|this [a-z]+) (?:gets?|gains?|can't|deals?|endures|explores|connives)(?= )|defending player (?=loses|gains|sacrifices|discards)))\b/i;
+
+/** "gain control of all creatures the other controls", the body of "you and X each ...". */
+const EXCHANGE = /^gain control of ((?:all|each) [a-z -]{1,40}?) the other controls\b/i;
+
+/** A tail that opens with a player of its own and then a verb ("an opponent of your choice gains control of it", Khârn): a new phrase with its own actor, not more of the object before it.
+ *  Only a short subject made of the player alone, so "a land card and an opponent ..." is not cut at the first "and". */
+function playerThenVerb(tail: string): boolean {
+  if (!playerSubject(tail)) return false;
+  const subject = tail.slice(0, tail.search(/ (?:draws|gains|loses|discards|mills|sacrifices|searches|reveals|creates|scries|surveils)\b/i)).replace(/ of your choice$/i, "");
+  return /^(?:an? |each |target |that |another |any |the )?(?:other )?(?:players?|opponents?)$/i.test(subject);
+}
 
 /** Split a sentence into phrases on ", then ", " and then ", ", and ", " and ", ", " -- only where a
  *  verb follows, so "a creature and a land" stays whole. */
@@ -1083,7 +1094,7 @@ function phrases(sentence: string): string[] {
     for (let m; (m = re.exec(rest));) {
       const tail = rest.slice(m.index + m[0].length).replace(/^then /, "");
       // ", then " is a joint whatever follows: "create a Robot token, then creatures you control get +1/+0".
-      if (m.index > 0 && ((m[0].includes(",") || /\b(?:and|then)\b/.test(m[0])) && ANY_VERB.test(tail) || /^, then $/.test(m[0]))) { cut = m.index; len = m[0].length; break; }
+      if (m.index > 0 && ((m[0].includes(",") || /\b(?:and|then)\b/.test(m[0])) && (ANY_VERB.test(tail) || playerThenVerb(tail)) || /^, then $/.test(m[0]))) { cut = m.index; len = m[0].length; break; }
     }
     if (cut < 0) { out.push(rest); return out; }
     out.push(rest.slice(0, cut));
@@ -1938,14 +1949,26 @@ export function parseActions(effect: string, type: string | null, cost?: string)
       // Black Widow's and Tenuous Truce's draws are never claimed as yours).
       if (!table || (table.control === "any" && table.scope === "that") || /^the controller of /.test(named)) {
         const shared: NonNullable<ActionReading["actor"]> = { control: "any", scope: "each" };
-        for (let k = 0; k < 2; k++) for (const p of phrases(both[2]!)) for (const alt of p.split(OR_ALTERNATIVE)) { const r = readPhrase(alt, condition, shared); if (r) out.push(...r); }
+        for (let k = 0; k < 2; k++) for (const p of phrases(both[2]!)) for (const alt of p.split(OR_ALTERNATIVE)) {
+          // "gain control of X the other controls" with a back-referenced player: whose X is whose cannot be said with one shared actor, so it is refused, not read as one player's.
+          const r = EXCHANGE.test(alt) ? null : readPhrase(alt, condition, shared);
+          if (r) out.push(...r); else if (k === 0) unread?.push(alt.trim());
+        }
         continue;
       }
       // Otherwise one action per player and phrase, the first pass YOURS and the second the named player's (#1391 F2), named outright: "defending player" and "the attacking player" are
       // definite opponents, so their back-reference scope is dropped and the object is the player, as the store writes it.
       const other: NonNullable<ActionReading["actor"]> = { control: table.control, ...(table.scope && table.scope !== "that" ? { scope: table.scope } : {}), text: both[1]! };
       const you: NonNullable<ActionReading["actor"]> = { control: "you", text: "you" };
-      for (const pair of [you, other]) for (const p of phrases(both[2]!)) for (const alt of p.split(OR_ALTERNATIVE)) { const r = readPhrase(alt, condition, pair); if (r) out.push(...r); }
+      const unreadAlts = new Set<string>();
+      for (const pair of [you, other]) for (const p of phrases(both[2]!)) for (const alt of p.split(OR_ALTERNATIVE)) {
+        // "each gain control of all creatures the other controls" (Twist Allegiance): each takes what the OTHER holds, so your pass names the player and theirs names you,
+        // the way the store writes the pair ("all creatures target opponent controls", then "all creatures you control").
+        const phrase = alt.replace(EXCHANGE, (_m, what: string) => `gain control of ${what} ${pair === you ? `${other.text} controls` : "you control"}`);
+        const r = readPhrase(phrase, condition, pair);
+        // A phrase either pass reads to nothing is unread, once, so the card is not complete without it.
+        if (r) out.push(...r); else if (!unreadAlts.has(alt)) { unreadAlts.add(alt); unread?.push(alt.trim()); }
+      }
       continue;
     }
     // "You and Humans you control have hexproof" (Sigarda): the class's grant is read; the player's
@@ -1968,7 +1991,7 @@ export function parseActions(effect: string, type: string | null, cost?: string)
       // ...except a LIFE payment by "that player" of a "For each opponent, you ..." sentence ("... return that card from your graveyard to your hand unless that player pays 3 life",
       // Sivriss): read as a separate lose-life, derive takes its recipient off a sentence that opens with "you", and the payment becomes yours. It stays the main action's `unless`, as the stored answer has it.
       // CEILING: only after "For each opponent,"; "they" / "its controller" pay (Tyrannize, Wand of Ith) keep the separate lose-life the stored rows also carry, and a granted ability's "that player" (Nazgul Battle-Mace) is not touched.
-      const thatPlayerPaysLife = forEachOpponent && payment !== undefined && /^that (?:player|opponent) pays? .+ life$/i.test(payment);
+      const thatPlayerPaysLife = payment !== undefined && (forEachOpponent && /^that player pays? .+ life$/i.test(payment) || /^that opponent pays? .+ life$/i.test(payment));
       const pay = payment && !thatPlayerPaysLife ? readPhrase(payment, "unless")?.map((a) => ({ ...a, optional: true as const })) ?? null : null;
       const mainCondition = payment && !pay ? [condition, `unless ${payment}`].filter(Boolean).join(", ") : condition;
       // "discard a card or pay {2}", "sacrifice a creature or discard a card": either is an action.

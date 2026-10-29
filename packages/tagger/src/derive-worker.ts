@@ -7,7 +7,8 @@ import { charsFrom, deriveInputOf } from "./derive-input.js";
 import { grammarClauseRecords } from "./grammar/clause-record.js";
 import { deriveDiff, lostClaims, lostScaledAmount, lostSubjectFields, lostTriggerFlags, manaDiffers } from "./grammar/derive-diff.js";
 import triage from "../grammar-only-triage.json" with { type: "json" };
-import { deriveCardTags, foldGrantTwins } from "./derive/derive.js";
+import { BACK_REF_AMOUNT, QUANTIFIER_AMOUNT, deriveCardTags, foldGrantTwins } from "./derive/derive.js";
+import { alignVerbs } from "./grammar/action.js";
 import type { CardClausesDoc, DerivedTagsDoc } from "./clause-store.js";
 import type { CardTags } from "./schema.js";
 import type { ClauseRecord } from "./canonicalize.js";
@@ -17,6 +18,24 @@ export interface DeriveResult { tags: CardTags; fromGrammar: boolean }
 
 /** Drops exact-duplicate abilities (same JSON, clause included), keeping the first. */
 function dedupe<T>(xs: T[]): T[] { const seen = new Set<string>(); return xs.filter((a) => { const k = JSON.stringify(a); return !seen.has(k) && !!seen.add(k); }); }
+
+/** THE STORED AMOUNT A BACK-REFERENCE POINTS AT (#1403). The grammar reads "that many" / "that much"; the stored answer, where it resolves it ("the number of -1/-1 counters on it", Oft-Nabbed Goat),
+ *  is the better amount, and derive keeps it over a back-referenced reading's (`BACK_REF_AMOUNT`). The grammar records carry the stored amount of the same clause and verb, so the grammar's reading
+ *  derives it too, and the switch compares like with like: a card whose only difference was that amount stays on the grammar (Basri Ket's batched attack trigger, Cryptcaller Chariot's `batched`).
+ *  Not a trigger's quantifier ("one or more", Cryptcaller's stored amount): that counts events, not the thing made.
+ *  CEILING: aligned by verb within a clause of the same id; a clause the two segment differently carries nothing. */
+export function carryStoredAmounts(grammar: ClauseRecord[], stored: ClauseRecord[]): ClauseRecord[] {
+  return grammar.map((rec) => {
+    const was = stored.find((c) => c.id === rec.id);
+    if (!was?.actions?.length || !rec.actions?.length) return rec;
+    const actions = rec.actions.map((a) => ({ ...a }));
+    for (const [i, j] of alignVerbs(was.actions.map((a) => a.verb ?? ""), actions.map((a) => a.verb ?? ""))) {
+      const old = was.actions[i]!.amount, now = actions[j]!.amount;
+      if (typeof now === "string" && BACK_REF_AMOUNT.test(now) && typeof old === "string" && old !== "" && !BACK_REF_AMOUNT.test(old) && !QUANTIFIER_AMOUNT.test(old)) actions[j] = { ...actions[j]!, amount: old };
+    }
+    return { ...rec, actions };
+  });
+}
 
 /** The keyword-grant twin fold (#1391; since F4 also an identical twin in an "instead" clause) applies to whichever tags win, never before the switch. */
 const folded = (t: CardTags, texts?: Record<number, string>): CardTags => ({ ...t, abilities: foldGrantTwins(t.abilities, texts) });
@@ -40,7 +59,8 @@ export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
   if (!isToken) {
     const g = grammarClauseRecords(source as never);
     if (g.complete) {
-      const grammarTags = deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, g.records, undefined, g.readings), { foldGrantTwins: false, collapseZoneSearches: false });
+      const records = carryStoredAmounts(g.records, doc.canonical as ClauseRecord[]);
+      const grammarTags = deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, records, undefined, g.readings), { foldGrantTwins: false, collapseZoneSearches: false });
       const key = deriveDiff(tags.abilities, grammarTags.abilities);
       // A labelled difference switches only when the grammar claims at least what the stored answer
       // claims (`lostClaims`): the label was judged on a few cards, the guard holds for every card.
@@ -57,7 +77,7 @@ export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
       const sameButDoubled = key !== null && dedupe(grammarTags.abilities).length === grammarTags.abilities.length && deriveDiff(dedupe(tags.abilities), grammarTags.abilities) === null;
       // The zone-search collapse (#1391 F3, one printed "search its graveyard, hand, and library" is one search ability) is likewise OFF for the decision: it changed the diff keys and flipped 5 cards
       // model->grammar, Finale of Devastation among them onto a reading whose enters emit claims the library only. The winner is RE-DERIVED with both dedupes on.
-      if ((key === null || right || sameButDoubled) && !manaDiffers(tags, grammarTags)) return { tags: rederived(source, doc, g.records, g.readings, grammarTags), fromGrammar: true };
+      if ((key === null || right || sameButDoubled) && !manaDiffers(tags, grammarTags)) return { tags: rederived(source, doc, records, g.readings, grammarTags), fromGrammar: true };
     }
   }
   return { tags: rederived(source, doc, doc.canonical as ClauseRecord[], undefined, tags, isToken), fromGrammar: false };

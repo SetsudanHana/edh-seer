@@ -166,3 +166,28 @@ describe("separate can't-attack / can't-block restrictions both survive (#1391 F
     });
   }
 });
+
+// #1403: a stored amount that resolves a back-reference ("that much") reaches the grammar's reading too, and a trigger quantifier stored as an amount ("one or more") is no count. Real oracle text and
+// stored records dumped from Mongo 2026-10-29. Without the carry these cards un-switched onto the stored answer (Cryptcaller lost `trigger.batched`).
+describe("a stored amount rides on the grammar's back-reference (#1403)", () => {
+  const CRYPT = { name: "Cryptcaller Chariot", typeLine: "Artifact — Vehicle", oracleText: "Menace\nWhenever you discard one or more cards, create that many tapped 2/2 black Zombie creature tokens.\nCrew 2", keywords: ["Crew", "Menace"] };
+  const CRYPT_STORED = [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Menace", fromZone: null, toZone: null }] }, { id: 2, abilityType: "triggered", trigger: { event: "discarded", subject: "a card", control: "you" }, actions: [{ verb: "create", object: "tapped 2/2 black Zombie creature tokens", fromZone: null, toZone: null, amount: "one or more", optional: false }] }, { id: 3, abilityType: "none", actions: [{ verb: "none", object: "Crew 2", fromZone: null, toZone: null }] }];
+  const DRAGON = { name: "Dragonspark Reactor", typeLine: "Artifact", oracleText: "Whenever this artifact or another artifact you control enters, put a charge counter on this artifact.\n{4}, Sacrifice this artifact: It deals damage equal to the number of charge counters on it to target player and that much damage to up to one target creature.", keywords: [] as string[] };
+  const dmg = (n: string) => ({ verb: "deal-damage", object: n, fromZone: null, toZone: null, amount: "the number of charge counters on this artifact", optional: false });
+  const DRAGON_STORED = [{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this artifact or another artifact you control", control: "you" }, actions: [{ verb: "add-counter", object: "charge counter", fromZone: null, toZone: null, amount: null, optional: false }] }, { id: 2, abilityType: "activated", actions: [{ verb: "sacrifice", object: "this artifact", fromZone: null, toZone: null, amount: null, optional: false }, dmg("target player"), dmg("up to one target creature")] }];
+
+  test("Cryptcaller Chariot stays on the grammar, keeps its batched trigger, and does not take 'one or more' as an amount", () => {
+    const row = deriveRow({ doc: { oracleId: "2bdd0bcb", name: CRYPT.name, canonical: CRYPT_STORED } as never, source: CRYPT, isToken: false });
+    expect(row.fromGrammar).toBe(true);
+    expect(row.tags.abilities.some((a) => a.trigger?.batched === true)).toBe(true);
+    expect(row.tags.abilities.map((a) => a.amount)).not.toContain("one or more");
+  });
+
+  test("Dragonspark Reactor stays on the grammar and gains the scaled 'that much'", () => {
+    const row = deriveRow({ doc: { oracleId: "a8acb0b0", name: DRAGON.name, canonical: DRAGON_STORED } as never, source: DRAGON, isToken: false });
+    expect(row.fromGrammar).toBe(true);
+    const dmgs = row.tags.abilities.filter((a) => a.effect?.kind === "damage");
+    expect(dmgs.length).toBeGreaterThan(1);
+    expect(dmgs.every((a) => a.count?.scalesWith !== undefined)).toBe(true);
+  });
+});
