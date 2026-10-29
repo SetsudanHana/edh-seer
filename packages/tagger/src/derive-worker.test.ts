@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { deriveRow } from "./derive-worker.js";
 import { grammarClauseRecords } from "./grammar/clause-record.js";
 import { deriveCardTags, foldGrantTwins } from "./derive/derive.js";
@@ -123,4 +123,46 @@ test("foldGrantTwins: an 'instead' only in parentheses folds nothing; outside th
   const twin = { kind: "on-cast", effect: { kind: "" }, emits: [{ verb: "shuffle", subject: { control: "you", token: null } }], clause: 1, repeats: "once" } as never;
   expect(foldGrantTwins([twin, twin], { 1: "Shuffle. Then shuffle. (If it would untap, remove one instead.)" })).toHaveLength(2);
   expect(foldGrantTwins([twin, twin], { 1: "Shuffle. If kicked, instead shuffle." })).toHaveLength(1);
+});
+
+// #1391 F5-F7 (oracle text and stored records dumped from Mongo 2026-10-28).
+const F567 = {"Arachnus Web":{"source":{"name":"Arachnus Web","typeLine":"Enchantment — Aura","keywords":["Enchant"],"oracleText":"Enchant creature\nEnchanted creature can't attack or block, and its activated abilities can't be activated.\nAt the beginning of the end step, if enchanted creature's power is 4 or greater, destroy this Aura."},"canonical":[{"id":1,"abilityType":"none","actions":[{"verb":"none","object":"Enchant creature","fromZone":null,"toZone":null}]},{"id":2,"abilityType":"static","actions":[{"verb":"cant","object":"attack","fromZone":null,"toZone":null,"amount":null,"optional":false},{"verb":"cant","object":"block","fromZone":null,"toZone":null,"amount":null,"optional":false},{"verb":"cant","object":"activated abilities be activated","fromZone":null,"toZone":null,"amount":null,"optional":false}]},{"id":3,"abilityType":"triggered","trigger":{"event":"end-step","subject":"you","control":"you"},"actions":[{"verb":"destroy","object":"this Aura","fromZone":null,"toZone":null,"amount":null,"optional":false}]}]},"Faith's Fetters":{"source":{"name":"Faith's Fetters","typeLine":"Enchantment — Aura","keywords":["Enchant"],"oracleText":"Enchant permanent\nWhen this Aura enters, you gain 4 life.\nEnchanted permanent can't attack or block, and its activated abilities can't be activated unless they're mana abilities."},"canonical":[{"id":1,"abilityType":"none","actions":[{"verb":"none","object":"Enchant permanent","fromZone":null,"toZone":null}]},{"id":2,"abilityType":"triggered","trigger":{"event":"enters","subject":"this","control":"you"},"actions":[{"verb":"gain-life","object":"you","fromZone":null,"toZone":null,"amount":"4","optional":false}]},{"id":3,"abilityType":"static","actions":[{"verb":"cant","object":"attack","fromZone":null,"toZone":null,"amount":null,"optional":false},{"verb":"cant","object":"block","fromZone":null,"toZone":null,"amount":null,"optional":false},{"verb":"cant","object":"activate activated abilities unless they're mana abilities","fromZone":null,"toZone":null,"amount":null,"optional":false}]}]},"Juniper Order Ranger":{"source":{"name":"Juniper Order Ranger","typeLine":"Creature — Human Knight Ranger","keywords":[],"oracleText":"Whenever another creature you control enters, put a +1/+1 counter on that creature and a +1/+1 counter on this creature."},"canonical":[{"id":1,"abilityType":"triggered","trigger":{"event":"enters","subject":"another creature you control","control":"you"},"actions":[{"verb":"add-counter","object":"+1/+1","fromZone":null,"toZone":null,"amount":null,"optional":false},{"verb":"add-counter","object":"+1/+1","fromZone":null,"toZone":null,"amount":null,"optional":false}]}]},"Sumala Sentry":{"source":{"name":"Sumala Sentry","typeLine":"Creature — Elf Archer","keywords":["Reach"],"oracleText":"Reach\nWhenever a face-down permanent you control is turned face up, put a +1/+1 counter on it and a +1/+1 counter on this creature."},"canonical":[{"id":1,"abilityType":"none","actions":[{"verb":"none","object":"Reach","fromZone":null,"toZone":null}]},{"id":2,"abilityType":"triggered","trigger":{"event":"turned-face-up","subject":"a face-down permanent you control","control":"you"},"actions":[{"verb":"add-counter","object":"+1/+1","fromZone":null,"toZone":null,"amount":"1","optional":false},{"verb":"add-counter","object":"+1/+1","fromZone":null,"toZone":null,"amount":"1","optional":false}]}]},"Primal Clay":{"source":{"name":"Primal Clay","typeLine":"Artifact Creature — Shapeshifter","keywords":[],"oracleText":"As this creature enters, it becomes your choice of a 3/3 artifact creature, a 2/2 artifact creature with flying, or a 1/6 Wall artifact creature with defender in addition to its other types. (A creature with defender can't attack.)"},"canonical":[{"id":1,"abilityType":"static","actions":[{"verb":"animate","object":"this creature becomes your choice of a 3/3 artifact creature, a 2/2 artifact creature with flying, or a 1/6 Wall artifact creature with defender in addition to its other types","fromZone":null,"toZone":null,"amount":null,"optional":false}]}]},"Aquamorph Entity":{"source":{"name":"Aquamorph Entity","typeLine":"Creature — Shapeshifter","keywords":["Morph"],"oracleText":"As this creature enters or is turned face up, it becomes your choice of 5/1 or 1/5.\nMorph {2}{U} (You may cast this card face down as a 2/2 creature for {3}. Turn it face up any time for its morph cost.)"},"canonical":[{"id":1,"abilityType":"static","actions":[{"verb":"animate","object":"this creature","fromZone":null,"toZone":null,"amount":null,"optional":false}]},{"id":2,"abilityType":"none","actions":[{"verb":"none","object":"Morph {2}{U}","fromZone":null,"toZone":null}]}]},"Molten Sentry":{"source":{"name":"Molten Sentry","typeLine":"Creature — Elemental","keywords":[],"oracleText":"As this creature enters, flip a coin. If the coin comes up heads, this creature enters as a 5/2 creature with haste. If it comes up tails, this creature enters as a 2/5 creature with defender."},"canonical":[{"id":1,"abilityType":"static","actions":[{"verb":"flip-coin","object":"a coin","fromZone":null,"toZone":null,"amount":null,"optional":false},{"verb":"animate","object":"this creature as a 5/2 creature with haste","fromZone":null,"toZone":null,"amount":null,"optional":false},{"verb":"animate","object":"this creature as a 2/5 creature with defender","fromZone":null,"toZone":null,"amount":null,"optional":false}]}]}} as Record<string, { source: { name: string; typeLine: string; keywords: string[]; oracleText: string }; canonical: unknown[] | null }>;
+const f567 = (name: string, path: "model" | "grammar") => deriveRow({ doc: { oracleId: "x", name, canonical: path === "model" ? F567[name]!.canonical : grammarClauseRecords(F567[name]!.source as never).records } as never, source: F567[name]!.source as never, isToken: false });
+const kinds = (row: ReturnType<typeof deriveRow>) => row.tags.abilities.map((a) => a.effect?.kind).filter((k) => k === "restriction" || k === "ability-loss").sort();
+
+// F7: "can't attack or block, and its activated abilities can't be activated" is ONE restriction and ONE ability-loss.
+test("Arachnus Web (stored attack / block / activated-abilities actions): one restriction, one ability-loss", () => {
+  expect(kinds(f567("Arachnus Web", "model"))).toEqual(["ability-loss", "restriction"]);
+});
+test("Faith's Fetters (grammar): the 'unless they're mana abilities' rider is the ability-loss's alone, so the restriction derives", () => {
+  expect(kinds(f567("Faith's Fetters", "grammar"))).toEqual(["ability-loss", "restriction"]);
+});
+
+// F5: "put a +1/+1 counter on that creature and a +1/+1 counter on this creature" is one placement on the trigger's creature and one on the card itself.
+const counterEmits = (row: ReturnType<typeof deriveRow>) => row.tags.abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.verb === "counter-added").map((e) => e.subject.self === true));
+test("Juniper Order Ranger (grammar) and Sumala Sentry (stored): one counter on the trigger's permanent, one on self", () => {
+  expect(counterEmits(f567("Juniper Order Ranger", "grammar"))).toEqual([false, true]);
+  expect(counterEmits(f567("Sumala Sentry", "model"))).toEqual([false, true]);
+});
+
+// F6: "it becomes your choice of A, B, or C" is one either/or animate; the grammar writes one animate action per alternative, folded as an "instead" twin is.
+test("Primal Clay and Aquamorph Entity (grammar): one animate, not one per alternative; Molten Sentry's coin flip keeps its two", () => {
+  expect(f567("Primal Clay", "grammar").tags.abilities.filter((a) => a.effect?.kind === "animate")).toHaveLength(1);
+  expect(f567("Aquamorph Entity", "grammar").tags.abilities.filter((a) => a.effect?.kind === "animate")).toHaveLength(1);
+  expect(f567("Molten Sentry", "model").tags.abilities.filter((a) => a.effect?.kind === "animate")).toHaveLength(2);
+});
+
+// F7 review: two SEPARATE restrictions in one clause keep both (only a reading covering BOTH words makes a stored bare combat action redundant). Synthetic Auras: no corpus card has the shape.
+describe("separate can't-attack / can't-block restrictions both survive (#1391 F7 review)", () => {
+  const cant = (o: string) => ({ verb: "cant", object: o, fromZone: null, toZone: null, optional: false });
+  const restricts = (row: ReturnType<typeof deriveRow>) => row.tags.abilities.filter((a) => a.effect?.kind === "restriction").flatMap((a) => a.restricts ?? []).sort();
+  for (const sentence of ["Enchanted creature can't attack. Enchanted creature can't block.", "Enchanted creature can't attack, and it can't block."]) {
+    test(sentence, () => {
+      const source = { name: "Synthetic Aura", typeLine: "Enchantment — Aura", keywords: [] as string[], oracleText: `Enchant creature\n${sentence}` };
+      const model = deriveRow({ doc: { oracleId: "x", name: source.name, canonical: [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant creature" }] }, { id: 2, abilityType: "static", actions: [cant("attack"), cant("block")] }] } as never, source: source as never, isToken: false });
+      expect(restricts(model)).toEqual(["attack", "block"]);
+      const grammar = deriveRow({ doc: { oracleId: "x", name: source.name, canonical: grammarClauseRecords(source as never).records } as never, source: source as never, isToken: false });
+      expect(restricts(grammar)).toEqual(["attack", "block"]);
+    });
+  }
 });

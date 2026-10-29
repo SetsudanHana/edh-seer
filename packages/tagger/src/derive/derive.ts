@@ -569,7 +569,8 @@ import { emblemRecipient } from "../emblem.js";
 // 404: #1391 part 2 F2 -- "you and <player> each <verb>" (Farsight Adept, Thran Spider, Cait, Bloodroot Apothecary; 16 cards change, below) reads the first pass as YOU and the second as the named player (`action.ts` `both`), not two JSON-identical `any` actors: a stored draw / discard pair takes the player's own object, and a `create` pair carries the player on `Action.actor` so the token-generation subject is yours and theirs. A store that wrote ONE action for the pair is unchanged (the grammar reads more draws than it holds, so it is left as stored). Measured (full re-derive): cards with exact-duplicate abilities 129 -> 115 (model 79 -> 72, grammar 50 -> 43); 16 cards change (full-corpus deriveRow diff, 31,667 cards). 5 are single-actor creates, intentionally widened (`Action.actor` applies to any `create` with a named, non-back-referenced actor): Kamber, the Plunderer, Lotho, Corrupt Shirriff, Rocco, Street Chef, Seize the Spotlight (you) and Ingenious Mastery (opp), each `any` before. 11 lose a false twin: Farsight Adept, Teyo, Love Song of Night and Day (draw you + target opponent), Thran Spider, Bloodroot Apothecary, Oath of the Grey Host (token you + opponent), Cait, Cage Brawler (the defending player's draw and discard were `you`), Karazikar, Tempt with Bunnies / Reflections / Vengeance (the opponents' tokens are theirs; the "for each opponent who does" repeat stays). A back-referenced player ("that player": Diviner Spirit, Sergeant John Benton, Xyris, Black Widow) keeps the 403 pair, both `any`. Switch: 7 cards move model -> grammar, each because the two readings are now identical (Flumph, Loran of the Third Path, Sky Crier, Secret Rendezvous, Joined Researchers, Your Temple Is Under Attack, Karazikar). Panel precision 100.0% / retention 98.4% (428 held, 7 lost) unchanged; role-ratchet gained 0 lost 0; dropped-clauses 5179 unchanged. Still a `you` for another player (same at 403, #1395): Angel of Destiny, Benevolent Offering, Eumidian Wastewaker, Twist Allegiance, Reins of Power.
 // 405: #1391 part 2 F3 -- one printed search over several zones ("Search its owner's graveyard, hand, and library for ...": Eradicate, Extirpate, Kassandra, Gate to the Afterlife, ~27 cards) is ONE search ability, not one per zone (the graveyard and hand ones were JSON-identical, no emits): `collapseZoneSearches` merges a run of same-object searches that differ only in `fromZone`, keeping the library member so the `search` emit and `librarySearch` survive. Measured (full re-derive): cards with exact-duplicate abilities 115 -> 93 (model 72 -> 56, grammar 43 -> 37). 77 cards change, each a search-count drop (no mana or unclaimed field moves): the "graveyard, hand, and library" hate and named-card searches 3 -> 1 (Extirpate, Eradicate, Surgical Extraction, Memoricide, Deadly Cover-Up ... librarySearch "other", subject `any`; Kassandra, Gate to the Afterlife, Shaun & Rebecca "yours"), ~40 "library and/or graveyard" searches 2 -> 1 (Ethereal Elk, The First Doctor, Chandra's Outburst ...); Vraska's Scorn, Jace's Ruse, Liberating Combustion 3 -> 2 and Nissa's Encouragement 6 -> 5 (CEILING). The kept "yours" search's subject reads `you` (was `any`), and on Chandra's Flame Wave, Vraska's Scorn, Ecological Appreciation and Turtles Forever its `search` emit too: every corpus consumer of a search event is an opponent's (River Song, Archivist of Oghma, Ob Nixilis, Unshackled, Wan Shi Tong, Librarian), so `any` matched them -- a false edge, now gone: with one search action left, a stated-nowhere searcher defaults to you (`ACTOR_DEFAULTS_TO_YOU`); "other" searches stay `any`. The card-by-card switch decides with both dedupes off (`collapseZoneSearches: false`, `foldGrantTwins: false`): 0 cards move (collapsing first moved 5, Finale of Devastation onto a library-only reading). Panel precision 100.0% / retention 98.4% (428 held, 7 lost) unchanged; role-ratchet gained 0 lost 0; dropped-clauses 5179 unchanged (measured after a forced re-derive at this code: the first measurement read a same-version derive that had not re-run).
 // 406: #1391 part 2 F4 -- the post-switch twin fold also drops an ability JSON-identical to an earlier one of the SAME clause when that clause's printed text (reminder text stripped) says "instead": an alternative branch that repeats the base branch (Grow from the Ashes' and Primal Growth's shuffle, Bane's Contingency's counter-spell, Academy Manufactor's token-doubling, Galadriel's Dismissal, Wildfire Howl, Bilbo) is one either/or effect. Measured (derive-corpus --force): cards with exact-duplicate abilities 93 -> 77 (model 56 -> 49, grammar 37 -> 28). 17 cards change, each only losing an identical either/or twin (oracle read for all 17): Academy Manufactor 3 -> 1 token-doubling, Bilbo, Fellow Conspirator, Szadek, Lord of Secrets, Bane's Contingency (counter-spell), Galadriel's Dismissal (phases-out), River of Tears and A-Town (mana-generation), Finale of Revelation and Careful Consideration (the shared draw; Careful Consideration's 3 vs 2 discards stay), Wildfire Howl (the shared 2 damage to each creature), Grow from the Ashes, Primal Growth, Entish Restoration, Sadistic Sacrament (the shared shuffle; the searches differ and stay), Burning Curiosity (exiled), Ceta Sanctuary (discard; grammar-only, no stored answer), Goblin Psychopath 4 -> 2 (its two stored limbs derived as clause 1 each doubled; one attacks and one blocks remain). Switch: 0 cards move. Panel precision 100.0% / retention 98.4% (428 held, 7 lost) unchanged; role-ratchet gained 0 lost 0; dropped-clauses 5179 unchanged.
-export const DERIVE_VERSION = 406;
+// 407: #1391 part 2 F5-F7 -- (F7) "can't attack or block, and its activated abilities can't be activated" (Arachnus Web, Volrath's Curse, Faith's Fetters, Realmbreaker's Grasp): a stored bare combat action the grammar's "attack or block" already covers is dropped before alignment (it took the activated-abilities phrase's place: restriction + TWO ability-loss), the "unless they're mana abilities" rider scopes to the abilities phrase, and `restrictedActions` ignores it; (F5) two counter placements in one clause read their own "counter on <X>" phrase, so "on that creature and on this creature" (Juniper Order Ranger, Sumala Sentry) is one on the trigger's permanent and one on self; (F6) the post-switch twin fold treats "your choice of" like "instead" (Primal Clay, Primal Plasma, Corrupted Shapeshifter, Aquamorph Entity: one animate per alternative on the grammar path). Measured (derive-corpus --force): cards with exact-duplicate abilities 77 -> 63 (model 49 -> 46, grammar 28 -> 17). 19 cards change (full deriveRow diff, tokens and grammar-only included; reviewer re-ran it): F7 Arachnus Web, Volrath's Curse, Academic Probation lose a duplicate ability-loss; Faith's Fetters, Realmbreaker's Grasp gain the restriction and lose the duplicate; Bound in Gold loses the duplicate (its "attack, block, or crew Vehicles" stays unread: dropped-clauses +2:cant, banked); F6 Primal Clay, Primal Plasma, Corrupted Shapeshifter 3 -> 1 animate, Aquamorph Entity 2 -> 1; F5 the self counter: Juniper Order Ranger, Captain America, Team Leader, X-23, Deadly Weapon (second), Sumala Sentry (was both self), Drillworks Mole, Trygon Prime, Ich-Tekik, Serrated Biskelion (first), Claim the Kingdom (plan counter). Switch: Arachnus Web moves model -> grammar (its readings are now identical). Panel precision 100.0% / retention 98.4% (428 held, 7 lost) unchanged; role-ratchet gained 0 lost 0; dropped-clauses 5179 -> 5180.
+export const DERIVE_VERSION = 407;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -640,6 +641,27 @@ const OTHER_OBJECT = /\b(?:target|another|each other|any other)\b/i;
  *  ability (Sinking Feeling), whose "this creature" is the grantee. */
 const COUNTER_PUT_AS_COST = /\bput (?:an?|one|two|three|x) [^,:]*?counters? on\b/i;
 const COUNTER_PREP = /\bcounters?\s+on\b/i;
+/** ONE COUNTER PLACEMENT PER RECIPIENT (#1391 F5): "put a +1/+1 counter on that creature and a +1/+1 counter on this creature" (Juniper Order Ranger, Sumala Sentry) stores two add-counter actions whose objects name no
+ *  recipient, and the clause text read whole made both "on that" (Juniper) or both "on this creature" (Sumala: the first "it" is the face-up permanent). When the clause has as many `counter(s) on <X>` phrases as
+ *  add-counter actions, the nth action reads the text with the OTHER actions' phrases cut out, so each recipient is judged alone and the lead-in ("This creature enters with ...") still counts.
+ *  CEILING: only a clause with exactly two add-counter actions and two \"counter on X and a counter on Y\" phrases (Communal Brewing's three, with a where-clause, reads the whole text; Sanctuary Wall's "... on it. If you do, put a stun counter on this creature." puts them in two sentences, so both still read self); "a counter on each of two creatures" or a list the store split otherwise reads the whole text, as before. */
+function ownCounterText(action: Action, actions: Action[], text: string): string {
+  if (action.verb !== "add-counter") return text;
+  const mine = actions.filter((a) => a.verb === "add-counter");
+  if (mine.length !== 2) return text;
+  // Index scanning, no lazy runs (CodeQL js/polynomial-redos): every "counter(s) on", and the sentence delimiter after it.
+  const starts = [...text.matchAll(/\bcounters?\s+on\s/gi)].map((m) => m.index!);
+  if (starts.length !== 2) return text;
+  const stop = (from: number): number => { const i = text.slice(from).search(/[,.;]/); return i < 0 ? text.length : from + i; };
+  // ...and the two are joined by the FIRST "and <a / a number>" between them, in one sentence (a third phrase in a where-clause, Communal Brewing, or a sentence break reads the whole text).
+  const [a, b] = starts as [number, number];
+  if (stop(a) < b) return text;
+  const join = /(?<=\s)and\s+(?=(?:an?|one|two|three|four|five|x|\d+)\s)/i.exec(text.slice(a, b));
+  if (!join) return text;
+  const phrases = [text.slice(a, a + join.index).trimEnd(), text.slice(b, stop(b))];
+  const own = mine.indexOf(action);
+  return phrases.reduce((t, ph, i) => (i === own ? t : t.replace(ph, "")), text);
+}
 function counterOnSelf(verb: string | undefined, text: string, cardName?: string, triggerIsSelf = false): boolean {
   if (verb === "adapt" || verb === "monstrosity") return true;
   if ((verb !== "add-counter" && verb !== "remove-counter") || !text) return false;
@@ -1922,7 +1944,19 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
   const readings = (precomputed ?? parseActions(effectText(text, cardName ?? ""), clause.abilityType ?? null, cost))
     .filter((r) => GRAMMAR_ACTION_VERBS.has(r.verb));
   if (readings.length === 0) return clause;
-  const stored = clause.actions;
+  // THE STORE WRITES "can't attack or block" AS TWO ACTIONS (attack, block) where the grammar reads ONE phrase (#1391 F7, Arachnus Web: attack, block, activated abilities against attack-or-block, activate): aligned by
+  // position the grammar's second phrase took the BLOCK action's place and the real activated-abilities action was left over, so one restriction and TWO ability-loss derived. A stored bare "block" / "attack"
+  // that an earlier stored bare combat action's reading already covers ("attack or block") is dropped before the alignment.
+  const combatWords = (o: string | undefined): string[] => (/^(?:attack|block)(?: or (?:attack|block))?$/i.exec((o ?? "").trim()) ? (o ?? "").toLowerCase().match(/attack|block/g)! : []);
+  // Only a reading that covers BOTH words ("attack or block") makes the second stored bare action redundant; two separate restrictions ("can't attack. ... can't block.") keep both.
+  const coveredByReading = new Set(readings.filter((r) => r.verb === "cant").map((r) => combatWords(r.text)).filter((w) => w.length === 2).flat());
+  let seenCombat = false;
+  const stored = clause.actions.filter((a) => {
+    if (a.verb !== "cant" || !/^(?:attack|block)$/i.test((a.object ?? "").trim())) return true;
+    const dup = seenCombat && coveredByReading.has((a.object ?? "").trim().toLowerCase());
+    seenCombat = true;
+    return !dup;
+  });
   // The store files "becomes prepared" as a grant of "prepared" (Codie): a prepare, not a grant, so it
   // takes no grant's reading ("becomes prepared and gains hexproof" would hand it "hexproof").
   const verbOf = (a: Action): string => (a.verb === "grant-ability" && /^prepared$/i.test((a.object ?? "").trim()) ? "prepare" : a.verb ?? "");
@@ -2865,7 +2899,7 @@ export function deriveAbilities(
         // 4,321 corpus counter emits carried no `self` -- every self-growing creature "fed" every
         // "whenever you put counters on THIS creature" payoff. The recipient is in the clause text.
         // A COUNTER REMOVED AS A COST names its permanent in the cost, not in the effect text.
-        || counterOnSelf(action.verb, (action.verb === "remove-counter" && /\bcounters?\b/i.test(cost)) || (action.verb === "add-counter" && COUNTER_PUT_AS_COST.test(cost) && !COUNTER_PREP.test(text) && clauseGrants?.[clause.id as number] === undefined) ? cost : text, cardName, isSelfSubject(clause.trigger?.subject ?? "", cardName))
+        || counterOnSelf(action.verb, (action.verb === "remove-counter" && /\bcounters?\b/i.test(cost)) || (action.verb === "add-counter" && COUNTER_PUT_AS_COST.test(cost) && !COUNTER_PREP.test(text) && clauseGrants?.[clause.id as number] === undefined) ? cost : ownCounterText(action, clause.actions ?? [], text), cardName, isSelfSubject(clause.trigger?.subject ?? "", cardName))
         // A pronoun standing in for the card itself. Tested on the RESOLVED antecedent, because the
         // raw object is "it" and matches none of the spellings above.
         || (PRONOUN_OBJECT.test((action.object ?? "").trim())
@@ -3941,12 +3975,12 @@ export function foldGrantTwins(abilities: Ability[], clauseTexts?: Record<number
     return !seen.has(key) && !!seen.add(key);
   });
 }
-/** A clause whose printed text says "instead" OUTSIDE its reminder text (#1391 F4): an alternative branch ("If this spell was kicked, instead search ...", "If you would create a Clue, Food, or Treasure token, instead
+/** A clause whose printed text says "instead" or "your choice of" OUTSIDE its reminder text (#1391 F4, F6: Primal Clay's "it becomes your choice of A, B, or C", one animate action per alternative on the grammar path): an alternative branch ("If this spell was kicked, instead search ...", "If you would create a Clue, Food, or Treasure token, instead
  *  create one of each") that derives an ability JSON-identical to the base branch's is one either/or effect, folded like a grant twin. `segment()` already drops reminder text (Wicked Slumber's "(... remove one from it
  *  instead.)" never reaches a clause text, and its two stun counters are a real repeat); parenthesised text is stripped here too, for a text handed in directly.
  *  CEILING: only an IDENTICAL twin folds; a branch that differs (Grow from the Ashes' two basic lands against one, a kicked amount) stays, and the alternative still counts as a second ability. An "instead"
  *  inside a quoted granted ability is not excluded (15 corpus cards, none with an identical twin at 406). */
-const hasInstead = (text: string | undefined): boolean => text !== undefined && /\binstead\b/i.test(text.replace(/\([^()]*\)/g, ""));
+const hasInstead = (text: string | undefined): boolean => text !== undefined && /\b(?:instead|your choice of)\b/i.test(text.replace(/\([^()]*\)/g, ""));
 export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: boolean; collapseZoneSearches?: boolean } = {}): CardTags {
   const chars = input.characteristics;
   const derived = deriveAbilitiesOf(input, opts);
