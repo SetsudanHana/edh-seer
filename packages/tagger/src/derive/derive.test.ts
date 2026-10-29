@@ -6986,9 +6986,13 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
     const tStored = [{ id: 1, abilityType: "spell", actions: [rec("deal-damage", "each creature without flying", { amount: "X" })] }, { id: 2, abilityType: "spell", actions: [rec("grant-ability", "each creature: Prevent the next 1 damage that would be dealt to this creature by Torrent of Lava this turn.")] }, { id: 3, abilityType: "activated", actions: [rec("prevent", "the next 1 damage that would be dealt to this creature by Torrent of Lava this turn")] }];
     const cad = "Equipped creature has lifelink.\nAs long as you have 30 or more life, equipped creature gets +5/+5 and has indestructible and \"Prevent all damage that would be dealt to this creature.\"\nEquip {W}{W}";
     const cStored = [{ id: 1, abilityType: "static", actions: [rec("grant-ability", "lifelink")] }, { id: 2, abilityType: "static", actions: [rec("modify-pt", "equipped creature", { amount: "+5/+5" }), rec("grant-ability", "indestructible"), rec("prevent", "all damage that would be dealt to this creature")] }, { id: 3, abilityType: "none", actions: [rec("none", "Equip {W}{W}")] }];
-    for (const [name, typeLine, text, stored] of [["Torrent of Lava", "Sorcery", torrent, tStored], ["Caduceus, Staff of Hermes", "Legendary Artifact — Equipment", cad, cStored]] as const) {
-      all(both(name, typeLine, text, stored as never).filter(([path]) => path === "model"), (path, abs) =>
-        expect(abs.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "prevented").map((e) => e.subject.self), `${name} ${path}`).toEqual(abs.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "prevented").map(() => undefined)));
+    // Torrent of Lava is grammar-complete (both paths); Caduceus is model-only.
+    for (const [name, typeLine, text, stored, paths] of [["Torrent of Lava", "Sorcery", torrent, tStored, ["model", "grammar"]], ["Caduceus, Staff of Hermes", "Legendary Artifact — Equipment", cad, cStored, ["model"]]] as const) {
+      all(both(name, typeLine, text, stored as never).filter(([path]) => (paths as readonly string[]).includes(path)), (path, abs) => {
+        const prevented = abs.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "prevented");
+        expect(prevented.length, `${name} ${path} emits a prevented`).toBeGreaterThan(0);
+        expect(prevented.map((e) => e.subject.self), `${name} ${path}`).toEqual(prevented.map(() => undefined));
+      });
     }
   });
 

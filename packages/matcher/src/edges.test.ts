@@ -7076,8 +7076,8 @@ test("a self 'prevented' producer does not feed a 'prevented' consumer about the
   const khârn = { verb: "prevented", subject: { control: "any", token: null, self: true } } as never as GameEvent;
   const squire = { verb: "prevented", subject: { control: "you", token: null } } as never as GameEvent;
   expect(eventMatches(khârn, squire, H)).toBe(false);
-  // A protected permanent (a typed subject: Torrent of Lava's and Caduceus's granted prevention) is not "you" either.
-  expect(eventMatches({ verb: "prevented", subject: { control: "any", token: null, type: "creature" } } as never, squire, H)).toBe(false);
+  // A TYPED producer that protects you and your creatures still feeds it: Safe Passage's derived emit (Mongo, 2026-10-29).
+  expect(eventMatches({ verb: "prevented", subject: { control: "you", token: null, type: "creature", scope: "all" }, instantSpeed: true } as never, squire, H)).toBe(true);
   // Damage to anything prevented (the five untyped `any` consumers) and another card's prevention still match.
   expect(eventMatches(khârn, { verb: "prevented", subject: { control: "any" as const, token: null } }, H)).toBe(true);
   expect(eventMatches({ verb: "prevented", subject: { control: "any", token: null } } as never, squire, H)).toBe(true);
