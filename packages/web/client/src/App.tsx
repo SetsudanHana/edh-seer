@@ -195,7 +195,13 @@ export default function App() {
       setLink(payload ? shareUrl(window.location.origin, window.location.pathname, payload) : null);
       if (payload) {
         const write = payloadFromHash(window.location.hash) ? "replaceState" : "pushState";
-        window.history[write](null, "", `#deck=${payload}`);
+        // The entry carries a key of its own, as the router's do: written bare, it is "default" to the router, the same
+        // name as the first entry and every native fragment entry, and the scroll position of one is read back for
+        // another (ScrollToTop).
+        const at = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+        window.history[write](write === "pushState"
+          ? { usr: null, key: Math.random().toString(36).slice(2, 10), idx: at + 1 }
+          : window.history.state, "", `#deck=${payload}`);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -214,7 +220,7 @@ export default function App() {
   // state, and the hash (the deck) is untouched. `ReportShell` keys its "go home" on the deck's
   // cards, so the reader also stays on whatever surface they were on.
   const writeStateUrl = (s: GameState) =>
-    window.history.replaceState(null, "", `${window.location.pathname}${searchWithState(window.location.search, s)}${window.location.hash}`);
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${searchWithState(window.location.search, s)}${window.location.hash}`);
   const onState = (next: GameState) => {
     const previous = stateRef.current;
     setState(next);

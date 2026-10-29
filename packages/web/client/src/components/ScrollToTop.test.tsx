@@ -1,10 +1,13 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { Link, MemoryRouter, Route, Routes, useNavigate } from "react-router";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { ScrollToTop } from "./ScrollToTop.js";
 
+// The router's own navigate, for moves that are not a click (the browser's Back, a script).
+let nav: ReturnType<typeof useNavigate>;
 function Back() {
   const go = useNavigate();
+  nav = go;
   return <button onClick={() => go(-1)}>back</button>;
 }
 const app = (start: string[]) => (
@@ -20,7 +23,7 @@ let scroll: ReturnType<typeof vi.fn>;
 // The tests redefine these on the shared window; put back whatever was there so no test inherits another's page.
 const WATCHED = [[window, "scrollY"], [window, "innerHeight"], [document.documentElement, "scrollHeight"]] as const;
 const originals = WATCHED.map(([o, k]) => Object.getOwnPropertyDescriptor(o, k));
-beforeEach(() => { sessionStorage.clear(); scroll = vi.fn(); window.scrollTo = scroll as unknown as typeof window.scrollTo; });
+beforeEach(() => { history.replaceState({ idx: 0 }, ""); sessionStorage.clear(); scroll = vi.fn(); window.scrollTo = scroll as unknown as typeof window.scrollTo; });
 afterEach(() => {
   vi.restoreAllMocks();
   WATCHED.forEach(([o, k], i) => { const d = originals[i]; if (d) Object.defineProperty(o, k, d); else delete (o as unknown as Record<string, unknown>)[k]; });
@@ -193,3 +196,81 @@ test("a hash-only change does not scroll", () => {
   expect(scroll).not.toHaveBeenCalled();
 });
 
+test("an anonymous entry (state null, key default) is never restored from a record of another", () => {
+  vi.useFakeTimers();
+  try {
+    Object.defineProperty(window, "innerHeight", { value: 800, configurable: true });
+    height(5000);
+    render(app(["/cards/a"]));
+    scrolled(3000);
+    fireEvent.click(screen.getByText("to b"));
+    scrolled(0);
+    scroll.mockClear();
+    history.replaceState(null, ""); // the entry went back to is a native fragment / pushState(null) one
+    act(() => { void nav(-1); });
+    vi.advanceTimersByTime(50);
+    expect(scroll).not.toHaveBeenCalled();
+  } finally { vi.useRealTimers(); }
+});
+
+test("going back onto a #fragment entry of the same page leaves the jump to the anchor", () => {
+  sessionStorage.setItem("edh-seer:scroll-offsets", JSON.stringify([["default:0", { path: "/cards/a", y: 700 }]]));
+  render(app(["/cards/a#up", "/cards/a"]));
+  scroll.mockClear();
+  fireEvent.click(screen.getByText("back"));
+  expect(scroll).not.toHaveBeenCalled();
+});
+
+test("a click's offset is taken at the click, before the anchor's own jump", () => {
+  vi.useFakeTimers();
+  try {
+    Object.defineProperty(window, "innerHeight", { value: 800, configurable: true });
+    height(5000);
+    render(<MemoryRouter initialEntries={["/cards/a"]}><ScrollToTop /><a href="#x" data-testid="frag" onClick={(e) => e.preventDefault()}>f</a><Back /><Routes><Route path="*" element={null} /></Routes></MemoryRouter>);
+    scrolled(2000);
+    fireEvent.click(screen.getByTestId("frag")); // capture-phase listener notes 2000
+    scrolled(2600); // the browser jumped to the anchor before the router rendered
+    act(() => { void nav("/cards/b"); });
+    scrolled(0);
+    scroll.mockClear();
+    act(() => { void nav(-1); });
+    vi.advanceTimersByTime(50);
+    expect(scroll).toHaveBeenCalledWith(0, 2000);
+  } finally { vi.useRealTimers(); }
+});
+
+test("a click on the page left is not used for the page arrived on", () => {
+  vi.useFakeTimers();
+  try {
+    Object.defineProperty(window, "innerHeight", { value: 800, configurable: true });
+    height(5000);
+    render(app(["/cards/a"]));
+    scrolled(500);
+    fireEvent.click(screen.getByText("to b")); // B opens at the top
+    scrolled(0);
+    act(() => { void nav(-1); }); // browser Back, no click, within a second
+    scrolled(500);
+    scroll.mockClear();
+    act(() => { void nav(1); });
+    vi.advanceTimersByTime(50);
+    expect(scroll).not.toHaveBeenCalledWith(0, 500);
+  } finally { vi.useRealTimers(); }
+});
+
+test("leaving the document saves the entry's offset, and a fresh mount restores it", () => {
+  vi.useFakeTimers();
+  try {
+    Object.defineProperty(window, "innerHeight", { value: 800, configurable: true });
+    height(5000);
+    const first = render(app(["/cards/a"]));
+    scrolled(1234);
+    window.dispatchEvent(new Event("pagehide"));
+    expect(JSON.parse(sessionStorage.getItem("edh-seer:scroll-offsets")!)).toEqual([["default:0", { path: "/cards/a", y: 1234 }]]);
+    first.unmount();
+    scrolled(0);
+    scroll.mockClear();
+    render(app(["/cards/a"]));
+    vi.advanceTimersByTime(50);
+    expect(scroll).toHaveBeenCalledWith(0, 1234);
+  } finally { vi.useRealTimers(); }
+});
