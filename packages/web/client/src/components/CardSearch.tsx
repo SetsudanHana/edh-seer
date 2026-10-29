@@ -6,6 +6,7 @@ import { matchNames, needleOf } from "../lib/name-match.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
 import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, factFilterOf, orderOf, withoutFilterKind, EFFECT_KINDS, FILTER_KINDS, NATURAL_DIR, type EventQuery, type FilterKind } from "../lib/facets.js";
 import { effectCaption } from "../lib/effect-caption.js";
+import { isEmptyFilter } from "@edh-seer/matcher/member-facts";
 import { membersPassing, unjudgedLeftOut } from "../lib/effect-filter.js";
 import { AbilityKindRow, AmountRow, RepeatsRow } from "./EffectRows.js";
 import { EventSentence, termWords } from "./EventSentence.js";
@@ -950,20 +951,32 @@ export function CardSearch({
                 // WITH AN EFFECT ROW SET, each term also says how this card does it: the facts of the
                 // ability that passed, or that it is there by what it is (#1405 C).
                 const effectSet = askedKinds.some((k) => EFFECT_KINDS.includes(k));
-                const say = (t: (typeof terms)[number]): string => {
-                  const why = effectSet ? effectCaption(lists.get(t.key), t.side, pos, factFilterOf(eventQuery, t.side), eventQuery) : "";
-                  return why ? `${termWords(t)} · ${why}` : termWords(t);
+                const whyOf = (t: (typeof terms)[number]): { filter: boolean; why: string } => {
+                  const filter = factFilterOf(eventQuery, t.side);
+                  return { filter: effectSet && !isEmptyFilter(filter), why: effectSet ? effectCaption(lists.get(t.key), t.side, pos, filter) : "" };
                 };
-                const caption = [
-                  ...terms.filter((t) => t.op === "and").map(say),
-                  ...terms.filter((t) => t.op === "or" && (t.side === "makes" ? lists.get(t.key)?.p : lists.get(t.key)?.c)?.includes(pos)).map(say),
-                ];
+                const andTerms = terms.filter((t) => t.op === "and");
+                // AN `or` TERM IS A REASON ONLY IF ITS ABILITY PASSED: with an effect row set, a card in
+                // both terms by one failing ability must not name the failing one.
+                const orTerms = terms.filter((t) => t.op === "or"
+                  && (t.side === "makes" ? lists.get(t.key)?.p : lists.get(t.key)?.c)?.includes(pos)
+                  && (!whyOf(t).filter || whyOf(t).why !== ""));
+                const shownTerms = [...andTerms, ...orTerms];
+                // FACTS FIRST, because a three-across phone tile clips the end (#1405 C review). One term
+                // is already in the sentence above, so the facts stand alone; several are named, in
+                // parentheses, and joined by semicolons so two terms never read as one run.
+                const caption = shownTerms.map((t) => {
+                  const { why } = whyOf(t);
+                  if (why === "") return termWords(t);
+                  return shownTerms.length === 1 ? why : `${termWords(t)} (${why.replaceAll(" · ", ", ")})`;
+                });
                 return (
                   <li key={e.slug} className="min-w-0">
                     <CardTile
                       slug={e.slug} name={e.name} art={e.art} identity={e.identity}
                       to={`${commanderMode ? "/commanders" : "/cards"}/${e.slug}`}
-                      caption={caption.length > 0 ? caption.join(" · ") : undefined}
+                      caption={caption.length > 0 ? caption.join("; ") : undefined}
+                      captionLines={effectSet ? 3 : 2}
                       note={!commanderMode && e.commander ? "commander" : undefined}
                     />
                   </li>

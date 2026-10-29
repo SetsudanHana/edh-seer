@@ -1,32 +1,42 @@
 import { factPasses, isEmptyFilter, isUnjudgedFact, unpackFact, type FactFilter, type MemberFact } from "@edh-seer/matcher/member-facts";
-import type { Repeats } from "@edh-seer/tagger";
 import type { EventMembers } from "./partners.js";
-import type { EventQuery } from "./facets.js";
 
 /** WHY A TILE PASSED THE EFFECT ROWS, IN THE CARD'S OWN ABILITY (#1405 C). The short form of the
  *  how-often ladder; the kind words are the Ability type chips lower-cased. */
 const KIND_WORD: Record<MemberFact["kind"], string> = {
   spell: "spell", triggered: "triggered", activated: "activated", static: "static", replacement: "replacement",
 };
-const REPEATS_WORD: Record<string, string> = {
-  once: "once", "per-cycle": "once a round", "per-turn": "every turn", repeatable: "as often as you like", continuous: "always on",
-};
+/** "AS OFTEN AS YOU LIKE" IS AN ACTIVATED ABILITY'S WORD: on a trigger `repeatable` means it fires
+ *  every time the watched event happens (derive/repeats.ts rule 9), and the player does not choose. */
+function repeatsWord(f: MemberFact): string | undefined {
+  switch (f.repeats) {
+    case undefined: return undefined;
+    case "once": return "once";
+    case "per-cycle": return "once a round";
+    case "per-turn": return "every turn";
+    case "continuous": return "always on";
+    default: return f.kind === "activated" ? "as often as you like" : f.kind === "triggered" ? "every time it happens" : "every time";
+  }
+}
 
 export const BY_WHAT_IT_IS = "by what it is, not an ability";
 
-/** Which parts of a fact the reader filtered on: the kind whenever any row is set, the rest only
- *  if their own row is. */
-function factWords(f: MemberFact, q: EventQuery): string {
-  const parts: string[] = [KIND_WORD[f.kind]];
-  if (q.repeatsMin !== undefined && f.repeats !== undefined) parts.push(REPEATS_WORD[f.repeats as Repeats] ?? f.repeats);
-  const asked = q.amountMin !== undefined || q.amountMax !== undefined || q.amountVariable === true || q.amountChange !== undefined;
+/** Which parts of a fact the reader filtered ON THIS SIDE: the kind whenever any row is set, the rest
+ *  only if the side's own filter uses them (an asker's amount counts only with a change op). The
+ *  discriminating parts come first, because a small tile clips the end. */
+function factWords(f: MemberFact, filter: FactFilter): string {
+  const parts: string[] = [];
+  const asked = filter.amountMin !== undefined || filter.amountMax !== undefined || filter.includeVariable === true
+    || filter.changeOp !== undefined;
   if (asked) {
     const a = f.amount;
     if (a.kind === "fixed") parts.push(`${a.value} each time`);
-    else if (a.kind === "variable") parts.push("X each time");
-    else if (a.kind === "plus") parts.push(`+${a.value}`);
-    else if (a.kind === "times") parts.push(`×${a.value}`);
+    else if (a.kind === "variable") parts.push("varies");
+    else if (a.kind === "plus") parts.push(`adds ${a.value}`);
+    else if (a.kind === "times") parts.push(a.value === 2 ? "doubles" : a.value === 3 ? "triples" : `×${a.value}`);
   }
+  if (filter.minRepeats !== undefined) { const r = repeatsWord(f); if (r) parts.push(r); }
+  parts.push(KIND_WORD[f.kind]);
   return parts.join(" · ");
 }
 
@@ -34,7 +44,7 @@ function factWords(f: MemberFact, q: EventQuery): string {
  *  the reason it is listed without one: a member on the key by what it is. Empty when nothing needs
  *  saying. `id` is the card's index position. */
 export function effectCaption(
-  m: EventMembers | null | undefined, side: "makes" | "pays", id: number, filter: FactFilter, q: EventQuery,
+  m: EventMembers | null | undefined, side: "makes" | "pays", id: number, filter: FactFilter,
 ): string {
   if (!m || isEmptyFilter(filter)) return "";
   const ids = side === "makes" ? m.p : m.c;
@@ -44,5 +54,5 @@ export function effectCaption(
   if (own.length === 0) return BY_WHAT_IT_IS;
   const passing = own.filter((n) => !isUnjudgedFact(n)).map(unpackFact).filter((f) => factPasses(f, filter));
   if (passing.length === 0) return own.some(isUnjudgedFact) ? BY_WHAT_IT_IS : "";
-  return [...new Set(passing.map((f) => factWords(f, q)))].slice(0, 2).join(" / ");
+  return [...new Set(passing.map((f) => factWords(f, filter)))].slice(0, 2).join(" / ");
 }

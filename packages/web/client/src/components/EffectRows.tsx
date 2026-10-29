@@ -24,12 +24,12 @@ export const ABILITY_KIND_LABEL: Record<FactKind, string> = {
  *  "Any": any minimum runs `memberPasses`, so a card on the event by being cast, entering or a keyword
  *  (no ability fact) fails it, and the left-out note counts it -- the same restriction the Ability type
  *  row expresses, kept as a rung because a shared `?repeats=once` link must still select. `repeatable`
- *  keeps `continuous` too (`factPasses` compares ladder positions), so it says so. */
+ *  (an activated ability with no limit, a trigger that fires every time) keeps `continuous` too (`factPasses` compares ladder positions), so it says so. */
 export const REPEATS_LABEL: Record<(typeof REPEATS_LADDER)[number], string> = {
   once: "Once or more (by an ability)",
   "per-cycle": "At least once a round",
   "per-turn": "At least every turn",
-  repeatable: "As often as you like, or always on",
+  repeatable: "No limit (every time, or always on)",
   continuous: "Always on",
 };
 

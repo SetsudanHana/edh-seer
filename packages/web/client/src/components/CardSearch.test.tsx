@@ -1052,7 +1052,7 @@ test("the how-often options say what each keeps", async () => {
   const select = await screen.findByLabelText("How often");
   expect(select).toHaveValue("repeatable");
   expect(within(select).getAllByRole("option").map((o) => o.textContent)).toEqual([
-    "Any", "Once or more (by an ability)", "At least once a round", "At least every turn", "As often as you like, or always on", "Always on",
+    "Any", "Once or more (by an ability)", "At least once a round", "At least every turn", "No limit (every time, or always on)", "Always on",
   ]);
   expect(screen.queryByText("at least")).toBeNull();
 });
@@ -1118,7 +1118,7 @@ const captionOf = async (name: RegExp): Promise<string> =>
 
 test("a filtered tile's caption carries the passing ability's facts", async () => {
   atUrl(`/cards?produce=${encodeURIComponent(MILL)}&amtmin=1&amtmax=1&repeats=per-cycle`, factProps);
-  expect(await captionOf(/Skullclamp/)).toContain("mill a card · triggered · as often as you like · 1 each time");
+  expect(await captionOf(/Skullclamp/)).toContain("1 each time · every time it happens · triggered");
 });
 
 test("an unfiltered tile's caption is unchanged", async () => {
@@ -1130,7 +1130,7 @@ test("an unfiltered tile's caption is unchanged", async () => {
 
 test("on the skipped list the caption says it is there by what it is", async () => {
   atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered&skipped=1`, { members: UNJUDGED_MILL });
-  expect(await captionOf(/Fathom Mage/)).toContain("mill a card · by what it is, not an ability");
+  expect(await captionOf(/Fathom Mage/)).toContain("by what it is, not an ability");
 });
 
 test("an or-term card shows only the facts of the term it matched", async () => {
@@ -1146,4 +1146,39 @@ test("an or-term card shows only the facts of the term it matched", async () => 
 test("an empty skipped view does not also say these are the skipped ones", async () => {
   atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered&skipped=1&colors=W`, { members: UNJUDGED_MILL });
   expect(await screen.findByText(/None of the skipped cards fit these filters\./)).not.toHaveTextContent(/These are the ones/);
+});
+
+const activatedFree = packFact({ kind: "activated", repeats: "repeatable", amount: { kind: "variable" } });
+const torbran = packFact({ kind: "replacement", repeats: "continuous", amount: { kind: "plus", value: 2 } });
+const furnace = packFact({ kind: "replacement", repeats: "continuous", amount: { kind: "times", value: 2 } });
+
+test("an activated ability reads 'as often as you like' and a variable amount 'varies'", async () => {
+  const members = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === MILL ? { p: [2], c: [], pf: [[activatedFree]], cf: [] } : null;
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&repeats=repeatable&amtvar=1&amtmin=1`, { members });
+  expect(await captionOf(/Skullclamp/)).toContain("varies · as often as you like · activated");
+});
+
+test("two and-terms are separated by semicolons, each with its own facts", async () => {
+  const members = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === MILL ? { p: [2], c: [], pf: [[pingOne]], cf: [] } : k === DIES ? { p: [2], c: [], pf: [[millTwoOnce]], cf: [] } : null;
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&produce=${encodeURIComponent(DIES)}&ability=triggered&ability=spell`, { members });
+  expect(await captionOf(/Skullclamp/)).toContain("mill a card (triggered); a creature dies (spell)");
+});
+
+test("an or-term whose ability failed is not named as a reason", async () => {
+  const members = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === MILL ? { p: [2], c: [], pf: [[pingOne]], cf: [] } : k === DIES ? { p: [2], c: [], pf: [[millTwoOnce]], cf: [] } : null;
+  atUrl(`/cards?orproduce=${encodeURIComponent(MILL)}&orproduce=${encodeURIComponent(DIES)}&ability=spell`, { members });
+  const text = await captionOf(/Skullclamp/);
+  expect(text).toContain("spell");
+  expect(text).not.toContain("mill a card");
+  expect(text).not.toContain("triggered");
+});
+
+test("a cares-about caption words the replacement's change, and only with a change op", async () => {
+  const members = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === DIES ? { p: [], c: [0, 1], pf: [], cf: [[torbran], [furnace]] } : null;
+  atUrl(`/cards?consume=${encodeURIComponent(DIES)}&amtop=plus&amtmin=2&amtmax=2`, { members });
+  expect(await captionOf(/Fathom Mage/)).toContain("adds 2 · replacement");
 });
