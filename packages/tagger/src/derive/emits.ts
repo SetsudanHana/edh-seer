@@ -479,8 +479,6 @@ const NAMES_A_PLAYER = /\b(?:each|target|another|any|that|those|a|other|defendin
  *  opponent" is your clash, "each opponent faces a villainous choice" is your effect. The consumer
  *  watches the actor ("whenever you clash"), so the emit says `you`. */
 const ACTOR_IS_THE_EVENT: ReadonlySet<string> = new Set(["gains-control", "clash", "face-a-villainous-choice"]);
-/** A CONTROL CHANGE HANDED TO ANOTHER PLAYER: "target opponent gains control of", "target player
- *  gains control of" (Donate prints `player`; giving yourself your own permanent does nothing). */
 /** The object of a control change that IS something you control: its HEAD noun phrase (cut at the first " with ", " whose " or " that ") ends in "you control" ("all creatures you control", "any number
  *  of target permanents you control", "a creature you control of their choice", "the creature you control with the greatest mana value"). A "you control" inside a QUALIFIER ("target creature with power
  *  less than or equal to the number of creatures you control", Beguiler of Wills; Vedalken Shackles, Dominating Vampire) is a limit on what YOU take, so the head is "target creature" and the gain is yours.
@@ -490,6 +488,8 @@ function yourOwnObject(object: string): boolean {
   return /\byou control(?: of their choice)?$/i.test(head);
 }
 
+/** A CONTROL CHANGE HANDED TO ANOTHER PLAYER: "target opponent gains control of", "target player
+ *  gains control of" (Donate prints `player`; giving yourself your own permanent does nothing). */
 const OTHER_GAINS_CONTROL = /\b(?:(?:target|an|each|that) (?:opponent|player)|the player to your (?:left|right)) gains? control of\b/i;
 
 const RECIPIENT_VERBS: ReadonlySet<string> = new Set([
