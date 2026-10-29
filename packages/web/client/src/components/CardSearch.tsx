@@ -328,12 +328,17 @@ export function CardSearch({
   }, [needle, query, eventQuery, vocabulary, carriesColours, commanderMode, colours, mode]);
   // HOW MANY CARDS THE FILTERS COULD NOT JUDGE (review of 160d353): on an asked event by what they
   // are -- cast, entering, lifelink -- rather than by an ability. Left out, and said so.
-  const unjudgedCount = useMemo(() => {
-    if (index === null || !asked || keptIds === undefined) return 0;
-    const left = unjudgedLeftOut(terms, lists, eventQuery)
+  // THE CARDS THE FILTERS LEFT OUT, as index rows (before the card predicates). The count, and the
+  // list when `skipped` is set, both start from these, so the two cannot disagree.
+  const leftOut = useMemo((): NameIndexEntry[] => {
+    if (index === null || !asked || keptIds === undefined) return [];
+    return unjudgedLeftOut(terms, lists, eventQuery)
       .map((id) => index[id]).filter((e): e is NameIndexEntry => e !== undefined);
-    return fitCard(left).length;
-  }, [terms, lists, eventQuery, index, asked, keptIds, fitCard]);
+  }, [terms, lists, eventQuery, index, asked, keptIds]);
+  const unjudgedCount = useMemo(() => fitCard(leftOut).length, [leftOut, fitCard]);
+  // A LINK THAT ASKS FOR THE SKIPPED VIEW AFTER THE FILTERS CHANGED UNDER IT shows the normal list:
+  // an empty "skipped" list would read as "nothing matches".
+  const showSkipped = eventQuery.skipped === true && unjudgedCount > 0;
   const unanswerable = effectUnanswerable || (chosenKeys.length > 0 && chosenKeys.every((k) => lists.has(k))
     && chosenKeys.some((k) => lists.get(k) === null));
 
@@ -342,7 +347,7 @@ export function CardSearch({
   const matches = useMemo((): NameIndexEntry[] | null => {
     if (index === null || !asked) return [];
     if (keptIds === undefined) return null;
-    const base = keptIds === null ? index
+    const base = showSkipped ? leftOut : keptIds === null ? index
       : (keptIds.keep === null ? index : [...keptIds.keep].map((id) => index[id]))
         .filter((e): e is NameIndexEntry => e !== undefined)
         .filter((e) => keptIds.drop.size === 0 || !keptIds.drop.has(positionOf.get(e) ?? -1));
@@ -385,7 +390,15 @@ export function CardSearch({
         : order === "tou" ? byNumber((e) => e.tou)
         : byNumber((e) => e.partners ?? 0),
     );
-  }, [index, keptIds, asked, eventQuery, lists, positionOf, fitCard]);
+  }, [index, keptIds, asked, eventQuery, lists, positionOf, fitCard, showSkipped, leftOut]);
+  // WHAT "Back to the N matches" RETURNS TO: the normal list's size, without sorting it.
+  const normalCount = useMemo((): number => {
+    if (!showSkipped || index === null || keptIds === undefined || keptIds === null) return 0;
+    const base = (keptIds.keep === null ? index : [...keptIds.keep].map((id) => index[id]))
+      .filter((e): e is NameIndexEntry => e !== undefined)
+      .filter((e) => keptIds.drop.size === 0 || !keptIds.drop.has(positionOf.get(e) ?? -1));
+    return fitCard(base).length;
+  }, [showSkipped, index, keptIds, positionOf, fitCard]);
 
   // WHAT THE PICKERS OFFER, AND WHAT EACH ROW COSTS TO SAY.
   //
@@ -598,6 +611,7 @@ export function CardSearch({
           <AmountRow
             min={eventQuery.amountMin} max={eventQuery.amountMax} variable={eventQuery.amountVariable === true}
             change={eventQuery.amountChange}
+            caresAbout={terms.some((t) => t.side === "pays" && t.op !== "not")}
             onChange={(r) => {
               const { amountMin: _a, amountMax: _b, amountVariable: _c, amountChange: _d, ...rest } = eventQuery;
               setEvents({ ...rest, ...(r.min !== undefined ? { amountMin: r.min } : {}),
@@ -854,12 +868,25 @@ export function CardSearch({
                         ? (commanderMode ? "commander matches" : "card matches")
                         : (commanderMode ? "commanders match" : "cards match")}
                       {matches.length > shown ? `, showing the first ${shown}` : ""}.</>}
-                {unjudgedCount > 0 && (
-                  <>{" "}{unjudgedCount.toLocaleString("en-US")} more {unjudgedCount === 1 ? "is" : "are"} on these
-                    events by what {unjudgedCount === 1 ? "it is" : "they are"} (being cast, entering, a keyword like
-                    lifelink) rather than by an ability, so the ability filters can't judge {unjudgedCount === 1 ? "it" : "them"} and leave {unjudgedCount === 1 ? "it" : "them"} out.</>
-                )}
+                {unjudgedCount > 0 && (showSkipped
+                  ? <>{" "}These are the ones the ability filters skipped.</>
+                  : <>{" "}{unjudgedCount.toLocaleString("en-US")} more {unjudgedCount === 1 ? "card matches" : "cards match"} because
+                    of what {unjudgedCount === 1 ? "it is" : "they are"} (a keyword like lifelink, or simply entering or being
+                    cast) rather than an ability, so these filters skip {unjudgedCount === 1 ? "it" : "them"}.</>)}
               </p>
+              {unjudgedCount > 0 && (
+                <button
+                  type="button" className="chip"
+                  onClick={() => {
+                    const { skipped: _s, ...rest } = eventQuery;
+                    setEvents(showSkipped ? rest : { ...rest, skipped: true });
+                  }}
+                >
+                  {showSkipped
+                    ? `Back to the ${normalCount.toLocaleString("en-US")} ${normalCount === 1 ? "match" : "matches"}`
+                    : unjudgedCount === 1 ? "Show this card" : `Show these ${unjudgedCount.toLocaleString("en-US")}`}
+                </button>
+              )}
               {/* THE ORDER NAMES ITS AXIS AND THE DIRECTION IS ITS OWN CONTROL (owner 2026-09-22):
                 * "biggest first" did not say whether it meant power or toughness, and there was no
                 * way to turn any order round. Changing the axis resets the direction to its

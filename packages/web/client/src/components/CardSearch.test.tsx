@@ -1015,5 +1015,67 @@ test("the cards the ability filters cannot judge are counted beside the result",
     k === MILL ? { p: [1, 2, 0], c: [], pf: [[millTwoOnce], [pingOne], []], cf: [] } : MEMBERS[k] ?? null;
   atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered`, { members: withUnjudged });
   expect(await screen.findByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
-  expect(screen.getByText(/1 more is on these events by what it is/)).toBeInTheDocument();
+  expect(screen.getByText(/1 more card matches because of what it is/)).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Show this card" })).toBeInTheDocument();
+});
+
+/** THE LEFT-OUT NOTE CAN BE CHECKED (#1405 B): a control lists exactly those cards, the URL carries
+ *  it, and the way back names the normal count. */
+test("the skipped cards can be listed, and the list goes back", async () => {
+  const withUnjudged = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === MILL ? { p: [1, 2, 0], c: [], pf: [[millTwoOnce], [pingOne], []], cf: [] } : MEMBERS[k] ?? null;
+  const spy = atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered`, { members: withUnjudged });
+  expect(await screen.findByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Fathom Mage/ })).toBeNull();
+  await userEvent.click(screen.getByRole("button", { name: "Show this card" }));
+  expect(await screen.findByRole("link", { name: /Fathom Mage/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Skullclamp/ })).toBeNull();
+  expect(new URLSearchParams(spy.search).get("skipped")).toBe("1");
+  await userEvent.click(screen.getByRole("button", { name: "Back to the 1 match" }));
+  expect(await screen.findByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Fathom Mage/ })).toBeNull();
+  expect(new URLSearchParams(spy.search).get("skipped")).toBeNull();
+});
+
+test("a link carrying skipped opens on the skipped cards", async () => {
+  const withUnjudged = async (_b: string, k: string): Promise<EventMembers | null> =>
+    k === MILL ? { p: [1, 2, 0], c: [], pf: [[millTwoOnce], [pingOne], []], cf: [] } : MEMBERS[k] ?? null;
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&ability=triggered&skipped=1`, { members: withUnjudged });
+  expect(await screen.findByRole("link", { name: /Fathom Mage/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Skullclamp/ })).toBeNull();
+});
+
+/** "HOW OFTEN" SAYS WHAT IT KEEPS (#1405 B): a bare "at least" beside "Any number of times" read as
+ *  no limit, which is the top rung. `repeatable` keeps always-on too (the ladder's last rung). */
+test("the how-often options say what each keeps", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&repeats=repeatable`, factProps);
+  const select = await screen.findByLabelText("How often");
+  expect(select).toHaveValue("repeatable");
+  expect(within(select).getAllByRole("option").map((o) => o.textContent)).toEqual([
+    "Any", "Once or more", "At least once a round", "At least every turn", "As often as you like, or always on", "Always on",
+  ]);
+  expect(screen.queryByText("at least")).toBeNull();
+});
+
+/** THE REPLACEMENT CONTROL EXISTS ONLY FOR "CARES ABOUT" (#1405 B); both seats skipped it otherwise. */
+test("the amount row offers the replacement only beside a cares-about event", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&amtmin=1&amtmax=1`, factProps);
+  expect(await screen.findByLabelText("Amount, each time, from")).toHaveValue("1");
+  expect(screen.getByText("How many each time it happens.")).toBeInTheDocument();
+  expect(screen.queryByLabelText("A replacement that")).toBeNull();
+});
+
+test("with a cares-about event the amount row explains the replacement in a player's words", async () => {
+  atUrl(`/cards?consume=${encodeURIComponent(DIES)}&amtmin=1&amtmax=1`, factProps);
+  expect(await screen.findByLabelText("A replacement that")).toBeInTheDocument();
+  expect(screen.getByText("For cards that change it, like Torbran (+2 damage) or a doubler (×2): how much they add or multiply.")).toBeInTheDocument();
+});
+
+test("an amtop in the link with no cares-about event is kept in the URL, not dropped", async () => {
+  const spy = atUrl(`/cards?produce=${encodeURIComponent(MILL)}&amtmin=1&amtop=plus`, factProps);
+  await screen.findByLabelText("Amount, each time, from");
+  await userEvent.click(screen.getByLabelText("Include variable amounts (X, “equal to its power”)"));
+  const q = new URLSearchParams(spy.search);
+  expect(q.get("amtop")).toBe("plus");
+  expect(q.get("amtvar")).toBe("1");
 });
