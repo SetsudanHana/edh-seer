@@ -820,7 +820,13 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // `parseControl` makes one file over, so the two cannot disagree about where a sentence's head
   // ends. Four cards: Call the Coppercoats, Rose, Hylda's Crown of Winter, Kaito.
   const head = (copyHead ? clauseText?.replace(COPIED_PHRASE, "") : clauseText)?.split(COUNT_PHRASE)[0];
-  const sentenceHead = head && head.trim().length > 0 ? head : clauseText;
+  const wholeHead = head && head.trim().length > 0 ? head : clauseText;
+  // ANOTHER PLAYER'S PHRASE JOINED TO THIS ACTION'S OWN ("its owner draws that many cards AND EACH OTHER PLAYER loses that much life", Oft-Nabbed Goat) is not this action's actor: the named-player guard reads
+  // the head up to that join, unless this action's verb is in the tail (then the tail is its own, "Draw a card and each other player discards a card" keeps the guard for the discard). The join is a
+  // compound subject, which is what makes the cut principled: the clause is two predicates and the guard asks who does THIS one.
+  // CEILING: the verb test is the first word of the action verb ("lose" for lose-life), and only "and / then each other / defending / the attacking player" is a join.
+  const otherPlayerJoin = /,?\s+(?:and|then)\s+(?:each other|defending|the attacking)\s+player\b[\s\S]*$/i.exec(wholeHead ?? "");
+  const sentenceHead = otherPlayerJoin && !new RegExp(`\\b${(action.verb ?? "").split("-")[0]}`, "i").test(otherPlayerJoin[0]) ? wholeHead!.slice(0, otherPlayerJoin.index) : wholeHead;
   const control = !!clauseText
     && subject.control === "any"
     && CONTROLLER_DEFAULT.has(action.verb ?? "")

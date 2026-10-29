@@ -5917,6 +5917,18 @@ test("taking an opponent's permanent is not a donation, and the count does not r
   expect(directedReasons(countsDonated(), donates(), H).some((x) => x.tag === "scales:donated")).toBe(false);
 });
 
+/** A LOAN IS NOT A DONATION (#1395): Assault Suit and Twist Allegiance hand a permanent over "until end of turn"; Hithlain Rope's is for good. */
+test("a temporary gift (until end of turn / combat) does not feed Zedruu's count, a permanent one does", () => {
+  const withText = (name: string, text: string) => { const c = donates(name); (c.card as { oracleText: string }).oracleText = text; return c; };
+  const suit = withText("Assault Suit", "At the beginning of each opponent's upkeep, you may have that player gain control of equipped creature until end of turn. If you do, untap it.");
+  const twist = withText("Twist Allegiance", "You and target opponent each gain control of all creatures the other controls until end of turn. Untap those creatures. Those creatures gain haste until end of turn.");
+  const tahngarth = withText("Tahngarth, First Mate", "Whenever an opponent attacks with one or more creatures, if Tahngarth is tapped, you may have that opponent gain control of Tahngarth until end of combat.");
+  const rope = withText("Hithlain Rope", "{2}, {T}: Draw a card. The player to your right gains control of this artifact.");
+  const denizen = withText("Infernal Denizen", "an opponent may gain control of a creature you control of their choice for as long as this creature remains on the battlefield.");
+  for (const loan of [suit, twist, tahngarth]) expect(directedReasons(loan, countsDonated(), H).some((x) => x.tag === "scales:donated"), loan.card.name).toBe(false);
+  for (const gift of [rope, denizen]) expect(directedReasons(gift, countsDonated(), H).some((x) => x.tag === "scales:donated"), gift.card.name).toBe(true);
+});
+
 /** AN EXCHANGE OF CONTROL GIVES ONE OF YOURS AWAY (#681). Vedalken Plotter "exchange[s] control of
  *  target land you control and target land an opponent controls"; derive types only the land you
  *  receive, so the printed "exchange control" is what says a permanent of yours changed hands. */

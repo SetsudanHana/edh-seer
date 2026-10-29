@@ -7034,9 +7034,9 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
       (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Reins of Power ${path}`).toEqual(["you", "opp"]); });
     all(both("Iroh, Tea Master", "Legendary Creature — Human Citizen Ally", "When Iroh enters, create a Food token.\nAt the beginning of combat on your turn, you may have target opponent gain control of target permanent you control. When you do, create a 1/1 white Ally creature token. Put a +1/+1 counter on that token for each permanent you own that your opponents control.",
       [trig("enters", "Iroh, Tea Master", "you", []), trig("begin-combat", "you", "you", [rec("gain-control", "target permanent you control", { optional: true })], 2), trig("other", "you giving control of a permanent to an opponent", "you", [], 3)]),
-      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Iroh ${path}`).toEqual(["opp"]); });
+      (path, abs) => expect(players(abs, "gains-control"), `Iroh ${path}`).toEqual(["opp"]));
     all(both("Donate", "Sorcery", "Target player gains control of target permanent you control.", [{ id: 1, abilityType: "spell", actions: [gc("target permanent you control")] }]),
-      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Donate ${path}`).toEqual(["opp"]); });
+      (path, abs) => expect(players(abs, "gains-control"), `Donate ${path}`).toEqual(["opp"]));
     all(both("Temporary Insanity", "Instant", "Untap target creature with power less than the number of cards in your graveyard and gain control of it until end of turn. That creature gains haste until end of turn.",
       [{ id: 1, abilityType: "spell", actions: [gc("target creature with power less than the number of cards in your graveyard")] }]),
       (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Temporary Insanity ${path}`).toEqual(["you"]); });
@@ -7049,10 +7049,10 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
     all(both("Hithlain Rope", "Artifact", "This artifact can't be sacrificed.\n{1}, {T}: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle. The player to your right gains control of this artifact.\n{2}, {T}: Draw a card. The player to your right gains control of this artifact.",
       [{ id: 2, abilityType: "activated", actions: [rec("search", "a basic land card", { fromZone: "library" }), rec("put", "it", { fromZone: "library", toZone: "battlefield" }), rec("shuffle", "your library"), gc("this artifact")] },
         { id: 3, abilityType: "activated", actions: [rec("draw", "a card", { amount: "1" }), gc("this artifact")] }]),
-      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Hithlain Rope ${path}`).toEqual(["opp", "opp"]); });
+      (path, abs) => expect(players(abs, "gains-control"), `Hithlain Rope ${path}`).toEqual(["opp", "opp"]));
     all(both("Assault Suit", "Artifact — Equipment", "Equipped creature gets +2/+2, has haste, can't attack you or planeswalkers you control, and can't be sacrificed.\nAt the beginning of each opponent's upkeep, you may have that player gain control of equipped creature until end of turn. If you do, untap it.\nEquip {3}",
       [trig("upkeep", "you", "opponent", [rec("gain-control", "equipped creature", { optional: true }), rec("untap", "equipped creature")], 2)]),
-      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Assault Suit ${path}`).toEqual(["opp"]); });
+      (path, abs) => expect(players(abs, "gains-control"), `Assault Suit ${path}`).toEqual(["opp"]));
     all(both("Infernal Denizen", "Creature — Demon", "At the beginning of your upkeep, sacrifice two Swamps. If you can't, tap this creature, and an opponent may gain control of a creature you control of their choice for as long as this creature remains on the battlefield.\n{T}: Gain control of target creature for as long as this creature remains on the battlefield.",
       [trig("upkeep", "you", "you", [rec("sacrifice", "two Swamps"), rec("tap", "this creature"), rec("gain-control", "a creature you control of their choice", { optional: true })]), { id: 2, abilityType: "activated", actions: [gc("target creature")] }]),
       (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Infernal Denizen ${path}`).toEqual(["opp", "you"]); });
@@ -7062,6 +7062,21 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
     // The own-object rule alone, with NO clause text to lean on (Coveted Falcon's turned-face-up half).
     expect(actionEmits(gc("any number of target permanents you control") as never)[0]?.subject.control).toBe("opp");
     expect(actionEmits(gc("target creature with power less than or equal to the number of creatures you control") as never)[0]?.subject.control).toBe("you");
+  });
+  test("#1395: a textless twin takes its partner's reading, so Wernog keeps one ability set per limb (grammar records, 6 abilities)", () => {
+    const text = "When Wernog, Rider's Chaplain enters or leaves the battlefield, each opponent may investigate. Each opponent who doesn't loses 1 life. You investigate X times, where X is one plus the number of opponents who investigated this way.\nPartner—Friends forever (You can have two commanders if both have this ability.)";
+    const card = { name: "Wernog, Rider's Chaplain", typeLine: "Legendary Creature — Human", oracleText: text, keywords: ["Investigate", "Partner"] };
+    const g = grammarClauseRecords(card as never);
+    const abs = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records as never, undefined, g.readings)).abilities;
+    expect(abs).toHaveLength(6);
+    expect(abs.filter((a) => a.emits?.some((e) => e.verb === "create-token" && e.subject.control === "any"))).toHaveLength(0);
+  });
+
+  test("#1395: another player's phrase joined by 'and each other player' is not the owner's draw (Oft-Nabbed Goat)", () => {
+    all(both("Oft-Nabbed Goat", "Creature — Goat", "{1}: Draw a card. Gain control of this creature and put a -1/-1 counter on it. Only your opponents may activate this ability and only as a sorcery.\nWhen this creature dies, if it had one or more -1/-1 counters on it, its owner draws that many cards and each other player loses that much life.",
+      [{ id: 1, abilityType: "activated", actions: [rec("draw", "you", { amount: "1" }), rec("gain-control", "this creature"), rec("add-counter", "-1/-1", { amount: "1" })] },
+        trig("dies", "this creature", "you", [rec("draw", "its owner", { amount: "the number of -1/-1 counters on it" }), rec("lose-life", "each other player", { amount: "the number of -1/-1 counters on it" })], 2)]),
+      (path, abs) => { if (path === "model") expect(abs.filter((a) => a.clause === 2).flatMap((a) => a.emits ?? []).filter((e) => e.verb === "draw").map((e) => e.subject.control), `Goat ${path}`).toEqual(["you"]); });
   });
 });
 

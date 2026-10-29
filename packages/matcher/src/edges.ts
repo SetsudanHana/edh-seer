@@ -2763,10 +2763,14 @@ function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
 // CEILING: the exchange test reads the whole card's text, so a card with an "exchange control"
 // ability AND an unrelated exchange (life totals) would credit both; none in the corpus 2026-09-28.
 const EXCHANGES_CONTROL = /\bexchange control\b/i;
+// A LOAN IS NOT A DONATION (#1395): "you and target opponent each gain control of all creatures the other controls UNTIL END OF TURN" (Twist Allegiance), Assault Suit, Tahngarth: the permanent comes
+// back, so Zedruu's "permanents you own that your opponents control" does not grow. "For as long as ..." (Infernal Denizen) is not excluded.
+// CEILING: read off the card's text (the emit carries no duration), so a card that both loans and donates reads as a loan.
+const LENDS_TEMPORARILY = /\bgains? control of\b[^.]*\buntil (?:(?:the )?end of (?:turn|combat)|your next turn)\b/i;
 /** Does this card hand one of your permanents to an opponent? Shared with the card page's supply
  *  keys (`supplyKeysOf`), so the deck edge and the page ask the same question. */
 export const givesAPermanentAway = (events: readonly GameEvent[], oracleText: string | undefined): boolean =>
-  events.some((e) => (e.verb === "gains-control" && e.subject.control === "opp")
+  events.some((e) => (e.verb === "gains-control" && e.subject.control === "opp" && !LENDS_TEMPORARILY.test(oracleText ?? ""))
     || (e.verb === "exchange" && EXCHANGES_CONTROL.test(oracleText ?? "")));
 function donatedCountEdges({ p, c, pEvents, reasons }: PairScope): void {
   if (!givesAPermanentAway(pEvents, p.card.oracleText)) return;

@@ -2444,7 +2444,14 @@ export function deriveAbilities(
     // effect read off that sentence); none-or-several leave it NO printed text (the stored reading alone). Mixing the stored trigger with another
     // sentence's effect was Kratos at 314: a `dies` trigger carrying the end-step's +1/+1 counters.
     const rehomed = homeOfMisplaced(clause, clauses, clauseTexts);
-    clause = withGrammarActions(clause, rehomed ?? clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName, readings?.[clause.id]?.actions);
+    // A TEXTLESS TWIN TAKES ITS PARTNER'S READING (#1395, Wernog): the grammar's "enters or leaves" records are two with IDENTICAL actions, the reading keyed to the first only. Unread, the twin kept
+    // the stored `any` actor beside its partner's `you`, the identical-twin fold (exact abilityKey) no longer matched, and the card grew duplicate abilities. Only an identical-action sibling is used.
+    const twinSource = rehomed === undefined && clauseTexts?.[clause.id] === undefined && readings?.[clause.id] === undefined && clause.trigger?.event
+      ? clauses.find((c) => c.id !== clause.id && readings?.[c.id] !== undefined && clauseTexts?.[c.id] !== undefined && JSON.stringify(c.actions) === JSON.stringify(clause.actions))
+      : undefined;
+    clause = twinSource
+      ? withGrammarActions(clause, clauseTexts![twinSource.id], clauseCosts?.[twinSource.id], cardName, readings![twinSource.id]?.actions)
+      : withGrammarActions(clause, rehomed ?? clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName, readings?.[clause.id]?.actions);
     if (collapseSearches) clause = collapseZoneSearches(clause);
     // WHICH FACE PRINTS THIS CLAUSE. Stamped onto every ability the clause derives below, so the
     // matcher can stop reading a back-face ability against the card's UNION of types.
