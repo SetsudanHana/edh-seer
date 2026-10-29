@@ -1907,6 +1907,8 @@ const GRAMMAR_ACTION_VERBS: ReadonlySet<string> = new Set(Object.keys(ACTION_FAM
 /** The recipient of the damage a "prevent" clause prevents is the card itself: "If damage would be dealt to ~, prevent that damage ...", "prevent all damage that would be dealt to this creature". */
 function preventHitsSelf(text: string, cardName?: string): boolean {
   const m = /\bdamage would be dealt to ([^,.]+)|\bprevent (?:all |that |the next [\dx]+ )?damage(?: that would be dealt)? to ([^,.]+)/i.exec(text);
+  // A recipient inside a QUOTED ability is the grantee's own "this creature" (Caduceus: equipped creature has "Prevent all damage that would be dealt to this creature"), never the card's.
+  if (m && (text.slice(0, m.index).match(/"/g) ?? []).length % 2 === 1) return false;
   const who = (m?.[1] ?? m?.[2] ?? "").trim().replace(/ this turn$/i, "");
   return who !== "" && (SELF_REFERENCE.test(who) || isSelfSubject(who, cardName));
 }
@@ -2932,7 +2934,7 @@ export function deriveAbilities(
         || (action.verb === "deal-damage" && damageHitsSelf(action.object ?? "", text))
         // "prevent that damage" aimed at the card ("If damage would be dealt to Khârn the Betrayer, prevent that damage ..."): the damage prevented is dealt to the card, so the emit is a self reference (#1403).
         // The object may be the grammar's "that damage", so the recipient is read off the printed text. CEILING: one recipient phrase before a comma or full stop.
-        || (action.verb === "prevent" && preventHitsSelf(text, cardName))
+        || (action.verb === "prevent" && clauseGrants?.[clause.id] === undefined && preventHitsSelf(text, cardName))
         // A COUNTER PUT ON THE CARD ITSELF (owner-reported 2026-09-17, Primal Amulet -> Exemplar of
         // Light). An add-counter's object is the COUNTER ("charge counter", "+1/+1"), never the
         // permanent receiving it, so the object could never say "this artifact" and 4,240 of the

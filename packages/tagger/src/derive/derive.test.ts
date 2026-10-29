@@ -6981,6 +6981,17 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
     });
   });
 
+  test("#1403: a granted 'prevent damage to this creature' is not the granting card's self reference (Torrent of Lava, Caduceus)", () => {
+    const torrent = "Torrent of Lava deals X damage to each creature without flying.\nAs long as Torrent of Lava is on the stack, each creature has \"{T}: Prevent the next 1 damage that would be dealt to this creature by Torrent of Lava this turn.\"";
+    const tStored = [{ id: 1, abilityType: "spell", actions: [rec("deal-damage", "each creature without flying", { amount: "X" })] }, { id: 2, abilityType: "spell", actions: [rec("grant-ability", "each creature: Prevent the next 1 damage that would be dealt to this creature by Torrent of Lava this turn.")] }, { id: 3, abilityType: "activated", actions: [rec("prevent", "the next 1 damage that would be dealt to this creature by Torrent of Lava this turn")] }];
+    const cad = "Equipped creature has lifelink.\nAs long as you have 30 or more life, equipped creature gets +5/+5 and has indestructible and \"Prevent all damage that would be dealt to this creature.\"\nEquip {W}{W}";
+    const cStored = [{ id: 1, abilityType: "static", actions: [rec("grant-ability", "lifelink")] }, { id: 2, abilityType: "static", actions: [rec("modify-pt", "equipped creature", { amount: "+5/+5" }), rec("grant-ability", "indestructible"), rec("prevent", "all damage that would be dealt to this creature")] }, { id: 3, abilityType: "none", actions: [rec("none", "Equip {W}{W}")] }];
+    for (const [name, typeLine, text, stored] of [["Torrent of Lava", "Sorcery", torrent, tStored], ["Caduceus, Staff of Hermes", "Legendary Artifact — Equipment", cad, cStored]] as const) {
+      all(both(name, typeLine, text, stored as never).filter(([path]) => path === "model"), (path, abs) =>
+        expect(abs.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "prevented").map((e) => e.subject.self), `${name} ${path}`).toEqual(abs.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "prevented").map(() => undefined)));
+    }
+  });
+
   test("#1403: 'an opponent of your choice gains control of it' is the opponent's gain (Khârn the Betrayer)", () => {
     const text = "Berzerker — Khârn the Betrayer attacks or blocks each combat if able.\nSigil of Corruption — When you lose control of Khârn the Betrayer, draw two cards.\nThe Betrayer — If damage would be dealt to Khârn the Betrayer, prevent that damage and an opponent of your choice gains control of it.";
     const stored = [{ id: 1, abilityType: "static", actions: [rec("cant", "not attack or block")] }, { id: 2, abilityType: "triggered", trigger: { event: "loses-control", subject: "Khârn the Betrayer", control: "you" }, actions: [rec("draw", "card", { amount: "2" })] }, { id: 3, abilityType: "static", actions: [rec("prevent", "damage to Khârn the Betrayer"), rec("gain-control", "Khârn the Betrayer")] }];
