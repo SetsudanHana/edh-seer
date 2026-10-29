@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { deriveCardTags, deriveInputOf, grammarClauseRecords } from "@edh-seer/tagger";
 import {
-  classifyRows, compareRow, diffReasonKeys, fieldDiff, formatSummary, grammarReport, pairsReport, reasonKey, snapOf, tagFamily,
-  type ImpactReport, type RowSnap,
+  CONSTANT_FIELDS, FIELD_KIND, chooseMatcher, classifyRows, compareRow, diffReasons, fieldDiff, formatSummary, grammarReport, matcherCodeFiles, nodeModulesHash,
+  pairsReport, pick, sampleIds, snapOf, tagFamily, treeVerdict, type ImpactReport, type RowSnap,
 } from "./derive-impact-core.js";
 
 const row = (name: string, tags: Record<string, unknown>, g = false): RowSnap => snapOf(name, tags, g);
@@ -49,52 +50,132 @@ describe("grammarReport", () => {
   });
 });
 
-describe("reason keys", () => {
-  it("keys by tag|producer|consumer|magnitude", () => {
-    expect(reasonKey({ tag: "attacks:x", producer: "P", consumer: "C", magnitude: { n: 1 } })).toBe('attacks:x|P|C|{"n":1}');
-    expect(reasonKey({ tag: "t" })).toBe("t|||null");
+describe("derived row fields", () => {
+  it("compares every key of a real derived row that is not a known constant", () => {
+    const card = { name: "Test Blast", typeLine: "Sorcery", oracleText: "Create two tapped 2/2 black Zombie creature tokens.", keywords: [] as string[] };
+    const g = grammarClauseRecords(card);
+    const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings));
+    // Every key the row carries has been classified: a new CardTags field fails the typecheck of FIELD_KIND, and any key outside it fails here.
+    for (const k of Object.keys(tags)) expect(Object.keys(FIELD_KIND), `unclassified field ${k}`).toContain(k);
+    const compared = Object.keys(pick(tags as never));
+    expect(compared.length).toBeGreaterThan(0);
+    for (const k of CONSTANT_FIELDS) expect(compared).not.toContain(k);
+    for (const k of compared) expect(FIELD_KIND[k as keyof typeof FIELD_KIND]).toBe("compared");
   });
-  it("diffs gained and lost", () => { expect(diffReasonKeys(["a", "b"], ["b", "c"])).toEqual({ gained: ["c"], lost: ["a"] }); });
-  it("takes the family before the first colon", () => { expect(tagFamily("attacks:creature|P|C|null")).toBe("attacks"); expect(tagFamily("combo|P|C|null")).toBe("combo"); });
+  it("pick compares an unknown key too", () => { expect(Object.keys(pick({ oracleId: "x", brandNew: 1, abilities: [] }))).toEqual(["abilities", "brandNew"]); });
+});
+
+describe("diffReasons", () => {
+  const r = (extra: Record<string, unknown> = {}) => ({ tag: "attacks:x", producer: "P", consumer: "C", magnitude: { floor: 1 }, ...extra });
+  it("separates membership from magnitude-only and attribute-only moves", () => {
+    const base = [r(), r({ consumer: "D" }), r({ producer: "Q", repeatability: "static" }), r({ producer: "M", magnitude: { floor: 0 } })];
+    const head = [r(), r({ consumer: "E" }), r({ producer: "Q", repeatability: "triggered", perTurn: true }), r({ producer: "M", magnitude: { floor: 2 } })];
+    const d = diffReasons(base, head);
+    expect(d.gained).toEqual(["attacks:x|P|E"]);
+    expect(d.lost).toEqual(["attacks:x|P|D"]);
+    expect(d.magnitude).toEqual([{ key: "attacks:x|M|C", before: ['{"floor":0}'], after: ['{"floor":2}'] }]);
+    expect(d.attrs).toEqual([{ key: "attacks:x|Q|C", fields: ["perTurn", "repeatability"] }]);
+  });
+  it("is empty for identical reasons, and ignores the reason text", () => {
+    expect(diffReasons([r({ text: "a" })], [r({ text: "b" })])).toEqual({ gained: [], lost: [], magnitude: [], attrs: [] });
+  });
+  it("takes the family before the first colon", () => { expect(tagFamily("attacks:creature|P|C")).toBe("attacks"); expect(tagFamily("combo|P|C")).toBe("combo"); });
+});
+
+describe("matcher selection, sample, cache", () => {
+  it("defaults to each side's own matcher; head is explicit; anything else throws", () => {
+    expect(chooseMatcher(undefined)).toBe("own");
+    expect(chooseMatcher("own")).toBe("own");
+    expect(chooseMatcher("head")).toBe("head");
+    expect(() => chooseMatcher("auto")).toThrow(/own or head/);
+  });
+  it("counts matcher, engine, data and pair-time tagger sources, not tests, fixtures, tables or other tagger files", () => {
+    const tagger = ["packages/tagger/src/derive/subject.ts", "packages/tagger/src/schema.ts"];
+    const files = matcherCodeFiles([
+      "packages/matcher/src/edges.ts", "packages/matcher/src/edges.test.ts", "packages/matcher/src/same-job.fixtures.json", "packages/matcher/rules.json",
+      "packages/matcher/quality-weights.json", "packages/matcher/src/bin/build-static.ts", "packages/engine/src/synergy.ts", "packages/engine/scripts/gen-tag-weights.ts", "packages/data/src/docs.ts",
+      "packages/tagger/src/derive/subject.ts", "packages/tagger/src/derive/derive.ts", "docs/x.md",
+    ], tagger);
+    expect(files).toEqual(["packages/data/src/docs.ts", "packages/engine/src/synergy.ts", "packages/matcher/rules.json", "packages/matcher/src/edges.ts", "packages/tagger/src/derive/subject.ts"]);
+  });
+  it("samples a stable, seeded subset", () => {
+    const ids = Array.from({ length: 100 }, (_, i) => `id${i}`);
+    const a = sampleIds(ids, 10), b = sampleIds([...ids].reverse(), 10);
+    expect(a).toEqual(b);
+    expect(new Set(a).size).toBe(10);
+    expect(a.every((x) => ids.includes(x))).toBe(true);
+    expect(sampleIds(ids, 1000)).toHaveLength(100);
+    expect(sampleIds(ids, 10, "other")).not.toEqual(a);
+  });
+  it("accepts only a real directory owned by the caller and not writable by others", () => {
+    const ok = { isDirectory: true, isSymbolicLink: false, uid: 501, mode: 0o40700 };
+    expect(treeVerdict(ok, 501)).toBe("ok");
+    expect(treeVerdict({ ...ok, isSymbolicLink: true }, 501)).toMatch(/symlink/);
+    expect(treeVerdict({ ...ok, isDirectory: false }, 501)).toMatch(/not a directory/);
+    expect(treeVerdict({ ...ok, uid: 0 }, 501)).toMatch(/owned by uid 0/);
+    expect(treeVerdict({ ...ok, mode: 0o40770 }, 501)).toMatch(/group or others/);
+    expect(treeVerdict({ ...ok, mode: 0o40757 }, 501)).toMatch(/group or others/);
+  });
+  it("fingerprints the node_modules listing regardless of order", () => {
+    expect(nodeModulesHash(["a", "b"])).toBe(nodeModulesHash(["b", "a"]));
+    expect(nodeModulesHash(["a", "b"])).not.toBe(nodeModulesHash(["a", "c"]));
+  });
 });
 
 describe("pairsReport", () => {
-  it("groups by family, ranks cards and counts a key moved on many cards", () => {
+  const none = { magnitude: [], attrs: [] };
+  it("groups by family, ranks cards and names the other card of each moved key", () => {
     const p = pairsReport([
-      { id: "1", name: "One", gained: ["attacks:a|X|Y|null"], lost: ["prevented|S|Z|null"] },
-      { id: "2", name: "Two", gained: [], lost: ["prevented|S|Z|null", "prevented|S|W|null", "prevented|S|V|null"] },
-      { id: "3", name: "Three", gained: [], lost: [] },
+      { id: "1", name: "One", gained: ["attacks:a|X|Y"], lost: ["prevented|S|Z"], ...none },
+      { id: "2", name: "Two", gained: [], lost: ["prevented|S|Z", "prevented|S|W", "prevented|S|V"], ...none },
+      { id: "3", name: "Three", gained: [], lost: [], ...none },
     ]);
-    expect(p).toMatchObject({ gained: 1, lost: 4 });
+    expect(p).toMatchObject({ gained: 1, lost: 4, magnitude: 0, attrs: 0 });
     expect(p.families).toEqual([{ family: "prevented", gained: 0, lost: 4 }, { family: "attacks", gained: 1, lost: 0 }]);
-    expect(p.top).toEqual([{ name: "Two", gained: 0, lost: 3 }, { name: "One", gained: 1, lost: 1 }]);
+    expect(p.top.map((c) => c.name)).toEqual(["Two", "One"]);
     expect(p.byCounterpart[0]).toEqual({ name: "S", gained: 0, lost: 4 });
   });
+  it("counts magnitude-only and attribute moves apart, with the fields", () => {
+    const p = pairsReport([{ id: "1", name: "One", gained: [], lost: [], magnitude: [{ key: "t|A|B", before: ["1"], after: ["2"] }], attrs: [{ key: "t|A|C", fields: ["perTurn", "scaling"] }] }]);
+    expect(p).toMatchObject({ gained: 0, lost: 0, magnitude: 1, attrs: 1 });
+    expect(p.attrFields).toEqual([{ field: "perTurn", count: 1 }, { field: "scaling", count: 1 }]);
+    expect(p.top).toEqual([{ name: "One", gained: 0, lost: 0, magnitude: 1, attrs: 1 }]);
+  });
   it("caps the top list", () => {
-    const cards = Array.from({ length: 30 }, (_, i) => ({ id: String(i), name: `C${i}`, gained: ["t|a|b|null"], lost: [] }));
+    const cards = Array.from({ length: 30 }, (_, i) => ({ id: String(i), name: `C${i}`, gained: ["t|a|b"], lost: [], ...none }));
     expect(pairsReport(cards).top).toHaveLength(20);
   });
 });
 
 describe("formatSummary", () => {
+  const sec = (over = {}) => ({ cards: 2, gained: 5, lost: 7, magnitude: 3, attrs: 1, attrFields: [{ field: "perTurn", count: 1 }], families: [{ family: "prevented", gained: 0, lost: 7 }], top: [], byCounterpart: [], skipped: ["Tokeny (no maker)"], ...over });
   const report: ImpactReport = {
-    base: "abc1234", head: "working tree", matcher: "own",
+    base: { ref: "abc1234", sha: "abc12345", deriveVersion: 405 }, head: { ref: "HEAD", sha: "def67890", deriveVersion: 406, dirty: true }, matcher: "own", matcherCode: ["packages/matcher/src/edges.ts"],
     rows: { totals: { same: 100, changed: 2, added: 0, removed: 0, sourceFlipped: 1, sourceFlippedIdenticalTags: 1 }, changes: [
       { id: "1", name: "Alpha", status: "changed", fields: { abilities: { removed: ["x"], added: [] } } }, { id: "2", name: "Beta", status: "changed", fields: { abilities: { removed: ["x"], added: ["y", "z"] } } }, { id: "3", name: "Gamma", status: "flip-only", fields: {} },
     ] },
     grammar: { completeBase: 28417, completeHead: 28423, gained: ["a"], lost: [], recordsChanged: ["b", "c"] },
-    pairs: { cards: 2, gained: 5, lost: 7, families: [{ family: "prevented", gained: 0, lost: 7 }], top: [], byCounterpart: [] },
+    pairs: sec(), sample: sec({ cards: 150, gained: 9 }),
   };
-  it("is one paste-ready block with the counts", () => {
+  it("is one paste-ready block with versions, dirty flag, counts and the open ends", () => {
     const s = formatSummary(report);
-    expect(s).toContain("derive-impact abc1234 -> working tree");
+    expect(s).toContain("derive-impact abc12345 (DERIVE_VERSION 405) -> def67890 working tree (dirty) (DERIVE_VERSION 406)");
     expect(s).toContain("2 changed");
     expect(s).toContain("source flips 1 (1 with identical tags)");
     expect(s).toContain("top changed: Beta; Alpha");
     expect(s).not.toContain("Gamma");
     expect(s).toContain("28,417 -> 28,423");
-    expect(s).toContain("+5 gained, -7 lost");
-    expect(s).toContain("each side's own matcher");
+    expect(s).toContain("membership +5 gained, -7 lost; magnitude-only 3; attributes changed 1 [perTurn x1]");
+    expect(s).toContain("MATCHER CODE DIFFERS (1 file(s)): pair reasons below cover changed rows only; matcher-only effects are measured on the sample");
+    expect(s).toContain("matcher sample, seeded (150 cards)");
+    expect(s).toContain("not paired (1): Tokeny (no maker)");
+    expect(s).toContain("ratchets: not run (task 2)");
+    expect(s).toContain("token-vs-token pairs are not covered");
   });
-  it("says so when pairs did not run", () => { expect(formatSummary({ ...report, pairs: undefined })).toContain("pair reasons: not run"); });
+  it("is silent about the matcher when its code is the same, and says so when pairs did not run", () => {
+    const s = formatSummary({ ...report, matcherCode: [], pairs: undefined, sample: undefined, head: { ...report.head, dirty: false } });
+    expect(s).not.toContain("MATCHER CODE DIFFERS");
+    expect(s).toContain("pair reasons: not run");
+    expect(s).toContain("def67890 working tree (DERIVE_VERSION");
+  });
 });

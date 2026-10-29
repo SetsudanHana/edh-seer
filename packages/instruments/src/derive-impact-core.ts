@@ -2,12 +2,23 @@
  *  data diffs. No Mongo, no git, no modules of either commit -- the bin loads both trees and feeds these.
  *
  *  Four reports: derived ROWS (per field set diffs, source flips), GRAMMAR (complete flag and record JSON),
- *  PAIR REASONS (keyed `tag|producer|consumer|magnitude`, gained and lost), and the paste-ready SUMMARY. */
+ *  PAIR REASONS (membership tag|producer|consumer, with magnitude and attribute moves apart), and the paste-ready SUMMARY. */
+import { createHash } from "node:crypto";
+import type { CardTags } from "@edh-seer/tagger/schema";
 
-/** The fields compared, the same pick as research/tagger/derive-identity.ts. */
-export const PICKED_FIELDS = ["abilities", "unclaimed", "characteristics", "manaLines", "staticFixer", "landFetch", "isOneShot", "suspendOnly", "unknownTriggers"] as const;
+/** EVERY FIELD OF A DERIVED ROW IS COMPARED except these, which are constants of the pipeline (not derived from the card's text). */
+export const CONSTANT_FIELDS = ["oracleId", "schemaVersion", "promptVersion", "model", "pinned"] as const;
+/** Exhaustive over `CardTags`: a new field is a TYPE ERROR here until someone says whether it is derived (compared) or a constant. */
+export const FIELD_KIND: Record<keyof CardTags, "compared" | "constant"> = {
+  oracleId: "constant", schemaVersion: "constant", promptVersion: "constant", model: "constant", pinned: "constant",
+  characteristics: "compared", abilities: "compared", manaLines: "compared", staticFixer: "compared", landFetch: "compared",
+  isOneShot: "compared", suspendOnly: "compared", unknownTriggers: "compared", unclaimed: "compared",
+};
+const CONSTANTS: ReadonlySet<string> = new Set(CONSTANT_FIELDS);
 
-export const pick = (t: Record<string, unknown>): Record<string, unknown> => Object.fromEntries(PICKED_FIELDS.map((k) => [k, t[k]]));
+/** Every own key but the constants, in key order, so the JSON is stable. A key `FIELD_KIND` does not know is still compared. */
+export const pick = (t: Record<string, unknown>): Record<string, unknown> =>
+  Object.fromEntries(Object.entries(t).filter(([k]) => !CONSTANTS.has(k)).sort(([x], [y]) => (x < y ? -1 : x > y ? 1 : 0)));
 
 /** A row as the report keeps it: the picked fields as JSON (comparable, small) and the winner of `deriveRow`. */
 export interface RowSnap { name: string; fromGrammar: boolean; pick: string }
@@ -23,7 +34,8 @@ function entriesOf(v: unknown): string[] {
   return [JSON.stringify(v)];
 }
 
-/** Per field, the entries only BEFORE (removed) and only AFTER (added). A field with no change is absent. Set-based, as derive-identity is. */
+/** Per field, the entries only BEFORE (removed) and only AFTER (added). A field with no change is absent. Set-based, as derive-identity is.
+ *  CEILING: set-based, so a duplicate entry added or removed, or a pure reorder of an array, is not an entry diff (a reorder is listed as `(reordered)`; a changed count of an identical entry is invisible). */
 export function fieldDiff(before: string, after: string): Record<string, FieldDiff> {
   const a = JSON.parse(before) as Record<string, unknown>, b = JSON.parse(after) as Record<string, unknown>;
   const out: Record<string, FieldDiff> = {};
@@ -95,32 +107,72 @@ export function grammarReport(entries: GrammarEntry[]): GrammarReport {
 
 // ---- pair reasons ----
 
-export interface ReasonLike { tag: string; producer?: string; consumer?: string; magnitude?: unknown }
-export const reasonKey = (r: ReasonLike): string => `${r.tag}|${r.producer ?? ""}|${r.consumer ?? ""}|${JSON.stringify(r.magnitude ?? null)}`;
-/** The family of a tag: what precedes its first `:` (`attacks:creature` -> `attacks`). */
+/** The fields of a reason besides its membership key (tag|producer|consumer) and magnitude that the report watches. Not `text`, ability indexes or `enabledBy`. */
+export const ATTR_FIELDS = ["effectKind", "repeatability", "scaling", "perTurn", "hasStatPredicate", "producerIsToken", "consumerIsToken", "producerFace", "consumerFace"] as const;
+export type ReasonLike = { tag: string; producer?: string; consumer?: string; magnitude?: unknown } & { [K in (typeof ATTR_FIELDS)[number]]?: unknown };
+
+export const memberKey = (r: ReasonLike): string => `${r.tag}|${r.producer ?? ""}|${r.consumer ?? ""}`;
+const magOf = (r: ReasonLike): string => JSON.stringify(r.magnitude ?? null);
+/** The family of a tag: what precedes its first `:` (`attacks:creature` -> `attacks`). Takes a member key or a tag. */
 export const tagFamily = (key: string): string => { const tag = key.split("|")[0] ?? ""; return tag.split(":")[0] ?? tag; };
 
-export function diffReasonKeys(base: Iterable<string>, head: Iterable<string>): { gained: string[]; lost: string[] } {
-  const b = new Set(base), h = new Set(head);
-  return { gained: [...h].filter((k) => !b.has(k)).sort(), lost: [...b].filter((k) => !h.has(k)).sort() };
+export interface ReasonMoves {
+  /** Membership: a (tag, producer, consumer) present on one side only. */
+  gained: string[]; lost: string[];
+  /** Present on both sides with a different SET of magnitudes. */
+  magnitude: { key: string; before: string[]; after: string[] }[];
+  /** Present on both sides with the same magnitudes and a different attribute: the fields that differ. */
+  attrs: { key: string; fields: string[] }[];
 }
 
-export interface CardPairs { id: string; name: string; gained: string[]; lost: string[] }
+/** Membership moves apart from magnitude-only moves and attribute-only moves. Several reasons may share a member key (one per magnitude).
+ *  CEILING: attributes are compared between the first reason of each magnitude on each side; a key whose reasons differ only in a later duplicate is not seen. */
+export function diffReasons(base: ReasonLike[], head: ReasonLike[]): ReasonMoves {
+  const group = (rs: ReasonLike[]): Map<string, Map<string, ReasonLike>> => {
+    const m = new Map<string, Map<string, ReasonLike>>();
+    for (const r of rs) {
+      const k = memberKey(r);
+      const mags = m.get(k) ?? new Map<string, ReasonLike>();
+      if (!mags.has(magOf(r))) mags.set(magOf(r), r);
+      m.set(k, mags);
+    }
+    return m;
+  };
+  const b = group(base), h = group(head);
+  const out: ReasonMoves = { gained: [], lost: [], magnitude: [], attrs: [] };
+  for (const k of new Set([...b.keys(), ...h.keys()])) {
+    const mb = b.get(k), mh = h.get(k);
+    if (!mb) { out.gained.push(k); continue; }
+    if (!mh) { out.lost.push(k); continue; }
+    const before = [...mb.keys()].sort(), after = [...mh.keys()].sort();
+    if (JSON.stringify(before) !== JSON.stringify(after)) { out.magnitude.push({ key: k, before, after }); continue; }
+    const fields = new Set<string>();
+    for (const [m, rb] of mb) for (const f of ATTR_FIELDS) if (JSON.stringify(rb[f] ?? null) !== JSON.stringify(mh.get(m)![f] ?? null)) fields.add(f);
+    if (fields.size) out.attrs.push({ key: k, fields: [...fields].sort() });
+  }
+  out.gained.sort(); out.lost.sort();
+  out.magnitude.sort((x, y) => (x.key < y.key ? -1 : 1)); out.attrs.sort((x, y) => (x.key < y.key ? -1 : 1));
+  return out;
+}
+
+export type CardPairs = { id: string; name: string } & ReasonMoves;
+const movedOf = (c: ReasonMoves): number => c.gained.length + c.lost.length + c.magnitude.length + c.attrs.length;
 export interface PairsReport {
-  gained: number; lost: number;
+  gained: number; lost: number; magnitude: number; attrs: number;
+  attrFields: { field: string; count: number }[];
+  /** membership moves by tag family */
   families: { family: string; gained: number; lost: number }[];
-  top: { name: string; gained: number; lost: number }[];
-  /** The OTHER card of each moved reason (the key's producer or consumer that is not the changed card), ranked by moves:
+  top: { name: string; gained: number; lost: number; magnitude: number; attrs: number }[];
+  /** The OTHER card of each moved membership key (the producer or consumer that is not the changed card), ranked by moves:
    *  one card losing a reason with 50 changed cards is `lost: 50`, however the keys differ. */
   byCounterpart: { name: string; gained: number; lost: number }[];
 }
 
-/** Group by tag family, rank cards by moved reasons (gained + lost), and count how many changed cards each moved key appears on.
- *  A reason between two changed cards is seen from both sides; counts are of (card, key) pairs as the per-card lists hold them. */
 export function pairsReport(cards: CardPairs[], top = 20): PairsReport {
   const fam = new Map<string, { gained: number; lost: number }>();
   const other = new Map<string, { gained: number; lost: number }>();
-  let gained = 0, lost = 0;
+  const fields = new Map<string, number>();
+  let gained = 0, lost = 0, magnitude = 0, attrs = 0;
   const bump = (c: CardPairs, k: string, dir: "gained" | "lost") => {
     const f = fam.get(tagFamily(k)) ?? { gained: 0, lost: 0 };
     f[dir]++; fam.set(tagFamily(k), f);
@@ -130,45 +182,124 @@ export function pairsReport(cards: CardPairs[], top = 20): PairsReport {
     o[dir]++; other.set(counterpart, o);
   };
   for (const c of cards) {
-    gained += c.gained.length; lost += c.lost.length;
+    gained += c.gained.length; lost += c.lost.length; magnitude += c.magnitude.length; attrs += c.attrs.length;
     c.gained.forEach((k) => bump(c, k, "gained")); c.lost.forEach((k) => bump(c, k, "lost"));
+    for (const a of c.attrs) for (const f of a.fields) fields.set(f, (fields.get(f) ?? 0) + 1);
   }
+  const byMoves = <T extends { name: string; gained: number; lost: number }>(x: T, y: T) => (y.gained + y.lost) - (x.gained + x.lost) || x.name.localeCompare(y.name);
   return {
-    gained, lost,
+    gained, lost, magnitude, attrs,
+    attrFields: [...fields].map(([field, count]) => ({ field, count })).sort((a, b) => b.count - a.count || a.field.localeCompare(b.field)),
     families: [...fam].map(([family, v]) => ({ family, ...v })).sort((a, b) => (b.gained + b.lost) - (a.gained + a.lost) || a.family.localeCompare(b.family)),
-    top: cards.filter((c) => c.gained.length + c.lost.length > 0).map((c) => ({ name: c.name, gained: c.gained.length, lost: c.lost.length }))
-      .sort((a, b) => (b.gained + b.lost) - (a.gained + a.lost) || a.name.localeCompare(b.name)).slice(0, top),
-    byCounterpart: [...other].map(([name, v]) => ({ name, ...v })).sort((a, b) => (b.gained + b.lost) - (a.gained + a.lost) || a.name.localeCompare(b.name)).slice(0, top),
+    top: cards.filter((c) => movedOf(c) > 0).map((c) => ({ name: c.name, gained: c.gained.length, lost: c.lost.length, magnitude: c.magnitude.length, attrs: c.attrs.length }))
+      .sort((a, b) => (b.gained + b.lost + b.magnitude + b.attrs) - (a.gained + a.lost + a.magnitude + a.attrs) || a.name.localeCompare(b.name)).slice(0, top),
+    byCounterpart: [...other].map(([name, v]) => ({ name, ...v })).sort(byMoves).slice(0, top),
   };
 }
 
+// ---- matcher selection, sample, cache ----
+
+export type MatcherMode = "own" | "head";
+/** Each side's OWN matcher is the default and the truth. `head` is an explicit isolation option: HEAD's matcher on both sides, to see what the rows alone did. */
+export function chooseMatcher(flag: string | undefined): MatcherMode {
+  if (flag === undefined || flag === "own") return "own";
+  if (flag === "head") return "head";
+  throw new Error(`--matcher takes own or head, not ${flag}`);
+}
+
+/** Files, from a list of changed paths (repo-relative), whose change alters what `pairReasons` says: matcher sources and the data it reads,
+ *  the engine and data sources it imports, and the tagger modules it calls at pair time (`taggerPairTime`: the tagger's export-map targets bar the barrel).
+ *  Tests, fixtures, snapshots and the scoring tables (weights, stats) are not pair-time code.
+ *  CEILING: tagger modules the exported ones import in turn are not followed; a change only there reads as "matcher code same". `--pair-sample N` forces the sample. */
+export function matcherCodeFiles(paths: string[], taggerPairTime: string[]): string[] {
+  const test = (f: string): boolean => /\.test\.ts$/.test(f) || /\/fixtures\//.test(f) || /\.(fixtures|labels)[.\w-]*\.json$/.test(f);
+  const table = /(compass-report|theme-stats|rate-stats|quality-weights|staples|VALIDATION)/;
+  return paths.filter((f) => {
+    if (test(f)) return false;
+    if (f.startsWith("packages/matcher/")) return (f.endsWith(".ts") && !f.includes("/bin/")) || (f.endsWith(".json") && !table.test(f));
+    if (f.startsWith("packages/engine/src/") || f.startsWith("packages/data/src/")) return f.endsWith(".ts") && !f.includes("/bin/");
+    return taggerPairTime.includes(f);
+  }).sort();
+}
+
+/** A stable, seeded sample of ids: ranked by an FNV-1a hash of `seed + id`, so adding a card moves at most one member. */
+export function sampleIds(ids: string[], n: number, seed = "derive-impact"): string[] {
+  const h = (s: string): number => { let x = 0x811c9dc5; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 0x01000193) >>> 0; } return x; };
+  return ids.map((id) => ({ id, h: h(seed + id) })).sort((a, b) => a.h - b.h || (a.id < b.id ? -1 : 1)).slice(0, Math.max(0, n)).map((x) => x.id);
+}
+
+export interface TreeStat { isDirectory: boolean; isSymbolicLink: boolean; uid: number; mode: number }
+/** May a cached tree be imported? A real directory (not a link) owned by the caller and not writable by group or others: on a shared machine anyone else could plant code in it. */
+export function treeVerdict(st: TreeStat, uid: number): "ok" | string {
+  if (st.isSymbolicLink) return "is a symlink";
+  if (!st.isDirectory) return "is not a directory";
+  if (st.uid !== uid) return `owned by uid ${st.uid}, not ${uid}`;
+  if ((st.mode & 0o022) !== 0) return "writable by group or others";
+  return "ok";
+}
+/** A fingerprint of the repo's top-level node_modules listing; the cached tree links into it, so a different listing means dangling or missing modules. */
+export const nodeModulesHash = (names: string[]): string => createHash("sha1").update([...names].sort().join("\n")).digest("hex");
+
 // ---- summary ----
 
+export interface SideInfo { ref: string; sha: string; deriveVersion: number }
+export interface PairSection extends PairsReport { cards: number; skipped: string[] }
 export interface ImpactReport {
-  base: string; head: string; matcher: "head" | "own";
+  base: SideInfo; head: SideInfo & { dirty: boolean };
+  matcher: MatcherMode;
+  /** Matcher / engine / data / tagger-at-pair-time files that differ between BASE and the working tree. */
+  matcherCode: string[];
   rows: { totals: RowTotals; changes: RowChange[] };
   grammar: GrammarReport;
-  pairs?: PairsReport & { cards: number };
-  /** wall seconds, never part of a byte-for-byte comparison of two runs: kept out of the JSON by the bin. */
+  /** Pair reasons of the changed rows (and the cards that make them). */
+  pairs?: PairSection;
+  /** Pair reasons of a seeded sample of cards, changed or not: what a matcher-only change does. */
+  sample?: PairSection;
 }
 
 const n = (x: number): string => x.toLocaleString("en-US");
+const headName = (r: ImpactReport): string => `${r.head.sha} working tree${r.head.dirty ? " (dirty)" : ""}`;
+
+function pairLine(label: string, p: PairSection): string {
+  const fields = p.attrFields.length ? ` [${p.attrFields.map((f) => `${f.field} x${f.count}`).join(", ")}]` : "";
+  return `${label} (${p.cards} cards): membership +${n(p.gained)} gained, -${n(p.lost)} lost; magnitude-only ${n(p.magnitude)}; attributes changed ${n(p.attrs)}${fields}`
+    + (p.families.length ? `; by family ${p.families.slice(0, 5).map((f) => `${f.family} +${f.gained}/-${f.lost}`).join(", ")}` : "");
+}
 
 /** The paste-ready block for a commit message or the DERIVE_VERSION comment. */
 export function formatSummary(r: ImpactReport, topChanged = 10): string {
   const t = r.rows.totals;
   const lines = [
-    `derive-impact ${r.base} -> ${r.head}`,
+    `derive-impact ${r.base.sha} (DERIVE_VERSION ${r.base.deriveVersion}) -> ${headName(r)} (DERIVE_VERSION ${r.head.deriveVersion}); matcher: ${r.matcher === "own" ? "each side's own" : "HEAD's on both sides (isolation)"}`,
     `rows: ${n(t.same)} same, ${n(t.changed)} changed, ${n(t.added)} added, ${n(t.removed)} removed; source flips ${t.sourceFlipped} (${t.sourceFlippedIdenticalTags} with identical tags)`,
   ];
   // Ranked by entries moved (removed + added across fields), then by name.
   const size = (c: RowChange): number => Object.values(c.fields).reduce((a, d) => a + d.removed.length + d.added.length, 0);
   const changed = r.rows.changes.filter((c) => c.status !== "flip-only").sort((a, b) => size(b) - size(a) || a.name.localeCompare(b.name));
-  if (changed.length) lines.push(`top changed: ${changed.slice(0, topChanged).map((c) => c.name).join("; ")}${changed.length > topChanged ? `, +${changed.length - topChanged} more` : ""}`);
+  if (changed.length) lines.push(`top changed: ${changed.slice(0, topChanged).map((c) => c.name).join("; ")}${changed.length > topChanged ? `; +${changed.length - topChanged} more` : ""}`);
   lines.push(`grammar complete: ${n(r.grammar.completeBase)} -> ${n(r.grammar.completeHead)} (${r.grammar.gained.length} gained, ${r.grammar.lost.length} lost, ${r.grammar.recordsChanged.length} with changed records)`);
-  if (r.pairs) lines.push(`pair reasons (${r.pairs.cards} changed cards, ${r.matcher === "own" ? "each side's own matcher" : "HEAD matcher both sides"}): +${n(r.pairs.gained)} gained, -${n(r.pairs.lost)} lost${r.pairs.families.length ? `; by family ${r.pairs.families.slice(0, 5).map((f) => `${f.family} +${f.gained}/-${f.lost}`).join(", ")}` : ""}`);
-  else lines.push("pair reasons: not run");
+  if (r.matcherCode.length) lines.push(`MATCHER CODE DIFFERS (${r.matcherCode.length} file(s)): pair reasons below cover changed rows only; matcher-only effects are measured on the sample`);
+  if (r.pairs) {
+    lines.push(pairLine("pair reasons of changed rows", r.pairs));
+    if (r.pairs.skipped.length) lines.push(`  not paired (${r.pairs.skipped.length}): ${r.pairs.skipped.slice(0, 8).join("; ")}${r.pairs.skipped.length > 8 ? "; ..." : ""}`);
+  } else lines.push("pair reasons: not run");
+  if (r.sample) lines.push(pairLine("matcher sample, seeded", r.sample));
+  lines.push("tokens: a changed token row is paired against every card, and makers against token nodes (collectTokenNodes); token-vs-token pairs are not covered");
+  lines.push("ratchets: not run (task 2)");
   return lines.join("\n");
+}
+
+function pairBlock(out: string[], title: string, p: PairSection): void {
+  out.push("", title);
+  out.push(`membership: gained ${n(p.gained)}, lost ${n(p.lost)}; magnitude-only ${n(p.magnitude)}; attributes changed ${n(p.attrs)}`);
+  if (p.attrFields.length) out.push(`attribute fields: ${p.attrFields.map((f) => `${f.field} x${f.count}`).join(", ")}`);
+  out.push("by tag family (membership):");
+  p.families.forEach((f) => out.push(`  ${f.family}  +${n(f.gained)} -${n(f.lost)}`));
+  out.push("top cards by moved reasons:");
+  p.top.forEach((c) => out.push(`  ${c.name}  +${n(c.gained)} -${n(c.lost)} mag ${n(c.magnitude)} attr ${n(c.attrs)}`));
+  out.push("other cards whose reasons with these cards moved most:");
+  p.byCounterpart.forEach((c) => out.push(`  ${c.name}  +${n(c.gained)} -${n(c.lost)}`));
+  if (p.skipped.length) { out.push("not paired:"); p.skipped.forEach((x) => out.push(`  ${x}`)); }
 }
 
 /** The whole human-readable report: per changed card, grammar lists, pairs, then the summary. */
@@ -188,16 +319,8 @@ export function formatReport(r: ImpactReport): string {
   r.grammar.gained.forEach((x) => out.push(`  + complete: ${x}`));
   r.grammar.lost.forEach((x) => out.push(`  - complete: ${x}`));
   r.grammar.recordsChanged.forEach((x) => out.push(`  ~ records: ${x}`));
-  if (r.pairs) {
-    out.push("", `== PAIR REASONS (${r.pairs.cards} changed cards, matcher: ${r.matcher}) ==`);
-    out.push(`gained ${n(r.pairs.gained)}, lost ${n(r.pairs.lost)}`);
-    out.push("by tag family:");
-    r.pairs.families.forEach((f) => out.push(`  ${f.family}  +${n(f.gained)} -${n(f.lost)}`));
-    out.push("top cards by moved reasons:");
-    r.pairs.top.forEach((c) => out.push(`  ${c.name}  +${n(c.gained)} -${n(c.lost)}`));
-    out.push("other cards whose reasons with the changed cards moved most:");
-    r.pairs.byCounterpart.forEach((c) => out.push(`  ${c.name}  +${n(c.gained)} -${n(c.lost)}`));
-  }
+  if (r.pairs) pairBlock(out, `== PAIR REASONS OF CHANGED ROWS (${r.pairs.cards} cards, matcher: ${r.matcher}) ==`, r.pairs);
+  if (r.sample) pairBlock(out, `== MATCHER SAMPLE (${r.sample.cards} seeded cards, matcher: ${r.matcher}) ==`, r.sample);
   out.push("", "== SUMMARY ==", formatSummary(r));
   return out.join("\n");
 }
