@@ -467,6 +467,8 @@ const OBJECT_NAMES_A_PLAYER = /\b(?:controllers?|owners?|players?|opponents?)\b|
  *  ambiguous), "each player" (48), "players" (14), "a player" (7), "any player" (3). */
 /** Where a COUNT begins — the same cue `derive/subject.ts` cuts on, exported from there so one
  *  edit moves both readers. */
+// CEILING: clause-wide -- one player named anywhere in the sentence declines the controller default for EVERY action in it, so a cost the effect's player never touches ("Discard a card:
+// Each other player loses 2 life") goes `any` unless derive pins it (`costDiscard`, `ownSearch`).
 const NAMES_A_PLAYER = /\b(?:each|target|another|any|that|those|a|other|defending|the attacking) player\b|\bplayers\b|\bopponents?\b/i;
 
 /** Verbs whose object names WHO the thing happens to, not WHAT it happens to. The same list

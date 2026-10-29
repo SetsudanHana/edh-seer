@@ -1900,6 +1900,8 @@ const ACTION_FAMILY: Record<string, string> = {
 const GRAMMAR_ACTION_VERBS: ReadonlySet<string> = new Set(Object.keys(ACTION_FAMILY));
 /** Verbs whose OBJECT, on derive's string path, is the player it happens to ("target player mills two
  *  cards" -> object "target player"); see `RECIPIENT_VERBS` in emits.ts. */
+/** Verbs that move a card from one place to another: the player who does them need not own the card (see `withGrammarActions`' reading fill, #1395). */
+const CARD_MOVING_VERBS: ReadonlySet<string> = new Set(["exile", "destroy", "return", "put"]);
 const PLAYER_OBJECT_VERBS: ReadonlySet<string> = new Set(["draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life"]);
 /** ...of which these name only a COUNT of cards, so a reading with no actor is the controller's own
  *  ("Draw a card": CR 608.2c, the controller follows its instructions). Not discard: "discard a creature card" names
@@ -2004,9 +2006,11 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
         : r.text ?? base.object;
     // A NAMED PLAYER RIDES ON THE READING (a token maker's stored object is only the token, #1391 F2; and `actorFor` refuses a clause with two actions of one verb, so the other player's
     // half of "you and defending player each discard ..." / an edict after a sacrifice cost was left to the controller default, #1395). Only "you" and an opponent. An opponent is carried
-    // for every verb; "you" only for a create, or where the same verb is read for an opponent too (the pair's own half) -- a lone named "you" ("you may cast ...") already defaults to you.
+    // for every verb; CEILING: "you" only for a create, or where the same verb is read for an opponent too (the pair's own half) -- a lone named "you" ("you may cast ...") already defaults to you.
     // "each other player" is the players OTHER THAN the one the sentence is about: yours when you act, but "Whenever a player casts ..., each other player copies that spell" (Hive Mind) and
     // "Whenever enchanted player casts ..." (Curse of Echoes) leave YOU among them, so a trigger that is not yours keeps it `any`. A gain of control is the later "who gains it" task.
+    // CEILING: "each other player" is "other than the sentence's subject", and only a trigger that is not yours is guarded. "Target player draws two cards. Each other player discards a card." reads the
+    // second half `opp` although you can be in that set (no corpus card is shaped so, 2026-10-29). A gain of control is deferred to its own task (#1395), not read here.
     const otherThanSomeoneElse = /\bother player\b/i.test(r.actor?.text ?? "") && clause.trigger != null && clause.trigger.control !== "you";
     const named1 = r.actor?.text !== undefined && r.actor.scope !== "that" && !otherThanSomeoneElse && r.verb !== "gains-control" && (r.actor.control === "you" || r.actor.control === "opp") ? r.actor.control : undefined;
     const namedActor: "you" | "opp" | undefined = named1 === "opp" || (named1 === "you" && (r.verb === "create" || readings.some((o) => o.verb === r.verb && o.actor?.text !== undefined && o.actor.scope !== "that" && o.actor.control === "opp"))) ? named1 : undefined;
@@ -3248,6 +3252,17 @@ export function deriveAbilities(
         for (const e of emits) if (e.subject.control === "any") e.subject.control = "you";
         if (subject && subject.control === "any") subject.control = "you";
       }
+      // A COST DISCARD IS THE CONTROLLER'S TOO ("{2}{B}, {T}, Discard a card: Each other player loses 2 life", Urborg Syphon-Mage), pinned like the cost sacrifice above: the clause-wide
+      // `NAMES_A_PLAYER` guard reads the effect's "other player" and would leave it `any`. CEILING: the FIRST discard only, and only when the cost text holds a discard.
+      const costDiscard = action.verb === "discard" && /\bdiscard\b/i.test(cost) && (clause.actions ?? []).find((x) => x.verb === "discard") === action;
+      // A SEARCH OF YOUR OWN LIBRARY is yours whatever player the sentence also names ("if defending player controls more lands than you, search your library", Aerial Surveyor, Loyal Warhound, Tithe): the
+      // same `librarySearchOwner` reading that sets `Ability.librarySearch`, so the emit and that field agree.
+      const ownSearch = action.verb === "search" && clauseText !== "" && printsSearch(clauseText)
+        && librarySearchOwner(action, clauseText, (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).filter((x) => x.verb === "search").length) === "yours";
+      if (costDiscard || ownSearch) {
+        for (const e of emits) if (e.subject.control === "any") e.subject.control = "you";
+        if (subject && subject.control === "any") subject.control = "you";
+      }
       // AN EDICT NAMES ITS PLAYER, NOT ITS CREATURE (#1295): "Target player sacrifices a creature of their choice"
       // targets the player, so the sacrifice and the death carry `edict` instead of a `target` scope they never had.
       // Not read through `actorFor`, which refuses a clause with two sacrifices -- and an edict has two when it asks for
@@ -3259,10 +3274,17 @@ export function deriveAbilities(
       // lose 2 life" is said by the opponent's permanent), the same flip line 1154 applied to the
       // object's own "you" -- the actor cue runs after it and must not undo it.
       const cued = actorFor(action.verb);
-      const stated = cued ?? action.actor;
+      // THE ACTOR OWNS WHAT IT ACTS ON only for sacrifice, discard, draw, mill, search, counters and life. For a verb that MOVES a card between zones, "an opponent exiles a nonland card from among
+      // them" (Allure of the Unknown) chooses, and the card is still yours: the reading's player is written only where the object or zone names theirs ("from their hand", "that player controls").
+      // CEILING: a word list on the stored object / zone, not a parse; a chooser whose phrase names no owner stays `any`.
+      const mover = action.verb !== undefined && CARD_MOVING_VERBS.has(action.verb);
+      const namesTheirs = /\b(?:their|that player'?s|his or her|opponents?'s?|they control|that player controls)\b/i.test(action.object ?? "") || action.fromZone === "hand" || action.fromZone === "graveyard" || action.fromZone === "library";
+      const viaReading = cued === undefined && action.actor !== undefined && action.verb !== "create";
+      const readingOk = !viaReading || !mover || namesTheirs;
+      const stated = cued ?? (readingOk ? action.actor : undefined);
       // The grammar's named player FILLS what is unknown and never overrides a stated one (a `create` keeps its F2 override): "an opponent chooses a permanent YOU control and exiles it" (Wormfang Crab)
       // exiles your permanent, which the object already said.
-      const readingFills = cued === undefined && action.actor !== undefined && action.verb !== "create";
+      const readingFills = viaReading && readingOk;
       const actor = stated === "you" && grantedTo ? grantedTo.control : stated;
       if (actor) {
         // A PUT'S OBJECT MAY NAME ITS OWN CONTROLLER, and that outranks the actor: Visions of Dread's

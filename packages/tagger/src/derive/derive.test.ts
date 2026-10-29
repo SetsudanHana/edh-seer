@@ -6950,25 +6950,59 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
     const abs = run("Farsight Adept", "enters", "When this creature enters, you and target opponent each draw a card.", [act("draw", "a card", "1")]);
     expect(abs).toHaveLength(1);
   });
+  // Real oracle text and the real stored records (Mongo cardClauses, dumped 2026-10-29).
+  const rec = (verb: string, object: string, extra: Record<string, unknown> = {}) => ({ verb, object, ...extra });
+  const trig = (event: string, subject: string, control: string, actions: unknown[], id = 1) => ({ id, abilityType: "triggered", trigger: { event, subject, control }, actions });
+  const all = (c: ReturnType<typeof both>, check: (path: string, abs: ReturnType<typeof run>) => void) => { for (const [path, abs] of c) check(path, abs); };
+
   test("#1395: another player's half is never yours", () => {
-    const sac = (o: string) => act("sacrifice", o);
-    const shatter = both("Shattergang Brothers", "Legendary Creature — Goblin", "{2}{B}, Sacrifice a creature: Each other player sacrifices a creature.",
-      [{ id: 1, abilityType: "activated", cost: "{2}{B}, Sacrifice a creature", actions: [sac("a creature"), sac("a creature")] }]);
-    for (const [path, abs] of shatter) expect(players(abs, "sacrifice"), `Shattergang ${path}`).toEqual(["you", "opp"]);
-    const text = "Whenever this creature attacks, you and defending player each discard a card or sacrifice a permanent. You draw a card for each land card put into a graveyard this way.";
-    const eum = both("Eumidian Wastewaker", "Creature — Human Wizard", text,
-      [{ id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: [{ ...act("discard", "a card"), optional: true }, { ...act("sacrifice", "a permanent"), optional: true }, act("discard", "a card"), act("sacrifice", "a permanent"), act("draw", "a card", "for each land card put into a graveyard this way")] }]);
-    for (const [path, abs] of eum) {
-      expect(players(abs, "discard"), `Eumidian discard ${path}`).toEqual(["you", "opp"]);
-      expect(players(abs, "sacrifice"), `Eumidian sacrifice ${path}`).toEqual(["you", "opp"]);
-      expect(players(abs, "draw"), `Eumidian draw ${path}`).toEqual(["you"]);
-    }
-    const wow = both("Words of Wisdom", "Instant", "You draw two cards, then each other player draws a card.",
-      [{ id: 1, abilityType: "spell", actions: [act("draw", "two cards", "2"), act("draw", "a card", "1")] }]);
-    for (const [path, abs] of wow) expect(players(abs, "draw"), `Words of Wisdom ${path}`).toEqual(["you", "opp"]);
-    const savra = both("Savra, Queen of the Golgari", "Legendary Creature — Elf Shaman", "Whenever you sacrifice a black creature, you may pay 2 life. If you do, each other player sacrifices a creature of their choice.",
-      [{ id: 1, abilityType: "triggered", trigger: { event: "sacrifice", subject: "a black creature", control: "you" }, actions: [{ ...act("pay-life", "2 life", "2"), optional: true }, act("sacrifice", "a creature of their choice")] }]);
-    for (const [path, abs] of savra) expect(players(abs, "sacrifice"), `Savra ${path}`).toEqual(["opp"]);
+    all(both("Shattergang Brothers", "Legendary Creature — Goblin Artificer", "{2}{B}, Sacrifice a creature: Each other player sacrifices a creature.\n{2}{R}, Sacrifice an artifact: Each other player sacrifices an artifact.\n{2}{G}, Sacrifice an enchantment: Each other player sacrifices an enchantment.",
+      [1, 2, 3].map((id, k) => ({ id, abilityType: "activated", actions: [rec("sacrifice", ["a creature", "an artifact", "an enchantment"][k]!), rec("sacrifice", ["a creature", "an artifact", "an enchantment"][k]!)] }))),
+      (path, abs) => expect(players(abs, "sacrifice"), `Shattergang ${path}`).toEqual(["you", "opp", "you", "opp", "you", "opp"]));
+    const text = "Whenever this creature attacks, you and defending player each discard a card or sacrifice a permanent. You draw a card for each land card put into a graveyard this way.\nEncore {6}{B}{B} ({6}{B}{B}, Exile this card from your graveyard: For each opponent, create a token copy that attacks that opponent this turn if able. They gain haste. Sacrifice them at the beginning of the next end step. Activate only as a sorcery.)";
+    all(both("Eumidian Wastewaker", "Creature — Insect Cleric", text, [trig("attacks", "this creature", "you", [rec("discard", "a card", { optional: true }), rec("sacrifice", "a permanent", { optional: true }), rec("discard", "a card", { optional: true }), rec("sacrifice", "a permanent", { optional: true }), rec("draw", "a card", { amount: "for each land card put into a graveyard this way" })])]),
+      (path, abs) => {
+        expect(players(abs, "discard"), `Eumidian discard ${path}`).toEqual(["you", "opp"]);
+        expect(players(abs, "sacrifice"), `Eumidian sacrifice ${path}`).toEqual(["you", "opp"]);
+        expect(players(abs, "draw"), `Eumidian draw ${path}`).toEqual(["you"]);
+      });
+    all(both("Words of Wisdom", "Instant", "You draw two cards, then each other player draws a card.", [{ id: 1, abilityType: "spell", actions: [rec("draw", "you", { amount: "2" }), rec("draw", "each other player", { amount: "1" })] }]),
+      (path, abs) => expect(players(abs, "draw"), `Words of Wisdom ${path}`).toEqual(["you", "opp"]));
+    all(both("Savra, Queen of the Golgari", "Legendary Creature — Elf Shaman", "Whenever you sacrifice a black creature, you may pay 2 life. If you do, each other player sacrifices a creature of their choice.\nWhenever you sacrifice a green creature, you may gain 2 life.",
+      [trig("sacrificed", "a black creature", "you", [rec("sacrifice", "a creature of their choice", { optional: true })]), trig("sacrificed", "a green creature", "you", [rec("gain-life", "you", { amount: "2", optional: true })], 2)]),
+      (path, abs) => expect(players(abs, "sacrifice"), `Savra ${path}`).toEqual(["opp"]));
+  });
+
+  test("#1395: 'each other player' under a trigger that is not yours includes you, so it stays any (Hive Mind, Curse of Echoes)", () => {
+    all(both("Hive Mind", "Enchantment", "Whenever a player casts an instant or sorcery spell, each other player copies that spell. Each of those players may choose new targets for their copy.",
+      [trig("cast", "an instant or sorcery spell", "any", [rec("copy", "that spell")])]),
+      (path, abs) => expect(players(abs, "copy"), `Hive Mind ${path}`).not.toContain("opp"));
+    all(both("Curse of Echoes", "Enchantment — Aura Curse", "Enchant player\nWhenever enchanted player casts an instant or sorcery spell, each other player may copy that spell and may choose new targets for the copy they control.",
+      [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant player" }] }, trig("cast", "an instant or sorcery spell", "opponent", [rec("copy", "that spell", { optional: true })], 2)]),
+      (path, abs) => expect(players(abs, "copy"), `Curse of Echoes ${path}`).not.toContain("opp"));
+  });
+
+  test("#1395: the reading never overrides a stated control, and a chooser does not own the card (Wormfang Crab, Allure of the Unknown)", () => {
+    all(both("Wormfang Crab", "Creature — Nightmare Crab", "This creature can't be blocked.\nWhen this creature enters, an opponent chooses a permanent you control other than this creature and exiles it.\nWhen this creature leaves the battlefield, return the exiled card to the battlefield under its owner's control.",
+      [{ id: 1, abilityType: "static", actions: [rec("cant", "be blocked")] }, trig("enters", "this creature", "you", [rec("exile", "a permanent you control other than this creature", { fromZone: "battlefield", toZone: "exile" })], 2), trig("leaves", "this creature", "you", [rec("return", "the exiled card", { fromZone: "exile", toZone: "battlefield" })], 3)]),
+      (path, abs) => expect(players(abs, "exiled"), `Wormfang ${path}`).not.toContain("opp"));
+    all(both("Allure of the Unknown", "Sorcery", "Reveal the top six cards of your library. An opponent exiles a nonland card from among them, then you put the rest into your hand. That opponent may cast the exiled card without paying its mana cost.",
+      [{ id: 1, abilityType: "spell", actions: [rec("reveal", "the top six cards of your library"), rec("exile", "a nonland card from among them"), rec("put", "the rest", { fromZone: "library", toZone: "hand" }), rec("cast", "the exiled card", { fromZone: "exile", toZone: "stack", optional: true })] }]),
+      (path, abs) => expect(players(abs, "exiled"), `Allure ${path}`).not.toContain("opp"));
+  });
+
+  test("#1395: a cost discard and 'search your library' stay yours beside another player's name (Urborg Syphon-Mage, Aerial Surveyor)", () => {
+    all(both("Urborg Syphon-Mage", "Creature — Human Spellshaper", "{2}{B}, {T}, Discard a card: Each other player loses 2 life. You gain life equal to the life lost this way.",
+      [{ id: 1, abilityType: "activated", actions: [rec("discard", "a card"), rec("lose-life", "each other player", { amount: "2" }), rec("gain-life", "you", { amount: "equal to the life lost this way" })] }]),
+      (path, abs) => expect(players(abs, "discard"), `Syphon-Mage ${path}`).toEqual(["you"]));
+    all(both("Aerial Surveyor", "Artifact — Vehicle", "Flying\nWhenever this Vehicle attacks, if defending player controls more lands than you, search your library for a basic Plains card, put it onto the battlefield tapped, then shuffle.\nCrew 2",
+      [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Flying" }] }, trig("attacks", "this", "you", [rec("search", "your library for a basic Plains card", { fromZone: "library" }), rec("put", "it", { fromZone: "library", toZone: "battlefield" }), rec("tap", "it"), rec("shuffle", "your library")], 2), { id: 3, abilityType: "none", actions: [{ verb: "none", object: "Crew 2" }] }]),
+      (path, abs) => expect(players(abs, "search"), `Surveyor ${path}`).toEqual(["you"]));
+  });
+
+  test("#1395: a lone named 'you' is not carried onto a verb that defaults to you anyway", () => {
+    const abs = run("Some Caster", "enters", "When this creature enters, you may cast a spell from your graveyard.", [act("cast", "a spell from your graveyard")]);
+    expect(abs.every((a) => a.emits?.every((e) => e.subject.control !== "opp"))).toBe(true);
   });
 });
 
