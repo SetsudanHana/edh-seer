@@ -1052,7 +1052,7 @@ test("the how-often options say what each keeps", async () => {
   const select = await screen.findByLabelText("How often");
   expect(select).toHaveValue("repeatable");
   expect(within(select).getAllByRole("option").map((o) => o.textContent)).toEqual([
-    "Any", "Once or more (by an ability)", "At least once a round", "At least every turn", "No limit (every time, or always on)", "Always on",
+    "Any", "Once or more (by an ability)", "At least once a round", "At least every turn", "No limit, or always on", "Always on",
   ]);
   expect(screen.queryByText("at least")).toBeNull();
 });

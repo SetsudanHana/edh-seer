@@ -29,7 +29,7 @@ export const REPEATS_LABEL: Record<(typeof REPEATS_LADDER)[number], string> = {
   once: "Once or more (by an ability)",
   "per-cycle": "At least once a round",
   "per-turn": "At least every turn",
-  repeatable: "No limit (every time, or always on)",
+  repeatable: "No limit, or always on",
   continuous: "Always on",
 };
 
@@ -63,7 +63,7 @@ export function RepeatsRow(
       <label className="eyebrow" htmlFor={id}>How often</label>
       <div className="flex flex-wrap items-center gap-2">
         <select
-          id={id} className="field w-52"
+          id={id} className="field w-full sm:w-80"
           value={min ?? ""}
           onChange={(e) => onChange(e.target.value === "" ? undefined : e.target.value as Repeats)}
         >
