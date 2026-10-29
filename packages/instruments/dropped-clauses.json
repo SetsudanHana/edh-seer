@@ -4375,6 +4375,7 @@
 "Welcome the Dead": ["1:tap:partial"],
 "Welkin Tern": ["2:cant"],
 "Werewolf Pack Leader": ["2:cant:partial","2:modify-pt:partial"],
+"Wernog, Rider's Chaplain": ["3:spliced"],
 "West Wind Avatar": ["4:spliced"],
 "Wheel of Potential": ["2:play:partial"],
 "Wheel of Sun and Moon": ["2:put:>library"],
