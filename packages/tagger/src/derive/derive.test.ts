@@ -1,7 +1,7 @@
 import { describe, expect, it, test } from "vitest";
 import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, abilityKey, amountCovered, countCovered, exilesTopOfLibrary, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
-import { targetsASpellEarlier } from "./emits.js";
+import { targetsASpellEarlier, actionEmits } from "./emits.js";
 import { exileNamesOnlyGraveyards } from "./effect-kind.js";
 import { victimDeclines } from "./recipient.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
@@ -7043,6 +7043,25 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
     all(both("Coveted Falcon", "Artifact Creature — Bird", "Flying\nWhenever this creature attacks, gain control of target permanent you own but don't control.\nDisguise {1}{U}\nWhen this creature is turned face up, target opponent gains control of any number of target permanents you control. Draw a card for each one they gained control of this way.",
       [trig("attacks", "this creature", "you", [gc("target permanent you own but don't control")], 2), trig("turned-face-up", "this creature", "you", [gc("any number of target permanents you control")], 4)]),
       (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Coveted Falcon ${path}`).toEqual(["you", "opp"]); });
+  });
+  test("#1395: control-change branches that moved cards (Hithlain Rope, Assault Suit, Infernal Denizen, Juxtapose, Coveted Falcon's own object)", () => {
+    const gc = (o: string) => rec("gain-control", o);
+    all(both("Hithlain Rope", "Artifact", "This artifact can't be sacrificed.\n{1}, {T}: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle. The player to your right gains control of this artifact.\n{2}, {T}: Draw a card. The player to your right gains control of this artifact.",
+      [{ id: 2, abilityType: "activated", actions: [rec("search", "a basic land card", { fromZone: "library" }), rec("put", "it", { fromZone: "library", toZone: "battlefield" }), rec("shuffle", "your library"), gc("this artifact")] },
+        { id: 3, abilityType: "activated", actions: [rec("draw", "a card", { amount: "1" }), gc("this artifact")] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Hithlain Rope ${path}`).toEqual(["opp", "opp"]); });
+    all(both("Assault Suit", "Artifact — Equipment", "Equipped creature gets +2/+2, has haste, can't attack you or planeswalkers you control, and can't be sacrificed.\nAt the beginning of each opponent's upkeep, you may have that player gain control of equipped creature until end of turn. If you do, untap it.\nEquip {3}",
+      [trig("upkeep", "you", "opponent", [rec("gain-control", "equipped creature", { optional: true }), rec("untap", "equipped creature")], 2)]),
+      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Assault Suit ${path}`).toEqual(["opp"]); });
+    all(both("Infernal Denizen", "Creature — Demon", "At the beginning of your upkeep, sacrifice two Swamps. If you can't, tap this creature, and an opponent may gain control of a creature you control of their choice for as long as this creature remains on the battlefield.\n{T}: Gain control of target creature for as long as this creature remains on the battlefield.",
+      [trig("upkeep", "you", "you", [rec("sacrifice", "two Swamps"), rec("tap", "this creature"), rec("gain-control", "a creature you control of their choice", { optional: true })]), { id: 2, abilityType: "activated", actions: [gc("target creature")] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Infernal Denizen ${path}`).toEqual(["opp", "you"]); });
+    all(both("Juxtapose", "Sorcery", "You and target player exchange control of the creature you each control with the greatest mana value. Then exchange control of artifacts the same way. If two or more permanents a player controls are tied for greatest, their controller chooses one of them.",
+      [{ id: 1, abilityType: "spell", actions: [gc("the creature you control with the greatest mana value"), gc("the creature target player controls with the greatest mana value"), gc("an artifact you control"), gc("an artifact target player controls")] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "gains-control"), `Juxtapose ${path}`).toEqual(["opp", "you", "opp", "you"]); });
+    // The own-object rule alone, with NO clause text to lean on (Coveted Falcon's turned-face-up half).
+    expect(actionEmits(gc("any number of target permanents you control") as never)[0]?.subject.control).toBe("opp");
+    expect(actionEmits(gc("target creature with power less than or equal to the number of creatures you control") as never)[0]?.subject.control).toBe("you");
   });
 });
 

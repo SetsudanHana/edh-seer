@@ -481,11 +481,13 @@ const NAMES_A_PLAYER = /\b(?:each|target|another|any|that|those|a|other|defendin
 const ACTOR_IS_THE_EVENT: ReadonlySet<string> = new Set(["gains-control", "clash", "face-a-villainous-choice"]);
 /** A CONTROL CHANGE HANDED TO ANOTHER PLAYER: "target opponent gains control of", "target player
  *  gains control of" (Donate prints `player`; giving yourself your own permanent does nothing). */
-/** The object of a control change that IS something you control ("all creatures you control", "target permanent you control", "a creature you control of their choice"): its "you control" closes the
- *  noun phrase. A "you control" inside a QUALIFIER ("power less than or equal to the number of creatures you control", Beguiler of Wills; "...Islands you control", Vedalken Shackles) is a limit on
- *  what YOU take, and an exchange ("the creature you control with the greatest mana value", Juxtapose) has a half of each. */
+/** The object of a control change that IS something you control: its HEAD noun phrase (cut at the first " with ", " whose " or " that ") ends in "you control" ("all creatures you control", "any number
+ *  of target permanents you control", "a creature you control of their choice", "the creature you control with the greatest mana value"). A "you control" inside a QUALIFIER ("target creature with power
+ *  less than or equal to the number of creatures you control", Beguiler of Wills; Vedalken Shackles, Dominating Vampire) is a limit on what YOU take, so the head is "target creature" and the gain is yours.
+ *  An exchange (Juxtapose) gives its "you control" half away, so that half is the opponent's gain and the half "target player controls" is yours. Not cut at " of ": "any number of target permanents". */
 function yourOwnObject(object: string): boolean {
-  return /\byou control(?: of their choice)?$/i.test(object.trim()) && !/\b(?:number of|power|toughness|mana value|less than|greater than|equal to|with the)\b/i.test(object);
+  const head = object.split(/ (?:with|whose|that) /i)[0]!.trim();
+  return /\byou control(?: of their choice)?$/i.test(head);
 }
 
 const OTHER_GAINS_CONTROL = /\b(?:(?:target|an|each|that) (?:opponent|player)|the player to your (?:left|right)) gains? control of\b/i;
