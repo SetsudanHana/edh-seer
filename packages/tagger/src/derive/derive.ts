@@ -650,15 +650,15 @@ function ownCounterText(action: Action, actions: Action[], text: string): string
   const mine = actions.filter((a) => a.verb === "add-counter");
   if (mine.length !== 2) return text;
   // Index scanning, no lazy runs (CodeQL js/polynomial-redos): every "counter(s) on", and the sentence delimiter after it.
-  const starts = [...text.matchAll(/\bcounters?\s+on\b/gi)].map((m) => m.index!);
+  const starts = [...text.matchAll(/\bcounters?\s+on\s/gi)].map((m) => m.index!);
   if (starts.length !== 2) return text;
   const stop = (from: number): number => { const i = text.slice(from).search(/[,.;]/); return i < 0 ? text.length : from + i; };
-  // ...and the two are joined by "and <a / a number>" in one sentence (a third phrase in a where-clause, Communal Brewing, or a sentence break reads the whole text).
+  // ...and the two are joined by the FIRST "and <a / a number>" between them, in one sentence (a third phrase in a where-clause, Communal Brewing, or a sentence break reads the whole text).
   const [a, b] = starts as [number, number];
   if (stop(a) < b) return text;
-  const join = text.toLowerCase().lastIndexOf(" and ", b);
-  if (join <= a || !/^(?:an?|one|two|three|four|five|x|\d+)\s/i.test(text.slice(join + 5))) return text;
-  const phrases = [text.slice(a, join), text.slice(b, stop(b))];
+  const join = /\s+and\s+(?=(?:an?|one|two|three|four|five|x|\d+)\s)/i.exec(text.slice(a, b));
+  if (!join) return text;
+  const phrases = [text.slice(a, a + join.index), text.slice(b, stop(b))];
   const own = mine.indexOf(action);
   return phrases.reduce((t, ph, i) => (i === own ? t : t.replace(ph, "")), text);
 }
