@@ -133,6 +133,11 @@ npx tsx packages/instruments/src/dropped-clauses.ts          # exit 1 on any new
 npx tsx packages/instruments/src/dropped-clauses.ts --bank   # rewrite the snapshot (--silent lists the drops derive did not report)
 ```
 
+**One command for a `DERIVE_VERSION` bump.** `npm run derive:bump -- --issue N --note "text"` bumps the
+constant, re-derives with `--force`, regenerates the fixtures, quality weights and schema docs, runs both
+ratchets in check mode (never `--bank`), and runs the three stamp tests. `--restamp` repeats everything but
+the bump at the same version; `--dry-run` prints the plan. Needs Mongo and the sourced `packages/tagger/.env`.
+
 **Never quote the panel's precision without the retention figure beside it.** A gate that deletes
 every claim it is unsure of scores 100%, so precision alone is not comparable across any change that
 shrinks the claim set — and most correctness fixes shrink it.
