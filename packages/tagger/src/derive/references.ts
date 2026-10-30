@@ -248,7 +248,8 @@ export function pluralAntecedent(actions: readonly Action[], idx: number, clause
       // The cards returned from YOUR graveyard are now permanents under your control: "those creatures" is that class on the battlefield, minus the zone words.
       // CEILING: only a return from your own graveyard (the clause says so); "under your control" from another graveyard or exile is refused.
       if (!/\bfrom your graveyard\b/i.test(clauseText)) return undefined;
-      const cls = o.replace(/\s+from your graveyard\b.*$/i, "").replace(/\bcards?\b/gi, "").replace(/\s+/g, " ").trim().replace(/\b(creatures?)\b/i, "$1 you control");
+      const cut = o.search(/ from your graveyard\b/i);
+      const cls = (cut < 0 ? o : o.slice(0, cut)).replace(/\bcards?\b/gi, "").replace(/\s+/g, " ").trim().replace(/\b(creatures?)\b/i, "$1 you control");
       const s = parseSubject(cls);
       if (s.type === undefined || s.control !== "you" || COMPOUND_SET.test(cls)) return undefined;
       if (found === undefined) found = cls; else if (cls.toLowerCase() !== found.toLowerCase()) return undefined;
