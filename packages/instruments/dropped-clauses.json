@@ -738,6 +738,7 @@
 "Crown of Convergence": ["3:put:library>library"],
 "Crown-Hunter Hireling": ["2:cant"],
 "Crucible of the Spirit Dragon": ["3:other:partial"],
+"Cruel Entertainment": ["1:gain-control","1:gain-control"],
 "Cruel Revival": ["1:cant:partial"],
 "Crumble": ["1:cant:partial"],
 "Cryogen Relic": ["3:spliced"],
