@@ -933,3 +933,15 @@ test("a copied LIST is not collapsed to its first word (#1385 review)", () => {
   expect(parseSubject("a token that's a copy of each creature attacking you or a planeswalker you control and that's blocking that creature").type).toBe("creature");
   expect(parseSubject("a token that's a copy of target artifact or creature").type).toEqual(["creature", "artifact"]);
 });
+
+// #1427 review: the opponent in "attacking one of your opponents" is the DEFENDER, not the controller. Garruk, Curse Breaker's
+// "-4: Until your next turn, whenever one or more creatures attack one of your opponents, those creatures get +2/+2 and gain trample until end of turn."
+test("#1427: 'creatures attacking one of your opponents' names the defender; control is not read from it", () => {
+  for (const t of ["creatures attacking one of your opponents", "creatures attacking your opponents", "a creature attacking an opponent", "each other creature that's attacking one of your opponents"]) {
+    const s = parseSubject(t);
+    expect(s.control, t).toBe("any");
+    expect(s.combat, t).toBe("attacking");
+  }
+  // ...while a controller phrase still reads: "attacking creatures your opponents control".
+  expect(parseSubject("attacking creatures your opponents control").control).toBe("opp");
+});

@@ -59,6 +59,10 @@ function parseOwnership(t: string): { owner?: "you" | "opp"; control?: Control }
   return undefined;
 }
 
+/** THE OPPONENT AN ATTACKER ATTACKS IS THE DEFENDER, NOT ITS CONTROLLER (#1427 review): "creatures attacking one of your opponents" (Garruk, Curse Breaker; 6 stored
+ *  subjects) are any player's attackers. Cut before `parseControl` reads "your opponents" as the controller. CEILING: only "attacking" + an opponent phrase. */
+const ATTACKED_OPPONENT = /\battacking\s+(?:(?:one|each|any|a|an) of )?(?:your opponents?|an opponent|each opponent|target opponent)\b/gi;
+
 function parseControl(t: string): Control {
   // A PLAYER NAMED ONLY INSIDE A COUNT IS NOT THE ACTOR. Cut there first, so the branches below read
   // the sentence's HEAD. A subject that really is opponent-facing keeps its cue, because that cue
@@ -72,7 +76,7 @@ function parseControl(t: string): Control {
   if (head.trim().length > 0) t = head;
   // Negation first: "you don't control" must not fall through to the "you control" branch below.
   if (/\byou (?:don'?t|do not|don’t) control\b/.test(t)) return "opp";
-  t = t.replace(NOT_A_CONTROLLER, " ");
+  t = t.replace(NOT_A_CONTROLLER, " ").replace(ATTACKED_OPPONENT, "attacking");
   // COMBAT NAMES THE OPPONENT WITHOUT SAYING "OPPONENT". Measured over the derived corpus: 12 clause
   // actions say "defending player" and all 12 mean an opponent (11 sit on an `attacks` trigger the
   // card's controller owns; the 12th, Elturel Survivors, is a characteristic-defining "+X/+0 where X
