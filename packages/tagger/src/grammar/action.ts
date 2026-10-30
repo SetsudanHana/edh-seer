@@ -1402,8 +1402,8 @@ function predicateOf(pred: string, object: SubjectFilter, target: { object: Subj
   // The subject in front ("Lands you control are every basic land type ..."): the store's object named
   // the recipient, which derive reads off these words (Prismatic Omen).
   // CEILING: "Each of those creatures is a black Zombie in addition to its other colors and types" (Ever After) is left unread: the phrase-only grant names no recipient, and derive
-  // read its words as a class, claiming every black Zombie got a grant. The text makes the RETURNED creatures black Zombies.
-  if (is && /^(?:each of )?those (?:creatures|permanents)$/i.test(target.phrase ?? "")) return null;
+  // read its words as a class, claiming every black Zombie got a grant. The text makes the RETURNED creatures black Zombies. Only the singular "is a X" form: "Those creatures are Vampires" (Shilgengar) derived nothing.
+  if (is && /^is an? /i.test(pred) && /^(?:each of )?those (?:creatures|permanents)$/i.test(target.phrase ?? "")) return null;
   if (is) return [{ verb: "grant-ability", object, phrase: target.text ? `${target.text} ${pred}` : pred }];
   const has = /^(?:has|have|gains?) (.+)$/i.exec(pred);
   if (!has) return null;
