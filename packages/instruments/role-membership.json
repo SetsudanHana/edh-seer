@@ -855,7 +855,7 @@
 "Atris, Oracle of Half-Truths": ["role:handFill"],
 "Atrocious Experiment": ["role:burn","role:draw","wincon:burn","wincon:mill"],
 "Atsushi, the Blazing Sky": ["role:impulseDraw","role:ramp"],
-"Attempted Murder": ["wincon:go-wide"],
+"Attempted Murder": ["role:targetedRemoval","wincon:go-wide"],
 "Attended Healer": ["wincon:go-wide"],
 "Attended Knight": ["wincon:go-wide"],
 "Attentive Sunscribe": ["role:cardSelection"],

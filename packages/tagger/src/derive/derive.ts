@@ -583,7 +583,8 @@ import { emblemRecipient } from "../emblem.js";
 // 417: #1427 -- A plural back-reference ("untap those creatures", "each of those creatures") is the set its antecedent action named in the same clause (controller, target scope, power cut, keyword, attacking), or nothing (`pluralAntecedent`, references.ts; it replaces the #1423 combat-only tap refusal). Resolved: Mob Rule (power cut), Thundermaw Hellkite (opponents' flyers), Domineering Will, Harness by Force, Triton Tactics, Colossal Heroics, Mass Mutiny, Molten Primordial, Worf, In the Darkness Bind Them (targeted creatures), Motivated Pony, Guul Draz Overseer, Kang Dynasty, Call for Aid, Virtue of Loyalty. A return to the BATTLEFIELD from your graveyard names the creatures it returned (Wake the Dead, Rally the Ancestors, Ever After: control you); a DELAYED sacrifice/exile ("at the beginning of the next end step") drops the antecedent's combat role (CR 511.3: Tears of Rage is back to its base reading). Refused (emits nothing, never widened): a trigger's batched creatures or an earlier sentence (Tamiyo, Garruk Curse Breaker, Lightmine Field, Sabotage Strategist, Druid's Familiar, Trusted Forcemage, Wolfir Silverheart, Shellshock, Twinstrike, Rags // Riches, Seize the Spotlight, Scrambleverse, Hideous Taskmaster (no stored gain-control), Sigarda's Vanguard), a return to hand (Random Encounter), a counter with no recipient or a combat-role recipient (Dread Wight, Choking Vines), a class the action list does not carry (Day of Black Sun), two different sets (Twist Allegiance). ALSO: parseControl no longer reads the opponent of "attacking one of your opponents" as the controller (the defender; Garruk Curse Breaker's model reading was `opp`, now `any`; Blast-Furnace Hellkite and Roar of Resistance move opp -> any), and the grammar leaves "Each of those creatures is a black Zombie in addition to its other types" unread (Ever After stays on the model; the phrase-only grant claimed every black Zombie). Measured (derive-impact vs bdfa6878, final): 41 rows changed, 6 source flips (3 tags-identical: Champions from Beyond, Marsh Casualties, The Fifth Doctor; Garruk Curse Breaker, Random Encounter, Send to Sleep), grammar complete 28,423 -> 28,422 (Ever After), role-ratchet gained 0 / lost 0, dropped-clauses 4,914 -> 4,933 (new 21, fixed 2), pair reasons of changed rows +249 / -71,099 (gained: heroic-style cast on Domineering Will, Harness by Force, Mass Mutiny, whose untap is now of TARGETED creatures; lost: the false every-creature families, e.g. the static pump of Druid's Familiar, Trusted Forcemage, Wolfir Silverheart, `dies` of Sabotage Strategist, Day of Black Sun, Twinstrike). KNOWN IMPRECISION of the RESOLVED readings, narrower than before and the right direction: "all creatures target opponent controls" parses scope `target` (Call for Aid); a "that didn't attack or enter" qualifier is dropped (The Fifth Doctor); "that player controls" is not carried into control (Worf, Mass Mutiny, Molten Primordial); a returned set keeps the scope of the returned cards (`target` for Wake the Dead, `each` for Rally).
 // 418: #1401 -- F/G: Molten Sentry, Giant Shark, Curse of Opulence/Disturbance, Cruel Entertainment; 5 rows change, 0 pair-reason membership moves
 // 419: #1424 -- Activation hosers: 10 rows gain ability-loss: 8 on their class with abilityKind activated (Stony Silence, Null Rod, Collector Ouphe, Cursed Totem, Linvala x2, Clarion Conqueror, Karn the Great Creator), 2 typeless on the chosen name like Pithing Needle (Phyrexian Revoker, Voidstone Gargoyle); pair reasons +0/-0, role-ratchet 0/0, dropped-clauses 4,935 -> 4,925
-export const DERIVE_VERSION = 419;
+// 420: #1421 -- A multiplier of the counters on this creature is self: Mossborn Hydra, Primordial Hydra, Voracious Hydra, Dragonsguard Elite, Solarion, Sisterhood of Karn, Ascendant Acolyte, Big Mother Mouser, Lily Bowen, The Millennium Calendar, Paradox Zone
+export const DERIVE_VERSION = 420;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -722,7 +723,9 @@ function splitOneRecipientList(text: string, a: number, end: number, own: number
 }
 function counterOnSelf(verb: string | undefined, text: string, cardName?: string, triggerIsSelf = false): boolean {
   if (verb === "adapt" || verb === "monstrosity") return true;
-  if ((verb !== "add-counter" && verb !== "remove-counter") || !text) return false;
+  // A MULTIPLIER OF THE COUNTERS ON THE CARD ITSELF (#1421): "double the number of +1/+1 counters on this creature" (Mossborn Hydra) is about the card, as a placement on it is.
+  // 9 corpus doublers name "this creature" (census, 2026-10-30); the rest name a target, a class or a pronoun for another creature.
+  if ((verb !== "add-counter" && verb !== "remove-counter" && verb !== "double" && verb !== "triple") || !text) return false;
   const prep = verb === "remove-counter" ? "from" : "on";
   const re = verb === "remove-counter" ? COUNTER_FROM : COUNTER_ON;
   // Every face, by the SHORT name the card's own text uses ("on Lonis", never "on Lonis, Genetics
@@ -3064,7 +3067,7 @@ export function deriveAbilities(
         // 4,321 corpus counter emits carried no `self` -- every self-growing creature "fed" every
         // "whenever you put counters on THIS creature" payoff. The recipient is in the clause text.
         // A COUNTER REMOVED AS A COST names its permanent in the cost, not in the effect text.
-        || counterOnSelf(action.verb, (action.verb === "remove-counter" && /\bcounters?\b/i.test(cost)) || (action.verb === "add-counter" && COUNTER_PUT_AS_COST.test(cost) && !COUNTER_PREP.test(text) && clauseGrants?.[clause.id as number] === undefined) ? cost : ownCounterText(action, clause.actions ?? [], text), cardName, isSelfSubject(clause.trigger?.subject ?? "", cardName))
+        || counterOnSelf(MULTIPLIER_VERBS.has(action.verb ?? "") && clauseGrants?.[clause.id as number] !== undefined ? undefined : action.verb, (action.verb === "remove-counter" && /\bcounters?\b/i.test(cost)) || (action.verb === "add-counter" && COUNTER_PUT_AS_COST.test(cost) && !COUNTER_PREP.test(text) && clauseGrants?.[clause.id as number] === undefined) ? cost : ownCounterText(action, clause.actions ?? [], text), cardName, isSelfSubject(clause.trigger?.subject ?? "", cardName))
         // A pronoun standing in for the card itself. Tested on the RESOLVED antecedent, because the
         // raw object is "it" and matches none of the spellings above.
         || (PRONOUN_OBJECT.test((action.object ?? "").trim())
@@ -3211,6 +3214,9 @@ export function deriveAbilities(
         ? effectSubject(subjectAction, effectKind, trigger?.subject.self === true, text, cardName, enchantText, sameCant)
         : undefined;
       if (subject && selfByIf) subject.self = true;
+      // A DOUBLER OF THE CARD'S OWN COUNTERS is self on its effect subject too (#1421), or the counter-presence pass reads Mossborn Hydra as a class of creatures.
+      // CEILING: not for a granted ability (Evolution Vat's quoted "double ... on this creature", Level Up's "on it"): the "this creature" there is the RECIPIENT, so those subjects stay as parsed (a class); the matcher's self refusal does not cover them.
+      if (subject && emitsSelf && MULTIPLIER_VERBS.has(action.verb ?? "") && !grantedTo) subject.self = true;
       // A CARD PUT INTO YOUR HAND FROM THE TOP OF YOUR LIBRARY IS NEVER THE PERMANENT THAT ENTERED (#1302, self-reference): "the chosen cards" / "it" in a self-ETB clause (Niv-Mizzet Reborn) read as the card itself
       // through the pronoun inheritance, and the dig "dug for itself". The hand-fill's subject is whose hand (to-hand) or the class dug for (typed), never `self`.
       if (subject && handRead && subject.self) delete subject.self;

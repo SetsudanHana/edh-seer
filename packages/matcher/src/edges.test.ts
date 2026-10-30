@@ -1018,6 +1018,30 @@ test("two abilities emitting the identical counter-added event credit a cares-on
   expect(counterReasons.length).toBe(1);
 });
 
+// A CONSUMER OF THE COUNTERS ON ITSELF IS NOT FED BY A PRODUCER OF COUNTERS ON ITSELF (#1421): Mossborn Hydra's
+// "double the +1/+1 counters on this creature" joined Walking Ballista, whose counters only ever land on Ballista.
+describe("a self counter consumer joins only a producer that can reach another creature", () => {
+  const hydra = base("Mossborn Hydra", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "land", control: "you", token: null } },
+    effect: { kind: "counter-placement", subject: { type: "creature", control: "any", token: null, counter: "+1/+1", self: true } },
+    emits: [{ verb: "double", subject: { type: "creature", control: "any", token: null, counter: "+1/+1", self: true } }],
+  }] as unknown as CardTags["abilities"]);
+  const producer = (name: string, subject: object) => base(name, [{
+    kind: "activated", cost: "{4}",
+    effect: { kind: "counter-placement" },
+    emits: [{ verb: "counter-added", subject }],
+  }] as unknown as CardTags["abilities"]);
+  const feeds = (p: DeckCard) => directedReasons(p, hydra, H).filter((r) => r.tag.startsWith("counter-added"));
+  test("a self-only producer does not feed it", () => {
+    expect(feeds(producer("Walking Ballista", { control: "any", token: null, counter: "+1/+1", self: true }))).toEqual([]);
+  });
+  test("a target or a class producer still does", () => {
+    expect(feeds(producer("Arwen", { type: "creature", control: "any", token: null, counter: "+1/+1", scope: "target" })).length).toBe(1);
+    expect(feeds(producer("Anthem", { type: "creature", control: "you", token: null, counter: "+1/+1" })).length).toBe(1);
+  });
+});
+
 test("reasons record whether the producer side was baseline or authored", () => {
   const payoff = base("ETB Payoff", [{
     kind: "triggered",

@@ -3790,6 +3790,9 @@ function counterPresenceEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       // an ability that emits the same event is already covered by the event-edge pass above
       if ((ca.emits ?? []).some((e) => e.verb === "counter-added")) continue;
       if (ca.trigger?.verbs.includes("counter-added")) continue;
+      // SELF ON BOTH SIDES IS TWO DIFFERENT CARDS (#1421), as `SELF_BOTH_REFUSED` has it for events: Walking Ballista's counters land on Ballista, and
+      // Mossborn Hydra doubles only its own, so the one never feeds the other. A producer that can reach ANOTHER creature (a target, a class) still does.
+      if (emit.subject.self === true && want.self === true) continue;
       if (!subjectMatches(emit.subject, want, h)) continue;
       reasons.push({
         tag: `counter-added:${themeSubjectKey(want)}`,

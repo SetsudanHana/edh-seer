@@ -1332,6 +1332,51 @@ test("a self trigger keeps the clause's you", () => {
   expect(abilities[0].trigger!.subject.control).toBe("you");
 });
 
+// DOUBLING THE COUNTERS ON THIS CREATURE IS ABOUT THE CARD ITSELF (#1421): Mossborn Hydra's double emit and
+// effect subject were a creature class, so Walking Ballista (whose counters only land on Ballista) "fed" it.
+test("a doubler of the counters on this card is self; one on another permanent is not", () => {
+  const derive = (text: string, name: string, object: string, trigger = { event: "enters", subject: "a land", control: "you" }) => deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger, actions: [{ verb: "double", object, amount: "1" }] }],
+    name, { 1: text },
+  ).abilities.find((a) => (a.emits ?? []).some((e) => e.verb === "double"));
+  const hydra = derive("Landfall — Whenever a land you control enters, double the number of +1/+1 counters on this creature.", "Mossborn Hydra", "+1/+1 counters on this creature");
+  expect(hydra?.emits?.find((e) => e.verb === "double")?.subject.self).toBe(true);
+  expect(hydra?.effect.subject?.self).toBe(true);
+  const named = derive("Whenever a land you control enters, double the number of +1/+1 counters on Lily Bowen.", "Lily Bowen, Raging Grandma", "the number of +1/+1 counters on Lily Bowen");
+  expect(named?.emits?.find((e) => e.verb === "double")?.subject.self).toBe(true);
+  const mouser = derive("Whenever this creature attacks, double the number of +1/+1 counters on it.", "Big Mother Mouser", "+1/+1 counters on it", { event: "attacks", subject: "this creature", control: "you" });
+  expect(mouser?.emits?.find((e) => e.verb === "double")?.subject.self).toBe(true);
+  // A class, a target, or a pronoun for ANOTHER creature is not the card.
+  const kalonian = derive("Whenever this creature attacks, double the number of +1/+1 counters on each creature you control.", "Kalonian Hydra", "+1/+1 counters on each creature you control", { event: "attacks", subject: "this creature", control: "you" });
+  expect(kalonian?.emits?.find((e) => e.verb === "double")?.subject.self).toBeUndefined();
+  const byrke = derive("Whenever a creature you control with a +1/+1 counter on it attacks, double the number of +1/+1 counters on it.", "Byrke, Long Ear of the Law", "+1/+1 counters on it", { event: "attacks", subject: "a creature you control with a +1/+1 counter on it", control: "you" });
+  expect(byrke?.emits?.find((e) => e.verb === "double")?.subject.self).toBeUndefined();
+  // A GRANTED ability's "this creature" is the recipient (Evolution Vat), not the Vat.
+  const vatText = "Until end of turn, that creature gains \"{2}{G}{U}: Double the number of +1/+1 counters on this creature.\"";
+  const vat = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "grant-ability", object: "{2}{G}{U}: Double the number of +1/+1 counters on this creature." }] },
+      { id: 2, abilityType: "activated", actions: [{ verb: "double", object: "the number of +1/+1 counters on this creature" }] }],
+    "Evolution Vat", { 1: vatText, 2: "{2}{G}{U}: Double the number of +1/+1 counters on this creature." },
+    undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, { 2: 1 },
+  ).abilities;
+  const granted = vat.filter((a) => (a.emits ?? []).some((e) => e.verb === "double"));
+  expect(granted.length).toBeGreaterThan(0); // the granted double is derived...
+  expect(granted.some((a) => a.emits?.some((e) => e.subject.self === true) || a.effect.subject?.self === true)).toBe(false); // ...and is not read as the Vat's own
+});
+
+// "... on THAT CREATURE" after "another target creature" is the target (#1421): Arwen's non-self counter emit was untyped, so once the
+// self-only producers stopped feeding Mossborn Hydra, the one real pair (Arwen's target can be the Hydra) would have gone with them.
+test("a counter put on 'that creature' after a target is an emit on a target creature; the one on the card stays self", () => {
+  const text = "{1}, Remove an indestructible counter from Arwen: Another target creature gains indestructible until end of turn. Put a +1/+1 counter on that creature and a +1/+1 counter on Arwen.";
+  const emits = deriveAbilities(
+    [{ id: 2, abilityType: "activated", actions: [{ verb: "add-counter", object: "+1/+1", amount: "1" }, { verb: "add-counter", object: "+1/+1", amount: "1" }] }],
+    "Arwen, Mortal Queen", { 2: text },
+  ).abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "counter-added" && e.subject.counter === "+1/+1");
+  const target = emits.find((e) => e.subject.self !== true);
+  expect(target?.subject).toMatchObject({ type: "creature", scope: "target" });
+  expect(emits.find((e) => e.subject.self === true)?.subject.type).toBeUndefined();
+});
+
 // A COUNTER PUT ON THE CARD ITSELF IS A SELF EMIT (owner-reported 2026-09-17): Primal Amulet's
 // charge counter lands on Primal Amulet, so it can never be Exemplar of Light's "whenever you put
 // +1/+1 counters on THIS creature". The object names the counter; the clause text names where.

@@ -329,14 +329,26 @@ const RETURNS_TO_HAND = /\bto (?:its|their|that card's|the) owners?'s? hands?\b|
 /** "... counters on each other Moogle you control for each ..." -> "each other Moogle you control".
  *  The regex matches only the head; the tail is cut with string ops, because a lazy run ahead of
  *  `\s+for each` was polynomial ReDoS (CodeQL js/polynomial-redos, PR #498). */
-function counterRecipient(clauseText: string): string | undefined {
+function counterRecipient(clauseText: string, named = true): string | undefined {
   const head = /\bcounters?\s+on\s+(?=(?:each|all|target|another|up to \w+)\b)/i.exec(clauseText);
-  if (!head) return undefined;
+  if (!head) return named ? thatTarget(clauseText) : undefined;
   let tail = clauseText.slice(head.index + head[0].length);
   const stop = tail.search(/[.;,]/);
   if (stop >= 0) tail = tail.slice(0, stop);
   const forEach = tail.search(/\sfor each\b/i);
   return forEach >= 0 ? tail.slice(0, forEach).trimEnd() : tail;
+}
+
+/** "Another target creature gains indestructible. Put a +1/+1 counter ... on THAT CREATURE" (Arwen, Mortal Queen, #1421): "that creature" is the target the sentence named
+ *  before the counters, so the emit says "target creature" and a consumer that wants a creature (Mossborn Hydra) sees a supply it can reach. The word "another" is dropped on
+ *  purpose: it narrows away from the card, which `other` would carry onto the emit.
+ *  CEILING: only a "target <creature|permanent|artifact|land>" earlier in the same clause text; a "that creature" bound to a trigger or an earlier choice stays untyped. */
+function thatTarget(clauseText: string): string | undefined {
+  const at = /\bcounters?\s+on\s+that\s+(?:creature|permanent|artifact|land)\b/i.exec(clauseText);
+  if (!at) return undefined;
+  const before = clauseText.slice(0, at.index);
+  const m = /\btarget\s+(creature|permanent|artifact|land)\b/i.exec(before);
+  return m ? `target ${m[1]!.toLowerCase()}` : undefined;
 }
 
 /** A move whose stated origin is the stack: a spell. */
@@ -697,7 +709,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // Moogle you control". Parsed from there so the emit says what gets them; a pronoun or the card
   // itself stays with the self logic in derive.
   const recipient = (action.verb === "add-counter" && counterKindOf(action.object ?? "") !== undefined)
-    ? counterRecipient(clauseText ?? "")
+    ? counterRecipient(clauseText ?? "", opts.self !== true)
     : undefined;
   // A BID THE MODEL STORED AS ONE `other` ("You and target spell's controller bid life ... If you win the bidding, counter that spell", Mages' Contest) still counters that spell.
   if (action.verb === "other" && (action.object ?? "").toLowerCase().includes("counter that spell")) {
