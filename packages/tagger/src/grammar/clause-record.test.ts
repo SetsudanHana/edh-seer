@@ -1634,7 +1634,7 @@ test("Crabomination: the library, graveyard and hand limbs each exile from their
       a("cast", "a spell from among cards exiled this way", { fromZone: "exile", toZone: "stack", optional: true })] },
   ];
   const g = grammarClauseRecords(crab);
-  const zones = (records: typeof stored) => deriveCardTags(deriveInputOf(crab as never, "x", crab.name, records as never)).abilities.flatMap((x) => x.emits.filter((e) => e.verb === "exiled").map((e) => e.subject.fromZone));
+  const zones = (records: typeof stored) => deriveCardTags(deriveInputOf(crab as never, "x", crab.name, records as never)).abilities.flatMap((x) => (x.emits ?? []).filter((e) => e.verb === "exiled").map((e) => e.subject.fromZone));
   expect(zones(stored)).toEqual(["library", "graveyard", "hand"]);
   expect(g.records.find((r) => r.trigger)!.actions!.filter((x) => x.verb === "exile").map((x) => x.fromZone)).toEqual(["library", "graveyard", "hand"]);
 });
