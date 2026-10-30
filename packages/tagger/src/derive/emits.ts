@@ -8,6 +8,7 @@ import { LAND_SUBTYPES } from "./subtypes.js";
 import { damageRecipient, isControllerPhrase, playerOnlyRecipient } from "./damage-recipient.js";
 import { tokenTypeFor } from "./token-types.js";
 import { isEnergyObject, permanentHalf } from "./effect-kind.js";
+import { parse as parseFilter } from "../grammar/filter.js";
 
 /** Action verb -> the events it makes available, in order. Verbs absent from this table emit
  *  nothing; a guessed event is worse than silence because it forms edges that are not real. */
@@ -414,6 +415,21 @@ function counteredCardTypes(text: string): SubjectFilter["type"] | undefined {
   const type = parseSubject(`${words.slice(det + 1).join(" ")} spell`).type;
   return type === undefined || type === "spell" ? undefined : type;
 }
+/** A CARD NAME WITH A COMMA IS ONE NAME (#1401 part 2): `parseSubject`'s NAMED stops at a comma, so "a card named Vraska, Scheming
+ *  Gorgon" read `named: "vraska"` plus `subtype: "gorgon"` (a filter nobody asked for) while the effect subject, which the filter grammar
+ *  reads, held the whole name. The name is the grammar's reading; the rest of the phrase is `parseSubject`'s with the name cut out, so
+ *  no word of the name can become a subtype or type. A token's name (`token named X`) is not a card name and is left alone. */
+function parseSubjectWhole(text: string): SubjectFilter {
+  const plain = parseSubject(text);
+  if (plain.named === undefined || !/\bnamed\b/i.test(text)) return plain;
+  const whole = parseFilter(text)?.named;
+  if (whole === undefined || whole === plain.named || whole === "~" || !whole.startsWith(plain.named)) return plain;
+  const at = text.toLowerCase().indexOf(whole);
+  if (at < 0) return plain;
+  const { named: _n, ...others } = parseSubject(`${text.slice(0, at)}${text.slice(at + whole.length)}`);
+  return { ...others, named: whole };
+}
+
 /** The back-references to a spell the clause named earlier. */
 const SPELL_ANAPHORS = ["the chosen spell", "that spell", "the spell"];
 
@@ -660,7 +676,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   const listed = action.verb === "deal-damage" || action.verb === "lose-life" ? damageRecipient(action.object ?? "") : undefined;
   // ...and damage to "target player" / "target opponent" is player-only (#1294), no "any target".
   const playerOnly = action.verb === "deal-damage" && listed === undefined ? playerOnlyRecipient(action.object ?? "") : undefined;
-  const subject = listed ?? playerOnly ?? parseSubject(recipient ?? action.object ?? "");
+  const subject = listed ?? playerOnly ?? parseSubjectWhole(recipient ?? action.object ?? "");
   // A TOKEN THAT IS A COPY IS CONTROLLED BY ITS CREATOR, NOT BY WHAT IT COPIES (#1295, CR 111.2: the player who creates a
   // token is its owner and it enters under that player's control unless the effect says otherwise). "Create two tokens
   // that are copies of target permanent an opponent controls" (Venser, Fervent Forger) parsed the original's control and

@@ -716,3 +716,20 @@ describe("'for each opponent ... that player controls' is an opponent's permanen
     expect(dies.subject.control).toBe("opp");
   });
 });
+
+/** A CARD NAME WITH A COMMA IS ONE NAME (#1401 part 2). `parseSubject`'s NAMED stops at a comma, so the emit of
+ *  Vraska's Scorn read `named: "vraska", subtype: "gorgon"` -- a name no card has and a Gorgon filter nobody asked for --
+ *  while the effect subject (the filter grammar) read "vraska, scheming gorgon". Real oracle text, Mongo 2026-10-30. */
+test("a search for a card named with a comma emits the whole name and no subtype from it", () => {
+  const cases: [string, string, string][] = [
+    ["a card named Vraska, Scheming Gorgon", "You may search your library and/or graveyard for a card named Vraska, Scheming Gorgon, reveal it, and put it into your hand.", "vraska, scheming gorgon"],
+    ["a card named Jace, Arcane Strategist", "You may search your library and/or graveyard for a card named Jace, Arcane Strategist, reveal it, and put it into your hand.", "jace, arcane strategist"],
+    ["a card named Chandra, Pyrogenius", "You may search your library and/or graveyard for a card named Chandra, Pyrogenius, reveal it, and put it into your hand.", "chandra, pyrogenius"],
+    ["a card named TARDIS", "Search your library for a card named TARDIS, reveal it, and put it into your hand.", "tardis"],
+  ];
+  for (const [object, text, name] of cases) {
+    const [e] = actionEmits({ verb: "search", object, fromZone: "library" } as never, text);
+    expect(e!.subject.named).toBe(name);
+    expect(e!.subject.subtype).toBeUndefined();
+  }
+});
