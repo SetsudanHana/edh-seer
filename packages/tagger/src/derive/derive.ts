@@ -693,7 +693,8 @@ function ownCounterText(action: Action, actions: Action[], text: string, forEmit
     const before = actions[actions.indexOf(firstAction) - 1];
     const obj = (before?.object ?? "").trim();
     if (!before || before.verb === "add-counter" || !(/^this (?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle|card)$/i.test(obj) || /^(?:up to \w+ )?target\b/i.test(obj))) return ph;
-    return ph.replace(/\s+it$/i, ` ${obj}`);
+    // Start-anchored (an unanchored leading `\s+` before a literal tail is CodeQL js/polynomial-redos, #1358).
+    return ph.replace(/^(counters?\s+on\s+)it$/i, (_m, head: string) => `${head}${obj}`);
   };
   if (apart && /^counters?\s+on\s+it$/i.test(second.trimEnd()) && (actions[actions.indexOf(mine[g1]!) - 1]?.verb === "add-counter" || recipient(second, mine[g1]!) === second)) return text;
   const rewritten = recipient(phrases[phraseOf]!, mine[phraseOf === 0 ? 0 : g1]!);
