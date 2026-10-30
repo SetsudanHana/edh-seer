@@ -7485,3 +7485,40 @@ describe("a plural back-reference is its antecedent's subject, or nothing (#1427
     expect(s).toEqual([]);
   });
 });
+
+// #1424: a static "activated abilities of <class> can't be activated" is an `ability-loss` on the class (CR 602.5: a player can't begin to activate an ability that's prohibited from being activated).
+describe("activation hosers derive ability-loss on their class (#1424)", () => {
+  const derive = (name: string, typeLine: string, oracleText: string, stored?: unknown) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, (stored ?? g.records) as never, undefined, g.readings)).abilities.filter((a) => a.effect.kind === "ability-loss");
+  };
+  const who = (a: Ability[]) => a.map((x) => ({ control: x.effect.subject?.control, type: x.effect.subject?.type }));
+
+  test("Stony Silence / Null Rod: artifacts; Cursed Totem: creatures; Linvala: creatures your opponents control; Damping Matrix: both", () => {
+    expect(who(derive("Stony Silence", "Enchantment", "Activated abilities of artifacts can't be activated."))).toEqual([{ control: "any", type: "artifact" }]);
+    expect(who(derive("Cursed Totem", "Artifact", "Activated abilities of creatures can't be activated."))).toEqual([{ control: "any", type: "creature" }]);
+    expect(who(derive("Linvala, Keeper of Silence", "Legendary Creature — Angel", "Flying\nActivated abilities of creatures your opponents control can't be activated."))).toEqual([{ control: "opp", type: "creature" }]);
+    expect(derive("Clarion Conqueror", "Creature — Dragon", "Flying\nActivated abilities of artifacts, creatures, and planeswalkers can't be activated.")).toHaveLength(1);
+    // Only ACTIVATED abilities are stopped, and the matcher reads that to leave the class's triggers alone.
+    expect(derive("Stony Silence", "Enchantment", "Activated abilities of artifacts can't be activated.")[0]?.effect.subject?.abilityKind).toEqual(["activated"]);
+    // The chosen permanent (Scheming Fence) is a name, not a class: no type.
+    expect(who(derive("Scheming Fence", "Artifact", "Activated abilities of the chosen permanent can't be activated.", [{ id: 1, abilityType: "static", actions: [{ verb: "cant", object: "be activated" }] }]))).toEqual([{ control: "any", type: undefined }]);
+    // A temporary line is not the static.
+    expect(derive("Test Pulse", "Instant", "Activated abilities of creatures can't be activated this turn.")).toHaveLength(0);
+  });
+
+  test("Phyrexian Revoker (stored model clauses, the grammar's object aligned over them): the named card, like Pithing Needle", () => {
+    const text = "As this creature enters, choose a nonland card name.\nActivated abilities of sources with the chosen name can't be activated.";
+    const stored = [
+      { id: 1, abilityType: "static", actions: [{ verb: "other", object: "choose a nonland card name as this creature enters" }] },
+      { id: 2, abilityType: "static", actions: [{ verb: "cant", object: "activated abilities of sources with the chosen name can't be activated" }] },
+    ];
+    expect(who(derive("Phyrexian Revoker", "Artifact Creature — Phyrexian Horror", text, stored))).toEqual([{ control: "any", type: undefined }]);
+    const needle = [
+      { id: 1, abilityType: "static", actions: [{ verb: "other", object: "choose a card name" }] },
+      { id: 2, abilityType: "static", actions: [{ verb: "cant", object: "activated abilities of sources with the chosen name can't be activated unless they're mana abilities" }] },
+    ];
+    expect(who(derive("Pithing Needle", "Artifact", "As this artifact enters, choose a card name.\nActivated abilities of sources with the chosen name can't be activated unless they're mana abilities.", needle))).toEqual([{ control: "any", type: undefined }]);
+  });
+});
