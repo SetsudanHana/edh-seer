@@ -7354,3 +7354,14 @@ describe("'tap those creatures' is refused, not read as every creature (#1423 fo
     expect(abilities.some((a) => a.effect.kind === "counter-placement" && a.effect.subject?.combat === "blocking")).toBe(true);
   });
 });
+
+describe("untap-denial: a recipient that opens with the card's own damage clause is the card (#1423 review: Reveka)", () => {
+  test("Reveka, Wizard Savant: 'Reveka deals 2 damage to any target and doesn't untap' denies Reveka's own untap, not a target's", () => {
+    const text = "{T}: Reveka deals 2 damage to any target and doesn't untap during your next untap step.";
+    const stored = [{ id: 1, abilityType: "activated", actions: [{ verb: "deal-damage", object: "any target" }, { verb: "untap", object: "this" }] }] as never;
+    const den = deriveAbilities(stored, "Reveka, Wizard Savant", { 1: text }, undefined, text).abilities.filter((a) => a.effect.kind === "untap-denial");
+    expect(den).toHaveLength(1);
+    expect(den[0]?.effect.subject?.self).toBe(true);
+    expect(den[0]?.effect.subject?.scope).not.toBe("target");
+  });
+});

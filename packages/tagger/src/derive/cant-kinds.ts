@@ -271,8 +271,8 @@ export function untapDenialOf(object: string, clauseText = "", occurrence = 0): 
   if (duration === undefined) return undefined;
   const steps = next?.[1] ? STEP_COUNT[next[1]] : undefined;
   const denial: UntapDenial = { duration, ...(steps && steps > 1 ? { steps } : {}) };
-  // THE RECIPIENT: the words ahead of the verb, up to a "gets / has / loses" (Dance of the Dead: "Enchanted creature gets +1/+1 and doesn't untap ..."), without a trailing "and".
-  const who = head.split(/\s(?=(?:gets?|gains?|has|have|loses?|enters)\b)/i)[0]?.trim().replace(/ and$/i, "").replace(/^(?:and|then|but|also) /i, "");
+  // THE RECIPIENT: the words ahead of the verb, up to a "gets / has / loses / enters / deals" (Reveka's "deals 2 damage to any target and doesn't untap" is Reveka's) (Dance of the Dead: "Enchanted creature gets +1/+1 and doesn't untap ..."), without a trailing "and".
+  const who = head.split(/\s(?=(?:gets?|gains?|has|have|loses?|enters|deals?)\b)/i)[0]?.trim().replace(/ and$/i, "").replace(/^(?:and|then|but|also) /i, "");
   return { denial, ...(who && !UNTAP_PRONOUN.test(who) && !/,| (?:and|or) /i.test(who) ? { who } : {}) };
 }
 
