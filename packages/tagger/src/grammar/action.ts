@@ -655,7 +655,8 @@ const MANA_TAP: Record<string, [string, Handler]> = {
     const parts = rest.split(OBJECT_JOINT);
     if (parts.length > 1) {
       const each = parts.map((p) => objectOf(p));
-      return each.every((e) => e) ? each.map((e, i) => ({ object: e!.object, ...(e!.object.ref || e!.object.self ? {} : { text: parts[i]! }) })) : null;
+      // A back-reference part keeps its OWN words ("it"), not the whole phrase the first action would take: "tap it and up to one target creature ..." read as the target twice (#1401).
+      return each.every((e) => e) ? each.map((e, i) => ({ object: e!.object, ...(e!.object.ref ? { phrase: parts[i]! } : e!.object.self ? {} : { text: parts[i]! }) })) : null;
     }
     const r = objectOf(rest);
     return r && { object: r.object, ...(r.object.ref || r.object.self ? {} : { text: rest }) };
@@ -1672,7 +1673,7 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
       return all.map((a) => ({ verb, ...a, ...(who !== undefined ? { object: parse(who) ?? { control: "any" as const, token: null, ref: "sentence" as const }, text: who } : {}),
         ...(optional ? { optional: true as const } : {}), ...(actor ? { actor } : {}), ...(condition ? { condition } : {}) }));
     }
-    return all.map((a, i) => ({ verb, ...(isRef(a) ? (({ text: _t, ...rest }: Args) => rest)(a) : a), ...(a.object && !isRef(a) && a.text === undefined && /\S/.test(rest) && !/^(?:\d+|x)$/i.test(rest) ? { text: objectPhrase(verb, rest) } : {}), ...(/\S/.test(rest) && i === 0 && (a.verb === undefined || a.verb === verb) ? { phrase: objectPhrase(verb, rest) } : {}), ...(counted && ZONE[base] && isRef(a) && a.amount === undefined && /\bX\b/.test(rest) ? { amount: counted } : {}), ...(optional ? { optional: true as const } : {}), ...(actor ? { actor } : {}), ...(condition ? { condition } : {}) }));
+    return all.map((a, i) => ({ verb, ...(isRef(a) ? (({ text: _t, ...rest }: Args) => rest)(a) : a), ...(a.object && !isRef(a) && a.text === undefined && /\S/.test(rest) && !/^(?:\d+|x)$/i.test(rest) ? { text: objectPhrase(verb, rest) } : {}), ...(/\S/.test(rest) && i === 0 && (a.verb === undefined || a.verb === verb) && !(all.length > 1 && a.phrase !== undefined) ? { phrase: objectPhrase(verb, rest) } : {}), ...(counted && ZONE[base] && isRef(a) && a.amount === undefined && /\bX\b/.test(rest) ? { amount: counted } : {}), ...(optional ? { optional: true as const } : {}), ...(actor ? { actor } : {}), ...(condition ? { condition } : {}) }));
   }
   return null;
 }

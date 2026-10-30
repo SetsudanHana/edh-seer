@@ -191,3 +191,23 @@ describe("a stored amount rides on the grammar's back-reference (#1403)", () => 
     expect(dmgs.every((a) => a.count?.scalesWith !== undefined)).toBe(true);
   });
 });
+
+// #1401: one printed object, one action, and the subject is the object THAT action names. Real oracle text dumped from Mongo 2026-10-30; both derive from the grammar.
+describe("each printed object gets its own subject (#1401)", () => {
+  const TURTLE = { name: "Dragon Turtle", typeLine: "Creature — Turtle Dragon", keywords: ["Flash"], oracleText: "Flash\nDrag Below — When this creature enters, tap it and up to one target creature an opponent controls. They don't untap during their controllers' next untap steps." };
+  const grammarRow = (source: typeof TURTLE) => deriveRow({ doc: { oracleId: "x", name: source.name, canonical: grammarClauseRecords(source as never).records } as never, source: source as never, isToken: false });
+  const emitsOf = (row: ReturnType<typeof deriveRow>, verb: string) => row.tags.abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.verb === verb));
+  const noDuplicateAbilities = (row: ReturnType<typeof deriveRow>) => { const j = row.tags.abilities.map((a) => JSON.stringify(a)); return new Set(j).size === j.length; };
+
+  test("Dragon Turtle: 'tap it and up to one target creature an opponent controls' is a tap of the card and a tap of the opponent's target, not the target twice", () => {
+    const records = grammarClauseRecords(TURTLE as never).records;
+    expect(records[1]!.actions!.filter((a) => a.verb === "tap").map((a) => a.object)).toEqual(["this creature", "up to one target creature an opponent controls"]);
+    const row = grammarRow(TURTLE);
+    expect(row.fromGrammar).toBe(true);
+    // The card's own tap is no `taps` event (no scope: tapVerbs), so only the opponent's target emits one, once.
+    const taps = emitsOf(row, "taps");
+    expect(taps).toHaveLength(1);
+    expect(taps[0]!.subject).toMatchObject({ control: "opp", type: "creature", scope: "target" });
+    expect(noDuplicateAbilities(row)).toBe(true);
+  });
+});
