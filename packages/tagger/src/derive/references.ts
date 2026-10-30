@@ -209,3 +209,72 @@ export function exiledAcrossClauses(clause: ClauseRecord, lastExiled: string | u
   }
   return { clause, lastExiled };
 }
+
+/** A PLURAL BACK-REFERENCE (#1427): "untap THOSE CREATURES", "deals 1 damage to EACH OF THOSE CREATURES". It names exactly the set an
+ *  earlier object of the same clause named, and read as a plain class ("creatures": scope all, control any) it dropped every narrowing
+ *  that object stated -- the controller ("creatures you control"), the target scope ("up to three target creatures"), the power cut
+ *  ("all creatures with power 4 or greater"), the keyword ("each creature with flying your opponents control"). Deliberately NOT part of
+ *  `PRONOUN_OBJECT`: that list also makes a self-trigger's pronoun mean the card itself (derive.ts, `triggerIsSelf`), which no plural can.
+ *  CEILING: creatures and permanents only; "those tokens" (Dog Walker) keeps `CREATED_TOKEN_REF`'s own handling. */
+export const PLURAL_BACKREF = /^(?:each of )?those (?:creatures|permanents)$/i;
+
+/** The verbs whose object is a CLASS OF PERMANENTS ON THE BATTLEFIELD, so that "those creatures" after one means that class. A `return`/`put` TO THE BATTLEFIELD is read
+ *  apart below (the cards returned are the creatures it then names); one to HAND or another zone names cards in a zone and is refused. An `add-counter` is read apart too
+ *  (the store's object is the counter, with no recipient). A `cant`/`grant-ability` names an ability, so it says which creatures only if the record carries the class:
+ *  CEILING: Day of Black Sun's "Each creature with mana value X or less loses all abilities ... Destroy those creatures" IS a creature class, but the action list holds only
+ *  the `cant | have abilities`, not the class, so the plural is refused. */
+const BATTLEFIELD_CLASS_VERBS: ReadonlySet<string> = new Set(["gain-control", "modify-pt", "untap", "tap", "deal-damage", "destroy", "goad", "phase-out", "fight", "sacrifice"]);
+/** A compound antecedent ("target creature and each other creature that shares a color with it", Rally the Righteous) is two sets. */
+const COMPOUND_SET = /\band (?:each|all|another|other|target)\b/i;
+
+/** The subject text a plural back-reference stands for, or `undefined` when the engine cannot carry it (so the emit is refused, never widened).
+ *  Walks back over the clause's actions: an unresolved plural, an empty object, a pronoun and a granted ability are passed by; the nearest
+ *  `BATTLEFIELD_CLASS_VERBS` object is the set. A different set named just before it in the same run of such actions (Twist Allegiance's two
+ *  gain-controls) makes the reference ambiguous. A reference with no earlier action (a trigger's batched creatures, an earlier sentence the
+ *  clause does not hold) is refused: the trigger's "one or more creatures" carries the event's narrowing (Tamiyo: those that dealt combat
+ *  damage to you) the subject filter cannot. */
+export function pluralAntecedent(actions: readonly Action[], idx: number, clauseText = ""): string | undefined {
+  let found: string | undefined;
+  for (let i = idx - 1; i >= 0; i--) {
+    const a = actions[i]!;
+    const o = (a.object ?? "").trim();
+    if (PLURAL_BACKREF.test(o)) return undefined; // an earlier plural that was itself refused
+    if (o === "" || PRONOUN_OBJECT.test(o) || a.verb === "grant-ability") continue;
+    // The grammar writes a counter put as "<recipients>, <counter>" ("each creature you control, +1/+1"): the recipients are the set. The store writes the counter alone
+    // ("+1/+1"), which names no recipient. CEILING: a recipient class stating a combat role ("each creature blocking or blocked by this creature", Dread Wight) is refused,
+    // since the filter keeps "blocking" and loses "by this creature".
+    const comma = o.lastIndexOf(", ");
+    if ((a.verb === "return" || a.verb === "put") && a.toZone === "battlefield") {
+      // The cards returned from YOUR graveyard are now permanents under your control: "those creatures" is that class on the battlefield, minus the zone words.
+      // CEILING: only a return from your own graveyard (the clause says so); "under your control" from another graveyard or exile is refused.
+      if (!/\bfrom your graveyard\b/i.test(clauseText)) return undefined;
+      const cut = o.search(/ from your graveyard\b/i);
+      const cls = (cut < 0 ? o : o.slice(0, cut)).replace(/\bcards?\b/gi, "").replace(/\s+/g, " ").trim().replace(/\b(creatures?)\b/i, "$1 you control");
+      const s = parseSubject(cls);
+      if (s.type === undefined || s.control !== "you" || COMPOUND_SET.test(cls)) return undefined;
+      if (found === undefined) found = cls; else if (cls.toLowerCase() !== found.toLowerCase()) return undefined;
+      continue;
+    }
+    if (a.verb === "add-counter") {
+      if (comma <= 0 || parseSubject(o.slice(0, comma)).combat !== undefined) return undefined;
+    } else if (!BATTLEFIELD_CLASS_VERBS.has(a.verb ?? "")) return found; // the run of class-naming actions ends here
+    const t = (a.verb === "add-counter" ? o.slice(0, comma) : o).replace(/^control of /i, "");
+    if (found === undefined) {
+      const s = parseSubject(t);
+      if ((s.type === undefined && s.subtype === undefined) || COMPOUND_SET.test(t)) return undefined;
+      found = t;
+    } else if (t.toLowerCase() !== found.toLowerCase()) return undefined;
+  }
+  return found;
+}
+
+/** "Sacrifice those creatures AT THE BEGINNING OF THE NEXT END STEP" (Tears of Rage): a delayed trigger acts on the set as it is THEN. Attacking and blocking end with the
+ *  end of combat step, when every creature is removed from combat (CR 511.3), so the resolved class keeps its controller and type but not its combat role. */
+export function pluralIsDelayed(clauseText: string, object: string): boolean {
+  const o = object.trim().toLowerCase();
+  return clauseText.split(/\.\s+/).some((sentence) => { const l = sentence.toLowerCase(); return l.includes(o) && l.includes("at the beginning of"); });
+}
+/** The class without its combat role: "attacking creatures you control" -> "creatures you control". */
+export function withoutCombatRole(cls: string): string {
+  return cls.replace(/\b(?:attacking|blocking|blocked)\b(?: or (?:attacking|blocking|blocked)\b)?\s*/gi, "").replace(/\s+/g, " ").trim();
+}

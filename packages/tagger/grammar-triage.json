@@ -951,7 +951,7 @@
       "why": "Every member read. token: a copy of a nontoken creature is a token; 'Zombies and/or tokens' is an OR the outer `token` cannot say."
     },
     "combat,combatWith": {
-      "distinct": 21,
+      "distinct": 24,
       "label": "grammar right",
       "rule": "CR 506.4",
       "why": "Every member read. combat: attacking/blocking stated by the phrase; 'attacking or blocking' is `in-combat`; combatWith: a combat relation to another object: 'blocking this creature', 'blocking or blocked by ~', 'attacking you'."
@@ -1099,12 +1099,6 @@
       "label": "grammar right",
       "rule": "CR 115.1, CR 205.4c, printed text",
       "why": "Every member read. basic: nonbasic; except: 'except for Merfolk, Krakens ...', 'except for tokens you control'; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
-    },
-    "combat,combatWith,control": {
-      "distinct": 3,
-      "label": "grammar right",
-      "rule": "CR 108.3, CR 112.2, CR 115.1, CR 506.4",
-      "why": "Every member read. combat: attacking/blocking stated by the phrase; 'attacking or blocking' is `in-combat`; combatWith: a combat relation to another object: 'blocking this creature', 'blocking or blocked by ~', 'attacking you'; control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller."
     },
     "keyword,stats,subtype,type": {
       "distinct": 3,
