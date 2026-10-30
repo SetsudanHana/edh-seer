@@ -2036,6 +2036,22 @@ function collapseZoneSearches(clause: ClauseRecord): ClauseRecord {
   return out.length === acts.length ? clause : { ...clause, actions: out };
 }
 
+/** "EACH OPPONENT ATTACKING THAT PLAYER DOES THE SAME" (#1401 G: the Curses that make a token, Curse of Opulence and Curse of Disturbance) is a second actor, not a second copy of the first:
+ *  the model stores two `create` actions of one object, which derived JSON-identical `any` token makers. The first is read as YOURS and the second as an opponent's (`actor`, as
+ *  Forbidden Orchard's "target opponent creates"), and the second takes the first's amount when the store left it out. The Curses that gain life or draw already store the second
+ *  actor in the object ("each opponent attacking that player"), so only two same-verb actions of one object are touched.
+ *  CEILING: the one printed sentence, anchored on its words; a clause with other actions of that verb is left alone. */
+const OPPONENTS_DO_THE_SAME = /\beach opponent attacking that player does the same\b/i;
+function splitDoesTheSame(clause: ClauseRecord, text: string | undefined): ClauseRecord {
+  if (text === undefined || !OPPONENTS_DO_THE_SAME.test(text)) return clause;
+  const acts = clause.actions ?? [];
+  const makers = acts.flatMap((a, i) => (a.verb === "create" ? [i] : []));
+  if (makers.length !== 2 || acts[makers[0]!]!.object !== acts[makers[1]!]!.object || acts.some((a) => a.verb !== "create" && a.verb !== "none")) return clause;
+  const [first, second] = [acts[makers[0]!]!, acts[makers[1]!]!];
+  const out = acts.map((a) => (a === first ? { ...a, actor: "you" as const } : a === second ? { ...a, actor: "opp" as const, ...(second.amount == null && first.amount != null ? { amount: first.amount } : {}) } : a));
+  return { ...clause, actions: out };
+}
+
 /** THE ACTION GRAMMAR WINS (owner, 2026-10-01): a clause's stored actions of a taken-over family are
  *  rewritten from the printed text where the grammar read the phrase completely -- object, amount,
  *  optional, zones and the kept condition. The rest of derive reads the rewritten record exactly as
@@ -2556,6 +2572,7 @@ export function deriveAbilities(
       ? withGrammarActions(clause, clauseTexts![twinSource.id], clauseCosts?.[twinSource.id], cardName, readings![twinSource.id]?.actions)
       : withGrammarActions(clause, rehomed ?? clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName, readings?.[clause.id]?.actions);
     if (collapseSearches) clause = collapseZoneSearches(clause);
+    clause = splitDoesTheSame(clause, clauseTexts?.[clause.id]);
     // WHICH FACE PRINTS THIS CLAUSE. Stamped onto every ability the clause derives below, so the
     // matcher can stop reading a back-face ability against the card's UNION of types.
     const face = clauseFaces?.[clause.id];
@@ -4176,11 +4193,19 @@ export function deriveAbilitiesOf(input: DeriveInput, opts: { collapseZoneSearch
  *  two kinds. CEILING: grants that differ by trigger reading stay, each still carrying the clause's union.
  *  Run LAST (`deriveCardTags`), and by `deriveRow` on the tags the card-by-card switch picked: the
  *  switch itself compares UNFOLDED readings. */
+/** The two sides of ONE coin flip (#1401 F: Molten Sentry's "If the coin comes up heads, this creature enters as a 5/2 ... If it comes up tails, ... a 2/5"): exactly one branch happens, so an
+ *  identical twin across them is one effect, folded like an "instead" branch. CEILING: only a clause printing BOTH "heads" and "tails" outcomes; a branch that differs stays. */
+const flipBranches = (text: string | undefined): boolean => text !== undefined && /\bcomes up heads\b/i.test(text) && /\bcomes up tails\b/i.test(text);
+/** A trigger header with an "or" before its first comma ("Whenever this creature blocks or becomes blocked by ..., ..."). The model stores it as one record per event under one id; when the
+ *  trigger is REFUSED for every event (Giant Shark's narrowing "by a creature that has been dealt damage this turn") the records derive trigger-less and JSON-identical, one effect printed once.
+ *  CEILING: only a trigger-less triggered ability, and the "or" (not "one or more", "or fewer") is a word before the first comma of a "When/Whenever/At" sentence; Zurzoth's "you and those players each draw" pair is two actors and stays. */
+const orTrigger = (text: string | undefined): boolean => text !== undefined && /^(?:when|whenever|at)\b[^,]{0,200}\bor\b(?! (?:more|less|fewer|greater)\b)/i.test(text.trim());
 export function foldGrantTwins(abilities: Ability[], clauseTexts?: Record<number, string>): Ability[] {
   const seen = new Set<string>();
   const once = abilities.filter((a) => {
     const k = a.effect?.kind;
-    if (k !== "keyword-grant" && k !== "speed-increase" && !(a.clause !== undefined && hasInstead(clauseTexts?.[Math.trunc(Number(a.clause))]))) return true;
+    const text = a.clause !== undefined ? clauseTexts?.[Math.trunc(Number(a.clause))] : undefined;
+    if (k !== "keyword-grant" && k !== "speed-increase" && !hasInstead(text) && !flipBranches(text) && !(a.kind === "triggered" && a.trigger === undefined && orTrigger(text))) return true;
     const key = stableJson(JSON.parse(JSON.stringify(a)));
     return !seen.has(key) && !!seen.add(key);
   });

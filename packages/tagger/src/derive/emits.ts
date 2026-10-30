@@ -625,8 +625,11 @@ const CONTROL_CHANGE_PRINTED = [
   /\b(?:gains?|gained|takes?|took|taken|exchanges?|steals?)\s+control\b/i,
   /\bunder\s[^.,;:]{0,40}?\bcontrol\b/i,
   /\bcontrols?\s+(?:enchanted|equipped|target|that|those|each|all|another)\b/i,
-  // A PLAYER CONTROLLED (CR 723.1: one player controlling another): Opposition Agent's "You control your opponents", Cruel Entertainment's "The first player controls the second player".
-  /\bcontrols?\s+(?:your\s+opponents?|the\s+(?:first|second)\s+player)\b/i,
+  // A PLAYER YOU CONTROL (CR 723.1: one player controlling another): Opposition Agent's "You control your opponents".
+  // NOT Cruel Entertainment's "The first player controls the second player" (#1401 G): CR 723.3 says only control of the PLAYER changes, every object keeps its controller, and neither
+  // player is you -- an emit whose subject reads "you gain control" is a wrong answer there. CEILING: Mindslaver, Sorin Markov's -7 and Emrakul keep their player-control emit (the
+  // `target` pattern above), which the matcher reads as a control change although CR 723.3 says no permanent changes hands; that is a wider ruling than this task.
+  /\bcontrols?\s+your\s+opponents?\b/i,
 ];
 export function printsControlChange(clauseText: string): boolean {
   return CONTROL_CHANGE_PRINTED.some((re) => re.test(clauseText));

@@ -46,7 +46,7 @@ describe("gains-control emits need a printed control change (#1318)", () => {
     expect(steals(tags.abilities)).toHaveLength(0);
   });
 
-  test("keepers: Control Magic and Act of Treason (grammar), Gather Specimens, Fealty to the Realm, Opposition Agent, Cruel Entertainment (model)", () => {
+  test("keepers: Control Magic and Act of Treason (grammar), Gather Specimens, Fealty to the Realm, Opposition Agent (model)", () => {
     expect(steals(viaGrammar("Control Magic", AURA, "Enchant creature\nYou control enchanted creature.").abilities)).toHaveLength(1);
     expect(steals(viaGrammar("Act of Treason", "Sorcery", "Gain control of target creature until end of turn. Untap that creature. It gains haste until end of turn. (It can attack and {T} this turn.)").abilities)).toHaveLength(1);
     expect(steals(via("Gather Specimens", "Instant", "If a creature would enter the battlefield under an opponent's control this turn, it enters under your control instead.", [
@@ -58,8 +58,6 @@ describe("gains-control emits need a printed control change (#1318)", () => {
     expect(steals(via("Opposition Agent", "Creature — Human Rogue", "Flash\nYou control your opponents while they're searching their libraries.", [
       { id: 1, abilityType: "none", actions: [act("none", "Flash")] },
       { id: 2, abilityType: "static", actions: [act("gain-control", "opponent")] }]).abilities)).toHaveLength(1);
-    expect(steals(via("Cruel Entertainment", "Sorcery", "Choose target player and another target player. The first player controls the second player during the second player's next turn, and the second player controls the first player during the first player's next turn.", [
-      { id: 1, abilityType: "spell", actions: [act("gain-control", "the second player during the second player's next turn"), act("gain-control", "the first player during the first player's next turn")] }]).abilities).length).toBeGreaterThan(0);
   });
 
   test("exchange control (Switcheroo) still derives its exchange", () => {
