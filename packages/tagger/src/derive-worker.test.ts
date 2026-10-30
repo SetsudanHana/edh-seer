@@ -210,4 +210,25 @@ describe("each printed object gets its own subject (#1401)", () => {
     expect(taps[0]!.subject).toMatchObject({ control: "opp", type: "creature", scope: "target" });
     expect(noDuplicateAbilities(row)).toBe(true);
   });
+
+  // "it" here is the tapped target, NOT the card (in Dragon Turtle's text it is the card): the antecedent comes from the sentence.
+  const WALL = { name: "Sanctuary Wall", typeLine: "Artifact Creature — Wall", keywords: ["Defender"], oracleText: "Defender\n{2}{W}, {T}: Tap target creature. You may put a stun counter on it. If you do, put a stun counter on this creature. (If a permanent with a stun counter would become untapped, remove one from it instead.)" };
+  test("Sanctuary Wall: the first stun counter goes on the tapped target, the second on the card itself", () => {
+    const row = grammarRow(WALL as never);
+    expect(row.fromGrammar).toBe(true);
+    const counters = emitsOf(row, "counter-added");
+    expect(counters.map((e) => e.subject.self === true)).toEqual([false, true]);
+    expect(emitsOf(row, "taps")).toHaveLength(1);
+    expect(noDuplicateAbilities(row)).toBe(true);
+  });
+
+  // The cut is for a second phrase that names the card; a second phrase that is a pronoun takes its antecedent from the phrase before it (oracle text dumped from Mongo 2026-10-30).
+  test("Elder Cathar: 'it' in 'put two +1/+1 counters on it instead' is the target, not the card", () => {
+    const elder = { name: "Elder Cathar", typeLine: "Creature — Human Cleric", keywords: [], oracleText: "When this creature dies, put a +1/+1 counter on target creature you control. If that creature is a Human, put two +1/+1 counters on it instead." };
+    expect(emitsOf(grammarRow(elder as never), "counter-added").map((e) => e.subject.self === true)).not.toContain(true);
+  });
+  test("Communal Brewing: 'put an ingredient counter on it' after 'on this enchantment' is still the card", () => {
+    const brew = { name: "Communal Brewing", typeLine: "Enchantment", keywords: [], oracleText: "When this enchantment enters, any number of target opponents each draw a card. Put an ingredient counter on this enchantment, then put an ingredient counter on it for each card drawn this way.\nWhenever you cast a creature spell, that creature enters with X additional +1/+1 counters on it, where X is the number of ingredient counters on this enchantment." };
+    expect(emitsOf(grammarRow(brew as never), "counter-added").map((e) => e.subject.self === true)).toContain(true);
+  });
 });

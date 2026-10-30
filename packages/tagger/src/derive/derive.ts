@@ -646,7 +646,7 @@ const COUNTER_PREP = /\bcounters?\s+on\b/i;
 /** ONE COUNTER PLACEMENT PER RECIPIENT (#1391 F5): "put a +1/+1 counter on that creature and a +1/+1 counter on this creature" (Juniper Order Ranger, Sumala Sentry) stores two add-counter actions whose objects name no
  *  recipient, and the clause text read whole made both "on that" (Juniper) or both "on this creature" (Sumala: the first "it" is the face-up permanent). When the clause has as many `counter(s) on <X>` phrases as
  *  add-counter actions, the nth action reads the text with the OTHER actions' phrases cut out, so each recipient is judged alone and the lead-in ("This creature enters with ...") still counts.
- *  CEILING: only a clause with exactly two add-counter actions and two \"counter on X and a counter on Y\" phrases (Communal Brewing's three, with a where-clause, reads the whole text; Sanctuary Wall's "... on it. If you do, put a stun counter on this creature." puts them in two sentences, so both still read self); "a counter on each of two creatures" or a list the store split otherwise reads the whole text, as before. */
+ *  CEILING: only a clause with exactly two add-counter actions and two counter phrases, joined by \"and a\", or apart with the second on \"this <card>\" (#1401) (Communal Brewing's three, with a where-clause, reads the whole text); "a counter on each of two creatures" or a list the store split otherwise reads the whole text, as before. */
 function ownCounterText(action: Action, actions: Action[], text: string): string {
   if (action.verb !== "add-counter") return text;
   const mine = actions.filter((a) => a.verb === "add-counter");
@@ -657,10 +657,15 @@ function ownCounterText(action: Action, actions: Action[], text: string): string
   const stop = (from: number): number => { const i = text.slice(from).search(/[,.;]/); return i < 0 ? text.length : from + i; };
   // ...and the two are joined by the FIRST "and <a / a number>" between them, in one sentence (a third phrase in a where-clause, Communal Brewing, or a sentence break reads the whole text).
   const [a, b] = starts as [number, number];
-  if (stop(a) < b) return text;
-  const join = /(?<=\s)and\s+(?=(?:an?|one|two|three|four|five|x|\d+)\s)/i.exec(text.slice(a, b));
-  if (!join) return text;
-  const phrases = [text.slice(a, a + join.index).trimEnd(), text.slice(b, stop(b))];
+  // ...or the phrases are apart (a sentence break, "then"): split only when the SECOND names the card outright ("on this creature") (#1401, Sanctuary Wall: "You may put a stun counter on it. If you do, put a stun counter on this creature.").
+  // A pronoun cannot point forward, so the first is judged without it: its "it" is whatever the text before it named (the tapped target). A second phrase that is itself a pronoun
+  // (Elder Cathar's "... on target creature you control. If that creature is a Human, put two counters on it instead", Communal Brewing's "on this enchantment, then ... on it") takes its antecedent
+  // from the phrase before it, which cutting out would lose, so those read the whole text as before.
+  const phrases = stop(a) < b ? (/^counters?\s+on\s+this\s+(?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle|card)\b/i.test(text.slice(b, stop(b))) ? [text.slice(a, stop(a)), text.slice(b, stop(b))] : null) : (() => {
+    const join = /(?<=\s)and\s+(?=(?:an?|one|two|three|four|five|x|\d+)\s)/i.exec(text.slice(a, b));
+    return join ? [text.slice(a, a + join.index).trimEnd(), text.slice(b, stop(b))] : null;
+  })();
+  if (!phrases) return text;
   const own = mine.indexOf(action);
   return phrases.reduce((t, ph, i) => (i === own ? t : t.replace(ph, "")), text);
 }
