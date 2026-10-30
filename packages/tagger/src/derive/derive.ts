@@ -1333,6 +1333,9 @@ const CANT_BE_BLOCKED = /^(.*?\S)\s+(?:(?:can['\u2019]t|cannot)\s+)?be blocked\b
 const CANT_ATTACK_OR_BLOCK = /^(.*?\S)\s+(?:can['\u2019]t|cannot)\s+(?:attack|block)\b/i;
 /** Who can't be targeted (#1423): the words ahead of "can't be the target(s) of". */
 const CANT_BE_TARGETED = /^(.*?\S)\s+(?:(?:can['\u2019]t|cannot)\s+)?be the targets? of\b/i;
+/** "those creatures" / "those permanents": a back-reference object whose antecedent's narrowing the filter cannot recover. */
+const THOSE_BACKREF = /^those (?:creatures|permanents)$/i;
+const COMBAT_ANTECEDENT = /\b(?:blocking|blocked by|deal(?:s)? combat damage|attacking)\b/i;
 /** An Aura's or Equipment's host by any noun ("enchanted permanent", "enchanted land", "equipped creature"): the host is `Ability.host`, never a class (#1423). */
 const HOST_WORD = /^(?:enchanted|equipped)\b/i;
 /** A recipient that is a LIST ("players and permanents", "lands on the battlefield and land cards in graveyards") or holds another sentence's verb: the filter reads one class, so it is left unnamed. */
@@ -3098,6 +3101,11 @@ export function deriveAbilities(
         // the replaced event: Academy Manufactor's clause answers `create` three times and creates
         // a token on its own none of those times.
         .filter(() => replacement === null)
+        // "TAP THOSE CREATURES" AFTER A COMBAT-DEFINED CLASS (#1423 follow-up): the back-reference reads as every creature, dropping the antecedent's combat narrowing (Dread Wight's "each creature blocking or blocked by this
+        // creature", Tamiyo, Upriser Crowned's "creatures deal combat damage to you"): those are the OPPONENT'S creatures in combat with the card, and a `taps` over every creature fed every "this creature becomes tapped" watcher
+        // of yours. The antecedent walk does not resolve it (not a PRONOUN_OBJECT), so the emit is refused: missing beats wrong. CEILING: only a combat antecedent; "those creatures" after another narrowing (Thundermaw Hellkite's
+        // "with flying") keeps the wide reading, whose class (opponents' creatures) is still true of it.
+        .filter(() => !(action.verb === "tap" && THOSE_BACKREF.test((action.object ?? "").trim()) && COMBAT_ANTECEDENT.test(text)))
         // A DENIED UNTAP IS NO UNTAP EVENT (#1423): the model's `untap` verb for "doesn't untap" (Melancholy, Reveka) would otherwise emit `untaps` and feed every untap watcher.
         .filter(() => effectKind !== "untap-denial")
         // ROADMAP I7. The permanent arrives under a controller the schema cannot name, so the emit

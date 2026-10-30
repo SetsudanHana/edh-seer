@@ -7340,3 +7340,17 @@ describe("untap-denial: the model's `untap` beside its own `cant` is one denial 
     expect(abilities.some((a) => (a.emits ?? []).some((e) => e.verb === "untaps"))).toBe(false);
   });
 });
+
+describe("'tap those creatures' is refused, not read as every creature (#1423 follow-up, Dread Wight)", () => {
+  test("Dread Wight: 'tap those creatures' taps the creatures blocking or blocked by it, not every creature", () => {
+    const card = { name: "Dread Wight", typeLine: "Creature — Zombie", keywords: [] as string[],
+      oracleText: "At end of combat, put a paralyzation counter on each creature blocking or blocked by this creature and tap those creatures. Each of those creatures doesn't untap during its controller's untap step for as long as it has a paralyzation counter on it. Each of those creatures gains \"{4}: Remove a paralyzation counter from this creature.\"" };
+    const g = grammarClauseRecords(card);
+    const abilities = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings)).abilities;
+    const taps = abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.verb === "taps"));
+    // The back-reference is refused rather than guessed: no `taps` emit over every creature (it was 60 false reasons), and the real "put a counter on each creature blocking or blocked by" stays.
+    for (const e of taps) expect(e.subject.scope === "all" && e.subject.combat === undefined).toBe(false);
+    expect(taps).toEqual([]);
+    expect(abilities.some((a) => a.effect.kind === "counter-placement" && a.effect.subject?.combat === "blocking")).toBe(true);
+  });
+});
