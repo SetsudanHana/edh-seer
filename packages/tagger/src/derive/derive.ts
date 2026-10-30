@@ -4111,12 +4111,22 @@ export interface DeriveInput {
 
 /** A SELF "YOU LOSE THE GAME" ABILITY CLAIMS NOTHING (#1252, #1264): emits non-empty and every one a `loses-game` of
  *  `control: "you"`. A reason already set stands -- a refused trigger keeps "refused-trigger" (the matcher's precedence). */
-/** A FACT-KIND RIDER OF A MANA ABILITY CLAIMS NOTHING (#1423, `Ability.claimsNothing` "mana-rider"): Cinder Marsh's "This land doesn't untap during your next untap step" shares the clause of its
- *  `{T}: Add {B} or {R}`, so it is part of that mana ability (CR 605.1a) and not an activated ability a copier can target (CR 605.3b). Only the three #1423 kinds; a reason already set stands. */
-const MANA_RIDER_KINDS: ReadonlySet<string> = new Set(["targeting-ban", "trigger-suppression", "untap-denial"]);
-export function stampManaRider(a: Ability, all: readonly Ability[]): Ability {
-  return a.claimsNothing === undefined && a.kind === "activated" && MANA_RIDER_KINDS.has(a.effect.kind)
-    && all.some((o) => o !== a && o.clause === a.clause && o.kind === "activated" && o.effect.kind === "mana-generation")
+/** A RIDER OF AN ACTIVATED MANA ABILITY CLAIMS NOTHING (#1423, #1426, `Ability.claimsNothing` "mana-rider"): Cinder Marsh's "This land doesn't untap during your next untap step" and Llanowar Wastes'
+ *  "This land deals 1 damage to you" share the clause of their `{T}: Add ...`. CR 605.1a: an activated ability that adds mana, needs no target, is no loyalty ability and moves no card to or from a
+ *  library IS a mana ability, and everything the one printed ability does is part of it; CR 605.3b: it never uses the stack, so it cannot be targeted or copied. The engine models the rider as a second
+ *  `activated` ability, which a copier would be offered (`copies:activated`). Stamped on any ability that is not itself mana-generation, shares the clause AND the activation cost of a
+ *  mana-generation ability, when nothing in that clause group targets or is a loyalty ability (Deathrite Shaman's "Exile target land card from a graveyard. Add one mana" is no mana ability, CR 605.1a).
+ *  The rider's emits stay (the damage still happens). A reason already set stands.
+ *  CEILING: ACTIVATED only. A triggered mana ability is one only when it triggers from mana (CR 605.1b), and Carnival of Souls' "Whenever a creature enters, you lose 1 life and add {B}" does not, so the
+ *  trigger would have to be read first; no triggered rider is stamped. A target is read off the clause's printed text (`target`) and `scope: "target"` subjects, either one refuses; a clause with two printed abilities and a target in the other is left unstamped; library movement (605.1a) is not read. */
+const targetsAnything = (a: Ability, printed: string): boolean =>
+  /\btargets?\b/i.test(printed) || a.effect.subject?.scope === "target" || (a.emits ?? []).some((e) => e.subject?.scope === "target");
+export function stampManaRider(a: Ability, all: readonly Ability[], clauseTexts?: Record<number, string>): Ability {
+  if (a.claimsNothing !== undefined || a.kind !== "activated" || a.effect.kind === "mana-generation") return a;
+  const group = all.filter((o) => o.kind === "activated" && o.clause === a.clause && o.face === a.face && o.cost === a.cost);
+  const printed = a.clause === undefined ? "" : clauseTexts?.[Math.trunc(Number(a.clause))] ?? "";
+  return group.some((o) => o.effect.kind === "mana-generation")
+    && !group.some((o) => o.payment?.loyalty !== undefined || targetsAnything(o, printed))
     ? { ...a, claimsNothing: "mana-rider" as const } : a;
 }
 export function stampSelfLoss(a: Ability): Ability {
@@ -4287,7 +4297,7 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
   const spellOnce = pinned.map((a) => a.kind === "on-cast" || a.repeats === "once" || !isSpellFace(a.face) ? a : { ...a, repeats: "once" as const })
     // A SELF "YOU LOSE THE GAME" ABILITY CLAIMS NOTHING (#1252, #1264), decided on the FINAL emits: every control fill above has run.
     .map(stampSelfLoss)
-    .map((a, _i, all) => stampManaRider(a, all))
+    .map((a, _i, all) => stampManaRider(a, all, input.clauseTexts))
     // THE CLAUSE THAT GRANTS A QUOTED ABILITY (#1315): `segment()`'s granted clause and its parent, from `DeriveInput.clauseGrants` (both clause sources).
     .map((a) => { const by = a.clause !== undefined ? input.clauseGrants?.[a.clause as number] : undefined; return by === undefined ? a : { ...a, grantedBy: by }; });
   // A CREATURE ONLY UNDER A CONDITION (#797): the action grammar reads "As long as your devotion to red
