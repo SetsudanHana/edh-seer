@@ -1377,6 +1377,15 @@ test("a counter put on 'that creature' after a target is an emit on a target cre
   expect(emits.find((e) => e.subject.self === true)?.subject.type).toBeUndefined();
 });
 
+// The target's controller survives "that creature" (#1421): Protocol Knight stuns an OPPONENT's creature, which no "Goblin you control" payoff may count; the nearest target wins.
+test("a counter put on 'that creature' keeps the nearest target's controller", () => {
+  const emitOf = (text: string) => deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "add-counter", object: "stun counter", amount: "1" }] }], "Protocol Knight", { 1: text },
+  ).abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "counter-added");
+  expect(emitOf("Tap target creature an opponent controls. Put a stun counter on that creature.")?.subject).toMatchObject({ type: "creature", scope: "target", control: "opp" });
+  expect(emitOf("Untap target creature you control. Tap target creature an opponent controls. Put a stun counter on that creature.")?.subject.control).toBe("opp");
+});
+
 // A COUNTER PUT ON THE CARD ITSELF IS A SELF EMIT (owner-reported 2026-09-17): Primal Amulet's
 // charge counter lands on Primal Amulet, so it can never be Exemplar of Light's "whenever you put
 // +1/+1 counters on THIS creature". The object names the counter; the clause text names where.

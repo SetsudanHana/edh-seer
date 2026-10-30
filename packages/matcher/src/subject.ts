@@ -1,5 +1,6 @@
 import type { StatPredicate, SubjectFilter } from "@edh-seer/tagger";
 import type { Hierarchy } from "./types.js";
+import { SUBTYPE_TYPES } from "@edh-seer/tagger/subtypes";
 import { expandTypes, PSEUDO_TYPE_SETS } from "./hierarchy.js";
 import { evalStatPredicate } from "./stats.js";
 
@@ -329,7 +330,8 @@ function targetReachesSubtype(producer: SubjectFilter, consumer: SubjectFilter, 
   const subs = arr(consumer.subtype);
   if (subs.length === 0) return false;
   const ptypes = arr(producer.type).map((t) => t.toLowerCase());
-  const reachable = subs.filter((st) => (h[st.toLowerCase()] ?? []).some((t) => ptypes.includes(t.toLowerCase())));
+  // The CR's own assignment of subtype to type (`SUBTYPE_TYPES`), NOT the scraped hierarchy: that is a union over type lines (saga lists creature, from one Enchantment Creature - Saga), so creature -> Saga passed it (Sigurd).
+  const reachable = subs.filter((st) => (SUBTYPE_TYPES[st.toLowerCase()] ?? []).some((t) => ptypes.includes(t)));
   if (reachable.length === 0) return false;
   return subjectMatches({ ...producer, subtype: reachable }, consumer, h);
 }

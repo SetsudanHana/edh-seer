@@ -1036,6 +1036,17 @@ describe("a self counter consumer joins only a producer that can reach another c
   test("a self-only producer does not feed it", () => {
     expect(feeds(producer("Walking Ballista", { control: "any", token: null, counter: "+1/+1", self: true }))).toEqual([]);
   });
+  test("a self emit beside an untyped non-self emit feeds it through the untyped one", () => {
+    const ranger = base("Juniper Order Ranger", [{
+      kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+      effect: { kind: "counter-placement" },
+      emits: [
+        { verb: "counter-added", subject: { control: "any", token: null, counter: "+1/+1", self: true } },
+        { verb: "counter-added", subject: { control: "any", token: null, counter: "+1/+1" } },
+      ],
+    }] as unknown as CardTags["abilities"]);
+    expect(feeds(ranger).length).toBe(1);
+  });
   test("a target or a class producer still does", () => {
     expect(feeds(producer("Arwen", { type: "creature", control: "any", token: null, counter: "+1/+1", scope: "target" })).length).toBe(1);
     expect(feeds(producer("Anthem", { type: "creature", control: "you", token: null, counter: "+1/+1" })).length).toBe(1);
@@ -1053,12 +1064,25 @@ describe("a target counter producer satisfies a subtype demand of its type, neve
     kind: "on-cast", effect: { kind: "counter-placement" },
     emits: [{ verb: "counter-added", subject: { type: "creature", control: "any", token: null, scope: "target", counter: "+1/+1" } }],
   }] as unknown as CardTags["abilities"]);
-  const feeds = (c: DeckCard) => directedReasons(targeter, c, H).filter((r) => r.tag.startsWith("counter-added"));
+  const HE: Hierarchy = { ...H, equipment: ["artifact"] };
+  const feeds = (c: DeckCard) => directedReasons(targeter, c, HE).filter((r) => r.tag.startsWith("counter-added"));
   test("a Wizard you control", () => {
     expect(feeds(consumer({ subtype: "wizard", control: "you", token: null })).length).toBe(1);
   });
-  test("a noncreature type is refused", () => {
-    expect(feeds(consumer({ type: "planeswalker", control: "you", token: null })).length).toBe(0);
+  // A SUBTYPE of another type: with the hierarchy check removed this would be fed, so it can fail.
+  // Sigurd's shape (#1421): the scraped hierarchy lists creature under saga (one Enchantment Creature - Saga), the CR does not.
+  test("a Saga demand is refused although the scraped hierarchy lists creature under saga", () => {
+    const HS: Hierarchy = { ...H, saga: ["enchantment", "creature"] };
+    expect(directedReasons(targeter, consumer({ subtype: "saga", control: "you", token: null }), HS).filter((r) => r.tag.startsWith("counter-added")).length).toBe(0);
+  });
+  // The anyOf shape (Loading Zone): a branch keeps its type; a creature producer feeds the creature branch and not a Spacecraft one.
+  test("an anyOf demand is fed by its creature branch and not by a Spacecraft branch alone", () => {
+    const HA: Hierarchy = { ...H, spacecraft: ["artifact"] };
+    expect(directedReasons(targeter, consumer({ control: "you", token: null, anyOf: [{ type: "creature" }, { subtype: "spacecraft" }] }), HA).filter((r) => r.tag.startsWith("counter-added")).length).toBe(1);
+    expect(directedReasons(targeter, consumer({ control: "you", token: null, anyOf: [{ subtype: "spacecraft" }] }), HA).filter((r) => r.tag.startsWith("counter-added")).length).toBe(0);
+  });
+  test("a subtype of a type the producer cannot be is refused", () => {
+    expect(feeds(consumer({ subtype: "equipment", control: "you", token: null })).length).toBe(0);
   });
 });
 

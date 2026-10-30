@@ -19,7 +19,7 @@
   "packages/matcher/src/colour-sources.ts": 1,
   "packages/matcher/src/deck-math.ts": 1,
   "packages/matcher/src/edge-magnitude.ts": 1,
-  "packages/matcher/src/edges.ts": 33,
+  "packages/matcher/src/edges.ts": 34,
   "packages/matcher/src/effect-class.ts": 1,
   "packages/matcher/src/effect-gate-weight.ts": 4,
   "packages/matcher/src/fetch-land.ts": 2,

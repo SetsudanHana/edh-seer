@@ -342,13 +342,15 @@ function counterRecipient(clauseText: string, named = true): string | undefined 
 /** "Another target creature gains indestructible. Put a +1/+1 counter ... on THAT CREATURE" (Arwen, Mortal Queen, #1421): "that creature" is the target the sentence named
  *  before the counters, so the emit says "target creature" and a consumer that wants a creature (Mossborn Hydra) sees a supply it can reach. The word "another" is dropped on
  *  purpose: it narrows away from the card, which `other` would carry onto the emit.
- *  CEILING: only a "target <creature|permanent|artifact|land>" earlier in the same clause text; a "that creature" bound to a trigger or an earlier choice stays untyped. */
+ *  CEILING: only the nearest "target <creature|permanent|artifact|land>" (plus a you/opponent control qualifier) earlier in the same clause text; a "that creature" bound to a trigger or an earlier choice stays untyped. */
 function thatTarget(clauseText: string): string | undefined {
   const at = /\bcounters?\s+on\s+that\s+(?:creature|permanent|artifact|land)\b/i.exec(clauseText);
   if (!at) return undefined;
   const before = clauseText.slice(0, at.index);
-  const m = /\btarget\s+(creature|permanent|artifact|land)\b/i.exec(before);
-  return m ? `target ${m[1]!.toLowerCase()}` : undefined;
+  // The NEAREST target (Trickster's Stratagem names two), with its controller qualifier kept so "target creature an opponent controls" stays the opponent's (Protocol Knight).
+  const all = [...before.matchAll(/\btarget\s+(creature|permanent|artifact|land)\b(\s+(?:you control|an opponent controls|you don't control|your opponents control))?/gi)];
+  const m = all.at(-1);
+  return m ? `target ${m[1]!.toLowerCase()}${m[2] ?? ""}` : undefined;
 }
 
 /** A move whose stated origin is the stack: a spell. */
