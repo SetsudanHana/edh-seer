@@ -650,27 +650,66 @@ const COUNTER_PREP = /\bcounters?\s+on\b/i;
  *  recipient, and the clause text read whole made both "on that" (Juniper) or both "on this creature" (Sumala: the first "it" is the face-up permanent). When the clause has as many `counter(s) on <X>` phrases as
  *  add-counter actions, the nth action reads the text with the OTHER actions' phrases cut out, so each recipient is judged alone and the lead-in ("This creature enters with ...") still counts.
  *  CEILING: only a clause with exactly two add-counter actions and two counter phrases, joined by \"and a\", or apart with the second on \"this <card>\" (#1401) (Communal Brewing's three, with a where-clause, reads the whole text); "a counter on each of two creatures" or a list the store split otherwise reads the whole text, as before. */
-function ownCounterText(action: Action, actions: Action[], text: string): string {
+function ownCounterText(action: Action, actions: Action[], text: string, forEmits = false): string {
   if (action.verb !== "add-counter") return text;
   const mine = actions.filter((a) => a.verb === "add-counter");
-  if (mine.length !== 2) return text;
+  if (mine.length < 2) return text;
+  const own = mine.indexOf(action);
   // Index scanning, no lazy runs (CodeQL js/polynomial-redos): every "counter(s) on", and the sentence delimiter after it.
   const starts = [...text.matchAll(/\bcounters?\s+on\s/gi)].map((m) => m.index!);
-  if (starts.length !== 2) return text;
   const stop = (from: number): number => { const i = text.slice(from).search(/[,.;]/); return i < 0 ? text.length : from + i; };
+  if (starts.length === 1 && mine.length === 2) return splitOneRecipientList(text, starts[0]!, stop(starts[0]!), own);
+  // The EMIT reads the cut text only for a one-phrase recipient list (it names the recipient class: "each other creature you control"); the two-phrase splits above keep the emit on the whole text, as before (#1391 F5 counter kinds and recipients are unchanged).
+  if (starts.length !== 2 || forEmits) return text;
   // ...and the two are joined by the FIRST "and <a / a number>" between them, in one sentence (a third phrase in a where-clause, Communal Brewing, or a sentence break reads the whole text).
   const [a, b] = starts as [number, number];
   // ...or the phrases are apart (a sentence break, "then"): split only when the SECOND names the card outright ("on this creature") (#1401, Sanctuary Wall: "You may put a stun counter on it. If you do, put a stun counter on this creature.").
   // A pronoun cannot point forward, so the first is judged without it: its "it" is whatever the text before it named (the tapped target). A second phrase that is itself a pronoun
   // (Elder Cathar's "... on target creature you control. If that creature is a Human, put two counters on it instead", Communal Brewing's "on this enchantment, then ... on it") takes its antecedent
-  // from the phrase before it, which cutting out would lose, so those read the whole text as before.
-  const phrases = stop(a) < b ? (/^counters?\s+on\s+this\s+(?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle|card)\b/i.test(text.slice(b, stop(b))) ? [text.slice(a, stop(a)), text.slice(b, stop(b))] : null) : (() => {
+  // from the phrase before it, which cutting out would lose, so those read the whole text as before. The exception is a pronoun whose nearest preceding ACTION is not a counter placement
+  // (#1401 part 4, Sinister Concierge: "exile it and put three time counters on it. If you do, exile up to one target creature and put three time counters on it"): it is that action's object.
+  const apart = stop(a) < b;
+  let joinAt = -1;
+  if (!apart) {
     const join = /(?<=\s)and\s+(?=(?:an?|one|two|three|four|five|x|\d+)\s)/i.exec(text.slice(a, b));
-    return join ? [text.slice(a, a + join.index).trimEnd(), text.slice(b, stop(b))] : null;
-  })();
-  if (!phrases) return text;
-  const own = mine.indexOf(action);
-  return phrases.reduce((t, ph, i) => (i === own ? t : t.replace(ph, "")), text);
+    if (!join) return text;
+    joinAt = a + join.index;
+  }
+  const first = apart ? text.slice(a, stop(a)) : text.slice(a, joinAt).trimEnd();
+  const second = text.slice(b, stop(b));
+  if (apart && !/^counters?\s+on\s+(?:this\s+(?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle|card)|it)$/i.test(second.trimEnd())) return text;
+  // How many of the actions each phrase covers: the counter words from the start of its sentence (or after the join) up to and including its own "counter(s) on". Two actions are one each, as before.
+  const counterWords = (span: string): number => span.split(/\s+/).filter((w) => /^counters?$/i.test(w)).length;
+  const sentenceStart = Math.max(text.lastIndexOf(".", a), text.lastIndexOf(":", a), text.lastIndexOf(";", a)) + 1;
+  const g1 = mine.length === 2 ? 1 : counterWords(text.slice(sentenceStart, a)) + 1;
+  const g2 = mine.length === 2 ? 1 : counterWords(text.slice(apart ? stop(a) + 1 : joinAt + 3, b)) + 1;
+  if (g1 + g2 !== mine.length) return text;
+  const phraseOf = own < g1 ? 0 : 1;
+  const phrases = [first, second];
+  // The nearest preceding action of the phrase's first counter: a pronoun phrase takes that action's object when it names the card or a target.
+  const recipient = (ph: string, firstAction: Action): string => {
+    if (!/^counters?\s+on\s+it$/i.test(ph.trimEnd())) return ph;
+    const before = actions[actions.indexOf(firstAction) - 1];
+    const obj = (before?.object ?? "").trim();
+    if (!before || before.verb === "add-counter" || !(/^this (?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle|card)$/i.test(obj) || /^(?:up to \w+ )?target\b/i.test(obj))) return ph;
+    return ph.replace(/\s+it$/i, ` ${obj}`);
+  };
+  if (apart && /^counters?\s+on\s+it$/i.test(second.trimEnd()) && (actions[actions.indexOf(mine[g1]!) - 1]?.verb === "add-counter" || recipient(second, mine[g1]!) === second)) return text;
+  const rewritten = recipient(phrases[phraseOf]!, mine[phraseOf === 0 ? 0 : g1]!);
+  return phrases.reduce((t, ph, i) => (i === phraseOf ? t.replace(ph, rewritten) : t.replace(ph, "")), text);
+}
+/** "put a +1/+1 counter on that creature and each other creature you control that shares a creature type with it" (#1401 part 4, Invasion of New Capenna): ONE counter phrase whose recipient list
+ *  names two objects, and two add-counter actions. The nth action reads the text with the other recipient cut out. CEILING: exactly two actions and one phrase, split at the first "and" that
+ *  starts a second recipient ("each", "all", "another", "target", "up to", "other"); a qualifier on the second recipient ("shares a creature type") stays in its words and is not a field. */
+function splitOneRecipientList(text: string, a: number, end: number, own: number): string {
+  const head = /^counters?\s+on\s+/i.exec(text.slice(a))![0].length;
+  const words = text.slice(a + head, end).split(" ");
+  const RECIPIENT_HEAD = new Set(["each", "all", "another", "target", "up", "other"]);
+  const k = words.findIndex((w, i) => i > 0 && w === "and" && RECIPIENT_HEAD.has(words[i + 1] ?? ""));
+  if (k < 0) return text;
+  const firstLen = words.slice(0, k).join(" ").length;
+  const tailStart = a + head + firstLen + " and ".length;
+  return own === 0 ? text.slice(0, a + head + firstLen) + text.slice(end) : text.slice(0, a + head) + text.slice(tailStart);
 }
 function counterOnSelf(verb: string | undefined, text: string, cardName?: string, triggerIsSelf = false): boolean {
   if (verb === "adapt" || verb === "monstrosity") return true;
@@ -3002,7 +3041,7 @@ export function deriveAbilities(
       // "tapped") still emits the wildcard `{token:true, scope:all}` tap, because CREATED_TOKEN_REF only
       // resolves when "tapped" is present.
       const tapsCreated = tapMadeHere && TAPPED_WORD.test(effectText(text, cardName ?? "")) && !TAPS_IT.test(effectText(text, cardName ?? ""));
-      const emits = temporaryRider ? [] : narrowSelfExiledSpell(actionEmits(antecedent ? { ...action, object: antecedent, ...(zone ? { fromZone: zone } : {}) } : action, text, { self: emitsSelf }), text, cardText)
+      const emits = temporaryRider ? [] : narrowSelfExiledSpell(actionEmits(antecedent ? { ...action, object: antecedent, ...(zone ? { fromZone: zone } : {}) } : action, ownCounterText(action, clause.actions ?? [], text, true), { self: emitsSelf }), text, cardText)
         .filter((e) => !(e.verb === "taps" && (tapsCreated || ARRIVES_TAPPED.test(effectText(text, cardName ?? "")))))
         // A SACRIFICE triggered by the card's own LEAVING is drawback, not supply. "When this
         // enchantment leaves the battlefield, that creature's controller sacrifices it" (Necromancy,
