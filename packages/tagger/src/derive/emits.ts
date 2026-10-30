@@ -435,7 +435,7 @@ function parseSubjectWhole(text: string): SubjectFilter {
  *  read `any` and satisfied the opponent-mill gate of a recursion over an opponent's graveyard (edges.ts reanimatorEdges, ruling #729). The clause says "your library" and no other player's library:
  *  that mill is yours. Manifest dread (CR 701.62) puts the other of the top two cards of YOUR library into the graveyard, unless a player is named doing it ("the exiled card's owner manifests dread").
  *  The verb `mill` itself is covered by CONTROLLER_DEFAULT ("target player mills" stays `any`), and only the `mill` event is read here: the same action's `enters` keeps its own reading.
- *  KNOWN LIMIT (a deliberate simplification): clause-wide text, so a clause naming both "your library" and another player's library stays `any`; a clause with no text stays `any` (a text-less twin of the same put, Celestus Sanctifier).
+ *  CEILING: clause-wide text, so a clause naming both "your library" and another player's library stays `any`; a clause with no text stays `any` (a text-less twin of the same put, Celestus Sanctifier).
  */
 const OTHER_LIBRARY = /\b(?:their|its owner's|that player's|target (?:player|opponent)'s|each (?:player|opponent)'s|an opponent's|his or her|defending player's) librar(?:y|ies)\b/i;
 export function millsOwnLibrary(action: Action, clauseText?: string): boolean {
