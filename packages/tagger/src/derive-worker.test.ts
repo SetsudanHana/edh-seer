@@ -191,3 +191,44 @@ describe("a stored amount rides on the grammar's back-reference (#1403)", () => 
     expect(dmgs.every((a) => a.count?.scalesWith !== undefined)).toBe(true);
   });
 });
+
+// #1401: one printed object, one action, and the subject is the object THAT action names. Real oracle text dumped from Mongo 2026-10-30; both derive from the grammar.
+describe("each printed object gets its own subject (#1401)", () => {
+  const TURTLE = { name: "Dragon Turtle", typeLine: "Creature — Turtle Dragon", keywords: ["Flash"], oracleText: "Flash\nDrag Below — When this creature enters, tap it and up to one target creature an opponent controls. They don't untap during their controllers' next untap steps." };
+  const grammarRow = (source: typeof TURTLE) => deriveRow({ doc: { oracleId: "x", name: source.name, canonical: grammarClauseRecords(source as never).records } as never, source: source as never, isToken: false });
+  const emitsOf = (row: ReturnType<typeof deriveRow>, verb: string) => row.tags.abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.verb === verb));
+  const noDuplicateAbilities = (row: ReturnType<typeof deriveRow>) => { const j = row.tags.abilities.map((a) => JSON.stringify(a)); return new Set(j).size === j.length; };
+
+  test("Dragon Turtle: 'tap it and up to one target creature an opponent controls' is a tap of the card and a tap of the opponent's target, not the target twice", () => {
+    const records = grammarClauseRecords(TURTLE as never).records;
+    expect(records[1]!.actions!.filter((a) => a.verb === "tap").map((a) => a.object)).toEqual(["this creature", "up to one target creature an opponent controls"]);
+    const row = grammarRow(TURTLE);
+    expect(row.fromGrammar).toBe(true);
+    // The card's own tap is no `taps` event (no scope: tapVerbs), so only the opponent's target emits one, once.
+    const taps = emitsOf(row, "taps");
+    expect(taps).toHaveLength(1);
+    expect(taps[0]!.subject).toMatchObject({ control: "opp", type: "creature", scope: "target" });
+    expect(noDuplicateAbilities(row)).toBe(true);
+  });
+
+  // "it" here is the tapped target, NOT the card (in Dragon Turtle's text it is the card): the antecedent comes from the sentence.
+  const WALL = { name: "Sanctuary Wall", typeLine: "Artifact Creature — Wall", keywords: ["Defender"], oracleText: "Defender\n{2}{W}, {T}: Tap target creature. You may put a stun counter on it. If you do, put a stun counter on this creature. (If a permanent with a stun counter would become untapped, remove one from it instead.)" };
+  test("Sanctuary Wall: the first stun counter goes on the tapped target, the second on the card itself", () => {
+    const row = grammarRow(WALL as never);
+    expect(row.fromGrammar).toBe(true);
+    const counters = emitsOf(row, "counter-added");
+    expect(counters.map((e) => e.subject.self === true)).toEqual([false, true]);
+    expect(emitsOf(row, "taps")).toHaveLength(1);
+    expect(noDuplicateAbilities(row)).toBe(true);
+  });
+
+  // The cut is for a second phrase that names the card; a second phrase that is a pronoun takes its antecedent from the phrase before it (oracle text dumped from Mongo 2026-10-30).
+  test("Elder Cathar: 'it' in 'put two +1/+1 counters on it instead' is the target, not the card", () => {
+    const elder = { name: "Elder Cathar", typeLine: "Creature — Human Cleric", keywords: [], oracleText: "When this creature dies, put a +1/+1 counter on target creature you control. If that creature is a Human, put two +1/+1 counters on it instead." };
+    expect(emitsOf(grammarRow(elder as never), "counter-added").map((e) => e.subject.self === true)).not.toContain(true);
+  });
+  test("Communal Brewing: 'put an ingredient counter on it' after 'on this enchantment' is still the card", () => {
+    const brew = { name: "Communal Brewing", typeLine: "Enchantment", keywords: [], oracleText: "When this enchantment enters, any number of target opponents each draw a card. Put an ingredient counter on this enchantment, then put an ingredient counter on it for each card drawn this way.\nWhenever you cast a creature spell, that creature enters with X additional +1/+1 counters on it, where X is the number of ingredient counters on this enchantment." };
+    expect(emitsOf(grammarRow(brew as never), "counter-added").map((e) => e.subject.self === true)).toContain(true);
+  });
+});

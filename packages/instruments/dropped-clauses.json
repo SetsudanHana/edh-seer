@@ -986,7 +986,7 @@
 "Draconic Destiny": ["2:other:partial"],
 "Dragon Appeasement": ["1:cant"],
 "Dragon Grip": ["1:cast"],
-"Dragon Turtle": ["2:cant:partial"],
+"Dragon Turtle": ["2:cant:partial","2:tap:partial"],
 "Dragon's Approach": ["2:other"],
 "Dragon's Rage Channeler": ["2:cant:partial"],
 "Dragonhawk, Fate's Tempest": ["2.1:spliced","2:play:partial"],
