@@ -117,6 +117,8 @@ async function main(): Promise<number> {
   console.log(`restamped files:\n${st.stdout.trim() || "  (none)"}`);
   const ratchets = results.filter((r) => r.name === "role-ratchet" || r.name === "dropped-clauses");
   console.log(`ratchet verdicts: ${ratchets.length ? ratchets.map((r) => `${r.name} ${r.code === 0 ? "ok" : "MOVED (exit " + r.code + ") -- explain, then bank by hand"}`).join("; ") : "not run"}`);
+  const fresh = results.find((r) => r.name === "theme-stats-fresh");
+  console.log(`theme-stats: ${fresh === undefined ? "not run" : fresh.code === 0 ? "fresh" : "STALE (exit " + fresh.code + ") -- re-run gen-theme-stats"}`);
   if (failedStop) {
     console.log(`\nFAILED at step "${failedStop.name}". Fix it, then resume with: npm run derive:bump -- --restamp`);
     return 1;
