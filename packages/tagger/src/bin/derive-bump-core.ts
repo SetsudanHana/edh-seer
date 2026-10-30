@@ -12,7 +12,7 @@ export interface Step {
   args: string[];
   /** Workspace directory (relative to the repo root) the command runs in; default the root. */
   cwd?: string;
-  /** Steps 1-5 stop the run on a non-zero exit; the ratchets and the stamp tests only report. */
+  /** Steps 1-6 stop the run on a non-zero exit; the ratchets, the freshness check and the stamp tests only report. */
   stopOnFail: boolean;
 }
 
@@ -87,9 +87,13 @@ export function planSteps(mode: Mode): Step[] {
     tsx("derive-corpus", "packages/tagger/src/bin/derive-corpus.ts", ["--force"]),
     tsx("refresh-fixtures", "research/mana/refresh-fixtures.mts"),
     tsx("gen-quality-weights", "packages/matcher/src/bin/gen-quality-weights.ts"),
+    // theme-stats.json is the IDF table behind every headline theme; an absent tag scores log(N+1),
+    // so a stale file mis-ranks decks (#1428). Regenerated from the fresh derive, then re-counted.
+    tsx("gen-theme-stats", "packages/matcher/src/bin/gen-theme-stats.ts"),
     tsx("gen-schema-docs", "packages/tagger/src/bin/gen-schema-docs.ts"),
     tsx("role-ratchet", "packages/instruments/src/role-ratchet.ts", [], false),
     tsx("dropped-clauses", "packages/instruments/src/dropped-clauses.ts", [], false),
+    tsx("theme-stats-fresh", "packages/instruments/src/theme-stats-fresh.ts", [], false),
     vitest("src/fixture-derive-version.test.ts", "packages/matcher"),
     vitest("src/quality-weights.test.ts", "packages/matcher"),
     vitest("src/bin/gen-schema-docs.test.ts", "packages/tagger"),
