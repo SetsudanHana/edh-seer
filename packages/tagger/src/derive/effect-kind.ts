@@ -562,6 +562,26 @@ function doubledKind(text: string): EffectKind | null {
   return null;
 }
 
+// "ABILITIES" AS THE SOURCE OF SOMETHING DONE TO THE SUBJECT IS NOT ABILITY-LOSS (#1401 part 5, family E). Peace Talks' "players and permanents can't be the targets of spells or activated
+// abilities" strips nobody's abilities -- the abilities are what would TARGET -- yet the bare word "abilit" made two ability-loss statics, which the matcher reads as a board-off effect
+// (edges.ts). Same for "can't cause abilities to trigger" (Torpor Orb), "spend this mana only to ... activate an ability" and "can't be blocked by creatures with abilities". 39 model-path
+// corpus cards (census 2026-10-30). A `cant` that is none of these keeps the old reading: the subject's own abilities removed or stopped (CR 613.1f layer 6; CR 602.5 "can't be activated").
+const ABILITIES_AS_SOURCE = /\btargets? of\b|\btargeted by\b|\btargeting\b|\btargets? (?:spells?|abilit)|\bcaus(?:e|es|ing)\b|\bspend\b|\btrigger\b|blocked by\b|\bfrom \S+ sources?\b/i;
+const ABILITIES_PHRASE = /\band (?:its|their) activated abilities\b/i;
+function namesOwnAbilitiesStopped(object: string): boolean {
+  if (!/\babilit(?:y|ies)\b/i.test(object)) return false;
+  if (ABILITIES_AS_SOURCE.test(object)) return false;
+  // ONE ACTION HOLDING TWO LIMBS: the grammar reads Hold for Questioning's "doesn't untap during its controller's untap step and its activated abilities can't be activated" as one `cant`
+  // and aligns it over the stored "doesn't untap" limb, which then read as ability-loss next to the stored abilities limb (two identical statics). A head that is not itself about
+  // abilities or combat is not ability-loss (the abilities limb is read from its own action); "can't attack or block and its activated abilities ..." (Edifice of Authority) keeps the old reading.
+  const at = object.search(ABILITIES_PHRASE);
+  if (at > 0) {
+    const head = object.slice(0, at);
+    if (!/\babilit(?:y|ies)\b|\b(?:attack|block)\b/i.test(head)) return false;
+  }
+  return true;
+}
+
 /** A sentence with "instead", a "would ..." frame and the action's OWN word ("damage" for a damage action, "lose"/"loses" for a life loss): it replaces that event rather than causing it.
  *  Sentence by sentence, so Flames of the Blood Hand's separate "if that player would gain life ... instead" does not take its real damage with it. */
 function replacesDamageOrLife(clauseText: string, verb: string): boolean {
@@ -688,7 +708,7 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
   // nothing, so Dress Down derived its draw and its end-step sacrifice and never the static that
   // turns the board off -- and the engine claimed Grim Guardian drains when Dress Down enters
   // (owner, 2026-09-05). Layer 6 of CR 613: an ability-removing effect. 73 corpus cards print it.
-  if (verb === "cant" && /\babilit(?:y|ies)\b/i.test(action.object ?? "")) return "ability-loss";
+  if (verb === "cant" && namesOwnAbilitiesStopped(action.object ?? "")) return "ability-loss";
   // CEILING: "can't be blocked unless defending player pays {3}" (Awesome Presence) is an evasion by CR 509.1b and stays a `tax` -- the payable
   // reading is checked first, as it always was; one corpus card. Reading it as evasion would need a payable-evasion kind of its own.
   if (verb === "cant") {

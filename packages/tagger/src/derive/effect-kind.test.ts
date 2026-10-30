@@ -1002,3 +1002,23 @@ test("a CONDITIONAL restriction is not read as total: trailing and leading condi
   expect(read("can't block this turn", aragorn, 0)).toBe("restriction");
   expect(read("can't block this turn", aragorn, 1)).toBeNull();
 });
+
+test("#1401 E: 'abilities' as the source of targeting, a trigger or mana spending is not ability-loss; the subject's own abilities stopped still is", () => {
+  for (const object of [
+    "players can't be the targets of spells or activated abilities",
+    "be the target of spells or abilities your opponents control",
+    "be targeted by spells or abilities from Vampires, Werewolves, or Zombies",
+    "creatures entering cause abilities to trigger",
+    "spells and abilities your opponents control can't cause you to sacrifice permanents",
+    "spend this mana only to cast an artifact spell or activate an ability",
+    "untap during its controller's untap step and its activated abilities can't be activated",
+  ]) expect(actionEffectKind({ verb: "cant", object })).not.toBe("ability-loss");
+  for (const object of [
+    "enchanted permanent's activated abilities can't be activated",
+    "its activated abilities can't be activated",
+    "activated abilities of artifacts can't be activated",
+    "target creature loses all abilities",
+    "target creature can't use landwalk abilities until end of turn",
+    "target creature can't attack or block and its activated abilities can't be activated until your next turn",
+  ]) expect(actionEffectKind({ verb: "cant", object })).toBe("ability-loss");
+});
