@@ -4044,12 +4044,61 @@ export function deriveAbilitiesOf(input: DeriveInput, opts: { collapseZoneSearch
  *  switch itself compares UNFOLDED readings. */
 export function foldGrantTwins(abilities: Ability[], clauseTexts?: Record<number, string>): Ability[] {
   const seen = new Set<string>();
-  return abilities.filter((a) => {
+  const once = abilities.filter((a) => {
     const k = a.effect?.kind;
     if (k !== "keyword-grant" && k !== "speed-increase" && !(a.clause !== undefined && hasInstead(clauseTexts?.[Math.trunc(Number(a.clause))]))) return true;
     const key = stableJson(JSON.parse(JSON.stringify(a)));
     return !seen.has(key) && !!seen.add(key);
   });
+  return foldRepeatedVerbTwins(once, clauseTexts);
+}
+/** The printed word forms of the verbs `foldRepeatedVerbTwins` can count. A verb absent from this table is never folded (a missing fold beats a wrong one). */
+const TWIN_VERB_FORMS: Record<string, readonly string[]> = {
+  sacrifice: ["sacrifice", "sacrifices", "sacrificed", "sacrificing"],
+  copy: ["copy", "copies", "copied", "copying"],
+  shuffle: ["shuffle", "shuffles", "shuffled", "shuffling"],
+};
+/** A word before "copy" / "sacrifice" / "shuffle" that makes it a NOUN ("for the copy", "a copy of"): not a second printed action. */
+const NOUN_MARKERS: ReadonlySet<string> = new Set(["the", "a", "an", "that", "this", "its", "their", "your", "his", "her", "each", "new", "another", "any", "one"]);
+/** How many times the clause text prints `verb` as a verb. Words are scanned, not matched by pattern. A word after a determiner or a possessive is a noun and does not count; an
+ *  ambiguous word ("two copies") counts, which can only make a fold rarer. */
+function printedVerbCount(text: string, verb: string): number {
+  const forms = TWIN_VERB_FORMS[verb]!;
+  const words = text.replace(/\([^()]*\)/g, " ").toLowerCase().split(/[^a-z']+/).filter((w) => w !== "");
+  let n = 0;
+  for (let i = 0; i < words.length; i++) {
+    if (!forms.includes(words[i]!)) continue;
+    const prev = i > 0 ? words[i - 1]! : "";
+    if (NOUN_MARKERS.has(prev) || prev.endsWith("'s") || prev.endsWith("s'")) continue;
+    n++;
+  }
+  return n;
+}
+/** A bought record that writes ONE printed action twice (Chimeric Coils' two sacrifices, Ether's two copies, Thunderous Debut's and Phyrexian Portal's two shuffles; #1401 family B) derives
+ *  JSON-identical abilities in one clause. They fold to as many as the clause's printed text names the verb (`printedVerbCount`), keeping the first ones. A repeat the text prints
+ *  (This Is How It Ends' two shuffles) stays.
+ *  CEILING: only the verbs in `TWIN_VERB_FORMS`; an ability counts when exactly one of its emits is such a verb; a clause that prints the verb zero times (another spelling) folds nothing. */
+function foldRepeatedVerbTwins(abilities: Ability[], clauseTexts?: Record<number, string>): Ability[] {
+  if (!clauseTexts) return abilities;
+  const groups = new Map<string, number[]>();
+  const verbOf = new Map<string, string>();
+  abilities.forEach((a, i) => {
+    if (a.clause === undefined) return;
+    const verbs = (a.emits ?? []).map((e) => e.verb).filter((v) => v in TWIN_VERB_FORMS);
+    if (verbs.length !== 1) return;
+    const key = stableJson(JSON.parse(JSON.stringify(a)));
+    verbOf.set(key, verbs[0]!);
+    groups.set(key, [...(groups.get(key) ?? []), i]);
+  });
+  const drop = new Set<number>();
+  for (const [key, idx] of groups) {
+    if (idx.length < 2) continue;
+    const text = clauseTexts[Math.trunc(Number(abilities[idx[0]!]!.clause))];
+    if (text === undefined) continue;
+    const printed = printedVerbCount(text, verbOf.get(key)!);
+    if (printed >= 1 && printed < idx.length) for (const i of idx.slice(printed)) drop.add(i);
+  }
+  return drop.size === 0 ? abilities : abilities.filter((_, i) => !drop.has(i));
 }
 /** A clause whose printed text says "instead" or "your choice of" OUTSIDE its reminder text (#1391 F4, F6: Primal Clay's "it becomes your choice of A, B, or C", one animate action per alternative on the grammar path): an alternative branch ("If this spell was kicked, instead search ...", "If you would create a Clue, Food, or Treasure token, instead
  *  create one of each") that derives an ability JSON-identical to the base branch's is one either/or effect, folded like a grant twin. `segment()` already drops reminder text (Wicked Slumber's "(... remove one from it
