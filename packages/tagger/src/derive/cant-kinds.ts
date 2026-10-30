@@ -1,7 +1,7 @@
 /** THE THREE `cant` LINES #1401 part 5 STOPPED READING AS ABILITY-LOSS, EACH WITH A KIND OF ITS OWN (#1423, owner ruling 2026-10-30): `targeting-ban`, `trigger-suppression`, `untap-denial`.
  *  Pure readers over a stored action's object and the printed clause; `effect-kind.ts` asks "is it one" and `derive.ts` copies the fields onto the ability. Every reader is a WHITELIST: a word it does not
  *  know refuses the whole line (a missing answer beats a silent wrong one), and none of them backtracks on card text (words are split on a single space, never matched with a leading `.*`). */
-import type { SubjectFilter } from "../schema.js";
+import type { Control, SubjectFilter } from "../schema.js";
 
 /** The words of a phrase, lowercased, commas dropped (a list is read by its words). Empty for a blank phrase. */
 function words(text: string): string[] {
@@ -14,6 +14,12 @@ function sentenceAround(text: string, at: number): { head: string; tail: string 
   const start = from < 0 ? 0 : from + 2;
   const to = text.indexOf(". ", at);
   return { head: text.slice(start, at), tail: text.slice(at, to < 0 ? text.length : to + 1) };
+}
+
+/** Where the sentence holding index `at` starts. */
+function sentenceStart(text: string, at: number): number {
+  const i = text.lastIndexOf(". ", at);
+  return i < 0 ? 0 : i + 2;
 }
 
 /** The `n`-th (clamped) start index of a global regex's match in `text`, or -1 when there is none. */
@@ -117,4 +123,88 @@ export function targetingBanSubjectInObject(object: string): string | undefined 
   const lower = head.toLowerCase();
   for (const s of CANT_SUFFIXES) if (lower.endsWith(` ${s}`)) { head = head.slice(0, head.length - s.length - 1).trim(); break; }
   return head === "" ? undefined : head;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// 2. TRIGGER-SUPPRESSION
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/** WHICH EVENTS STOP CAUSING TRIGGERS, AND WHOSE ABILITIES (#1423): Torpor Orb ("Creatures entering don't cause abilities to trigger") is `{events: ["enters"], controller: "any"}`, Hushbringer adds `dies`,
+ *  Elesh Norn, Mother of Machines ("... of permanents your opponents control") is `controller: "opp"`. The things whose event is muted are `effect.subject` (creatures; artifacts and creatures; permanents).
+ *  `any`: no event is named ("Triggered abilities of permanents your opponents control can't trigger"); none is printed on a card today, the CR can express it (CR 603.2). */
+export interface TriggerSuppression {
+  events: ("enters" | "dies" | "attacks" | "leaves" | "any")[];
+  controller: Control;
+}
+
+const NEGATIONS = ["don't", "do not", "doesn't", "does not", "can't", "cannot"];
+const EVENT_WORD: Readonly<Record<string, "enters" | "dies" | "attacks" | "leaves">> = { entering: "enters", dying: "dies", attacking: "attacks", leaving: "leaves" };
+const MUTED_TYPES: ReadonlySet<string> = new Set(["creature", "creatures", "artifact", "artifacts", "land", "lands", "permanent", "permanents", "enchantment", "enchantments", "planeswalker", "planeswalkers"]);
+const WHOSE_ABILITIES: Readonly<Record<string, Control>> = { "": "any", "of permanents your opponents control": "opp", "of permanents you control": "you" };
+
+/** `head` without a trailing negation, or undefined when it ends in none. */
+function withoutNegation(head: string): string | undefined {
+  for (const n of NEGATIONS) if (head === n || head.endsWith(` ${n}`)) return head.slice(0, head.length - n.length).trim();
+  return undefined;
+}
+
+/** "creatures entering or dying" -> events + the muted class' words; undefined for any word outside the whitelist. */
+function parseMutedEvents(head: string): { events: TriggerSuppression["events"]; who: string } | undefined {
+  const ws = words(head);
+  const at = ws.findIndex((w) => w in EVENT_WORD);
+  if (at <= 0) return undefined;
+  let who = ws.slice(0, at);
+  // "creatures opponents control entering", "... you control entering": whose entering is muted.
+  const tail3 = who.slice(-3).join(" "), tail2 = who.slice(-2).join(" ");
+  const control = tail3 === "your opponents control" ? 3 : tail2 === "opponents control" || tail2 === "you control" ? 2 : 0;
+  const controlWords = who.slice(who.length - control);
+  who = who.slice(0, who.length - control);
+  if (who.length === 0 || !who.every((w) => MUTED_TYPES.has(w) || w === "and" || w === "or")) return undefined;
+  const events: TriggerSuppression["events"] = [];
+  for (const w of ws.slice(at)) {
+    if (w in EVENT_WORD) { events.push(EVENT_WORD[w]!); continue; }
+    if (w === "or" || w === "and" || w === "the" || w === "battlefield") continue;
+    return undefined;
+  }
+  return { events: [...new Set(events)], who: [...who, ...controlWords].join(" ") };
+}
+
+/** "<things> entering [or dying] don't cause abilities [of permanents your opponents control] to trigger" and "triggered abilities [of ...] can't trigger" (CR 603.2: an ability triggers when its
+ *  event happens; CR 603.6a, 603.6c: enters and leaves/dies). The stored action is a `cant` whose object is garbled (Torpor Orb: "creatures entering from causing abilities to trigger"; Hushbringer:
+ *  "cause abilities to trigger"), so the PRINTED sentence is read; with no clause text the object is read and the verb is the negation. WHITELIST: the ability class must be plain "abilities"
+ *  (Azorius Traffic Enforcement's "backup abilities", Nowhere to Run's "ward abilities" refuse), nothing may follow "to trigger", and any other word in the head (a condition: "As long as ...") refuses.
+ *  "trigger an additional time" is the doubling (`trigger-doubling`), never this.
+ *  Returns the muted class' words as `who` for the caller's subject filter. */
+export function triggerSuppressionOf(object: string, clauseText = "", occurrence = 0): { suppression: TriggerSuppression; who: string } | undefined {
+  const implied = clauseText === "";
+  const lower = (implied ? object : clauseText).toLowerCase().replace(/\u2019/g, "'").replace(" from causing abilities", " cause abilities");
+  // ---- "<things> entering don't cause abilities to trigger" ----
+  const marks: number[] = [];
+  for (let from = lower.indexOf(" cause abilities"); from >= 0; from = lower.indexOf(" cause abilities", from + 1)) marks.push(from);
+  const at = marks[Math.min(occurrence, marks.length - 1)];
+  if (at !== undefined) {
+    const start = sentenceStart(lower, at);
+    const stop = lower.indexOf(". ", at);
+    const headRaw = lower.slice(start, at).trim();
+    const head = implied ? headRaw : withoutNegation(headRaw);
+    if (head === undefined) return undefined;
+    const rest = lower.slice(at + " cause abilities".length, stop < 0 ? lower.length : stop).trim().replace(/\.$/, "");
+    const whose = rest.endsWith(" to trigger") || rest === "to trigger" ? WHOSE_ABILITIES[rest.slice(0, rest.length - "to trigger".length).trim()] : undefined;
+    if (whose === undefined) return undefined;
+    const muted = parseMutedEvents(head);
+    return muted ? { suppression: { events: muted.events, controller: whose }, who: muted.who } : undefined;
+  }
+  // ---- "triggered abilities [of permanents your opponents control] can't trigger" ----
+  let verbAt = -1;
+  if (implied) verbAt = lower.endsWith(" trigger") ? lower.length - " trigger".length : -1;
+  else for (const n of NEGATIONS) { const i = lower.indexOf(` ${n} trigger`); if (i >= 0 && (lower.length === i + n.length + 9 || lower.startsWith(".", i + n.length + 9) )) { verbAt = i + 1 + n.length; break; } }
+  if (verbAt < 0) return undefined;
+  let head = lower.slice(sentenceStart(lower, verbAt), verbAt).trim();
+  if (!implied) { const bare = withoutNegation(head); if (bare === undefined) return undefined; head = bare; }
+  for (const lead of ["triggered abilities", "abilities"]) {
+    if (!head.startsWith(lead)) continue;
+    const whose = WHOSE_ABILITIES[head.slice(lead.length).trim()];
+    if (whose !== undefined) return { suppression: { events: ["any"], controller: whose }, who: "" };
+  }
+  return undefined;
 }

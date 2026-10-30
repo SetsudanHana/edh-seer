@@ -7207,3 +7207,47 @@ describe("targeting-ban: a permanent or player that can't be targeted, and by wh
     expect(bans(derive("Kaya, Bane of the Dead", "Legendary Planeswalker — Kaya", "Your opponents and permanents your opponents control with hexproof can be the targets of spells and abilities you control as though they didn't have hexproof.\n−3: Exile target creature."))).toEqual([]);
   });
 });
+
+// #1423: `trigger-suppression`, "creatures entering don't cause abilities to trigger" (CR 603.2 an ability triggers when its event happens; CR 603.6a enters-the-battlefield abilities; CR 603.6c leaves-the-battlefield / dies).
+describe("trigger-suppression: which events stop causing triggers, and whose abilities (#1423)", () => {
+  const derive = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities;
+  };
+  const sups = (abilities: Ability[]) => abilities.filter((a) => a.effect.kind === "trigger-suppression");
+  const shape = (a: Ability | undefined) => ({ events: a?.suppresses?.events, controller: a?.suppresses?.controller, type: a?.effect.subject?.type });
+
+  test("Torpor Orb: creatures entering, anyone's abilities", () => {
+    const out = sups(derive("Torpor Orb", "Artifact", "Creatures entering don't cause abilities to trigger."));
+    expect(out).toHaveLength(1);
+    expect(shape(out[0])).toEqual({ events: ["enters"], controller: "any", type: "creature" });
+  });
+
+  test("Hushbringer (the model's reading): entering or dying; Karn, Argent Defender: artifacts and creatures entering the battlefield", () => {
+    const text = "Creatures entering or dying don't cause abilities to trigger.";
+    const stored = [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Flying, lifelink" }] }, { id: 2, abilityType: "static", actions: [{ verb: "cant", object: "cause abilities to trigger" }] }] as never;
+    expect(shape(sups(deriveAbilities(stored, "Hushbringer", { 1: "Flying, lifelink", 2: text }, undefined, `Flying, lifelink\n${text}`).abilities)[0])).toEqual({ events: ["enters", "dies"], controller: "any", type: "creature" });
+    expect(shape(sups(derive("Karn, Argent Defender", "Legendary Artifact Creature \u2014 Construct", "Artifacts and creatures entering the battlefield don't cause abilities to trigger."))[0])).toEqual({ events: ["enters"], controller: "any", type: ["creature", "artifact"] });
+  });
+
+  test("Elesh Norn, Mother of Machines: only the opponents' half is suppression; your doubling stays trigger-doubling", () => {
+    const doubling = "If a permanent entering causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time.";
+    const mute = "Permanents entering don't cause abilities of permanents your opponents control to trigger.";
+    const stored = [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Vigilance" }] },
+      { id: 2, abilityType: "static", actions: [{ verb: "trigger-again", object: "a triggered ability of a permanent you control" }] },
+      { id: 3, abilityType: "static", actions: [{ verb: "cant", object: "permanents entering cause abilities of permanents your opponents control to trigger" }] },
+    ] as never;
+    const abilities = deriveAbilities(stored, "Elesh Norn, Mother of Machines", { 1: "Vigilance", 2: doubling, 3: mute }, undefined, `Vigilance\n${doubling}\n${mute}`).abilities;
+    expect(sups(abilities)).toHaveLength(1);
+    expect(shape(sups(abilities)[0])).toEqual({ events: ["enters"], controller: "opp", type: "permanent" });
+    expect(abilities.filter((a) => a.effect.kind === "trigger-doubling")).toHaveLength(1);
+  });
+
+  test("not read: Azorius Traffic Enforcement's backup abilities, a conditional one, Nowhere to Run's ward triggers", () => {
+    expect(sups(derive("Test Enforcer", "Creature — Human", "Creatures opponents control entering the battlefield don't cause backup abilities to trigger."))).toEqual([]);
+    expect(sups(derive("Test Conditional", "Artifact", "As long as you control an artifact, creatures entering don't cause abilities to trigger."))).toEqual([]);
+    expect(sups(derive("Nowhere to Run", "Enchantment", "Flash\nWhen this enchantment enters, target creature an opponent controls gets -3/-3 until end of turn.\nCreatures your opponents control can be the targets of spells and abilities as though they didn't have hexproof. Ward abilities of those creatures don't trigger."))).toEqual([]);
+  });
+});

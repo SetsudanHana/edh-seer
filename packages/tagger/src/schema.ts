@@ -1019,6 +1019,12 @@ export const EFFECT_KINDS = [
   // from artifact sources"), Bartel Runeaxe ("Aura spells"), Ground Seal, Peace Talks. `effect.subject` is who is protected, `Ability.targetingBan` is by what and from whom. A fact kind like `restriction`: the
   // pair channels read it blank. NOT the keyword (hexproof / shroud is `keyword-grant`), NOT a narrowed or conditional ban (Wall of Shadows, Lurker), NOT Kaya's permission to target through hexproof.
   "targeting-ban",
+  // TRIGGER-SUPPRESSION (CR 603.2: an ability triggers when its event happens; CR 603.6a enters, CR 603.6c leaves and dies; #1423, owner ruling 2026-10-30): "Creatures entering don't cause abilities to
+  // trigger" -- Torpor Orb, Hushwing Gryff, Tocatli Honor Guard; "Creatures entering or dying" (Hushbringer); "Artifacts and creatures entering the battlefield" (Karn, Argent Defender, Doorkeeper Thrull);
+  // "Permanents entering don't cause abilities of permanents your opponents control to trigger" (Elesh Norn, Mother of Machines; her other half DOUBLES your triggers and stays `trigger-doubling`).
+  // `effect.subject` is the class whose event is muted, `Ability.suppresses` is which events and whose abilities. A fact kind like `restriction`: the pair channels read it blank (a Torpor Orb
+  // is no more a payoff than an enters trigger is a producer of it). NOT a narrowed class ("backup abilities", "ward abilities"), NOT a condition, NOT "trigger an additional time".
+  "trigger-suppression",
   // TO-HAND (CR 121.5: "If an effect moves cards from a player's library to that player's hand without using the word 'draw,' the player has not drawn those cards"; #1302,
   // owner ruling 2026-10-22): cards put from the TOP of your own library into your hand with no search -- Dark Confidant ("reveal the top card of your library and put that
   // card into your hand"), Ad Nauseam, Fact or Fiction (one pile), Impulse / Dig Through Time ("look at the top N ... put one / two of them into your hand"), Coiling
@@ -1232,6 +1238,13 @@ export interface Ability {
   targetingBan?: {
     by: ("spell" | "ability" | "activated-ability")[];
     source: SubjectFilter;
+  };
+  /** WHICH EVENTS A `trigger-suppression` ABILITY STOPS FROM CAUSING TRIGGERS, AND WHOSE ABILITIES (#1423; CR 603.2, 603.6a, 603.6c). `events` are the trigger words `enters`, `dies`, `attacks`, `leaves`, or `any`
+   *  when the line names no event; `controller` is whose abilities are muted: `opp` for "abilities of permanents your opponents control" (Elesh Norn, Mother of Machines), `you`, else `any` (Torpor Orb). The
+   *  class whose event is muted (creatures; artifacts and creatures; permanents) is `effect.subject`. ABSENT on every other ability. */
+  suppresses?: {
+    events: ("enters" | "dies" | "attacks" | "leaves" | "any")[];
+    controller: Control;
   };
   /** A `to-hand` ABILITY'S CARDS REACH THE HAND BY A PICK (#1302): somebody chooses which of at least two looked-at or revealed cards go to your hand -- "look at the top four
    *  cards, put one of them into your hand" (Impulse), "put two of them" (Dig Through Time), "you may reveal a historic card from among them and put it into your hand". `amount`

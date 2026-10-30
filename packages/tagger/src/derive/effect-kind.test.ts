@@ -1048,3 +1048,25 @@ test("#1423 a scoped ban on being targeted is `targeting-ban`: who can't, and fr
   expect(read("hexproof prevents your spells and abilities from targeting opponents and permanents your opponents control")).toBeNull();
   expect(read("be countered by blue or black spells this turn")).toBeNull();
 });
+
+test("#1423 an entering or dying that doesn't cause abilities to trigger is `trigger-suppression` (CR 603.2, 603.6a, 603.6c); a narrowed or conditional one is not", () => {
+  const read = (object: string, text = "") => actionEffectKind({ verb: "cant", object }, text);
+  const cases: [string, string][] = [
+    ["creatures entering from causing abilities to trigger", "Creatures entering don't cause abilities to trigger."],                                        // Torpor Orb, Hushwing Gryff, Tocatli Honor Guard
+    ["cause abilities to trigger", "Creatures entering or dying don't cause abilities to trigger."],                                                       // Hushbringer
+    ["artifacts and creatures entering the battlefield cause abilities to trigger", "Artifacts and creatures entering the battlefield don't cause abilities to trigger."], // Karn, Argent Defender
+    ["cause abilities to trigger", "Artifacts and creatures entering don't cause abilities to trigger."],                                                  // Doorkeeper Thrull
+    ["permanents entering cause abilities of permanents your opponents control to trigger", "Permanents entering don't cause abilities of permanents your opponents control to trigger."], // Elesh Norn, Mother of Machines
+    ["triggered abilities of permanents your opponents control trigger", "Triggered abilities of permanents your opponents control can't trigger."],
+  ];
+  for (const [object, text] of cases) expect(read(object, text), text).toBe("trigger-suppression");
+  // The object alone is enough where the clause text is not known (the verb is the negation).
+  expect(read("creatures entering cause abilities to trigger")).toBe("trigger-suppression");
+  // Not suppression: a narrowed ability class (Azorius Traffic Enforcement's backup abilities), ward (Nowhere to Run), a condition, "causes you to sacrifice" (The Master, Multiplied).
+  expect(read("cause backup abilities to trigger", "Creatures opponents control entering the battlefield don't cause backup abilities to trigger.")).toBeNull();
+  expect(read("ward abilities of creatures your opponents control can't trigger", "Ward abilities of those creatures don't trigger.")).toBeNull();
+  expect(read("cause abilities to trigger", "As long as you control an artifact, creatures entering don't cause abilities to trigger.")).toBeNull();
+  expect(read("cause you to sacrifice or exile creature tokens you control", "Triggered abilities you control can't cause you to sacrifice or exile creature tokens you control.")).toBeNull();
+  // ...and "trigger an additional time" is the doubling, never this.
+  expect(read("trigger an additional time", "If a triggered ability of a permanent you control triggers, that ability can't trigger an additional time.")).toBeNull();
+});

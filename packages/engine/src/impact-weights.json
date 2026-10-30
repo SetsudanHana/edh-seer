@@ -41,6 +41,7 @@
     "evasion": 0.2,
     "restriction": 0.2,
     "targeting-ban": 0.2,
+    "trigger-suppression": 0.2,
     "to-hand": 0.2,
     "exile-processing": 0.6,
     "keyword-grant": 0.3,

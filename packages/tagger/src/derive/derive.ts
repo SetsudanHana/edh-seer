@@ -10,7 +10,7 @@ import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb, EventCount } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
-import { targetingBanOf, targetingBanSubjectInObject } from "./cant-kinds.js";
+import { targetingBanOf, targetingBanSubjectInObject, triggerSuppressionOf } from "./cant-kinds.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
 import { actionEmits, casualtySacrifice, millsOwnLibrary, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, narrowSelfExiledSpell, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, activationConditionOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
@@ -1536,7 +1536,7 @@ const DAMAGE_REDIRECT = /\bwould (?:be dealt|deal)\b[^.]{0,160}?\b(?:is|are) dea
 const BURN_RECIPIENT_KINDS: ReadonlySet<string> = new Set(["damage", "player-life-loss", "drain"]);
 
 function effectSubject(
-  action: Action, kind: string, triggerIsSelf = false, clauseText = "", cardName?: string, cardText = "",
+  action: Action, kind: string, triggerIsSelf = false, clauseText = "", cardName?: string, cardText = "", cantOccurrence = 0,
 ): ReturnType<typeof parseSubject> {
   // A GRANT's object is the ability handed over, never the thing receiving it, so the subject has to
   // come from the clause text. Falls back to the object when the text states no recipient, which
@@ -1572,6 +1572,11 @@ function effectSubject(
     const s = subjectFrom(tail, cardName, cardText);
     if (SELF_REFERENCE.test(tail) || isSelfSubject(tail, cardName)) s.self = true;
     return s;
+  }
+  // THE CLASS WHOSE EVENT IS MUTED by a `trigger-suppression` (#1423, CR 603.2): "creatures" for Torpor Orb, "artifacts and creatures" for Karn, "permanents" for Elesh Norn.
+  if (kind === "trigger-suppression") {
+    const who = triggerSuppressionOf(action.object ?? "", clauseText, cantOccurrence)?.who;
+    return who ? parseSubject(who) : parseSubject("");
   }
   if (kind === "evasion" || kind === "restriction") {
     const object = action.object ?? "";
@@ -3149,7 +3154,7 @@ export function deriveAbilities(
       const typedDig = handRead?.typed && !handRead.typed.fromObject && handRead.typed.cls !== "" ? { ...action, object: `a ${handRead.typed.cls} card from the top card of your library` } : undefined;
       const subjectAction = typedDig ?? ((effectKind === "flicker" && antecedent && exiledHere && !emitsSelf) || (effectKind === "damage" && refersToTrigger) ? { ...action, object: antecedent } : action);
       const subject = effectKind
-        ? effectSubject(subjectAction, effectKind, trigger?.subject.self === true, text, cardName, enchantText)
+        ? effectSubject(subjectAction, effectKind, trigger?.subject.self === true, text, cardName, enchantText, sameCant)
         : undefined;
       if (subject && selfByIf) subject.self = true;
       // A CARD PUT INTO YOUR HAND FROM THE TOP OF YOUR LIBRARY IS NEVER THE PERMANENT THAT ENTERED (#1302, self-reference): "the chosen cards" / "it" in a self-ETB clause (Niv-Mizzet Reborn) read as the card itself
@@ -3485,6 +3490,7 @@ export function deriveAbilities(
           || effectKind === "retarget"
           // ...and so is a targeting ban's (#1423): a fact kind, the pair channels read it blank, and WHO is protected is the point of the line.
           || effectKind === "targeting-ban"
+          || effectKind === "trigger-suppression"
           || (effectKind === "graveyard-recursion" && subject.zone === "graveyard")
           // A STATIC GRAVEYARD-HATE REPLACEMENT (Leyline of the Void, Rest in Peace, #1266) keeps whose graveyard it hits; the `zone: graveyard` matches no printed card, like the recursion above.
           || (effectKind === "graveyard-hate" && subject.zone === "graveyard" && graveyardReplacement(text)?.kind === "hate"))
@@ -3512,6 +3518,7 @@ export function deriveAbilities(
       // The effect lands on the permanent this card is attached to (#1315): a marker, never a subject -- see `Ability.host`.
       if (hostEffect(action, effectKind, text)) ability.host = true;
       if (effectKind === "restriction") { const r = restrictedActions(action.object ?? "", text, sameCant); if (r) ability.restricts = r; }
+      if (effectKind === "trigger-suppression") { const t = triggerSuppressionOf(action.object ?? "", text, sameCant); if (t) ability.suppresses = t.suppression; }
       if (effectKind === "targeting-ban") { const b = targetingBanOf(action.object ?? "", text, sameCant); if (b) ability.targetingBan = b; }
       // "DRAW A CARD IF IT WAS ATTACKING. OTHERWISE, ..." (#798, Garna; Zurgo Stormrender): the
       // condition narrows the action its own sentence names to a death IN COMBAT, which is the
