@@ -15,6 +15,7 @@ const FIXTURES = [
   "similar.fixtures.json",
   "quality.fixtures.json",
   "same-job.labels.cards.json",
+  "redundancy.fixtures.json",
 ] as const;
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REFRESH = "npx tsx research/mana/refresh-fixtures.mts";
