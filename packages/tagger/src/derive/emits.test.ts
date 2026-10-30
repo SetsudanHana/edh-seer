@@ -754,3 +754,11 @@ test("manifest dread mills the top-two card of YOUR library; its entry and a nam
   const hover = actionEmits({ verb: "manifest-dread", object: "" } as never, "When this Vehicle leaves the battlefield, the exiled card's owner manifests dread.");
   expect(hover.find((x) => x.verb === "mill")?.subject.control).toBe("any");
 });
+
+test("manifest dread mills YOUR library when you manifest, whatever player words the clause holds (real texts)", () => {
+  const mill = (text: string) => actionEmits({ verb: "manifest-dread", object: "" } as never, text).find((x) => x.verb === "mill")?.subject.control;
+  expect(mill("{4}{U}{U}: Shuffle enchanted creature into its owner's library, then manifest dread.")).toBe("you"); // Stay Hidden, Stay Silent
+  expect(mill("At the beginning of each opponent's upkeep, manifest dread.")).toBe("you"); // Abhorrent Oculus
+  expect(mill("When this creature dies, its controller manifests dread.")).toBe("any"); // Fear of Impostors / Unwanted Remake shape
+  expect(mill("When this Vehicle leaves the battlefield, the exiled card's owner manifests dread.")).toBe("any"); // Unidentified Hovership
+});

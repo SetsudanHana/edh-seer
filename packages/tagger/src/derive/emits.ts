@@ -430,6 +430,14 @@ function parseSubjectWhole(text: string): SubjectFilter {
   return { ...others, named: whole };
 }
 
+/** WHO MANIFESTS DREAD is the subject of the verb right in front of it, not any player word in the clause (#1401 part 2): "Its controller manifests dread" / "the exiled card's owner manifests dread" is
+ *  another player (the third-person -s), while "then manifest dread" / "At the beginning of each opponent's upkeep, manifest dread" / "you may manifest dread" is you. Every "manifest dread" in the text must be
+ *  yours; no such phrase (an empty text) is unknown. A plural subject right before it ("each opponent may manifest dread" is not printed; an opponent word as the last word is refused) stays `any`. */
+function manifestsDreadYourself(text: string): boolean {
+  const hits = [...text.matchAll(/(\S*(?:\s+\S+){0,2}?)\s*\bmanifest(s?) dread\b/gi)];
+  return hits.length > 0 && hits.every((m) => m[2] === "" && !/\b(?:opponents?|players?|they|controllers?|owners?)\s*(?:may\s*)?$/i.test(m[1] ?? ""));
+}
+
 /** A MILL MADE BY A PUT (OR A MANIFEST DREAD) NAMES WHOSE LIBRARY (#1401 part 2): "Reveal the top five cards of YOUR library ... Put the rest into your graveyard" (Benefaction of Rhonas, Hermit Druid,
  *  Fact or Fiction, Tower Geist) moves cards library -> graveyard, so it emits `mill`, but the put's object ("the rest") names no player and `CONTROLLER_DEFAULT` does not cover `put`, so the mill
  *  read `any` and satisfied the opponent-mill gate of a recursion over an opponent's graveyard (edges.ts reanimatorEdges, ruling #729). The clause says "your library" and no other player's library:
@@ -441,7 +449,7 @@ const OTHER_LIBRARY = /\b(?:their|its owner's|that player's|target (?:player|opp
 export function millsOwnLibrary(action: Action, clauseText?: string): boolean {
   const text = clauseText ?? "";
   if (action.verb === "put") return /\byour library\b/i.test(text) && !OTHER_LIBRARY.test(text);
-  return action.verb === "manifest-dread" && text !== "" && !NAMES_A_PLAYER.test(text) && !/\b(?:owner|controller)\b/i.test(text);
+  return action.verb === "manifest-dread" && manifestsDreadYourself(text);
 }
 
 /** The back-references to a spell the clause named earlier. */
