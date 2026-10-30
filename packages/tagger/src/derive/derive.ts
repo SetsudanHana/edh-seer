@@ -579,7 +579,8 @@ import { emblemRecipient } from "../emblem.js";
 // 413: #1401 -- #1401 part 4 family A -- counter actions map to recipient phrases by group: Arwen's two pairs (the other creature, then the card), Sinister Concierge's two time counters (the card exiled, then the target exiled), Invasion of New Capenna's second counter reads 'each other creature you control'. Measured: 3 rows change, pair membership +68/-0, role-ratchet 0/0, dropped-clauses 5181 unchanged.
 // 414: #1401 -- part 5 (family E): a cant is ability-loss only when the abilities are the subject's own. 'Abilities' as the SOURCE of targeting (Peace Talks, Ground Seal, Canopy Cover, Wall of Shadows), of triggers (Torpor Orb, Hushbringer, Nowhere to Run), of mana spending (Guidelight Optimizer, Ronin) or of blocking (Jasmine Boreal, Staff of the Ages) no longer reads as ability-loss, and the grammar's merged 'untap during its controller's untap step and its activated abilities can't be activated' (Hold for Questioning, Encrust, Stuck in Summoner's Sanctum) is no longer a second ability-loss next to the stored abilities limb. 39 rows change (38 lose a false ability-loss; Jasmine Boreal gains evasion, True Believer shroud), source flips 5, dropped-clauses 5181 -> 5219, role-ratchet gained 2 (Artifact Ward, Canopy Cover wincon:voltron)
 // 415: #1423 -- three effect kinds for the `cant` lines #1401 part 5 stopped reading as ability-loss and left unread (owner ruling 2026-10-30), all FACT kinds (edges.ts FACT_KINDS, impact 0.2, quality.ts counts none as extra value, sentence.ts / similar.ts words): (1) `targeting-ban` (CR 115.1; hexproof CR 702.11 and shroud CR 702.18 are its keyword forms) -- `effect.subject` is who is protected (self, a class, a target; an Aura host is `host`; a list unnamed), `Ability.targetingBan` is `{by: spell | ability | activated-ability, source: SubjectFilter}` (opponents control, colours / non-colours, a card type, Aura): Shielding Plax, Canopy Cover, Vines of Vastwood, Thrun, Gaea's Revenge, Spellbane Centaur, Artifact Ward, Bartel Runeaxe, Ground Seal, Peace Talks; 28 cards (29 abilities) read, Wall of Shadows / Lurker (narrowed, conditional) and Kaya, Bane of the Dead (a PERMISSION to target through hexproof, stored as a `cant`) not. (2) `trigger-suppression` (CR 603.2, 603.6a, 603.6c) -- `Ability.suppresses` is `{events: enters | dies | attacks | leaves | any, controller}`, `effect.subject` the muted class: Torpor Orb, Hushbringer, Hushwing Gryff, Doorkeeper Thrull, Tocatli Honor Guard, Karn Argent Defender, Elesh Norn Mother of Machines (her doubling half stays trigger-doubling); 7 cards, "backup" / "ward" abilities and conditions refused. (3) `untap-denial` (CR 502.3) -- `Ability.untapDenial` is `{duration: continuous | next-untap-step | as-long-as, steps?}`; host.ts HOST_KINDS lists it and the targeting ban, and "doesn't" joins RECIPIENT_VERB so an Aura's "Enchanted creature doesn't untap" is `host`; 280 of the 328 corpus cards printing a negated untap read, 276 of them inside the derive scope (42 unread: 32 conditional, 9 "can't untap more than N" limits, Leviathan; 6 not derived). Read off the printed sentence by whitelist (cant-kinds.ts), so a condition, a permission or a narrowed class stays unread. ALSO: a stored `untap` whose printed clause only negates untapping is the denial (Energy Storm, Melancholy, Thirst, Fogwalker, Galvanic Juggernaut, Leviathan, Reveka), emits no `untaps`, and a stored `untap` beside its own `cant | untap` is one ability (Glacial Grasp, Illithid Harvester); `claimsNothing: "mana-rider"` on a targeting-ban / trigger-suppression / untap-denial ability that shares a clause with a mana-generation ability (Cinder Marsh and 9 more lands), which `abilityIsKind` counts as no ability to copy. Measured (derive-impact vs 049f7607, final): 312 rows changed, 4 model->grammar source flips (Energy Storm, Fogwalker, Melancholy, Thirst; Dread Wight no longer flips), dropped-clauses 5,219 -> 4,914 (322 fixed: 305 `cant`; 19 new keys, none a new drop: 18 re-flagged `:partial` plus Tamiyo, Upriser Crowned 3:tap:partial), role-ratchet gained 0 / lost 0 (31,223 -> 31,223), pair reasons of changed rows +197 / -4,060 (gained: copies +188 on cards whose real activated or triggered ability was invisible, static cost-reduction +9; lost: the false `static:untap` / `untaps` / `cast` families of the misfiled untap, 3,604 of them Energy Storm's, and 82 `taps` of Tamiyo, Upriser Crowned), matcher sample +2 / -34. "Tap those creatures" after a combat-defined class (Dread Wight, Tamiyo, Upriser Crowned) emits no `taps`. Three CEILING markers are new: two in cant-kinds.ts, one in derive.ts.
-export const DERIVE_VERSION = 415;
+// 416: #1426 -- Any rider of an activated mana ability (painland and Talisman damage, counters, Astrolabe's delayed draw) is stamped mana-rider: 314 abilities on 297 cards stop forming copies:activated pairs (-13,244 pair reasons, +765 copies:triggered that the false activated reading had hidden); a clause that targets, holds a loyalty ability or moves a card to or from a library by its cost or effect (CR 605.1a: Chromatic Sphere, the Eggs, Selvala, Millikin, Deranged Assistant, Charmed Pendant) is no mana ability and stays copyable; a draw in a delayed trigger (CR 603.7a: Astrolabe, Barbed Sextant) is not the ability's own effect and stays stamped. Emits unchanged.
+export const DERIVE_VERSION = 416;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -4111,12 +4112,36 @@ export interface DeriveInput {
 
 /** A SELF "YOU LOSE THE GAME" ABILITY CLAIMS NOTHING (#1252, #1264): emits non-empty and every one a `loses-game` of
  *  `control: "you"`. A reason already set stands -- a refused trigger keeps "refused-trigger" (the matcher's precedence). */
-/** A FACT-KIND RIDER OF A MANA ABILITY CLAIMS NOTHING (#1423, `Ability.claimsNothing` "mana-rider"): Cinder Marsh's "This land doesn't untap during your next untap step" shares the clause of its
- *  `{T}: Add {B} or {R}`, so it is part of that mana ability (CR 605.1a) and not an activated ability a copier can target (CR 605.3b). Only the three #1423 kinds; a reason already set stands. */
-const MANA_RIDER_KINDS: ReadonlySet<string> = new Set(["targeting-ban", "trigger-suppression", "untap-denial"]);
-export function stampManaRider(a: Ability, all: readonly Ability[]): Ability {
-  return a.claimsNothing === undefined && a.kind === "activated" && MANA_RIDER_KINDS.has(a.effect.kind)
-    && all.some((o) => o !== a && o.clause === a.clause && o.kind === "activated" && o.effect.kind === "mana-generation")
+/** A RIDER OF AN ACTIVATED MANA ABILITY CLAIMS NOTHING (#1423, #1426, `Ability.claimsNothing` "mana-rider"): Cinder Marsh's "This land doesn't untap during your next untap step" and Llanowar Wastes'
+ *  "This land deals 1 damage to you" share the clause of their `{T}: Add ...`. CR 605.1a: an activated ability that adds mana, needs no target, is no loyalty ability and its cost and effect move no
+ *  card to or from a library IS a mana ability, and everything the one printed ability does is part of it; CR 605.3b: it never uses the stack, so it cannot be targeted or copied. The engine models the
+ *  rider as a second `activated` ability, which a copier would be offered (`copies:activated`). Stamped on any ability that is not itself mana-generation, shares the clause, face AND activation cost of a
+ *  mana-generation ability. The WHOLE group is refused (no member stamped, it is a copyable ability) when anything in it targets (Deathrite Shaman, Soulbright Flamekin), is a loyalty ability, or moves a
+ *  card to or from a library (CR 605.1a: a draw or mill in the effect -- Chromatic Sphere, the Eggs, Selvala -- or a mill in the cost -- Millikin, Deranged Assistant, Charmed Pendant).
+ *  EXEMPT: a draw in a DELAYED triggered ability (CR 603.7a: created during resolution, so not the ability's own effect; the mana-ability rules say nothing of it) -- Astrolabe's and Barbed Sextant's "Draw a card at the
+ *  beginning of the next turn's upkeep" -- when every sentence naming a draw / mill / search opens a delayed trigger ("at the beginning of").
+ *  The rider's emits stay (the damage still happens). A reason already set stands.
+ *  CEILING: ACTIVATED only. A triggered mana ability is one only when it triggers from mana (CR 605.1b), and Carnival of Souls' "Whenever a creature enters, you lose 1 life and add {B}" does not, so the
+ *  trigger would have to be read first; no triggered rider is stamped. A target is read off the clause's printed text (`target`) and `scope: "target"` subjects, either one refuses; a clause with two
+ *  printed abilities and a target in the other is left unstamped. */
+const LIBRARY_KINDS: ReadonlySet<string> = new Set(["draw-card", "mill", "search"]);
+const LIBRARY_VERBS: ReadonlySet<string> = new Set(["draw", "mill", "search"]);
+const targetsAnything = (a: Ability, printed: string): boolean =>
+  /\btargets?\b/i.test(printed) || a.effect.subject?.scope === "target" || (a.emits ?? []).some((e) => e.subject?.scope === "target");
+/** CR 605.1a's library criterion: the group's cost or effect moves a card to or from a library, unless every effect sentence that does is a delayed trigger (CR 603.7a). */
+const movesLibraryCard = (group: readonly Ability[], printed: string): boolean => {
+  if (group.some((o) => /\b(?:mill|library|draw|search)/i.test(o.cost ?? ""))) return true;
+  if (!group.some((o) => LIBRARY_KINDS.has(o.effect.kind) || (o.emits ?? []).some((e) => LIBRARY_VERBS.has(e.verb)))) return false;
+  const movers = printed.split(/\.\s/).filter((sentence) => /\b(?:draws?|mills?|search)/i.test(sentence));
+  return movers.length === 0 || movers.some((sentence) => !/\bat the beginning of\b/i.test(sentence));
+};
+export function stampManaRider(a: Ability, all: readonly Ability[], clauseTexts?: Record<number, string>): Ability {
+  if (a.claimsNothing !== undefined || a.kind !== "activated" || a.effect.kind === "mana-generation") return a;
+  const group = all.filter((o) => o.kind === "activated" && o.clause === a.clause && o.face === a.face && o.cost === a.cost);
+  const printed = a.clause === undefined ? "" : clauseTexts?.[Math.trunc(Number(a.clause))] ?? "";
+  return group.some((o) => o.effect.kind === "mana-generation")
+    && !group.some((o) => o.payment?.loyalty !== undefined || targetsAnything(o, printed))
+    && !movesLibraryCard(group, printed)
     ? { ...a, claimsNothing: "mana-rider" as const } : a;
 }
 export function stampSelfLoss(a: Ability): Ability {
@@ -4287,7 +4312,7 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
   const spellOnce = pinned.map((a) => a.kind === "on-cast" || a.repeats === "once" || !isSpellFace(a.face) ? a : { ...a, repeats: "once" as const })
     // A SELF "YOU LOSE THE GAME" ABILITY CLAIMS NOTHING (#1252, #1264), decided on the FINAL emits: every control fill above has run.
     .map(stampSelfLoss)
-    .map((a, _i, all) => stampManaRider(a, all))
+    .map((a, _i, all) => stampManaRider(a, all, input.clauseTexts))
     // THE CLAUSE THAT GRANTS A QUOTED ABILITY (#1315): `segment()`'s granted clause and its parent, from `DeriveInput.clauseGrants` (both clause sources).
     .map((a) => { const by = a.clause !== undefined ? input.clauseGrants?.[a.clause as number] : undefined; return by === undefined ? a : { ...a, grantedBy: by }; });
   // A CREATURE ONLY UNDER A CONDITION (#797): the action grammar reads "As long as your devotion to red

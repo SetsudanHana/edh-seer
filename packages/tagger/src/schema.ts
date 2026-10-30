@@ -1307,10 +1307,11 @@ export interface Ability {
    *  - `"self-loss"`: the #1252 owner ruling. An ability whose ONLY effect is that its controller loses the
    *    game (Phage the Untouchable, the Pacts' upkeep payment) is a drawback nobody builds toward. Its emits
    *    still reach a RESCUE consumer (a `loses-game` trigger of `control: "you"`) and no other.
-   *  - `"mana-rider"` (#1423): an ability of a fact kind that a MANA ABILITY'S OWN CLAUSE carries as a rider -- Cinder Marsh's "{T}: Add {B} or {R}. This land doesn't untap during your next untap step."
-   *    The rider is part of the mana ability (CR 605.1a), which is not copied or targeted (CR 605.3b), but the engine models it as a second `activated` ability, which a copier would be offered
-   *    (`copies:activated`). Set on `targeting-ban`, `trigger-suppression` and `untap-denial` abilities only, when a `mana-generation` ability of the same clause sits beside them; `abilityIsKind`
-   *    counts it as no ability to copy. (A painland's "This land deals 1 damage to you" is the same shape and is NOT stamped: it predates this and is left as it was.)
+   *  - `"mana-rider"` (#1423, #1426): an ability that is the RIDER of an activated MANA ABILITY -- Cinder Marsh's "{T}: Add {B} or {R}. This land doesn't untap during your next untap step.", Llanowar Wastes'
+   *    "{T}: Add {B} or {G}. This land deals 1 damage to you.". Everything one printed mana ability does is part of it (CR 605.1a), and it never uses the stack, so it cannot be targeted or copied (CR 605.3b),
+   *    but the engine models the rider as a second `activated` ability, which a copier would be offered (`copies:activated`). Set on any non-mana-generation `activated` ability that shares the clause and the
+   *    activation cost of a `mana-generation` ability, unless something in that group targets, is a loyalty ability, or moves a card to or from a library by its cost or effect (CR 605.1a: then it is no mana ability: Deathrite Shaman, Chromatic Sphere's draw, Millikin's mill, Selvala). A draw in a DELAYED trigger is not the ability's effect (CR 603.7a): Astrolabe stays stamped. `abilityIsKind` counts it as no ability
+   *    to copy; its emits are untouched, so the damage still reaches a payoff that watches it. Activated only: a triggered rider is not stamped (CR 605.1b needs the trigger to come from mana).
    *  Both: `"refused-trigger"` wins.
    *
    *  `"refused-trigger"`: THE TRIGGER THIS ABILITY WAITS ON WAS REFUSED, AND THE ABILITY POINTS BACK AT AN OBJECT WITH NO CLASS (#1253).

@@ -7328,6 +7328,51 @@ describe("untap-denial: a mana ability's rider is no ability of its own (#1423)"
   });
 });
 
+describe("any rider of a mana ability is no ability of its own (#1426)", () => {
+  const tagsOf = (name: string, typeLine: string, oracleText: string, stored: unknown) =>
+    deriveCardTags(deriveInputOf({ name, typeLine, oracleText, keywords: [] as string[] } as never, "x", name, stored as never)).abilities;
+  test("Llanowar Wastes' 'This land deals 1 damage to you' is stamped mana-rider and keeps its emits", () => {
+    const text = "{T}: Add {C}.\n{T}: Add {B} or {G}. This land deals 1 damage to you.";
+    const stored = [
+      { id: 1, abilityType: "activated", actions: [{ verb: "add-mana", object: "{C}", fromZone: null, toZone: null, amount: null, optional: false }] },
+      { id: 2, abilityType: "activated", actions: [{ verb: "add-mana", object: "{B} or {G}", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "deal-damage", object: "you", fromZone: null, toZone: null, amount: "1", optional: false }] },
+    ];
+    const abs = tagsOf("Llanowar Wastes", "Land", text, stored);
+    expect(abs.map((a) => [a.effect.kind, a.clause, a.claimsNothing])).toEqual([["mana-generation", 1, undefined], ["mana-generation", 2, undefined], ["damage", 2, "mana-rider"]]);
+    expect((abs[2]?.emits ?? []).length).toBeGreaterThan(0);
+  });
+  test("Deathrite Shaman's targeted 'Exile target land card ... Add one mana' is no mana ability: nothing is swallowed", () => {
+    const text = "{T}: Exile target land card from a graveyard. Add one mana of any color. (Activate only as an instant.)";
+    const stored = [{ id: 1, abilityType: "activated", actions: [{ verb: "exile", object: "target land card from a graveyard", fromZone: "graveyard", toZone: "exile", amount: null, optional: false }, { verb: "add-mana", object: "one mana of any color", fromZone: null, toZone: null, amount: null, optional: false }] }];
+    const abs = tagsOf("Deathrite Shaman", "Creature — Elf Shaman", text, stored);
+    expect(abs.map((a) => a.claimsNothing)).toEqual(abs.map(() => undefined));
+    expect(abs.some((a) => a.effect.kind === "graveyard-hate")).toBe(true);
+  });
+  const lib = (verb: string, object: string) => ({ verb, object, fromZone: null, toZone: null, amount: null, optional: false });
+  test("CR 605.1a: a draw in the effect or a mill in the cost moves a card from a library, so Chromatic Sphere and Millikin are no mana ability and nothing is stamped", () => {
+    const sphere = tagsOf("Chromatic Sphere", "Artifact", "{1}, {T}, Sacrifice this artifact: Add one mana of any color. Draw a card. (Activate only as an instant.)",
+      [{ id: 1, abilityType: "activated", actions: [lib("add-mana", "one mana of any color"), lib("draw", "a card")] }]);
+    expect(sphere.some((a) => a.effect.kind === "draw-card")).toBe(true);
+    expect(sphere.map((a) => a.claimsNothing)).toEqual(sphere.map(() => undefined));
+    const millikin = tagsOf("Millikin", "Artifact Creature — Construct", "{T}, Mill a card: Add {C}. (Activate only as an instant. To mill a card, put the top card of your library into your graveyard.)",
+      [{ id: 1, abilityType: "activated", actions: [lib("mill", "a card"), lib("add-mana", "{C}")] }]);
+    expect(millikin.some((a) => a.effect.kind === "mana-generation")).toBe(true);
+    expect(millikin.map((a) => a.claimsNothing)).toEqual(millikin.map(() => undefined));
+  });
+  test("CR 603.7a: Astrolabe's 'Draw a card at the beginning of the next turn's upkeep' is a delayed triggered ability, not the mana ability's effect: its draw stays a rider", () => {
+    const abs = tagsOf("Astrolabe", "Artifact", "{1}, {T}, Sacrifice this artifact: Add two mana of any one color. Draw a card at the beginning of the next turn's upkeep.",
+      [{ id: 1, abilityType: "activated", actions: [lib("add-mana", "two mana of any one color"), lib("draw", "a card")] }]);
+    expect(abs.find((a) => a.effect.kind === "draw-card")?.claimsNothing).toBe("mana-rider");
+  });
+  test("Soulbright Flamekin's 'Target creature gains trample ... you may add' is targeted, so its keyword-grant keeps being an activated ability", () => {
+    const text = "{2}: Target creature gains trample until end of turn. If this is the third time this ability has resolved this turn, you may add {R}{R}{R}{R}{R}{R}{R}{R}.";
+    const stored = [{ id: 1, abilityType: "activated", actions: [{ verb: "gain-keyword", object: "target creature gains trample", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "add-mana", object: "{R}{R}{R}{R}{R}{R}{R}{R}", fromZone: null, toZone: null, amount: null, optional: true }] }];
+    const abs = tagsOf("Soulbright Flamekin", "Creature — Elemental", text, stored);
+    expect(abs.some((a) => a.effect.kind === "mana-generation")).toBe(true);
+    expect(abs.map((a) => a.claimsNothing)).toEqual(abs.map(() => undefined));
+  });
+});
+
 describe("untap-denial: the model's `untap` beside its own `cant` is one denial (#1423)", () => {
   test("Glacial Grasp: tap + mill + `untap` + `cant | untap ...` of one sentence derive ONE untap-denial", () => {
     const text = "Tap target creature. Its controller mills two cards. That creature doesn't untap during its controller's next untap step.";

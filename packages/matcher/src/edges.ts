@@ -4133,7 +4133,7 @@ export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[]
 /** Does an authored ability count as the kind a copier names? See the copy-ability pass. Shared with
  *  `partners-core.ts`, which keys a card page's `copies|` supply on the same reading. */
 export function abilityIsKind(ca: CardTags["abilities"][number], kind: string): boolean {
-  if (isSelfLoss(ca) || isManaRider(ca)) return false; // #1252: a self lose-the-game ability is no ability to copy; #1423: nor is a mana ability's rider
+  if (isSelfLoss(ca) || isManaRider(ca)) return false; // #1252: a self lose-the-game ability is no ability to copy; #1423, #1426: nor is any rider of an activated mana ability (CR 605.1a, 605.3b: part of a mana ability, never on the stack)
   const loyalty = ca.kind === "activated" && ca.payment?.loyalty !== undefined;
   const mana = ca.kind === "activated" && ca.effect?.kind === "mana-generation";
   if (kind === "triggered") return ca.kind === "triggered";

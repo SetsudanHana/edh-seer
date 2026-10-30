@@ -172,6 +172,7 @@ const PROSE: Record<string, string> = {
   "707.10": "schema / effect-kind: an ability is the third copyable object, kind copy-ability (AC12; derive.test asserts Gogo)",
   "707.2": "effect-kind: a clone's 'except it has this ability' is an exception to the copy, not the object copied (effect-kind.test asserts Cryptoplasm)",
   "605.3b": "schema: a mana ability does not use the stack, so 'activated' as an object excludes it (AC12)", "603.8": "state triggers — prompt rule", "603.12": "reflexive — prompt rule",
+  "605.1b": "derive.ts stampManaRider CEILING: a triggered mana ability must trigger from mana, which Carnival of Souls' does not; no triggered rider is stamped (#1426)",
 };
 
 const SRC = fileURLToPath(new URL("..", import.meta.url));
