@@ -1100,3 +1100,18 @@ test("#1423 'doesn't untap' is `untap-denial` (CR 502.3: effects can keep perman
   expect(read("untap during your untap step", "You may choose not to untap this artifact during your untap step.")).toBeNull();
   expect(read("this creature untaps during your untap step", "This creature untaps during your untap step.")).toBeNull();
 });
+
+test("#1423 the WORDS decide where the model filed 'doesn't untap' under the positive verb `untap` (Melancholy, Reveka); a real untap is untouched", () => {
+  const kind = (verb: string, object: string, text: string) => actionEffectKind({ verb, object } as never, text);
+  // The model's positive `untap` for a NEGATED untap read as "untaps a permanent" -- the opposite of the card.
+  expect(kind("untap", "enchanted creature", "Enchanted creature doesn't untap during its controller's untap step.")).toBe("untap-denial");
+  expect(kind("untap", "this", "{T}: Reveka deals 2 damage to any target and doesn't untap during your next untap step.")).toBe("untap-denial");
+  expect(kind("untap", "creatures with flying", "Creatures with flying don't untap during their controllers' untap steps.")).toBe("untap-denial");
+  // ...but a positive untap stays one, also when the same clause negates another.
+  expect(kind("untap", "this creature", "Untap this creature.")).toBe("untap");
+  expect(kind("untap", "target land", "Untap target land. It doesn't untap during your next untap step.")).toBe("untap");
+  expect(kind("untap", "all creatures you control", "Whenever a creature enters, untap all creatures.")).toBe("untap");
+  // A grant of a quoted ability that denies the untap (Mindbender Spores) stays a grant.
+  expect(kind("grant-ability", "that creature gains \"This creature doesn't untap during your untap step if it has a fungus counter on it\"",
+    "The creature gains \"This creature doesn't untap during your untap step if it has a fungus counter on it\".")).toBe("keyword-grant");
+});

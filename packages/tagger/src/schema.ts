@@ -1307,6 +1307,10 @@ export interface Ability {
    *  - `"self-loss"`: the #1252 owner ruling. An ability whose ONLY effect is that its controller loses the
    *    game (Phage the Untouchable, the Pacts' upkeep payment) is a drawback nobody builds toward. Its emits
    *    still reach a RESCUE consumer (a `loses-game` trigger of `control: "you"`) and no other.
+   *  - `"mana-rider"` (#1423): an ability of a fact kind that a MANA ABILITY'S OWN CLAUSE carries as a rider -- Cinder Marsh's "{T}: Add {B} or {R}. This land doesn't untap during your next untap step."
+   *    The rider is part of the mana ability (CR 605.1a), which is not copied or targeted (CR 605.3b), but the engine models it as a second `activated` ability, which a copier would be offered
+   *    (`copies:activated`). Set on `targeting-ban`, `trigger-suppression` and `untap-denial` abilities only, when a `mana-generation` ability of the same clause sits beside them; `abilityIsKind`
+   *    counts it as no ability to copy. (A painland's "This land deals 1 damage to you" is the same shape and is NOT stamped: it predates this and is left as it was.)
    *  Both: `"refused-trigger"` wins.
    *
    *  `"refused-trigger"`: THE TRIGGER THIS ABILITY WAITS ON WAS REFUSED, AND THE ABILITY POINTS BACK AT AN OBJECT WITH NO CLASS (#1253).
@@ -1329,7 +1333,7 @@ export interface Ability {
    *  object claims what it always did (a saga chapter's token is still a token).
    *  ONE THING STILL SEES IT: a flagged ability is a triggered ability (CR 603.1), so it still counts
    *  as one for the `copies|-|triggered|-` key a copier is offered. */
-  claimsNothing?: "refused-trigger" | "self-loss";
+  claimsNothing?: "refused-trigger" | "self-loss" | "mana-rider";
   /** A numeric condition on WHEN the ability is on — The Millennium Calendar's "when there are
    *  1,000 or more time counters", Chrome Steed's "as long as you control three or more artifacts",
    *  Urza's Workshop's "activate only if you control three or more artifacts", Gadrak's "can't

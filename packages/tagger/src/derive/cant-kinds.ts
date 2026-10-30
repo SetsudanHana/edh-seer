@@ -275,3 +275,19 @@ export function untapDenialOf(object: string, clauseText = "", occurrence = 0): 
   const who = head.split(/\s(?=(?:gets?|gains?|has|have|loses?|enters)\b)/i)[0]?.trim().replace(/ and$/i, "").replace(/^(?:and|then|but|also) /i, "");
   return { denial, ...(who && !UNTAP_PRONOUN.test(who) && !/,| (?:and|or) /i.test(who) ? { who } : {}) };
 }
+
+const UNTAP_STEP = /\buntap (?:steps?|phases?)\b/gi;
+/** Is every "untap" in the clause a negated one (or the word of an "untap step")? Then a stored `untap` action is the negation, not a positive untap. */
+function onlyNegatedUntaps(text: string): boolean {
+  return !/\buntaps?\b/i.test(text.replace(NEG_UNTAP, " ").replace(UNTAP_STEP, " "));
+}
+
+/** `untapDenialOf` for the verb the model stored. The model files "doesn't untap" mostly as a `cant`, but also as the POSITIVE verb `untap` (Melancholy, Thirst, Energy Storm, Reveka: read as "untaps a
+ *  permanent" -- the opposite of the card). THE WORDS DECIDE, as they do for `retarget`: a stored `untap` is the denial only when every "untap" the printed clause holds is negated (a clause that also untaps
+ *  something keeps its `untap`). Any other verb is not read: Dread Wight's denial, filed as a `grant-ability`, is rewritten to "that ability" before it reaches here. */
+export function untapDenialFor(verb: string, object: string, clauseText: string, occurrence = 0): ReturnType<typeof untapDenialOf> {
+  if (verb === "cant") return untapDenialOf(object, clauseText, occurrence);
+  if (clauseText === "") return undefined;
+  if (verb === "untap") return onlyNegatedUntaps(clauseText) ? untapDenialOf("untap", clauseText, 0) : undefined;
+  return undefined;
+}

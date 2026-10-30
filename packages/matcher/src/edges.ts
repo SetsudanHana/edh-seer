@@ -24,7 +24,7 @@ import { basicTypeDemand, classifyLand, creatureTypeDemand } from "./land-condit
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
 import { BASIC_LAND_TYPE_SET, SUPERTYPES, parseTypeLineAllFaces } from "./typeline.js";
 import { enteringFaceName, faceDeckCards } from "./faces.js";
-import { claimsNothing, isRefusedTrigger, isSelfLoss } from "./claims.js";
+import { claimsNothing, isManaRider, isRefusedTrigger, isSelfLoss } from "./claims.js";
 import { magnitudeOf, mergeMagnitude } from "./edge-magnitude.js";
 import type { LandTypes } from "./chosen-type.js";
 
@@ -4133,7 +4133,7 @@ export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[]
 /** Does an authored ability count as the kind a copier names? See the copy-ability pass. Shared with
  *  `partners-core.ts`, which keys a card page's `copies|` supply on the same reading. */
 export function abilityIsKind(ca: CardTags["abilities"][number], kind: string): boolean {
-  if (isSelfLoss(ca)) return false; // #1252: a self lose-the-game ability is no ability to copy
+  if (isSelfLoss(ca) || isManaRider(ca)) return false; // #1252: a self lose-the-game ability is no ability to copy; #1423: nor is a mana ability's rider
   const loyalty = ca.kind === "activated" && ca.payment?.loyalty !== undefined;
   const mana = ca.kind === "activated" && ca.effect?.kind === "mana-generation";
   if (kind === "triggered") return ca.kind === "triggered";

@@ -7272,6 +7272,8 @@ describe("untap-denial: what stays tapped, and for how long (#1423)", () => {
     const stored = [{ id: 1, abilityType: "static", actions: [{ verb: "cant", object: "enchanted permanent doesn't untap during its controller's untap step" }, { verb: "cant", object: "enchanted permanent's activated abilities can't be activated" }] }] as never;
     const both = deriveAbilities(stored, "Hold for Questioning", { 1: text }, undefined, `Enchant creature or planeswalker\n${text}`).abilities;
     expect(both.map((x) => x.effect.kind)).toEqual(["untap-denial", "ability-loss"]);
+    // ...and the host is `host`, never a class: Encrust's "enchanted permanent" is not read as the artifact-or-creature class its Enchant line names.
+    expect(dens(hold)[0]?.effect.subject?.type).toBeUndefined();
     expect(shape(dens(derive("Encrust", AURA, "Enchant artifact or creature\nEnchanted permanent doesn't untap during its controller's untap step and its activated abilities can't be activated."))[0])).toMatchObject({ duration: "continuous", host: true });
   });
 
@@ -7298,5 +7300,43 @@ describe("untap-denial: what stays tapped, and for how long (#1423)", () => {
     expect(dens(derive("Veldt", "Land", "This land doesn't untap during your untap step if it has a depletion counter on it.\nAt the beginning of your upkeep, remove a depletion counter from this land.\n{T}: Add {G} or {W}. Put a depletion counter on this land."))).toEqual([]);
     expect(dens(derive("Stunning Strike", AURA, "Flash\nEnchant creature\nWhen this Aura enters, tap enchanted creature and remove it from combat.\nAs long as enchanted creature isn't legendary, it doesn't untap during its controller's untap step."))).toEqual([]);
     expect(dens(derive("Amber Prison", "Artifact", "You may choose not to untap this artifact during your untap step.\n{4}, {T}: Tap target artifact, creature, or land. That permanent doesn't untap during its controller's untap step for as long as this artifact remains tapped."))).toHaveLength(1);
+  });
+});
+
+describe("untap-denial: the model's `untap` verb for a negated untap (#1423)", () => {
+  const text = "Enchanted creature doesn't untap during its controller's untap step.";
+  const stored = [{ id: 1, abilityType: "static", actions: [{ verb: "untap", object: "enchanted creature" }] }] as never;
+  test("Melancholy, Thirst: the stored `untap` is the host's denial, and no `untap` ability is left to feed an untap payoff", () => {
+    const abilities = deriveAbilities(stored, "Melancholy", { 1: text }, undefined, `Enchant creature\n${text}`).abilities;
+    expect(abilities.map((a) => a.effect.kind)).toEqual(["untap-denial"]);
+    expect(abilities[0]?.untapDenial).toEqual({ duration: "continuous" });
+    expect(abilities[0]?.host).toBe(true);
+    expect(abilities.some((a) => (a.emits ?? []).some((e) => e.verb === "untaps"))).toBe(false);
+  });
+});
+
+describe("untap-denial: a mana ability's rider is no ability of its own (#1423)", () => {
+  const tagsOf = (name: string, typeLine: string, oracleText: string, stored: unknown) =>
+    deriveCardTags(deriveInputOf({ name, typeLine, oracleText, keywords: [] as string[] } as never, "x", name, stored as never)).abilities;
+  test("Cinder Marsh's 'This land doesn't untap' is stamped mana-rider; Barl's Cage's lone activated denial is not", () => {
+    const text = "{T}: Add {B} or {R}. This land doesn't untap during your next untap step.";
+    const stored = [{ id: 1, abilityType: "activated", actions: [{ verb: "add-mana", object: "{B} or {R}" }, { verb: "cant", object: "untap during your next untap step" }] }];
+    expect(tagsOf("Cinder Marsh", "Land", text, stored).map((a) => [a.effect.kind, a.claimsNothing])).toEqual([["mana-generation", undefined], ["untap-denial", "mana-rider"]]);
+    const cage = "{3}: Target creature doesn't untap during its controller's next untap step.";
+    const alone = [{ id: 1, abilityType: "activated", actions: [{ verb: "cant", object: "untap during its controller's next untap step" }] }];
+    expect(tagsOf("Barl's Cage", "Artifact", cage, alone).map((a) => a.claimsNothing)).toEqual([undefined]);
+  });
+});
+
+describe("untap-denial: the model's `untap` beside its own `cant` is one denial (#1423)", () => {
+  test("Glacial Grasp: tap + mill + `untap` + `cant | untap ...` of one sentence derive ONE untap-denial", () => {
+    const text = "Tap target creature. Its controller mills two cards. That creature doesn't untap during its controller's next untap step.";
+    const stored = [{ id: 1, abilityType: "spell", actions: [
+      { verb: "tap", object: "target creature" }, { verb: "mill", object: "target creature's controller" },
+      { verb: "untap", object: "target creature" }, { verb: "cant", object: "untap during its controller's next untap step" },
+    ] }] as never;
+    const abilities = deriveAbilities(stored, "Glacial Grasp", { 1: text }, undefined, text).abilities;
+    expect(abilities.filter((a) => a.effect.kind === "untap-denial")).toHaveLength(1);
+    expect(abilities.some((a) => (a.emits ?? []).some((e) => e.verb === "untaps"))).toBe(false);
   });
 });

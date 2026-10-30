@@ -10,7 +10,7 @@ import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb, EventCount } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
-import { targetingBanOf, targetingBanSubjectInObject, triggerSuppressionOf, untapDenialOf } from "./cant-kinds.js";
+import { targetingBanOf, targetingBanSubjectInObject, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
 import { actionEmits, casualtySacrifice, millsOwnLibrary, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, narrowSelfExiledSpell, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, activationConditionOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
@@ -1332,6 +1332,8 @@ const CANT_BE_BLOCKED = /^(.*?\S)\s+(?:(?:can['\u2019]t|cannot)\s+)?be blocked\b
 const CANT_ATTACK_OR_BLOCK = /^(.*?\S)\s+(?:can['\u2019]t|cannot)\s+(?:attack|block)\b/i;
 /** Who can't be targeted (#1423): the words ahead of "can't be the target(s) of". */
 const CANT_BE_TARGETED = /^(.*?\S)\s+(?:(?:can['\u2019]t|cannot)\s+)?be the targets? of\b/i;
+/** An Aura's or Equipment's host by any noun ("enchanted permanent", "enchanted land", "equipped creature"): the host is `Ability.host`, never a class (#1423). */
+const HOST_WORD = /^(?:enchanted|equipped)\b/i;
 /** A recipient that is a LIST ("players and permanents", "lands on the battlefield and land cards in graveyards") or holds another sentence's verb: the filter reads one class, so it is left unnamed. */
 const RECIPIENT_LIST = /,| (?:and|or) |\b(?:can['\u2019]t|cannot)\b/i;
 /** Who LOSES abilities: "Creatures lose all abilities", "Enchanted creature loses all abilities". */
@@ -1568,7 +1570,7 @@ function effectSubject(
     const who = left?.split(/\s(?=(?:gets?|gains?|has|have|loses?)\b)/i)[0]?.trim().replace(/ and$/i, "");
     const tail = who?.includes(", and ") ? who.slice(who.lastIndexOf(", and ") + 6) : who;
     const granted = /["\u201c][^"\u201c\u201d]*\b(?:can['\u2019]t|cannot) be the targets? of/i.test(clauseText);
-    if (!tail || granted || UNEXPRESSIBLE_NARROWING.test(tail) || RECIPIENT_LIST.test(tail) || /^(?:it|that creature|they|them|players?)$/i.test(tail)) return parseSubject("");
+    if (!tail || granted || UNEXPRESSIBLE_NARROWING.test(tail) || HOST_WORD.test(tail) || RECIPIENT_LIST.test(tail) || /^(?:it|that creature|they|them|players?)$/i.test(tail)) return parseSubject("");
     const s = subjectFrom(tail, cardName, cardText);
     if (SELF_REFERENCE.test(tail) || isSelfSubject(tail, cardName)) s.self = true;
     return s;
@@ -1580,9 +1582,9 @@ function effectSubject(
   }
   // WHAT STAYS TAPPED (#1423, CR 502.3): "Islands", "this land", a target; "Enchanted creature" is the host (unnamed here, `Ability.host`); a pronoun or a list is unnamed.
   if (kind === "untap-denial") {
-    const who = untapDenialOf(action.object ?? "", clauseText, cantOccurrence)?.who;
+    const who = untapDenialFor(action.verb ?? "", action.object ?? "", clauseText, cantOccurrence)?.who;
     const granted = /["\u201c][^"\u201c\u201d]*\b(?:doesn['\u2019]t|don['\u2019]t|can['\u2019]t|cannot) untap/i.test(clauseText);
-    if (!who || granted || UNEXPRESSIBLE_NARROWING.test(who)) return parseSubject("");
+    if (!who || granted || UNEXPRESSIBLE_NARROWING.test(who) || HOST_WORD.test(who)) return parseSubject("");
     const s = subjectFrom(who, cardName, cardText);
     if (SELF_REFERENCE.test(who) || isSelfSubject(who, cardName)) s.self = true;
     return s;
@@ -3040,6 +3042,8 @@ export function deriveAbilities(
       const sameCant = action.verb === "cant" ? (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).filter((x) => x.verb === "cant" && x.object === action.object).length : 0;
       const read = replacement?.kind ?? actionEffectKind(action, text, sameCant);
       const effectKind = read === "retarget" && stealsASpell ? null : read;
+      // THE MODEL FILES ONE PRINTED DENIAL TWICE (#1423): a stored `untap` beside a stored `cant | untap during ...` of the same clause (Glacial Grasp, Illithid Harvester) is that `cant`'s twin, one ability.
+      if (action.verb === "untap" && effectKind === "untap-denial" && (clause.actions ?? []).some((x) => x.verb === "cant" && untapDenialFor("cant", x.object ?? "", text, 0))) continue;
       // A tap the clause states as an ARRIVAL state is not an event. See ARRIVES_TAPPED.
       // THE TEMPORARY-TOKEN RIDER IS NOT AN EVENT. "Exile it at the beginning of the next end step"
       // resolves its pronoun to the token the clause just made, so the emit builder would see a
@@ -3093,6 +3097,8 @@ export function deriveAbilities(
         // the replaced event: Academy Manufactor's clause answers `create` three times and creates
         // a token on its own none of those times.
         .filter(() => replacement === null)
+        // A DENIED UNTAP IS NO UNTAP EVENT (#1423): the model's `untap` verb for "doesn't untap" (Melancholy, Reveka) would otherwise emit `untaps` and feed every untap watcher.
+        .filter(() => effectKind !== "untap-denial")
         // ROADMAP I7. The permanent arrives under a controller the schema cannot name, so the emit
         // claims nothing rather than claiming everyone. See `entersUnderAnotherPlayer`.
         .filter((e) => !(e.verb === "enters" && entersUnderAnotherPlayer(cardText)));
@@ -3528,7 +3534,7 @@ export function deriveAbilities(
       // The effect lands on the permanent this card is attached to (#1315): a marker, never a subject -- see `Ability.host`.
       if (hostEffect(action, effectKind, text)) ability.host = true;
       if (effectKind === "restriction") { const r = restrictedActions(action.object ?? "", text, sameCant); if (r) ability.restricts = r; }
-      if (effectKind === "untap-denial") { const u = untapDenialOf(action.object ?? "", text, sameCant); if (u) ability.untapDenial = u.denial; }
+      if (effectKind === "untap-denial") { const u = untapDenialFor(action.verb ?? "", action.object ?? "", text, sameCant); if (u) ability.untapDenial = u.denial; }
       if (effectKind === "trigger-suppression") { const t = triggerSuppressionOf(action.object ?? "", text, sameCant); if (t) ability.suppresses = t.suppression; }
       if (effectKind === "targeting-ban") { const b = targetingBanOf(action.object ?? "", text, sameCant); if (b) ability.targetingBan = b; }
       // "DRAW A CARD IF IT WAS ATTACKING. OTHERWISE, ..." (#798, Garna; Zurgo Stormrender): the
@@ -4096,6 +4102,14 @@ export interface DeriveInput {
 
 /** A SELF "YOU LOSE THE GAME" ABILITY CLAIMS NOTHING (#1252, #1264): emits non-empty and every one a `loses-game` of
  *  `control: "you"`. A reason already set stands -- a refused trigger keeps "refused-trigger" (the matcher's precedence). */
+/** A FACT-KIND RIDER OF A MANA ABILITY CLAIMS NOTHING (#1423, `Ability.claimsNothing` "mana-rider"): Cinder Marsh's "This land doesn't untap during your next untap step" shares the clause of its
+ *  `{T}: Add {B} or {R}`, so it is part of that mana ability (CR 605.1a) and not an activated ability a copier can target (CR 605.3b). Only the three #1423 kinds; a reason already set stands. */
+const MANA_RIDER_KINDS: ReadonlySet<string> = new Set(["targeting-ban", "trigger-suppression", "untap-denial"]);
+export function stampManaRider(a: Ability, all: readonly Ability[]): Ability {
+  return a.claimsNothing === undefined && a.kind === "activated" && MANA_RIDER_KINDS.has(a.effect.kind)
+    && all.some((o) => o !== a && o.clause === a.clause && o.kind === "activated" && o.effect.kind === "mana-generation")
+    ? { ...a, claimsNothing: "mana-rider" as const } : a;
+}
 export function stampSelfLoss(a: Ability): Ability {
   const emits = a.emits ?? [];
   return a.claimsNothing === undefined && emits.length > 0 && emits.every((e) => e.verb === "loses-game" && e.subject.control === "you")
@@ -4264,6 +4278,7 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
   const spellOnce = pinned.map((a) => a.kind === "on-cast" || a.repeats === "once" || !isSpellFace(a.face) ? a : { ...a, repeats: "once" as const })
     // A SELF "YOU LOSE THE GAME" ABILITY CLAIMS NOTHING (#1252, #1264), decided on the FINAL emits: every control fill above has run.
     .map(stampSelfLoss)
+    .map((a, _i, all) => stampManaRider(a, all))
     // THE CLAUSE THAT GRANTS A QUOTED ABILITY (#1315): `segment()`'s granted clause and its parent, from `DeriveInput.clauseGrants` (both clause sources).
     .map((a) => { const by = a.clause !== undefined ? input.clauseGrants?.[a.clause as number] : undefined; return by === undefined ? a : { ...a, grantedBy: by }; });
   // A CREATURE ONLY UNDER A CONDITION (#797): the action grammar reads "As long as your devotion to red

@@ -9,7 +9,7 @@ import type { Action } from "../canonicalize.js";
 import type { EffectKind } from "../schema.js";
 import { parseSubject, spellMove } from "./subject.js";
 import { readToHand, type ToHandRead } from "./to-hand.js";
-import { targetingBanOf, triggerSuppressionOf, untapDenialOf } from "./cant-kinds.js";
+import { targetingBanOf, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
 
 /** Zone-sensitive rules, checked before the plain lookup. Order matters within this list.
  *  `from`/`to` omitted means "don't care"; `from: null` means the clause STATED NO ORIGIN.
@@ -630,6 +630,8 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
   if (verb === "extra-turn" || verb === "extra-phase") {
     return extraUnitKind(String(action.object ?? ""), clauseText);
   }
+  // THE MODEL FILES A NEGATED UNTAP UNDER THE POSITIVE VERB `untap`: the printed words decide (#1423, see `untapDenialFor`).
+  if (verb === "untap" && untapDenialFor(verb, action.object ?? "", clauseText)) return "untap-denial";
   // 342 corpus cards carry a grant-ability action and the verb had no row here at all, so Lightning
   // Greaves and Swiftfoot Boots derived nothing whatsoever.
   if (verb === "grant-ability") {
@@ -721,7 +723,7 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
     // "CREATURES ENTERING DON'T CAUSE ABILITIES TO TRIGGER" (CR 603.2; #1423): the stored object is garbled, so the printed sentence decides.
     if (triggerSuppressionOf(action.object ?? "", clauseText, occurrence)) return "trigger-suppression";
     // "DOESN'T UNTAP DURING ITS CONTROLLER'S UNTAP STEP" (CR 502.3; #1423). A conditional one, or a permission ("you may choose not to untap"), is not read.
-    if (untapDenialOf(action.object ?? "", clauseText, occurrence)) return "untap-denial";
+    if (untapDenialFor("cant", action.object ?? "", clauseText, occurrence)) return "untap-denial";
     return null;
   }
   if (verb === "cost-modify") return costDirection(action.object ?? "", clauseText);
