@@ -1025,6 +1025,12 @@ export const EFFECT_KINDS = [
   // `effect.subject` is the class whose event is muted, `Ability.suppresses` is which events and whose abilities. A fact kind like `restriction`: the pair channels read it blank (a Torpor Orb
   // is no more a payoff than an enters trigger is a producer of it). NOT a narrowed class ("backup abilities", "ward abilities"), NOT a condition, NOT "trigger an additional time".
   "trigger-suppression",
+  // UNTAP-DENIAL (CR 502.3: "effects can keep one or more of a player's permanents from untapping"; #1423, owner ruling 2026-10-30): "Enchanted creature doesn't untap during its controller's untap step"
+  // (Waterknot, Hold for Questioning, Encrust, Claustrophobia), "Islands don't untap during their controllers' untap steps" (Choke), "That creature doesn't untap during its controller's next untap
+  // step" (Frost Trickster), "... for as long as you control this creature" (Icefall Regent). `effect.subject` is what stays tapped (the host of an Aura is `host`), `Ability.untapDenial` is
+  // for how long. A fact kind like `restriction`: the pair channels read it blank. NOT the positive `untap`, NOT "you may choose not to untap" (a permission, Amber Prison), and a CONDITIONAL denial
+  // ("if it has a depletion counter on it": Veldt; "As long as enchanted creature isn't legendary": Stunning Strike) is left unread.
+  "untap-denial",
   // TO-HAND (CR 121.5: "If an effect moves cards from a player's library to that player's hand without using the word 'draw,' the player has not drawn those cards"; #1302,
   // owner ruling 2026-10-22): cards put from the TOP of your own library into your hand with no search -- Dark Confidant ("reveal the top card of your library and put that
   // card into your hand"), Ad Nauseam, Fact or Fiction (one pile), Impulse / Dig Through Time ("look at the top N ... put one / two of them into your hand"), Coiling
@@ -1245,6 +1251,13 @@ export interface Ability {
   suppresses?: {
     events: ("enters" | "dies" | "attacks" | "leaves" | "any")[];
     controller: Control;
+  };
+  /** FOR HOW LONG AN `untap-denial` ABILITY KEEPS ITS SUBJECT TAPPED (#1423; CR 502.3). `continuous`: every untap step while the effect lasts ("doesn't untap during its controller's untap step": an Aura, a
+   *  static); `next-untap-step`: just the next one, or the next `steps` ("next two untap steps", written only above 1); `as-long-as`: a printed duration ("for as long as you control this creature", "for as long
+   *  as this artifact remains tapped"). WHAT stays tapped is `effect.subject` (an Aura's host is `host`; a pronoun or a list is unnamed). ABSENT on every other ability. */
+  untapDenial?: {
+    duration: "continuous" | "next-untap-step" | "as-long-as";
+    steps?: number;
   };
   /** A `to-hand` ABILITY'S CARDS REACH THE HAND BY A PICK (#1302): somebody chooses which of at least two looked-at or revealed cards go to your hand -- "look at the top four
    *  cards, put one of them into your hand" (Impulse), "put two of them" (Dig Through Time), "you may reveal a historic card from among them and put it into your hand". `amount`

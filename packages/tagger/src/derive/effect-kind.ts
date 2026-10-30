@@ -9,7 +9,7 @@ import type { Action } from "../canonicalize.js";
 import type { EffectKind } from "../schema.js";
 import { parseSubject, spellMove } from "./subject.js";
 import { readToHand, type ToHandRead } from "./to-hand.js";
-import { targetingBanOf, triggerSuppressionOf } from "./cant-kinds.js";
+import { targetingBanOf, triggerSuppressionOf, untapDenialOf } from "./cant-kinds.js";
 
 /** Zone-sensitive rules, checked before the plain lookup. Order matters within this list.
  *  `from`/`to` omitted means "don't care"; `from: null` means the clause STATED NO ORIGIN.
@@ -720,6 +720,8 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
     if (targetingBanOf(action.object ?? "", clauseText, occurrence)) return "targeting-ban";
     // "CREATURES ENTERING DON'T CAUSE ABILITIES TO TRIGGER" (CR 603.2; #1423): the stored object is garbled, so the printed sentence decides.
     if (triggerSuppressionOf(action.object ?? "", clauseText, occurrence)) return "trigger-suppression";
+    // "DOESN'T UNTAP DURING ITS CONTROLLER'S UNTAP STEP" (CR 502.3; #1423). A conditional one, or a permission ("you may choose not to untap"), is not read.
+    if (untapDenialOf(action.object ?? "", clauseText, occurrence)) return "untap-denial";
     return null;
   }
   if (verb === "cost-modify") return costDirection(action.object ?? "", clauseText);

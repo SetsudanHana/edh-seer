@@ -208,3 +208,70 @@ export function triggerSuppressionOf(object: string, clauseText = "", occurrence
   }
   return undefined;
 }
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// 3. UNTAP-DENIAL
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/** HOW LONG A PERMANENT STAYS TAPPED (#1423; CR 502.3: "effects can keep one or more of a player's permanents from untapping"). `continuous`: every untap step while the effect lasts (an Aura's or a static's
+ *  "doesn't untap during its controller's untap step": Hold for Questioning, Encrust, Choke); `next-untap-step`: only the next one (Frost Trickster), or the next `steps` of them ("next two untap
+ *  steps", Telekinesis; `steps` is written only above 1); `as-long-as`: a printed duration ("for as long as you control this creature", "for as long as this artifact remains tapped": Icefall Regent, Kill Switch).
+ *  Who stays tapped is `effect.subject` (the card itself, a class, an Aura's host: `Ability.host`; a pronoun or a list is unnamed). */
+export interface UntapDenial {
+  duration: "continuous" | "next-untap-step" | "as-long-as";
+  steps?: number;
+}
+
+const NEG_UNTAP = /\b(?:doesn['\u2019]t|don['\u2019]t|does not|do not|can['\u2019]t|cannot|won['\u2019]t)\s+untap\b/gi;
+const STEP_COUNT: Readonly<Record<string, number>> = { two: 2, three: 3, four: 4, five: 5 };
+const UNTAP_PRONOUN = /^(?:it|they|them|that (?:creature|permanent|land|artifact|player)|those (?:creatures|permanents|lands|artifacts)|the chosen creature)$/i;
+
+/** "doesn't untap during its controller's untap step" in all its printed shapes (CR 502.3), read off the PRINTED sentence: the model drops the subject on most cards and writes "untap during ..." as the
+ *  object of a `cant`. Refused: a CONDITION anywhere in the sentence (a leading "If you win,", "As long as enchanted creature isn't legendary," or a trailing "if it has a depletion counter on it" /
+ *  "unless ..."), which makes the denial partial; a PERMISSION ("You may choose not to untap", Amber Prison: no negation is printed); and any "until". A trigger head, an activation cost, a leading
+ *  "for as long as ..." (the duration) and the activated-abilities rider of Hold for Questioning and Encrust ("... and its activated abilities can't be activated unless ...") are not conditions.
+ *  CEILING: conditional printings are left unread (Veldt and Lava Tubes' depletion counter, Walking Dream, Tangle Kelp, Stunning Strike, Pollen Lullaby's "If you win", Guardian of Tazeem's
+ *  "If that land is an Island"): a partial denial read as total would be a silent wrong answer. Measured 2026-10-30 over the 328 corpus cards printing a negated untap outside reminder text: 274 read,
+ *  6 not derived at all, 48 unread = 32 conditional (a quoted grant included), 9 "can't untap MORE THAN N" limits (Static Orb, Winter Orb, Damping Field, Winter Moon, Smoke, Stoic Angel, Imi Statue,
+ *  Mungha Wurm, Dovin Baan's emblem: a limit, not a denial), and 7 where the stored answer files the negation as the positive verb `untap` or holds no `cant` (Melancholy, Thirst, Energy Storm, Galvanic
+ *  Juggernaut, Leviathan, Reveka, Arbalest Elite: reported on #1423, not fixed here). A list recipient ("Creatures and lands target opponent controls") is left unnamed.
+ *  Returns the recipient's words as `who` (undefined when the sentence names none or a pronoun). */
+export function untapDenialOf(object: string, clauseText = "", occurrence = 0): { denial: UntapDenial; who?: string } | undefined {
+  if (!/\buntap/i.test(object)) return undefined;
+  const implied = clauseText === "";
+  const text = implied ? object : clauseText;
+  const hit = nthMatch(text, NEG_UNTAP, occurrence);
+  if (!hit && !implied) return undefined;
+  // With no clause text the object is the sentence and the verb is the negation: "untap during ..." (subject dropped) or "enchanted creature doesn't untap ..." (kept).
+  const at = hit ? hit.index : text.search(/\buntap\b/i);
+  if (at < 0) return undefined;
+  const start = sentenceStart(text, at);
+  let head = text.slice(start, at).trim();
+  const afterNegation = text.slice(hit ? at + hit[0].length : at + "untap".length);
+  const end = afterNegation.indexOf(". ");
+  const sentenceTail = (end < 0 ? afterNegation : afterNegation.slice(0, end)).replace(/\.$/, "");
+  // An activation cost ("{T}, Sacrifice this artifact: ...") and a trigger head ("Whenever this creature blocks a creature, ...") are not part of the recipient.
+  const colon = head.indexOf(":");
+  if (colon >= 0 && colon <= 60 && !head.includes('"')) head = head.slice(colon + 1).trim();
+  if (/^(?:when|whenever|at)\b/i.test(head)) { const comma = head.indexOf(","); if (comma < 0) return undefined; head = head.slice(comma + 1).trim(); }
+  // A LEADING DURATION: "For as long as this creature remains tapped, target tapped creature doesn't untap ..." (Giant Oyster).
+  let longAs = false;
+  if (/^for as long as\b/i.test(head)) { const comma = head.indexOf(","); if (comma < 0) return undefined; head = head.slice(comma + 1).trim(); longAs = true; }
+  if (/\b(?:if|unless|as long as|while|during|except|only|when|whenever)\b/i.test(head)) return undefined;
+  // The other limb of Hold for Questioning / Encrust belongs to ability-loss, with its own "unless they're mana abilities".
+  const tail = sentenceTail.split(/,? and (?:its|their) activated abilities\b/i)[0]!.toLowerCase();
+  if (/\b(?:if|unless|except|only|while|until)\b/.test(tail)) return undefined;
+  // "can't untap MORE THAN one artifact" (Damping Field, Winter Moon, Static Orb) limits the untap, it does not deny it.
+  if (tail.trim().startsWith("more than")) return undefined;
+  const lead = tail.indexOf("as long as");
+  if (lead >= 0 && !tail.slice(0, lead).endsWith("for ")) return undefined;
+  longAs = longAs || lead >= 0;
+  const next = /\bnext (?:(two|three|four|five) )?untap steps?\b/.exec(tail);
+  const duration: UntapDenial["duration"] | undefined = longAs ? "as-long-as" : next ? "next-untap-step" : /\buntap steps?\b/.test(tail) ? "continuous" : undefined;
+  if (duration === undefined) return undefined;
+  const steps = next?.[1] ? STEP_COUNT[next[1]] : undefined;
+  const denial: UntapDenial = { duration, ...(steps && steps > 1 ? { steps } : {}) };
+  // THE RECIPIENT: the words ahead of the verb, up to a "gets / has / loses" (Dance of the Dead: "Enchanted creature gets +1/+1 and doesn't untap ..."), without a trailing "and".
+  const who = head.split(/\s(?=(?:gets?|gains?|has|have|loses?|enters)\b)/i)[0]?.trim().replace(/ and$/i, "").replace(/^(?:and|then|but|also) /i, "");
+  return { denial, ...(who && !UNTAP_PRONOUN.test(who) && !/,| (?:and|or) /i.test(who) ? { who } : {}) };
+}

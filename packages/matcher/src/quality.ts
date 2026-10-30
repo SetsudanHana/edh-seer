@@ -24,7 +24,7 @@ export type Ingredients = Partial<Record<Ingredient, number>>;
 const NOT_A_DECK_CARD = new Set(["stickers", "attraction"]);
 
 /** Fact kinds that are no EXTRA VALUE on a card whose job is another's (`extraValue`, below): a curse or a cost (`restriction`, owner 2026-10-22, #1315), and the kinds that derived blank before they had a name (#1423). */
-const NOT_EXTRA_VALUE: ReadonlySet<string> = new Set(["restriction", "targeting-ban", "trigger-suppression"]);
+const NOT_EXTRA_VALUE: ReadonlySet<string> = new Set(["restriction", "targeting-ban", "trigger-suppression", "untap-denial"]);
 
 export function rolesOfCard(d: DeckCard): Role[] {
   const types = [...(d.tags?.characteristics.types ?? []), ...(d.tags?.characteristics.subtypes ?? [])].map((t) => t.toLowerCase());

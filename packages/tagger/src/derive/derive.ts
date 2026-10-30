@@ -10,7 +10,7 @@ import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb, EventCount } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
-import { targetingBanOf, targetingBanSubjectInObject, triggerSuppressionOf } from "./cant-kinds.js";
+import { targetingBanOf, targetingBanSubjectInObject, triggerSuppressionOf, untapDenialOf } from "./cant-kinds.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
 import { actionEmits, casualtySacrifice, millsOwnLibrary, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, narrowSelfExiledSpell, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, activationConditionOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
@@ -1577,6 +1577,15 @@ function effectSubject(
   if (kind === "trigger-suppression") {
     const who = triggerSuppressionOf(action.object ?? "", clauseText, cantOccurrence)?.who;
     return who ? parseSubject(who) : parseSubject("");
+  }
+  // WHAT STAYS TAPPED (#1423, CR 502.3): "Islands", "this land", a target; "Enchanted creature" is the host (unnamed here, `Ability.host`); a pronoun or a list is unnamed.
+  if (kind === "untap-denial") {
+    const who = untapDenialOf(action.object ?? "", clauseText, cantOccurrence)?.who;
+    const granted = /["\u201c][^"\u201c\u201d]*\b(?:doesn['\u2019]t|don['\u2019]t|can['\u2019]t|cannot) untap/i.test(clauseText);
+    if (!who || granted || UNEXPRESSIBLE_NARROWING.test(who)) return parseSubject("");
+    const s = subjectFrom(who, cardName, cardText);
+    if (SELF_REFERENCE.test(who) || isSelfSubject(who, cardName)) s.self = true;
+    return s;
   }
   if (kind === "evasion" || kind === "restriction") {
     const object = action.object ?? "";
@@ -3491,6 +3500,7 @@ export function deriveAbilities(
           // ...and so is a targeting ban's (#1423): a fact kind, the pair channels read it blank, and WHO is protected is the point of the line.
           || effectKind === "targeting-ban"
           || effectKind === "trigger-suppression"
+          || effectKind === "untap-denial"
           || (effectKind === "graveyard-recursion" && subject.zone === "graveyard")
           // A STATIC GRAVEYARD-HATE REPLACEMENT (Leyline of the Void, Rest in Peace, #1266) keeps whose graveyard it hits; the `zone: graveyard` matches no printed card, like the recursion above.
           || (effectKind === "graveyard-hate" && subject.zone === "graveyard" && graveyardReplacement(text)?.kind === "hate"))
@@ -3518,6 +3528,7 @@ export function deriveAbilities(
       // The effect lands on the permanent this card is attached to (#1315): a marker, never a subject -- see `Ability.host`.
       if (hostEffect(action, effectKind, text)) ability.host = true;
       if (effectKind === "restriction") { const r = restrictedActions(action.object ?? "", text, sameCant); if (r) ability.restricts = r; }
+      if (effectKind === "untap-denial") { const u = untapDenialOf(action.object ?? "", text, sameCant); if (u) ability.untapDenial = u.denial; }
       if (effectKind === "trigger-suppression") { const t = triggerSuppressionOf(action.object ?? "", text, sameCant); if (t) ability.suppresses = t.suppression; }
       if (effectKind === "targeting-ban") { const b = targetingBanOf(action.object ?? "", text, sameCant); if (b) ability.targetingBan = b; }
       // "DRAW A CARD IF IT WAS ATTACKING. OTHERWISE, ..." (#798, Garna; Zurgo Stormrender): the

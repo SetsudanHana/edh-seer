@@ -604,5 +604,6 @@ describe("the fact kinds say what they are on the ability row (#1315)", () => {
   test("a targeting ban says what it is (#1423)", () => {
     expect(effectPhrase("targeting-ban", undefined)).toBe("restricts what can target it");
     expect(effectPhrase("trigger-suppression", undefined)).toBe("stops some abilities from triggering");
+    expect(effectPhrase("untap-denial", undefined)).toBe("keeps permanents from untapping");
   });
 });

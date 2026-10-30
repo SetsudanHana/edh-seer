@@ -7251,3 +7251,52 @@ describe("trigger-suppression: which events stop causing triggers, and whose abi
     expect(sups(derive("Nowhere to Run", "Enchantment", "Flash\nWhen this enchantment enters, target creature an opponent controls gets -3/-3 until end of turn.\nCreatures your opponents control can be the targets of spells and abilities as though they didn't have hexproof. Ward abilities of those creatures don't trigger."))).toEqual([]);
   });
 });
+
+// #1423: `untap-denial`, "doesn't untap during its controller's untap step" (CR 502.3: effects can keep one or more of a player's permanents from untapping).
+describe("untap-denial: what stays tapped, and for how long (#1423)", () => {
+  const derive = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities;
+  };
+  const dens = (abilities: Ability[]) => abilities.filter((a) => a.effect.kind === "untap-denial");
+  const shape = (a: Ability | undefined) => ({ duration: a?.untapDenial?.duration, steps: a?.untapDenial?.steps, host: a?.host === true, self: a?.effect.subject?.self === true, type: a?.effect.subject?.type, subtype: a?.effect.subject?.subtype });
+  const AURA = "Enchantment — Aura";
+
+  test("Hold for Questioning and Encrust: the host stays tapped; the activated-abilities lock is the other limb", () => {
+    const hold = derive("Hold for Questioning", AURA, "Enchant creature or planeswalker\nWhen this Aura enters, tap enchanted permanent and investigate.\nEnchanted permanent doesn't untap during its controller's untap step and its activated abilities can't be activated.");
+    expect(dens(hold)).toHaveLength(1);
+    expect(shape(dens(hold)[0])).toMatchObject({ duration: "continuous", host: true });
+    // The model's two limbs (the stored answer): one denial, one ability-loss, each its own action.
+    const text = "Enchanted permanent doesn't untap during its controller's untap step and its activated abilities can't be activated.";
+    const stored = [{ id: 1, abilityType: "static", actions: [{ verb: "cant", object: "enchanted permanent doesn't untap during its controller's untap step" }, { verb: "cant", object: "enchanted permanent's activated abilities can't be activated" }] }] as never;
+    const both = deriveAbilities(stored, "Hold for Questioning", { 1: text }, undefined, `Enchant creature or planeswalker\n${text}`).abilities;
+    expect(both.map((x) => x.effect.kind)).toEqual(["untap-denial", "ability-loss"]);
+    expect(shape(dens(derive("Encrust", AURA, "Enchant artifact or creature\nEnchanted permanent doesn't untap during its controller's untap step and its activated abilities can't be activated."))[0])).toMatchObject({ duration: "continuous", host: true });
+  });
+
+  test("Choke: Islands, continuously; Jasconian Isle: itself; Frost Trickster: the next untap step; Telekinesis: the next two", () => {
+    expect(shape(dens(derive("Choke", "Enchantment", "Islands don't untap during their controllers' untap steps."))[0])).toMatchObject({ duration: "continuous", subtype: "island" });
+    expect(shape(dens(derive("Frost Trickster", "Creature — Bird Wizard", "Flying\nWhen this creature enters, tap target creature an opponent controls. That creature doesn't untap during its controller's next untap step."))[0])).toMatchObject({ duration: "next-untap-step", steps: undefined });
+    expect(shape(dens(derive("Telekinesis", "Instant", "Tap target creature. Prevent all combat damage that would be dealt by that creature this turn. It doesn't untap during its controller's next two untap steps."))[0])).toMatchObject({ duration: "next-untap-step", steps: 2 });
+    expect(shape(dens(derive("Grim Monolith", "Artifact", "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{4}: Untap this artifact."))[0])).toMatchObject({ duration: "continuous", self: true });
+  });
+
+  test("a recipient that opens with the card's own 'enters tapped and' is the card (Traxos, Grimgrin); Damping Field's 'can't untap more than' is a limit, not a denial", () => {
+    const text = "Traxos enters tapped and doesn't untap during your untap step.";
+    const stored = [{ id: 1, abilityType: "static", actions: [{ verb: "cant", object: "untap during your untap step" }] }] as never;
+    expect(shape(dens(deriveAbilities(stored, "Traxos, Scourge of Kroog", { 1: text }, undefined, text).abilities)[0])).toMatchObject({ duration: "continuous", self: true });
+    expect(dens(derive("Damping Field", "Enchantment", "Players can't untap more than one artifact during their untap steps."))).toEqual([]);
+  });
+
+  test("Icefall Regent and Kill Switch: for as long as ...", () => {
+    expect(shape(dens(derive("Icefall Regent", "Creature — Dragon", "Flying\nWhen this creature enters, tap target creature an opponent controls. That creature doesn't untap during its controller's untap step for as long as you control this creature.\nSpells your opponents cast that target this creature cost {2} more to cast."))[0])).toMatchObject({ duration: "as-long-as" });
+    expect(shape(dens(derive("Kill Switch", "Artifact", "{2}, {T}: Tap all other artifacts. They don't untap during their controllers' untap steps for as long as this artifact remains tapped."))[0])).toMatchObject({ duration: "as-long-as" });
+  });
+
+  test("not read: Veldt's counter condition, Stunning Strike's 'as long as', Amber Prison's permission", () => {
+    expect(dens(derive("Veldt", "Land", "This land doesn't untap during your untap step if it has a depletion counter on it.\nAt the beginning of your upkeep, remove a depletion counter from this land.\n{T}: Add {G} or {W}. Put a depletion counter on this land."))).toEqual([]);
+    expect(dens(derive("Stunning Strike", AURA, "Flash\nEnchant creature\nWhen this Aura enters, tap enchanted creature and remove it from combat.\nAs long as enchanted creature isn't legendary, it doesn't untap during its controller's untap step."))).toEqual([]);
+    expect(dens(derive("Amber Prison", "Artifact", "You may choose not to untap this artifact during your untap step.\n{4}, {T}: Tap target artifact, creature, or land. That permanent doesn't untap during its controller's untap step for as long as this artifact remains tapped."))).toHaveLength(1);
+  });
+});

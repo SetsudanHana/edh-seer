@@ -3,7 +3,7 @@
 import type { Action } from "../canonicalize.js";
 
 /** The effect kinds a host marker is read for: what a buff, a curse or a neutraliser does TO the thing it is attached to. */
-const HOST_KINDS: ReadonlySet<string> = new Set(["pump", "debuff", "keyword-grant", "speed-increase", "type-grant", "ability-loss", "animate", "evasion", "restriction", "targeting-ban"]);
+const HOST_KINDS: ReadonlySet<string> = new Set(["pump", "debuff", "keyword-grant", "speed-increase", "type-grant", "ability-loss", "animate", "evasion", "restriction", "targeting-ban", "untap-denial"]);
 
 /** "enchanted creature", "equipped creature", "enchanted permanent", "enchanted land": the host phrase at the START of a recipient. Not "enchanted creature's
  *  controller" (a player) and not "enchanted player" (a Curse) or a plural ("Enchanted creatures you control have shroud", Greater Auramancy: a class) and not "enchanted creature and ..." / "... or ..." (a list that is not only the host), not a plural (Kor Blademaster's "Equipped Warriors you control") and not "... you control". */
@@ -13,7 +13,7 @@ const HOST_PHRASE = /^(?:enchanted|equipped) (?!player\b|(?!plains\b)[a-z]*s\b)[
 const OTHER_CLASS = /^(?:all|each|every|other|another|target|the other|those|that (?:creature|permanent)|creatures?|permanents?|lands?)\b/i;
 
 /** The verb that ends a clause's recipient: "Enchanted creature GETS", "it HAS", "enchanted creature CAN'T be blocked". */
-const RECIPIENT_VERB = /^(.*?\S)\s+(?:gets?|has|have|gains?|loses?|can['’]t|cannot|is|are|becomes?)\b/i;
+const RECIPIENT_VERB = /^(.*?\S)\s+(?:gets?|has|have|gains?|loses?|can['’]t|cannot|doesn['’]t|don['’]t|is|are|becomes?)\b/i;
 
 /** The words of a clause that precede its recipient: a trigger head ("Whenever enchanted creature attacks, ") or a condition ("As long as enchanted creature is black, ", "During your turn, "). */
 const HEAD = /^(?:(?:when|whenever|at)\b[^,]*,\s*|(?:as long as|if|while|during)\b[^,]*,\s*)/i;

@@ -94,6 +94,7 @@ test("extraValue: a `restriction` is no extra value, a drawback or a rider alike
   expect(ingredients(withAbility("restriction"), "targetedRemoval").extraValue).toBe(0);
   expect(ingredients(withAbility("targeting-ban"), "targetedRemoval").extraValue).toBe(0); // #1423: blank before its kind, so no card's quality moves
   expect(ingredients(withAbility("trigger-suppression"), "targetedRemoval").extraValue).toBe(0);
+  expect(ingredients(withAbility("untap-denial"), "targetedRemoval").extraValue).toBe(0);
   expect(ingredients(withAbility("pump"), "targetedRemoval").extraValue).toBe(1); // the control: a real second effect counts
 });
 
