@@ -2025,6 +2025,8 @@ function silencedBy(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
     // the narrowing gate and arrives typeless -- and a typeless subject matches every card. Darksteel
     // Mutation silences its host, not the deck.
     && (list(a.effect.subject.type).length > 0 || list(a.effect.subject.subtype).length > 0)
+    // ...and a HOST is one permanent even when its type survives (#1435): Flood the Engine / Stop Cold's "enchanted permanent" keeps `permanent`, which matches every card.
+    && a.host !== true
     // ONLY THE ACTIVATED ABILITIES (#1424): Cursed Totem / Stony Silence / Linvala stop activation and leave every triggered ability of the class working, so the
     // class's triggers are not silenced. CEILING: a pair whose channel is the class's ACTIVATED ability (a sacrifice outlet under Cursed Totem) keeps its claim.
     && (a.effect.subject.abilityKind === undefined || a.effect.subject.abilityKind.includes("triggered"))
