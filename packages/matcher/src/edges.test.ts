@@ -4613,6 +4613,17 @@ describe("an ability-loss static silences the creatures it reaches", () => {
     expect(tags.some((t) => t.startsWith("enters"))).toBe(true);
   });
 
+  /** #1435: Flood the Engine / Stop Cold's "Enchanted permanent loses all abilities" keeps the type `permanent`, which matches every card; the loss is marked
+   *  `host`, and a host is ONE permanent, so it silences no pair either. */
+  test("a host-marked ability loss on a typed subject silences nothing", () => {
+    const flood = typed(base("Flood the Engine", [
+      { kind: "static", effect: { kind: "ability-loss", subject: { control: "any", token: null, type: "permanent" } }, host: true },
+      { kind: "static", effect: { kind: "keyword-grant" }, emits: [{ verb: "enters", subject: { control: "you", token: null, type: "enchantment" } }] },
+    ] as unknown as CardTags["abilities"]), ["enchantment"]);
+    const tags = pairReasons(flood, constellation("Grim Guardian", ["enchantment", "creature"]), H).map((r) => r.tag);
+    expect(tags.some((t) => t.startsWith("enters"))).toBe(true);
+  });
+
   /** #1424: Cursed Totem / Stony Silence stop ACTIVATION (CR 602.5); the class's triggers still work, so its constellation still triggers. */
   test("an activation-only ability loss (Cursed Totem) leaves the class's triggers alone", () => {
     const totem = typed(base("Cursed Totem", [
