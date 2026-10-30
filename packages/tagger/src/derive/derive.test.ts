@@ -1,6 +1,7 @@
 import { describe, expect, it, test } from "vitest";
 import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, abilityKey, amountCovered, countCovered, exilesTopOfLibrary, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
+import { pluralAntecedent } from "./references.js";
 import { targetsASpellEarlier, actionEmits } from "./emits.js";
 import { exileNamesOnlyGraveyards } from "./effect-kind.js";
 import { victimDeclines } from "./recipient.js";
@@ -7451,7 +7452,35 @@ describe("a plural back-reference is its antecedent's subject, or nothing (#1427
     const s = taps("Twist Allegiance", "Instant", "You and target opponent each gain control of all creatures the other controls until end of turn. Untap those creatures. Those creatures gain haste until end of turn.", "untaps");
     expect(s).toEqual([]);
   });
-  test("Day of Black Sun: an antecedent that is no creature class (abilities) is refused", () => {
+  test("Tears of Rage: a sacrifice AT THE BEGINNING OF THE NEXT END STEP is of creatures no longer attacking (CR 511.3: the end of combat removes them from combat)", () => {
+    const text = "Cast this spell only during the declare attackers step.\nAttacking creatures you control get +X/+0 until end of turn, where X is the number of attacking creatures. Sacrifice those creatures at the beginning of the next end step.";
+    const s = taps("Tears of Rage", "Instant", text, "dies");
+    expect(s).toHaveLength(1);
+    expect(s[0]).toMatchObject({ control: "you", type: "creature" });
+    expect(s[0]?.combat).toBeUndefined();
+  });
+  test("Wake the Dead: the creature cards RETURNED to the battlefield are the creatures sacrificed (yours, no zone)", () => {
+    const text = "Cast this spell only during combat on an opponent's turn.\nReturn X target creature cards from your graveyard to the battlefield. Sacrifice those creatures at the beginning of the next end step.";
+    const s = taps("Wake the Dead", "Instant", text, "dies");
+    expect(s).toHaveLength(1);
+    expect(s[0]).toMatchObject({ control: "you", type: "creature" });
+    expect(s[0]?.fromZone).toBeUndefined();
+  });
+  test("Rally the Ancestors: the creatures it returned are the creatures it exiles (a leaves of creatures you control)", () => {
+    const text = "Return each creature card with mana value X or less from your graveyard to the battlefield. Exile those creatures at the beginning of your next upkeep. Exile Rally the Ancestors.";
+    const s = taps("Rally the Ancestors", "Instant", text, "leaves").filter((x) => x.self !== true && x.fromZone !== "graveyard");
+    expect(s).toHaveLength(1);
+    expect(s[0]).toMatchObject({ control: "you", type: "creature" });
+  });
+  test("a return to HAND names cards in a zone, not the creatures: refused", () => {
+    const acts = [{ verb: "return", object: "each creature card from your graveyard", fromZone: "graveyard", toZone: "hand" }, { verb: "sacrifice", object: "those creatures" }] as never;
+    expect(pluralAntecedent(acts, 1, "Return each creature card from your graveyard to your hand. Sacrifice those creatures.")).toBeUndefined();
+  });
+  test("Ever After: 'Each of those creatures is a black Zombie' is left unread by the grammar (it claimed every black Zombie got a grant)", () => {
+    const card = { name: "Ever After", typeLine: "Sorcery", keywords: [] as string[], oracleText: "Return up to two target creature cards from your graveyard to the battlefield. Each of those creatures is a black Zombie in addition to its other colors and types. Put Ever After on the bottom of its owner's library." };
+    expect(grammarClauseRecords(card).complete).toBe(false);
+  });
+  test("Day of Black Sun: an antecedent whose creature class the action list does not carry is refused", () => {
     const s = taps("Day of Black Sun", "Sorcery", "Each creature with mana value X or less loses all abilities until end of turn. Destroy those creatures.", "dies");
     expect(s).toEqual([]);
   });

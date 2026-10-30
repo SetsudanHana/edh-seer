@@ -42,7 +42,7 @@ import { addsManaText, deriveMana, production } from "./mana-lines.js";
 import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
 import { isSelfSubject, SELF_REFERENCE, withoutArticle } from "./self-reference.js";
-import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, boundedByEnchantLine, exiledAcrossClauses, PLURAL_BACKREF, pluralAntecedent, PRONOUN_OBJECT, zoneAfterEvent } from "./references.js";
+import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, boundedByEnchantLine, exiledAcrossClauses, PLURAL_BACKREF, pluralAntecedent, pluralIsDelayed, PRONOUN_OBJECT, withoutCombatRole, zoneAfterEvent } from "./references.js";
 import { triggerHasCue } from "../clause-store.js";
 import { emblemRecipient } from "../emblem.js";
 
@@ -2985,8 +2985,9 @@ export function deriveAbilities(
       const rewritten = [...(clause.actions ?? [])];
       rewritten.forEach((a, i) => {
         if (!PLURAL_BACKREF.test((a.object ?? "").trim())) return;
-        const t = pluralAntecedent(rewritten, i);
-        if (t === undefined) refusedPlural.add(a); else rewritten[i] = { ...a, object: t };
+        const t = pluralAntecedent(rewritten, i, clauseText ?? "");
+        // A DELAYED sacrifice/exile ("at the beginning of the next end step") is of the set after combat ended: no combat role (CR 511.3).
+        if (t === undefined) refusedPlural.add(a); else rewritten[i] = { ...a, object: pluralIsDelayed(clauseText ?? "", a.object ?? "") ? withoutCombatRole(t) : t };
       });
       clause = { ...clause, actions: rewritten };
     }
