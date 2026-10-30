@@ -231,10 +231,10 @@ const UNTAP_PRONOUN = /^(?:it|they|them|that (?:creature|permanent|land|artifact
  *  "unless ..."), which makes the denial partial; a PERMISSION ("You may choose not to untap", Amber Prison: no negation is printed); and any "until". A trigger head, an activation cost, a leading
  *  "for as long as ..." (the duration) and the activated-abilities rider of Hold for Questioning and Encrust ("... and its activated abilities can't be activated unless ...") are not conditions.
  *  CEILING: conditional printings are left unread (Veldt and Lava Tubes' depletion counter, Walking Dream, Tangle Kelp, Stunning Strike, Pollen Lullaby's "If you win", Guardian of Tazeem's
- *  "If that land is an Island"): a partial denial read as total would be a silent wrong answer. Measured 2026-10-30 over the 328 corpus cards printing a negated untap outside reminder text: 274 read,
- *  6 not derived at all, 48 unread = 32 conditional (a quoted grant included), 9 "can't untap MORE THAN N" limits (Static Orb, Winter Orb, Damping Field, Winter Moon, Smoke, Stoic Angel, Imi Statue,
- *  Mungha Wurm, Dovin Baan's emblem: a limit, not a denial), and 7 where the stored answer files the negation as the positive verb `untap` or holds no `cant` (Melancholy, Thirst, Energy Storm, Galvanic
- *  Juggernaut, Leviathan, Reveka, Arbalest Elite: reported on #1423, not fixed here). A list recipient ("Creatures and lands target opponent controls") is left unnamed.
+ *  "If that land is an Island"): a partial denial read as total would be a silent wrong answer. Measured 2026-10-30 over the 328 corpus cards printing a negated untap outside reminder text: 280 read,
+ *  6 not derived at all, 42 unread = 32 conditional (a quoted grant included), 9 "can't untap MORE THAN N" limits (Static Orb, Winter Orb, Damping Field, Winter Moon, Smoke, Stoic Angel, Imi Statue,
+ *  Mungha Wurm, Dovin Baan's emblem: a limit, not a denial) and Leviathan ("enters tapped and doesn't untap", the stored answer holds no usable `cant`). A list recipient ("Creatures and lands target
+ *  opponent controls") is left unnamed.
  *  Returns the recipient's words as `who` (undefined when the sentence names none or a pronoun). */
 export function untapDenialOf(object: string, clauseText = "", occurrence = 0): { denial: UntapDenial; who?: string } | undefined {
   if (!/\buntap/i.test(object)) return undefined;
