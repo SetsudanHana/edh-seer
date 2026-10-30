@@ -8,6 +8,7 @@ import { LAND_SUBTYPES } from "./subtypes.js";
 import { damageRecipient, isControllerPhrase, playerOnlyRecipient } from "./damage-recipient.js";
 import { tokenTypeFor } from "./token-types.js";
 import { isEnergyObject, permanentHalf } from "./effect-kind.js";
+import { parse as parseFilter } from "../grammar/filter.js";
 
 /** Action verb -> the events it makes available, in order. Verbs absent from this table emit
  *  nothing; a guessed event is worse than silence because it forms edges that are not real. */
@@ -414,6 +415,50 @@ function counteredCardTypes(text: string): SubjectFilter["type"] | undefined {
   const type = parseSubject(`${words.slice(det + 1).join(" ")} spell`).type;
   return type === undefined || type === "spell" ? undefined : type;
 }
+/** A CARD NAME WITH A COMMA IS ONE NAME (#1401 part 2): `parseSubject`'s NAMED stops at a comma, so "a card named Vraska, Scheming
+ *  Gorgon" read `named: "vraska"` plus `subtype: "gorgon"` (a filter nobody asked for) while the effect subject, which the filter grammar
+ *  reads, held the whole name. The name is the grammar's reading; the rest of the phrase is `parseSubject`'s with the name cut out, so
+ *  no word of the name can become a subtype or type. A token's name (`token named X`) is not a card name and is left alone. */
+function parseSubjectWhole(text: string): SubjectFilter {
+  const plain = parseSubject(text);
+  if (plain.named === undefined || !/\bnamed\b/i.test(text)) return plain;
+  const whole = parseFilter(text)?.named;
+  if (whole === undefined || whole === plain.named || whole === "~" || !whole.startsWith(plain.named)) return plain;
+  const at = text.toLowerCase().indexOf(whole);
+  if (at < 0) return plain;
+  const { named: _n, ...others } = parseSubject(`${text.slice(0, at)}${text.slice(at + whole.length)}`);
+  return { ...others, named: whole };
+}
+
+/** WHO MANIFESTS DREAD is the subject of the verb right in front of it, not any player word in the clause (#1401 part 2): "Its controller manifests dread" / "the exiled card's owner manifests dread" is
+ *  another player (the third-person -s), while "then manifest dread" / "At the beginning of each opponent's upkeep, manifest dread" / "you may manifest dread" is you. Every "manifest dread" in the text must be
+ *  yours; no such phrase (an empty text) is unknown. A plural subject right before it ("each opponent may manifest dread" is not printed; an opponent word as the last word is refused) stays `any`. */
+const DREAD_ACTOR = new Set(["opponent", "opponents", "player", "players", "they", "controller", "controllers", "owner", "owners"]);
+function manifestsDreadYourself(text: string): boolean {
+  const hits = [...text.matchAll(/\bmanifest(s?) dread\b/gi)];
+  return hits.length > 0 && hits.every((m) => {
+    if (m[1] !== "") return false;
+    // The word right before the verb, skipping a "may": scanned word by word, not by a backtracking prefix regex (CodeQL js/polynomial-redos).
+    const words = text.slice(0, m.index).toLowerCase().split(/\s+/).filter((w) => w !== "");
+    const last = words.at(-1) === "may" ? words.at(-2) : words.at(-1);
+    return last === undefined || !DREAD_ACTOR.has(last);
+  });
+}
+
+/** A MILL MADE BY A PUT (OR A MANIFEST DREAD) NAMES WHOSE LIBRARY (#1401 part 2): "Reveal the top five cards of YOUR library ... Put the rest into your graveyard" (Benefaction of Rhonas, Hermit Druid,
+ *  Fact or Fiction, Tower Geist) moves cards library -> graveyard, so it emits `mill`, but the put's object ("the rest") names no player and `CONTROLLER_DEFAULT` does not cover `put`, so the mill
+ *  read `any` and satisfied the opponent-mill gate of a recursion over an opponent's graveyard (edges.ts reanimatorEdges, ruling #729). The clause says "your library" and no other player's library:
+ *  that mill is yours. Manifest dread (CR 701.62) puts the other of the top two cards of YOUR library into the graveyard, unless a player is named doing it ("the exiled card's owner manifests dread").
+ *  The verb `mill` itself is covered by CONTROLLER_DEFAULT ("target player mills" stays `any`), and only the `mill` event is read here: the same action's `enters` keeps its own reading.
+ *  CEILING: clause-wide text, so a clause naming both "your library" and another player's library stays `any`; a clause with no text stays `any` (a text-less twin of the same put, Celestus Sanctifier).
+ */
+const OTHER_LIBRARY = /\b(?:their|its owner's|that player's|target (?:player|opponent)'s|each (?:player|opponent)'s|an opponent's|his or her|defending player's) librar(?:y|ies)\b/i;
+export function millsOwnLibrary(action: Action, clauseText?: string): boolean {
+  const text = clauseText ?? "";
+  if (action.verb === "put") return /\byour library\b/i.test(text) && !OTHER_LIBRARY.test(text);
+  return action.verb === "manifest-dread" && manifestsDreadYourself(text);
+}
+
 /** The back-references to a spell the clause named earlier. */
 const SPELL_ANAPHORS = ["the chosen spell", "that spell", "the spell"];
 
@@ -660,7 +705,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   const listed = action.verb === "deal-damage" || action.verb === "lose-life" ? damageRecipient(action.object ?? "") : undefined;
   // ...and damage to "target player" / "target opponent" is player-only (#1294), no "any target".
   const playerOnly = action.verb === "deal-damage" && listed === undefined ? playerOnlyRecipient(action.object ?? "") : undefined;
-  const subject = listed ?? playerOnly ?? parseSubject(recipient ?? action.object ?? "");
+  const subject = listed ?? playerOnly ?? parseSubjectWhole(recipient ?? action.object ?? "");
   // A TOKEN THAT IS A COPY IS CONTROLLED BY ITS CREATOR, NOT BY WHAT IT COPIES (#1295, CR 111.2: the player who creates a
   // token is its owner and it enters under that player's control unless the effect says otherwise). "Create two tokens
   // that are copies of target permanent an opponent controls" (Venser, Fervent Forger) parsed the original's control and
@@ -874,7 +919,8 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       // CEILING: a literal word match on the object, not a parse (a parse reads "cards in your graveyard" and "a creature of your choice that player controls" as yours, and they ARE gained by you);
       // "you own but don't control" does not match, and "each land they own that you control" goes to the opponent. A gift of an object that does not say so ("gain control of it") reads per clause.
       control: verb === "gains-control" && (OTHER_GAINS_CONTROL.test(clauseText ?? "") || yourOwnObject(action.object ?? "")) ? "opp" as const
-        : ACTOR_IS_THE_EVENT.has(verb) ? "you" as const : control,
+        : ACTOR_IS_THE_EVENT.has(verb) ? "you" as const
+        : verb === "mill" && control === "any" && millsOwnLibrary(action, clauseText) ? "you" as const : control,
       ...(createsAToken && subject.token !== true ? { token: true as const } : {}),
       ...(arrivesTapped && verb === "enters" ? { entersTapped: true as const } : {}),
       ...(leftTheGraveyard && verb === "leaves" ? { zone: "graveyard" } : {}),
