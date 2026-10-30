@@ -87,6 +87,7 @@ const PROSE: Record<string, string> = {
   "903.8": "commander tax is a caveat, not a number",
   "113.3": "edges: the copy-ability pass reads the other card's ability kinds (AC12; edges.test asserts Strionic, Gogo, Tawnos)",
   "605.3b": "edges: 'activated' excludes mana abilities in the copy-ability pass (AC12)",
+  "605.1a": "tagger derive.test.ts — Llanowar Wastes' damage rider is stamped mana-rider, which abilityIsKind counts as no ability to copy (#1426)",
   "306.5b": "edges: a planeswalker's loyalty is a counter (canCarryCounters, AL4); goldfish/mana-lines: it enters with its printed loyalty, which the first activation spends from (goldfish.test.ts)",
   "310.6": "edges: a battle's defence is a counter (canCarryCounters, AL4)",
   "702.63": "edges: vanishing puts time counters on (canCarryCounters, AL4)",
