@@ -148,8 +148,8 @@ test("token gate excludes a nontoken-only payoff from token producers", () => {
       characteristics: { types: ["sorcery"], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
       abilities: [{
         kind: "static",
-        effect: { kind: "token-generation", subject: { subtype: "goblin", control: "you", token: true } },
-        emits: [{ verb: "enters", subject: { subtype: "goblin", control: "you", token: true } }],
+        effect: { kind: "token-generation", subject: { subtype: "wizard", control: "you", token: true } },
+        emits: [{ verb: "enters", subject: { subtype: "wizard", control: "you", token: true } }],
       }],
     } as CardTags,
   };
@@ -1016,6 +1016,74 @@ test("two abilities emitting the identical counter-added event credit a cares-on
   }]);
   const counterReasons = directedReasons(dualAdder, carer, H).filter((r) => r.tag.startsWith("counter-added"));
   expect(counterReasons.length).toBe(1);
+});
+
+// A CONSUMER OF THE COUNTERS ON ITSELF IS NOT FED BY A PRODUCER OF COUNTERS ON ITSELF (#1421): Mossborn Hydra's
+// "double the +1/+1 counters on this creature" joined Walking Ballista, whose counters only ever land on Ballista.
+describe("a self counter consumer joins only a producer that can reach another creature", () => {
+  const hydra = base("Mossborn Hydra", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "land", control: "you", token: null } },
+    effect: { kind: "counter-placement", subject: { type: "creature", control: "any", token: null, counter: "+1/+1", self: true } },
+    emits: [{ verb: "double", subject: { type: "creature", control: "any", token: null, counter: "+1/+1", self: true } }],
+  }] as unknown as CardTags["abilities"]);
+  const producer = (name: string, subject: object) => base(name, [{
+    kind: "activated", cost: "{4}",
+    effect: { kind: "counter-placement" },
+    emits: [{ verb: "counter-added", subject }],
+  }] as unknown as CardTags["abilities"]);
+  const feeds = (p: DeckCard) => directedReasons(p, hydra, H).filter((r) => r.tag.startsWith("counter-added"));
+  test("a self-only producer does not feed it", () => {
+    expect(feeds(producer("Walking Ballista", { control: "any", token: null, counter: "+1/+1", self: true }))).toEqual([]);
+  });
+  // CEILING pinned: an untyped non-self emit beside a self one cannot be told from an unmarked self placement. Big Bertha's shape (really self) must not feed; Juniper Order Ranger's (really reaches another) is a known miss.
+  test("a self emit beside an untyped non-self emit does not feed it", () => {
+    const bertha = base("Big Bertha", [{
+      kind: "static", effect: { kind: "enters-with-counters" },
+      emits: [
+        { verb: "counter-added", subject: { control: "any", token: null, counter: "+1/+1", self: true } },
+        { verb: "counter-added", subject: { control: "any", token: null, counter: "+1/+1" } },
+      ],
+    }] as unknown as CardTags["abilities"]);
+    expect(feeds(bertha).length).toBe(0);
+  });
+  test("a target or a class producer still does", () => {
+    expect(feeds(producer("Arwen", { type: "creature", control: "any", token: null, counter: "+1/+1", scope: "target" })).length).toBe(1);
+    expect(feeds(producer("Anthem", { type: "creature", control: "you", token: null, counter: "+1/+1" })).length).toBe(1);
+  });
+});
+
+// A TARGET COUNTER PRODUCER REACHES A SUBTYPE OF ITS TYPE (#1421): "put a +1/+1 counter on target creature" can land on a Goblin (The Great Goblin).
+describe("a target counter producer satisfies a subtype demand of its type, never a type it cannot be", () => {
+  const consumer = (subject: object) => base("Counter Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["counter-added"], subject },
+    effect: { kind: "damage" },
+  }] as unknown as CardTags["abilities"]);
+  const targeter = base("Target Placer", [{
+    kind: "on-cast", effect: { kind: "counter-placement" },
+    emits: [{ verb: "counter-added", subject: { type: "creature", control: "any", token: null, scope: "target", counter: "+1/+1" } }],
+  }] as unknown as CardTags["abilities"]);
+  const HE: Hierarchy = { ...H, equipment: ["artifact"] };
+  const feeds = (c: DeckCard) => directedReasons(targeter, c, HE).filter((r) => r.tag.startsWith("counter-added"));
+  test("a Wizard you control", () => {
+    expect(feeds(consumer({ subtype: "wizard", control: "you", token: null })).length).toBe(1);
+  });
+  // A SUBTYPE of another type: with the hierarchy check removed this would be fed, so it can fail.
+  // Sigurd's shape (#1421): the scraped hierarchy lists creature under saga (one Enchantment Creature - Saga), the CR does not.
+  test("a Saga demand is refused although the scraped hierarchy lists creature under saga", () => {
+    const HS: Hierarchy = { ...H, saga: ["enchantment", "creature"] };
+    expect(directedReasons(targeter, consumer({ subtype: "saga", control: "you", token: null }), HS).filter((r) => r.tag.startsWith("counter-added")).length).toBe(0);
+  });
+  // The anyOf shape (Loading Zone): a branch keeps its type; a creature producer feeds the creature branch and not a Spacecraft one.
+  test("an anyOf demand is fed by its creature branch and not by a Spacecraft branch alone", () => {
+    const HA: Hierarchy = { ...H, spacecraft: ["artifact"] };
+    expect(directedReasons(targeter, consumer({ control: "you", token: null, anyOf: [{ type: "creature" }, { subtype: "spacecraft" }] }), HA).filter((r) => r.tag.startsWith("counter-added")).length).toBe(1);
+    expect(directedReasons(targeter, consumer({ control: "you", token: null, anyOf: [{ subtype: "spacecraft" }] }), HA).filter((r) => r.tag.startsWith("counter-added")).length).toBe(0);
+  });
+  test("a subtype of a type the producer cannot be is refused", () => {
+    expect(feeds(consumer({ subtype: "equipment", control: "you", token: null })).length).toBe(0);
+  });
 });
 
 test("reasons record whether the producer side was baseline or authored", () => {

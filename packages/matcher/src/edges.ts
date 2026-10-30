@@ -3790,6 +3790,12 @@ function counterPresenceEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       // an ability that emits the same event is already covered by the event-edge pass above
       if ((ca.emits ?? []).some((e) => e.verb === "counter-added")) continue;
       if (ca.trigger?.verbs.includes("counter-added")) continue;
+      // SELF ON BOTH SIDES IS TWO DIFFERENT CARDS (#1421), as `SELF_BOTH_REFUSED` has it for events: Walking Ballista's counters land on Ballista, and
+      // Mossborn Hydra doubles only its own, so the one never feeds the other. A producer that can reach ANOTHER creature (a target, a class) still does.
+      if (emit.subject.self === true && want.self === true) continue;
+      // CEILING: a self consumer is fed only through typed / target / class emits. A producer's UNTYPED non-self emit beside a self one (Juniper Order Ranger, Wildgrowth Archaic, Clay Champion: real misses)
+      // cannot be told apart from an unmarked self placement (Big Bertha, Grimgrin, Hooded Hydra, Captain America's Hero-only counter), and reading them loosely was 16 false for 3 real. Kalonian Hydra's real link
+      // is its `double` emit, which is not a counter-added supply, and Bloodspore Thrinax derives only a self emit.
       if (!subjectMatches(emit.subject, want, h)) continue;
       reasons.push({
         tag: `counter-added:${themeSubjectKey(want)}`,

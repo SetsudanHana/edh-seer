@@ -1,5 +1,6 @@
 import type { StatPredicate, SubjectFilter } from "@edh-seer/tagger";
 import type { Hierarchy } from "./types.js";
+import { SUBTYPE_TYPES } from "@edh-seer/tagger/subtypes";
 import { expandTypes, PSEUDO_TYPE_SETS } from "./hierarchy.js";
 import { evalStatPredicate } from "./stats.js";
 
@@ -316,6 +317,25 @@ export function graveyardFillMatches(producer: SubjectFilter, consumer: SubjectF
  *  (122.1i) and experience. */
 const PLAYER_COUNTERS: ReadonlySet<string> = new Set(["energy", "experience", "poison", "rad"]);
 
+/** A TARGET REACHES ANY PERMANENT OF ITS STATED TYPE (#1421): "put a +1/+1 counter on target creature" can land on a Goblin, so it satisfies "a Goblin you control with a counter"
+ *  (The Great Goblin). Only for `scope: "target"`, and only the SUBTYPE narrowing the producer leaves unstated is dropped, and only when that subtype can be of the producer's type
+ *  (the hierarchy says goblin is a creature). A type the producer cannot be still refuses.
+ *  CEILING: a type the producer does not state ("target creature" may be an artifact creature: Iron Spider's "artifacts you control") is not reached; supertype/colour narrowings likewise. */
+function targetReachesSubtype(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
+  if (producer.scope !== "target" || arr(producer.type).length === 0 || arr(producer.subtype).length > 0) return false;
+  if (consumer.anyOf?.length) {
+    const { anyOf, ...shared } = consumer;
+    return anyOf.some((b) => counterAddMatches(producer, { ...shared, ...b }, h));
+  }
+  const subs = arr(consumer.subtype);
+  if (subs.length === 0) return false;
+  const ptypes = arr(producer.type).map((t) => t.toLowerCase());
+  // The CR's own assignment of subtype to type (`SUBTYPE_TYPES`), NOT the scraped hierarchy: that is a union over type lines (saga lists creature, from one Enchantment Creature - Saga), so creature -> Saga passed it (Sigurd).
+  const reachable = subs.filter((st) => (SUBTYPE_TYPES[st.toLowerCase()] ?? []).some((t) => ptypes.includes(t)));
+  if (reachable.length === 0) return false;
+  return subjectMatches({ ...producer, subtype: reachable }, consumer, h);
+}
+
 export function counterAddMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
   // A kind MISMATCH is real information on either path: a +1/+1 placer is not a poison enabler.
   if (consumer.counter !== undefined && producer.counter !== undefined
@@ -336,7 +356,10 @@ export function counterAddMatches(producer: SubjectFilter, consumer: SubjectFilt
   // card's own types, which puts it on the strict path -- where a consumer's `counter: "+1/+1"`
   // against a producer that recorded no kind read as a mismatch and Shelinda, Yevon Acolyte
   // stopped feeding Simic Ascendancy. The kind is compared only when BOTH sides state one (above).
-  if (!untyped) return subjectMatches(producer, producer.counter === undefined ? { ...consumer, counter: undefined } : consumer, h);
+  if (!untyped) {
+    const strict = subjectMatches(producer, producer.counter === undefined ? { ...consumer, counter: undefined } : consumer, h);
+    return strict || targetReachesSubtype(producer, producer.counter === undefined ? { ...consumer, counter: undefined } : consumer, h);
+  }
   if (sharedTypeRefuses(producer, consumer)) return false;
   if (consumer.control !== "any" && producer.control !== "any" && consumer.control !== producer.control) return false;
   if (consumer.token !== null && producer.token !== null && consumer.token !== producer.token) return false;
