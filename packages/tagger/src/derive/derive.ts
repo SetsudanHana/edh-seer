@@ -11,7 +11,7 @@ import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Char
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
-import { actionEmits, casualtySacrifice, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, narrowSelfExiledSpell, TEMPORARY_TOKEN_REF } from "./emits.js";
+import { actionEmits, casualtySacrifice, millsOwnLibrary, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, narrowSelfExiledSpell, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, activationConditionOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
 import { hostEffect } from "./host.js";
@@ -1654,6 +1654,8 @@ function effectSubject(
     const owner = zoneOwner(clauseText, action.fromZone, triggerIsSelf, cardName, object);
     if (owner && subject.control === "any") subject.control = owner;
   }
+  // A MILL MADE BY A PUT names whose library, as its emit does (emits.ts `millsOwnLibrary`, #1401 part 2): the grammar and the stored answer must agree, or the model/grammar switch flips on the difference.
+  if (kind === "mill" && subject.control === "any" && millsOwnLibrary(action, clauseText)) subject.control = "you";
   // Owner's ruling 2026-08-14 (threshold-lines): a coarse extra-phase conflated units the game
   // keeps apart -- an extra beginning phase brings an untap step (activation supply, §6.4 of the
   // design spec) and an extra upkeep or end step brings none. Unset when the text names no phase

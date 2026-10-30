@@ -430,6 +430,20 @@ function parseSubjectWhole(text: string): SubjectFilter {
   return { ...others, named: whole };
 }
 
+/** A MILL MADE BY A PUT (OR A MANIFEST DREAD) NAMES WHOSE LIBRARY (#1401 part 2): "Reveal the top five cards of YOUR library ... Put the rest into your graveyard" (Benefaction of Rhonas, Hermit Druid,
+ *  Fact or Fiction, Tower Geist) moves cards library -> graveyard, so it emits `mill`, but the put's object ("the rest") names no player and `CONTROLLER_DEFAULT` does not cover `put`, so the mill
+ *  read `any` and satisfied the opponent-mill gate of a recursion over an opponent's graveyard (edges.ts reanimatorEdges, ruling #729). The clause says "your library" and no other player's library:
+ *  that mill is yours. Manifest dread (CR 701.62) puts the other of the top two cards of YOUR library into the graveyard, unless a player is named doing it ("the exiled card's owner manifests dread").
+ *  The verb `mill` itself is covered by CONTROLLER_DEFAULT ("target player mills" stays `any`), and only the `mill` event is read here: the same action's `enters` keeps its own reading.
+ *  KNOWN LIMIT (a deliberate simplification): clause-wide text, so a clause naming both "your library" and another player's library stays `any`; a clause with no text stays `any` (a text-less twin of the same put, Celestus Sanctifier).
+ */
+const OTHER_LIBRARY = /\b(?:their|its owner's|that player's|target (?:player|opponent)'s|each (?:player|opponent)'s|an opponent's|his or her|defending player's) librar(?:y|ies)\b/i;
+export function millsOwnLibrary(action: Action, clauseText?: string): boolean {
+  const text = clauseText ?? "";
+  if (action.verb === "put") return /\byour library\b/i.test(text) && !OTHER_LIBRARY.test(text);
+  return action.verb === "manifest-dread" && text !== "" && !NAMES_A_PLAYER.test(text) && !/\b(?:owner|controller)\b/i.test(text);
+}
+
 /** The back-references to a spell the clause named earlier. */
 const SPELL_ANAPHORS = ["the chosen spell", "that spell", "the spell"];
 
@@ -890,7 +904,8 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       // CEILING: a literal word match on the object, not a parse (a parse reads "cards in your graveyard" and "a creature of your choice that player controls" as yours, and they ARE gained by you);
       // "you own but don't control" does not match, and "each land they own that you control" goes to the opponent. A gift of an object that does not say so ("gain control of it") reads per clause.
       control: verb === "gains-control" && (OTHER_GAINS_CONTROL.test(clauseText ?? "") || yourOwnObject(action.object ?? "")) ? "opp" as const
-        : ACTOR_IS_THE_EVENT.has(verb) ? "you" as const : control,
+        : ACTOR_IS_THE_EVENT.has(verb) ? "you" as const
+        : verb === "mill" && control === "any" && millsOwnLibrary(action, clauseText) ? "you" as const : control,
       ...(createsAToken && subject.token !== true ? { token: true as const } : {}),
       ...(arrivesTapped && verb === "enters" ? { entersTapped: true as const } : {}),
       ...(leftTheGraveyard && verb === "leaves" ? { zone: "graveyard" } : {}),

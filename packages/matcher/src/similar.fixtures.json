@@ -6433,14 +6433,14 @@
      "effect": {
       "kind": "mill",
       "subject": {
-       "control": "any",
+       "control": "you",
        "token": null
       }
      },
      "emits": [
       {
        "subject": {
-        "control": "any",
+        "control": "you",
         "fromZone": "library",
         "token": null
        },

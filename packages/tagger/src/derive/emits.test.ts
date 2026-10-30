@@ -733,3 +733,24 @@ test("a search for a card named with a comma emits the whole name and no subtype
     expect(e!.subject.subtype).toBeUndefined();
   }
 });
+
+/** A MILL MADE BY A PUT SAYS WHOSE LIBRARY (#1401 part 2): the implied `mill` of "Put the rest into your graveyard" read `control: any`, which
+ *  passes the opponent-mill gate of a recursion over an opponent's graveyard. Real oracle text, Mongo 2026-10-30. */
+test("a put from your library into your graveyard mills YOUR library; 'target player mills' stays any", () => {
+  const benefaction = "Reveal the top five cards of your library. You may put a creature card and/or an enchantment card from among them into your hand. Put the rest into your graveyard.";
+  const rest = actionEmits({ verb: "put", object: "the rest", fromZone: "library", toZone: "graveyard" } as never, benefaction).find((e) => e.verb === "mill");
+  expect(rest?.subject.control).toBe("you");
+  const hermit = "{G}, {T}: Reveal cards from the top of your library until you reveal a basic land card. Put that card into your hand and all other cards revealed this way into your graveyard.";
+  expect(actionEmits({ verb: "put", object: "all other cards revealed this way", fromZone: "library", toZone: "graveyard" } as never, hermit).find((e) => e.verb === "mill")?.subject.control).toBe("you");
+  const altar = "Target player mills cards equal to the sacrificed creature's power.";
+  expect(actionEmits({ verb: "mill", object: "target player" } as never, altar).find((e) => e.verb === "mill")?.subject.control).toBe("any");
+});
+
+test("manifest dread mills the top-two card of YOUR library; its entry and a named owner's dread are left alone", () => {
+  const text = "Manifest dread. (Look at the top two cards of your library. Put one onto the battlefield face down as a 2/2 creature and the other into your graveyard. Turn it face up any time for its mana cost if it's a creature card.)";
+  const e = actionEmits({ verb: "manifest-dread", object: "" } as never, text);
+  expect(e.find((x) => x.verb === "mill")?.subject.control).toBe("you");
+  expect(e.find((x) => x.verb === "enters")?.subject.control).toBe("any");
+  const hover = actionEmits({ verb: "manifest-dread", object: "" } as never, "When this Vehicle leaves the battlefield, the exiled card's owner manifests dread.");
+  expect(hover.find((x) => x.verb === "mill")?.subject.control).toBe("any");
+});

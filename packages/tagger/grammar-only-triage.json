@@ -288,6 +288,10 @@
     "effect.subject(+keyword +stats +subtype ~type),repeats": {
       "label": "grammar right",
       "why": "Reverberating Summons (the only member over the corpus): \"At the beginning of each combat, if you've cast two or more spells this turn, this enchantment becomes a 3/3 Monk creature with haste in addition to its other types until end of turn.\" The grammar reads the self animate's Monk creature, P/T and haste (the store left {type: enchantment}), and `repeats: per-turn`: EACH combat is every player's, which the schema's per-turn is (\"fires on every player's turn\"); the stored per-cycle means only yours. Oracle text read 2026-10-26 (#1352)."
+    },
+    "amount,count,effect.kind,effect.subject(+subtype),effect.subject(-subtype),emits,toHand": {
+      "label": "grammar right",
+      "why": "A TYPED ONE-CARD LOOK (#1302): \"look at the top card of your library. If it's a Zombie card, you may reveal it and put it into your hand. If you don't, you may put it into your graveyard\". Both readings now derive the typed dig (`search` + `toHand`, derive 385); they differ on the graveyard half, where the stored model answer types the MILL emit by the revealed card's class (\"mills a creature\", from the condition) and the grammar reads it as the untyped card it is (Territory Culler, Sarinth Steelseeker, Traveling Botanist, Archghoul of Thraben, Bison Whistle, whose grammar also keeps the Bison subtype on its `enters`). These cards were on the grammar reading before the dig was typed (group abilities:1->2); the new keys keep them there. #1401 part 2: Archghoul of Thraben moved to this key when its mill emit's control became `you` on both readings (the old key's `~control` is gone); same judgement, same card. CEILING: these keys pair the two readings' abilities by SORT ORDER, so they are fragile."
     }
   }
 }

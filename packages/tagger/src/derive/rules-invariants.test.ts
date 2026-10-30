@@ -17,6 +17,7 @@ import { emblemRecipient } from "../emblem.js";
 
 const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b"]);
 const TESTED: Record<string, string> = {
+  "701.62": "manifest dread: its mill is of your library (emits.test.ts, manifest dread mills the top-two card of YOUR library)",
   "104.2b": "derive.test.ts — a win-game VERB derives the win-game kind (Epic Struggle, Laboratory Maniac, #1266)",
   "603.1": "matcher partners-core.test.ts — a claimsNothing ability is still a triggered ability: a copier is offered the copies|triggered key (#1253)",
   "306.5b": "derive/mana-lines.test.ts — a planeswalker's printed loyalty rides on each of its loyalty-cost mana lines (ManaLine.startLoyalty, #1169)",
