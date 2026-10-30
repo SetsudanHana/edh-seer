@@ -266,3 +266,39 @@ describe("identical twins of one printed verb fold (#1401 family B)", () => {
     expect(bRow(name).tags.abilities).toHaveLength(n);
   });
 });
+
+// #1401 part 4 family A: one clause puts counters on the card AND on another object. All three are model rows: the stored add-counter object holds only the counter kind, so the
+// recipient comes from the printed text. Oracle text and stored records dumped from Mongo 2026-10-30.
+describe("a counter clause with two recipients reads each recipient (#1401 part 4)", () => {
+  const ac = (object: string, amount: string | null = null) => ({ verb: "add-counter", object, amount, fromZone: null, toZone: null, optional: false });
+  const row = (source: { name: string; oracleText: string; typeLine: string; keywords: string[] }, canonical: unknown[]) =>
+    deriveRow({ doc: { oracleId: "x", name: source.name, canonical } as never, source: source as never, isToken: false });
+  const added = (r: ReturnType<typeof row>) => r.tags.abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.verb === "counter-added"));
+  const noDup = (r: ReturnType<typeof row>) => { const j = r.tags.abilities.map((a) => JSON.stringify(a)); return new Set(j).size === j.length; };
+
+  test("Sinister Concierge: the first 'it' is the card just exiled, the second 'it' the target just exiled", () => {
+    const src = { name: "Sinister Concierge", typeLine: "Creature — Human Wizard", keywords: [], oracleText: "When this creature dies, you may exile it and put three time counters on it. If you do, exile up to one target creature and put three time counters on it. Each card exiled this way that doesn't have suspend gains suspend. (For each card with suspend, its owner removes a time counter from it at the beginning of their upkeep. When the last is removed, they may cast it without paying its mana cost. Those creature spells have haste.)" };
+    const r = row(src, [{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "this creature", control: "you" }, actions: [{ ...ac("this creature"), verb: "exile", fromZone: "battlefield", toZone: "exile", optional: true }, ac("time", "3"), { ...ac("up to one target creature"), verb: "exile", fromZone: "battlefield", toZone: "exile" }, ac("time", "3"), { ...ac("suspend"), verb: "grant-ability" }] }]);
+    expect(added(r).map((e) => e.subject.self === true)).toEqual([true, false]);
+    expect(noDup(r)).toBe(true);
+  });
+
+  test("Arwen: the first +1/+1 and lifelink go on the other creature, the second pair on Arwen", () => {
+    const src = { name: "Arwen, Mortal Queen", typeLine: "Legendary Creature — Elf Noble", keywords: [], oracleText: "Arwen enters with an indestructible counter on her.\n{1}, Remove an indestructible counter from Arwen: Another target creature gains indestructible until end of turn. Put a +1/+1 counter and a lifelink counter on that creature and a +1/+1 counter and a lifelink counter on Arwen." };
+    const r = row(src, [{ id: 1, abilityType: "static", actions: [ac("indestructible counter")] }, { id: 2, abilityType: "activated", actions: [{ ...ac("indestructible counter"), verb: "remove-counter" }, { ...ac("indestructible"), verb: "grant-ability" }, ac("+1/+1 counter"), ac("lifelink counter"), ac("+1/+1 counter"), ac("lifelink counter")] }]);
+    // Clause 1 ("enters with an indestructible counter on her") is not read as self ("her"): not this part's, so only clause 2's four are checked.
+    expect(added(r).slice(1).map((e) => e.subject.self === true)).toEqual([false, false, true, true]);
+    expect(noDup(r)).toBe(true);
+  });
+
+  test("Invasion of New Capenna: one counter on the equipped attacker, one on each OTHER creature you control", () => {
+    const src = { name: "Invasion of New Capenna // Holy Frazzle-Cannon", typeLine: "Battle — Siege // Artifact — Equipment", keywords: ["Transform", "Equip"], oracleText: "(As a Siege enters, choose an opponent to protect it. You and others can attack it. When it's defeated, exile it, then cast it transformed.)\nWhen this Siege enters, you may sacrifice an artifact or creature. When you do, exile target artifact or creature an opponent controls.\n//\nWhenever equipped creature attacks, put a +1/+1 counter on that creature and each other creature you control that shares a creature type with it.\nEquip {1}" };
+    const r = row(src, [{ id: 4, abilityType: "triggered", trigger: { event: "attacks", subject: "equipped creature", control: "you" }, actions: [ac("+1/+1"), ac("+1/+1")] }]);
+    const subs = added(r).map((e) => e.subject);
+    expect(subs).toHaveLength(2);
+    expect(subs.map((s) => s.self === true)).toEqual([false, false]);
+    expect(subs[0]).not.toEqual(subs[1]);
+    expect(subs[1]).toMatchObject({ other: true, scope: "each", type: "creature", control: "you" });
+    expect(noDup(r)).toBe(true);
+  });
+});
