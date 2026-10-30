@@ -3,7 +3,7 @@
 import type { Action } from "../canonicalize.js";
 
 /** The effect kinds a host marker is read for: what a buff, a curse or a neutraliser does TO the thing it is attached to. */
-const HOST_KINDS: ReadonlySet<string> = new Set(["pump", "debuff", "keyword-grant", "speed-increase", "type-grant", "ability-loss", "animate", "evasion", "restriction"]);
+const HOST_KINDS: ReadonlySet<string> = new Set(["pump", "debuff", "keyword-grant", "speed-increase", "type-grant", "ability-loss", "animate", "evasion", "restriction", "targeting-ban"]);
 
 /** "enchanted creature", "equipped creature", "enchanted permanent", "enchanted land": the host phrase at the START of a recipient. Not "enchanted creature's
  *  controller" (a player) and not "enchanted player" (a Curse) or a plural ("Enchanted creatures you control have shroud", Greater Auramancy: a class) and not "enchanted creature and ..." / "... or ..." (a list that is not only the host), not a plural (Kor Blademaster's "Equipped Warriors you control") and not "... you control". */

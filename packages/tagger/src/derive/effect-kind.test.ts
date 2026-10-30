@@ -1022,3 +1022,29 @@ test("#1401 E: 'abilities' as the source of targeting, a trigger or mana spendin
     "target creature can't attack or block and its activated abilities can't be activated until your next turn",
   ]) expect(actionEffectKind({ verb: "cant", object })).toBe("ability-loss");
 });
+
+// #1423 (owner ruling 2026-10-30): the `cant` lines #1401 part 5 stopped reading as ability-loss each get a kind of their own. `targeting-ban` first.
+test("#1423 a scoped ban on being targeted is `targeting-ban`: who can't, and from what source (CR 115.1; hexproof 702.11 and shroud 702.18 are its keyword forms)", () => {
+  const read = (object: string, text = "") => actionEffectKind({ verb: "cant", object }, text);
+  for (const object of [
+    "be the target of spells or abilities your opponents control",        // Shielding Plax, Canopy Cover, Shanna
+    "be the target of spells or abilities your opponents control this turn", // Vines of Vastwood
+    "be the targets of spells or abilities",                                // Ground Seal
+    "be the target of nongreen spells or abilities from nongreen sources",  // Gaea's Revenge
+    "be the target of nongreen spells your opponents control or abilities from nongreen sources your opponents control", // Thrun
+    "be the targets of blue spells or abilities from blue sources",         // Spellbane Centaur
+    "be the target of abilities from artifact sources",                     // Artifact Ward
+    "be the target of black or red spells your opponents control",          // Fiendslayer Paladin
+    "be the target of Aura spells",                                         // Bartel Runeaxe
+    "be the target of spells",                                              // Spectral Shield
+    "players can't be the targets of spells or activated abilities",        // Peace Talks (the model keeps the subject in the object)
+    "cards in graveyards be the targets of spells or abilities",            // Underworld Cerberus
+  ]) expect(read(object), object).toBe("targeting-ban");
+  // A narrowed or conditional ban is not total: left unread rather than read as hexproof.
+  expect(read("be the target of spells that can target only Walls or of abilities that can target only Walls")).toBeNull(); // Wall of Shadows
+  expect(read("be the target of spells unless it attacked or blocked this turn")).toBeNull();                              // Lurker
+  expect(read("be the target of spells", "As long as you control a Forest, this creature can't be the target of spells.")).toBeNull();
+  // The opposite sentence is a permission, never a ban (Kaya, Bane of the Dead; Nowhere to Run).
+  expect(read("hexproof prevents your spells and abilities from targeting opponents and permanents your opponents control")).toBeNull();
+  expect(read("be countered by blue or black spells this turn")).toBeNull();
+});

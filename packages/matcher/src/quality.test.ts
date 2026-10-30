@@ -92,6 +92,7 @@ test("extraValue: a `restriction` is no extra value, a drawback or a rider alike
   const swords = dc("Swords to Plowshares");
   const withAbility = (kind: string): DeckCard => ({ ...swords, tags: { ...swords.tags!, abilities: [...swords.tags!.abilities, { kind: "static", effect: { kind } }] } }) as unknown as DeckCard;
   expect(ingredients(withAbility("restriction"), "targetedRemoval").extraValue).toBe(0);
+  expect(ingredients(withAbility("targeting-ban"), "targetedRemoval").extraValue).toBe(0); // #1423: blank before its kind, so no card's quality moves
   expect(ingredients(withAbility("pump"), "targetedRemoval").extraValue).toBe(1); // the control: a real second effect counts
 });
 

@@ -9,6 +9,7 @@ import type { Action } from "../canonicalize.js";
 import type { EffectKind } from "../schema.js";
 import { parseSubject, spellMove } from "./subject.js";
 import { readToHand, type ToHandRead } from "./to-hand.js";
+import { targetingBanOf } from "./cant-kinds.js";
 
 /** Zone-sensitive rules, checked before the plain lookup. Order matters within this list.
  *  `from`/`to` omitted means "don't care"; `from: null` means the clause STATED NO ORIGIN.
@@ -714,7 +715,10 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
   if (verb === "cant") {
     if (PAYABLE.test(action.object ?? "")) return "tax";
     if (cantBeBlocked(action.object ?? "", clauseText)) return "evasion";
-    return restrictedActions(action.object ?? "", clauseText, occurrence) ? "restriction" : null;
+    if (restrictedActions(action.object ?? "", clauseText, occurrence)) return "restriction";
+    // A SCOPED BAN ON BEING TARGETED (CR 115.1; #1423): read after the attack/block restriction, which never holds "be the target of".
+    if (targetingBanOf(action.object ?? "", clauseText, occurrence)) return "targeting-ban";
+    return null;
   }
   if (verb === "cost-modify") return costDirection(action.object ?? "", clauseText);
   // THE OBJECT SOMETIMES STATES THE ORIGIN THE FIELD OMITTED. Hidetsugu and Kairi reads "put two

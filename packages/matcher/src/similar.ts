@@ -187,7 +187,7 @@ function outputOf(e: GameEvent, key: string, cost = false): Output {
 const EMITTED_ELSEWHERE = new Set(["drain", "draw-card", "mill", "bounce"]);
 const EFFECT_NOUN: Record<string, string> = {
   pump: "pump", debuff: "debuff", "keyword-grant": "keyword grant", "mana-generation": "mana", "speed-increase": "speed boost",
-  animate: "animation", evasion: "evasion", "cost-reduction": "cost reduction", search: "library search", restriction: "restriction",
+  animate: "animation", evasion: "evasion", "cost-reduction": "cost reduction", search: "library search", restriction: "restriction", "targeting-ban": "targeting ban",
   drain: "drain", "ability-loss": "ability loss", "to-hand": "return to hand", "top-set": "top-of-library setup", tax: "tax",
   "type-grant": "type change", emblem: "emblem", "damage-multiplier": "damage multiplier", "counter-placement": "counters",
   "extra-turn": "extra turn", "extra-combat": "extra combat", "trigger-doubling": "trigger doubling", "win-game": "winning the game",

@@ -7139,3 +7139,71 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
   });
 });
 
+
+// #1423: `targeting-ban`, a scoped "can't be the target of ..." (CR 115.1; CR 702.11 hexproof and CR 702.18 shroud are the keyword forms).
+describe("targeting-ban: a permanent or player that can't be targeted, and by what (#1423)", () => {
+  const derive = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities;
+  };
+  const bans = (abilities: Ability[]) => abilities.filter((a) => a.effect.kind === "targeting-ban");
+  const AURA = "Enchantment — Aura";
+
+  test("Shielding Plax: the host can't be targeted by spells or abilities your opponents control", () => {
+    const [a, ...rest] = bans(derive("Shielding Plax", AURA, "Enchant creature\nWhen this Aura enters, draw a card.\nEnchanted creature can't be the target of spells or abilities your opponents control."));
+    expect(rest).toEqual([]);
+    expect(a?.host).toBe(true);
+    expect(a?.targetingBan).toEqual({ by: ["spell", "ability"], source: { control: "opp", token: null } });
+  });
+
+  test("Thrun: itself, from nongreen spells and nongreen sources of the opponents'; Gaea's Revenge: any controller", () => {
+    const thrun = bans(derive("Thrun, Breaker of Silence", "Legendary Creature — Troll Shaman", "This spell can't be countered.\nTrample\nThrun can't be the target of nongreen spells your opponents control or abilities from nongreen sources your opponents control.\nDuring your turn, Thrun has indestructible."));
+    expect(thrun).toHaveLength(1);
+    expect(thrun[0]?.effect.subject?.self).toBe(true);
+    expect(thrun[0]?.targetingBan).toEqual({ by: ["spell", "ability"], source: { control: "opp", token: null, notColors: ["G"] } });
+    const gaea = bans(derive("Gaea's Revenge", "Creature — Elemental", "This spell can't be countered.\nHaste\nThis creature can't be the target of nongreen spells or abilities from nongreen sources."));
+    expect(gaea[0]?.targetingBan).toEqual({ by: ["spell", "ability"], source: { control: "any", token: null, notColors: ["G"] } });
+  });
+
+  test("Spellbane Centaur: your creatures, from blue; Artifact Ward: abilities only, from artifact sources; Bartel Runeaxe: Aura spells", () => {
+    const centaur = bans(derive("Spellbane Centaur", "Creature — Centaur", "Creatures you control can't be the targets of blue spells or abilities from blue sources."));
+    expect(centaur[0]?.effect.subject).toMatchObject({ type: "creature", control: "you" });
+    expect(centaur[0]?.targetingBan).toEqual({ by: ["spell", "ability"], source: { control: "any", token: null, colors: ["U"] } });
+    const ward = bans(derive("Artifact Ward", AURA, "Enchant creature\nEnchanted creature can't be blocked by artifact creatures.\nPrevent all damage that would be dealt to enchanted creature by artifact sources.\nEnchanted creature can't be the target of abilities from artifact sources."));
+    expect(ward[0]?.targetingBan).toEqual({ by: ["ability"], source: { control: "any", token: null, type: "artifact" } });
+    const bartel = bans(derive("Bartel Runeaxe", "Legendary Creature — Human Warrior", "Vigilance\nBartel Runeaxe can't be the target of Aura spells."));
+    expect(bartel[0]?.targetingBan).toEqual({ by: ["spell"], source: { control: "any", token: null, subtype: ["aura"] } });
+  });
+
+  test("Ground Seal and Peace Talks: players and cards, no source restriction; Vines of Vastwood: a target creature, this turn", () => {
+    const seal = bans(derive("Ground Seal", "Enchantment", "When this enchantment enters, draw a card.\nCards in graveyards can't be the targets of spells or abilities."));
+    expect(seal).toHaveLength(1);
+    expect(seal[0]?.targetingBan).toEqual({ by: ["spell", "ability"], source: { control: "any", token: null } });
+    const vines = bans(derive("Vines of Vastwood", "Instant", "Kicker {G}\nTarget creature can't be the target of spells or abilities your opponents control this turn. If this spell was kicked, that creature gets +4/+4 until end of turn."));
+    expect(vines).toHaveLength(1);
+    expect(vines[0]?.effect.subject).toMatchObject({ type: "creature", scope: "target" });
+    expect(vines[0]?.targetingBan?.source.control).toBe("opp");
+  });
+
+  test("Peace Talks (the model's two limbs) and Tomik (a list): the player limb and the list name no class, the permanent limb is permanents", () => {
+    const text = "This turn and next turn, creatures can't attack, and players and permanents can't be the targets of spells or activated abilities.";
+    const stored = [{ id: 1, abilityType: "spell", actions: [
+      { verb: "cant", object: "creatures can't attack" },
+      { verb: "cant", object: "players can't be the targets of spells or activated abilities" },
+      { verb: "cant", object: "permanents can't be the targets of spells or activated abilities" },
+    ] }] as never;
+    const out = bans(deriveAbilities(stored, "Peace Talks", { 1: text }, undefined, text).abilities);
+    expect(out.map((a) => [a.effect.subject?.type ?? null, a.targetingBan?.by])).toEqual([[null, ["spell", "activated-ability"]], ["permanent", ["spell", "activated-ability"]]]);
+    const tomik = bans(derive("Tomik, Distinguished Advokist", "Legendary Creature \u2014 Human Advisor", "Flying\nLands on the battlefield and land cards in graveyards can't be the targets of spells or abilities your opponents control.\nYour opponents can't play land cards from graveyards."));
+    expect(tomik).toHaveLength(1);
+    expect(tomik[0]?.effect.subject?.type).toBeUndefined();
+    expect(tomik[0]?.targetingBan?.source.control).toBe("opp");
+  });
+
+  test("not read: a narrowed or conditional ban (Wall of Shadows, Lurker) and Kaya's opposite permission", () => {
+    expect(bans(derive("Wall of Shadows", "Creature — Wall", "Defender\nPrevent all damage that would be dealt to this creature by creatures it's blocking.\nThis creature can't be the target of spells that can target only Walls or of abilities that can target only Walls."))).toEqual([]);
+    expect(bans(derive("Lurker", "Creature — Beast", "This creature can't be the target of spells unless it attacked or blocked this turn."))).toEqual([]);
+    expect(bans(derive("Kaya, Bane of the Dead", "Legendary Planeswalker — Kaya", "Your opponents and permanents your opponents control with hexproof can be the targets of spells and abilities you control as though they didn't have hexproof.\n−3: Exile target creature."))).toEqual([]);
+  });
+});

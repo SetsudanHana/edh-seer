@@ -121,6 +121,8 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     evasion: 0.2,
     // RESTRICTION (#1315): the same reasoning -- a fact about what a creature cannot do, blank before its kind.
     restriction: 0.2,
+    // TARGETING-BAN (#1423): the same reasoning -- a hexproof-like fact about what can target a permanent, blank before its kind.
+    "targeting-ban": 0.2,
     // TO-HAND (#1302, CR 121.5): the same reasoning -- a fact about cards put from your library into your hand, blank before its kind.
     "to-hand": 0.2,
     // A PROCESSOR (AF7b, 2026-09-16): spending an opponent's exiled card is a rider on a body --

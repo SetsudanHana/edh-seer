@@ -10,6 +10,7 @@ import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb, EventCount } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
+import { targetingBanOf, targetingBanSubjectInObject } from "./cant-kinds.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
 import { actionEmits, casualtySacrifice, millsOwnLibrary, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, narrowSelfExiledSpell, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, activationConditionOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
@@ -1329,6 +1330,10 @@ function everyCreatureYouControl(who: string, clauseText: string): boolean {
 const CANT_BE_BLOCKED = /^(.*?\S)\s+(?:(?:can['\u2019]t|cannot)\s+)?be blocked\b/i;
 /** Who cannot attack or block (#1315): the words ahead of "can't attack|block". */
 const CANT_ATTACK_OR_BLOCK = /^(.*?\S)\s+(?:can['\u2019]t|cannot)\s+(?:attack|block)\b/i;
+/** Who can't be targeted (#1423): the words ahead of "can't be the target(s) of". */
+const CANT_BE_TARGETED = /^(.*?\S)\s+(?:(?:can['\u2019]t|cannot)\s+)?be the targets? of\b/i;
+/** A recipient that is a LIST ("players and permanents", "lands on the battlefield and land cards in graveyards") or holds another sentence's verb: the filter reads one class, so it is left unnamed. */
+const RECIPIENT_LIST = /,| (?:and|or) |\b(?:can['\u2019]t|cannot)\b/i;
 /** Who LOSES abilities: "Creatures lose all abilities", "Enchanted creature loses all abilities". */
 const LOSES_ABILITIES = /^(.*?\S)\s+\bloses?\s+all\s+abilities\b/i;
 /** The same defect one verb over. `copy` records the copy SOURCE as its object -- Shapesharer's
@@ -1557,6 +1562,17 @@ function effectSubject(
   // A "gets +1/+0 and" ahead of it is not the subject. "enchanted creature" and the other narrowings the filter cannot hold stay unnamed.
   // CEILING: "enchanted / equipped creature" and the other narrowings stay unnamed, and a STATIC keeps no subject (`namesItsTargets`): 328 of the 541
   // derived evasion abilities carry no type, subtype or self. WHOSE it is, an Aura's / Equipment's host, is `Ability.host` (derive 370), not the subject.
+  // WHO IS PROTECTED from a `targeting-ban` (#1423, CR 115.1): "Enchanted creature" is the host (unnamed here, `Ability.host`), "this creature" / the card's name is `self`, a list is unnamed rather than half read.
+  if (kind === "targeting-ban") {
+    const left = targetingBanSubjectInObject(action.object ?? "") ?? recipientBefore(clauseText, CANT_BE_TARGETED);
+    const who = left?.split(/\s(?=(?:gets?|gains?|has|have|loses?)\b)/i)[0]?.trim().replace(/ and$/i, "");
+    const tail = who?.includes(", and ") ? who.slice(who.lastIndexOf(", and ") + 6) : who;
+    const granted = /["\u201c][^"\u201c\u201d]*\b(?:can['\u2019]t|cannot) be the targets? of/i.test(clauseText);
+    if (!tail || granted || UNEXPRESSIBLE_NARROWING.test(tail) || RECIPIENT_LIST.test(tail) || /^(?:it|that creature|they|them|players?)$/i.test(tail)) return parseSubject("");
+    const s = subjectFrom(tail, cardName, cardText);
+    if (SELF_REFERENCE.test(tail) || isSelfSubject(tail, cardName)) s.self = true;
+    return s;
+  }
   if (kind === "evasion" || kind === "restriction") {
     const object = action.object ?? "";
     const re = kind === "evasion" ? CANT_BE_BLOCKED : CANT_ATTACK_OR_BLOCK;
@@ -3467,6 +3483,8 @@ export function deriveAbilities(
         && (kind !== "static" || namesItsTargets(subject) || effectKind === "ability-loss"
           // A RETARGET'S SUBJECT IS A TARGET (scope "target"), never a whole-deck class, and a fact kind claims nothing pairwise: Emissary of Grudges' activated ability is stored `static`.
           || effectKind === "retarget"
+          // ...and so is a targeting ban's (#1423): a fact kind, the pair channels read it blank, and WHO is protected is the point of the line.
+          || effectKind === "targeting-ban"
           || (effectKind === "graveyard-recursion" && subject.zone === "graveyard")
           // A STATIC GRAVEYARD-HATE REPLACEMENT (Leyline of the Void, Rest in Peace, #1266) keeps whose graveyard it hits; the `zone: graveyard` matches no printed card, like the recursion above.
           || (effectKind === "graveyard-hate" && subject.zone === "graveyard" && graveyardReplacement(text)?.kind === "hate"))
@@ -3494,6 +3512,7 @@ export function deriveAbilities(
       // The effect lands on the permanent this card is attached to (#1315): a marker, never a subject -- see `Ability.host`.
       if (hostEffect(action, effectKind, text)) ability.host = true;
       if (effectKind === "restriction") { const r = restrictedActions(action.object ?? "", text, sameCant); if (r) ability.restricts = r; }
+      if (effectKind === "targeting-ban") { const b = targetingBanOf(action.object ?? "", text, sameCant); if (b) ability.targetingBan = b; }
       // "DRAW A CARD IF IT WAS ATTACKING. OTHERWISE, ..." (#798, Garna; Zurgo Stormrender): the
       // condition narrows the action its own sentence names to a death IN COMBAT, which is the
       // trigger subject's combat state; the "Otherwise" branch keeps every other death.

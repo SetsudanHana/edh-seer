@@ -1014,6 +1014,11 @@ export const EFFECT_KINDS = [
   // `Ability.restricts`. A fact kind like `evasion`: the pair channels read it blank. NOT "can't be blocked" (evasion), NOT "can't attack you" (a tax, Propaganda), NOT
   // a requirement ("attacks each combat if able"), and a block narrowed to a class ("can't block creatures without flying") is left unread.
   "restriction",
+  // TARGETING-BAN (CR 115.1 targets; CR 702.11 hexproof and CR 702.18 shroud are its keyword forms; #1423, owner ruling 2026-10-30): a SCOPED "can't be the target of ..." -- Shielding Plax and Canopy Cover
+  // ("spells or abilities your opponents control"), Vines of Vastwood (this turn), Thrun and Gaea's Revenge ("nongreen spells or abilities from nongreen sources"), Spellbane Centaur, Artifact Ward ("abilities
+  // from artifact sources"), Bartel Runeaxe ("Aura spells"), Ground Seal, Peace Talks. `effect.subject` is who is protected, `Ability.targetingBan` is by what and from whom. A fact kind like `restriction`: the
+  // pair channels read it blank. NOT the keyword (hexproof / shroud is `keyword-grant`), NOT a narrowed or conditional ban (Wall of Shadows, Lurker), NOT Kaya's permission to target through hexproof.
+  "targeting-ban",
   // TO-HAND (CR 121.5: "If an effect moves cards from a player's library to that player's hand without using the word 'draw,' the player has not drawn those cards"; #1302,
   // owner ruling 2026-10-22): cards put from the TOP of your own library into your hand with no search -- Dark Confidant ("reveal the top card of your library and put that
   // card into your hand"), Ad Nauseam, Fact or Fiction (one pile), Impulse / Dig Through Time ("look at the top N ... put one / two of them into your hand"), Coiling
@@ -1219,6 +1224,15 @@ export interface Ability {
   grantedBy?: number;
   /** WHICH ACTIONS A `restriction` ABILITY FORBIDS (#1315): `attack`, `block`, or both ("can't attack or block"). Only on an ability of effect kind `restriction`. */
   restricts?: ("attack" | "block")[];
+  /** WHAT A `targeting-ban` ABILITY KEEPS FROM TARGETING IT, AND WHOSE (#1423; CR 115.1, hexproof CR 702.11, shroud CR 702.18). `by` is `spell`, `ability`, both ("spells or abilities"), or `activated-ability`
+   *  (Peace Talks: "spells or activated abilities"). `source` is the filter on the SOURCE of the spell or ability: `control: "opp"` for "your opponents control" (Shielding Plax), else `any` (Ground Seal, shroud);
+   *  `colors` / `notColors` (WUBRG letters) for "blue spells or abilities from blue sources" (Spellbane Centaur) and "nongreen" (Thrun, Gaea's Revenge); `type` for "abilities from artifact sources" (Artifact Ward);
+   *  `subtype: ["aura"]` for "Aura spells" (Bartel Runeaxe). Who is PROTECTED is `effect.subject` (absent when the line names a list, "players and permanents", or an Aura's host: `host`).
+   *  ABSENT on every other ability. A hexproof-like fact: the pair channels read the kind blank. */
+  targetingBan?: {
+    by: ("spell" | "ability" | "activated-ability")[];
+    source: SubjectFilter;
+  };
   /** A `to-hand` ABILITY'S CARDS REACH THE HAND BY A PICK (#1302): somebody chooses which of at least two looked-at or revealed cards go to your hand -- "look at the top four
    *  cards, put one of them into your hand" (Impulse), "put two of them" (Dig Through Time), "you may reveal a historic card from among them and put it into your hand". `amount`
    *  says how many. Only `true` is written. ABSENT: the one card a reveal turned up (Dark Confidant, Coiling Oracle, Demonic Consultation), a pile (Fact or Fiction: `amount`

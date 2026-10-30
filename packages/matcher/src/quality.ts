@@ -23,6 +23,9 @@ export type Ingredients = Partial<Record<Ingredient, number>>;
  *  mana cost they took the top percentiles; the trigger vocabulary excludes them on the same footing. */
 const NOT_A_DECK_CARD = new Set(["stickers", "attraction"]);
 
+/** Fact kinds that are no EXTRA VALUE on a card whose job is another's (`extraValue`, below): a curse or a cost (`restriction`, owner 2026-10-22, #1315), and the kinds that derived blank before they had a name (#1423). */
+const NOT_EXTRA_VALUE: ReadonlySet<string> = new Set(["restriction", "targeting-ban"]);
+
 export function rolesOfCard(d: DeckCard): Role[] {
   const types = [...(d.tags?.characteristics.types ?? []), ...(d.tags?.characteristics.subtypes ?? [])].map((t) => t.toLowerCase());
   if (types.some((t) => NOT_A_DECK_CARD.has(t))) return [];
@@ -210,8 +213,9 @@ export function ingredients(d: DeckCard, role: Role): Ingredients {
   out.drawback = all.some((a) => (a.emits ?? []).some(isDrawback)) || GIVES_A_PERMANENT.test(d.card.oracleText ?? "") ? 1 : 0;
   // A SECOND ABILITY WITH ITS OWN EFFECT, not a gift to the opponent (Swords' lifegain is the victim's).
   // A `restriction` ("can't attack or block", "can't block") is a cost or a curse, never extra value -- self drawback or rider alike (owner 2026-10-22, #1315).
+  // A `targeting-ban` (#1423) is no extra value either: it derived blank before its kind, and counting it would move every card that prints one (Shielding Plax, Spellbane Centaur) with no ruling to say it should.
   // A `to-hand` ability (#1302: Sea Gate Oracle's look-and-take, Dark Confidant's reveal) IS extra value: it is real card advantage, so it counts here like any other kind.
-  const others = all.filter((a) => !abilities.includes(a) && a.effect.kind !== "" && a.effect.kind !== "restriction"
+  const others = all.filter((a) => !abilities.includes(a) && a.effect.kind !== "" && !NOT_EXTRA_VALUE.has(a.effect.kind)
     && !(a.emits ?? []).some((e) => e.subject.control === "opp"));
   const types = (d.tags?.characteristics.types ?? []).map((t) => t.toLowerCase());
   out.extraValue = (types.includes("creature") ? 1 : 0) + (others.length > 0 ? 1 : 0);
