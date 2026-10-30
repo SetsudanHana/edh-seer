@@ -7410,3 +7410,49 @@ describe("untap-denial: a recipient that opens with the card's own damage clause
     expect(den[0]?.effect.subject?.scope).not.toBe("target");
   });
 });
+
+describe("a plural back-reference is its antecedent's subject, or nothing (#1427)", () => {
+  const taps = (name: string, typeLine: string, oracleText: string, verb: string) => {
+    const card = { name, typeLine, keywords: [] as string[], oracleText };
+    const g = grammarClauseRecords(card);
+    expect(g.complete, name).toBe(true);
+    const abilities = deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities;
+    return abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.verb === verb).map((e) => e.subject));
+  };
+  test("Zealous Display: 'untap those creatures' untaps the creatures YOU control, not every creature", () => {
+    const s = taps("Zealous Display", "Instant", "Creatures you control get +2/+0 until end of turn. If it's not your turn, untap those creatures.", "untaps");
+    expect(s).toHaveLength(1);
+    expect(s[0]).toMatchObject({ control: "you", type: "creature" });
+  });
+  test("Mob Rule: each mode untaps the creatures its own gain-control named (power 4 or greater / 3 or less)", () => {
+    const s = taps("Mob Rule", "Sorcery", "Choose one —\n• Gain control of all creatures with power 4 or greater until end of turn. Untap those creatures. They gain haste until end of turn.\n• Gain control of all creatures with power 3 or less until end of turn. Untap those creatures. They gain haste until end of turn.", "untaps");
+    expect(s.map((x) => x.stats?.[0]?.op).sort()).toEqual(["gte", "lte"]);
+  });
+  test("Domineering Will: the untapped creatures are the TARGETED ones", () => {
+    const s = taps("Domineering Will", "Instant", "Target player gains control of up to three target nonattacking creatures until end of turn. Untap those creatures. They block this turn if able.", "untaps");
+    expect(s).toHaveLength(1);
+    expect(s[0]?.scope).toBe("target");
+  });
+  test("Thundermaw Hellkite keeps its opponents' flying creatures", () => {
+    const s = taps("Thundermaw Hellkite", "Creature — Dragon", "Flying\nHaste (This creature can attack and {T} as soon as it comes under your control.)\nWhen this creature enters, it deals 1 damage to each creature with flying your opponents control. Tap those creatures.", "taps");
+    expect(s).toHaveLength(1);
+    expect(s[0]).toMatchObject({ control: "opp", keyword: ["flying"] });
+  });
+  test("Tamiyo, Upriser Crowned: a batched trigger's creatures are no class the emit can carry: no taps", () => {
+    const s = taps("Tamiyo, Upriser Crowned", "Legendary Creature — Elder Human Wizard", "Flying, double strike, haste\nWhen Tamiyo enters, you become the monarch.\nWhenever one or more creatures deal combat damage to you while you're the monarch, tap those creatures and put a stun counter on each of them.", "taps");
+    expect(s).toEqual([]);
+  });
+  test("Virtue of Loyalty: 'untap those creatures' after a counter put on 'each creature you control' untaps the creatures you control", () => {
+    const s = taps("Virtue of Loyalty", "Enchantment", "At the beginning of your end step, put a +1/+1 counter on each creature you control. Untap those creatures.", "untaps");
+    expect(s).toHaveLength(1);
+    expect(s[0]).toMatchObject({ control: "you", type: "creature" });
+  });
+  test("Twist Allegiance: two different antecedents are no single class: no untaps", () => {
+    const s = taps("Twist Allegiance", "Instant", "You and target opponent each gain control of all creatures the other controls until end of turn. Untap those creatures. Those creatures gain haste until end of turn.", "untaps");
+    expect(s).toEqual([]);
+  });
+  test("Day of Black Sun: an antecedent that is no creature class (abilities) is refused", () => {
+    const s = taps("Day of Black Sun", "Sorcery", "Each creature with mana value X or less loses all abilities until end of turn. Destroy those creatures.", "dies");
+    expect(s).toEqual([]);
+  });
+});

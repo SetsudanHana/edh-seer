@@ -42,7 +42,7 @@ import { addsManaText, deriveMana, production } from "./mana-lines.js";
 import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
 import { isSelfSubject, SELF_REFERENCE, withoutArticle } from "./self-reference.js";
-import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, boundedByEnchantLine, exiledAcrossClauses, PRONOUN_OBJECT, zoneAfterEvent } from "./references.js";
+import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, boundedByEnchantLine, exiledAcrossClauses, PLURAL_BACKREF, pluralAntecedent, PRONOUN_OBJECT, zoneAfterEvent } from "./references.js";
 import { triggerHasCue } from "../clause-store.js";
 import { emblemRecipient } from "../emblem.js";
 
@@ -1334,9 +1334,6 @@ const CANT_BE_BLOCKED = /^(.*?\S)\s+(?:(?:can['\u2019]t|cannot)\s+)?be blocked\b
 const CANT_ATTACK_OR_BLOCK = /^(.*?\S)\s+(?:can['\u2019]t|cannot)\s+(?:attack|block)\b/i;
 /** Who can't be targeted (#1423): the words ahead of "can't be the target(s) of". */
 const CANT_BE_TARGETED = /^(.*?\S)\s+(?:(?:can['\u2019]t|cannot)\s+)?be the targets? of\b/i;
-/** "those creatures" / "those permanents": a back-reference object whose antecedent's narrowing the filter cannot recover. */
-const THOSE_BACKREF = /^those (?:creatures|permanents)$/i;
-const COMBAT_ANTECEDENT = /\b(?:blocking|blocked by|deal(?:s)? combat damage|attacking)\b/i;
 /** An Aura's or Equipment's host by any noun ("enchanted permanent", "enchanted land", "equipped creature"): the host is `Ability.host`, never a class (#1423). */
 const HOST_WORD = /^(?:enchanted|equipped)\b/i;
 /** A recipient that is a LIST ("players and permanents", "lands on the battlefield and land cards in graveyards") or holds another sentence's verb: the filter reads one class, so it is left unnamed. */
@@ -2980,6 +2977,18 @@ export function deriveAbilities(
         if (GUARDED_VERBS.has(a.verb ?? "") && !guardExempt(a) && verbPrint(a.verb ?? "", clauseText, clauseCosts?.[clause.id as number], oracleText) === "none") misfiled.add(a);
       }
     }
+    // "UNTAP THOSE CREATURES" IS THE SET AN EARLIER ACTION NAMED (#1427): see `pluralAntecedent`. Resolved, the object becomes that text; unresolved, the action is
+    // refused below (missing beats wrong -- it read as every creature).
+    const refusedPlural = new Set<Action>();
+    if ((clause.actions ?? []).some((a) => PLURAL_BACKREF.test((a.object ?? "").trim()))) {
+      const rewritten = [...(clause.actions ?? [])];
+      rewritten.forEach((a, i) => {
+        if (!PLURAL_BACKREF.test((a.object ?? "").trim())) return;
+        const t = pluralAntecedent(rewritten, i);
+        if (t === undefined) refusedPlural.add(a); else rewritten[i] = { ...a, object: t };
+      });
+      clause = { ...clause, actions: rewritten };
+    }
     // The trailing "if" of each action's sentence (#1357), read once per clause from the effect body (the text after the trigger preamble, an intervening if and an ability word).
     const gateReads = clauseText ? effectGates(effectText(clauseText, cardName ?? ""), (clause.actions ?? []).map((a) => a.verb ?? "")) : undefined;
     const alike = clauseText ? branchesAlike(effectText(clauseText, cardName ?? ""), (clause.actions ?? []).map((a) => a.verb ?? "")) : undefined;
@@ -2993,7 +3002,7 @@ export function deriveAbilities(
       }
       // Inert: states no action (`INERT_VERBS`), so there is nothing to report. A printed casualty line above has its own ability.
       if (INERT_VERBS.has(action.verb ?? "")) continue;
-      if (misfiled.has(action)) { unclaimed.push(action); continue; }
+      if (misfiled.has(action) || refusedPlural.has(action)) { unclaimed.push(action); continue; }
       if (keywordActionOnStaticClause(kind, action.verb)) { unclaimed.push(action); continue; }
       // See antecedentFor: a pronoun object inherits the thing named earlier in the same clause.
       // "Whenever a player casts a spell, if it's not their turn, this creature deals 4 damage to THEM"
@@ -3102,11 +3111,6 @@ export function deriveAbilities(
         // the replaced event: Academy Manufactor's clause answers `create` three times and creates
         // a token on its own none of those times.
         .filter(() => replacement === null)
-        // "TAP THOSE CREATURES" AFTER A COMBAT-DEFINED CLASS (#1423 follow-up): the back-reference reads as every creature, dropping the antecedent's combat narrowing (Dread Wight's "each creature blocking or blocked by this
-        // creature", Tamiyo, Upriser Crowned's "creatures deal combat damage to you"): those are the OPPONENT'S creatures in combat with the card, and a `taps` over every creature fed every "this creature becomes tapped" watcher
-        // of yours. The antecedent walk does not resolve it (not a PRONOUN_OBJECT), so the emit is refused: missing beats wrong. CEILING: only a combat antecedent; "those creatures" after another narrowing (Thundermaw Hellkite's
-        // "with flying") keeps the wide reading, whose class (opponents' creatures) is still true of it.
-        .filter(() => !(action.verb === "tap" && THOSE_BACKREF.test((action.object ?? "").trim()) && COMBAT_ANTECEDENT.test(text)))
         // A DENIED UNTAP IS NO UNTAP EVENT (#1423): the model's `untap` verb for "doesn't untap" (Melancholy, Reveka) would otherwise emit `untaps` and feed every untap watcher.
         .filter(() => effectKind !== "untap-denial")
         // ROADMAP I7. The permanent arrives under a controller the schema cannot name, so the emit
