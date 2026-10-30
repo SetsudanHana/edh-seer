@@ -575,7 +575,8 @@ import { emblemRecipient } from "../emblem.js";
 // 410: #1401 -- tap it and up to one target keeps the card's own tap; counter on it / on this creature across two sentences
 // 411: #1401 -- #1401 part 2: a zone list keeps each limb's own zone (moveList: Decree of Annihilation, Crabomination, Shadows' Verdict) and an emit reads a comma card name whole (38 cards: Vraska's Scorn, Jace's Ruse, Liberating Combustion, ...)
 // 412: #1401 -- #1401 part 3 family B -- identical abilities of one clause fold to the number of times the clause prints their verb (sacrifice, copy, shuffle): Chimeric Coils, Ether, Thunderous Debut, Phyrexian Portal lose one duplicate each; This Is How It Ends, Telling Time, Ransack stay. Measured: 4 rows change, pair membership +0/-0, role-ratchet 0/0, dropped-clauses 5181 unchanged.
-export const DERIVE_VERSION = 412;
+// 413: #1401 -- #1401 part 4 family A -- counter actions map to recipient phrases by group: Arwen's two pairs (the other creature, then the card), Sinister Concierge's two time counters (the card exiled, then the target exiled), Invasion of New Capenna's second counter reads 'each other creature you control'. Measured: 3 rows change, pair membership +68/-0, role-ratchet 0/0, dropped-clauses 5181 unchanged.
+export const DERIVE_VERSION = 413;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
