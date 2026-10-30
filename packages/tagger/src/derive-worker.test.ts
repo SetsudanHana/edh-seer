@@ -232,3 +232,37 @@ describe("each printed object gets its own subject (#1401)", () => {
     expect(emitsOf(grammarRow(brew as never), "counter-added").map((e) => e.subject.self === true)).toContain(true);
   });
 });
+
+// #1401 part 3 (family B): a bought record that writes ONE printed action twice derives JSON-identical abilities; the fold counts the clause's printed VERB (oracle text and stored records dumped from Mongo 2026-10-30).
+const B_ACT = (verb: string, object: string, extra: Record<string, unknown> = {}) => ({ verb, object, fromZone: null, toZone: null, amount: null, optional: false, ...extra });
+const B_CARDS: Record<string, { oracleText: string; typeLine: string; keywords?: string[]; canonical: unknown[]; expect: Record<string, number> }> = {
+  "Chimeric Coils": { oracleText: "{X}{1}: This artifact becomes an X/X Construct artifact creature. Sacrifice it at the beginning of the next end step.", typeLine: "Artifact",
+    canonical: [{ id: 1, abilityType: "activated", actions: [B_ACT("sacrifice", "this"), B_ACT("animate", "this", { amount: "X/X" }), B_ACT("sacrifice", "this")] }], expect: { sacrifice: 1 } },
+  "Ether": { oracleText: "{T}, Exile this artifact: Add {U}. When you next cast an instant or sorcery spell this turn, copy that spell. You may choose new targets for the copy.", typeLine: "Artifact",
+    canonical: [{ id: 1, abilityType: "activated", actions: [B_ACT("exile", "this artifact"), B_ACT("add-mana", "{U}")] }, { id: 2, abilityType: "triggered", trigger: { event: "cast", subject: "an instant or sorcery spell", control: "you" }, actions: [B_ACT("copy", "that spell"), B_ACT("copy", "that spell", { optional: true })] }], expect: { copy: 1 } },
+  "Thunderous Debut": { oracleText: "Bargain (You may sacrifice an artifact, enchantment, or token as you cast this spell.)\nLook at the top twenty cards of your library. You may reveal up to two creature cards from among them. If this spell was bargained, put the revealed cards onto the battlefield. Otherwise, put the revealed cards into your hand. Then shuffle.", typeLine: "Sorcery", keywords: ["Bargain"],
+    canonical: [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Bargain" }] }, { id: 2, abilityType: "spell", actions: [B_ACT("shuffle", "your library"), B_ACT("reveal", "up to two creature cards from the top twenty cards of your library", { optional: true }), B_ACT("put", "the revealed cards", { fromZone: "library", toZone: "battlefield" }), B_ACT("put", "the revealed cards", { fromZone: "library", toZone: "hand" }), B_ACT("shuffle", "your library")] }], expect: { shuffle: 1 } },
+  "Phyrexian Portal": { oracleText: "{3}: If your library has ten or more cards in it, target opponent looks at the top ten cards of your library and separates them into two face-down piles. Exile one of those piles. Search the other pile for a card, put it into your hand, then shuffle the rest of that pile into your library.", typeLine: "Artifact",
+    canonical: [{ id: 1, abilityType: "activated", actions: [B_ACT("shuffle", "your library"), B_ACT("exile", "one pile", { fromZone: "library", toZone: "exile" }), B_ACT("search", "the other pile", { fromZone: "library" }), B_ACT("put", "a card", { fromZone: "library", toZone: "hand" }), B_ACT("shuffle", "the rest of that pile into your library")] }], expect: { shuffle: 1 } },
+  // Correct repeats: the printed text names the verb as often as the record does.
+  "This Is How It Ends": { oracleText: "Target creature's owner shuffles it into their library, then faces a villainous choice — They lose 5 life, or they shuffle another creature they own into their library.", typeLine: "Sorcery",
+    canonical: [{ id: 1, abilityType: "spell", actions: [B_ACT("put", "target creature", { fromZone: "battlefield", toZone: "library" }), B_ACT("shuffle", "library"), B_ACT("face-a-villainous-choice", "target creature's owner"), B_ACT("lose-life", "target creature's owner", { amount: "5", optional: true }), B_ACT("put", "another creature they own", { fromZone: "battlefield", toZone: "library", optional: true }), B_ACT("shuffle", "library", { optional: true })] }], expect: { shuffle: 2 } },
+  "Telling Time": { oracleText: "Look at the top three cards of your library. Put one of those cards into your hand, one on top of your library, and one on the bottom of your library.", typeLine: "Instant",
+    canonical: [{ id: 1, abilityType: "spell", actions: [B_ACT("put", "one of the top three cards of your library", { fromZone: "library", toZone: "hand" }), B_ACT("put", "one of the top three cards of your library", { fromZone: "library", toZone: "library" }), B_ACT("put", "one of the top three cards of your library", { fromZone: "library", toZone: "library" })] }], expect: { put: 3 } },
+  "Ransack": { oracleText: "Look at the top five cards of target player's library. Put any number of them on the bottom of that library in any order and the rest on top of the library in any order.", typeLine: "Sorcery",
+    canonical: [{ id: 1, abilityType: "spell", actions: [B_ACT("put", "any number of the top five cards of target player's library", { fromZone: "library", toZone: "library", optional: true }), B_ACT("put", "the rest of the top five cards of target player's library", { fromZone: "library", toZone: "library" })] }], expect: { put: 2 } },
+};
+const bRow = (name: string) => { const c = B_CARDS[name]!; return deriveRow({ doc: { oracleId: "x", name, canonical: c.canonical } as never, source: { name, oracleText: c.oracleText, typeLine: c.typeLine, keywords: c.keywords ?? [] } as never, isToken: false }); };
+describe("identical twins of one printed verb fold (#1401 family B)", () => {
+  // The count of emits per verb the card keeps: a twin pair reads 2 before the fold.
+  const emitCount = (name: string, verb: string) => bRow(name).tags.abilities.reduce((n, a) => n + (a.emits ?? []).filter((e) => e.verb === verb).length, 0);
+  test.each([["Chimeric Coils", "sacrifice"], ["Ether", "copy"], ["Thunderous Debut", "shuffle"], ["Phyrexian Portal", "shuffle"]])("%s: one printed %s, one ability", (name, verb) => {
+    expect(emitCount(name, verb)).toBe(B_CARDS[name]!.expect[verb]);
+  });
+  test("This Is How It Ends: two printed shuffles stay two", () => {
+    expect(emitCount("This Is How It Ends", "shuffle")).toBe(2);
+  });
+  test.each([["Telling Time", 3], ["Ransack", 2]])("%s: a top-set repeat has no verb to count, so it stays (%i abilities)", (name, n) => {
+    expect(bRow(name).tags.abilities).toHaveLength(n);
+  });
+});

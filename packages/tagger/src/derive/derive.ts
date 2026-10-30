@@ -574,7 +574,8 @@ import { emblemRecipient } from "../emblem.js";
 // 409: #1403 -- the grammar no longer reads a card complete while dropping a printed action: a "you and X each" phrase it cannot read is unread (was silently dropped), "each gain control of <X> the other controls" reads as two control changes (yours of theirs, theirs of yours: Twist Allegiance, gains-control you then opp), and a phrase splits before "and <player> <verb>" (Khârn the Betrayer's swallowed gain of control, Haunted Angel, Oft-Nabbed Goat). Also "that opponent" is a player actor, "decides whether" a phrase joint, "unless that opponent pays N life" stays the main action's unless (Prince of Thralls), a back-referenced amount ("that many", "that much") no longer replaces a stored amount that resolves it, on the model path or (carryStoredAmounts) on a grammar winner, a trigger quantifier ("one or more") excepted, and a prevention of damage to the card itself marks the prevented emit `self` (Khârn the Betrayer, the Phantom cycle, Wall of Vapor) (not a granted or quoted "this creature", whose recipient is another permanent), which no "damage to you" payoff hears. Measured (derive-corpus --force; whole cardTagsDerived snapshot 408 vs 409, 32,797 rows): 86 rows change, none added or removed; 7 more move model -> grammar with identical tags (Twist Allegiance, Tomik, Norn's Decree, Fungal Shambler, Haunted Angel, Zhang Liao, Oft-Nabbed Goat); derive-identity identical 32006, different 2 (the stale pair). Emits: Khârn the Betrayer gains-control you -> opp ("an opponent of your choice gains control of it", pairs gained: scales:donated into Zedruu and Iroh); 52 rows' prevented emit gains `self` (prevention of damage to the card itself), which removes their false prevented -> Selfless Squire reason (50 of 52 probed lost it, 0 other reasons moved). Amount/count: the stored amount and its scaling restored over "that many" on Black Panther, Spider-Man New Champion, Basri Ket (batched attacks trigger kept), Dragonspark Reactor, Last-Ditch Effort, Kaya Orzhov Usurper, Sawblade Skinripper and more (pair reasons re-magnituded, none lost); Rogue Skycaptain removes "all" wage counters. Grammar: complete 28,417 -> 28,423 of 34,740; grammar-complete cards printing "gain(s) control" with no gain-control record 2 -> 0. Panel precision 100.0% [99.2, 100.0] / retention 98.4% (428 held, 7 lost) unchanged; role-ratchet gained 0 lost 0; dropped-clauses 5180 unchanged.
 // 410: #1401 -- tap it and up to one target keeps the card's own tap; counter on it / on this creature across two sentences
 // 411: #1401 -- #1401 part 2: a zone list keeps each limb's own zone (moveList: Decree of Annihilation, Crabomination, Shadows' Verdict) and an emit reads a comma card name whole (38 cards: Vraska's Scorn, Jace's Ruse, Liberating Combustion, ...)
-export const DERIVE_VERSION = 411;
+// 412: #1401 -- #1401 part 3 family B -- identical abilities of one clause fold to the number of times the clause prints their verb (sacrifice, copy, shuffle): Chimeric Coils, Ether, Thunderous Debut, Phyrexian Portal lose one duplicate each; This Is How It Ends, Telling Time, Ransack stay. Measured: 4 rows change, pair membership +0/-0, role-ratchet 0/0, dropped-clauses 5181 unchanged.
+export const DERIVE_VERSION = 412;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -4044,12 +4045,61 @@ export function deriveAbilitiesOf(input: DeriveInput, opts: { collapseZoneSearch
  *  switch itself compares UNFOLDED readings. */
 export function foldGrantTwins(abilities: Ability[], clauseTexts?: Record<number, string>): Ability[] {
   const seen = new Set<string>();
-  return abilities.filter((a) => {
+  const once = abilities.filter((a) => {
     const k = a.effect?.kind;
     if (k !== "keyword-grant" && k !== "speed-increase" && !(a.clause !== undefined && hasInstead(clauseTexts?.[Math.trunc(Number(a.clause))]))) return true;
     const key = stableJson(JSON.parse(JSON.stringify(a)));
     return !seen.has(key) && !!seen.add(key);
   });
+  return foldRepeatedVerbTwins(once, clauseTexts);
+}
+/** The printed word forms of the verbs `foldRepeatedVerbTwins` can count. A verb absent from this table is never folded (a missing fold beats a wrong one). */
+const TWIN_VERB_FORMS: Record<string, readonly string[]> = {
+  sacrifice: ["sacrifice", "sacrifices", "sacrificed", "sacrificing"],
+  copy: ["copy", "copies", "copied", "copying"],
+  shuffle: ["shuffle", "shuffles", "shuffled", "shuffling"],
+};
+/** A word before "copy" / "sacrifice" / "shuffle" that makes it a NOUN ("for the copy", "a copy of"): not a second printed action. */
+const NOUN_MARKERS: ReadonlySet<string> = new Set(["the", "a", "an", "that", "this", "its", "their", "your", "his", "her", "each", "new", "another", "any", "one"]);
+/** How many times the clause text prints `verb` as a verb. Words are scanned, not matched by pattern. A word after a determiner or a possessive is a noun and does not count; an
+ *  ambiguous word ("two copies") counts, which can only make a fold rarer. */
+function printedVerbCount(text: string, verb: string): number {
+  const forms = TWIN_VERB_FORMS[verb]!;
+  const words = text.replace(/\([^()]*\)/g, " ").toLowerCase().split(/[^a-z']+/).filter((w) => w !== "");
+  let n = 0;
+  for (let i = 0; i < words.length; i++) {
+    if (!forms.includes(words[i]!)) continue;
+    const prev = i > 0 ? words[i - 1]! : "";
+    if (NOUN_MARKERS.has(prev) || prev.endsWith("'s") || prev.endsWith("s'")) continue;
+    n++;
+  }
+  return n;
+}
+/** A bought record that writes ONE printed action twice (Chimeric Coils' two sacrifices, Ether's two copies, Thunderous Debut's and Phyrexian Portal's two shuffles; #1401 family B) derives
+ *  JSON-identical abilities in one clause. They fold to as many as the clause's printed text names the verb (`printedVerbCount`), keeping the first ones. A repeat the text prints
+ *  (This Is How It Ends' two shuffles) stays.
+ *  CEILING: only the verbs in `TWIN_VERB_FORMS`; an ability counts when exactly one of its emits is such a verb; a clause that prints the verb zero times (another spelling) folds nothing. */
+function foldRepeatedVerbTwins(abilities: Ability[], clauseTexts?: Record<number, string>): Ability[] {
+  if (!clauseTexts) return abilities;
+  const groups = new Map<string, number[]>();
+  const verbOf = new Map<string, string>();
+  abilities.forEach((a, i) => {
+    if (a.clause === undefined) return;
+    const verbs = (a.emits ?? []).map((e) => e.verb).filter((v) => v in TWIN_VERB_FORMS);
+    if (verbs.length !== 1) return;
+    const key = stableJson(JSON.parse(JSON.stringify(a)));
+    verbOf.set(key, verbs[0]!);
+    groups.set(key, [...(groups.get(key) ?? []), i]);
+  });
+  const drop = new Set<number>();
+  for (const [key, idx] of groups) {
+    if (idx.length < 2) continue;
+    const text = clauseTexts[Math.trunc(Number(abilities[idx[0]!]!.clause))];
+    if (text === undefined) continue;
+    const printed = printedVerbCount(text, verbOf.get(key)!);
+    if (printed >= 1 && printed < idx.length) for (const i of idx.slice(printed)) drop.add(i);
+  }
+  return drop.size === 0 ? abilities : abilities.filter((_, i) => !drop.has(i));
 }
 /** A clause whose printed text says "instead" or "your choice of" OUTSIDE its reminder text (#1391 F4, F6: Primal Clay's "it becomes your choice of A, B, or C", one animate action per alternative on the grammar path): an alternative branch ("If this spell was kicked, instead search ...", "If you would create a Clue, Food, or Treasure token, instead
  *  create one of each") that derives an ability JSON-identical to the base branch's is one either/or effect, folded like a grant twin. `segment()` already drops reminder text (Wicked Slumber's "(... remove one from it
