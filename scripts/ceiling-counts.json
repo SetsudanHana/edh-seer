@@ -53,7 +53,7 @@
   "packages/matcher/src/similar.ts": 3,
   "packages/matcher/src/split-cost.ts": 1,
   "packages/matcher/src/static-fixers.ts": 6,
-  "packages/matcher/src/subject.ts": 1,
+  "packages/matcher/src/subject.ts": 2,
   "packages/matcher/src/suggest-static.ts": 2,
   "packages/matcher/src/suggest.ts": 2,
   "packages/matcher/src/supply-demand.ts": 3,

@@ -148,8 +148,8 @@ test("token gate excludes a nontoken-only payoff from token producers", () => {
       characteristics: { types: ["sorcery"], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] },
       abilities: [{
         kind: "static",
-        effect: { kind: "token-generation", subject: { subtype: "goblin", control: "you", token: true } },
-        emits: [{ verb: "enters", subject: { subtype: "goblin", control: "you", token: true } }],
+        effect: { kind: "token-generation", subject: { subtype: "wizard", control: "you", token: true } },
+        emits: [{ verb: "enters", subject: { subtype: "wizard", control: "you", token: true } }],
       }],
     } as CardTags,
   };
@@ -1039,6 +1039,26 @@ describe("a self counter consumer joins only a producer that can reach another c
   test("a target or a class producer still does", () => {
     expect(feeds(producer("Arwen", { type: "creature", control: "any", token: null, counter: "+1/+1", scope: "target" })).length).toBe(1);
     expect(feeds(producer("Anthem", { type: "creature", control: "you", token: null, counter: "+1/+1" })).length).toBe(1);
+  });
+});
+
+// A TARGET COUNTER PRODUCER REACHES A SUBTYPE OF ITS TYPE (#1421): "put a +1/+1 counter on target creature" can land on a Goblin (The Great Goblin).
+describe("a target counter producer satisfies a subtype demand of its type, never a type it cannot be", () => {
+  const consumer = (subject: object) => base("Counter Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["counter-added"], subject },
+    effect: { kind: "damage" },
+  }] as unknown as CardTags["abilities"]);
+  const targeter = base("Target Placer", [{
+    kind: "on-cast", effect: { kind: "counter-placement" },
+    emits: [{ verb: "counter-added", subject: { type: "creature", control: "any", token: null, scope: "target", counter: "+1/+1" } }],
+  }] as unknown as CardTags["abilities"]);
+  const feeds = (c: DeckCard) => directedReasons(targeter, c, H).filter((r) => r.tag.startsWith("counter-added"));
+  test("a Wizard you control", () => {
+    expect(feeds(consumer({ subtype: "wizard", control: "you", token: null })).length).toBe(1);
+  });
+  test("a noncreature type is refused", () => {
+    expect(feeds(consumer({ type: "planeswalker", control: "you", token: null })).length).toBe(0);
   });
 });
 
