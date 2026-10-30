@@ -85,4 +85,16 @@ describe("planSteps", () => {
       expect(r.every((s) => !s.stopOnFail)).toBe(true);
     }
   });
+  it("regenerates theme-stats.json after the derive, then checks it fresh without stopping", () => {
+    for (const mode of ["bump", "restamp"] as const) {
+      const p = planSteps(mode);
+      const names = p.map((s) => s.name);
+      const gen = p.find((s) => s.args.some((a) => a.endsWith("gen-theme-stats.ts")));
+      const chk = p.find((s) => s.args.some((a) => a.endsWith("theme-stats-fresh.ts")));
+      expect(gen?.stopOnFail).toBe(true);
+      expect(chk?.stopOnFail).toBe(false);
+      expect(names.indexOf(gen!.name)).toBeGreaterThan(names.indexOf("derive-corpus"));
+      expect(names.indexOf(chk!.name)).toBeGreaterThan(names.indexOf(gen!.name));
+    }
+  });
 });

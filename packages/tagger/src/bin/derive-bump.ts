@@ -1,15 +1,17 @@
 /** FREE. Runs every DERIVE_VERSION bump chore in order, so none is forgotten:
  *    1 bump DERIVE_VERSION + add its `// N: #issue -- note` line      (derive.ts)
  *    2 derive-corpus --force       3 research/mana/refresh-fixtures.mts
- *    4 gen-quality-weights         5 gen-schema-docs
- *    6 role-ratchet + dropped-clauses, CHECK mode only (never --bank: a moved line needs a written
+ *    4 gen-quality-weights         5 gen-theme-stats (packages/matcher/theme-stats.json)
+ *    6 gen-schema-docs
+ *    7 role-ratchet + dropped-clauses, CHECK mode only (never --bank: a moved line needs a written
  *      explanation by a human; a non-zero verdict is reported and makes this bin exit non-zero)
- *    7 the three stamp tests (fixture-derive-version, quality-weights, gen-schema-docs)
- *  Steps 1-5 stop at the first failure and print the `--restamp` command to resume.
+ *      and theme-stats-fresh (count check; reported the same way)
+ *    8 the three stamp tests (fixture-derive-version, quality-weights, gen-schema-docs)
+ *  Steps 1-6 stop at the first failure and print the `--restamp` command to resume.
  *
  *  Usage (repo root, env sourced: `set -a && source packages/tagger/.env && set +a`; needs Mongo):
  *    npm run derive:bump -- --issue N --note "text"
- *    npm run derive:bump -- --restamp          # steps 2-7 at the current version (review-fix rounds)
+ *    npm run derive:bump -- --restamp          # steps 2-8 at the current version (review-fix rounds)
  *    npm run derive:bump -- --dry-run --issue N --note "text"   # prints the plan, writes nothing */
 import { spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -20,8 +22,8 @@ import { parseArgs, planSteps, rewriteDeriveVersion, type Step } from "./derive-
 
 const ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
 const DERIVE_TS = "packages/tagger/src/derive/derive.ts";
-/** The paths steps 1-5 write, for the summary's `git status --short`. */
-const WRITTEN = [DERIVE_TS, "docs/reference/SCHEMA.md", "packages/matcher", "packages/instruments", "research/mana"];
+/** The paths steps 1-6 write, for the summary's `git status --short`. */
+const WRITTEN = [DERIVE_TS, "docs/reference/SCHEMA.md", "packages/matcher/theme-stats.json", "packages/matcher", "packages/instruments", "research/mana"];
 
 const show = (s: Step) => `${s.cwd ? `(cd ${s.cwd}) ` : ""}${s.cmd} ${s.args.join(" ")}`;
 
@@ -115,6 +117,8 @@ async function main(): Promise<number> {
   console.log(`restamped files:\n${st.stdout.trim() || "  (none)"}`);
   const ratchets = results.filter((r) => r.name === "role-ratchet" || r.name === "dropped-clauses");
   console.log(`ratchet verdicts: ${ratchets.length ? ratchets.map((r) => `${r.name} ${r.code === 0 ? "ok" : "MOVED (exit " + r.code + ") -- explain, then bank by hand"}`).join("; ") : "not run"}`);
+  const fresh = results.find((r) => r.name === "theme-stats-fresh");
+  console.log(`theme-stats: ${fresh === undefined ? "not run" : fresh.code === 0 ? "fresh" : "STALE (exit " + fresh.code + ") -- re-run gen-theme-stats"}`);
   if (failedStop) {
     console.log(`\nFAILED at step "${failedStop.name}". Fix it, then resume with: npm run derive:bump -- --restamp`);
     return 1;
