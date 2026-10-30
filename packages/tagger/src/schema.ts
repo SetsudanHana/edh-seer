@@ -1310,7 +1310,7 @@ export interface Ability {
    *  - `"mana-rider"` (#1423, #1426): an ability that is the RIDER of an activated MANA ABILITY -- Cinder Marsh's "{T}: Add {B} or {R}. This land doesn't untap during your next untap step.", Llanowar Wastes'
    *    "{T}: Add {B} or {G}. This land deals 1 damage to you.". Everything one printed mana ability does is part of it (CR 605.1a), and it never uses the stack, so it cannot be targeted or copied (CR 605.3b),
    *    but the engine models the rider as a second `activated` ability, which a copier would be offered (`copies:activated`). Set on any non-mana-generation `activated` ability that shares the clause and the
-   *    activation cost of a `mana-generation` ability, unless something in that group targets or is a loyalty ability (then it is no mana ability: Deathrite Shaman). `abilityIsKind` counts it as no ability
+   *    activation cost of a `mana-generation` ability, unless something in that group targets, is a loyalty ability, or moves a card to or from a library by its cost or effect (CR 605.1a: then it is no mana ability: Deathrite Shaman, Chromatic Sphere's draw, Millikin's mill, Selvala). A draw in a DELAYED trigger is not the ability's effect (CR 603.7a): Astrolabe stays stamped. `abilityIsKind` counts it as no ability
    *    to copy; its emits are untouched, so the damage still reaches a payoff that watches it. Activated only: a triggered rider is not stamped (CR 605.1b needs the trigger to come from mana).
    *  Both: `"refused-trigger"` wins.
    *

@@ -7348,6 +7348,22 @@ describe("any rider of a mana ability is no ability of its own (#1426)", () => {
     expect(abs.map((a) => a.claimsNothing)).toEqual(abs.map(() => undefined));
     expect(abs.some((a) => a.effect.kind === "graveyard-hate")).toBe(true);
   });
+  const lib = (verb: string, object: string) => ({ verb, object, fromZone: null, toZone: null, amount: null, optional: false });
+  test("CR 605.1a: a draw in the effect or a mill in the cost moves a card from a library, so Chromatic Sphere and Millikin are no mana ability and nothing is stamped", () => {
+    const sphere = tagsOf("Chromatic Sphere", "Artifact", "{1}, {T}, Sacrifice this artifact: Add one mana of any color. Draw a card. (Activate only as an instant.)",
+      [{ id: 1, abilityType: "activated", actions: [lib("add-mana", "one mana of any color"), lib("draw", "a card")] }]);
+    expect(sphere.some((a) => a.effect.kind === "draw-card")).toBe(true);
+    expect(sphere.map((a) => a.claimsNothing)).toEqual(sphere.map(() => undefined));
+    const millikin = tagsOf("Millikin", "Artifact Creature — Construct", "{T}, Mill a card: Add {C}. (Activate only as an instant. To mill a card, put the top card of your library into your graveyard.)",
+      [{ id: 1, abilityType: "activated", actions: [lib("mill", "a card"), lib("add-mana", "{C}")] }]);
+    expect(millikin.some((a) => a.effect.kind === "mana-generation")).toBe(true);
+    expect(millikin.map((a) => a.claimsNothing)).toEqual(millikin.map(() => undefined));
+  });
+  test("CR 603.7a: Astrolabe's 'Draw a card at the beginning of the next turn's upkeep' is a delayed triggered ability, not the mana ability's effect: its draw stays a rider", () => {
+    const abs = tagsOf("Astrolabe", "Artifact", "{1}, {T}, Sacrifice this artifact: Add two mana of any one color. Draw a card at the beginning of the next turn's upkeep.",
+      [{ id: 1, abilityType: "activated", actions: [lib("add-mana", "two mana of any one color"), lib("draw", "a card")] }]);
+    expect(abs.find((a) => a.effect.kind === "draw-card")?.claimsNothing).toBe("mana-rider");
+  });
   test("Soulbright Flamekin's 'Target creature gains trample ... you may add' is targeted, so its keyword-grant keeps being an activated ability", () => {
     const text = "{2}: Target creature gains trample until end of turn. If this is the third time this ability has resolved this turn, you may add {R}{R}{R}{R}{R}{R}{R}{R}.";
     const stored = [{ id: 1, abilityType: "activated", actions: [{ verb: "gain-keyword", object: "target creature gains trample", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "add-mana", object: "{R}{R}{R}{R}{R}{R}{R}{R}", fromZone: null, toZone: null, amount: null, optional: true }] }];
