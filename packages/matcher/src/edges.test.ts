@@ -4613,6 +4613,16 @@ describe("an ability-loss static silences the creatures it reaches", () => {
     expect(tags.some((t) => t.startsWith("enters"))).toBe(true);
   });
 
+  /** #1424: Cursed Totem / Stony Silence stop ACTIVATION (CR 602.5); the class's triggers still work, so its constellation still triggers. */
+  test("an activation-only ability loss (Cursed Totem) leaves the class's triggers alone", () => {
+    const totem = typed(base("Cursed Totem", [
+      { kind: "static", effect: { kind: "ability-loss", subject: { control: "any", token: null, type: "creature", scope: "all", abilityKind: ["activated"] } } },
+      { kind: "static", effect: { kind: "keyword-grant" }, emits: [{ verb: "enters", subject: { control: "you", token: null, type: "enchantment" } }] },
+    ] as unknown as CardTags["abilities"]), ["artifact"]);
+    const tags = pairReasons(totem, constellation("Grim Guardian", ["enchantment", "creature"]), H).map((r) => r.tag);
+    expect(tags.some((t) => t.startsWith("enters"))).toBe(true);
+  });
+
   test("the static itself is never a synergy claim", () => {
     const bear = base("Grizzly Bears", [], []);
     expect(pairReasons(dressDown, bear, H)).toEqual([]);

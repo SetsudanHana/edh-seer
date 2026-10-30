@@ -11,7 +11,7 @@ import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Char
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
 import { targetingBanOf, targetingBanSubjectInObject, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
-import { ZONE_SCOPED_KINDS, actionEffectKind, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
+import { ZONE_SCOPED_KINDS, actionEffectKind, activationBanClass, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
 import { actionEmits, casualtySacrifice, millsOwnLibrary, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, narrowSelfExiledSpell, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, activationConditionOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
@@ -1609,6 +1609,10 @@ function effectSubject(
   // WHOSE HAND (#1302): `putsTopCardsIntoYourHand` only lets YOUR hand through, so the subject is you; the cards themselves are `Ability.amount` / `Ability.chooses`, not a class.
   if (kind === "to-hand") return { ...parseSubject(""), control: "you" };
   if (kind === "ability-loss") {
+    // "Activated abilities of artifacts can't be activated" (#1424): the class is the subject; a NAMED card ("sources with the chosen name") is unnamed, as Pithing Needle's always was.
+    const banned = activationBanClass(clauseText);
+    // `abilityKind: ["activated"]` says WHICH abilities the class loses: only the activated ones (the matcher's `silencedBy` mutes a pair only when triggers go too).
+    if (banned !== undefined) return /\bchosen\b/i.test(banned) ? parseSubject("") : { ...parseSubject(banned), abilityKind: ["activated"] };
     const who = recipientBefore(clauseText, LOSES_ABILITIES);
     return who && !UNEXPRESSIBLE_NARROWING.test(who) ? parseSubject(who) : parseSubject("");
   }

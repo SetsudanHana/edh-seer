@@ -583,6 +583,19 @@ function namesOwnAbilitiesStopped(object: string): boolean {
   return true;
 }
 
+// THE GRAMMAR KEEPS THE CLASS IN A STRUCTURED FILTER AND THE ACTION'S OBJECT IS ONLY "be activated" (#1424: Stony Silence, Null Rod, Collector Ouphe, Cursed Totem, Linvala; Phyrexian Revoker
+// once the grammar's object is aligned over the stored one), so the word "abilities" is in the printed clause, not the object. A STATIC "activated abilities of <class> can't be activated" is
+// ability-loss (CR 602.5). Anchored at both ends and bounded, so a "this turn" spell, an "unless" rider or a conditional line is not this. CEILING: "unless they're mana abilities" (Pithing
+// Needle) and these cards' mana-ability stop (Stony Silence stops mana abilities too) are not distinguished -- the effect carries no mana-ability exception.
+const ACTIVATION_BANNED = /^activated abilities of ([^.;]{1,80}?) can(?:'|\u2019)t be activated\.?$/i;
+/** The class whose activated abilities the clause stops ("artifacts", "creatures your opponents control", "sources with the chosen name"), or undefined. */
+export function activationBanClass(clauseText: string): string | undefined {
+  return ACTIVATION_BANNED.exec(clauseText.trim())?.[1];
+}
+function activationBanned(object: string, clauseText: string): boolean {
+  return /^be activated\b/i.test(object.trim()) && ACTIVATION_BANNED.test(clauseText.trim());
+}
+
 /** A sentence with "instead", a "would ..." frame and the action's OWN word ("damage" for a damage action, "lose"/"loses" for a life loss): it replaces that event rather than causing it.
  *  Sentence by sentence, so Flames of the Blood Hand's separate "if that player would gain life ... instead" does not take its real damage with it. */
 function replacesDamageOrLife(clauseText: string, verb: string): boolean {
@@ -711,7 +724,7 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
   // nothing, so Dress Down derived its draw and its end-step sacrifice and never the static that
   // turns the board off -- and the engine claimed Grim Guardian drains when Dress Down enters
   // (owner, 2026-09-05). Layer 6 of CR 613: an ability-removing effect. 73 corpus cards print it.
-  if (verb === "cant" && namesOwnAbilitiesStopped(action.object ?? "")) return "ability-loss";
+  if (verb === "cant" && (namesOwnAbilitiesStopped(action.object ?? "") || activationBanned(action.object ?? "", clauseText))) return "ability-loss";
   // CEILING: "can't be blocked unless defending player pays {3}" (Awesome Presence) is an evasion by CR 509.1b and stays a `tax` -- the payable
   // reading is checked first, as it always was; one corpus card. Reading it as evasion would need a payable-evasion kind of its own.
   if (verb === "cant") {
