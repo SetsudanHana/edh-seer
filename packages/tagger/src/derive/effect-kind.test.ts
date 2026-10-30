@@ -1022,3 +1022,96 @@ test("#1401 E: 'abilities' as the source of targeting, a trigger or mana spendin
     "target creature can't attack or block and its activated abilities can't be activated until your next turn",
   ]) expect(actionEffectKind({ verb: "cant", object })).toBe("ability-loss");
 });
+
+// #1423 (owner ruling 2026-10-30): the `cant` lines #1401 part 5 stopped reading as ability-loss each get a kind of their own. `targeting-ban` first.
+test("#1423 a scoped ban on being targeted is `targeting-ban`: who can't, and from what source (CR 115.1; hexproof 702.11 and shroud 702.18 are its keyword forms)", () => {
+  const read = (object: string, text = "") => actionEffectKind({ verb: "cant", object }, text);
+  for (const object of [
+    "be the target of spells or abilities your opponents control",        // Shielding Plax, Canopy Cover, Shanna
+    "be the target of spells or abilities your opponents control this turn", // Vines of Vastwood
+    "be the targets of spells or abilities",                                // Ground Seal
+    "be the target of nongreen spells or abilities from nongreen sources",  // Gaea's Revenge
+    "be the target of nongreen spells your opponents control or abilities from nongreen sources your opponents control", // Thrun
+    "be the targets of blue spells or abilities from blue sources",         // Spellbane Centaur
+    "be the target of abilities from artifact sources",                     // Artifact Ward
+    "be the target of black or red spells your opponents control",          // Fiendslayer Paladin
+    "be the target of Aura spells",                                         // Bartel Runeaxe
+    "be the target of spells",                                              // Spectral Shield
+    "players can't be the targets of spells or activated abilities",        // Peace Talks (the model keeps the subject in the object)
+    "cards in graveyards be the targets of spells or abilities",            // Underworld Cerberus
+  ]) expect(read(object), object).toBe("targeting-ban");
+  // A narrowed or conditional ban is not total: left unread rather than read as hexproof.
+  expect(read("be the target of spells that can target only Walls or of abilities that can target only Walls")).toBeNull(); // Wall of Shadows
+  expect(read("be the target of spells unless it attacked or blocked this turn")).toBeNull();                              // Lurker
+  expect(read("be the target of spells", "As long as you control a Forest, this creature can't be the target of spells.")).toBeNull();
+  // The opposite sentence is a permission, never a ban (Kaya, Bane of the Dead; Nowhere to Run).
+  expect(read("hexproof prevents your spells and abilities from targeting opponents and permanents your opponents control")).toBeNull();
+  expect(read("be countered by blue or black spells this turn")).toBeNull();
+});
+
+test("#1423 an entering or dying that doesn't cause abilities to trigger is `trigger-suppression` (CR 603.2, 603.6a, 603.6c); a narrowed or conditional one is not", () => {
+  const read = (object: string, text = "") => actionEffectKind({ verb: "cant", object }, text);
+  const cases: [string, string][] = [
+    ["creatures entering from causing abilities to trigger", "Creatures entering don't cause abilities to trigger."],                                        // Torpor Orb, Hushwing Gryff, Tocatli Honor Guard
+    ["cause abilities to trigger", "Creatures entering or dying don't cause abilities to trigger."],                                                       // Hushbringer
+    ["artifacts and creatures entering the battlefield cause abilities to trigger", "Artifacts and creatures entering the battlefield don't cause abilities to trigger."], // Karn, Argent Defender
+    ["cause abilities to trigger", "Artifacts and creatures entering don't cause abilities to trigger."],                                                  // Doorkeeper Thrull
+    ["permanents entering cause abilities of permanents your opponents control to trigger", "Permanents entering don't cause abilities of permanents your opponents control to trigger."], // Elesh Norn, Mother of Machines
+    ["triggered abilities of permanents your opponents control trigger", "Triggered abilities of permanents your opponents control can't trigger."],
+  ];
+  for (const [object, text] of cases) expect(read(object, text), text).toBe("trigger-suppression");
+  // The object alone is enough where the clause text is not known (the verb is the negation).
+  expect(read("creatures entering cause abilities to trigger")).toBe("trigger-suppression");
+  // Not suppression: a narrowed ability class (Azorius Traffic Enforcement's backup abilities), ward (Nowhere to Run), a condition, "causes you to sacrifice" (The Master, Multiplied).
+  expect(read("cause backup abilities to trigger", "Creatures opponents control entering the battlefield don't cause backup abilities to trigger.")).toBeNull();
+  expect(read("ward abilities of creatures your opponents control can't trigger", "Ward abilities of those creatures don't trigger.")).toBeNull();
+  expect(read("cause abilities to trigger", "As long as you control an artifact, creatures entering don't cause abilities to trigger.")).toBeNull();
+  expect(read("cause you to sacrifice or exile creature tokens you control", "Triggered abilities you control can't cause you to sacrifice or exile creature tokens you control.")).toBeNull();
+  // ...and "trigger an additional time" is the doubling, never this.
+  expect(read("trigger an additional time", "If a triggered ability of a permanent you control triggers, that ability can't trigger an additional time.")).toBeNull();
+});
+
+test("#1423 'doesn't untap' is `untap-denial` (CR 502.3: effects can keep permanents from untapping); a conditional one, a permission and the positive untap are not", () => {
+  const read = (object: string, text = "") => actionEffectKind({ verb: "cant", object }, text);
+  const cases: [string, string][] = [
+    ["untap during its controller's untap step", "Enchanted creature doesn't untap during its controller's untap step."],                       // Waterknot, Bonds of Quicksilver
+    ["untap during its controller's untap step and its activated abilities can't be activated", "Enchanted permanent doesn't untap during its controller's untap step and its activated abilities can't be activated."], // Hold for Questioning (grammar)
+    ["enchanted permanent doesn't untap during its controller's untap step", "Enchanted permanent doesn't untap during its controller's untap step and its activated abilities can't be activated."], // ...and the model's first limb
+    ["untap during their controllers' untap steps", "Islands don't untap during their controllers' untap steps."],                                // Choke
+    ["untap during your untap step", "This creature doesn't untap during your untap step."],                                                    // Battered Golem
+    ["untap during its controller's next untap step", "Tap target creature. It doesn't untap during its controller's next untap step."],     // Frost Trickster
+    ["untap during its controller's untap step for as long as you control this creature", "Tap target creature an opponent controls. That creature doesn't untap during its controller's untap step for as long as you control this creature."], // Icefall Regent
+    ["untap during its controller's next two untap steps", "Tap target creature. It doesn't untap during its controller's next two untap steps."], // Telekinesis
+    ["enchanted creature can't untap during its controller's untap step", "Enchanted creature can't untap during its controller's untap step."],
+  ];
+  for (const [object, text] of cases) expect(read(object, text), text).toBe("untap-denial");
+  // Conditional: not total, left unread (Veldt, Tangle Kelp, Stunning Strike, Walking Dream, Guardian of Tazeem, Pollen Lullaby).
+  for (const [object, text] of [
+    ["untap during your untap step if it has a depletion counter on it", "This land doesn't untap during your untap step if it has a depletion counter on it."],
+    ["untap during its controller's untap step if it attacked during its controller's last turn", "Enchanted creature doesn't untap during its controller's untap step if it attacked during its controller's last turn."],
+    ["doesn't untap during its controller's untap step", "As long as enchanted creature isn't legendary, it doesn't untap during its controller's untap step."],
+    ["untap during your untap step if an opponent controls two or more creatures", "This creature doesn't untap during your untap step if an opponent controls two or more creatures."],
+    ["untap during its controller's next untap step", "Landfall — Whenever a land you control enters, tap target creature an opponent controls. If that land is an Island, that creature doesn't untap during its controller's next untap step."],
+    ["untap during the player's next untap step", "Clash with an opponent. If you win, creatures that player controls don't untap during the player's next untap step."],
+    ["untap during your untap step unless you have an enduring story", "This creature doesn't untap during your untap step unless you have an enduring story."],
+    ["untap more than one artifact during their untap steps", "Players can't untap more than one artifact during their untap steps."],  // a limit (Damping Field, Winter Moon), not a denial
+  ] as const) expect(read(object, text), text).toBeNull();
+  // A PERMISSION to skip the untap is not a denial (Amber Prison, Giant Oyster), and the positive "untaps" is not one either.
+  expect(read("untap during your untap step", "You may choose not to untap this artifact during your untap step.")).toBeNull();
+  expect(read("this creature untaps during your untap step", "This creature untaps during your untap step.")).toBeNull();
+});
+
+test("#1423 the WORDS decide where the model filed 'doesn't untap' under the positive verb `untap` (Melancholy, Reveka); a real untap is untouched", () => {
+  const kind = (verb: string, object: string, text: string) => actionEffectKind({ verb, object } as never, text);
+  // The model's positive `untap` for a NEGATED untap read as "untaps a permanent" -- the opposite of the card.
+  expect(kind("untap", "enchanted creature", "Enchanted creature doesn't untap during its controller's untap step.")).toBe("untap-denial");
+  expect(kind("untap", "this", "{T}: Reveka deals 2 damage to any target and doesn't untap during your next untap step.")).toBe("untap-denial");
+  expect(kind("untap", "creatures with flying", "Creatures with flying don't untap during their controllers' untap steps.")).toBe("untap-denial");
+  // ...but a positive untap stays one, also when the same clause negates another.
+  expect(kind("untap", "this creature", "Untap this creature.")).toBe("untap");
+  expect(kind("untap", "target land", "Untap target land. It doesn't untap during your next untap step.")).toBe("untap");
+  expect(kind("untap", "all creatures you control", "Whenever a creature enters, untap all creatures.")).toBe("untap");
+  // A grant of a quoted ability that denies the untap (Mindbender Spores) stays a grant.
+  expect(kind("grant-ability", "that creature gains \"This creature doesn't untap during your untap step if it has a fungus counter on it\"",
+    "The creature gains \"This creature doesn't untap during your untap step if it has a fungus counter on it\".")).toBe("keyword-grant");
+});

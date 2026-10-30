@@ -7139,3 +7139,229 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
   });
 });
 
+
+// #1423: `targeting-ban`, a scoped "can't be the target of ..." (CR 115.1; CR 702.11 hexproof and CR 702.18 shroud are the keyword forms).
+describe("targeting-ban: a permanent or player that can't be targeted, and by what (#1423)", () => {
+  const derive = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities;
+  };
+  const bans = (abilities: Ability[]) => abilities.filter((a) => a.effect.kind === "targeting-ban");
+  const AURA = "Enchantment — Aura";
+
+  test("Shielding Plax: the host can't be targeted by spells or abilities your opponents control", () => {
+    const [a, ...rest] = bans(derive("Shielding Plax", AURA, "Enchant creature\nWhen this Aura enters, draw a card.\nEnchanted creature can't be the target of spells or abilities your opponents control."));
+    expect(rest).toEqual([]);
+    expect(a?.host).toBe(true);
+    expect(a?.targetingBan).toEqual({ by: ["spell", "ability"], source: { control: "opp", token: null } });
+  });
+
+  test("Thrun: itself, from nongreen spells and nongreen sources of the opponents'; Gaea's Revenge: any controller", () => {
+    const thrun = bans(derive("Thrun, Breaker of Silence", "Legendary Creature — Troll Shaman", "This spell can't be countered.\nTrample\nThrun can't be the target of nongreen spells your opponents control or abilities from nongreen sources your opponents control.\nDuring your turn, Thrun has indestructible."));
+    expect(thrun).toHaveLength(1);
+    expect(thrun[0]?.effect.subject?.self).toBe(true);
+    expect(thrun[0]?.targetingBan).toEqual({ by: ["spell", "ability"], source: { control: "opp", token: null, notColors: ["G"] } });
+    const gaea = bans(derive("Gaea's Revenge", "Creature — Elemental", "This spell can't be countered.\nHaste\nThis creature can't be the target of nongreen spells or abilities from nongreen sources."));
+    expect(gaea[0]?.targetingBan).toEqual({ by: ["spell", "ability"], source: { control: "any", token: null, notColors: ["G"] } });
+  });
+
+  test("Spellbane Centaur: your creatures, from blue; Artifact Ward: abilities only, from artifact sources; Bartel Runeaxe: Aura spells", () => {
+    const centaur = bans(derive("Spellbane Centaur", "Creature — Centaur", "Creatures you control can't be the targets of blue spells or abilities from blue sources."));
+    expect(centaur[0]?.effect.subject).toMatchObject({ type: "creature", control: "you" });
+    expect(centaur[0]?.targetingBan).toEqual({ by: ["spell", "ability"], source: { control: "any", token: null, colors: ["U"] } });
+    const ward = bans(derive("Artifact Ward", AURA, "Enchant creature\nEnchanted creature can't be blocked by artifact creatures.\nPrevent all damage that would be dealt to enchanted creature by artifact sources.\nEnchanted creature can't be the target of abilities from artifact sources."));
+    expect(ward[0]?.targetingBan).toEqual({ by: ["ability"], source: { control: "any", token: null, type: "artifact" } });
+    const bartel = bans(derive("Bartel Runeaxe", "Legendary Creature — Human Warrior", "Vigilance\nBartel Runeaxe can't be the target of Aura spells."));
+    expect(bartel[0]?.targetingBan).toEqual({ by: ["spell"], source: { control: "any", token: null, subtype: ["aura"] } });
+  });
+
+  test("Ground Seal and Peace Talks: players and cards, no source restriction; Vines of Vastwood: a target creature, this turn", () => {
+    const seal = bans(derive("Ground Seal", "Enchantment", "When this enchantment enters, draw a card.\nCards in graveyards can't be the targets of spells or abilities."));
+    expect(seal).toHaveLength(1);
+    expect(seal[0]?.targetingBan).toEqual({ by: ["spell", "ability"], source: { control: "any", token: null } });
+    const vines = bans(derive("Vines of Vastwood", "Instant", "Kicker {G}\nTarget creature can't be the target of spells or abilities your opponents control this turn. If this spell was kicked, that creature gets +4/+4 until end of turn."));
+    expect(vines).toHaveLength(1);
+    expect(vines[0]?.effect.subject).toMatchObject({ type: "creature", scope: "target" });
+    expect(vines[0]?.targetingBan?.source.control).toBe("opp");
+  });
+
+  test("Peace Talks (the model's two limbs) and Tomik (a list): the player limb and the list name no class, the permanent limb is permanents", () => {
+    const text = "This turn and next turn, creatures can't attack, and players and permanents can't be the targets of spells or activated abilities.";
+    const stored = [{ id: 1, abilityType: "spell", actions: [
+      { verb: "cant", object: "creatures can't attack" },
+      { verb: "cant", object: "players can't be the targets of spells or activated abilities" },
+      { verb: "cant", object: "permanents can't be the targets of spells or activated abilities" },
+    ] }] as never;
+    const out = bans(deriveAbilities(stored, "Peace Talks", { 1: text }, undefined, text).abilities);
+    expect(out.map((a) => [a.effect.subject?.type ?? null, a.targetingBan?.by])).toEqual([[null, ["spell", "activated-ability"]], ["permanent", ["spell", "activated-ability"]]]);
+    const tomik = bans(derive("Tomik, Distinguished Advokist", "Legendary Creature \u2014 Human Advisor", "Flying\nLands on the battlefield and land cards in graveyards can't be the targets of spells or abilities your opponents control.\nYour opponents can't play land cards from graveyards."));
+    expect(tomik).toHaveLength(1);
+    expect(tomik[0]?.effect.subject?.type).toBeUndefined();
+    expect(tomik[0]?.targetingBan?.source.control).toBe("opp");
+  });
+
+  test("not read: a narrowed or conditional ban (Wall of Shadows, Lurker) and Kaya's opposite permission", () => {
+    expect(bans(derive("Wall of Shadows", "Creature — Wall", "Defender\nPrevent all damage that would be dealt to this creature by creatures it's blocking.\nThis creature can't be the target of spells that can target only Walls or of abilities that can target only Walls."))).toEqual([]);
+    expect(bans(derive("Lurker", "Creature — Beast", "This creature can't be the target of spells unless it attacked or blocked this turn."))).toEqual([]);
+    expect(bans(derive("Kaya, Bane of the Dead", "Legendary Planeswalker — Kaya", "Your opponents and permanents your opponents control with hexproof can be the targets of spells and abilities you control as though they didn't have hexproof.\n−3: Exile target creature."))).toEqual([]);
+  });
+});
+
+// #1423: `trigger-suppression`, "creatures entering don't cause abilities to trigger" (CR 603.2 an ability triggers when its event happens; CR 603.6a enters-the-battlefield abilities; CR 603.6c leaves-the-battlefield / dies).
+describe("trigger-suppression: which events stop causing triggers, and whose abilities (#1423)", () => {
+  const derive = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities;
+  };
+  const sups = (abilities: Ability[]) => abilities.filter((a) => a.effect.kind === "trigger-suppression");
+  const shape = (a: Ability | undefined) => ({ events: a?.suppresses?.events, controller: a?.suppresses?.controller, type: a?.effect.subject?.type });
+
+  test("Torpor Orb: creatures entering, anyone's abilities", () => {
+    const out = sups(derive("Torpor Orb", "Artifact", "Creatures entering don't cause abilities to trigger."));
+    expect(out).toHaveLength(1);
+    expect(shape(out[0])).toEqual({ events: ["enters"], controller: "any", type: "creature" });
+  });
+
+  test("Hushbringer (the model's reading): entering or dying; Karn, Argent Defender: artifacts and creatures entering the battlefield", () => {
+    const text = "Creatures entering or dying don't cause abilities to trigger.";
+    const stored = [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Flying, lifelink" }] }, { id: 2, abilityType: "static", actions: [{ verb: "cant", object: "cause abilities to trigger" }] }] as never;
+    expect(shape(sups(deriveAbilities(stored, "Hushbringer", { 1: "Flying, lifelink", 2: text }, undefined, `Flying, lifelink\n${text}`).abilities)[0])).toEqual({ events: ["enters", "dies"], controller: "any", type: "creature" });
+    expect(shape(sups(derive("Karn, Argent Defender", "Legendary Artifact Creature \u2014 Construct", "Artifacts and creatures entering the battlefield don't cause abilities to trigger."))[0])).toEqual({ events: ["enters"], controller: "any", type: ["creature", "artifact"] });
+  });
+
+  test("Elesh Norn, Mother of Machines: only the opponents' half is suppression; your doubling stays trigger-doubling", () => {
+    const doubling = "If a permanent entering causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time.";
+    const mute = "Permanents entering don't cause abilities of permanents your opponents control to trigger.";
+    const stored = [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Vigilance" }] },
+      { id: 2, abilityType: "static", actions: [{ verb: "trigger-again", object: "a triggered ability of a permanent you control" }] },
+      { id: 3, abilityType: "static", actions: [{ verb: "cant", object: "permanents entering cause abilities of permanents your opponents control to trigger" }] },
+    ] as never;
+    const abilities = deriveAbilities(stored, "Elesh Norn, Mother of Machines", { 1: "Vigilance", 2: doubling, 3: mute }, undefined, `Vigilance\n${doubling}\n${mute}`).abilities;
+    expect(sups(abilities)).toHaveLength(1);
+    expect(shape(sups(abilities)[0])).toEqual({ events: ["enters"], controller: "opp", type: "permanent" });
+    expect(abilities.filter((a) => a.effect.kind === "trigger-doubling")).toHaveLength(1);
+  });
+
+  test("not read: Azorius Traffic Enforcement's backup abilities, a conditional one, Nowhere to Run's ward triggers", () => {
+    expect(sups(derive("Test Enforcer", "Creature — Human", "Creatures opponents control entering the battlefield don't cause backup abilities to trigger."))).toEqual([]);
+    expect(sups(derive("Test Conditional", "Artifact", "As long as you control an artifact, creatures entering don't cause abilities to trigger."))).toEqual([]);
+    expect(sups(derive("Nowhere to Run", "Enchantment", "Flash\nWhen this enchantment enters, target creature an opponent controls gets -3/-3 until end of turn.\nCreatures your opponents control can be the targets of spells and abilities as though they didn't have hexproof. Ward abilities of those creatures don't trigger."))).toEqual([]);
+  });
+});
+
+// #1423: `untap-denial`, "doesn't untap during its controller's untap step" (CR 502.3: effects can keep one or more of a player's permanents from untapping).
+describe("untap-denial: what stays tapped, and for how long (#1423)", () => {
+  const derive = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities;
+  };
+  const dens = (abilities: Ability[]) => abilities.filter((a) => a.effect.kind === "untap-denial");
+  const shape = (a: Ability | undefined) => ({ duration: a?.untapDenial?.duration, steps: a?.untapDenial?.steps, host: a?.host === true, self: a?.effect.subject?.self === true, type: a?.effect.subject?.type, subtype: a?.effect.subject?.subtype });
+  const AURA = "Enchantment — Aura";
+
+  test("Hold for Questioning and Encrust: the host stays tapped; the activated-abilities lock is the other limb", () => {
+    const hold = derive("Hold for Questioning", AURA, "Enchant creature or planeswalker\nWhen this Aura enters, tap enchanted permanent and investigate.\nEnchanted permanent doesn't untap during its controller's untap step and its activated abilities can't be activated.");
+    expect(dens(hold)).toHaveLength(1);
+    expect(shape(dens(hold)[0])).toMatchObject({ duration: "continuous", host: true });
+    // The model's two limbs (the stored answer): one denial, one ability-loss, each its own action.
+    const text = "Enchanted permanent doesn't untap during its controller's untap step and its activated abilities can't be activated.";
+    const stored = [{ id: 1, abilityType: "static", actions: [{ verb: "cant", object: "enchanted permanent doesn't untap during its controller's untap step" }, { verb: "cant", object: "enchanted permanent's activated abilities can't be activated" }] }] as never;
+    const both = deriveAbilities(stored, "Hold for Questioning", { 1: text }, undefined, `Enchant creature or planeswalker\n${text}`).abilities;
+    expect(both.map((x) => x.effect.kind)).toEqual(["untap-denial", "ability-loss"]);
+    // ...and the host is `host`, never a class: Encrust's "enchanted permanent" is not read as the artifact-or-creature class its Enchant line names.
+    expect(dens(hold)[0]?.effect.subject?.type).toBeUndefined();
+    expect(shape(dens(derive("Encrust", AURA, "Enchant artifact or creature\nEnchanted permanent doesn't untap during its controller's untap step and its activated abilities can't be activated."))[0])).toMatchObject({ duration: "continuous", host: true });
+  });
+
+  test("Choke: Islands, continuously; Jasconian Isle: itself; Frost Trickster: the next untap step; Telekinesis: the next two", () => {
+    expect(shape(dens(derive("Choke", "Enchantment", "Islands don't untap during their controllers' untap steps."))[0])).toMatchObject({ duration: "continuous", subtype: "island" });
+    expect(shape(dens(derive("Frost Trickster", "Creature — Bird Wizard", "Flying\nWhen this creature enters, tap target creature an opponent controls. That creature doesn't untap during its controller's next untap step."))[0])).toMatchObject({ duration: "next-untap-step", steps: undefined });
+    expect(shape(dens(derive("Telekinesis", "Instant", "Tap target creature. Prevent all combat damage that would be dealt by that creature this turn. It doesn't untap during its controller's next two untap steps."))[0])).toMatchObject({ duration: "next-untap-step", steps: 2 });
+    expect(shape(dens(derive("Grim Monolith", "Artifact", "This artifact doesn't untap during your untap step.\n{T}: Add {C}{C}{C}.\n{4}: Untap this artifact."))[0])).toMatchObject({ duration: "continuous", self: true });
+  });
+
+  test("a recipient that opens with the card's own 'enters tapped and' is the card (Traxos, Grimgrin); Damping Field's 'can't untap more than' is a limit, not a denial", () => {
+    const text = "Traxos enters tapped and doesn't untap during your untap step.";
+    const stored = [{ id: 1, abilityType: "static", actions: [{ verb: "cant", object: "untap during your untap step" }] }] as never;
+    expect(shape(dens(deriveAbilities(stored, "Traxos, Scourge of Kroog", { 1: text }, undefined, text).abilities)[0])).toMatchObject({ duration: "continuous", self: true });
+    expect(dens(derive("Damping Field", "Enchantment", "Players can't untap more than one artifact during their untap steps."))).toEqual([]);
+  });
+
+  test("Icefall Regent and Kill Switch: for as long as ...", () => {
+    expect(shape(dens(derive("Icefall Regent", "Creature — Dragon", "Flying\nWhen this creature enters, tap target creature an opponent controls. That creature doesn't untap during its controller's untap step for as long as you control this creature.\nSpells your opponents cast that target this creature cost {2} more to cast."))[0])).toMatchObject({ duration: "as-long-as" });
+    expect(shape(dens(derive("Kill Switch", "Artifact", "{2}, {T}: Tap all other artifacts. They don't untap during their controllers' untap steps for as long as this artifact remains tapped."))[0])).toMatchObject({ duration: "as-long-as" });
+  });
+
+  test("not read: Veldt's counter condition, Stunning Strike's 'as long as', Amber Prison's permission", () => {
+    expect(dens(derive("Veldt", "Land", "This land doesn't untap during your untap step if it has a depletion counter on it.\nAt the beginning of your upkeep, remove a depletion counter from this land.\n{T}: Add {G} or {W}. Put a depletion counter on this land."))).toEqual([]);
+    expect(dens(derive("Stunning Strike", AURA, "Flash\nEnchant creature\nWhen this Aura enters, tap enchanted creature and remove it from combat.\nAs long as enchanted creature isn't legendary, it doesn't untap during its controller's untap step."))).toEqual([]);
+    expect(dens(derive("Amber Prison", "Artifact", "You may choose not to untap this artifact during your untap step.\n{4}, {T}: Tap target artifact, creature, or land. That permanent doesn't untap during its controller's untap step for as long as this artifact remains tapped."))).toHaveLength(1);
+  });
+});
+
+describe("untap-denial: the model's `untap` verb for a negated untap (#1423)", () => {
+  const text = "Enchanted creature doesn't untap during its controller's untap step.";
+  const stored = [{ id: 1, abilityType: "static", actions: [{ verb: "untap", object: "enchanted creature" }] }] as never;
+  test("Melancholy, Thirst: the stored `untap` is the host's denial, and no `untap` ability is left to feed an untap payoff", () => {
+    const abilities = deriveAbilities(stored, "Melancholy", { 1: text }, undefined, `Enchant creature\n${text}`).abilities;
+    expect(abilities.map((a) => a.effect.kind)).toEqual(["untap-denial"]);
+    expect(abilities[0]?.untapDenial).toEqual({ duration: "continuous" });
+    expect(abilities[0]?.host).toBe(true);
+    expect(abilities.some((a) => (a.emits ?? []).some((e) => e.verb === "untaps"))).toBe(false);
+  });
+});
+
+describe("untap-denial: a mana ability's rider is no ability of its own (#1423)", () => {
+  const tagsOf = (name: string, typeLine: string, oracleText: string, stored: unknown) =>
+    deriveCardTags(deriveInputOf({ name, typeLine, oracleText, keywords: [] as string[] } as never, "x", name, stored as never)).abilities;
+  test("Cinder Marsh's 'This land doesn't untap' is stamped mana-rider; Barl's Cage's lone activated denial is not", () => {
+    const text = "{T}: Add {B} or {R}. This land doesn't untap during your next untap step.";
+    const stored = [{ id: 1, abilityType: "activated", actions: [{ verb: "add-mana", object: "{B} or {R}" }, { verb: "cant", object: "untap during your next untap step" }] }];
+    expect(tagsOf("Cinder Marsh", "Land", text, stored).map((a) => [a.effect.kind, a.claimsNothing])).toEqual([["mana-generation", undefined], ["untap-denial", "mana-rider"]]);
+    const cage = "{3}: Target creature doesn't untap during its controller's next untap step.";
+    const alone = [{ id: 1, abilityType: "activated", actions: [{ verb: "cant", object: "untap during its controller's next untap step" }] }];
+    expect(tagsOf("Barl's Cage", "Artifact", cage, alone).map((a) => a.claimsNothing)).toEqual([undefined]);
+  });
+});
+
+describe("untap-denial: the model's `untap` beside its own `cant` is one denial (#1423)", () => {
+  test("Glacial Grasp: tap + mill + `untap` + `cant | untap ...` of one sentence derive ONE untap-denial", () => {
+    const text = "Tap target creature. Its controller mills two cards. That creature doesn't untap during its controller's next untap step.";
+    const stored = [{ id: 1, abilityType: "spell", actions: [
+      { verb: "tap", object: "target creature" }, { verb: "mill", object: "target creature's controller" },
+      { verb: "untap", object: "target creature" }, { verb: "cant", object: "untap during its controller's next untap step" },
+    ] }] as never;
+    const abilities = deriveAbilities(stored, "Glacial Grasp", { 1: text }, undefined, text).abilities;
+    expect(abilities.filter((a) => a.effect.kind === "untap-denial")).toHaveLength(1);
+    expect(abilities.some((a) => (a.emits ?? []).some((e) => e.verb === "untaps"))).toBe(false);
+  });
+});
+
+describe("'tap those creatures' is refused, not read as every creature (#1423 follow-up, Dread Wight)", () => {
+  test("Dread Wight: 'tap those creatures' taps the creatures blocking or blocked by it, not every creature", () => {
+    const card = { name: "Dread Wight", typeLine: "Creature — Zombie", keywords: [] as string[],
+      oracleText: "At end of combat, put a paralyzation counter on each creature blocking or blocked by this creature and tap those creatures. Each of those creatures doesn't untap during its controller's untap step for as long as it has a paralyzation counter on it. Each of those creatures gains \"{4}: Remove a paralyzation counter from this creature.\"" };
+    const g = grammarClauseRecords(card);
+    const abilities = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings)).abilities;
+    const taps = abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.verb === "taps"));
+    // The back-reference is refused rather than guessed: no `taps` emit over every creature (it was 60 false reasons), and the real "put a counter on each creature blocking or blocked by" stays.
+    for (const e of taps) expect(e.subject.scope === "all" && e.subject.combat === undefined).toBe(false);
+    expect(taps).toEqual([]);
+    expect(abilities.some((a) => a.effect.kind === "counter-placement" && a.effect.subject?.combat === "blocking")).toBe(true);
+  });
+});
+
+describe("untap-denial: a recipient that opens with the card's own damage clause is the card (#1423 review: Reveka)", () => {
+  test("Reveka, Wizard Savant: 'Reveka deals 2 damage to any target and doesn't untap' denies Reveka's own untap, not a target's", () => {
+    const text = "{T}: Reveka deals 2 damage to any target and doesn't untap during your next untap step.";
+    const stored = [{ id: 1, abilityType: "activated", actions: [{ verb: "deal-damage", object: "any target" }, { verb: "untap", object: "this" }] }] as never;
+    const den = deriveAbilities(stored, "Reveka, Wizard Savant", { 1: text }, undefined, text).abilities.filter((a) => a.effect.kind === "untap-denial");
+    expect(den).toHaveLength(1);
+    expect(den[0]?.effect.subject?.self).toBe(true);
+    expect(den[0]?.effect.subject?.scope).not.toBe("target");
+  });
+});

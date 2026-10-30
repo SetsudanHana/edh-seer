@@ -191,3 +191,10 @@ test("derive stores 'self-loss' on Phage's own enters loss and not on the damage
   expect(byClause(2)?.claimsNothing).toBeUndefined();
   expect(byClause(3)?.claimsNothing).toBeUndefined(); // "that player" after the card's own damage is an opponent
 });
+
+test("abilityIsKind: a mana ability's fact-kind rider is no activated ability to copy (#1423); a plain activated ability is", () => {
+  const rider = { kind: "activated", effect: { kind: "untap-denial" }, claimsNothing: "mana-rider" } as never;
+  const plain = { kind: "activated", effect: { kind: "untap-denial" } } as never;
+  expect(abilityIsKind(rider, "activated")).toBe(false);
+  expect(abilityIsKind(plain, "activated")).toBe(true);
+});

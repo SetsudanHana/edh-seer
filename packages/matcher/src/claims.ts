@@ -10,4 +10,6 @@ export function claimsNothing(a: Ability): Ability["claimsNothing"] {
 /** A refused trigger's ability: no emit, demand or supply, though it still counts as a triggered ability (CR 603.1). */
 export const isRefusedTrigger = (a: Ability): boolean => claimsNothing(a) === "refused-trigger";
 /** A self "you lose the game" ability (owner ruling 2026-10-16/17, #1252): its emits reach a rescue consumer only. */
+/** A rider of a mana ability (#1423): a fact-kind ability that a mana ability's own clause carries (Cinder Marsh's "This land doesn't untap during your next untap step"), no ability of its own to copy. */
+export const isManaRider = (a: Ability): boolean => claimsNothing(a) === "mana-rider";
 export const isSelfLoss = (a: Ability): boolean => claimsNothing(a) === "self-loss";

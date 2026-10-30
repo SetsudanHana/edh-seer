@@ -23,6 +23,10 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   // "by power 3 or greater" as well as "can't be blocked", and `restriction` is attack, block or both (`Ability.restricts` is not on the row). No pair reason is built from either.
   evasion: [() => "restricts what can block it", "restricts what can block it"],
   restriction: [() => "restricts attacking or blocking", "restricts attacking or blocking"],
+  // A scoped "can't be the target of ..." (#1423): who is protected and from whom are `effect.subject` and `Ability.targetingBan`, not on the row. No pair reason is built from it.
+  "targeting-ban": [() => "restricts what can target it", "restricts what can target it"],
+  "trigger-suppression": [() => "stops some abilities from triggering", "stops some abilities from triggering"],
+  "untap-denial": [() => "keeps permanents from untapping", "keeps permanents from untapping"],
   // Cards put into your hand from the top of your library are not drawn (the tagger's `to-hand` kind), so the row says "puts", never "draws".
   "to-hand": [() => "puts cards into your hand", "puts cards into your hand"],
   retarget: [() => "changes what a spell or ability targets", "changes what a spell or ability targets"],

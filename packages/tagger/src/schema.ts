@@ -1014,6 +1014,23 @@ export const EFFECT_KINDS = [
   // `Ability.restricts`. A fact kind like `evasion`: the pair channels read it blank. NOT "can't be blocked" (evasion), NOT "can't attack you" (a tax, Propaganda), NOT
   // a requirement ("attacks each combat if able"), and a block narrowed to a class ("can't block creatures without flying") is left unread.
   "restriction",
+  // TARGETING-BAN (CR 115.1 targets; CR 702.11 hexproof and CR 702.18 shroud are its keyword forms; #1423, owner ruling 2026-10-30): a SCOPED "can't be the target of ..." -- Shielding Plax and Canopy Cover
+  // ("spells or abilities your opponents control"), Vines of Vastwood (this turn), Thrun and Gaea's Revenge ("nongreen spells or abilities from nongreen sources"), Spellbane Centaur, Artifact Ward ("abilities
+  // from artifact sources"), Bartel Runeaxe ("Aura spells"), Ground Seal, Peace Talks. `effect.subject` is who is protected, `Ability.targetingBan` is by what and from whom. A fact kind like `restriction`: the
+  // pair channels read it blank. NOT the keyword (hexproof / shroud is `keyword-grant`), NOT a narrowed or conditional ban (Wall of Shadows, Lurker), NOT Kaya's permission to target through hexproof.
+  "targeting-ban",
+  // TRIGGER-SUPPRESSION (CR 603.2: an ability triggers when its event happens; CR 603.6a enters, CR 603.6c leaves and dies; #1423, owner ruling 2026-10-30): "Creatures entering don't cause abilities to
+  // trigger" -- Torpor Orb, Hushwing Gryff, Tocatli Honor Guard; "Creatures entering or dying" (Hushbringer); "Artifacts and creatures entering the battlefield" (Karn, Argent Defender, Doorkeeper Thrull);
+  // "Permanents entering don't cause abilities of permanents your opponents control to trigger" (Elesh Norn, Mother of Machines; her other half DOUBLES your triggers and stays `trigger-doubling`).
+  // `effect.subject` is the class whose event is muted, `Ability.suppresses` is which events and whose abilities. A fact kind like `restriction`: the pair channels read it blank (a Torpor Orb
+  // is no more a payoff than an enters trigger is a producer of it). NOT a narrowed class ("backup abilities", "ward abilities"), NOT a condition, NOT "trigger an additional time".
+  "trigger-suppression",
+  // UNTAP-DENIAL (CR 502.3: "effects can keep one or more of a player's permanents from untapping"; #1423, owner ruling 2026-10-30): "Enchanted creature doesn't untap during its controller's untap step"
+  // (Waterknot, Hold for Questioning, Encrust, Claustrophobia), "Islands don't untap during their controllers' untap steps" (Choke), "That creature doesn't untap during its controller's next untap
+  // step" (Frost Trickster), "... for as long as you control this creature" (Icefall Regent). `effect.subject` is what stays tapped (the host of an Aura is `host`), `Ability.untapDenial` is
+  // for how long. A fact kind like `restriction`: the pair channels read it blank. NOT the positive `untap`, NOT "you may choose not to untap" (a permission, Amber Prison), and a CONDITIONAL denial
+  // ("if it has a depletion counter on it": Veldt; "As long as enchanted creature isn't legendary": Stunning Strike) is left unread.
+  "untap-denial",
   // TO-HAND (CR 121.5: "If an effect moves cards from a player's library to that player's hand without using the word 'draw,' the player has not drawn those cards"; #1302,
   // owner ruling 2026-10-22): cards put from the TOP of your own library into your hand with no search -- Dark Confidant ("reveal the top card of your library and put that
   // card into your hand"), Ad Nauseam, Fact or Fiction (one pile), Impulse / Dig Through Time ("look at the top N ... put one / two of them into your hand"), Coiling
@@ -1219,6 +1236,29 @@ export interface Ability {
   grantedBy?: number;
   /** WHICH ACTIONS A `restriction` ABILITY FORBIDS (#1315): `attack`, `block`, or both ("can't attack or block"). Only on an ability of effect kind `restriction`. */
   restricts?: ("attack" | "block")[];
+  /** WHAT A `targeting-ban` ABILITY KEEPS FROM TARGETING IT, AND WHOSE (#1423; CR 115.1, hexproof CR 702.11, shroud CR 702.18). `by` is `spell`, `ability`, both ("spells or abilities"), or `activated-ability`
+   *  (Peace Talks: "spells or activated abilities"). `source` is the filter on the SOURCE of the spell or ability: `control: "opp"` for "your opponents control" (Shielding Plax), else `any` (Ground Seal, shroud);
+   *  `colors` / `notColors` (WUBRG letters) for "blue spells or abilities from blue sources" (Spellbane Centaur) and "nongreen" (Thrun, Gaea's Revenge); `type` for "abilities from artifact sources" (Artifact Ward);
+   *  `subtype: ["aura"]` for "Aura spells" (Bartel Runeaxe). Who is PROTECTED is `effect.subject` (absent when the line names a list, "players and permanents", or an Aura's host: `host`).
+   *  ABSENT on every other ability. A hexproof-like fact: the pair channels read the kind blank. */
+  targetingBan?: {
+    by: ("spell" | "ability" | "activated-ability")[];
+    source: SubjectFilter;
+  };
+  /** WHICH EVENTS A `trigger-suppression` ABILITY STOPS FROM CAUSING TRIGGERS, AND WHOSE ABILITIES (#1423; CR 603.2, 603.6a, 603.6c). `events` are the trigger words `enters`, `dies`, `attacks`, `leaves`, or `any`
+   *  when the line names no event; `controller` is whose abilities are muted: `opp` for "abilities of permanents your opponents control" (Elesh Norn, Mother of Machines), `you`, else `any` (Torpor Orb). The
+   *  class whose event is muted (creatures; artifacts and creatures; permanents) is `effect.subject`. ABSENT on every other ability. */
+  suppresses?: {
+    events: ("enters" | "dies" | "attacks" | "leaves" | "any")[];
+    controller: Control;
+  };
+  /** FOR HOW LONG AN `untap-denial` ABILITY KEEPS ITS SUBJECT TAPPED (#1423; CR 502.3). `continuous`: every untap step while the effect lasts ("doesn't untap during its controller's untap step": an Aura, a
+   *  static); `next-untap-step`: just the next one, or the next `steps` ("next two untap steps", written only above 1); `as-long-as`: a printed duration ("for as long as you control this creature", "for as long
+   *  as this artifact remains tapped"). WHAT stays tapped is `effect.subject` (an Aura's host is `host`; a pronoun or a list is unnamed). ABSENT on every other ability. */
+  untapDenial?: {
+    duration: "continuous" | "next-untap-step" | "as-long-as";
+    steps?: number;
+  };
   /** A `to-hand` ABILITY'S CARDS REACH THE HAND BY A PICK (#1302): somebody chooses which of at least two looked-at or revealed cards go to your hand -- "look at the top four
    *  cards, put one of them into your hand" (Impulse), "put two of them" (Dig Through Time), "you may reveal a historic card from among them and put it into your hand". `amount`
    *  says how many. Only `true` is written. ABSENT: the one card a reveal turned up (Dark Confidant, Coiling Oracle, Demonic Consultation), a pile (Fact or Fiction: `amount`
@@ -1267,6 +1307,10 @@ export interface Ability {
    *  - `"self-loss"`: the #1252 owner ruling. An ability whose ONLY effect is that its controller loses the
    *    game (Phage the Untouchable, the Pacts' upkeep payment) is a drawback nobody builds toward. Its emits
    *    still reach a RESCUE consumer (a `loses-game` trigger of `control: "you"`) and no other.
+   *  - `"mana-rider"` (#1423): an ability of a fact kind that a MANA ABILITY'S OWN CLAUSE carries as a rider -- Cinder Marsh's "{T}: Add {B} or {R}. This land doesn't untap during your next untap step."
+   *    The rider is part of the mana ability (CR 605.1a), which is not copied or targeted (CR 605.3b), but the engine models it as a second `activated` ability, which a copier would be offered
+   *    (`copies:activated`). Set on `targeting-ban`, `trigger-suppression` and `untap-denial` abilities only, when a `mana-generation` ability of the same clause sits beside them; `abilityIsKind`
+   *    counts it as no ability to copy. (A painland's "This land deals 1 damage to you" is the same shape and is NOT stamped: it predates this and is left as it was.)
    *  Both: `"refused-trigger"` wins.
    *
    *  `"refused-trigger"`: THE TRIGGER THIS ABILITY WAITS ON WAS REFUSED, AND THE ABILITY POINTS BACK AT AN OBJECT WITH NO CLASS (#1253).
@@ -1289,7 +1333,7 @@ export interface Ability {
    *  object claims what it always did (a saga chapter's token is still a token).
    *  ONE THING STILL SEES IT: a flagged ability is a triggered ability (CR 603.1), so it still counts
    *  as one for the `copies|-|triggered|-` key a copier is offered. */
-  claimsNothing?: "refused-trigger" | "self-loss";
+  claimsNothing?: "refused-trigger" | "self-loss" | "mana-rider";
   /** A numeric condition on WHEN the ability is on — The Millennium Calendar's "when there are
    *  1,000 or more time counters", Chrome Steed's "as long as you control three or more artifacts",
    *  Urza's Workshop's "activate only if you control three or more artifacts", Gadrak's "can't
