@@ -1036,16 +1036,16 @@ describe("a self counter consumer joins only a producer that can reach another c
   test("a self-only producer does not feed it", () => {
     expect(feeds(producer("Walking Ballista", { control: "any", token: null, counter: "+1/+1", self: true }))).toEqual([]);
   });
-  test("a self emit beside an untyped non-self emit feeds it through the untyped one", () => {
-    const ranger = base("Juniper Order Ranger", [{
-      kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
-      effect: { kind: "counter-placement" },
+  // CEILING pinned: an untyped non-self emit beside a self one cannot be told from an unmarked self placement. Big Bertha's shape (really self) must not feed; Juniper Order Ranger's (really reaches another) is a known miss.
+  test("a self emit beside an untyped non-self emit does not feed it", () => {
+    const bertha = base("Big Bertha", [{
+      kind: "static", effect: { kind: "enters-with-counters" },
       emits: [
         { verb: "counter-added", subject: { control: "any", token: null, counter: "+1/+1", self: true } },
         { verb: "counter-added", subject: { control: "any", token: null, counter: "+1/+1" } },
       ],
     }] as unknown as CardTags["abilities"]);
-    expect(feeds(ranger).length).toBe(1);
+    expect(feeds(bertha).length).toBe(0);
   });
   test("a target or a class producer still does", () => {
     expect(feeds(producer("Arwen", { type: "creature", control: "any", token: null, counter: "+1/+1", scope: "target" })).length).toBe(1);

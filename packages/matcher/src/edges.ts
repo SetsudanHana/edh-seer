@@ -3793,11 +3793,10 @@ function counterPresenceEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       // SELF ON BOTH SIDES IS TWO DIFFERENT CARDS (#1421), as `SELF_BOTH_REFUSED` has it for events: Walking Ballista's counters land on Ballista, and
       // Mossborn Hydra doubles only its own, so the one never feeds the other. A producer that can reach ANOTHER creature (a target, a class) still does.
       if (emit.subject.self === true && want.self === true) continue;
-      // A SELF CONSUMER READS A NON-SELF EMIT LOOSELY: Juniper Order Ranger's "+1/+1 counter on another creature" is untyped, and strict `subjectMatches` rejects an untyped producer against
-      // `{type: creature}`; `counterAddMatches` accepts it (it can land on another creature), as it does for the event pass. Only for a self consumer AND a producer that also states a self emit of that kind (the measured family, 30 cards): an untyped emit alone is often an unmarked self placement (a kicked "enters with two counters", Academy Drake) and stays strict.
-      // CEILING: Kalonian Hydra's real link to a self doubler is its `double` emit, which is not a counter-added supply and is not read here, so that pair stays lost.
-      const loose = want.self === true && pEvents.some((e) => e.verb === "counter-added" && e.subject.self === true && e.subject.counter === emit.subject.counter);
-      if (loose ? !counterAddMatches(emit.subject, want, h) : !subjectMatches(emit.subject, want, h)) continue;
+      // CEILING: a self consumer is fed only through typed / target / class emits. A producer's UNTYPED non-self emit beside a self one (Juniper Order Ranger, Wildgrowth Archaic, Clay Champion: real misses)
+      // cannot be told apart from an unmarked self placement (Big Bertha, Grimgrin, Hooded Hydra, Captain America's Hero-only counter), and reading them loosely was 16 false for 3 real. Kalonian Hydra's real link
+      // is its `double` emit, which is not a counter-added supply, and Bloodspore Thrinax derives only a self emit.
+      if (!subjectMatches(emit.subject, want, h)) continue;
       reasons.push({
         tag: `counter-added:${themeSubjectKey(want)}`,
         text: counterPresenceSentence(p.card.name, c.card.name, want.counter),
