@@ -1,244 +1,128 @@
 {
  "Fiery Emancipation": {
   "card": {
-   "name": "Fiery Emancipation",
-   "typeLine": "Enchantment",
-   "oracleText": "If a source you control would deal damage to a permanent or player, it deals triple that damage to that permanent or player instead.",
    "colorIdentity": [
     "R"
-   ]
+   ],
+   "colors": [
+    "R"
+   ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
+   "keywords": [
+    "Triple"
+   ],
+   "layout": "normal",
+   "manaCost": "{3}{R}{R}{R}",
+   "manaValue": 6,
+   "name": "Fiery Emancipation",
+   "oracleText": "If a source you control would deal damage to a permanent or player, it deals triple that damage to that permanent or player instead.",
+   "power": null,
+   "toughness": null,
+   "typeLine": "Enchantment"
   },
   "tags": {
-   "oracleId": "52159875-354c-47f9-bb1c-cd65395fcc68",
-   "schemaVersion": 1,
-   "promptVersion": 0,
-   "model": "derived",
-   "characteristics": {
-    "types": [
-     "enchantment"
-    ],
-    "subtypes": [],
-    "layout": "normal",
-    "colors": [
-     "R"
-    ],
-    "identity": [
-     "R"
-    ],
-    "cmc": 6,
-    "power": null,
-    "toughness": null,
-    "token": false,
-    "keywords": [
-     "triple"
-    ]
-   },
+   "_id": "6a736ac9f6eb344af122237b",
    "abilities": [
     {
-     "kind": "static",
-     "effect": {
-      "kind": "damage-multiplier"
-     },
-     "trigger": {
-      "verbs": [
-       "combat-damage",
-       "non-combat-damage"
-      ],
-      "subject": {
-       "control": "you",
-       "token": null
-      }
-     },
-     "clause": 1,
-     "repeats": "continuous",
-     "replacement": true,
      "change": {
       "op": "times",
       "value": 3
+     },
+     "clause": 1,
+     "effect": {
+      "kind": "damage-multiplier"
+     },
+     "kind": "static",
+     "repeats": "continuous",
+     "replacement": true,
+     "trigger": {
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "verbs": [
+       "combat-damage",
+       "non-combat-damage"
+      ]
      }
     }
    ],
-   "deriveVersion": 388,
-   "normalizeVersion": 12,
-   "segmentHash": "0bc49b57a75c684af29391081412b379392fea41f86cecc2fc95d3ca10c4b067",
-   "clauseSource": "grammar"
-  }
- },
- "Hordeling Outburst": {
-  "card": {
-   "name": "Hordeling Outburst",
-   "typeLine": "Sorcery",
-   "oracleText": "Create three 1/1 red Goblin creature tokens.",
-   "colorIdentity": [
-    "R"
-   ]
-  },
-  "tags": {
-   "oracleId": "a6450b8e-eb18-431c-9eb7-7daf107978b2",
-   "schemaVersion": 1,
-   "promptVersion": 0,
-   "model": "derived",
    "characteristics": {
-    "types": [
-     "sorcery"
-    ],
-    "subtypes": [],
-    "layout": "normal",
+    "cmc": 6,
     "colors": [
      "R"
     ],
     "identity": [
      "R"
     ],
-    "cmc": 3,
+    "keywords": [
+     "triple"
+    ],
+    "layout": "normal",
     "power": null,
-    "toughness": null,
+    "subtypes": [],
     "token": false,
-    "keywords": []
+    "toughness": null,
+    "types": [
+     "enchantment"
+    ]
    },
-   "abilities": [
-    {
-     "kind": "on-cast",
-     "effect": {
-      "kind": "token-generation",
-      "subject": {
-       "control": "you",
-       "token": true,
-       "type": "creature",
-       "subtype": "goblin",
-       "scope": "all",
-       "colors": [
-        "R"
-       ],
-       "stats": [
-        {
-         "metric": "power",
-         "op": "eq",
-         "value": 1
-        },
-        {
-         "metric": "toughness",
-         "op": "eq",
-         "value": 1
-        }
-       ]
-      }
-     },
-     "amount": "3",
-     "emits": [
-      {
-       "verb": "create-token",
-       "subject": {
-        "control": "you",
-        "token": true,
-        "colors": [
-         "R"
-        ],
-        "type": "creature",
-        "subtype": "goblin",
-        "scope": "all",
-        "stats": [
-         {
-          "metric": "power",
-          "op": "eq",
-          "value": 1
-         },
-         {
-          "metric": "toughness",
-          "op": "eq",
-          "value": 1
-         }
-        ]
-       }
-      },
-      {
-       "verb": "enters",
-       "subject": {
-        "control": "you",
-        "token": true,
-        "colors": [
-         "R"
-        ],
-        "type": "creature",
-        "subtype": "goblin",
-        "scope": "all",
-        "stats": [
-         {
-          "metric": "power",
-          "op": "eq",
-          "value": 1
-         },
-         {
-          "metric": "toughness",
-          "op": "eq",
-          "value": 1
-         }
-        ]
-       }
-      }
-     ],
-     "clause": 1,
-     "repeats": "once",
-     "count": {
-      "floor": 3,
-      "ceiling": 3
-     }
-    }
-   ],
-   "deriveVersion": 388,
-   "normalizeVersion": 14,
-   "segmentHash": "23ba3d198a3be770b28abfb177f74b7cf054b322ef51b027a8e274c9173c7994",
-   "clauseSource": "grammar"
+   "clauseSource": "grammar",
+   "deriveVersion": 409,
+   "model": "derived",
+   "normalizeVersion": 12,
+   "oracleId": "52159875-354c-47f9-bb1c-cd65395fcc68",
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "0bc49b57a75c684af29391081412b379392fea41f86cecc2fc95d3ca10c4b067"
   }
  },
  "Goblin Instigator": {
   "card": {
-   "name": "Goblin Instigator",
-   "typeLine": "Creature — Goblin Rogue",
-   "oracleText": "When this creature enters, create a 1/1 red Goblin creature token.",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Goblin",
+     "printingId": "9cb4069a-0ec9-415d-8a2c-82f4a9f3ea2b",
+     "typeLine": "Token Creature — Goblin"
+    }
+   ],
    "colorIdentity": [
     "R"
-   ]
+   ],
+   "colors": [
+    "R"
+   ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
+   "keywords": [],
+   "layout": "normal",
+   "manaCost": "{1}{R}",
+   "manaValue": 2,
+   "name": "Goblin Instigator",
+   "oracleText": "When this creature enters, create a 1/1 red Goblin creature token.",
+   "power": "1",
+   "toughness": "1",
+   "typeLine": "Creature — Goblin Rogue"
   },
   "tags": {
-   "oracleId": "8b022754-6d16-470e-b754-4df6e4f4709e",
-   "schemaVersion": 1,
-   "promptVersion": 0,
-   "model": "derived",
-   "characteristics": {
-    "types": [
-     "creature"
-    ],
-    "subtypes": [
-     "goblin",
-     "rogue"
-    ],
-    "layout": "normal",
-    "colors": [
-     "R"
-    ],
-    "identity": [
-     "R"
-    ],
-    "cmc": 2,
-    "power": "1",
-    "toughness": "1",
-    "token": false,
-    "keywords": []
-   },
+   "_id": "6a932a53f6eb344af193b7ac",
    "abilities": [
     {
-     "kind": "triggered",
+     "amount": "1",
+     "clause": 1,
+     "count": {
+      "ceiling": 1,
+      "floor": 1
+     },
      "effect": {
       "kind": "token-generation",
       "subject": {
-       "control": "you",
-       "token": true,
-       "type": "creature",
-       "subtype": "goblin",
        "colors": [
         "R"
        ],
+       "control": "you",
        "stats": [
         {
          "metric": "power",
@@ -250,32 +134,19 @@
          "op": "eq",
          "value": 1
         }
-       ]
+       ],
+       "subtype": "goblin",
+       "token": true,
+       "type": "creature"
       }
      },
-     "trigger": {
-      "verbs": [
-       "enters"
-      ],
-      "subject": {
-       "control": "you",
-       "token": null,
-       "type": "creature",
-       "self": true
-      }
-     },
-     "amount": "1",
      "emits": [
       {
-       "verb": "create-token",
        "subject": {
-        "control": "you",
-        "token": true,
         "colors": [
          "R"
         ],
-        "type": "creature",
-        "subtype": "goblin",
+        "control": "you",
         "stats": [
          {
           "metric": "power",
@@ -287,19 +158,19 @@
           "op": "eq",
           "value": 1
          }
-        ]
-       }
+        ],
+        "subtype": "goblin",
+        "token": true,
+        "type": "creature"
+       },
+       "verb": "create-token"
       },
       {
-       "verb": "enters",
        "subject": {
-        "control": "you",
-        "token": true,
         "colors": [
          "R"
         ],
-        "type": "creature",
-        "subtype": "goblin",
+        "control": "you",
         "stats": [
          {
           "metric": "power",
@@ -311,100 +182,295 @@
           "op": "eq",
           "value": 1
          }
-        ]
-       }
+        ],
+        "subtype": "goblin",
+        "token": true,
+        "type": "creature"
+       },
+       "verb": "enters"
       }
      ],
-     "clause": 1,
+     "kind": "triggered",
      "repeats": "once",
-     "count": {
-      "floor": 1,
-      "ceiling": 1
+     "trigger": {
+      "subject": {
+       "control": "you",
+       "self": true,
+       "token": null,
+       "type": "creature"
+      },
+      "verbs": [
+       "enters"
+      ]
      }
     }
    ],
-   "deriveVersion": 388,
-   "normalizeVersion": 14,
-   "segmentHash": "dd9136846586ebb00b6b3adafa928d43046e92bb4a9b519dfbe2d9d084bd826f",
-   "clauseSource": "grammar"
-  }
- },
- "Warstorm Surge": {
-  "card": {
-   "name": "Warstorm Surge",
-   "typeLine": "Enchantment",
-   "oracleText": "Whenever a creature you control enters, it deals damage equal to its power to any target.",
-   "colorIdentity": [
-    "R"
-   ]
-  },
-  "tags": {
-   "oracleId": "42fb1a1c-ab3d-4cdc-a6ff-a591f7481583",
-   "schemaVersion": 1,
-   "promptVersion": 0,
-   "model": "derived",
    "characteristics": {
-    "types": [
-     "enchantment"
-    ],
-    "subtypes": [],
-    "layout": "normal",
+    "cmc": 2,
     "colors": [
      "R"
     ],
     "identity": [
      "R"
     ],
-    "cmc": 6,
-    "power": null,
-    "toughness": null,
+    "keywords": [],
+    "layout": "normal",
+    "power": "1",
+    "subtypes": [
+     "goblin",
+     "rogue"
+    ],
     "token": false,
-    "keywords": []
+    "toughness": "1",
+    "types": [
+     "creature"
+    ]
    },
+   "clauseSource": "grammar",
+   "deriveVersion": 409,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "oracleId": "8b022754-6d16-470e-b754-4df6e4f4709e",
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "dd9136846586ebb00b6b3adafa928d43046e92bb4a9b519dfbe2d9d084bd826f"
+  }
+ },
+ "Hordeling Outburst": {
+  "card": {
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Goblin",
+     "printingId": "7913ab41-f5d1-43d3-85e3-451befc97753",
+     "typeLine": "Token Creature — Goblin"
+    }
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "colors": [
+    "R"
+   ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
+   "keywords": [],
+   "layout": "normal",
+   "manaCost": "{1}{R}{R}",
+   "manaValue": 3,
+   "name": "Hordeling Outburst",
+   "oracleText": "Create three 1/1 red Goblin creature tokens.",
+   "power": null,
+   "toughness": null,
+   "typeLine": "Sorcery"
+  },
+  "tags": {
+   "_id": "6a932a52f6eb344af193a1f0",
    "abilities": [
     {
-     "kind": "triggered",
+     "amount": "3",
+     "clause": 1,
+     "count": {
+      "ceiling": 3,
+      "floor": 3
+     },
+     "effect": {
+      "kind": "token-generation",
+      "subject": {
+       "colors": [
+        "R"
+       ],
+       "control": "you",
+       "scope": "all",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ],
+       "subtype": "goblin",
+       "token": true,
+       "type": "creature"
+      }
+     },
+     "emits": [
+      {
+       "subject": {
+        "colors": [
+         "R"
+        ],
+        "control": "you",
+        "scope": "all",
+        "stats": [
+         {
+          "metric": "power",
+          "op": "eq",
+          "value": 1
+         },
+         {
+          "metric": "toughness",
+          "op": "eq",
+          "value": 1
+         }
+        ],
+        "subtype": "goblin",
+        "token": true,
+        "type": "creature"
+       },
+       "verb": "create-token"
+      },
+      {
+       "subject": {
+        "colors": [
+         "R"
+        ],
+        "control": "you",
+        "scope": "all",
+        "stats": [
+         {
+          "metric": "power",
+          "op": "eq",
+          "value": 1
+         },
+         {
+          "metric": "toughness",
+          "op": "eq",
+          "value": 1
+         }
+        ],
+        "subtype": "goblin",
+        "token": true,
+        "type": "creature"
+       },
+       "verb": "enters"
+      }
+     ],
+     "kind": "on-cast",
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "cmc": 3,
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "keywords": [],
+    "layout": "normal",
+    "power": null,
+    "subtypes": [],
+    "token": false,
+    "toughness": null,
+    "types": [
+     "sorcery"
+    ]
+   },
+   "clauseSource": "grammar",
+   "deriveVersion": 409,
+   "model": "derived",
+   "normalizeVersion": 14,
+   "oracleId": "a6450b8e-eb18-431c-9eb7-7daf107978b2",
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "23ba3d198a3be770b28abfb177f74b7cf054b322ef51b027a8e274c9173c7994"
+  }
+ },
+ "Warstorm Surge": {
+  "card": {
+   "colorIdentity": [
+    "R"
+   ],
+   "colors": [
+    "R"
+   ],
+   "commanderLegality": "legal",
+   "gameChanger": false,
+   "keywords": [],
+   "layout": "normal",
+   "manaCost": "{5}{R}",
+   "manaValue": 6,
+   "name": "Warstorm Surge",
+   "oracleText": "Whenever a creature you control enters, it deals damage equal to its power to any target.",
+   "power": null,
+   "toughness": null,
+   "typeLine": "Enchantment"
+  },
+  "tags": {
+   "_id": "6a736ac9f6eb344af1222383",
+   "abilities": [
+    {
+     "amount": "its power",
+     "clause": 1,
      "effect": {
       "kind": "damage",
       "subject": {
        "control": "any",
-       "token": null,
-       "scope": "target"
+       "scope": "target",
+       "token": null
       }
      },
+     "emits": [
+      {
+       "dealer": {
+        "control": "you",
+        "token": null
+       },
+       "subject": {
+        "control": "any",
+        "scope": "target",
+        "token": null
+       },
+       "verb": "non-combat-damage"
+      }
+     ],
+     "kind": "triggered",
+     "repeats": "repeatable",
      "trigger": {
-      "verbs": [
-       "enters"
-      ],
       "subject": {
        "control": "you",
        "token": null,
        "type": "creature"
-      }
-     },
-     "amount": "its power",
-     "emits": [
-      {
-       "verb": "non-combat-damage",
-       "subject": {
-        "control": "any",
-        "token": null,
-        "scope": "target"
-       },
-       "dealer": {
-        "control": "you",
-        "token": null
-       }
-      }
-     ],
-     "clause": 1,
-     "repeats": "repeatable"
+      },
+      "verbs": [
+       "enters"
+      ]
+     }
     }
    ],
-   "deriveVersion": 388,
+   "characteristics": {
+    "cmc": 6,
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "keywords": [],
+    "layout": "normal",
+    "power": null,
+    "subtypes": [],
+    "token": false,
+    "toughness": null,
+    "types": [
+     "enchantment"
+    ]
+   },
+   "clauseSource": "grammar",
+   "deriveVersion": 409,
+   "model": "derived",
    "normalizeVersion": 12,
-   "segmentHash": "e30b3a23ab3e0ec6d565406e189eabf0be69b078d42cf0a8e0400b6fbbee15d4",
-   "clauseSource": "grammar"
+   "oracleId": "42fb1a1c-ab3d-4cdc-a6ff-a591f7481583",
+   "promptVersion": 0,
+   "schemaVersion": 1,
+   "segmentHash": "e30b3a23ab3e0ec6d565406e189eabf0be69b078d42cf0a8e0400b6fbbee15d4"
   }
  }
 }
