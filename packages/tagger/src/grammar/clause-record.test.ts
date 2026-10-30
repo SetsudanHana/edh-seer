@@ -1615,3 +1615,26 @@ test("Gauntlet of Power: the land trigger keeps 'of the chosen color', and the s
   // The amount ("an additional one mana of that color") still reads a different floor, so the gate keeps the stored answer.
   expect(manaDiffers(a, b)).toBe(true);
 });
+
+// #1401 part 2 (T3): a list of zone moves gives each limb the zone its OWN words name. The closing "from all hands" was appended to
+// every limb, so all three of Decree of Annihilation's exiles read `fromZone: "hand"`. Real oracle text, Mongo 2026-10-30.
+test("Decree of Annihilation: each exile limb keeps its own zone (battlefield, graveyard, hand)", () => {
+  const decree = { name: "Decree of Annihilation", typeLine: "Sorcery", keywords: ["Cycling"], oracleText: "Exile all artifacts, creatures, and lands from the battlefield, all cards from all graveyards, and all cards from all hands.\nCycling {5}{R}{R} ({5}{R}{R}, Discard this card: Draw a card.)\nWhen you cycle this card, destroy all lands." };
+  const exiles = grammarClauseRecords(decree).records[0]!.actions!.filter((a) => a.verb === "exile");
+  expect(exiles.map((a) => a.fromZone)).toEqual(["battlefield", "graveyard", "hand"]);
+});
+
+test("Crabomination: the library, graveyard and hand limbs each exile from their own zone, on the stored answer and the grammar's (real oracle text and bought clauses)", () => {
+  const crab = { name: "Crabomination", typeLine: "Creature — Crab Horror", keywords: ["Emerge"], oracleText: "Emerge from artifact {5}{B}{B} (You may cast this spell by sacrificing an artifact and paying the emerge cost reduced by that artifact's mana value.)\nWhen this creature enters, target opponent exiles the top card of their library, a card at random from their graveyard, and a card at random from their hand. You may cast a spell from among cards exiled this way without paying its mana cost." };
+  const a = (verb: string, object: string, extra: Record<string, unknown> = {}) => ({ verb, object, fromZone: null, toZone: null, amount: null, optional: false, ...extra });
+  const stored = [
+    { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Emerge from artifact {5}{B}{B}" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [
+      a("exile", "the top card of target opponent's library"), a("exile", "a card at random from target opponent's graveyard"), a("exile", "a card at random from target opponent's hand"),
+      a("cast", "a spell from among cards exiled this way", { fromZone: "exile", toZone: "stack", optional: true })] },
+  ];
+  const g = grammarClauseRecords(crab);
+  const zones = (records: typeof stored) => deriveCardTags(deriveInputOf(crab as never, "x", crab.name, records as never)).abilities.flatMap((x) => x.emits.filter((e) => e.verb === "exiled").map((e) => e.subject.fromZone));
+  expect(zones(stored)).toEqual(["library", "graveyard", "hand"]);
+  expect(g.records.find((r) => r.trigger)!.actions!.filter((x) => x.verb === "exile").map((x) => x.fromZone)).toEqual(["library", "graveyard", "hand"]);
+});

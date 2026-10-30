@@ -552,7 +552,9 @@ function moveList(text: string, onField = false): Args | Args[] | null {
   if (parts.length < 2) return moveObject(text, onField);
   const from = / from (?:your|their|a|an opponent's|target player's|all) (?:graveyards?|hands?|librar(?:y|ies))$/.exec(parts[parts.length - 1]!)?.[0] ?? "";
   const each = parts.map((p) => {
-    const r = moveObject(p.endsWith(from) ? p : `${p}${from}`, onField);
+    // A limb that names its OWN zone keeps it ("... lands from the battlefield, all cards from all graveyards, and all cards from all hands":
+    // Decree of Annihilation); the closing zone is borrowed only by a limb that names none (#1401 part 2).
+    const r = moveObject(p.endsWith(from) || fromOf(p).from !== undefined ? p : `${p}${from}`, onField);
     return r && r.text !== undefined ? { ...r, text: p } : r;
   });
   return each.every((e) => e) ? (each as Args[]) : null;
