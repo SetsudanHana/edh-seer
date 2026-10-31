@@ -724,7 +724,12 @@ const TAIL: Record<string, [string, Handler]> = {
   }],
   play: ["play", (rest) => castOrPlay(rest, /\blands?\b|\bcards?\b|^(?:it|them)$|\bof them$/i)],
   // "prevent all combat damage that would be dealt this turn": the store keeps the whole phrase.
-  prevent: ["prevent", (rest) => (/\bdamage\b/.test(rest) ? { object: { control: "any", token: null }, text: rest } : null)],
+  // #1378: "prevent 1 of that damage", "prevent the next 3 damage ...": the number prevented is the amount, as the store writes it where it writes one ("all" is none).
+  prevent: ["prevent", (rest) => {
+    if (!/\bdamage\b/.test(rest)) return null;
+    const n = /^(?:the next )?(\d+|x|one|two|three|four|five|six|seven|eight|nine|ten)(?: of that)? damage\b/i.exec(rest);
+    return { object: { control: "any", token: null }, text: rest, ...(n && amountOf(n[1]!) ? { amount: amountOf(n[1]!)! } : {}) };
+  }],
   // "double its power", "double the number of +1/+1 counters on it": the verb is read, the doubled
   // thing keeps the stored object (it names the counters' holder, which "it" / "each of them" hides).
   double: ["double", (rest) => (rest !== "" ? { object: { control: "any", token: null, ref: "sentence" } } : null)],
@@ -742,8 +747,9 @@ const TAIL: Record<string, [string, Handler]> = {
   learn: ["learn", (rest) => (rest === "" ? {} : null)],
   // The rest of the keyword actions and game actions: the verb is read, the stored object stays.
   roll: ["roll-dice", (rest) => (/^(?:a|an|one|two|three) (?:d\d+|(?:four|six|eight|ten|twelve|twenty)-sided (?:die|dice)|dice|die)(?: \w+ times?)?$/i.test(rest) ? {} : null)],
-  flip: ["flip-coin", (rest) => (/^(?:a coin|two coins|a coin until you lose a flip)$/i.test(rest) ? {} : null)],
-  take: ["extra-turn", (rest) => (/^(?:an|two) extra turns? after this one$/i.test(rest) ? {} : null)],
+  // #1378: "two coins" / "two extra turns" is the amount 2 (stored: Two-Headed Giant, Teferi Master of Time); "a coin" / "an extra turn" is no amount, as stored.
+  flip: ["flip-coin", (rest) => (/^(?:a coin|two coins|a coin until you lose a flip)$/i.test(rest) ? (/^two/i.test(rest) ? { amount: "2" } : {}) : null)],
+  take: ["extra-turn", (rest) => (/^(?:an|two) extra turns? after this one$/i.test(rest) ? (/^two/i.test(rest) ? { amount: "2" } : {}) : null)],
   "get an emblem": ["emblem", (rest) => (/^with /i.test(rest) || rest === "" ? {} : null)],
   switch: ["exchange", (all) => {
     const rest = all.replace(DURATION, "");
@@ -937,7 +943,9 @@ function subjectAction(t: string): ActionReading[] | null {
   }
   if (kw[4]) return null;
   const verb = word.startsWith("explores") ? "explore" : word.startsWith("connives") ? "connive" : word === "is goaded" ? "goad" : "endure";
-  return [{ verb, object: who.object, ...self, ...(kw[3] ? { amount: kw[3] } : {}), ...opt }];
+  // #1378: "connives X" / "connives 2": the number is the amount (the sentence's "where X is ..." replaces an X, in readPhraseOnce).
+  const cn = verb === "connive" ? /^connives (\d+|x)$/i.exec(word) : null;
+  return [{ verb, object: who.object, ...self, ...(kw[3] ? { amount: kw[3] } : cn ? { amount: cn[1]!.toUpperCase() } : {}), ...opt }];
 }
 
 const THEY = /^(?:they|it|he|she|that creature|those creatures|that permanent|the next (?:[\w -]+? )?spell you cast this turn)$/i;

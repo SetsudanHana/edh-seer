@@ -708,3 +708,27 @@ test("'you and defending player each discard a card or sacrifice a permanent' re
   const r = parseActions("you and defending player each discard a card or sacrifice a permanent.", "triggered");
   expect(r.map((x) => `${x.verb}:${x.actor?.control}`)).toEqual(["discard:you", "sacrifice:you", "discard:opp", "sacrifice:opp"]);
 });
+
+// #1378: a grammar reading carries the amount the printed words state, as the stored reading does.
+test("prevent N: the amount is the number prevented (Orbs of Warding, Shield of the Realm, Plated Pegasus)", () => {
+  expect(read("prevent 1 of that damage.")).toMatchObject([{ verb: "prevent", amount: "1" }]);
+  expect(read("prevent 2 of that damage.")).toMatchObject([{ verb: "prevent", amount: "2" }]);
+  expect(read("prevent 1 damage that spell would deal to that permanent or player.")).toMatchObject([{ verb: "prevent", amount: "1" }]);
+  expect(read("Prevent the next 3 damage that a source of your choice would deal to you this turn.")).toMatchObject([{ verb: "prevent", amount: "3" }]);
+  expect(read("Prevent the next X damage that would be dealt to target creature this turn.")).toMatchObject([{ verb: "prevent", amount: "X" }]);
+  // "all" is no number.
+  expect(read("Prevent all combat damage that would be dealt this turn.")[0]?.amount).toBeUndefined();
+});
+
+test("extra turns and coin flips: 'two' is the amount, 'an' / 'a' are no amount (Time Stretch, Two-Headed Giant)", () => {
+  expect(read("Take two extra turns after this one.")).toMatchObject([{ verb: "extra-turn", amount: "2" }]);
+  expect(read("flip two coins.")).toMatchObject([{ verb: "flip-coin", amount: "2" }]);
+  expect(read("Take an extra turn after this one.")[0]?.amount).toBeUndefined();
+  expect(read("flip a coin.")[0]?.amount).toBeUndefined();
+});
+
+test("connive X: the amount is what the sentence says X is (Raffine, Mask of the Schemer, Spymaster's Vault)", () => {
+  expect(read("target attacking creature connives X, where X is the number of attacking creatures.")).toMatchObject([{ verb: "connive", amount: "the number of attacking creatures" }]);
+  expect(read("it connives X, where X is the amount of damage it dealt to that player.")).toMatchObject([{ verb: "connive", amount: "the amount of damage it dealt to that player" }]);
+  expect(read("it connives.")[0]?.amount).toBeUndefined();
+});
