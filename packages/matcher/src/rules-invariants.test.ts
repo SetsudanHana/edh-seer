@@ -29,6 +29,7 @@ const TESTED: Record<string, string> = {
   "700.4": "zones.test.ts — dies stays dies (CR 700.4)",
   "207.2c": "similar.test.ts — ability words are not keywords (CR 207.2c)",
   "700.11": "deck-fit.test.ts — a permanent card put into your graveyard from anywhere is a descent, so a creature dying meets the descend condition (#1166)",
+  "701.10e": "edges.test.ts — a doubler of other creatures' counters feeds a self counter doubler; a self doubler does not (#1438)",
   "701.17a": "partners-core.test.ts — a mill also supplies the general graveyard put, one way only",
   "400.1": "partners-core.test.ts — a graveyard leave keys apart from a battlefield leave (AK6)",
   "205.3i": "rules.test.ts — tutor.text refuses a search whose subject is only a land type (land types are the CR 205.3i list: Gate, Desert, Cave, Town ...), #1266",

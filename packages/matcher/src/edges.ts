@@ -3783,7 +3783,10 @@ function imprintEdges({ p, c, h, reasons }: PairScope): void {
 // identical event don't each spawn their own (byte-identical) Reason here.
 function counterPresenceEdges({ p, c, h, pEvents, reasons }: PairScope): void {
   for (const emit of pEvents) {
-    if (emit.verb !== "counter-added" || !emit.subject.counter) continue;
+    // CR 701.10e: "To double the number of a kind of counters on a player or permanent, give that player or permanent as many of those counters as that player or permanent already has" -- a doubling (or tripling)
+    // of ANOTHER permanent's counters (Kalonian Hydra's "each creature you control") is a placement of that kind on it. The card's own doubling is not a supply to anyone (#1438).
+    const placesCounters = emit.verb === "counter-added" || ((emit.verb === "double" || emit.verb === "triple") && emit.subject.self !== true);
+    if (!placesCounters || !emit.subject.counter) continue;
     for (const ca of c.tags.abilities) {
       const want = ca.effect.subject;
       if (!want?.counter || want.counter !== emit.subject.counter) continue;
@@ -3793,9 +3796,9 @@ function counterPresenceEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       // SELF ON BOTH SIDES IS TWO DIFFERENT CARDS (#1421), as `SELF_BOTH_REFUSED` has it for events: Walking Ballista's counters land on Ballista, and
       // Mossborn Hydra doubles only its own, so the one never feeds the other. A producer that can reach ANOTHER creature (a target, a class) still does.
       if (emit.subject.self === true && want.self === true) continue;
-      // CEILING: a self consumer is fed only through typed / target / class emits. A producer's UNTYPED non-self emit beside a self one (Juniper Order Ranger, Wildgrowth Archaic, Clay Champion: real misses)
-      // cannot be told apart from an unmarked self placement (Big Bertha, Grimgrin, Hooded Hydra, Captain America's Hero-only counter), and reading them loosely was 16 false for 3 real. Kalonian Hydra's real link
-      // is its `double` emit, which is not a counter-added supply, and Bloodspore Thrinax derives only a self emit.
+      // CEILING: a self consumer is fed only through typed / target / class emits. A producer's UNTYPED non-self emit beside a self one cannot be told from an unmarked self placement (Big Bertha's "her", Grimgrin's "it" after an untap,
+      // Hooded Hydra's morph), so it does not feed; derive types the real ones (#1438). The doubling above is read here only: producerEvents and the event pass still see a `double` as no counter-added event, so a payoff that
+      // waits for "whenever you put counters on a creature" is not fed by Kalonian Hydra.
       if (!subjectMatches(emit.subject, want, h)) continue;
       reasons.push({
         tag: `counter-added:${themeSubjectKey(want)}`,

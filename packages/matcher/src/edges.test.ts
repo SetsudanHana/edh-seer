@@ -1036,7 +1036,7 @@ describe("a self counter consumer joins only a producer that can reach another c
   test("a self-only producer does not feed it", () => {
     expect(feeds(producer("Walking Ballista", { control: "any", token: null, counter: "+1/+1", self: true }))).toEqual([]);
   });
-  // CEILING pinned: an untyped non-self emit beside a self one cannot be told from an unmarked self placement. Big Bertha's shape (really self) must not feed; Juniper Order Ranger's (really reaches another) is a known miss.
+  // An untyped non-self emit beside a self one still cannot be told from an unmarked self placement (Big Bertha's shape, really self, must not feed); derive types the real ones now (#1438).
   test("a self emit beside an untyped non-self emit does not feed it", () => {
     const bertha = base("Big Bertha", [{
       kind: "static", effect: { kind: "enters-with-counters" },
@@ -1046,6 +1046,18 @@ describe("a self counter consumer joins only a producer that can reach another c
       ],
     }] as unknown as CardTags["abilities"]);
     expect(feeds(bertha).length).toBe(0);
+  });
+  // CR 701.10e: doubling the counters on a permanent gives it as many as it has, so a doubler of ANOTHER creature's counters (Kalonian Hydra) supplies the counters a self doubler wants. Its own doubling does not (Mossborn -> Mossborn's twin).
+  test("a doubler of other creatures' counters feeds it; a self doubler does not (#1438)", () => {
+    const doubler = (name: string, subject: object, verb = "double") => base(name, [{
+      kind: "triggered", trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: null, self: true } },
+      effect: { kind: "counter-placement" },
+      emits: [{ verb, subject }],
+    }] as unknown as CardTags["abilities"]);
+    expect(feeds(doubler("Kalonian Hydra", { type: "creature", control: "you", token: null, counter: "+1/+1", scope: "each" })).length).toBe(1);
+    expect(feeds(doubler("Tripler", { type: "creature", control: "you", token: null, counter: "+1/+1", scope: "each" }, "triple")).length).toBe(1);
+    expect(feeds(doubler("Solarion", { type: "creature", control: "any", token: null, counter: "+1/+1", self: true }))).toEqual([]);
+    expect(feeds(doubler("Other kind", { type: "creature", control: "you", token: null, counter: "charge", scope: "each" }))).toEqual([]);
   });
   test("a target or a class producer still does", () => {
     expect(feeds(producer("Arwen", { type: "creature", control: "any", token: null, counter: "+1/+1", scope: "target" })).length).toBe(1);
