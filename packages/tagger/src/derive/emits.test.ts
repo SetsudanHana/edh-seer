@@ -762,3 +762,14 @@ test("manifest dread mills YOUR library when you manifest, whatever player words
   expect(mill("When this creature dies, its controller manifests dread.")).toBe("any"); // Fear of Impostors / Unwanted Remake shape
   expect(mill("When this Vehicle leaves the battlefield, the exiled card's owner manifests dread.")).toBe("any"); // Unidentified Hovership
 });
+
+// #1387: a token's granted ability names players that are not the actor. Judith's Imp "deals 2 damage to each opponent" when it dies; the Imp is its creator's.
+test("a player named only inside a token's quoted ability does not stop the controller default (Judith, Carnage Connoisseur, #1387)", () => {
+  const object = 'a 2/2 red Imp creature token with "When this token dies, it deals 2 damage to each opponent."';
+  const clause = `Create ${object}`;
+  const [create, enters] = actionEmits({ verb: "create", object }, clause);
+  expect(create!.subject.control).toBe("you");
+  expect(enters!.subject.control).toBe("you");
+  // a player named OUTSIDE the quote still blocks it
+  expect(actionEmits({ verb: "create", object: "a 1/1 Soldier creature token" }, "Target opponent creates a 1/1 Soldier creature token")[0]!.subject.control).not.toBe("you");
+});

@@ -224,9 +224,7 @@ function parseTypes(
   // \"EQUIPPED CREATURE gets +1/+0\"") were swept into `type`, so the Prydwen's Knight read as an artifact creature and every
   // Equipment token as a creature. Quoted text is cut before any sweep -- only after the word "token", since an emblem's quoted text IS its subject (Kaito's
   // Ninjas); a quoted NAME stays.
-  // CEILING: only the TYPE sweep is cut. The same quoted text also leaks scope, control and subtype words (Country Roads' Pilot token
-  // gains Mount and Vehicle; Vernal Sovereign's scope), left for #1387 so this change moves types alone.
-  // `plural` is still read off the whole text so `scope` does not move with this change.
+  // `parseSubject` cuts the quoted ability before ANY field is read (#1387); this one stays for direct callers and the clause-less shape.
   // "cards exiled WITH THIS ARTIFACT" names the card that exiled them (Dino DNA, Death in Heaven), not a class of the subject.
   // ...but only when another type word is left to name the subject: "land cards exiled with this enchantment" is a land, while a phrase with
   // nothing else ("the cards exiled with this artifact") keeps its sweep rather than become typeless and match everything.
@@ -762,11 +760,15 @@ const TARGETS_ONLY = /\btargets? only\b/i;
  *  target creature"), or the Equipment being described ("all Equipment attached to that creature").
  *  33 of the 61 carry a type word in the tail that the head does not. */
 const ATTACHED_TO = /\battached to\b/i;
+/** "create a token that's a copy of the card Armadillo Cloak AND ATTACH IT TO that creature": the host is not the token (#1387). */
+const AND_ATTACH = /\band attach(?:es)? (?:it|them|that token|those tokens)\b/i;
+/** "a copy of the card Armadillo Cloak": a card's NAME, whose words are not the token's subtypes (#1387). Up to a comma or "and". */
+const COPY_OF_NAMED_CARD = /\b(copy of the card)\s+(?:(?!\band\b)[^,])+/i;
 /** "exiled with this artifact": the type word is the card's own, not the subject's. */
 const EXILED_WITH_SELF = /\bexiled\s+(?:with|by)\s+this\s+[a-z]+\b/gi;
 
 /** Cut the quoted ability off a token description; any other text is returned untouched. */
-function stripTokenAbility(text: string): string {
+export function stripTokenAbility(text: string): string {
   // The first DOUBLE quote or `with '`, never a bare apostrophe: "Volo's Journal, a ... token" has one before the word "token".
   const q = text.search(/"|\bwith\s+'/i);
   if (q < 0 || !/\btokens?\b/i.test(text.slice(0, q))) return text;
@@ -785,7 +787,13 @@ export function namesAClass(s: Partial<SubjectFilter>): boolean {
 }
 
 export function parseSubject(text: string): SubjectFilter {
-  const whole = text.toLowerCase().trim().split(ATTACHED_TO)[0].trim();
+  // EVERY FIELD IS READ FROM THE TOKEN, NOT FROM THE ABILITY IT IS GRANTED (#1387; #1385 cut the types alone). Cut first, so the counter in Zabu's
+  // landfall ability, the "creatures with flying" a Drone can block, the "each opponent" an Imp damages and the Mounts a Pilot crews are not the
+  // token's counter, scope, control or subtype. A quoted NAME stays; an emblem's quoted text IS its subject and stays (see `stripTokenAbility`).
+  // The tail after "and attach it to ..." is the Aura's host, not the token; and "a copy of the card Armadillo Cloak" names a card, whose
+  // words are not subtypes (The Dogronmaster).
+  const whole = stripTokenAbility(text.toLowerCase().trim()).split(ATTACHED_TO)[0].split(AND_ATTACH)[0]
+    .replace(COPY_OF_NAMED_CARD, "$1").trim();
   // A COUNT IS A MAGNITUDE, NOT A CLASS (recall v6 #77, 2026-09-10). "a Treasure token for each
   // nontoken creature that died this turn" (Gadrak) read `type: creature` off the count, so the
   // Treasure was a creature and no Treasure payoff met it. `parseControl` has cut at the cue since
