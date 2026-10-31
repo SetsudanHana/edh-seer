@@ -945,3 +945,34 @@ test("#1427: 'creatures attacking one of your opponents' names the defender; con
   // ...while a controller phrase still reads: "attacking creatures your opponents control".
   expect(parseSubject("attacking creatures your opponents control").control).toBe("opp");
 });
+
+// #1387: the cut #1385 made for TYPES applies to every field. The token is what comes before its granted ability.
+test("a token's quoted ability does not set its counter, scope, control or subtype (#1387)", () => {
+  // Ka-Zar of the Savage Land: Zabu, "put a +1/+1 counter on Zabu" is Zabu's ability.
+  const zabu = parseSubject('zabu, a legendary 2/2 green cat creature token with "landfall — whenever a land you control enters, put a +1/+1 counter on zabu."');
+  expect(zabu).not.toHaveProperty("counter");
+  expect(zabu.subtype).toBe("cat");
+  // Desculpting Blast: "creatures with flying" is the Drone's restriction, not a class of all creatures.
+  const drone = parseSubject('a 1/1 colorless drone artifact creature token with flying and "this token can block only creatures with flying."');
+  expect(drone).not.toHaveProperty("scope");
+  expect(drone.keyword).toEqual(["flying"]);
+  // Judith: "each opponent" is who the Imp's trigger damages, not who controls the Imp.
+  const imp = parseSubject('a 2/2 red imp creature token with "when this token dies, it deals 2 damage to each opponent."');
+  expect(imp.control).not.toBe("opp");
+  expect(imp).not.toHaveProperty("scope");
+  // Country Roads: Mounts and Vehicles are what the Pilot crews, not what it is.
+  expect(parseSubject('a 1/1 colorless pilot creature token with "this token saddles mounts and crews vehicles as though its power were 2 greater."').subtype).toBe("pilot");
+  // a quoted NAME stays
+  expect(parseSubject('a colorless artifact token named land mine with "{r}, sacrifice this token: this token deals 2 damage to target attacking creature without flying."').named).toBeUndefined();
+});
+
+test("an emblem's quoted text is its subject and keeps its subtype (Kaito, #1387)", () => {
+  expect(parseSubject("an emblem with \"ninjas you control get +1/+1.\"").subtype).toBe("ninja");
+});
+
+test("a token that is a copy of a named card takes no subtype from the card's name (The Dogronmaster, #1387)", () => {
+  const cloak = parseSubject("a token that's a copy of the card armadillo cloak and attach it to that creature");
+  expect(cloak.subtype).toBeUndefined();
+  expect(cloak.type).toBeUndefined();
+  expect(cloak.token).toBe(true);
+});

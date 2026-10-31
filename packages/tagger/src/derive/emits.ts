@@ -3,7 +3,7 @@
  *  vocabulary, but without its `dies` emit no aristocrats edge ever forms. */
 import type { Action } from "../canonicalize.js";
 import type { GameEvent, SubjectFilter, Verb } from "../schema.js";
-import { controlFromRelation, counterKindOf, parseCounter, parseSubject, spellMove, COUNT_PHRASE } from "./subject.js";
+import { controlFromRelation, counterKindOf, parseCounter, parseSubject, spellMove, stripTokenAbility, COUNT_PHRASE } from "./subject.js";
 import { LAND_SUBTYPES } from "./subtypes.js";
 import { damageRecipient, isControllerPhrase, playerOnlyRecipient } from "./damage-recipient.js";
 import { tokenTypeFor } from "./token-types.js";
@@ -955,7 +955,9 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // payoff. The opponents are the multiplier; CR 111.2 makes the tokens the controller's. Same cut
   // `parseControl` makes one file over, so the two cannot disagree about where a sentence's head
   // ends. Four cards: Call the Coppercoats, Rose, Hylda's Crown of Winter, Kaito.
-  const head = (copyHead ? clauseText?.replace(COPIED_PHRASE, "") : clauseText)?.split(COUNT_PHRASE)[0];
+  // A token's GRANTED ability names players that are not this action's actor (#1387): Judith's Imp "deals 2 damage to each opponent" when IT dies, and that
+  // "opponent" kept the Imp's controller from defaulting to "you".
+  const head = stripTokenAbility(copyHead ? clauseText?.replace(COPIED_PHRASE, "") ?? "" : clauseText ?? "").split(COUNT_PHRASE)[0];
   const wholeHead = head && head.trim().length > 0 ? head : clauseText;
   // ANOTHER PLAYER'S PHRASE JOINED TO THIS ACTION'S OWN ("its owner draws that many cards AND EACH OTHER PLAYER loses that much life", Oft-Nabbed Goat) is not this action's actor: the named-player guard reads
   // the head up to that join, unless this action's verb is in the tail (then the tail is its own, "Draw a card and each other player discards a card" keeps the guard for the discard). The join is a

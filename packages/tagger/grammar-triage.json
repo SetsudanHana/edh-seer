@@ -3,13 +3,13 @@
   "parsed": 6820,
   "groups": {
     "control": {
-      "distinct": 83,
+      "distinct": 82,
       "label": "grammar right",
       "rule": "CR 112.2",
-      "why": "Two shapes, both right. (1) 'spells you cast' (70 of 73): a spell's controller is the player who put it on the stack, so the caster is the controller -- parseSubject's control regex knows 'you control' and 'your' but not 'you cast', and answered any. (2) 'of an opponent's choice' / 'of your choice' (6): the chooser is not the controller; parseSubject read 'opponent'/'your' anywhere and answered opp/you. A Clue, Food or Treasure 'of your choice' is created under the creator's control by CONTROLLER_DEFAULT, not by this word. The 'that targets only' member names the TARGET's controller, not the spell's, and the subject is refused (restricted) either way. 'a token that's a copy of a permanent you control': 'you control' names the ORIGINAL, not the token, which CONTROLLER_DEFAULT gives its creator (CR 111.2). (3) 'a 2/2 white Human Knight creature token with \"...under your control this turn.\"' (The Prydwen, Steel Flagship; this phrase was group control,type before #1385): the type difference is gone, since parseSubject now cuts a token's quoted ability from the type sweep. What remains is control: parseSubject still reads 'your control' inside the quote and answers you, the grammar answers any. That is the quote leak of #1387, and the grammar is right."
+      "why": "Two shapes, both right. (1) 'spells you cast' (70 of 73): a spell's controller is the player who put it on the stack, so the caster is the controller -- parseSubject's control regex knows 'you control' and 'your' but not 'you cast', and answered any. (2) 'of an opponent's choice' / 'of your choice' (6): the chooser is not the controller; parseSubject read 'opponent'/'your' anywhere and answered opp/you. A Clue, Food or Treasure 'of your choice' is created under the creator's control by CONTROLLER_DEFAULT, not by this word. The 'that targets only' member names the TARGET's controller, not the spell's, and the subject is refused (restricted) either way. 'a token that's a copy of a permanent you control': 'you control' names the ORIGINAL, not the token, which CONTROLLER_DEFAULT gives its creator (CR 111.2). (3) the quote leak of #1387 is fixed: parseSubject now cuts a token's quoted ability before it reads any field, so the Prydwen's Knight (\"... under your control this turn.\") agrees with the grammar and left this group."
     },
     "scope": {
-      "distinct": 87,
+      "distinct": 71,
       "label": "grammar right",
       "rule": "CR 115.1",
       "why": "(1) 'creatures target player controls', 'a creature target opponent controls': the player is the target, the creatures are not -- parseSubject's scope reads 'target' anywhere in the string. (2) 'any number of targets', 'one or two targets': parseSubject's \\btarget\\b misses the plural. (3) 'a creature each opponent controls': the quantifier binds the opponent. (4) Two token names ('Kobolds of Kher Keep', 'Llanowar Elves'): a plural in a NAME is not a mass subject. (5) 'a token that's a copy of target creature': the original is targeted, the token is created, not targeted. Copy tokens of a target ('a token that's a copy of target artifact') are not themselves targeted."
@@ -45,13 +45,13 @@
       "why": "'target creature you own', 'Commander creatures you own': ownership is a stated fact the schema has a field for (`owner`, Zedruu #681); parseSubject never sets it from 'you own'."
     },
     "named": {
-      "distinct": 33,
+      "distinct": 34,
       "label": "grammar right",
       "rule": "CR 111.4",
       "why": "'a 1/2 blue Bird creature token with flying named Storm Crow': the name belongs to the token being created (G2b ruling, 2026-08-21). parseSubject's TOKEN_CREATION wants 'token named' adjacent, so a 'with flying' between them made it read a card name to look for."
     },
     "subtype": {
-      "distinct": 33,
+      "distinct": 30,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Words inside a NAME or a COUNTER KIND are not subtypes: 'a card named Forest', 'Scion of Darkness', 'Kobolds of Kher Keep', 'Cloud Sprite', 'a creature with a fungus counter on it', 'a land with a mine counter on it'. parseSubject's subtype sweep reads every word; the grammar reads the name and the counter as what they are. The 'that targets only a single Golem' member is refused (restricted) either way."
@@ -93,7 +93,7 @@
       "why": "'attacking player' is a player, not an attacking creature. 'target attacking or blocking creature' (13 phrases, 87 card uses) is `in-combat` (CR 506.4): parseSubject read only 'attacking'."
     },
     "named,subtype": {
-      "distinct": 6,
+      "distinct": 5,
       "label": "grammar right",
       "rule": "CR 111.4",
       "why": "'a 3/1 colorless Wall artifact creature token with defender named Stone Boulder': the token's own name, and 'stone' is not a subtype of it."
@@ -105,7 +105,7 @@
       "why": "'a colorless artifact token named Land Mine': an artifact token; 'Land' and 'Mine' are its name."
     },
     "control,scope": {
-      "distinct": 12,
+      "distinct": 8,
       "label": "grammar right",
       "rule": "CR 707.2, CR 111.2",
       "why": "'a token that's a copy of target creature you control': control and target belong to the ORIGINAL. The token copies only copiable values (CR 707.2) and is its creator's (CR 111.2); parseSubject read 'you control' and 'target' as the token's. The copiable values the original states (a chosen type, a keyword) are kept, so 'each creature you control of the chosen type' and '... with haste' land here too."
@@ -117,10 +117,10 @@
       "why": "'a creature other than this creature': singular, so no mass scope; parseSubject's scope reads the word 'other' as a class-minus-this. The grammar says `other`, which is what the words mean."
     },
     "keyword": {
-      "distinct": 30,
+      "distinct": 32,
       "label": "grammar right",
       "rule": "printed text",
-      "why": "'a spell that has convoke', 'another spell that has flash': the keyword the spell has, the same demand as 'a spell with convoke'. parseSubject reads keywords only after 'with'."
+      "why": "'a spell that has convoke', 'another spell that has flash': the keyword the spell has, the same demand as 'a spell with convoke'. parseSubject reads keywords only after 'with'. (#1387: two phrases moved in from keyword,scope when parseSubject stopped reading a token's quoted scope -- a token's keyword list with commas, 'with first strike, vigilance, and that ability': the grammar stops at the first keyword and parseSubject reads the list; the same disagreement keyword,scope already labelled.)"
     },
     "other,scope,type": {
       "distinct": 4,
@@ -267,7 +267,7 @@
       "why": "Every member read. anyOf: whole noun phrases joined by and/or ('target creature you control and target creature you don't control', 'another creature you control or a land you control'): their union, shared fields outside and the differing ones per branch; or 'power or toughness N or less' as one branch per stat; control: control belongs to the right noun: the caster controls a spell; a possessive or relative clause names another object's controller."
     },
     "scope,subtype": {
-      "distinct": 6,
+      "distinct": 3,
       "label": "grammar right",
       "rule": "CR 111.4, CR 115.1",
       "why": "Every member read. scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; 'each of up to three targets' is targeted; a quantifier inside a token's quoted ability is not the token's; subtype: a word inside a name, a counter kind, a Role's name or a token's quoted ability is not the subject's subtype; 'Mice' is Mouse."
@@ -289,12 +289,6 @@
       "label": "grammar right",
       "rule": "CR 400.1, printed text",
       "why": "Every member read. stats: stat comparisons parseSubject does not read: a bare value ('mana value 1'), a run ('mana value 4, 5, or 6' = 4..6), the subject's own other stat ('power equal to its toughness', `vs`), and a rhs the text does not fix ('mana value X or less', 'less than the result', 'lesser power') as `variable`, where the matcher abstains exactly as the dropped words did; zone: where the subject lives ('in your graveyard', 'all the cards in your hand')."
-    },
-    "notSubtype,scope": {
-      "distinct": 1,
-      "label": "grammar right",
-      "rule": "CR 115.1, printed text",
-      "why": "Every member read. notSubtype: a negated subtype inside a token's quoted ability is not the token's; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; 'each of up to three targets' is targeted; a quantifier inside a token's quoted ability is not the token's."
     },
     "control,stats": {
       "distinct": 5,
@@ -441,7 +435,7 @@
       "why": "Every member read. colors: a colour inside 'protection from white' is the keyword's, not the token's; keyword: keyword lists joined by commas ('flanking, protection from white, and haste') and 'that has convoke'."
     },
     "control,scope,subtype": {
-      "distinct": 2,
+      "distinct": 1,
       "label": "grammar right",
       "rule": "CR 111.4, CR 112.2, CR 115.1",
       "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive or relative clause names another object's controller; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; 'each of up to three targets' is targeted; a quantifier inside a token's quoted ability is not the token's; subtype: a word inside a name, a counter kind, a Role's name or a token's quoted ability is not the subject's subtype; 'Mice' is Mouse."
@@ -465,7 +459,7 @@
       "why": "Every member read. notColors: negated colours; stats: stat comparisons parseSubject does not read: a bare value ('mana value 1'), a run ('mana value 4, 5, or 6' = 4..6), the subject's own other stat ('power equal to its toughness', `vs`), and a rhs the text does not fix ('mana value X or less', 'less than the result', 'lesser power') as `variable`, where the matcher abstains exactly as the dropped words did."
     },
     "notSubtype": {
-      "distinct": 2,
+      "distinct": 1,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. notSubtype: a negated subtype inside a token's quoted ability is not the token's."
@@ -1353,7 +1347,7 @@
       "why": "Every member read. condition: a condition on a player or on an object's controller (controls X, life/poison/hand counts, the punisher's 'who doesn't', a vote or choice, a coin) that parseSubject dropped or read as a class; the matcher refuses it; subtype: a word inside a name, a counter kind, a Role's name or a token's quoted ability is not a subtype; Adventure is a card's layout (`status`), not its subtype; a planeswalker subtype counts before 'planeswalker'."
     },
     "keyword,scope": {
-      "distinct": 3,
+      "distinct": 1,
       "label": "grammar right",
       "rule": "CR 115.1, printed text",
       "why": "Every member read. keyword: keyword lists with commas and 'protection from X', 'that has convoke', 'with a cycling ability'; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject."
@@ -1903,12 +1897,6 @@
       "label": "grammar right",
       "rule": "printed text",
       "why": "'target spell, nonland permanent, or card in a graveyard': three alternatives, the grammar's branches each with its own class (the nonland permanent carries its notType); parseSubject read one nonland permanent and dropped the other two."
-    },
-    "control,counter": {
-      "distinct": 1,
-      "label": "grammar right",
-      "rule": "CR 112.2, CR 115.1, printed text",
-      "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive or relative clause names another object's controller; counter: an energy amount inside a stat's rhs is not the subject's counter."
     }
   }
 }
