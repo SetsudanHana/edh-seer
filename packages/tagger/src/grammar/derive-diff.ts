@@ -252,9 +252,33 @@ export function storedLacks(stored: readonly Ability[], grammar: readonly Abilit
   return [...lost].sort();
 }
 
+/** AN EMIT SUBJECT FIELD ONLY THE STORED READING NAMES (#1377 review). Per clause and effect kind, a stored emit's subject carries a filter field (type, subtype, ...) that no grammar emit of the same verb has.
+ *  Archghoul of Thraben, Territory Culler and Sarinth Steelseeker: "look at the top card ... if it's a land card ... put it into your hand. If you don't, you may put it into your graveyard" -- the stored
+ *  `mill` emit is typed zombie / creature / land, but the card that reaches the graveyard is the one NOT taken, so the type is wrong and the grammar's untyped emit is the truer reading.
+ *  A field the stored side names is not a loss the grammar must make up, it is a claim the grammar did not make: the stored reading is not loss-free, so the card stays on the grammar.
+ *  Returns "kind:emit.verb.field", sorted. */
+export function storedEmitFields(stored: readonly Ability[], grammar: readonly Ability[]): string[] {
+  const out = new Set<string>();
+  for (const s of stored) {
+    const kind = s.effect?.kind ?? "";
+    const peers = grammar.filter((g) => g.clause === s.clause && g.effect?.kind === kind);
+    if (peers.length === 0) continue;
+    for (const e of s.emits ?? []) {
+      const theirs = peers.flatMap((g) => (g.emits ?? []).filter((x) => x.verb === e.verb));
+      if (theirs.length === 0) continue; // no grammar emit of the verb: `lostClaims`'s
+      for (const f of Object.keys(e.subject as unknown as Record<string, unknown>)) {
+        if ((e.subject as unknown as Record<string, unknown>)[f] === undefined) continue;
+        if (!theirs.some((x) => (x.subject as unknown as Record<string, unknown>)[f] !== undefined)) out.add(`${kind}:emit.${e.verb}.${f}`);
+      }
+    }
+  }
+  return [...out].sort();
+}
+
 /** The stored reading is no worse than the grammar's on anything the other guards can see. */
 export const storedLosesNothing = (stored: readonly Ability[], grammar: readonly Ability[]): boolean =>
-  lostClaims(grammar, stored).length === 0 && lostSubjectFields(grammar, stored).length === 0 && lostScaledAmount(grammar, stored).length === 0 && storedLacks(stored, grammar).length === 0;
+  lostClaims(grammar, stored).length === 0 && lostSubjectFields(grammar, stored).length === 0 && lostScaledAmount(grammar, stored).length === 0 && storedLacks(stored, grammar).length === 0
+  && storedEmitFields(stored, grammar).length === 0;
 
 /** Refuse the grammar row: it drops a number the stored reading states, and the stored reading loses nothing against it (#1377). */
 export const refusedForAmount = (stored: readonly Ability[], grammar: readonly Ability[]): boolean =>

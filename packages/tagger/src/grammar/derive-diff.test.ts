@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Ability } from "../schema.js";
-import { deriveDiff, lostAmountOrCount, refusedForAmount, storedLacks, lostClaims, lostScaledAmount, lostSubjectFields, lostTriggerFlags, manaDiffers } from "./derive-diff.js";
+import { deriveDiff, lostAmountOrCount, refusedForAmount, storedEmitFields, storedLacks, lostClaims, lostScaledAmount, lostSubjectFields, lostTriggerFlags, manaDiffers } from "./derive-diff.js";
 
 const ab = (over: Partial<Ability>): Ability => ({ kind: "static", effect: { kind: "" }, clause: 1, ...over } as Ability);
 
@@ -188,6 +188,17 @@ test("lostAmountOrCount: a spelling-only difference, a gain, a prose amount and 
 });
 test("lostAmountOrCount: an N/N amount is a number (Living Lands)", () => {
   expect(lostAmountOrCount([ab({ effect: { kind: "animate" }, amount: "1/1" })], [ab({ effect: { kind: "animate" } })])).toEqual(["animate:amount"]);
+});
+// The reversed check of `grants`, `toZone` and `toHand` in `storedLacks` is INERT in the corpus at DERIVE 425: the review's census found 0 cards it changes. It is kept for the shapes it names;
+// the emit-subject case below (`storedEmitFields`) is not inert: it keeps Archghoul of Thraben, Territory Culler and Sarinth Steelseeker on the grammar.
+test("storedEmitFields: a stored emit subject field the grammar's emit of the same verb lacks makes the stored reading not loss-free", () => {
+  const mill = (subject: object): Ability => ab({ effect: { kind: "mill" }, amount: "1", emits: [{ verb: "mill", subject }] } as never);
+  const stored = [mill({ control: "you", token: null, fromZone: "library", subtype: "zombie" })];
+  const grammar = [ab({ effect: { kind: "mill" }, emits: [{ verb: "mill", subject: { control: "you", token: null, fromZone: "library" } }] } as never)];
+  expect(storedEmitFields(stored, grammar)).toEqual(["mill:emit.mill.subtype"]);
+  expect(refusedForAmount(stored, grammar)).toBe(false);
+  expect(storedEmitFields(stored, [mill({ control: "you", token: null, fromZone: "library", subtype: "zombie" })])).toEqual([]);
+  expect(storedEmitFields(stored, [ab({ effect: { kind: "mill" } })])).toEqual([]); // no grammar emit of the verb: lostClaims's
 });
 test("refusedForAmount: not when the stored reading loses its own grants to the grammar (Vampire Nocturnus)", () => {
   const stored = [ab({ effect: { kind: "keyword-grant" }, amount: "2" })];

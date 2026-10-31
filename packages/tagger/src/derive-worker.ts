@@ -67,7 +67,7 @@ export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
       const right = key !== null && (triage.groups as Record<string, { label: string }>)[key]?.label === "grammar right"
         && lostClaims(tags.abilities, grammarTags.abilities).length === 0 && lostSubjectFields(tags.abilities, grammarTags.abilities).length === 0 && lostScaledAmount(tags.abilities, grammarTags.abilities).length === 0
         && !lostTriggerFlags(tags.abilities, grammarTags.abilities)
-        // #1377: ...and does not drop a number the stored answer states, unless the stored answer is the worse reading in some other way (Vampire Nocturnus' grants, Sarinth's subject).
+        // #1377: ...and does not drop a number the stored answer states, unless the stored answer is the worse reading in some other way (a `grants` or `toZone` only the grammar has; a stored emit subject field the grammar's emit lacks: Archghoul of Thraben's typed mill emit).
         && !refusedForAmount(tags.abilities, grammarTags.abilities);
       // MANA IS NOT IN `deriveDiff`: a card whose grammar reading derives other mana fields keeps the stored answer, identical abilities or not.
       // #1376: the stored answer IS the grammar's abilities with exact duplicates (`sameButDoubled`, the grammar having none): the grammar reading drops them.
