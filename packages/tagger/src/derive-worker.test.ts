@@ -313,3 +313,26 @@ test("Peace Talks: 'can't be the targets of spells or activated abilities' strip
 test("Hold for Questioning: 'doesn't untap' is not ability-loss; the activated-abilities limb is, once", () => {
   expect(cantKinds("Hold for Questioning")).toEqual(["ability-loss"]);
 });
+
+// #1377: the switch refuses a grammar reading that drops a number the stored one states, and keeps one that gains (oracle text and stored records dumped from Mongo 2026-10-31).
+const rowOf = (source: { name: string }, canonical: unknown[]) => deriveRow({ doc: { oracleId: "x", name: source.name, canonical } as never, source: source as never, isToken: false });
+const LIVING = {"name":"Living Lands","oracleText":"All Forests are 1/1 creatures that are still lands.","keywords":[],"typeLine":"Enchantment","manaCost":"{3}{G}","colors":["G"],"colorIdentity":["G"],"manaValue":4,"layout":"normal"};
+const LIVING_STORED = [{"id":1,"abilityType":"static","actions":[{"verb":"animate","object":"All Forests","fromZone":null,"toZone":null,"amount":"1/1","optional":false}]}];
+test("Living Lands keeps its stored reading: the grammar's animate drops the 1/1 (#1377)", () => {
+  const row = rowOf(LIVING, LIVING_STORED);
+  expect(row.fromGrammar).toBe(false);
+  expect(row.tags.abilities.find((a) => a.effect?.kind === "animate")?.amount).toBe("1/1");
+});
+const NOCTURNUS = {"name":"Vampire Nocturnus","oracleText":"Play with the top card of your library revealed.\nAs long as the top card of your library is black, this creature and other Vampire creatures you control get +2/+1 and have flying.","keywords":[],"typeLine":"Creature \u2014 Vampire","manaCost":"{1}{B}{B}{B}","colors":["B"],"colorIdentity":["B"],"manaValue":4,"layout":"normal","power":"3","toughness":"3"};
+const NOCTURNUS_STORED = [{"id":1,"abilityType":"static","actions":[{"verb":"none"}]},{"id":2,"abilityType":"static","actions":[{"verb":"modify-pt","object":"this creature and other Vampire creatures you control","fromZone":null,"toZone":null,"amount":"+2/+1","optional":false},{"verb":"grant-ability","object":"this creature and other Vampire creatures you control","fromZone":null,"toZone":null,"amount":"flying","optional":false}]}];
+test("Vampire Nocturnus stays on the grammar: the stored reading has no `grants` (#1377)", () => {
+  const row = rowOf(NOCTURNUS, NOCTURNUS_STORED);
+  expect(row.fromGrammar).toBe(true);
+  expect(row.tags.abilities.some((a) => a.grants?.includes("flying"))).toBe(true);
+});
+const URCHINS = {"name":"Dusk Urchins","oracleText":"Whenever this creature attacks or blocks, put a -1/-1 counter on it.\nWhen this creature dies, draw a card for each -1/-1 counter on it.","keywords":[],"typeLine":"Creature \u2014 Ouphe","manaCost":"{2}{B}","colors":["B"],"colorIdentity":["B"],"manaValue":3,"layout":"normal","power":"4","toughness":"3"};
+const URCHINS_STORED = [{"id":1,"abilityType":"triggered","trigger":{"event":"attacks","subject":"this creature","control":"you"},"actions":[{"verb":"add-counter","object":"-1/-1","fromZone":null,"toZone":null,"amount":"1","optional":false}]},{"id":2,"abilityType":"triggered","trigger":{"event":"dies","subject":"this creature","control":"you"},"actions":[{"verb":"draw","object":"a card for each -1/-1 counter on it","fromZone":null,"toZone":null,"amount":null,"optional":false}]},{"id":3,"abilityType":"triggered","trigger":{"event":"blocks","subject":"this creature","control":"you"},"actions":[{"verb":"add-counter","object":"-1/-1","fromZone":null,"toZone":null,"amount":"1","optional":false}]}];
+test("Dusk Urchins keeps the counter's amount 1, whichever reading wins (#1377)", () => {
+  const row = rowOf(URCHINS, URCHINS_STORED);
+  expect(row.tags.abilities.filter((a) => a.effect?.kind === "counter-placement").map((a) => a.amount)).toEqual(["1", "1"]);
+});
