@@ -1377,6 +1377,64 @@ test("a counter put on 'that creature' after a target is an emit on a target cre
   expect(emits.find((e) => e.subject.self === true)?.subject.type).toBeUndefined();
 });
 
+// THE COUNTER A CARD PUTS ON ANOTHER CREATURE ARRIVES TYPED (#1438): an untyped non-self emit cannot be told from an unmarked self placement, so Juniper Order Ranger, Wildgrowth Archaic, Clay Champion
+// and Bloodspore Thrinax could not feed Mossborn Hydra. The recipient takes its antecedent's filter; a placement on the card itself stays as it was.
+test("a counter on a back-reference recipient takes the antecedent's filter (#1438)", () => {
+  const counterEmits = (cards: Parameters<typeof deriveAbilities>[0], name: string, texts: Record<number, string>) =>
+    deriveAbilities(cards, name, texts).abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "counter-added" && e.subject.counter === "+1/+1");
+  const add = { verb: "add-counter", object: "+1/+1", amount: null, optional: false, fromZone: null, toZone: null };
+  // Juniper: "that creature" is the trigger's entering creature; "this creature" stays self.
+  const juniper = counterEmits(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "another creature you control", control: "you" }, actions: [add, add] }],
+    "Juniper Order Ranger", { 1: "Whenever another creature you control enters, put a +1/+1 counter on that creature and a +1/+1 counter on this creature." });
+  expect(juniper.find((e) => e.subject.self !== true)?.subject).toMatchObject({ type: "creature", control: "you", other: true });
+  expect(juniper.filter((e) => e.subject.self === true)).toHaveLength(1);
+  // Wildgrowth: "that creature enters with X additional counters" is the creature spell cast.
+  const wildgrowth = counterEmits(
+    [{ id: 3, abilityType: "triggered", trigger: { event: "cast", subject: "a creature spell", control: "you" }, actions: [{ ...add, amount: "the number of colors of mana spent to cast it" }] }],
+    "Wildgrowth Archaic", { 3: "Whenever you cast a creature spell, that creature enters with X additional +1/+1 counters on it, where X is the number of colors of mana spent to cast it." });
+  expect(wildgrowth[0]!.subject).toMatchObject({ type: "creature", control: "you" });
+  expect(wildgrowth[0]!.subject.self).toBeUndefined();
+  // Clay Champion: "each of them" is the targets named before it.
+  const clay = counterEmits(
+    [{ id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [{ ...add, amount: "one for each {W}{W} spent to cast this creature" }] }],
+    "Clay Champion", { 2: "When this creature enters, choose up to two other target creatures you control. For each {W}{W} spent to cast this creature, put a +1/+1 counter on each of them." });
+  expect(clay[0]!.subject).toMatchObject({ type: "creature", control: "you", other: true, scope: "target" });
+  // Thrinax: a static "each other creature you control enters with ... counters on it" is that class, though the amount names "this creature".
+  const thrinax = counterEmits(
+    [{ id: 2, abilityType: "static", actions: [{ ...add, amount: "X" }] }],
+    "Bloodspore Thrinax", { 2: "Each other creature you control enters with an additional X +1/+1 counters on it, where X is the number of +1/+1 counters on this creature." });
+  expect(thrinax[0]!.subject).toMatchObject({ type: "creature", control: "you", other: true });
+  expect(thrinax[0]!.subject.self).toBeUndefined();
+  // The Great Henge: "it" after a non-self entering trigger is the entering creature.
+  const henge = counterEmits(
+    [{ id: 3, abilityType: "triggered", trigger: { event: "enters", subject: "a nontoken creature you control", control: "you" }, actions: [add] }],
+    "The Great Henge", { 3: "Whenever a nontoken creature you control enters, put a +1/+1 counter on it and draw a card." });
+  expect(henge[0]!.subject).toMatchObject({ type: "creature", control: "you" });
+  // REFUSALS: a placement on the card itself stays untyped or self (Big Bertha's "her", Grimgrin's "it" after an untap, Hooded Hydra's morph, Walking Ballista).
+  const bertha = counterEmits([{ id: 2, abilityType: "static", actions: [{ ...add, amount: "X" }] }], "Big Bertha", { 2: "Big Bertha enters with X +1/+1 counters on her." });
+  expect(bertha[0]!.subject.type).toBeUndefined();
+  const grimgrin = counterEmits([{ id: 2, abilityType: "activated", actions: [add] }], "Grimgrin, Corpse-Born", { 2: "Sacrifice another creature: Untap Grimgrin and put a +1/+1 counter on it." });
+  expect(grimgrin[0]!.subject.type).toBeUndefined();
+  const hooded = counterEmits([{ id: 4, abilityType: "static", actions: [{ ...add, amount: "five" }] }], "Hooded Hydra", { 4: "As this creature is turned face up, put five +1/+1 counters on it." });
+  expect(hooded[0]!.subject.type).toBeUndefined();
+  const ballista = counterEmits([{ id: 1, abilityType: "static", actions: [{ ...add, amount: "X" }] }], "Walking Ballista", { 1: "This creature enters with X +1/+1 counters on it." });
+  expect(ballista[0]!.subject.self).toBe(true);
+  // ...and the readings that look like a back-reference and are not: a qualified pronoun (Lost in the Maze), a counter on an exiled card (Evelyn), a `~` trigger (Constable Odo), a stray later "them" (Etrata).
+  const mazeStun = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "this enchantment", control: "you" }, actions: [{ ...add, object: "stun counter" }] }], "Lost in the Maze",
+    { 2: "When this enchantment enters, tap X target creatures. Put a stun counter on each of those creatures you don't control." }).abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "counter-added");
+  expect(mazeStun?.subject.scope).not.toBe("target");
+  const evelyn = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "Evelyn or another Vampire you control", control: "you" }, actions: [{ ...add, object: "collection counter" }] }], "Evelyn, the Covetous",
+    { 2: "Whenever Evelyn or another Vampire you control enters, exile the top card of each player's library with a collection counter on it." }).abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "counter-added");
+  expect(evelyn?.subject.subtype).toBeUndefined();
+  const odo = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "~", control: "you" }, actions: [{ ...add, object: "stun counter", amount: "2" }] }], "Constable Odo",
+    { 2: "Tap target creature an opponent controls. Put two stun counters on it." }).abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "counter-added");
+  expect(odo?.subject.control).toBe("any");
+  const etrata = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "combat damage to a player", control: "you" }, actions: [{ ...add, object: "hit" }] }], "Etrata, the Silencer",
+    { 2: "Whenever Etrata deals combat damage to a player, exile target creature that player controls and put a hit counter on that card. That player loses the game if they own three or more exiled cards with hit counters on them." }).abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "counter-added");
+  expect(etrata?.subject.type).toBeUndefined();
+});
+
 // The target's controller survives "that creature" (#1421): Protocol Knight stuns an OPPONENT's creature, which no "Goblin you control" payoff may count; the nearest target wins.
 test("a counter put on 'that creature' keeps the nearest target's controller", () => {
   const emitOf = (text: string) => deriveAbilities(
