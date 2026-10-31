@@ -1292,6 +1292,10 @@ describe("removal.targeted is derived", () => {
   test("permanents you OWN are refused, as the printed pattern refused 'you own': a bounce (Get Out, Leave // Chance) and a DELAYED flicker of your own creature (Charming Prince)", () => {
     for (const n of ["Get Out", "Leave // Chance", "Charming Prince"]) expect(ruleMatches(rule, blank(n), set), n).toBe(false);
   });
+  test("ownership is checked per ability, not per clause (#1366): Word of Undoing's target bounce is removal though a second bounce in its clause is 'Auras you own'; Hubris (same shape) is too; Venser's +2 stays refused by its own emit", () => {
+    for (const n of ["Word of Undoing", "Hubris"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
+    expect(ruleMatches(rule, blank("Venser, the Sojourner"), set)).toBe(false);
+  });
   test("a land with derived removal fills removal.land, not removal.targeted", () => {
     const eiganjo = { ...realCard("Murder"), card: { name: "x", typeLine: "Land", oracleText: "", manaValue: 0 } as never };
     expect(ruleMatches(land, eiganjo, set)).toBe(true);
