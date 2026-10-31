@@ -357,7 +357,8 @@ function firstCounterPhrase(clauseText: string): { at: number; rest: string; bef
 
 /** A PLACEMENT CONDITIONED ON WHAT THE RECIPIENT IS ("If it's a Spider, put a +1/+1 counter on it", Aunt May; "if that creature is 1/1", Sigil Captain; "if its mana value is 4 or less", Thunderous Velocipede) reaches only part of the
  *  trigger's class, so the back-reference readings below leave it untyped as before (#1438): typed `creature`, it fed every self counter doubler although none is a Spider. "If you do, put ..." is not about the recipient and stays typed.
- *  CEILING: the condition is recognised by the recipient pronoun's own "is / are / has / had / its" after an "if". */
+ *  CEILING: the condition is recognised by the recipient pronoun's own "is / are / has / had / its" after an "if", and clause-wide: an unconditional placement beside a conditioned one
+ *  (Emiel the Blessed's "If you do, put a +1/+1 counter on it" before "If it's a Unicorn, put two ... instead") is refused too. Only pairs are lost; BASE was untyped. */
 function conditionedOnRecipient(clauseText: string): boolean {
   return /\bif (?:it(?:'s| is| has| had)|its|that (?:creature|permanent) (?:is|has|had)|those (?:creatures|permanents) (?:are|have))\b/i.test(clauseText);
 }
