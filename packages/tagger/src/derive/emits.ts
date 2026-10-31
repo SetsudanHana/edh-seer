@@ -355,10 +355,18 @@ function firstCounterPhrase(clauseText: string): { at: number; rest: string; bef
   return { at: m.index, rest: clauseText.slice(m.index + m[0].length), before: upTo.slice(upTo.lastIndexOf(".") + 1) };
 }
 
+/** A PLACEMENT CONDITIONED ON WHAT THE RECIPIENT IS ("If it's a Spider, put a +1/+1 counter on it", Aunt May; "if that creature is 1/1", Sigil Captain; "if its mana value is 4 or less", Thunderous Velocipede) reaches only part of the
+ *  trigger's class, so the back-reference readings below leave it untyped as before (#1438): typed `creature`, it fed every self counter doubler although none is a Spider. "If you do, put ..." is not about the recipient and stays typed.
+ *  CEILING: the condition is recognised by the recipient pronoun's own "is / are / has / had / its" after an "if". */
+function conditionedOnRecipient(clauseText: string): boolean {
+  return /\bif (?:it(?:'s| is| has| had)|its|that (?:creature|permanent) (?:is|has|had)|those (?:creatures|permanents) (?:are|have))\b/i.test(clauseText);
+}
+
 /** "... counters on EACH OF THEM / THEM / THOSE CREATURES" bound to the nearest earlier TARGET phrase of the clause (Clay Champion, #1438): the phrase itself ("up to two other target creatures you control"),
  *  so the emit carries its type, control, `other` and `scope: target`. CEILING: the nearest earlier "target <creature|permanent|artifact|land>" phrase; a pronoun that carries its own qualifier ("each of those creatures you don't
  *  control", Lost in the Maze) or a target phrase naming two types ("artifacts and/or creatures") keeps the old reading. */
 function targetedPlural(clauseText: string): string | undefined {
+  if (conditionedOnRecipient(clauseText)) return undefined;
   const first = firstCounterPhrase(clauseText);
   if (!first) return undefined;
   const pronoun = /^(?:each of (?:them|those (?:creatures|permanents|artifacts|lands))|them|those (?:creatures|permanents|artifacts|lands))\b/i.exec(first.rest);
@@ -385,7 +393,7 @@ function triggerClass(trigger: CounterTrigger): string | undefined {
  *  names; typed so a consumer that wants a creature sees the supply (#1438). Only a PUT in the first counter sentence, with no target named before it ("tap target creature ... put a stun counter on it" is the target), and
  *  only on an ENTERS trigger: "return it ... with a flying counter on it" (Salvation Swan) and a card's own "put five counters on it" (Hooded Hydra, no trigger) are not this. */
 function triggerBound(clauseText: string, trigger?: CounterTrigger): string | undefined {
-  if (!trigger || trigger.event !== "enters") return undefined;
+  if (!trigger || trigger.event !== "enters" || conditionedOnRecipient(clauseText)) return undefined;
   const first = firstCounterPhrase(clauseText);
   if (!first || !/\bputs?\b/i.test(first.before) || /\btarget\b/i.test(clauseText.slice(0, first.at))) return undefined;
   if (!/^(?:that\s+(?:creature|permanent)|it)\b/i.test(first.rest)) return undefined;
@@ -396,12 +404,12 @@ function triggerBound(clauseText: string, trigger?: CounterTrigger): string | un
  *  spell, THAT CREATURE enters with X additional +1/+1 counters on it" (the cast spell's creature, from the trigger). CEILING: the subject is the clause's last comma-free run before "enters with", led by each / all / another / other / that;
  *  a subject joining two classes ("Vehicle and creature", Thunderous Velocipede) is left to the old reading, since a subject filter cannot say "either". */
 export function enteringClass(clauseText: string, trigger?: CounterTrigger): string | undefined {
-  const at = clauseText.search(/\s+enters?\s+with\b/i);
-  if (at < 0 || !/\bcounters?\s+on\s+(?:it|them)\b/i.test(clauseText)) return undefined;
-  const lead = clauseText.slice(0, at);
+  const at = clauseText.search(/\benters?\s+with\b/i);
+  if (at < 0 || !/\bcounters?\s+on\s+(?:it|them)\b/i.test(clauseText) || conditionedOnRecipient(clauseText)) return undefined;
+  const lead = clauseText.slice(0, at).trimEnd();
   const subject = lead.slice(lead.lastIndexOf(",") + 1).trim();
   if (/^that\s+(?:creature|permanent)$/i.test(subject)) return trigger ? triggerClass(trigger) : undefined;
-  return /^(?:each|all|another|other)\s+[\w' -]+$/i.test(subject) && !/\b(?:this|~|and|or)\b/i.test(subject) ? subject : undefined;
+  return /^(?:each|all|another|other)(?: [\w'-]+)+$/i.test(subject) && !/\b(?:this|~|and|or)\b/i.test(subject) ? subject : undefined;
 }
 
 /** "Another target creature gains indestructible. Put a +1/+1 counter ... on THAT CREATURE" (Arwen, Mortal Queen, #1421): "that creature" is the target the sentence named

@@ -1430,6 +1430,12 @@ test("a counter on a back-reference recipient takes the antecedent's filter (#14
   const odo = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "~", control: "you" }, actions: [{ ...add, object: "stun counter", amount: "2" }] }], "Constable Odo",
     { 2: "Tap target creature an opponent controls. Put two stun counters on it." }).abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "counter-added");
   expect(odo?.subject.control).toBe("any");
+  // ...a placement conditioned on what the recipient IS (Aunt May's Spider, Sigil Captain's 1/1) reaches only part of the class and stays untyped; "if you do" (Olivia) does not.
+  const entersOf = (name: string, subject: string, text: string) => deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject, control: "you" }, actions: [add] }], name, { 1: text })
+    .abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "counter-added");
+  expect(entersOf("Aunt May", "another creature you control", "Whenever another creature you control enters, you gain 1 life. If it's a Spider, put a +1/+1 counter on it.")?.subject.type).toBeUndefined();
+  expect(entersOf("Sigil Captain", "a creature you control", "Whenever a creature you control enters, if that creature is 1/1, put two +1/+1 counters on it.")?.subject.type).toBeUndefined();
+  expect(entersOf("Olivia, Mobilized for War", "another creature you control", "Whenever another creature you control enters, you may discard a card. If you do, put a +1/+1 counter on that creature, it gains haste until end of turn, and it becomes a Vampire in addition to its other types.")?.subject.type).toBe("creature");
   const etrata = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "combat damage to a player", control: "you" }, actions: [{ ...add, object: "hit" }] }], "Etrata, the Silencer",
     { 2: "Whenever Etrata deals combat damage to a player, exile target creature that player controls and put a hit counter on that card. That player loses the game if they own three or more exiled cards with hit counters on them." }).abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "counter-added");
   expect(etrata?.subject.type).toBeUndefined();

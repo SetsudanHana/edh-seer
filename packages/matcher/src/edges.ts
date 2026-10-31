@@ -3783,8 +3783,8 @@ function imprintEdges({ p, c, h, reasons }: PairScope): void {
 // identical event don't each spawn their own (byte-identical) Reason here.
 function counterPresenceEdges({ p, c, h, pEvents, reasons }: PairScope): void {
   for (const emit of pEvents) {
-    // CR 701.10e: "To double the number of a kind of counters on a player or permanent, give that player or permanent as many of those counters as that player or permanent already has" -- a doubling (or tripling)
-    // of ANOTHER permanent's counters (Kalonian Hydra's "each creature you control") is a placement of that kind on it. The card's own doubling is not a supply to anyone (#1438).
+    // CR 701.10e: "To double the number of a kind of counters on a player or permanent, give that player or permanent as many of those counters as that player or permanent already has" -- a doubling of ANOTHER
+    // permanent's counters (Kalonian Hydra's "each creature you control") is a placement of that kind on it. `triple` is read the same BY ANALOGY (CR 701.11 has no counters subrule). The card's own doubling supplies no one (#1438).
     const placesCounters = emit.verb === "counter-added" || ((emit.verb === "double" || emit.verb === "triple") && emit.subject.self !== true);
     if (!placesCounters || !emit.subject.counter) continue;
     for (const ca of c.tags.abilities) {
