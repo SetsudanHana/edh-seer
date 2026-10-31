@@ -583,8 +583,8 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
     //   LOST (real removal, no usable emit): Polymorph, Transmogrify, Chaos Mutation, Divergent Transformations (derive reads the polymorph family as played on YOUR creature, `control: you`: owner ruling 2026-10-02 / #962,
     //   "primary use", so the opponent use is dropped on purpose; the role pays for it);
     //   Venser, the Sojourner (its removal is the −8 emblem's "exile target permanent", which lives on the emblem's own node by design, 2026-09-08 emblems-as-nodes; its +2 is a
-    //   permanent you own, which the emit's own `owner: you` refuses). Ownership is read per ability (its effect subject, then its emit's), not across the clause (#1366): Word of Undoing's target bounce
-    //   keeps the role though a second bounce in its clause is "Auras you own". A paired flicker's own emit carries `owner: you` (Charming Prince, Meneldor, Slip On the Ring), so nothing else moved.
+    //   permanent you own, which its emit's `control: you` and `owner: you` both refuse). Ownership is read per ability (its effect subject, then its emit's), not across the clause (#1366): Word of Undoing's target bounce
+    //   keeps the role though a second bounce in its clause is "Auras you own". A paired flicker's own emit carries `owner: you` and `control: you` (Charming Prince, Meneldor, Slip On the Ring), so nothing else moved.
     //   RIGHT FOR A WRONG REASON: Audacious Swap (its tuck counts because derive reads "If it's a land card, they put it onto the battlefield" -- a different card -- as a
     //   one-branch return of the target, `returnIf`, which `notFlickered` lets through).
     //   NOT A DEFECT, owner ruling 2026-10-20 (#1295): a kill decided by a coin flip (Mogg Assassin, Crooked Scales, Creepy Doll, Boompile, Plasma Caster) IS removal;
