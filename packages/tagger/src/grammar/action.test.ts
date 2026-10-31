@@ -273,7 +273,7 @@ test("fragments 1: a back-referenced controller and a set made 'this way' are re
 
 test("fragments 2: a leading duration, set P/T on becoming, losing abilities, casting restrictions, entering with counters", () => {
   expect(read("Until end of turn, target creature becomes a white Rabbit with base power and toughness 0/1.").map((r) => [r.verb, r.amount]))
-    .toEqual([["animate", undefined], ["modify-pt", "0/1"]]);
+    .toEqual([["animate", "0/1"], ["modify-pt", "0/1"]]); // #1378: the set P/T is the animate's amount too
   // A TARGET keeps its class alone (#1352): the result type in a `scope: target` subject reads as a creature the spell targets (matcher `spellTargeting`).
   expect(read("Until end of turn, target creature becomes a white Rabbit with base power and toughness 0/1.")[0]?.text).toBe("target creature");
   // ...the card itself carries it: the set P/T is in the animate's words, as the store writes it.
@@ -707,4 +707,33 @@ test("a plural subject's \"are goaded\" is a goad, not an animate", () => {
 test("'you and defending player each discard a card or sacrifice a permanent' reads both alternatives for both players", () => {
   const r = parseActions("you and defending player each discard a card or sacrifice a permanent.", "triggered");
   expect(r.map((x) => `${x.verb}:${x.actor?.control}`)).toEqual(["discard:you", "sacrifice:you", "discard:opp", "sacrifice:opp"]);
+});
+
+// #1378: a grammar reading carries the amount the printed words state, as the stored reading does.
+test("prevent N: the amount is the number prevented (Orbs of Warding, Shield of the Realm, Plated Pegasus)", () => {
+  expect(read("prevent 1 of that damage.")).toMatchObject([{ verb: "prevent", amount: "1" }]);
+  expect(read("prevent 2 of that damage.")).toMatchObject([{ verb: "prevent", amount: "2" }]);
+  expect(read("prevent 1 damage that spell would deal to that permanent or player.")).toMatchObject([{ verb: "prevent", amount: "1" }]);
+  expect(read("Prevent the next 3 damage that a source of your choice would deal to you this turn.")).toMatchObject([{ verb: "prevent", amount: "3" }]);
+  expect(read("Prevent the next X damage that would be dealt to target creature this turn.")).toMatchObject([{ verb: "prevent", amount: "X" }]);
+  // "all" is no number.
+  expect(read("Prevent all combat damage that would be dealt this turn.")[0]?.amount).toBeUndefined();
+});
+
+test("extra turns and coin flips: 'two' is the amount, 'an' / 'a' are no amount (Time Stretch, Two-Headed Giant)", () => {
+  expect(read("Take two extra turns after this one.")).toMatchObject([{ verb: "extra-turn", amount: "2" }]);
+  expect(read("flip two coins.")).toMatchObject([{ verb: "flip-coin", amount: "2" }]);
+  expect(read("Take an extra turn after this one.")[0]?.amount).toBeUndefined();
+  expect(read("flip a coin.")[0]?.amount).toBeUndefined();
+});
+
+test("connive X: the amount is what the sentence says X is (Raffine, Mask of the Schemer, Spymaster's Vault)", () => {
+  expect(read("target attacking creature connives X, where X is the number of attacking creatures.")).toMatchObject([{ verb: "connive", amount: "the number of attacking creatures" }]);
+  expect(read("it connives X, where X is the amount of damage it dealt to that player.")).toMatchObject([{ verb: "connive", amount: "the amount of damage it dealt to that player" }]);
+  expect(read("it connives.")[0]?.amount).toBeUndefined();
+});
+
+test("a base P/T set on an unfolded animate is the animate's amount (Ensoul Artifact, Skilled Animator)", () => {
+  expect(read("target artifact you control becomes an artifact creature with base power and toughness 5/5 for as long as this creature remains on the battlefield."))
+    .toMatchObject([{ verb: "animate", amount: "5/5" }, { verb: "modify-pt", amount: "5/5" }]);
 });

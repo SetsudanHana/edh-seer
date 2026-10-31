@@ -1638,3 +1638,23 @@ test("Crabomination: the library, graveyard and hand limbs each exile from their
   expect(zones(stored)).toEqual(["library", "graveyard", "hand"]);
   expect(g.records.find((r) => r.trigger)!.actions!.filter((x) => x.verb === "exile").map((x) => x.fromZone)).toEqual(["library", "graveyard", "hand"]);
 });
+
+// #1378: the grammar reading carries the amounts the stored reading carries (real oracle text; the expected values are the stored derive's, from Mongo at DERIVE 422).
+test("#1378: prevent N, two extra turns, flip two coins and connive X derive their amounts from the printed text", () => {
+  const amounts = (name: string, typeLine: string, oracleText: string) => {
+    const { g, tags } = grammarDerive({ name, typeLine, keywords: [], oracleText });
+    expect(g.complete, name).toBe(true);
+    return tags.abilities.map((a) => [a.effect.kind, a.amount, a.count?.scalesWith] as const);
+  };
+  expect(amounts("Orbs of Warding", "Artifact", "You have hexproof. (You can't be the target of spells or abilities your opponents control.)\nIf a creature would deal damage to you, prevent 1 of that damage.")).toContainEqual(["", "1", undefined]);
+  expect(amounts("Shield of the Realm", "Artifact — Equipment", "If a source would deal damage to equipped creature, prevent 2 of that damage.\nEquip {1}")).toContainEqual(["", "2", undefined]);
+  expect(amounts("Plated Pegasus", "Creature — Pegasus", "Flash\nFlying\nIf a spell would deal damage to a permanent or player, prevent 1 damage that spell would deal to that permanent or player.")).toContainEqual(["", "1", undefined]);
+  expect(amounts("Time Stretch", "Sorcery", "Target player takes two extra turns after this one.")).toEqual([["extra-turn", "2", undefined]]);
+  expect(amounts("Two-Headed Giant", "Creature — Giant", "Whenever this creature attacks, flip two coins. If both coins come up heads, this creature gains double strike until end of turn. If both coins come up tails, this creature gains menace until end of turn."))
+    .toContainEqual(["", "2", undefined]);
+  // "connives X, where X is ...": the counted thing is the amount and what the pair scales with (the stored derive's Raffine; Spymaster's Vault stored a paid X, `mana`).
+  const raffine = amounts("Raffine, Scheming Seer", "Legendary Creature — Sphinx Demon", "Flying, ward {1}\nWhenever you attack, target attacking creature connives X, where X is the number of attacking creatures.");
+  expect(raffine.find((r) => r[1] === "the number of attacking creatures")?.[2]).toMatchObject({ combat: "attacking", type: "creature" });
+  expect(amounts("Mask of the Schemer", "Artifact — Equipment", "Whenever equipped creature deals combat damage to a player, it connives X, where X is the amount of damage it dealt to that player.\nEquip {2}"))
+    .toContainEqual(["", "the amount of damage it dealt to that player", undefined]);
+});
