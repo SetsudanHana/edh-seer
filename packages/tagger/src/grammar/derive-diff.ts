@@ -199,3 +199,87 @@ export function lostTriggerFlags(stored: readonly Ability[], grammar: readonly A
 export function manaDiffers(stored: Pick<CardTags, "manaLines" | "staticFixer" | "landFetch" | "isOneShot" | "suspendOnly">, grammar: Pick<CardTags, "manaLines" | "staticFixer" | "landFetch" | "isOneShot" | "suspendOnly">): boolean {
   return (["manaLines", "staticFixer", "landFetch", "isOneShot", "suspendOnly"] as const).some((k) => json(stored[k]) !== json(grammar[k]));
 }
+
+/** A NUMBER THE STORED READING STATES THAT THE GRAMMAR DROPS (#1377). `lostClaims` compares kinds and verbs, `lostScaledAmount` only a scaled amount, so a grammar reading could drop a plain `amount` ("put a
+ *  -1/-1 counter on it": Dusk Urchins lost "1") or a `count` (Freelance Muscle) and still switch. Per clause, effect kind and trigger verbs -- an ability both readings share -- the stored side has more
+ *  abilities with a plain `amount` (a number, X, an N/N, or a "where X is" form), or with a `count`, than the grammar side has abilities carrying any amount / count. Counted, not matched by value: an amount both
+ *  carry in another spelling ("a" against "1") is no loss, and the spelling is `deriveDiff`'s to key.
+ *  A PROSE amount is not a loss ("flying" on a keyword-grant, "two target creatures" on an animate: Dropkick Bomber, Arcades, #1378). One-directional; the reverse (a number only the grammar carries) is a gain.
+ *  Returns "kind:amount" / "kind:count" per loss, sorted. */
+const PLAIN_AMOUNT = /^(?:[+-]?\d+(?:\/[+-]?\d+)?|[+-]?x(?:\/[+-]?x)?|[+-][xX\d]+\/[+-][xX\d]+)$|\bwhere x is\b/i;
+export const isPlainAmount = (v: unknown): boolean => typeof v === "string" && PLAIN_AMOUNT.test(v.trim());
+export function lostAmountOrCount(stored: readonly Ability[], grammar: readonly Ability[]): string[] {
+  const group = (a: Ability): string => `${a.clause ?? -1}|${a.effect?.kind ?? ""}|${a.trigger ? [...a.trigger.verbs].sort().join("+") : ""}`;
+  // Exact duplicates are one ability (`sameButDoubled`'s reading, Fog Bank's doubled stored count): a repeat is no second number.
+  const once = (abs: readonly Ability[]): Ability[] => { const seen = new Set<string>(); return abs.filter((a) => !seen.has(json(a)) && !!seen.add(json(a))); };
+  const by = (abs: readonly Ability[]): Map<string, Ability[]> => { const out = new Map<string, Ability[]>(); for (const a of once(abs)) (out.get(group(a)) ?? out.set(group(a), []).get(group(a))!).push(a); return out; };
+  const g = by(grammar), lost = new Set<string>();
+  for (const [k, s] of by(stored)) {
+    const gs = g.get(k);
+    // Only an ability both readings have one-for-one: a stored ability the grammar has no peer for is `deriveDiff`'s `abilities:N->M`, not a dropped number.
+    if (!gs || gs.length !== s.length) continue;
+    // CEILING: `untap-denial` ("doesn't untap during its controller's untap step", Thirst, Melancholy) states no quantity; the stored "1" is the model's default, not a number the text gives.
+    const plain = k.split("|")[1] === "untap-denial" ? [] : s.filter((a) => isPlainAmount(a.amount));
+    if (plain.length > gs.filter((a) => a.amount !== undefined).length) lost.add(`${k.split("|")[1]}:amount`);
+    // A `count` is the amount's events: one with no plain amount behind it (Vish Kal's "all") is not a number the grammar dropped.
+    if (plain.filter((a) => a.count !== undefined).length > gs.filter((a) => a.count !== undefined).length) lost.add(`${k.split("|")[1]}:count`);
+  }
+  return [...lost].sort();
+}
+
+/** WHAT THE STORED READING LACKS AGAINST THE GRAMMAR, beyond the reversed `lostClaims`/`lostSubjectFields`/`lostScaledAmount`: the `grants` of a keyword-grant and the `toZone` of a tutor/recursion.
+ *  Per clause and effect kind: a grammar ability's grants (each keyword) or `toZone` that no stored ability of that kind in that clause carries. Both are outside `deriveDiff`'s key (`toZone`) or
+ *  were the 7 regressions of the one-directional guard tried on #1373 (Vampire Nocturnus' grants, Djeru's toZone). Returns "kind:grants" / "kind:toZone", sorted. */
+export function storedLacks(stored: readonly Ability[], grammar: readonly Ability[]): string[] {
+  const lost = new Set<string>();
+  for (const g of grammar) {
+    const there = stored.filter((s) => s.clause === g.clause && s.effect?.kind === g.effect?.kind);
+    if (there.length === 0) continue; // a kind the stored lacks entirely is the reversed `lostClaims`'s
+    const kind = g.effect?.kind ?? "";
+    if (g.grants?.some((k) => !there.some((s) => s.grants?.includes(k)))) lost.add(`${kind}:grants`);
+    if (g.toZone !== undefined && !there.some((s) => s.toZone !== undefined)) lost.add(`${kind}:toZone`);
+    // ...and the ability's `toHand`, and each subject field value the grammar's effect names that no stored effect of the kind does. `lostSubjectFields` skips a side whose effects hold no subject at all, which is the
+    // stored side here (Sarinth Steelseeker's search: the grammar reads "a land card", the stored effect names none).
+    if (g.toHand !== undefined && !there.some((s) => s.toHand !== undefined)) lost.add(`${kind}:toHand`);
+    const gSub = g.effect?.subject as unknown as Record<string, unknown> | undefined;
+    for (const f of SUBJECT_FIELDS) {
+      const v = gSub?.[f];
+      if (v === undefined) continue;
+      const have = new Set(there.flatMap((s) => { const x = (s.effect?.subject as unknown as Record<string, unknown> | undefined)?.[f]; return x === undefined ? [] : (Array.isArray(x) ? x : [x]).map((y) => JSON.stringify(canonical(y))); }));
+      if ((Array.isArray(v) ? v : [v]).some((y) => !have.has(JSON.stringify(canonical(y))))) lost.add(`${kind}:${f}`);
+    }
+  }
+  return [...lost].sort();
+}
+
+/** AN EMIT SUBJECT FIELD ONLY THE STORED READING NAMES (#1377 review). Per clause and effect kind, a stored emit's subject carries a filter field (type, subtype, ...) that no grammar emit of the same verb has.
+ *  Archghoul of Thraben, Territory Culler and Sarinth Steelseeker: "look at the top card ... if it's a land card ... put it into your hand. If you don't, you may put it into your graveyard" -- the stored
+ *  `mill` emit is typed zombie / creature / land, but the card that reaches the graveyard is the one NOT taken, so the type is wrong and the grammar's untyped emit is the truer reading.
+ *  A field the stored side names is not a loss the grammar must make up, it is a claim the grammar did not make: the stored reading is not loss-free, so the card stays on the grammar.
+ *  Returns "kind:emit.verb.field", sorted. */
+export function storedEmitFields(stored: readonly Ability[], grammar: readonly Ability[]): string[] {
+  const out = new Set<string>();
+  for (const s of stored) {
+    const kind = s.effect?.kind ?? "";
+    const peers = grammar.filter((g) => g.clause === s.clause && g.effect?.kind === kind);
+    if (peers.length === 0) continue;
+    for (const e of s.emits ?? []) {
+      const theirs = peers.flatMap((g) => (g.emits ?? []).filter((x) => x.verb === e.verb));
+      if (theirs.length === 0) continue; // no grammar emit of the verb: `lostClaims`'s
+      for (const f of Object.keys(e.subject as unknown as Record<string, unknown>)) {
+        if ((e.subject as unknown as Record<string, unknown>)[f] === undefined) continue;
+        if (!theirs.some((x) => (x.subject as unknown as Record<string, unknown>)[f] !== undefined)) out.add(`${kind}:emit.${e.verb}.${f}`);
+      }
+    }
+  }
+  return [...out].sort();
+}
+
+/** The stored reading is no worse than the grammar's on anything the other guards can see. */
+export const storedLosesNothing = (stored: readonly Ability[], grammar: readonly Ability[]): boolean =>
+  lostClaims(grammar, stored).length === 0 && lostSubjectFields(grammar, stored).length === 0 && lostScaledAmount(grammar, stored).length === 0 && storedLacks(stored, grammar).length === 0
+  && storedEmitFields(stored, grammar).length === 0;
+
+/** Refuse the grammar row: it drops a number the stored reading states, and the stored reading loses nothing against it (#1377). */
+export const refusedForAmount = (stored: readonly Ability[], grammar: readonly Ability[]): boolean =>
+  lostAmountOrCount(stored, grammar).length > 0 && storedLosesNothing(stored, grammar);

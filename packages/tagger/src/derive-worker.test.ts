@@ -313,3 +313,36 @@ test("Peace Talks: 'can't be the targets of spells or activated abilities' strip
 test("Hold for Questioning: 'doesn't untap' is not ability-loss; the activated-abilities limb is, once", () => {
   expect(cantKinds("Hold for Questioning")).toEqual(["ability-loss"]);
 });
+
+// #1377: the switch refuses a grammar reading that drops a number the stored one states, and keeps one that gains (oracle text and stored records dumped from Mongo 2026-10-31).
+const rowOf = (source: { name: string }, canonical: unknown[]) => deriveRow({ doc: { oracleId: "x", name: source.name, canonical } as never, source: source as never, isToken: false });
+const LIVING = {"name":"Living Lands","oracleText":"All Forests are 1/1 creatures that are still lands.","keywords":[],"typeLine":"Enchantment","manaCost":"{3}{G}","colors":["G"],"colorIdentity":["G"],"manaValue":4,"layout":"normal"};
+const LIVING_STORED = [{"id":1,"abilityType":"static","actions":[{"verb":"animate","object":"All Forests","fromZone":null,"toZone":null,"amount":"1/1","optional":false}]}];
+test("Living Lands keeps its stored reading: the grammar's animate drops the 1/1 (#1377)", () => {
+  const row = rowOf(LIVING, LIVING_STORED);
+  expect(row.fromGrammar).toBe(false);
+  expect(row.tags.abilities.find((a) => a.effect?.kind === "animate")?.amount).toBe("1/1");
+});
+const NOCTURNUS = {"name":"Vampire Nocturnus","oracleText":"Play with the top card of your library revealed.\nAs long as the top card of your library is black, this creature and other Vampire creatures you control get +2/+1 and have flying.","keywords":[],"typeLine":"Creature \u2014 Vampire","manaCost":"{1}{B}{B}{B}","colors":["B"],"colorIdentity":["B"],"manaValue":4,"layout":"normal","power":"3","toughness":"3"};
+const NOCTURNUS_STORED = [{"id":1,"abilityType":"static","actions":[{"verb":"none"}]},{"id":2,"abilityType":"static","actions":[{"verb":"modify-pt","object":"this creature and other Vampire creatures you control","fromZone":null,"toZone":null,"amount":"+2/+1","optional":false},{"verb":"grant-ability","object":"this creature and other Vampire creatures you control","fromZone":null,"toZone":null,"amount":"flying","optional":false}]}];
+test("Vampire Nocturnus stays on the grammar: an unequal group and a prose amount (\"flying\"), so the amount guard never trips (#1377)", () => {
+  const row = rowOf(NOCTURNUS, NOCTURNUS_STORED);
+  expect(row.fromGrammar).toBe(true);
+  expect(row.tags.abilities.some((a) => a.grants?.includes("flying"))).toBe(true);
+});
+const URCHINS = {"name":"Dusk Urchins","oracleText":"Whenever this creature attacks or blocks, put a -1/-1 counter on it.\nWhen this creature dies, draw a card for each -1/-1 counter on it.","keywords":[],"typeLine":"Creature \u2014 Ouphe","manaCost":"{2}{B}","colors":["B"],"colorIdentity":["B"],"manaValue":3,"layout":"normal","power":"4","toughness":"3"};
+const URCHINS_STORED = [{"id":1,"abilityType":"triggered","trigger":{"event":"attacks","subject":"this creature","control":"you"},"actions":[{"verb":"add-counter","object":"-1/-1","fromZone":null,"toZone":null,"amount":"1","optional":false}]},{"id":2,"abilityType":"triggered","trigger":{"event":"dies","subject":"this creature","control":"you"},"actions":[{"verb":"draw","object":"a card for each -1/-1 counter on it","fromZone":null,"toZone":null,"amount":null,"optional":false}]},{"id":3,"abilityType":"triggered","trigger":{"event":"blocks","subject":"this creature","control":"you"},"actions":[{"verb":"add-counter","object":"-1/-1","fromZone":null,"toZone":null,"amount":"1","optional":false}]}];
+test("Dusk Urchins: the diff is null, so the guard is never reached; the counter keeps amount 1 on either reading (#1377)", () => {
+  const row = rowOf(URCHINS, URCHINS_STORED);
+  expect(row.tags.abilities.filter((a) => a.effect?.kind === "counter-placement").map((a) => a.amount)).toEqual(["1", "1"]);
+});
+
+const ARCHGHOUL = {"name":"Archghoul of Thraben","oracleText":"Whenever this creature or another Zombie you control dies, look at the top card of your library. If it's a Zombie card, you may reveal it and put it into your hand. If you don't put the card into your hand, you may put it into your graveyard.","keywords":[],"typeLine":"Creature \u2014 Zombie Cleric","manaCost":"{2}{B}","colors":["B"],"colorIdentity":["B"],"manaValue":3,"layout":"normal","power":"3","toughness":"2"};
+const ARCHGHOUL_STORED = [{"id":1,"abilityType":"triggered","trigger":{"event":"dies","subject":"this creature or another Zombie you control","control":"you"},"actions":[{"verb":"put","object":"it","fromZone":"library","toZone":"hand","amount":null,"optional":true},{"verb":"put","object":"it","fromZone":"library","toZone":"graveyard","amount":null,"optional":true}]}];
+test("Archghoul of Thraben stays on the grammar: the stored mill emit is typed Zombie, but the card that reaches the graveyard is the one NOT taken (#1377 review)", () => {
+  const row = rowOf(ARCHGHOUL, ARCHGHOUL_STORED);
+  expect(row.fromGrammar).toBe(true);
+  const emits = row.tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "mill");
+  expect(emits.length).toBeGreaterThan(0);
+  expect(emits.every((e) => (e.subject as { subtype?: string }).subtype === undefined)).toBe(true);
+});

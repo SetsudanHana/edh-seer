@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Ability } from "../schema.js";
-import { deriveDiff, lostClaims, lostScaledAmount, lostSubjectFields, lostTriggerFlags, manaDiffers } from "./derive-diff.js";
+import { deriveDiff, lostAmountOrCount, refusedForAmount, storedEmitFields, storedLacks, lostClaims, lostScaledAmount, lostSubjectFields, lostTriggerFlags, manaDiffers } from "./derive-diff.js";
 
 const ab = (over: Partial<Ability>): Ability => ({ kind: "static", effect: { kind: "" }, clause: 1, ...over } as Ability);
 
@@ -165,4 +165,50 @@ test("a gate that moved to ANOTHER ability of the same clause is a difference (d
   expect(deriveDiff([ab({ ...draw, gate: g1 }), ab({ ...mill, gate: g2 })], [ab({ ...draw, gate: g2 }), ab({ ...mill, gate: g1 })])).toBe("gate");
   // ...while the same gates on the same kinds, in another order, are none
   expect(deriveDiff([ab({ ...draw, gate: g1 }), ab({ ...mill, gate: g2 })], [ab({ ...mill, gate: g2 }), ab({ ...draw, gate: g1 })])).toBeNull();
+});
+
+// #1377: a number the stored reading states and the grammar drops, on an ability both share.
+const draw = (over: Partial<Ability> = {}): Ability => ab({ effect: { kind: "draw-card" }, ...over });
+test("lostAmountOrCount: a plain amount or count only the stored reading carries is a loss", () => {
+  const n = { floor: 1, ceiling: 1 };
+  expect(lostAmountOrCount([draw({ amount: "1", count: n })], [draw()])).toEqual(["draw-card:amount", "draw-card:count"]);
+  expect(lostAmountOrCount([draw({ amount: "+X/+X, where X is the greatest power", count: n })], [draw({ amount: "+X/+X, where X is the greatest power" })])).toEqual(["draw-card:count"]);
+});
+test("lostAmountOrCount: a spelling-only difference, a gain, a prose amount and an unshared ability are no loss", () => {
+  expect(lostAmountOrCount([draw({ amount: "1" })], [draw({ amount: "a" })])).toEqual([]);
+  expect(lostAmountOrCount([draw()], [draw({ amount: "1" })])).toEqual([]);
+  // prose / keyword-name amounts and "all": Dropkick Bomber's "flying", Arcades' prose, Vish Kal's "all"
+  expect(lostAmountOrCount([ab({ effect: { kind: "keyword-grant" }, amount: "flying" })], [ab({ effect: { kind: "keyword-grant" } })])).toEqual([]);
+  expect(lostAmountOrCount([draw({ amount: "two target creatures", count: { floor: 0, ceiling: null } })], [draw()])).toEqual([]);
+  // an ability the grammar has no peer for is `abilities:N->M`'s; an exact duplicate on the stored side is one ability (Fog Bank)
+  expect(lostAmountOrCount([draw({ amount: "1" }), draw({ amount: "1" }), draw()], [draw()])).toEqual([]);
+  expect(lostAmountOrCount([draw({ amount: "1" }), draw({ amount: "1" })], [draw()])).toEqual(["draw-card:amount"]);
+  // a static denial states no quantity (Thirst)
+  expect(lostAmountOrCount([ab({ effect: { kind: "untap-denial" }, amount: "1" })], [ab({ effect: { kind: "untap-denial" } })])).toEqual([]);
+});
+test("lostAmountOrCount: an N/N amount is a number (Living Lands)", () => {
+  expect(lostAmountOrCount([ab({ effect: { kind: "animate" }, amount: "1/1" })], [ab({ effect: { kind: "animate" } })])).toEqual(["animate:amount"]);
+});
+// The reversed check of `grants`, `toZone` and `toHand` in `storedLacks` is INERT in the corpus at DERIVE 425: the review's census found 0 cards it changes. It is kept for the shapes it names;
+// the emit-subject case below (`storedEmitFields`) is not inert: it keeps Archghoul of Thraben, Territory Culler and Sarinth Steelseeker on the grammar.
+test("storedEmitFields: a stored emit subject field the grammar's emit of the same verb lacks makes the stored reading not loss-free", () => {
+  const mill = (subject: object): Ability => ab({ effect: { kind: "mill" }, amount: "1", emits: [{ verb: "mill", subject }] } as never);
+  const stored = [mill({ control: "you", token: null, fromZone: "library", subtype: "zombie" })];
+  const grammar = [ab({ effect: { kind: "mill" }, emits: [{ verb: "mill", subject: { control: "you", token: null, fromZone: "library" } }] } as never)];
+  expect(storedEmitFields(stored, grammar)).toEqual(["mill:emit.mill.subtype"]);
+  expect(refusedForAmount(stored, grammar)).toBe(false);
+  expect(storedEmitFields(stored, [mill({ control: "you", token: null, fromZone: "library", subtype: "zombie" })])).toEqual([]);
+  expect(storedEmitFields(stored, [ab({ effect: { kind: "mill" } })])).toEqual([]); // no grammar emit of the verb: lostClaims's
+});
+test("refusedForAmount: not when the stored reading loses its own grants to the grammar (Vampire Nocturnus)", () => {
+  const stored = [ab({ effect: { kind: "keyword-grant" }, amount: "2" })];
+  const grammar = [ab({ effect: { kind: "keyword-grant" }, grants: ["flying"] })];
+  expect(storedLacks(stored, grammar)).toEqual(["keyword-grant:grants"]);
+  expect(lostAmountOrCount(stored, grammar)).toEqual(["keyword-grant:amount"]);
+  expect(refusedForAmount(stored, grammar)).toBe(false);
+  expect(refusedForAmount(stored, [ab({ effect: { kind: "keyword-grant" } })])).toBe(true);
+  // ...nor a toZone, nor a subject type, only the grammar names
+  expect(storedLacks([ab({})], [ab({ toZone: "hand" })])).toEqual([":toZone"]);
+  expect(storedLacks([ab({})], [ab({ toHand: "search" })])).toEqual([":toHand"]);
+  expect(storedLacks([ab({ effect: { kind: "search" } })], [ab({ effect: { kind: "search", subject: { control: "you", token: null, type: "land" } } })])).toEqual(["search:type"]);
 });

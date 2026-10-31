@@ -5,7 +5,7 @@ import { isMainThread } from "node:worker_threads";
 import { serveWorker } from "@edh-seer/data/parallel";
 import { charsFrom, deriveInputOf } from "./derive-input.js";
 import { grammarClauseRecords } from "./grammar/clause-record.js";
-import { deriveDiff, lostClaims, lostScaledAmount, lostSubjectFields, lostTriggerFlags, manaDiffers } from "./grammar/derive-diff.js";
+import { deriveDiff, lostClaims, lostScaledAmount, lostSubjectFields, lostTriggerFlags, manaDiffers, refusedForAmount } from "./grammar/derive-diff.js";
 import triage from "../grammar-only-triage.json" with { type: "json" };
 import { BACK_REF_AMOUNT, QUANTIFIER_AMOUNT, deriveCardTags, foldGrantTwins } from "./derive/derive.js";
 import { alignVerbs } from "./grammar/action.js";
@@ -66,7 +66,9 @@ export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
       // claims (`lostClaims`): the label was judged on a few cards, the guard holds for every card.
       const right = key !== null && (triage.groups as Record<string, { label: string }>)[key]?.label === "grammar right"
         && lostClaims(tags.abilities, grammarTags.abilities).length === 0 && lostSubjectFields(tags.abilities, grammarTags.abilities).length === 0 && lostScaledAmount(tags.abilities, grammarTags.abilities).length === 0
-        && !lostTriggerFlags(tags.abilities, grammarTags.abilities);
+        && !lostTriggerFlags(tags.abilities, grammarTags.abilities)
+        // #1377: ...and does not drop a number the stored answer states, unless the stored answer is the worse reading in some other way (a `grants` or `toZone` only the grammar has; a stored emit subject field the grammar's emit lacks: Archghoul of Thraben's typed mill emit).
+        && !refusedForAmount(tags.abilities, grammarTags.abilities);
       // MANA IS NOT IN `deriveDiff`: a card whose grammar reading derives other mana fields keeps the stored answer, identical abilities or not.
       // #1376: the stored answer IS the grammar's abilities with exact duplicates (`sameButDoubled`, the grammar having none): the grammar reading drops them.
       // Keyword-grant twins (one ability per granted keyword, each carrying the clause's whole list: Colossus of Akros' trample, Silverquill Pledgemage's cast/copy pair)
