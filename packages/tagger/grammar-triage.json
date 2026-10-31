@@ -120,7 +120,7 @@
       "distinct": 32,
       "label": "grammar right",
       "rule": "printed text",
-      "why": "'a spell that has convoke', 'another spell that has flash': the keyword the spell has, the same demand as 'a spell with convoke'. parseSubject reads keywords only after 'with'. (#1387: two phrases moved in from keyword,scope when parseSubject stopped reading a token's quoted scope -- a token's keyword list with commas, 'with first strike, vigilance, and that ability': the grammar stops at the first keyword and parseSubject reads the list; the same disagreement keyword,scope already labelled.)"
+      "why": "'a spell that has convoke', 'another spell that has flash': the keyword the spell has, the same demand as 'a spell with convoke'. parseSubject reads keywords only after 'with'. (#1387: two phrases moved in from keyword,scope once parseSubject stopped reading a token's quoted scope. The GRAMMAR reads the whole keyword list and parseSubject stops at the first or misses one: The Void -- grammar [flying, indestructible], parseSubject [flying]; Toggo's Rock 'Equipment artifact token named Rock with \"...\" and equip {1}' -- grammar [equip], parseSubject none. Grammar right on both; the same keyword-list disagreement keyword,scope already labelled.)"
     },
     "other,scope,type": {
       "distinct": 4,
@@ -462,7 +462,7 @@
       "distinct": 1,
       "label": "grammar right",
       "rule": "printed text",
-      "why": "Every member read. notSubtype: a negated subtype inside a token's quoted ability is not the token's."
+      "why": "Every member read. The one member is 'each non-Bolas planeswalker': Bolas is a planeswalker subtype (Nicol Bolas), so the grammar's notSubtype [bolas] is the printed meaning and parseSubject, which reads no notSubtype off a hyphenated 'non-Bolas', drops it. (#1387: the other member, a negated subtype inside a token's quoted ability, left the group when parseSubject cut the quote.)"
     },
     "notType,stats,type": {
       "distinct": 1,
