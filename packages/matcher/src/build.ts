@@ -145,7 +145,7 @@ function readsAbilities(clauses: readonly RuleClause[] | undefined): boolean {
  *  report can call the card a narrow answer.
  *  AN ORACLE-ONLY RULE (`boardWipe.text`, `stax.text`, the `oracle` leg of `removal.targeted` ...) reads no ability, so a view cannot weigh it: it takes the best weight among the card's abilities when EVERY ability of
  *  the card is gated, and is worth 1 as soon as one is not.
- *  CEILING: a clause that looks at a SIBLING ability (`notPairedTarget`, `notFlickered`, `notOwnedByYou` over the same clause) sees the filtered list, so taking a gated ability away can change its answer. CEILING: an
+ *  CEILING: a clause that looks at a SIBLING ability (`notPairedTarget`, `notFlickered`) sees the filtered list, so taking a gated ability away can change its answer. CEILING: an
  *  oracle-only rule on a card with a gated and an ungated ability is worth 1 whichever of them the printed text belongs to. */
 function ruleWeight(rule: Rule, dc: DeckCard, gates: GateWeigher): EffectWeight | null {
   const abilities = dc.tags?.abilities ?? [];

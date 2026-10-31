@@ -92,7 +92,7 @@ export type RuleClause =
       /** Refuse an ability that is PAID by exiling or discarding THIS card from your hand ("{3}, Exile this card from your hand: Target land gains ...": Emrakul the Exigent Doom, Shattered Seraph, Spara's
        *  Adjudicators). Derive reads the exile in the cost as an exile of the target. */
       notFromHandCost?: true;
-      /** Refuse an ability that acts on permanents YOU OWN: any ability of the same `clause` (this one, or a paired flicker, delayed or not) whose effect subject has `owner: "you"` ("Return one or two target creatures
+      /** Refuse an ability that acts on permanents YOU OWN: an ability whose own effect subject has `owner: "you"`, or whose emit's subject does (a sibling ability in the same clause does not decide, #1366: Word of Undoing's other bounce is "Auras you own"; "Return one or two target creatures
        *  and/or enchantments you own": Get Out; "Exile another target creature you own. Return it ... at the beginning of the next end step": Charming Prince). Derive reads the emit's control as `opp`. The printed pattern
        *  refused "you own"; the delayed-return ruling (2026-09-25) is about an OPPONENT's permanent, not yours. */
       notOwnedByYou?: true;
@@ -583,14 +583,15 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
     //   LOST (real removal, no usable emit): Polymorph, Transmogrify, Chaos Mutation, Divergent Transformations (derive reads the polymorph family as played on YOUR creature, `control: you`: owner ruling 2026-10-02 / #962,
     //   "primary use", so the opponent use is dropped on purpose; the role pays for it);
     //   Venser, the Sojourner (its removal is the −8 emblem's "exile target permanent", which lives on the emblem's own node by design, 2026-09-08 emblems-as-nodes; its +2 is a
-    //   permanent you own, which the owner guard refuses).
+    //   permanent you own, which its emit's `control: you` and `owner: you` both refuse). Ownership is read per ability (its effect subject, then its emit's), not across the clause (#1366): Word of Undoing's target bounce
+    //   keeps the role though a second bounce in its clause is "Auras you own". A paired flicker's own emit carries `owner: you` and `control: you` (Charming Prince, Meneldor, Slip On the Ring), so nothing else moved.
     //   RIGHT FOR A WRONG REASON: Audacious Swap (its tuck counts because derive reads "If it's a land card, they put it onto the battlefield" -- a different card -- as a
     //   one-branch return of the target, `returnIf`, which `notFlickered` lets through).
     //   NOT A DEFECT, owner ruling 2026-10-20 (#1295): a kill decided by a coin flip (Mogg Assassin, Crooked Scales, Creepy Doll, Boompile, Plasma Caster) IS removal;
     //   only a losing-side shrink is refused (`notOnFlip`, Orcish Captain).
     case "emits":
       return (dc.tags?.abilities ?? []).some((a) =>
-        (clause.notOwnedByYou !== true || !(dc.tags?.abilities ?? []).some((f) => f.clause === a.clause && f.effect.subject?.owner === "you"))
+        (clause.notOwnedByYou !== true || a.effect.subject?.owner !== "you")
         && (clause.notFromHandCost !== true || !/from your hand/i.test(a.cost ?? ""))
         && (clause.notFlickered !== true || !(dc.tags?.abilities ?? []).some((f) => f.effect.kind === "flicker" && f.clause === a.clause && f.delayedUntil === undefined && f.returnIf !== true && f.effect.subject?.control !== "opp"))
         && (a.emits ?? []).some((e) =>
