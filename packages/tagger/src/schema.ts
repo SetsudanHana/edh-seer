@@ -1232,7 +1232,7 @@ export interface Ability {
   /** THE CLAUSE THAT GRANTS THIS ABILITY (#1315). On an ability derived from a QUOTED ability another clause hands over (Sunbond's "Enchanted creature has 'Whenever you gain
    *  life, put that many +1/+1 counters on this creature.'"), the id of the granting clause (`segment()`'s `granted` clause and its `parentId`): the granting clause's own
    *  ability is a `keyword-grant` with empty `grants` and says nothing of what is granted, so a reader that must judge the grant (a buff or a curse) follows this to the
-   *  abilities that say it. Additive and read by no edge code. ABSENT on every ability no clause grants. */
+   *  abilities that say it. Additive. Edge code reads it once: `auraHostLeaves` (#1417) feeds a granted host trigger only on the host's own event. ABSENT on every ability no clause grants. */
   grantedBy?: number;
   /** WHICH ACTIONS A `restriction` ABILITY FORBIDS (#1315): `attack`, `block`, or both ("can't attack or block"). Only on an ability of effect kind `restriction`. */
   restricts?: ("attack" | "block")[];
