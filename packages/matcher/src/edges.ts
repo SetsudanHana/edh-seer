@@ -1888,7 +1888,7 @@ function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
   return { ...dc, tags: out };
 }
 
-/** AN AURA DIES WITH ITS HOST (CR 704.5m; recall v6 #57, Chime of Night <- Dockside Chef). "When
+/** AN AURA DIES WITH ITS HOST (CR 704.5m -- an Aura attached to nothing is put into its owner's graveyard; recall v6 #57, Chime of Night <- Dockside Chef). "When
  *  this Aura is put into a graveyard from the battlefield" is a self trigger on an ENCHANTMENT, and
  *  no sacrifice outlet eats an enchantment -- but every one that eats the creature it is attached
  *  to sends the Aura to the graveyard by rule, and that is what the card is for. So a producer
@@ -1899,10 +1899,19 @@ function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
  *  and a producer removing ITSELF is not removing a host. 42 corpus Auras carry the shape, 4 in the
  *  71 decks; the other 109 Aura dies-triggers say "when enchanted creature dies" and already read as
  *  a `dies:creature` demand. */
-function auraHostLeaves(chars: CardTags["characteristics"], e: GameEvent, t: GameEvent, h: Hierarchy): boolean {
+function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abilities"][number], e: GameEvent, t: GameEvent, h: Hierarchy): boolean {
   const host = chars.enchants;
   if (!host || t.subject.self !== true || (t.verb !== "dies" && t.verb !== "leaves")) return false;
   if (e.verb !== "dies" && e.verb !== "leaves") return false;
+  // WHOSE TRIGGER IT IS (#1417). The translation is for the AURA's own trigger. A creature-typed self
+  // subject is not the Aura: either a GRANTED ability ("Enchanted creature has 'When this creature dies'",
+  // Infernal Scarring; `grantedBy`) whose "this creature" is the HOST, or a creature face's own trigger on
+  // a card whose other face is the Aura (Vengeful Strangler). The first fires on the host's own event only
+  // (an exile does not kill it); the second has no host route at all.
+  if (list(t.subject.type).includes("creature")) {
+    if (a.grantedBy === undefined) return false;
+    if (e.verb === "leaves" && t.verb === "dies") return false;
+  }
   if (e.subject.self === true) return false;
   const { zone: _z, fromZone: _f, ...printed } = e.subject;
   return subjectMatches({ ...printed, zone: e.subject.zone ?? "battlefield" }, host.zone === undefined ? { ...host, zone: "battlefield" } : host, h);
@@ -2179,7 +2188,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
         const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject, ...(a.trigger.amount ? { amountIs: a.trigger.amount } : {}) });
         // `e` is `e0` when it matches as authored, or an untyped land put resolved against the
         // deck's lands to the subtype this trigger names (`landPutFor`); null is no match.
-        const viaHost = auraHostLeaves(c.tags.characteristics, e0, t, h);
+        const viaHost = auraHostLeaves(c.tags.characteristics, a, e0, t, h);
         const e = viaHost ? e0 : landPutFor(e0, t, opts.landTypes, ownEvents, h);
         if (!e) continue;
         // TOKENS MEDIATE (Task 7, tokens-as-nodes, 2026-08-16). A maker's own "a Treasure enters"

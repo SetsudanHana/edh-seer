@@ -2643,6 +2643,44 @@ test("a bounce or an exile unattaches an Aura the way a death does (CR 704.5m)",
   expect(reasons(remover("graveyard"))).toHaveLength(0);
 });
 
+// WHOSE TRIGGER IT IS (#1417). The host translation is for the Aura's OWN trigger only.
+test("a granted host-dies trigger and a creature face's self dies are not the Aura's own (#1417)", () => {
+  const selfDies = (subject: Record<string, unknown>, extra: Record<string, unknown> = {}) => ({
+    kind: "triggered" as const, effect: { kind: "draw" }, ...extra,
+    trigger: { verbs: ["dies" as const], subject: { control: "you", token: null, self: true, ...subject } },
+  });
+  const aura = (abilities: unknown[], enchants: Record<string, unknown> = { type: "creature" }): CardTags => ({
+    oracleId: "aura", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["enchantment"], subtypes: ["aura"], colors: ["B"], identity: ["B"], cmc: 2,
+      power: null, toughness: null, token: false, keywords: ["enchant"],
+      enchants: { control: "any", token: null, ...enchants } as CardTags["characteristics"]["enchants"] },
+    abilities: abilities as CardTags["abilities"],
+  });
+  const remover = (verb: "dies" | "leaves"): CardTags => ({
+    oracleId: "rm", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["instant"], subtypes: [], colors: ["W"], identity: ["W"], cmc: 1,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{ kind: "on-cast", effect: { kind: "" },
+      emits: [{ verb, subject: { control: "any", token: null, type: "creature" } as never }] }],
+  });
+  const reasons = (c: CardTags, p: CardTags) => directedReasons(
+    { card: { name: "Remover" } as DeckCard["card"], tags: p },
+    { card: { name: "Aura" } as DeckCard["card"], tags: c }, H,
+  ).filter((r) => r.tag.startsWith("dies:") || r.tag.startsWith("leaves:"));
+
+  // Infernal Scarring: "Enchanted creature has 'When this creature dies, draw a card.'" -- the host must DIE.
+  const scarring = aura([selfDies({ type: "creature" }, { grantedBy: 2 })]);
+  expect(reasons(scarring, remover("leaves"))).toHaveLength(0);
+  expect(reasons(scarring, remover("dies"))).toHaveLength(1);
+  // Chime of Night: the Aura's own "put into a graveyard" -- an exile of the host still sends it there.
+  const chime = aura([selfDies({ subtype: "aura" })]);
+  expect(reasons(chime, remover("leaves"))).toHaveLength(1);
+  // Vengeful Strangler: the FRONT face's "when this creature dies" is the creature, not the Aura.
+  const strangler = aura([selfDies({ type: "creature" }), selfDies({ type: "creature" })], { control: "opp", type: ["creature", "planeswalker"] });
+  expect(reasons(strangler, remover("leaves"))).toHaveLength(0);
+  expect(reasons(strangler, remover("dies"))).toHaveLength(0);
+});
+
 // A COUNT THE ABILITY IS GATED ON IS THE SAME RELATION AS A WIN CONDITION'S (2026-09-16; recall v6
 // #77 Gadrak, v7 #79 Urza's Workshop): the producer is one of the things the consumer counts, and
 // below the count the consumer does nothing. Whatever the effect kind -- Gadrak's `cant` derives no
