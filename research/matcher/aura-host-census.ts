@@ -1,19 +1,28 @@
 /** ONE-SHOT (#1417): corpus-wide census of the Aura host-removal route (CR 704.5m, `auraHostLeaves`).
  *  Consumers: every card whose characteristics carry `enchants` and that has a self dies/leaves trigger.
  *  Producers: every card with a non-self dies/leaves emit. Counts the dies:/leaves: pair reasons under
- *  the OLD edges.ts (a copy at packages/matcher/src/edges-old-tmp.ts, made from `git show <sha>:...`;
- *  delete it after) and the CURRENT one, and prints lost / gained by consumer.
+ *  edges.ts at BASE (written beside the live one for the run, so its relative imports resolve, and
+ *  removed after) and the CURRENT one, and prints lost / gained by consumer.
  *
- *    git show 98f1c03e:packages/matcher/src/edges.ts > packages/matcher/src/edges-old-tmp.ts
- *    npx tsx research/matcher/aura-host-census.ts */
+ *    npx tsx research/matcher/aura-host-census.ts 98f1c03e */
+import { execFileSync } from "node:child_process";
+import { rmSync, writeFileSync } from "node:fs";
 import { connect, docToCard, loadConfig } from "../../packages/data/src/index.js";
 import { pairReasons as pairNew } from "../../packages/matcher/src/edges.js";
 import { loadHierarchy } from "../../packages/matcher/src/hierarchy.js";
 import type { DeckCard } from "../../packages/matcher/src/types.js";
 
-// Dynamic, so the file typechecks while the temp copy does not exist.
-const oldPath = "../../packages/matcher/src/edges-old-tmp.js";
-const pairOld: typeof pairNew = ((await import(oldPath)) as { pairReasons: typeof pairNew }).pairReasons;
+const base = process.argv[2];
+if (!base) throw new Error("usage: aura-host-census.ts <BASE-sha>");
+const stem = `edges.base-${base.replace(/[^0-9a-f]/gi, "")}`;
+const oldFile = new URL(`../../packages/matcher/src/${stem}.ts`, import.meta.url);
+writeFileSync(oldFile, execFileSync("git", ["show", `${base}:packages/matcher/src/edges.ts`]));
+let pairOld: typeof pairNew;
+try {
+  pairOld = ((await import(`../../packages/matcher/src/${stem}.js`)) as { pairReasons: typeof pairNew }).pairReasons;
+} finally {
+  rmSync(oldFile, { force: true });
+}
 const store = await connect(loadConfig());
 const h = loadHierarchy();
 const cards = new Map<string, any>();
