@@ -1302,7 +1302,9 @@ function animateReadings(target: { object: SubjectFilter; text?: string; phrase?
   // stays as the grammar always read it: bare. Never a wildcard colour. With a P/T ("becomes blue with base power and toughness 5/4", Surge Engine) it is a result again.
   // ...and nor is a phrase that names no type, subtype or P/T ("colorless sources of damage", Ghostly Flame): nothing is animated or retyped, so nothing is read into the animate.
   const plain = result.replace(/ in addition to (?:its|their) other types$/i, "");
-  const unfolded: ActionReading[] = [{ verb: "animate", ...target }, ...(pt ? [{ verb: "modify-pt", ...target, amount: pt }] : []), ...grants(withs)];
+  // #1378: the set base P/T is also the animate's amount, as the store writes an animate of a host, a target or a class ("5/5", Ensoul Artifact, Skilled Animator).
+  const setPt = pt !== undefined && /^[\dX]+\/[\dX]+$/i.test(pt) ? { amount: pt } : {};
+  const unfolded: ActionReading[] = [{ verb: "animate", ...target, ...setPt }, ...(pt ? [{ verb: "modify-pt", ...target, amount: pt }] : []), ...grants(withs)];
   const bare = !foldable(target) || NOT_A_RESULT.test(plain) || (pt === undefined && !namesType(plain));
   if (bare) return unfolded;
   // "protection from red" stays a grant: its colour word would read as the animated permanent's colour.

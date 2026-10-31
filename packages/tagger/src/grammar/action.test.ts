@@ -273,7 +273,7 @@ test("fragments 1: a back-referenced controller and a set made 'this way' are re
 
 test("fragments 2: a leading duration, set P/T on becoming, losing abilities, casting restrictions, entering with counters", () => {
   expect(read("Until end of turn, target creature becomes a white Rabbit with base power and toughness 0/1.").map((r) => [r.verb, r.amount]))
-    .toEqual([["animate", undefined], ["modify-pt", "0/1"]]);
+    .toEqual([["animate", "0/1"], ["modify-pt", "0/1"]]); // #1378: the set P/T is the animate's amount too
   // A TARGET keeps its class alone (#1352): the result type in a `scope: target` subject reads as a creature the spell targets (matcher `spellTargeting`).
   expect(read("Until end of turn, target creature becomes a white Rabbit with base power and toughness 0/1.")[0]?.text).toBe("target creature");
   // ...the card itself carries it: the set P/T is in the animate's words, as the store writes it.
@@ -731,4 +731,9 @@ test("connive X: the amount is what the sentence says X is (Raffine, Mask of the
   expect(read("target attacking creature connives X, where X is the number of attacking creatures.")).toMatchObject([{ verb: "connive", amount: "the number of attacking creatures" }]);
   expect(read("it connives X, where X is the amount of damage it dealt to that player.")).toMatchObject([{ verb: "connive", amount: "the amount of damage it dealt to that player" }]);
   expect(read("it connives.")[0]?.amount).toBeUndefined();
+});
+
+test("a base P/T set on an unfolded animate is the animate's amount (Ensoul Artifact, Skilled Animator)", () => {
+  expect(read("target artifact you control becomes an artifact creature with base power and toughness 5/5 for as long as this creature remains on the battlefield."))
+    .toMatchObject([{ verb: "animate", amount: "5/5" }, { verb: "modify-pt", amount: "5/5" }]);
 });
