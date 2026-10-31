@@ -329,14 +329,88 @@ const RETURNS_TO_HAND = /\bto (?:its|their|that card's|the) owners?'s? hands?\b|
 /** "... counters on each other Moogle you control for each ..." -> "each other Moogle you control".
  *  The regex matches only the head; the tail is cut with string ops, because a lazy run ahead of
  *  `\s+for each` was polynomial ReDoS (CodeQL js/polynomial-redos, PR #498). */
-function counterRecipient(clauseText: string, named = true): string | undefined {
+function counterRecipient(clauseText: string, named = true, trigger?: CounterTrigger): string | undefined {
+  // "... put a +1/+1 counter on EACH OF THEM" after "up to two other target creatures you control" (Clay Champion, #1438) is those targets, not a bare `each`.
+  const plural = named ? targetedPlural(clauseText) : undefined;
+  if (plural) return plural;
   const head = /\bcounters?\s+on\s+(?=(?:each|all|target|another|up to \w+)\b)/i.exec(clauseText);
-  if (!head) return named ? thatTarget(clauseText) : undefined;
+  if (!head) return named ? (thatTarget(clauseText) ?? enteringClass(clauseText, trigger) ?? triggerBound(clauseText, trigger)) : undefined;
   let tail = clauseText.slice(head.index + head[0].length);
   const stop = tail.search(/[.;,]/);
   if (stop >= 0) tail = tail.slice(0, stop);
   const forEach = tail.search(/\sfor each\b/i);
   return forEach >= 0 ? tail.slice(0, forEach).trimEnd() : tail;
+}
+
+/** The trigger the clause hangs on, as far as a counter's recipient needs it (#1438). `self`: its subject is the card itself. */
+export interface CounterTrigger { event?: string; subject?: string; control?: string; self?: boolean }
+
+/** The clause's FIRST counter phrase: where it starts, and the sentence words before it. The back-reference readings below look only at it, because a later "counters on them" (Etrata's "exiled cards with hit counters on them")
+ *  or a second action's own recipient is not this action's (#1438). CEILING: with several counter actions of different kinds in one clause (Support Mission) the first phrase stands for all of them, so a trigger-bound reading
+ *  would type a quest counter as a creature's; the sentence-before test below refuses that clause rather than guess. */
+function firstCounterPhrase(clauseText: string): { at: number; rest: string; before: string } | undefined {
+  const m = /\bcounters?\s+on\s+/i.exec(clauseText);
+  if (!m) return undefined;
+  const upTo = clauseText.slice(0, m.index);
+  return { at: m.index, rest: clauseText.slice(m.index + m[0].length), before: upTo.slice(upTo.lastIndexOf(".") + 1) };
+}
+
+/** A PLACEMENT CONDITIONED ON WHAT THE RECIPIENT IS ("If it's a Spider, put a +1/+1 counter on it", Aunt May; "if that creature is 1/1", Sigil Captain; "if its mana value is 4 or less", Thunderous Velocipede) reaches only part of the
+ *  trigger's class, so the back-reference readings below leave it untyped as before (#1438): typed `creature`, it fed every self counter doubler although none is a Spider. "If you do, put ..." is not about the recipient and stays typed.
+ *  CEILING: the condition is recognised by the recipient pronoun's own "is / are / has / had / its" after an "if", and clause-wide: an unconditional placement beside a conditioned one
+ *  (Emiel the Blessed's "If you do, put a +1/+1 counter on it" before "If it's a Unicorn, put two ... instead") is refused too. Only pairs are lost; BASE was untyped. */
+function conditionedOnRecipient(clauseText: string): boolean {
+  return /\bif (?:it(?:'s| is| has| had)|its|that (?:creature|permanent) (?:is|has|had)|those (?:creatures|permanents) (?:are|have))\b/i.test(clauseText);
+}
+
+/** "... counters on EACH OF THEM / THEM / THOSE CREATURES" bound to the nearest earlier TARGET phrase of the clause (Clay Champion, #1438): the phrase itself ("up to two other target creatures you control"),
+ *  so the emit carries its type, control, `other` and `scope: target`. CEILING: the nearest earlier "target <creature|permanent|artifact|land>" phrase; a pronoun that carries its own qualifier ("each of those creatures you don't
+ *  control", Lost in the Maze) or a target phrase naming two types ("artifacts and/or creatures") keeps the old reading. */
+function targetedPlural(clauseText: string): string | undefined {
+  if (conditionedOnRecipient(clauseText)) return undefined;
+  const first = firstCounterPhrase(clauseText);
+  if (!first) return undefined;
+  const pronoun = /^(?:each of (?:them|those (?:creatures|permanents|artifacts|lands))|them|those (?:creatures|permanents|artifacts|lands))\b/i.exec(first.rest);
+  if (!pronoun || /^\s+(?:you|an? opponent|your opponents|they|that|with|of)\b/i.test(first.rest.slice(pronoun[0].length))) return undefined;
+  const before = clauseText.slice(0, first.at);
+  const all = [...before.matchAll(/\b(?:up to \w+ |(?:one|two|three|four|x) )?(?:other |another )?target (?:creatures?|permanents?|artifacts?|lands?)\b(?: (?:you control|an opponent controls|you don't control|your opponents control))?/gi)];
+  const last = all.at(-1);
+  if (!last) return undefined;
+  return /^\s+(?:and\/or|and|or)\s/i.test(before.slice(last.index + last[0].length)) ? undefined : last[0];
+}
+
+/** What a trigger's subject becomes as a RECIPIENT: an entering permanent keeps its words ("another creature you control"); a cast "creature spell" is the creature that will enter ("creature you control").
+ *  Refused: the card itself (`~`, "this ..."), a card in a zone ("an exiled card", Lagrella). */
+function triggerClass(trigger: CounterTrigger): string | undefined {
+  if (trigger.self === true || !trigger.subject) return undefined;
+  const subject = trigger.subject.trim();
+  if (/^(?:~|this\b|it$)|\bcards?\b/i.test(subject)) return undefined;
+  if (trigger.event === "enters") return /\bcontrol\b/i.test(subject) || trigger.control !== "you" ? subject : `${subject} you control`;
+  const spell = trigger.event === "cast" ? /^an? ((?:nontoken |non-?\w+ )?(?:creature|artifact|enchantment|planeswalker|permanent|land)) spell$/i.exec(subject) : null;
+  return spell && trigger.control === "you" ? `${spell[1]} you control` : undefined;
+}
+
+/** "Whenever another creature you control enters, put a +1/+1 counter on THAT CREATURE" (Juniper Order Ranger) and "... put a +1/+1 counter on IT" (The Great Henge) are the entering permanent, which the trigger's subject
+ *  names; typed so a consumer that wants a creature sees the supply (#1438). Only a PUT in the first counter sentence, with no target named before it ("tap target creature ... put a stun counter on it" is the target), and
+ *  only on an ENTERS trigger: "return it ... with a flying counter on it" (Salvation Swan) and a card's own "put five counters on it" (Hooded Hydra, no trigger) are not this. */
+function triggerBound(clauseText: string, trigger?: CounterTrigger): string | undefined {
+  if (!trigger || trigger.event !== "enters" || conditionedOnRecipient(clauseText)) return undefined;
+  const first = firstCounterPhrase(clauseText);
+  if (!first || !/\bputs?\b/i.test(first.before) || /\btarget\b/i.test(clauseText.slice(0, first.at))) return undefined;
+  if (!/^(?:that\s+(?:creature|permanent)|it)\b/i.test(first.rest)) return undefined;
+  return triggerClass(trigger);
+}
+
+/** "<class> ENTERS WITH ... counters on it" is the class (#1438): Bloodspore Thrinax's "Each other creature you control enters with an additional X +1/+1 counters on it" (a static), Wildgrowth Archaic's "Whenever you cast a creature
+ *  spell, THAT CREATURE enters with X additional +1/+1 counters on it" (the cast spell's creature, from the trigger). CEILING: the subject is the clause's last comma-free run before "enters with", led by each / all / another / other / that;
+ *  a subject joining two classes ("Vehicle and creature", Thunderous Velocipede) is left to the old reading, since a subject filter cannot say "either". */
+export function enteringClass(clauseText: string, trigger?: CounterTrigger): string | undefined {
+  const at = clauseText.search(/\benters?\s+with\b/i);
+  if (at < 0 || !/\bcounters?\s+on\s+(?:it|them)\b/i.test(clauseText) || conditionedOnRecipient(clauseText)) return undefined;
+  const lead = clauseText.slice(0, at).trimEnd();
+  const subject = lead.slice(lead.lastIndexOf(",") + 1).trim();
+  if (/^that\s+(?:creature|permanent)$/i.test(subject)) return trigger ? triggerClass(trigger) : undefined;
+  return /^(?:each|all|another|other)(?: [\w'-]+)+$/i.test(subject) && !/\b(?:this|~|and|or)\b/i.test(subject) ? subject : undefined;
 }
 
 /** "Another target creature gains indestructible. Put a +1/+1 counter ... on THAT CREATURE" (Arwen, Mortal Queen, #1421): "that creature" is the target the sentence named
@@ -649,7 +723,7 @@ export function printsControlChange(clauseText: string): boolean {
   return CONTROL_CHANGE_PRINTED.some((re) => re.test(clauseText));
 }
 
-export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean } = {}): GameEvent[] {
+export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean; trigger?: CounterTrigger } = {}): GameEvent[] {
   // A `gain-control` THE PRINTED CLAUSE DOES NOT STATE IS NOT A CONTROL CHANGE (#1318): see `printsControlChange`. Dropped, so the action goes to `unclaimed`.
   if (action.verb === "gain-control" && clauseText !== undefined && clauseText !== "" && !printsControlChange(clauseText)) return [];
   const casualty = action.verb === "grant-ability" ? CASUALTY.exec(action.object ?? "") : null;
@@ -711,7 +785,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // Moogle you control". Parsed from there so the emit says what gets them; a pronoun or the card
   // itself stays with the self logic in derive.
   const recipient = (action.verb === "add-counter" && counterKindOf(action.object ?? "") !== undefined)
-    ? counterRecipient(clauseText ?? "", opts.self !== true)
+    ? counterRecipient(clauseText ?? "", opts.self !== true, opts.trigger)
     : undefined;
   // A BID THE MODEL STORED AS ONE `other` ("You and target spell's controller bid life ... If you win the bidding, counter that spell", Mages' Contest) still counters that spell.
   if (action.verb === "other" && (action.object ?? "").toLowerCase().includes("counter that spell")) {

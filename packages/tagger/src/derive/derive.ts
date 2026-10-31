@@ -12,7 +12,7 @@ import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
 import { targetingBanOf, targetingBanSubjectInObject, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, activationBanClass, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
-import { actionEmits, casualtySacrifice, millsOwnLibrary, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, narrowSelfExiledSpell, TEMPORARY_TOKEN_REF } from "./emits.js";
+import { actionEmits, casualtySacrifice, enteringClass, millsOwnLibrary, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, narrowSelfExiledSpell, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, activationConditionOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
 import { hostEffect } from "./host.js";
@@ -584,7 +584,8 @@ import { emblemRecipient } from "../emblem.js";
 // 418: #1401 -- F/G: Molten Sentry, Giant Shark, Curse of Opulence/Disturbance, Cruel Entertainment; 5 rows change, 0 pair-reason membership moves
 // 419: #1424 -- Activation hosers: 10 rows gain ability-loss: 8 on their class with abilityKind activated (Stony Silence, Null Rod, Collector Ouphe, Cursed Totem, Linvala x2, Clarion Conqueror, Karn the Great Creator), 2 typeless on the chosen name like Pithing Needle (Phyrexian Revoker, Voidstone Gargoyle); pair reasons +0/-0, role-ratchet 0/0, dropped-clauses 4,935 -> 4,925
 // 420: #1421 -- A multiplier of the counters on this creature is self: 12 rows (Mossborn Hydra, Primordial Hydra, Voracious Hydra, Dragonsguard Elite, Solarion, Sisterhood of Karn, Ascendant Acolyte, Big Mother Mouser, Gargantos the Endbringer, Lily Bowen, The Millennium Calendar, Paradox Zone); a granted/quoted doubler (Evolution Vat, Level Up) stays a class. And "put a counter on THAT creature" after the nearest "target <noun>" emits a typed target (controller kept): 15 rows (Arwen, Beast Mode, Protocol Knight, Attempted Murder, Puncture Bolt, ...). 27 rows change, 0 source flips; role-ratchet +1 (Attempted Murder +targetedRemoval), dropped-clauses 4,925 -> 4,925; pair reasons of the changed rows +386/-12,505 (counter-added)
-export const DERIVE_VERSION = 420;
+// 421: #1438 -- A counter on a back-reference recipient takes its antecedent's filter: Juniper Order Ranger, Wildgrowth Archaic, Clay Champion, Bloodspore Thrinax, The Great Henge (trigger-bound "it"/"that creature" after a non-self enters trigger, "that creature enters with" under a cast trigger, "each of them" after a target, "<class> enters with ... counters on it"); a placement conditioned on the recipient ("if it's a Spider", "if that creature is 1/1": Aunt May, Sigil Captain, Emiel, Tribute to the World Tree, Miles Prower) stays untyped. 37 rows change, 1 source flip; grammar complete 28,422 -> 28,422; role-ratchet 0/0, dropped-clauses 4,925 -> 4,925; pair reasons of the changed rows +784/-295 (counter-added +784/-254, counter-removed -41), matcher sample +28/-10
+export const DERIVE_VERSION = 421;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -3054,7 +3055,9 @@ export function deriveAbilities(
       // FIRST, as the fighter, and the prefix test above would read the whole pair as self. But the
       // fight's emit is the OTHER creature being dealt damage (emits.ts, CR 701.14a) -- Brash Taunter
       // supplied no "a creature is dealt damage" payoff. 17 corpus cards.
-      const emitsSelf = action.verb !== "fight" && (selfByIf || SELF_REFERENCE.test((action.object ?? "").trim())
+      // A CLASS THAT "ENTERS WITH" COUNTERS IS THE RECIPIENT, whatever "this creature" the amount clause names (#1438, Bloodspore Thrinax: "... where X is the number of +1/+1 counters on this creature").
+      const classEnters = action.verb === "add-counter" && enteringClass(text) !== undefined && clauseGrants?.[clause.id as number] === undefined;
+      const emitsSelf = action.verb !== "fight" && !classEnters && (selfByIf || SELF_REFERENCE.test((action.object ?? "").trim())
         || /^this$/i.test((action.object ?? "").trim())
         || isSelfSubject(action.object ?? "", cardName)
         || (action.verb === "deal-damage" && damageHitsSelf(action.object ?? "", text))
@@ -3120,7 +3123,7 @@ export function deriveAbilities(
       // "tapped") still emits the wildcard `{token:true, scope:all}` tap, because CREATED_TOKEN_REF only
       // resolves when "tapped" is present.
       const tapsCreated = tapMadeHere && TAPPED_WORD.test(effectText(text, cardName ?? "")) && !TAPS_IT.test(effectText(text, cardName ?? ""));
-      const emits = temporaryRider ? [] : narrowSelfExiledSpell(actionEmits(antecedent ? { ...action, object: antecedent, ...(zone ? { fromZone: zone } : {}) } : action, ownCounterText(action, clause.actions ?? [], text, true), { self: emitsSelf }), text, cardText)
+      const emits = temporaryRider ? [] : narrowSelfExiledSpell(actionEmits(antecedent ? { ...action, object: antecedent, ...(zone ? { fromZone: zone } : {}) } : action, ownCounterText(action, clause.actions ?? [], text, true), { self: emitsSelf, ...(clause.trigger && clauseGrants?.[clause.id as number] === undefined ? { trigger: { event: clause.trigger.event, subject: clause.trigger.subject, control: clause.trigger.control, self: isSelfSubject(clause.trigger.subject ?? "", cardName) } } : {}) }), text, cardText)
         .filter((e) => !(e.verb === "taps" && (tapsCreated || ARRIVES_TAPPED.test(effectText(text, cardName ?? "")))))
         // A SACRIFICE triggered by the card's own LEAVING is drawback, not supply. "When this
         // enchantment leaves the battlefield, that creature's controller sacrifices it" (Necromancy,
