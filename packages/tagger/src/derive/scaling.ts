@@ -63,9 +63,13 @@ const BASES: [RegExp, ScalingBasis][] = [
  *  Dragonspark Reactor's "the number of charge counters on this artifact" counts counters, not
  *  artifacts, and the table would have called it per-permanent off the word "artifact". Everything
  *  from " on " is dropped for that reason; " in " is kept, because "in your graveyard" IS the basis. */
-// A comma-separated TYPE LIST is part of the noun ("that's an Insect, Rat, Spider, or Squirrel");
-// any other comma still ends it ("for each creature you control, draw a card").
-const COUNTED = /\b(?:for each|number of)\s+([^.,;]{1,60}(?:,\s*(?:or\s+)?[A-Z][a-z-]+)*)/;
+// A comma-separated TYPE LIST is part of the noun ("that's an Insect, Rat, Spider, or Squirrel"),
+// and so is a list of NEGATIONS ("noncreature, nonland card in your graveyard": cut at the comma it
+// counted "noncreature" and kept land in the class, #1453); any other comma still ends it ("for each
+// creature you control, draw a card"). CEILING: "ANY number of" still reads as a count (#1467),
+// so the negation list also makes Paradoxical Outcome's "any number of target nonland, nontoken
+// permanents you control" a board count, as "any number of target creatures you control" already was.
+const COUNTED = /\b(?:for each|number of)\s+([^.,;]{1,60}(?:,\s*(?:(?:or\s+)?[A-Z][a-z-]+|non[a-z-]+[^.,;]{0,60}))*)/;
 
 /** "WHERE X IS THE NUMBER OF ..." DEFINES X FOR THE WHOLE CLAUSE, and the own-text rule still holds:
  *  the count reaches only an action whose amount IS that bare X, never a sibling with a fixed
