@@ -3032,6 +3032,7 @@ export function deriveAbilities(
       trigger = { verbs: damageResultVerbs(text), subject, ...(toCreature ? { victim: "creature" as const } : {}) };
       kind = "triggered";
     }
+    // (the flag is stamped on every ability the clause produces, with the other per-clause labels below)
 
     const before = abilities.length;
     /** The abilities (the ability and its twins) a `search` or `counter-spell` action made, by action index: the put that follows names its destination (#1301). */
@@ -3970,6 +3971,7 @@ export function deriveAbilities(
       }
       // THE MULTIPLIER'S OWN TRIGGER, the one synthesized from the "would ... instead" frame -- see
       // `Ability.replacement`. Matched on the verbs so a clause's other trigger is never marked.
+      if (damageResult) abilities[i] = { ...abilities[i], replacementResult: true };
       const heard = abilities[i].trigger?.verbs ?? [];
       if (replacement && !replacement.restricted && replacement.verbs.some((v) => heard.includes(v))) {
         // AND WHAT IT DOES TO THE EVENT, when a number is printed (`Ability.change`, DERIVE 388).

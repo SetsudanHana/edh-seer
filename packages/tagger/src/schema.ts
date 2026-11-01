@@ -1305,6 +1305,10 @@ export interface Ability {
   /** A `to-hand` OR typed-dig ability that NETS ZERO CARDS (#1302, owner 2026-10-22): it replaces a draw ("If you would draw a card, you may instead ... reveal cards ...": Abundance, Underrealm Lich, Tomorrow) or swaps with the
    *  top of the library (Scroll Rack). Card selection, not hand-fill. Only `true` is written. */
   netZero?: true;
+  /** A REPLACEMENT EFFECT WHOSE RESULT IS AN EVENT OF ITS OWN, NOT A MULTIPLIER (#1465; CR 614.1a: "instead" makes it a replacement effect, not a triggered ability, CR 603.1): Undead Alchemist, Szadek, Soul-Scar Mage.
+   *  The ability keeps its trigger (the replaced damage) and its kind so the pair readers hear the damage and the mill / counter placement, but it is no TRIGGERED ABILITY to copy (`copies:triggered`) or to double
+   *  (trigger-doubling). Distinct from `replacement`, which marks a multiplier. Only `true` is written. */
+  replacementResult?: true;
   /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs. */
   trigger?: {
     verbs: Verb[];

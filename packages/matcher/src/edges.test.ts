@@ -345,10 +345,20 @@ test("a damage replacement that mills or places counters is a plain damage trigg
     emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target" }, dealer: { control: "you", token: null } }],
   } as never]);
   // a player-only damage emit (Lava Spike's target player, Purphoros's each opponent) never becomes counters on a creature
+  // the two-emit shape derive writes for "target player or planeswalker": a player and a targeted planeswalker
   const spike = base("Lava Spike", [{
     kind: "on-cast", effect: { kind: "damage" },
-    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target", player: true }, dealer: { control: "you", token: null } }],
+    emits: [
+      { verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target", player: true }, dealer: { control: "you", token: null } },
+      { verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target", type: "planeswalker" }, dealer: { control: "you", token: null } },
+    ],
   } as never]);
+  // a painland: "deals 1 damage to you"
+  const painland = base("Shivan Reef", [{
+    kind: "activated", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "you", token: null }, dealer: { control: "you", token: null } }],
+  } as never]);
+  expect(pairReasons(painland, mage, H)).toEqual([]);
   const purphoros = base("Purphoros", [{
     kind: "triggered", effect: { kind: "damage" },
     emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null }, dealer: { control: "you", token: null } }],
@@ -356,6 +366,12 @@ test("a damage replacement that mills or places counters is a plain damage trigg
   expect(pairReasons(spike, mage, H)).toEqual([]);
   expect(pairReasons(purphoros, mage, H)).toEqual([]);
   expect(mage.tags.abilities.filter((a) => a.replacement)).toEqual([]);
+  // CR 614.1a: it is a replacement effect, so no copier of triggered abilities and no trigger doubler hears it
+  expect(mage.tags.abilities[0]!.replacementResult).toBe(true);
+  const resonator = base("Strionic Resonator", [{ kind: "activated", effect: { kind: "copy-ability", subject: { control: "you", token: null, abilityKind: ["triggered"] } } } as never]);
+  expect(pairReasons(mage, resonator, H).filter((r) => r.tag.startsWith("copies"))).toEqual([]);
+  const panharmonicon = base("Annie Joins Up", [{ kind: "static", effect: { kind: "trigger-doubling" }, doubles: ["non-combat-damage"] } as never]);
+  expect(pairReasons(mage, panharmonicon, H).filter((r) => r.tag.startsWith("doubles"))).toEqual([]);
   const text = pairReasons(bolt, mage, H).map((r) => r.text).join(" | ");
   expect(text).toContain("When Lightning Bolt deals noncombat damage, Soul-Scar Mage");
   expect(text).not.toMatch(/doubl|triples|changes the damage|adds to the damage/);

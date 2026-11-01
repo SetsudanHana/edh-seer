@@ -1197,13 +1197,11 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // a wrong one. Measured on the corpus: seven cards print such a trigger; Ghyrson Starn had been
   // joined to every pinger (Eidolon of the Great Revel's 2, Flame-Kin War Scout's 4).
   if (consumer.amountIs !== undefined && !sizeSatisfies(producer.amount, consumer.amountIs)) return false;
-  // DAMAGE TO A CREATURE (#1465): a trigger that needs the damage dealt to a creature (Soul-Scar Mage) is not met by damage aimed only at players -- a `player` subject (target player or planeswalker), or an untyped opponent
-  // ("each opponent": Guttersnipe, Impact Tremors, Purphoros). An "any target" emit stays (it can be aimed at a creature).
-  // CEILING: an untyped non-opponent emit that is not targeted ("each player") is not refused.
-  if (consumer.victimIs === "creature" && DAMAGE_VERBS.has(producer.verb)) {
-    const v = producer.subject;
-    if (v.player === true || (v.control === "opp" && v.type === undefined && v.subtype === undefined && v.anyOf === undefined && v.scope !== "target")) return false;
-  }
+  // DAMAGE TO A CREATURE (#1465): a trigger that needs the damage dealt to a creature (Soul-Scar Mage) is met only by an emit that CAN be a creature: its type list names creature, or it is untyped, targeted and not a player
+  // ("any target": Lightning Bolt), or an anyOf branch is. Refused: a `player` subject, a planeswalker / battle-typed one (Lava Spike's second emit), and an untyped `you` (every painland) or `opp` ("each opponent":
+  // Guttersnipe, Impact Tremors, Purphoros).
+  // CEILING: an untyped `any` emit that is not targeted ("each player") is not refused.
+  if (consumer.victimIs === "creature" && DAMAGE_VERBS.has(producer.verb) && !canHitACreature(producer.subject)) return false;
   // A TARGETING RESTRICTION IS A DEMAND NOTHING HERE CAN CHECK, so the trigger claims no producer.
   // `replacement.restricted` one layer over: keep the ability and its kind, claim no cards. Read on
   // the CONSUMER only — a producer's emit never states how a spell was targeted, so the field can
@@ -1323,6 +1321,15 @@ function damagedMatches(victim: SubjectFilter, consumer: SubjectFilter, h: Hiera
   const consumerIsPermanent = consumer.self === true || list(consumer.type).length > 0 || list(consumer.subtype).length > 0;
   if (victimIsPermanent !== consumerIsPermanent) return false;
   return subjectMatches(victim, consumer, h);
+}
+
+/** Can a damage emit's victim be a creature? See the victim gate in `eventMatches`. */
+function canHitACreature(v: SubjectFilter): boolean {
+  if (v.anyOf !== undefined && v.anyOf.length > 0) return v.anyOf.some((b) => canHitACreature({ ...v, anyOf: undefined, ...b }));
+  if (list(v.type).length > 0) return list(v.type).includes("creature");
+  if (list(v.subtype).length > 0) return true;
+  if (v.player === true || v.control === "you") return false;
+  return v.control === "opp" ? v.scope === "target" : true;
 }
 
 /** A counter-placing ability whose every counter goes on its own source: its self emit, else undefined. */
@@ -3179,7 +3186,7 @@ function triggerDoublingEdges({ p, c, h, reasons }: PairScope): void {
       if (a.doublesOf.chosenType === true || a.doublesOf.chosenColor === true) continue;
       const member = subjectMatches(characteristicsSubject(c.tags, c.card.name), a.doublesOf, h);
       // Any trigger of the member counts, whoever's object it watches -- the same reading as below.
-      const hasTrigger = c.tags.abilities.some((ca) => (ca.trigger?.verbs.length ?? 0) > 0);
+      const hasTrigger = c.tags.abilities.some((ca) => (ca.trigger?.verbs.length ?? 0) > 0 && ca.replacementResult !== true);
       if (member && hasTrigger) {
         reasons.push({
           tag: `doubles:${themeSubjectKey(a.doublesOf)}`,
@@ -3194,6 +3201,7 @@ function triggerDoublingEdges({ p, c, h, reasons }: PairScope): void {
     }
     if (!a.doubles?.length) continue;
     for (const ca of c.tags?.abilities ?? []) {
+      if (ca.replacementResult === true) continue; // a replacement is no triggered ability to double (CR 614.1a, #1465)
       const verb = (ca.trigger?.verbs ?? []).find((v) => a.doubles!.includes(v));
       if (!verb) continue;
       // "A triggered ability of a permanent YOU CONTROL" is the ABILITY's side, and the consumer is
@@ -4194,7 +4202,7 @@ export function abilityIsKind(ca: CardTags["abilities"][number], kind: string): 
   if (isSelfLoss(ca) || isManaRider(ca)) return false; // #1252: a self lose-the-game ability is no ability to copy; #1423, #1426: nor is any rider of an activated mana ability (CR 605.1a, 605.3b: part of a mana ability, never on the stack)
   const loyalty = ca.kind === "activated" && ca.payment?.loyalty !== undefined;
   const mana = ca.kind === "activated" && ca.effect?.kind === "mana-generation";
-  if (kind === "triggered") return ca.kind === "triggered";
+  if (kind === "triggered") return ca.kind === "triggered" && ca.replacementResult !== true; // CR 614.1a: a damage replacement whose result is a mill / counters is no triggered ability (#1465)
   if (kind === "loyalty") return loyalty;
   if (kind === "mana") return mana;
   if (kind === "activated") return ca.kind === "activated" && !mana;
