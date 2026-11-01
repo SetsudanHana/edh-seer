@@ -1197,6 +1197,13 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // a wrong one. Measured on the corpus: seven cards print such a trigger; Ghyrson Starn had been
   // joined to every pinger (Eidolon of the Great Revel's 2, Flame-Kin War Scout's 4).
   if (consumer.amountIs !== undefined && !sizeSatisfies(producer.amount, consumer.amountIs)) return false;
+  // DAMAGE TO A CREATURE (#1465): a trigger that needs the damage dealt to a creature (Soul-Scar Mage) is not met by damage aimed only at players -- a `player` subject (target player or planeswalker), or an untyped opponent
+  // ("each opponent": Guttersnipe, Impact Tremors, Purphoros). An "any target" emit stays (it can be aimed at a creature).
+  // CEILING: an untyped non-opponent emit that is not targeted ("each player") is not refused.
+  if (consumer.victimIs === "creature" && DAMAGE_VERBS.has(producer.verb)) {
+    const v = producer.subject;
+    if (v.player === true || (v.control === "opp" && v.type === undefined && v.subtype === undefined && v.anyOf === undefined && v.scope !== "target")) return false;
+  }
   // A TARGETING RESTRICTION IS A DEMAND NOTHING HERE CAN CHECK, so the trigger claims no producer.
   // `replacement.restricted` one layer over: keep the ability and its kind, claim no cards. Read on
   // the CONSUMER only — a producer's emit never states how a spell was targeted, so the field can
@@ -2213,7 +2220,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
       if (!a.trigger) continue;
       if (a.effect.kind === "proliferate" && notAnOrigin.has(JSON.stringify(e0))) continue;
       for (const rawVerb of a.trigger.verbs) {
-        const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject, ...(a.trigger.amount ? { amountIs: a.trigger.amount } : {}) });
+        const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject, ...(a.trigger.amount ? { amountIs: a.trigger.amount } : {}), ...(a.trigger.victim ? { victimIs: a.trigger.victim } : {}) });
         // `e` is `e0` when it matches as authored, or an untyped land put resolved against the
         // deck's lands to the subtype this trigger names (`landPutFor`); null is no match.
         const viaHost = auraHostLeaves(c.tags.characteristics, a, e0, t, h);

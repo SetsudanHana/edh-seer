@@ -3027,7 +3027,9 @@ export function deriveAbilities(
     if (damageResult && replacementRead && !trigger) {
       const subject = subjectFrom(replacementRead.subjectText, cardName, enchantText);
       if (isSelfSubject(replacementRead.subjectText, cardName)) subject.self = true;
-      trigger = { verbs: damageResultVerbs(text), subject };
+      // A recipient that is a creature ("to a creature an opponent controls", Soul-Scar Mage) is carried, so a pinger that only hits players is not heard.
+      const toCreature = /\bdamage to (?:a|an|target) (?:\w+ )?creature\b/i.test(text);
+      trigger = { verbs: damageResultVerbs(text), subject, ...(toCreature ? { victim: "creature" as const } : {}) };
       kind = "triggered";
     }
 
@@ -3260,6 +3262,11 @@ export function deriveAbilities(
         ? effectSubject(subjectAction, effectKind, trigger?.subject.self === true, text, cardName, enchantText, sameCant)
         : undefined;
       if (subject && selfByIf) subject.self = true;
+      // "...damage to a creature an opponent controls, put that many -1/-1 counters on THAT CREATURE" (#1465, Soul-Scar Mage): the counters go on the creature the sentence named, whose controller is printed.
+      if (damageResult && action.verb === "add-counter" && !emitsSelf && /\bcounters? on that creature\b/i.test(text)) {
+        const owner = /\bdamage to (?:a|an|target) (?:\w+ )?creature an opponent controls\b/i.test(text) ? "opp" : /\bdamage to (?:a|an|target) (?:\w+ )?creature you control\b/i.test(text) ? "you" : undefined;
+        if (owner) { if (subject) subject.control = owner; for (const e of emits) if (e.verb === "counter-added" && e.subject.self !== true) e.subject.control = owner; }
+      }
       // A DOUBLER OF THE CARD'S OWN COUNTERS is self on its effect subject too (#1421), or the counter-presence pass reads Mossborn Hydra as a class of creatures.
       // CEILING: not for a granted ability (Evolution Vat's quoted "double ... on this creature", Level Up's "on it"): the "this creature" there is the RECIPIENT, so those subjects stay as parsed (a class); the matcher's self refusal does not cover them.
       if (subject && emitsSelf && MULTIPLIER_VERBS.has(action.verb ?? "") && !grantedTo) subject.self = true;

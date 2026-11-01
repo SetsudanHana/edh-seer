@@ -342,8 +342,19 @@ test("a damage replacement that mills or places counters is a plain damage trigg
   const mage = base("Soul-Scar Mage", abilities as CardTags["abilities"]);
   const bolt = base("Lightning Bolt", [{
     kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target" }, dealer: { control: "you", token: null } }],
+  } as never]);
+  // a player-only damage emit (Lava Spike's target player, Purphoros's each opponent) never becomes counters on a creature
+  const spike = base("Lava Spike", [{
+    kind: "on-cast", effect: { kind: "damage" },
     emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target", player: true }, dealer: { control: "you", token: null } }],
   } as never]);
+  const purphoros = base("Purphoros", [{
+    kind: "triggered", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null }, dealer: { control: "you", token: null } }],
+  } as never]);
+  expect(pairReasons(spike, mage, H)).toEqual([]);
+  expect(pairReasons(purphoros, mage, H)).toEqual([]);
   expect(mage.tags.abilities.filter((a) => a.replacement)).toEqual([]);
   const text = pairReasons(bolt, mage, H).map((r) => r.text).join(" | ");
   expect(text).toContain("When Lightning Bolt deals noncombat damage, Soul-Scar Mage");

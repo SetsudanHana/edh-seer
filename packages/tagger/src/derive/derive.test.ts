@@ -2377,6 +2377,9 @@ test("a damage replacement that mills or places counters is a plain trigger on t
   expect(alchemist[0]!.kind).toBe("triggered");
   expect(alchemist[0]!.effect.kind).toBe("mill");
   expect(alchemist[0]!.emits?.map((e) => e.verb)).toContain("mill");
+  // "that player" is the one the Zombie hit: an opponent, so the mill never fills YOUR graveyard (trigger form: Crosstown Courier)
+  expect(alchemist[0]!.effect.subject?.control).toBe("opp");
+  expect(alchemist[0]!.emits?.find((e) => e.verb === "mill")?.subject.control).toBe("opp");
   expect(alchemist[0]!.replacement).toBeUndefined();
   expect(alchemist[0]!.change).toBeUndefined();
 
@@ -2384,6 +2387,8 @@ test("a damage replacement that mills or places counters is a plain trigger on t
     "If Szadek would deal combat damage to a player, instead put that many +1/+1 counters on Szadek and that player mills that many cards.", "Szadek, Lord of Secrets");
   expect(szadek.every((a) => a.replacement === undefined && a.effect.kind !== "damage-multiplier")).toBe(true);
   expect(szadek.map((a) => a.effect.kind).sort()).toEqual(["counter-placement", "mill"]);
+  expect(szadek.flatMap((a) => a.emits ?? []).find((e) => e.verb === "mill")?.subject.control).toBe("opp");
+  expect(szadek.flatMap((a) => a.emits ?? []).find((e) => e.verb === "counter-added")?.subject.self).toBe(true);
   expect(szadek.every((a) => a.trigger?.verbs?.join() === "combat-damage" && a.trigger.subject.self === true)).toBe(true);
 
   const mage = run("static", [{ verb: "add-counter", object: "-1/-1", amount: "that many" }],
@@ -2393,6 +2398,12 @@ test("a damage replacement that mills or places counters is a plain trigger on t
   expect(mage[0]!.trigger?.subject.control).toBe("you");
   expect(mage[0]!.effect.kind).toBe("counter-placement");
   expect(mage[0]!.emits?.map((e) => e.verb)).toContain("counter-added");
+  // "that creature" is the creature an opponent controls
+  expect(mage[0]!.emits?.find((e) => e.verb === "counter-added")?.subject.control).toBe("opp");
+  expect(mage[0]!.effect.subject?.control).toBe("opp");
+  // the damage must be dealt to a creature
+  expect(mage[0]!.trigger?.victim).toBe("creature");
+  expect(alchemist[0]!.trigger?.victim).toBeUndefined();
   expect(mage[0]!.replacement).toBeUndefined();
 
   const lava = run("spell", [{ verb: "deal-damage", object: "any target", amount: "X" },
