@@ -2326,6 +2326,18 @@ test("a create trigger derives the create-token verb", () => {
   expect(abilities[0].trigger?.verbs).toContain("create-token");
 });
 
+// WHAT A DAMAGE MULTIPLIER DOES TO THE DAMAGE (#1345): the kind alone made every sentence say "doubles".
+test("a damage multiplier records how it changes the damage, from the printed clause", () => {
+  const of = (verb: string, object: string, text: string) =>
+    deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb, object }] }], "X", { 1: text }).abilities[0]!.effect;
+  expect(of("triple", "damage dealt by a source you control to a permanent or player",
+    "If a source you control would deal damage to a permanent or player, it deals triple that damage to that permanent or player instead.")).toMatchObject({ kind: "damage-multiplier", damageChange: "thrice" });
+  expect(of("double", "all damage that sources you control of the chosen type would deal",
+    "Double all damage that sources you control of the chosen type would deal.")).toMatchObject({ kind: "damage-multiplier", damageChange: "twice" });
+  // No clause text, nothing claimed.
+  expect(of("double", "all damage that creatures you control with counters on them would deal", "").damageChange).toBeUndefined();
+});
+
 // A MULTIPLIER'S NARROWING LIVES INSIDE ITS OBJECT, and dropping it claims every card the nouns
 // match. MEASURED: re-normalizing gave Raphael, the Muscle and Mjölnir, Hammer of Thor the subjects
 // {creature, you, all} and {creature, any, all}, taking MESHED 288 -> 405 (60 + 57, the whole

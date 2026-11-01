@@ -311,6 +311,29 @@ test("a token replacement is worded by how it multiplies, never as a doubler by 
   expect(sentenceFor(undefined)).not.toContain("doubles");
 });
 
+test("a damage replacement is worded by what it prints, never as a doubler by default (#1345)", () => {
+  const sentenceFor = (effect: Record<string, unknown>, change?: { op: "plus" | "times"; value: number }) => {
+    const doubler = base("Damage Doubler", [{
+      kind: "static", effect: { kind: "damage-multiplier", ...effect }, ...(change ? { change } : {}), replacement: true,
+      trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null } },
+    } as never]);
+    const spike = base("Lava Spike", [{
+      kind: "on-cast", effect: { kind: "damage" },
+      emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target", player: true }, dealer: { control: "you", token: null } }],
+    } as never]);
+    return pairReasons(spike, doubler, H).filter((r) => r.tag === "non-combat-damage:any").map((r) => r.text).join(" | ");
+  };
+  expect(sentenceFor({ damageChange: "twice" })).toContain("Damage Doubler doubles the damage");
+  expect(sentenceFor({ damageChange: "thrice" })).toContain("Damage Doubler triples the damage");
+  expect(sentenceFor({ damageChange: "thrice" })).not.toContain("doubles");
+  expect(sentenceFor({ damageChange: "plus" }, { op: "plus", value: 2 })).toContain("Damage Doubler adds 2 to the damage");
+  expect(sentenceFor({ damageChange: "plus" })).toContain("Damage Doubler adds to the damage");
+  expect(sentenceFor({ damageChange: "reduced" })).toContain("Damage Doubler reduces the damage");
+  expect(sentenceFor({ damageChange: "other" })).toContain("Damage Doubler changes the damage");
+  expect(sentenceFor({})).toContain("Damage Doubler changes the damage");
+  expect(sentenceFor({})).not.toContain("doubles");
+});
+
 test("themeSubjectKey prefers subtype, then type, else any", () => {
   expect(themeSubjectKey({ subtype: "wizard", control: "you", token: null })).toBe("wizard");
   expect(themeSubjectKey({ type: "creature", control: "you", token: null })).toBe("creature");

@@ -4,7 +4,7 @@ import {
   costReductionSentence, counterPresenceSentence, createsSentence, effectPhrase, eventVerbPhrase,
   fetchSentence, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
   boardCountFeedsScaling, effectTargetNoun, emitSubjectNoun, staticGrantSentence, tutorSentence, digsRatherThanSearches, VERB_PHRASES, winconSentence,
-  thresholdSentence, countedNounPlural, emitPhrase } from "./sentence.js";
+  thresholdSentence, countedNounPlural, emitPhrase, phraseKindOf } from "./sentence.js";
 
 describe("effectPhrase — the fallback ladder", () => {
   // effectKind is absent on 8.9% of reasons and `amount` on more than half of abilities, so the
@@ -606,4 +606,12 @@ describe("the fact kinds say what they are on the ability row (#1315)", () => {
     expect(effectPhrase("trigger-suppression", undefined)).toBe("stops some abilities from triggering");
     expect(effectPhrase("untap-denial", undefined)).toBe("keeps permanents from untapping");
   });
+});
+
+test("a toughness-as-damage static has its own phrase, never a multiplier's (#1345)", () => {
+  // Doran, the Siege Tower: "assigns combat damage equal to its toughness rather than its power" is a static over a stat line.
+  const doran = { kind: "damage-multiplier", subject: { stats: [{ metric: "toughness", op: "gt", vs: "power" }] }, damageChange: "other" };
+  expect(effectPhrase(phraseKindOf(doran), undefined)).toBe("assigns combat damage equal to its toughness");
+  expect(effectPhrase(phraseKindOf({ kind: "damage-multiplier", damageChange: "plus" }, { op: "plus", value: 2 }), undefined)).toBe("adds 2 to the damage");
+  expect(effectPhrase(phraseKindOf({ kind: "damage-multiplier", damageChange: "plus" }, { op: "times", value: 2 }), undefined)).toBe("adds to the damage");
 });
