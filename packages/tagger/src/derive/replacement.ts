@@ -81,19 +81,28 @@ export function changeOf(clauseText: string): ReplacementChange | undefined {
   return value === undefined ? undefined : { op: "plus", value };
 }
 
-/** WHAT A DAMAGE REPLACEMENT DOES TO THE DAMAGE (#1345), read off the clause text. `changeOf` cannot say it: it
+/** WHAT A DAMAGE MULTIPLIER DOES TO THE DAMAGE (#1345), read off the clause text. `changeOf` cannot say it: it
  *  is set only beside `replacement` and only for a stated number, so Collective Inferno's "Double all damage ...",
- *  an on-cast or an activated rider, and "plus X" carry none. Reducing first (Benevolent Unicorn "minus 1",
- *  Ghosts of the Innocent "half"), then the multiples, then "plus"; whatever else the kind caught (a mill, a
- *  redirect, "deals 3 damage instead") is `other`. An empty text claims nothing.
+ *  an on-cast or an activated rider, and "plus X" carry none. Triples before doubles, then "plus".
+ *  UNDEFINED means the clause does NOT multiply or add (#1456): an empty text, a reduction (Benevolent Unicorn "minus 1",
+ *  Ghosts of the Innocent "half"), a fixed number ("deals 3 damage instead"), a redirect, a mill or counters. The caller refuses
+ *  the `damage-multiplier` kind then (`isDamageMultiplication`), so burn demand never counts such a card.
+ *  CEILING: a refused replacement gets no kind of its own (prevention, mill, counter placement): on a replacement a mill or
+ *  counter-placement kind reads as a doubler to the templates and would mislead. The action stays in `unclaimed`.
  *  CEILING: a clause stating two different changes (Desperate Gambit's double, then prevention) reads the first. */
 export function damageChangeOf(clauseText: string): DamageChange | undefined {
   if (clauseText.trim() === "") return undefined;
-  if (/\b(?:minus|half)\b/i.test(clauseText)) return "reduced";
+  if (/\b(?:minus|half)\b/i.test(clauseText)) return undefined;
   if (/\b(?:triple|three times|thrice)\b/i.test(clauseText)) return "thrice";
   if (/\b(?:double|twice)\b/i.test(clauseText)) return "twice";
   if (/\bplus\b/i.test(clauseText)) return "plus";
-  return "other";
+  return undefined;
+}
+
+/** True when a `damage-multiplier` read off this clause really multiplies or adds. An empty text carries no
+ *  evidence either way, so it is not refused (the kind was read without the clause at hand). */
+export function isDamageMultiplication(clauseText: string): boolean {
+  return clauseText.trim() === "" || damageChangeOf(clauseText) !== undefined;
 }
 
 /** HOW A TOKEN REPLACEMENT CHANGES THE COUNT (#1136). Of the 34 corpus cards deriving `token-doubling`

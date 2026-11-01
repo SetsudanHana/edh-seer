@@ -33,7 +33,7 @@ import { conditionalReturn, delaysIn, flipBranch, returnDelay, untilSourceLeaves
 import { branchesAlike, counterIsTheCardsOwn, effectGates, FLIP_VERB_WORDS, isOtherwiseGate, nthSentenceMatching, printedVerbWord } from "./effect-gate.js";
 import { parseGate } from "./gate.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
-import { damageChangeOf, replacementOf } from "./replacement.js";
+import { damageChangeOf, isDamageMultiplication, replacementOf } from "./replacement.js";
 import { countOf } from "./event-count.js";
 import { reductionOf } from "./reduction.js";
 import crKeywords from "./cr-keywords.json" with { type: "json" };
@@ -599,7 +599,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 430: #1349 part 3 -- regenerated creature-subtype vocabulary from MTGJSON (11 types: Romulan, Mindless-One, Jem'Hadar, Vau-N'akat and 7 more, none yet in CR 205.3m; the placeholder 'missing' goes): Rise from the Nether and In the Pale Moonlight read; changeling cards list the new types. derive-impact vs 2df5d340: 67 rows changed (every changeling gains all 11 types, 0 pair reasons from that alone), 2 added (Rise from the Nether, In the Pale Moonlight), 0 source flips; pair reasons +8,563 / -0, all on the two new cards (Pale Moonlight +7,475, Rise +1,061, +27 more where the partner is a changeling); role-ratchet 0/0; dropped-clauses 4,933 -> 4,933 (new 0, fixed 0). 'Choose target X.' stays a blocker (#1452)
 // 431: #1345 -- a damage multiplier records how it changes the damage (Effect.damageChange: twice, thrice, plus, reduced, other), read off the clause: Fiery Emancipation triples, Torbran adds 2, Benevolent Unicorn reduces; the reason sentence says so instead of 'doubles the damage'. derive-impact vs 3a45859b: 75 rows changed (the new field only), 0 added/removed, 0 source flips; pair reasons +0 / -0; role-ratchet 0/0; dropped-clauses 4,933 -> 4,933 (new 0, fixed 0). Round 2: the static pass and the row phrase read the same variant (Doran, Absorbing Man and Titania)
 // 432: #1333 -- a life-total set: opponent/target player to a printed 10 or less is player-life-loss + lose-life; other genuine sets are the new fact kind life-total-set (CR 119.5); damage floors stay unclaimed; 'lose all but 1 life' emits lose-life
-export const DERIVE_VERSION = 432;
+// 433: #1456 -- a damage replacement that reduces, caps, redirects, mills or counters is UNREAD, not a damage-multiplier: no kind, no synthesized damage trigger, no replacement ability (12 cards, 14 abilities; their actions go to unclaimed; Goblin Psychopath keeps its kindless attacks/blocks triggers); the burn demand and the 'changes/reduces the damage' reasons go with it. RETENTION COST: Undead Alchemist <-> Zombie attackers (854 reasons, combat damage becomes mill) and Soul-Scar Mage <-> your own noncombat sources (-1/-1 counters) are real relations lost with no other route until a damage-to-mill/counters reading exists. derive-impact vs 965393c8: 12 rows changed, 0 added/removed, 1 source flip (Equal Treatment model to grammar); pair reasons of the 12 cards +0 / -40,633 (combat-damage -21,436, non-combat-damage -19,193, doubles -4); role-ratchet 0/0; dropped-clauses 4,901 -> 4,917; hollow replacement abilities (replacement:true, empty kind) 0
+export const DERIVE_VERSION = 433;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2759,7 +2760,11 @@ export function deriveAbilities(
      *  does not record. Bound per CLAUSE because that is where the sentence sits: verified against
      *  all 16 corpus cards carrying one of the templates, and in every case `segment()` gives the
      *  replacement sentence a clause of its own, including Rankle and Torbran's fifth mode. */
-    const replacement = replacementOf(text);
+    // A DAMAGE REPLACEMENT THAT DOES NOT MULTIPLY IS UNREAD (#1456): no replacement, no synthesized damage trigger, no ability of its own -- else it stays a hollow
+    // `replacement: true` ability that the matcher hears every damage source with. Its actions go to `unclaimed` in the loop below.
+    const replacementRead = replacementOf(text);
+    const refusedDamageReplacement = replacementRead?.kind === "damage-multiplier" && !isDamageMultiplication(text);
+    const replacement = refusedDamageReplacement ? null : replacementRead;
     let trigger: Ability["trigger"];
     let grammarExtra: { verbs: Verb[]; subject: SubjectFilter }[] = [];
     let grammarRead = false;
@@ -3053,6 +3058,7 @@ export function deriveAbilities(
       if (INERT_VERBS.has(action.verb ?? "")) continue;
       if (misfiled.has(action) || refusedPlural.has(action)) { unclaimed.push(action); continue; }
       if (keywordActionOnStaticClause(kind, action.verb)) { unclaimed.push(action); continue; }
+      if (refusedDamageReplacement) { unclaimed.push(action); continue; }
       // See antecedentFor: a pronoun object inherits the thing named earlier in the same clause.
       // "Whenever a player casts a spell, if it's not their turn, this creature deals 4 damage to THEM"
       // (Scytheclaw Raptor, Adrenaline Jockey): the pronoun is the player who acted, not the spell the
@@ -3106,7 +3112,8 @@ export function deriveAbilities(
       // The n-th identical `cant` of a clause is the n-th printed "can't attack|block" (Aragorn, King of Gondor stores one object twice).
       const sameCant = action.verb === "cant" ? (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).filter((x) => x.verb === "cant" && x.object === action.object).length : 0;
       const read = replacement?.kind ?? actionEffectKind(action, text, sameCant);
-      const effectKind = read === "retarget" && stealsASpell ? null : read;
+      // A DAMAGE REPLACEMENT THAT DOES NOT MULTIPLY IS NO DAMAGE MULTIPLIER (#1456): a reduction, a fixed number, a redirect, a mill or counters leave the action unclaimed (see `damageChangeOf`).
+      const effectKind = read === "retarget" && stealsASpell ? null : read === "damage-multiplier" && !isDamageMultiplication(text) ? null : read;
       // THE MODEL FILES ONE PRINTED DENIAL TWICE (#1423): a stored `untap` beside a stored `cant | untap during ...` of the same clause (Glacial Grasp, Illithid Harvester) is that `cant`'s twin, one ability.
       if (action.verb === "untap" && effectKind === "untap-denial" && (clause.actions ?? []).some((x) => x.verb === "cant" && untapDenialFor("cant", x.object ?? "", text, 0))) continue;
       // A tap the clause states as an ARRIVAL state is not an event. See ARRIVES_TAPPED.
@@ -3887,7 +3894,7 @@ export function deriveAbilities(
     // to no kind, so the clause pushed nothing and the one thing the card asks of its deck --
     // artifacts -- went with it. Kept only when the count NAMES a class: a bare number gates nothing
     // the matcher can join, and a kindless ability with nothing on it is noise.
-    if ((trigger || thresholdSubject) && abilities.length === before) {
+    if ((trigger || thresholdSubject) && abilities.length === before && !(refusedDamageReplacement && !trigger)) {
       // A multiplier reaches here when its action was refused upstream — Tekuthal's `proliferate` on
       // a static clause, which `keywordActionOnStaticClause` drops precisely so it never becomes a
       // proliferate source. The KIND is known even though the action was refused, so the ability is

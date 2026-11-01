@@ -5,6 +5,7 @@ import { faceDeckCards } from "./faces.js";
 import { fixtureDeckCard } from "./fixture-cards.js";
 import { FREE_TAP, mkLine } from "./mana-test-support.js";
 import type { Reason } from "@edh-seer/engine";
+import { deriveAbilities } from "@edh-seer/tagger";
 import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 
@@ -311,6 +312,33 @@ test("a token replacement is worded by how it multiplies, never as a doubler by 
   expect(sentenceFor(undefined)).not.toContain("doubles");
 });
 
+// #1456: a refused damage replacement is UNREAD -- no hollow `replacement: true` ability, so no pair reason ("When Lightning Bolt deals damage, Divine Presence triggers") and no burn demand.
+test("a damage replacement that does not multiply forms no edge, reason or cares tag (#1456)", () => {
+  const derived = (name: string, abilityType: string, actions: { verb: string; object: string; amount?: string }[], text: string) => {
+    const { abilities } = deriveAbilities([{ id: 1, abilityType, actions }] as never, name, { 1: text });
+    return base(name, abilities as CardTags["abilities"]);
+  };
+  const bolt = base("Lightning Bolt", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target", player: true }, dealer: { control: "you", token: null } }],
+  } as never]);
+  const refused = [
+    derived("Divine Presence", "static", [{ verb: "deal-damage", object: "that permanent or player", amount: "3" }],
+      "If a source would deal 4 or more damage to a permanent or player, that source deals 3 damage to that permanent or player instead."),
+    derived("Soul-Scar Mage", "static", [{ verb: "add-counter", object: "-1/-1", amount: "that many" }],
+      "If a source you control would deal noncombat damage to a creature an opponent controls, put that many -1/-1 counters on that creature instead."),
+    derived("Undead Alchemist", "static", [{ verb: "mill", object: "that many cards" }],
+      "If a Zombie you control would deal combat damage to a player, instead that player mills that many cards."),
+  ];
+  for (const card of refused) {
+    expect(card.tags.abilities.filter((a) => a.replacement && !a.effect.kind), card.card.name).toEqual([]);
+    expect(card.tags.abilities.filter((a) => a.replacement), card.card.name).toEqual([]);
+    expect(pairReasons(bolt, card, H), card.card.name).toEqual([]);
+    expect(pairReasons(card, bolt, H), card.card.name).toEqual([]);
+    expect([...cardCaresTags(card.tags)].filter((t) => t.startsWith("non-combat-damage") || t.startsWith("combat-damage")), card.card.name).toEqual([]);
+  }
+});
+
 test("a damage replacement is worded by what it prints, never as a doubler by default (#1345)", () => {
   const sentenceFor = (effect: Record<string, unknown>, change?: { op: "plus" | "times"; value: number }) => {
     const doubler = base("Damage Doubler", [{
@@ -328,8 +356,6 @@ test("a damage replacement is worded by what it prints, never as a doubler by de
   expect(sentenceFor({ damageChange: "thrice" })).not.toContain("doubles");
   expect(sentenceFor({ damageChange: "plus" }, { op: "plus", value: 2 })).toContain("Damage Doubler adds 2 to the damage");
   expect(sentenceFor({ damageChange: "plus" })).toContain("Damage Doubler adds to the damage");
-  expect(sentenceFor({ damageChange: "reduced" })).toContain("Damage Doubler reduces the damage");
-  expect(sentenceFor({ damageChange: "other" })).toContain("Damage Doubler changes the damage");
   expect(sentenceFor({})).toContain("Damage Doubler changes the damage");
   expect(sentenceFor({})).not.toContain("doubles");
 });
