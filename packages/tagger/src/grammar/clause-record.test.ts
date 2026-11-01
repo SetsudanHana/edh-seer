@@ -1533,11 +1533,10 @@ test("'Then if there are three or more X counters on ~, remove those counters' r
   expect(lostClaims(pig.a.abilities, pig.b.abilities)).toEqual([]);
 });
 
-test("Rise from the Nether stops at 'Mindless-One', a creature type the filter vocabulary does not hold (reported, not added)", () => {
-  expect(grammarClauseRecords(RISE_FROM_THE_NETHER).blocker).toEqual({ clause: 1, kind: "action", phrase: "create a 3/1 black Mindless-One creature token for each noncreature, nonland card in your graveyard" });
-  // The count itself reads: the same sentence with a known type.
-  const known = { ...RISE_FROM_THE_NETHER, oracleText: RISE_FROM_THE_NETHER.oracleText.replace("Mindless-One", "Rat") };
-  expect(grammarClauseRecords(known).blocker).toBeUndefined();
+test("Rise from the Nether reads now that the generated subtype list holds 'Mindless-One' (MTGJSON CardTypes, gen-vocabulary); a type that list lacks still stops the sentence", () => {
+  expect(grammarClauseRecords(RISE_FROM_THE_NETHER).blocker).toBeUndefined();
+  const unknown = { ...RISE_FROM_THE_NETHER, oracleText: RISE_FROM_THE_NETHER.oracleText.replace("Mindless-One", "Zzyzx-One") };
+  expect(grammarClauseRecords(unknown).blocker).toEqual({ clause: 1, kind: "action", phrase: "create a 3/1 black Zzyzx-One creature token for each noncreature, nonland card in your graveyard" });
 });
 
 // #1349 part 2, task C2 follow-up: the kind-less counter replacement (replacement.ts), derived from real cards.
@@ -1674,4 +1673,23 @@ test("the 'spend mana as though it were mana of any color' rider stays visible a
     const tags = deriveCardTags(deriveInputOf(c as never, "x", c.name, g.records, undefined, g.readings));
     expect(JSON.stringify(tags.unclaimed ?? []), c.name).toMatch(rider);
   }
+});
+
+// #1349 part 3: "Choose target creature." is the store's `other` (Arcbond), a designation the next sentence refers back to.
+const THE_INNER_LIGHT = {"name":"The Inner Light","typeLine":"Enchantment — Saga","keywords":["Treasure"],"oracleText":"(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Return target green or white creature card from your graveyard to the battlefield.\nII — Choose target creature. Whenever it deals combat damage to a player this turn, you draw that many cards.\nIII — You gain life equal to the greatest power among creatures you control. Create a Treasure token."};
+const THOSE_OLD_SCIENTISTS = {"name":"Those Old Scientists","typeLine":"Enchantment — Saga","keywords":[],"oracleText":"(As this Saga enters and after your draw\nstep, add a lore counter. Sacrifice after III.)\nI — Draw two cards, then discard two cards.\nII — Return up to one target artifact, instant, or sorcery card from your graveyard to your hand.\nIII — Choose up to two target cards in graveyards. The owners of those cards shuffle them into their libraries."};
+const IN_THE_PALE_MOONLIGHT = {"name":"In the Pale Moonlight","typeLine":"Enchantment — Saga","keywords":["Investigate"],"oracleText":"(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Each opponent sacrifices a nontoken creature of their choice.\nII — Investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")\nIII — You may sacrifice an artifact or creature. If you do, create two 2/2 black Romulan creature tokens."};
+
+// "Choose target X." stays a BLOCKER (#1349 part 3): the sentence is the only place the target is stated, and the next sentence says "it" / "the chosen permanent". Read as an unclaimed `other`, Quag Feast lost its
+// targeted-removal scope (control opp, scope target) to a bare "permanent". Target carry-over is its own issue.
+const QUAG_FEAST = {"name":"Quag Feast","typeLine":"Sorcery","keywords":["Mill"],"oracleText":"Choose target creature, planeswalker, or Vehicle. Mill two cards, then destroy the chosen permanent if its mana value is less than or equal to the number of cards in your graveyard."};
+
+test("'Choose target X.' stays a blocker: Quag Feast, The Inner Light, Those Old Scientists", () => {
+  expect(grammarClauseRecords(QUAG_FEAST).blocker).toMatchObject({ clause: 1, kind: "action", phrase: "choose target creature, planeswalker, or Vehicle" });
+  expect(grammarClauseRecords(THE_INNER_LIGHT).blocker).toMatchObject({ kind: "action", phrase: "choose target creature" });
+  expect(grammarClauseRecords(THOSE_OLD_SCIENTISTS).blocker).toMatchObject({ kind: "action", phrase: "choose up to two target cards in graveyards" });
+});
+
+test("In the Pale Moonlight reads once 'Romulan' is a known creature type", () => {
+  expect(grammarClauseRecords(IN_THE_PALE_MOONLIGHT).blocker).toBeUndefined();
 });

@@ -18,12 +18,11 @@ test("exactly one multi-word subtype exists, so the join is bounded", () => {
   expect(Object.keys(SUBTYPE_TYPES).filter((s) => s.includes(" "))).toEqual(["time lord"]);
 });
 
-// MTGJSON lists "Missing" as a creature type, but no printed card has it and it is an English word (the generator keeps it out of the free-text sets).
+// MTGJSON listed "Missing" as a creature type until the 2026-11 regeneration (#1349 part 3) dropped it; no printed card ever had it and it is an English word (the generator keeps such words out of the free-text sets).
 test("'missing' is no free-text subtype: 'cards missing from your graveyard' names no creature type", async () => {
   const { CREATURE_SUBTYPES, SUBTYPES } = await import("./subtypes.js");
   const { parseSubject } = await import("./subject.js");
   expect(SUBTYPES.has("missing")).toBe(false);
   expect(CREATURE_SUBTYPES).not.toContain("missing");
-  expect(SUBTYPE_TYPES.missing).toEqual(["creature"]);
   expect(parseSubject("cards missing from your graveyard").subtype).toBeUndefined();
 });
