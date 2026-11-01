@@ -46,9 +46,11 @@
   "blood",
   "boar",
   "bobblehead",
+  "bolian",
   "book",
   "borg",
   "brainiac",
+  "brikar",
   "bringer",
   "brushwagg",
   "c'tan",
@@ -106,6 +108,7 @@
   "dryad",
   "dwarf",
   "echidna",
+  "edosian",
   "efreet",
   "egg",
   "el-aurian",
@@ -186,6 +189,7 @@
   "island",
   "jackal",
   "jellyfish",
+  "jem'hadar",
   "juggernaut",
   "junk",
   "kangaroo",
@@ -218,9 +222,11 @@
   "map",
   "masticore",
   "medusan",
+  "melkotian",
   "mercenary",
   "merfolk",
   "metathran",
+  "mindless-one",
   "mine",
   "minion",
   "minotaur",
@@ -251,6 +257,7 @@
   "noggle",
   "nomad",
   "nymph",
+  "ocampa",
   "octopus",
   "officer",
   "ogre",
@@ -302,6 +309,7 @@
   "robot",
   "rogue",
   "role",
+  "romulan",
   "room",
   "rukh",
   "rune",
@@ -365,7 +373,9 @@
   "swamp",
   "symbiote",
   "synth",
+  "talaxian",
   "talosian",
+  "tamarian",
   "teddy",
   "tellarite",
   "tentacle",
@@ -396,6 +406,7 @@
   "utrom",
   "vampire",
   "varmint",
+  "vau-n'akat",
   "vedalken",
   "vehicle",
   "vibranium",
@@ -465,8 +476,10 @@
   "bison",
   "blinkmoth",
   "boar",
+  "bolian",
   "borg",
   "brainiac",
+  "brikar",
   "bringer",
   "brushwagg",
   "c'tan",
@@ -515,6 +528,7 @@
   "dryad",
   "dwarf",
   "echidna",
+  "edosian",
   "efreet",
   "egg",
   "el-aurian",
@@ -585,6 +599,7 @@
   "insect",
   "jackal",
   "jellyfish",
+  "jem'hadar",
   "juggernaut",
   "kangaroo",
   "kavu",
@@ -612,9 +627,11 @@
   "manticore",
   "masticore",
   "medusan",
+  "melkotian",
   "mercenary",
   "merfolk",
   "metathran",
+  "mindless-one",
   "minion",
   "minotaur",
   "mite",
@@ -642,6 +659,7 @@
   "noggle",
   "nomad",
   "nymph",
+  "ocampa",
   "octopus",
   "officer",
   "ogre",
@@ -687,6 +705,7 @@
   "rigger",
   "robot",
   "rogue",
+  "romulan",
   "rukh",
   "sable",
   "salamander",
@@ -740,7 +759,9 @@
   "survivor",
   "symbiote",
   "synth",
+  "talaxian",
   "talosian",
+  "tamarian",
   "teddy",
   "tellarite",
   "tentacle",
@@ -766,6 +787,7 @@
   "utrom",
   "vampire",
   "varmint",
+  "vau-n'akat",
   "vedalken",
   "villain",
   "volver",
@@ -1184,6 +1206,9 @@
   "bolas": [
    "planeswalker"
   ],
+  "bolian": [
+   "creature"
+  ],
   "book": [
    "artifact"
   ],
@@ -1191,6 +1216,9 @@
    "creature"
   ],
   "brainiac": [
+   "creature"
+  ],
+  "brikar": [
    "creature"
   ],
   "bringer": [
@@ -1411,6 +1439,9 @@
    "planeswalker"
   ],
   "echidna": [
+   "creature"
+  ],
+  "edosian": [
    "creature"
   ],
   "efreet": [
@@ -1704,6 +1735,9 @@
   "jellyfish": [
    "creature"
   ],
+  "jem'hadar": [
+   "creature"
+  ],
   "jeska": [
    "planeswalker"
   ],
@@ -1840,6 +1874,9 @@
   "medusan": [
    "creature"
   ],
+  "melkotian": [
+   "creature"
+  ],
   "mercenary": [
    "creature"
   ],
@@ -1847,6 +1884,9 @@
    "creature"
   ],
   "metathran": [
+   "creature"
+  ],
+  "mindless-one": [
    "creature"
   ],
   "mine": [
@@ -1860,9 +1900,6 @@
   ],
   "minsc": [
    "planeswalker"
-  ],
-  "missing": [
-   "creature"
   ],
   "mite": [
    "creature"
@@ -1964,6 +2001,9 @@
    "creature"
   ],
   "nymph": [
+   "creature"
+  ],
+  "ocampa": [
    "creature"
   ],
   "octopus": [
@@ -2131,6 +2171,9 @@
   ],
   "role": [
    "enchantment"
+  ],
+  "romulan": [
+   "creature"
   ],
   "room": [
    "enchantment"
@@ -2351,7 +2394,13 @@
   "szat": [
    "planeswalker"
   ],
+  "talaxian": [
+   "creature"
+  ],
   "talosian": [
+   "creature"
+  ],
+  "tamarian": [
    "creature"
   ],
   "tamiyo": [
@@ -2476,6 +2525,9 @@
    "creature"
   ],
   "varmint": [
+   "creature"
+  ],
+  "vau-n'akat": [
    "creature"
   ],
   "vedalken": [
@@ -2605,7 +2657,6 @@
   "world"
  ],
  "keywordActions": [
-  "",
   "abandon",
   "activate",
   "adapt",
@@ -2773,6 +2824,7 @@
   "flash",
   "flashback",
   "flying",
+  "follow the 3rd rule",
   "for mirrodin!",
   "forecast",
   "forestcycling",
@@ -2923,6 +2975,7 @@
   "addendum",
   "alliance",
   "battalion",
+  "battlefront",
   "bloodrush",
   "celebration",
   "channel",
