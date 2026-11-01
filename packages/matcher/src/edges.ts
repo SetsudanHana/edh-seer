@@ -485,7 +485,9 @@ export function characteristicsSubject(tags: CardTags, name?: string): SubjectFi
     // A printed two-type line is both (#1385): an unmarked multi-type producer list reads as an OR in `subjectMatches`.
     ...(printedAllTypes(types) ? { allTypes: printedAllTypes(types)! } : {}),
     subtype: c.subtypes.length ? c.subtypes.map((t) => t.toLowerCase()) : undefined,
-    colors: c.colors.length ? c.colors : undefined,
+    // The PRINTED colours are known, and none is a fact: `[]` says "colourless" where `undefined` would say "unrecorded", which
+    // `subjectMatches` abstains on (#1360). Every colour reader there treats `[]` as it treated `undefined`.
+    colors: c.colors,
     control: "you",
     token: c.token,
     power: parseStat(c.power),
