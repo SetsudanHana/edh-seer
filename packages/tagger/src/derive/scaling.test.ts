@@ -167,3 +167,14 @@ test("life lost this turn is per-life-lost, keyed on whose loss", () => {
   expect(actionScaling(rakdos as never)).toBe("per-life-lost");
   expect(scalingSubject(rakdos as never)?.control).toBe("opp");
 });
+
+test("a list of negations counts every one of them: 'noncreature, nonland card' leaves land out (#1453)", () => {
+  // Xande, Dark Mage; Dragonfly Swarm. Cut at the comma the count read "noncreature" alone and the
+  // class kept land, so lands in the graveyard grew Xande.
+  for (const amount of ["for each noncreature, nonland card in your graveyard", "the number of noncreature, nonland cards in your graveyard"]) {
+    const subject = scalingSubject({ verb: "modify-pt", amount });
+    expect(subject).toMatchObject({ zone: "graveyard", control: "you", notType: ["creature", "land"] });
+    expect(subject?.type).not.toContain("land");
+    expect(actionScaling({ verb: "modify-pt", amount })).toBe("per-graveyard");
+  }
+});
