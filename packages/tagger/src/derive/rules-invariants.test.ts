@@ -127,7 +127,7 @@ const TESTED: Record<string, string> = {
   "120.1": "derive.test.ts — the receiving side of damage is its own verb `damaged`, never the dealing one",
   "603.7a": "delayed-trigger.test.ts — a delayed trigger's rate is its creator's: a chapter, a spell, an activation",
   "603.7b": "delayed-trigger.test.ts — \"when you next\" fires once per creation, so a chapter's or a spell's is once",
-  "119.5": "derive.test.ts — a life total set is neither damage nor life loss: The Golden Throne, Arbiter of Knollridge (#1266)",
+  "119.5": "derive.test.ts — a life total set is `life-total-set`, not damage or life loss (The Golden Throne, Arbiter of Knollridge); at an opponent or target player to a printed 10 or less it is the lose-life it amounts to (Sorin Markov, Vraska); a damage floor is no set (Ali from Cairo) (#1266, #1333)",
   "714.3": "grammar/clause-record.test.ts — a Saga's reminder line (lore counters, sacrifice after the last chapter) is the store's inert record: Year of Hell, The Eldest Reborn (#1349)",
   "721.2": "grammar/clause-record.test.ts — every line under a Station bar, to the next bar or the card's end, is gated at that bar's N; lines before the first bar are not: Entropic Battlecruiser, Seriema (#1349)",
   "721.2a": "grammar/clause-record.test.ts — a Station row's 'N+ |' bar is read past and its row GATED at N charge counters (threshold {atLeast: N}): D-7 Battle Cruiser, Wedgelight Rammer (#1349)",

@@ -102,10 +102,12 @@ test("an action with no event contributes nothing rather than a guess", () => {
   expect(actionEmits({ verb: "none", object: "" })).toEqual([]);
 });
 
-// "life total becomes N" only loses life if the current total is above N — direction depends on
-// state derivation cannot see (17 corpus cards set it upward, e.g. Captive Audience to 4; only
-// Sorin Markov sets an opponent's down). A guessed lose-life here wires the wrong direction.
-test("set-life emits nothing because the direction depends on the current life total", () => {
+// "life total becomes N" gains or loses what the difference needs (CR 119.5). Only a set aimed at an opponent or a target player to a PRINTED number of 10 or less is read as the loss it
+// amounts to (#1333, owner ruling 2026-11-01: Sorin Markov, Vraska); any other set emits nothing, because its direction depends on a life total derivation cannot see.
+test("a set at an opponent to 10 or less emits the lose-life it amounts to; any other set emits nothing", () => {
+  expect(actionEmits({ verb: "set-life", object: "target opponent", amount: "10" }, "Target opponent's life total becomes 10.")).toEqual([{ verb: "lose-life", subject: { control: "opp", token: null, scope: "target" } }]);
+  expect(actionEmits({ verb: "set-life", object: "target player", amount: "20" }, "Target player's life total becomes 20.")).toEqual([]);
+  expect(actionEmits({ verb: "set-life", object: "your life total", amount: "1" }, "Your life total becomes 1.")).toEqual([]);
   expect(actionEmits({ verb: "set-life", object: "target opponent" })).toEqual([]);
 });
 

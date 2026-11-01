@@ -6407,13 +6407,15 @@ describe("#1266 burn: who a damage or life loss hits", () => {
     expect(burn(kinds("deal-damage", "that source's controller", "If damage is prevented this way, Deflecting Palm deals that much damage to that source's controller.", "Deflecting Palm"))).toBe(true);
   });
 
-  it("a life total SET is neither damage nor life loss (The Golden Throne, Arbiter of Knollridge)", () => {
+  it("a life total SET is neither damage nor life loss: it is `life-total-set` (The Golden Throne, Arbiter of Knollridge; #1333)", () => {
     const throne = abil([{ id: 1, abilityType: "static", actions: [{ verb: "exile", object: "The Golden Throne" }, { verb: "set-life", object: "1" }] }], "The Golden Throne",
       { 1: "If you would lose the game, instead exile The Golden Throne and your life total becomes 1." });
     expect(throne.some((x) => ["player-life-loss", "damage", "drain"].includes(x.effect.kind))).toBe(false);
+    expect(throne.some((x) => x.effect.kind === "life-total-set")).toBe(true);
     const arbiter = abil([{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [{ verb: "set-life", object: "each player's life total", amount: "the highest life total among all players" }] }], "Arbiter of Knollridge",
       { 1: "When this creature enters, each player's life total becomes the highest life total among all players." });
     expect(arbiter.some((x) => ["player-life-loss", "damage", "drain"].includes(x.effect.kind))).toBe(false);
+    expect(arbiter.some((x) => x.effect.kind === "life-total-set")).toBe(true);
   });
 });
 
@@ -7650,5 +7652,76 @@ describe("activation hosers derive ability-loss on their class (#1424)", () => {
       { id: 2, abilityType: "static", actions: [{ verb: "cant", object: "activated abilities of sources with the chosen name can't be activated unless they're mana abilities" }] },
     ];
     expect(who(derive("Pithing Needle", "Artifact", "As this artifact enters, choose a card name.\nActivated abilities of sources with the chosen name can't be activated unless they're mana abilities.", needle))).toEqual([{ control: "any", type: undefined }]);
+  });
+});
+
+// #1333 (owner ruling 2026-11-01; CR 119.5: "If an effect sets a player's life total to a specific number, the player gains or loses the necessary amount of life to end up with the new total"):
+// a set at an opponent or a target player to a PRINTED number of 10 or less is a life LOSS; every other genuine set is `life-total-set`; a damage floor and "lose all but 1" are not sets.
+describe("#1333 a life-total set (CR 119.5)", () => {
+  const run = (clauses: Parameters<typeof deriveAbilities>[0], name: string, texts: Record<number, string>) => deriveAbilities(clauses, name, texts);
+  const set = (object: string, amount: string | null, text: string, name: string, abilityType: "static" | "triggered" | "activated" | "spell" = "spell") =>
+    run([{ id: 1, abilityType, ...(abilityType === "triggered" ? { trigger: { event: "enters", subject: "this creature", control: "you" } } : {}), actions: [{ verb: "set-life", object, amount }] }] as never, name, { 1: text });
+  const lose = (a: ReturnType<typeof run>) => a.abilities.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "lose-life");
+
+  it("Sorin Markov: 'Target opponent's life total becomes 10' is a life loss the opponent suffers", () => {
+    const r = set("target opponent", "10", "Target opponent's life total becomes 10.", "Sorin Markov", "activated");
+    expect(r.abilities.map((x) => x.effect.kind)).toEqual(["player-life-loss"]);
+    expect(lose(r).map((e) => e.subject.control)).toEqual(["opp"]);
+    expect(r.unclaimed).toEqual([]);
+  });
+  it("Vraska, Relic Seeker: 'Target player's life total becomes 1' (the stored object keeps 'life total') reads like 'Target player loses 1 life'", () => {
+    const r = set("target player's life total", "1", "Target player's life total becomes 1.", "Vraska, Relic Seeker", "activated");
+    const printed = run([{ id: 1, abilityType: "activated", actions: [{ verb: "lose-life", object: "target player", amount: "1" }] }] as never, "Vraska, Relic Seeker", { 1: "Target player loses 1 life." });
+    expect(r.abilities[0]!.effect.kind).toBe("player-life-loss");
+    expect(lose(r)).toEqual(lose(printed));
+    expect(r.abilities[0]!.effect.subject).toEqual(printed.abilities[0]!.effect.subject);
+  });
+  it("Magister Sphinx and Master of Cruelties (the player it attacked) are losses too", () => {
+    expect(lose(set("target player", "10", "When this creature enters, target player's life total becomes 10.", "Magister Sphinx", "triggered"))).toHaveLength(1);
+    const m = run([{ id: 3, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" }, actions: [{ verb: "set-life", object: "defending player's life total", amount: "1" }] }] as never, "Master of Cruelties",
+      { 3: "Whenever this creature attacks a player and isn't blocked, that player's life total becomes 1. This creature assigns no combat damage this combat." });
+    expect(m.abilities[0]!.effect.kind).toBe("player-life-loss");
+    expect(lose(m).map((e) => e.subject.control)).toEqual(["opp"]);
+  });
+  it("Blessed Wind (20 is not 10 or less) and Torgaar (no printed number) are sets, with no emit", () => {
+    const wind = set("target player", "20", "Target player's life total becomes 20.", "Blessed Wind");
+    expect(wind.abilities.map((x) => x.effect.kind)).toEqual(["life-total-set"]);
+    expect(wind.abilities.flatMap((x) => x.emits ?? [])).toEqual([]);
+    expect(wind.unclaimed).toEqual([]);
+    const torgaar = set("up to one target player", "half their starting life total, rounded down", "When Torgaar enters, up to one target player's life total becomes half their starting life total, rounded down.", "Torgaar, Famine Incarnate", "triggered");
+    expect(torgaar.abilities.map((x) => x.effect.kind)).toEqual(["life-total-set"]);
+    expect(lose(torgaar)).toEqual([]);
+  });
+  it("Worldfire, Providence, Golden Throne: every other genuine set is life-total-set, `effect.subject` says whose, nothing is emitted", () => {
+    const world = set("each player", "1", "Exile all permanents. Exile all cards from all hands and graveyards. Each player's life total becomes 1.", "Worldfire");
+    expect(world.abilities.map((x) => x.effect.kind)).toEqual(["life-total-set"]);
+    expect(world.abilities[0]!.effect.subject?.control).toBe("any");
+    const prov = set("your life total", "26", "Your life total becomes 26.", "Providence", "static");
+    expect(prov.abilities.map((x) => x.effect.kind)).toEqual(["life-total-set"]);
+    expect(prov.abilities[0]!.effect.subject?.control).toBe("you");
+    const throne = set("1", null, "If you would lose the game, instead exile The Golden Throne and your life total becomes 1.", "The Golden Throne", "static");
+    expect(throne.abilities.map((x) => x.effect.kind)).toEqual(["life-total-set"]);
+    expect(throne.abilities.flatMap((x) => x.emits ?? [])).toEqual([]);
+    const wurm = set("7", null, "When this creature enters, if your life total is less than 7, your life total becomes 7.", "Elderscale Wurm", "triggered");
+    expect(wurm.abilities.map((x) => x.effect.kind)).toEqual(["life-total-set"]);
+    const angel = set("your life total", "3", "If your life total would be reduced to 0 or less, instead transform this creature and your life total becomes 3. Then if this creature didn't transform this way, you lose the game.", "Enduring Angel // Angelic Enforcer", "static");
+    expect(angel.abilities.map((x) => x.effect.kind)).toEqual(["life-total-set"]);
+  });
+  it("a damage floor is not a set: Ali from Cairo, Angel's Grace, Elderscale Wurm's static stay unclaimed", () => {
+    for (const [obj, amount, text, name] of [
+      ["your life total", "1", "Damage that would reduce your life total to less than 1 reduces it to 1 instead.", "Ali from Cairo"],
+      ["your life total to 1", null, "You can't lose the game this turn and your opponents can't win the game this turn. Until end of turn, damage that would reduce your life total to less than 1 reduces it to 1 instead.", "Angel's Grace"],
+      ["7", null, "As long as you have 7 or more life, damage that would reduce your life total to less than 7 reduces it to 7 instead.", "Elderscale Wurm"],
+    ] as const) {
+      const r = set(obj, amount, text, name, "static");
+      expect(r.abilities.map((x) => x.effect.kind), name).not.toContain("life-total-set");
+      expect(r.unclaimed.map((a) => a.verb), name).toEqual(["set-life"]);
+    }
+  });
+  it("Soulgorger Orgg: 'you lose all but 1 life' is the life loss it prints, not a set", () => {
+    const r = set("1", null, "When this creature enters, you lose all but 1 life.", "Soulgorger Orgg", "triggered");
+    expect(r.abilities.map((x) => x.effect.kind)).not.toContain("life-total-set");
+    expect(lose(r).map((e) => e.subject.control)).toEqual(["you"]);
+    expect(r.unclaimed).toEqual([]);
   });
 });

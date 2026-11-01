@@ -127,6 +127,8 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     "trigger-suppression": 0.2,
     // UNTAP-DENIAL (#1423): the same reasoning -- a fact about a permanent that stays tapped, blank before its kind.
     "untap-denial": 0.2,
+    // LIFE-TOTAL-SET (#1333): the same reasoning -- a fact about a life total being set, no direction, blank before its kind.
+    "life-total-set": 0.2,
     // TO-HAND (#1302, CR 121.5): the same reasoning -- a fact about cards put from your library into your hand, blank before its kind.
     "to-hand": 0.2,
     // A PROCESSOR (AF7b, 2026-09-16): spending an opponent's exiled card is a rider on a body --

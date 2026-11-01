@@ -5,6 +5,7 @@
  *  an emit is returned in `unclaimed` instead of vanishing -- a dropped clause that produces
  *  silence is indistinguishable from a card that does nothing, which is exactly how Bitterblossom
  *  sat in the corpus as a vanilla bear. */
+import { lifeSetRewrite } from "./life-set.js";
 import { GUARDED_VERBS, guardExempt, verbPrint } from "./verb-words.js";
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb, EventCount } from "../schema.js";
@@ -597,7 +598,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 429: #1355 -- a printed 'spend mana as though it were mana of any color' / 'mana of any type can be spent' rider after a cast or play is read as the store's unclaimed other, not stripped silently
 // 430: #1349 part 3 -- regenerated creature-subtype vocabulary from MTGJSON (11 types: Romulan, Mindless-One, Jem'Hadar, Vau-N'akat and 7 more, none yet in CR 205.3m; the placeholder 'missing' goes): Rise from the Nether and In the Pale Moonlight read; changeling cards list the new types. derive-impact vs 2df5d340: 67 rows changed (every changeling gains all 11 types, 0 pair reasons from that alone), 2 added (Rise from the Nether, In the Pale Moonlight), 0 source flips; pair reasons +8,563 / -0, all on the two new cards (Pale Moonlight +7,475, Rise +1,061, +27 more where the partner is a changeling); role-ratchet 0/0; dropped-clauses 4,933 -> 4,933 (new 0, fixed 0). 'Choose target X.' stays a blocker (#1452)
 // 431: #1345 -- a damage multiplier records how it changes the damage (Effect.damageChange: twice, thrice, plus, reduced, other), read off the clause: Fiery Emancipation triples, Torbran adds 2, Benevolent Unicorn reduces; the reason sentence says so instead of 'doubles the damage'. derive-impact vs 3a45859b: 75 rows changed (the new field only), 0 added/removed, 0 source flips; pair reasons +0 / -0; role-ratchet 0/0; dropped-clauses 4,933 -> 4,933 (new 0, fixed 0). Round 2: the static pass and the row phrase read the same variant (Doran, Absorbing Man and Titania)
-export const DERIVE_VERSION = 431;
+// 432: #1333 -- a life-total set: opponent/target player to a printed 10 or less is player-life-loss + lose-life; other genuine sets are the new fact kind life-total-set (CR 119.5); damage floors stay unclaimed; 'lose all but 1 life' emits lose-life
+export const DERIVE_VERSION = 432;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2080,6 +2082,10 @@ function splitDoesTheSame(clause: ClauseRecord, text: string | undefined): Claus
  *  it read the stored one. CEILING: a phrase the store left out (the "reveal it" of a tutor) is not
  *  ADDED: an inserted action becomes the antecedent of the "it" after it, and the references
  *  resolver (#900) reads the revealed card's class off the text, not off an action. */
+function withLifeSetReadings(clause: ClauseRecord, text: string | undefined): ClauseRecord {
+  if (!clause.actions?.some((a) => a.verb === "set-life")) return clause;
+  return { ...clause, actions: clause.actions.map((a) => (a.verb === "set-life" ? lifeSetRewrite(a, text ?? "") ?? a : a)) };
+}
 function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost: string | undefined, cardName: string | undefined, precomputed?: ActionReading[]): ClauseRecord {
   if (!text || !clause.actions?.length) return clause;
   // PRECOMPUTED READINGS (G-T3): `grammarClauseRecords` already ran `parseActions` on this exact
@@ -2593,6 +2599,8 @@ export function deriveAbilities(
     clause = twinSource
       ? withGrammarActions(clause, clauseTexts![twinSource.id], clauseCosts?.[twinSource.id], cardName, readings![twinSource.id]?.actions)
       : withGrammarActions(clause, rehomed ?? clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName, readings?.[clause.id]?.actions);
+    // A LIFE TOTAL SET READS OFF ITS PRINTED CLAUSE (#1333, CR 119.5): a loss at an opponent / target player (Sorin Markov), "lose all but 1 life" (Soulgorger Orgg) and a genuine set's own recipient.
+    clause = withLifeSetReadings(clause, rehomed ?? clauseTexts?.[clause.id]);
     if (collapseSearches) clause = collapseZoneSearches(clause);
     clause = splitDoesTheSame(clause, clauseTexts?.[clause.id]);
     // WHICH FACE PRINTS THIS CLAUSE. Stamped onto every ability the clause derives below, so the
@@ -3567,6 +3575,8 @@ export function deriveAbilities(
           || effectKind === "targeting-ban"
           || effectKind === "trigger-suppression"
           || effectKind === "untap-denial"
+          // ...and so is whose life total a `life-total-set` sets (#1333; a fact kind, no pair channel reads it).
+          || effectKind === "life-total-set"
           || (effectKind === "graveyard-recursion" && subject.zone === "graveyard")
           // A STATIC GRAVEYARD-HATE REPLACEMENT (Leyline of the Void, Rest in Peace, #1266) keeps whose graveyard it hits; the `zone: graveyard` matches no printed card, like the recursion above.
           || (effectKind === "graveyard-hate" && subject.zone === "graveyard" && graveyardReplacement(text)?.kind === "hate"))

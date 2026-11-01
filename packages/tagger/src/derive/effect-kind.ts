@@ -5,6 +5,7 @@
  *  vocabulary is payoff-centric and has NO removal kind, so `destroy` legitimately maps to nothing
  *  and reaches the graph through its `dies` emit instead. A near-miss kind is worse than null: it is
  *  consumed as if it were true. */
+import { readLifeSet } from "./life-set.js";
 import type { Action } from "../canonicalize.js";
 import type { EffectKind } from "../schema.js";
 import { parseSubject, spellMove } from "./subject.js";
@@ -823,8 +824,9 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
   }
   // A LIFE TOTAL SET IS NEITHER DAMAGE NOR LIFE LOSS (#1266, burn; "your life total becomes 1", "each player's life total becomes the highest"):
   // the clause stores the number as the object, which read as a player-life-loss with no recipient. CR 119.5 makes the change a gain or a loss
-  // as the total demands, so no one direction is claimed.
-  if (verb === "set-life") return null;
+  // as the total demands, so no one direction is claimed: `life-total-set` (#1333, owner ruling 2026-11-01). A set at an opponent or a target player to a printed number of 10 or less
+  // is rewritten to the `lose-life` it amounts to before this is asked (`lifeSetRewrite`), and a damage floor ("reduces it to 1 instead": Ali from Cairo) is no set, so stays null.
+  if (verb === "set-life") return readLifeSet(action, clauseText).read === "set" ? "life-total-set" : null;
   // ENERGY IS NOT MANA, AND THE NORMALIZER CALLS IT MANA. "Whenever a creature you control enters,
   // you get {E} (an energy counter)" arrives from the clause layer as `{verb: "add-mana", object:
   // "E"}`, and `SIMPLE` below turned that into `mana-generation` -- so Decoction Module's page read

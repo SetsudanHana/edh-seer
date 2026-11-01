@@ -24,7 +24,7 @@ export const NOT_AN_EVENT: Record<string, string> = {
   emblem: "getting an emblem (114) has no printed trigger head; the emblem's own abilities are their own clauses",
   "trigger-again": "603.2d: makes ANOTHER ability trigger again; not an event of its own (`trigger-doubling` is the kind)",
   "add-mana": "the event is the permanent being tapped for it (106.12a, `tapped-for-mana`); 'whenever you add mana' is printed by 0 cards",
-  "set-life": "119.5: the change it causes is a gain or a loss; no card triggers on a life total being SET",
+  "set-life": "119.5: the change it causes is a gain or a loss; no card triggers on a life total being SET (an opponent-side set to a printed 10 or less emits the `lose-life` it amounts to, #1333; the kind is `life-total-set`)",
   "win-game": "104.2 ends the game; nothing can trigger after it. 0 corpus heads",
   "extra-turn": "500.7: the extra turn's own steps are the events (`untap-step`, `upkeep`)",
   "extra-combat": "500.8: `begin-combat` is the event of any combat phase, extra or not",

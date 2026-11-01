@@ -1,6 +1,7 @@
 /** What other cards can trigger on. Distinct from effect.kind, which asks whether this action is a
  *  payoff — many actions answer only this question. `destroy` has no payoff kind in the engine's
  *  vocabulary, but without its `dies` emit no aristocrats edge ever forms. */
+import { lifeSetRewrite } from "./life-set.js";
 import type { Action } from "../canonicalize.js";
 import type { GameEvent, SubjectFilter, Verb } from "../schema.js";
 import { controlFromRelation, counterKindOf, parseCounter, parseSubject, spellMove, stripTokenAbility, COUNT_PHRASE } from "./subject.js";
@@ -724,6 +725,9 @@ export function printsControlChange(clauseText: string): boolean {
 }
 
 export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean; trigger?: CounterTrigger } = {}): GameEvent[] {
+  // A LIFE TOTAL SET THAT IS A LOSS (#1333, CR 119.5): "target opponent's life total becomes 10" is the `lose-life` a printed "target opponent loses N life" is; a plain set emits nothing.
+  const lifeLoss = action.verb === "set-life" ? lifeSetRewrite(action, clauseText ?? "") : undefined;
+  if (lifeLoss?.verb === "lose-life") return actionEmits(lifeLoss, clauseText, opts);
   // A `gain-control` THE PRINTED CLAUSE DOES NOT STATE IS NOT A CONTROL CHANGE (#1318): see `printsControlChange`. Dropped, so the action goes to `unclaimed`.
   if (action.verb === "gain-control" && clauseText !== undefined && clauseText !== "" && !printsControlChange(clauseText)) return [];
   const casualty = action.verb === "grant-ability" ? CASUALTY.exec(action.object ?? "") : null;
