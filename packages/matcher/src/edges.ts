@@ -485,7 +485,9 @@ export function characteristicsSubject(tags: CardTags, name?: string): SubjectFi
     // A printed two-type line is both (#1385): an unmarked multi-type producer list reads as an OR in `subjectMatches`.
     ...(printedAllTypes(types) ? { allTypes: printedAllTypes(types)! } : {}),
     subtype: c.subtypes.length ? c.subtypes.map((t) => t.toLowerCase()) : undefined,
-    colors: c.colors.length ? c.colors : undefined,
+    // The PRINTED colours are known, and none is a fact: `[]` says "colourless" where `undefined` would say "unrecorded", which
+    // `subjectMatches` abstains on (#1360). Every colour reader there treats `[]` as it treated `undefined`.
+    colors: c.colors,
     control: "you",
     token: c.token,
     power: parseStat(c.power),
@@ -612,7 +614,7 @@ export function producerEventOrigins(tags: CardTags): Map<string, number> {
  *  narrow which creature satisfies it, rather than accepting any of them? A bare subject, or one
  *  whose only type is `creature` (every attacker is one, so that narrows nothing), does not
  *  narrow. Anything else -- a subtype, a stats predicate ("power 4 or greater"), a counter, a
- *  chosenType, or a colors filter, or a token filter that isn't wildcarded -- is a real typal or
+ *  chosenType or chosenColor, or a colors filter, or a token filter that isn't wildcarded -- is a real typal or
  *  statistical condition and narrows. */
 function combatConsumerNarrows(subject: SubjectFilter): boolean {
   return combatNarrowsByType(subject) || combatNarrowsOffType(subject);
@@ -713,7 +715,7 @@ export function combatNarrowsByType(subject: SubjectFilter): boolean {
 }
 
 /** Does it narrow via a dimension OUTSIDE the type line -- a stats predicate ("power 4 or greater"),
- *  a counter, a chosenType, a colors filter, or a token filter? These are invisible to a
+ *  a counter, a chosenType, a chosenColor, a colors filter, or a token filter? These are invisible to a
  *  type/subtype key, so two shapes can share a key and disagree about being self-supplied.
  *
  *  `token` narrows only when it demands a TOKEN. `token: false` means "nontoken", which nearly every
@@ -730,7 +732,7 @@ function combatNarrowsOffType(subject: SubjectFilter): boolean {
   // generic combat, was judged self-supplied, and formed no edge at all — even to the commander.
   if (subject.commander === true) return true;
   if (subject.counter) return true;
-  if (subject.chosenType) return true;
+  if (subject.chosenType || subject.chosenColor) return true;
   if ((subject.colors?.length ?? 0) > 0) return true;
   return subject.token === true;
 }
@@ -1040,7 +1042,7 @@ function castConsumerNarrows(subject: SubjectFilter): boolean {
     return anyOf.every((b) => castConsumerNarrows({ ...shared, ...b }));
   }
   if (subject.subtype !== undefined || subject.colors !== undefined) return true;
-  if (subject.stats !== undefined || subject.chosenType === true) return true;
+  if (subject.stats !== undefined || subject.chosenType === true || subject.chosenColor === true) return true;
   if (subject.historic === true) return true;
   // "Whenever you cast a LEGENDARY spell" (Rona, Herald of Invasion, #713) names which spell as
   // surely as "historic" does; read as the bare umbrella, no legend in the deck could untap Rona.
@@ -1584,7 +1586,7 @@ function copySubject(
   // trigger (Ochre Jelly copying itself) keeps the old path.
   const copiesThatCreature = /copy of that creature\b/i.test(oracle)
     ? abilities.find((a) => a.effect.kind === "token-generation" && a.trigger !== undefined
-      && a.trigger.subject.self !== true && a.trigger.subject.chosenType !== true && a.trigger.subject.control !== "opp"
+      && a.trigger.subject.self !== true && a.trigger.subject.chosenType !== true && a.trigger.subject.chosenColor !== true && a.trigger.subject.control !== "opp"
       && (a.trigger.subject.type !== undefined || a.trigger.subject.subtype !== undefined))?.trigger?.subject
     : undefined;
   const raw: Partial<SubjectFilter> | undefined = copiesThatCreature
@@ -3141,7 +3143,7 @@ function triggerDoublingEdges({ p, c, h, reasons }: PairScope): void {
       // before this runs in the product; in pair isolation (the compass, the probe) it is still
       // `chosenType: true`, which `subjectMatches` does not read -- so Roaming Throne would have
       // doubled every creature with a trigger. Unresolved is a refusal, not a wildcard.
-      if (a.doublesOf.chosenType === true) continue;
+      if (a.doublesOf.chosenType === true || a.doublesOf.chosenColor === true) continue;
       const member = subjectMatches(characteristicsSubject(c.tags, c.card.name), a.doublesOf, h);
       // Any trigger of the member counts, whoever's object it watches -- the same reading as below.
       const hasTrigger = c.tags.abilities.some((ca) => (ca.trigger?.verbs.length ?? 0) > 0);

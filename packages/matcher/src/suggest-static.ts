@@ -26,7 +26,7 @@ import { commanderSubtypes, markCommander, resolveSharedTypes } from "./commande
 import { axisWeightOf, maxAxisWeight } from "./axis.js";
 import { loadHierarchy } from "./hierarchy.js";
 import { BUILD_CATEGORIES, BUILD_PARENTS } from "./build.js";
-import { POOL_CLASSES } from "./answer-pool.js";
+import { POOL_CLASSES, commanderIdentity } from "./answer-pool.js";
 import {
   answerList, byConnection, byHint, byPlan, candidatePool, gapList, pairReplacements, stapleList,
   type Candidate, type CutSide, type DeckSide, type GroupState, type IndexCard,
@@ -414,9 +414,10 @@ export async function suggestForDeck(input: {
   const commanderNames = new Set(report.cards.filter((c) => c.isCommander).map((c) => c.cardName ?? c.name));
   // And a shared type resolves to the commanders' types, as the report resolves it (#559).
   const sharedWith = commanderSubtypes(rawDeck.filter((d) => commanderNames.has(d.card.name)).map((d) => d.tags));
+  const chosenIdentity = commanderIdentity(rawDeck, commanderNames);
   const resolve = (d: DeckCard | null): DeckCard | null => {
     if (!d?.tags) return d;
-    const tags = resolveSharedTypes(resolveChosenTypes(d.tags, counts, hierarchy), sharedWith);
+    const tags = resolveSharedTypes(resolveChosenTypes(d.tags, counts, hierarchy, chosenIdentity), sharedWith);
     return { ...d, tags: commanderNames.has(d.card.name) ? markCommander(tags) : tags };
   };
   const dc = async (name: string) => resolve(await raw(name));

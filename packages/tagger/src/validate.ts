@@ -163,6 +163,7 @@ function validateSubject(s: unknown, i: number): SubjectFilter {
   if (subtype !== undefined) out.subtype = subtype;
   if (Array.isArray(o.colors)) out.colors = o.colors.filter((c): c is string => typeof c === "string");
   if (o.chosenType === true) out.chosenType = true;
+  if (o.chosenColor === true) out.chosenColor = true;
   if (typeof o.counter === "string") out.counter = o.counter;
   if (typeof o.zone === "string") out.zone = o.zone;
   if (Array.isArray(o.stats)) {

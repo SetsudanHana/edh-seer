@@ -77,7 +77,7 @@ export function doublesOf(text: string): SubjectFilter | undefined {
   const m = text.match(WHOSE_FRAME);
   if (!m) return undefined;
   const { other: _other, ...s } = parseSubject(m[1]!);
-  const bounded = s.subtype !== undefined || s.legendary === true || s.chosenType === true
+  const bounded = s.subtype !== undefined || s.legendary === true || s.chosenType === true || s.chosenColor === true
     || (s.stats?.length ?? 0) > 0 || (s.colors?.length ?? 0) > 0 || s.commander === true;
   return bounded ? s : undefined;
 }

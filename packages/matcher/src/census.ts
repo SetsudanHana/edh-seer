@@ -36,7 +36,7 @@ const censusKey = (e: GameEvent): string => zoneEventKeyRaw(e.verb, e.subject.zo
  *  carry.
  *
  *  `censusSubjectKey` encodes only type and subtype, but `combatSelfSupplied` also reads `stats`,
- *  `counter`, `chosenType`, `colors` and `token`. So two shapes could share a key while disagreeing
+ *  `counter`, `chosenType`, `chosenColor`, `colors` and `token`. So two shapes could share a key while disagreeing
  *  on the very property the tables partition on -- and `rollUp` AND-merges `selfSupplied`, so one
  *  narrowed shape flipped the whole row. On the live corpus that emptied the SELF-SUPPLIED table
  *  outright: all four non-narrowing combat keys had at least one narrowed shape hiding in them, so

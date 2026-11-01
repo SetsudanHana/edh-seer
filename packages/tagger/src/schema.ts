@@ -181,6 +181,8 @@ export interface SubjectFilter {
   token: boolean | null;
   /** Marks "the chosen type" (Kindred Discovery); resolved deck-aware in Stage 2. */
   chosenType?: boolean;
+  /** Marks "of the chosen color" / "of that color" / "of a color of your choice" (Heraldic Banner, Prism Ring, Crossroads Village): the subject is narrowed by a colour the player chose, which is a fact of the game and not of the deck (#1360). It is NOT `chosenType`: the matcher resolves `chosenType` to a deck SUBTYPE, and a colour is not one. Counted as a narrowing wherever `chosenType` is, resolved by nothing: the unresolved subject claims no more than its class. "of the chosen color and type" (a token) is `chosenType`. */
+  chosenColor?: boolean;
   /** "A spell that SHARES A CREATURE TYPE WITH this creature" (issue #559). `self`: the card's own
    *  creature types, pinned to `subtype` by `deriveCardTags` and never stored. `commander`: the
    *  ability is granted to commander creatures (Folk Hero), so the class is the COMMANDER'S types --

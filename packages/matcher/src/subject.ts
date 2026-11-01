@@ -189,6 +189,9 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
     const ok = { multi: n >= 2, mono: n === 1, all: n === 5, "exactly-two": n === 2, colored: n >= 1 }[consumer.colorCount];
     if (producer.colors === undefined || !ok) return false;
   }
+  // A CHOSEN COLOUR no deck has resolved (#1360) is still one of the five colours: a colourless producer is never in it. An
+  // unrecorded producer abstains, as the colour filters above do.
+  if (consumer.chosenColor === true && producer.colors !== undefined && producer.colors.filter((c) => c !== "C").length === 0) return false;
   if (consumer.allColors?.length && !consumer.allColors.every((x) => producer.colors?.includes(x))) return false;
   // type: expand both sides' type tokens (concrete, pseudo, or subtype-implied) to concrete
   // card-type sets and require they intersect. Reduces to exact/subtype-implied matching for

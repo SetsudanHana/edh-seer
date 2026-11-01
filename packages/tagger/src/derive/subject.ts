@@ -506,6 +506,9 @@ function parseColors(t: string): string[] | undefined {
  *  every spell — Chronicle of Victory "triggered" on Stroke of Midnight, Fellwar Stone and Banner of
  *  Kinship, none of which has a creature type at all. */
 const CHOSEN = /\bof the chosen\b|\bthe chosen (?:type|color|colour)\b/i;
+/** ...and the COLOUR case (#1360): a chosen colour is `chosenColor`, never `chosenType` (which the matcher resolves to a subtype). "color and type" is both words and stays a type. */
+const CHOSEN_COLOR = /\bof the chosen colou?r\b|\bthe chosen colou?r\b/i;
+const CHOSEN_COLOR_AND_TYPE = /\bchosen colou?r and (?:creature )?type\b/i;
 
 /** The ORIGIN zone the text names: "casts a spell from a graveyard" (River Kelpie), "casts a
  *  legendary spell from your hand" (Jodah), "a Dragon creature spell from your graveyard" (Rivaz).
@@ -845,7 +848,8 @@ export function parseSubject(text: string): SubjectFilter {
     if (ownership.owner) out.owner = ownership.owner;
     if (ownership.control && out.control === "any") out.control = ownership.control;
   }
-  if (CHOSEN.test(t)) out.chosenType = true;
+  if (CHOSEN_COLOR.test(t) && !CHOSEN_COLOR_AND_TYPE.test(t)) out.chosenColor = true;
+  else if (CHOSEN.test(t)) out.chosenType = true;
   const counter = parseCounter(t);
   if (counter) out.counter = counter;
   if (HISTORIC.test(t) && !NOT_HISTORIC.test(t)) out.historic = true;

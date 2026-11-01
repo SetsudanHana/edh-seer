@@ -232,6 +232,8 @@ interface Reading {
   prepared: boolean;
   commander: boolean;
   chosenType: boolean;
+  /** A chosen COLOUR (#1360), never `chosenType`: the matcher resolves that to a subtype. */
+  chosenColor: boolean;
   restricted: boolean;
   named?: string;
   fromZone?: string;
@@ -244,7 +246,7 @@ const reading = (): Reading => ({
   token: null, groups: [{ types: [], subtypes: [], adj: [] }], plural: false, target: false, each: false,
   all: false, other: false, otherWord: false, notTypes: [], notSubtypes: [], colors: new Set(), colorAfterHead: false, stats: [], ability: false, abilityKinds: [],
   keywords: [], notKeywords: [], notColors: [], restarted: false, status: [], notStatus: [], history: [], determined: false, historic: false, outlaw: false,
-  modified: false, prepared: false, commander: false, chosenType: false, restricted: false,
+  modified: false, prepared: false, commander: false, chosenType: false, chosenColor: false, restricted: false,
   tokenHead: false,
 });
 
@@ -1793,12 +1795,14 @@ function post(c: Cursor, r: Reading): boolean | null {
   if (c.eat("of", "each", "color")) { if (!r.colorCount) r.colorCount = "colored"; return true; }
   if (c.eat("of", "each", "card", "type")) return true;
   // "of a chosen color", "of the color of your choice": the chosen-quality filter `chosenType` holds.
-  if (c.eat("of", "a", "chosen", "color") || c.eat("of", "a", "chosen", "type") || c.eat("of", "the", "color", "of", "your", "choice")) { r.chosenType = true; return true; }
+  if (c.eat("of", "a", "chosen", "color") || c.eat("of", "the", "color", "of", "your", "choice")) { r.chosenColor = true; return true; }
+  if (c.eat("of", "a", "chosen", "type")) { r.chosenType = true; return true; }
   // "of the creature type of your choice" is the chosen type, chosen as it resolves.
   if (c.eat("of", "the", "creature", "type", "of", "your", "choice")) { r.chosenType = true; return true; }
   if (c.eat("of", "the", "chosen")) {
     if (c.eat("color", "and", "type")) { r.chosenType = true; return true; }
-    if (c.eat("type") || c.eat("color") || c.eat("colour") || c.eat("creature", "type")) { r.chosenType = true; return true; }
+    if (c.eat("type") || c.eat("creature", "type")) { r.chosenType = true; return true; }
+    if (c.eat("color") || c.eat("colour")) { r.chosenColor = true; return true; }
     return null;
   }
   // "a creature other than this creature": the same fact as "another" (`other`).
@@ -1990,7 +1994,7 @@ function post(c: Cursor, r: Reading): boolean | null {
       if (!x.groups.some((g) => g.types.length || g.subtypes.length) && x.token !== true) return null;
       Object.assign(r, {
         groups: x.groups, notTypes: x.notTypes, notSubtypes: x.notSubtypes, colors: x.colors, stats: x.stats,
-        keywords: x.keywords, notKeywords: x.notKeywords, legendary: x.legendary, chosenType: x.chosenType,
+        keywords: x.keywords, notKeywords: x.notKeywords, legendary: x.legendary, chosenType: x.chosenType, chosenColor: x.chosenColor,
         historic: x.historic, outlaw: x.outlaw, snow: x.snow, basic: x.basic, notColors: x.notColors, colorCount: x.colorCount,
         // The name is copiable too.
         named: x.named, notNamed: x.notNamed,
@@ -2068,7 +2072,7 @@ function post(c: Cursor, r: Reading): boolean | null {
  *  ("target creature you control"), never its quantifier. */
 function copiedClass(r: Reading): Partial<SubjectFilter> | undefined {
   const f = lower({ ...reading(), groups: r.groups, notTypes: r.notTypes, notSubtypes: r.notSubtypes, colors: r.colors, stats: r.stats,
-    keywords: r.keywords, notKeywords: r.notKeywords, legendary: r.legendary, chosenType: r.chosenType, historic: r.historic,
+    keywords: r.keywords, notKeywords: r.notKeywords, legendary: r.legendary, chosenType: r.chosenType, chosenColor: r.chosenColor, historic: r.historic,
     outlaw: r.outlaw, snow: r.snow, basic: r.basic, notColors: r.notColors, colorCount: r.colorCount, named: r.named, notNamed: r.notNamed,
     token: r.token, ...(r.control ? { control: r.control } : {}) });
   if (!f) return undefined;
@@ -2366,6 +2370,7 @@ function lower(r: Reading): SubjectFilter | null {
   if (r.prepared) out.prepared = true;
   if (r.commander) out.commander = true;
   if (r.chosenType) out.chosenType = true;
+  if (r.chosenColor) out.chosenColor = true;
   if (r.restricted) out.restricted = true;
   if (r.named) out.named = r.named;
   if (r.fromZone) out.fromZone = r.fromZone;
