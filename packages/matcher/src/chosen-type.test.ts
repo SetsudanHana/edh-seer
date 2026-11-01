@@ -153,3 +153,47 @@ test("resolveChosenTypes never resolves a chosenColor subject to a subtype, and 
   expect(t!.subtype).toBeDefined();
   expect(t!.chosenType).toBeUndefined();
 });
+
+// #1360 round 2: a chosen colour is one of the five, so a colourless object is never in it. Real corpus cards (2026-11-01):
+// Shard of the Nightbringer is black, Canoptek Spyder / Sol Ring / Metallic Mimic are colourless artifacts.
+import { subjectMatches } from "./subject.js";
+import type { SubjectFilter } from "@edh-seer/tagger";
+
+const obj = (colors: string[], type: string): SubjectFilter => ({ control: "you", token: null, type, colors });
+const SHARD = obj(["B"], "creature");
+const SPYDER = obj([], "creature");
+const resolveOne = (subject: SubjectFilter, identity?: string[]): SubjectFilter =>
+  resolveChosenTypes(tagsWith([], [{ kind: "static", effect: { kind: "pump", subject } }] as never), new Map(), NO_HIERARCHY, identity).abilities[0]!.effect.subject!;
+const cagedSun: SubjectFilter = { type: "creature", control: "you", token: null, scope: "all", chosenColor: true } as never;
+
+test("Caged Sun in a mono-black deck pumps Shard of the Nightbringer and not Canoptek Spyder", () => {
+  const s = resolveOne(cagedSun, ["B"]);
+  expect(s.colors).toEqual(["B"]);
+  expect(s.chosenColor).toBeUndefined();
+  expect(subjectMatches(SHARD, s, NO_HIERARCHY)).toBe(true);
+  expect(subjectMatches(SPYDER, s, NO_HIERARCHY)).toBe(false);
+});
+
+test("a multicolour deck resolves to any-of its identity", () => {
+  const s = resolveOne(cagedSun, ["W", "U", "B"]);
+  expect(subjectMatches(obj(["U"], "creature"), s, NO_HIERARCHY)).toBe(true);
+  expect(subjectMatches(obj(["R"], "creature"), s, NO_HIERARCHY)).toBe(false);
+});
+
+test("Prism Ring does not fire on Sol Ring, resolved or not", () => {
+  const ring: SubjectFilter = { type: "spell", control: "you", token: null, chosenColor: true } as never;
+  const solRing = obj([], "spell");
+  expect(subjectMatches(solRing, resolveOne(ring, ["G"]), NO_HIERARCHY)).toBe(false);
+  expect(subjectMatches(solRing, resolveOne(ring), NO_HIERARCHY)).toBe(false);
+  expect(subjectMatches(obj(["G"], "spell"), resolveOne(ring), NO_HIERARCHY)).toBe(true);
+});
+
+test("Heraldic Banner does not pump Metallic Mimic, in a colourless deck either", () => {
+  const banner: SubjectFilter = { type: "creature", control: "you", token: null, scope: "all", chosenColor: true } as never;
+  const mimic = obj([], "creature");
+  expect(subjectMatches(mimic, resolveOne(banner, ["R"]), NO_HIERARCHY)).toBe(false);
+  const none = resolveOne(banner, []);
+  expect(none.colorCount).toBe("colored");
+  expect(subjectMatches(mimic, none, NO_HIERARCHY)).toBe(false);
+  expect(subjectMatches(SHARD, none, NO_HIERARCHY)).toBe(true);
+});

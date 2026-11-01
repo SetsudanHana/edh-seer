@@ -59,7 +59,23 @@ function topSubtype(counts: Map<string, number>, hierarchy: Hierarchy, types: st
   return best;
 }
 
-function resolveSubject(subject: SubjectFilter, counts: Map<string, number>, hierarchy: Hierarchy): SubjectFilter {
+/** A CHOSEN COLOUR IS ONE THE DECK PLAYS (#1360). "Creatures you control of the chosen color" (Heraldic Banner) is not
+ *  a creature type and not every creature: it is the creatures of one of the five colours, so a colourless one (Metallic
+ *  Mimic, Canoptek Spyder) is never in it. With the deck's colour identity known the subject becomes `colors: identity`
+ *  (any-of, as `subjectMatches` reads `colors`); a colourless deck can still choose a colour, so it becomes
+ *  `colorCount: "colored"`; with no identity (a card page, no commander) it stays `chosenColor`, which `subjectMatches`
+ *  reads as "has a colour".
+ *  CEILING: the actual choice is ONE colour, and a multicolour deck's identity accepts any of its colours, so a Heraldic Banner
+ *  in Esper pumps white, blue and black creatures alike where the game pumps one of them. */
+function resolveColor(subject: SubjectFilter, identity: readonly string[] | undefined): SubjectFilter {
+  if (subject.chosenColor !== true || identity === undefined) return subject;
+  const { chosenColor, ...rest } = subject;
+  if (rest.colors !== undefined || rest.colorCount !== undefined) return rest;
+  return identity.length > 0 ? { ...rest, colors: [...identity] } : { ...rest, colorCount: "colored" };
+}
+
+function resolveSubject(subject: SubjectFilter, counts: Map<string, number>, hierarchy: Hierarchy, identity?: readonly string[]): SubjectFilter {
+  if (subject.chosenColor === true) return resolveColor(subject, identity);
   if (subject.chosenType !== true) return subject;
   const { chosenType, ...rest } = subject;
   const top = topSubtype(counts, hierarchy, arr(subject.type));
@@ -69,21 +85,21 @@ function resolveSubject(subject: SubjectFilter, counts: Map<string, number>, hie
 /** Replace every chosenType:true subject in the card's abilities with the deck's top subtype
  *  among the subject's legal types (or the deck's global top subtype when the subject has no
  *  type constraint). Returns a new CardTags; the input is never mutated. */
-export function resolveChosenTypes(tags: CardTags, counts: Map<string, number>, hierarchy: Hierarchy): CardTags {
+export function resolveChosenTypes(tags: CardTags, counts: Map<string, number>, hierarchy: Hierarchy, identity?: readonly string[]): CardTags {
   return {
     ...tags,
     abilities: tags.abilities.map((a) => ({
       ...a,
       trigger: a.trigger
-        ? { ...a.trigger, subject: resolveSubject(a.trigger.subject, counts, hierarchy) }
+        ? { ...a.trigger, subject: resolveSubject(a.trigger.subject, counts, hierarchy, identity) }
         : a.trigger,
       effect: a.effect.subject
-        ? { ...a.effect, subject: resolveSubject(a.effect.subject, counts, hierarchy) }
+        ? { ...a.effect, subject: resolveSubject(a.effect.subject, counts, hierarchy, identity) }
         : a.effect,
-      emits: a.emits?.map((e) => ({ ...e, subject: resolveSubject(e.subject, counts, hierarchy) })),
+      emits: a.emits?.map((e) => ({ ...e, subject: resolveSubject(e.subject, counts, hierarchy, identity) })),
       // Roaming Throne doubles "a triggered ability of another creature you control of the chosen
       // type": the class it doubles is chosen the same way, and it lives on its own field.
-      ...(a.doublesOf ? { doublesOf: resolveSubject(a.doublesOf, counts, hierarchy) } : {}),
+      ...(a.doublesOf ? { doublesOf: resolveSubject(a.doublesOf, counts, hierarchy, identity) } : {}),
     })),
   };
 }

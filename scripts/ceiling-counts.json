@@ -16,6 +16,7 @@
   "packages/matcher/src/brackets.ts": 2,
   "packages/matcher/src/build.ts": 5,
   "packages/matcher/src/choice-condition.ts": 2,
+  "packages/matcher/src/chosen-type.ts": 1,
   "packages/matcher/src/colour-sources.ts": 1,
   "packages/matcher/src/deck-math.ts": 1,
   "packages/matcher/src/edge-magnitude.ts": 1,

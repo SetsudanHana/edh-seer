@@ -9,7 +9,7 @@ import type { Ability, SubjectFilter } from "../schema.js";
 // #1360: a chosen COLOUR is not a chosen creature TYPE. Real oracle text (corpus 2026-11-01).
 const HERALDIC = "As this artifact enters, choose a color.\nCreatures you control of the chosen color get +1/+0.\n{T}: Add one mana of the chosen color.";
 const PRISM = "As this artifact enters, choose a color.\nWhenever you cast a spell of the chosen color, you gain 1 life.";
-const KINDRED = "As this enchantment enters, choose a creature type.\nAt the beginning of your upkeep, you may look at the top card of your library. If it's a creature card of the chosen type, you may reveal it and put it into your hand.";
+const KINDRED = "As this enchantment enters, choose a creature type.\nWhenever a creature you control of the chosen type enters or attacks, draw a card.";
 
 const subjectsOf = (name: string, oracleText: string, typeLine: string): SubjectFilter[] => {
   const card = { name, typeLine, oracleText, keywords: [] as string[] };
@@ -30,10 +30,16 @@ test("Prism Ring's cast trigger carries chosenColor and no chosenType", () => {
   expect(subs.some((s) => s.chosenType === true)).toBe(false);
 });
 
-test("a chosen creature type is still chosenType (Kindred Discovery-style)", () => {
-  const subs = subjectsOf("Kindred Discovery", KINDRED, "Enchantment");
-  expect(subs.some((s) => s.chosenColor === true)).toBe(false);
-  expect(parseSubject("creature spells of the chosen type").chosenType).toBe(true);
+// Kindred Discovery's "choose a creature type" blocks the grammar (a bought card), so its reading is the STORED one: parseSubject
+// on the trigger's words, then the colour pass over the real clause text.
+test("a chosen creature type is still chosenType (Kindred Discovery)", () => {
+  const trigger = parseSubject("a creature you control of the chosen type");
+  expect(trigger).toMatchObject({ type: "creature", control: "you", chosenType: true });
+  expect(trigger.chosenColor).toBeUndefined();
+  const ability = { kind: "triggered", clause: 2, effect: { kind: "card-draw" }, trigger: { verbs: ["enters", "attacks"], subject: trigger } } as unknown as Ability;
+  const [a] = chosenColorOf([ability], { 2: KINDRED.split("\n")[1]! }, KINDRED);
+  expect(a!.trigger!.subject.chosenType).toBe(true);
+  expect(a!.trigger!.subject.chosenColor).toBeUndefined();
 });
 
 test("parseSubject reads the chosen colour as chosenColor", () => {

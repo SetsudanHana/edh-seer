@@ -276,9 +276,11 @@ export function analyzeDeckStructured(
   // way `SubjectFilter.commander` can ever be satisfied — see commander.ts.
   const counts = deckSubtypeCounts(inputs);
   const sharedWith = commanderSubtypes(inputs.filter((dc) => commanderSet.has(dc.card.name)).map((dc) => dc.tags));
+  // A chosen COLOUR is one the deck plays: its commanders' identity (CR 903.4), unknown without a commander (#1360).
+  const chosenIdentity = commanderIdentity(inputs, commanderSet);
   const resolved: DeckCard[] = inputs.map((dc) => {
     if (!dc.tags) return dc;
-    const tags = resolveSharedTypes(resolveChosenTypes(dc.tags, counts, hierarchy), sharedWith);
+    const tags = resolveSharedTypes(resolveChosenTypes(dc.tags, counts, hierarchy, chosenIdentity), sharedWith);
     return { card: dc.card, tags: commanderSet.has(dc.card.name) ? markCommander(tags) : tags };
   });
   // The third deck fact, read at match time rather than written into the tags: what land types an
@@ -295,7 +297,7 @@ export function analyzeDeckStructured(
   const deckNameSet = new Set(resolved.map((dc) => dc.card.name));
   const companionResolved: DeckCard[] = companions
     .filter((dc) => !deckNameSet.has(dc.card.name))
-    .map((dc) => (dc.tags ? { card: dc.card, tags: resolveSharedTypes(resolveChosenTypes(dc.tags, counts, hierarchy), sharedWith) } : dc));
+    .map((dc) => (dc.tags ? { card: dc.card, tags: resolveSharedTypes(resolveChosenTypes(dc.tags, counts, hierarchy, chosenIdentity), sharedWith) } : dc));
   const companionSet = new Set(companionResolved.map((dc) => dc.card.name));
   // Lookups by name (tags, cost, derivation, land-ness) must find the companion's row; the COUNTS
   // built off `resolved` must not see it. This is the array for the first kind only.
