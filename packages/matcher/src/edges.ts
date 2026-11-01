@@ -496,6 +496,24 @@ export function characteristicsSubject(tags: CardTags, name?: string): SubjectFi
   };
 }
 
+/** AN AUTHORED DAMAGE EMIT'S DEALER IS THE CARD ITSELF WHEN IT NAMES NO KIND OF OBJECT (#1344). Derive sets a type only
+ *  when another object deals the damage (a fight, "target creature deals damage"), so a bare dealer is the printed source
+ *  and its colour is the card's. Torbran's "a red source you control would deal damage" asks for that colour, and a dealer
+ *  that stated none failed every coloured demand: Impact Tremors, a red enchantment, never met it. `[]` is colourless, a
+ *  fact, and fails a coloured demand as it should.
+ *  CEILING: an ability on a permanent whose damage is dealt by something else without saying so (an equipped creature)
+ *  is read as the permanent. */
+function selfDealer(d: SubjectFilter): boolean {
+  return d.colors === undefined && d.type === undefined && d.subtype === undefined && d.anyOf === undefined && d.self === undefined;
+}
+
+/** One authored emit as the matcher reads it: a damage emit carries its ability's `amount`, and its self dealer the card's colours (#1344).
+ *  Shared by `baseEvents` and `producerEventOrigins`, whose map is keyed on the event's JSON. */
+function authoredEmit(a: CardTags["abilities"][number], e: GameEvent, tags: CardTags): GameEvent {
+  const sized = a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e;
+  return sized.dealer !== undefined && selfDealer(sized.dealer) ? { ...sized, dealer: { ...sized.dealer, colors: tags.characteristics.colors } } : sized;
+}
+
 /** A producer's events BEFORE anything is derived from them -- authored emits plus the card's own
  *  implied cast/enters, zone-normalized. Split out of `producerEvents` so the proliferate demand
  *  below can ask `impliedCounterEvents` the same question over the same input, rather than rebuilding
@@ -506,8 +524,7 @@ function baseEvents(tags: CardTags): GameEvent[] {
     // A DAMAGE EMIT CARRIES ITS SIZE, the ability's own `amount`, so a trigger that requires one
     // ("exactly 1 damage", Ghyrson Starn) can tell Impact Tremors from Eidolon of the Great Revel.
     // A REFUSED TRIGGER'S ABILITY SUPPLIES NOTHING (#1253): see `Ability.claimsNothing`.
-    ...tags.abilities.filter((a) => !isRefusedTrigger(a)).flatMap((a) => (a.emits ?? []).map((e) =>
-      a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e)),
+    ...tags.abilities.filter((a) => !isRefusedTrigger(a)).flatMap((a) => (a.emits ?? []).map((e) => authoredEmit(a, e, tags))),
     ...impliedEvents(tags.characteristics).map((e) => targeting.length && e.verb === "cast" ? { ...e, targeting } : e),
   ].map(normalizeZoneEvent);
 }
@@ -600,8 +617,8 @@ export function producerEventOrigins(tags: CardTags): Map<string, number> {
   const out = new Map<string, number>();
   tags.abilities.forEach((a, i) => {
     if (isRefusedTrigger(a)) return;
-    const own = (a.emits ?? []).map((e) =>
-      normalizeZoneEvent(a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e));
+    // THE SAME EVENT `baseEvents` BUILDS, or the origin lookup (keyed on its JSON) misses.
+    const own = (a.emits ?? []).map((e) => normalizeZoneEvent(authoredEmit(a, e, tags)));
     for (const e of selfLeavesTypes(own, tags.characteristics)) {
       const k = JSON.stringify(e);
       if (!out.has(k)) out.set(k, i);

@@ -3880,6 +3880,44 @@ test("a damage trigger that requires a size meets only a producer of that size",
   expect(joins(pinger("Eidolon of the Great Revel", "2"), anySize)).toBe(true);
 });
 
+/** A SOURCE-COLOUR CONDITION IS CHECKED AGAINST THE CARD THAT DEALS THE DAMAGE (#1344). Torbran's "a red source
+ *  you control would deal damage" is a replacement whose trigger subject carries `colors: ["R"]`; an authored
+ *  damage emit's `dealer` is this card and names no colour, so Impact Tremors (a red enchantment) never met it.
+ *  Shapes below are the real derived ones (Torbran, Impact Tremors, Corpse Knight, Fiery Emancipation). */
+test("a red-source damage replacement pairs with a red damage card and never a non-red one (#1344)", () => {
+  const withColours = (d: ReturnType<typeof base>, colors: string[], types: string[]) => {
+    d.tags!.characteristics = { ...d.tags!.characteristics, colors, identity: colors, types } as never;
+    return d;
+  };
+  const torbran = withColours(base("Torbran, Thane of Red Fell", [{
+    kind: "static", effect: { kind: "damage-multiplier", damageChange: "plus" },
+    trigger: { verbs: ["combat-damage", "non-combat-damage"], subject: { control: "you", token: null, colors: ["R"] } },
+    replacement: true, change: { op: "plus", value: 2 }, amount: "that much damage plus 2",
+  }]), ["R"], ["creature"]);
+  const emancipation = withColours(base("Fiery Emancipation", [{
+    kind: "static", effect: { kind: "damage-multiplier", damageChange: "thrice" },
+    trigger: { verbs: ["combat-damage", "non-combat-damage"], subject: { control: "you", token: null } },
+    replacement: true, change: { op: "times", value: 3 },
+  }]), ["R"], ["enchantment"]);
+  const pinger = (name: string, colors: string[], types: string[]) => withColours(base(name, [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, scope: "each" }, dealer: { control: "you", token: null } }],
+  }]), colors, types);
+  const damageTag = (p: DeckCard, c: DeckCard) => directedReasons(p, c, H).filter((r) => r.tag.startsWith("non-combat-damage"));
+  const tremors = pinger("Impact Tremors", ["R"], ["enchantment"]);
+  // Torbran is the replacement, so the reason is written Torbran -> the damage card (see `directedReasons`).
+  expect(damageTag(torbran, tremors).map((r) => r.text)).toEqual(["When Impact Tremors deals noncombat damage, Torbran, Thane of Red Fell adds 2 to the damage"]);
+  // The stamped dealer must still find its ability route (`producerEventOrigins` is keyed on the event's JSON): derive-impact read 3,943 magnitude moves when it did not.
+  expect(damageTag(torbran, tremors)[0]!.consumerAbility).toBe(0);
+  expect(damageTag(torbran, pinger("Corpse Knight", ["W", "B"], ["creature"]))).toEqual([]);
+  expect(damageTag(torbran, pinger("Vault Skirge", [], ["artifact"]))).toEqual([]);
+  // A source with no colour restriction is unchanged.
+  expect(damageTag(emancipation, pinger("Corpse Knight", ["W", "B"], ["creature"]))).toHaveLength(1);
+  expect(damageTag(emancipation, tremors)).toHaveLength(1);
+});
+
 /** The fix must be ADDITIVE. An implied combat emit carries no `dealer` — its subject IS the
  *  creature dealing the damage — so it falls back to exactly the comparison it made before. */
 test("an emit with no dealer still matches on its subject, as implied combat damage does", () => {
