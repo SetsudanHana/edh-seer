@@ -988,3 +988,13 @@ test("a token copy of a non-creature target is not itself a target; a copy of a 
   expect(parseSubject("a token that's a copy of target artifact or creature you control, except it's an artifact in addition to its other types").scope).toBe("target");
   expect(parseSubject("a token that's a copy of target creature").scope).toBe("target");
 });
+
+// #1365 round 3: the head's creature EXCLUSION, written with or without a hyphen, and whose permanent it is.
+test("a token copy of a permanent keeps its target only when the permanent can be a creature YOU control", () => {
+  const copyOf = (head: string) => parseSubject(`a token that's a copy of ${head}, except it's a 3/3 Dragon creature in addition to its other types`);
+  expect(copyOf("target permanent you control").scope).toBe("target"); // Saheeli, Radiant Creator
+  expect(copyOf("target noncreature permanent you control")).not.toHaveProperty("scope");
+  expect(copyOf("target non-creature permanent you control")).not.toHaveProperty("scope");
+  expect(copyOf("target non-creature artifact")).not.toHaveProperty("scope");
+  expect(copyOf("target permanent an opponent controls")).not.toHaveProperty("scope"); // Ignite the Cloneforge!
+});

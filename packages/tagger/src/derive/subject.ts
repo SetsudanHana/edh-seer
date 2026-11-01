@@ -179,15 +179,18 @@ function copiedHeadTypes(t: string): string[] | undefined {
 }
 
 /** The copied head's card types, the head itself and whether the words after "copy of" say "you control". */
-function copiedHead(t: string): { types: string[]; head: string; yours: boolean } | undefined {
+function copiedHead(t: string): { types: string[]; head: string; yours: boolean; excludesCreature: boolean } | undefined {
   const m = /\bcop(?:y|ies)\s+of\b/.exec(t);
   if (!m) return undefined;
   const rest = t.slice(m.index + m[0].length);
   // The head ends at a QUALIFIER or a following clause, never at a list separator: "a copy of target creature, artifact, or planeswalker" and "creature and/or
   // artifact" are lists of what may be copied. "and" ends it only when a clause follows ("and that's blocking"), a comma only before a clause word.
   const head = rest.split(/\b(?:attacking|blocking|you|your|an?\s+opponent|with|from|exiled|except|which|who)\b|\band\s+(?:that|it|they|those|attach)\b|\bthat(?:'s|\s+(?:is|are|was|were|has|have|can|would))|,\s*(?:except|tapped|that|which|who|with|then|and\s+(?:that|it|they))\b/i)[0]!;
-  const types = [...CARD_TYPES, "permanent"].filter((x) => new RegExp(`\\b${x}s?\\b`).test(head));
-  return { types, head, yours: /\byou control\b/.test(rest.split(/\bexcept\b/)[0]!) };
+  // "non-creature" / "noncreature" EXCLUDES creature: the hyphen would otherwise leave a word boundary before "creature" and name it.
+  const excludesCreature = /\bnon-?creature\b/.test(head);
+  const named = head.replace(/\bnon-?creature\b/g, " ");
+  const types = [...CARD_TYPES, "permanent"].filter((x) => new RegExp(`\\b${x}s?\\b`).test(named));
+  return { types, head, excludesCreature, yours: /\byou control\b/.test(rest.split(/\bexcept\b/)[0]!) };
 }
 
 function copiedCreature(t: string, out: SubjectFilter): string | undefined {
@@ -209,8 +212,7 @@ function copiesNonCreatureTarget(t: string, out: SubjectFilter): boolean {
   const h = copiedHead(t);
   if (h === undefined || h.types.length === 0) return false;
   if (h.types.includes("creature")) return false;
-  const excludesCreature = /\bnon-?creature\b/.test(h.head);
-  return !(h.types.includes("permanent") && !excludesCreature && h.yours);
+  return !(h.types.includes("permanent") && !h.excludesCreature && h.yours);
 }
 
 function compoundTypes(t: string): string[] | undefined {
