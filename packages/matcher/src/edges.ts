@@ -496,22 +496,27 @@ export function characteristicsSubject(tags: CardTags, name?: string): SubjectFi
   };
 }
 
-/** AN AUTHORED DAMAGE EMIT'S DEALER IS THE CARD ITSELF WHEN IT NAMES NO KIND OF OBJECT (#1344). Derive sets a type only
- *  when another object deals the damage (a fight, "target creature deals damage"), so a bare dealer is the printed source
- *  and its colour is the card's. Torbran's "a red source you control would deal damage" asks for that colour, and a dealer
- *  that stated none failed every coloured demand: Impact Tremors, a red enchantment, never met it. `[]` is colourless, a
- *  fact, and fails a coloured demand as it should.
- *  CEILING: an ability on a permanent whose damage is dealt by something else without saying so (an equipped creature)
- *  is read as the permanent. */
+/** "its power", "that creature's toughness": the size is a stat of the creature that deals the damage, which is not the card unless the card is that creature. */
+const OTHER_CREATURE_AMOUNT = /\b(?:its|their|that creature'?s?|enchanted creature'?s?|equipped creature'?s?) (?:power|toughness)\b/i;
 function selfDealer(d: SubjectFilter): boolean {
   return d.colors === undefined && d.type === undefined && d.subtype === undefined && d.anyOf === undefined && d.self === undefined;
 }
 
-/** One authored emit as the matcher reads it: a damage emit carries its ability's `amount`, and its self dealer the card's colours (#1344).
- *  Shared by `baseEvents` and `producerEventOrigins`, whose map is keyed on the event's JSON. */
+/** One authored emit as the matcher reads it: a damage emit carries its ability's `amount`, and a bare dealer the card's colours (#1344). Shared by `baseEvents` and
+ *  `producerEventOrigins`, whose map is keyed on the event's JSON.
+ *
+ *  A BARE DAMAGE DEALER IS THE CARD ONLY WHEN NOTHING SAYS OTHERWISE. Torbran's "a red source you control would deal damage" asks for the dealer's colour, and an authored
+ *  damage emit's `dealer` is `{control: you}` with no colour, so Impact Tremors (a red enchantment) never met it. The card's colours are stamped on it, but only where the card
+ *  is the dealer. Derive types SOME other dealers (a fight; Chandra's Ignition) and leaves others bare, so a bare dealer is not proof of "this card". Refused, where the stamp
+ *  only abstains (the old behaviour): a granted ability (`grantedBy`: Barbed Field's enchanted land deals the damage) and an amount read off another creature ("equal to its
+ *  power": Self-Destruct, Pain for All, Domri's Ambush). `[]` is colourless, a fact, and fails a coloured demand as it should.
+ *  CEILING: the matcher has no clause text here (`CardTags` carries none), so a bare dealer whose sentence names another object with no creature stat in the amount still reads as the
+ *  card. Measured 2026-11-01 over Torbran's 1,875 gained producers: about 15 cards (Rakdos Charm, Missy, Sarkhan the Mad, Enchanter's Bane, Beastie Beatdown, Goblin Tinkerer, Aura Barbs,
+ *  Stalking Yeti, Form of the Dinosaur, Dizzying Gaze, Rage Forger, Ingris Stingerquill, Wisecrack, Swooping Pteranodon, the second half of Pain for All). The fix is derive-side typing of
+ *  those dealers, after which `selfDealer` refuses them without a change here. */
 function authoredEmit(a: CardTags["abilities"][number], e: GameEvent, tags: CardTags): GameEvent {
   const sized = a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e;
-  return sized.dealer !== undefined && selfDealer(sized.dealer) ? { ...sized, dealer: { ...sized.dealer, colors: tags.characteristics.colors } } : sized;
+  return sized.dealer !== undefined && selfDealer(sized.dealer) && a.grantedBy === undefined && !OTHER_CREATURE_AMOUNT.test(a.amount ?? "") ? { ...sized, dealer: { ...sized.dealer, colors: tags.characteristics.colors } } : sized;
 }
 
 /** A producer's events BEFORE anything is derived from them -- authored emits plus the card's own

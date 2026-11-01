@@ -3918,6 +3918,42 @@ test("a red-source damage replacement pairs with a red damage card and never a n
   expect(damageTag(emancipation, tremors)).toHaveLength(1);
 });
 
+/** A BARE DEALER IS NOT ALWAYS THE CARD (#1344 round 2). Barbed Field's "{T}: This land deals 1 damage" is dealt by the ENCHANTED LAND (a granted ability,
+ *  `grantedBy`), and Self-Destruct / Pain for All have a creature deal "damage equal to its power": the emit's dealer is the bare `{control: you}` all the same.
+ *  Stamping the card's red on those paired Torbran with a source that is not red. Shapes below are the real derived ones. */
+test("a red-source damage replacement does not pair with damage another object deals (#1344)", () => {
+  const withColours = (d: ReturnType<typeof base>, colors: string[], types: string[]) => {
+    d.tags!.characteristics = { ...d.tags!.characteristics, colors, identity: colors, types } as never;
+    return d;
+  };
+  const torbran = withColours(base("Torbran, Thane of Red Fell", [{
+    kind: "static", effect: { kind: "damage-multiplier", damageChange: "plus" },
+    trigger: { verbs: ["combat-damage", "non-combat-damage"], subject: { control: "you", token: null, colors: ["R"] } },
+    replacement: true, change: { op: "plus", value: 2 }, amount: "that much damage plus 2",
+  }]), ["R"], ["creature"]);
+  const dealer = { control: "you", token: null } as const;
+  const victim = { control: "any", token: null, scope: "target" } as const;
+  const barbed = withColours(base("Barbed Field", [
+    { kind: "static", effect: { kind: "keyword-grant" }, clause: 2 },
+    { kind: "activated", cost: "{T}", effect: { kind: "damage" }, amount: "1", grantedBy: 2, clause: 3, emits: [{ verb: "non-combat-damage", subject: victim, dealer }] },
+  ]), ["R"], ["enchantment"]);
+  const selfDestruct = withColours(base("Self-Destruct", [
+    { kind: "on-cast", effect: { kind: "damage" }, amount: "its power", clause: 1, emits: [{ verb: "non-combat-damage", subject: { ...victim, other: true }, dealer }] },
+  ]), ["R"], ["instant"]);
+  const painForAll = withColours(base("Pain for All", [
+    { kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, subtype: "aura", self: true } }, effect: { kind: "damage" }, amount: "its power", clause: 2,
+      emits: [{ verb: "non-combat-damage", subject: { ...victim, other: true }, dealer }] },
+  ]), ["R"], ["enchantment"]);
+  const fireslinger = withColours(base("Fireslinger", [
+    { kind: "activated", cost: "{T}", effect: { kind: "damage" }, amount: "1", clause: 1, emits: [{ verb: "non-combat-damage", subject: victim, dealer }] },
+  ]), ["R"], ["creature"]);
+  const damageTag = (p: DeckCard, c: DeckCard) => directedReasons(p, c, H).filter((r) => r.tag.startsWith("non-combat-damage"));
+  expect(damageTag(torbran, barbed)).toEqual([]);
+  expect(damageTag(torbran, selfDestruct)).toEqual([]);
+  expect(damageTag(torbran, painForAll)).toEqual([]);
+  expect(damageTag(torbran, fireslinger)).toHaveLength(1);
+});
+
 /** The fix must be ADDITIVE. An implied combat emit carries no `dealer` — its subject IS the
  *  creature dealing the damage — so it falls back to exactly the comparison it made before. */
 test("an emit with no dealer still matches on its subject, as implied combat damage does", () => {
