@@ -977,10 +977,13 @@ test("a token that is a copy of a named card takes no subtype from the card's na
   expect(cloak.token).toBe(true);
 });
 
-// #1365: a token copy of a target is `scope: target` only when what it copies is not a non-creature (Rebuild the City, Applied Geometry, Will of the Temur).
+// #1365: a token copy of a target is `scope: target` only when its copied head can be a creature you control (Applied Geometry keeps it; Rebuild the City, Will of the Temur, Mishra and Astral Dragon do not).
 test("a token copy of a non-creature target is not itself a target; a copy of a creature target is", () => {
   expect(parseSubject("a token that is a copy of target land, except it's a 3/3 creature in addition to its other types")).not.toHaveProperty("scope");
-  expect(parseSubject("a token that's a copy of target non-Aura permanent you control, except it's a 0/0 Fractal creature in addition to its other types")).not.toHaveProperty("scope");
+  expect(parseSubject("a token that's a copy of target non-Aura permanent you control, except it's a 0/0 Fractal creature in addition to its other types").scope).toBe("target");
+  expect(parseSubject("a token that's a copy of target permanent, except it's a 4/4 Dragon creature in addition to its other types")).not.toHaveProperty("scope");
+  expect(parseSubject("a token that's a copy of target noncreature permanent, except they're 3/3 Dragon creatures in addition to their other types")).not.toHaveProperty("scope");
+  expect(parseSubject("a token that's a copy of target noncreature artifact you control, except it's a 4/4 Construct artifact creature in addition to its other types")).not.toHaveProperty("scope");
   expect(parseSubject("a token that's a copy of target creature you control, except it's not legendary and it's a 4/4 Hero in addition to its other types").scope).toBe("target");
   expect(parseSubject("a token that's a copy of target artifact or creature you control, except it's an artifact in addition to its other types").scope).toBe("target");
   expect(parseSubject("a token that's a copy of target creature").scope).toBe("target");

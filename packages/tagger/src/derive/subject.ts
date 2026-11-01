@@ -175,13 +175,19 @@ function lostOtherTypes(t: string, out: SubjectFilter): string | string[] | unde
  *  ("attacking", "you control", "that", "except"); when that names the type `creature` and no other, the token is a creature. An added type is `allTypes`
  *  (left alone), and "an artifact or creature" names two, so it stays the OR it is. */
 function copiedHeadTypes(t: string): string[] | undefined {
+  return copiedHead(t)?.types;
+}
+
+/** The copied head's card types, the head itself and whether the words after "copy of" say "you control". */
+function copiedHead(t: string): { types: string[]; head: string; yours: boolean } | undefined {
   const m = /\bcop(?:y|ies)\s+of\b/.exec(t);
   if (!m) return undefined;
   const rest = t.slice(m.index + m[0].length);
   // The head ends at a QUALIFIER or a following clause, never at a list separator: "a copy of target creature, artifact, or planeswalker" and "creature and/or
   // artifact" are lists of what may be copied. "and" ends it only when a clause follows ("and that's blocking"), a comma only before a clause word.
   const head = rest.split(/\b(?:attacking|blocking|you|your|an?\s+opponent|with|from|exiled|except|which|who)\b|\band\s+(?:that|it|they|those|attach)\b|\bthat(?:'s|\s+(?:is|are|was|were|has|have|can|would))|,\s*(?:except|tapped|that|which|who|with|then|and\s+(?:that|it|they))\b/i)[0]!;
-  return [...CARD_TYPES, "permanent"].filter((x) => new RegExp(`\\b${x}s?\\b`).test(head));
+  const types = [...CARD_TYPES, "permanent"].filter((x) => new RegExp(`\\b${x}s?\\b`).test(head));
+  return { types, head, yours: /\byou control\b/.test(rest.split(/\bexcept\b/)[0]!) };
 }
 
 function copiedCreature(t: string, out: SubjectFilter): string | undefined {
@@ -191,14 +197,20 @@ function copiedCreature(t: string, out: SubjectFilter): string | undefined {
 }
 
 /** A TOKEN COPY OF A TARGET IS AIMED AT WHAT IT COPIES, NOT AT WHAT IT BECOMES (#1365). The subject describes the TOKEN, so "a token that's a copy of target land, except it's a 3/3 creature in addition"
- *  (Rebuild the City) is a creature that is `scope: target`, and `spellTargeting` read a creature target off the token's own type. The target is a class of its own: when the copied head names a
- *  type that is not `creature` ("target land", "target non-Aura permanent": Applied Geometry, Will of the Temur), the scope is not the token's and is left off. A head that names no type at all
- *  ("target token you control" has a type; "that card" has none) is not judged, and one that names creature keeps the scope (Saheeli's Artistry, Aggressive Biomancy).
- *  CEILING: the copied class is not carried anywhere, so a copy of a target land no longer states that it targets; nothing reads a token-generation's target but `spellTargeting`. */
+ *  (Rebuild the City) is a creature that is `scope: target`, and `spellTargeting` read a creature target off the token's own type. The target is judged from the COPIED HEAD: the scope stays when
+ *  the head can be a creature you control (#713) -- it names creature (Ember Island Production, Aggressive Biomancy, Saheeli's Artistry, Molten Duplication), or names permanent with no creature
+ *  exclusion AND says "you control" (Applied Geometry: "target non-Aura permanent you control") -- and is left off otherwise: only non-creature types ("target land", "target artifact" Schema Thief,
+ *  "target noncreature artifact" Mishra, "target noncreature permanent" Astral Dragon) or a bare "target permanent" with no "you control" (Will of the Temur: #713 counts a target that is not
+ *  yours only when the effect helps it, and a token-generation does not). A head naming no type at all ("that card", "target token": `token` is not a card type) is not judged and keeps the scope.
+ *  CEILING: `parseSubject` sets no `copyOf` (the grammar's rows carry it: Replication Technique, Mythos of Illuna), so a copy of a target land no longer states what it targets; nothing reads a
+ *  token-generation's target but `spellTargeting`. Upgrade path: set `copyOf` here and have `spellTargeting` read it instead of the token's own type. */
 function copiesNonCreatureTarget(t: string, out: SubjectFilter): boolean {
   if (out.token !== true) return false;
-  const named = copiedHeadTypes(t);
-  return named !== undefined && named.length > 0 && !named.includes("creature");
+  const h = copiedHead(t);
+  if (h === undefined || h.types.length === 0) return false;
+  if (h.types.includes("creature")) return false;
+  const excludesCreature = /\bnon-?creature\b/.test(h.head);
+  return !(h.types.includes("permanent") && !excludesCreature && h.yours);
 }
 
 function compoundTypes(t: string): string[] | undefined {
