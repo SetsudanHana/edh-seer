@@ -1117,6 +1117,12 @@ export interface Effect {
    *  Visitation (the same count, a different token) and Ojer Taq (triples). Absent on a doubler read
    *  off a bare "double"/"triple" verb: the sentence says "makes more tokens" then. */
   tokenMultiplier?: TokenMultiplier;
+  /** WHAT AN `animate` MAKES ITS OBJECT (#1364): "target land you control becomes a 3/3 Elemental creature" -> `{ type: "creature", subtype: "elemental", stats: 3/3 }`; "All lands are 1/1 creatures"; "a blue Fish".
+   *  The RESULT of the change (types, subtypes, base P/T), read off the printed clause. NEVER THE SUBJECT AND NO READER MAY TAKE IT AS THE TARGET: `subject` is what is targeted or affected, and
+   *  `spellTargeting` (matcher) reads a `scope: target` creature-typed subject as "aimed at a creature you control" (Brave the Wilds targets a land). Every animate carries it when the text states a
+   *  result that reads; a SELF animate also keeps the result in its subject, as the store writes it (130 abilities), and `becomes` repeats it. Absent on a colour alone, a type "of your choice",
+   *  a copy, and a clause stating two different results (Primal Clay). */
+  becomes?: SubjectFilter;
 }
 
 export type TokenMultiplier = "twice" | "thrice" | "additional" | "one-of-each" | "replaced";

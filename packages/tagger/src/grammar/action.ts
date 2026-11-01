@@ -1274,8 +1274,8 @@ function isSelfText(sub: string): boolean {
  *  Wilds targets a land; Leyline of Resonance and the heroic consumers met it), and the store keeps the target CLASS alone for those (stored Brave the Wilds: `type land`). Nor for a
  *  STATIC ability: `staticEdges` takes a static's subject as who it applies to, so the result words would widen "All lands are 2/2 creatures" to every creature in the deck, or narrow
  *  Blood Moon to the lands that are already Mountains; a self static also loses its subject in derive, and a grant folded into it would go too. Those keep the target alone and the
- *  separate pump and grants. CEILING: the result of a target or class animate (and of any static) is not in the animate's subject; the separate pump and grants carry the P/T and keywords,
- *  and an upcoming card's "target land becomes a 3/3 Elemental creature" still derives an animate with the land type only.
+ *  separate pump and grants. The result of a target or class animate (and of any static) is `Effect.becomes` (#1364), which derive reads off the printed clause for both paths and no matcher
+ *  reader takes as the target; the separate pump and grants still carry the P/T and keywords.
  *  An Aura host is a class too. */
 function foldable(target: { object?: SubjectFilter; text?: string; phrase?: string }): boolean {
   if (staticAbility) return false;
