@@ -712,7 +712,7 @@ const TAIL: Record<string, [string, Handler]> = {
     const to = rest.indexOf(" to ");
     return to > 0 && objectOf(rest.slice(to + 4)) ? thing(rest.slice(0, to)) : null;
   }],
-  cast: ["cast", (rest) => {
+  cast: ["cast", withRider((rest) => {
     // "this card from your graveyard by discarding two cards in addition to paying its other costs":
     // the cast and the discard it costs, as the store writes them.
     // ...or "by sacrificing a creature": the cast and the sacrifice.
@@ -721,8 +721,8 @@ const TAIL: Record<string, [string, Handler]> = {
     if (!by) return cast;
     const d = by[1]!.toLowerCase() === "discarding" ? DRAW_SEARCH.discard![1](by[2]!) : moveObject(by[2]!, true);
     return cast && d && !Array.isArray(d) ? [cast, { ...d, verb: by[1]!.toLowerCase() === "discarding" ? "discard" : "sacrifice", text: by[2]! }] : null;
-  }],
-  play: ["play", (rest) => castOrPlay(rest, /\blands?\b|\bcards?\b|^(?:it|them)$|\bof them$/i)],
+  })],
+  play: ["play", withRider((rest) => castOrPlay(rest, /\blands?\b|\bcards?\b|^(?:it|them)$|\bof them$/i))],
   // "prevent all combat damage that would be dealt this turn": the store keeps the whole phrase.
   // #1378: "prevent 1 of that damage", "prevent the next 3 damage ...": the number prevented is the amount, as the store writes it where it writes one ("all" is none).
   prevent: ["prevent", (rest) => {
@@ -780,15 +780,26 @@ const TAIL: Record<string, [string, Handler]> = {
   behold: ["behold", (rest) => (/^(?:a|an) [\w -]+$/i.test(rest) ? {} : null)],
 };
 
+/** "..., and you may spend mana as though it were mana of any color to cast that spell" / "..., and mana of any type can be spent to cast it" (CR 609.4b: it changes
+ *  how the cost is paid, not the cost). No reader consumes it (derive has no any-colour spend field; the stored reading filed it as an unclaimed `cost-modify`), so it is NEVER
+ *  stripped silently (#1355): the cast or play is read as before and the rider rides after it as the store's unclaimed `other`, the sentence its object, visible in `unclaimed`. */
+const SPEND_RIDER = /,? and (?:you may spend mana as though it were mana of any (?:color|type)|mana of any type can be spent) to cast (?:that spell|it|them|those spells)$/i;
+function withRider(h: Handler): Handler {
+  return (rest) => {
+    const m = SPEND_RIDER.exec(rest);
+    if (!m) return h(rest);
+    const r = h(rest.slice(0, m.index));
+    return r && [...(Array.isArray(r) ? r : [r]), { verb: "other", object: { control: "any", token: null, ref: "sentence" }, phrase: m[0].replace(/^,? and /i, "") }];
+  };
+}
+
 /** "you may cast it without paying its mana cost", "play lands from your graveyard", "play an
  *  additional land on each of your turns": what is cast or played, the manner and time stripped. */
 function castOrPlay(rest: string, what: RegExp): Args | null {
   let t = rest;
   for (let prev = ""; prev !== t;) {
     prev = t;
-    t = t.replace(/ (?:as though (?:it|they) had flash|without paying (?:its|their) mana costs?|this turn|until end of turn|until (?:the )?end of your next turn|until your next end step|on each of (?:your|their) turns|for as long as it remains exiled|for as long as (?:they|it) remain exiled|using its [\w-]+ ability|by paying (?:\{[^}]+\})+ rather than paying (?:its|their) mana costs?)$/i, "")
-      // "..., and you may spend mana as though it were mana of any color to cast that spell".
-      .replace(/,? and (?:you may spend mana as though it were mana of any (?:color|type)|mana of any type can be spent) to cast (?:that spell|it|them|those spells)$/i, "");
+    t = t.replace(/ (?:as though (?:it|they) had flash|without paying (?:its|their) mana costs?|this turn|until end of turn|until (?:the )?end of your next turn|until your next end step|on each of (?:your|their) turns|for as long as it remains exiled|for as long as (?:they|it) remain exiled|using its [\w-]+ ability|by paying (?:\{[^}]+\})+ rather than paying (?:its|their) mana costs?)$/i, "");
   }
   t = t.replace(/ as an Adventure$/i, "").replace(/ by paying (?:\d+|one|two|three) life in addition to paying (?:its|their) other costs$/i, "");
   // "a spell from your hand with mana value 3 or less": the zone mid-phrase, moved to the end.
