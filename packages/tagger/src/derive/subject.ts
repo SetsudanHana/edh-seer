@@ -174,16 +174,45 @@ function lostOtherTypes(t: string, out: SubjectFilter): string | string[] | unde
  *  [creature, planeswalker], and read as an OR the token is a planeswalker. The copied thing is the head noun phrase after "copy of", up to what qualifies it
  *  ("attacking", "you control", "that", "except"); when that names the type `creature` and no other, the token is a creature. An added type is `allTypes`
  *  (left alone), and "an artifact or creature" names two, so it stays the OR it is. */
-function copiedCreature(t: string, out: SubjectFilter): string | undefined {
-  if (out.token !== true || !Array.isArray(out.type) || (out.allTypes?.length ?? 0) > 0) return undefined;
+function copiedHeadTypes(t: string): string[] | undefined {
+  return copiedHead(t)?.types;
+}
+
+/** The copied head's card types, the head itself and whether the words after "copy of" say "you control". */
+function copiedHead(t: string): { types: string[]; head: string; yours: boolean; excludesCreature: boolean } | undefined {
   const m = /\bcop(?:y|ies)\s+of\b/.exec(t);
   if (!m) return undefined;
   const rest = t.slice(m.index + m[0].length);
   // The head ends at a QUALIFIER or a following clause, never at a list separator: "a copy of target creature, artifact, or planeswalker" and "creature and/or
   // artifact" are lists of what may be copied. "and" ends it only when a clause follows ("and that's blocking"), a comma only before a clause word.
   const head = rest.split(/\b(?:attacking|blocking|you|your|an?\s+opponent|with|from|exiled|except|which|who)\b|\band\s+(?:that|it|they|those|attach)\b|\bthat(?:'s|\s+(?:is|are|was|were|has|have|can|would))|,\s*(?:except|tapped|that|which|who|with|then|and\s+(?:that|it|they))\b/i)[0]!;
-  const named = (CARD_TYPES as readonly string[]).filter((x) => new RegExp(`\\b${x}s?\\b`).test(head));
-  return named.length === 1 && named[0] === "creature" ? "creature" : undefined;
+  // "non-creature" / "noncreature" EXCLUDES creature: the hyphen would otherwise leave a word boundary before "creature" and name it.
+  const excludesCreature = /\bnon-?creature\b/.test(head);
+  const named = head.replace(/\bnon-?creature\b/g, " ");
+  const types = [...CARD_TYPES, "permanent"].filter((x) => new RegExp(`\\b${x}s?\\b`).test(named));
+  return { types, head, excludesCreature, yours: /\byou control\b/.test(rest.split(/\bexcept\b/)[0]!) };
+}
+
+function copiedCreature(t: string, out: SubjectFilter): string | undefined {
+  if (out.token !== true || !Array.isArray(out.type) || (out.allTypes?.length ?? 0) > 0) return undefined;
+  const named = copiedHeadTypes(t)?.filter((x) => x !== "permanent");
+  return named?.length === 1 && named[0] === "creature" ? "creature" : undefined;
+}
+
+/** A TOKEN COPY OF A TARGET IS AIMED AT WHAT IT COPIES, NOT AT WHAT IT BECOMES (#1365). The subject describes the TOKEN, so "a token that's a copy of target land, except it's a 3/3 creature in addition"
+ *  (Rebuild the City) is a creature that is `scope: target`, and `spellTargeting` read a creature target off the token's own type. The target is judged from the COPIED HEAD: the scope stays when
+ *  the head can be a creature you control (#713) -- it names creature (Ember Island Production, Aggressive Biomancy, Saheeli's Artistry, Molten Duplication), or names permanent with no creature
+ *  exclusion AND says "you control" (Applied Geometry: "target non-Aura permanent you control") -- and is left off otherwise: only non-creature types ("target land", "target artifact" Schema Thief,
+ *  "target noncreature artifact" Mishra, "target noncreature permanent" Astral Dragon) or a bare "target permanent" with no "you control" (Will of the Temur: #713 counts a target that is not
+ *  yours only when the effect helps it, and a token-generation does not). A head naming no type at all ("that card", "target token": `token` is not a card type) is not judged and keeps the scope.
+ *  CEILING: `parseSubject` sets no `copyOf` (the grammar's rows carry it: Replication Technique, Mythos of Illuna), so a copy of a target land no longer states what it targets; nothing reads a
+ *  token-generation's target but `spellTargeting`. Upgrade path: set `copyOf` here and have `spellTargeting` read it instead of the token's own type. */
+function copiesNonCreatureTarget(t: string, out: SubjectFilter): boolean {
+  if (out.token !== true) return false;
+  const h = copiedHead(t);
+  if (h === undefined || h.types.length === 0) return false;
+  if (h.types.includes("creature")) return false;
+  return !(h.types.includes("permanent") && !h.excludesCreature && h.yours);
 }
 
 function compoundTypes(t: string): string[] | undefined {
@@ -909,7 +938,7 @@ export function parseSubject(text: string): SubjectFilter {
   const copied = lost === undefined ? copiedCreature(t, out) : undefined;
   if (copied !== undefined) out.type = copied;
   if (subtype) out.subtype = subtype;
-  if (scope) out.scope = scope;
+  if (scope && !(scope === "target" && copiesNonCreatureTarget(t, out))) out.scope = scope;
   if (stats.length) out.stats = stats;
   // A CROSS-SLOT OR IS A DISJUNCTION, NOT AN AND. "another creature or Vehicle you control" (Prowl),
   // "an artifact or Dragon card" (Magda): one half fills `type`, the other `subtype`, and the matcher

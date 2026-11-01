@@ -1647,19 +1647,19 @@
       "why": "Every member read. named: a token's own name is not a card to look for; a card name runs past its comma and stops at ';'; 'named ~' is one token; relation: a relation or capability one card states (would destroy, could enchant, targeted by, tap ability, could produce, protected by, card-type count) that parseSubject dropped or misread as a class; the matcher refuses it; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
     },
     "copyOf": {
-      "distinct": 23,
+      "distinct": 26,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. copyOf: what a copy copies (the original's class), beside what it becomes; parseSubject kept neither apart."
     },
     "control,copyOf,scope": {
-      "distinct": 38,
+      "distinct": 30,
       "label": "grammar right",
       "rule": "CR 108.3, CR 112.2, CR 115.1, printed text",
       "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; copyOf: what a copy copies (the original's class), beside what it becomes; parseSubject kept neither apart; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject."
     },
     "copyOf,scope": {
-      "distinct": 14,
+      "distinct": 11,
       "label": "grammar right",
       "rule": "CR 115.1, printed text",
       "why": "Every member read. copyOf: what a copy copies (the original's class), beside what it becomes; parseSubject kept neither apart; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject."
@@ -1677,7 +1677,7 @@
       "why": "Every member read. copyOf: what a copy copies (the original's class), beside what it becomes; parseSubject kept neither apart; tapped: tapped/untapped."
     },
     "control,copyOf": {
-      "distinct": 5,
+      "distinct": 13,
       "label": "grammar right",
       "rule": "CR 108.3, CR 112.2, CR 115.1, printed text",
       "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; copyOf: what a copy copies (the original's class), beside what it becomes; parseSubject kept neither apart."
