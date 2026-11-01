@@ -88,7 +88,7 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   "damage-multiplier-plus": [() => "adds to the damage", "adds to the damage"],
   "damage-multiplier-reduced": [() => "reduces the damage", "reduces the damage"],
   "damage-multiplier-other": [() => "changes the damage", "changes the damage"],
-  "damage-multiplier-toughness": [() => "assigns combat damage equal to its toughness", "assigns combat damage equal to its toughness"],
+  "damage-multiplier-toughness": [() => "makes creatures assign combat damage by toughness", "makes creatures assign combat damage by toughness"],
   "trigger-doubling": [() => "doubles the trigger", "doubles the trigger"],
   proliferate: [() => "proliferates", "proliferates"],
   clone: [() => "copies a permanent", "copies a permanent"],
@@ -745,6 +745,15 @@ const GRANT_PHRASES: Record<string, string> = {
 export function staticGrantSentence(
   producer: string, consumer: string, kind: string, noun?: string, keywords?: readonly string[],
 ): string {
+  // A DAMAGE MULTIPLIER REACHES THE DAMAGE THE CONSUMER DEALS (#1345): "gives X its damage multiplier" was the bare kind.
+  if (kind.startsWith("damage-multiplier")) {
+    const plusN = /^damage-multiplier-plus-(\d+)$/.exec(kind)?.[1];
+    const how = kind === "damage-multiplier-toughness" ? null
+      : kind === "damage-multiplier-twice" ? "doubles" : kind === "damage-multiplier-thrice" ? "triples"
+      : plusN ? `adds ${plusN} to` : kind === "damage-multiplier-plus" ? "adds to"
+      : kind === "damage-multiplier-reduced" ? "reduces" : "changes";
+    return how === null ? `${producer} makes ${consumer} deal combat damage equal to its toughness` : `${producer} ${how} the damage ${consumer} deals`;
+  }
   const phrase = kind === "type-grant" && noun
     ? `an extra ${noun} type`
     : kind === "keyword-grant" && keywords?.length

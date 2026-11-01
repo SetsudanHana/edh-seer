@@ -611,7 +611,14 @@ describe("the fact kinds say what they are on the ability row (#1315)", () => {
 test("a toughness-as-damage static has its own phrase, never a multiplier's (#1345)", () => {
   // Doran, the Siege Tower: "assigns combat damage equal to its toughness rather than its power" is a static over a stat line.
   const doran = { kind: "damage-multiplier", subject: { stats: [{ metric: "toughness", op: "gt", vs: "power" }] }, damageChange: "other" };
-  expect(effectPhrase(phraseKindOf(doran), undefined)).toBe("assigns combat damage equal to its toughness");
+  expect(effectPhrase(phraseKindOf(doran), undefined)).toBe("makes creatures assign combat damage by toughness");
   expect(effectPhrase(phraseKindOf({ kind: "damage-multiplier", damageChange: "plus" }, { op: "plus", value: 2 }), undefined)).toBe("adds 2 to the damage");
   expect(effectPhrase(phraseKindOf({ kind: "damage-multiplier", damageChange: "plus" }, { op: "times", value: 2 }), undefined)).toBe("adds to the damage");
+});
+
+test("a damage static's grant sentence says what it does to the consumer's damage (#1345)", () => {
+  expect(staticGrantSentence("Torbran", "Wall of Omens", "damage-multiplier-plus-2")).toBe("Torbran adds 2 to the damage Wall of Omens deals");
+  expect(staticGrantSentence("Fiery Emancipation", "Wall of Omens", "damage-multiplier-thrice")).toBe("Fiery Emancipation triples the damage Wall of Omens deals");
+  expect(staticGrantSentence("Doran", "Wall of Omens", "damage-multiplier-toughness")).toBe("Doran makes Wall of Omens deal combat damage equal to its toughness");
+  expect(staticGrantSentence("X", "Y", "damage-multiplier")).toBe("X changes the damage Y deals");
 });

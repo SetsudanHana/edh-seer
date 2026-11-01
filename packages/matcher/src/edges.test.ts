@@ -334,6 +334,17 @@ test("a damage replacement is worded by what it prints, never as a doubler by de
   expect(sentenceFor({})).not.toContain("doubles");
 });
 
+test("a damage static is worded by what it does to the consumer's damage (#1345)", () => {
+  const stat = [{ metric: "toughness", op: "gte", vs: "power" }];
+  const doran = base("Doran, the Siege Tower", [{ kind: "static", effect: { kind: "damage-multiplier", subject: { type: "creature", control: "you", token: null, stats: stat } } } as never]);
+  const wall = base("Wall of Omens", [], []);
+  const text = (p: ReturnType<typeof base>) => pairReasons(p, wall, H).filter((r) => r.tag === "static:damage-multiplier").map((r) => r.text).join(" | ");
+  expect(text(doran)).toContain("Doran, the Siege Tower makes Wall of Omens deal combat damage equal to its toughness");
+  expect(text(doran)).not.toContain("damage multiplier");
+  const twice = base("Absorbing Man and Titania", [{ kind: "static", effect: { kind: "damage-multiplier", damageChange: "twice", subject: { type: "creature", control: "you", token: null } } } as never]);
+  expect(text(twice)).toContain("Absorbing Man and Titania doubles the damage Wall of Omens deals");
+});
+
 test("themeSubjectKey prefers subtype, then type, else any", () => {
   expect(themeSubjectKey({ subtype: "wizard", control: "you", token: null })).toBe("wizard");
   expect(themeSubjectKey({ type: "creature", control: "you", token: null })).toBe("creature");
