@@ -325,10 +325,6 @@ test("a damage replacement that does not multiply forms no edge, reason or cares
   const refused = [
     derived("Divine Presence", "static", [{ verb: "deal-damage", object: "that permanent or player", amount: "3" }],
       "If a source would deal 4 or more damage to a permanent or player, that source deals 3 damage to that permanent or player instead."),
-    derived("Soul-Scar Mage", "static", [{ verb: "add-counter", object: "-1/-1", amount: "that many" }],
-      "If a source you control would deal noncombat damage to a creature an opponent controls, put that many -1/-1 counters on that creature instead."),
-    derived("Undead Alchemist", "static", [{ verb: "mill", object: "that many cards" }],
-      "If a Zombie you control would deal combat damage to a player, instead that player mills that many cards."),
   ];
   for (const card of refused) {
     expect(card.tags.abilities.filter((a) => a.replacement && !a.effect.kind), card.card.name).toEqual([]);
@@ -337,6 +333,21 @@ test("a damage replacement that does not multiply forms no edge, reason or cares
     expect(pairReasons(card, bolt, H), card.card.name).toEqual([]);
     expect([...cardCaresTags(card.tags)].filter((t) => t.startsWith("non-combat-damage") || t.startsWith("combat-damage")), card.card.name).toEqual([]);
   }
+});
+
+// #1465: a replacement whose result is a mill or counters is read as a plain trigger on the replaced damage: a reason forms, worded as a trigger, never as a doubler.
+test("a damage replacement that mills or places counters is a plain damage trigger (#1465)", () => {
+  const { abilities } = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "add-counter", object: "-1/-1", amount: "that many" }] }] as never, "Soul-Scar Mage",
+    { 1: "If a source you control would deal noncombat damage to a creature an opponent controls, put that many -1/-1 counters on that creature instead." });
+  const mage = base("Soul-Scar Mage", abilities as CardTags["abilities"]);
+  const bolt = base("Lightning Bolt", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target", player: true }, dealer: { control: "you", token: null } }],
+  } as never]);
+  expect(mage.tags.abilities.filter((a) => a.replacement)).toEqual([]);
+  const text = pairReasons(bolt, mage, H).map((r) => r.text).join(" | ");
+  expect(text).toContain("When Lightning Bolt deals noncombat damage, Soul-Scar Mage");
+  expect(text).not.toMatch(/doubl|triples|changes the damage|adds to the damage/);
 });
 
 test("a damage replacement is worded by what it prints, never as a doubler by default (#1345)", () => {

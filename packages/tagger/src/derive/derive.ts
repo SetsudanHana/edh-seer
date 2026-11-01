@@ -33,7 +33,7 @@ import { conditionalReturn, delaysIn, flipBranch, returnDelay, untilSourceLeaves
 import { branchesAlike, counterIsTheCardsOwn, effectGates, FLIP_VERB_WORDS, isOtherwiseGate, nthSentenceMatching, printedVerbWord } from "./effect-gate.js";
 import { parseGate } from "./gate.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
-import { damageChangeOf, isDamageMultiplication, replacementOf } from "./replacement.js";
+import { damageChangeOf, damageResultVerbs, isDamageMultiplication, replacementOf } from "./replacement.js";
 import { countOf } from "./event-count.js";
 import { reductionOf } from "./reduction.js";
 import crKeywords from "./cr-keywords.json" with { type: "json" };
@@ -601,7 +601,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 432: #1333 -- a life-total set: opponent/target player to a printed 10 or less is player-life-loss + lose-life; other genuine sets are the new fact kind life-total-set (CR 119.5); damage floors stay unclaimed; 'lose all but 1 life' emits lose-life
 // 433: #1456 -- a damage replacement that reduces, caps, redirects, mills or counters is UNREAD, not a damage-multiplier: no kind, no synthesized damage trigger, no replacement ability (12 cards, 14 abilities; their actions go to unclaimed; Goblin Psychopath keeps its kindless attacks/blocks triggers); the burn demand and the 'changes/reduces the damage' reasons go with it. RETENTION COST: Undead Alchemist <-> Zombie attackers (854 reasons, combat damage becomes mill) and Soul-Scar Mage <-> your own noncombat sources (-1/-1 counters) are real relations lost with no other route until a damage-to-mill/counters reading exists. derive-impact vs 965393c8: 12 rows changed, 0 added/removed, 1 source flip (Equal Treatment model to grammar); pair reasons of the 12 cards +0 / -40,633 (combat-damage -21,436, non-combat-damage -19,193, doubles -4); role-ratchet 0/0; dropped-clauses 4,901 -> 4,917; hollow replacement abilities (replacement:true, empty kind) 0
 // 434: #1453 -- #1453 -- a counted noun keeps a LIST OF NEGATIONS: 'for each noncreature, nonland card in your graveyard' was cut at the comma, counted 'noncreature' and kept land in the class (Xande, Dark Mage; Serpent of the Pass; Rise from the Nether; Ravenous Cosmozoan; Dragonfly Swarm; Flame On!; Summon: Esper Ramuh; The Emperor of Palamecia): scalingSubject now notType [creature, land], and the cut noun had matched no basis, so all 8 gain scaling per-graveyard and join the graveyard-scaling channel. Paradoxical Outcome's 'any number of target nonland, nontoken permanents you control' becomes a board count like its 'any number of' siblings (CEILING, #1467). derive-impact vs 432/433 main: 9 rows changed, 0 source flips, grammar complete 28,424 -> 28,424; pair reasons +30,162 / -0, all scales (8 x ~3,770 graveyard fills); role-ratchet 31,231 -> 31,231; dropped-clauses 4,917 -> 4,917.
-export const DERIVE_VERSION = 434;
+// 435: #1465 -- #1465 -- a damage replacement whose result is a mill or counters (Undead Alchemist, Szadek, Soul-Scar Mage) is an ordinary triggered ability on the replaced combat/non-combat damage (no replacement flag, no change, plain mill/counter-placement kind and emits); Lava Burst's 'can't be prevented or dealt instead' is no replacement (its deal-damage derives as damage again, the prevent rider stays unclaimed, as does Whippoorwill's identical rider which stops claiming a false prevented emit). Everything else #1456 refused stays refused. derive-impact vs 4f1de7c2: 5 rows changed, 0 added/removed, 0 source flips; pair reasons +7,714 / -28 (Soul-Scar Mage +3,280, Undead Alchemist +2,467, Szadek +1,826, Lava Burst +124, Whippoorwill +17/-28); role-ratchet +5/0 (Lava Burst burn/targetedRemoval/wincon:burn, Szadek and Undead Alchemist wincon:mill); dropped-clauses 4,917 -> 4,913
+export const DERIVE_VERSION = 435;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2613,7 +2614,7 @@ export function deriveAbilities(
     const enchantText = face !== undefined && clauseTexts
       ? Object.entries(clauseTexts).filter(([id]) => clauseFaces?.[Number(id)] === face).map(([, t]) => t).join("\n")
       : cardText;
-    const kind = abilityKind(clause);
+    let kind = abilityKind(clause);
     // A MODE TAKES ITS HEADER'S TRIGGER (#846). "Whenever you cast a spell, choose up to one —"
     // segments into a trigger clause and one clause per bullet, and the model repeats the trigger on
     // some bullets (Kairi, the Swirling Sky) and not on others (Hullbreaker Horror, 306 corpus
@@ -2764,8 +2765,13 @@ export function deriveAbilities(
     // A DAMAGE REPLACEMENT THAT DOES NOT MULTIPLY IS UNREAD (#1456): no replacement, no synthesized damage trigger, no ability of its own -- else it stays a hollow
     // `replacement: true` ability that the matcher hears every damage source with. Its actions go to `unclaimed` in the loop below.
     const replacementRead = replacementOf(text);
-    const refusedDamageReplacement = replacementRead?.kind === "damage-multiplier" && !isDamageMultiplication(text);
-    const replacement = refusedDamageReplacement ? null : replacementRead;
+    const nonMultiplying = replacementRead?.kind === "damage-multiplier" && !isDamageMultiplication(text);
+    // ... EXCEPT WHEN ITS RESULT IS A MILL OR COUNTERS (#1465, Undead Alchemist, Szadek, Soul-Scar Mage): those happen instead of the damage (CR 614), so the replaced damage is the trigger
+    // of an ordinary ability (no `replacement`, no `change`) and the mill / counter placement keeps its ordinary effect and emits.
+    const resultActions = clause.actions ?? [];
+    const damageResult = nonMultiplying && resultActions.length > 0 && resultActions.every((a) => a.verb === "mill" || a.verb === "add-counter");
+    const refusedDamageReplacement = nonMultiplying && !damageResult;
+    const replacement = refusedDamageReplacement || damageResult ? null : replacementRead;
     let trigger: Ability["trigger"];
     let grammarExtra: { verbs: Verb[]; subject: SubjectFilter }[] = [];
     let grammarRead = false;
@@ -3018,6 +3024,13 @@ export function deriveAbilities(
       trigger = { verbs: replacement.verbs, subject };
     }
 
+    if (damageResult && replacementRead && !trigger) {
+      const subject = subjectFrom(replacementRead.subjectText, cardName, enchantText);
+      if (isSelfSubject(replacementRead.subjectText, cardName)) subject.self = true;
+      trigger = { verbs: damageResultVerbs(text), subject };
+      kind = "triggered";
+    }
+
     const before = abilities.length;
     /** The abilities (the ability and its twins) a `search` or `counter-spell` action made, by action index: the put that follows names its destination (#1301). */
     const destinationOwners = new Map<number, Ability[]>();
@@ -3060,6 +3073,8 @@ export function deriveAbilities(
       if (misfiled.has(action) || refusedPlural.has(action)) { unclaimed.push(action); continue; }
       if (keywordActionOnStaticClause(kind, action.verb)) { unclaimed.push(action); continue; }
       if (refusedDamageReplacement) { unclaimed.push(action); continue; }
+      // "that damage can't be prevented or dealt instead to ..." (Lava Burst, #1465) forbids prevention; it is no prevention (Whippoorwill's same wording stops claiming `prevented` too). CEILING: stays unclaimed until prevention has a kind.
+      if (action.verb === "prevent" && /\bcan't be prevented or dealt instead\b/i.test(action.object ?? "")) { unclaimed.push(action); continue; }
       // See antecedentFor: a pronoun object inherits the thing named earlier in the same clause.
       // "Whenever a player casts a spell, if it's not their turn, this creature deals 4 damage to THEM"
       // (Scytheclaw Raptor, Adrenaline Jockey): the pronoun is the player who acted, not the spell the

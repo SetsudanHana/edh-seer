@@ -87,8 +87,12 @@ export function changeOf(clauseText: string): ReplacementChange | undefined {
  *  UNDEFINED means the clause does NOT multiply or add (#1456): an empty text, a reduction (Benevolent Unicorn "minus 1",
  *  Ghosts of the Innocent "half"), a fixed number ("deals 3 damage instead"), a redirect, a mill or counters. The caller refuses
  *  the `damage-multiplier` kind then (`isDamageMultiplication`), so burn demand never counts such a card.
- *  CEILING: a refused replacement gets no kind of its own (prevention, mill, counter placement): on a replacement a mill or
+ *  CEILING: a refused replacement gets no kind of its own (prevention, reduction, cap, redirect): on a replacement a mill or
  *  counter-placement kind reads as a doubler to the templates and would mislead. The action stays in `unclaimed`.
+ *  READ SINCE #1465: a damage replacement whose RESULT is a mill or counters (Undead Alchemist, Szadek, Soul-Scar Mage) is no
+ *  replacement ability at all but an ordinary triggered ability on the replaced damage (`damageResultVerbs`); its mill / counter
+ *  kind is then a plain effect. CEILING: the matcher still hears the replaced damage as dealt, so a Zombie whose combat damage
+ *  becomes a mill is not anti-synergy with a "combat damage" payoff there.
  *  CEILING: a clause stating two different changes (Desperate Gambit's double, then prevention) reads the first. */
 export function damageChangeOf(clauseText: string): DamageChange | undefined {
   if (clauseText.trim() === "") return undefined;
@@ -97,6 +101,14 @@ export function damageChangeOf(clauseText: string): DamageChange | undefined {
   if (/\b(?:double|twice)\b/i.test(clauseText)) return "twice";
   if (/\bplus\b/i.test(clauseText)) return "plus";
   return undefined;
+}
+
+/** The damage verbs a non-multiplying damage replacement hears, from the printed word before "damage": "combat damage" only
+ *  combat, "noncombat damage" only non-combat, bare "damage" both (#1465). */
+export function damageResultVerbs(clauseText: string): Verb[] {
+  const m = clauseText.match(/\bwould deal\b[^.]{0,40}?\b(combat|non-?combat) damage\b/i);
+  if (!m) return ["combat-damage", "non-combat-damage"];
+  return /^non/i.test(m[1]!) ? ["non-combat-damage"] : ["combat-damage"];
 }
 
 /** True when a `damage-multiplier` read off this clause really multiplies or adds. An empty text carries no
@@ -208,6 +220,8 @@ function classOf(rest: string): string {
 
 export function replacementOf(clauseText: string): Replacement | null {
   if (!/\binstead\b/i.test(clauseText)) return null;
+  // A PROHIBITION IS NO REPLACEMENT (#1465): "that damage can't be prevented or dealt instead to another permanent or player" (Lava Burst) forbids a redirect; its "instead" is not a "would ... instead" frame.
+  if (/\bcan't be prevented or dealt instead\b/i.test(clauseText)) return null;
   for (const t of TEMPLATES) {
     const m = clauseText.match(t.re);
     if (!m) continue;
