@@ -80,7 +80,15 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   "token-doubling-additional": [() => "makes extra tokens", "makes extra tokens"],
   "token-doubling-one-of-each": [() => "makes extra tokens", "makes extra tokens"],
   "token-doubling-replaced": [() => "turns them into its own tokens", "turns them into its own tokens"],
-  "damage-multiplier": [() => "doubles the damage", "doubles the damage"],
+  // BY WHAT THE REPLACEMENT PRINTS (#1345): the bare kind claimed "doubles" of Fiery Emancipation (triples), Torbran (adds 2),
+  // Benevolent Unicorn (takes 1 off) and Doran (changes which stat deals combat damage). The bare kind, an old derive, now claims only "changes".
+  "damage-multiplier": [() => "changes the damage", "changes the damage"],
+  "damage-multiplier-twice": [() => "doubles the damage", "doubles the damage"],
+  "damage-multiplier-thrice": [() => "triples the damage", "triples the damage"],
+  "damage-multiplier-plus": [() => "adds to the damage", "adds to the damage"],
+  "damage-multiplier-reduced": [() => "reduces the damage", "reduces the damage"],
+  "damage-multiplier-other": [() => "changes the damage", "changes the damage"],
+  "damage-multiplier-toughness": [() => "makes creatures assign combat damage by toughness", "makes creatures assign combat damage by toughness"],
   "trigger-doubling": [() => "doubles the trigger", "doubles the trigger"],
   proliferate: [() => "proliferates", "proliferates"],
   clone: [() => "copies a permanent", "copies a permanent"],
@@ -190,8 +198,19 @@ export function counterCostSentence(producer: string, consumer: string, onItself
 
 /** The phrase key of an effect: `token-doubling` splits by how it multiplies (#1136), as an
  *  intercepted recursion splits into `graveyard-intercept`. The effect's own kind is untouched. */
-export function phraseKindOf(effect: { kind: string; tokenMultiplier?: string }): string {
-  return effect.kind === "token-doubling" && effect.tokenMultiplier ? `token-doubling-${effect.tokenMultiplier}` : effect.kind;
+export function phraseKindOf(
+  effect: { kind: string; tokenMultiplier?: string; damageChange?: string; subject?: { stats?: unknown[] } },
+  change?: { op: string; value: number },
+): string {
+  if (effect.kind === "token-doubling" && effect.tokenMultiplier) return `token-doubling-${effect.tokenMultiplier}`;
+  if (effect.kind === "damage-multiplier") {
+    // Doran's "assigns combat damage equal to its toughness" is a static over a stat line, no multiplier.
+    if (effect.subject?.stats?.length) return "damage-multiplier-toughness";
+    // "that much damage plus 2" names its number (Torbran); "plus X" does not, and says only that it adds.
+    if (effect.damageChange === "plus" && change?.op === "plus") return `damage-multiplier-plus-${change.value}`;
+    if (effect.damageChange) return `damage-multiplier-${effect.damageChange}`;
+  }
+  return effect.kind;
 }
 
 export function effectPhrase(
@@ -234,6 +253,9 @@ export function effectPhrase(
       : `${amount} ${kindWord}counters`;
     return `puts ${n} on ${target}`;
   }
+  // The number a "plus N" damage replacement states (#1345), carried in the key by `phraseKindOf`.
+  const plusN = /^damage-multiplier-plus-(\d+)$/.exec(kind)?.[1];
+  if (plusN) return `adds ${plusN} to the damage`;
   const entry = PHRASES[kind];
   if (!entry) return null;
   const [withAmount, without] = entry;
@@ -723,6 +745,15 @@ const GRANT_PHRASES: Record<string, string> = {
 export function staticGrantSentence(
   producer: string, consumer: string, kind: string, noun?: string, keywords?: readonly string[],
 ): string {
+  // A DAMAGE MULTIPLIER REACHES THE DAMAGE THE CONSUMER DEALS (#1345): "gives X its damage multiplier" was the bare kind.
+  if (kind.startsWith("damage-multiplier")) {
+    const plusN = /^damage-multiplier-plus-(\d+)$/.exec(kind)?.[1];
+    const how = kind === "damage-multiplier-toughness" ? null
+      : kind === "damage-multiplier-twice" ? "doubles" : kind === "damage-multiplier-thrice" ? "triples"
+      : plusN ? `adds ${plusN} to` : kind === "damage-multiplier-plus" ? "adds to"
+      : kind === "damage-multiplier-reduced" ? "reduces" : "changes";
+    return how === null ? `${producer} makes ${consumer} deal combat damage equal to its toughness` : `${producer} ${how} the damage ${consumer} deals`;
+  }
   const phrase = kind === "type-grant" && noun
     ? `an extra ${noun} type`
     : kind === "keyword-grant" && keywords?.length

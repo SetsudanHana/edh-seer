@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { replacementOf } from "./replacement.js";
+import { damageChangeOf, replacementOf } from "./replacement.js";
 
 test("a multiplier is read as the event it MODIFIES, never as one it performs", () => {
   // Hardened Scales. The card places no counter of its own; it changes how many are placed.
@@ -145,4 +145,22 @@ test("a change the sentence does not state as a number is left unset", () => {
   expect(replacementOf("If one or more tokens would be created under your control, those tokens plus that many 1/1 green Squirrel creature tokens are created instead.")?.change).toBeUndefined();
   // Alhammarret's Archive: a different event count, not a multiple of "that many".
   expect(replacementOf("If you would draw a card except the first one you draw in each of your draw steps, draw two cards instead.")?.change).toBeUndefined();
+});
+
+/** WHAT A DAMAGE REPLACEMENT DOES (#1345): the sentence said "doubles the damage" of every
+ *  `damage-multiplier`. Printed texts from the corpus (Mongo, 2026-11-01). */
+test("a damage replacement says how it changes the damage", () => {
+  const how = (t: string) => damageChangeOf(t);
+  expect(how("If a source you control would deal damage to a permanent or player, it deals triple that damage to that permanent or player instead.")).toBe("thrice");
+  expect(how("If a creature you control would deal damage to a permanent or player, it deals double that damage instead.")).toBe("twice");
+  expect(how("Double all damage that creatures you control with counters on them would deal.")).toBe("twice");
+  expect(how("If a creature you control that entered this turn would deal damage, it deals twice that much damage instead.")).toBe("twice");
+  expect(how("If a source would deal damage to a player or battle this turn, it deals that much damage plus 2 instead.")).toBe("plus");
+  expect(how("If a source you control would deal noncombat damage to a permanent or player this turn, it deals that much damage plus X instead.")).toBe("plus");
+  expect(how("If a source would deal damage to a permanent or player, it deals half that damage, rounded down, to that permanent or player instead.")).toBe("reduced");
+  expect(how("If a spell would deal damage to a permanent or player, it deals that much damage minus 1 to that permanent or player instead.")).toBe("reduced");
+  // Not a multiplier at all: a redirect, a mill, a counter, a fixed number.
+  expect(how("If a Zombie you control would deal combat damage to a player, instead that player mills that many cards.")).toBe("other");
+  expect(how("If a source would deal 4 or more damage to a permanent or player, that source deals 3 damage to that permanent or player instead.")).toBe("other");
+  expect(how("")).toBeUndefined();
 });

@@ -29,7 +29,7 @@
  *  that field existed and captured the victim, so Fiery Emancipation's trigger read `permanent` and
  *  Khalni Ambush's fight -- dealer `{control: you}`, no type -- could never satisfy it. The source
  *  phrase before "would" is now the half the matcher checks, so it is the subject. */
-import type { EffectKind, ReplacementChange, TokenMultiplier, Verb } from "../schema.js";
+import type { DamageChange, EffectKind, ReplacementChange, TokenMultiplier, Verb } from "../schema.js";
 
 export interface Replacement {
   /** The event this modifies — what a consumer trigger fires on. */
@@ -79,6 +79,21 @@ export function changeOf(clauseText: string): ReplacementChange | undefined {
   const word = plus[1]!.toLowerCase();
   const value = /^an?\s/.test(word) ? 1 : /^\d+$/.test(word) ? Number(word) : NUMBER_WORDS[word];
   return value === undefined ? undefined : { op: "plus", value };
+}
+
+/** WHAT A DAMAGE REPLACEMENT DOES TO THE DAMAGE (#1345), read off the clause text. `changeOf` cannot say it: it
+ *  is set only beside `replacement` and only for a stated number, so Collective Inferno's "Double all damage ...",
+ *  an on-cast or an activated rider, and "plus X" carry none. Reducing first (Benevolent Unicorn "minus 1",
+ *  Ghosts of the Innocent "half"), then the multiples, then "plus"; whatever else the kind caught (a mill, a
+ *  redirect, "deals 3 damage instead") is `other`. An empty text claims nothing.
+ *  CEILING: a clause stating two different changes (Desperate Gambit's double, then prevention) reads the first. */
+export function damageChangeOf(clauseText: string): DamageChange | undefined {
+  if (clauseText.trim() === "") return undefined;
+  if (/\b(?:minus|half)\b/i.test(clauseText)) return "reduced";
+  if (/\b(?:triple|three times|thrice)\b/i.test(clauseText)) return "thrice";
+  if (/\b(?:double|twice)\b/i.test(clauseText)) return "twice";
+  if (/\bplus\b/i.test(clauseText)) return "plus";
+  return "other";
 }
 
 /** HOW A TOKEN REPLACEMENT CHANGES THE COUNT (#1136). Of the 34 corpus cards deriving `token-doubling`

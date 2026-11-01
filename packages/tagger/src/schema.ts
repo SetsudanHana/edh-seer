@@ -1119,6 +1119,11 @@ export interface Effect {
    *  Visitation (the same count, a different token) and Ojer Taq (triples). Absent on a doubler read
    *  off a bare "double"/"triple" verb: the sentence says "makes more tokens" then. */
   tokenMultiplier?: TokenMultiplier;
+  /** WHAT A `damage-multiplier` DOES TO THE DAMAGE (#1345), read off the printed clause. The kind alone made every
+   *  reason say "doubles the damage": Fiery Emancipation triples, Torbran adds 2, Benevolent Unicorn takes 1 off. Absent
+   *  when the clause text was not at hand (the sentence says "changes the damage" then). A toughness-as-damage static
+   *  (Doran) is told apart by its stat predicate, not by this field. */
+  damageChange?: DamageChange;
   /** WHAT AN `animate` MAKES ITS OBJECT (#1364): "target land you control becomes a 3/3 Elemental creature" -> `{ type: "creature", subtype: "elemental", stats: 3/3 }`; "All lands are 1/1 creatures"; "a blue Fish".
    *  The RESULT of the change (types, subtypes, base P/T, colours), read off the printed clause. NEVER THE SUBJECT: `subject` is what is targeted or affected, and `spellTargeting` (matcher) reads a
    *  `scope: target` creature-typed subject as "aimed at a creature you control" (Brave the Wilds targets a land).
@@ -1128,6 +1133,10 @@ export interface Effect {
    *  (Life and Limb), a name cut by a comma (Tenth District Hero) and a clause stating two different results (Primal Clay) are left unread. */
   becomes?: SubjectFilter;
 }
+
+/** `plus` is "that much damage plus N" (the number is `Ability.change` when stated); `reduced` is minus or half; `other` is
+ *  a replacement the kind catches without scaling the damage (a mill, a redirect, "deals 3 damage instead"). */
+export type DamageChange = "twice" | "thrice" | "plus" | "reduced" | "other";
 
 export type TokenMultiplier = "twice" | "thrice" | "additional" | "one-of-each" | "replaced";
 

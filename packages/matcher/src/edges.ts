@@ -2351,7 +2351,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
             : clonesOnEntry ? enterAsCopySentence(p.card.name, c.card.name)
             : reasonSentence({
             producer: enteringFaceName(p, e0) ?? p.card.name, consumer: c.card.name, eventKey: key,
-            effectKind: phraseKindOf(a.effect), amount: a.amount, self: t.subject.self === true, keywords,
+            effectKind: phraseKindOf(a.effect, a.change), amount: a.amount, self: t.subject.self === true, keywords,
             ...(t.subject.self !== true && sacrificedTo(p, origin, e0) ? { sacrificedTo: sacrificedTo(p, origin, e0) } : {}),
             // THE PRODUCER IS THE THING SACRIFICED (#729 f): Treasure's "Sacrifice this artifact", an
             // evoke creature. The player sacrifices it; the card does not sacrifice anything. A card
@@ -3089,7 +3089,7 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
         : tagKey(a.effect.kind, themeSubjectKey(a.effect.subject)),
       text: a.effect.kind === "cost-reduction"
         ? costReductionSentence(p.card.name, c.card.name)
-        : staticGrantSentence(p.card.name, c.card.name, a.effect.kind,
+        : staticGrantSentence(p.card.name, c.card.name, a.effect.kind === "damage-multiplier" ? phraseKindOf(a.effect, a.change) : a.effect.kind,
           typeGrantNoun(a.effect.subject?.type, c.tags.characteristics.types), a.grants && grants),
       effectKind: a.effect.kind,
       repeatability:

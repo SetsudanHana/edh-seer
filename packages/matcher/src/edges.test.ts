@@ -311,6 +311,40 @@ test("a token replacement is worded by how it multiplies, never as a doubler by 
   expect(sentenceFor(undefined)).not.toContain("doubles");
 });
 
+test("a damage replacement is worded by what it prints, never as a doubler by default (#1345)", () => {
+  const sentenceFor = (effect: Record<string, unknown>, change?: { op: "plus" | "times"; value: number }) => {
+    const doubler = base("Damage Doubler", [{
+      kind: "static", effect: { kind: "damage-multiplier", ...effect }, ...(change ? { change } : {}), replacement: true,
+      trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null } },
+    } as never]);
+    const spike = base("Lava Spike", [{
+      kind: "on-cast", effect: { kind: "damage" },
+      emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target", player: true }, dealer: { control: "you", token: null } }],
+    } as never]);
+    return pairReasons(spike, doubler, H).filter((r) => r.tag === "non-combat-damage:any").map((r) => r.text).join(" | ");
+  };
+  expect(sentenceFor({ damageChange: "twice" })).toContain("Damage Doubler doubles the damage");
+  expect(sentenceFor({ damageChange: "thrice" })).toContain("Damage Doubler triples the damage");
+  expect(sentenceFor({ damageChange: "thrice" })).not.toContain("doubles");
+  expect(sentenceFor({ damageChange: "plus" }, { op: "plus", value: 2 })).toContain("Damage Doubler adds 2 to the damage");
+  expect(sentenceFor({ damageChange: "plus" })).toContain("Damage Doubler adds to the damage");
+  expect(sentenceFor({ damageChange: "reduced" })).toContain("Damage Doubler reduces the damage");
+  expect(sentenceFor({ damageChange: "other" })).toContain("Damage Doubler changes the damage");
+  expect(sentenceFor({})).toContain("Damage Doubler changes the damage");
+  expect(sentenceFor({})).not.toContain("doubles");
+});
+
+test("a damage static is worded by what it does to the consumer's damage (#1345)", () => {
+  const stat = [{ metric: "toughness", op: "gte", vs: "power" }];
+  const doran = base("Doran, the Siege Tower", [{ kind: "static", effect: { kind: "damage-multiplier", subject: { type: "creature", control: "you", token: null, stats: stat } } } as never]);
+  const wall = base("Wall of Omens", [], []);
+  const text = (p: ReturnType<typeof base>) => pairReasons(p, wall, H).filter((r) => r.tag === "static:damage-multiplier").map((r) => r.text).join(" | ");
+  expect(text(doran)).toContain("Doran, the Siege Tower makes Wall of Omens deal combat damage equal to its toughness");
+  expect(text(doran)).not.toContain("damage multiplier");
+  const twice = base("Absorbing Man and Titania", [{ kind: "static", effect: { kind: "damage-multiplier", damageChange: "twice", subject: { type: "creature", control: "you", token: null } } } as never]);
+  expect(text(twice)).toContain("Absorbing Man and Titania doubles the damage Wall of Omens deals");
+});
+
 test("themeSubjectKey prefers subtype, then type, else any", () => {
   expect(themeSubjectKey({ subtype: "wizard", control: "you", token: null })).toBe("wizard");
   expect(themeSubjectKey({ type: "creature", control: "you", token: null })).toBe("creature");

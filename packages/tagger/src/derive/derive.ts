@@ -32,7 +32,7 @@ import { conditionalReturn, delaysIn, flipBranch, returnDelay, untilSourceLeaves
 import { branchesAlike, counterIsTheCardsOwn, effectGates, FLIP_VERB_WORDS, isOtherwiseGate, nthSentenceMatching, printedVerbWord } from "./effect-gate.js";
 import { parseGate } from "./gate.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
-import { replacementOf } from "./replacement.js";
+import { damageChangeOf, replacementOf } from "./replacement.js";
 import { countOf } from "./event-count.js";
 import { reductionOf } from "./reduction.js";
 import crKeywords from "./cr-keywords.json" with { type: "json" };
@@ -596,7 +596,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 428: #1360 -- A chosen colour is chosenColor, not chosenType: Heraldic Banner, Prism Ring, Crossroads Village no longer resolve to a deck subtype
 // 429: #1355 -- a printed 'spend mana as though it were mana of any color' / 'mana of any type can be spent' rider after a cast or play is read as the store's unclaimed other, not stripped silently
 // 430: #1349 part 3 -- regenerated creature-subtype vocabulary from MTGJSON (11 types: Romulan, Mindless-One, Jem'Hadar, Vau-N'akat and 7 more, none yet in CR 205.3m; the placeholder 'missing' goes): Rise from the Nether and In the Pale Moonlight read; changeling cards list the new types. derive-impact vs 2df5d340: 67 rows changed (every changeling gains all 11 types, 0 pair reasons from that alone), 2 added (Rise from the Nether, In the Pale Moonlight), 0 source flips; pair reasons +8,563 / -0, all on the two new cards (Pale Moonlight +7,475, Rise +1,061, +27 more where the partner is a changeling); role-ratchet 0/0; dropped-clauses 4,933 -> 4,933 (new 0, fixed 0). 'Choose target X.' stays a blocker (#1452)
-export const DERIVE_VERSION = 430;
+// 431: #1345 -- a damage multiplier records how it changes the damage (Effect.damageChange: twice, thrice, plus, reduced, other), read off the clause: Fiery Emancipation triples, Torbran adds 2, Benevolent Unicorn reduces; the reason sentence says so instead of 'doubles the damage'. derive-impact vs 3a45859b: 75 rows changed (the new field only), 0 added/removed, 0 source flips; pair reasons +0 / -0; role-ratchet 0/0; dropped-clauses 4,933 -> 4,933 (new 0, fixed 0). Round 2: the static pass and the row phrase read the same variant (Doran, Absorbing Man and Titania)
+export const DERIVE_VERSION = 431;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -3589,6 +3590,8 @@ export function deriveAbilities(
         effect: countedSubject ? { ...scaled, scalingSubject: countedSubject } : scaled,
       };
       if (replacement?.tokenMultiplier) ability.effect = { ...ability.effect, tokenMultiplier: replacement.tokenMultiplier };
+      // HOW A DAMAGE MULTIPLIER CHANGES THE DAMAGE (#1345), off the clause the verb path and the template both sit in.
+      if (effectKind === "damage-multiplier") { const damageChange = damageChangeOf(text); if (damageChange) ability.effect = { ...ability.effect, damageChange }; }
       // WHAT AN ANIMATE MAKES ITS OBJECT lives in its own slot, never the subject (#1364; see `Effect.becomes`).
       if (effectKind === "animate") { const becomes = animateResult(clauseText); if (becomes) ability.effect = { ...ability.effect, becomes }; }
       if (trigger) ability.trigger = trigger;
@@ -3879,7 +3882,8 @@ export function deriveAbilities(
       // a static clause, which `keywordActionOnStaticClause` drops precisely so it never becomes a
       // proliferate source. The KIND is known even though the action was refused, so the ability is
       // labelled rather than left empty.
-      abilities.push({ kind, effect: replacement ? { kind: replacement.kind, ...(replacement.tokenMultiplier ? { tokenMultiplier: replacement.tokenMultiplier } : {}) } : { kind: "" as const },
+      abilities.push({ kind, effect: replacement ? { kind: replacement.kind, ...(replacement.tokenMultiplier ? { tokenMultiplier: replacement.tokenMultiplier } : {}),
+        ...(replacement.kind === "damage-multiplier" && damageChangeOf(text) ? { damageChange: damageChangeOf(text)! } : {}) } : { kind: "" as const },
         ...(trigger ? { trigger } : {}), ...(face ? { face } : {}) });
     }
 

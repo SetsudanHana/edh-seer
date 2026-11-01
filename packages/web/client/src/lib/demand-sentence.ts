@@ -642,7 +642,8 @@ const STATIC_REACH: Record<string, string> = {
   "keyword-grant": "it grants abilities to",
   "type-grant": "it grants types to",
   "trigger-doubling": "whose triggers it doubles",
-  "damage-multiplier": "whose damage it multiplies",
+  // PER KIND (like token-doubling): Doran makes a creature deal damage by toughness, Torbran adds to it, Fiery Emancipation triples it; the variant is on the effect, not the key (#1345).
+  "damage-multiplier": "whose damage it changes",
   // PER KIND, SO TRUE FOR EVERY MODE (#1136): Xorn adds one, Divine Visitation swaps them at the same
   // count, and only a Doubling Season doubles. The mode is on the effect, not the key.
   "token-doubling": "whose tokens it adds to or replaces",
