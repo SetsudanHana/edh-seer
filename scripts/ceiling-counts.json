@@ -80,6 +80,7 @@
   "packages/tagger/src/derive/host.ts": 1,
   "packages/tagger/src/derive/intervening-if.ts": 2,
   "packages/tagger/src/derive/library-search.ts": 1,
+  "packages/tagger/src/derive/life-set.ts": 1,
   "packages/tagger/src/derive/mana-lines.ts": 29,
   "packages/tagger/src/derive/modal.ts": 3,
   "packages/tagger/src/derive/recipient.ts": 3,

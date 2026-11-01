@@ -1033,6 +1033,13 @@ export const EFFECT_KINDS = [
   // for how long. A fact kind like `restriction`: the pair channels read it blank. NOT the positive `untap`, NOT "you may choose not to untap" (a permission, Amber Prison), and a CONDITIONAL denial
   // ("if it has a depletion counter on it": Veldt; "As long as enchanted creature isn't legendary": Stunning Strike) is left unread.
   "untap-denial",
+  // LIFE-TOTAL-SET (CR 119.5: "If an effect sets a player's life total to a specific number, the player gains or loses the necessary amount of life to end up with the new total"; #1333, owner ruling
+  // 2026-11-01): "Your life total becomes 26" (Providence), "each player's life total becomes the highest" (Arbiter of Knollridge), Worldfire, Biorhythm, Blessed Wind's 20, Torgaar's "half their starting
+  // life total", Lich's Mirror and The Golden Throne's replacement. `effect.subject` is whose life total (you / each player / target player). No direction: the change is a gain or a loss as the total
+  // demands, so NO emit and no role. A fact kind like `restriction`: the pair channels read it blank. NOT a set at an opponent or a target player to a printed number of 10 or less (Sorin Markov,
+  // Vraska, Magister Sphinx: that is a `player-life-loss` and a `lose-life` emit), NOT "you lose all but 1 life" (Soulgorger Orgg: a loss), NOT a damage floor ("damage that would reduce your life
+  // total to less than 1 reduces it to 1 instead": Ali from Cairo, Angel's Grace; no set happens, unclaimed).
+  "life-total-set",
   // TO-HAND (CR 121.5: "If an effect moves cards from a player's library to that player's hand without using the word 'draw,' the player has not drawn those cards"; #1302,
   // owner ruling 2026-10-22): cards put from the TOP of your own library into your hand with no search -- Dark Confidant ("reveal the top card of your library and put that
   // card into your hand"), Ad Nauseam, Fact or Fiction (one pile), Impulse / Dig Through Time ("look at the top N ... put one / two of them into your hand"), Coiling
