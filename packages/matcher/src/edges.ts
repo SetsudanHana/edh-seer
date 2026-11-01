@@ -3089,7 +3089,7 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
         : tagKey(a.effect.kind, themeSubjectKey(a.effect.subject)),
       text: a.effect.kind === "cost-reduction"
         ? costReductionSentence(p.card.name, c.card.name)
-        : staticGrantSentence(p.card.name, c.card.name, phraseKindOf(a.effect, a.change),
+        : staticGrantSentence(p.card.name, c.card.name, a.effect.kind === "damage-multiplier" ? phraseKindOf(a.effect, a.change) : a.effect.kind,
           typeGrantNoun(a.effect.subject?.type, c.tags.characteristics.types), a.grants && grants),
       effectKind: a.effect.kind,
       repeatability:
