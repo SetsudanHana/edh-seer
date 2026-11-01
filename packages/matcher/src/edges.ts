@@ -520,7 +520,12 @@ function selfDealer(d: SubjectFilter): boolean {
  *  regains ~55 and readmits ~10 false (Champion of the Path, Be'lakor, Stalking Vengeance): a missing pair over a wrong one. Derive-side dealer typing makes this regex deletable. */
 function authoredEmit(a: CardTags["abilities"][number], e: GameEvent, tags: CardTags): GameEvent {
   const sized = a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e;
-  return sized.dealer !== undefined && selfDealer(sized.dealer) && a.grantedBy === undefined && !OTHER_CREATURE_AMOUNT.test(a.amount ?? "") ? { ...sized, dealer: { ...sized.dealer, colors: tags.characteristics.colors } } : sized;
+  if (!(sized.dealer !== undefined && selfDealer(sized.dealer) && a.grantedBy === undefined && !OTHER_CREATURE_AMOUNT.test(a.amount ?? ""))) return sized;
+  // A SPELL IS THE SOURCE OF ITS OWN DAMAGE (#1465): an instant's or sorcery's on-cast damage is dealt by that spell, so the dealer carries the card's spell types and a trigger on "an instant or sorcery spell you control
+  // deals damage" (Syr Carah, Pyromancer's Swath, Rem Karolus, Flame Channeler) hears it. It used to reach her only through an untyped recipient, which a player-only recipient closes.
+  // CEILING: only an `on-cast` ability of an instant or sorcery card; a creature spell's or permanent's ability damage stays a bare dealer, and a split card's other half shares the card's types.
+  const spellTypes = a.kind === "on-cast" ? tags.characteristics.types.map((t) => t.toLowerCase()).filter((t) => t === "instant" || t === "sorcery") : [];
+  return { ...sized, dealer: { ...sized.dealer, colors: tags.characteristics.colors, ...(spellTypes.length > 0 ? { type: spellTypes.length === 1 ? spellTypes[0]! : spellTypes } : {}) } };
 }
 
 /** A producer's events BEFORE anything is derived from them -- authored emits plus the card's own
@@ -2306,7 +2311,9 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
           // so the set can never hold a card of yours. Card-scoped printed cue, the same shape and
           // the same ceiling as `reducesItself`.
           if (exilesOnlyOpponents(p.card.oracleText)) continue;
-          const { zone: _eventZone, ...identity } = e.subject;
+          // A DAMAGE EVENT'S IDENTITY IS ITS DEALER (#1465): a self trigger "when Syr Carah deals damage" watches who DEALS it, not who is hit, so it is the dealer that must be able to be this card.
+          // CEILING: a bare dealer (a creature's ability) is untyped and still satisfies any card; only a typed dealer (an instant or sorcery's own damage) is refused.
+          const { zone: _eventZone, ...identity } = DAMAGE_VERBS.has(e.verb) && t.verb !== "damaged" && e.dealer !== undefined ? e.dealer : e.subject;
           // The producer re-entering ITSELF (Reassembling Skeleton, Drownyard Temple) is a real
           // entry for anything watching creatures, but it is never the CONSUMER entering, which is
           // the only event a self trigger watches.

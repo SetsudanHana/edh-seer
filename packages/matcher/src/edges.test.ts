@@ -429,6 +429,31 @@ test("a damage replacement that mills or places counters is a plain damage trigg
   expect(text).not.toMatch(/doubl|triples|changes the damage|adds to the damage/);
 });
 
+// #1465: a spell is the source of its own damage, so a trigger on "an instant or sorcery spell you control deals damage" (Syr Carah) hears an instant's or sorcery's damage even when the recipient is a player
+test("an instant or sorcery's own damage satisfies a spell-typed damage trigger; a creature's does not", () => {
+  const withTypes = (c: ReturnType<typeof base>, types: string[]) => ({ ...c, tags: { ...c.tags, characteristics: { ...c.tags.characteristics, types } } });
+  const carah = base("Syr Carah, the Bold", [{
+    kind: "triggered", effect: { kind: "damage" },
+    trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null, type: ["instant", "sorcery"] } },
+  } as never]);
+  const flameRift = withTypes(base("Flame Rift", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "each", player: true }, dealer: { control: "you", token: null } }],
+  } as never]), ["sorcery"]);
+  const pyromancer = base("Prodigal Pyromancer", [{
+    kind: "activated", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target" }, dealer: { control: "you", token: null } }],
+  } as never]);
+  expect(pairReasons(flameRift, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(true);
+  expect(pairReasons(pyromancer, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(false);
+  // her SELF trigger is not satisfied by another card's spell: "Syr Carah deals noncombat damage thanks to Flame Rift" names the wrong dealer
+  const selfCarah = base("Syr Carah, the Bold", [{
+    kind: "triggered", effect: { kind: "damage" },
+    trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null, self: true } },
+  } as never]);
+  expect(pairReasons(flameRift, selfCarah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(false);
+});
+
 test("a damage replacement is worded by what it prints, never as a doubler by default (#1345)", () => {
   const sentenceFor = (effect: Record<string, unknown>, change?: { op: "plus" | "times"; value: number }) => {
     const doubler = base("Damage Doubler", [{
