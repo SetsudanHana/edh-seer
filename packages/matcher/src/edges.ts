@@ -511,9 +511,13 @@ function selfDealer(d: SubjectFilter): boolean {
  *  only abstains (the old behaviour): a granted ability (`grantedBy`: Barbed Field's enchanted land deals the damage) and an amount read off another creature ("equal to its
  *  power": Self-Destruct, Pain for All, Domri's Ambush). `[]` is colourless, a fact, and fails a coloured demand as it should.
  *  CEILING: the matcher has no clause text here (`CardTags` carries none), so a bare dealer whose sentence names another object with no creature stat in the amount still reads as the
- *  card. Measured 2026-11-01 over Torbran's 1,875 gained producers: about 15 cards (Rakdos Charm, Missy, Sarkhan the Mad, Enchanter's Bane, Beastie Beatdown, Goblin Tinkerer, Aura Barbs,
+ *  card. Measured 2026-11-01 over Torbran's 1,887 gained producers: about 15 cards (Rakdos Charm, Missy, Sarkhan the Mad, Saskia the Unyielding, Enchanter's Bane, Beastie Beatdown, Goblin Tinkerer, Aura Barbs,
  *  Stalking Yeti, Form of the Dinosaur, Dizzying Gaze, Rage Forger, Ingris Stingerquill, Wisecrack, Swooping Pteranodon, the second half of Pain for All). The fix is derive-side typing of
- *  those dealers, after which `selfDealer` refuses them without a change here. */
+ *  those dealers, after which `selfDealer` refuses them without a change here.
+ *  CEILING: `OTHER_CREATURE_AMOUNT` also refuses TRUE self-dealers, because on a creature card "its power" is usually its own and "that creature's power" usually sizes a creature the card
+ *  itself deals damage with: of the 127 producers it removed from Torbran, about 57 deal the damage themselves (Terror of the Peaks, Murderous Redcap, Cacophony Scamp, Heartfire Hero,
+ *  Spikeshot Elder, Gleeful Arsonist, Ziatora, Rupture), about 285 reasons over the five red-source replacements, missing on main too. Chosen over a creature-only narrowing, which
+ *  regains ~55 and readmits ~10 false (Champion of the Path, Be'lakor, Stalking Vengeance): a missing pair over a wrong one. Derive-side dealer typing makes this regex deletable. */
 function authoredEmit(a: CardTags["abilities"][number], e: GameEvent, tags: CardTags): GameEvent {
   const sized = a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e;
   return sized.dealer !== undefined && selfDealer(sized.dealer) && a.grantedBy === undefined && !OTHER_CREATURE_AMOUNT.test(a.amount ?? "") ? { ...sized, dealer: { ...sized.dealer, colors: tags.characteristics.colors } } : sized;
