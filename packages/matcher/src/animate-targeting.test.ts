@@ -66,3 +66,48 @@ test("...so no heroic creature forms a cast edge with Rebuild the City or Will o
   expect(pairReasons(geometry, crusader, H).some((r) => r.tag.startsWith("cast:"))).toBe(true);
   expect(pairReasons(embers, crusader, H).some((r) => r.tag.startsWith("cast:"))).toBe(true);
 });
+
+/** AN ANIMATE'S RESULT HAS ITS OWN SLOT (#1364). What the object BECOMES (types, subtypes, P/T) is `Effect.becomes`, never the subject: the subject keeps what is targeted or affected, which is
+ *  all `spellTargeting` may read. Real oracle text (Mongo `cards`), derived from the grammar's own records. */
+/** The five #1352 cards are not grammar-complete: their STORED readings (Mongo `cardClauses`, verbatim) are derived, so the stored path states `becomes` too. */
+function fromStored(name: string, typeLine: string, oracleText: string, records: unknown[]): DeckCard {
+  const card = { name, typeLine, oracleText, keywords: [] as string[] };
+  const tags = deriveCardTags(deriveInputOf(card as never, name, name, records as never)) as CardTags;
+  return { card: { ...card, colors: [], manaValue: 0 } as unknown as DeckCard["card"], tags };
+}
+const act = (verb: string, object: string) => ({ verb, object, fromZone: null, toZone: null, amount: null, optional: false });
+const uprising = fromStored("Elemental Uprising", "Instant", "Target land you control becomes a 4/4 Elemental creature with haste until end of turn. It's still a land. It must be blocked this turn if able.",
+  [{ id: 1, abilityType: "spell", actions: [act("animate", "target land you control"), act("grant-ability", "target land you control"), act("cant", "not be blocked this turn if able")] }]);
+const slumber = fromStored("Disturbed Slumber", "Instant", "Until end of turn, target land you control becomes a 4/4 Dinosaur creature with reach and haste. It's still a land. It must be blocked this turn if able.",
+  [{ id: 1, abilityType: "spell", actions: [act("animate", "target land you control becomes a 4/4 Dinosaur creature with reach and haste"), act("cant", "it can be unblocked this turn")] }]);
+const kamahl = fromStored("Kamahl's Will", "Instant", "Choose one. If you control a commander as you cast this spell, you may choose both instead.\n\u2022 Until end of turn, any number of target lands you control become 1/1 Elemental creatures with vigilance, indestructible, and haste. They're still lands.\n\u2022 Choose target creature you don't control. Each creature you control deals damage equal to its power to that creature.",
+  [{ id: 1, abilityType: "spell" }, { id: 2, abilityType: "spell", actions: [{ verb: "animate", object: "any number of target lands you control", optional: false }, { verb: "grant-ability", object: "vigilance", optional: false }, { verb: "grant-ability", object: "indestructible", optional: false }, { verb: "grant-ability", object: "haste", optional: false }] },
+    { id: 3, abilityType: "spell", actions: [{ verb: "deal-damage", object: "target creature you don't control", amount: "the total power of each creature you control", optional: false }] }]);
+const jade = fromText("Jade Statue", "Artifact", "{2}: This artifact becomes a 3/6 Golem artifact creature until end of combat. Activate only during combat.");
+const livingPlane = fromText("Living Plane", "World Enchantment", "All lands are 1/1 creatures that are still lands.");
+const animateOfCard = (c: DeckCard) => c.tags!.abilities.find((a) => a.effect.kind === "animate")!.effect as { subject?: unknown; becomes?: unknown };
+
+test("a TARGET animate states its result in `becomes` and keeps the land as its subject", () => {
+  expect(animateOfCard(brave).becomes).toMatchObject({ type: "creature", subtype: "elemental", stats: [{ metric: "power", op: "eq", value: 3 }, { metric: "toughness", op: "eq", value: 3 }] });
+  expect(animateOfCard(uprising).becomes).toMatchObject({ type: "creature", subtype: "elemental" });
+  expect(animateOfCard(slumber).becomes).toMatchObject({ type: "creature", subtype: "dinosaur" });
+  expect(animateOfCard(kamahl).becomes).toMatchObject({ type: "creature", subtype: "elemental" });
+  for (const c of [brave, uprising, slumber]) expect(animateOfCard(c).subject, c.card.name).toMatchObject({ type: "land", scope: "target" });
+});
+
+test("...so its spell states no creature target and no heroic creature meets it", () => {
+  for (const c of [brave, uprising, slumber, kamahl]) {
+    expect(targetingOf(c), c.card.name).toEqual([]);
+    expect(pairReasons(c, crusader, H).some((r) => r.tag.startsWith("cast:")), c.card.name).toBe(false);
+  }
+});
+
+test("a SELF animate keeps its result in the subject, as the store writes it, and also states it in `becomes`", () => {
+  expect(animateOfCard(jade).subject).toMatchObject({ self: true, subtype: "golem", type: ["creature", "artifact"] });
+  expect(animateOfCard(jade).becomes).toMatchObject({ subtype: "golem", type: ["creature", "artifact"] });
+});
+
+test("a CLASS animate states its result in `becomes`, its subject stays the lands", () => {
+  expect(animateOfCard(livingPlane).becomes).toMatchObject({ type: "creature", stats: [{ metric: "power", op: "eq", value: 1 }, { metric: "toughness", op: "eq", value: 1 }] });
+  expect(animateOfCard(livingPlane).subject).toMatchObject({ type: "land" });
+});
