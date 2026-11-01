@@ -496,6 +496,33 @@ export function characteristicsSubject(tags: CardTags, name?: string): SubjectFi
   };
 }
 
+/** "its power", "that creature's toughness": the size is a stat of the creature that deals the damage, which is not the card unless the card is that creature. */
+const OTHER_CREATURE_AMOUNT = /\b(?:its|their|that creature'?s?|enchanted creature'?s?|equipped creature'?s?) (?:power|toughness)\b/i;
+function selfDealer(d: SubjectFilter): boolean {
+  return d.colors === undefined && d.type === undefined && d.subtype === undefined && d.anyOf === undefined && d.self === undefined;
+}
+
+/** One authored emit as the matcher reads it: a damage emit carries its ability's `amount`, and a bare dealer the card's colours (#1344). Shared by `baseEvents` and
+ *  `producerEventOrigins`, whose map is keyed on the event's JSON.
+ *
+ *  A BARE DAMAGE DEALER IS THE CARD ONLY WHEN NOTHING SAYS OTHERWISE. Torbran's "a red source you control would deal damage" asks for the dealer's colour, and an authored
+ *  damage emit's `dealer` is `{control: you}` with no colour, so Impact Tremors (a red enchantment) never met it. The card's colours are stamped on it, but only where the card
+ *  is the dealer. Derive types SOME other dealers (a fight; Chandra's Ignition) and leaves others bare, so a bare dealer is not proof of "this card". Refused, where the stamp
+ *  only abstains (the old behaviour): a granted ability (`grantedBy`: Barbed Field's enchanted land deals the damage) and an amount read off another creature ("equal to its
+ *  power": Self-Destruct, Pain for All, Domri's Ambush). `[]` is colourless, a fact, and fails a coloured demand as it should.
+ *  CEILING: the matcher has no clause text here (`CardTags` carries none), so a bare dealer whose sentence names another object with no creature stat in the amount still reads as the
+ *  card. Measured 2026-11-01 over Torbran's 1,887 gained producers: about 15 cards (Rakdos Charm, Missy, Sarkhan the Mad, Saskia the Unyielding, Enchanter's Bane, Beastie Beatdown, Goblin Tinkerer, Aura Barbs,
+ *  Stalking Yeti, Form of the Dinosaur, Dizzying Gaze, Rage Forger, Ingris Stingerquill, Wisecrack, Swooping Pteranodon, the second half of Pain for All). The fix is derive-side typing of
+ *  those dealers, after which `selfDealer` refuses them without a change here.
+ *  CEILING: `OTHER_CREATURE_AMOUNT` also refuses TRUE self-dealers, because on a creature card "its power" is usually its own and "that creature's power" usually sizes a creature the card
+ *  itself deals damage with: of the 127 producers it removed from Torbran, about 57 deal the damage themselves (Terror of the Peaks, Murderous Redcap, Cacophony Scamp, Heartfire Hero,
+ *  Spikeshot Elder, Gleeful Arsonist, Ziatora, Rupture), about 285 reasons over the five red-source replacements, missing on main too. Chosen over a creature-only narrowing, which
+ *  regains ~55 and readmits ~10 false (Champion of the Path, Be'lakor, Stalking Vengeance): a missing pair over a wrong one. Derive-side dealer typing makes this regex deletable. */
+function authoredEmit(a: CardTags["abilities"][number], e: GameEvent, tags: CardTags): GameEvent {
+  const sized = a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e;
+  return sized.dealer !== undefined && selfDealer(sized.dealer) && a.grantedBy === undefined && !OTHER_CREATURE_AMOUNT.test(a.amount ?? "") ? { ...sized, dealer: { ...sized.dealer, colors: tags.characteristics.colors } } : sized;
+}
+
 /** A producer's events BEFORE anything is derived from them -- authored emits plus the card's own
  *  implied cast/enters, zone-normalized. Split out of `producerEvents` so the proliferate demand
  *  below can ask `impliedCounterEvents` the same question over the same input, rather than rebuilding
@@ -506,8 +533,7 @@ function baseEvents(tags: CardTags): GameEvent[] {
     // A DAMAGE EMIT CARRIES ITS SIZE, the ability's own `amount`, so a trigger that requires one
     // ("exactly 1 damage", Ghyrson Starn) can tell Impact Tremors from Eidolon of the Great Revel.
     // A REFUSED TRIGGER'S ABILITY SUPPLIES NOTHING (#1253): see `Ability.claimsNothing`.
-    ...tags.abilities.filter((a) => !isRefusedTrigger(a)).flatMap((a) => (a.emits ?? []).map((e) =>
-      a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e)),
+    ...tags.abilities.filter((a) => !isRefusedTrigger(a)).flatMap((a) => (a.emits ?? []).map((e) => authoredEmit(a, e, tags))),
     ...impliedEvents(tags.characteristics).map((e) => targeting.length && e.verb === "cast" ? { ...e, targeting } : e),
   ].map(normalizeZoneEvent);
 }
@@ -600,8 +626,8 @@ export function producerEventOrigins(tags: CardTags): Map<string, number> {
   const out = new Map<string, number>();
   tags.abilities.forEach((a, i) => {
     if (isRefusedTrigger(a)) return;
-    const own = (a.emits ?? []).map((e) =>
-      normalizeZoneEvent(a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e));
+    // THE SAME EVENT `baseEvents` BUILDS, or the origin lookup (keyed on its JSON) misses.
+    const own = (a.emits ?? []).map((e) => normalizeZoneEvent(authoredEmit(a, e, tags)));
     for (const e of selfLeavesTypes(own, tags.characteristics)) {
       const k = JSON.stringify(e);
       if (!out.has(k)) out.set(k, i);
