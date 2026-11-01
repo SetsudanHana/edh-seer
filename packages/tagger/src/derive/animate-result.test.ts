@@ -31,7 +31,32 @@ test("no result that reads: a choice, a colour alone, a copy", () => {
   expect(animateResult("Target creature becomes a copy of target artifact.")).toBeUndefined();
 });
 
-test("a condition inside another sentence of the clause is not the result (Summoner's Egg, Hauntwoods Shrieker)", () => {
-  expect(animateResult("When this creature dies, turn the exiled card face up. If it's a creature card, put it onto the battlefield under your control.")).toBeUndefined();
+test("a condition inside another sentence of the clause is not the result (Hauntwoods Shrieker); a sentence after one still is (Cyber Conversion)", () => {
+  expect(animateResult("{1}{G}: Reveal target face-down permanent. If it's a creature card, you may turn it face up.")).toBeUndefined();
   expect(animateResult("Turn target creature face down. It's a 2/2 Cyberman artifact creature.")).toMatchObject({ subtype: "cyberman", stats: pt(2, 2) });
+});
+
+test("two colours joined by \"and\" are one result: Atarka Monument, Simic Keyrune, Celestial Colonnade", () => {
+  expect(animateResult("{4}{R}{G}: This artifact becomes a 4/4 red and green Dragon artifact creature with flying until end of turn.")).toMatchObject({ type: ["creature", "artifact"], subtype: "dragon", colors: ["R", "G"], stats: pt(4, 4) });
+  expect(animateResult("{G}{U}: This artifact becomes a 2/3 green and blue Crab artifact creature with hexproof until end of turn. (It can't be the target of spells or abilities your opponents control.)")).toMatchObject({ type: ["creature", "artifact"], subtype: "crab", colors: ["U", "G"], stats: pt(2, 3) });
+  expect(animateResult("{3}{W}{U}: Until end of turn, this land becomes a 4/4 white and blue Elemental creature with flying and vigilance. It's still a land.")).toMatchObject({ type: "creature", subtype: "elemental", colors: ["W", "U"], stats: pt(4, 4) });
+});
+
+test("an \"or\" is a choice, not a result: Tundra Kavu", () => {
+  expect(animateResult("{T}: Target land becomes a Plains or an Island until end of turn.")).toBeUndefined();
+});
+
+test("a result of P/T or colours with no type is none; coordinated noun phrases and a name cut by a comma are none (Life and Limb, Tenth District Hero)", () => {
+  expect(animateResult("This creature becomes 4/4 until end of turn.")).toBeUndefined();
+  expect(animateResult("All Forests and all Saprolings are 1/1 green Saproling creatures and Forest lands in addition to their other types. (They're affected by summoning sickness.)")).toBeUndefined();
+  expect(animateResult("{2}{W}, Collect evidence 4: If this creature is a Detective, it becomes a legendary creature named Mileva, the Stalwart, it has base power and toughness 5/5, and it gains \"Other creatures you control have indestructible.\"")).toBeUndefined();
+  expect(animateResult("{1}{W}, Collect evidence 2: This creature becomes a Human Detective with base power and toughness 4/4 and gains vigilance.")).toMatchObject({ subtype: ["human", "detective"], stats: pt(4, 4) });
+});
+
+test("whitespace runs and unmatched openers are linear (CodeQL js/polynomial-redos)", () => {
+  for (const text of [`Target land becomes a${" ".repeat(100_000)}x`, `Target land becomes a ${"(".repeat(50_000)}`, `Target land becomes a ${"if ".repeat(1_000)}`, `Target land becomes a${" ".repeat(3_000)}creature${" ".repeat(900)}with`]) {
+    const t0 = performance.now();
+    animateResult(text);
+    expect(performance.now() - t0, text.slice(0, 30)).toBeLessThan(50);
+  }
 });
