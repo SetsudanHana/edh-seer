@@ -1658,3 +1658,20 @@ test("#1378: prevent N, two extra turns, flip two coins and connive X derive the
   expect(amounts("Mask of the Schemer", "Artifact — Equipment", "Whenever equipped creature deals combat damage to a player, it connives X, where X is the amount of damage it dealt to that player.\nEquip {2}"))
     .toContainEqual(["", "the amount of damage it dealt to that player", undefined]);
 });
+
+// #1355: a printed "spend mana as though it were mana of any color" rider was stripped with no trace, so the dropped-clauses ratchet
+// counted Evelyn as fixed. It is the store's unclaimed `other` now (CR 609.4b: it changes how a cost is paid, not the cost), never absent.
+test("the 'spend mana as though it were mana of any color' rider stays visible as an `other` after the cast or play: Evelyn, Tinybones", () => {
+  const EVELYN = { name: "Evelyn, the Covetous", typeLine: "Legendary Creature — Vampire Rogue", keywords: ["Flash"], oracleText: "Flash\nWhenever Evelyn or another Vampire you control enters, exile the top card of each player's library with a collection counter on it.\nOnce each turn, you may play a card from exile with a collection counter on it if it was exiled by an ability you controlled, and you may spend mana as though it were mana of any color to cast it." };
+  const TINYBONES = { name: "Tinybones, the Pickpocket", typeLine: "Legendary Creature — Skeleton Rogue", keywords: ["Deathtouch"], oracleText: "Deathtouch\nWhenever Tinybones deals combat damage to a player, you may cast target nonland permanent card from that player's graveyard, and mana of any type can be spent to cast that spell." };
+  for (const [c, verb, rider] of [[EVELYN, "play", /spend mana as though it were mana of any color/], [TINYBONES, "cast", /mana of any type can be spent/]] as const) {
+    const g = grammarClauseRecords(c);
+    expect(g.blocker, c.name).toBeUndefined();
+    const actions = g.records.flatMap((r) => r.actions ?? []);
+    expect(actions.map((a) => a.verb), c.name).toContain(verb);
+    const other = actions.find((a) => a.verb === "other");
+    expect(String(other?.object), c.name).toMatch(rider);
+    const tags = deriveCardTags(deriveInputOf(c as never, "x", c.name, g.records, undefined, g.readings));
+    expect(JSON.stringify(tags.unclaimed ?? []), c.name).toMatch(rider);
+  }
+});
