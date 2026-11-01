@@ -2338,6 +2338,33 @@ test("a damage multiplier records how it changes the damage, from the printed cl
   expect(of("double", "all damage that creatures you control with counters on them would deal", "").damageChange).toBeUndefined();
 });
 
+// #1456: a damage replacement is a damage multiplier ONLY when it multiplies or adds. 14 corpus abilities (12 cards) that reduce, set, redirect, mill or put counters carried the kind and fed burn demand.
+test("a damage replacement that reduces, sets, redirects, mills or counters is no damage multiplier (#1456)", () => {
+  const kindsOf = (abilityType: string, actions: { verb: string; object: string; amount?: string }[], text: string, trigger?: object) =>
+    deriveAbilities([{ id: 1, abilityType, ...(trigger ? { trigger } : {}), actions }] as never, "X", { 1: text }).abilities.map((a) => a.effect.kind);
+  const none = (k: string[]) => expect(k).not.toContain("damage-multiplier");
+  none(kindsOf("static", [{ verb: "deal-damage", object: "a permanent or player", amount: "that much damage minus 1" }],
+    "If a spell would deal damage to a permanent or player, it deals that much damage minus 1 to that permanent or player instead."));
+  none(kindsOf("static", [{ verb: "mill", object: "that many cards" }],
+    "If a Zombie you control would deal combat damage to a player, instead that player mills that many cards."));
+  none(kindsOf("static", [{ verb: "add-counter", object: "-1/-1", amount: "that many" }],
+    "If a source you control would deal noncombat damage to a creature an opponent controls, put that many -1/-1 counters on that creature instead."));
+  none(kindsOf("static", [{ verb: "deal-damage", object: "that permanent or player", amount: "3" }],
+    "If a source would deal 4 or more damage to a permanent or player, that source deals 3 damage to that permanent or player instead."));
+  // model path: Goblin Psychopath (a trigger whose rider is a filed `other`), Equal Treatment (on-cast)
+  none(kindsOf("triggered", [{ verb: "flip-coin", object: "" }, { verb: "other", object: "if you lose the flip, the next time it would deal combat damage this turn, it deals that damage to you instead" }],
+    "Whenever this creature attacks or blocks, flip a coin. If you lose the flip, the next time it would deal combat damage this turn, it deals that damage to you instead.", { event: "attacks", subject: "this creature", control: "you" }));
+  none(kindsOf("spell", [{ verb: "deal-damage", object: "a permanent or player", amount: "2" }],
+    "If any source would deal 1 or more damage to a permanent or player this turn, it deals 2 damage to that permanent or player instead."));
+  // the real multipliers keep the kind
+  expect(kindsOf("static", [{ verb: "deal-damage", object: "an opponent or a permanent an opponent controls", amount: "that much plus 2" }],
+    "If a red source you control would deal damage to an opponent or a permanent an opponent controls, it deals that much damage plus 2 instead.")).toContain("damage-multiplier");
+  expect(kindsOf("static", [{ verb: "triple", object: "damage dealt by a source you control to a permanent or player" }],
+    "If a source you control would deal damage to a permanent or player, it deals triple that damage to that permanent or player instead.")).toContain("damage-multiplier");
+  expect(kindsOf("static", [{ verb: "double", object: "damage dealt to a permanent or player by a creature you control" }],
+    "If a creature you control would deal damage to a permanent or player, it deals double that damage instead.")).toContain("damage-multiplier");
+});
+
 // A MULTIPLIER'S NARROWING LIVES INSIDE ITS OBJECT, and dropping it claims every card the nouns
 // match. MEASURED: re-normalizing gave Raphael, the Muscle and Mjölnir, Hammer of Thor the subjects
 // {creature, you, all} and {creature, any, all}, taking MESHED 288 -> 405 (60 + 57, the whole

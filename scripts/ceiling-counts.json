@@ -87,7 +87,7 @@
   "packages/tagger/src/derive/reduction.ts": 1,
   "packages/tagger/src/derive/references.ts": 4,
   "packages/tagger/src/derive/repeats.ts": 1,
-  "packages/tagger/src/derive/replacement.ts": 7,
+  "packages/tagger/src/derive/replacement.ts": 8,
   "packages/tagger/src/derive/scaling.ts": 3,
   "packages/tagger/src/derive/subject.ts": 6,
   "packages/tagger/src/derive/threshold.ts": 2,

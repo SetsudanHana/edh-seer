@@ -328,8 +328,6 @@ test("a damage replacement is worded by what it prints, never as a doubler by de
   expect(sentenceFor({ damageChange: "thrice" })).not.toContain("doubles");
   expect(sentenceFor({ damageChange: "plus" }, { op: "plus", value: 2 })).toContain("Damage Doubler adds 2 to the damage");
   expect(sentenceFor({ damageChange: "plus" })).toContain("Damage Doubler adds to the damage");
-  expect(sentenceFor({ damageChange: "reduced" })).toContain("Damage Doubler reduces the damage");
-  expect(sentenceFor({ damageChange: "other" })).toContain("Damage Doubler changes the damage");
   expect(sentenceFor({})).toContain("Damage Doubler changes the damage");
   expect(sentenceFor({})).not.toContain("doubles");
 });

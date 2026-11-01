@@ -1141,9 +1141,9 @@ export interface Effect {
   becomes?: SubjectFilter;
 }
 
-/** `plus` is "that much damage plus N" (the number is `Ability.change` when stated); `reduced` is minus or half; `other` is
- *  a replacement the kind catches without scaling the damage (a mill, a redirect, "deals 3 damage instead"). */
-export type DamageChange = "twice" | "thrice" | "plus" | "reduced" | "other";
+/** `plus` is "that much damage plus N" (the number is `Ability.change` when stated). A reduction, a fixed number, a redirect, a mill
+ *  or counters are no damage multiplier since #1456 and carry neither the kind nor a value here. */
+export type DamageChange = "twice" | "thrice" | "plus";
 
 export type TokenMultiplier = "twice" | "thrice" | "additional" | "one-of-each" | "replaced";
 

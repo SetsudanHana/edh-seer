@@ -610,7 +610,7 @@ describe("the fact kinds say what they are on the ability row (#1315)", () => {
 
 test("a toughness-as-damage static has its own phrase, never a multiplier's (#1345)", () => {
   // Doran, the Siege Tower: "assigns combat damage equal to its toughness rather than its power" is a static over a stat line.
-  const doran = { kind: "damage-multiplier", subject: { stats: [{ metric: "toughness", op: "gt", vs: "power" }] }, damageChange: "other" };
+  const doran = { kind: "damage-multiplier", subject: { stats: [{ metric: "toughness", op: "gt", vs: "power" }] } };
   expect(effectPhrase(phraseKindOf(doran), undefined)).toBe("makes creatures assign combat damage by toughness");
   expect(effectPhrase(phraseKindOf({ kind: "damage-multiplier", damageChange: "plus" }, { op: "plus", value: 2 }), undefined)).toBe("adds 2 to the damage");
   expect(effectPhrase(phraseKindOf({ kind: "damage-multiplier", damageChange: "plus" }, { op: "times", value: 2 }), undefined)).toBe("adds to the damage");
