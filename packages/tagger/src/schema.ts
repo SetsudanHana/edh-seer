@@ -883,7 +883,7 @@ export interface GameEvent {
    *  carried onto the event the matcher builds from the trigger. A demand only: never on an emit. */
   amountIs?: { op: "eq" | "gte"; value: number };
   /** The consumer's trigger requires the damage to be dealt to a creature (`Ability.trigger.victim`). A demand only: never on an emit. */
-  victimIs?: "creature";
+  victimIs?: "creature" | "opponent-creature";
 }
 
 /** The closed set of recognized effect.kind labels. Extraction output is normalized to this
@@ -1329,9 +1329,9 @@ export interface Ability {
      *  `GameEvent.amount` and refuses a producer whose size is unknown. Absent on every trigger that
      *  prints no size. */
     amount?: { op: "eq" | "gte"; value: number };
-    /** WHO THE DAMAGE MUST BE DEALT TO, when the printed trigger names a creature (#1465, Soul-Scar Mage: "deal noncombat damage to a creature an opponent controls"). Read by the matcher, which refuses a damage
+    /** WHO THE DAMAGE MUST BE DEALT TO, when the printed trigger names a creature (#1465, Soul-Scar Mage: "deal noncombat damage to a creature an opponent controls" is `opponent-creature`). Read by the matcher, which refuses a damage
      *  producer aimed only at players. Only damage-result triggers write it; every other damage trigger leaves the recipient open. */
-    victim?: "creature";
+    victim?: "creature" | "opponent-creature";
   };
   /** THIS ABILITY CLAIMS NO CARDS, AND IS STILL AN ABILITY OF ITS KIND (#1264). One stored field for the two
    *  classes derive can decide from the card alone; the matcher reads it in one place (`claimsNothing`,

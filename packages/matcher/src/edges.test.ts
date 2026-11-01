@@ -372,6 +372,29 @@ test("a damage replacement that mills or places counters is a plain damage trigg
   expect(pairReasons(mage, resonator, H).filter((r) => r.tag.startsWith("copies"))).toEqual([]);
   const panharmonicon = base("Annie Joins Up", [{ kind: "static", effect: { kind: "trigger-doubling" }, doubles: ["non-combat-damage"] } as never]);
   expect(pairReasons(mage, panharmonicon, H).filter((r) => r.tag.startsWith("doubles"))).toEqual([]);
+  // Soul-Scar's printed recipient is "a creature AN OPPONENT controls": the card itself (Protector of the Crown, "damage dealt to you is dealt to this creature instead") and your own creature (Rile) never feed it
+  const protector = base("Protector of the Crown", [{
+    kind: "static", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "you", token: null, self: true }, dealer: { control: "any", token: null } }],
+  } as never]);
+  const rile = base("Rile", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "you", token: null, type: "creature", scope: "target" }, dealer: { control: "you", token: null } }],
+  } as never]);
+  const removal = base("Flame Slash", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, type: "creature", scope: "target" }, dealer: { control: "you", token: null } }],
+  } as never]);
+  expect(mage.tags.abilities[0]!.trigger?.victim).toBe("opponent-creature");
+  expect(pairReasons(protector, mage, H)).toEqual([]);
+  expect(pairReasons(rile, mage, H)).toEqual([]);
+  expect(pairReasons(removal, mage, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(true);
+  // the WHOSE-axis doubler (Annie Joins Up shape) never doubles the replacement: it has a trigger and nothing else
+  const annie = base("Annie Joins Up", [{ kind: "static", effect: { kind: "trigger-doubling" }, doublesOf: { control: "you", token: null, type: "creature", subtype: "zombie" } } as never]);
+  const szadekShaped = base("Szadek-shaped", mage.tags.abilities.map((a) => ({ ...a, replacementResult: true })) as CardTags["abilities"], ["zombie"]);
+  expect(pairReasons(annie, szadekShaped, H).filter((r) => r.tag.startsWith("doubles"))).toEqual([]);
+  const realTrigger = base("Real", [{ kind: "triggered", trigger: { verbs: ["dies"], subject: { self: true, control: "you", token: null } }, effect: { kind: "draw-card" } } as never], ["zombie"]);
+  expect(pairReasons(annie, realTrigger, H).some((r) => r.tag.startsWith("doubles"))).toBe(true);
   const text = pairReasons(bolt, mage, H).map((r) => r.text).join(" | ");
   expect(text).toContain("When Lightning Bolt deals noncombat damage, Soul-Scar Mage");
   expect(text).not.toMatch(/doubl|triples|changes the damage|adds to the damage/);

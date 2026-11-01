@@ -1201,7 +1201,9 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // ("any target": Lightning Bolt), or an anyOf branch is. Refused: a `player` subject, a planeswalker / battle-typed one (Lava Spike's second emit), and an untyped `you` (every painland) or `opp` ("each opponent":
   // Guttersnipe, Impact Tremors, Purphoros).
   // CEILING: an untyped `any` emit that is not targeted ("each player") is not refused.
-  if (consumer.victimIs === "creature" && DAMAGE_VERBS.has(producer.verb) && !canHitACreature(producer.subject)) return false;
+  // CEILING: a creature-typed emit with control `any` passes for the opponent-creature trigger (a "target creature" removal can be aimed at an opponent's), and a FIGHT's damage (Wayta, Ulvenwald Tracker: the emit names your own
+  // creature as the victim) is lost, as are three cards with their own derive defects (Satyr Firedancer, Flame Sweep, Ajani Unrelenting): 5 cards (the fight pair and the three) that can damage an opponent's creature stay unpaired.
+  if (consumer.victimIs !== undefined && DAMAGE_VERBS.has(producer.verb) && !canHitACreature(producer.subject, consumer.victimIs === "opponent-creature")) return false;
   // A TARGETING RESTRICTION IS A DEMAND NOTHING HERE CAN CHECK, so the trigger claims no producer.
   // `replacement.restricted` one layer over: keep the ability and its kind, claim no cards. Read on
   // the CONSUMER only — a producer's emit never states how a spell was targeted, so the field can
@@ -1324,8 +1326,10 @@ function damagedMatches(victim: SubjectFilter, consumer: SubjectFilter, h: Hiera
 }
 
 /** Can a damage emit's victim be a creature? See the victim gate in `eventMatches`. */
-function canHitACreature(v: SubjectFilter): boolean {
-  if (v.anyOf !== undefined && v.anyOf.length > 0) return v.anyOf.some((b) => canHitACreature({ ...v, anyOf: undefined, ...b }));
+function canHitACreature(v: SubjectFilter, opponents: boolean): boolean {
+  // The card itself is always YOUR permanent, and a creature `you` control is not "a creature an opponent controls" (Soul-Scar Mage).
+  if (v.self === true || (opponents && v.control === "you")) return false;
+  if (v.anyOf !== undefined && v.anyOf.length > 0) return v.anyOf.some((b) => canHitACreature({ ...v, anyOf: undefined, ...b }, opponents));
   if (list(v.type).length > 0) return list(v.type).includes("creature");
   if (list(v.subtype).length > 0) return true;
   if (v.player === true || v.control === "you") return false;

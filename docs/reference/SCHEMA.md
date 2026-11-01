@@ -217,7 +217,7 @@ Defined in [`GameEvent`](../../packages/tagger/src/schema.ts).
 | `dealer` | `SubjectFilter` | optional | WHO DEALT THE DAMAGE — damage verbs only, and only on an AUTHORED emit. |
 | `amount` | `string` | optional | HOW MUCH DAMAGE -- a damage producer's `Ability.amount` ("1", "2", "X"), stamped by the matcher on an authored damage emit (`edges.ts` `baseEvents`). Never set by derive. Read only against a consumer's `amountIs`. |
 | `amountIs` | `{ op: "eq" \| "gte"; value: number }` | optional | HOW MUCH DAMAGE THE CONSUMER REQUIRES -- its trigger's `amount` ("exactly 1", "5 or more"), carried onto the event the matcher builds from the trigger. A demand only: never on an emit. |
-| `victimIs` | `"creature"` | optional | The consumer's trigger requires the damage to be dealt to a creature (`Ability.trigger.victim`). A demand only: never on an emit. |
+| `victimIs` | `"creature" \| "opponent-creature"` | optional | The consumer's trigger requires the damage to be dealt to a creature (`Ability.trigger.victim`). A demand only: never on an emit. |
 
 ### Effect
 

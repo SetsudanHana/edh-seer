@@ -2402,7 +2402,7 @@ test("a damage replacement that mills or places counters is a plain trigger on t
   expect(mage[0]!.emits?.find((e) => e.verb === "counter-added")?.subject.control).toBe("opp");
   expect(mage[0]!.effect.subject?.control).toBe("opp");
   // the damage must be dealt to a creature
-  expect(mage[0]!.trigger?.victim).toBe("creature");
+  expect(mage[0]!.trigger?.victim).toBe("opponent-creature");
   expect(alchemist[0]!.trigger?.victim).toBeUndefined();
   expect(mage[0]!.replacement).toBeUndefined();
 

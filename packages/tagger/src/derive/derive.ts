@@ -3029,7 +3029,7 @@ export function deriveAbilities(
       if (isSelfSubject(replacementRead.subjectText, cardName)) subject.self = true;
       // A recipient that is a creature ("to a creature an opponent controls", Soul-Scar Mage) is carried, so a pinger that only hits players is not heard.
       const toCreature = /\bdamage to (?:a|an|target) (?:\w+ )?creature\b/i.test(text);
-      trigger = { verbs: damageResultVerbs(text), subject, ...(toCreature ? { victim: "creature" as const } : {}) };
+      trigger = { verbs: damageResultVerbs(text), subject, ...(toCreature ? { victim: (/\bdamage to (?:a|an|target) (?:\w+ )?creature an opponent controls\b/i.test(text) ? "opponent-creature" : "creature") as "creature" | "opponent-creature" } : {}) };
       kind = "triggered";
     }
     // (the flag is stamped on every ability the clause produces, with the other per-clause labels below)
