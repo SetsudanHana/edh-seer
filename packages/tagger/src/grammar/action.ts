@@ -1842,7 +1842,7 @@ export function parseActions(effect: string, type: string | null, cost?: string)
     // choice and keeps the reference in the later words ("of the chosen color", "mana of that color"), which this grammar reads or leaves unread by its own rules.
     // The store keeps a REPLACEMENT's choice ("As this creature enters, choose a color": 52 of the 90 stored cards that print a choose-a-color, the rest are inside an effect) as an `other` with the choice as its words, which derive lists as unclaimed;
     // the same choice inside an effect it drops.
-    // CEILING: the choice is never carried: a later "of that color" / "the chosen number" is read (or left unread) by its own words, and "of the chosen color" is the filter's `chosenType`, as for a bought card.
+    // CEILING: the choice is never carried: a later "of that color" / "the chosen number" is read (or left unread) by its own words, and "of the chosen color" is the filter's `chosenColor` (#1360), as for a bought card.
     if (/^(?:you may look at the top card of your library any time|play with the top card of your library revealed|choose a color|choose a number between \d+ and \d+)$/i.test(s)) { mayBefore = false; continue; }
     const asEnters = /^as (?:~|this [a-z]+) enters, (choose a color|choose a number between \d+ and \d+)$/i.exec(s);
     if (asEnters) { mayBefore = false; out.push({ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: asEnters[1]! }); continue; }

@@ -66,6 +66,7 @@
   "packages/tagger/src/derive-input.ts": 1,
   "packages/tagger/src/derive-worker.ts": 2,
   "packages/tagger/src/derive/cant-kinds.ts": 2,
+  "packages/tagger/src/derive/chosen-color.ts": 1,
   "packages/tagger/src/derive/damage-recipient.ts": 3,
   "packages/tagger/src/derive/delay.ts": 2,
   "packages/tagger/src/derive/derive.ts": 59,

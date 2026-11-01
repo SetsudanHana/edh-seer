@@ -273,7 +273,7 @@
       "why": "Every member read. scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; 'each of up to three targets' is targeted; a quantifier inside a token's quoted ability is not the token's; subtype: a word inside a name, a counter kind, a Role's name or a token's quoted ability is not the subject's subtype; 'Mice' is Mouse."
     },
     "chosenType,control": {
-      "distinct": 7,
+      "distinct": 5,
       "label": "grammar right",
       "rule": "CR 112.2, CR 115.1, printed text",
       "why": "Every member read. chosenType: 'of the creature type of your choice' is the chosen type; 'your choice' names the chooser, not the controller; control: control belongs to the right noun: the caster controls a spell; a possessive or relative clause names another object's controller."
@@ -1011,7 +1011,7 @@
       "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; targets: what a spell targets (owner 2026-10-01); type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
     },
     "chosenType": {
-      "distinct": 2,
+      "distinct": 1,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. chosenType: 'of the creature type of your choice' is the chosen type; 'of the chosen quality' is a stat's parity, not a type."
@@ -1897,6 +1897,18 @@
       "label": "grammar right",
       "rule": "printed text",
       "why": "'target spell, nonland permanent, or card in a graveyard': three alternatives, the grammar's branches each with its own class (the nonland permanent carries its notType); parseSubject read one nonland permanent and dropped the other two."
+    },
+    "chosenColor": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "Every member read. chosenColor: 'all cards of a chosen color' is a chosen colour; parseSubject's chosen-colour regex knows 'the chosen color' and 'a color of your choice' but not 'a chosen color'. A chosen colour is chosenColor and never chosenType (#1360): the matcher resolves chosenType to a creature subtype."
+    },
+    "chosenColor,control": {
+      "distinct": 2,
+      "label": "grammar right",
+      "rule": "printed text, CR 112.2",
+      "why": "Every member read. chosenColor: 'all enchantments / all permanents of the color of your choice' is a chosen colour, which parseSubject does not read (it knows 'the chosen color' only); it is chosenColor and never chosenType (#1360), which the matcher resolves to a creature subtype. control: 'your choice' names the chooser, not the controller; parseSubject read 'your' as you."
     }
   }
 }

@@ -136,3 +136,20 @@ test("deckLandTypes lists the deck's land subtypes, and the basics alone", () =>
   ]);
   expect(out).toEqual({ any: ["mountain", "swamp"], basic: ["mountain"] });
 });
+
+// #1360: a chosen COLOUR is not a chosen type. Heraldic Banner's "creatures you control of the chosen color" must
+// never become "creatures you control of the deck's top subtype".
+test("resolveChosenTypes never resolves a chosenColor subject to a subtype, and a chosenType beside it still resolves", () => {
+  const counts = new Map([["elf", 5], ["goblin", 2]]);
+  const color = { type: "creature", control: "you", token: null, scope: "all", chosenColor: true } as never;
+  const type = { type: "creature", control: "you", token: null, chosenType: true } as never;
+  const resolved = resolveChosenTypes(tagsWith(["artifact"], [
+    { kind: "static", effect: { kind: "pump", subject: color } },
+    { kind: "static", effect: { kind: "pump", subject: type } },
+  ] as never), counts, NO_HIERARCHY);
+  const [c, t] = resolved.abilities.map((a) => a.effect.subject!);
+  expect(c!.subtype).toBeUndefined();
+  expect(c!.chosenColor).toBe(true);
+  expect(t!.subtype).toBeDefined();
+  expect(t!.chosenType).toBeUndefined();
+});

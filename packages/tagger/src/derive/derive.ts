@@ -46,6 +46,7 @@ import { isSelfSubject, SELF_REFERENCE, withoutArticle } from "./self-reference.
 import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, boundedByEnchantLine, exiledAcrossClauses, PLURAL_BACKREF, pluralAntecedent, pluralIsDelayed, PRONOUN_OBJECT, withoutCombatRole, zoneAfterEvent } from "./references.js";
 import { triggerHasCue } from "../clause-store.js";
 import { emblemRecipient } from "../emblem.js";
+import { chosenColorOf } from "./chosen-color.js";
 
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
@@ -592,7 +593,8 @@ import { emblemRecipient } from "../emblem.js";
 // 425: #1377 -- the switch refuses a grammar row that drops a plain amount/count the stored reading states and loses nothing to it: 2 rows change, both source flips grammar->model (Imoen, Mystic Trickster: "Draw another card" amount 1; Living Lands: animate 1/1). A stored emit subject field the grammar's emit lacks (Archghoul of Thraben, Territory Culler, Sarinth Steelseeker: a typed mill emit for the card NOT taken) keeps the card on the grammar. Pair reasons: 0 membership moves, matcher sample (2000) +0/-0; role-ratchet gained 0, lost 0 (31,224 memberships); dropped-clauses 4,925 -> 4,925 (new 0, fixed 0). The reverse check of grants/toZone/toHand is inert in the corpus at 425 (0 cards)
 // 426: #1365 -- A token copy's `scope: target` is judged from the COPIED HEAD, not the token's own type (the token-generation subject describes the token, so Rebuild the City's `target land` plus its added `creature` read as a creature target in `spellTargeting`). Kept when the head can be a creature you control (#713): it names creature, or a permanent with no creature exclusion ("noncreature" / "non-creature") AND "you control" (Applied Geometry, Saheeli Radiant Creator). Dropped when the head names only non-creature types (Rebuild the City, Schema Thief, Mishra "noncreature artifact", Astral Dragon "noncreature permanent", Urza) or is a permanent without "you control" (Will of the Temur: #713 counts a non-yours target only when the effect helps it, token-generation does not). Measured (derive-impact vs the DERIVE 425 commit, --pair-sample 0): 6 rows change (Astral Dragon, Mishra Eminent One, Rebuild the City, Schema Thief, Urza Prince of Kroog, Will of the Temur), source flips 0, grammar complete 28,422 unchanged; pair reasons -166 lost / 0 gained (cast -158, prowess -8): Rebuild the City and Will of the Temur 83 each (the heroic payoffs and Leyline of Resonance), the other four 0; Applied Geometry 0. Role-ratchet 0/0, dropped-clauses new 0 fixed 0.
 // 427: #1364 -- An animate's RESULT (what its object becomes: types, subtypes, base P/T, colours) has its own slot, `Effect.becomes`, read off the printed clause (derive/animate-result.ts) so the stored answer and the grammar state the same result on an animate of any scope (self, target, class, host) whose clause states one that reads. It is never the subject: `spellTargeting` reads a `scope: target` creature subject as a creature target (Brave the Wilds targets a land). NO MATCHER READER TAKES `becomes` YET (the follow-up is kindred supply). A SELF animate keeps its result in the subject too (the store's 130). Unread, on purpose: a result with P/T or colours and no type, a choice ("of your choice", a copy), an "or" between alternatives (Tundra Kavu), coordinated noun phrases (Life and Limb), a name cut by a comma (Tenth District Hero), two different results in one clause; a condition ahead of or after the result is not it; two colours joined by "and" are one result (Atarka Monument, the Keyrunes, the manlands). Measured (derive-impact vs the DERIVE 426 commit, --pair-sample 0): 500 rows change, 523 abilities gain `becomes`, every change an added `becomes` and nothing else; 0 source flips; pair reasons 0 gained / 0 lost over the 500 changed rows; role-ratchet gained 0, lost 0; dropped-clauses 4,925 -> 4,925. Brave the Wilds, Disturbed Slumber, Kamahl's Will and Elemental Uprising still meet no heroic consumer.
-export const DERIVE_VERSION = 427;
+// 428: #1360 -- A chosen colour is chosenColor, not chosenType: Heraldic Banner, Prism Ring, Crossroads Village no longer resolve to a deck subtype
+export const DERIVE_VERSION = 428;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -4364,12 +4366,14 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
   // back) has no entry in `faces` and is never read as a spell.
   const isSpellFace = (face: number | undefined): boolean =>
     (chars.faces ? chars.faces[face ?? 0]?.types ?? [] : chars.types).some((t) => /^(?:instant|sorcery)$/i.test(t));
-  const spellOnce = pinned.map((a) => a.kind === "on-cast" || a.repeats === "once" || !isSpellFace(a.face) ? a : { ...a, repeats: "once" as const })
+  const spellOnceRaw = pinned.map((a) => a.kind === "on-cast" || a.repeats === "once" || !isSpellFace(a.face) ? a : { ...a, repeats: "once" as const })
     // A SELF "YOU LOSE THE GAME" ABILITY CLAIMS NOTHING (#1252, #1264), decided on the FINAL emits: every control fill above has run.
     .map(stampSelfLoss)
     .map((a, _i, all) => stampManaRider(a, all, input.clauseTexts))
     // THE CLAUSE THAT GRANTS A QUOTED ABILITY (#1315): `segment()`'s granted clause and its parent, from `DeriveInput.clauseGrants` (both clause sources).
     .map((a) => { const by = a.clause !== undefined ? input.clauseGrants?.[a.clause as number] : undefined; return by === undefined ? a : { ...a, grantedBy: by }; });
+  // A CHOSEN COLOUR IS NOT A CHOSEN TYPE (#1360): a stored reading's `chosenType` on a colour choice becomes `chosenColor`.
+  const spellOnce = chosenColorOf(spellOnceRaw, input.clauseTexts, input.oracleText ?? "");
   // A CREATURE ONLY UNDER A CONDITION (#797): the action grammar reads "As long as your devotion to red
   // is less than five, Purphoros isn't a creature" as the card itself that "can't be a creature".
   // Read off the printed text, which reaches the Theros gods the store filed as something else.

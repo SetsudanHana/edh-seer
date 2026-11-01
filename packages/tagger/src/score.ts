@@ -64,6 +64,7 @@ function subjectKey(s: SubjectFilter): string {
     colors: s.colors ? [...s.colors].sort() : null,
     control: s.control,
     chosenType: s.chosenType ?? false,
+    chosenColor: s.chosenColor ?? false,
     counter: s.counter ?? null,
     zone: s.zone ?? null,
   });
