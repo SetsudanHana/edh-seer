@@ -9974,6 +9974,7 @@
       "kind": "damage",
       "subject": {
        "control": "opp",
+       "player": true,
        "scope": "each",
        "token": null
       }
@@ -9986,6 +9987,7 @@
        },
        "subject": {
         "control": "opp",
+        "player": true,
         "scope": "each",
         "token": null
        },

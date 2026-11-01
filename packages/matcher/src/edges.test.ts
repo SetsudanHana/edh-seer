@@ -361,7 +361,7 @@ test("a damage replacement that mills or places counters is a plain damage trigg
   expect(pairReasons(painland, mage, H)).toEqual([]);
   const purphoros = base("Purphoros", [{
     kind: "triggered", effect: { kind: "damage" },
-    emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null }, dealer: { control: "you", token: null } }],
+    emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, player: true }, dealer: { control: "you", token: null } }],
   } as never]);
   expect(pairReasons(spike, mage, H)).toEqual([]);
   expect(pairReasons(purphoros, mage, H)).toEqual([]);
@@ -395,6 +395,35 @@ test("a damage replacement that mills or places counters is a plain damage trigg
   expect(pairReasons(annie, szadekShaped, H).filter((r) => r.tag.startsWith("doubles"))).toEqual([]);
   const realTrigger = base("Real", [{ kind: "triggered", trigger: { verbs: ["dies"], subject: { self: true, control: "you", token: null } }, effect: { kind: "draw-card" } } as never], ["zombie"]);
   expect(pairReasons(annie, realTrigger, H).some((r) => r.tag.startsWith("doubles"))).toBe(true);
+  // damage with no target in its sentence reaches no creature: Price of Progress (each player), Cryoclasm ("that land's controller")
+  const price = base("Price of Progress", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "each", player: true }, dealer: { control: "you", token: null } }],
+  } as never]);
+  const cryoclasm = base("Cryoclasm", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, player: true }, dealer: { control: "you", token: null } }],
+  } as never]);
+  expect(pairReasons(price, mage, H)).toEqual([]);
+  expect(pairReasons(cryoclasm, mage, H)).toEqual([]);
+  // divided damage is untyped but targeted; a permanent-typed any-target emit can be a creature
+  const hellkite = base("Bogardan Hellkite", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { self: true, control: "you", token: null } }, effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target" }, dealer: { control: "you", token: null } }],
+  } as never]);
+  const riddle = base("Riddle of Lightning", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, type: "permanent", scope: "target" }, dealer: { control: "you", token: null } },
+      { verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target", player: true }, dealer: { control: "you", token: null } }],
+  } as never]);
+  // untargeted damage to each creature feeds it just as well (Pyroclasm)
+  const pyroclasm = base("Pyroclasm", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, type: "creature", scope: "each" }, dealer: { control: "you", token: null } }],
+  } as never]);
+  expect(pairReasons(pyroclasm, mage, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(true);
+  expect(pairReasons(hellkite, mage, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(true);
+  expect(pairReasons(riddle, mage, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(true);
   const text = pairReasons(bolt, mage, H).map((r) => r.text).join(" | ");
   expect(text).toContain("When Lightning Bolt deals noncombat damage, Soul-Scar Mage");
   expect(text).not.toMatch(/doubl|triples|changes the damage|adds to the damage/);

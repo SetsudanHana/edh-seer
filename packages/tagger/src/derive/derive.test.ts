@@ -2417,6 +2417,27 @@ test("a damage replacement that mills or places counters is a plain trigger on t
     "If a spell would deal damage to a permanent or player, it deals that much damage minus 1 to that permanent or player instead.", "Benevolent Unicorn")).toEqual([]);
 });
 
+// #1465: damage whose printed recipients are TARGETS (CR 115.1) is an untyped targeted emit, like "any target".
+test("damage divided among, or dealt to each of, N targets carries scope target (#1465)", () => {
+  const scopeOf = (object: string, text: string) =>
+    deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "deal-damage", object, amount: "3" }] }] as never, "X", { 1: text }).abilities
+      .flatMap((a) => a.emits ?? []).find((e) => e.verb === "non-combat-damage")?.subject;
+  for (const [object, text] of [
+    ["any number of targets", "When this creature enters, it deals 5 damage divided as you choose among any number of targets."],
+    ["one or two targets", "Prismari Charm deals 1 damage to each of one or two targets."],
+    ["each of up to X targets", "Crackle with Power deals five times X damage to each of up to X targets."],
+    ["3 damage divided as you choose among one, two, or three targets", "Whenever this creature enters or attacks, it deals 3 damage divided as you choose among one, two, or three targets."],
+  ] as const) expect(scopeOf(object, text), object).toMatchObject({ control: "any", scope: "target" });
+  // a recipient that is only a PLAYER carries player: true (Price of Progress, Cryoclasm, Rakdos Charm, Browbeat), never the "could be a creature" untyped shape
+  for (const [object, text] of [
+    ["each player", "Price of Progress deals 2 damage to each player."],
+    ["that land's controller", "Destroy target nonbasic land. Cryoclasm deals 3 damage to that land's controller."],
+    ["its controller", "Each creature deals 1 damage to its controller."],
+    ["each opponent", "Purphoros deals 2 damage to each opponent."],
+    ["any player", "Browbeat deals 5 damage to any player unless that player has you draw three cards."],
+  ] as const) expect(scopeOf(object, text), object).toMatchObject({ player: true });
+});
+
 // A MULTIPLIER'S NARROWING LIVES INSIDE ITS OBJECT, and dropping it claims every card the nouns
 // match. MEASURED: re-normalizing gave Raphael, the Muscle and Mjölnir, Hammer of Thor the subjects
 // {creature, you, all} and {creature, any, all}, taking MESHED 288 -> 405 (60 + 57, the whole

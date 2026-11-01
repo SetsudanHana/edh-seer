@@ -1198,11 +1198,12 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // joined to every pinger (Eidolon of the Great Revel's 2, Flame-Kin War Scout's 4).
   if (consumer.amountIs !== undefined && !sizeSatisfies(producer.amount, consumer.amountIs)) return false;
   // DAMAGE TO A CREATURE (#1465): a trigger that needs the damage dealt to a creature (Soul-Scar Mage) is met only by an emit that CAN be a creature: its type list names creature, or it is untyped, targeted and not a player
-  // ("any target": Lightning Bolt), or an anyOf branch is. Refused: a `player` subject, a planeswalker / battle-typed one (Lava Spike's second emit), and an untyped `you` (every painland) or `opp` ("each opponent":
-  // Guttersnipe, Impact Tremors, Purphoros).
-  // CEILING: an untyped `any` emit that is not targeted ("each player") is not refused.
+  // ("any target": Lightning Bolt), or an anyOf branch is. Refused: a `player` subject, a planeswalker / battle-typed one (Lava Spike's second emit), and an untyped one that is not targeted (every painland, "each opponent":
+  // Guttersnipe, Impact Tremors, Purphoros, "that land's controller").
   // CEILING: a creature-typed emit with control `any` passes for the opponent-creature trigger (a "target creature" removal can be aimed at an opponent's), and a FIGHT's damage (Wayta, Ulvenwald Tracker: the emit names your own
   // creature as the victim) is lost, as are three cards with their own derive defects (Satyr Firedancer, Flame Sweep, Ajani Unrelenting): 5 cards (the fight pair and the three) that can damage an opponent's creature stay unpaired.
+  // The untyped recipients still passing as "could be a creature" were censused at 42 producers: 'a permanent or player' / 'that permanent or player' (Ghyrson Starn, Kelermorph: really can be creatures), and a player-only "them" (Razorkin Needlehead, Adrenaline Jockey, Scytheclaw Raptor,
+  // Roiling Vortex; left untyped because stamping it flipped Davriel and Invasion of Eldraine to a reading that lost their opponent control) and a few unread objects (Hans Eriksson, Ojer Axonil, Gargantos, Batroc the Leaper).
   if (consumer.victimIs !== undefined && DAMAGE_VERBS.has(producer.verb) && !canHitACreature(producer.subject, consumer.victimIs === "opponent-creature")) return false;
   // A TARGETING RESTRICTION IS A DEMAND NOTHING HERE CAN CHECK, so the trigger claims no producer.
   // `replacement.restricted` one layer over: keep the ability and its kind, claim no cards. Read on
@@ -1330,10 +1331,12 @@ function canHitACreature(v: SubjectFilter, opponents: boolean): boolean {
   // The card itself is always YOUR permanent, and a creature `you` control is not "a creature an opponent controls" (Soul-Scar Mage).
   if (v.self === true || (opponents && v.control === "you")) return false;
   if (v.anyOf !== undefined && v.anyOf.length > 0) return v.anyOf.some((b) => canHitACreature({ ...v, anyOf: undefined, ...b }, opponents));
-  if (list(v.type).length > 0) return list(v.type).includes("creature");
+  // A permanent can be a creature ("any target ... that permanent or player": Riddle of Lightning, Erratic Explosion); a planeswalker or battle cannot.
+  if (list(v.type).length > 0) return list(v.type).includes("creature") || list(v.type).includes("permanent");
   if (list(v.subtype).length > 0) return true;
   if (v.player === true || v.control === "you") return false;
-  return v.control === "opp" ? v.scope === "target" : true;
+  // UNTYPED and not a player: the recipient could be a creature ("any target", "divided among any number of targets", an untargeted "each"). Derive types a player-only recipient (`player: true`).
+  return true;
 }
 
 /** A counter-placing ability whose every counter goes on its own source: its self emit, else undefined. */
