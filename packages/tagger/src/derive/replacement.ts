@@ -111,6 +111,42 @@ export function damageResultVerbs(clauseText: string): Verb[] {
   return /^non/i.test(m[1]!) ? ["non-combat-damage"] : ["combat-damage"];
 }
 
+/** WHO A DAMAGE MULTIPLIER MUST HURT (#1458), off the recipient it prints after "damage to". The matcher keeps a damage producer only if its recipient CAN be that one (`recipientGate`), so Torbran no longer hears Rile or Marauding Raptor.
+ *  CEILING: only the forms below are read (census of 51 multiplier lines: 25 "a permanent or player" stay unconditioned by design; 13 "an opponent or a permanent an opponent controls", 4 "an opponent" / "one of your opponents", 2 "a player", 1 "a player or battle" (Rankle and Torbran's mode), 1 "a creature" (Blind Fury) are read; 1 list form, Disciples of the Inferno "a creature, battle, or opponent", is unconditioned).
+ *  Unread: the chosen / enchanted / "that player" forms (Sawhorn Nemesis, Bitter Feud, Lightning Army of One, Curse of Bloodletting, The Countdown Is at One, The Rollercrusher Ride), the recipient that is the damaged object itself (Goldnight Castigator "you" / "this creature", Inquisitor's Flail "equipped creature"),
+ *  Beyond the 25 "permanent or player" lines, 10 more stay unconditioned: the 9 named above (Goldnight Castigator is two lines) and Disciples. */
+export function damageRecipientOf(clauseText: string): "creature" | "opponent" | "opponent-or-permanent" | "player" | "player-or-battle" | undefined {
+  // By search, not a lazy regex (CodeQL js/polynomial-redos): the sentence from "would deal", its first "damage to", and the recipient up to the first comma or " this turn".
+  const lower = clauseText.toLowerCase();
+  const at = lower.search(/\bwould deal\b/);
+  if (at < 0) return undefined;
+  const stop = lower.indexOf(".", at);
+  const sentence = lower.slice(at, stop < 0 ? undefined : stop);
+  const to = sentence.search(/\bdamage to /);
+  if (to < 0) return undefined;
+  const rest = sentence.slice(to + "damage to ".length);
+  const ends = [rest.indexOf(","), rest.indexOf(" this turn")].filter((i) => i >= 0);
+  const cut = ends.length > 0 ? Math.min(...ends) : rest.length;
+  // A LIST recipient ("a creature, battle, or opponent": Disciples of the Inferno) is not cut to its first item: it is unconditioned.
+  if (rest[cut] === ",") {
+    const tail = rest.slice(cut + 1).trimStart();
+    const next = tail.indexOf(",");
+    const item = next >= 0 ? tail.slice(next + 1).trimStart() : "";
+    if (/^(?:or|and)\s/.test(tail) || /^(?:or|and)\s/.test(item)) return undefined;
+  }
+  const printed = rest.slice(0, cut).trim();
+  switch (printed) {
+    case "an opponent or a permanent an opponent controls":
+    case "one of your opponents or a permanent one of your opponents controls": return "opponent-or-permanent";
+    case "an opponent":
+    case "one of your opponents": return "opponent";
+    case "a player": return "player";
+    case "a player or battle": return "player-or-battle";
+    case "a creature": return "creature";
+    default: return undefined;
+  }
+}
+
 /** True when a `damage-multiplier` read off this clause really multiplies or adds. An empty text carries no
  *  evidence either way, so it is not refused (the kind was read without the clause at hand). */
 export function isDamageMultiplication(clauseText: string): boolean {

@@ -805,6 +805,9 @@ export const VERB_ALIASES: Readonly<Record<string, Verb>> = {
 };
 
 /** An event an ability puts out for OTHER cards to trigger on. Subject is concrete. */
+/** The recipient a damage trigger or multiplier names (`Ability.trigger.victim`), a small closed set the matcher's `recipientGate` reads (#1465, #1458): a creature; a creature an opponent controls; an opponent (player only); an opponent or a permanent an opponent controls; a player; a player or battle. */
+export type DamageVictim = "creature" | "opponent-creature" | "opponent" | "opponent-or-permanent" | "player" | "player-or-battle";
+
 export interface GameEvent {
   verb: Verb;
   subject: SubjectFilter;
@@ -883,7 +886,7 @@ export interface GameEvent {
    *  carried onto the event the matcher builds from the trigger. A demand only: never on an emit. */
   amountIs?: { op: "eq" | "gte"; value: number };
   /** The consumer's trigger requires the damage to be dealt to a creature (`Ability.trigger.victim`). A demand only: never on an emit. */
-  victimIs?: "creature" | "opponent-creature";
+  victimIs?: DamageVictim;
 }
 
 /** The closed set of recognized effect.kind labels. Extraction output is normalized to this
@@ -1330,8 +1333,8 @@ export interface Ability {
      *  prints no size. */
     amount?: { op: "eq" | "gte"; value: number };
     /** WHO THE DAMAGE MUST BE DEALT TO, when the printed trigger names a creature (#1465, Soul-Scar Mage: "deal noncombat damage to a creature an opponent controls" is `opponent-creature`). Read by the matcher, which refuses a damage
-     *  producer aimed only at players. Only damage-result triggers write it; every other damage trigger leaves the recipient open. */
-    victim?: "creature" | "opponent-creature";
+     *  producer aimed only at players. Written by damage-result triggers and, since #1458, by damage MULTIPLIERS that print a recipient (Torbran: `opponent-or-permanent`); every other damage trigger leaves the recipient open. */
+    victim?: DamageVictim;
   };
   /** THIS ABILITY CLAIMS NO CARDS, AND IS STILL AN ABILITY OF ITS KIND (#1264). One stored field for the two
    *  classes derive can decide from the card alone; the matcher reads it in one place (`claimsNothing`,

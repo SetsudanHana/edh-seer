@@ -335,6 +335,38 @@ test("a damage replacement that does not multiply forms no edge, reason or cares
   }
 });
 
+// #1458: a damage multiplier names who must be hurt ("an opponent or a permanent an opponent controls", "an opponent", "a creature"); a producer aimed only elsewhere (your own creature, yourself) feeds nothing.
+test("a damage multiplier hears only damage that can reach its printed recipient (#1458)", () => {
+  const derived = (name: string, abilityType: string, text: string) => {
+    const { abilities } = deriveAbilities([{ id: 1, abilityType, actions: [{ verb: "deal-damage", object: "x", amount: "that much plus 2" }] }] as never, name, { 1: text });
+    return base(name, abilities as CardTags["abilities"]);
+  };
+  const burn = (name: string, ...subjects: Record<string, unknown>[]) => base(name, [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: subjects.map((subject) => ({ verb: "non-combat-damage", subject: { token: null, ...subject }, dealer: { control: "you", token: null, colors: ["R"] } })),
+  } as never]);
+  const torbran = derived("Torbran, Thane of Red Fell", "static", "If a red source you control would deal damage to an opponent or a permanent an opponent controls, it deals that much damage plus 2 instead.");
+  const goliath = derived("Goblin Goliath", "activated", "{3}{R}, {T}: If a source you control would deal damage to an opponent this turn, it deals double that damage to that player instead.");
+  const fury = derived("Blind Fury", "spell", "If a creature would deal combat damage to a creature this turn, it deals double that damage to that creature instead.");
+  const dmg = (a: ReturnType<typeof base>, b: ReturnType<typeof base>) => pairReasons(a, b, H).some((r) => r.tag.startsWith("non-combat-damage"));
+  const bolt = burn("Lightning Bolt", { control: "any", scope: "target" });
+  const rile = burn("Rile", { control: "you", type: "creature", scope: "target" });
+  const raptor = burn("Marauding Raptor", { control: "you", self: true });
+  const spike = burn("Lava Spike", { control: "any", scope: "target", player: true }, { control: "any", scope: "target", type: "planeswalker" });
+  const slash = burn("Flame Slash", { control: "any", scope: "target", type: "creature" });
+  expect(dmg(bolt, torbran)).toBe(true);
+  expect(dmg(spike, torbran)).toBe(true);
+  expect(dmg(rile, torbran)).toBe(false);
+  expect(dmg(raptor, torbran)).toBe(false);
+  expect(dmg(spike, goliath)).toBe(true);
+  expect(dmg(slash, goliath)).toBe(false);
+  expect(dmg(rile, goliath)).toBe(false);
+  expect(dmg(spike, fury)).toBe(false);
+  // an IMPLIED combat event (no `dealer`, the attacker as subject, recipient unknown) still feeds a victim-gated multiplier
+    const attacker = base("Grizzly Bears", [{ kind: "static", effect: { kind: "other" }, emits: [{ verb: "combat-damage", subject: { control: "you", token: null, self: true, type: "creature" } }] } as never]);
+  expect(pairReasons(attacker, goliath, H).some((r) => r.tag.startsWith("combat-damage"))).toBe(true);
+});
+
 // #1465: a replacement whose result is a mill or counters is read as a plain trigger on the replaced damage: a reason forms, worded as a trigger, never as a doubler.
 test("a damage replacement that mills or places counters is a plain damage trigger (#1465)", () => {
   const { abilities } = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "add-counter", object: "-1/-1", amount: "that many" }] }] as never, "Soul-Scar Mage",
