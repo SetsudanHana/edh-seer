@@ -2311,12 +2311,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
           // so the set can never hold a card of yours. Card-scoped printed cue, the same shape and
           // the same ceiling as `reducesItself`.
           if (exilesOnlyOpponents(p.card.oracleText)) continue;
-          // A DAMAGE EVENT'S IDENTITY IS ITS DEALER (#1465): a self trigger "when Syr Carah deals damage" watches who DEALS it, not who is hit. A BARE dealer (no type, subtype, list or self) means the PRODUCER ITSELF deals the damage,
-          // so it can never be another card's self trigger; only a dealer that names another object ("target creature you control deals damage equal to its power": Ram Through, Rabid Bite) or a typed spell is compared with the card.
-          // `damaged` triggers watch the victim and keep the old comparison.
-          const damageDealt = DAMAGE_VERBS.has(e.verb) && t.verb !== "damaged" && e.dealer !== undefined;
-          if (damageDealt && e.dealer!.type === undefined && e.dealer!.subtype === undefined && e.dealer!.anyOf === undefined && e.dealer!.self === undefined) continue;
-          const { zone: _eventZone, ...identity } = damageDealt ? e.dealer! : e.subject;
+          const { zone: _eventZone, ...identity } = e.subject;
           // The producer re-entering ITSELF (Reassembling Skeleton, Drownyard Temple) is a real
           // entry for anything watching creatures, but it is never the CONSUMER entering, which is
           // the only event a self trigger watches.

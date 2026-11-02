@@ -446,24 +446,6 @@ test("an instant or sorcery's own damage satisfies a spell-typed damage trigger;
   } as never]);
   expect(pairReasons(flameRift, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(true);
   expect(pairReasons(pyromancer, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(false);
-  // her SELF trigger is not satisfied by another card's spell: "Syr Carah deals noncombat damage thanks to Flame Rift" names the wrong dealer
-  const selfCarah = base("Syr Carah, the Bold", [{
-    kind: "triggered", effect: { kind: "damage" },
-    trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null, self: true } },
-  } as never]);
-  // a creature's own ping (bare dealer) never satisfies ANOTHER card's self trigger (Witherscale Wurm shape) ...
-  const wurm = base("Witherscale Wurm", [{
-    kind: "triggered", effect: { kind: "damage" },
-    trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null, type: "creature", self: true } },
-  } as never]);
-  expect(pairReasons(pyromancer, wurm, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(false);
-  // ... but a spell that makes the consumer deal the damage does (Ram Through: "target creature you control deals damage equal to its power")
-  const ramThrough = base("Ram Through", [{
-    kind: "on-cast", effect: { kind: "damage" },
-    emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, type: "creature", scope: "target" }, dealer: { control: "you", token: null, type: "creature", scope: "target" } }],
-  } as never]);
-  expect(pairReasons(ramThrough, wurm, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(true);
-  expect(pairReasons(flameRift, selfCarah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(false);
 });
 
 test("a damage replacement is worded by what it prints, never as a doubler by default (#1345)", () => {
