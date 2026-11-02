@@ -523,12 +523,13 @@ function authoredEmit(a: CardTags["abilities"][number], e: GameEvent, tags: Card
   if (!(sized.dealer !== undefined && selfDealer(sized.dealer) && a.grantedBy === undefined && !OTHER_CREATURE_AMOUNT.test(a.amount ?? ""))) return sized;
   // A SPELL IS THE SOURCE OF ITS OWN DAMAGE (#1465): an instant's or sorcery's on-cast damage is dealt by that spell, so the dealer carries the card's spell types and a trigger on "an instant or sorcery spell you control
   // deals damage" (Syr Carah, Pyromancer's Swath, Rem Karolus, Flame Channeler) hears it. It used to reach her only through an untyped recipient, which a player-only recipient closes.
-  // Not when a creature is the dealer: a delayed trigger the spell sets up (Harsh Justice: the attacking creature deals it) or an amount sized by a creature you control ("equal to the power of target
-  // creature you control": Friendly Rivalry, Chocobo Kick) — those keep the bare dealer, which no spell-typed trigger hears.
-  // CEILING: only an `on-cast` ability of an instant or sorcery card is typed; a permanent's ability damage stays a bare dealer, and a split card's other half shares the card's types. A REDIRECT reads as
-  // the spell's damage (the matcher has no clause text): Harm's Way, Kor Chant, Kor Dirge, Captain's Maneuver, Reflect Damage, Turn the Tables, Carom, Sivvi's Valor, Shining Shoal, plus Beastie Beatdown
-  // and Compel Brutality, about 11 cards reaching ~8 spell-typed consumers each (#1465 final review, 2026-11-02). Derive-side typing of redirected damage is the fix.
-  const creatureDealt = a.trigger !== undefined || /\bpower of\b/i.test(a.amount ?? "");
+  // Not when the spell is not the dealer: a delayed trigger it sets up (Harsh Justice, Gaze of Pain: the attacking creature deals it), damage your creature deals ("target creature you control deals damage
+  // equal to its power": Friendly Rivalry, Chocobo Kick; Ram Through's trample "excess damage"), or a REDIRECT (Harm's Way, Kor Chant, Shining Shoal: the original source deals it) -- those keep the bare
+  // dealer, which no spell-typed trigger hears. "Equal to the power of the sacrificed creatures" (Soulblast, Morgue Burst, Olórin's Searing Light) is the spell's own damage, sized by a creature.
+  // CEILING: only an `on-cast` ability of an instant or sorcery card is typed; a permanent's ability damage stays a bare dealer, and a split card's other half shares the card's types. Beastie Beatdown and
+  // Compel Brutality (a planeswalker's or creature's damage with no flag or amount cue) still read as the spell's; Season of the Bold's "whenever you cast a spell, Season of the Bold deals 2 damage" mode
+  // carries a trigger and is left bare, a missing answer (#1465 final review, 2026-11-02).
+  const creatureDealt = a.trigger !== undefined || e.redirect === true || /\bpower of (?:up to \w+ )?(?:other )?target creature\b|\bexcess damage\b/i.test(a.amount ?? "");
   const spellTypes = a.kind === "on-cast" && !creatureDealt ? tags.characteristics.types.map((t) => t.toLowerCase()).filter((t) => t === "instant" || t === "sorcery") : [];
   return { ...sized, dealer: { ...sized.dealer, colors: tags.characteristics.colors, ...(spellTypes.length > 0 ? { type: spellTypes.length === 1 ? spellTypes[0]! : spellTypes } : {}) } };
 }

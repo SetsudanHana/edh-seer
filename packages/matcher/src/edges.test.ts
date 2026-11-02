@@ -458,6 +458,17 @@ test("an instant or sorcery's own damage satisfies a spell-typed damage trigger;
   } as never]), ["instant"]);
   expect(pairReasons(harshJustice, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(false);
   expect(pairReasons(rivalry, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(false);
+  // ...and a redirect (Harm's Way: the original source deals it). A spell's own damage SIZED by a creature (Soulblast) is still the spell's.
+  const harmsWay = withTypes(base("Harm's Way", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target" }, dealer: { control: "you", token: null }, redirect: true }],
+  } as never]), ["instant"]);
+  const soulblast = withTypes(base("Soulblast", [{
+    kind: "on-cast", effect: { kind: "damage" }, amount: "the total power of the sacrificed creatures",
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target" }, dealer: { control: "you", token: null } }],
+  } as never]), ["instant"]);
+  expect(pairReasons(harmsWay, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(false);
+  expect(pairReasons(soulblast, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(true);
 });
 
 test("a damage replacement is worded by what it prints, never as a doubler by default (#1345)", () => {
