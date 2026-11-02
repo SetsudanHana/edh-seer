@@ -2365,6 +2365,19 @@ test("a damage replacement that reduces, sets, redirects, mills or counters is n
     "If a creature you control would deal damage to a permanent or player, it deals double that damage instead.")).toContain("damage-multiplier");
 });
 
+// #1458: a damage multiplier records the recipient it prints (`trigger.victim`), so the matcher can refuse damage dealt to the wrong side.
+test("a damage multiplier carries the recipient it prints as trigger.victim (#1458)", () => {
+  const victimOf = (abilityType: string, text: string, name: string) => {
+    const abs = deriveAbilities([{ id: 1, abilityType, actions: [{ verb: "deal-damage", object: "x", amount: "that much plus 2" }] }] as never, name, { 1: text }).abilities;
+    return abs.find((a) => a.effect.kind === "damage-multiplier")?.trigger?.victim;
+  };
+  expect(victimOf("static", "If a red source you control would deal damage to an opponent or a permanent an opponent controls, it deals that much damage plus 2 instead.", "Torbran, Thane of Red Fell")).toBe("opponent-or-permanent");
+  expect(victimOf("activated", "{3}{R}, {T}: If a source you control would deal damage to an opponent this turn, it deals double that damage to that player instead.", "Goblin Goliath")).toBe("opponent");
+  expect(victimOf("static", "If this creature would deal combat damage to a player, it deals double that damage to that player instead.", "Charging Tuskodon")).toBe("player");
+  expect(victimOf("spell", "If a creature would deal combat damage to a creature this turn, it deals double that damage to that creature instead.", "Blind Fury")).toBe("creature");
+  expect(victimOf("static", "If another red source you control would deal damage to a permanent or player, it deals that much damage plus 1 to that permanent or player instead.", "Embermaw Hellion")).toBeUndefined();
+});
+
 // #1465: a damage replacement whose RESULT is a mill or counters is the damage event heard by an ordinary triggered ability; Lava Burst's "can't be ... dealt instead" is no replacement.
 test("a damage replacement that mills or places counters is a plain trigger on the replaced damage (#1465)", () => {
   const run = (abilityType: string, actions: { verb: string; object: string; amount?: string }[], text: string, name = "X") =>

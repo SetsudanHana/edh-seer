@@ -1208,6 +1208,7 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // a wrong one. Measured on the corpus: seven cards print such a trigger; Ghyrson Starn had been
   // joined to every pinger (Eidolon of the Great Revel's 2, Flame-Kin War Scout's 4).
   if (consumer.amountIs !== undefined && !sizeSatisfies(producer.amount, consumer.amountIs)) return false;
+  // THE RECIPIENT GATE (#1458) READS ONLY AN AUTHORED EMIT (one with a `dealer`): an implied combat event's subject is the attacker itself and its recipient is unknown (whoever it hits or is blocked by), so it passes. Measured: without this line Rem Karolus lost 20,597 combat reasons.
   // DAMAGE TO A CREATURE (#1465): a trigger that needs the damage dealt to a creature (Soul-Scar Mage) is met only by an emit that CAN be a creature: its type list names creature, or it is untyped, targeted and not a player
   // ("any target": Lightning Bolt), or an anyOf branch is. Refused: a `player` subject, a planeswalker / battle-typed one (Lava Spike's second emit), and an untyped one that is not targeted (every painland, "each opponent":
   // Guttersnipe, Impact Tremors, Purphoros, "that land's controller").
@@ -1215,7 +1216,7 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // creature as the victim) is lost, as are three cards with their own derive defects (Satyr Firedancer, Flame Sweep, Ajani Unrelenting): 5 cards (the fight pair and the three) that can damage an opponent's creature stay unpaired.
   // The untyped recipients still passing as "could be a creature" were censused at 42 producers: 'a permanent or player' / 'that permanent or player' (Ghyrson Starn, Kelermorph: really can be creatures), and a player-only "them" (Razorkin Needlehead, Adrenaline Jockey, Scytheclaw Raptor,
   // Roiling Vortex; left untyped because stamping it flipped Davriel and Invasion of Eldraine to a reading that lost their opponent control) and a few unread objects (Hans Eriksson, Ojer Axonil, Gargantos, Batroc the Leaper).
-  if (consumer.victimIs !== undefined && DAMAGE_VERBS.has(producer.verb) && !canHitACreature(producer.subject, consumer.victimIs === "opponent-creature")) return false;
+  if (consumer.victimIs !== undefined && DAMAGE_VERBS.has(producer.verb) && producer.dealer !== undefined && !canReachRecipient(producer.subject, consumer.victimIs)) return false;
   // A TARGETING RESTRICTION IS A DEMAND NOTHING HERE CAN CHECK, so the trigger claims no producer.
   // `replacement.restricted` one layer over: keep the ability and its kind, claim no cards. Read on
   // the CONSUMER only — a producer's emit never states how a spell was targeted, so the field can
@@ -1337,11 +1338,20 @@ function damagedMatches(victim: SubjectFilter, consumer: SubjectFilter, h: Hiera
   return subjectMatches(victim, consumer, h);
 }
 
-/** Can a damage emit's victim be a creature? See the victim gate in `eventMatches`. */
-function canHitACreature(v: SubjectFilter, opponents: boolean): boolean {
-  // The card itself is always YOUR permanent, and a creature `you` control is not "a creature an opponent controls" (Soul-Scar Mage).
-  if (v.self === true || (opponents && v.control === "you")) return false;
-  if (v.anyOf !== undefined && v.anyOf.length > 0) return v.anyOf.some((b) => canHitACreature({ ...v, anyOf: undefined, ...b }, opponents));
+/** Can a damage emit's recipient be the one a consumer's trigger names (`GameEvent.victimIs`)? See the victim gate in `eventMatches`. One gate for every named recipient (#1465 creature forms, #1458 multiplier forms). */
+function canReachRecipient(v: SubjectFilter, want: NonNullable<GameEvent["victimIs"]>): boolean {
+  const mine = want === "opponent-creature" || want === "opponent" || want === "opponent-or-permanent";
+  // The card itself is always YOUR permanent, and a thing you control is not an opponent's (Soul-Scar Mage, Torbran). A player may be you ("a player"), so `control: you` refuses only the opponent forms and a creature.
+  if (v.self === true || (mine && v.control === "you")) return false;
+  if (v.anyOf !== undefined && v.anyOf.length > 0) return v.anyOf.some((b) => canReachRecipient({ ...v, anyOf: undefined, ...b }, want));
+  const typed = list(v.type).length > 0 || list(v.subtype).length > 0;
+  switch (want) {
+    case "opponent-or-permanent": return true;
+    // An opponent / a player is not a permanent: a typed recipient (creature, planeswalker, battle, "permanent") cannot be one. "A player or battle" keeps a battle-typed (or "permanent"-typed) one.
+    case "opponent": case "player": return !typed;
+    case "player-or-battle": return !typed || list(v.type).includes("battle") || list(v.type).includes("permanent");
+    case "creature": case "opponent-creature": break;
+  }
   // A permanent can be a creature ("any target ... that permanent or player": Riddle of Lightning, Erratic Explosion); a planeswalker or battle cannot.
   if (list(v.type).length > 0) return list(v.type).includes("creature") || list(v.type).includes("permanent");
   if (list(v.subtype).length > 0) return true;

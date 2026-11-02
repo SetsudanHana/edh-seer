@@ -111,6 +111,24 @@ export function damageResultVerbs(clauseText: string): Verb[] {
   return /^non/i.test(m[1]!) ? ["non-combat-damage"] : ["combat-damage"];
 }
 
+/** WHO A DAMAGE MULTIPLIER MUST HURT (#1458), off the recipient it prints after "damage to". The matcher keeps a damage producer only if its recipient CAN be that one (`recipientGate`), so Torbran no longer hears Rile or Marauding Raptor.
+ *  CEILING: only the forms below are read (census of 51 multiplier lines: 25 "a permanent or player" stay unconditioned by design; 13 "an opponent or a permanent an opponent controls", 4 "an opponent" / "one of your opponents", 2 "a player", 1 "a player or battle", 2 "a creature" are read).
+ *  Unread: the chosen / enchanted / "that player" forms (Sawhorn Nemesis, Bitter Feud, Lightning Army of One, Curse of Bloodletting, The Countdown Is at One, The Rollercrusher Ride), the recipient that is the damaged object itself (Goldnight Castigator "you" / "this creature", Inquisitor's Flail "equipped creature"),
+ *  and Rankle and Torbran's mode, which inherits its parent's combat-damage trigger. */
+export function damageRecipientOf(clauseText: string): "creature" | "opponent" | "opponent-or-permanent" | "player" | "player-or-battle" | undefined {
+  const printed = /\bwould deal\b[^.]*?\bdamage to ([^,.]+?)(?:,| this turn|$)/i.exec(clauseText)?.[1]?.trim().toLowerCase();
+  switch (printed) {
+    case "an opponent or a permanent an opponent controls":
+    case "one of your opponents or a permanent one of your opponents controls": return "opponent-or-permanent";
+    case "an opponent":
+    case "one of your opponents": return "opponent";
+    case "a player": return "player";
+    case "a player or battle": return "player-or-battle";
+    case "a creature": return "creature";
+    default: return undefined;
+  }
+}
+
 /** True when a `damage-multiplier` read off this clause really multiplies or adds. An empty text carries no
  *  evidence either way, so it is not refused (the kind was read without the clause at hand). */
 export function isDamageMultiplication(clauseText: string): boolean {
