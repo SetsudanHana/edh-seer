@@ -724,6 +724,31 @@ export function printsControlChange(clauseText: string): boolean {
   return CONTROL_CHANGE_PRINTED.some((re) => re.test(clauseText));
 }
 
+/** THE CARD ITSELF FIGHTS (#1471): "this creature fights up to one target creature you don't control" (Thorn Mammoth, Markov Enforcer), "~ fights", or a pronoun with no earlier object ("When this creature enters, it fights ...": Scab-Clan Giant, Wicked Wolf). The fighter is then the producer and
+ *  never another card's self trigger. Refused: a pronoun whose antecedent is another object ("Target creature you control gets +1/+1. It fights ...", "whenever a creature you control enters, it fights", "If it's a creature card ... it fights Hans Eriksson"), and a fight whose other target may
+ *  be YOUR creature ("another target creature", "target creature you control": Brash Taunter, Golden Guardian), since your Exalted Angel can be the one fought. The card-level conditions (a permanent, not a Saga, not a granted ability) are applied in derive.ts.
+ *  CEILING: the card's NAME as fighter is not read; a fight whose target is "target creature" with no control stated, or "target creature token" (Hivespine Wolverine), stays unmarked;
+ *  a Saga creature's own chapter fight ("Summon: Magus Sisters": "This creature fights") is stripped with the Saga in derive.ts. Each leaves a typed `you` dealer that Exalted Angel-type triggers hear. */
+function selfFights(clauseText: string): boolean {
+  const lower = clauseText.toLowerCase();
+  let at = lower.indexOf(" fights ");
+  while (at >= 0) {
+    const before = lower.slice(0, at);
+    const words = before.split(/[\s,]+/).filter((w) => w !== "");
+    const last = words[words.length - 1], prev = words[words.length - 2];
+    const end = lower.indexOf(". ", at);
+    const after = lower.slice(at, end < 0 ? undefined : end);
+    const notYours = after.includes("you don't control") || after.includes("an opponent controls") || after.includes("defending player controls") || after.includes("your opponents control");
+    // Without this card's own words, an earlier object in the clause is the pronoun's antecedent.
+    const rest = before.replace(/\bthis [a-z]+\b/g, " ").replace(/~/g, " ");
+    const bareRest = !/\btarget\b|\banother\b|\bcreatures?\b|\bcard\b|\bpermanent\b/.test(rest);
+    const fighter = (prev === "this" && last !== undefined) || last === "~" ? true : (last === "it" || last === "he" || last === "she") && bareRest;
+    if (fighter && notYours) return true;
+    at = lower.indexOf(" fights ", at + 1);
+  }
+  return false;
+}
+
 export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean; trigger?: CounterTrigger } = {}): GameEvent[] {
   // A LIFE TOTAL SET THAT IS A LOSS (#1333, CR 119.5): "target opponent's life total becomes 10" is the `lose-life` a printed "target opponent loses N life" is; a plain set emits nothing.
   const lifeLoss = action.verb === "set-life" ? lifeSetRewrite(action, clauseText ?? "") : undefined;
@@ -1039,7 +1064,9 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     // CR 701.14a, each creature deals damage equal to its power to the other, so the dealer is the
     // fighting creature and not the spell -- Gratuitous Violence's "a creature you control" can
     // check it (recall v4 #120).
-    ...(DAMAGE_VERBS.has(verb) ? { dealer: { control: "you" as const, token: null, ...(action.verb === "fight" ? { type: "creature" } : {}) } } : {}),
+    // THE CARD'S OWN FIGHT HAS THE CARD AS DEALER (#1471): "this creature fights ...", "it fights ..." (Scab-Clan Giant, Wicked Wolf) is the producer itself, `self`, so it never feeds another card's self trigger.
+    ...(DAMAGE_VERBS.has(verb) ? { dealer: { control: "you" as const, token: null, ...(action.verb === "fight" ? { type: "creature", ...(selfFights(clauseText ?? "") ? { self: true as const } : {}) } : {}) } } : {}),
+    ...(DAMAGE_VERBS.has(verb) && action.verb !== "fight" && /^(?:its|their) controller$/i.test((action.object ?? "").trim()) ? { toDealerController: true as const } : {}),
   }));
   // A LISTED RECIPIENT IS ONE EVENT PER HALF (#1266, burn): the matcher's `damaged` test reads the VICTIM's top-level type ("a player and a permanent never meet"), so a
   // producer `anyOf` of [player, creature] would meet neither side's consumer. "Each opponent and each creature they control" is the opponent being dealt damage and

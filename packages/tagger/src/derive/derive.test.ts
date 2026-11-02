@@ -2380,6 +2380,51 @@ test("a damage multiplier carries the recipient it prints as trigger.victim (#14
   expect(victimOf("static", "If another red source you control would deal damage to a permanent or player, it deals that much damage plus 1 to that permanent or player instead.", "Embermaw Hellion")).toBeUndefined();
 });
 
+// #1471: a damage trigger on the card itself or on its host records the recipient it prints (`trigger.victim`) and whether it watches its host (`trigger.host`), so the matcher judges the dealer and the recipient.
+test("a self or host damage trigger carries its printed recipient and host marker (#1471)", () => {
+  const run = (subject: string, control: string, text: string, name: string, actions: unknown[] = [{ verb: "gain-life", object: "you", amount: "that much" }]) =>
+    deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "damage-dealt", subject, control }, actions }] as never, name, { 1: text }).abilities.find((a) => a.trigger)?.trigger;
+  const specter = run("this creature", "you", "Whenever this creature deals damage to a player, that player discards a card.", "Abyssal Specter", [{ verb: "discard", object: "a card" }]);
+  expect(specter).toMatchObject({ victim: "player" });
+  expect(specter?.host).toBeUndefined();
+  expect(run("this creature", "you", "Whenever this creature deals combat damage to an opponent, draw a card.", "Hypothetical", [{ verb: "draw", object: "a card" }])?.victim).toBe("opponent");
+  // no recipient printed: the angel hears any damage it deals
+  expect(run("this creature", "you", "Whenever this creature deals damage, you gain that much life.", "Exalted Angel")?.victim).toBeUndefined();
+  // a LIST or unread recipient stays open
+  expect(run("this creature", "you", "Whenever this creature deals combat damage to a player or planeswalker, draw a card.", "Hypothetical", [{ verb: "draw", object: "a card" }])?.victim).toBeUndefined();
+  // the host: an Aura's or Equipment's "enchanted / equipped creature"
+  const cloak = run("enchanted creature", "you", "Whenever enchanted creature deals damage, you gain that much life.", "Armadillo Cloak");
+  expect(cloak?.host).toBe(true);
+  expect(cloak?.victim).toBeUndefined();
+  expect(run("equipped creature", "you", "Whenever equipped creature deals combat damage to a player, draw a card.", "Hypothetical", [{ verb: "draw", object: "a card" }])).toMatchObject({ host: true, victim: "player" });
+  // a MODE of a modal trigger keeps the trigger but not its words: the card's one damage trigger names the recipient (Bejeweled Warg)
+  const warg = "Trample\nWhenever this creature deals combat damage to a player, choose one —\n• Put a +1/+1 counter on target Wolf you control.\n• Create a Treasure token.";
+  expect(deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "this creature", control: "you" }, actions: [{ verb: "add-counter", object: "target Wolf you control", amount: "+1/+1" }] }] as never, "Bejeweled Warg", { 1: "• Put a +1/+1 counter on target Wolf you control." }, undefined, warg as never).abilities.find((a) => a.trigger)?.trigger?.victim).toBe("player");
+  // a creature's own fight has the card as dealer; a pronoun that points at another object, a spell, a Saga, a granted ability, or a fight that may hit your own creature does not
+  const fightDealer = (text: string, types: string[], clause: Record<string, unknown> = { abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" } }, extra: Record<string, unknown> = {}, subtypes: string[] = []) =>
+    deriveCardTags({ oracleId: "t", clauses: [{ id: 1, ...clause, actions: [{ verb: "fight", object: "up to one target creature you don't control" }] }] as never, characteristics: { ...MINIMAL_CHARACTERISTICS, types, subtypes }, clauseTexts: { 1: text }, ...extra } as never)
+      .abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "non-combat-damage" && e.dealer?.type === "creature")?.dealer;
+  expect(fightDealer("When this creature enters, it fights target creature an opponent controls chosen at random.", ["Creature"])).toMatchObject({ self: true });
+  // "defending player controls" is never yours either (The Tarrasque, Ace, Fearless Rebel).
+  expect(fightDealer("Whenever this creature attacks, it fights up to one target creature defending player controls.", ["Creature"])).toMatchObject({ self: true });
+  expect(fightDealer("Whenever this creature or another creature you control enters, this creature fights up to one target creature you don't control.", ["Creature"])).toMatchObject({ self: true });
+  const spell = { abilityType: "spell" };
+  expect(fightDealer("Target creature you control gets +1/+1 until end of turn. It fights target creature you don't control.", ["Sorcery"], spell)?.self).toBeUndefined();
+  expect(fightDealer("Whenever a creature you control enters, it fights up to one target creature you don't control with the same mana value.", ["Artifact"])?.self).toBeUndefined();
+  expect(fightDealer("Reveal the top card of your library. If it's a creature card, put it onto the battlefield. It fights target creature you don't control.", ["Creature"])?.self).toBeUndefined();
+  expect(fightDealer("{2}: This creature fights another target creature you control.", ["Creature"], { abilityType: "activated" })?.self).toBeUndefined();
+  expect(fightDealer("When this creature enters, it fights up to one target creature you don't control.", ["Enchantment"], undefined, undefined, ["Saga"])?.self).toBeUndefined();
+  // granted: "target creatures each gain '{T}: This creature fights another target creature'" is the grantee's
+  expect(fightDealer("Target creatures gain \"When this creature enters, it fights up to one target creature you don't control.\"", ["Instant"], spell)?.self).toBeUndefined();
+  // "its controller" marks the damage as hitting the dealer's controller
+  const backlash = deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "deal-damage", object: "its controller", amount: "equal to its power" }] }] as never, "Backlash", { 1: "Tap target untapped creature. That creature deals damage equal to its power to its controller." }).abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "non-combat-damage");
+  expect(backlash?.toDealerController).toBe(true);
+  // a trigger that names neither the card nor its host is left alone (out of scope)
+  const other = run("a creature", "you", "Whenever a creature you control deals combat damage to a player, draw a card.", "Hypothetical", [{ verb: "draw", object: "a card" }]);
+  expect(other?.victim).toBeUndefined();
+  expect(other?.host).toBeUndefined();
+});
+
 // #1465: a damage replacement whose RESULT is a mill or counters is the damage event heard by an ordinary triggered ability; Lava Burst's "can't be ... dealt instead" is no replacement.
 test("a damage replacement that mills or places counters is a plain trigger on the replaced damage (#1465)", () => {
   const run = (abilityType: string, actions: { verb: string; object: string; amount?: string }[], text: string, name = "X") =>

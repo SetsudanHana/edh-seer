@@ -503,6 +503,115 @@ test("an instant or sorcery's own damage satisfies a spell-typed damage trigger;
   expect(pairReasons(soulblast, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(true);
 });
 
+// #1471: a damage trigger on the card ITSELF (or its HOST) hears another card's damage only when that card's DEALER can be this card (a bite's "target creature you control", a grant) and its RECIPIENT can be the one the trigger prints. Shapes are the derived ones (Mongo, DERIVE 436).
+describe("a self or host damage trigger hears only a dealer that can be the card, hitting a recipient it can name (#1471)", () => {
+  const dmg = (name: string, subject: Record<string, unknown>, dealer: Record<string, unknown>, types = ["sorcery"]) => {
+    const c = base(name, [{ kind: "on-cast", effect: { kind: "damage" }, emits: [{ verb: "non-combat-damage", subject: { token: null, ...subject }, dealer: { token: null, ...dealer } }] } as never]);
+    return { ...c, tags: { ...c.tags, characteristics: { ...c.tags.characteristics, types } } };
+  };
+  const selfTrigger = (name: string, victim: string | undefined, subtypes: string[] = []) => base(name, [{
+    kind: "triggered", effect: { kind: "lifegain" },
+    trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null, type: "creature", self: true }, ...(victim ? { victim } : {}) },
+    emits: [{ verb: "gain-life", subject: { control: "you", token: null } }],
+  } as never], subtypes);
+  const heard = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) => pairReasons(p, c, { ...H, dragon: ["creature"] }).some((r) => r.tag.startsWith("non-combat-damage"));
+  const bolt = dmg("Lightning Bolt", { control: "any", scope: "target" }, { control: "you" }, ["instant"]);
+  const bite = dmg("Rabid Bite", { control: "opp", type: "creature", scope: "target" }, { control: "you", type: "creature" });
+  const angel = selfTrigger("Exalted Angel", undefined, ["angel"]);
+  const specter = selfTrigger("Abyssal Specter", "player", ["specter"]);
+  const wurm = selfTrigger("Witherscale Wurm", "opponent", ["wurm"]);
+
+  test("an any-target spell is a bare dealer: it is the spell itself, never the creature with the trigger", () => {
+    expect(heard(bolt, angel)).toBe(false);
+    expect(heard(bolt, specter)).toBe(false);
+    const carahSelf = base("Syr Carah, the Bold", [{
+      kind: "triggered", effect: { kind: "" },
+      trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null, self: true }, victim: "player" },
+      emits: [{ verb: "exiled", subject: { control: "you", token: null, fromZone: "library" } }],
+    } as never]);
+    expect(pairReasons(bolt, carahSelf, H).filter((r) => r.tag.startsWith("non-combat-damage"))).toEqual([]);
+    // a creature's tap ability is the creature itself, not the Wurm
+    const pyromancer = base("Prodigal Pyromancer", [{ kind: "activated", effect: { kind: "damage" }, emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target" }, dealer: { control: "you", token: null }, instantSpeed: true }] } as never]);
+    expect(heard(pyromancer, wurm)).toBe(false);
+  });
+
+  test("a bite makes your creature the dealer: it feeds a self trigger with no recipient, not one that needs a player", () => {
+    expect(heard(bite, angel)).toBe(true);
+    expect(heard(bite, specter)).toBe(false);
+    expect(heard(bite, wurm)).toBe(false);
+  });
+
+  test("a dealer that cannot be the card never feeds it: an opponent's creature, another creature type", () => {
+    const hunt = dmg("Hunt the Weak (fight half)", { control: "you", type: "creature", scope: "target" }, { control: "opp", type: "creature" });
+    expect(heard(hunt, angel)).toBe(false);
+    const dragonBite = dmg("Dragon bite", { control: "opp", type: "creature", scope: "target" }, { control: "you", subtype: "dragon" });
+    expect(heard(dragonBite, selfTrigger("Sabertooth Cobra", undefined, ["snake"]))).toBe(false);
+    expect(heard(dragonBite, selfTrigger("Dragon Whelp", undefined, ["dragon"]))).toBe(true);
+  });
+
+  test("'its controller' is you when the dealer is your creature: Backlash never hits the opponent a trigger names", () => {
+    const backlash = dmg("Backlash", { control: "any", player: true }, { control: "any", type: "creature" }, ["instant"]);
+    backlash.tags.abilities[0]!.emits![0] = { ...backlash.tags.abilities[0]!.emits![0]!, toDealerController: true };
+    expect(heard(backlash, wurm)).toBe(false);
+    expect(heard(backlash, specter)).toBe(true);
+    // a typed dealer aimed at "target player" (Lava Spike's recipient) can hit the opponent
+    const targeted = dmg("Targeted", { control: "any", player: true, scope: "target" }, { control: "any", type: "creature" }, ["instant"]);
+    expect(heard(targeted, wurm)).toBe(true);
+  });
+
+  test("a creature's own fight is the producer itself, never another card's self trigger (Scab-Clan Giant)", () => {
+    const giant = dmg("Scab-Clan Giant", { control: "opp", type: "creature", scope: "target" }, { control: "you", type: "creature", self: true }, ["creature"]);
+    expect(heard(giant, angel)).toBe(false);
+    // ...but the Giant can wear the Aura whose host trigger watches damage
+    const cloak = base("Armadillo Cloak", [{ kind: "triggered", effect: { kind: "lifegain" }, trigger: { verbs: ["non-combat-damage"], subject: { control: "any", token: null, type: "creature" }, host: true }, emits: [{ verb: "gain-life", subject: { control: "you", token: null } }] } as never]);
+    expect(heard(giant, cloak)).toBe(true);
+  });
+
+  test("a granted self trigger is judged as its host's: a creature you control feeds Snake Umbra (#1471)", () => {
+    const umbra = base("Snake Umbra", [{
+      kind: "triggered", effect: { kind: "draw-card" }, grantedBy: 2,
+      trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null, type: "creature", self: true }, victim: "opponent" },
+      emits: [{ verb: "draw", subject: { control: "you", token: null } }],
+    } as never]);
+    (umbra.tags.characteristics as { types: string[] }).types = ["enchantment"];
+    const soulsFire = dmg("Soul's Fire", { control: "any", scope: "target" }, { control: "you", type: "creature" }, ["instant"]);
+    expect(heard(soulsFire, umbra)).toBe(true);
+    expect(heard(bolt, umbra)).toBe(false);
+    // a self-fighter is no host's: it feeds an Aura's own host trigger (Armadillo Cloak) but never a granted one (Genju of the Fields)
+    const selfFighter = dmg("Scab-Clan Giant", { control: "opp", type: "creature", scope: "target" }, { control: "you", type: "creature", self: true }, ["creature"]);
+    expect(heard(selfFighter, umbra)).toBe(false);
+    const playerBite = dmg("Soul's Fire (player)", { control: "any", player: true, scope: "target" }, { control: "you", type: "creature" }, ["instant"]);
+    expect(heard(playerBite, umbra)).toBe(true);
+    // a creature granting the trigger to ITSELF (Rakavolver's kicker) is a self trigger judged on the card: a bite reaches it, another creature's own fight does not
+    const volver = base("Rakavolver", [{ ...umbra.tags.abilities[0]!, trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null, type: "creature", self: true } } } as never], ["volver"]);
+    expect(heard(playerBite, volver)).toBe(true);
+    expect(heard(selfFighter, volver)).toBe(false);
+  });
+
+  test("a host trigger hears a creature you control, not a bare dealer", () => {
+    const cloak = base("Armadillo Cloak", [{
+      kind: "triggered", effect: { kind: "lifegain" },
+      trigger: { verbs: ["non-combat-damage"], subject: { control: "any", token: null, type: "creature" }, host: true },
+      emits: [{ verb: "gain-life", subject: { control: "you", token: null } }],
+    } as never]);
+    expect(heard(bolt, cloak)).toBe(false);
+    expect(heard(bite, cloak)).toBe(true);
+    // without the marker the same subject is "whenever a creature deals damage": a typed dealer is heard as before
+    const classTrigger = base("Class", [{ ...cloak.tags.abilities[0]!, trigger: { verbs: ["non-combat-damage"], subject: { control: "any", token: null, type: "creature" } } } as never]);
+    expect(heard(bite, classTrigger)).toBe(true);
+  });
+
+  test("a spell-typed damage demand is never met by a typed permanent dealer (Syr Carah's spell half, #1471 G2)", () => {
+    const carahSpells = base("Syr Carah, the Bold", [{
+      kind: "triggered", effect: { kind: "" },
+      trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null, type: ["instant", "sorcery"] } },
+      emits: [{ verb: "exiled", subject: { control: "you", token: null, fromZone: "library" } }],
+    } as never]);
+    expect(heard(bite, carahSpells)).toBe(false);
+    expect(heard(bolt, carahSpells)).toBe(true);
+  });
+});
+
 test("a damage replacement is worded by what it prints, never as a doubler by default (#1345)", () => {
   const sentenceFor = (effect: Record<string, unknown>, change?: { op: "plus" | "times"; value: number }) => {
     const doubler = base("Damage Doubler", [{
