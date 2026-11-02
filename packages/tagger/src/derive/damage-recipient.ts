@@ -15,6 +15,8 @@
  *  Linear word scans only: no regex with a lazy or optional-whitespace tail (CodeQL js/polynomial-redos). */
 import type { SubjectFilter } from "../schema.js";
 import { parseSubject } from "./subject.js";
+import { isSelfSubject } from "./self-reference.js";
+import { SUBTYPE_TYPES } from "./subtypes.js";
 
 /** Words that open an item without naming it ("each", "target", "up to one", "another"). */
 const DETERMINERS: ReadonlySet<string> = new Set([
@@ -186,16 +188,129 @@ export function damageHitsSelf(object: string, clauseText: string): boolean {
   return o === "~" || ((o === "him" || o === "her") && FIGHT_BACK.test(clauseText));
 }
 
-/** WHO DEALS THE DAMAGE when a CREATURE does, not the spell (#1266, burn): "Target creature you control deals damage equal to its power to target creature you don't control" (Rabid Bite),
- *  "... to each other creature and each opponent" (Chandra's Ignition), "that creature deals damage" . The emit's dealer is then a creature, `you` when the sentence says "you control".
- *  A sentence word scan, no backtracking: the text before the first " deals " must be exactly such a creature phrase. Undefined when the dealer is the card or unclear. */
-export function creatureDamageSource(clauseText: string): "you" | "any" | undefined {
-  const lower = clauseText.toLowerCase();
-  const at = lower.indexOf(" deals ");
-  if (at < 0) return undefined;
-  // The head: the sentence part before " deals ", after any cost or earlier sentence.
-  const head = lower.slice(0, at).split(/[.:]/).pop()!.trim();
-  const phrases = ["target creature you control", "up to one target creature you control", "target creature", "that creature", "each of those creatures"];
-  if (!phrases.includes(head)) return undefined;
-  return head.endsWith("you control") ? "you" : "any";
+/** WHO DEALS THE DAMAGE, read off the damage sentence's PRINTED SUBJECT (#1266 burn, #1462): the words before " deals ". Three answers.
+ *   - `self`: the card itself ("this creature / this artifact / ... / this spell", its own name or short name, `~`; "it" when the clause's trigger is about the card -- Murderous Redcap).
+ *   - `other`: another object, typed from the phrase by `parseSubject` ("target creature you control", "that creature", "each creature", "enchanted creature", "target land", "the exiled creature"): control
+ *     (`you` / `opp`, else `any`), type or subtype. A typed dealer is never the card, so a matcher asking "a red source you control" cannot read it as the card's colour.
+ *   - undefined: unclear (an "it" with another antecedent, "he", "that source", a head that names no type) -- the dealer stays bare, which the matcher reads as the card unless a heuristic refuses it.
+ *  `nth` is which of the clause's `count` deal-damage actions this is: the k-th " deals " of the text, when the text holds exactly `count` of them (Stalking Yeti: "it deals ... and that creature deals ...").
+ *  A clause whose count differs stays unread. The head is the words after the last clause break; a trigger's own " deals " ("Whenever this creature deals damage") is not an action's.
+ *  Linear scans only: no regex with a lazy or unbounded tail over card text (CodeQL js/polynomial-redos). */
+export type DamageDealer = { self: true } | { other: Pick<SubjectFilter, "control" | "token" | "type" | "allTypes" | "subtype"> };
+const SELF_NOUNS: ReadonlySet<string> = new Set(["creature", "artifact", "enchantment", "permanent", "spell", "land", "aura", "equipment", "vehicle", "planeswalker", "saga", "class", "siege", "room", "card", "contraption"]);
+const OTHER_OPENERS: ReadonlySet<string> = new Set(["target", "that", "those", "each", "enchanted", "equipped", "fortified", "the", "all", "another", "up"]);
+const BREAKS = [". ", ": ", "; ", ", ", " then ", " and ", " — ", " instead ", " if ", "\n"];
+function lastBreak(s: string): string {
+  let best = -1, len = 0;
+  for (const b of BREAKS) { const at = s.lastIndexOf(b); if (at >= 0 && at + b.length > best + len) { best = at; len = b.length; } }
+  return best < 0 ? s : s.slice(best + len);
+}
+/** The positions of the damage verbs: " deals ", and " deal " after "have" ("you may have that creature deal 1 damage": Rage Forger) or "they (each)" ("They each deal damage equal to their power": Coordinated Clobbering). */
+function dealAt(lower: string): { at: number; len: number }[] {
+  const out: { at: number; len: number }[] = [];
+  for (let at = lower.indexOf(" deals "); at >= 0; at = lower.indexOf(" deals ", at + 7)) out.push({ at, len: 7 });
+  for (let at = lower.indexOf(" deal "); at >= 0; at = lower.indexOf(" deal ", at + 6)) {
+    const head = lastBreak(lower.slice(0, at)).trim();
+    if (head.startsWith("have ") || head.startsWith("you may have ") || head.startsWith("may have ") || head === "they each" || head === "they" || head.endsWith(" each")) out.push({ at, len: 6 });
+  }
+  return out.sort((x, y) => x.at - y.at);
+}
+/** The subject of the trigger that opens the clause, read off the PRINTED words ("Whenever a Beast you control enters, ..." -> "a beast you control"). The text and not `clause.trigger.subject`, so the grammar's
+ *  reading and the stored model answer (which words "becomes blocked by a creature" as subject "a creature") derive the same dealer and the card-by-card switch has nothing to flip over (#1462). */
+const TRIGGER_VERBS: ReadonlySet<string> = new Set(["enters", "enter", "attacks", "attack", "blocks", "block", "dies", "die", "deals", "deal", "is", "are", "becomes", "become", "leaves", "leave", "gets", "get", "taps", "untaps", "cast", "casts", "controls", "draws", "gains", "loses", "sacrifices", "would", "has", "have", "dealt"]);
+function triggerSubject(lower: string): string | undefined {
+  const start = lower.startsWith("whenever ") ? 9 : lower.startsWith("when ") ? 5 : -1;
+  if (start < 0) return undefined;
+  const end = lower.indexOf(", ");
+  if (end < 0) return undefined;
+  const words = lower.slice(start, end).split(" ");
+  if (words[0] === "you" || (words[0] === "an" && words[1] === "opponent")) return "";
+  const k = words.findIndex((w) => TRIGGER_VERBS.has(w));
+  return (k < 0 ? words : words.slice(0, k)).join(" ").trim();
+}
+const PERMANENT_TYPES: ReadonlySet<string> = new Set(["creature", "artifact", "enchantment", "land", "planeswalker", "battle", "permanent"]);
+/** "it" stands for the trigger's subject: the card (self) or a typed permanent. A spell, a player or a counter is not a dealer this scan can name. */
+function triggerDealer(subject: string | undefined, cardName: string | undefined): DamageDealer | undefined {
+  if (subject === undefined || subject === "" || subject.includes(" or ")) return undefined;
+  const w = subject.split(" ");
+  if (subject === "~" || (w[0] === "this" && w.length === 2 && SELF_NOUNS.has(w[1]!)) || isSelfSubject(subject, cardName)) return { self: true };
+  const d = typedDealer(subject);
+  if (d === undefined || !("other" in d)) return undefined;
+  const t = ([] as string[]).concat(d.other.type ?? []);
+  return t.length > 0 && !t.every((x) => PERMANENT_TYPES.has(x)) ? undefined : d;
+}
+export function damageDealerOf(clauseText: string, nth: number, count: number, cardName: string | undefined): DamageDealer | undefined {
+  // The card's own full name is one word for the scan ("Vikya, Scorching Stalwart deals" has a comma in it): replaced by `~`, longest face first.
+  let lower = clauseText.toLowerCase();
+  for (const face of (cardName ?? "").toLowerCase().split(" // ").map((f) => f.trim()).filter((f) => f.length > 0).sort((a, b) => b.length - a.length)) lower = lower.split(face).join("~");
+  const heads: { head: string; at: number }[] = [];
+  for (const { at } of dealAt(lower)) {
+    let head = lastBreak(lower.slice(0, at)).trim();
+    while (head.startsWith("•") || head.startsWith('"')) head = head.slice(1).trim();
+    for (const lead of ["you may have ", "may have ", "have "]) if (head.startsWith(lead)) { head = head.slice(lead.length).trim(); break; }
+    // "Up to two target creatures you control each deal damage equal to their power": the dealers are the creatures named, `each` only spreads the verb.
+    if (head.endsWith(" each") && head !== "they each") head = head.slice(0, -5).trim();
+    const w = head.split(" ")[0] ?? "";
+    // A trigger's or a condition's own dealer ("whenever a creature you control deals damage", "if a source would deal"), a reminder, or a granted quote is not an action's.
+    if (w === "when" || w === "whenever" || w === "if" || w === "unless" || w === "as" || w.startsWith("(")) continue;
+    heads.push({ head, at });
+  }
+  // One printed dealer for several damage actions ("Target creature you control deals damage equal to its power to ... If it has trample, excess damage is dealt to ...": Ram Through) is the dealer of all of them.
+  if (heads.length === 1 && count > 1 && nth < count) heads.push(...Array.from({ length: count - 1 }, () => heads[0]!));
+  if (heads.length !== count || nth >= count) return undefined;
+  const resolve = (i: number): DamageDealer | undefined => {
+    let head = heads[i]!.head;
+    for (const lead of ["then ", "instead ", "also "]) if (head.startsWith(lead)) head = head.slice(lead.length).trim();
+    if (head.endsWith(" also")) head = head.slice(0, -5).trim();
+    if (head === "") return undefined;
+    const parts = head.split(" ");
+    if (head === "~") return { self: true };
+    if (head === "it" || head === "they each" || head === "they") {
+      // "~ deals X damage to target creature. If it was kicked, it deals X damage to that creature's controller" (Illuminate): a later "it" is the dealer just named.
+      if (i > 0 && head === "it" && heads[i - 1]!.at !== heads[i]!.at) return resolve(i - 1);
+      const found = antecedentOf(lower.slice(0, heads[i]!.at));
+      if (found !== undefined) return found === "none" ? undefined : found;
+      return triggerDealer(triggerSubject(lower), cardName);
+    }
+    if (parts[0] === "this") return parts.length === 2 && SELF_NOUNS.has(parts[1]!) ? { self: true } : undefined;
+    if (isSelfSubject(head, cardName)) return { self: true };
+    return OTHER_OPENERS.has(parts[0]!) ? typedDealer(head) : undefined;
+  };
+  return resolve(nth);
+}
+function typedDealer(phrase: string): DamageDealer | undefined {
+  const s = parseSubject(phrase);
+  if (s.type === undefined && s.subtype === undefined) return undefined;
+  // A tribal dealer ("another Elemental you control") names a subtype only; a consumer asking for an instant or sorcery source must not meet it, so the subtype's card types (CR 205.3) fill the type.
+  let type = s.type;
+  if (type === undefined) {
+    const from = ([] as string[]).concat(s.subtype ?? []).flatMap((st) => SUBTYPE_TYPES[st.toLowerCase()] ?? []);
+    const uniq = [...new Set(from)];
+    if (uniq.length > 0) type = uniq.length === 1 ? uniq[0]! : uniq;
+  }
+  return { other: { control: s.control, token: s.token, ...(type !== undefined ? { type } : {}), ...(s.allTypes !== undefined ? { allTypes: s.allTypes } : {}), ...(s.subtype !== undefined ? { subtype: s.subtype } : {}) } };
+}
+
+/** What a pronoun stands for, read off the clause text before it: the NEAREST object named after the trigger -- "this creature" (the card: a cost "Sacrifice this creature: It deals"), "target creature you control"
+ *  ("Target creature you control gets +1/+0 until end of turn. It deals"), "that creature", "enchanted creature". Undefined when none is named (the trigger's subject then stands, in `damageDealerOf`);
+ *  "none" when the first is named but types nothing (a player), so the dealer stays unclear. */
+const PHRASE_ENDS = [" gets ", " get ", " gains ", " gain ", " has ", " have ", " and ", " to ", " deals ", " deal ", " that ", " with ", " becomes ", " can't ", " fights ", " fight ", " is ", " are ", " each ", " then ", " until ", " as ", " of ", " on ", " attacks", " blocks"];
+function antecedentOf(before: string): DamageDealer | "none" | undefined {
+  let text = before;
+  const opener = text.split(" ")[0] ?? "";
+  if (opener === "when" || opener === "whenever" || opener === "at") { const c = text.indexOf(", "); text = c < 0 ? "" : text.slice(c + 2); }
+  const pick: { at: number; kind: "self" | "target" | "ref" } = { at: -1, kind: "ref" };
+  const consider = (at: number, k: "self" | "target" | "ref") => { if (at >= 0 && at > pick.at) { pick.at = at; pick.kind = k; } };
+  for (const noun of SELF_NOUNS) consider(text.lastIndexOf(`this ${noun}`), "self");
+  consider(text.lastIndexOf("~"), "self");
+  // "becomes the target of a spell, it deals" names no object ("target of").
+  for (let at = text.lastIndexOf("target "); at >= 0; at = at === 0 ? -1 : text.lastIndexOf("target ", at - 1)) if (!text.startsWith("target of ", at)) { consider(at, "target"); break; }
+  for (const r of ["that creature", "enchanted creature", "equipped creature"]) consider(text.lastIndexOf(r), "ref");
+  if (pick.at < 0) return undefined;
+  if (pick.kind === "self") return { self: true };
+  let rest = text.slice(pick.at);
+  let end = rest.length;
+  for (const e of [...PHRASE_ENDS, ". ", ", ", ": ", "; "]) { const at = rest.indexOf(e, 1); if (at >= 0 && at < end) end = at; }
+  rest = rest.slice(0, end).trim();
+  return typedDealer(rest) ?? "none";
 }

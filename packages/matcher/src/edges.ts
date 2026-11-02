@@ -499,37 +499,36 @@ export function characteristicsSubject(tags: CardTags, name?: string): SubjectFi
 /** "its power", "that creature's toughness": the size is a stat of the creature that deals the damage, which is not the card unless the card is that creature. */
 const OTHER_CREATURE_AMOUNT = /\b(?:its|their|that creature'?s?|enchanted creature'?s?|equipped creature'?s?) (?:power|toughness)\b/i;
 function selfDealer(d: SubjectFilter): boolean {
-  return d.colors === undefined && d.type === undefined && d.subtype === undefined && d.anyOf === undefined && d.self === undefined;
+  return d.colors === undefined && d.type === undefined && d.subtype === undefined && d.anyOf === undefined;
 }
 
 /** One authored emit as the matcher reads it: a damage emit carries its ability's `amount`, and a bare dealer the card's colours (#1344). Shared by `baseEvents` and
  *  `producerEventOrigins`, whose map is keyed on the event's JSON.
  *
- *  A BARE DAMAGE DEALER IS THE CARD ONLY WHEN NOTHING SAYS OTHERWISE. Torbran's "a red source you control would deal damage" asks for the dealer's colour, and an authored
- *  damage emit's `dealer` is `{control: you}` with no colour, so Impact Tremors (a red enchantment) never met it. The card's colours are stamped on it, but only where the card
- *  is the dealer. Derive types SOME other dealers (a fight; Chandra's Ignition) and leaves others bare, so a bare dealer is not proof of "this card". Refused, where the stamp
- *  only abstains (the old behaviour): a granted ability (`grantedBy`: Barbed Field's enchanted land deals the damage) and an amount read off another creature ("equal to its
- *  power": Self-Destruct, Pain for All, Domri's Ambush). `[]` is colourless, a fact, and fails a coloured demand as it should.
- *  CEILING: the matcher has no clause text here (`CardTags` carries none), so a bare dealer whose sentence names another object with no creature stat in the amount still reads as the
- *  card. Measured 2026-11-01 over Torbran's 1,887 gained producers: about 15 cards (Rakdos Charm, Missy, Sarkhan the Mad, Saskia the Unyielding, Enchanter's Bane, Beastie Beatdown, Goblin Tinkerer, Aura Barbs,
- *  Stalking Yeti, Form of the Dinosaur, Dizzying Gaze, Rage Forger, Ingris Stingerquill, Wisecrack, Swooping Pteranodon, the second half of Pain for All). The fix is derive-side typing of
- *  those dealers, after which `selfDealer` refuses them without a change here.
- *  CEILING: `OTHER_CREATURE_AMOUNT` also refuses TRUE self-dealers, because on a creature card "its power" is usually its own and "that creature's power" usually sizes a creature the card
- *  itself deals damage with: of the 127 producers it removed from Torbran, about 57 deal the damage themselves (Terror of the Peaks, Murderous Redcap, Cacophony Scamp, Heartfire Hero,
- *  Spikeshot Elder, Gleeful Arsonist, Ziatora, Rupture), about 285 reasons over the five red-source replacements, missing on main too. Chosen over a creature-only narrowing, which
- *  regains ~55 and readmits ~10 false (Champion of the Path, Be'lakor, Stalking Vengeance): a missing pair over a wrong one. Derive-side dealer typing makes this regex deletable. */
+ *  DERIVE NAMES THE DEALER (#1462). It reads the damage sentence's printed subject: a dealer typed from it ("each creature deals", "that creature deals", "enchanted creature deals", "target land deals", "it" after a
+ *  trigger about a Beast you control) is another object and never the card; `self: true` ("this creature", the card's name, "it" after a trigger about the card) is the card. A SELF dealer gets the card's colours whatever the
+ *  amount reads ("its power", "that creature's power": Terror of the Peaks, Murderous Redcap, Heartfire Hero), and a typed dealer stays unstamped, which `selfDealer` refuses. A BARE dealer (no type, no `self`) is a
+ *  sentence derive could not read: it is the card ONLY WHEN NOTHING SAYS OTHERWISE, the old #1344 rule. Torbran's "a red source you control would deal damage" asks for the dealer's colour, and an authored damage emit's
+ *  `dealer` was `{control: you}` with no colour, so Impact Tremors (a red enchantment) never met it. Refused for a bare dealer, where the stamp only abstains (the old behaviour): a granted ability (`grantedBy`: Barbed Field's
+ *  enchanted land deals the damage) and an amount read off another creature ("equal to its power": Self-Destruct, Pain for All, Domri's Ambush). `[]` is colourless, a fact, and fails a coloured demand as it should.
+ *  CEILING: `OTHER_CREATURE_AMOUNT` stays for the bare dealers derive cannot name. Measured 2026-11-02 after the dealer typing (derive-impact + guard census over every derived ability): about 20 derived damage abilities still
+ *  carry a bare dealer with such an amount, each a pronoun whose antecedent the clause text does not hold: an activated "Sacrifice this creature: It deals damage equal to its power" whose cost is not in the clause text (Aerie Ouphes,
+ *  Blazing Bomb, Hellhole Flailer, Cinder Shade, Flame Elemental, Voldaren Thrillseeker), "Choose a Giant creature you control. It deals" (Crush Underfoot), a reflexive "that creature's controller may have it deal" (Pandemonium).
+ *  Before the typing the guard refused about 57 true self dealers (Terror of the Peaks, Murderous Redcap, Cacophony Scamp, Heartfire Hero, Spikeshot Elder, Gleeful Arsonist, Ziatora, Rupture) and admitted about 15 false ones
+ *  (Rakdos Charm, Missy, Sarkhan the Mad, Saskia the Unyielding, Enchanter's Bane, Beastie Beatdown, Goblin Tinkerer, Aura Barbs, Stalking Yeti, Form of the Dinosaur, Dizzying Gaze, Rage Forger, Ingris Stingerquill,
+ *  Swooping Pteranodon, the second half of Pain for All): both families are now read off the sentence. Deleting the regex would stamp the card's colour on those ~20 and on any future unread pronoun. */
 function authoredEmit(a: CardTags["abilities"][number], e: GameEvent, tags: CardTags): GameEvent {
   const sized = a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e;
-  if (!(sized.dealer !== undefined && selfDealer(sized.dealer) && a.grantedBy === undefined && !OTHER_CREATURE_AMOUNT.test(a.amount ?? ""))) return sized;
+  if (!(sized.dealer !== undefined && selfDealer(sized.dealer) && a.grantedBy === undefined && (sized.dealer.self === true || !OTHER_CREATURE_AMOUNT.test(a.amount ?? "")))) return sized;
   // A SPELL IS THE SOURCE OF ITS OWN DAMAGE (#1465): an instant's or sorcery's on-cast damage is dealt by that spell, so the dealer carries the card's spell types and a trigger on "an instant or sorcery spell you control
   // deals damage" (Syr Carah, Pyromancer's Swath, Rem Karolus, Flame Channeler) hears it. It used to reach her only through an untyped recipient, which a player-only recipient closes.
   // Not when the spell is not the dealer: a delayed trigger it sets up (Harsh Justice, Gaze of Pain: the attacking creature deals it), damage your creature deals ("target creature you control deals damage
   // equal to its power": Friendly Rivalry, Chocobo Kick; Ram Through's trample "excess damage"), or a REDIRECT (Harm's Way, Kor Chant, Shining Shoal: the original source deals it) -- those keep the bare
   // dealer, which no spell-typed trigger hears. "Equal to the power of the sacrificed creatures" (Soulblast, Morgue Burst, Olórin's Searing Light) is the spell's own damage, sized by a creature.
   // CEILING: only an `on-cast` ability of an instant or sorcery card is typed; a permanent's ability damage stays a bare dealer, and a split card's other half shares the card's types. Beastie Beatdown and
-  // Compel Brutality (a planeswalker's or creature's damage with no flag or amount cue) still read as the spell's; Season of the Bold's "whenever you cast a spell, Season of the Bold deals 2 damage" mode
+  // Compel Brutality are typed dealers since #1462 and never reach this line; Season of the Bold's "whenever you cast a spell, Season of the Bold deals 2 damage" mode
   // carries a trigger and is left bare, a missing answer (#1465 final review, 2026-11-02).
-  const creatureDealt = a.trigger !== undefined || e.redirect === true || /\bpower of (?:up to \w+ )?(?:other )?target creature\b|\bexcess damage\b/i.test(a.amount ?? "");
+  const creatureDealt = a.trigger !== undefined || e.redirect === true || (sized.dealer.self !== true && /\bpower of (?:up to \w+ )?(?:other )?target creature\b|\bexcess damage\b/i.test(a.amount ?? ""));
   const spellTypes = a.kind === "on-cast" && !creatureDealt ? tags.characteristics.types.map((t) => t.toLowerCase()).filter((t) => t === "instant" || t === "sorcery") : [];
   return { ...sized, dealer: { ...sized.dealer, colors: tags.characteristics.colors, ...(spellTypes.length > 0 ? { type: spellTypes.length === 1 ? spellTypes[0]! : spellTypes } : {}) } };
 }
