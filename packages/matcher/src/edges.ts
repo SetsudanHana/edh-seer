@@ -1338,6 +1338,20 @@ function damagedMatches(victim: SubjectFilter, consumer: SubjectFilter, h: Hiera
   return subjectMatches(victim, consumer, h);
 }
 
+/** Can this damage DEALER be another card's self (or host)? A typed dealer whose type, subtype and control the card satisfies; for a host, a typed creature you control. A bare dealer (`{control: you}`) is the producer itself, a `self` dealer is the producer, an opponent's
+ *  creature is never your card (#1471). CEILING: a dealer typed only by colour or keyword reads as bare; Derive types a dealer for a fight and a few bites and leaves most bites bare ("target creature you control deals damage", Chocobo Kick, Tandem Takedown), so those stop pairing until #1462. */
+function dealerCanBe(dealer: SubjectFilter, card: SubjectFilter | undefined, h: Hierarchy): boolean {
+  if (dealer.self === true || dealer.control === "opp") return false;
+  const typed = list(dealer.type).length > 0 || list(dealer.subtype).length > 0 || (dealer.anyOf?.length ?? 0) > 0;
+  if (!typed) return false;
+  if (card === undefined) {
+    const creature = (d: SubjectFilter): boolean => list(d.type).includes("creature") || list(d.type).includes("permanent") || list(d.subtype).length > 0 || (d.anyOf ?? []).some((b) => creature({ ...d, anyOf: undefined, ...b }));
+    return creature(dealer);
+  }
+  const { zone: _zone, ...printed } = dealer;
+  return subjectMatches(card, printed, h);
+}
+
 /** Can a damage emit's recipient be the one a consumer's trigger names (`GameEvent.victimIs`)? See the victim gate in `eventMatches`. One gate for every named recipient (#1465 creature forms, #1458 multiplier forms). */
 function canReachRecipient(v: SubjectFilter, want: NonNullable<GameEvent["victimIs"]>): boolean {
   const mine = want === "opponent-creature" || want === "opponent" || want === "opponent-or-permanent";
@@ -2313,7 +2327,14 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
         // ETB, and a rule that deleted that would be the mistake the taps work already caught once.
         // `zone` is dropped for the same reason as in the reanimator gate below: printed
         // characteristics sit in no zone.
-        if (t.subject.self === true && !viaHost) {
+        // A DAMAGE TRIGGER ON THE CARD ITSELF OR ON ITS HOST (#1471) IS JUDGED ON THE DEALER, NEVER ON THE VICTIM. An authored damage emit's `subject` is the one hit ("any target"), so the identity gate below compared the
+        // wrong participant: Lightning Bolt (victim untyped) passed for Syr Carah, Atemsis and Nicol Bolas, and a bite (victim an opponent's creature) was refused for Exalted Angel. The recipient is judged in `eventMatches`
+        // (`victimIs`); here the question is whether the DEALER can be this card (a typed dealer: a bite's "target creature you control", a grant) or its host (a creature you control).
+        // A bare dealer is the producer itself; it can never be another card's self trigger. An implied combat event has no `dealer` and keeps the identity gate (its subject is the attacker).
+        const ownDamage = DAMAGE_VERBS.has(t.verb) && DAMAGE_VERBS.has(e.verb) && e.dealer !== undefined && (t.subject.self === true || a.trigger.host === true);
+        if (ownDamage) {
+          if (!dealerCanBe(e.dealer!, a.trigger.host === true ? undefined : characteristicsSubject(c.tags, c.card.name), h)) continue;
+        } else if (t.subject.self === true && !viaHost) {
           // "EXILED WITH THIS CARD" IS A SET ONLY THE PRODUCER CAN ENUMERATE, and the emit drops the
           // restriction: Gisa, Glorious Resurrector and The Darkness Crystal both emit a bare
           // `enters: creature` for "put all creature cards exiled with <me> onto the battlefield",

@@ -1335,6 +1335,9 @@ export interface Ability {
     /** WHO THE DAMAGE MUST BE DEALT TO, when the printed trigger names a creature (#1465, Soul-Scar Mage: "deal noncombat damage to a creature an opponent controls" is `opponent-creature`). Read by the matcher, which refuses a damage
      *  producer aimed only at players. Written by damage-result triggers and, since #1458, by damage MULTIPLIERS that print a recipient (Torbran: `opponent-or-permanent`); every other damage trigger leaves the recipient open. */
     victim?: DamageVictim;
+    /** THE TRIGGER WATCHES THE PERMANENT THIS CARD IS ATTACHED TO (#1471): "Whenever enchanted creature deals damage, you gain that much life" (Armadillo Cloak, Spirit Link), "equipped creature" (Neko-Te). Written on damage triggers only;
+     *  the subject is a plain creature (the host's identity is not a filter), so this is the one record that it is the HOST and not every creature. The matcher then hears only a damage producer whose dealer can be a creature you control. */
+    host?: true;
   };
   /** THIS ABILITY CLAIMS NO CARDS, AND IS STILL AN ABILITY OF ITS KIND (#1264). One stored field for the two
    *  classes derive can decide from the card alone; the matcher reads it in one place (`claimsNothing`,

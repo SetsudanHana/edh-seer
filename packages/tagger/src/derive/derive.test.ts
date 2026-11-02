@@ -2380,6 +2380,32 @@ test("a damage multiplier carries the recipient it prints as trigger.victim (#14
   expect(victimOf("static", "If another red source you control would deal damage to a permanent or player, it deals that much damage plus 1 to that permanent or player instead.", "Embermaw Hellion")).toBeUndefined();
 });
 
+// #1471: a damage trigger on the card itself or on its host records the recipient it prints (`trigger.victim`) and whether it watches its host (`trigger.host`), so the matcher judges the dealer and the recipient.
+test("a self or host damage trigger carries its printed recipient and host marker (#1471)", () => {
+  const run = (subject: string, control: string, text: string, name: string, actions: unknown[] = [{ verb: "gain-life", object: "you", amount: "that much" }]) =>
+    deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "damage-dealt", subject, control }, actions }] as never, name, { 1: text }).abilities.find((a) => a.trigger)?.trigger;
+  const specter = run("this creature", "you", "Whenever this creature deals damage to a player, that player discards a card.", "Abyssal Specter", [{ verb: "discard", object: "a card" }]);
+  expect(specter).toMatchObject({ victim: "player" });
+  expect(specter?.host).toBeUndefined();
+  expect(run("this creature", "you", "Whenever this creature deals combat damage to an opponent, draw a card.", "Hypothetical", [{ verb: "draw", object: "a card" }])?.victim).toBe("opponent");
+  // no recipient printed: the angel hears any damage it deals
+  expect(run("this creature", "you", "Whenever this creature deals damage, you gain that much life.", "Exalted Angel")?.victim).toBeUndefined();
+  // a LIST or unread recipient stays open
+  expect(run("this creature", "you", "Whenever this creature deals combat damage to a player or planeswalker, draw a card.", "Hypothetical", [{ verb: "draw", object: "a card" }])?.victim).toBeUndefined();
+  // the host: an Aura's or Equipment's "enchanted / equipped creature"
+  const cloak = run("enchanted creature", "you", "Whenever enchanted creature deals damage, you gain that much life.", "Armadillo Cloak");
+  expect(cloak?.host).toBe(true);
+  expect(cloak?.victim).toBeUndefined();
+  expect(run("equipped creature", "you", "Whenever equipped creature deals combat damage to a player, draw a card.", "Hypothetical", [{ verb: "draw", object: "a card" }])).toMatchObject({ host: true, victim: "player" });
+  // a MODE of a modal trigger keeps the trigger but not its words: the card's one damage trigger names the recipient (Bejeweled Warg)
+  const warg = "Trample\nWhenever this creature deals combat damage to a player, choose one —\n• Put a +1/+1 counter on target Wolf you control.\n• Create a Treasure token.";
+  expect(deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "this creature", control: "you" }, actions: [{ verb: "add-counter", object: "target Wolf you control", amount: "+1/+1" }] }] as never, "Bejeweled Warg", { 1: "• Put a +1/+1 counter on target Wolf you control." }, undefined, warg as never).abilities.find((a) => a.trigger)?.trigger?.victim).toBe("player");
+  // a trigger that names neither the card nor its host is left alone (out of scope)
+  const other = run("a creature", "you", "Whenever a creature you control deals combat damage to a player, draw a card.", "Hypothetical", [{ verb: "draw", object: "a card" }]);
+  expect(other?.victim).toBeUndefined();
+  expect(other?.host).toBeUndefined();
+});
+
 // #1465: a damage replacement whose RESULT is a mill or counters is the damage event heard by an ordinary triggered ability; Lava Burst's "can't be ... dealt instead" is no replacement.
 test("a damage replacement that mills or places counters is a plain trigger on the replaced damage (#1465)", () => {
   const run = (abilityType: string, actions: { verb: string; object: string; amount?: string }[], text: string, name = "X") =>
