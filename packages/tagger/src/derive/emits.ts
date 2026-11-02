@@ -727,7 +727,8 @@ export function printsControlChange(clauseText: string): boolean {
 /** THE CARD ITSELF FIGHTS (#1471): "this creature fights up to one target creature you don't control" (Thorn Mammoth, Markov Enforcer), "~ fights", or a pronoun with no earlier object ("When this creature enters, it fights ...": Scab-Clan Giant, Wicked Wolf). The fighter is then the producer and
  *  never another card's self trigger. Refused: a pronoun whose antecedent is another object ("Target creature you control gets +1/+1. It fights ...", "whenever a creature you control enters, it fights", "If it's a creature card ... it fights Hans Eriksson"), and a fight whose other target may
  *  be YOUR creature ("another target creature", "target creature you control": Brash Taunter, Golden Guardian), since your Exalted Angel can be the one fought. The card-level conditions (a permanent, not a Saga, not a granted ability) are applied in derive.ts.
- *  CEILING: the card's NAME as fighter is not read, and a fight whose target is "target creature" with no control stated stays unmarked. */
+ *  CEILING: the card's NAME as fighter is not read; a fight whose target is "target creature" with no control stated, or "target creature token" (Hivespine Wolverine), stays unmarked;
+ *  a Saga creature's own chapter fight ("Summon: Magus Sisters": "This creature fights") is stripped with the Saga in derive.ts. Each leaves a typed `you` dealer that Exalted Angel-type triggers hear. */
 function selfFights(clauseText: string): boolean {
   const lower = clauseText.toLowerCase();
   let at = lower.indexOf(" fights ");
@@ -737,7 +738,7 @@ function selfFights(clauseText: string): boolean {
     const last = words[words.length - 1], prev = words[words.length - 2];
     const end = lower.indexOf(". ", at);
     const after = lower.slice(at, end < 0 ? undefined : end);
-    const notYours = after.includes("you don't control") || after.includes("an opponent controls");
+    const notYours = after.includes("you don't control") || after.includes("an opponent controls") || after.includes("defending player controls") || after.includes("your opponents control");
     // Without this card's own words, an earlier object in the clause is the pronoun's antecedent.
     const rest = before.replace(/\bthis [a-z]+\b/g, " ").replace(/~/g, " ");
     const bareRest = !/\btarget\b|\banother\b|\bcreatures?\b|\bcard\b|\bpermanent\b/.test(rest);

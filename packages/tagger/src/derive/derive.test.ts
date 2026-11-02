@@ -2405,6 +2405,8 @@ test("a self or host damage trigger carries its printed recipient and host marke
     deriveCardTags({ oracleId: "t", clauses: [{ id: 1, ...clause, actions: [{ verb: "fight", object: "up to one target creature you don't control" }] }] as never, characteristics: { ...MINIMAL_CHARACTERISTICS, types, subtypes }, clauseTexts: { 1: text }, ...extra } as never)
       .abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "non-combat-damage" && e.dealer?.type === "creature")?.dealer;
   expect(fightDealer("When this creature enters, it fights target creature an opponent controls chosen at random.", ["Creature"])).toMatchObject({ self: true });
+  // "defending player controls" is never yours either (The Tarrasque, Ace, Fearless Rebel).
+  expect(fightDealer("Whenever this creature attacks, it fights up to one target creature defending player controls.", ["Creature"])).toMatchObject({ self: true });
   expect(fightDealer("Whenever this creature or another creature you control enters, this creature fights up to one target creature you don't control.", ["Creature"])).toMatchObject({ self: true });
   const spell = { abilityType: "spell" };
   expect(fightDealer("Target creature you control gets +1/+1 until end of turn. It fights target creature you don't control.", ["Sorcery"], spell)?.self).toBeUndefined();
