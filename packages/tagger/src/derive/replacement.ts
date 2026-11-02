@@ -116,10 +116,25 @@ export function damageResultVerbs(clauseText: string): Verb[] {
  *  Unread: the chosen / enchanted / "that player" forms (Sawhorn Nemesis, Bitter Feud, Lightning Army of One, Curse of Bloodletting, The Countdown Is at One, The Rollercrusher Ride), the recipient that is the damaged object itself (Goldnight Castigator "you" / "this creature", Inquisitor's Flail "equipped creature"),
  *  Beyond the 25 "permanent or player" lines, 10 more stay unconditioned: the 9 named above (Goldnight Castigator is two lines) and Disciples. */
 export function damageRecipientOf(clauseText: string): "creature" | "opponent" | "opponent-or-permanent" | "player" | "player-or-battle" | undefined {
-  const m = /\bwould deal\b[^.]*?\bdamage to ([^,.]+?)(?:,| this turn|$)(.*)/i.exec(clauseText);
+  // By search, not a lazy regex (CodeQL js/polynomial-redos): the sentence from "would deal", its first "damage to", and the recipient up to the first comma or " this turn".
+  const lower = clauseText.toLowerCase();
+  const at = lower.search(/\bwould deal\b/);
+  if (at < 0) return undefined;
+  const stop = lower.indexOf(".", at);
+  const sentence = lower.slice(at, stop < 0 ? undefined : stop);
+  const to = sentence.search(/\bdamage to /);
+  if (to < 0) return undefined;
+  const rest = sentence.slice(to + "damage to ".length);
+  const ends = [rest.indexOf(","), rest.indexOf(" this turn")].filter((i) => i >= 0);
+  const cut = ends.length > 0 ? Math.min(...ends) : rest.length;
   // A LIST recipient ("a creature, battle, or opponent": Disciples of the Inferno) is not cut to its first item: it is unconditioned.
-  if (m && /^\s*(?:[^,.]+,\s*)?(?:or|and)\s/i.test(m[2] ?? "")) return undefined;
-  const printed = m?.[1]?.trim().toLowerCase();
+  if (rest[cut] === ",") {
+    const tail = rest.slice(cut + 1).trimStart();
+    const next = tail.indexOf(",");
+    const item = next >= 0 ? tail.slice(next + 1).trimStart() : "";
+    if (/^(?:or|and)\s/.test(tail) || /^(?:or|and)\s/.test(item)) return undefined;
+  }
+  const printed = rest.slice(0, cut).trim();
   switch (printed) {
     case "an opponent or a permanent an opponent controls":
     case "one of your opponents or a permanent one of your opponents controls": return "opponent-or-permanent";
