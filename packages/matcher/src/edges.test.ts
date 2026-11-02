@@ -446,6 +446,18 @@ test("an instant or sorcery's own damage satisfies a spell-typed damage trigger;
   } as never]);
   expect(pairReasons(flameRift, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(true);
   expect(pairReasons(pyromancer, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(false);
+  // A creature deals it, though the card is a spell: a delayed trigger (Harsh Justice: the attacking creature) or an amount sized by your creature (Friendly Rivalry).
+  const harshJustice = withTypes(base("Harsh Justice", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    trigger: { verbs: ["combat-damage"], subject: { control: "opp", token: null, type: "creature" } },
+    emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, player: true }, dealer: { control: "you", token: null } }],
+  } as never]), ["instant"]);
+  const rivalry = withTypes(base("Friendly Rivalry", [{
+    kind: "on-cast", effect: { kind: "damage" }, amount: "equal to the power of target creature you control",
+    emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, type: "creature", scope: "target" }, dealer: { control: "you", token: null } }],
+  } as never]), ["instant"]);
+  expect(pairReasons(harshJustice, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(false);
+  expect(pairReasons(rivalry, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(false);
 });
 
 test("a damage replacement is worded by what it prints, never as a doubler by default (#1345)", () => {
