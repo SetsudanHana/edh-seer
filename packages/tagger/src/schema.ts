@@ -850,6 +850,9 @@ export interface GameEvent {
   /** THIS DAMAGE IS A REDIRECT (#1294): "the next 2 damage that would be dealt to you is dealt to any target instead" (Harm's Way, Glarecaster). The card deals no damage of its own; it hands damage that was coming at you to a target, so the
    *  removal role refuses it (`notRedirect`). Set by derive on the `non-combat-damage` emits of an action whose clause says "is dealt to ... instead"; never by the LLM. "Prevent ... then this card deals that much" (Refraction Trap) is not one. */
   redirect?: true;
+  /** THIS DAMAGE HITS THE PLAYER WHO CONTROLS ITS DEALER (#1471): "that creature deals damage equal to its power to ITS CONTROLLER" (Backlash, Bomb Squad). Set by derive on a damage emit whose printed recipient is "its controller" /
+   *  "their controller"; the recipient is then a plain `{control: any, player: true}`, which says nothing of whose. When the dealer is YOUR creature the player is you, so a trigger that needs an opponent hit refuses it (`directedReasons`). */
+  toDealerController?: true;
   /** THIS `leaves` IS A TUCK: a permanent put into its owner's library (Condemn, Oust, Teferi, Hero of Dominaria -3). It left the battlefield, so a leaves payoff hears it, but the
    *  owner's quality ladder puts it BELOW a bounce (exile > destroy / sacrifice > bounce > tuck), which `quality.ts` `permanenceOf` reads. Set by derive (`actionEmits`); never by the LLM. */
   tuck?: true;

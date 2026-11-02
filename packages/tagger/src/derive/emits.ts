@@ -724,6 +724,20 @@ export function printsControlChange(clauseText: string): boolean {
   return CONTROL_CHANGE_PRINTED.some((re) => re.test(clauseText));
 }
 
+/** "...it fights up to one target creature", "this creature fights ...", "he fights": the fighter is the card (or the creature that entered). Read by search on the word before "fights". A name or "target creature you control ... fights" is not read.
+ *  CEILING: "it" after "this creature or another creature you control enters" (Thorn Mammoth) may be the other creature; it reads as the card. */
+function selfFights(clauseText: string): boolean {
+  const lower = clauseText.toLowerCase();
+  let at = lower.indexOf(" fights ");
+  while (at >= 0) {
+    const before = lower.slice(0, at).split(/[\s,]+/).filter((w) => w !== "");
+    const last = before[before.length - 1], prev = before[before.length - 2];
+    if (last === "it" || last === "he" || last === "she" || last === "~" || (prev === "this" && last !== undefined)) return true;
+    at = lower.indexOf(" fights ", at + 1);
+  }
+  return false;
+}
+
 export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean; trigger?: CounterTrigger } = {}): GameEvent[] {
   // A LIFE TOTAL SET THAT IS A LOSS (#1333, CR 119.5): "target opponent's life total becomes 10" is the `lose-life` a printed "target opponent loses N life" is; a plain set emits nothing.
   const lifeLoss = action.verb === "set-life" ? lifeSetRewrite(action, clauseText ?? "") : undefined;
@@ -1039,7 +1053,9 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     // CR 701.14a, each creature deals damage equal to its power to the other, so the dealer is the
     // fighting creature and not the spell -- Gratuitous Violence's "a creature you control" can
     // check it (recall v4 #120).
-    ...(DAMAGE_VERBS.has(verb) ? { dealer: { control: "you" as const, token: null, ...(action.verb === "fight" ? { type: "creature" } : {}) } } : {}),
+    // THE CARD'S OWN FIGHT HAS THE CARD AS DEALER (#1471): "this creature fights ...", "it fights ..." (Scab-Clan Giant, Wicked Wolf) is the producer itself, `self`, so it never feeds another card's self trigger.
+    ...(DAMAGE_VERBS.has(verb) ? { dealer: { control: "you" as const, token: null, ...(action.verb === "fight" ? { type: "creature", ...(selfFights(clauseText ?? "") ? { self: true as const } : {}) } : {}) } } : {}),
+    ...(DAMAGE_VERBS.has(verb) && action.verb !== "fight" && /^(?:its|their) controller$/i.test((action.object ?? "").trim()) ? { toDealerController: true as const } : {}),
   }));
   // A LISTED RECIPIENT IS ONE EVENT PER HALF (#1266, burn): the matcher's `damaged` test reads the VICTIM's top-level type ("a player and a permanent never meet"), so a
   // producer `anyOf` of [player, creature] would meet neither side's consumer. "Each opponent and each creature they control" is the opponent being dealt damage and

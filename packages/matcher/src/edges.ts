@@ -1339,9 +1339,15 @@ function damagedMatches(victim: SubjectFilter, consumer: SubjectFilter, h: Hiera
 }
 
 /** Can this damage DEALER be another card's self (or host)? A typed dealer whose type, subtype and control the card satisfies; for a host, a typed creature you control. A bare dealer (`{control: you}`) is the producer itself, a `self` dealer is the producer, an opponent's
- *  creature is never your card (#1471). CEILING: a dealer typed only by colour or keyword reads as bare; Derive types a dealer for a fight and a few bites and leaves most bites bare ("target creature you control deals damage", Chocobo Kick, Tandem Takedown), so those stop pairing until #1462. */
+ *  creature is never your card (#1471).
+ *  CEILING: a dealer typed only by colour or keyword reads as bare. The largest real loss is 40 producers that GRANT a pinger ("Equipped / Enchanted creature has '{T}: This creature deals 1 damage to any target'": Hankyu, Fire Whip, Lightning Prowess,
+ *  Heavy Arbalest, Viridian Longbow, Power of Fire, Psionic Gift): their dealer is bare, so they lose 253 reasons (40 each on Atemsis, Nicol Bolas, Niv-Mizzet, Lu Xun, Zhang Liao, Syr Carah, 5 each on Kiyomaro and Cecil), about half real (Hankyu x Lu Xun, Fire Whip x Kiyomaro). Fixing it needs the
+ *  grantee typed as the dealer (follow-up; #1462 strips `self` on grants and leaves them bare). Bare-dealer bites (Chocobo Kick, Tandem Takedown) never paired with a recipient-free self trigger (the old gate compared the victim), so nothing is lost there; #1462 will ADD them.
+ *  CEILING: Delirium ("target creature that player controls ... deals damage to the player") derives a control-`any` recipient and feeds every self trigger that names a player (#1474, recipient misreads). A modal trigger's mode (Bejeweled Warg) loses the word "combat", so its verb is non-combat-damage (pre-existing).
+ */
 function dealerCanBe(dealer: SubjectFilter, card: SubjectFilter | undefined, h: Hierarchy): boolean {
-  if (dealer.self === true || dealer.control === "opp") return false;
+  // A `self` dealer is the producer: never ANOTHER card's own trigger, but it can be a host (the Giant that fights can wear the Cloak).
+  if ((dealer.self === true && card !== undefined) || dealer.control === "opp") return false;
   const typed = list(dealer.type).length > 0 || list(dealer.subtype).length > 0 || (dealer.anyOf?.length ?? 0) > 0;
   if (!typed) return false;
   if (card === undefined) {
@@ -2331,9 +2337,13 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
         // wrong participant: Lightning Bolt (victim untyped) passed for Syr Carah, Atemsis and Nicol Bolas, and a bite (victim an opponent's creature) was refused for Exalted Angel. The recipient is judged in `eventMatches`
         // (`victimIs`); here the question is whether the DEALER can be this card (a typed dealer: a bite's "target creature you control", a grant) or its host (a creature you control).
         // A bare dealer is the producer itself; it can never be another card's self trigger. An implied combat event has no `dealer` and keeps the identity gate (its subject is the attacker).
-        const ownDamage = DAMAGE_VERBS.has(t.verb) && DAMAGE_VERBS.has(e.verb) && e.dealer !== undefined && (t.subject.self === true || a.trigger.host === true);
+        // A GRANTED self trigger ("Enchanted creature has 'Whenever this creature deals damage...'", Snake Umbra) is the HOST's, not the grantor's: it is judged as a host (a typed creature you control), as `auraHostLeaves` does.
+        const hostLike = a.trigger.host === true || (a.grantedBy !== undefined && t.subject.self === true);
+        const ownDamage = DAMAGE_VERBS.has(t.verb) && DAMAGE_VERBS.has(e.verb) && e.dealer !== undefined && (t.subject.self === true || hostLike);
         if (ownDamage) {
-          if (!dealerCanBe(e.dealer!, a.trigger.host === true ? undefined : characteristicsSubject(c.tags, c.card.name), h)) continue;
+          if (!dealerCanBe(e.dealer!, hostLike ? undefined : characteristicsSubject(c.tags, c.card.name), h)) continue;
+          // "Its controller" is the dealer's controller, and this dealer is YOUR creature: the player hit is you, never the opponent the trigger names (Backlash on your Atemsis).
+          if (e.toDealerController === true && (t.victimIs === "opponent" || t.victimIs === "opponent-creature" || t.victimIs === "opponent-or-permanent")) continue;
         } else if (t.subject.self === true && !viaHost) {
           // "EXILED WITH THIS CARD" IS A SET ONLY THE PRODUCER CAN ENUMERATE, and the emit drops the
           // restriction: Gisa, Glorious Resurrector and The Darkness Crystal both emit a bare

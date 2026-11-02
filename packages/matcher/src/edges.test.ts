@@ -549,6 +549,36 @@ describe("a self or host damage trigger hears only a dealer that can be the card
     expect(heard(dragonBite, selfTrigger("Dragon Whelp", undefined, ["dragon"]))).toBe(true);
   });
 
+  test("'its controller' is you when the dealer is your creature: Backlash never hits the opponent a trigger names", () => {
+    const backlash = dmg("Backlash", { control: "any", player: true }, { control: "any", type: "creature" }, ["instant"]);
+    backlash.tags.abilities[0]!.emits![0] = { ...backlash.tags.abilities[0]!.emits![0]!, toDealerController: true };
+    expect(heard(backlash, wurm)).toBe(false);
+    expect(heard(backlash, specter)).toBe(true);
+    // a typed dealer aimed at "target player" (Lava Spike's recipient) can hit the opponent
+    const targeted = dmg("Targeted", { control: "any", player: true, scope: "target" }, { control: "any", type: "creature" }, ["instant"]);
+    expect(heard(targeted, wurm)).toBe(true);
+  });
+
+  test("a creature's own fight is the producer itself, never another card's self trigger (Scab-Clan Giant)", () => {
+    const giant = dmg("Scab-Clan Giant", { control: "opp", type: "creature", scope: "target" }, { control: "you", type: "creature", self: true }, ["creature"]);
+    expect(heard(giant, angel)).toBe(false);
+    // ...but the Giant can wear the Aura whose host trigger watches damage
+    const cloak = base("Armadillo Cloak", [{ kind: "triggered", effect: { kind: "lifegain" }, trigger: { verbs: ["non-combat-damage"], subject: { control: "any", token: null, type: "creature" }, host: true }, emits: [{ verb: "gain-life", subject: { control: "you", token: null } }] } as never]);
+    expect(heard(giant, cloak)).toBe(true);
+  });
+
+  test("a granted self trigger is judged as its host's: a creature you control feeds Snake Umbra (#1471)", () => {
+    const umbra = base("Snake Umbra", [{
+      kind: "triggered", effect: { kind: "draw-card" }, grantedBy: 2,
+      trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null, type: "creature", self: true }, victim: "opponent" },
+      emits: [{ verb: "draw", subject: { control: "you", token: null } }],
+    } as never]);
+    (umbra.tags.characteristics as { types: string[] }).types = ["enchantment"];
+    const soulsFire = dmg("Soul's Fire", { control: "any", scope: "target" }, { control: "you", type: "creature" }, ["instant"]);
+    expect(heard(soulsFire, umbra)).toBe(true);
+    expect(heard(bolt, umbra)).toBe(false);
+  });
+
   test("a host trigger hears a creature you control, not a bare dealer", () => {
     const cloak = base("Armadillo Cloak", [{
       kind: "triggered", effect: { kind: "lifegain" },

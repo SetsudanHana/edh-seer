@@ -2400,6 +2400,13 @@ test("a self or host damage trigger carries its printed recipient and host marke
   // a MODE of a modal trigger keeps the trigger but not its words: the card's one damage trigger names the recipient (Bejeweled Warg)
   const warg = "Trample\nWhenever this creature deals combat damage to a player, choose one —\n• Put a +1/+1 counter on target Wolf you control.\n• Create a Treasure token.";
   expect(deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "this creature", control: "you" }, actions: [{ verb: "add-counter", object: "target Wolf you control", amount: "+1/+1" }] }] as never, "Bejeweled Warg", { 1: "• Put a +1/+1 counter on target Wolf you control." }, undefined, warg as never).abilities.find((a) => a.trigger)?.trigger?.victim).toBe("player");
+  // a creature's own fight has the card as dealer; a bite on a creature you control does not
+  const fightDealer = (text: string, name: string) => deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [{ verb: "fight", object: "up to one target creature you don't control" }] }] as never, name, { 1: text }).abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "non-combat-damage")?.dealer;
+  expect(fightDealer("When this creature enters, it fights up to one target creature you don't control.", "Wicked Wolf")).toMatchObject({ type: "creature", self: true });
+  expect(fightDealer("When this creature enters, target creature you control fights up to one target creature you don't control.", "Hypothetical")?.self).toBeUndefined();
+  // "its controller" marks the damage as hitting the dealer's controller
+  const backlash = deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "deal-damage", object: "its controller", amount: "equal to its power" }] }] as never, "Backlash", { 1: "Tap target untapped creature. That creature deals damage equal to its power to its controller." }).abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "non-combat-damage");
+  expect(backlash?.toDealerController).toBe(true);
   // a trigger that names neither the card nor its host is left alone (out of scope)
   const other = run("a creature", "you", "Whenever a creature you control deals combat damage to a player, draw a card.", "Hypothetical", [{ verb: "draw", object: "a card" }]);
   expect(other?.victim).toBeUndefined();
