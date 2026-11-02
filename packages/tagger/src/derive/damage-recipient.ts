@@ -321,3 +321,17 @@ function antecedentOf(before: string, skipRef = false): DamageDealer | "none" | 
   rest = rest.slice(0, end).trim();
   return typedDealer(rest) ?? "none";
 }
+
+/** A GRANTED "this creature deals" is the creature the grant lands on (#1462): "Enchanted creature has \"{T}: This creature deals 1 damage ...\"", "Creatures you control have ...", "Equipped creature gains ...".
+ *  Read from the granting clause's own words before its first has / have / gains / gain; undefined when that subject names no creature (a land or an unknown grantee stays a bare dealer). */
+export function granteeDealer(grantClauseText: string): { control: SubjectFilter["control"]; token: null; type: string | string[] } | undefined {
+  const lower = grantClauseText.toLowerCase();
+  let end = -1;
+  for (const v of [" has ", " have ", " gains ", " gain "]) { const at = lower.indexOf(v); if (at >= 0 && (end < 0 || at < end)) end = at; }
+  if (end < 0) return undefined;
+  const d = typedDealer(lower.slice(0, end).trim());
+  if (d === undefined || !("other" in d) || d.other.type === undefined) return undefined;
+  const types = ([] as string[]).concat(d.other.type);
+  if (!types.includes("creature")) return undefined;
+  return { control: d.other.control, token: null, type: d.other.type };
+}
