@@ -882,6 +882,8 @@ export interface GameEvent {
   /** HOW MUCH DAMAGE THE CONSUMER REQUIRES -- its trigger's `amount` ("exactly 1", "5 or more"),
    *  carried onto the event the matcher builds from the trigger. A demand only: never on an emit. */
   amountIs?: { op: "eq" | "gte"; value: number };
+  /** The consumer's trigger requires the damage to be dealt to a creature (`Ability.trigger.victim`). A demand only: never on an emit. */
+  victimIs?: "creature" | "opponent-creature";
 }
 
 /** The closed set of recognized effect.kind labels. Extraction output is normalized to this
@@ -1303,6 +1305,10 @@ export interface Ability {
   /** A `to-hand` OR typed-dig ability that NETS ZERO CARDS (#1302, owner 2026-10-22): it replaces a draw ("If you would draw a card, you may instead ... reveal cards ...": Abundance, Underrealm Lich, Tomorrow) or swaps with the
    *  top of the library (Scroll Rack). Card selection, not hand-fill. Only `true` is written. */
   netZero?: true;
+  /** A REPLACEMENT EFFECT WHOSE RESULT IS AN EVENT OF ITS OWN, NOT A MULTIPLIER (#1465; CR 614.1a: "instead" makes it a replacement effect, not a triggered ability, CR 603.1): Undead Alchemist, Szadek, Soul-Scar Mage.
+   *  The ability keeps its trigger (the replaced damage) and its kind so the pair readers hear the damage and the mill / counter placement, but it is no TRIGGERED ABILITY to copy (`copies:triggered`) or to double
+   *  (trigger-doubling). Distinct from `replacement`, which marks a multiplier. Only `true` is written. */
+  replacementResult?: true;
   /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs. */
   trigger?: {
     verbs: Verb[];
@@ -1323,6 +1329,9 @@ export interface Ability {
      *  `GameEvent.amount` and refuses a producer whose size is unknown. Absent on every trigger that
      *  prints no size. */
     amount?: { op: "eq" | "gte"; value: number };
+    /** WHO THE DAMAGE MUST BE DEALT TO, when the printed trigger names a creature (#1465, Soul-Scar Mage: "deal noncombat damage to a creature an opponent controls" is `opponent-creature`). Read by the matcher, which refuses a damage
+     *  producer aimed only at players. Only damage-result triggers write it; every other damage trigger leaves the recipient open. */
+    victim?: "creature" | "opponent-creature";
   };
   /** THIS ABILITY CLAIMS NO CARDS, AND IS STILL AN ABILITY OF ITS KIND (#1264). One stored field for the two
    *  classes derive can decide from the card alone; the matcher reads it in one place (`claimsNothing`,

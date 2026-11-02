@@ -89,14 +89,26 @@ function branchOf(s: SubjectFilter): Partial<SubjectFilter> {
   return rest;
 }
 
+const BARE_TARGET_WORDS: ReadonlySet<string> = new Set(["damage", "divided", "as", "you", "choose", "among", "any", "number", "of", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "x", "or", "each", "up", "to", "and"]);
+/** An object that is only a count of targets, with no type: "any number of targets", "each of up to X targets", "3 damage divided as you choose among one, two, or three targets". */
+function isBareTargets(t: string): boolean {
+  const w = words(t.replace(/,/g, " "));
+  if (w.length < 2 || w[w.length - 1] !== "targets") return false;
+  return w.slice(0, -1).every((x) => BARE_TARGET_WORDS.has(x) || /^\d+$/.test(x));
+}
+
 /** The recipient of a damage or life-loss action, when its words list a player beside something else (`anyOf`) or name a
  *  permanent's controller (untyped, `any`); undefined when neither, so the caller keeps the parsed noun. */
 export function damageRecipient(object: string): SubjectFilter | undefined {
   let t = object.trim().toLowerCase();
   if (t === "") return undefined;
-  if (isControllerPhrase(t)) return { control: "any", token: null };
+  // A controller is a PLAYER, whose it is depends on X (#1465: "that land's controller", "its controller": Cryoclasm, Rakdos Charm).
+  if (isControllerPhrase(t)) return { control: "any", token: null, player: true };
   // "any target that isn't a Dragon" (Wrathful Red Dragon), "any other target": still any target, so a player can be hit.
   if (t.startsWith("any target ") || t.startsWith("any other target")) return { control: "any", token: null, scope: "target", ...(t.startsWith("any other") ? { other: true as const } : {}) };
+  // BARE TARGETS (#1465): "any number of targets" (Bogardan Hellkite, Rolling Thunder), "one or two targets" (Twin Bolt), "each of up to three targets" (Jaya's Immolating Inferno), "3 damage divided as you choose among one, two, or three
+  // targets" (Inferno Titan) are targets (CR 115.1) of no stated type: any target, as the "any target" head above.
+  if (isBareTargets(t)) return { control: "any", token: null, scope: "target" };
   for (const cut of RELATIVE_CUTS) { const at = t.indexOf(cut); if (at > 0) t = t.slice(0, at); }
   // The control tail binds the permanent items: "each creature they control" after "each opponent" is the opponent's.
   let tail = "";
@@ -149,13 +161,18 @@ export function damageRecipient(object: string): SubjectFilter | undefined {
 /** DAMAGE THAT CAN ONLY HIT A PLAYER (#1294): "target player", "target opponent", "that player", "that opponent". `parseSubject` reads these as an untyped subject, byte for byte what it
  *  reads for "any target", so a role asking "can this damage reach a permanent?" could not tell Pyroclastic Elemental from Lightning Bolt. The player subject states the player, as the
  *  "player or planeswalker" branch of `damageRecipient` does. "Any target" stays untyped. Exact phrases only: a longer phrase ("target player who controls ...") keeps its reading. */
-const PLAYER_ONLY_OBJECTS: ReadonlySet<string> = new Set(["target player", "target opponent", "that player", "that opponent"]);
+const PLAYER_ONLY_OBJECTS: ReadonlySet<string> = new Set([
+  "target player", "target opponent", "that player", "that opponent",
+  // #1465: a recipient that names only a player, left untyped and so read as "could be a creature" (Price of Progress, Browbeat, Curse of Shaken Faith, Khorvath's Fury)
+  "each player", "any player", "the player", "each other player", "each opponent", "each foe", "enchanted player", "the chosen player", "each other opponent", "defending player", "any opponent", "each of your opponents", "chosen opponent", "an opponent",
+]);
 /** What may follow the noun without changing who is hit: a qualifier on the same player ("target player who attacked this turn", "target opponent chosen at random", "target opponent previously dealt damage by it"). */
-const PLAYER_QUALIFIERS: ReadonlySet<string> = new Set(["who", "chosen", "previously"]);
+const PLAYER_QUALIFIERS: ReadonlySet<string> = new Set(["who", "whose", "chosen", "previously", "at"]);
 export function playerOnlyRecipient(object: string): SubjectFilter | undefined {
   const t = object.trim().toLowerCase();
   const w = words(t);
-  if (!PLAYER_ONLY_OBJECTS.has(w.slice(0, 2).join(" ")) || (w.length > 2 && !PLAYER_QUALIFIERS.has(w[2]!))) return undefined;
+  const n = PLAYER_ONLY_OBJECTS.has(w.slice(0, 3).join(" ")) ? 3 : PLAYER_ONLY_OBJECTS.has(w.slice(0, 2).join(" ")) ? 2 : PLAYER_ONLY_OBJECTS.has(w[0] ?? "") ? 1 : 0;
+  if (n === 0 || (w.length > n && !PLAYER_QUALIFIERS.has(w[n]!))) return undefined;
   // A player has no type: a qualifier clause ("who cast one or more sorcery spells") must not leak one onto it (Backdraft read `sorcery`).
   const { type: _ty, subtype: _st, ...s } = parseSubject(t);
   return { ...s, player: true };

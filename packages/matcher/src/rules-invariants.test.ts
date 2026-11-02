@@ -42,6 +42,7 @@ const TESTED: Record<string, string> = {
   "903.4b": "legality.test.ts — 903.4b a card that chooses its colour",
   "702.124": "partners.test.ts — 702.124a/c",
   "702.124m": "legality.test.ts — Doctor's companion needs a Time Lord Doctor and nothing else",
+  "614.1a": "edges.test.ts — a damage replacement whose result is a mill / counters is no triggered ability: no copies:triggered, no trigger doubling (#1465)",
   "614.1c": "edges.test.ts — an UNTYPED enters emit does not reach a clone (a clone replaces its own entry)",
   "702.90b": "deck-math.test.ts — infect damage to a player is poison, not life: the whole-table combat speed leaves infect out (#1056)",
   "702.164c": "wincon.test.ts — toxic gives N poison counters in addition to the damage: N read off the text (#1056 poison)",

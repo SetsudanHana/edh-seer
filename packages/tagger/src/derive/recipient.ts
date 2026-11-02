@@ -85,7 +85,8 @@ export function damagedPlayerIsOpponent(clauseText: string, triggerIsSelf: boole
   // polynomially on runs of spaces (CodeQL js/polynomial-redos), so the shape is read with string search.
   const text = clauseText.trimStart();
   const lower = text.toLowerCase();
-  const start = lower.startsWith("whenever ") ? 9 : lower.startsWith("when ") ? 5 : -1;
+  // ...and the replacement frame "If a Zombie you control would deal combat damage to a player, instead that player mills" (#1465).
+  const start = lower.startsWith("whenever ") ? 9 : lower.startsWith("when ") ? 5 : lower.startsWith("if ") ? 3 : -1;
   if (start < 0) return false;
   // "deals combat damage to a player / an opponent", or damage of ANY kind to either (Atemsis, #1252; Marsh Viper, #1263).
   const combatAt = lower.indexOf(" combat damage to ", start);
@@ -99,7 +100,7 @@ export function damagedPlayerIsOpponent(clauseText: string, triggerIsSelf: boole
   const verbAt = head.toLowerCase().endsWith(" deals") ? head.length - 6 : head.toLowerCase().endsWith(" deal") ? head.length - 5 : -1;
   if (verbAt < 0) return false;
   if (toOpponent) return true;
-  const who = head.slice(0, verbAt).trim();
+  const who = head.slice(0, verbAt).replace(/\s+would\s*$/i, "").trim();
   return triggerIsSelf || /\byou control\b/i.test(who) || /^(?:this |equipped creature$)/i.test(who)
     || (cardName !== undefined && (who === cardName || who.toLowerCase() === cardName.split(",")[0]!.toLowerCase()));
 }

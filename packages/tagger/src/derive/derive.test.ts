@@ -2365,6 +2365,79 @@ test("a damage replacement that reduces, sets, redirects, mills or counters is n
     "If a creature you control would deal damage to a permanent or player, it deals double that damage instead.")).toContain("damage-multiplier");
 });
 
+// #1465: a damage replacement whose RESULT is a mill or counters is the damage event heard by an ordinary triggered ability; Lava Burst's "can't be ... dealt instead" is no replacement.
+test("a damage replacement that mills or places counters is a plain trigger on the replaced damage (#1465)", () => {
+  const run = (abilityType: string, actions: { verb: string; object: string; amount?: string }[], text: string, name = "X") =>
+    deriveAbilities([{ id: 1, abilityType, actions }] as never, name, { 1: text }).abilities;
+  const alchemist = run("static", [{ verb: "mill", object: "that many cards" }],
+    "If a Zombie you control would deal combat damage to a player, instead that player mills that many cards.", "Undead Alchemist");
+  expect(alchemist).toHaveLength(1);
+  expect(alchemist[0]!.trigger?.verbs).toEqual(["combat-damage"]);
+  expect(alchemist[0]!.trigger?.subject).toMatchObject({ subtype: "zombie", control: "you" });
+  expect(alchemist[0]!.kind).toBe("triggered");
+  expect(alchemist[0]!.effect.kind).toBe("mill");
+  expect(alchemist[0]!.emits?.map((e) => e.verb)).toContain("mill");
+  // "that player" is the one the Zombie hit: an opponent, so the mill never fills YOUR graveyard (trigger form: Crosstown Courier)
+  expect(alchemist[0]!.effect.subject?.control).toBe("opp");
+  expect(alchemist[0]!.emits?.find((e) => e.verb === "mill")?.subject.control).toBe("opp");
+  expect(alchemist[0]!.replacement).toBeUndefined();
+  expect(alchemist[0]!.change).toBeUndefined();
+
+  const szadek = run("static", [{ verb: "add-counter", object: "+1/+1" }, { verb: "mill", object: "that player" }],
+    "If Szadek would deal combat damage to a player, instead put that many +1/+1 counters on Szadek and that player mills that many cards.", "Szadek, Lord of Secrets");
+  expect(szadek.every((a) => a.replacement === undefined && a.effect.kind !== "damage-multiplier")).toBe(true);
+  expect(szadek.map((a) => a.effect.kind).sort()).toEqual(["counter-placement", "mill"]);
+  expect(szadek.flatMap((a) => a.emits ?? []).find((e) => e.verb === "mill")?.subject.control).toBe("opp");
+  expect(szadek.flatMap((a) => a.emits ?? []).find((e) => e.verb === "counter-added")?.subject.self).toBe(true);
+  expect(szadek.every((a) => a.trigger?.verbs?.join() === "combat-damage" && a.trigger.subject.self === true)).toBe(true);
+
+  const mage = run("static", [{ verb: "add-counter", object: "-1/-1", amount: "that many" }],
+    "If a source you control would deal noncombat damage to a creature an opponent controls, put that many -1/-1 counters on that creature instead.", "Soul-Scar Mage");
+  expect(mage).toHaveLength(1);
+  expect(mage[0]!.trigger?.verbs).toEqual(["non-combat-damage"]);
+  expect(mage[0]!.trigger?.subject.control).toBe("you");
+  expect(mage[0]!.effect.kind).toBe("counter-placement");
+  expect(mage[0]!.emits?.map((e) => e.verb)).toContain("counter-added");
+  // "that creature" is the creature an opponent controls
+  expect(mage[0]!.emits?.find((e) => e.verb === "counter-added")?.subject.control).toBe("opp");
+  expect(mage[0]!.effect.subject?.control).toBe("opp");
+  // the damage must be dealt to a creature
+  expect(mage[0]!.trigger?.victim).toBe("opponent-creature");
+  expect(alchemist[0]!.trigger?.victim).toBeUndefined();
+  expect(mage[0]!.replacement).toBeUndefined();
+
+  const lava = run("spell", [{ verb: "deal-damage", object: "any target", amount: "X" },
+    { verb: "prevent", object: "damage dealt to a creature by this spell can't be prevented or dealt instead to another permanent or player" }],
+    "Lava Burst deals X damage to any target. If Lava Burst would deal damage to a creature, that damage can't be prevented or dealt instead to another permanent or player.", "Lava Burst");
+  expect(lava.map((a) => a.effect.kind)).toContain("damage");
+  expect(lava.map((a) => a.emits?.map((e) => e.verb)).flat()).not.toContain("prevented");
+
+  // out of scope: a reduction stays unread
+  expect(run("static", [{ verb: "deal-damage", object: "a permanent or player", amount: "that much damage minus 1" }],
+    "If a spell would deal damage to a permanent or player, it deals that much damage minus 1 to that permanent or player instead.", "Benevolent Unicorn")).toEqual([]);
+});
+
+// #1465: damage whose printed recipients are TARGETS (CR 115.1) is an untyped targeted emit, like "any target".
+test("damage divided among, or dealt to each of, N targets carries scope target (#1465)", () => {
+  const scopeOf = (object: string, text: string) =>
+    deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "deal-damage", object, amount: "3" }] }] as never, "X", { 1: text }).abilities
+      .flatMap((a) => a.emits ?? []).find((e) => e.verb === "non-combat-damage")?.subject;
+  for (const [object, text] of [
+    ["any number of targets", "When this creature enters, it deals 5 damage divided as you choose among any number of targets."],
+    ["one or two targets", "Prismari Charm deals 1 damage to each of one or two targets."],
+    ["each of up to X targets", "Crackle with Power deals five times X damage to each of up to X targets."],
+    ["3 damage divided as you choose among one, two, or three targets", "Whenever this creature enters or attacks, it deals 3 damage divided as you choose among one, two, or three targets."],
+  ] as const) expect(scopeOf(object, text), object).toMatchObject({ control: "any", scope: "target" });
+  // a recipient that is only a PLAYER carries player: true (Price of Progress, Cryoclasm, Rakdos Charm, Browbeat), never the "could be a creature" untyped shape
+  for (const [object, text] of [
+    ["each player", "Price of Progress deals 2 damage to each player."],
+    ["that land's controller", "Destroy target nonbasic land. Cryoclasm deals 3 damage to that land's controller."],
+    ["its controller", "Each creature deals 1 damage to its controller."],
+    ["each opponent", "Purphoros deals 2 damage to each opponent."],
+    ["any player", "Browbeat deals 5 damage to any player unless that player has you draw three cards."],
+  ] as const) expect(scopeOf(object, text), object).toMatchObject({ player: true });
+});
+
 // A MULTIPLIER'S NARROWING LIVES INSIDE ITS OBJECT, and dropping it claims every card the nouns
 // match. MEASURED: re-normalizing gave Raphael, the Muscle and Mjölnir, Hammer of Thor the subjects
 // {creature, you, all} and {creature, any, all}, taking MESHED 288 -> 405 (60 + 57, the whole

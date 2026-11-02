@@ -520,7 +520,18 @@ function selfDealer(d: SubjectFilter): boolean {
  *  regains ~55 and readmits ~10 false (Champion of the Path, Be'lakor, Stalking Vengeance): a missing pair over a wrong one. Derive-side dealer typing makes this regex deletable. */
 function authoredEmit(a: CardTags["abilities"][number], e: GameEvent, tags: CardTags): GameEvent {
   const sized = a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e;
-  return sized.dealer !== undefined && selfDealer(sized.dealer) && a.grantedBy === undefined && !OTHER_CREATURE_AMOUNT.test(a.amount ?? "") ? { ...sized, dealer: { ...sized.dealer, colors: tags.characteristics.colors } } : sized;
+  if (!(sized.dealer !== undefined && selfDealer(sized.dealer) && a.grantedBy === undefined && !OTHER_CREATURE_AMOUNT.test(a.amount ?? ""))) return sized;
+  // A SPELL IS THE SOURCE OF ITS OWN DAMAGE (#1465): an instant's or sorcery's on-cast damage is dealt by that spell, so the dealer carries the card's spell types and a trigger on "an instant or sorcery spell you control
+  // deals damage" (Syr Carah, Pyromancer's Swath, Rem Karolus, Flame Channeler) hears it. It used to reach her only through an untyped recipient, which a player-only recipient closes.
+  // Not when the spell is not the dealer: a delayed trigger it sets up (Harsh Justice, Gaze of Pain: the attacking creature deals it), damage your creature deals ("target creature you control deals damage
+  // equal to its power": Friendly Rivalry, Chocobo Kick; Ram Through's trample "excess damage"), or a REDIRECT (Harm's Way, Kor Chant, Shining Shoal: the original source deals it) -- those keep the bare
+  // dealer, which no spell-typed trigger hears. "Equal to the power of the sacrificed creatures" (Soulblast, Morgue Burst, Olórin's Searing Light) is the spell's own damage, sized by a creature.
+  // CEILING: only an `on-cast` ability of an instant or sorcery card is typed; a permanent's ability damage stays a bare dealer, and a split card's other half shares the card's types. Beastie Beatdown and
+  // Compel Brutality (a planeswalker's or creature's damage with no flag or amount cue) still read as the spell's; Season of the Bold's "whenever you cast a spell, Season of the Bold deals 2 damage" mode
+  // carries a trigger and is left bare, a missing answer (#1465 final review, 2026-11-02).
+  const creatureDealt = a.trigger !== undefined || e.redirect === true || /\bpower of (?:up to \w+ )?(?:other )?target creature\b|\bexcess damage\b/i.test(a.amount ?? "");
+  const spellTypes = a.kind === "on-cast" && !creatureDealt ? tags.characteristics.types.map((t) => t.toLowerCase()).filter((t) => t === "instant" || t === "sorcery") : [];
+  return { ...sized, dealer: { ...sized.dealer, colors: tags.characteristics.colors, ...(spellTypes.length > 0 ? { type: spellTypes.length === 1 ? spellTypes[0]! : spellTypes } : {}) } };
 }
 
 /** A producer's events BEFORE anything is derived from them -- authored emits plus the card's own
@@ -1197,6 +1208,14 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // a wrong one. Measured on the corpus: seven cards print such a trigger; Ghyrson Starn had been
   // joined to every pinger (Eidolon of the Great Revel's 2, Flame-Kin War Scout's 4).
   if (consumer.amountIs !== undefined && !sizeSatisfies(producer.amount, consumer.amountIs)) return false;
+  // DAMAGE TO A CREATURE (#1465): a trigger that needs the damage dealt to a creature (Soul-Scar Mage) is met only by an emit that CAN be a creature: its type list names creature, or it is untyped, targeted and not a player
+  // ("any target": Lightning Bolt), or an anyOf branch is. Refused: a `player` subject, a planeswalker / battle-typed one (Lava Spike's second emit), and an untyped one that is not targeted (every painland, "each opponent":
+  // Guttersnipe, Impact Tremors, Purphoros, "that land's controller").
+  // CEILING: a creature-typed emit with control `any` passes for the opponent-creature trigger (a "target creature" removal can be aimed at an opponent's), and a FIGHT's damage (Wayta, Ulvenwald Tracker: the emit names your own
+  // creature as the victim) is lost, as are three cards with their own derive defects (Satyr Firedancer, Flame Sweep, Ajani Unrelenting): 5 cards (the fight pair and the three) that can damage an opponent's creature stay unpaired.
+  // The untyped recipients still passing as "could be a creature" were censused at 42 producers: 'a permanent or player' / 'that permanent or player' (Ghyrson Starn, Kelermorph: really can be creatures), and a player-only "them" (Razorkin Needlehead, Adrenaline Jockey, Scytheclaw Raptor,
+  // Roiling Vortex; left untyped because stamping it flipped Davriel and Invasion of Eldraine to a reading that lost their opponent control) and a few unread objects (Hans Eriksson, Ojer Axonil, Gargantos, Batroc the Leaper).
+  if (consumer.victimIs !== undefined && DAMAGE_VERBS.has(producer.verb) && !canHitACreature(producer.subject, consumer.victimIs === "opponent-creature")) return false;
   // A TARGETING RESTRICTION IS A DEMAND NOTHING HERE CAN CHECK, so the trigger claims no producer.
   // `replacement.restricted` one layer over: keep the ability and its kind, claim no cards. Read on
   // the CONSUMER only — a producer's emit never states how a spell was targeted, so the field can
@@ -1316,6 +1335,19 @@ function damagedMatches(victim: SubjectFilter, consumer: SubjectFilter, h: Hiera
   const consumerIsPermanent = consumer.self === true || list(consumer.type).length > 0 || list(consumer.subtype).length > 0;
   if (victimIsPermanent !== consumerIsPermanent) return false;
   return subjectMatches(victim, consumer, h);
+}
+
+/** Can a damage emit's victim be a creature? See the victim gate in `eventMatches`. */
+function canHitACreature(v: SubjectFilter, opponents: boolean): boolean {
+  // The card itself is always YOUR permanent, and a creature `you` control is not "a creature an opponent controls" (Soul-Scar Mage).
+  if (v.self === true || (opponents && v.control === "you")) return false;
+  if (v.anyOf !== undefined && v.anyOf.length > 0) return v.anyOf.some((b) => canHitACreature({ ...v, anyOf: undefined, ...b }, opponents));
+  // A permanent can be a creature ("any target ... that permanent or player": Riddle of Lightning, Erratic Explosion); a planeswalker or battle cannot.
+  if (list(v.type).length > 0) return list(v.type).includes("creature") || list(v.type).includes("permanent");
+  if (list(v.subtype).length > 0) return true;
+  if (v.player === true || v.control === "you") return false;
+  // UNTYPED and not a player: the recipient could be a creature ("any target", "divided among any number of targets", an untargeted "each"). Derive types a player-only recipient (`player: true`).
+  return true;
 }
 
 /** A counter-placing ability whose every counter goes on its own source: its self emit, else undefined. */
@@ -2213,7 +2245,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
       if (!a.trigger) continue;
       if (a.effect.kind === "proliferate" && notAnOrigin.has(JSON.stringify(e0))) continue;
       for (const rawVerb of a.trigger.verbs) {
-        const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject, ...(a.trigger.amount ? { amountIs: a.trigger.amount } : {}) });
+        const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject, ...(a.trigger.amount ? { amountIs: a.trigger.amount } : {}), ...(a.trigger.victim ? { victimIs: a.trigger.victim } : {}) });
         // `e` is `e0` when it matches as authored, or an untyped land put resolved against the
         // deck's lands to the subtype this trigger names (`landPutFor`); null is no match.
         const viaHost = auraHostLeaves(c.tags.characteristics, a, e0, t, h);
@@ -3172,7 +3204,7 @@ function triggerDoublingEdges({ p, c, h, reasons }: PairScope): void {
       if (a.doublesOf.chosenType === true || a.doublesOf.chosenColor === true) continue;
       const member = subjectMatches(characteristicsSubject(c.tags, c.card.name), a.doublesOf, h);
       // Any trigger of the member counts, whoever's object it watches -- the same reading as below.
-      const hasTrigger = c.tags.abilities.some((ca) => (ca.trigger?.verbs.length ?? 0) > 0);
+      const hasTrigger = c.tags.abilities.some((ca) => (ca.trigger?.verbs.length ?? 0) > 0 && ca.replacementResult !== true);
       if (member && hasTrigger) {
         reasons.push({
           tag: `doubles:${themeSubjectKey(a.doublesOf)}`,
@@ -3187,6 +3219,7 @@ function triggerDoublingEdges({ p, c, h, reasons }: PairScope): void {
     }
     if (!a.doubles?.length) continue;
     for (const ca of c.tags?.abilities ?? []) {
+      if (ca.replacementResult === true) continue; // a replacement is no triggered ability to double (CR 614.1a, #1465)
       const verb = (ca.trigger?.verbs ?? []).find((v) => a.doubles!.includes(v));
       if (!verb) continue;
       // "A triggered ability of a permanent YOU CONTROL" is the ABILITY's side, and the consumer is
@@ -4187,7 +4220,7 @@ export function abilityIsKind(ca: CardTags["abilities"][number], kind: string): 
   if (isSelfLoss(ca) || isManaRider(ca)) return false; // #1252: a self lose-the-game ability is no ability to copy; #1423, #1426: nor is any rider of an activated mana ability (CR 605.1a, 605.3b: part of a mana ability, never on the stack)
   const loyalty = ca.kind === "activated" && ca.payment?.loyalty !== undefined;
   const mana = ca.kind === "activated" && ca.effect?.kind === "mana-generation";
-  if (kind === "triggered") return ca.kind === "triggered";
+  if (kind === "triggered") return ca.kind === "triggered" && ca.replacementResult !== true; // CR 614.1a: a damage replacement whose result is a mill / counters is no triggered ability (#1465)
   if (kind === "loyalty") return loyalty;
   if (kind === "mana") return mana;
   if (kind === "activated") return ca.kind === "activated" && !mana;

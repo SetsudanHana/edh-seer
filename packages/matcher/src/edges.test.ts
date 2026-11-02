@@ -325,10 +325,6 @@ test("a damage replacement that does not multiply forms no edge, reason or cares
   const refused = [
     derived("Divine Presence", "static", [{ verb: "deal-damage", object: "that permanent or player", amount: "3" }],
       "If a source would deal 4 or more damage to a permanent or player, that source deals 3 damage to that permanent or player instead."),
-    derived("Soul-Scar Mage", "static", [{ verb: "add-counter", object: "-1/-1", amount: "that many" }],
-      "If a source you control would deal noncombat damage to a creature an opponent controls, put that many -1/-1 counters on that creature instead."),
-    derived("Undead Alchemist", "static", [{ verb: "mill", object: "that many cards" }],
-      "If a Zombie you control would deal combat damage to a player, instead that player mills that many cards."),
   ];
   for (const card of refused) {
     expect(card.tags.abilities.filter((a) => a.replacement && !a.effect.kind), card.card.name).toEqual([]);
@@ -337,6 +333,142 @@ test("a damage replacement that does not multiply forms no edge, reason or cares
     expect(pairReasons(card, bolt, H), card.card.name).toEqual([]);
     expect([...cardCaresTags(card.tags)].filter((t) => t.startsWith("non-combat-damage") || t.startsWith("combat-damage")), card.card.name).toEqual([]);
   }
+});
+
+// #1465: a replacement whose result is a mill or counters is read as a plain trigger on the replaced damage: a reason forms, worded as a trigger, never as a doubler.
+test("a damage replacement that mills or places counters is a plain damage trigger (#1465)", () => {
+  const { abilities } = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "add-counter", object: "-1/-1", amount: "that many" }] }] as never, "Soul-Scar Mage",
+    { 1: "If a source you control would deal noncombat damage to a creature an opponent controls, put that many -1/-1 counters on that creature instead." });
+  const mage = base("Soul-Scar Mage", abilities as CardTags["abilities"]);
+  const bolt = base("Lightning Bolt", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target" }, dealer: { control: "you", token: null } }],
+  } as never]);
+  // a player-only damage emit (Lava Spike's target player, Purphoros's each opponent) never becomes counters on a creature
+  // the two-emit shape derive writes for "target player or planeswalker": a player and a targeted planeswalker
+  const spike = base("Lava Spike", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [
+      { verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target", player: true }, dealer: { control: "you", token: null } },
+      { verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target", type: "planeswalker" }, dealer: { control: "you", token: null } },
+    ],
+  } as never]);
+  // a painland: "deals 1 damage to you"
+  const painland = base("Shivan Reef", [{
+    kind: "activated", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "you", token: null }, dealer: { control: "you", token: null } }],
+  } as never]);
+  expect(pairReasons(painland, mage, H)).toEqual([]);
+  const purphoros = base("Purphoros", [{
+    kind: "triggered", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, player: true }, dealer: { control: "you", token: null } }],
+  } as never]);
+  expect(pairReasons(spike, mage, H)).toEqual([]);
+  expect(pairReasons(purphoros, mage, H)).toEqual([]);
+  expect(mage.tags.abilities.filter((a) => a.replacement)).toEqual([]);
+  // CR 614.1a: it is a replacement effect, so no copier of triggered abilities and no trigger doubler hears it
+  expect(mage.tags.abilities[0]!.replacementResult).toBe(true);
+  const resonator = base("Strionic Resonator", [{ kind: "activated", effect: { kind: "copy-ability", subject: { control: "you", token: null, abilityKind: ["triggered"] } } } as never]);
+  expect(pairReasons(mage, resonator, H).filter((r) => r.tag.startsWith("copies"))).toEqual([]);
+  const panharmonicon = base("Annie Joins Up", [{ kind: "static", effect: { kind: "trigger-doubling" }, doubles: ["non-combat-damage"] } as never]);
+  expect(pairReasons(mage, panharmonicon, H).filter((r) => r.tag.startsWith("doubles"))).toEqual([]);
+  // Soul-Scar's printed recipient is "a creature AN OPPONENT controls": the card itself (Protector of the Crown, "damage dealt to you is dealt to this creature instead") and your own creature (Rile) never feed it
+  const protector = base("Protector of the Crown", [{
+    kind: "static", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "you", token: null, self: true }, dealer: { control: "any", token: null } }],
+  } as never]);
+  const rile = base("Rile", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "you", token: null, type: "creature", scope: "target" }, dealer: { control: "you", token: null } }],
+  } as never]);
+  const removal = base("Flame Slash", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, type: "creature", scope: "target" }, dealer: { control: "you", token: null } }],
+  } as never]);
+  expect(mage.tags.abilities[0]!.trigger?.victim).toBe("opponent-creature");
+  expect(pairReasons(protector, mage, H)).toEqual([]);
+  expect(pairReasons(rile, mage, H)).toEqual([]);
+  expect(pairReasons(removal, mage, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(true);
+  // the WHOSE-axis doubler (Annie Joins Up shape) never doubles the replacement: it has a trigger and nothing else
+  const annie = base("Annie Joins Up", [{ kind: "static", effect: { kind: "trigger-doubling" }, doublesOf: { control: "you", token: null, type: "creature", subtype: "zombie" } } as never]);
+  const szadekShaped = base("Szadek-shaped", mage.tags.abilities.map((a) => ({ ...a, replacementResult: true })) as CardTags["abilities"], ["zombie"]);
+  expect(pairReasons(annie, szadekShaped, H).filter((r) => r.tag.startsWith("doubles"))).toEqual([]);
+  const realTrigger = base("Real", [{ kind: "triggered", trigger: { verbs: ["dies"], subject: { self: true, control: "you", token: null } }, effect: { kind: "draw-card" } } as never], ["zombie"]);
+  expect(pairReasons(annie, realTrigger, H).some((r) => r.tag.startsWith("doubles"))).toBe(true);
+  // damage with no target in its sentence reaches no creature: Price of Progress (each player), Cryoclasm ("that land's controller")
+  const price = base("Price of Progress", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "each", player: true }, dealer: { control: "you", token: null } }],
+  } as never]);
+  const cryoclasm = base("Cryoclasm", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, player: true }, dealer: { control: "you", token: null } }],
+  } as never]);
+  expect(pairReasons(price, mage, H)).toEqual([]);
+  expect(pairReasons(cryoclasm, mage, H)).toEqual([]);
+  // divided damage is untyped but targeted; a permanent-typed any-target emit can be a creature
+  const hellkite = base("Bogardan Hellkite", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { self: true, control: "you", token: null } }, effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target" }, dealer: { control: "you", token: null } }],
+  } as never]);
+  const riddle = base("Riddle of Lightning", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, type: "permanent", scope: "target" }, dealer: { control: "you", token: null } },
+      { verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target", player: true }, dealer: { control: "you", token: null } }],
+  } as never]);
+  // untargeted damage to each creature feeds it just as well (Pyroclasm)
+  const pyroclasm = base("Pyroclasm", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, type: "creature", scope: "each" }, dealer: { control: "you", token: null } }],
+  } as never]);
+  expect(pairReasons(pyroclasm, mage, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(true);
+  expect(pairReasons(hellkite, mage, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(true);
+  expect(pairReasons(riddle, mage, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(true);
+  const text = pairReasons(bolt, mage, H).map((r) => r.text).join(" | ");
+  expect(text).toContain("When Lightning Bolt deals noncombat damage, Soul-Scar Mage");
+  expect(text).not.toMatch(/doubl|triples|changes the damage|adds to the damage/);
+});
+
+// #1465: a spell is the source of its own damage, so a trigger on "an instant or sorcery spell you control deals damage" (Syr Carah) hears an instant's or sorcery's damage even when the recipient is a player
+test("an instant or sorcery's own damage satisfies a spell-typed damage trigger; a creature's does not", () => {
+  const withTypes = (c: ReturnType<typeof base>, types: string[]) => ({ ...c, tags: { ...c.tags, characteristics: { ...c.tags.characteristics, types } } });
+  const carah = base("Syr Carah, the Bold", [{
+    kind: "triggered", effect: { kind: "damage" },
+    trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null, type: ["instant", "sorcery"] } },
+  } as never]);
+  const flameRift = withTypes(base("Flame Rift", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "each", player: true }, dealer: { control: "you", token: null } }],
+  } as never]), ["sorcery"]);
+  const pyromancer = base("Prodigal Pyromancer", [{
+    kind: "activated", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target" }, dealer: { control: "you", token: null } }],
+  } as never]);
+  expect(pairReasons(flameRift, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(true);
+  expect(pairReasons(pyromancer, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(false);
+  // A creature deals it, though the card is a spell: a delayed trigger (Harsh Justice: the attacking creature) or an amount sized by your creature (Friendly Rivalry).
+  const harshJustice = withTypes(base("Harsh Justice", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    trigger: { verbs: ["combat-damage"], subject: { control: "opp", token: null, type: "creature" } },
+    emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, player: true }, dealer: { control: "you", token: null } }],
+  } as never]), ["instant"]);
+  const rivalry = withTypes(base("Friendly Rivalry", [{
+    kind: "on-cast", effect: { kind: "damage" }, amount: "equal to the power of target creature you control",
+    emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, type: "creature", scope: "target" }, dealer: { control: "you", token: null } }],
+  } as never]), ["instant"]);
+  expect(pairReasons(harshJustice, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(false);
+  expect(pairReasons(rivalry, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(false);
+  // ...and a redirect (Harm's Way: the original source deals it). A spell's own damage SIZED by a creature (Soulblast) is still the spell's.
+  const harmsWay = withTypes(base("Harm's Way", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target" }, dealer: { control: "you", token: null }, redirect: true }],
+  } as never]), ["instant"]);
+  const soulblast = withTypes(base("Soulblast", [{
+    kind: "on-cast", effect: { kind: "damage" }, amount: "the total power of the sacrificed creatures",
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, scope: "target" }, dealer: { control: "you", token: null } }],
+  } as never]), ["instant"]);
+  expect(pairReasons(harmsWay, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(false);
+  expect(pairReasons(soulblast, carah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(true);
 });
 
 test("a damage replacement is worded by what it prints, never as a doubler by default (#1345)", () => {
