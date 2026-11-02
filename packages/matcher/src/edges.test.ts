@@ -451,6 +451,18 @@ test("an instant or sorcery's own damage satisfies a spell-typed damage trigger;
     kind: "triggered", effect: { kind: "damage" },
     trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null, self: true } },
   } as never]);
+  // a creature's own ping (bare dealer) never satisfies ANOTHER card's self trigger (Witherscale Wurm shape) ...
+  const wurm = base("Witherscale Wurm", [{
+    kind: "triggered", effect: { kind: "damage" },
+    trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null, type: "creature", self: true } },
+  } as never]);
+  expect(pairReasons(pyromancer, wurm, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(false);
+  // ... but a spell that makes the consumer deal the damage does (Ram Through: "target creature you control deals damage equal to its power")
+  const ramThrough = base("Ram Through", [{
+    kind: "on-cast", effect: { kind: "damage" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, type: "creature", scope: "target" }, dealer: { control: "you", token: null, type: "creature", scope: "target" } }],
+  } as never]);
+  expect(pairReasons(ramThrough, wurm, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(true);
   expect(pairReasons(flameRift, selfCarah, H).some((r) => r.tag.startsWith("non-combat-damage"))).toBe(false);
 });
 
