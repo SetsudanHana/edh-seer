@@ -2400,10 +2400,20 @@ test("a self or host damage trigger carries its printed recipient and host marke
   // a MODE of a modal trigger keeps the trigger but not its words: the card's one damage trigger names the recipient (Bejeweled Warg)
   const warg = "Trample\nWhenever this creature deals combat damage to a player, choose one —\n• Put a +1/+1 counter on target Wolf you control.\n• Create a Treasure token.";
   expect(deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "this creature", control: "you" }, actions: [{ verb: "add-counter", object: "target Wolf you control", amount: "+1/+1" }] }] as never, "Bejeweled Warg", { 1: "• Put a +1/+1 counter on target Wolf you control." }, undefined, warg as never).abilities.find((a) => a.trigger)?.trigger?.victim).toBe("player");
-  // a creature's own fight has the card as dealer; a bite on a creature you control does not
-  const fightDealer = (text: string, name: string) => deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [{ verb: "fight", object: "up to one target creature you don't control" }] }] as never, name, { 1: text }).abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "non-combat-damage")?.dealer;
-  expect(fightDealer("When this creature enters, it fights up to one target creature you don't control.", "Wicked Wolf")).toMatchObject({ type: "creature", self: true });
-  expect(fightDealer("When this creature enters, target creature you control fights up to one target creature you don't control.", "Hypothetical")?.self).toBeUndefined();
+  // a creature's own fight has the card as dealer; a pronoun that points at another object, a spell, a Saga, a granted ability, or a fight that may hit your own creature does not
+  const fightDealer = (text: string, types: string[], clause: Record<string, unknown> = { abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" } }, extra: Record<string, unknown> = {}, subtypes: string[] = []) =>
+    deriveCardTags({ oracleId: "t", clauses: [{ id: 1, ...clause, actions: [{ verb: "fight", object: "up to one target creature you don't control" }] }] as never, characteristics: { ...MINIMAL_CHARACTERISTICS, types, subtypes }, clauseTexts: { 1: text }, ...extra } as never)
+      .abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "non-combat-damage" && e.dealer?.type === "creature")?.dealer;
+  expect(fightDealer("When this creature enters, it fights target creature an opponent controls chosen at random.", ["Creature"])).toMatchObject({ self: true });
+  expect(fightDealer("Whenever this creature or another creature you control enters, this creature fights up to one target creature you don't control.", ["Creature"])).toMatchObject({ self: true });
+  const spell = { abilityType: "spell" };
+  expect(fightDealer("Target creature you control gets +1/+1 until end of turn. It fights target creature you don't control.", ["Sorcery"], spell)?.self).toBeUndefined();
+  expect(fightDealer("Whenever a creature you control enters, it fights up to one target creature you don't control with the same mana value.", ["Artifact"])?.self).toBeUndefined();
+  expect(fightDealer("Reveal the top card of your library. If it's a creature card, put it onto the battlefield. It fights target creature you don't control.", ["Creature"])?.self).toBeUndefined();
+  expect(fightDealer("{2}: This creature fights another target creature you control.", ["Creature"], { abilityType: "activated" })?.self).toBeUndefined();
+  expect(fightDealer("When this creature enters, it fights up to one target creature you don't control.", ["Enchantment"], undefined, undefined, ["Saga"])?.self).toBeUndefined();
+  // granted: "target creatures each gain '{T}: This creature fights another target creature'" is the grantee's
+  expect(fightDealer("Target creatures gain \"When this creature enters, it fights up to one target creature you don't control.\"", ["Instant"], spell)?.self).toBeUndefined();
   // "its controller" marks the damage as hitting the dealer's controller
   const backlash = deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "deal-damage", object: "its controller", amount: "equal to its power" }] }] as never, "Backlash", { 1: "Tap target untapped creature. That creature deals damage equal to its power to its controller." }).abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "non-combat-damage");
   expect(backlash?.toDealerController).toBe(true);

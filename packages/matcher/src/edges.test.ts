@@ -577,6 +577,15 @@ describe("a self or host damage trigger hears only a dealer that can be the card
     const soulsFire = dmg("Soul's Fire", { control: "any", scope: "target" }, { control: "you", type: "creature" }, ["instant"]);
     expect(heard(soulsFire, umbra)).toBe(true);
     expect(heard(bolt, umbra)).toBe(false);
+    // a self-fighter is no host's: it feeds an Aura's own host trigger (Armadillo Cloak) but never a granted one (Genju of the Fields)
+    const selfFighter = dmg("Scab-Clan Giant", { control: "opp", type: "creature", scope: "target" }, { control: "you", type: "creature", self: true }, ["creature"]);
+    expect(heard(selfFighter, umbra)).toBe(false);
+    const playerBite = dmg("Soul's Fire (player)", { control: "any", player: true, scope: "target" }, { control: "you", type: "creature" }, ["instant"]);
+    expect(heard(playerBite, umbra)).toBe(true);
+    // a creature granting the trigger to ITSELF (Rakavolver's kicker) is a self trigger judged on the card: a bite reaches it, another creature's own fight does not
+    const volver = base("Rakavolver", [{ ...umbra.tags.abilities[0]!, trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null, type: "creature", self: true } } } as never], ["volver"]);
+    expect(heard(playerBite, volver)).toBe(true);
+    expect(heard(selfFighter, volver)).toBe(false);
   });
 
   test("a host trigger hears a creature you control, not a bare dealer", () => {
