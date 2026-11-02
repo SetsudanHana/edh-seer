@@ -112,11 +112,14 @@ export function damageResultVerbs(clauseText: string): Verb[] {
 }
 
 /** WHO A DAMAGE MULTIPLIER MUST HURT (#1458), off the recipient it prints after "damage to". The matcher keeps a damage producer only if its recipient CAN be that one (`recipientGate`), so Torbran no longer hears Rile or Marauding Raptor.
- *  CEILING: only the forms below are read (census of 51 multiplier lines: 25 "a permanent or player" stay unconditioned by design; 13 "an opponent or a permanent an opponent controls", 4 "an opponent" / "one of your opponents", 2 "a player", 1 "a player or battle", 2 "a creature" are read).
+ *  CEILING: only the forms below are read (census of 51 multiplier lines: 25 "a permanent or player" stay unconditioned by design; 13 "an opponent or a permanent an opponent controls", 4 "an opponent" / "one of your opponents", 2 "a player", 1 "a player or battle" (Rankle and Torbran's mode), 1 "a creature" (Blind Fury) are read; 1 list form, Disciples of the Inferno "a creature, battle, or opponent", is unconditioned).
  *  Unread: the chosen / enchanted / "that player" forms (Sawhorn Nemesis, Bitter Feud, Lightning Army of One, Curse of Bloodletting, The Countdown Is at One, The Rollercrusher Ride), the recipient that is the damaged object itself (Goldnight Castigator "you" / "this creature", Inquisitor's Flail "equipped creature"),
- *  and Rankle and Torbran's mode, which inherits its parent's combat-damage trigger. */
+ *  Beyond the 25 "permanent or player" lines, 10 more stay unconditioned: the 9 named above (Goldnight Castigator is two lines) and Disciples. */
 export function damageRecipientOf(clauseText: string): "creature" | "opponent" | "opponent-or-permanent" | "player" | "player-or-battle" | undefined {
-  const printed = /\bwould deal\b[^.]*?\bdamage to ([^,.]+?)(?:,| this turn|$)/i.exec(clauseText)?.[1]?.trim().toLowerCase();
+  const m = /\bwould deal\b[^.]*?\bdamage to ([^,.]+?)(?:,| this turn|$)(.*)/i.exec(clauseText);
+  // A LIST recipient ("a creature, battle, or opponent": Disciples of the Inferno) is not cut to its first item: it is unconditioned.
+  if (m && /^\s*(?:[^,.]+,\s*)?(?:or|and)\s/i.test(m[2] ?? "")) return undefined;
+  const printed = m?.[1]?.trim().toLowerCase();
   switch (printed) {
     case "an opponent or a permanent an opponent controls":
     case "one of your opponents or a permanent one of your opponents controls": return "opponent-or-permanent";

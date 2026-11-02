@@ -362,6 +362,9 @@ test("a damage multiplier hears only damage that can reach its printed recipient
   expect(dmg(slash, goliath)).toBe(false);
   expect(dmg(rile, goliath)).toBe(false);
   expect(dmg(spike, fury)).toBe(false);
+  // an IMPLIED combat event (no `dealer`, the attacker as subject, recipient unknown) still feeds a victim-gated multiplier
+    const attacker = base("Grizzly Bears", [{ kind: "static", effect: { kind: "other" }, emits: [{ verb: "combat-damage", subject: { control: "you", token: null, self: true, type: "creature" } }] } as never]);
+  expect(pairReasons(attacker, goliath, H).some((r) => r.tag.startsWith("combat-damage"))).toBe(true);
 });
 
 // #1465: a replacement whose result is a mill or counters is read as a plain trigger on the replaced damage: a reason forms, worded as a trigger, never as a doubler.

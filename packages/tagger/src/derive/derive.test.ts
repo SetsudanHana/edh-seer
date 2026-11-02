@@ -2375,6 +2375,8 @@ test("a damage multiplier carries the recipient it prints as trigger.victim (#14
   expect(victimOf("activated", "{3}{R}, {T}: If a source you control would deal damage to an opponent this turn, it deals double that damage to that player instead.", "Goblin Goliath")).toBe("opponent");
   expect(victimOf("static", "If this creature would deal combat damage to a player, it deals double that damage to that player instead.", "Charging Tuskodon")).toBe("player");
   expect(victimOf("spell", "If a creature would deal combat damage to a creature this turn, it deals double that damage to that creature instead.", "Blind Fury")).toBe("creature");
+  // a LIST recipient is not cut to its first item (Disciples of the Inferno, Invasion of Regatha's back face)
+  expect(victimOf("static", "If a noncreature source you control would deal damage to a creature, battle, or opponent, it deals that much damage plus 2 instead.", "Invasion of Regatha")).toBeUndefined();
   expect(victimOf("static", "If another red source you control would deal damage to a permanent or player, it deals that much damage plus 1 to that permanent or player instead.", "Embermaw Hellion")).toBeUndefined();
 });
 
