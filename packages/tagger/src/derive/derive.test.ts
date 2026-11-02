@@ -7858,7 +7858,7 @@ describe("the dealer of damage is typed from the sentence's printed subject (#14
       actions: [{ verb: "deal-damage", object: "target creature an opponent controls", amount: "equal to its power" }, { verb: "deal-damage", object: "this creature", amount: "equal to its power" }] }] as never, "Stalking Yeti",
       { 1: "When this creature enters, if it's on the battlefield, it deals damage equal to its power to target creature an opponent controls and that creature deals damage equal to its power to this creature." }).abilities;
     const yd = yeti.flatMap((a) => (a.emits ?? []).filter((e) => e.dealer !== undefined).map((e) => e.dealer));
-    expect(yd).toEqual([{ control: "you", token: null, self: true }, { control: "any", token: null, type: "creature" }]);
+    expect(yd).toEqual([{ control: "you", token: null, self: true }, { control: "opp", token: null, type: "creature" }]);
   });
   test("the card itself deals it: Terror of the Peaks, Murderous Redcap, Heartfire Hero carry `self`", () => {
     const self = [{ control: "you", token: null, self: true }];
@@ -7887,5 +7887,22 @@ describe("the dealer of damage is typed from the sentence's printed subject (#14
     const d = dealers("Dragon Tempest", "Enchantment", "Whenever a creature you control with flying enters, it gains haste until end of turn.\nWhenever a Dragon you control enters, it deals X damage to any target, where X is the number of Dragons you control.");
     expect(d).toHaveLength(1);
     expect(d[0]).toMatchObject({ control: "you", type: "creature", subtype: "dragon" });
+  });
+  test("a back-reference takes its antecedent's control; a granted ability's dealer is never the card (#1462 review)", () => {
+    // Form of the Dinosaur: "that creature" is the target creature an opponent controls.
+    const fod = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "upkeep", subject: "your upkeep", control: "you" }, actions: [{ verb: "deal-damage", object: "target creature an opponent controls", amount: "15" }, { verb: "deal-damage", object: "you", amount: "equal to its power" }] }] as never, "Form of the Dinosaur",
+      { 2: "At the beginning of your upkeep, this enchantment deals 15 damage to target creature an opponent controls and that creature deals damage equal to its power to you." }).abilities;
+    expect(fod.flatMap((x) => (x.emits ?? []).map((e) => e.dealer))[1]).toEqual({ control: "opp", token: null, type: "creature" });
+    // Halana: "that creature" is the creature you control that entered.
+    const hal = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "another creature you control", control: "you" }, actions: [{ verb: "deal-damage", object: "target creature", amount: "equal to its power" }] }] as never, "Halana, Kessig Ranger",
+      { 2: "Whenever another creature you control enters, you may pay {2}. When you do, that creature deals damage equal to its power to target creature." }).abilities;
+    expect(hal.flatMap((a) => (a.emits ?? []).map((e) => e.dealer))[0]).toMatchObject({ control: "you", type: "creature" });
+    // Barbed Field: the enchanted land deals it, so no ability that is granted carries `dealer.self`.
+    const card = { name: "Barbed Field", typeLine: "Enchantment — Aura", keywords: [] as string[], oracleText: "Enchant land\nEnchanted land has \"{T}: This land deals 1 damage to any target.\"" };
+    const g = grammarClauseRecords(card);
+    const ab = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings)).abilities;
+    const granted = ab.filter((a) => a.grantedBy !== undefined && (a.emits ?? []).some((e) => e.dealer !== undefined));
+    expect(granted.length).toBeGreaterThan(0);
+    for (const a of granted) for (const e of a.emits ?? []) expect(e.dealer?.self).toBeUndefined();
   });
 });

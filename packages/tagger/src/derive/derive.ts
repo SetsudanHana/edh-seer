@@ -4428,7 +4428,8 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
     .map(stampSelfLoss)
     .map((a, _i, all) => stampManaRider(a, all, input.clauseTexts))
     // THE CLAUSE THAT GRANTS A QUOTED ABILITY (#1315): `segment()`'s granted clause and its parent, from `DeriveInput.clauseGrants` (both clause sources).
-    .map((a) => { const by = a.clause !== undefined ? input.clauseGrants?.[a.clause as number] : undefined; return by === undefined ? a : { ...a, grantedBy: by }; });
+    .map((a) => { const by = a.clause !== undefined ? input.clauseGrants?.[a.clause as number] : undefined; return by === undefined ? a : { ...a, grantedBy: by, ...(a.emits?.some((e) => e.dealer?.self === true) ? { emits: a.emits.map((e) => { if (e.dealer?.self !== true) return e; const { self: _s, ...dealer } = e.dealer; return { ...e, dealer }; }) } : {}) }; });
+    // A GRANTED ability's "this creature" is the grantee (#1462): its dealer is never the card, so `self` goes (the dealer stays bare; the grant's object is not known here).
   // A CHOSEN COLOUR IS NOT A CHOSEN TYPE (#1360): a stored reading's `chosenType` on a colour choice becomes `chosenColor`.
   const spellOnce = chosenColorOf(spellOnceRaw, input.clauseTexts, input.oracleText ?? "");
   // A CREATURE ONLY UNDER A CONDITION (#797): the action grammar reads "As long as your devotion to red

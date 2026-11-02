@@ -274,6 +274,13 @@ export function damageDealerOf(clauseText: string, nth: number, count: number, c
     }
     if (parts[0] === "this") return parts.length === 2 && SELF_NOUNS.has(parts[1]!) ? { self: true } : undefined;
     if (isSelfSubject(head, cardName)) return { self: true };
+    if (head === "that creature" || head === "those creatures" || head === "each of those creatures") {
+      // A back-reference takes its antecedent's control: Stalking Yeti's "that creature" is the "target creature an opponent controls", Halana's the creature you control that entered. Unresolvable -> `any`.
+      const before = lower.slice(0, heads[i]!.at - head.length - 1);
+      const found = antecedentOf(before, true);
+      const via = found !== undefined && found !== "none" ? found : triggerDealer(triggerSubject(lower), cardName);
+      if (via !== undefined && "other" in via) return via;
+    }
     return OTHER_OPENERS.has(parts[0]!) ? typedDealer(head) : undefined;
   };
   return resolve(nth);
@@ -295,7 +302,7 @@ function typedDealer(phrase: string): DamageDealer | undefined {
  *  ("Target creature you control gets +1/+0 until end of turn. It deals"), "that creature", "enchanted creature". Undefined when none is named (the trigger's subject then stands, in `damageDealerOf`);
  *  "none" when the first is named but types nothing (a player), so the dealer stays unclear. */
 const PHRASE_ENDS = [" gets ", " get ", " gains ", " gain ", " has ", " have ", " and ", " to ", " deals ", " deal ", " that ", " with ", " becomes ", " can't ", " fights ", " fight ", " is ", " are ", " each ", " then ", " until ", " as ", " of ", " on ", " attacks", " blocks"];
-function antecedentOf(before: string): DamageDealer | "none" | undefined {
+function antecedentOf(before: string, skipRef = false): DamageDealer | "none" | undefined {
   let text = before;
   const opener = text.split(" ")[0] ?? "";
   if (opener === "when" || opener === "whenever" || opener === "at") { const c = text.indexOf(", "); text = c < 0 ? "" : text.slice(c + 2); }
@@ -305,7 +312,7 @@ function antecedentOf(before: string): DamageDealer | "none" | undefined {
   consider(text.lastIndexOf("~"), "self");
   // "becomes the target of a spell, it deals" names no object ("target of").
   for (let at = text.lastIndexOf("target "); at >= 0; at = at === 0 ? -1 : text.lastIndexOf("target ", at - 1)) if (!text.startsWith("target of ", at)) { consider(at, "target"); break; }
-  for (const r of ["that creature", "enchanted creature", "equipped creature"]) consider(text.lastIndexOf(r), "ref");
+  for (const r of skipRef ? [] : ["that creature", "enchanted creature", "equipped creature"]) consider(text.lastIndexOf(r), "ref");
   if (pick.at < 0) return undefined;
   if (pick.kind === "self") return { self: true };
   let rest = text.slice(pick.at);
