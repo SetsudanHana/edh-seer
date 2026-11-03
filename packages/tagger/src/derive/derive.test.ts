@@ -8081,6 +8081,29 @@ describe("a fight emits both damage halves (#1474, CR 701.14a)", () => {
     expect(h.find((e) => e.subject.control === "opp")?.dealer).toMatchObject({ control: "you", type: "creature" });
     expect(h.find((e) => e.subject.control === "you")?.dealer).toMatchObject({ control: "opp", type: "creature" });
   });
+  // THE RECIPIENT OF EACH HALF IS THE OTHER CREATURE, EXACTLY: when the card itself fights, the half that damages "your side" damages the card, not a creature you control.
+  test("Hivespine Wolverine: the card itself is hit back (self), the token is the other half", () => {
+    const h = halves("Hivespine Wolverine", "Creature — Wolverine", "When this creature enters, choose one —\n• Put a +1/+1 counter on target creature you control.\n• This creature fights target creature token.\n• Destroy target artifact or enchantment.");
+    expect(h).toHaveLength(2);
+    expect(h.find((e) => e.subject.self === true)?.subject).toMatchObject({ control: "you", type: "creature", self: true });
+    expect(h.find((e) => e.subject.self !== true)?.subject).toMatchObject({ control: "any", token: true, type: "creature" });
+  });
+  test("Territorial Allosaurus: 'it fights another target creature' hits the card itself back", () => {
+    const h = halves("Territorial Allosaurus", "Creature — Dinosaur", "Kicker {2}{G} (You may pay an additional {2}{G} as you cast this spell.)\nWhen this creature enters, if it was kicked, it fights another target creature.");
+    expect(h).toHaveLength(2);
+    expect(h.filter((e) => e.subject.self === true)).toHaveLength(1);
+    expect(h.find((e) => e.subject.self !== true)?.subject.control).toBe("any");
+  });
+  test("Pheres-Band Brawler: the opponent-creature mirror half is the card itself too", () => {
+    const h = halves("Pheres-Band Brawler", "Creature — Centaur", "When this creature enters, it fights up to one target creature you don't control. (Each deals damage equal to its power to the other.)");
+    expect(h).toHaveLength(2);
+    expect(h.find((e) => e.subject.control === "opp")?.subject.self).toBeUndefined();
+    expect(h.find((e) => e.subject.self === true)?.dealer).toMatchObject({ control: "opp", type: "creature" });
+  });
+  test("Pit Fight: 'target creature you control' is not the card, so no self", () => {
+    const h = halves("Pit Fight", "Instant", "Target creature you control fights another target creature. (Each deals damage equal to its power to the other.)");
+    expect(h.some((e) => e.subject.self === true)).toBe(false);
+  });
   test("Clash of Titans: both creatures are any, and each hits the other", () => {
     const h = halves("Clash of Titans", "Sorcery", "Target creature fights another target creature. (Each deals damage equal to its power to the other.)");
     expect(h).toHaveLength(2);

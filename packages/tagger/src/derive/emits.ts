@@ -729,8 +729,9 @@ export function printsControlChange(clauseText: string): boolean {
  *  be YOUR creature ("another target creature", "target creature you control": Brash Taunter, Golden Guardian), since your Exalted Angel can be the one fought. The card-level conditions (a permanent, not a Saga, not a granted ability) are applied in derive.ts.
  *  CEILING: the card's NAME as fighter is not read; a fight whose target is "target creature" with no control stated, or "target creature token" (Hivespine Wolverine), stays unmarked;
  *  a Saga creature's own chapter fight ("Summon: Magus Sisters": "This creature fights") is stripped with the Saga in derive.ts. Each leaves a typed `you` dealer that Exalted Angel-type triggers hear. */
-function selfFights(clauseText: string): boolean {
+function fightersOf(clauseText: string): { fighter: boolean; notYours: boolean }[] {
   const lower = clauseText.toLowerCase();
+  const out: { fighter: boolean; notYours: boolean }[] = [];
   let at = lower.indexOf(" fights ");
   while (at >= 0) {
     const before = lower.slice(0, at);
@@ -743,10 +744,17 @@ function selfFights(clauseText: string): boolean {
     const rest = before.replace(/\bthis [a-z]+\b/g, " ").replace(/~/g, " ");
     const bareRest = !/\btarget\b|\banother\b|\bcreatures?\b|\bcard\b|\bpermanent\b/.test(rest);
     const fighter = (prev === "this" && last !== undefined) || last === "~" ? true : (last === "it" || last === "he" || last === "she") && bareRest;
-    if (fighter && notYours) return true;
+    out.push({ fighter, notYours });
     at = lower.indexOf(" fights ", at + 1);
   }
-  return false;
+  return out;
+}
+function selfFights(clauseText: string): boolean {
+  return fightersOf(clauseText).some((f) => f.fighter && f.notYours);
+}
+/** Is the card ITSELF the fighter ("this creature fights ...", "it fights ...", "~ fights ...")? The half of the fight that damages the fighter then damages the card (#1474). */
+function cardFightsIn(clauseText: string): boolean {
+  return fightersOf(clauseText).some((f) => f.fighter);
 }
 
 /** The damage or life-loss object with an "except (for) ..." tail removed (#1474): the tail names what is spared, never who is hit. */
@@ -1136,7 +1144,12 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // the stored model files Food Fight's "It deals damage to any target" as a `fight` (a misfile, not a fight, so no creature of yours is hit back).
   if (action.verb === "fight") {
     const half = events.find((e) => e.verb === "non-combat-damage" && e.subject.control === "opp");
-    if (half) events.push({ ...half, subject: { ...half.subject, control: "you" }, dealer: { control: "opp", token: null, type: "creature" } });
+    // The card ITSELF is the one hit back when it is the fighter ("this creature fights target creature you don't control", Apex Altisaur): `self`, so no other card's "whenever this creature is dealt damage" hears it.
+    const selfHit = cardFightsIn(clauseText ?? "");
+    if (half) {
+      const { scope: _scope, ...hit } = half.subject;
+      events.push({ ...half, subject: selfHit ? { ...hit, control: "you", self: true } : { ...half.subject, control: "you" }, dealer: { control: "opp", token: null, type: "creature" } });
+    }
     else if (events.length > 0 && /\b(?:target|another|other|enchanted|equipped)\b/i.test(action.object ?? "") && !/^any\b/i.test((action.object ?? "").trim())) {
       const object = (action.object ?? "").trim();
       const split = /\s+and\s+(?=(?:up to |another |other |target |that ))/i.exec(object);
@@ -1146,7 +1159,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       // The card itself is the fighter when the stored object names it ("this creature and target creature", the model's spelling of "this creature fights target creature").
       const cardFights = fighterText === undefined || /^(?:this\b|it$|~)/i.test(fighterText.trim());
       const fighter: SubjectFilter = cardFights
-        ? { control: "you", token: null, type: "creature", ...(selfFights(clauseText ?? "") ? { self: true as const } : {}) }
+        ? { control: "you", token: null, type: "creature", ...(cardFightsIn(clauseText ?? "") || fighterText !== undefined ? { self: true as const } : {}) }
         : parseSubjectWhole(fighterText);
       delete other.other; delete fighter.other;
       const first = events.find((e) => e.verb === "non-combat-damage");
