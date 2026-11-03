@@ -4474,6 +4474,22 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
         const { self: _s, ...dealer } = e.dealer;
         return { ...e, dealer: !fight && grantee !== undefined && grantee !== "self" ? { ...grantee } : dealer };
       }) };
+    })
+    // A FIGHT'S `subject.self` IS THE CARD BEING HIT BACK (#1474): the card itself fights, so it is only on the card's OWN ability. A granted ability's fighter is the grantee (Setessan Tactics, Vorinclex),
+    // an instant's or sorcery's "it" is a creature it picked (Back for More), a non-creature Saga chapter's is another permanent. Without it the half is a creature you control, as before.
+    // The Saga gate stays off for a Saga that is itself a creature (Summon: Magus Sisters): its own "this creature fights" is the card.
+    // Only the emits `actionEmits` marked (`fightHitSelf`, transient: removed here) are touched, so a granted typed-dealer damage to "this creature" keeps its reading.
+    .map((a) => {
+      if (!a.emits?.some((e) => e.fightHitSelf === true)) return a;
+      const isCreature = chars.types.some((t) => t.toLowerCase() === "creature");
+      const own = a.grantedBy === undefined && !isSpellFace(a.face) && (isCreature || !chars.subtypes.some((t) => t.toLowerCase() === "saga"));
+      return { ...a, emits: a.emits.map((e) => {
+        if (e.fightHitSelf !== true) return e;
+        const { fightHitSelf: _m, ...rest } = e;
+        if (own) return rest;
+        const { self: _s, ...subject } = rest.subject;
+        return { ...rest, subject };
+      }) };
     });
   // A CHOSEN COLOUR IS NOT A CHOSEN TYPE (#1360): a stored reading's `chosenType` on a colour choice becomes `chosenColor`.
   const spellOnce = chosenColorOf(spellOnceRaw, input.clauseTexts, input.oracleText ?? "");

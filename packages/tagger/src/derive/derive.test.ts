@@ -8085,6 +8085,7 @@ describe("a fight emits both damage halves (#1474, CR 701.14a)", () => {
   test("Hivespine Wolverine: the card itself is hit back (self), the token is the other half", () => {
     const h = halves("Hivespine Wolverine", "Creature — Wolverine", "When this creature enters, choose one —\n• Put a +1/+1 counter on target creature you control.\n• This creature fights target creature token.\n• Destroy target artifact or enchantment.");
     expect(h).toHaveLength(2);
+    expect(h.some((e) => "fightHitSelf" in e)).toBe(false); // the transient mark never reaches a stored row
     expect(h.find((e) => e.subject.self === true)?.subject).toMatchObject({ control: "you", type: "creature", self: true });
     expect(h.find((e) => e.subject.self !== true)?.subject).toMatchObject({ control: "any", token: true, type: "creature" });
   });
@@ -8099,6 +8100,30 @@ describe("a fight emits both damage halves (#1474, CR 701.14a)", () => {
     expect(h).toHaveLength(2);
     expect(h.find((e) => e.subject.control === "opp")?.subject.self).toBeUndefined();
     expect(h.find((e) => e.subject.self === true)?.dealer).toMatchObject({ control: "opp", type: "creature" });
+  });
+  // `self` needs the CARD to be the fighter: a granted ability's fighter is the grantee, an instant's "it" is a creature it picked.
+  test("Back for More: an instant is never hit, so the returned creature is a creature you control (no self)", () => {
+    const h = halves("Back for More", "Instant", "Return target creature card from your graveyard to the battlefield. When you do, it fights up to one target creature you don't control. (Each deals damage equal to its power to the other.)");
+    expect(h).toHaveLength(2);
+    expect(h.find((e) => e.subject.control === "you")?.subject).toMatchObject({ control: "you", type: "creature" });
+    expect(h.some((e) => e.subject.self === true)).toBe(false);
+  });
+  test("Setessan Tactics: the granted fighter is the grantee, not the card (no self)", () => {
+    const h = halves("Setessan Tactics", "Instant", "Strive — This spell costs {G} more to cast for each target beyond the first.\nUntil end of turn, any number of target creatures each get +1/+1 and gain \"{T}: This creature fights another target creature.\"");
+    expect(h.length).toBeGreaterThan(0);
+    expect(h.some((e) => e.subject.self === true)).toBe(false);
+  });
+  test("Foe-Razer Regent: 'have it fight' is the card fighting, so the hit-back half is self", () => {
+    const h = halves("Foe-Razer Regent", "Creature — Dragon", "Flying\nWhen this creature enters, you may have it fight target creature you don't control.\nWhenever a creature you control fights, put two +1/+1 counters on it at the beginning of the next end step.");
+    expect(h.find((e) => e.subject.control === "opp")?.subject.self).toBeUndefined();
+    expect(h.filter((e) => e.subject.self === true)).toHaveLength(1);
+    // the hit-back half is the card: it carries nothing of the other creature's filter (Ulrich's "non-Werewolf" belongs to the creature it fights)
+    expect(h.find((e) => e.subject.self === true)?.subject).toEqual({ control: "you", token: null, type: "creature", self: true });
+  });
+  test("Temur War Shaman: 'have it fight' after 'a permanent you control is turned face up' is that permanent, not the Shaman (no self)", () => {
+    const h = halves("Temur War Shaman", "Creature — Human Shaman", "Whenever a permanent you control is turned face up, if it's a creature, you may have it fight target creature you don't control.");
+    expect(h).toHaveLength(2);
+    expect(h.some((e) => e.subject.self === true)).toBe(false);
   });
   test("Pit Fight: 'target creature you control' is not the card, so no self", () => {
     const h = halves("Pit Fight", "Instant", "Target creature you control fights another target creature. (Each deals damage equal to its power to the other.)");

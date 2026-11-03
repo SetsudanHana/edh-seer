@@ -747,6 +747,20 @@ function fightersOf(clauseText: string): { fighter: boolean; notYours: boolean }
     out.push({ fighter, notYours });
     at = lower.indexOf(" fights ", at + 1);
   }
+  // "...you may have IT fight target creature you don't control" (Foe-Razer Regent), "have this creature fight ...": the same fighter, with the verb in its bare form.
+  // CEILING: only "have it|this <noun>|~ fight"; "have target creature you control fight ..." and "... fight each other" name no card and are not read.
+  for (let h = lower.indexOf(" fight "); h >= 0; h = lower.indexOf(" fight ", h + 1)) {
+    const words = lower.slice(0, h).split(/[\s,]+/).filter((w) => w !== "");
+    const n = words.length;
+    // "it" is the card only when nothing earlier in the clause could be its antecedent (the same bare-rest test as "it fights"): Frontier Siege's "whenever a creature enters ... you may have it fight" is the ENTERING creature.
+    const rest = lower.slice(0, h).replace(/\bthis [a-z]+\b/g, " ").replace(/~/g, " ");
+    const bareRest = !/\btarget\b|\banother\b|\bcreatures?\b|\bcard\b|\bpermanent\b/.test(rest);
+    const fighter = (words[n - 2] === "have" && words[n - 1] === "it" && bareRest) || (words[n - 2] === "have" && words[n - 1] === "~") || (words[n - 3] === "have" && words[n - 2] === "this");
+    if (!fighter) continue;
+    const end = lower.indexOf(". ", h);
+    const after = lower.slice(h, end < 0 ? undefined : end);
+    out.push({ fighter: true, notYours: after.includes("you don't control") || after.includes("an opponent controls") || after.includes("defending player controls") || after.includes("your opponents control") });
+  }
   return out;
 }
 function selfFights(clauseText: string): boolean {
@@ -1145,10 +1159,10 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   if (action.verb === "fight") {
     const half = events.find((e) => e.verb === "non-combat-damage" && e.subject.control === "opp");
     // The card ITSELF is the one hit back when it is the fighter ("this creature fights target creature you don't control", Apex Altisaur): `self`, so no other card's "whenever this creature is dealt damage" hears it.
-    const selfHit = cardFightsIn(clauseText ?? "");
+    // ...or the stored object names the card ("this creature and target creature you don't control", Kraul Harpooner).
+    const selfHit = cardFightsIn(clauseText ?? "") || /^(?:this\b|it\s+and\b|~)/i.test((action.object ?? "").trim());
     if (half) {
-      const { scope: _scope, ...hit } = half.subject;
-      events.push({ ...half, subject: selfHit ? { ...hit, control: "you", self: true } : { ...half.subject, control: "you" }, dealer: { control: "opp", token: null, type: "creature" } });
+      events.push({ ...half, ...(selfHit ? { fightHitSelf: true as const } : {}), subject: selfHit ? { control: "you", token: null, type: "creature", self: true } : { ...half.subject, control: "you" }, dealer: { control: "opp", token: null, type: "creature" } });
     }
     else if (events.length > 0 && /\b(?:target|another|other|enchanted|equipped)\b/i.test(action.object ?? "") && !/^any\b/i.test((action.object ?? "").trim())) {
       const object = (action.object ?? "").trim();
@@ -1165,7 +1179,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       const first = events.find((e) => e.verb === "non-combat-damage");
       if (first) {
         if (!cardFights) first.subject = { ...other };
-        events.push({ ...first, subject: { ...fighter }, dealer: { control: other.control, token: null, type: "creature" } });
+        events.push({ ...first, ...(fighter.self === true ? { fightHitSelf: true as const } : {}), subject: { ...fighter }, dealer: { control: other.control, token: null, type: "creature" } });
       }
     }
   }
