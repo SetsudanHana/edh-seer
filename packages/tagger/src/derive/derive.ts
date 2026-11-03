@@ -19,7 +19,7 @@ import { requiresOf } from "./markers.js";
 import { animateResult } from "./animate-result.js";
 import { hostEffect } from "./host.js";
 import { librarySearchOwner, printsSearch } from "./library-search.js";
-import { damageDealerOf, granteeDealer, damageHitsSelf, damageRecipient, playerOnlyRecipient } from "./damage-recipient.js";
+import { damageDealerOf, granteeDealer, grantedDealerIsGranter, damageHitsSelf, damageRecipient, playerOnlyRecipient } from "./damage-recipient.js";
 import { actionRecipients, damagedPlayerIsOpponent, sacrificerIsTargeted, sentenceNamesAPlayer, thatPlayerIsOpponent, victimDeclines } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { namesAClass, parseSubject, parseCounter } from "./subject.js";
@@ -610,7 +610,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 440: #1462 -- a damage multiplier hears the damage it names: 'would deal combat damage' is combat-damage only (Inquisitor's Flail, The Sound of Drums, Blind Fury), 'noncombat' non-combat only (it heard both)
 // 441: #1462 -- a SELF-grant ('this creature has "...deals"', 'it has', 'Iron Fist gains') keeps dealer.self (the card), not the class creature (Pardic Arsonist, Tyrant's Familiar)
 // 442: #1462 -- review fixes: a dies/leaves trigger's 'it' dealer is marked dealerGone (no self/host trigger hears it, CR 113.6); a granted-ability grantee is cut at its own sentence (Takklemaggot self); a pronoun grantee resolves from its lead (Lavamancer's Skill enchanted creature, Sliver attacks), self only when the lead names the card
-export const DERIVE_VERSION = 442;
+// 443: #1462 -- a granted ability whose quoted dealer is the GRANTING card (Shuriken 'Shuriken deals', 'this Equipment deals') deals as the card (dealer.self), not the grantee class creature
+export const DERIVE_VERSION = 443;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -4452,7 +4453,9 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
     .map((a) => {
       if (!a.emits?.some((e) => e.dealer?.self === true)) return a;
       const ownPermanent = a.grantedBy === undefined && !isSpellFace(a.face) && !chars.subtypes.some((t) => t.toLowerCase() === "saga");
-      const grantee = a.grantedBy !== undefined ? granteeDealer(String(input.clauseTexts?.[a.grantedBy as number] ?? ""), input.name) : undefined;
+      const grantText = a.grantedBy !== undefined ? String(input.clauseTexts?.[a.grantedBy as number] ?? "") : "";
+      // A quoted dealer that is the GRANTING card (Shuriken "Shuriken deals", "this Equipment deals") is the card, not the grantee.
+      const grantee = a.grantedBy === undefined ? undefined : grantedDealerIsGranter(String(input.clauseTexts?.[a.clause as number] ?? ""), input.name, [...chars.types, ...chars.subtypes]) ? "self" as const : granteeDealer(grantText, input.name);
       return { ...a, emits: a.emits.map((e) => {
         if (e.dealer?.self !== true) return e;
         const fight = e.dealer.type !== undefined;

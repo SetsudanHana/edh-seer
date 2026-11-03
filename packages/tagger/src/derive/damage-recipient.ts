@@ -333,6 +333,19 @@ function antecedentOf(before: string, skipRef = false): DamageDealer | "none" | 
   return typedDealer(rest) ?? "none";
 }
 
+/** A GRANTED ability whose quoted damage sentence names the GRANTING card as dealer ("Equipped creature has \"{T}, Unattach Shuriken: Shuriken deals 2 damage ...\"", "this Equipment deals") deals as the card, not the grantee (#1462).
+ *  Takes the GRANTED ability's own clause text (the quote, a clause of its own: the granting clause reads "has that ability"). True when it holds at least one "deals" and EVERY dealer head there is the card's own name / "~" / "this <a type or subtype the card has, other than creature>"; "this creature deals", "it deals" (Hankyu) make it false.
+ *  CEILING: a clause with one granter-named and one grantee-named dealer is read as the grantee (the old behaviour). */
+export function grantedDealerIsGranter(grantClauseText: string, cardName: string | undefined, cardKinds: readonly string[]): boolean {
+  let lower = grantClauseText.toLowerCase();
+  for (const face of (cardName ?? "").toLowerCase().split(" // ").map((f) => f.trim()).filter((f) => f.length > 0).sort((a, b) => b.length - a.length)) lower = lower.split(face).join("~");
+  const kinds = new Set(cardKinds.map((k) => k.toLowerCase()));
+  const heads: string[] = [];
+  for (let at = lower.indexOf(" deals "); at >= 0; at = lower.indexOf(" deals ", at + 7)) heads.push(lastBreak(lower.slice(0, at)).trim().replace(/^"/, ""));
+  if (heads.length === 0) return false;
+  return heads.every((h) => h === "~" || (h.startsWith("this ") && h.split(" ").length === 2 && h !== "this creature" && SELF_NOUNS.has(h.slice(5)) && kinds.has(h.slice(5))));
+}
+
 /** A GRANTED "this creature deals" is the creature the grant lands on (#1462): "Enchanted creature has \"{T}: This creature deals 1 damage ...\"", "Creatures you control have ...", "Equipped creature gains ...".
  *  Read from the granting clause's own words before its first has / have / gains / gain; undefined when that subject names no creature (a land or an unknown grantee stays a bare dealer). */
 export function granteeDealer(grantClauseText: string, cardName?: string): "self" | { control: SubjectFilter["control"]; token: null; type: string | string[]; subtype?: string | string[] } | undefined {
