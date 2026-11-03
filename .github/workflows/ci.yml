@@ -40,8 +40,10 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         # Nothing here pushes, so the token is not left in .git/config for later steps.
+        # fetch-depth 0: lint:redos diffs against `git merge-base origin/main HEAD`.
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
@@ -94,6 +96,10 @@ jobs:
       # tokens/theme.css is GENERATED. Editing tokens/*.json without rebuilding it is the drift the
       # gates above cannot see, because they would both read the same stale pair.
       - run: npm run tokens:build && git diff --exit-code -- tokens/theme.css
+      # CODEQL-PRONE REGEX SHAPES (#1483), diff-only: `\s+` beside `.*`, an optional group or another
+      # `\s+`, `[^}]+` in a repeated group, `<[^>]+>`. CodeQL runs only on GitHub and each hit cost a
+      # CI round. Costs nothing on main (no added lines). Needs the full history for the merge-base.
+      - run: npm run lint:redos
 
   # THE NEXT NODE, AS AN EARLY WARNING AND NOT A GATE. Node 26 becomes LTS in late October 2026; this
   # leg shows what moving .nvmrc to it would break before anyone has to, the way a Node 24 leg
