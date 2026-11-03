@@ -3399,7 +3399,16 @@ export function deriveAbilities(
       // ...and "that permanent or player" / "that player or a planeswalker that player controls" (Erratic Explosion, Vial Smasher) keep their own
       // player branch: the trigger's `you` is not the controller of what they hit.
       const playerList = BURN_RECIPIENT_KINDS.has(effectKind ?? "") && subject?.anyOf?.some((b) => b.player === true) === true;
-      if (THAT_TYPED.test(objectText) && !PRONOUN_OBJECT.test(objectText) && !thatPlayerHit && !playerList) {
+      // "...deals that much damage to target creature THAT PLAYER CONTROLS" (Satyr Firedancer, #1474): the permanent is controlled by the player the clause named, so it is an opponent's
+      // when that player is one (`thatPlayerIsOpponent`: an opponent named earlier, or the card's own damage hit one) and `any` otherwise -- never the trigger subject's `you`
+      // ("an instant or sorcery spell YOU control" is the dealer's controller, not "that player"). THAT_TYPED reads "that much damage to ..." as a typed pronoun, so this phrase is kept out of it.
+      // CEILING: only the one-clause antecedent `thatPlayerIsOpponent` can see; an antecedent in an earlier sentence stays `any`.
+      const thatPlayerControls = BURN_RECIPIENT_KINDS.has(effectKind ?? "") && /\bthat (?:player|opponent) controls\b/i.test(objectText);
+      if (thatPlayerControls && thatPlayerIsOpponent(text, trigger?.subject.self === true, cardName)) {
+        for (const e of emits) if (e.subject.control === "any") e.subject.control = "opp";
+        if (subject && subject.control === "any") subject.control = "opp";
+      }
+      if (THAT_TYPED.test(objectText) && !PRONOUN_OBJECT.test(objectText) && !thatPlayerHit && !playerList && !thatPlayerControls) {
         const ante = antecedentFor((clause.actions ?? []).indexOf(action));
         const inherited = ante ? subjectFrom(ante, cardName, enchantText).control : undefined;
         if (inherited && inherited !== "any" && !(inherited === "you" && PLAYER_BACKREF.test(objectText))) {

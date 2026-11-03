@@ -8031,3 +8031,27 @@ describe("a damage recipient's except-for tail is not the recipient (#1474)", ()
     expect(e!.subject.token).not.toBe(true);
   });
 });
+
+// #1474: "that player controls" resolves to the player the clause last named. Satyr Firedancer's trigger subject is "a spell YOU control" -- the dealer's controller,
+// not "that player" -- so the creature it damages is the OPPONENT's, not yours (oracle text from the corpus, 2026-11-03).
+describe("'that player controls' on a damage recipient resolves to its antecedent (#1474)", () => {
+  const creatureHits = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    const tags = deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings));
+    return tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "non-combat-damage" && e.subject.type === "creature");
+  };
+  test("Satyr Firedancer: the creature damaged is an opponent's", () => {
+    const hits = creatureHits("Satyr Firedancer", "Creature — Satyr", "Whenever an instant or sorcery spell you control deals damage to an opponent, this creature deals that much damage to target creature that player controls.");
+    expect(hits).toHaveLength(1);
+    expect(hits[0]!.subject).toMatchObject({ control: "opp", type: "creature", scope: "target" });
+  });
+  test("Chandra's Flame Wave: 'target player' may be anyone, so their creatures are any", () => {
+    const hits = creatureHits("Chandra's Flame Wave", "Sorcery", "Chandra's Flame Wave deals 2 damage to target player and each creature that player controls.");
+    expect(hits.map((h) => h.subject.control)).toEqual(["any"]);
+  });
+  test("Flames of the Raze-Boar: 'target creature an opponent controls' names the opponent that player is", () => {
+    const hits = creatureHits("Flames of the Raze-Boar", "Sorcery", "Flames of the Raze-Boar deals 4 damage to target creature an opponent controls. Then Flames of the Raze-Boar deals 2 damage to each other creature that player controls if you control a creature with power 4 or greater.");
+    expect(hits.map((h) => h.subject.control)).toEqual(["opp", "opp"]);
+  });
+});
