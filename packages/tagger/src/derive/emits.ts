@@ -773,7 +773,8 @@ function cardFightsIn(clauseText: string): boolean {
 
 /** The damage or life-loss object with an "except (for) ..." tail removed (#1474): the tail names what is spared, never who is hit. */
 function cutExceptTail(object: string): string {
-  const at = object.search(/\s+except\b/i);
+  // A literal space, not `\s+`: an unanchored `\s+` scan is polynomial on long space runs (CodeQL js/polynomial-redos); oracle text is single-spaced.
+  const at = object.search(/ except\b/i);
   return at > 0 ? object.slice(0, at) : object;
 }
 
@@ -1160,13 +1161,14 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     const half = events.find((e) => e.verb === "non-combat-damage" && e.subject.control === "opp");
     // The card ITSELF is the one hit back when it is the fighter ("this creature fights target creature you don't control", Apex Altisaur): `self`, so no other card's "whenever this creature is dealt damage" hears it.
     // ...or the stored object names the card ("this creature and target creature you don't control", Kraul Harpooner).
-    const selfHit = cardFightsIn(clauseText ?? "") || /^(?:this\b|it\s+and\b|~)/i.test((action.object ?? "").trim());
+    const selfHit = cardFightsIn(clauseText ?? "") || /^(?:this\b|it and\b|~)/i.test((action.object ?? "").trim());
     if (half) {
       events.push({ ...half, ...(selfHit ? { fightHitSelf: true as const } : {}), subject: selfHit ? { control: "you", token: null, type: "creature", self: true } : { ...half.subject, control: "you" }, dealer: { control: "opp", token: null, type: "creature" } });
     }
     else if (events.length > 0 && /\b(?:target|another|other|enchanted|equipped)\b/i.test(action.object ?? "") && !/^any\b/i.test((action.object ?? "").trim())) {
       const object = (action.object ?? "").trim();
-      const split = /\s+and\s+(?=(?:up to |another |other |target |that ))/i.exec(object);
+      // Literal spaces, not `\s+` (CodeQL js/polynomial-redos); stored objects are single-spaced.
+      const split = / and (?=(?:up to |another |other |target |that ))/i.exec(object);
       const fighterText = split ? object.slice(0, split.index) : undefined;
       const otherText = split ? object.slice(split.index + split[0].length) : object;
       const other = parseSubjectWhole(otherText);
