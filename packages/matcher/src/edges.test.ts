@@ -567,6 +567,12 @@ describe("a self or host damage trigger hears only a dealer that can be the card
     expect(heard(giant, cloak)).toBe(true);
   });
 
+  test("a granted pinger keeps its grantee's class: Acidic Sliver's Sliver dealer feeds a Sliver's self trigger, not Kjeldoran Gargoyle's (#1462)", () => {
+    const acidic = dmg("Acidic Sliver", { control: "any", scope: "target" }, { control: "any", type: "creature", subtype: "sliver" }, ["creature"]);
+    expect(heard(acidic, selfTrigger("Kjeldoran Gargoyle", undefined, ["gargoyle"]))).toBe(false);
+    expect(heard(acidic, selfTrigger("Sliver Legion", undefined, ["sliver"]))).toBe(true);
+  });
+
   test("a granted self trigger is judged as its host's: a creature you control feeds Snake Umbra (#1471)", () => {
     const umbra = base("Snake Umbra", [{
       kind: "triggered", effect: { kind: "draw-card" }, grantedBy: 2,

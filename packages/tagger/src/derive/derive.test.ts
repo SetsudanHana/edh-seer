@@ -7955,4 +7955,11 @@ describe("the dealer of damage is typed from the sentence's printed subject (#14
     expect(dealers("Hankyu", "Artifact — Equipment", "Equipped creature has \"{T}: Put an aim counter on Hankyu\" and \"{T}, Remove all aim counters from Hankyu: This creature deals damage to any target equal to the number of aim counters removed this way.\"\nEquip {4} ({4}: Attach to target creature you control. Equip only as a sorcery.)")).toEqual([{ control: "any", token: null, type: "creature" }]);
     expect(dealers("Barbed Field", "Enchantment — Aura", "Enchant land\nEnchanted land has \"{T}: This land deals 1 damage to any target.\"")).toEqual([{ control: "you", token: null }]);
   });
+  test("a granted 'This creature deals' keeps the grantee's class: Acidic Sliver (Sliver), Lorehold Apprentice (Spirit you control); a granted artifact is not a creature: Quicksmith Rebel (#1462)", () => {
+    expect(dealers("Acidic Sliver", "Creature — Sliver", "All Slivers have \"{2}, Sacrifice this permanent: This permanent deals 2 damage to any target.\"")).toEqual([{ control: "any", token: null, type: "creature", subtype: "sliver" }]);
+    expect(dealers("Lorehold Apprentice", "Creature — Human Wizard", "Magecraft — Whenever you cast or copy an instant or sorcery spell, until end of turn, Spirit creatures you control gain \"{T}: This creature deals 1 damage to each opponent.\"")).toEqual([{ control: "you", token: null, type: "creature", subtype: "spirit" }]);
+    const q = dealers("Quicksmith Rebel", "Creature — Human Artificer", "When this creature enters, target artifact you control gains \"{T}: This artifact deals 2 damage to any target\" for as long as you control this creature.");
+    expect(q).toHaveLength(1);
+    expect(q[0]).not.toHaveProperty("type", "creature");
+  });
 });

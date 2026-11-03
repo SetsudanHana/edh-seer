@@ -324,14 +324,23 @@ function antecedentOf(before: string, skipRef = false): DamageDealer | "none" | 
 
 /** A GRANTED "this creature deals" is the creature the grant lands on (#1462): "Enchanted creature has \"{T}: This creature deals 1 damage ...\"", "Creatures you control have ...", "Equipped creature gains ...".
  *  Read from the granting clause's own words before its first has / have / gains / gain; undefined when that subject names no creature (a land or an unknown grantee stays a bare dealer). */
-export function granteeDealer(grantClauseText: string): { control: SubjectFilter["control"]; token: null; type: string | string[] } | undefined {
+export function granteeDealer(grantClauseText: string): { control: SubjectFilter["control"]; token: null; type: string | string[]; subtype?: string | string[] } | undefined {
   const lower = grantClauseText.toLowerCase();
   let end = -1;
   for (const v of [" has ", " have ", " gains ", " gain "]) { const at = lower.indexOf(v); if (at >= 0 && (end < 0 || at < end)) end = at; }
   if (end < 0) return undefined;
-  const d = typedDealer(lower.slice(0, end).trim());
+  // The grantee is the last comma-clause before the verb: "When this creature enters, target artifact you control gains" is the artifact, "..., until end of turn, Spirit creatures you control gain" the Spirits.
+  // Only LEADING trigger / duration clauses are dropped, so a list grantee ("Assassins, Mercenaries, and Rogues you control have") keeps its commas.
+  let subject = lower.slice(0, end).trim();
+  for (let lead = /^(?:[^,]*— )?(?:when|whenever|at|until|if|as|during|after|for each|once)\b/; lead.test(subject);) {
+    const c = subject.indexOf(", ");
+    if (c < 0) break;
+    subject = subject.slice(c + 2);
+  }
+  const d = typedDealer(subject);
   if (d === undefined || !("other" in d) || d.other.type === undefined) return undefined;
   const types = ([] as string[]).concat(d.other.type);
   if (!types.includes("creature")) return undefined;
-  return { control: d.other.control, token: null, type: d.other.type };
+  // The grantee's class travels with the dealer: "All Slivers have" is a Sliver, "Spirit creatures you control gain" a Spirit you control, so a consumer watching a non-Sliver creature's damage does not meet it.
+  return { control: d.other.control, token: null, type: d.other.type, ...(d.other.subtype !== undefined ? { subtype: d.other.subtype } : {}) };
 }
