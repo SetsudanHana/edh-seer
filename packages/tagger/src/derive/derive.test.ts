@@ -8009,3 +8009,25 @@ describe("the dealer of damage is typed from the sentence's printed subject (#14
     expect(gone("Brokers Charm", "Instant", "Choose one —\n• Target creature you control gets +1/+0 until end of turn. It deals damage equal to its power to target creature or planeswalker an opponent controls.\n• Draw two cards.")).toEqual([false]);
   });
 });
+
+// #1474: "each creature except for X" damages every creature BUT X. The exception's "you control" / "flying" / "token" described who is spared and
+// was read as the recipient, so the damage payoff gate refused true pairs with opponent-or-permanent multipliers (oracle text from the corpus, 2026-11-03).
+describe("a damage recipient's except-for tail is not the recipient (#1474)", () => {
+  const damageEmits = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    const tags = deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings));
+    return tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "non-combat-damage");
+  };
+  test("Flame Sweep: each creature, not the flying creatures you control", () => {
+    const [e, ...rest] = damageEmits("Flame Sweep", "Instant", "Flame Sweep deals 2 damage to each creature except for creatures you control with flying.");
+    expect(rest).toHaveLength(0);
+    expect(e!.subject).toMatchObject({ control: "any", type: "creature", scope: "each" });
+    expect(e!.subject.keyword).toBeUndefined();
+  });
+  test("Ajani Unrelenting: each creature, not the tokens you control", () => {
+    const [e] = damageEmits("Ajani Unrelenting", "Legendary Planeswalker — Ajani", "−3: Ajani deals 4 damage to each creature except for tokens you control.");
+    expect(e!.subject).toMatchObject({ control: "any", type: "creature", scope: "each" });
+    expect(e!.subject.token).not.toBe(true);
+  });
+});

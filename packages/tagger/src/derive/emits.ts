@@ -749,6 +749,12 @@ function selfFights(clauseText: string): boolean {
   return false;
 }
 
+/** The damage or life-loss object with an "except (for) ..." tail removed (#1474): the tail names what is spared, never who is hit. */
+function cutExceptTail(object: string): string {
+  const at = object.search(/\s+except\b/i);
+  return at > 0 ? object.slice(0, at) : object;
+}
+
 export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean; trigger?: CounterTrigger } = {}): GameEvent[] {
   // A LIFE TOTAL SET THAT IS A LOSS (#1333, CR 119.5): "target opponent's life total becomes 10" is the `lose-life` a printed "target opponent loses N life" is; a plain set emits nothing.
   const lifeLoss = action.verb === "set-life" ? lifeSetRewrite(action, clauseText ?? "") : undefined;
@@ -822,10 +828,16 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   }
   // A DAMAGE OR LIFE LOSS NAMES WHO IT HITS (#1266, burn): "target player or planeswalker" keeps the player (Lava Spike was typed
   // planeswalker), "each opponent and each creature they control" both halves, "that creature's controller" is the player.
-  const listed = action.verb === "deal-damage" || action.verb === "lose-life" ? damageRecipient(action.object ?? "") : undefined;
+  // AN EXCEPTION IS NOT THE RECIPIENT (#1474): "each creature except for creatures you control with flying" (Flame Sweep) damages every creature but those, so
+  // the "you control" and "flying" of the tail describe who is SPARED. Read whole, they became the recipient's control and keyword and the damage payoff
+  // gate (canReachRecipient) refused an opponent-or-permanent multiplier. The tail is cut before any recipient parse.
+  // CEILING: the exclusion is dropped, not carried as `subject.except` -- the matcher reads `except` on the consumer side only (matcher/src/subject.ts), so an
+  // emit-side one would be ignored there anyway.
+  const damageObject = action.verb === "deal-damage" || action.verb === "lose-life" ? cutExceptTail(action.object ?? "") : (action.object ?? "");
+  const listed = action.verb === "deal-damage" || action.verb === "lose-life" ? damageRecipient(damageObject) : undefined;
   // ...and damage to "target player" / "target opponent" is player-only (#1294), no "any target".
-  const playerOnly = action.verb === "deal-damage" && listed === undefined ? playerOnlyRecipient(action.object ?? "") : undefined;
-  const subject = listed ?? playerOnly ?? parseSubjectWhole(recipient ?? action.object ?? "");
+  const playerOnly = action.verb === "deal-damage" && listed === undefined ? playerOnlyRecipient(damageObject) : undefined;
+  const subject = listed ?? playerOnly ?? parseSubjectWhole(recipient ?? damageObject);
   // A TOKEN THAT IS A COPY IS CONTROLLED BY ITS CREATOR, NOT BY WHAT IT COPIES (#1295, CR 111.2: the player who creates a
   // token is its owner and it enters under that player's control unless the effect says otherwise). "Create two tokens
   // that are copies of target permanent an opponent controls" (Venser, Fervent Forger) parsed the original's control and
