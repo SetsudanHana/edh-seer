@@ -881,6 +881,10 @@ export interface GameEvent {
    *  stored doc changes meaning and no existing edge moves; an emit that does not set this falls
    *  back to `subject`, which is the dealer for the implied combat case. */
   dealer?: SubjectFilter;
+  /** The dealer named by a dies / leaves / sacrificed / exiled trigger's "it" (Stalking Vengeance: "Whenever another creature you control dies, it deals damage equal to its power") is no longer on the battlefield
+   *  when it deals, so no self or host damage trigger (its own, or its Aura's) can hear it (CR 113.6: abilities of a permanent function only while it is on the battlefield). Stamped by derive (#1462); the
+   *  matcher refuses the dealer as another card's self / host, and a "source you control" trigger still hears it. */
+  dealerGone?: boolean;
   /** HOW MUCH DAMAGE -- a damage producer's `Ability.amount` ("1", "2", "X"), stamped by the matcher
    *  on an authored damage emit (`edges.ts` `baseEvents`). Never set by derive. Read only against a
    *  consumer's `amountIs`. */

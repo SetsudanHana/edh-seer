@@ -1,5 +1,6 @@
 import { describe, expect, it, test } from "vitest";
 import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, abilityKey, amountCovered, countCovered, exilesTopOfLibrary, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
+import { granteeDealer } from "./damage-recipient.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import { pluralAntecedent } from "./references.js";
 import { targetsASpellEarlier, actionEmits } from "./emits.js";
@@ -7883,5 +7884,128 @@ describe("#1333 a life-total set (CR 119.5)", () => {
     expect(r.abilities.map((x) => x.effect.kind)).not.toContain("life-total-set");
     expect(lose(r).map((e) => e.subject.control)).toEqual(["you"]);
     expect(r.unclaimed).toEqual([]);
+  });
+});
+
+describe("the dealer of damage is typed from the sentence's printed subject (#1462)", () => {
+  // Real oracle text (Mongo `cards.oracleText`, 2026-11-02), read through the grammar like the corpus is.
+  const dealers = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, keywords: [] as string[], oracleText };
+    const g = grammarClauseRecords(card);
+    const abilities = deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities;
+    return abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.dealer !== undefined && (e.verb === "non-combat-damage" || e.verb === "combat-damage")).map((e) => e.dealer!));
+  };
+  test("another object deals it: Rakdos Charm 'each creature', Stalking Yeti 'that creature', Dizzying Gaze 'enchanted creature', Swooping Pteranodon 'target land'", () => {
+    expect(dealers("Rakdos Charm", "Instant", "Choose one —\n• Exile target player's graveyard.\n• Destroy target artifact.\n• Each creature deals 1 damage to its controller.")).toEqual([{ control: "any", token: null, type: "creature" }]);
+    expect(dealers("Dizzying Gaze", "Enchantment — Aura", "Enchant creature you control\n{R}: Enchanted creature deals 1 damage to target creature with flying.")).toEqual([{ control: "any", token: null, type: "creature" }]);
+    expect(dealers("Swooping Pteranodon", "Creature — Dinosaur", "Flying, haste\nWhenever this creature or another Dinosaur you control with flying enters, gain control of target creature an opponent controls until end of turn. Untap that creature. It gains flying and haste until end of turn. At the beginning of the next end step, target land deals 3 damage to that creature.")).toEqual([{ control: "any", token: null, type: "land" }]);
+    // Two damage actions in one clause (stored model clause, text from Mongo): the card's own ("it" is this creature, the trigger's subject) and the creature it hits.
+    const yeti = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "any" },
+      actions: [{ verb: "deal-damage", object: "target creature an opponent controls", amount: "equal to its power" }, { verb: "deal-damage", object: "this creature", amount: "equal to its power" }] }] as never, "Stalking Yeti",
+      { 1: "When this creature enters, if it's on the battlefield, it deals damage equal to its power to target creature an opponent controls and that creature deals damage equal to its power to this creature." }).abilities;
+    const yd = yeti.flatMap((a) => (a.emits ?? []).filter((e) => e.dealer !== undefined).map((e) => e.dealer));
+    expect(yd).toEqual([{ control: "you", token: null, self: true }, { control: "opp", token: null, type: "creature" }]);
+  });
+  test("the card itself deals it: Terror of the Peaks, Murderous Redcap, Heartfire Hero carry `self`", () => {
+    const self = [{ control: "you", token: null, self: true }];
+    const terror = deriveAbilities([{ id: 3, abilityType: "triggered", trigger: { event: "enters", subject: "another creature you control", control: "you" }, actions: [{ verb: "deal-damage", object: "any target", amount: "that creature's power" }] }] as never, "Terror of the Peaks",
+      { 3: "Whenever another creature you control enters, this creature deals damage equal to that creature's power to any target." }).abilities;
+    expect(terror.flatMap((a) => (a.emits ?? []).filter((e) => e.dealer !== undefined).map((e) => e.dealer))).toEqual(self);
+    expect(dealers("Murderous Redcap", "Creature — Goblin Assassin", "When this creature enters, it deals damage equal to its power to any target.\nPersist (When this creature dies, if it had no -1/-1 counters on it, return it to the battlefield under its owner's control with a -1/-1 counter on it.)")).toEqual(self);
+    expect(dealers("Heartfire Hero", "Creature — Human Soldier", "Valiant — Whenever this creature becomes the target of a spell or ability you control for the first time each turn, put a +1/+1 counter on it.\nWhen this creature dies, it deals damage equal to its power to each opponent.")).toEqual(self);
+  });
+  test("the card's own name is the card, not a typed 'the ...' object; 'have that creature deal' and 'that artifact deals' are other objects", () => {
+    expect(dealers("The Royal Scions", "Legendary Planeswalker", "+1: Draw a card, then discard a card.\n+1: Target creature gets +2/+0 and gains first strike and trample until end of turn.\n−8: Draw four cards. When you do, The Royal Scions deals damage to any target equal to the number of cards in your hand.")).toEqual([{ control: "you", token: null, self: true }]);
+    expect(dealers("Goblin Tinkerer", "Creature — Goblin Artificer", "{R}, {T}: Destroy target artifact. That artifact deals damage equal to its mana value to this creature.")).toEqual([{ control: "any", token: null, type: "artifact" }]);
+    for (const d of dealers("Rage Forger", "Creature — Goblin Shaman", "When this creature enters, put a +1/+1 counter on each other Shaman creature you control.\nWhenever a creature you control with a +1/+1 counter on it attacks, you may have that creature deal 1 damage to target player or planeswalker.")) expect(d).toMatchObject({ type: "creature" });
+  });
+  test("a pronoun takes the object named before it; 'they each deal' and a fight-back name their creatures; one printed dealer covers every damage action", () => {
+    expect(dealers("Brokers Charm", "Instant", "Choose one —\n• Target creature you control gets +1/+0 until end of turn. It deals damage equal to its power to target creature or planeswalker an opponent controls.\n• Destroy target enchantment.\n• Draw two cards.")).toEqual([{ control: "you", token: null, type: "creature" }]);
+    expect(dealers("Coordinated Clobbering", "Instant", "Tap one or two target untapped creatures you control. They each deal damage equal to their power to target creature an opponent controls.")).toEqual([{ control: "you", token: null, type: "creature" }]);
+    // Tahngarth: the card deals the first, "that creature" deals the fight-back (its victim is the card).
+    expect(dealers("Tahngarth, Talruum Hero", "Legendary Creature — Minotaur Warrior", "Vigilance\n{1}{R}, {T}: Tahngarth deals damage equal to its power to target creature. That creature deals damage equal to its power to Tahngarth.")).toEqual([{ control: "you", token: null, self: true }, { control: "any", token: null, type: "creature" }]);
+    // Self-Destruct: one printed dealer, two damage actions.
+    const sd = dealers("Self-Destruct", "Instant", "Target creature you control deals X damage to any other target and X damage to itself, where X is its power.");
+    expect(sd).toHaveLength(2);
+    for (const d of sd) expect(d).toMatchObject({ control: "you", type: "creature" });
+  });
+  test("a tribal dealer carries its subtype's card type, so a source-type demand (Syr Carah's instant or sorcery) cannot meet it: Dragon Tempest", () => {
+    const d = dealers("Dragon Tempest", "Enchantment", "Whenever a creature you control with flying enters, it gains haste until end of turn.\nWhenever a Dragon you control enters, it deals X damage to any target, where X is the number of Dragons you control.");
+    expect(d).toHaveLength(1);
+    expect(d[0]).toMatchObject({ control: "you", type: "creature", subtype: "dragon" });
+  });
+  test("a back-reference takes its antecedent's control; a granted ability's dealer is never the card (#1462 review)", () => {
+    // Form of the Dinosaur: "that creature" is the target creature an opponent controls.
+    const fod = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "upkeep", subject: "your upkeep", control: "you" }, actions: [{ verb: "deal-damage", object: "target creature an opponent controls", amount: "15" }, { verb: "deal-damage", object: "you", amount: "equal to its power" }] }] as never, "Form of the Dinosaur",
+      { 2: "At the beginning of your upkeep, this enchantment deals 15 damage to target creature an opponent controls and that creature deals damage equal to its power to you." }).abilities;
+    expect(fod.flatMap((x) => (x.emits ?? []).map((e) => e.dealer))[1]).toEqual({ control: "opp", token: null, type: "creature" });
+    // Halana: "that creature" is the creature you control that entered.
+    const hal = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "another creature you control", control: "you" }, actions: [{ verb: "deal-damage", object: "target creature", amount: "equal to its power" }] }] as never, "Halana, Kessig Ranger",
+      { 2: "Whenever another creature you control enters, you may pay {2}. When you do, that creature deals damage equal to its power to target creature." }).abilities;
+    expect(hal.flatMap((a) => (a.emits ?? []).map((e) => e.dealer))[0]).toMatchObject({ control: "you", type: "creature" });
+    // Barbed Field: the enchanted land deals it, so no ability that is granted carries `dealer.self`.
+    const card = { name: "Barbed Field", typeLine: "Enchantment — Aura", keywords: [] as string[], oracleText: "Enchant land\nEnchanted land has \"{T}: This land deals 1 damage to any target.\"" };
+    const g = grammarClauseRecords(card);
+    const ab = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings)).abilities;
+    const granted = ab.filter((a) => a.grantedBy !== undefined && (a.emits ?? []).some((e) => e.dealer !== undefined));
+    expect(granted.length).toBeGreaterThan(0);
+    for (const a of granted) for (const e of a.emits ?? []) expect(e.dealer?.self).toBeUndefined();
+  });
+  test("a granted 'This creature deals' is typed as the grantee: Lightning Prowess, Hankyu; a granted land stays bare (#1462 x #1471)", () => {
+    expect(dealers("Lightning Prowess", "Enchantment — Aura", "Enchant creature\nEnchanted creature has haste and \"{T}: This creature deals 1 damage to any target.\"")).toEqual([{ control: "any", token: null, type: "creature" }]);
+    expect(dealers("Hankyu", "Artifact — Equipment", "Equipped creature has \"{T}: Put an aim counter on Hankyu\" and \"{T}, Remove all aim counters from Hankyu: This creature deals damage to any target equal to the number of aim counters removed this way.\"\nEquip {4} ({4}: Attach to target creature you control. Equip only as a sorcery.)")).toEqual([{ control: "any", token: null, type: "creature" }]);
+    expect(dealers("Barbed Field", "Enchantment — Aura", "Enchant land\nEnchanted land has \"{T}: This land deals 1 damage to any target.\"")).toEqual([{ control: "you", token: null }]);
+  });
+  test("a granted 'This creature deals' keeps the grantee's class: Acidic Sliver (Sliver), Lorehold Apprentice (Spirit you control); a granted artifact is not a creature: Quicksmith Rebel (#1462)", () => {
+    expect(dealers("Acidic Sliver", "Creature — Sliver", "All Slivers have \"{2}, Sacrifice this permanent: This permanent deals 2 damage to any target.\"")).toEqual([{ control: "any", token: null, type: "creature", subtype: "sliver" }]);
+    expect(dealers("Lorehold Apprentice", "Creature — Human Wizard", "Magecraft — Whenever you cast or copy an instant or sorcery spell, until end of turn, Spirit creatures you control gain \"{T}: This creature deals 1 damage to each opponent.\"")).toEqual([{ control: "you", token: null, type: "creature", subtype: "spirit" }]);
+    const q = dealers("Quicksmith Rebel", "Creature — Human Artificer", "When this creature enters, target artifact you control gains \"{T}: This artifact deals 2 damage to any target\" for as long as you control this creature.");
+    expect(q).toHaveLength(1);
+    expect(q[0]).not.toHaveProperty("type", "creature");
+  });
+  test("a SELF-grant ('this creature has', 'it has', 'Iron Fist gains') is the card itself, never the class creature: Pardic Arsonist, Tyrant's Familiar, Freewind Equenaut, Iron Fist (#1462)", () => {
+    const self = [{ control: "you", token: null, self: true }];
+    expect(dealers("Pardic Arsonist", "Creature — Minotaur Berserker", "Threshold — As long as there are seven or more cards in your graveyard, this creature has \"When this creature enters, it deals 3 damage to any target.\"")).toEqual(self);
+    expect(dealers("Tyrant's Familiar", "Creature — Dragon", "Flying, haste\nLieutenant — As long as you control your commander, this creature gets +2/+2 and has \"Whenever this creature attacks, it deals 7 damage to target creature defending player controls.\"")).toEqual(self);
+    expect(dealers("Freewind Equenaut", "Creature — Human Archer", "Flying\nAs long as this creature is enchanted, it has \"{T}: This creature deals 2 damage to target attacking or blocking creature.\"")).toEqual(self);
+    expect(dealers("Iron Fist, Living Weapon", "Legendary Creature — Human Monk", "Whenever you cast a spell that targets a creature you control, Iron Fist gains \"{T}: Iron Fist deals damage equal to his power to any other target\" until end of turn.")).toEqual(self);
+  });
+  test("a granted ability whose quoted dealer is the GRANTING card deals as the card: Shuriken; Hankyu and Fire Whip ('this creature deals') stay the grantee (#1462)", () => {
+    const self = [{ control: "you", token: null, self: true }];
+    expect(dealers("Shuriken", "Artifact — Equipment", "Equipped creature has \"{T}, Unattach Shuriken: Shuriken deals 2 damage to target creature. That creature's controller gains control of Shuriken unless it was unattached from a Ninja.\"\nEquip {2} ({2}: Attach to target creature you control. Equip only as a sorcery.)")).toEqual(self);
+    expect(dealers("Hankyu", "Artifact — Equipment", "Equipped creature has \"{T}: Put an aim counter on Hankyu\" and \"{T}, Remove all aim counters from Hankyu: This creature deals damage to any target equal to the number of aim counters removed this way.\"\nEquip {4} ({4}: Attach to target creature you control. Equip only as a sorcery.)")).toEqual([{ control: "any", token: null, type: "creature" }]);
+    expect(dealers("Fire Whip", "Enchantment — Aura", "Enchant creature you control\nEnchanted creature has \"{T}: This creature deals 1 damage to any target.\"\nSacrifice this Aura: It deals 1 damage to any target.")).toEqual(expect.arrayContaining([{ control: "any", token: null, type: "creature" }]));
+    expect(dealers("Fake Blade", "Artifact — Equipment", "Equipped creature has \"{T}: This Equipment deals 1 damage to any target.\"\nEquip {1}")).toEqual(self);
+  });
+  test("a grantee is cut at the sentence break before the verb: Takklemaggot's 'It loses ... and gains \"... this enchantment deals\"' is the card, not a class creature (#1462 review)", () => {
+    // The granting clause as the model reads it (`clauseGrants`): the whole paragraph, the grant in its last sentence.
+    const grant = "When enchanted creature dies, that creature's controller chooses a creature that this card could enchant. If the player does, return this card to the battlefield under your control attached to that creature. If they don't, return this card to the battlefield under your control as a non-Aura enchantment. It loses \"enchant creature\" and gains \"At the beginning of that player's upkeep, this enchantment deals 1 damage to that player.\"";
+    expect(granteeDealer(grant, "Takklemaggot")).toBe("self");
+    // a back-reference ("That permanent gains", Terminal Velocity) is typed by the sentence before it
+    expect(granteeDealer("You may put an artifact or creature card from your hand onto the battlefield. That permanent gains haste, \"When this permanent leaves the battlefield, it deals damage equal to its mana value to each creature,\" and \"At the beginning of your end step, sacrifice this permanent.\"", "Terminal Velocity")).toMatchObject({ type: expect.arrayContaining(["artifact", "creature"]) });
+    // and a list grantee still keeps its commas
+    expect(granteeDealer("Assassins, Mercenaries, and Rogues you control have \"{T}: This creature deals 1 damage to any target.\"")).toMatchObject({ control: "you", type: "creature" });
+  });
+  test("a pronoun grantee is the card only when the lead names the card; otherwise its antecedent: Lavamancer's Skill 'enchanted creature', 'a Sliver you control attacks' (#1462 review)", () => {
+    const skill = "Enchant creature\nEnchanted creature has \"{T}: This creature deals 1 damage to target creature.\"\nAs long as enchanted creature is a Wizard, it has \"{T}: This creature deals 2 damage to target creature.\"";
+    const card = { name: "Lavamancer's Skill", typeLine: "Enchantment — Aura", keywords: [] as string[], oracleText: skill };
+    const g = grammarClauseRecords(card);
+    const ab = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings)).abilities;
+    const granted = ab.filter((a) => a.grantedBy !== undefined).flatMap((a) => (a.emits ?? []).filter((e) => e.dealer !== undefined).map((e) => e.dealer));
+    expect(granted).toHaveLength(2);
+    for (const d of granted) expect(d).toEqual({ control: "any", token: null, type: "creature" });
+    expect(granteeDealer("Whenever a Sliver you control attacks, it has \"{T}: This creature deals 1 damage to any target.\"")).toEqual({ control: "you", token: null, type: "creature", subtype: "sliver" });
+    expect(granteeDealer("As long as this creature is enchanted, it has \"{T}: This creature deals 2 damage.\"")).toBe("self");
+  });
+  test("a dealer named by a dies / leaves trigger's 'it' is marked gone (CR 113.6): Stalking Vengeance, Heartfire Hero; a living dealer is not", () => {
+    const gone = (name: string, typeLine: string, oracleText: string) => {
+      const card = { name, typeLine, keywords: [] as string[], oracleText };
+      const g = grammarClauseRecords(card);
+      return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.dealer !== undefined).map((e) => e.dealerGone === true)).filter((v, i, all) => all.indexOf(v) === i);
+    };
+    expect(gone("Stalking Vengeance", "Enchantment", "Haste\nWhenever another creature you control dies, it deals damage equal to its power to target player or planeswalker.")).toEqual([true]);
+    expect(gone("Heartfire Hero", "Creature — Human Soldier", "When this creature dies, it deals damage equal to its power to each opponent.")).toEqual([true]);
+    expect(gone("Murderous Redcap", "Creature — Goblin Assassin", "When this creature enters, it deals damage equal to its power to any target.")).toEqual([false]);
+    expect(gone("Brokers Charm", "Instant", "Choose one —\n• Target creature you control gets +1/+0 until end of turn. It deals damage equal to its power to target creature or planeswalker an opponent controls.\n• Draw two cards.")).toEqual([false]);
   });
 });

@@ -267,7 +267,8 @@ export function replacementOf(clauseText: string): Replacement | null {
     if (t.kind === "counter-placement" && /\buntil (?:end of turn|your next turn)\b/i.test(clauseText.slice(0, m.index))) continue;
     const actor = t.actor !== undefined ? (m[t.actor] ?? "").trim() : "";
     return {
-      verbs: t.verbs,
+      // A damage multiplier hears the damage it names: "would deal combat damage" is combat only (Inquisitor's Flail, Blind Fury), "noncombat damage" only non-combat, bare "damage" both (#1462).
+      verbs: t.kind === "damage-multiplier" ? damageResultVerbs(clauseText) : t.verbs,
       kind: t.kind,
       subjectText: (t.subject === 0 ? "" : t.kind === "counter-placement" ? classOf(m[t.subject] ?? "") : m[t.subject] ?? "").trim(),
       ...(t.kind === "token-doubling" ? { tokenMultiplier: tokenMultiplierOf(clauseText) } : {}),

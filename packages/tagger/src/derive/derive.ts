@@ -19,7 +19,7 @@ import { requiresOf } from "./markers.js";
 import { animateResult } from "./animate-result.js";
 import { hostEffect } from "./host.js";
 import { librarySearchOwner, printsSearch } from "./library-search.js";
-import { creatureDamageSource, damageHitsSelf, damageRecipient, playerOnlyRecipient } from "./damage-recipient.js";
+import { damageDealerOf, granteeDealer, grantedDealerIsGranter, damageHitsSelf, damageRecipient, playerOnlyRecipient } from "./damage-recipient.js";
 import { actionRecipients, damagedPlayerIsOpponent, sacrificerIsTargeted, sentenceNamesAPlayer, thatPlayerIsOpponent, victimDeclines } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { namesAClass, parseSubject, parseCounter } from "./subject.js";
@@ -605,7 +605,13 @@ import { chosenColorOf } from "./chosen-color.js";
 // 435: #1465 -- (1) a damage replacement whose result is a mill or counters (Undead Alchemist, Szadek, Soul-Scar Mage) is an ordinary triggered ability on the replaced combat / non-combat damage (verbs follow the printed word, no `replacement`, no `change`, plain mill / counter-placement kind and emits), marked `replacementResult` (CR 614.1a: a replacement effect, so no copies:triggered and no trigger doubling hears it); (2) the damaged player of the "If <dealer> would deal combat damage to a player, instead ..." opener is an opponent (`damagedPlayerIsOpponent`), so the mill fills THEIR graveyard; (3) Soul-Scar Mage's "counters on that creature" carry the antecedent's control (opp) and `trigger.victim: "opponent-creature"` (matcher: only damage that can hit a creature an opponent controls feeds it); (4) Lava Burst's "can't be prevented or dealt instead" is no replacement (its deal-damage is damage again; the rider stays unclaimed, as does Whippoorwill's identical one, which stops claiming a false `prevented` emit); (5) a damage recipient that is only a PLAYER (each player / any player / each opponent / each other opponent / defending player / any opponent / chosen opponent, and every "X's controller") carries `player: true`, and one that is only a count of TARGETS ("divided among any number of targets", "each of one or two targets") is the untyped "any target" shape with scope target; (6) the matcher's `canHitACreature` accepts a permanent-typed or untyped non-player recipient; (7) an instant's or sorcery's on-cast damage carries the card's spell types on its dealer (Syr Carah, Pyromancer's Swath, Rem Karolus, Satyr Firedancer, Sulfuric Vapors, Tamanoa, Blaze Commando hear every burn spell). Reductions, caps, fixed amounts and redirects stay unread (#1456). derive-impact vs 4f1de7c2: 620 rows changed (about 590 are the player-only `player: true` stamp), 0 added/removed, 6 source flips (Book Burning, Breaking Point, Browbeat, Harsh Justice, Spiteful Shadows grammar to model; Inferno Titan model to grammar, dropping the model's duplicated third trigger clause); pair reasons of the changed rows +6,157 / -1,345 (non-combat-damage +4,113 / -1,290, combat-damage +853, graveyard-recursion +454, counter-added +271, lose-life +268, damaged +55 / -26); Soul-Scar Mage +2,320, Undead Alchemist +1,129, Szadek +466, Lava Burst +133, Whippoorwill +17 / -28; the non-combat-damage loss is the self-only damage triggers (Kiyomaro, Lu Xun, Zhang Liao, Atemsis, Cecil, Nicol Bolas, Niv-Mizzet, about -136 each, Syr Carah's self half) no longer reached by player-only producers: false 'thanks to' reasons (the rest of that defect is #1471); matcher sample (1,000 cards) +328 / -1 (round-5/6 self-gate change reverted, #1471); final review: a spell's damage a creature deals (a delayed trigger, Harsh Justice; an amount 'equal to the power of' your creature, Friendly Rivalry, Chocobo Kick) keeps a bare dealer, redirects stay a CEILING; role-ratchet +8 / 0 (Lava Burst burn, targetedRemoval, wincon:burn; Desolation burn, wincon:burn; Iron Fist, Hero for Hire targetedRemoval; Szadek and Undead Alchemist wincon:mill); dropped-clauses 4,917 -> 4,913 (Inferno Titan +3:spliced is the removed duplicate clause)
 // 436: #1458 -- A damage multiplier records the recipient it prints (trigger.victim: opponent-or-permanent / opponent / player / player-or-battle / creature) and the matcher's one recipient gate (canReachRecipient, authored emits only; an implied combat event has an unknown recipient and passes) refuses damage that cannot reach it: Torbran, Rem Karolus and 19 more stop hearing Rile, Marauding Raptor, Cinder Giant, Yusri-shaped own-side damage. A LIST recipient (Disciples of the Inferno, "a creature, battle, or opponent") is unconditioned, not cut to its first item. derive-impact vs f15226c0: 21 rows changed, 0 added/removed, 0 source flips; pair reasons of the changed rows +0 / -7,775 (all non-combat-damage); matcher sample (300) +0 / -70; role-ratchet 0/0; dropped-clauses 4,913 -> 4,913. RETENTION COST, about 103 TRUE pairs lost to upstream misreads of who is damaged (not fixed here): Flame Sweep ("each creature except for creatures you control with flying" stored control you), Ajani Unrelenting ("except for tokens you control"), Satyr Firedancer ("target creature that player controls" stored control you), and fights that emit only the half damaging your own creature (Pit Fight, Domri Rade, Ulvenwald Tracker, Wayta, The Super Hero Civil War, Time to Feed); about 9 producers x 11 opponent-or-permanent consumers + 3 on Torbran + 1 on Rem Karolus. Rem Karolus losing the fights is correct (the creatures deal that damage).
 // 437: #1471 -- a damage trigger on the card itself or its host records its printed recipient (trigger.victim) and the host marker (trigger.host); the matcher judges another card's damage on its dealer, not its victim: a bare dealer (the producer itself) never feeds another card's self trigger. a creature's own fight ("this creature fights", a bare pronoun on a permanent's own ability, the other target never yours) has `dealer.self`, and a damage emit to "its controller" carries `toDealerController`. derive-impact vs 1020b3f1: 651 rows changed, 1 flip-only (Essence Backlash, tags identical), pair reasons of changed rows +391 / -14,324, 4,000-card sample +366 / -2,197, all non-combat-damage; role-ratchet 0/0, dropped-clauses 4,913 -> 4,913
-export const DERIVE_VERSION = 437;
+// 438: #1462 -- the dealer of damage is read off the damage sentence's printed subject (typed for another object with its antecedent's control, self for the card itself, a granted 'this creature deals' typed as its grantee); the matcher stamps the card's colours on a self dealer and never a typed one; merged with #1471's dealerCanBe gates; numbers in the PR
+// 439: #1462 -- a granted 'this creature deals' keeps the grantee's class (subtype: All Slivers, Spirit creatures you control) and a non-creature grantee (Quicksmith Rebel's artifact) stays bare; leading trigger / duration clauses are stripped from the grantee phrase
+// 440: #1462 -- a damage multiplier hears the damage it names: 'would deal combat damage' is combat-damage only (Inquisitor's Flail, The Sound of Drums, Blind Fury), 'noncombat' non-combat only (it heard both)
+// 441: #1462 -- a SELF-grant ('this creature has "...deals"', 'it has', 'Iron Fist gains') keeps dealer.self (the card), not the class creature (Pardic Arsonist, Tyrant's Familiar)
+// 442: #1462 -- review fixes: a dies/leaves trigger's 'it' dealer is marked dealerGone (no self/host trigger hears it, CR 113.6); a granted-ability grantee is cut at its own sentence (Takklemaggot self); a pronoun grantee resolves from its lead (Lavamancer's Skill enchanted creature, Sliver attacks), self only when the lead names the card
+// 443: #1462 -- a granted ability whose quoted dealer is the GRANTING card (Shuriken 'Shuriken deals', 'this Equipment deals') deals as the card (dealer.self), not the grantee class creature
+export const DERIVE_VERSION = 443;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -3210,10 +3216,17 @@ export function deriveAbilities(
       // THE CARD ITSELF HIT BY A FIGHT-BACK is bare `self` (Garruk's "him" kept the antecedent "target creature": a planeswalker typed creature, scope target) (#1266, burn).
       const selfDamage = action.verb === "deal-damage" && damageHitsSelf(action.object ?? "", text);
       if (selfDamage) for (const e of emits) e.subject = { control: "any", token: null, self: true };
-      // A CREATURE DEALS IT when the sentence says "target creature (you control) deals damage ...": the dealer is that creature, so a damage trigger hears "a creature ... thanks to <card>" (Rabid Bite), not the spell.
-      // CEILING: only a clause with ONE damage action (Garruk's two read the card as dealer of both).
-      const creatureSource = action.verb === "deal-damage" && !selfDamage && (clause.actions ?? []).filter((x) => x.verb === "deal-damage").length === 1 ? creatureDamageSource(text) : undefined;
-      if (creatureSource !== undefined) for (const e of emits) if (e.dealer !== undefined) e.dealer = { control: creatureSource, token: null, type: "creature" };
+      // THE DEALER IS READ OFF THE DAMAGE SENTENCE'S PRINTED SUBJECT (#1462): "target creature you control deals", "that creature deals", "each creature deals", "enchanted creature deals", "target land deals" are
+      // another object, a typed dealer a damage trigger hears as "a creature ... thanks to <card>" (Rabid Bite) and the matcher never reads as the card; "this creature / ~ / it (the trigger's subject is the card) deals" is
+      // `self`. Anything unclear stays a bare dealer. The k-th deal-damage action takes the k-th " deals " of the text, when the counts agree (Stalking Yeti); a granted ability's "this creature" is the grantee, so never `self`.
+      // CEILING: a clause whose number of " deals " differs from its deal-damage actions (a shared "deals ... and ..." list; Garruk's two) is unread and keeps the bare dealer.
+      const damageActions = (clause.actions ?? []).filter((x) => x.verb === "deal-damage");
+      const dealer = action.verb === "deal-damage"
+        ? damageDealerOf(text, damageActions.indexOf(action), damageActions.length, cardName)
+        : undefined;
+      if (dealer !== undefined && !("self" in dealer && grantedTo)) for (const e of emits) if (e.dealer !== undefined) e.dealer = "self" in dealer ? { ...e.dealer, self: true } : { ...dealer.other };
+      // "Whenever another creature you control dies, it deals damage equal to its power": the dealer has left the battlefield (CR 113.6), so no self or host damage trigger hears it (#1462 review).
+      if (dealer?.gone === true) for (const e of emits) if (e.dealer !== undefined) e.dealerGone = true;
       if (emitsSelf) for (const e of emits) {
         if (!grantedTo) { e.subject.self = true; continue; }
         // The granted ability's "this permanent"/"it" is the recipient -- see `grantedTo`.
@@ -4434,11 +4447,23 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
     .map((a, _i, all) => stampManaRider(a, all, input.clauseTexts))
     // THE CLAUSE THAT GRANTS A QUOTED ABILITY (#1315): `segment()`'s granted clause and its parent, from `DeriveInput.clauseGrants` (both clause sources).
     .map((a) => { const by = a.clause !== undefined ? input.clauseGrants?.[a.clause as number] : undefined; return by === undefined ? a : { ...a, grantedBy: by }; })
-    // A fight's `dealer.self` (#1471) is the CARD fighting: only on its own ability, on a permanent that is not a Saga. A granted ability's fighter is the grantee, and a spell's or chapter's "it" is a creature it picked.
+    // A DEALER'S `self` IS THE CARD (#1462, #1471). A fight's `dealer.self` (#1471, typed creature) is the CARD fighting: only on its own ability, on a permanent that is not a Saga; a granted ability's fighter is the
+    // grantee, and a spell's or chapter's "it" is a creature it picked. A `self` dealer of a deal-damage sentence (#1462, untyped) is the card on every face and kind EXCEPT a granted ability, whose "this creature deals" is
+    // the grantee: typed from the granting clause's subject ("Enchanted creature has", "Creatures you control have") when it names a creature, else left bare.
     .map((a) => {
+      if (!a.emits?.some((e) => e.dealer?.self === true)) return a;
       const ownPermanent = a.grantedBy === undefined && !isSpellFace(a.face) && !chars.subtypes.some((t) => t.toLowerCase() === "saga");
-      if (ownPermanent || !a.emits?.some((e) => e.dealer?.self === true)) return a;
-      return { ...a, emits: a.emits.map((e) => { if (e.dealer?.self !== true) return e; const { self: _s, ...dealer } = e.dealer; return { ...e, dealer }; }) };
+      const grantText = a.grantedBy !== undefined ? String(input.clauseTexts?.[a.grantedBy as number] ?? "") : "";
+      // A quoted dealer that is the GRANTING card (Shuriken "Shuriken deals", "this Equipment deals") is the card, not the grantee.
+      const grantee = a.grantedBy === undefined ? undefined : grantedDealerIsGranter(String(input.clauseTexts?.[a.clause as number] ?? ""), input.name, [...chars.types, ...chars.subtypes]) ? "self" as const : granteeDealer(grantText, input.name);
+      return { ...a, emits: a.emits.map((e) => {
+        if (e.dealer?.self !== true) return e;
+        const fight = e.dealer.type !== undefined;
+        if (a.grantedBy === undefined && (!fight || ownPermanent)) return e;
+        if (!fight && grantee === "self") return e; // a self-grant is the card itself (#1462)
+        const { self: _s, ...dealer } = e.dealer;
+        return { ...e, dealer: !fight && grantee !== undefined && grantee !== "self" ? { ...grantee } : dealer };
+      }) };
     });
   // A CHOSEN COLOUR IS NOT A CHOSEN TYPE (#1360): a stored reading's `chosenType` on a colour choice becomes `chosenColor`.
   const spellOnce = chosenColorOf(spellOnceRaw, input.clauseTexts, input.oracleText ?? "");

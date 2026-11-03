@@ -367,6 +367,33 @@ test("a damage multiplier hears only damage that can reach its printed recipient
   expect(pairReasons(attacker, goliath, H).some((r) => r.tag.startsWith("combat-damage"))).toBe(true);
 });
 
+// #1462 x #1458: a damage replacement keeps what it names. A COMBAT-only one (Inquisitor's Flail, The Sound of Drums, Blind Fury) hears no noncombat pinger, and a SPELL-typed one (Rem Karolus) hears no creature's ability.
+test("a combat-only or spell-only damage replacement does not hear a granted pinger (#1462)", () => {
+  const derived = (name: string, text: string) => {
+    const { abilities } = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "deal-damage", object: "x", amount: "double" }] }] as never, name, { 1: text });
+    return base(name, abilities as CardTags["abilities"]);
+  };
+  const flail = derived("Inquisitor's Flail", "If another creature would deal combat damage to equipped creature, it deals double that damage to equipped creature instead.");
+  const drums = derived("The Sound of Drums", "If enchanted creature would deal combat damage to a permanent or player, it deals double that damage to that permanent or player instead.");
+  const fury = derived("Blind Fury", "If a creature would deal combat damage to a creature this turn, it deals double that damage to that creature instead.");
+  const karolus = derived("Rem Karolus, Stalwart Slayer", "If a spell would deal damage to an opponent or a permanent an opponent controls, it deals that much damage plus 1 instead.");
+  const violence = derived("Gratuitous Violence", "If a creature you control would deal damage to a permanent or player, it deals double that damage to that permanent or player instead.");
+  const target = { control: "any", token: null, scope: "target" } as const;
+  // Hankyu and Fire Whip: "Equipped creature has '{T}: This creature deals 1 damage to any target'"
+  const hankyu = base("Hankyu", [{ kind: "activated", cost: "{T}", effect: { kind: "damage" }, grantedBy: 0, emits: [{ verb: "non-combat-damage", subject: target, dealer: { control: "any", token: null, type: "creature" } }] } as never]);
+  const bolt = base("Lightning Bolt", [{ kind: "on-cast", effect: { kind: "damage" }, emits: [{ verb: "non-combat-damage", subject: target, dealer: { control: "you", token: null, self: true, type: "instant" } }] } as never]);
+  const attacker = base("Grizzly Bears", [{ kind: "static", effect: { kind: "other" }, emits: [{ verb: "combat-damage", subject: { control: "you", token: null, self: true, type: "creature" } }] } as never]);
+  const dmg = (a: ReturnType<typeof base>, b: ReturnType<typeof base>) => pairReasons(a, b, H).some((r) => r.tag.includes("combat-damage"));
+  for (const c of [flail, drums, fury]) {
+    expect(c.tags.abilities.find((a) => a.trigger)?.trigger?.verbs, c.card.name).toEqual(["combat-damage"]);
+    expect(dmg(hankyu, c), c.card.name).toBe(false);
+    expect(dmg(attacker, c), c.card.name).toBe(true);
+  }
+  expect(dmg(hankyu, karolus)).toBe(false);
+  expect(dmg(bolt, karolus)).toBe(true);
+  expect(dmg(hankyu, violence)).toBe(true);
+});
+
 // #1465: a replacement whose result is a mill or counters is read as a plain trigger on the replaced damage: a reason forms, worded as a trigger, never as a doubler.
 test("a damage replacement that mills or places counters is a plain damage trigger (#1465)", () => {
   const { abilities } = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "add-counter", object: "-1/-1", amount: "that many" }] }] as never, "Soul-Scar Mage",
@@ -565,6 +592,24 @@ describe("a self or host damage trigger hears only a dealer that can be the card
     // ...but the Giant can wear the Aura whose host trigger watches damage
     const cloak = base("Armadillo Cloak", [{ kind: "triggered", effect: { kind: "lifegain" }, trigger: { verbs: ["non-combat-damage"], subject: { control: "any", token: null, type: "creature" }, host: true }, emits: [{ verb: "gain-life", subject: { control: "you", token: null } }] } as never]);
     expect(heard(giant, cloak)).toBe(true);
+  });
+
+  test("a granted pinger keeps its grantee's class: Acidic Sliver's Sliver dealer feeds a Sliver's self trigger, not Kjeldoran Gargoyle's (#1462)", () => {
+    const acidic = dmg("Acidic Sliver", { control: "any", scope: "target" }, { control: "any", type: "creature", subtype: "sliver" }, ["creature"]);
+    expect(heard(acidic, selfTrigger("Kjeldoran Gargoyle", undefined, ["gargoyle"]))).toBe(false);
+    expect(heard(acidic, selfTrigger("Sliver Legion", undefined, ["sliver"]))).toBe(true);
+  });
+
+  test("a dealer that has left the battlefield (a dies trigger's 'it') feeds no self or host trigger, only a 'source you control' one (CR 113.6, #1462 review)", () => {
+    const vengeance = dmg("Stalking Vengeance", { control: "any", player: true, scope: "target" }, { control: "you", type: "creature" }, ["enchantment"]);
+    vengeance.tags.abilities[0]!.emits![0] = { ...vengeance.tags.abilities[0]!.emits![0]!, dealerGone: true };
+    expect(heard(vengeance, selfTrigger("Kjeldoran Gargoyle", undefined, ["gargoyle"]))).toBe(false);
+    const cloak = base("Armadillo Cloak", [{ kind: "triggered", effect: { kind: "lifegain" }, trigger: { verbs: ["non-combat-damage"], subject: { control: "any", token: null, type: "creature" }, host: true }, emits: [{ verb: "gain-life", subject: { control: "you", token: null } }] } as never]);
+    expect(heard(vengeance, cloak)).toBe(false);
+    const torbran = base("Tamanoa", [{ kind: "triggered", effect: { kind: "lifegain" }, trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null } }, emits: [{ verb: "gain-life", subject: { control: "you", token: null } }] } as never]);
+    expect(heard(vengeance, torbran)).toBe(true);
+    // the same dealer, alive (no mark), still feeds a creature's self trigger
+    expect(heard(dmg("Rabid Bite", { control: "opp", type: "creature", scope: "target" }, { control: "you", type: "creature" }), selfTrigger("Exalted Angel", undefined, ["angel"]))).toBe(true);
   });
 
   test("a granted self trigger is judged as its host's: a creature you control feeds Snake Umbra (#1471)", () => {
@@ -4251,6 +4296,35 @@ test("a red-source damage replacement does not pair with damage another object d
   expect(damageTag(torbran, selfDestruct)).toEqual([]);
   expect(damageTag(torbran, painForAll)).toEqual([]);
   expect(damageTag(torbran, fireslinger)).toHaveLength(1);
+});
+
+/** DERIVE NAMES THE DEALER (#1462). A dealer typed from the sentence's printed subject ("each creature deals", "enchanted creature deals") is another object and is never the card; a `self` dealer
+ *  ("this creature deals ... equal to that creature's power": Terror of the Peaks) is the card whatever the amount reads. Shapes below are the real derived ones. */
+test("a red-source damage replacement pairs with a self dealer and not with a typed one (#1462)", () => {
+  const withColours = (d: ReturnType<typeof base>, colors: string[], types: string[]) => {
+    d.tags!.characteristics = { ...d.tags!.characteristics, colors, identity: colors, types } as never;
+    return d;
+  };
+  const torbran = withColours(base("Torbran, Thane of Red Fell", [{
+    kind: "static", effect: { kind: "damage-multiplier", damageChange: "plus" },
+    trigger: { verbs: ["combat-damage", "non-combat-damage"], subject: { control: "you", token: null, colors: ["R"] } },
+    replacement: true, change: { op: "plus", value: 2 }, amount: "that much damage plus 2",
+  }]), ["R"], ["creature"]);
+  const victim = { control: "any", token: null, scope: "target" } as const;
+  const terror = withColours(base("Terror of the Peaks", [
+    { kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null, other: true } }, effect: { kind: "damage" }, amount: "that creature's power", clause: 3,
+      emits: [{ verb: "non-combat-damage", subject: victim, dealer: { control: "you", token: null, self: true } }] },
+  ]), ["R"], ["creature"]);
+  const rakdosCharm = withColours(base("Rakdos Charm", [
+    { kind: "on-cast", effect: { kind: "damage" }, clause: 3, emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null }, dealer: { control: "any", token: null, type: "creature" } }] },
+  ]), ["B", "R"], ["instant"]);
+  const gaze = withColours(base("Dizzying Gaze", [
+    { kind: "activated", cost: "{R}", effect: { kind: "damage" }, amount: "1", clause: 2, emits: [{ verb: "non-combat-damage", subject: victim, dealer: { control: "any", token: null, type: "creature" } }] },
+  ]), ["R"], ["enchantment"]);
+  const damageTag = (p: DeckCard, c: DeckCard) => directedReasons(p, c, H).filter((r) => r.tag.startsWith("non-combat-damage"));
+  expect(damageTag(torbran, terror)).toHaveLength(1);
+  expect(damageTag(torbran, rakdosCharm)).toEqual([]);
+  expect(damageTag(torbran, gaze)).toEqual([]);
 });
 
 /** The fix must be ADDITIVE. An implied combat emit carries no `dealer` — its subject IS the
