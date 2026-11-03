@@ -853,6 +853,9 @@ export interface GameEvent {
   /** THIS DAMAGE HITS THE PLAYER WHO CONTROLS ITS DEALER (#1471): "that creature deals damage equal to its power to ITS CONTROLLER" (Backlash, Bomb Squad). Set by derive on a damage emit whose printed recipient is "its controller" /
    *  "their controller"; the recipient is then a plain `{control: any, player: true}`, which says nothing of whose. When the dealer is YOUR creature the player is you, so a trigger that needs an opponent hit refuses it (`directedReasons`). */
   toDealerController?: true;
+  /** TRANSIENT (#1474), never stored: `actionEmits` marks the fight half whose recipient is the CARD ITSELF (`subject.self`); `deriveAbilities` removes the mark and, unless the ability is the card's own
+   *  (not granted, not an instant/sorcery face, not a non-creature Saga chapter), the `self` with it. */
+  fightHitSelf?: true;
   /** THIS `leaves` IS A TUCK: a permanent put into its owner's library (Condemn, Oust, Teferi, Hero of Dominaria -3). It left the battlefield, so a leaves payoff hears it, but the
    *  owner's quality ladder puts it BELOW a bounce (exile > destroy / sacrifice > bounce > tuck), which `quality.ts` `permanenceOf` reads. Set by derive (`actionEmits`); never by the LLM. */
   tuck?: true;

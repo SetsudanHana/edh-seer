@@ -563,7 +563,7 @@ test("a sweep debuff emits a death for every creature it reaches", () => {
 // A FIGHT IS TWO DAMAGE EVENTS (CR 701.14a; recall v7 #82, AF7d). The parsed object names the
 // opponent's creature as the victim and your creature as the dealer; the mirror is the half where
 // YOUR creature is dealt damage -- Khalni Ambush making Stuffy Doll the victim.
-test("a fight against an opponent's creature emits both halves; one among your own emits one", () => {
+test("a fight against an opponent's creature emits both halves; one among your own emits both too (#1474)", () => {
   const both = actionEmits({ verb: "fight", object: "target creature you control and target creature you don't control" },
     "Target creature you control fights target creature you don't control.");
   const damage = both.filter((e) => e.verb === "non-combat-damage");
@@ -572,7 +572,10 @@ test("a fight against an opponent's creature emits both halves; one among your o
   expect(damage[1]).toMatchObject({ subject: { control: "you", type: "creature" }, dealer: { control: "opp", type: "creature" } });
   const own = actionEmits({ verb: "fight", object: "target creature you control and another target creature you control" },
     "Target creature you control fights another target creature you control.");
-  expect(own.filter((e) => e.verb === "non-combat-damage")).toHaveLength(1);
+  // CR 701.14a: two of your own creatures still deal damage to each other, so both halves are emitted (#1474), both recipients yours.
+  const ownDamage = own.filter((e) => e.verb === "non-combat-damage");
+  expect(ownDamage).toHaveLength(2);
+  expect(ownDamage.map((e) => e.subject.control)).toEqual(["you", "you"]);
 });
 
 // EVERY EXILE PUTS SOMETHING INTO EXILE (CR 406.2; AF7b, 2026-09-16): the event the 39 corpus

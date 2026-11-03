@@ -8009,3 +8009,129 @@ describe("the dealer of damage is typed from the sentence's printed subject (#14
     expect(gone("Brokers Charm", "Instant", "Choose one —\n• Target creature you control gets +1/+0 until end of turn. It deals damage equal to its power to target creature or planeswalker an opponent controls.\n• Draw two cards.")).toEqual([false]);
   });
 });
+
+// #1474: "each creature except for X" damages every creature BUT X. The exception's "you control" / "flying" / "token" described who is spared and
+// was read as the recipient, so the damage payoff gate refused true pairs with opponent-or-permanent multipliers (oracle text from the corpus, 2026-11-03).
+describe("a damage recipient's except-for tail is not the recipient (#1474)", () => {
+  const damageEmits = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    const tags = deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings));
+    return tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "non-combat-damage");
+  };
+  test("Flame Sweep: each creature, not the flying creatures you control", () => {
+    const [e, ...rest] = damageEmits("Flame Sweep", "Instant", "Flame Sweep deals 2 damage to each creature except for creatures you control with flying.");
+    expect(rest).toHaveLength(0);
+    expect(e!.subject).toMatchObject({ control: "any", type: "creature", scope: "each" });
+    expect(e!.subject.keyword).toBeUndefined();
+  });
+  test("Ajani Unrelenting: each creature, not the tokens you control", () => {
+    const [e] = damageEmits("Ajani Unrelenting", "Legendary Planeswalker — Ajani", "−3: Ajani deals 4 damage to each creature except for tokens you control.");
+    expect(e!.subject).toMatchObject({ control: "any", type: "creature", scope: "each" });
+    expect(e!.subject.token).not.toBe(true);
+  });
+});
+
+// #1474: "that player controls" resolves to the player the clause last named. Satyr Firedancer's trigger subject is "a spell YOU control" -- the dealer's controller,
+// not "that player" -- so the creature it damages is the OPPONENT's, not yours (oracle text from the corpus, 2026-11-03).
+describe("'that player controls' on a damage recipient resolves to its antecedent (#1474)", () => {
+  const creatureHits = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    const tags = deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings));
+    return tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "non-combat-damage" && e.subject.type === "creature");
+  };
+  test("Satyr Firedancer: the creature damaged is an opponent's", () => {
+    const hits = creatureHits("Satyr Firedancer", "Creature — Satyr", "Whenever an instant or sorcery spell you control deals damage to an opponent, this creature deals that much damage to target creature that player controls.");
+    expect(hits).toHaveLength(1);
+    expect(hits[0]!.subject).toMatchObject({ control: "opp", type: "creature", scope: "target" });
+  });
+  test("Chandra's Flame Wave: 'target player' may be anyone, so their creatures are any", () => {
+    const hits = creatureHits("Chandra's Flame Wave", "Sorcery", "Chandra's Flame Wave deals 2 damage to target player and each creature that player controls.");
+    expect(hits.map((h) => h.subject.control)).toEqual(["any"]);
+  });
+  test("Flames of the Raze-Boar: 'target creature an opponent controls' names the opponent that player is", () => {
+    const hits = creatureHits("Flames of the Raze-Boar", "Sorcery", "Flames of the Raze-Boar deals 4 damage to target creature an opponent controls. Then Flames of the Raze-Boar deals 2 damage to each other creature that player controls if you control a creature with power 4 or greater.");
+    expect(hits.map((h) => h.subject.control)).toEqual(["opp", "opp"]);
+  });
+});
+
+// #1474, CR 701.14a: "each of those creatures deals damage equal to its power to the other creature". A fight is TWO damage events, each with the other creature
+// as recipient and the first as dealer. Pit Fight's object parsed onto YOUR creature, so the half where your creature damages the other one was missing, and the
+// one emitted claimed damage to your own creature by a dealer of yours (oracle text from the corpus, 2026-11-03).
+describe("a fight emits both damage halves (#1474, CR 701.14a)", () => {
+  const halves = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    const tags = deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings));
+    return tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "non-combat-damage");
+  };
+  test("Pit Fight: your creature hits the other (any), the other hits yours", () => {
+    const h = halves("Pit Fight", "Instant", "Target creature you control fights another target creature. (Each deals damage equal to its power to the other.)");
+    expect(h).toHaveLength(2);
+    const toOther = h.find((e) => e.subject.control === "any");
+    const toYours = h.find((e) => e.subject.control === "you");
+    expect(toOther?.dealer).toMatchObject({ control: "you", type: "creature" });
+    expect(toYours?.dealer?.control).not.toBe("you");
+    expect(toYours?.dealer).toMatchObject({ control: "any", type: "creature" });
+  });
+  test("Khalni Ambush (unchanged): their creature is hit by yours, yours by theirs", () => {
+    const h = halves("Khalni Ambush // Khalni Territory", "Sorcery // Land", "Target creature you control fights target creature you don't control. (Each deals damage equal to its power to the other.)\n//\nThis land enters tapped.\n{T}: Add {G}.");
+    expect(h).toHaveLength(2);
+    expect(h.find((e) => e.subject.control === "opp")?.dealer).toMatchObject({ control: "you", type: "creature" });
+    expect(h.find((e) => e.subject.control === "you")?.dealer).toMatchObject({ control: "opp", type: "creature" });
+  });
+  // THE RECIPIENT OF EACH HALF IS THE OTHER CREATURE, EXACTLY: when the card itself fights, the half that damages "your side" damages the card, not a creature you control.
+  test("Hivespine Wolverine: the card itself is hit back (self), the token is the other half", () => {
+    const h = halves("Hivespine Wolverine", "Creature — Wolverine", "When this creature enters, choose one —\n• Put a +1/+1 counter on target creature you control.\n• This creature fights target creature token.\n• Destroy target artifact or enchantment.");
+    expect(h).toHaveLength(2);
+    expect(h.some((e) => "fightHitSelf" in e)).toBe(false); // the transient mark never reaches a stored row
+    expect(h.find((e) => e.subject.self === true)?.subject).toMatchObject({ control: "you", type: "creature", self: true });
+    expect(h.find((e) => e.subject.self !== true)?.subject).toMatchObject({ control: "any", token: true, type: "creature" });
+  });
+  test("Territorial Allosaurus: 'it fights another target creature' hits the card itself back", () => {
+    const h = halves("Territorial Allosaurus", "Creature — Dinosaur", "Kicker {2}{G} (You may pay an additional {2}{G} as you cast this spell.)\nWhen this creature enters, if it was kicked, it fights another target creature.");
+    expect(h).toHaveLength(2);
+    expect(h.filter((e) => e.subject.self === true)).toHaveLength(1);
+    expect(h.find((e) => e.subject.self !== true)?.subject.control).toBe("any");
+  });
+  test("Pheres-Band Brawler: the opponent-creature mirror half is the card itself too", () => {
+    const h = halves("Pheres-Band Brawler", "Creature — Centaur", "When this creature enters, it fights up to one target creature you don't control. (Each deals damage equal to its power to the other.)");
+    expect(h).toHaveLength(2);
+    expect(h.find((e) => e.subject.control === "opp")?.subject.self).toBeUndefined();
+    expect(h.find((e) => e.subject.self === true)?.dealer).toMatchObject({ control: "opp", type: "creature" });
+  });
+  // `self` needs the CARD to be the fighter: a granted ability's fighter is the grantee, an instant's "it" is a creature it picked.
+  test("Back for More: an instant is never hit, so the returned creature is a creature you control (no self)", () => {
+    const h = halves("Back for More", "Instant", "Return target creature card from your graveyard to the battlefield. When you do, it fights up to one target creature you don't control. (Each deals damage equal to its power to the other.)");
+    expect(h).toHaveLength(2);
+    expect(h.find((e) => e.subject.control === "you")?.subject).toMatchObject({ control: "you", type: "creature" });
+    expect(h.some((e) => e.subject.self === true)).toBe(false);
+  });
+  test("Setessan Tactics: the granted fighter is the grantee, not the card (no self)", () => {
+    const h = halves("Setessan Tactics", "Instant", "Strive — This spell costs {G} more to cast for each target beyond the first.\nUntil end of turn, any number of target creatures each get +1/+1 and gain \"{T}: This creature fights another target creature.\"");
+    expect(h.length).toBeGreaterThan(0);
+    expect(h.some((e) => e.subject.self === true)).toBe(false);
+  });
+  test("Foe-Razer Regent: 'have it fight' is the card fighting, so the hit-back half is self", () => {
+    const h = halves("Foe-Razer Regent", "Creature — Dragon", "Flying\nWhen this creature enters, you may have it fight target creature you don't control.\nWhenever a creature you control fights, put two +1/+1 counters on it at the beginning of the next end step.");
+    expect(h.find((e) => e.subject.control === "opp")?.subject.self).toBeUndefined();
+    expect(h.filter((e) => e.subject.self === true)).toHaveLength(1);
+    // the hit-back half is the card: it carries nothing of the other creature's filter (Ulrich's "non-Werewolf" belongs to the creature it fights)
+    expect(h.find((e) => e.subject.self === true)?.subject).toEqual({ control: "you", token: null, type: "creature", self: true });
+  });
+  test("Temur War Shaman: 'have it fight' after 'a permanent you control is turned face up' is that permanent, not the Shaman (no self)", () => {
+    const h = halves("Temur War Shaman", "Creature — Human Shaman", "Whenever a permanent you control is turned face up, if it's a creature, you may have it fight target creature you don't control.");
+    expect(h).toHaveLength(2);
+    expect(h.some((e) => e.subject.self === true)).toBe(false);
+  });
+  test("Pit Fight: 'target creature you control' is not the card, so no self", () => {
+    const h = halves("Pit Fight", "Instant", "Target creature you control fights another target creature. (Each deals damage equal to its power to the other.)");
+    expect(h.some((e) => e.subject.self === true)).toBe(false);
+  });
+  test("Clash of Titans: both creatures are any, and each hits the other", () => {
+    const h = halves("Clash of Titans", "Sorcery", "Target creature fights another target creature. (Each deals damage equal to its power to the other.)");
+    expect(h).toHaveLength(2);
+    expect(h.map((e) => e.subject.control).sort()).toEqual(["any", "any"]);
+  });
+});

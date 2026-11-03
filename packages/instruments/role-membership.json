@@ -13305,6 +13305,7 @@
 "Satoru, the Infiltrator": ["role:draw"],
 "Satya, Aetherflux Genius": ["wincon:go-wide"],
 "Satyr Enchanter": ["role:draw"],
+"Satyr Firedancer": ["role:targetedRemoval"],
 "Satyr Hedonist": ["role:ramp"],
 "Satyr Nyx-Smith": ["wincon:go-wide"],
 "Satyr Wayfinder": ["role:cardSelection"],

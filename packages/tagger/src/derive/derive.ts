@@ -611,7 +611,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 441: #1462 -- a SELF-grant ('this creature has "...deals"', 'it has', 'Iron Fist gains') keeps dealer.self (the card), not the class creature (Pardic Arsonist, Tyrant's Familiar)
 // 442: #1462 -- review fixes: a dies/leaves trigger's 'it' dealer is marked dealerGone (no self/host trigger hears it, CR 113.6); a granted-ability grantee is cut at its own sentence (Takklemaggot self); a pronoun grantee resolves from its lead (Lavamancer's Skill enchanted creature, Sliver attacks), self only when the lead names the card
 // 443: #1462 -- a granted ability whose quoted dealer is the GRANTING card (Shuriken 'Shuriken deals', 'this Equipment deals') deals as the card (dealer.self), not the grantee class creature
-export const DERIVE_VERSION = 443;
+// 444: #1474 -- Damage emits read who is damaged. (1) An 'except for X' tail is cut before the recipient parse: X is spared, never hit (Flame Sweep, Ajani Unrelenting were control you). (2) 'that player/opponent controls' in a burn recipient is opp when the clause names an opponent before it or the card's own damage hit one, any otherwise, never the trigger subject's you (Satyr Firedancer was you; Balefire Dragon, Mordant Dragon, Spark Mage, Mutiny, Tri-Sentinel and 13 more any -> opp; Chandra's Flame Wave stays any). (3) A fight emits both halves (CR 701.14a), each with the other creature as recipient: Pit Fight, Domri Rade, Ulvenwald Tracker, Wayta, The Super Hero Civil War, Time to Feed gain the half hitting the other creature. The half that damages the CARD ITSELF carries self, on fighter and recipient, only when the ability is the card's own (no grantedBy, not an instant/sorcery face, not a non-creature Saga; transient fightHitSelf mark, never stored): Hivespine Wolverine, Pheres-Band Brawler, Apex Altisaur, 'have it fight' (Affectionate Indrik, Foe-Razer Regent, Somberwald Stag, Ulrich), Kraul Harpooner's 'this creature and ...'; Back for More, Setessan Tactics, Vorinclex III, Cherished Hatchling (a returned or granted fighter) keep {you, creature} with no self. The self half no longer copies the other creature's filter. Food Fight's model misfile (fight 'any target') is excluded. derive-impact vs e94b92c: 75 rows changed, 0 added/removed, 0 source flips; grammar complete 28,424 -> 28,424; pair reasons +328 / -3,209 (damaged +195/-3,098, non-combat-damage +133/-100, lose-life +0/-11); matcher sample (300) +0/-0; every loss is a consumer needing damage to its OWN creature or a 'whenever this creature is dealt damage / deals damage' self trigger (Boros Reckoner, Filthy Cur, Black Panther, Brash Taunter, Exalted Angel ...); role-ratchet +1 (Satyr Firedancer targetedRemoval, ruling #1294, banked), dropped-clauses 4,913 -> 4,913. NOT fixed: a card's own NAME as fighter (Gargos, Polukranos Unchained) is not read as self (CEILING).
+export const DERIVE_VERSION = 444;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -3399,7 +3400,16 @@ export function deriveAbilities(
       // ...and "that permanent or player" / "that player or a planeswalker that player controls" (Erratic Explosion, Vial Smasher) keep their own
       // player branch: the trigger's `you` is not the controller of what they hit.
       const playerList = BURN_RECIPIENT_KINDS.has(effectKind ?? "") && subject?.anyOf?.some((b) => b.player === true) === true;
-      if (THAT_TYPED.test(objectText) && !PRONOUN_OBJECT.test(objectText) && !thatPlayerHit && !playerList) {
+      // "...deals that much damage to target creature THAT PLAYER CONTROLS" (Satyr Firedancer, #1474): the permanent is controlled by the player the clause named, so it is an opponent's
+      // when that player is one (`thatPlayerIsOpponent`: an opponent named earlier, or the card's own damage hit one) and `any` otherwise -- never the trigger subject's `you`
+      // ("an instant or sorcery spell YOU control" is the dealer's controller, not "that player"). THAT_TYPED reads "that much damage to ..." as a typed pronoun, so this phrase is kept out of it.
+      // CEILING: only the one-clause antecedent `thatPlayerIsOpponent` can see; an antecedent in an earlier sentence stays `any`.
+      const thatPlayerControls = BURN_RECIPIENT_KINDS.has(effectKind ?? "") && /\bthat (?:player|opponent) controls\b/i.test(objectText);
+      if (thatPlayerControls && thatPlayerIsOpponent(text, trigger?.subject.self === true, cardName)) {
+        for (const e of emits) if (e.subject.control === "any") e.subject.control = "opp";
+        if (subject && subject.control === "any") subject.control = "opp";
+      }
+      if (THAT_TYPED.test(objectText) && !PRONOUN_OBJECT.test(objectText) && !thatPlayerHit && !playerList && !thatPlayerControls) {
         const ante = antecedentFor((clause.actions ?? []).indexOf(action));
         const inherited = ante ? subjectFrom(ante, cardName, enchantText).control : undefined;
         if (inherited && inherited !== "any" && !(inherited === "you" && PLAYER_BACKREF.test(objectText))) {
@@ -4463,6 +4473,22 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
         if (!fight && grantee === "self") return e; // a self-grant is the card itself (#1462)
         const { self: _s, ...dealer } = e.dealer;
         return { ...e, dealer: !fight && grantee !== undefined && grantee !== "self" ? { ...grantee } : dealer };
+      }) };
+    })
+    // A FIGHT'S `subject.self` IS THE CARD BEING HIT BACK (#1474): the card itself fights, so it is only on the card's OWN ability. A granted ability's fighter is the grantee (Setessan Tactics, Vorinclex),
+    // an instant's or sorcery's "it" is a creature it picked (Back for More), a non-creature Saga chapter's is another permanent. Without it the half is a creature you control, as before.
+    // The Saga gate stays off for a Saga that is itself a creature (Summon: Magus Sisters): its own "this creature fights" is the card.
+    // Only the emits `actionEmits` marked (`fightHitSelf`, transient: removed here) are touched, so a granted typed-dealer damage to "this creature" keeps its reading.
+    .map((a) => {
+      if (!a.emits?.some((e) => e.fightHitSelf === true)) return a;
+      const isCreature = chars.types.some((t) => t.toLowerCase() === "creature");
+      const own = a.grantedBy === undefined && !isSpellFace(a.face) && (isCreature || !chars.subtypes.some((t) => t.toLowerCase() === "saga"));
+      return { ...a, emits: a.emits.map((e) => {
+        if (e.fightHitSelf !== true) return e;
+        const { fightHitSelf: _m, ...rest } = e;
+        if (own) return rest;
+        const { self: _s, ...subject } = rest.subject;
+        return { ...rest, subject };
       }) };
     });
   // A CHOSEN COLOUR IS NOT A CHOSEN TYPE (#1360): a stored reading's `chosenType` on a colour choice becomes `chosenColor`.
