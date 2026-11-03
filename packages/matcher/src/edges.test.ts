@@ -600,6 +600,18 @@ describe("a self or host damage trigger hears only a dealer that can be the card
     expect(heard(acidic, selfTrigger("Sliver Legion", undefined, ["sliver"]))).toBe(true);
   });
 
+  test("a dealer that has left the battlefield (a dies trigger's 'it') feeds no self or host trigger, only a 'source you control' one (CR 113.6, #1462 review)", () => {
+    const vengeance = dmg("Stalking Vengeance", { control: "any", player: true, scope: "target" }, { control: "you", type: "creature" }, ["enchantment"]);
+    vengeance.tags.abilities[0]!.emits![0] = { ...vengeance.tags.abilities[0]!.emits![0]!, dealerGone: true };
+    expect(heard(vengeance, selfTrigger("Kjeldoran Gargoyle", undefined, ["gargoyle"]))).toBe(false);
+    const cloak = base("Armadillo Cloak", [{ kind: "triggered", effect: { kind: "lifegain" }, trigger: { verbs: ["non-combat-damage"], subject: { control: "any", token: null, type: "creature" }, host: true }, emits: [{ verb: "gain-life", subject: { control: "you", token: null } }] } as never]);
+    expect(heard(vengeance, cloak)).toBe(false);
+    const torbran = base("Tamanoa", [{ kind: "triggered", effect: { kind: "lifegain" }, trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null } }, emits: [{ verb: "gain-life", subject: { control: "you", token: null } }] } as never]);
+    expect(heard(vengeance, torbran)).toBe(true);
+    // the same dealer, alive (no mark), still feeds a creature's self trigger
+    expect(heard(dmg("Rabid Bite", { control: "opp", type: "creature", scope: "target" }, { control: "you", type: "creature" }), selfTrigger("Exalted Angel", undefined, ["angel"]))).toBe(true);
+  });
+
   test("a granted self trigger is judged as its host's: a creature you control feeds Snake Umbra (#1471)", () => {
     const umbra = base("Snake Umbra", [{
       kind: "triggered", effect: { kind: "draw-card" }, grantedBy: 2,

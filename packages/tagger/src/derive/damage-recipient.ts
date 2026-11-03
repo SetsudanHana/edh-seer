@@ -196,7 +196,7 @@ export function damageHitsSelf(object: string, clauseText: string): boolean {
  *  `nth` is which of the clause's `count` deal-damage actions this is: the k-th " deals " of the text, when the text holds exactly `count` of them (Stalking Yeti: "it deals ... and that creature deals ...").
  *  A clause whose count differs stays unread. The head is the words after the last clause break; a trigger's own " deals " ("Whenever this creature deals damage") is not an action's.
  *  Linear scans only: no regex with a lazy or unbounded tail over card text (CodeQL js/polynomial-redos). */
-export type DamageDealer = { self: true } | { other: Pick<SubjectFilter, "control" | "token" | "type" | "allTypes" | "subtype"> };
+export type DamageDealer = ({ self: true } | { other: Pick<SubjectFilter, "control" | "token" | "type" | "allTypes" | "subtype"> }) & { gone?: true };
 const SELF_NOUNS: ReadonlySet<string> = new Set(["creature", "artifact", "enchantment", "permanent", "spell", "land", "aura", "equipment", "vehicle", "planeswalker", "saga", "class", "siege", "room", "card", "contraption"]);
 const OTHER_OPENERS: ReadonlySet<string> = new Set(["target", "that", "those", "each", "enchanted", "equipped", "fortified", "the", "all", "another", "up"]);
 const BREAKS = [". ", ": ", "; ", ", ", " then ", " and ", " — ", " instead ", " if ", "\n"];
@@ -230,7 +230,18 @@ function triggerSubject(lower: string): string | undefined {
 }
 const PERMANENT_TYPES: ReadonlySet<string> = new Set(["creature", "artifact", "enchantment", "land", "planeswalker", "battle", "permanent"]);
 /** "it" stands for the trigger's subject: the card (self) or a typed permanent. A spell, a player or a counter is not a dealer this scan can name. */
-function triggerDealer(subject: string | undefined, cardName: string | undefined): DamageDealer | undefined {
+function triggerDealer(subject: string | undefined, cardName: string | undefined, departs = false): DamageDealer | undefined {
+  const d = triggerDealerOf(subject, cardName);
+  return d !== undefined && departs ? { ...d, gone: true } : d;
+}
+/** A trigger on a thing LEAVING (dies, leaves the battlefield, put into a graveyard, exiled, sacrificed): the "it" it names is gone when it deals (CR 113.6). Read off the trigger clause only. */
+const DEPARTS = /\b(?:dies|die|leaves? the battlefield|(?:is|are) put into (?:a|your|an opponent's|its owner's) graveyard|(?:is|are) exiled|(?:is|are) sacrificed|sacrifices?)\b/;
+function triggerDeparts(lower: string): boolean {
+  if (!lower.startsWith("whenever ") && !lower.startsWith("when ")) return false;
+  const end = lower.indexOf(", ");
+  return end >= 0 && DEPARTS.test(lower.slice(0, end));
+}
+function triggerDealerOf(subject: string | undefined, cardName: string | undefined): DamageDealer | undefined {
   if (subject === undefined || subject === "" || subject.includes(" or ")) return undefined;
   const w = subject.split(" ");
   if (subject === "~" || (w[0] === "this" && w.length === 2 && SELF_NOUNS.has(w[1]!)) || isSelfSubject(subject, cardName)) return { self: true };
@@ -270,7 +281,7 @@ export function damageDealerOf(clauseText: string, nth: number, count: number, c
       if (i > 0 && head === "it" && heads[i - 1]!.at !== heads[i]!.at) return resolve(i - 1);
       const found = antecedentOf(lower.slice(0, heads[i]!.at));
       if (found !== undefined) return found === "none" ? undefined : found;
-      return triggerDealer(triggerSubject(lower), cardName);
+      return triggerDealer(triggerSubject(lower), cardName, triggerDeparts(lower));
     }
     if (parts[0] === "this") return parts.length === 2 && SELF_NOUNS.has(parts[1]!) ? { self: true } : undefined;
     if (isSelfSubject(head, cardName)) return { self: true };
@@ -278,7 +289,7 @@ export function damageDealerOf(clauseText: string, nth: number, count: number, c
       // A back-reference takes its antecedent's control: Stalking Yeti's "that creature" is the "target creature an opponent controls", Halana's the creature you control that entered. Unresolvable -> `any`.
       const before = lower.slice(0, heads[i]!.at - head.length - 1);
       const found = antecedentOf(before, true);
-      const via = found !== undefined && found !== "none" ? found : triggerDealer(triggerSubject(lower), cardName);
+      const via = found !== undefined && found !== "none" ? found : triggerDealer(triggerSubject(lower), cardName, triggerDeparts(lower));
       if (via !== undefined && "other" in via) return via;
     }
     return OTHER_OPENERS.has(parts[0]!) ? typedDealer(head) : undefined;
@@ -329,19 +340,45 @@ export function granteeDealer(grantClauseText: string, cardName?: string): "self
   let end = -1;
   for (const v of [" has ", " have ", " gains ", " gain "]) { const at = lower.indexOf(v); if (at >= 0 && (end < 0 || at < end)) end = at; }
   if (end < 0) return undefined;
+  // The grantee belongs to the sentence that holds the verb: "...as a non-Aura enchantment. It loses "enchant creature" and gains "...this enchantment deals..."" (Takklemaggot) is "it", not everything since the clause began.
+  // CEILING: the cut is the last ". " before the verb, so a period inside a quoted ability or an abbreviation earlier in the same sentence would shorten the grantee; none in the corpus reads differently.
+  const prefix = lower.slice(0, end);
+  const cut = prefix.lastIndexOf(". ");
+  const sentence = cut < 0 ? prefix : prefix.slice(cut + 2);
   // The grantee is the last comma-clause before the verb: "When this creature enters, target artifact you control gains" is the artifact, "..., until end of turn, Spirit creatures you control gain" the Spirits.
   // Only LEADING trigger / duration clauses are dropped, so a list grantee ("Assassins, Mercenaries, and Rogues you control have") keeps its commas.
-  let subject = lower.slice(0, end).trim();
-  for (let lead = /^(?:[^,]*— )?(?:when|whenever|at|until|if|as|during|after|for each|once)\b/; lead.test(subject);) {
-    const c = subject.indexOf(", ");
-    if (c < 0) break;
-    subject = subject.slice(c + 2);
-  }
-  // A SELF-GRANT is the card (Pardic Arsonist "this creature has", Freewind Equenaut "it has", Iron Fist "Iron Fist gains"): its granted "deals" keeps `dealer.self`, like an ungranted ability.
-  // The subject may run on into "this creature gets +2/+2 and" (Tyrant's Familiar), so it is cut at the first verb before it is compared.
-  const head = subject.split(/ (?:gets|get|and) /)[0]!.trim();
+  const dropLeads = (text: string): string => {
+    let out = text.trim();
+    for (let lead = /^(?:[^,]*— )?(?:when|whenever|at|until|if|as|during|after|for each|once)\b/; lead.test(out);) {
+      const c = out.indexOf(", ");
+      if (c < 0) break;
+      out = out.slice(c + 2);
+    }
+    return out;
+  };
+  let subject = dropLeads(sentence);
+  // A BACK-REFERENCE ("That permanent gains", Terminal Velocity) is typed by the noun phrase of the sentence before it ("an artifact or creature card"), so it keeps the whole clause.
+  if (/^(?:that|those) /.test(subject) && cut >= 0) subject = dropLeads(prefix);
+  // A SELF-GRANT is the card (Pardic Arsonist "this creature has", Iron Fist "Iron Fist gains"): its granted "deals" keeps `dealer.self`, like an ungranted ability.
+  // The subject may run on into "this creature gets +2/+2 and" (Tyrant's Familiar) or "it loses "enchant creature" and" (Takklemaggot), so it is cut at the first verb before it is compared.
+  const head = subject.split(/ (?:gets|get|and|loses|lose) /)[0]!.trim();
   const hw = head.split(" ");
-  if (head === "~" || head === "it" || (hw[0] === "this" && hw.length === 2 && SELF_NOUNS.has(hw[1]!)) || (cardName !== undefined && isSelfSubject(head, cardName))) return "self";
+  if (head === "~" || (hw[0] === "this" && hw.length === 2 && SELF_NOUNS.has(hw[1]!)) || (cardName !== undefined && isSelfSubject(head, cardName))) return "self";
+  // A PRONOUN GRANTEE is what the text before it names (#1462 review): "As long as this creature is enchanted, it has" is the card (Freewind Equenaut), "As long as enchanted creature is a Wizard, it has" the enchanted creature
+  // (Lavamancer's Skill), "Whenever a Sliver you control attacks, it has" that Sliver. Nothing named -> bare.
+  // CEILING: only the NEAREST object named in the lead is read ("You may put a creature card onto the battlefield. If you do, it gains" names none and stays bare), and a plural "they" is not read at all.
+  if (head === "it") {
+    const lead = lower.slice(0, prefix.trimEnd().length - subject.length);
+    let named = lead;
+    for (const face of (cardName ?? "").toLowerCase().split(" // ").map((f) => f.trim()).filter((f) => f.length > 0).sort((a, b) => b.length - a.length)) named = named.split(face).join("~");
+    const found = antecedentOf(named);
+    const via = found !== undefined ? (found === "none" ? undefined : found) : triggerDealer(triggerSubject(named), cardName);
+    if (via === undefined) return undefined;
+    if ("self" in via) return "self";
+    const t = ([] as string[]).concat(via.other.type ?? []);
+    if (!t.includes("creature")) return undefined;
+    return { control: via.other.control, token: null, type: via.other.type!, ...(via.other.subtype !== undefined ? { subtype: via.other.subtype } : {}) };
+  }
   const d = typedDealer(subject);
   if (d === undefined || !("other" in d) || d.other.type === undefined) return undefined;
   const types = ([] as string[]).concat(d.other.type);

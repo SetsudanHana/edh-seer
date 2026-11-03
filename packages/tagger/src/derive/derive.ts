@@ -609,7 +609,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 439: #1462 -- a granted 'this creature deals' keeps the grantee's class (subtype: All Slivers, Spirit creatures you control) and a non-creature grantee (Quicksmith Rebel's artifact) stays bare; leading trigger / duration clauses are stripped from the grantee phrase
 // 440: #1462 -- a damage multiplier hears the damage it names: 'would deal combat damage' is combat-damage only (Inquisitor's Flail, The Sound of Drums, Blind Fury), 'noncombat' non-combat only (it heard both)
 // 441: #1462 -- a SELF-grant ('this creature has "...deals"', 'it has', 'Iron Fist gains') keeps dealer.self (the card), not the class creature (Pardic Arsonist, Tyrant's Familiar)
-export const DERIVE_VERSION = 441;
+// 442: #1462 -- review fixes: a dies/leaves trigger's 'it' dealer is marked dealerGone (no self/host trigger hears it, CR 113.6); a granted-ability grantee is cut at its own sentence (Takklemaggot self); a pronoun grantee resolves from its lead (Lavamancer's Skill enchanted creature, Sliver attacks), self only when the lead names the card
+export const DERIVE_VERSION = 442;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -3223,6 +3224,8 @@ export function deriveAbilities(
         ? damageDealerOf(text, damageActions.indexOf(action), damageActions.length, cardName)
         : undefined;
       if (dealer !== undefined && !("self" in dealer && grantedTo)) for (const e of emits) if (e.dealer !== undefined) e.dealer = "self" in dealer ? { ...e.dealer, self: true } : { ...dealer.other };
+      // "Whenever another creature you control dies, it deals damage equal to its power": the dealer has left the battlefield (CR 113.6), so no self or host damage trigger hears it (#1462 review).
+      if (dealer?.gone === true) for (const e of emits) if (e.dealer !== undefined) e.dealerGone = true;
       if (emitsSelf) for (const e of emits) {
         if (!grantedTo) { e.subject.self = true; continue; }
         // The granted ability's "this permanent"/"it" is the recipient -- see `grantedTo`.

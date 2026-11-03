@@ -2347,6 +2347,9 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
         const hostLike = a.trigger.host === true || grantedToHost;
         const ownDamage = DAMAGE_VERBS.has(t.verb) && DAMAGE_VERBS.has(e.verb) && e.dealer !== undefined && (t.subject.self === true || hostLike);
         if (ownDamage) {
+          // A dealer that has LEFT the battlefield (a dies / leaves trigger's "it", `dealerGone`) is no creature a self or host trigger can watch: its own and its Aura's abilities do not function there (CR 113.6).
+          // A "source you control" trigger is not `ownDamage` and still hears it (Tamanoa, Torbran).
+          if (e.dealerGone === true) continue;
           if (!dealerCanBe(e.dealer!, hostLike ? undefined : characteristicsSubject(c.tags, c.card.name), h, a.trigger.host === true)) continue;
           // "Its controller" is the dealer's controller, and this dealer is YOUR creature: the player hit is you, never the opponent the trigger names (Backlash on your Atemsis).
           if (e.toDealerController === true && (t.victimIs === "opponent" || t.victimIs === "opponent-creature" || t.victimIs === "opponent-or-permanent")) continue;

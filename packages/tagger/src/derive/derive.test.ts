@@ -1,5 +1,6 @@
 import { describe, expect, it, test } from "vitest";
 import { manaAdded, unitAmount, stampSelfLoss, deriveAbilities, abilityKey, amountCovered, countCovered, exilesTopOfLibrary, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
+import { granteeDealer } from "./damage-recipient.js";
 import { grammarClauseRecords } from "../grammar/clause-record.js";
 import { pluralAntecedent } from "./references.js";
 import { targetsASpellEarlier, actionEmits } from "./emits.js";
@@ -7968,5 +7969,36 @@ describe("the dealer of damage is typed from the sentence's printed subject (#14
     expect(dealers("Tyrant's Familiar", "Creature — Dragon", "Flying, haste\nLieutenant — As long as you control your commander, this creature gets +2/+2 and has \"Whenever this creature attacks, it deals 7 damage to target creature defending player controls.\"")).toEqual(self);
     expect(dealers("Freewind Equenaut", "Creature — Human Archer", "Flying\nAs long as this creature is enchanted, it has \"{T}: This creature deals 2 damage to target attacking or blocking creature.\"")).toEqual(self);
     expect(dealers("Iron Fist, Living Weapon", "Legendary Creature — Human Monk", "Whenever you cast a spell that targets a creature you control, Iron Fist gains \"{T}: Iron Fist deals damage equal to his power to any other target\" until end of turn.")).toEqual(self);
+  });
+  test("a grantee is cut at the sentence break before the verb: Takklemaggot's 'It loses ... and gains \"... this enchantment deals\"' is the card, not a class creature (#1462 review)", () => {
+    // The granting clause as the model reads it (`clauseGrants`): the whole paragraph, the grant in its last sentence.
+    const grant = "When enchanted creature dies, that creature's controller chooses a creature that this card could enchant. If the player does, return this card to the battlefield under your control attached to that creature. If they don't, return this card to the battlefield under your control as a non-Aura enchantment. It loses \"enchant creature\" and gains \"At the beginning of that player's upkeep, this enchantment deals 1 damage to that player.\"";
+    expect(granteeDealer(grant, "Takklemaggot")).toBe("self");
+    // a back-reference ("That permanent gains", Terminal Velocity) is typed by the sentence before it
+    expect(granteeDealer("You may put an artifact or creature card from your hand onto the battlefield. That permanent gains haste, \"When this permanent leaves the battlefield, it deals damage equal to its mana value to each creature,\" and \"At the beginning of your end step, sacrifice this permanent.\"", "Terminal Velocity")).toMatchObject({ type: expect.arrayContaining(["artifact", "creature"]) });
+    // and a list grantee still keeps its commas
+    expect(granteeDealer("Assassins, Mercenaries, and Rogues you control have \"{T}: This creature deals 1 damage to any target.\"")).toMatchObject({ control: "you", type: "creature" });
+  });
+  test("a pronoun grantee is the card only when the lead names the card; otherwise its antecedent: Lavamancer's Skill 'enchanted creature', 'a Sliver you control attacks' (#1462 review)", () => {
+    const skill = "Enchant creature\nEnchanted creature has \"{T}: This creature deals 1 damage to target creature.\"\nAs long as enchanted creature is a Wizard, it has \"{T}: This creature deals 2 damage to target creature.\"";
+    const card = { name: "Lavamancer's Skill", typeLine: "Enchantment — Aura", keywords: [] as string[], oracleText: skill };
+    const g = grammarClauseRecords(card);
+    const ab = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings)).abilities;
+    const granted = ab.filter((a) => a.grantedBy !== undefined).flatMap((a) => (a.emits ?? []).filter((e) => e.dealer !== undefined).map((e) => e.dealer));
+    expect(granted).toHaveLength(2);
+    for (const d of granted) expect(d).toEqual({ control: "any", token: null, type: "creature" });
+    expect(granteeDealer("Whenever a Sliver you control attacks, it has \"{T}: This creature deals 1 damage to any target.\"")).toEqual({ control: "you", token: null, type: "creature", subtype: "sliver" });
+    expect(granteeDealer("As long as this creature is enchanted, it has \"{T}: This creature deals 2 damage.\"")).toBe("self");
+  });
+  test("a dealer named by a dies / leaves trigger's 'it' is marked gone (CR 113.6): Stalking Vengeance, Heartfire Hero; a living dealer is not", () => {
+    const gone = (name: string, typeLine: string, oracleText: string) => {
+      const card = { name, typeLine, keywords: [] as string[], oracleText };
+      const g = grammarClauseRecords(card);
+      return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.dealer !== undefined).map((e) => e.dealerGone === true)).filter((v, i, all) => all.indexOf(v) === i);
+    };
+    expect(gone("Stalking Vengeance", "Enchantment", "Haste\nWhenever another creature you control dies, it deals damage equal to its power to target player or planeswalker.")).toEqual([true]);
+    expect(gone("Heartfire Hero", "Creature — Human Soldier", "When this creature dies, it deals damage equal to its power to each opponent.")).toEqual([true]);
+    expect(gone("Murderous Redcap", "Creature — Goblin Assassin", "When this creature enters, it deals damage equal to its power to any target.")).toEqual([false]);
+    expect(gone("Brokers Charm", "Instant", "Choose one —\n• Target creature you control gets +1/+0 until end of turn. It deals damage equal to its power to target creature or planeswalker an opponent controls.\n• Draw two cards.")).toEqual([false]);
   });
 });
