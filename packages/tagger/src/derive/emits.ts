@@ -1125,15 +1125,36 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     const types = counteredCardTypes(clauseText ?? "");
     if (types !== undefined) e.subject.type = types;
   }
-  // A FIGHT IS TWO DAMAGE EVENTS (CR 701.14a): each creature deals damage to the other, and the emit
-  // above carries only the half where YOUR creature is the dealer -- the object parses to the
-  // opponent's creature as the victim. The mirror is the half the receiving side needs: Khalni
-  // Ambush makes your Stuffy Doll the VICTIM of their creature's damage (recall v7 #82, AF7d).
-  // Only when the parsed victim is theirs; a fight among your own creatures (Savage Punch's
-  // "another target creature") keeps one event, as before.
+  // A FIGHT IS TWO DAMAGE EVENTS (CR 701.14a: "Each of those creatures deals damage equal to its power to the other creature"): each creature is the dealer to the
+  // other as recipient. The emit above carries the half where YOUR creature is the dealer, with the whole object as the victim.
+  // - A victim that parsed to the opponent's creature (Khalni Ambush: "... fights target creature you don't control") gets its mirror: yours as the victim (recall v7 #82, AF7d).
+  // - Otherwise (#1474) the object is read as its two creatures: "A and B" is the fighter A and the other B; a lone object ("another target creature", "target creature
+  //   you don't control" after "this creature fights") is the other, and the fighter is the card. The first half's recipient is B with the control B prints (Pit Fight's
+  //   "another target creature" is `any`, not the `you` the whole phrase parsed), and the second half's recipient is A with the other creature as dealer, B's control.
+  // CEILING: a fight among your own creatures ("another target creature you control") emits both halves, both recipients `you`; they are two events in the rules, so they are not collapsed.
+  // An object that is a pronoun, blank or "this" (Arena, Grothama, Skophos Maze-Warden) names no creature to read and keeps its single event, and so does "any target":
+  // the stored model files Food Fight's "It deals damage to any target" as a `fight` (a misfile, not a fight, so no creature of yours is hit back).
   if (action.verb === "fight") {
     const half = events.find((e) => e.verb === "non-combat-damage" && e.subject.control === "opp");
     if (half) events.push({ ...half, subject: { ...half.subject, control: "you" }, dealer: { control: "opp", token: null, type: "creature" } });
+    else if (events.length > 0 && /\b(?:target|another|other|enchanted|equipped)\b/i.test(action.object ?? "") && !/^any\b/i.test((action.object ?? "").trim())) {
+      const object = (action.object ?? "").trim();
+      const split = /\s+and\s+(?=(?:up to |another |other |target |that ))/i.exec(object);
+      const fighterText = split ? object.slice(0, split.index) : undefined;
+      const otherText = split ? object.slice(split.index + split[0].length) : object;
+      const other = parseSubjectWhole(otherText);
+      // The card itself is the fighter when the stored object names it ("this creature and target creature", the model's spelling of "this creature fights target creature").
+      const cardFights = fighterText === undefined || /^(?:this\b|it$|~)/i.test(fighterText.trim());
+      const fighter: SubjectFilter = cardFights
+        ? { control: "you", token: null, type: "creature", ...(selfFights(clauseText ?? "") ? { self: true as const } : {}) }
+        : parseSubjectWhole(fighterText);
+      delete other.other; delete fighter.other;
+      const first = events.find((e) => e.verb === "non-combat-damage");
+      if (first) {
+        if (!cardFights) first.subject = { ...other };
+        events.push({ ...first, subject: { ...fighter }, dealer: { control: other.control, token: null, type: "creature" } });
+      }
+    }
   }
   return events;
 }

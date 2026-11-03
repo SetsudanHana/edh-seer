@@ -8055,3 +8055,35 @@ describe("'that player controls' on a damage recipient resolves to its anteceden
     expect(hits.map((h) => h.subject.control)).toEqual(["opp", "opp"]);
   });
 });
+
+// #1474, CR 701.14a: "each of those creatures deals damage equal to its power to the other creature". A fight is TWO damage events, each with the other creature
+// as recipient and the first as dealer. Pit Fight's object parsed onto YOUR creature, so the half where your creature damages the other one was missing, and the
+// one emitted claimed damage to your own creature by a dealer of yours (oracle text from the corpus, 2026-11-03).
+describe("a fight emits both damage halves (#1474, CR 701.14a)", () => {
+  const halves = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    const tags = deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings));
+    return tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "non-combat-damage");
+  };
+  test("Pit Fight: your creature hits the other (any), the other hits yours", () => {
+    const h = halves("Pit Fight", "Instant", "Target creature you control fights another target creature. (Each deals damage equal to its power to the other.)");
+    expect(h).toHaveLength(2);
+    const toOther = h.find((e) => e.subject.control === "any");
+    const toYours = h.find((e) => e.subject.control === "you");
+    expect(toOther?.dealer).toMatchObject({ control: "you", type: "creature" });
+    expect(toYours?.dealer?.control).not.toBe("you");
+    expect(toYours?.dealer).toMatchObject({ control: "any", type: "creature" });
+  });
+  test("Khalni Ambush (unchanged): their creature is hit by yours, yours by theirs", () => {
+    const h = halves("Khalni Ambush // Khalni Territory", "Sorcery // Land", "Target creature you control fights target creature you don't control. (Each deals damage equal to its power to the other.)\n//\nThis land enters tapped.\n{T}: Add {G}.");
+    expect(h).toHaveLength(2);
+    expect(h.find((e) => e.subject.control === "opp")?.dealer).toMatchObject({ control: "you", type: "creature" });
+    expect(h.find((e) => e.subject.control === "you")?.dealer).toMatchObject({ control: "opp", type: "creature" });
+  });
+  test("Clash of Titans: both creatures are any, and each hits the other", () => {
+    const h = halves("Clash of Titans", "Sorcery", "Target creature fights another target creature. (Each deals damage equal to its power to the other.)");
+    expect(h).toHaveLength(2);
+    expect(h.map((e) => e.subject.control).sort()).toEqual(["any", "any"]);
+  });
+});
