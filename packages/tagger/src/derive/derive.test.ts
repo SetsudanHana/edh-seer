@@ -7962,4 +7962,11 @@ describe("the dealer of damage is typed from the sentence's printed subject (#14
     expect(q).toHaveLength(1);
     expect(q[0]).not.toHaveProperty("type", "creature");
   });
+  test("a SELF-grant ('this creature has', 'it has', 'Iron Fist gains') is the card itself, never the class creature: Pardic Arsonist, Tyrant's Familiar, Freewind Equenaut, Iron Fist (#1462)", () => {
+    const self = [{ control: "you", token: null, self: true }];
+    expect(dealers("Pardic Arsonist", "Creature — Minotaur Berserker", "Threshold — As long as there are seven or more cards in your graveyard, this creature has \"When this creature enters, it deals 3 damage to any target.\"")).toEqual(self);
+    expect(dealers("Tyrant's Familiar", "Creature — Dragon", "Flying, haste\nLieutenant — As long as you control your commander, this creature gets +2/+2 and has \"Whenever this creature attacks, it deals 7 damage to target creature defending player controls.\"")).toEqual(self);
+    expect(dealers("Freewind Equenaut", "Creature — Human Archer", "Flying\nAs long as this creature is enchanted, it has \"{T}: This creature deals 2 damage to target attacking or blocking creature.\"")).toEqual(self);
+    expect(dealers("Iron Fist, Living Weapon", "Legendary Creature — Human Monk", "Whenever you cast a spell that targets a creature you control, Iron Fist gains \"{T}: Iron Fist deals damage equal to his power to any other target\" until end of turn.")).toEqual(self);
+  });
 });

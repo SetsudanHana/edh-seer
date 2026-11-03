@@ -324,7 +324,7 @@ function antecedentOf(before: string, skipRef = false): DamageDealer | "none" | 
 
 /** A GRANTED "this creature deals" is the creature the grant lands on (#1462): "Enchanted creature has \"{T}: This creature deals 1 damage ...\"", "Creatures you control have ...", "Equipped creature gains ...".
  *  Read from the granting clause's own words before its first has / have / gains / gain; undefined when that subject names no creature (a land or an unknown grantee stays a bare dealer). */
-export function granteeDealer(grantClauseText: string): { control: SubjectFilter["control"]; token: null; type: string | string[]; subtype?: string | string[] } | undefined {
+export function granteeDealer(grantClauseText: string, cardName?: string): "self" | { control: SubjectFilter["control"]; token: null; type: string | string[]; subtype?: string | string[] } | undefined {
   const lower = grantClauseText.toLowerCase();
   let end = -1;
   for (const v of [" has ", " have ", " gains ", " gain "]) { const at = lower.indexOf(v); if (at >= 0 && (end < 0 || at < end)) end = at; }
@@ -337,6 +337,11 @@ export function granteeDealer(grantClauseText: string): { control: SubjectFilter
     if (c < 0) break;
     subject = subject.slice(c + 2);
   }
+  // A SELF-GRANT is the card (Pardic Arsonist "this creature has", Freewind Equenaut "it has", Iron Fist "Iron Fist gains"): its granted "deals" keeps `dealer.self`, like an ungranted ability.
+  // The subject may run on into "this creature gets +2/+2 and" (Tyrant's Familiar), so it is cut at the first verb before it is compared.
+  const head = subject.split(/ (?:gets|get|and) /)[0]!.trim();
+  const hw = head.split(" ");
+  if (head === "~" || head === "it" || (hw[0] === "this" && hw.length === 2 && SELF_NOUNS.has(hw[1]!)) || (cardName !== undefined && isSelfSubject(head, cardName))) return "self";
   const d = typedDealer(subject);
   if (d === undefined || !("other" in d) || d.other.type === undefined) return undefined;
   const types = ([] as string[]).concat(d.other.type);

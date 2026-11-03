@@ -608,7 +608,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 438: #1462 -- the dealer of damage is read off the damage sentence's printed subject (typed for another object with its antecedent's control, self for the card itself, a granted 'this creature deals' typed as its grantee); the matcher stamps the card's colours on a self dealer and never a typed one; merged with #1471's dealerCanBe gates; numbers in the PR
 // 439: #1462 -- a granted 'this creature deals' keeps the grantee's class (subtype: All Slivers, Spirit creatures you control) and a non-creature grantee (Quicksmith Rebel's artifact) stays bare; leading trigger / duration clauses are stripped from the grantee phrase
 // 440: #1462 -- a damage multiplier hears the damage it names: 'would deal combat damage' is combat-damage only (Inquisitor's Flail, The Sound of Drums, Blind Fury), 'noncombat' non-combat only (it heard both)
-export const DERIVE_VERSION = 440;
+// 441: #1462 -- a SELF-grant ('this creature has "...deals"', 'it has', 'Iron Fist gains') keeps dealer.self (the card), not the class creature (Pardic Arsonist, Tyrant's Familiar)
+export const DERIVE_VERSION = 441;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -4448,13 +4449,14 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
     .map((a) => {
       if (!a.emits?.some((e) => e.dealer?.self === true)) return a;
       const ownPermanent = a.grantedBy === undefined && !isSpellFace(a.face) && !chars.subtypes.some((t) => t.toLowerCase() === "saga");
-      const grantee = a.grantedBy !== undefined ? granteeDealer(String(input.clauseTexts?.[a.grantedBy as number] ?? "")) : undefined;
+      const grantee = a.grantedBy !== undefined ? granteeDealer(String(input.clauseTexts?.[a.grantedBy as number] ?? ""), input.name) : undefined;
       return { ...a, emits: a.emits.map((e) => {
         if (e.dealer?.self !== true) return e;
         const fight = e.dealer.type !== undefined;
         if (a.grantedBy === undefined && (!fight || ownPermanent)) return e;
+        if (!fight && grantee === "self") return e; // a self-grant is the card itself (#1462)
         const { self: _s, ...dealer } = e.dealer;
-        return { ...e, dealer: !fight && grantee !== undefined ? { ...grantee } : dealer };
+        return { ...e, dealer: !fight && grantee !== undefined && grantee !== "self" ? { ...grantee } : dealer };
       }) };
     });
   // A CHOSEN COLOUR IS NOT A CHOSEN TYPE (#1360): a stored reading's `chosenType` on a colour choice becomes `chosenColor`.
