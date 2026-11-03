@@ -1299,6 +1299,10 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   if (producer.verb === "non-combat-damage" || producer.verb === "combat-damage") {
     if (consumer.verb === "damaged") return damagedMatches(producer.subject, consumer.subject, h);
     const side = consumer.verb === "lose-life" ? producer.subject : producer.dealer ?? producer.subject;
+    // "A SPELL" IS NOT A PERMANENT'S DAMAGE (#1462). The type `spell` is the umbrella over every nonland card, so a creature dealer satisfied Rem Karolus' "if a spell would deal damage"; a creature's ability (a granted pinger) or combat damage is dealt by the permanent, never by a spell.
+    // CEILING: only the bare `spell` consumer is refused a dealer typed by permanent types or subtypes; a dealer typed `spell`/`instant`/`sorcery`, or typed by nothing (a bare burn dealer), is unchanged.
+    if (consumer.verb !== "lose-life" && list(consumer.subject.type).length === 1 && list(consumer.subject.type)[0] === "spell" && !consumer.subject.anyOf?.length
+      && (list(side.type).length > 0 || list(side.subtype).length > 0) && !list(side.type).some((t) => t === "spell" || t === "instant" || t === "sorcery" || t === "card")) return false;
     return subjectMatches(side, consumer.subject, h);
   }
   return subjectMatches(producer.subject, consumer.subject, h);

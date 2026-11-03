@@ -607,7 +607,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 437: #1471 -- a damage trigger on the card itself or its host records its printed recipient (trigger.victim) and the host marker (trigger.host); the matcher judges another card's damage on its dealer, not its victim: a bare dealer (the producer itself) never feeds another card's self trigger. a creature's own fight ("this creature fights", a bare pronoun on a permanent's own ability, the other target never yours) has `dealer.self`, and a damage emit to "its controller" carries `toDealerController`. derive-impact vs 1020b3f1: 651 rows changed, 1 flip-only (Essence Backlash, tags identical), pair reasons of changed rows +391 / -14,324, 4,000-card sample +366 / -2,197, all non-combat-damage; role-ratchet 0/0, dropped-clauses 4,913 -> 4,913
 // 438: #1462 -- the dealer of damage is read off the damage sentence's printed subject (typed for another object with its antecedent's control, self for the card itself, a granted 'this creature deals' typed as its grantee); the matcher stamps the card's colours on a self dealer and never a typed one; merged with #1471's dealerCanBe gates; numbers in the PR
 // 439: #1462 -- a granted 'this creature deals' keeps the grantee's class (subtype: All Slivers, Spirit creatures you control) and a non-creature grantee (Quicksmith Rebel's artifact) stays bare; leading trigger / duration clauses are stripped from the grantee phrase
-export const DERIVE_VERSION = 439;
+// 440: #1462 -- a damage multiplier hears the damage it names: 'would deal combat damage' is combat-damage only (Inquisitor's Flail, The Sound of Drums, Blind Fury), 'noncombat' non-combat only (it heard both)
+export const DERIVE_VERSION = 440;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */

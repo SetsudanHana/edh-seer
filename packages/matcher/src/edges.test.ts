@@ -367,6 +367,33 @@ test("a damage multiplier hears only damage that can reach its printed recipient
   expect(pairReasons(attacker, goliath, H).some((r) => r.tag.startsWith("combat-damage"))).toBe(true);
 });
 
+// #1462 x #1458: a damage replacement keeps what it names. A COMBAT-only one (Inquisitor's Flail, The Sound of Drums, Blind Fury) hears no noncombat pinger, and a SPELL-typed one (Rem Karolus) hears no creature's ability.
+test("a combat-only or spell-only damage replacement does not hear a granted pinger (#1462)", () => {
+  const derived = (name: string, text: string) => {
+    const { abilities } = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "deal-damage", object: "x", amount: "double" }] }] as never, name, { 1: text });
+    return base(name, abilities as CardTags["abilities"]);
+  };
+  const flail = derived("Inquisitor's Flail", "If another creature would deal combat damage to equipped creature, it deals double that damage to equipped creature instead.");
+  const drums = derived("The Sound of Drums", "If enchanted creature would deal combat damage to a permanent or player, it deals double that damage to that permanent or player instead.");
+  const fury = derived("Blind Fury", "If a creature would deal combat damage to a creature this turn, it deals double that damage to that creature instead.");
+  const karolus = derived("Rem Karolus, Stalwart Slayer", "If a spell would deal damage to an opponent or a permanent an opponent controls, it deals that much damage plus 1 instead.");
+  const violence = derived("Gratuitous Violence", "If a creature you control would deal damage to a permanent or player, it deals double that damage to that permanent or player instead.");
+  const target = { control: "any", token: null, scope: "target" } as const;
+  // Hankyu and Fire Whip: "Equipped creature has '{T}: This creature deals 1 damage to any target'"
+  const hankyu = base("Hankyu", [{ kind: "activated", cost: "{T}", effect: { kind: "damage" }, grantedBy: 0, emits: [{ verb: "non-combat-damage", subject: target, dealer: { control: "any", token: null, type: "creature" } }] } as never]);
+  const bolt = base("Lightning Bolt", [{ kind: "on-cast", effect: { kind: "damage" }, emits: [{ verb: "non-combat-damage", subject: target, dealer: { control: "you", token: null, self: true, type: "instant" } }] } as never]);
+  const attacker = base("Grizzly Bears", [{ kind: "static", effect: { kind: "other" }, emits: [{ verb: "combat-damage", subject: { control: "you", token: null, self: true, type: "creature" } }] } as never]);
+  const dmg = (a: ReturnType<typeof base>, b: ReturnType<typeof base>) => pairReasons(a, b, H).some((r) => r.tag.includes("combat-damage"));
+  for (const c of [flail, drums, fury]) {
+    expect(c.tags.abilities.find((a) => a.trigger)?.trigger?.verbs, c.card.name).toEqual(["combat-damage"]);
+    expect(dmg(hankyu, c), c.card.name).toBe(false);
+    expect(dmg(attacker, c), c.card.name).toBe(true);
+  }
+  expect(dmg(hankyu, karolus)).toBe(false);
+  expect(dmg(bolt, karolus)).toBe(true);
+  expect(dmg(hankyu, violence)).toBe(true);
+});
+
 // #1465: a replacement whose result is a mill or counters is read as a plain trigger on the replaced damage: a reason forms, worded as a trigger, never as a doubler.
 test("a damage replacement that mills or places counters is a plain damage trigger (#1465)", () => {
   const { abilities } = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "add-counter", object: "-1/-1", amount: "that many" }] }] as never, "Soul-Scar Mage",
