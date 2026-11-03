@@ -7950,4 +7950,9 @@ describe("the dealer of damage is typed from the sentence's printed subject (#14
     expect(granted.length).toBeGreaterThan(0);
     for (const a of granted) for (const e of a.emits ?? []) expect(e.dealer?.self).toBeUndefined();
   });
+  test("a granted 'This creature deals' is typed as the grantee: Lightning Prowess, Hankyu; a granted land stays bare (#1462 x #1471)", () => {
+    expect(dealers("Lightning Prowess", "Enchantment — Aura", "Enchant creature\nEnchanted creature has haste and \"{T}: This creature deals 1 damage to any target.\"")).toEqual([{ control: "any", token: null, type: "creature" }]);
+    expect(dealers("Hankyu", "Artifact — Equipment", "Equipped creature has \"{T}: Put an aim counter on Hankyu\" and \"{T}, Remove all aim counters from Hankyu: This creature deals damage to any target equal to the number of aim counters removed this way.\"\nEquip {4} ({4}: Attach to target creature you control. Equip only as a sorcery.)")).toEqual([{ control: "any", token: null, type: "creature" }]);
+    expect(dealers("Barbed Field", "Enchantment — Aura", "Enchant land\nEnchanted land has \"{T}: This land deals 1 damage to any target.\"")).toEqual([{ control: "you", token: null }]);
+  });
 });
