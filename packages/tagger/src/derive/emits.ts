@@ -791,7 +791,15 @@ function cutExceptTail(object: string): string {
   return at > 0 ? object.slice(0, at) : object;
 }
 
+/** A SENTENCE THAT DEFINES POWER OR TOUGHNESS (#1501). "This creature's power and toughness are each equal to ..." is a characteristic-defining ability (CR 604.3), whatever verb the model
+ *  filed it under; the Elemental token of Seize the Storm came back as an `exile` and emitted `exiled` and a graveyard `leaves`. Verbs that legitimately carry such text keep it: the real reading
+ *  (`modify-pt`), a token's quoted text (`create`, `grant-ability`), `animate`, and `other` (which emits nothing and stays unclaimed, Fungal Behemoth). One literal-space regex, no nested quantifiers. */
+const PT_DEFINITION = /\b(?:power|toughness)(?: and toughness)? (?:is|are) (?:each )?equal to\b/i;
+const PT_CARRIER_VERBS: ReadonlySet<string> = new Set(["modify-pt", "create", "grant-ability", "animate", "other"]);
+export const definesPowerToughness = (a: Action): boolean => !PT_CARRIER_VERBS.has(a.verb ?? "") && PT_DEFINITION.test(a.object ?? "");
+
 export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean; trigger?: CounterTrigger; cardName?: string } = {}): GameEvent[] {
+  if (definesPowerToughness(action)) return [];
   // A LIFE TOTAL SET THAT IS A LOSS (#1333, CR 119.5): "target opponent's life total becomes 10" is the `lose-life` a printed "target opponent loses N life" is; a plain set emits nothing.
   const lifeLoss = action.verb === "set-life" ? lifeSetRewrite(action, clauseText ?? "") : undefined;
   if (lifeLoss?.verb === "lose-life") return actionEmits(lifeLoss, clauseText, opts);
