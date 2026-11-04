@@ -5,7 +5,7 @@
  *  an emit is returned in `unclaimed` instead of vanishing -- a dropped clause that produces
  *  silence is indistinguishable from a card that does nothing, which is exactly how Bitterblossom
  *  sat in the corpus as a vanilla bear. */
-import { graveyardOwner } from "./graveyard-owner.js";
+import { graveyardOwner, selfGraveyardOwner } from "./graveyard-owner.js";
 import { lifeSetRewrite } from "./life-set.js";
 import { GUARDED_VERBS, guardExempt, verbPrint } from "./verb-words.js";
 import type { Action, ClauseRecord } from "../canonicalize.js";
@@ -620,7 +620,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 449: #1499 -- 'a card or token' (CARDS joined to TOKENS by or, either order, one word allowed before the second noun: 'a creature card or creature token') is token null, not token true (derive/subject.ts parseToken, and grammar/filter.ts reads it per alternative so the two parsers agree): Necrodominance, Festival of Embers, Emet-Selch // Hades and Rest in Peace stored one exile emit {token: true} for 'If a card or token would be put into a graveyard from anywhere, exile it instead', so the card half was lost and their real card exile no longer fed The War Doctor ('one or more other cards are put into exile') once #1495 made a cards-only trigger refuse tokens. Census (DERIVE 448 stored cardClauses, action objects and trigger subjects matching card(s) or token(s) / token(s) or card(s) / X card or X token): 4 cards, all model-sourced, all the object 'a card or token' of an exile action; 0 trigger subjects. Measured (derive-impact vs 3cc4653): 4 rows changed, source flips 0, grammar 0; pairs +27 / -0 (all exiled): The War Doctor +3 (Necrodominance, Festival of Embers, Emet-Selch) and 24 GAINED->SELF = each of the 4 exilers x 6 self-triggers 'when this is put into exile from the battlefield' (God-Eternal Bontu, Kefnet, Oketra, Rhonas, Ilharg the Raze-Boar, Urza's Sylex), true because the replacement exiles a card dying on the battlefield; matcher sample 300 +0/-0; role-ratchet 0/0; dropped-clauses 4,913 -> 4,913. loss-classify: lost 0; gained 27 (self 24, class 3), LOST->CLASS 0.
 // 450: #1501 -- a power/toughness definition filed under a zone verb (Seize the Storm's Elemental token, exile) is a CDA and emits no zone move. derive-impact vs 449: 1 row changed; pair reasons -82 / +0, loss-classify lost 82 (class 41, ambiguous 41, unmatched 0), every one the token as producer through its false exiled/leaves-graveyard self emit; role-ratchet 0/0; dropped-clauses 4,913 -> 4,913.
 // 451: #1502 -- An end-step exile of a token its maker just made is claimed by the maker's own leaves/exiled emits (6 unclaimed battlefield exiles: Zektar Shrine Expedition, Gruesome Encore, Living Laser, Nahiri, Flamerush Rider, Altair; plus the zoneless ones); a model exile whose toZone is battlefield is a put (Gruesome Encore: no false graveyard exile, its Exile it is a battlefield exile of the creature); a trailing 'unless' on the next-end-step token cleanup is read (Sauron: Wraith creature token exiled from the battlefield).
-export const DERIVE_VERSION = 451;
+// 452: #1496 -- A card that leaves its own graveyard leaves its owner's: self returns and exiles from a graveyard are control you, not any
+export const DERIVE_VERSION = 452;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1091,6 +1092,8 @@ const UNDER_YOUR_CONTROL = /\bunder your control\b/;
 const OPPONENTS_GRAVEYARD = /\bopponents?['\u2019]s? graveyards?\b/i;
 /** A put that hands the permanent to another player ("under its owner's control", "under that player's control"). */
 const UNDER_ANOTHERS_CONTROL = /\bunder (?:its owner's|their owner's|that player's|their|target opponent's|an opponent's) control\b/;
+/** An `enters` carries the CONTROLLER of what enters, not the graveyard's owner (#1496): "return this creature under that player's control" (Plague Reaver) and "that creature's controller returns this Aura" (Traveling Plague) hand the card to another player, so its self `enters` stays `any`. Necrotic Plague and Takklemaggot return it under the Aura controller's own control (who picks the target is not who controls the entry, CR 110.2a) and stay `you`. */
+const ANOTHER_CONTROLS_ENTRY = /\bunder (?:that player's|target opponent's|an opponent's|their) control\b|\bcontroller (?:returns|puts)\b/;
 /** A clause that puts a NONTOKEN permanent onto the battlefield and makes no token (Gruesome Encore: "Put target creature card ... onto the battlefield ... Exile it at the beginning of the next end step"): its
  *  end-step "Exile it" is of that permanent, an exile event of its own, not a temporary token's rider (#1502). */
 function exilesAPermanentPut(actions: readonly Action[]): boolean {
@@ -3322,6 +3325,8 @@ export function deriveAbilities(
           if (!trigger && e.subject.control === "any" && DEALS_DAMAGE_TO_YOU.test(text)) e.subject.control = "opp";
         }
       }
+      // THE CARD ITSELF LEAVING A GRAVEYARD leaves its OWNER's, which is yours (#1496). After every step that stamps `self` (the pronoun and the refused-trigger reads above), and beside the other graveyard-owner read (#1470, `graveyardOwner`), which is for non-self emits.
+      for (const e of emits) if ((e.subject.zone === "graveyard" || e.subject.fromZone === "graveyard") && e.subject.self === true && e.subject.control === "any" && selfGraveyardOwner(action) && !(e.verb === "enters" && ANOTHER_CONTROLS_ENTRY.test(text))) e.subject = { ...e.subject, control: "you" };
       // THE VICTIM MAY DECLINE (#1295): "its controller may sacrifice it", "unless that player sacrifices it". The event
       // is real when it happens, and not removal: see `GameEvent.victimMay`.
       if (victimDeclines(text, action.verb ?? "")) for (const e of emits) e.victimMay = true;

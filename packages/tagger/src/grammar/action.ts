@@ -554,7 +554,9 @@ function moveList(text: string, onField = false): Args | Args[] | null {
   const each = parts.map((p) => {
     // A limb that names its OWN zone keeps it ("... lands from the battlefield, all cards from all graveyards, and all cards from all hands":
     // Decree of Annihilation); the closing zone is borrowed only by a limb that names none (#1401 part 2).
-    const r = moveObject(p.endsWith(from) || fromOf(p).from !== undefined ? p : `${p}${from}`, onField);
+    // ...and "this artifact" beside "all cards from all graveyards" (Silent Gravestone) is the card itself on the battlefield: a sweep's "from all <zone>" is its own limb's, not borrowed by a "this <thing>" limb (#1496).
+    const borrows = !(from.startsWith(" from all ") && /^this /.test(p));
+    const r = moveObject(p.endsWith(from) || fromOf(p).from !== undefined || !borrows ? p : `${p}${from}`, onField);
     return r && r.text !== undefined ? { ...r, text: p } : r;
   });
   return each.every((e) => e) ? (each as Args[]) : null;
