@@ -8,8 +8,10 @@
  *      and theme-stats-fresh (count check; reported the same way)
  *    8 the three stamp tests (fixture-derive-version, quality-weights, gen-schema-docs)
  *  BEFORE step 1 edits anything, PREFLIGHT (derive-bump-core.ts) checks the files steps 2-8 read: a
- *  missing required one exits non-zero naming path and step; a missing optional one warns. --dry-run
- *  reports both and exits non-zero if a required one is missing. --restamp applies the same check.
+ *  missing required one is refused naming path and step; a missing or empty optional one warns (the
+ *  run goes on, on less input). --dry-run reports both. --restamp applies the same check.
+ *  EXIT CODES: 0 done; 2 REFUSED before any edit (bad usage, a missing required input -- under
+ *  --dry-run too --, Mongo down); 1 a step failed or a ratchet moved (resume with --restamp).
  *  Steps 1-6 stop at the first failure and print the `--restamp` command to resume.
  *
  *  Usage (repo root, env sourced: `set -a && source packages/tagger/.env && set +a`; needs Mongo):
@@ -17,7 +19,7 @@
  *    npm run derive:bump -- --restamp          # steps 2-8 at the current version (review-fix rounds)
  *    npm run derive:bump -- --dry-run --issue N --note "text"   # prints the plan, writes nothing */
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { MongoClient } from "mongodb";
 import { loadConfig } from "@edh-seer/data";
@@ -74,7 +76,10 @@ async function main(): Promise<number> {
     }
   }
   // Files the later steps read, checked BEFORE anything is edited or derived (#1484).
-  const pre = preflight((p) => existsSync(`${ROOT}${p}`));
+  const pre = preflight(
+    (p) => existsSync(`${ROOT}${p}`),
+    (dir, re) => { try { return readdirSync(`${ROOT}${dir}`).filter((f) => re.test(f)).length; } catch { return 0; } },
+  );
   for (const w of pre.warnings) console.warn(`derive-bump: WARNING ${w}`);
   const oldV = bumped ? bumped.from : Number(/^export const DERIVE_VERSION = (\d+);$/m.exec(src)?.[1]);
 
@@ -89,7 +94,7 @@ async function main(): Promise<number> {
     }
     for (const e of pre.errors) console.error(`derive-bump: ERROR ${e}`);
     if (pre.errors.length) console.error("derive-bump: a real run would refuse here, before editing anything");
-    return pre.errors.length ? 1 : 0;
+    return pre.errors.length ? 2 : 0;
   }
   if (pre.errors.length) {
     for (const e of pre.errors) console.error(`derive-bump: ERROR ${e}`);

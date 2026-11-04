@@ -109,6 +109,9 @@ export interface PreflightItem {
   level: "required" | "optional";
   step: string;
   why: string;
+  /** Set when `path` is a DIRECTORY that must hold at least one file whose name matches. A step that
+   *  reads every matching file fits on fewer inputs, silently, when the directory is empty. */
+  files?: RegExp;
 }
 
 const M = "packages/matcher/src";
@@ -124,7 +127,9 @@ const fixture = (name: string): PreflightItem => ({
 export const PREFLIGHT: PreflightItem[] = [
   { path: ".edhrec-cache/precon/precon.json", level: "required", step: "gen-quality-weights",
     why: "gen-quality-weights throws \"no EDHREC cache\" without it; fetch with research/web/precon-vs-edhrec.ts (the precon_*.json pages sit beside it)" },
-  { path: "docs/measurements/2026-09-27-precon-calibration/guides", level: "optional", step: "gen-quality-weights",
+  { path: ".edhrec-cache/precon", files: /^precon_.*\.json$/, level: "optional", step: "gen-quality-weights",
+    why: "gen-quality-weights reads every precon_*.json page beside precon.json (the cut/add pairs); with none the weights fit on the guide pairs alone" },
+  { path: "docs/measurements/2026-09-27-precon-calibration/guides", files: /\.json$/, level: "optional", step: "gen-quality-weights",
     why: "gen-quality-weights skips the hand-built guide pairs without it, so the weights fit on fewer pairs than the full checkout and quality-weights.json differs" },
   { path: `${M}/fixtures/goldfish-cards.json`, level: "required", step: "refresh-fixtures", why: "read and rewritten by refresh-fixtures.mts" },
   { path: `${M}/fixtures/mana-colour-sources.json`, level: "required", step: "refresh-fixtures", why: "read and rewritten by refresh-fixtures.mts" },
@@ -135,14 +140,21 @@ export const PREFLIGHT: PreflightItem[] = [
   { path: "packages/instruments/dropped-clauses.json", level: "required", step: "dropped-clauses", why: "the banked snapshot dropped-clauses compares against" },
 ];
 
-/** The pure decision: given which of the PREFLIGHT paths exist, what stops the run and what only warns. */
-export function preflight(exists: (path: string) => boolean): { errors: string[]; warnings: string[] } {
+/** The pure decision: given what exists (`exists`) and how many files in a directory match a pattern
+ *  (`count`), what stops the run and what only warns. A directory item (`files` set) is judged by
+ *  `count` alone, so a missing directory and an empty one both read as "none". */
+export function preflight(
+  exists: (path: string) => boolean,
+  count: (dir: string, files: RegExp) => number,
+): { errors: string[]; warnings: string[] } {
   const errors: string[] = [];
   const warnings: string[] = [];
   for (const i of PREFLIGHT) {
-    if (exists(i.path)) continue;
-    if (i.level === "required") errors.push(`missing ${i.path} -- needed by step "${i.step}": ${i.why}`);
-    else warnings.push(`missing ${i.path} -- optional for step "${i.step}": ${i.why}`);
+    const ok = i.files ? count(i.path, i.files) > 0 : exists(i.path);
+    if (ok) continue;
+    const what = i.files ? `${i.path} holds no file matching ${i.files}` : `missing ${i.path}`;
+    if (i.level === "required") errors.push(`${what} -- needed by step "${i.step}": ${i.why}`);
+    else warnings.push(`${what} -- optional for step "${i.step}": ${i.why}`);
   }
   return { errors, warnings };
 }
