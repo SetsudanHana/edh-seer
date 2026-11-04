@@ -10,6 +10,7 @@ import { damageRecipient, isControllerPhrase, playerOnlyRecipient } from "./dama
 import { tokenTypeFor } from "./token-types.js";
 import { isEnergyObject, permanentHalf } from "./effect-kind.js";
 import { parse as parseFilter } from "../grammar/filter.js";
+import { isSelfSubject, SELF_REFERENCE } from "./self-reference.js";
 
 /** Action verb -> the events it makes available, in order. Verbs absent from this table emit
  *  nothing; a guessed event is worse than silence because it forms edges that are not real. */
@@ -727,9 +728,11 @@ export function printsControlChange(clauseText: string): boolean {
 /** THE CARD ITSELF FIGHTS (#1471): "this creature fights up to one target creature you don't control" (Thorn Mammoth, Markov Enforcer), "~ fights", or a pronoun with no earlier object ("When this creature enters, it fights ...": Scab-Clan Giant, Wicked Wolf). The fighter is then the producer and
  *  never another card's self trigger. Refused: a pronoun whose antecedent is another object ("Target creature you control gets +1/+1. It fights ...", "whenever a creature you control enters, it fights", "If it's a creature card ... it fights Hans Eriksson"), and a fight whose other target may
  *  be YOUR creature ("another target creature", "target creature you control": Brash Taunter, Golden Guardian), since your Exalted Angel can be the one fought. The card-level conditions (a permanent, not a Saga, not a granted ability) are applied in derive.ts.
- *  CEILING: the card's NAME as fighter is not read; a fight whose target is "target creature" with no control stated, or "target creature token" (Hivespine Wolverine), stays unmarked;
+ *  The card's own NAME or short name before " fights " is the card too ("Gargos fights", #1480), through isSelfSubject on the last words.
+ *  CEILING: a name before the bare verb ("have Gargos fight") is not read, and "another creature named X fights" would read as the card
+ *  (no corpus card says it); a fight whose target is "target creature" with no control stated, or "target creature token" (Hivespine Wolverine), stays unmarked;
  *  a Saga creature's own chapter fight ("Summon: Magus Sisters": "This creature fights") is stripped with the Saga in derive.ts. Each leaves a typed `you` dealer that Exalted Angel-type triggers hear. */
-function fightersOf(clauseText: string): { fighter: boolean; notYours: boolean }[] {
+function fightersOf(clauseText: string, cardName?: string): { fighter: boolean; notYours: boolean }[] {
   const lower = clauseText.toLowerCase();
   const out: { fighter: boolean; notYours: boolean }[] = [];
   let at = lower.indexOf(" fights ");
@@ -743,7 +746,7 @@ function fightersOf(clauseText: string): { fighter: boolean; notYours: boolean }
     // Without this card's own words, an earlier object in the clause is the pronoun's antecedent.
     const rest = before.replace(/\bthis [a-z]+\b/g, " ").replace(/~/g, " ");
     const bareRest = !/\btarget\b|\banother\b|\bcreatures?\b|\bcard\b|\bpermanent\b/.test(rest);
-    const fighter = (prev === "this" && last !== undefined) || last === "~" ? true : (last === "it" || last === "he" || last === "she") && bareRest;
+    const fighter = (prev === "this" && last !== undefined) || last === "~" || namesCard(before, cardName) ? true : (last === "it" || last === "he" || last === "she") && bareRest;
     out.push({ fighter, notYours });
     at = lower.indexOf(" fights ", at + 1);
   }
@@ -763,12 +766,22 @@ function fightersOf(clauseText: string): { fighter: boolean; notYours: boolean }
   }
   return out;
 }
-function selfFights(clauseText: string): boolean {
-  return fightersOf(clauseText).some((f) => f.fighter && f.notYours);
+/** Does the text before "fights" END in the card's own name, short name or article-less name ("Gargos fights ...", #1480)? Tails of up to 6 words are tried through `isSelfSubject`, the one place that resolves names. */
+function namesCard(before: string, cardName?: string): boolean {
+  if (!cardName) return false;
+  const starts: number[] = [];
+  for (let i = before.length - 1, n = 0; i >= 0 && n < 6; i--) if (i === 0 || before[i - 1] === " ") { starts.push(i); n++; }
+  return starts.some((i) => {
+    const tail = before.slice(i).trim();
+    return tail !== "" && !/^(?:it|he|she|they)$/.test(tail) && !tail.startsWith("this ") && isSelfSubject(tail, cardName) && !SELF_REFERENCE.test(tail);
+  });
 }
-/** Is the card ITSELF the fighter ("this creature fights ...", "it fights ...", "~ fights ...")? The half of the fight that damages the fighter then damages the card (#1474). */
-function cardFightsIn(clauseText: string): boolean {
-  return fightersOf(clauseText).some((f) => f.fighter);
+function selfFights(clauseText: string, cardName?: string): boolean {
+  return fightersOf(clauseText, cardName).some((f) => f.fighter && f.notYours);
+}
+/** Is the card ITSELF the fighter ("this creature fights ...", "it fights ...", "~ fights ...", its own name: "Gargos fights ...")? The half of the fight that damages the fighter then damages the card (#1474). */
+function cardFightsIn(clauseText: string, cardName?: string): boolean {
+  return fightersOf(clauseText, cardName).some((f) => f.fighter);
 }
 
 /** The damage or life-loss object with an "except (for) ..." tail removed (#1474): the tail names what is spared, never who is hit. */
@@ -778,7 +791,7 @@ function cutExceptTail(object: string): string {
   return at > 0 ? object.slice(0, at) : object;
 }
 
-export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean; trigger?: CounterTrigger } = {}): GameEvent[] {
+export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean; trigger?: CounterTrigger; cardName?: string } = {}): GameEvent[] {
   // A LIFE TOTAL SET THAT IS A LOSS (#1333, CR 119.5): "target opponent's life total becomes 10" is the `lose-life` a printed "target opponent loses N life" is; a plain set emits nothing.
   const lifeLoss = action.verb === "set-life" ? lifeSetRewrite(action, clauseText ?? "") : undefined;
   if (lifeLoss?.verb === "lose-life") return actionEmits(lifeLoss, clauseText, opts);
@@ -1100,7 +1113,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     // fighting creature and not the spell -- Gratuitous Violence's "a creature you control" can
     // check it (recall v4 #120).
     // THE CARD'S OWN FIGHT HAS THE CARD AS DEALER (#1471): "this creature fights ...", "it fights ..." (Scab-Clan Giant, Wicked Wolf) is the producer itself, `self`, so it never feeds another card's self trigger.
-    ...(DAMAGE_VERBS.has(verb) ? { dealer: { control: "you" as const, token: null, ...(action.verb === "fight" ? { type: "creature", ...(selfFights(clauseText ?? "") ? { self: true as const } : {}) } : {}) } } : {}),
+    ...(DAMAGE_VERBS.has(verb) ? { dealer: { control: "you" as const, token: null, ...(action.verb === "fight" ? { type: "creature", ...(selfFights(clauseText ?? "", opts.cardName) ? { self: true as const } : {}) } : {}) } } : {}),
     ...(DAMAGE_VERBS.has(verb) && action.verb !== "fight" && /^(?:its|their) controller$/i.test((action.object ?? "").trim()) ? { toDealerController: true as const } : {}),
   }));
   // A LISTED RECIPIENT IS ONE EVENT PER HALF (#1266, burn): the matcher's `damaged` test reads the VICTIM's top-level type ("a player and a permanent never meet"), so a
@@ -1161,7 +1174,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     const half = events.find((e) => e.verb === "non-combat-damage" && e.subject.control === "opp");
     // The card ITSELF is the one hit back when it is the fighter ("this creature fights target creature you don't control", Apex Altisaur): `self`, so no other card's "whenever this creature is dealt damage" hears it.
     // ...or the stored object names the card ("this creature and target creature you don't control", Kraul Harpooner).
-    const selfHit = cardFightsIn(clauseText ?? "") || /^(?:this\b|it and\b|~)/i.test((action.object ?? "").trim());
+    const selfHit = cardFightsIn(clauseText ?? "", opts.cardName) || /^(?:this\b|it and\b|~)/i.test((action.object ?? "").trim());
     if (half) {
       events.push({ ...half, ...(selfHit ? { fightHitSelf: true as const } : {}), subject: selfHit ? { control: "you", token: null, type: "creature", self: true } : { ...half.subject, control: "you" }, dealer: { control: "opp", token: null, type: "creature" } });
     }
@@ -1175,7 +1188,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       // The card itself is the fighter when the stored object names it ("this creature and target creature", the model's spelling of "this creature fights target creature").
       const cardFights = fighterText === undefined || /^(?:this\b|it$|~)/i.test(fighterText.trim());
       const fighter: SubjectFilter = cardFights
-        ? { control: "you", token: null, type: "creature", ...(cardFightsIn(clauseText ?? "") || fighterText !== undefined ? { self: true as const } : {}) }
+        ? { control: "you", token: null, type: "creature", ...(cardFightsIn(clauseText ?? "", opts.cardName) || fighterText !== undefined ? { self: true as const } : {}) }
         : parseSubjectWhole(fighterText);
       delete other.other; delete fighter.other;
       const first = events.find((e) => e.verb === "non-combat-damage");

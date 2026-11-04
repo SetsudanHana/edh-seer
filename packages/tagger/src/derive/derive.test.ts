@@ -8095,6 +8095,26 @@ describe("a fight emits both damage halves (#1474, CR 701.14a)", () => {
     expect(h.filter((e) => e.subject.self === true)).toHaveLength(1);
     expect(h.find((e) => e.subject.self !== true)?.subject.control).toBe("any");
   });
+  // #1480: the card's own NAME (or short name) as fighter is the card itself, as "this creature fights" is.
+  test("Gargos, Vicious Watcher: 'Gargos fights' hits the card itself back and the fighter is self", () => {
+    const h = halves("Gargos, Vicious Watcher", "Creature — Hydra", "Vigilance\nHydra spells you cast cost {4} less to cast.\nWhenever a creature you control becomes the target of a spell, Gargos fights up to one target creature you don't control.");
+    expect(h).toHaveLength(2);
+    expect(h.some((e) => "fightHitSelf" in e)).toBe(false);
+    expect(h.find((e) => e.subject.control === "you")?.subject).toMatchObject({ type: "creature", self: true });
+    expect(h.find((e) => e.subject.control === "opp")?.dealer).toMatchObject({ control: "you", type: "creature", self: true });
+  });
+  test("Gimli, Mournful Avenger: a short name as fighter in a 'when you do' reflexive is self too", () => {
+    const h = halves("Gimli, Mournful Avenger", "Legendary Creature \u2014 Dwarf Warrior", "Gimli has indestructible as long as two or more creatures died under your control this turn.\nWhenever another creature you control dies, put a +1/+1 counter on Gimli. When this ability resolves for the third time this turn, Gimli fights up to one target creature you don't control.");
+    expect(h.filter((e) => e.subject.self === true)).toHaveLength(1);
+  });
+  test("Pitiless Fists: 'enchanted creature fights' names no card (a 'this Aura ...' tail is not the card's name)", () => {
+    const h = halves("Pitiless Fists", "Enchantment \u2014 Aura", "Enchant creature you control\nWhen this Aura enters, enchanted creature fights up to one target creature an opponent controls. (Each deals damage equal to its power to the other.)\nEnchanted creature gets +2/+2.");
+    expect(h.some((e) => e.subject.self === true)).toBe(false);
+  });
+  test("another card's name as fighter is not the card (Gargos's text on a card named otherwise)", () => {
+    const h = halves("Somebody Else", "Creature — Hydra", "Whenever a creature you control becomes the target of a spell, Gargos fights up to one target creature you don't control.");
+    expect(h.some((e) => e.subject.self === true)).toBe(false);
+  });
   test("Pheres-Band Brawler: the opponent-creature mirror half is the card itself too", () => {
     const h = halves("Pheres-Band Brawler", "Creature — Centaur", "When this creature enters, it fights up to one target creature you don't control. (Each deals damage equal to its power to the other.)");
     expect(h).toHaveLength(2);
