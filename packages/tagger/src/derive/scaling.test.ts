@@ -199,3 +199,10 @@ test("any number of <your permanents> still counts a board; from a library, hand
   // A count stated beside the choice still counts (Jaws of Stone).
   expect(actionScaling({ verb: "deal-damage", amount: "the number of Mountains you control", object: "any number of targets" })).toBe("per-permanent");
 });
+
+test("a battlefield choice of permanents you OWN keeps its board count: Leave // Chance (#1467 review)", () => {
+  // "Return any number of target permanents you own to your hand." Same shape as Paradoxical Outcome.
+  expect(actionScaling({ verb: "return", object: "any number of target permanents you own" })).toBe("per-permanent");
+  // ...while a reveal that merely mentions a commander you own is still a reveal.
+  expect(actionScaling({ verb: "put", object: "any number of permanent cards from among them" })).toBeUndefined();
+});

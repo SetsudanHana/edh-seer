@@ -99,12 +99,16 @@ const PREAMBLE_COUNT = /(?:^|[,.]\s*)for each ([^,.]{1,70}),\s*create\b/i;
  *      NOT a count (not what you control);
  *   4. otherwise no source can be read: the current reading stands.
  *  CEILING: rule 4 leaves "any number of tokens created with this creature", "creatures that saddled
- *  it" and "this creature's stored results" as board counts, as they were: the source is a linked
- *  group, not a zone the words name. And `scalingSubject` of a sacrifice ("any number of lands") stays
- *  blank, because the noun names no "you control" to read a control from. */
+ *  it", "this creature's stored results" and Sin, Unending Cataclysm ("remove all counters from any
+ *  number of artifacts, creatures, and enchantments": anyone's permanents, still `static per-permanent`
+ *  with no subject) as board counts, as they were: the source is a linked group, or no zone or
+ *  controller the words name. And `scalingSubject` stays blank for a sacrifice ("any number of lands")
+ *  and for Yorion ("exile any number of other nonland permanents you own and control": rule 2 reads
+ *  "you own and control", `scalingSubject` reads only "you control"), so Yorion keeps per-permanent
+ *  with no subject. */
 const ELSEWHERE_CUE = /\b(?:cards?|from|among|exiled|milled)\b/i;
-const YOURS_CUE = /\byou (?:own and )?control\b/i;
-const NOT_YOURS_CUE = /\b(?:targets?|controlled by|they control|(?:that|each) players? controls?|opponents?|players?|you own)\b/i;
+const YOURS_CUE = /\byou (?:own and control|control|own)\b/i;
+const NOT_YOURS_CUE = /\b(?:targets?|controlled by|they control|(?:that|each) players? controls?|opponents?|players?)\b/i;
 const anyNumberOfChoice = (action: Action, own: string): string =>
   own.replace(/\bany number of\b([^.;]*)/gi, (all, phrase: string, at: number) => {
     // A bare "any number of" amount (search's) reads its class off the object.
