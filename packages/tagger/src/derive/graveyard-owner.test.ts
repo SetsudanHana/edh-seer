@@ -1,7 +1,7 @@
 /** Whose graveyard a recursion leaves (#1470). Oracle text and clause records are copied verbatim from Mongo (`cards.oracleText`, `cardClauses.canonical`, DERIVE 446). */
 import { describe, expect, test } from "vitest";
 import type { ClauseRecord } from "../canonicalize.js";
-import { clauseTexts } from "../derive-input.js";
+import { clauseGrants, clauseTexts } from "../derive-input.js";
 import { deriveAbilities } from "./derive.js";
 import { graveyardOwner } from "./graveyard-owner.js";
 import fixtures from "./graveyard-owner.fixtures.json" with { type: "json" };
@@ -12,7 +12,7 @@ const FX = fixtures as unknown as Record<string, Fx>;
 /** Every control the card's graveyard-origin emits and graveyard-recursion subjects carry. */
 function graveyardControls(name: string): { emits: string[]; effects: string[] } {
   const f = FX[name]!;
-  const { abilities } = deriveAbilities(f.clauses as ClauseRecord[], name, clauseTexts(f), undefined, f.oracleText);
+  const { abilities } = deriveAbilities(f.clauses as ClauseRecord[], name, clauseTexts(f), undefined, f.oracleText, undefined, undefined, undefined, undefined, undefined, undefined, undefined, clauseGrants(f));
   const emits = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.subject.zone === "graveyard" || e.subject.fromZone === "graveyard").map((e) => e.subject.control ?? "?");
   const effects = abilities.filter((a) => a.effect.kind === "graveyard-recursion").map((a) => a.effect.subject?.control ?? "?");
   return { emits, effects };
@@ -49,6 +49,16 @@ describe("a recursion from your graveyard carries control you", () => {
   });
 });
 
+describe("a granted ability's pointer is not your graveyard (Kaya the Inexorable)", () => {
+  test("the ghostform return sits on any creature, an opponent's included: its emits are never you, though the emblem prints 'from your graveyard'", () => {
+    const f = FX["Kaya the Inexorable"]!;
+    const { abilities } = deriveAbilities(f.clauses as ClauseRecord[], "Kaya the Inexorable", clauseTexts(f), undefined, f.oracleText, undefined, undefined, undefined, undefined, undefined, undefined, undefined, clauseGrants(f));
+    const granted = abilities.filter((a) => a.clause === 2).flatMap((a) => a.emits ?? []).filter((e) => e.subject.zone === "graveyard");
+    expect(granted.length).toBeGreaterThan(0);
+    expect(granted.map((e) => e.subject.control)).not.toContain("you");
+  });
+});
+
 describe("graveyardOwner reads only a printed 'your graveyard'", () => {
   const zone = (object: string) => ({ object, fromZone: "graveyard" });
   test("an opponent's or any graveyard is not yours", () => {
@@ -62,6 +72,11 @@ describe("graveyardOwner reads only a printed 'your graveyard'", () => {
   test("a pointer on a card naming two players' graveyards stays unread", () => {
     const t = "Choose a creature card in an opponent's graveyard, then that player chooses a creature card in your graveyard. Return those cards to the battlefield.";
     expect(graveyardOwner(zone("those cards"), t, t)).toBeUndefined();
+  });
+  test("a pointer does not borrow your graveyard from a quoted ability", () => {
+    const t = 'It gains "When this creature dies, return it to its owner\'s hand." You get an emblem with "you may cast a spell from your graveyard."';
+    expect(graveyardOwner(zone("it"), "return it to its owner's hand", t)).toBeUndefined();
+    expect(graveyardOwner(zone("those cards"), "Return those cards to your hand.", "Choose two target cards in your graveyard. Return those cards to your hand.", true)).toBeUndefined();
   });
   test("a pointer with no graveyard anywhere stays unread", () => {
     expect(graveyardOwner(zone("those cards"), "Return those cards to your hand.", "Return those cards to your hand.")).toBeUndefined();

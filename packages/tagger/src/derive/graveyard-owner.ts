@@ -20,7 +20,10 @@ const YOUR_LIST = /\bfrom your (?:hand|library),? (?:or|and\/or|and) (?:your )?g
 /** Your graveyard as the card's source or home, anywhere in the text. */
 const YOUR_GRAVEYARD = /\b(?:in|from|into) your graveyard\b|\byour graveyard\b/i;
 
-export function graveyardOwner(action: { object?: string | null; fromZone?: string | null }, clauseText: string, cardText: string): "you" | undefined {
+/** A quoted ability granted to a permanent is another ability's text: its "your graveyard" is not the antecedent of a pointer outside the quotes (Kaya the Inexorable's emblem). */
+const QUOTED = /"[^"]*"/g;
+
+export function graveyardOwner(action: { object?: string | null; fromZone?: string | null }, clauseText: string, cardText: string, granted = false): "you" | undefined {
   if (action.fromZone !== "graveyard") return undefined;
   const object = (action.object ?? "").trim();
   // A graveyard the object itself puts on another player stays unread, before anything in the clause can claim it.
@@ -28,8 +31,9 @@ export function graveyardOwner(action: { object?: string | null; fromZone?: stri
   if (OTHER_GRAVEYARD.test(object)) return undefined;
   if (OBJECT_YOURS.test(object)) return "you";
   if (YOUR_LIST.test(clauseText) && !OTHER_GRAVEYARD.test(clauseText)) return "you";
-  if (POINTER.test(object)) {
-    const text = cardText !== "" ? cardText : clauseText;
+  // A GRANTED ability's pointer ("When this creature dies, return it to its owner's hand", Kaya's ghostform) sits on whatever permanent received it, an opponent's included: never `you` by pointer.
+  if (!granted && POINTER.test(object)) {
+    const text = (cardText !== "" ? cardText : clauseText).replace(QUOTED, " ");
     if (YOUR_GRAVEYARD.test(text) && !OTHER_GRAVEYARD.test(text)) return "you";
   }
   return undefined;
