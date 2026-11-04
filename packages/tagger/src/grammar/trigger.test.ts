@@ -51,6 +51,13 @@ test("CR 700.4: put into a graveyard from the battlefield is dies; CR 603.6c: fr
   expect(one("When ~ is put into a graveyard from anywhere").event).toBe("put-into-graveyard");
 });
 
+test("#1495: an exile 'from the battlefield' carries that origin zone (CR 603.6c leaves-the-battlefield)", () => {
+  expect(one("When ~ is put into exile from the battlefield").subject).toMatchObject({ self: true, fromZone: "battlefield" });
+  expect(one("When this creature is exiled from the battlefield").subject).toMatchObject({ self: true, fromZone: "battlefield" });
+  expect(one("When ~ is put into exile")?.subject?.fromZone).toBeUndefined();
+  expect(events("When ~ dies or is put into exile from the battlefield")).toEqual(["dies", "exiled"]);
+});
+
 test("damage: the direction is the event, the kind rides beside it", () => {
   expect(one("Whenever this creature deals combat damage to a player")).toMatchObject({ event: "damage-dealt", damage: "combat" });
   expect(one("Whenever this creature is dealt damage")).toMatchObject({ event: "damaged", subject: { self: true } });
