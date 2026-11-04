@@ -60,3 +60,14 @@ test("Reanimate does not feed Invasion of Amonkhet // Lazotep Convert: a battle 
     ] as CardTags["abilities"], {}, faces as never);
   expect(entersTags(reanimate, inv)).toEqual([]);
 });
+
+test("a DAYBOUND card's back face is reachable from a graveyard return (CR 702.145b: at night it enters transformed): Howlpack Piper still pairs", () => {
+  const faces = [
+    { name: "Howlpack Piper", typeLine: "Creature — Human Werewolf", oracleText: "Daybound", colors: [] },
+    { name: "Wildsong Howler", typeLine: "Creature — Werewolf", oracleText: "Whenever this creature enters or transforms into Wildsong Howler, ...", colors: [] },
+  ];
+  const piper = dc("Howlpack Piper // Wildsong Howler", "Creature — Human Werewolf // Creature — Werewolf", "x",
+    chars({ subtypes: ["human", "werewolf"], keywords: ["transform", "daybound", "nightbound"], faces: [{ types: ["creature"], subtypes: ["human", "werewolf"] }] } as never),
+    [enters(chars({}), { ...you, type: "creature", self: true }, 1)], {}, faces as never);
+  expect(entersTags(reanimate, piper).length).toBeGreaterThan(0);
+});
