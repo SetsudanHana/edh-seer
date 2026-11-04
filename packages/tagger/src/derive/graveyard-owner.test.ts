@@ -132,6 +132,11 @@ describe("a self graveyard leave carries control you (#1496)", () => {
     const f = FX[name]!;
     return deriveAbilities(f.clauses as ClauseRecord[], name, clauseTexts(f), undefined, f.oracleText, undefined, undefined, undefined, undefined, undefined, undefined, undefined, clauseGrants(f)).abilities;
   };
+  test("kept: Traveling Plague (grammar) hands the card to another player: self `enters` stays any, its graveyard leave is yours", () => {
+    const mine = selfLeaves(viaGrammar("Traveling Plague"));
+    expect(mine.filter((e) => e.verb === "enters").map((e) => e.subject.control)).toEqual(["any"]);
+    expect(mine.filter((e) => e.verb === "leaves").map((e) => e.subject.control)).toEqual(["you"]);
+  });
   test.each(["Plague Reaver", "Traveling Plague"])("kept: %s hands the card to another player: its self `enters` stays any, its graveyard leave is yours (model)", (name) => {
     const mine = selfLeaves(derived(name));
     expect(mine.filter((e) => e.verb === "enters").map((e) => e.subject.control)).toEqual(["any"]);
