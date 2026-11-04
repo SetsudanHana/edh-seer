@@ -96,9 +96,28 @@ describe("the CHANGED card as the consumer", () => {
     expect(c.lostToClass).toEqual(["Maker"]);
     expect(c.gainedToSelf).toEqual(["Maker"]);
   });
-  it("'other' is only a pair that names neither side as the changed card", () => {
+  it("a pair that names neither side is AMBIGUOUS and listed, never 'other'", () => {
     const j: ImpactJson = { pairDetail: [{ name: "Tok", lost: [key("damaged:creature", "A", "B")], gained: [] }], pairRows: {} };
-    expect(classifyReport(j).cards[0]!.lost.other).toBe(1);
+    const c = classifyReport(j).cards[0]!;
+    expect(c.lost).toMatchObject({ ambiguous: 1, other: 0 });
+    expect(c.ambiguousList).toEqual([{ dir: "lost", counterpart: "Tok", tag: "damaged:creature" }]);
+  });
+});
+
+describe("a double-faced changed card named by a face", () => {
+  const DFC = "Ulrich of the Krallenhorde // Ulrich, Uncontested Alpha";
+  it("the producer is the BACK face's name: still the changed card, the consumer's trigger is read", () => {
+    const j: ImpactJson = { pairDetail: [{ name: DFC, lost: [key("damaged:permanent [via token]", "Ulrich, Uncontested Alpha", "Payoff")], gained: [] }], pairRows: { Payoff: both([PERM]) } };
+    const c = classifyReport(j).cards[0]!;
+    expect(c.lost).toMatchObject({ class: 1, ambiguous: 0, other: 0 });
+    expect(c.lostToClass).toEqual(["Payoff"]);
+    expect(c.viaToken).toBe(1);
+  });
+  it("the consumer is the FRONT face's name: consumer-side, read from the changed card's row", () => {
+    const j: ImpactJson = { pairDetail: [{ name: DFC, lost: [key("damaged:creature", "Maker", "Ulrich of the Krallenhorde")], gained: [] }], pairRows: { [DFC]: { base: v([SELF]) } } };
+    const c = classifyReport(j).cards[0]!;
+    expect(c.lost).toMatchObject({ self: 1, ambiguous: 0 });
+    expect(c.consumerSide).toBe(1);
   });
 });
 

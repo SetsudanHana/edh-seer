@@ -97,7 +97,7 @@ export function triggerTagKeys(t: NonNullable<CompactAbility["trigger"]>): strin
 /** Classify one pair of one changed card.
  *  WHICH TRIGGER IS READ: the one that HEARS the tag, the consumer's. If the counterpart is the consumer (the changed card produces), that is the counterpart's;
  *  if the CHANGED card is the consumer, it is the changed card's own (`consumer-side`, its BASE row for a lost pair, HEAD for a gained one). A `[via token]` hop is
- *  read the same way with the suffix stripped, and labelled. `other` is only a pair naming neither side as the changed card (a token subject's relays).
+ *  read the same way with the suffix stripped, and labelled. A pair naming neither side as the changed card (a token subject's relays) is `ambiguous`, listed; `other` is no longer produced by this reader and stays in the counts so a future producer-side path has a bucket.
  *  `self` / `class`: a trigger carries exactly the tag; `class` wins when one tag is heard by both kinds (a person reads it).
  *  `ambiguous`: no trigger carries the tag's class key but one carries the family; or a name maps to several ids whose classes differ. Never read as class or self.
  *  `unmatched`: the consumer has no trigger of the family at all (a static, a granted or implied path this does not model): warned, never `other`. */
@@ -106,10 +106,14 @@ export function classifyPair(dir: "lost" | "gained", changed: string, key: strin
   const via = rawTag.includes(" [via token]");
   const tag = rawTag.replace(" [via token]", "");
   const family = tagFamily(key);
-  const consumerSide = consumer === changed;
-  const counterpart = consumerSide ? producer : producer === changed ? consumer : changed;
+  // A pair key names a double-faced card by the FACE it came from, so a name is the changed card when it equals the full name or any ` // ` face.
+  const faces = new Set([changed, ...changed.split(" // ")]);
+  const consumerSide = faces.has(consumer);
+  const producerIsChanged = faces.has(producer);
+  const counterpart = consumerSide ? producer : producerIsChanged ? consumer : changed;
   const base = { counterpart, family, tag: rawTag, via, consumerSide };
-  if (producer !== changed && consumer !== changed) return { klass: "other", ...base };
+  // Names neither side: nothing says which trigger hears it, so a person reads it (never `other`, which would hide it).
+  if (!producerIsChanged && !consumerSide) return { klass: "ambiguous", ...base };
   const reader = consumerSide ? changed : consumer; // the card whose triggers hear the tag
   const entry = rows[reader];
   const variants = dir === "lost" ? entry?.base ?? entry?.head : entry?.head ?? entry?.base;
