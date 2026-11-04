@@ -1083,6 +1083,12 @@ const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
  *  side, stored under `damage-dealt` before the clause word `damaged` existed. 20 of the 180
  *  `damage-dealt` clauses; the engine verb is `damaged` since 2026-09-16. */
 const DAMAGE_RECEIVED = /\b(?:is|are|becomes?) dealt\b/i;
+/** The pronoun an exile of a just-put permanent uses (#1502). */
+const PUT_PRONOUN = /^(?:it|them|that card|that creature|those creatures|those cards|that permanent)$/i;
+/** "...onto the battlefield under your control" (Gruesome Encore, Ashen Powder): the put permanent is yours whoever's graveyard it came from. */
+const UNDER_YOUR_CONTROL = /\bunder your control\b/;
+/** A put that hands the permanent to another player ("under its owner's control", "under that player's control"). */
+const UNDER_ANOTHERS_CONTROL = /\bunder (?:its owner's|their owner's|that player's|their|target opponent's|an opponent's) control\b/;
 /** A clause that puts a NONTOKEN permanent onto the battlefield and makes no token (Gruesome Encore: "Put target creature card ... onto the battlefield ... Exile it at the beginning of the next end step"): its
  *  end-step "Exile it" is of that permanent, an exile event of its own, not a temporary token's rider (#1502). */
 function exilesAPermanentPut(actions: readonly Action[]): boolean {
@@ -3259,10 +3265,22 @@ export function deriveAbilities(
       // ...the pronoun took the antecedent's printed ORIGIN (a graveyard, an exile): the exile and the leave it implies are from the battlefield. An emit stating NO zone is left alone: adding one on the grammar path only would split it from the stored path and flip the card-by-card switch (Fanged Flames, 32 cards). 
       // ...and an exile of a NONTOKEN permanent the clause put onto the battlefield (Gruesome Encore, #1502) states the battlefield even where the pronoun's antecedent printed no origin: its zoneless exile would match a graveyard-exile payoff.
       const putsNonToken = exilesAPermanentPut(clause.actions ?? []);
-      if (exilesFromBattlefield) for (const e of emits) if ((e.verb === "exiled" || e.verb === "leaves") && (e.subject.fromZone !== undefined || putsNonToken) && e.subject.fromZone !== "battlefield") {
+      // THE PRONOUN EXILE OF THE NONTOKEN PERMANENT ITSELF (#1502 fix round): "Search your library for a Dragon permanent card, put that card onto the battlefield ... Exile it at the beginning of the next end step" (Zirilan of
+      // the Claw) names a library as the pronoun's antecedent, and "Return target creature card ... Exile it" (Whip of Erebos) a graveyard; the exile is of the permanent, on the battlefield, controlled by whoever the put gave it
+      // to (yours unless the clause says another's control), no token, and no target (the exile is not aimed). The put's own `enters` is yours the same way.
+      // ONLY AN EXILE AFTER THE PUT, of neither the trigger's object nor the card itself: Academy Rector's "When this dies, you may exile it. If you do, search ... put it onto the battlefield" exiles the Rector from the graveyard BEFORE the put; Bogardan Phoenix's "exile it instead" is itself.
+      const putIdx = (clause.actions ?? []).findIndex((a) => a.toZone === "battlefield" && a.verb !== "exile");
+      const exileOfPut = action.verb === "exile" && putsNonToken && PUT_PRONOUN.test((action.object ?? "").trim()) && putIdx >= 0 && (clause.actions ?? []).indexOf(action) > putIdx && !refersToTrigger && !emitsSelf;
+      if (exilesFromBattlefield || exileOfPut) for (const e of emits) if ((e.verb === "exiled" || e.verb === "leaves") && (e.subject.fromZone !== undefined || putsNonToken) && (exileOfPut || e.subject.fromZone !== "battlefield")) {
         const { zone: _z, owner: _o, ...rest } = e.subject;
-        e.subject = { ...rest, fromZone: "battlefield" };
+        if (exileOfPut) {
+          const { scope: _s, ...untargeted } = rest;
+          e.subject = { ...untargeted, fromZone: "battlefield", token: false, ...(UNDER_ANOTHERS_CONTROL.test(text) ? {} : { control: "you" as const }) };
+        } else e.subject = { ...rest, fromZone: "battlefield" };
       }
+      // CEILING (#1502): only a put that is followed by the pronoun exile reads its `enters` as yours. The same "under your control" on a put with no such exile (Ashen Powder; Chorale of the Void, Helm of Obedience,
+      // Nurgle's Conscription and ~70 more, measured 2026-11-04) stays `control: opp`: reading all of them as yours adds 85,377 pairs (80,249 of them into creature ETB consumers), a census of its own.
+      if ((action.verb === "put" || action.verb === "return") && action.toZone === "battlefield" && UNDER_YOUR_CONTROL.test(text) && putsNonToken && (clause.actions ?? []).some((a) => a.verb === "exile" && PUT_PRONOUN.test((a.object ?? "").trim()))) for (const e of emits) if (e.verb === "enters" && e.subject.self !== true) e.subject = { ...e.subject, control: "you" };
       // THE CARD ITSELF HIT BY A FIGHT-BACK is bare `self` (Garruk's "him" kept the antecedent "target creature": a planeswalker typed creature, scope target) (#1266, burn).
       const selfDamage = action.verb === "deal-damage" && damageHitsSelf(action.object ?? "", text);
       if (selfDamage) for (const e of emits) e.subject = { control: "any", token: null, self: true };

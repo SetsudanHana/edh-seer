@@ -13107,7 +13107,7 @@
      "emits": [
       {
        "subject": {
-        "control": "opp",
+        "control": "you",
         "entersTapped": true,
         "fromZone": "library",
         "token": null
@@ -13198,7 +13198,7 @@
    "manaLines": [
     {
      "amount": {
-      "fixed": 2,
+      "fixed": 1,
       "scales": null
      },
      "anyColour": null,
@@ -13224,7 +13224,7 @@
      },
      "face": 0,
      "gate": null,
-     "net": -4,
+     "net": -5,
      "producesToken": null,
      "repeats": "once",
      "restriction": null,
