@@ -3260,7 +3260,7 @@
       {
        "subject": {
         "control": "any",
-        "fromZone": "exile",
+        "fromZone": "battlefield",
         "scope": "all",
         "token": null,
         "type": "creature"
