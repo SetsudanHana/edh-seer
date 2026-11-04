@@ -2381,7 +2381,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
           // a card in a graveyard has only its front face's characteristics (CR 712.8a), so a back face's own "when this
           // enters" / enter-as-a-copy (Lazotep Convert) is never what a return fires. Only a self ENTRY: a self trigger of
           // another verb is no return.
-          // Scope: only a return from a GRAVEYARD; a token exiled and "returned" (a flicker) is the exile channel's own question.
+          // CEILING: only a return from a GRAVEYARD; a token exiled and "returned" (a flicker) is the exile channel's own question.
           if (t.verb === "enters" && e.subject.fromZone === "graveyard"
             && (c.isToken === true || c.tags.characteristics.token === true || (c.face ?? 0) !== 0)) continue;
           // An UNTYPED producer subject is left alone deliberately, and it is the residual this gate
