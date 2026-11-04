@@ -426,6 +426,24 @@ function keywordAbilitiesUncached(chars: Characteristics): Ability[] {
   return out;
 }
 
+/** The first word of a keyword entry, ONLY when the rest is an argument (#1509). Scryfall lists
+ *  ability and flavor words in `keywords` ("Echo of the Lost", "Devour Intellect", "Toxic Spores");
+ *  reading those as their first word handed five cards a keyword they do not have. An argument is a
+ *  number, a brace cost, X, "from <quality>" or a dash cost. The stored `cards.keywords` are bare
+ *  (no multi-word entry carries an argument), so this is a guard for hand-written forms. Plain string
+ *  ops: no regex over the remainder. */
+function keywordHead(whole: string): string {
+  let i = 0;
+  while (i < whole.length && whole[i] !== " " && whole[i] !== "{") i++;
+  const head = whole.slice(0, i);
+  const rest = whole.slice(i).trim();
+  if (rest === "") return head;
+  const c = rest[0];
+  const isArg = (c >= "0" && c <= "9") || c === "{" || c === "—" || c === "–" || c === "-"
+    || rest === "x" || rest.startsWith("x ") || rest.startsWith("from ");
+  return isArg ? head : whole;
+}
+
 /** The events a card's PRINTED KEYWORDS supply. Marked `implied: true` like every other synthetic
  *  event, so the self-supply gates in edges.ts treat them as baseline rather than authored surplus. */
 export function keywordEvents(chars: Characteristics): GameEvent[] {
@@ -436,7 +454,7 @@ export function keywordEvents(chars: Characteristics): GameEvent[] {
   // first word alone would key them as "cumulative", and "basic landcycling" as "basic".
   const keys = (chars.keywords ?? []).map((raw) => {
     const whole = String(raw).toLowerCase().trim();
-    return whole in KEYWORD_EMITS ? whole : whole.split(/[\s{]/)[0];
+    return whole in KEYWORD_EMITS ? whole : keywordHead(whole);
   });
   // ONE KEYWORD NARROWS ANOTHER, so the map alone cannot decide this. Scryfall stamps the umbrella
   // `Cycling` on every typecycling card as well as its specific name, but their printed reminder
