@@ -18,7 +18,7 @@
  *  tags from the in-memory rows of that side. */
 import { execFileSync } from "node:child_process";
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
+import { availableParallelism, homedir } from "node:os";
 import { join, posix, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
@@ -40,9 +40,9 @@ const git = (...args: string[]): string => execFileSync("git", args, { cwd: REPO
 
 const { positionals, values } = parseArgs({
   allowPositionals: true, strict: true,
-  options: { cards: { type: "string" }, json: { type: "string" }, pairs: { type: "string" }, "no-pairs": { type: "boolean", default: false }, "no-ratchets": { type: "boolean", default: false }, "pair-sample": { type: "string" }, workers: { type: "string" }, matcher: { type: "string" } },
+  options: { cards: { type: "string" }, json: { type: "string" }, pairs: { type: "string" }, "no-pairs": { type: "boolean", default: false }, "no-ratchets": { type: "boolean", default: false }, serial: { type: "boolean", default: false }, "pair-sample": { type: "string" }, workers: { type: "string" }, matcher: { type: "string" } },
 });
-if (positionals.length !== 1) { console.error('usage: derive-impact.ts <BASE-ref> [--cards "A|B"] [--json out.json] [--pairs N] [--no-pairs] [--no-ratchets] [--pair-sample N] [--workers N] [--matcher own|head]'); process.exit(2); }
+if (positionals.length !== 1) { console.error('usage: derive-impact.ts <BASE-ref> [--cards "A|B"] [--json out.json] [--pairs N] [--no-pairs] [--no-ratchets] [--serial] [--pair-sample N] [--workers N] [--matcher own|head]'); process.exit(2); }
 const only = values.cards ? new Set(values.cards.split("|").map((s) => s.trim()).filter(Boolean)) : null;
 const num = (v: string | undefined, dflt: number, flag: string): number => {
   if (v === undefined) return dflt;
@@ -199,15 +199,35 @@ for (const c of allCards) {
   }
 }
 log(`grammar pass over ${allCards.length} cards done; grammar-only rows BASE ${grammarOnlyB.size}, HEAD ${grammarOnlyH.size}`);
-for (const doc of clauseDocs) {
-  const source = doc.isToken ? tokenSrc.get(doc.oracleId) : cardById.get(doc.oracleId);
-  if (!source) continue;
-  for (const [side, rows, only_] of [[B, rowsB, grammarOnlyB], [H, rowsH, grammarOnlyH]] as const) {
-    if (!doc.isToken && only_.has(doc.oracleId)) continue;
-    const r = side.deriveRow({ doc, source, isToken: !!doc.isToken });
-    rows.set(doc.oracleId, { snap: snapOf(doc.name, r.tags, r.fromGrammar), tags: r.tags });
+/** Derive one side's clause docs. Parallel: one worker pool per side, pointed at THAT side's own tree (`derive-worker.ts`), so BASE is still computed by BASE's code;
+ *  results come back in input order, so the rows are the serial loop's. A tree with no usable worker entry (an old base), or a pool that fails, falls back to the serial loop. */
+async function deriveSide(label: string, side: Side, root: string, skip: Set<string>, into: RowMap): Promise<void> {
+  const items: { doc: any; source: any; isToken: boolean }[] = [];
+  for (const doc of clauseDocs) {
+    const source = doc.isToken ? tokenSrc.get(doc.oracleId) : cardById.get(doc.oracleId);
+    if (!source) continue;
+    if (!doc.isToken && skip.has(doc.oracleId)) continue;
+    items.push({ doc, source, isToken: !!doc.isToken });
   }
+  let results: { tags: any; fromGrammar: boolean }[] | undefined;
+  if (!values.serial) {
+    const entry = join(root, "packages/tagger/src/derive-worker.ts");
+    const usableEntry = existsSync(entry) && /serveWorker\(/.test(readFileSync(entry, "utf8"));
+    if (!usableEntry) log(`${label}: no worker entry in ${root}; deriving serially`);
+    else {
+      const pool = createPool<(typeof items)[number], { tags: any; fromGrammar: boolean }>(pathToFileURL(entry), { workers: num(values.workers, availableParallelism(), "--workers") });
+      try { results = await pool.map(items); }
+      catch (e) { log(`${label}: worker pool failed (${(e as Error).message}); deriving serially`); results = undefined; }
+      finally { await pool.close(); }
+    }
+  }
+  items.forEach((it, i) => {
+    const r = results ? results[i]! : side.deriveRow(it);
+    into.set(it.doc.oracleId, { snap: snapOf(it.doc.name, r.tags, r.fromGrammar), tags: r.tags });
+  });
 }
+await deriveSide("BASE", B, baseRoot, grammarOnlyB, rowsB);
+await deriveSide("HEAD", H, REPO, grammarOnlyH, rowsH);
 log(`rows derived: BASE ${rowsB.size}, HEAD ${rowsH.size}`);
 
 const keep = (name: string): boolean => !only || only.has(name);
