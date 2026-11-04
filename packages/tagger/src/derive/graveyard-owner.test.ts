@@ -104,29 +104,42 @@ describe("a self graveyard leave carries control you (#1496)", () => {
     expect(mine.length).toBeGreaterThan(0);
     expect(mine.map((e) => e.subject.control)).not.toContain("any");
   });
-  test("kept: a non-self 'return target card from a graveyard' stays any (Naya Charm)", () => {
-    const f = FX["Naya Charm"]!;
-    const { abilities } = deriveAbilities(f.clauses as ClauseRecord[], "Naya Charm", clauseTexts(f), undefined, f.oracleText, undefined, undefined, undefined, undefined, undefined, undefined, undefined, clauseGrants(f));
-    const other = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.subject.fromZone === "graveyard" && e.subject.self !== true);
+  /** Naya Charm and Silent Gravestone are stored as clauseSource: grammar (Mongo, 2026-11-04): derived through the grammar's own records, as derive-corpus does. */
+  const viaGrammar = (name: string) => {
+    const f = FX[name]!;
+    const card = { name, typeLine: f.typeLine, oracleText: f.oracleText, keywords: f.keywords };
+    const g = grammarClauseRecords(card);
+    expect(g.complete, `${name} is read completely`).toBe(true);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities;
+  };
+  test("kept: a non-self 'return target card from a graveyard' stays any (Naya Charm, grammar)", () => {
+    const other = viaGrammar("Naya Charm").flatMap((a) => a.emits ?? []).filter((e) => e.subject.fromZone === "graveyard" && e.subject.self !== true);
     expect(other.length).toBeGreaterThan(0);
     expect(other.map((e) => e.subject.control)).toEqual(other.map(() => "any"));
   });
-  test("kept: Silent Gravestone's 'this artifact and all cards from all graveyards' is no card leaving your graveyard", () => {
-    const f = FX["Silent Gravestone"]!;
-    const { abilities } = deriveAbilities(f.clauses as ClauseRecord[], "Silent Gravestone", clauseTexts(f), undefined, f.oracleText, undefined, undefined, undefined, undefined, undefined, undefined, undefined, clauseGrants(f));
-    expect(selfLeaves(abilities).map((e) => e.subject.control)).not.toContain("you");
+  test("Silent Gravestone (grammar): 'this artifact' is exiled from the battlefield, not from a graveyard; the sweep of all graveyards stays any", () => {
+    const abilities = viaGrammar("Silent Gravestone");
+    expect(selfLeaves(abilities)).toEqual([]);
+    const sweep = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.subject.fromZone === "graveyard");
+    expect(sweep.length).toBeGreaterThan(0);
+    expect(sweep.map((e) => e.subject.control)).not.toContain("you");
   });
   test("selfGraveyardOwner: yours unless the object names another graveyard", () => {
     expect(selfGraveyardOwner({ object: "this card" })).toBe("you");
     expect(selfGraveyardOwner({ object: "this artifact and all cards from all graveyards" })).toBeUndefined();
   });
-  test("kept: a self return that hands the card to another player keeps its `enters` any, its graveyard leave is still yours (Plague Reaver, Necrotic Plague)", () => {
-    for (const name of ["Plague Reaver", "Necrotic Plague"]) {
-      const f = FX[name]!;
-      const { abilities } = deriveAbilities(f.clauses as ClauseRecord[], name, clauseTexts(f), undefined, f.oracleText, undefined, undefined, undefined, undefined, undefined, undefined, undefined, clauseGrants(f));
-      const mine = selfLeaves(abilities);
-      expect(mine.filter((e) => e.verb === "enters").map((e) => e.subject.control), name).not.toContain("you");
-      expect(mine.filter((e) => e.verb === "leaves").map((e) => e.subject.control), name).not.toContain("any");
-    }
+  const derived = (name: string) => {
+    const f = FX[name]!;
+    return deriveAbilities(f.clauses as ClauseRecord[], name, clauseTexts(f), undefined, f.oracleText, undefined, undefined, undefined, undefined, undefined, undefined, undefined, clauseGrants(f)).abilities;
+  };
+  test.each(["Plague Reaver", "Traveling Plague"])("kept: %s hands the card to another player: its self `enters` stays any, its graveyard leave is yours (model)", (name) => {
+    const mine = selfLeaves(derived(name));
+    expect(mine.filter((e) => e.verb === "enters").map((e) => e.subject.control)).toEqual(["any"]);
+    expect(mine.filter((e) => e.verb === "leaves").map((e) => e.subject.control)).not.toContain("any");
+  });
+  test.each(["Necrotic Plague", "Takklemaggot"])("%s returns itself under its own controller's control: `enters` and `leaves` are yours (model)", (name) => {
+    const mine = selfLeaves(derived(name));
+    expect(mine.filter((e) => e.verb === "enters").length).toBeGreaterThan(0);
+    expect(mine.map((e) => e.subject.control)).not.toContain("any");
   });
 });

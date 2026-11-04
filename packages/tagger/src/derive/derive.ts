@@ -1092,8 +1092,8 @@ const UNDER_YOUR_CONTROL = /\bunder your control\b/;
 const OPPONENTS_GRAVEYARD = /\bopponents?['\u2019]s? graveyards?\b/i;
 /** A put that hands the permanent to another player ("under its owner's control", "under that player's control"). */
 const UNDER_ANOTHERS_CONTROL = /\bunder (?:its owner's|their owner's|that player's|their|target opponent's|an opponent's) control\b/;
-/** An `enters` carries the CONTROLLER of what enters, not the graveyard's owner (#1496): "return this creature under that player's control" (Plague Reaver), "that creature's controller returns this Aura" (Necrotic Plague, Traveling Plague) hand the card to another player, so its self `enters` stays `any`. */
-const ANOTHER_CONTROLS_ENTRY = /\bunder (?:that player's|target opponent's|an opponent's|their) control\b|\bcontroller (?:returns|puts|chooses)\b|\bone of their opponents controls\b/;
+/** An `enters` carries the CONTROLLER of what enters, not the graveyard's owner (#1496): "return this creature under that player's control" (Plague Reaver) and "that creature's controller returns this Aura" (Traveling Plague) hand the card to another player, so its self `enters` stays `any`. Necrotic Plague and Takklemaggot return it under the Aura controller's own control (who picks the target is not who controls the entry, CR 110.2a) and stay `you`. */
+const ANOTHER_CONTROLS_ENTRY = /\bunder (?:that player's|target opponent's|an opponent's|their) control\b|\bcontroller (?:returns|puts)\b/;
 /** A clause that puts a NONTOKEN permanent onto the battlefield and makes no token (Gruesome Encore: "Put target creature card ... onto the battlefield ... Exile it at the beginning of the next end step"): its
  *  end-step "Exile it" is of that permanent, an exile event of its own, not a temporary token's rider (#1502). */
 function exilesAPermanentPut(actions: readonly Action[]): boolean {

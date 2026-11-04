@@ -41,7 +41,7 @@ export function graveyardOwner(action: { object?: string | null; fromZone?: stri
 
 /** A CARD THAT MOVES ITSELF OUT OF A GRAVEYARD (#1496) comes out of its OWNER's graveyard, which is yours: the card is in your deck. "Return this card from your graveyard",
  *  "exile this card from your graveyard", "when this creature dies, return it to the battlefield" all leave `you`. Returns `you` unless the action's own object names another graveyard: "Exile this artifact and all cards
- *  from all graveyards" (Silent Gravestone) is a SELF that leaves the battlefield and a wildcard sweep of graveyards, which is not a card leaving yours.
+ *  from all graveyards" is a sweep of graveyards, which is not a card leaving yours (the grammar no longer files its "this artifact" under that graveyard, #1496).
  *  CEILING: only the action's object is read for another graveyard, not the clause around it. */
 export function selfGraveyardOwner(action: { object?: string | null }): "you" | undefined {
   return OTHER_GRAVEYARD.test((action.object ?? "").trim()) ? undefined : "you";
