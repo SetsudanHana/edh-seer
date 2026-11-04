@@ -807,8 +807,8 @@ test("a self leaves/sacrifice/dies and a self graveyard fill carry allTypes for 
 
 // #1509: AN ABILITY WORD IS NOT ITS FIRST WORD. Scryfall lists ability and flavor words in `keywords`
 // beside the real ones; the keywords below are the stored `cards.keywords` of five cards whose first
-// word is a real key. Echo of the Lost / Echo of the First Murder are ETB exile abilities, Devour
-// Intellect an ETB exile, Undying Vengeance a damage trigger, Toxic Spores a life-loss trigger.
+// word is a real key. Echo of the Lost lets you play cards from your graveyard, Echo of the First
+// Murder and Devour Intellect are ETB exiles, Undying Vengeance a damage trigger, Toxic Spores a life-loss trigger.
 test("an ability word whose first word is a keyword emits nothing", () => {
   const verbs = (k: string[]) => keywordEvents(kw(k)).map((e) => `${e.verb}${e.subject.counter ? `:${e.subject.counter}` : ""}`);
   expect(verbs(["Vigilance", "Echo of the Lost", "Transform"])).not.toContain("sacrifice");   // Emet-Selch // Hades

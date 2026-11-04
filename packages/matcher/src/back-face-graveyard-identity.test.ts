@@ -115,6 +115,9 @@ describe("a back face's own graveyard fill is the front face's card", () => {
     const rs = pairReasonsAcrossFaces(FIX["Emet-Selch, Unsundered"]!, FIX["Overlord of the Balemurk"]!, H)
       .filter((r) => r.tag.startsWith("graveyard-recursion"));
     expect(rs.map((r) => r.text).filter((t) => t.includes("is in the graveyard"))).toEqual([]);
-    expect(rs.length).toBeGreaterThan(0);
+    expect(rs).toContainEqual(expect.objectContaining({
+      tag: "graveyard-recursion:creature",
+      text: "Emet-Selch, Unsundered puts cards into the graveyard that Overlord of the Balemurk can bring back",
+    }));
   });
 });
