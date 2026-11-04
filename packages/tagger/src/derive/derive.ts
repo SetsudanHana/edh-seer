@@ -619,7 +619,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 448: #1495 -- a trigger that prints 'is put into exile from the battlefield' / 'is exiled from the battlefield' carries fromZone battlefield (grammar/trigger.ts patch), and the matcher (originMatches) refuses an exile emit stating another zone while an exile stating none stays allowed. AND the exile side stops stating a graveyard it does not come from: an exile whose pronoun's antecedent was just put onto the battlefield (Haunted House, Kheru Lich Lord, Mila // Lukka: 'Return ... to the battlefield. Exile it at the beginning of the next end step') or a death replaced ('If a creature would die this turn, exile it instead': Cry of the Carnarium) is from the battlefield, not the antecedent's printed origin (an emit stating no zone is left alone: setting one on the grammar path only flipped 32 cards grammar -> model); a temporary token exiled at the next end step ('Exile it at the beginning of the next end step': Seance, Mordor on the March, Gyrus) also emits `exiled` from the battlefield beside its `leaves` (not on a granted ability: wincon.voltron read it as a curse on Splinter Twin, Elemental Mastery, Invocation of Saint Traft). Census (DERIVE 447 stored rows, oracle trigger lines saying 'from the battlefield'): 10 exiled triggers lacked the zone (3 grammar, 7 model; Hero of Bretagard's 'from your hand' correctly stays zoneless; the dies halves are battlefield by CR 700.4). Measured (final tree, derive-impact 31e3edb): 60 rows changed, source flips 0; 33 exile emits on 33 cards gain fromZone battlefield, 0 battlefield exile emits lost; pairs +676/-5,241 (exiled +163/-5,241, leaves +435, dies +78); matcher sample 300 cards +6/-50; role-ratchet gained 0 lost 0; dropped-clauses 4,913 -> 4,913. A trigger subject naming only CARDS (The War Doctor's 'one or more other cards are put into exile from anywhere') is token: false on `exiled` (CR 111.1 token): the 22 token exiles (Saheeli Rai, Inalla, Cogwork Assembler, Echo Chamber, Twinflame ...) no longer feed him; his own row lost 9 pairs, all producers whose exile emit is token: true (Aether Snap, Dance of Many, Dual Nature, Faerie Artisans, Shaun, Tetravus true negatives; Emet-Selch, Festival of Embers, Necrodominance 'If a card or token would be put into your graveyard, exile it instead' emit only the token half, so their real card exile is a true pair lost, pre-existing mistyping). Widened to 'a card is put into your graveyard' / 'cards leave your graveyard' it moved 32 more rows and flipped 5 cards grammar -> model (Teval, Advanced Reconstruction), so those verbs keep token: null. loss-classify: lost 5,241 (self 4,383, class 858, ambiguous 0, unmatched 0, no row 0) over 852 distinct producers; gained 676 (self 426, class 241, ambiguous 6, unmatched 3). Of the 852 lost producers, 155 have an exile sentence that names no graveyard/library/hand and were read: the lost pairs are the card's graveyard / library / hand exile (every 'dies ... exile it' and 'exile a nonland card from it' card), except Gruesome Encore (its 'Exile it' is unclaimed, the model filed the put as an exile), Nahiri (token copy of a 'creature or Equipment card', untyped), Sauron (conditional exile 'unless Sauron is your Ring-bearer'), whose battlefield exile has no emit and so lost Soulherder / Ashnod's Intervention; Haunted House, Kheru Lich Lord, Mila, Cry of the Carnarium, Seance, Mordor on the March and Gyrus keep or gain their pairs. The 426 GAINED->SELF are 142 per reanimator (Haunted House, Kheru Lich Lord, Mila // Lukka): 116 are leaves:creature (the reanimated creature's own 'when this creature leaves the battlefield': Admonition Angel, Aven Riftwatcher ...), 25 leaves:permanent, 25 dies:aura, 3 leaves:aura, 1 dies:enchantment, 1 via token; all true pairs, and the Aura ones are main's existing class (Conjurer's Closet / Aspect of Mongoose pair the same at 447). The 6 ambiguous / 3 unmatched are Eye of Nidhogg and Drone, same class. CEILING (edges.ts): a zoneless exile that is really from a graveyard or library is still admitted.
 // 449: #1499 -- 'a card or token' (CARDS joined to TOKENS by or, either order, one word allowed before the second noun: 'a creature card or creature token') is token null, not token true (derive/subject.ts parseToken, and grammar/filter.ts reads it per alternative so the two parsers agree): Necrodominance, Festival of Embers, Emet-Selch // Hades and Rest in Peace stored one exile emit {token: true} for 'If a card or token would be put into a graveyard from anywhere, exile it instead', so the card half was lost and their real card exile no longer fed The War Doctor ('one or more other cards are put into exile') once #1495 made a cards-only trigger refuse tokens. Census (DERIVE 448 stored cardClauses, action objects and trigger subjects matching card(s) or token(s) / token(s) or card(s) / X card or X token): 4 cards, all model-sourced, all the object 'a card or token' of an exile action; 0 trigger subjects. Measured (derive-impact vs 3cc4653): 4 rows changed, source flips 0, grammar 0; pairs +27 / -0 (all exiled): The War Doctor +3 (Necrodominance, Festival of Embers, Emet-Selch) and 24 GAINED->SELF = each of the 4 exilers x 6 self-triggers 'when this is put into exile from the battlefield' (God-Eternal Bontu, Kefnet, Oketra, Rhonas, Ilharg the Raze-Boar, Urza's Sylex), true because the replacement exiles a card dying on the battlefield; matcher sample 300 +0/-0; role-ratchet 0/0; dropped-clauses 4,913 -> 4,913. loss-classify: lost 0; gained 27 (self 24, class 3), LOST->CLASS 0.
 // 450: #1501 -- a power/toughness definition filed under a zone verb (Seize the Storm's Elemental token, exile) is a CDA and emits no zone move. derive-impact vs 449: 1 row changed; pair reasons -82 / +0, loss-classify lost 82 (class 41, ambiguous 41, unmatched 0), every one the token as producer through its false exiled/leaves-graveyard self emit; role-ratchet 0/0; dropped-clauses 4,913 -> 4,913.
-export const DERIVE_VERSION = 450;
+// 451: #1502 -- An end-step exile of a token its maker just made is claimed by the maker's own leaves/exiled emits (6 unclaimed battlefield exiles: Zektar Shrine Expedition, Gruesome Encore, Living Laser, Nahiri, Flamerush Rider, Altair; plus the zoneless ones); a model exile whose toZone is battlefield is a put (Gruesome Encore: no false graveyard exile, its Exile it is a battlefield exile of the creature); a trailing 'unless' on the next-end-step token cleanup is read (Sauron: Wraith creature token exiled from the battlefield).
+export const DERIVE_VERSION = 451;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -1082,8 +1083,14 @@ const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
  *  side, stored under `damage-dealt` before the clause word `damaged` existed. 20 of the 180
  *  `damage-dealt` clauses; the engine verb is `damaged` since 2026-09-16. */
 const DAMAGE_RECEIVED = /\b(?:is|are|becomes?) dealt\b/i;
+/** A clause that puts a NONTOKEN permanent onto the battlefield and makes no token (Gruesome Encore: "Put target creature card ... onto the battlefield ... Exile it at the beginning of the next end step"): its
+ *  end-step "Exile it" is of that permanent, an exile event of its own, not a temporary token's rider (#1502). */
+function exilesAPermanentPut(actions: readonly Action[]): boolean {
+  return !actions.some((a) => a.verb === "create") && actions.some((a) => a.toZone === "battlefield" && a.verb !== "exile");
+}
 /** "At the beginning of the next end step, sacrifice those tokens." as a clause of its own. */
-const NEXT_END_STEP_CLEANUP = /^at the beginning of the next end step, (sacrifice|exile) (?:those tokens|them|it|that token|the tokens?|those copies|the cop(?:y|ies)|that copy)\.?$/i;
+// CEILING (#1502): a trailing "unless <card> is your Ring-bearer" (Sauron, the Necromancer) is matched and left UNREAD, so the token reads as always leaving; the Ring-bearer case, where it stays, is not modelled. Other "unless" riders stay unmatched: Satya, Aetherflux Genius ("unless you pay {E}") and Tilonalli's Summoner ("unless you have the city's blessing") keep their tokens by choice or by a state, and measured as temporary they lost 3,599 and ~50 fodder pairs and their go-wide.
+const NEXT_END_STEP_CLEANUP = /^at the beginning of the next end step, (sacrifice|exile) (?:those tokens|them|it|that token|the tokens?|those copies|the cop(?:y|ies)|that copy)(?: unless [^.]{1,60} is your Ring-bearer)?\.?$/i;
 /** A token that LEAVES THE SAME TURN IT ARRIVED — see `Ability.temporary`. Three printed shapes,
  *  and the third is only reachable by NAME.
  *
@@ -2560,6 +2567,10 @@ export function deriveAbilities(
     });
     return { ...c, actions };
   });
+  // AN EXILE THAT ENDS ON THE BATTLEFIELD IS A PUT ONTO THE BATTLEFIELD (#1502). The model filed Gruesome Encore's "Put target creature card from an opponent's graveyard onto the battlefield under your control" as
+  // `exile | ... | graveyard>battlefield`: the only exile with a battlefield destination in all of `cardClauses.canonical` (census 2026-11-04). Read as the exile it was filed as it emitted a false
+  // `exiled:creature` from a graveyard and left its own "Exile it" unclaimed. It is the verb a real reanimation uses (Reanimate stores `put`), so the pass below reads it as one.
+  clauses = clauses.map((c) => (c.actions ?? []).some((a) => a.verb === "exile" && a.toZone === "battlefield") ? { ...c, actions: (c.actions ?? []).map((a) => (a.verb === "exile" && a.toZone === "battlefield" ? { ...a, verb: "put" } : a)) } : c);
   // The whole card's text, for the phantom-trigger guard below. CARD-scoped on purpose and never
   // per clause -- see `triggerHasCue`, where scoping it to the clause was measured and refuses 18
   // real modal triggers to catch 1 phantom. Absent `clauseTexts` disables the guard rather than
@@ -3181,7 +3192,7 @@ export function deriveAbilities(
       // resolves its pronoun to the token the clause just made, so the emit builder would see a
       // typed exile; tested on the RAW object here, before the antecedent, the way emits.ts tests
       // it for a direct call. The fact is `temporary` on the maker's own ability (below).
-      const temporaryRider = action.verb === "exile" && LEAVES_SAME_TURN.test(text) && TEMPORARY_TOKEN_REF.test((action.object ?? "").trim());
+      const temporaryRider = action.verb === "exile" && LEAVES_SAME_TURN.test(text) && TEMPORARY_TOKEN_REF.test((action.object ?? "").trim()) && !exilesAPermanentPut(clause.actions ?? []);
       // THE TRIGGERING OBJECT ITSELF (#896 task 4, #823): "whenever a creature an opponent controls dies,
       // exile IT" is that card, in the graveyard the event put it in -- not another creature, and not
       // on the battlefield. The emit keeps the trigger's class, takes the zone, and says it is `ref`.
@@ -3246,7 +3257,9 @@ export function deriveAbilities(
         // claims nothing rather than claiming everyone. See `entersUnderAnotherPlayer`.
         .filter((e) => !(e.verb === "enters" && entersUnderAnotherPlayer(cardText)));
       // ...the pronoun took the antecedent's printed ORIGIN (a graveyard, an exile): the exile and the leave it implies are from the battlefield. An emit stating NO zone is left alone: adding one on the grammar path only would split it from the stored path and flip the card-by-card switch (Fanged Flames, 32 cards). 
-      if (exilesFromBattlefield) for (const e of emits) if ((e.verb === "exiled" || e.verb === "leaves") && e.subject.fromZone !== undefined && e.subject.fromZone !== "battlefield") {
+      // ...and an exile of a NONTOKEN permanent the clause put onto the battlefield (Gruesome Encore, #1502) states the battlefield even where the pronoun's antecedent printed no origin: its zoneless exile would match a graveyard-exile payoff.
+      const putsNonToken = exilesAPermanentPut(clause.actions ?? []);
+      if (exilesFromBattlefield) for (const e of emits) if ((e.verb === "exiled" || e.verb === "leaves") && (e.subject.fromZone !== undefined || putsNonToken) && e.subject.fromZone !== "battlefield") {
         const { zone: _z, owner: _o, ...rest } = e.subject;
         e.subject = { ...rest, fromZone: "battlefield" };
       }
@@ -3302,6 +3315,9 @@ export function deriveAbilities(
       const claimedHere = action.verb === "put" && claimedAsDestination(action, clause.actions ?? [], sourceOf((clause.actions ?? []).indexOf(action)), destinationOwners, orphan);
       if (orphan) {
         if (claimedHere) continue;
+        // SILENT BY DESIGN, NOT UNCLAIMED (#1502): the temporary-token rider ("Exile it at the beginning of the next end step", `temporaryRider` above) derives no event of its own, and its home is the maker's
+        // `leaves` / `exiled` emits of this same clause (added once the maker's emits are attached). Only when the maker carries them: a rider whose maker was refused (a granted ability) stays unclaimed.
+        if (temporaryRider && abilities.slice(before).some((a) => a.temporary === true && (a.emits ?? []).some((e) => e.verb === "leaves" || e.verb === "dies"))) continue;
         unclaimed.push(action); continue;
       }
 
