@@ -23,7 +23,7 @@ import {
 import { basicTypeDemand, classifyLand, creatureTypeDemand } from "./land-conditions.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
 import { BASIC_LAND_TYPE_SET, SUPERTYPES, parseTypeLineAllFaces } from "./typeline.js";
-import { enteringFaceName, faceDeckCards, graveyardIdentity } from "./faces.js";
+import { enteringFaceName, faceDeckCards, graveyardFaceName, graveyardIdentity } from "./faces.js";
 import { claimsNothing, isManaRider, isRefusedTrigger, isSelfLoss } from "./claims.js";
 import { magnitudeOf, mergeMagnitude } from "./edge-magnitude.js";
 import type { LandTypes } from "./chosen-type.js";
@@ -1257,6 +1257,11 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   if (castSelfSupplied(producer, asked)) return false;
   if (selfEtbSelfSupplied(producer, consumer)) return false;
   if (producer.verb === "enters" && producer.subject.zone === "graveyard") {
+    // CEILING: this is the event channel and a back face's SELF fill keeps the BACK face's type here, which is right for a
+    // leaves-the-battlefield trigger ("dies", "put into a graveyard from the battlefield": it looks back in time) and wrong for
+    // "whenever an artifact card is put into your graveyard from anywhere", which sees the front face in the graveyard (712.8a).
+    // Stored consumers of that shape typed artifact/enchantment/battle: 4 abilities on 2 cards (Ultron the Annihilator, Ultron's
+    // Auxiliary); Overloaded Mage-Ring -> Ultron still claims "hits the graveyard". Not retyped: it needs the consumer's `fromZone`.
     // A MILL DOES NOT PROMISE A NONCREATURE, NONLAND CARD (#716), for a trigger ("whenever an
     // artifact card is put into your graveyard") exactly as for a recursion (`reanimatorEdges`).
     if (producer.milled === true && namesNoncreatureClass(consumer.subject)) return false;
@@ -2621,9 +2626,10 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       if (a.effect.subject.control === "opp" && a.effect.intercepted !== true
         && !(e.milled === true && e.subject.control !== "you")) continue;
       // Skip if the event-edge loop already credited this fill via a graveyard-entry trigger on the same ability.
+      // (The RAW fill, as the event channel below reads it: it does not retype, see the CEILING there.)
       if (a.trigger && a.trigger.verbs.some((v) => {
         const t = normalizeZoneEvent({ verb: v, subject: a.trigger!.subject });
-        return t.verb === "enters" && t.subject.zone === "graveyard" && graveyardFillMatches(e.subject, t.subject, h);
+        return t.verb === "enters" && t.subject.zone === "graveyard" && graveyardFillMatches(raw.subject, t.subject, h);
       })) continue;
       // THE SET IS DEFINED BY THE CONSUMER'S OWN EARLIER ACTION, so no other card's fill can put
       // anything in it. Three printed templates, each measured over the whole corpus:
@@ -2710,7 +2716,7 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       said.add(tag);
       reasons.push({
         tag,
-        text: graveyardEnablesRecursion(p.card.name, c.card.name, {
+        text: graveyardEnablesRecursion(graveyardFaceName(p, raw) ?? p.card.name, c.card.name, {
           producerItself: e.subject.self === true, returnsItself: a.effect.subject.self === true,
           intercepted,
         }),
@@ -2812,7 +2818,7 @@ function graveyardScalingEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       said.add(tag);
       reasons.push({
         tag,
-        text: graveyardFeedsScaling(p.card.name, c.card.name, e.subject.self === true),
+        text: graveyardFeedsScaling(graveyardFaceName(p, raw) ?? p.card.name, c.card.name, e.subject.self === true),
         effectKind: a.effect.kind,
         // AN ON-CAST COUNT HAPPENS ONCE (overview item 6c): this ternary had no `on-cast` branch, so
         // Thwart the Grave's cost reduction -- a sorcery's, applied as it is cast -- read `triggered`
@@ -2982,13 +2988,15 @@ function countGateEdges({ p, c, h, pEvents, reasons }: PairScope): void {
         && (list(e.subject.type).length > 0 || namesAnotherPlayer(p.card.oracleText)));
       return true;
     };
-    const fill = pEvents.find((e) => e.verb === "enters" && e.subject.zone === "graveyard" && !e.implied
+    // THE PRODUCER'S OWN CARD IN THE GRAVEYARD IS ITS FRONT FACE (`graveyardIdentity`, #1505).
+    const seen = pEvents.map((raw) => ({ raw, e: graveyardIdentity(p, raw) }));
+    const fill = seen.find(({ e }) => e.verb === "enters" && e.subject.zone === "graveyard" && !e.implied
       && e.subject.token !== true && reaches(e) && graveyardFillMatches(e.subject, counted, h));
     if (!fill) continue;
     countsSeen.add(`${tag}|${a.threshold.atLeast}|gy`);
     reasons.push({
       tag,
-      text: graveyardThresholdSentence(p.card.name, c.card.name, a.threshold.atLeast, counted),
+      text: graveyardThresholdSentence(graveyardFaceName(p, fill.raw) ?? p.card.name, c.card.name, a.threshold.atLeast, counted),
       effectKind: a.effect.kind,
       repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
       consumer: c.card.name,
