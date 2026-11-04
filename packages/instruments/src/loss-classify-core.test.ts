@@ -4,6 +4,8 @@ import { classifyReport, compactRow, formatClassified, type ImpactJson } from ".
 const trig = (verbs: string[], subject: Record<string, unknown>) => ({ kind: "triggered", trigger: { verbs, subject } });
 const SELF = trig(["damaged"], { control: "you", type: "creature", self: true });
 const CLASS = trig(["damaged"], { control: "opp", type: "creature" });
+const PERM = trig(["damaged"], { control: "you", type: "permanent" });
+const DEALS = trig(["non-combat-damage"], { control: "you", type: "creature", self: true });
 
 const key = (tag: string, p: string, c: string) => `${tag}|${p}|${c}`;
 const fixture = (): ImpactJson => ({
@@ -35,10 +37,10 @@ describe("classifyReport", () => {
   const r = classifyReport(fixture());
   const c = r.cards[0]!;
   it("counts lost pairs per class", () => {
-    expect(c.lost).toEqual({ self: 1, class: 1, other: 3, noRow: 1 });
+    expect(c.lost).toEqual({ self: 1, class: 1, other: 2, ambiguous: 0, unmatched: 1, noRow: 1 });
   });
   it("counts gained pairs per class, reading the HEAD row", () => {
-    expect(c.gained).toEqual({ self: 2, class: 0, other: 0, noRow: 0 });
+    expect(c.gained).toEqual({ self: 2, class: 0, other: 0, ambiguous: 0, unmatched: 0, noRow: 0 });
   });
   it("lists the class-trigger counterparts with their filter", () => {
     expect(c.classList).toEqual([{ dir: "lost", counterpart: "ClassCard", family: "damaged", filter: "control=opp type=creature" }]);
@@ -51,7 +53,11 @@ describe("classifyReport", () => {
     const out = formatClassified(r);
     expect(out).toContain("LOST->CLASS");
     expect(out).toContain("GAINED->SELF");
-    expect(out).toMatch(/summary: 1 card\(s\); lost 6 \(self 1, class 1, other 3, no row 1\); gained 2 \(self 2, class 0, other 0\)/);
+    expect(out).toMatch(/summary: 1 card\(s\); lost 6 \(self 1, class 1, other 2, ambiguous 0, unmatched 1, no row 1\); gained 2 \(self 2, class 0, other 0, ambiguous 0, unmatched 0\)/);
+  });
+  it("warns, per family, about a consumer with no trigger for the tag (never 'other')", () => {
+    const out = formatClassified(r);
+    expect(out).toContain("WARNING: 1 pair(s) into a consumer with no trigger matching the tag: damaged 1");
   });
   it("restricts to one card", () => {
     expect(classifyReport(fixture(), "Nobody").cards).toEqual([]);
@@ -63,6 +69,39 @@ describe("classifyReport", () => {
     j.pairDetail[0]!.lost = [key("damaged:creature", "Fighter", "Both")];
     j.pairDetail[0]!.gained = [];
     expect(classifyReport(j).cards[0]!.lost).toMatchObject({ class: 1, self: 0 });
+  });
+});
+
+describe("the tag names the trigger, not just its family (#1485 review)", () => {
+  // Ill-Tempered Loner // Howlpack Avenger: a self damaged trigger AND a "permanent you control" one.
+  const two = (tags: string[], extra: Record<string, unknown> = {}): ImpactJson => ({
+    pairDetail: [{ name: "Fighter", lost: tags.map((t) => key(t, "Fighter", "Loner")), gained: [] }],
+    rows: { Loner: { base: [SELF, PERM], head: [SELF, PERM] }, ...extra },
+  });
+  it("damaged:creature is the SELF trigger, damaged:permanent the class one", () => {
+    expect(classifyReport(two(["damaged:creature"])).cards[0]!.lost).toMatchObject({ self: 1, class: 0, ambiguous: 0 });
+    const p = classifyReport(two(["damaged:permanent"])).cards[0]!;
+    expect(p.lost).toMatchObject({ self: 0, class: 1 });
+    expect(p.lostToClass).toEqual(["Loner"]);
+  });
+  it("both tags at once: one self, one class", () => {
+    expect(classifyReport(two(["damaged:creature", "damaged:permanent"])).cards[0]!.lost).toMatchObject({ self: 1, class: 1 });
+  });
+  it("no trigger carries the class key: falls back to the family and says AMBIGUOUS, never class", () => {
+    const c = classifyReport(two(["damaged:planeswalker"])).cards[0]!;
+    expect(c.lost).toMatchObject({ ambiguous: 1, class: 0, self: 0 });
+    expect(c.lostToClass).toEqual([]);
+    expect(c.ambiguousList).toEqual([{ dir: "lost", counterpart: "Loner", tag: "damaged:planeswalker" }]);
+    expect(formatClassified(classifyReport(two(["damaged:planeswalker"])))).toContain("AMBIGUOUS");
+  });
+  it("a non-combat-damage lost pair into a 'deals damage' self trigger is self", () => {
+    const j: ImpactJson = { pairDetail: [{ name: "Burner", lost: [key("non-combat-damage:creature", "Burner", "Angel")], gained: [] }], rows: { Angel: { base: [DEALS], head: [DEALS] } } };
+    expect(classifyReport(j).cards[0]!.lost).toMatchObject({ self: 1, unmatched: 0, ambiguous: 0 });
+  });
+  it("counts matched and unmatched per family", () => {
+    const j = two(["damaged:creature", "damaged:permanent", "enters:creature"], { Loner: { base: [SELF, PERM], head: [SELF, PERM] } });
+    const r = classifyReport(j);
+    expect(r.families).toEqual([{ family: "damaged", matched: 2, ambiguous: 0, unmatched: 0 }, { family: "enters", matched: 0, ambiguous: 0, unmatched: 1 }]);
   });
 });
 
