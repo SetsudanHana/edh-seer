@@ -27,8 +27,28 @@ edges → deck report). The controller planned it; you build exactly that and no
 1. Write the failing test first when there is logic. Run it; confirm it fails for the RIGHT reason.
 2. Make the smallest change that passes. A deliberate simplification gets a `CEILING:` comment.
 3. Derive semantics changed → bump `DERIVE_VERSION`. Never touch `NORMALIZE_MIN_COMPATIBLE`.
-4. Run the touched workspace's tests (`npm test -w @edh-seer/<pkg>`) and `npm run typecheck`.
-   Trust exit codes, not grepped output. A red you did not cause is still reported, not ignored.
+4. Run the touched workspace's tests (`npm test -w @edh-seer/<pkg>`) while iterating, and
+   `npm run ci:local` before reporting DONE: it runs every `ci.yml` step (the "four gates" missed
+   `lint:ceilings`), then prints CodeQL-shape regex warnings to judge (CodeQL fails the PR on a real
+   one). Trust exit codes, not grepped output. A red you did not cause is still reported, not ignored.
+
+## Claims
+
+- **A claim about a changed card family covers every changed card.** For an engine change:
+  - Run `derive-impact <base> --json <file>` once on the final tree, **in the background with a long
+    timeout** (it takes many minutes; the foreground limit is 10). Pass no `--pairs`, `--no-pairs`
+    or `--cards`, which cut what is covered. Re-run it after a fix round that changed the engine diff.
+  - Then `npx tsx packages/instruments/src/loss-classify.ts <file> [--card "Name"]`. Exit 2 means
+    the JSON has no `pairRows` (written before #1485): re-run derive-impact.
+  - Argue every `LOST->CLASS`, `GAINED->SELF` and AMBIGUOUS pair it names. `unmatched` and `no row`
+    are counts per family: name the family and the cause, and read those pairs from `pairDetail`
+    with `--card`. Never argue from the report's top-20 list.
+  - loss-classify reads `pairDetail` only. A matcher-only change lands in the sample, which it does
+    not cover: report the sample size instead. Any claim checked on a sample is reported as a
+    sample, with its size.
+- **A claim about stored data or main quotes its source.** "X is stored as …" carries the query
+  and its output; "main does …" carries the `git show origin/main:<file>` lines. Do not repeat a
+  claim from the brief or a reviewer as fact without checking it.
 
 ## Committing
 
@@ -41,7 +61,8 @@ edges → deck report). The controller planned it; you build exactly that and no
 
 Push, switch branches, stash, `git checkout -- .`, `reset --hard`, rebase. Run `normalize-*` with
 `--run` (spends money), deploy, write Mongo (`derive-corpus`, `ingest-*`, `build-static`) unless the
-brief says so. Edit a ratchet cap or `known-lost-pairs.json`. Spawn subagents. Fix something
+brief says so. (`derive-impact` only reads Mongo, and the test suite writes only its own scratch
+databases: both are fine.) Edit a ratchet cap or `known-lost-pairs.json`. Spawn subagents. Fix something
 outside the brief — report it under Concerns instead.
 
 ## Report (exactly this shape)
@@ -50,7 +71,8 @@ outside the brief — report it under Concerns instead.
 STATUS: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
 HEAD: <paste `git rev-parse HEAD` output>
 STATUS_SHORT: <paste `git status --short` output, or "clean">
-TESTS: <command> -> exit <code>, <pass/fail counts>   (one line per command)
+TESTS: <command> -> exit <code>, <pass/fail counts>   (one line per command; ci:local included)
+IMPACT: <derive-impact --json path>; loss-classify summary line   (engine changes only)
 RED FIRST: <test name> failed with <message> before the fix
 CHANGED: <file — one line on what>
 NOT DONE: <anything in the brief you skipped, and why>
