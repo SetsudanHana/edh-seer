@@ -66,9 +66,7 @@ const BASES: [RegExp, ScalingBasis][] = [
 // A comma-separated TYPE LIST is part of the noun ("that's an Insect, Rat, Spider, or Squirrel"),
 // and so is a list of NEGATIONS ("noncreature, nonland card in your graveyard": cut at the comma it
 // counted "noncreature" and kept land in the class, #1453); any other comma still ends it ("for each
-// creature you control, draw a card"). CEILING: "ANY number of" still reads as a count (#1467),
-// so the negation list also makes Paradoxical Outcome's "any number of target nonland, nontoken
-// permanents you control" a board count, as "any number of target creatures you control" already was.
+// creature you control, draw a card"). "any number of" is a choice, not a count (#1467): see `anyNumberOfChoice`.
 const COUNTED = /\b(?:for each|number of)\s+([^.,;]{1,60}(?:,\s*(?:(?:or\s+)?[A-Z][a-z-]+|non[a-z-]+[^.,;]{0,60}))*)/;
 
 /** "WHERE X IS THE NUMBER OF ..." DEFINES X FOR THE WHOLE CLAUSE, and the own-text rule still holds:
@@ -89,10 +87,39 @@ const isBareX = (action: Action): boolean => /^x$/i.test((action.amount ?? "").t
  *  create with amount "1", so the count was only in the sentence. A `create` only, in a clause with
  *  a single create: 71 corpus lines print it before a create. */
 const PREAMBLE_COUNT = /(?:^|[,.]\s*)for each ([^,.]{1,70}),\s*create\b/i;
+/** "ANY NUMBER OF <class>" IS A CHOICE OF HOW MANY, and a board count ONLY when the chosen things come
+ *  from what YOU control (owner ruling 2026-11-04, #1467). "Sacrifice any number of lands" (Scapeshift)
+ *  and "return any number of target nonland, nontoken permanents you control" (Paradoxical Outcome)
+ *  grow with your board; "put any number of permanent cards ... from among them" (Genesis Wave), "from
+ *  your hand", "from your graveyard", a library search, and "any number of target creatures" (anyone's
+ *  board) do not. Decided from the action's own words, never a card list:
+ *   1. a zone or reveal cue (cards, from, among, exiled, milled) or a search/discard/mill/cast verb: NOT a count;
+ *   2. "you control" / "you own and control", or the verb sacrifice (always your permanents): a count;
+ *   3. a target, another player's or an opponent's board, a player class, "can block any number of":
+ *      NOT a count (not what you control);
+ *   4. otherwise no source can be read: the current reading stands.
+ *  CEILING: rule 4 leaves "any number of tokens created with this creature", "creatures that saddled
+ *  it" and "this creature's stored results" as board counts, as they were: the source is a linked
+ *  group, not a zone the words name. And `scalingSubject` of a sacrifice ("any number of lands") stays
+ *  blank, because the noun names no "you control" to read a control from. */
+const ELSEWHERE_CUE = /\b(?:cards?|from|among|exiled|milled)\b/i;
+const YOURS_CUE = /\byou (?:own and )?control\b/i;
+const NOT_YOURS_CUE = /\b(?:targets?|controlled by|they control|(?:that|each) players? controls?|opponents?|players?|you own)\b/i;
+const anyNumberOfChoice = (action: Action, own: string): string =>
+  own.replace(/\bany number of\b([^.;]*)/gi, (all, phrase: string, at: number) => {
+    // A bare "any number of" amount (search's) reads its class off the object.
+    const cue = phrase.trim() ? phrase : action.object ?? "";
+    const yours = ["search", "discard", "mill", "cast"].includes(action.verb ?? "") || ELSEWHERE_CUE.test(cue) ? false
+      : YOURS_CUE.test(cue) || action.verb === "sacrifice" ? true
+      : NOT_YOURS_CUE.test(cue) || /\bblock\s*$/i.test(own.slice(0, at)) ? false
+      : undefined;
+    return yours === false ? all.replace(/any number of/i, "any amount of") : all;
+  });
+
 const countedText = (action: Action, clauseText?: string): string => {
   // The amount and the object kept apart: "+1/+1 for each nonland card revealed this way" followed by
   // "creatures you control" read the object into the count (Phabine).
-  const own = `${action.amount ?? ""}; ${action.object ?? ""}`;
+  const own = anyNumberOfChoice(action, `${action.amount ?? ""}; ${action.object ?? ""}`);
   if (COUNTED.test(own)) return own;
   // ONE create per clause, or the preamble cannot say which create it counts for.
   const preamble = action.verb === "create" && clauseText && (clauseText.match(/\bcreate\b/gi) ?? []).length === 1

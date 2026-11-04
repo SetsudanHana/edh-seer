@@ -8155,3 +8155,13 @@ describe("a fight emits both damage halves (#1474, CR 701.14a)", () => {
     expect(h.map((e) => e.subject.control).sort()).toEqual(["any", "any"]);
   });
 });
+
+/** "ANY NUMBER OF" COUNTS A BOARD ONLY WHEN IT IS YOURS (#1467, owner 2026-11-04). Clauses as the store has them. */
+test("any number of: Scapeshift and Paradoxical Outcome keep a board count, Genesis Wave and a hand put lose it", () => {
+  const scaling = (verb: string, object: string, name: string, fromZone: string | null, toZone: string) =>
+    deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb, object, fromZone, toZone }] }] as never, name).abilities.map((a) => a.effect?.scaling);
+  expect(scaling("sacrifice", "any number of lands", "Scapeshift", null, "")).toContain("per-permanent");
+  expect(scaling("return", "any number of target nonland, nontoken permanents you control", "Paradoxical Outcome", "battlefield", "hand")).toContain("per-permanent");
+  expect(scaling("put", "any number of permanent cards with mana value X or less from among them", "Genesis Wave", "library", "battlefield")).not.toContain("per-permanent");
+  expect(scaling("put", "any number of land cards from your hand", "Amulet Test", "hand", "battlefield")).not.toContain("per-permanent");
+});
