@@ -2017,26 +2017,34 @@ function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abiliti
   }
   if (e.subject.self === true) return false;
   // WHOSE CREATURE (#1513). An Aura you put on an OPPONENT's creature is never sent to the graveyard by your own creature's departure.
-  if (e.subject.control === "you" && hostIsOpponents(host, abilities)) return false;
+  const side = e.subject.control === "you" || e.subject.control === "opp" ? auraHostSide(host, abilities) : undefined;
+  if ((e.subject.control === "you" && side === "opp") || (e.subject.control === "opp" && side === "own")) return false;
   const { zone: _z, fromZone: _f, ...printed } = e.subject;
   return subjectMatches({ ...printed, zone: e.subject.zone ?? "battlefield" }, host.zone === undefined ? { ...host, zone: "battlefield" } : host, h);
 }
 
-/** AN AURA THAT HURTS ITS HOST IS PUT ON AN OPPONENT'S CREATURE (#1513). A printed "Enchant creature an opponent controls" is `control: opp`
- *  and `subjectMatches` honours it. A plain "Enchant creature" is stored `control: any` for Rancor and Bitter Chill alike, so the side is read off what the Aura does
- *  to its host: it only takes from it (an `untap-denial`, `restriction` or `debuff` static, or "that player sacrifices that creature unless they pay", the
- *  controller as payer -- Slow Motion) and gives it nothing (`pump`, `keyword-grant`). Undying Rage (+2/+2, can't block) is a gift.
- *  CEILING: a heuristic over the stored effect kinds, not a printed fact. Of the 31 corpus Auras with a self dies/leaves trigger and an Enchant line,
- *  5 read opponent-side (Bitter Chill, Cessation, Despondency, Sluggishness, Slow Motion); the rest give the host something, grant nothing readable
- *  (Chime of Night, Krovikan Whispers, Reality Acid) or enchant a non-creature. A debuff Aura someone puts on their own creature (a Pacifism on a creature
- *  they mean to sacrifice) is the cost, and `Enchant creature you control` is already `control: you`. */
-// Read from the ORIGINAL abilities: `withLiveKills` blanks the fact kinds (`restriction`, `untap-denial`) in the copy the pair loop walks.
+/** WHOSE CREATURE AN AURA GOES ON, in both directions (#1513). A printed "Enchant creature an opponent controls" is `control: opp` and a printed "you control"
+ *  is `you`; `subjectMatches` honours both. A plain "Enchant creature" is stored `control: any` for Rancor and Bitter Chill alike, so the side is read off what the Aura
+ *  does to its host. OPPONENT'S: it only takes from it (an `untap-denial`, `restriction` or `debuff` static, or "that player sacrifices that creature unless they
+ *  pay", the controller as payer -- Slow Motion) and gives it nothing (`pump`, `keyword-grant`). YOURS: it gives (`pump` or `keyword-grant`), and does not rewrite the
+ *  host (`animate`: Eye of Nidhogg gives flying and deathtouch but also goads, and is put on an opponent's creature) and does not kill it from its own trigger
+ *  (Parallax Dementia's +3/+2 comes with "destroy enchanted creature"). Anything else (Chime of Night, Fool's Demise, Krovikan Whispers, Reality Acid) is
+ *  `undefined`: unknown, and the pair is kept as it was.
+ *  CEILING: a heuristic over the stored effect kinds, not a printed fact. Of the 32 corpus Auras with an Enchant line and a self dies/leaves trigger, 5 read opponent-side
+ *  (Bitter Chill, Cessation, Despondency, Sluggishness, Slow Motion); a debuff Aura someone puts on their own creature (a Pacifism on a creature they mean to sacrifice) is the
+ *  cost there, and a gift put on an opponent's creature (a Rancor on a creature you are about to hand over) is the cost on the other side. */
 const HOST_TAKES = new Set(["untap-denial", "restriction", "debuff"]);
 const HOST_GIVES = new Set(["pump", "keyword-grant"]);
-function hostIsOpponents(host: NonNullable<CardTags["characteristics"]["enchants"]>, abilities: CardTags["abilities"]): boolean {
-  if (host.control !== undefined && host.control !== "any") return host.control === "opp";
+// Read from the ORIGINAL abilities: `withLiveKills` blanks the fact kinds (`restriction`, `untap-denial`) in the copy the pair loop walks.
+function auraHostSide(host: NonNullable<CardTags["characteristics"]["enchants"]>, abilities: CardTags["abilities"]): "opp" | "own" | undefined {
+  if (host.control === "opp") return "opp";
+  if (host.control === "you") return "own";
+  const gives = abilities.some((x) => HOST_GIVES.has(x.effect.kind));
   const takes = abilities.some((x) => HOST_TAKES.has(x.effect.kind) || (x.unless?.payer === "controller" && (x.emits ?? []).some((m) => m.verb === "sacrifice")));
-  return takes && !abilities.some((x) => HOST_GIVES.has(x.effect.kind));
+  if (takes && !gives) return "opp";
+  const rewrites = abilities.some((x) => x.effect.kind === "animate" || (x.trigger?.subject?.self === true && (x.emits ?? []).some((m) => m.verb === "dies")));
+  // Only a creature host: "Enchant Mountain" (Goblin Shrine) and "Enchant creature or artifact" (Gift of Wrath) name no side.
+  return gives && !rewrites && list(host.type).join() === "creature" ? "own" : undefined;
 }
 
 /** AN UNTYPED LAND PUT RESOLVES AGAINST THE DECK'S OWN LANDS (owner ruling 2026-09-16, recall v6

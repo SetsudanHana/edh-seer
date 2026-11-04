@@ -35,13 +35,29 @@ describe("kept", () => {
   test("a producer whose creature side is 'any' still feeds a debuff Aura", () => {
     expect(auraDies(moving(F["Viscera Seer"]!, "any"), "Bitter Chill").length).toBeGreaterThan(0);
   });
-  test("an own-side Aura is fed by an opponent-side producer too (not narrowed here)", () => {
-    expect(auraDies(F["Murder"]!, "Rancor").length).toBeGreaterThan(0);
+  test("a producer moving creatures of 'any' side (Wrath of God) still feeds an own-side Aura", () => {
+    expect(auraDies(F["Wrath of God"]!, "Rancor").length).toBeGreaterThan(0);
   });
-  test("Krovikan Whispers (you control the host; the trigger is a drawback) is left as it was", () => {
+  test("Krovikan Whispers: a drawback pair whose event is real (you control the host; the trigger costs life), accepted like the #1502 drawback leave pairs", () => {
     expect(auraDies(F["Viscera Seer"]!, "Krovikan Whispers").length).toBeGreaterThan(0);
   });
-  test("a printed control is honoured by subjectMatches already (synthetic: Rancor enchanting an opponent's creature / one you control)", () => {
+  test.each(["Chime of Night", "Fool's Demise", "Parallax Dementia", "Reality Acid"])("side unknown (%s): fed by your creature and by an opponent's alike", (aura) => {
+    expect(auraDies(moving(F["Viscera Seer"]!, "you"), aura).length).toBeGreaterThan(0);
+    expect(auraDies(moving(F["Viscera Seer"]!, "opp"), aura).length).toBeGreaterThan(0);
+  });
+});
+
+describe("an own-side Aura is not fed by an opponent's creature leaving (the mirror)", () => {
+  test.each(["Rancor", "Aspect of Mongoose", "Fiery Mantle", "Undying Rage"])("Murder -> %s: no host-leaves reason", (aura) => {
+    expect(auraDies(F["Murder"]!, aura)).toEqual([]);
+  });
+  test("Dawn of the Dead still feeds Fiery Mantle", () => {
+    expect(auraDies(F["Dawn of the Dead"]!, "Fiery Mantle").length).toBeGreaterThan(0);
+  });
+});
+
+describe("a printed control", () => {
+  test("it is honoured by subjectMatches already (synthetic: Rancor enchanting an opponent's creature / one you control)", () => {
     const on = (control: "opp" | "you"): DeckCard => ({ ...F["Rancor"]!, tags: { ...F["Rancor"]!.tags!, characteristics: { ...F["Rancor"]!.tags!.characteristics, enchants: { ...F["Rancor"]!.tags!.characteristics.enchants!, control } } } });
     expect(pairReasonsAcrossFaces(F["Dawn of the Dead"]!, on("opp"), H).filter((r) => r.tag === "dies:aura")).toEqual([]);
     expect(pairReasonsAcrossFaces(F["Murder"]!, on("you"), H).filter((r) => r.tag === "dies:aura")).toEqual([]);
