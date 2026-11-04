@@ -1177,7 +1177,7 @@ function originMatches(producer: SubjectFilter, consumer: SubjectFilter, verb: s
   if (consumer.fromZone === undefined) return true;
   // "Is put into exile FROM THE BATTLEFIELD" (God-Eternal Bontu, Urza's Sylex; #1495) is refused only by an exile that STATES another zone (Necropotence's "from your graveyard"). An exile stating none
   // is the common authored shape ("exile target creature you control") and stays allowed.
-  // Known gap (a simplification; not banked as a CEILING marker, the count ratchet is the controller's): an exile whose clause recorded no zone but is really from a graveyard or library is still admitted.
+  // CEILING: an exile whose clause recorded no zone but is really from a graveyard or library is still admitted (Sauron, Teachings of the Kirin, Koh, Azula's second emit, #1495).
   if (verb === "exiled" && consumer.fromZone === "battlefield" && producer.fromZone === undefined) return true;
   return producer.fromZone === consumer.fromZone;
 }
