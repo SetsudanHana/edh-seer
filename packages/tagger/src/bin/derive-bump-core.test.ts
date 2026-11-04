@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseArgs, planSteps, rewriteDeriveVersion } from "./derive-bump-core.js";
+import { parseArgs, planSteps, PREFLIGHT, preflight, rewriteDeriveVersion } from "./derive-bump-core.js";
 
 const SRC = [
   "// 408: #1395 -- older note",
@@ -96,5 +96,41 @@ describe("planSteps", () => {
       expect(names.indexOf(gen!.name)).toBeGreaterThan(names.indexOf("derive-corpus"));
       expect(names.indexOf(chk!.name)).toBeGreaterThan(names.indexOf(gen!.name));
     }
+  });
+});
+
+describe("preflight (#1484)", () => {
+  const all = (p: string) => PREFLIGHT.some((i) => i.path === p);
+  const CACHE = ".edhrec-cache/precon/precon.json";
+  const GUIDES = "docs/measurements/2026-09-27-precon-calibration/guides";
+
+  it("pins the list: the cache is required for gen-quality-weights, the guides optional", () => {
+    expect(PREFLIGHT.find((i) => i.path === CACHE)).toMatchObject({ level: "required", step: "gen-quality-weights" });
+    expect(PREFLIGHT.find((i) => i.path === GUIDES)).toMatchObject({ level: "optional", step: "gen-quality-weights" });
+    expect(PREFLIGHT.length).toBeGreaterThan(2);
+  });
+  it("names only steps that exist in the plan", () => {
+    const names = new Set(planSteps("restamp").map((s) => s.name));
+    for (const i of PREFLIGHT) expect(names.has(i.step), `${i.path} -> ${i.step}`).toBe(true);
+  });
+  it("all present: no errors, no warnings", () => {
+    expect(preflight(all)).toEqual({ errors: [], warnings: [] });
+  });
+  it("cache missing: an error naming the path and the step", () => {
+    const r = preflight((p) => p !== CACHE);
+    expect(r.errors).toHaveLength(1);
+    expect(r.errors[0]).toContain(CACHE);
+    expect(r.errors[0]).toContain("gen-quality-weights");
+    expect(r.warnings).toEqual([]);
+  });
+  it("guides missing: a warning, no error", () => {
+    const r = preflight((p) => p !== GUIDES);
+    expect(r.errors).toEqual([]);
+    expect(r.warnings).toHaveLength(1);
+    expect(r.warnings[0]).toContain(GUIDES);
+  });
+  it("everything missing: every required one is an error", () => {
+    const r = preflight(() => false);
+    expect(r.errors).toHaveLength(PREFLIGHT.filter((i) => i.level === "required").length);
   });
 });
