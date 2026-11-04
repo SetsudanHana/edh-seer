@@ -74,6 +74,23 @@ export function enteringFaceName(p: DeckCard, e: GameEvent): string | undefined 
   return /\btransformed\b/i.test(faces[p.face]?.oracleText ?? "") ? undefined : faces[0]?.name;
 }
 
+/** THE PRODUCER'S OWN CARD IN A GRAVEYARD IS ITS FRONT FACE (CR 712.8a: a double-faced card in a zone
+ *  other than the battlefield or stack has only its front face's characteristics). A back face that
+ *  sacrifices itself (Overloaded Mage-Ring, an Artifact) leaves a BATTLE in the graveyard, so a
+ *  recursion that returns "target artifact card" or a count of artifact cards there cannot see it
+ *  (#1505). Retypes a `self` graveyard fill only, and only for a BACK face of a two-faced card; read
+ *  by the recursion and the per-graveyard scaling channels. A "dies" or leaves-the-battlefield event
+ *  looks back in time, seeing the permanent as it last existed, and keeps the back face's type, so `producerEvents` is untouched.
+ *  CEILING: a disturb back ("if it would be put into a graveyard from anywhere, exile it instead")
+ *  should make no fill at all; it is retyped here like any other back, not refused. */
+export function graveyardIdentity(p: DeckCard, e: GameEvent): GameEvent {
+  if (e.subject.self !== true || p.face === undefined || p.face < 1 || !p.parent) return e;
+  const faces = printedFaces(p.parent.card);
+  if (faces.length !== 2) return e;
+  const { type: _t, subtype: _s, allTypes: _a, ...rest } = e.subject;
+  return { ...e, subject: { ...rest, ...faceClass(faces[0]) } };
+}
+
 function faceClass(face: CardFace | undefined): { type?: string[]; subtype?: string[]; allTypes?: string[] } {
   if (!face) return {};
   const p = parseTypeLine(face.typeLine);

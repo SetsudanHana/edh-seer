@@ -23,7 +23,7 @@ import {
 import { basicTypeDemand, classifyLand, creatureTypeDemand } from "./land-conditions.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
 import { BASIC_LAND_TYPE_SET, SUPERTYPES, parseTypeLineAllFaces } from "./typeline.js";
-import { enteringFaceName, faceDeckCards } from "./faces.js";
+import { enteringFaceName, faceDeckCards, graveyardIdentity } from "./faces.js";
 import { claimsNothing, isManaRider, isRefusedTrigger, isSelfLoss } from "./claims.js";
 import { magnitudeOf, mergeMagnitude } from "./edge-magnitude.js";
 import type { LandTypes } from "./chosen-type.js";
@@ -2594,8 +2594,9 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
   // it has one -- sorted first, because `producerEvents` lists authored emits before the implied
   // self deaths -- and the count does not move.
   const said = new Set<string>();
-  for (const e of selfFillsFirst(pEvents)) {
-    if (!(e.verb === "enters" && e.subject.zone === "graveyard")) continue;
+  for (const raw of selfFillsFirst(pEvents)) {
+    if (!(raw.verb === "enters" && raw.subject.zone === "graveyard")) continue;
+    const e = graveyardIdentity(p, raw);
     for (const a of c.tags.abilities) {
       if (a.effect.kind !== "graveyard-recursion" || a.effect.subject?.zone !== "graveyard") continue;
       // A DEATH YOU INFLICT ON THE OTHER SIDE FILLS THEIR GRAVEYARD, NOT YOURS. Liliana's Triumph
@@ -2761,8 +2762,9 @@ function exileProcessingEdges({ p, c, pEvents, reasons }: PairScope): void {
 function graveyardScalingEdges({ p, c, h, pEvents, reasons }: PairScope): void {
   // One reason per tag, as `reanimatorEdges` keeps (#558).
   const said = new Set<string>();
-  for (const e of selfFillsFirst(pEvents)) {
-    if (!(e.verb === "enters" && e.subject.zone === "graveyard")) continue;
+  for (const raw of selfFillsFirst(pEvents)) {
+    if (!(raw.verb === "enters" && raw.subject.zone === "graveyard")) continue;
+    const e = graveyardIdentity(p, raw);
     for (const a of c.tags.abilities) {
       if (a.effect.scaling !== "per-graveyard" || !a.effect.scalingSubject) continue;
       // AN UNTYPED COUNT IS A WILDCARD, and `graveyardFillMatches` passes an untyped demand on
