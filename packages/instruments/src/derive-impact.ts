@@ -11,8 +11,8 @@
  *    --no-ratchets  skip the in-memory role-ratchet and dropped-clauses (BASE -> HEAD, and HEAD against the banked snapshots)
  *    --workers N    worker threads for the pair phase (default: every core but one) and the derive pools (default: every core); the output does not depend on it
  *    --serial       derive rows on the main thread, the pre-#1486 loop. Same output (proved byte-identical); for reproducing that proof
- *    --no-cache     recompute BASE instead of reading `~/.cache/edh-impact/<sha>/rows-<key>.json`, and write nothing. The cache holds BASE's own rows, never HEAD's;
- *                   its key is the base sha, the matcher mode and a digest of every cardClauses / cards / tokens document, so a changed corpus misses by itself
+ *    --no-cache     recompute BASE instead of reading `~/.cache/edh-impact/<sha>/rows-<key>.json`, and write nothing. The cache holds BASE's own rows, never HEAD's, and not the ratchet measurement;
+ *                   its key is the base sha, a digest of this tool's own source and of every cardClauses / cards / tokens document; ratchets are always re-measured, so a changed corpus misses by itself
  *    --matcher      `own` (default): each side's own matcher, which is the truth. `head`: HEAD's on both sides, to isolate what the rows alone did
  *
  *  ITERATING: `--pair-sample 0` (no matcher sample, which alone is ~9 min when matcher code differs) while you edit; the first run per BASE/corpus pays for BASE (~3 min), later runs read it from the cache.
@@ -31,7 +31,7 @@ import { pathToFileURL } from "node:url";
 import { connect, loadConfig } from "@edh-seer/data";
 import { createPool, defaultWorkers } from "@edh-seer/data/parallel";
 import {
-  baseRowsKey, chooseMatcher, classifyRows, clauseKey, docDigest, impactJson, formatReport, ratchetReport, grammarReport, nodeModulesHash, pairsReport, sampleIds, snapOf, splitMatcherCode, treeVerdict,
+  baseRowsKey, toolDigestOf, chooseMatcher, classifyRows, clauseKey, docDigest, impactJson, formatReport, ratchetReport, grammarReport, nodeModulesHash, pairsReport, sampleIds, snapOf, splitMatcherCode, treeVerdict,
   type CardPairs, type GrammarEntry, type GrammarSnap, type RatchetInputs, type ImpactReport, type PairSection, type RowSnap,
 } from "./derive-impact-core.js";
 import { reach } from "./derive-impact-graph.js";
@@ -187,15 +187,15 @@ const cardById = new Map(allCards.map((c) => [c._id as string, c]));
 log(`read ${clauseDocs.length} clause docs (${tokenIds.length} tokens), ${allCards.length} cards (derive scope BASE ${scopeB.size}, HEAD ${scopeH.size})`);
 
 // ---- BASE rows cache (#1486): what BASE's own code made of THIS corpus, stored under its tree ----
-interface BaseCache { rows: [string, string, boolean, any][]; grammarOnly: string[]; grammar: [string, boolean, string][]; ratchets?: RatchetInputs }
-const cacheKey = baseRowsKey({ baseSha, matcher: matcherMode, clauseKeys: clauseDocs.map(clauseKey), cardDigests: allCards.map(docDigest), tokenDigests: tokenDocs.map(docDigest) });
+interface BaseCache { rows: [string, string, boolean, any][]; grammarOnly: string[]; grammar: [string, boolean, string][] }
+const toolDigest = toolDigestOf(["derive-impact.ts", "derive-impact-core.ts"].map((f) => readFileSync(join(import.meta.dirname, f), "utf8")));
+const cacheKey = baseRowsKey({ baseSha, toolDigest, clauseKeys: clauseDocs.map(clauseKey), cardDigests: allCards.map(docDigest), tokenDigests: tokenDocs.map(docDigest) });
 const cacheFile = join(baseRoot, `rows-${cacheKey}.json`);
 let cached: BaseCache | undefined;
 if (!values["no-cache"] && existsSync(cacheFile)) {
   try {
     const c = JSON.parse(readFileSync(cacheFile, "utf8")) as BaseCache;
-    if (c.ratchets || values["no-ratchets"]) { cached = c; log(`BASE rows from cache (${cacheFile})`); }
-    else log("BASE rows cache has no ratchet measurement; recomputing");
+    cached = c; log(`BASE rows from cache (${cacheFile})`);
   } catch (e) { log(`BASE rows cache unreadable (${(e as Error).message}); recomputing`); }
 }
 
@@ -263,7 +263,7 @@ const rows = classifyRows(snaps(rowsB), snaps(rowsH));
 const grammar = grammarReport(grammarEntries.filter((e) => keep(e.name)));
 
 // ---- the two by-name ratchets, in memory (the bins' own measuring functions, each commit's own tagger / matcher / docs.ts, no Mongo write) ----
-let ratchets: ReturnType<typeof ratchetReport> | undefined, baseRatchets: RatchetInputs | undefined;
+let ratchets: ReturnType<typeof ratchetReport> | undefined;
 if (!values["no-ratchets"]) {
   const canonical = new Map(clauseDocs.filter((d) => !d.isToken).map((d) => [d.oracleId as string, d.canonical]));
   const measure = (side: Side, rowsOf: RowMap, detectors: RoleDetectors): RatchetInputs => {
@@ -275,18 +275,24 @@ if (!values["no-ratchets"]) {
   };
   const bank = (f: string): unknown => JSON.parse(readFileSync(join(REPO, "packages/instruments", f), "utf8"));
   const bankedDropped = bank("dropped-clauses.json") as RatchetInputs["dropped"], bankedRoles = bank("role-membership.json") as RatchetInputs["roles"], bankedUntagged = bank("role-membership-untagged.json") as string[];
-  baseRatchets = cached?.ratchets ?? measure(B, rowsB, matcherMode === "own" ? B.matcher : H.matcher);
-  ratchets = ratchetReport(baseRatchets, measure(H, rowsH, H.matcher), { dropped: bankedDropped, roles: bankedRoles, untagged: bankedUntagged });
+  // NEVER CACHED: BASE's ratchet measurement runs partly on HEAD's code (ratchet-measure.ts, INERT_VERBS via dropped-clauses-core, `--matcher head`).
+  ratchets = ratchetReport(measure(B, rowsB, matcherMode === "own" ? B.matcher : H.matcher), measure(H, rowsH, H.matcher), { dropped: bankedDropped, roles: bankedRoles, untagged: bankedUntagged });
   log(`ratchets measured: dropped-clauses ${ratchets.dropped.base.actions} -> ${ratchets.dropped.head.actions}, role-ratchet gained ${ratchets.roles.gained.length} lost ${ratchets.roles.lost.length}, untagged ${ratchets.untagged.base} -> ${ratchets.untagged.head}`);
 }
 
 if (!cached && !values["no-cache"]) {
-  // Written to a temp name and renamed: a reader never sees half a file. The files of other keys under this sha are stale corpora; they stay (the tree is the user's cache to clear).
+  // Written to a temp name and renamed: a reader never sees half a file. A failed write (disk full, tree moved) costs the cache, never the run.
+  // CEILING: files of other keys under this sha are stale corpora and are never pruned (~50 MB each); the tree is the user's cache to clear.
   const tmp = `${cacheFile}.${process.pid}.tmp`;
-  const payload: BaseCache = { rows: [...rowsB].map(([id, r]) => [id, r.snap.name, r.snap.fromGrammar, r.tags]), grammarOnly: [...grammarOnlyB], grammar: baseGrammar, ...(baseRatchets ? { ratchets: baseRatchets } : {}) };
-  writeFileSync(tmp, JSON.stringify(payload));
-  renameSync(tmp, cacheFile);
-  log(`BASE rows cached to ${cacheFile}`);
+  try {
+    const payload: BaseCache = { rows: [...rowsB].map(([id, r]) => [id, r.snap.name, r.snap.fromGrammar, r.tags]), grammarOnly: [...grammarOnlyB], grammar: baseGrammar };
+    writeFileSync(tmp, JSON.stringify(payload));
+    renameSync(tmp, cacheFile);
+    log(`BASE rows cached to ${cacheFile}`);
+  } catch (e) {
+    log(`BASE rows not cached (${(e as Error).message})`);
+    rmSync(tmp, { force: true });
+  }
 }
 
 // ---- pair reasons, spread over worker threads (results come back in input order, so the report equals a one-worker run) ----

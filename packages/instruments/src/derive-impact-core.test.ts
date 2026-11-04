@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deriveCardTags, deriveInputOf, grammarClauseRecords } from "@edh-seer/tagger";
 import {
-  CONSTANT_FIELDS, FIELD_KIND, formatRatchets, ratchetReport, chooseMatcher, classifyRows, compareRow, diffReasons, fieldDiff, formatSummary, baseRowsKey, clauseKey, docDigest, grammarReport, instrumentFor, nodeModulesHash, NOT_MEASURED, sampleCoverage, splitMatcherCode,
+  CONSTANT_FIELDS, FIELD_KIND, formatRatchets, ratchetReport, chooseMatcher, classifyRows, compareRow, diffReasons, fieldDiff, formatSummary, baseRowsKey, toolDigestOf, clauseKey, docDigest, grammarReport, instrumentFor, nodeModulesHash, NOT_MEASURED, sampleCoverage, splitMatcherCode,
   pairsReport, pick, sampleIds, snapOf, tagFamily, treeVerdict, type ImpactReport, type RowSnap,
 } from "./derive-impact-core.js";
 
@@ -220,7 +220,7 @@ describe("formatSummary", () => {
 
 describe("BASE rows cache key (#1486)", () => {
   const input = () => ({
-    baseSha: "abc", matcher: "own" as const, clauseKeys: ["a:h1:3:x", "b:h2:3:y"], cardDigests: ["c1", "c2"], tokenDigests: ["t1"],
+    baseSha: "abc", toolDigest: "T", clauseKeys: ["a:h1:3:x", "b:h2:3:y"], cardDigests: ["c1", "c2"], tokenDigests: ["t1"],
   });
   it("is stable and order-independent for the clause keys", () => {
     expect(baseRowsKey(input())).toBe(baseRowsKey(input()));
@@ -229,7 +229,7 @@ describe("BASE rows cache key (#1486)", () => {
   it("changes when any input changes", () => {
     const k = baseRowsKey(input());
     const variants = [
-      { ...input(), baseSha: "abd" }, { ...input(), matcher: "head" as const },
+      { ...input(), baseSha: "abd" }, { ...input(), toolDigest: toolDigestOf(["edited"]) },
       { ...input(), clauseKeys: ["a:h1:4:x", "b:h2:3:y"] }, { ...input(), clauseKeys: ["a:h1:3:x"] },
       { ...input(), cardDigests: ["c1", "c3"] }, { ...input(), cardDigests: ["c1", "c2", "c3"] },
       { ...input(), tokenDigests: ["t2"] }, { ...input(), tokenDigests: [] },
@@ -239,10 +239,17 @@ describe("BASE rows cache key (#1486)", () => {
   it("does not let a boundary move between the lists", () => {
     expect(baseRowsKey({ ...input(), cardDigests: ["c1"], tokenDigests: ["c2", "t1"] })).not.toBe(baseRowsKey(input()));
   });
-  it("clauseKey is oracleId:segmentHash:normalizeVersion plus a digest of the stored answer; docDigest follows content", () => {
-    const d = { oracleId: "o", segmentHash: "h", normalizeVersion: 3, canonical: [1] };
+  it("toolDigestOf follows the text of each file, and their order", () => {
+    expect(toolDigestOf(["a", "b"])).toBe(toolDigestOf(["a", "b"]));
+    expect(toolDigestOf(["a", "b"])).not.toBe(toolDigestOf(["a", "c"]));
+    expect(toolDigestOf(["a", "b"])).not.toBe(toolDigestOf(["b", "a"]));
+  });
+  it("clauseKey digests the whole clause doc: the stored answer, the name and isToken each move it", () => {
+    const d = { oracleId: "o", segmentHash: "h", normalizeVersion: 3, canonical: [1], name: "N", isToken: false };
     expect(clauseKey(d)).toMatch(/^o:h:3:[0-9a-f]+$/);
     expect(clauseKey({ ...d, canonical: [2] })).not.toBe(clauseKey(d));
+    expect(clauseKey({ ...d, name: "M" })).not.toBe(clauseKey(d));
+    expect(clauseKey({ ...d, isToken: true })).not.toBe(clauseKey(d));
     expect(docDigest({ a: 1 })).not.toBe(docDigest({ a: 2 }));
   });
 });

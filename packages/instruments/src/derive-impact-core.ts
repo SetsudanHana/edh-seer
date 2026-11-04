@@ -256,21 +256,25 @@ export const nodeModulesHash = (names: string[]): string => createHash("sha1").u
 const sha1 = (x: string): string => createHash("sha1").update(x).digest("hex");
 /** Content digest of one Mongo document (key order is the stored order, which is stable). */
 export const docDigest = (d: unknown): string => sha1(JSON.stringify(d));
-/** One `cardClauses` doc as the key sees it: `oracleId:segmentHash:normalizeVersion`, plus a digest of the stored answer (`canonical`), which derive reads and the version does not pin. */
-export const clauseKey = (d: { oracleId: string; segmentHash: string; normalizeVersion: number; canonical?: unknown }): string => `${d.oracleId}:${d.segmentHash}:${d.normalizeVersion}:${docDigest(d.canonical ?? null).slice(0, 16)}`;
+/** One `cardClauses` doc as the key sees it: `oracleId:segmentHash:normalizeVersion` (readable) plus a digest of the WHOLE document: BASE also reads `name` (self-reference, the snap) and `isToken`, and the stored answer the version does not pin.
+ *  A churn that touches no read field misses the cache needlessly, which is the safe direction. */
+export const clauseKey = (d: { oracleId: string; segmentHash: string; normalizeVersion: number } & Record<string, unknown>): string => `${d.oracleId}:${d.segmentHash}:${d.normalizeVersion}:${docDigest(d).slice(0, 16)}`;
 export interface BaseRowsKeyInput {
-  baseSha: string; matcher: MatcherMode;
+  baseSha: string;
+  /** sha1 of the text of every HEAD-side tool file that shapes the cached rows (derive-impact.ts builds the grammar-only rows; derive-impact-core.ts makes the snaps) */ toolDigest: string;
   /** `clauseKey` of every cardClauses doc */ clauseKeys: string[];
   /** `docDigest` of every card document (derive reads oracleText, typeLine, keywords, legalities ... of them) */ cardDigests: string[];
   /** `docDigest` of every token document */ tokenDigests: string[];
 }
-/** What BASE's rows (and its ratchet measurement) are a function of, besides BASE's own code (named by the sha): the three Mongo collections derive reads, and the matcher mode the BASE ratchet runs with.
- *  Counts are hashed with the lists, so a list cannot gain what another loses. The clause keys are sorted: Mongo's order is not a fact. */
+/** What BASE's cached rows are a function of, besides BASE's own code (named by the sha): the tool's own code that builds them, and the three Mongo collections derive reads.
+ *  NOT the ratchet measurement: that runs partly on HEAD's code (INERT_VERBS, ratchet-measure.ts) and is never cached. Counts are hashed with the lists, so a list cannot gain what another loses. The clause keys are sorted: Mongo's order is not a fact. */
 export function baseRowsKey(i: BaseRowsKeyInput): string {
   const h = createHash("sha1");
-  h.update(`sha ${i.baseSha}\nmatcher ${i.matcher}\nclauses ${i.clauseKeys.length}\n${[...i.clauseKeys].sort().join("\n")}\ncards ${i.cardDigests.length}\n${[...i.cardDigests].sort().join("\n")}\ntokens ${i.tokenDigests.length}\n${[...i.tokenDigests].sort().join("\n")}`);
+  h.update(`sha ${i.baseSha}\ntool ${i.toolDigest}\nclauses ${i.clauseKeys.length}\n${[...i.clauseKeys].sort().join("\n")}\ncards ${i.cardDigests.length}\n${[...i.cardDigests].sort().join("\n")}\ntokens ${i.tokenDigests.length}\n${[...i.tokenDigests].sort().join("\n")}`);
   return h.digest("hex").slice(0, 20);
 }
+/** The tool digest: sha1 over the named files' texts, in the order given. */
+export const toolDigestOf = (texts: string[]): string => sha1(texts.map((t) => sha1(t)).join("\n"));
 
 // ---- summary ----
 
