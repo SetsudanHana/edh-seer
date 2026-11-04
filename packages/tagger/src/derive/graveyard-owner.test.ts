@@ -2,8 +2,10 @@
 import { describe, expect, test } from "vitest";
 import type { ClauseRecord } from "../canonicalize.js";
 import { clauseGrants, clauseTexts } from "../derive-input.js";
-import { deriveAbilities } from "./derive.js";
-import { graveyardOwner } from "./graveyard-owner.js";
+import { deriveAbilities, deriveCardTags } from "./derive.js";
+import { graveyardOwner, selfGraveyardOwner } from "./graveyard-owner.js";
+import { grammarClauseRecords } from "../grammar/clause-record.js";
+import { deriveInputOf } from "../derive-input.js";
 import fixtures from "./graveyard-owner.fixtures.json" with { type: "json" };
 
 type Fx = { typeLine: string; keywords: string[]; oracleText: string; clauses: unknown[] };
@@ -80,5 +82,51 @@ describe("graveyardOwner reads only a printed 'your graveyard'", () => {
   });
   test("a pointer with no graveyard anywhere stays unread", () => {
     expect(graveyardOwner(zone("those cards"), "Return those cards to your hand.", "Return those cards to your hand.")).toBeUndefined();
+  });
+});
+
+/** A card that moves ITSELF out of a graveyard leaves its owner's, which is yours (#1496). Reassembling Skeleton is read by the grammar (Mongo clauseSource: grammar, 2026-11-04); the others by the model. */
+describe("a self graveyard leave carries control you (#1496)", () => {
+  const selfLeaves = (abilities: ReturnType<typeof deriveAbilities>["abilities"]) =>
+    abilities.flatMap((a) => a.emits ?? []).filter((e) => (e.subject.zone === "graveyard" || e.subject.fromZone === "graveyard") && e.subject.self === true);
+  test("Reassembling Skeleton (grammar): leaves and enters are yours", () => {
+    const card = { name: "Reassembling Skeleton", typeLine: "Creature — Skeleton Warrior", oracleText: "{1}{B}: Return this card from your graveyard to the battlefield tapped.", keywords: [] as string[] };
+    const g = grammarClauseRecords(card);
+    expect(g.complete).toBe(true);
+    const mine = selfLeaves(deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings)).abilities);
+    expect(mine.map((e) => e.verb).sort()).toEqual(["enters", "leaves"]);
+    expect(mine.map((e) => e.subject.control)).toEqual(["you", "you"]);
+  });
+  test.each(["Scavenged Brawler", "Wave of Rats"])("%s (model): every self graveyard emit is yours", (name) => {
+    const f = FX[name]!;
+    const { abilities } = deriveAbilities(f.clauses as ClauseRecord[], name, clauseTexts(f), undefined, f.oracleText, undefined, undefined, undefined, undefined, undefined, undefined, undefined, clauseGrants(f));
+    const mine = selfLeaves(abilities);
+    expect(mine.length).toBeGreaterThan(0);
+    expect(mine.map((e) => e.subject.control)).not.toContain("any");
+  });
+  test("kept: a non-self 'return target card from a graveyard' stays any (Naya Charm)", () => {
+    const f = FX["Naya Charm"]!;
+    const { abilities } = deriveAbilities(f.clauses as ClauseRecord[], "Naya Charm", clauseTexts(f), undefined, f.oracleText, undefined, undefined, undefined, undefined, undefined, undefined, undefined, clauseGrants(f));
+    const other = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.subject.fromZone === "graveyard" && e.subject.self !== true);
+    expect(other.length).toBeGreaterThan(0);
+    expect(other.map((e) => e.subject.control)).toEqual(other.map(() => "any"));
+  });
+  test("kept: Silent Gravestone's 'this artifact and all cards from all graveyards' is no card leaving your graveyard", () => {
+    const f = FX["Silent Gravestone"]!;
+    const { abilities } = deriveAbilities(f.clauses as ClauseRecord[], "Silent Gravestone", clauseTexts(f), undefined, f.oracleText, undefined, undefined, undefined, undefined, undefined, undefined, undefined, clauseGrants(f));
+    expect(selfLeaves(abilities).map((e) => e.subject.control)).not.toContain("you");
+  });
+  test("selfGraveyardOwner: yours unless the object names another graveyard", () => {
+    expect(selfGraveyardOwner({ object: "this card" })).toBe("you");
+    expect(selfGraveyardOwner({ object: "this artifact and all cards from all graveyards" })).toBeUndefined();
+  });
+  test("kept: a self return that hands the card to another player keeps its `enters` any, its graveyard leave is still yours (Plague Reaver, Necrotic Plague)", () => {
+    for (const name of ["Plague Reaver", "Necrotic Plague"]) {
+      const f = FX[name]!;
+      const { abilities } = deriveAbilities(f.clauses as ClauseRecord[], name, clauseTexts(f), undefined, f.oracleText, undefined, undefined, undefined, undefined, undefined, undefined, undefined, clauseGrants(f));
+      const mine = selfLeaves(abilities);
+      expect(mine.filter((e) => e.verb === "enters").map((e) => e.subject.control), name).not.toContain("you");
+      expect(mine.filter((e) => e.verb === "leaves").map((e) => e.subject.control), name).not.toContain("any");
+    }
   });
 });
