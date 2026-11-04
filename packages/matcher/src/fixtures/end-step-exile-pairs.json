@@ -1,0 +1,291 @@
+{
+ "Gruesome Encore": {
+  "source": {
+   "name": "Gruesome Encore",
+   "typeLine": "Sorcery",
+   "oracleText": "Put target creature card from an opponent's graveyard onto the battlefield under your control. It gains haste. Exile it at the beginning of the next end step. If that creature would leave the battlefield, exile it instead of putting it anywhere else.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target creature card from an opponent's graveyard",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Mulldrifter": {
+  "source": {
+   "name": "Mulldrifter",
+   "typeLine": "Creature — Elemental",
+   "oracleText": "Flying\nWhen this creature enters, draw two cards.\nEvoke {2}{U} (You may cast this spell for its evoke cost. If you do, it's sacrificed when it enters.)",
+   "keywords": [
+    "Flying",
+    "Evoke"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{4}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Evoke {2}{U}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Impact Tremors": {
+  "source": {
+   "name": "Impact Tremors",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever a creature you control enters, this enchantment deals 1 damage to each opponent.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Ulamog's Nullifier": {
+  "source": {
+   "name": "Ulamog's Nullifier",
+   "typeLine": "Creature — Eldrazi Processor",
+   "oracleText": "Devoid (This card has no color.)\nFlash\nFlying\nWhen this creature enters, you may put two cards your opponents own from exile into their owners' graveyards. If you do, counter target spell.",
+   "keywords": [
+    "Flying",
+    "Devoid",
+    "Flash"
+   ],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "manaCost": "{2}{U}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Devoid",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "two cards your opponents own",
+      "fromZone": "exile",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "counter-spell",
+      "object": "target spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Ruin Processor": {
+  "source": {
+   "name": "Ruin Processor",
+   "typeLine": "Creature — Eldrazi Processor",
+   "oracleText": "When you cast this spell, you may put a card an opponent owns from exile into that player's graveyard. If you do, you gain 5 life.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 7,
+   "colorIdentity": [],
+   "power": "7",
+   "toughness": "8",
+   "manaCost": "{7}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "this spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "a card an opponent owns from exile",
+      "fromZone": "exile",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "gain-life",
+      "object": "target player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "5",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ }
+}

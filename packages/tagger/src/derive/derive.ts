@@ -1087,6 +1087,8 @@ const DAMAGE_RECEIVED = /\b(?:is|are|becomes?) dealt\b/i;
 const PUT_PRONOUN = /^(?:it|them|that card|that creature|those creatures|those cards|that permanent)$/i;
 /** "...onto the battlefield under your control" (Gruesome Encore, Ashen Powder): the put permanent is yours whoever's graveyard it came from. */
 const UNDER_YOUR_CONTROL = /\bunder your control\b/;
+/** The put's own object names an opponent's graveyard: the card is OWNED by that opponent (CR 400.3), so it is never a card of your deck (owner ruling #729); `owner: "opp"` on the emit says so (#1502). */
+const OPPONENTS_GRAVEYARD = /\bopponents?['\u2019]s? graveyards?\b/i;
 /** A put that hands the permanent to another player ("under its owner's control", "under that player's control"). */
 const UNDER_ANOTHERS_CONTROL = /\bunder (?:its owner's|their owner's|that player's|their|target opponent's|an opponent's) control\b/;
 /** A clause that puts a NONTOKEN permanent onto the battlefield and makes no token (Gruesome Encore: "Put target creature card ... onto the battlefield ... Exile it at the beginning of the next end step"): its
@@ -3275,12 +3277,12 @@ export function deriveAbilities(
         const { zone: _z, owner: _o, ...rest } = e.subject;
         if (exileOfPut) {
           const { scope: _s, ...untargeted } = rest;
-          e.subject = { ...untargeted, fromZone: "battlefield", token: false, ...(UNDER_ANOTHERS_CONTROL.test(text) ? {} : { control: "you" as const }) };
+          e.subject = { ...untargeted, fromZone: "battlefield", token: false, ...(UNDER_ANOTHERS_CONTROL.test(text) ? {} : { control: "you" as const }), ...(OPPONENTS_GRAVEYARD.test((clause.actions ?? [])[putIdx]?.object ?? "") ? { owner: "opp" as const } : {}) };
         } else e.subject = { ...rest, fromZone: "battlefield" };
       }
       // CEILING (#1502): only a put that is followed by the pronoun exile reads its `enters` as yours. The same "under your control" on a put with no such exile (Ashen Powder; Chorale of the Void, Helm of Obedience,
       // Nurgle's Conscription and ~70 more, measured 2026-11-04) stays `control: opp`: reading all of them as yours adds 85,377 pairs (80,249 of them into creature ETB consumers), a census of its own.
-      if ((action.verb === "put" || action.verb === "return") && action.toZone === "battlefield" && UNDER_YOUR_CONTROL.test(text) && putsNonToken && (clause.actions ?? []).some((a) => a.verb === "exile" && PUT_PRONOUN.test((a.object ?? "").trim()))) for (const e of emits) if (e.verb === "enters" && e.subject.self !== true) e.subject = { ...e.subject, control: "you" };
+      if ((action.verb === "put" || action.verb === "return") && action.toZone === "battlefield" && UNDER_YOUR_CONTROL.test(text) && putsNonToken && (clause.actions ?? []).some((a) => a.verb === "exile" && PUT_PRONOUN.test((a.object ?? "").trim()))) for (const e of emits) if (e.verb === "enters" && e.subject.self !== true) e.subject = { ...e.subject, control: "you", ...(OPPONENTS_GRAVEYARD.test(action.object ?? "") ? { owner: "opp" as const } : {}) };
       // THE CARD ITSELF HIT BY A FIGHT-BACK is bare `self` (Garruk's "him" kept the antecedent "target creature": a planeswalker typed creature, scope target) (#1266, burn).
       const selfDamage = action.verb === "deal-damage" && damageHitsSelf(action.object ?? "", text);
       if (selfDamage) for (const e of emits) e.subject = { control: "any", token: null, self: true };

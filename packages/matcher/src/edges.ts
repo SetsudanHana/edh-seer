@@ -2381,6 +2381,9 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
           // entry for anything watching creatures, but it is never the CONSUMER entering, which is
           // the only event a self trigger watches.
           if (identity.self === true) continue;
+          // A CARD AN OPPONENT OWNS IS NEVER A CARD OF THIS DECK (#1502, owner ruling #729): Gruesome Encore's put from "an opponent's graveyard" (CR 400.3: the card is its owner's) emits `owner: opp`, and a
+          // deck-mate's own "when this creature enters" is never fired by it. The class triggers ("a creature you control enters") still hear it.
+          if (identity.owner === "opp") continue;
           // A CARD RETURNED FROM A GRAVEYARD IS A CARD, AND ITS FRONT FACE (#1497). A token that left the battlefield
           // ceases to exist (CR 111.7), so it is never in a graveyard to be returned (Outlaws' Merriment's Human Rogue); and
           // a card in a graveyard has only its front face's characteristics (CR 712.8a; a daybound card is the exception, 702.145b), so a back face's own "when this
@@ -2739,7 +2742,8 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
 // graveyard" reaches theirs as readily as yours.
 function exileProcessingEdges({ p, c, pEvents, reasons }: PairScope): void {
   for (const e of pEvents) {
-    if (e.verb !== "exiled" || e.subject.control === "you" || e.subject.self === true) continue;
+    // `owner` first: a creature you put onto the battlefield from an opponent's graveyard is yours to control and theirs to own (#1502).
+    if (e.verb !== "exiled" || (e.subject.owner ?? e.subject.control) === "you" || e.subject.self === true) continue;
     for (const a of c.tags.abilities) {
       if (a.effect.kind !== "exile-processing") continue;
       reasons.push({

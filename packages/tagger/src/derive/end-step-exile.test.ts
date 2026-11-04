@@ -90,6 +90,11 @@ describe("#1502 fix round: the exile of a put NONTOKEN permanent", () => {
     expect([ex.subject.control, ex.subject.scope, ex.subject.token]).toEqual(["you", undefined, false]);
     expect(emitsOf(rowOf("Gruesome Encore"), "enters").map((e) => e.subject.control)).toEqual(["you"]);
   });
+  test("Gruesome Encore: the put's `enters` and the stamped exile are owned by the opponent whose graveyard the card came from; Whip of Erebos (your graveyard) states no owner", () => {
+    expect(emitsOf(rowOf("Gruesome Encore"), "enters").map((e) => e.subject.owner)).toEqual(["opp"]);
+    expect(exiledFromBattlefield("Gruesome Encore").map((e) => e.subject.owner)).toEqual(["opp"]);
+    expect(emitsOf(rowOf("Whip of Erebos"), "exiled").map((e) => e.subject.owner)).toEqual([undefined]);
+  });
   test("Ashen Powder (no end-step exile): its `enters` is left as stored, the opponent's graveyard owner (CEILING, derive.ts)", () => {
     expect(emitsOf(rowOf("Ashen Powder"), "enters").map((e) => e.subject.control)).toEqual(["opp"]);
   });
