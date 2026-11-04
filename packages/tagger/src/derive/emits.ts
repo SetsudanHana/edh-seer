@@ -728,7 +728,9 @@ export function printsControlChange(clauseText: string): boolean {
 /** THE CARD ITSELF FIGHTS (#1471): "this creature fights up to one target creature you don't control" (Thorn Mammoth, Markov Enforcer), "~ fights", or a pronoun with no earlier object ("When this creature enters, it fights ...": Scab-Clan Giant, Wicked Wolf). The fighter is then the producer and
  *  never another card's self trigger. Refused: a pronoun whose antecedent is another object ("Target creature you control gets +1/+1. It fights ...", "whenever a creature you control enters, it fights", "If it's a creature card ... it fights Hans Eriksson"), and a fight whose other target may
  *  be YOUR creature ("another target creature", "target creature you control": Brash Taunter, Golden Guardian), since your Exalted Angel can be the one fought. The card-level conditions (a permanent, not a Saga, not a granted ability) are applied in derive.ts.
- *  CEILING: the card's NAME as fighter is not read; a fight whose target is "target creature" with no control stated, or "target creature token" (Hivespine Wolverine), stays unmarked;
+ *  The card's own NAME or short name before " fights " is the card too ("Gargos fights", #1480), through isSelfSubject on the last words.
+ *  CEILING: a name before the bare verb ("have Gargos fight") is not read, and "another creature named X fights" would read as the card
+ *  (no corpus card says it); a fight whose target is "target creature" with no control stated, or "target creature token" (Hivespine Wolverine), stays unmarked;
  *  a Saga creature's own chapter fight ("Summon: Magus Sisters": "This creature fights") is stripped with the Saga in derive.ts. Each leaves a typed `you` dealer that Exalted Angel-type triggers hear. */
 function fightersOf(clauseText: string, cardName?: string): { fighter: boolean; notYours: boolean }[] {
   const lower = clauseText.toLowerCase();
@@ -777,7 +779,7 @@ function namesCard(before: string, cardName?: string): boolean {
 function selfFights(clauseText: string, cardName?: string): boolean {
   return fightersOf(clauseText, cardName).some((f) => f.fighter && f.notYours);
 }
-/** Is the card ITSELF the fighter ("this creature fights ...", "it fights ...", "~ fights ...")? The half of the fight that damages the fighter then damages the card (#1474). */
+/** Is the card ITSELF the fighter ("this creature fights ...", "it fights ...", "~ fights ...", its own name: "Gargos fights ...")? The half of the fight that damages the fighter then damages the card (#1474). */
 function cardFightsIn(clauseText: string, cardName?: string): boolean {
   return fightersOf(clauseText, cardName).some((f) => f.fighter);
 }
