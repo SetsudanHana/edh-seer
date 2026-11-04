@@ -5,7 +5,7 @@ import { faceDeckCards } from "./faces.js";
 import { fixtureDeckCard } from "./fixture-cards.js";
 import { FREE_TAP, mkLine } from "./mana-test-support.js";
 import type { Reason } from "@edh-seer/engine";
-import { deriveAbilities } from "@edh-seer/tagger";
+import { deriveAbilities, deriveCardTags } from "@edh-seer/tagger";
 import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 
@@ -7701,4 +7701,23 @@ test("a self 'prevented' producer does not feed a 'prevented' consumer about the
   // Damage to anything prevented (the five untyped `any` consumers) and another card's prevention still match.
   expect(eventMatches(khârn, { verb: "prevented", subject: { control: "any" as const, token: null } }, H)).toBe(true);
   expect(eventMatches({ verb: "prevented", subject: { control: "any", token: null } } as never, squire, H)).toBe(true);
+});
+
+// "A CARD OR TOKEN" IS EITHER (#1499). Necrodominance's replacement exiles a card or a token; its emit stored `token: true` and so
+// stopped feeding The War Doctor's "one or more other CARDS are put into exile" (#1495 `cardsNotTokens`). Clause records are the
+// cards' Mongo `cardClauses.clauses` (DERIVE 448), oracle lines from `cards.oracleText`.
+test("Necrodominance's exile of 'a card or token' feeds The War Doctor's card-exile trigger; a token-only exile does not", () => {
+  const mk = (name: string, text: string, clauses: unknown[]) => {
+    const chars = { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, keywords: [] };
+    return base(name, (deriveCardTags({ oracleId: name, name, clauses: clauses as never, clauseTexts: { 1: text, 2: text, 4: text }, oracleText: text, characteristics: chars }) as CardTags).abilities);
+  };
+  const exileLine = (object: string) => [{ id: 4, abilityType: "static", actions: [{ verb: "exile", object, fromZone: null, toZone: "exile", amount: null, optional: false }] }];
+  const doctor = mk("The War Doctor", "Whenever one or more other cards are put into exile from anywhere, put a time counter on The War Doctor.",
+    [{ id: 2, abilityType: "triggered", trigger: { event: "exiled", subject: "one or more other cards from anywhere", control: "any" },
+      actions: [{ verb: "add-counter", object: "time", fromZone: null, toZone: null, amount: "1", optional: false }] }]);
+  const either = mk("Necrodominance", "If a card or token would be put into your graveyard from anywhere, exile it instead.", exileLine("a card or token"));
+  const tokenOnly = mk("Token Eater", "If a token would be put into your graveyard from anywhere, exile it instead.", exileLine("a token"));
+  const hears = (p: ReturnType<typeof base>) => pairReasons(p, doctor, H).some((r) => r.tag.startsWith("exiled"));
+  expect(hears(either)).toBe(true);
+  expect(hears(tokenOnly)).toBe(false);
 });
