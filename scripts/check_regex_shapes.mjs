@@ -180,11 +180,12 @@ function baseRef() {
 /** `[{ file, line, text }]` added since `base`, working tree included, plus untracked files whole. */
 function addedLines(base) {
   const out = [];
-  let file = null, n = 0;
+  let file = null, n = 0, header = false;
   for (const l of git("diff", "-U0", "--no-color", "--no-ext-diff", base, "--", "*.ts", "*.tsx", "*.mjs").split("\n")) {
-    if (l.startsWith("+++ ")) { file = l.startsWith("+++ b/") ? l.slice(6) : null; continue; }
+    if (l.startsWith("diff --git ")) { header = true; continue; }
+    if (header && l.startsWith("+++ ")) { file = l.startsWith("+++ b/") ? l.slice(6) : null; continue; }
     const h = l.match(/^@@ -\S+ \+(\d+)/);
-    if (h) { n = Number(h[1]); continue; }
+    if (h) { n = Number(h[1]); header = false; continue; }
     if (l.startsWith("+") && file && inScope(file)) out.push({ file, line: n++, text: l.slice(1) });
   }
   return [...out, ...wholeFiles(git("ls-files", "--others", "--exclude-standard").split("\n"))];
@@ -226,6 +227,8 @@ const MUST_PASS = [
   String.raw`x.match(/(?:\{[^{}]+\})+/)`,
   String.raw`x.match(/search(?:es)?\s+(?:your|their)\b/i)`,
   String.raw`x.match(/\d+\s*\/\s*\d+/)`,
+  String.raw`x.match(/^Add /m)`,
+  String.raw`const t = new DOMParser().parseFromString(html, "text/html").body.textContent;`,
   String.raw`x.match(/\[[^[\]]+\]/)`,
   String.raw`x.match(/^Enchant ([^\n]+)$/m)`,
   String.raw`const half = total / 2 / 3;`,
