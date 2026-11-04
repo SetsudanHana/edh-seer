@@ -67,8 +67,9 @@ outside the brief — report it under Concerns instead.
 
 The ratchet caps are `KNOWN_DEFECT_CAP`, the compass and `known-lost-pairs.json`. **Banking a new
 `CEILING:` marker is not editing a cap**: a deliberate simplification is written as `CEILING:`, and
-when `lint:ceilings` then fails, run `node scripts/check_ceiling_count.mjs --bank` and say why in the
-commit. Never hide a simplification as a plain "Known gap" or "Scope:" comment to keep the count down.
+when `lint:ceilings` then fails, run `node scripts/check_ceiling_count.mjs --bank` and write in the
+commit message which marker was added and why. A FALL in the count is banked only when the
+simplification was actually removed or fixed, and the commit names it. Never hide a simplification as a plain "Known gap" or "Scope:" comment to keep the count down.
 
 ## Report (exactly this shape)
 

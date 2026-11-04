@@ -23,7 +23,7 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { MongoClient } from "mongodb";
 import { loadConfig } from "@edh-seer/data";
-import { parseArgs, planSteps, preflight, rewriteDeriveVersion, type Step } from "./derive-bump-core.js";
+import { parseArgs, planSteps, preflight, rewriteDeriveVersion, withoutOwnTag, type Step } from "./derive-bump-core.js";
 
 const ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
 const DERIVE_TS = "packages/tagger/src/derive/derive.ts";
@@ -88,7 +88,7 @@ async function main(): Promise<number> {
     plan.forEach((s, i) => console.log(`${i + 1}. ${s.name}: ${show(s)}${s.stopOnFail ? "" : "   [reported, does not stop]"}`));
     if (bumped) {
       console.log(`\n${DERIVE_TS} edit: ${bumped.from} -> ${bumped.to}`);
-      console.log(`  + // ${bumped.to}: #${(args as { issue: number }).issue} -- ${(args as { note: string }).note}`);
+      console.log(`  + // ${bumped.to}: #${(args as { issue: number }).issue} -- ${withoutOwnTag((args as { note: string }).note, (args as { issue: number }).issue)}`);
       console.log(`  - export const DERIVE_VERSION = ${bumped.from};`);
       console.log(`  + export const DERIVE_VERSION = ${bumped.to};`);
     }

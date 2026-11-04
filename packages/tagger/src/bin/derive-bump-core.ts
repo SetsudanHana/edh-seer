@@ -57,21 +57,28 @@ export function rewriteDeriveVersion(src: string, issue: number, note: string): 
   if (!before.endsWith("\n") || !lastLine.startsWith(`// ${from}:`)) {
     throw new Error(`the line above DERIVE_VERSION must start with "// ${from}:" (one line per version, newest last)`);
   }
-  const text = `${before}// ${to}: #${issue} -- ${withoutOwnTag(note, issue)}\nexport const DERIVE_VERSION = ${to};${src.slice(m.index + m[0].length)}`;
+  const body = withoutOwnTag(note, issue);
+  if (body.trim() === "") throw new Error(`--note is only the issue tag "#${issue}": say what changed`);
+  const text = `${before}// ${to}: #${issue} -- ${body}\nexport const DERIVE_VERSION = ${to};${src.slice(m.index + m[0].length)}`;
   return { text, from, to };
 }
 
 /** The note without a leading tag for the SAME issue ("#1499 -- …", "#1499: …"): the line already
  *  starts `#ISSUE --`, and notes written that way gave `#1499 -- #1499 --` at 434, 445 and 449 (#1506).
- *  Another issue's tag, or a later mention, is kept. String ops, no regex (CodeQL polynomial shapes). */
-function withoutOwnTag(note: string, issue: string | number): string {
+ *  Only ONE separator is dropped, so "#1499 -- -1/-1 counters" keeps its minus sign. Another issue's
+ *  tag, or a later mention, is kept. String ops, no regex (CodeQL polynomial shapes). */
+export function withoutOwnTag(note: string, issue: string | number): string {
   const t = note.trimStart();
   const tag = `#${issue}`;
   if (!t.startsWith(tag)) return note;
   const next = t.charAt(tag.length);
   if (next >= "0" && next <= "9") return note; // "#14990" is another issue
   let i = tag.length;
-  while (i < t.length && " -:—–".includes(t.charAt(i))) i++;
+  while (t.charAt(i) === " ") i++;
+  for (const sep of ["--", "—", "–", ":", "-"]) {
+    if (t.startsWith(sep, i)) { i += sep.length; break; }
+  }
+  while (t.charAt(i) === " ") i++;
   return t.slice(i);
 }
 
