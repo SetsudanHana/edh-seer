@@ -25,10 +25,11 @@ import { pathToFileURL } from "node:url";
 import { connect, loadConfig } from "@edh-seer/data";
 import { createPool, defaultWorkers } from "@edh-seer/data/parallel";
 import {
-  chooseMatcher, classifyRows, formatReport, ratchetReport, grammarReport, nodeModulesHash, pairsReport, sampleIds, snapOf, splitMatcherCode, treeVerdict,
+  chooseMatcher, classifyRows, impactJson, formatReport, ratchetReport, grammarReport, nodeModulesHash, pairsReport, sampleIds, snapOf, splitMatcherCode, treeVerdict,
   type CardPairs, type GrammarEntry, type RatchetInputs, type ImpactReport, type PairSection, type RowSnap,
 } from "./derive-impact-core.js";
 import { reach } from "./derive-impact-graph.js";
+import { buildPairRows } from "./loss-classify-core.js";
 import { measureDropped, measureRoles, type DroppedTagger, type RoleDetectors } from "./ratchet-measure.js";
 import type { PairItem, PairResult, Setup } from "./derive-impact-worker.js";
 
@@ -275,6 +276,10 @@ const report: ImpactReport = {
   matcher: matcherMode, matcherCode, matcherOffPath, ...(samplePopulation ? { samplePopulation } : {}), rows, grammar, ...(pairs ? { pairs } : {}), ...(sample ? { sample } : {}), ...(tokens ? { tokens } : {}), ...(ratchets ? { ratchets } : {}),
 };
 console.log(formatReport(report));
-if (values.json) writeFileSync(values.json, JSON.stringify({ ...report, pairDetail, sampleDetail }, null, 1));
+// The compact BASE and HEAD rows of every card named in a lost or gained pair (#1485), so `loss-classify.ts` argues the pairs without Mongo, whose stored rows can be stale.
+// Every row is derived whatever `--cards` says, so a counterpart outside the filter is here too; a name shared by several ids keeps all of them.
+const asRows = (m: RowMap) => [...m].map(([id, r]) => ({ id, name: r.snap.name, tags: r.tags }));
+const pairRows = buildPairRows(pairDetail, asRows(rowsB), asRows(rowsH));
+if (values.json) writeFileSync(values.json, JSON.stringify(impactJson(report, pairDetail, sampleDetail, pairRows), null, 1));
 log(`done, wall ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 await store.close();

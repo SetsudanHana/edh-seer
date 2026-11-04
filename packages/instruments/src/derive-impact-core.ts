@@ -311,6 +311,11 @@ export interface ImpactReport {
   ratchets?: RatchetReport;
 }
 
+/** The `--json` document: the report plus the per-card pair lists and `pairRows` (#1485, the counterparts' compact rows). Its OWN key, because `rows` is the report's `{ totals, changes }`. */
+export function impactJson(report: ImpactReport, pairDetail: CardPairs[], sampleDetail: CardPairs[], pairRows: unknown): ImpactReport & { pairDetail: CardPairs[]; sampleDetail: CardPairs[]; pairRows: unknown } {
+  return { ...report, pairDetail, sampleDetail, pairRows };
+}
+
 /** WHAT THIS REPORT DOES NOT MEASURE. A 0 printed beside any of these is silence, not a measurement: say so in the report and the summary. */
 export const NOT_MEASURED: string[] = [
   "similar / redundancy ranking (research/matcher/similar-census.ts)",
