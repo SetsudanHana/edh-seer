@@ -3701,7 +3701,10 @@ test("the temporary-token rider makes no second ability", () => {
     "Flameshadow Conjuring", { 1: text }, undefined, text,
   );
   expect(abilities.find((a) => a.effect.kind === "token-generation")?.temporary).toBe(true);
-  expect(abilities.some((a) => (a.emits ?? []).some((e) => e.verb === "exiled"))).toBe(false);
+  // #1495: the exile of the token is an exile FROM THE BATTLEFIELD on the maker's own ability (what "whenever a creature is exiled from the battlefield" hears); no OTHER ability carries it.
+  const exiling = abilities.filter((a) => (a.emits ?? []).some((e) => e.verb === "exiled"));
+  expect(exiling.map((a) => a.effect.kind)).toEqual(["token-generation"]);
+  expect((exiling[0]!.emits ?? []).find((e) => e.verb === "exiled")?.subject).toMatchObject({ token: true, fromZone: "battlefield" });
 });
 
 /** THE PAYMENT RIDES ONTO THE ABILITY VERBATIM (CR 118.12a; DERIVE 159). Derivation records what

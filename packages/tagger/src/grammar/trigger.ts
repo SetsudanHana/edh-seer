@@ -279,7 +279,7 @@ const OBJECT_VERBS: [RegExp, string, VerbPatch?][] = [
   [/^becomes? renowned$/, "becomes-renowned"],
   [/^fights?$/, "fight"],
   [/^(?:is|are) returned to (?:its owner's|their owners'|your|a player's) hand$/, "returned-to-hand"],
-  [/^(?:is|are) exiled from the battlefield$/, "exiled"],
+  [/^(?:is|are) exiled from the battlefield$/, "exiled", { fromZone: "battlefield" }],
   [/^becomes? attached to (?:a creature|a permanent)$/, "attached"],
   [/^connives?$/, "connive"],
   [/^becomes? unattached(?: from (?:a permanent|a creature))?$/, "unattached"],
@@ -314,7 +314,7 @@ const OBJECT_VERBS: [RegExp, string, VerbPatch?][] = [
   [/^(?:is|are) put into your graveyard from your library$/, "put-into-graveyard", { fromZone: "library", control: "you" }],
   [/^(?:is|are) put into an opponent's graveyard from their library$/, "put-into-graveyard", { fromZone: "library", control: "opp" }],
   [/^(?:is|are) put into (?:a|its owner's) graveyard from (?:their|a) library$/, "put-into-graveyard", { fromZone: "library" }],
-  [/^(?:is|are) put into exile from the battlefield$/, "exiled"],
+  [/^(?:is|are) put into exile from the battlefield$/, "exiled", { fromZone: "battlefield" }],
   // Last, so a recipient the plain templates read is never a narrowing.
   [/^deals? (?<n>\d+ or more) (?:combat )?damage(?: to (?:a player|an opponent))?$/, "damage-dealt"],
   [/^deals? combat damage (?<n>to .+)$/, "damage-dealt", { damage: "combat" }],
