@@ -7,6 +7,11 @@
  *      explanation by a human; a non-zero verdict is reported and makes this bin exit non-zero)
  *      and theme-stats-fresh (count check; reported the same way)
  *    8 the three stamp tests (fixture-derive-version, quality-weights, gen-schema-docs)
+ *  BEFORE step 1 edits anything, PREFLIGHT (derive-bump-core.ts) checks the files steps 2-8 read: a
+ *  missing required one is refused naming path and step; a missing or empty optional one warns (the
+ *  run goes on, on less input). --dry-run reports both. --restamp applies the same check.
+ *  EXIT CODES: 0 done; 2 REFUSED before any edit (bad usage, a missing required input -- under
+ *  --dry-run too --, Mongo down); 1 a step failed or a ratchet moved (resume with --restamp).
  *  Steps 1-6 stop at the first failure and print the `--restamp` command to resume.
  *
  *  Usage (repo root, env sourced: `set -a && source packages/tagger/.env && set +a`; needs Mongo):
@@ -14,11 +19,11 @@
  *    npm run derive:bump -- --restamp          # steps 2-8 at the current version (review-fix rounds)
  *    npm run derive:bump -- --dry-run --issue N --note "text"   # prints the plan, writes nothing */
 import { spawnSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { MongoClient } from "mongodb";
 import { loadConfig } from "@edh-seer/data";
-import { parseArgs, planSteps, rewriteDeriveVersion, type Step } from "./derive-bump-core.js";
+import { parseArgs, planSteps, preflight, rewriteDeriveVersion, type Step } from "./derive-bump-core.js";
 
 const ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
 const DERIVE_TS = "packages/tagger/src/derive/derive.ts";
@@ -70,6 +75,12 @@ async function main(): Promise<number> {
       return 2;
     }
   }
+  // Files the later steps read, checked BEFORE anything is edited or derived (#1484).
+  const pre = preflight(
+    (p) => existsSync(`${ROOT}${p}`),
+    (dir, re) => { try { return readdirSync(`${ROOT}${dir}`).filter((f) => re.test(f)).length; } catch { return 0; } },
+  );
+  for (const w of pre.warnings) console.warn(`derive-bump: WARNING ${w}`);
   const oldV = bumped ? bumped.from : Number(/^export const DERIVE_VERSION = (\d+);$/m.exec(src)?.[1]);
 
   if (args.dryRun) {
@@ -81,7 +92,14 @@ async function main(): Promise<number> {
       console.log(`  - export const DERIVE_VERSION = ${bumped.from};`);
       console.log(`  + export const DERIVE_VERSION = ${bumped.to};`);
     }
-    return 0;
+    for (const e of pre.errors) console.error(`derive-bump: ERROR ${e}`);
+    if (pre.errors.length) console.error("derive-bump: a real run would refuse here, before editing anything");
+    return pre.errors.length ? 2 : 0;
+  }
+  if (pre.errors.length) {
+    for (const e of pre.errors) console.error(`derive-bump: ERROR ${e}`);
+    console.error("derive-bump: required input(s) missing; nothing was changed");
+    return 2;
   }
 
   // Preflight BEFORE the bump edit: a down Mongo or unsourced env must not leave derive.ts bumped.
