@@ -778,3 +778,23 @@ test("a player named only inside a token's quoted ability does not stop the cont
   // a player named OUTSIDE the quote still blocks it
   expect(actionEmits({ verb: "create", object: "a 1/1 Soldier creature token" }, "Target opponent creates a 1/1 Soldier creature token")[0]!.subject.control).not.toBe("you");
 });
+
+describe("a power/toughness definition is a CDA, not the zone move its verb names (#1501)", () => {
+  // Seize the Storm's Elemental token, stored clause 2 (tokens._id 74a3dea1-6a43-4cd2-925e-0abcf076bd02, clauseSource "model"):
+  // db.cardClauses.findOne({oracleId: "74a3dea1-6a43-4cd2-925e-0abcf076bd02"}).canonical[1].actions[0]
+  const cda = { verb: "exile", object: "This creature's power and toughness are each equal to the number of instant and sorcery cards in your graveyard plus the number of cards with flashback you own in exile", fromZone: null, toZone: null } as const;
+  test("exile whose object is a P/T definition emits nothing", () => {
+    expect(actionEmits(cda as never, undefined, { self: true })).toEqual([]);
+  });
+  test("any zone verb with that object emits nothing", () => {
+    expect(actionEmits({ ...cda, verb: "return", toZone: "hand", fromZone: "graveyard" } as never, undefined, { self: true })).toEqual([]);
+  });
+  test("a real exile still emits", () => {
+    const e = actionEmits({ verb: "exile", object: "target creature", fromZone: null, toZone: null } as never);
+    expect(e.map((x) => x.verb)).toContain("exiled");
+  });
+  test("a create carrying the sentence as token text still emits", () => {
+    const e = actionEmits({ verb: "create", object: "a token with \"this creature's power and toughness are each equal to the number of lands you control\"" } as never);
+    expect(e.length).toBeGreaterThan(0);
+  });
+});

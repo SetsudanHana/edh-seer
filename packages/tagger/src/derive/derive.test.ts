@@ -8168,3 +8168,18 @@ test("any number of: Scapeshift and Paradoxical Outcome keep a board count, Gene
   expect(scaling("put", "any number of permanent cards with mana value X or less from among them", "Genesis Wave", "library", "battlefield")).not.toContain("per-permanent");
   expect(scaling("put", "any number of land cards from your hand", "Amulet Test", "hand", "battlefield")).not.toContain("per-permanent");
 });
+
+test("Seize the Storm's Elemental token: a P/T definition filed as an exile keeps its scaling and emits no zone move (#1501)", () => {
+  // Stored clause 2 of tokens._id 74a3dea1-6a43-4cd2-925e-0abcf076bd02 (clauseSource "model"); the action is copied from
+  // db.cardClauses.findOne({oracleId: "74a3dea1-6a43-4cd2-925e-0abcf076bd02"}).canonical[1].
+  const { abilities, unclaimed } = deriveAbilities([{
+    id: 2, abilityType: "static",
+    actions: [{ verb: "exile", object: "This creature's power and toughness are each equal to the number of instant and sorcery cards in your graveyard plus the number of cards with flashback you own in exile", fromZone: null, toZone: null }],
+  }], "Elemental");
+  const verbs = abilities.flatMap((a) => a.emits ?? []).map((e) => e.verb);
+  expect(verbs).not.toContain("exiled");
+  expect(verbs).not.toContain("leaves");
+  expect(unclaimed).toEqual([]);
+  expect(abilities[0]?.effect.scaling).toBe("per-graveyard");
+  expect(abilities[0]?.effect.scalingSubject).toMatchObject({ type: ["instant", "sorcery"], zone: "graveyard" });
+});
