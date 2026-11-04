@@ -9,8 +9,14 @@
  *    --pair-sample N  pair reasons for N seeded, stable cards, changed or not: what a MATCHER-only change does. Default: SAMPLE_DEFAULT when the
  *                   matcher's code differs between BASE and the working tree, else 0
  *    --no-ratchets  skip the in-memory role-ratchet and dropped-clauses (BASE -> HEAD, and HEAD against the banked snapshots)
- *    --workers N    worker threads for the pair phase (default: every core but one); the output does not depend on it
+ *    --workers N    worker threads for the pair phase (default: every core but one) and the derive pools (default: every core); the output does not depend on it
+ *    --serial       derive rows on the main thread, the pre-#1486 loop. Same output (proved byte-identical); for reproducing that proof
+ *    --no-cache     recompute BASE instead of reading `~/.cache/edh-impact/<sha>/rows-<key>.json`, and write nothing. The cache holds BASE's own rows, never HEAD's, and not the ratchet measurement;
+ *                   its key is the base sha, a digest of this tool's own source and of every cardClauses / cards / tokens document; ratchets are always re-measured, so a changed corpus misses by itself
  *    --matcher      `own` (default): each side's own matcher, which is the truth. `head`: HEAD's on both sides, to isolate what the rows alone did
+ *
+ *  ITERATING: `--pair-sample 0` (no matcher sample, which alone is ~9 min when matcher code differs) while you edit; the first run per BASE/corpus pays for BASE (~3 min), later runs read it from the cache.
+ *  Run the default sample ONCE, on the final tree. Timings on 4 vCPU, 32.8k rows: cold ~170 s + pairs, warm ~90 s + pairs, before #1486 ~300 s + pairs.
  *
  *  The pure diffs are in derive-impact-core.ts. Rows mirror derive-corpus: a card with no answered clause doc that the grammar reads completely
  *  derives from its printed text (`clauseSource: "grammar"`); every other clause doc goes through `deriveRow`. Pair reasons are over every other
@@ -18,15 +24,15 @@
  *  tags from the in-memory rows of that side. */
 import { execFileSync } from "node:child_process";
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
+import { availableParallelism, homedir } from "node:os";
 import { join, posix, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
 import { connect, loadConfig } from "@edh-seer/data";
 import { createPool, defaultWorkers } from "@edh-seer/data/parallel";
 import {
-  chooseMatcher, classifyRows, impactJson, formatReport, ratchetReport, grammarReport, nodeModulesHash, pairsReport, sampleIds, snapOf, splitMatcherCode, treeVerdict,
-  type CardPairs, type GrammarEntry, type RatchetInputs, type ImpactReport, type PairSection, type RowSnap,
+  baseRowsKey, toolDigestOf, chooseMatcher, classifyRows, clauseKey, docDigest, impactJson, formatReport, ratchetReport, grammarReport, nodeModulesHash, pairsReport, sampleIds, snapOf, splitMatcherCode, treeVerdict,
+  type CardPairs, type GrammarEntry, type GrammarSnap, type RatchetInputs, type ImpactReport, type PairSection, type RowSnap,
 } from "./derive-impact-core.js";
 import { reach } from "./derive-impact-graph.js";
 import { buildPairRows } from "./loss-classify-core.js";
@@ -40,9 +46,9 @@ const git = (...args: string[]): string => execFileSync("git", args, { cwd: REPO
 
 const { positionals, values } = parseArgs({
   allowPositionals: true, strict: true,
-  options: { cards: { type: "string" }, json: { type: "string" }, pairs: { type: "string" }, "no-pairs": { type: "boolean", default: false }, "no-ratchets": { type: "boolean", default: false }, "pair-sample": { type: "string" }, workers: { type: "string" }, matcher: { type: "string" } },
+  options: { cards: { type: "string" }, json: { type: "string" }, pairs: { type: "string" }, "no-pairs": { type: "boolean", default: false }, "no-ratchets": { type: "boolean", default: false }, "no-cache": { type: "boolean", default: false }, serial: { type: "boolean", default: false }, "pair-sample": { type: "string" }, workers: { type: "string" }, matcher: { type: "string" } },
 });
-if (positionals.length !== 1) { console.error('usage: derive-impact.ts <BASE-ref> [--cards "A|B"] [--json out.json] [--pairs N] [--no-pairs] [--no-ratchets] [--pair-sample N] [--workers N] [--matcher own|head]'); process.exit(2); }
+if (positionals.length !== 1) { console.error('usage: derive-impact.ts <BASE-ref> [--cards "A|B"] [--json out.json] [--pairs N] [--no-pairs] [--no-ratchets] [--serial] [--no-cache] [--pair-sample N] [--workers N] [--matcher own|head]'); process.exit(2); }
 const only = values.cards ? new Set(values.cards.split("|").map((s) => s.trim()).filter(Boolean)) : null;
 const num = (v: string | undefined, dflt: number, flag: string): number => {
   if (v === undefined) return dflt;
@@ -180,6 +186,19 @@ const allCards = await store.cards.find({}).toArray() as any[];
 const cardById = new Map(allCards.map((c) => [c._id as string, c]));
 log(`read ${clauseDocs.length} clause docs (${tokenIds.length} tokens), ${allCards.length} cards (derive scope BASE ${scopeB.size}, HEAD ${scopeH.size})`);
 
+// ---- BASE rows cache (#1486): what BASE's own code made of THIS corpus, stored under its tree ----
+interface BaseCache { rows: [string, string, boolean, any][]; grammarOnly: string[]; grammar: [string, boolean, string][] }
+const toolDigest = toolDigestOf(["derive-impact.ts", "derive-impact-core.ts"].map((f) => readFileSync(join(import.meta.dirname, f), "utf8")));
+const cacheKey = baseRowsKey({ baseSha, toolDigest, clauseKeys: clauseDocs.map(clauseKey), cardDigests: allCards.map(docDigest), tokenDigests: tokenDocs.map(docDigest) });
+const cacheFile = join(baseRoot, `rows-${cacheKey}.json`);
+let cached: BaseCache | undefined;
+if (!values["no-cache"] && existsSync(cacheFile)) {
+  try {
+    const c = JSON.parse(readFileSync(cacheFile, "utf8")) as BaseCache;
+    cached = c; log(`BASE rows from cache (${cacheFile})`);
+  } catch (e) { log(`BASE rows cache unreadable (${(e as Error).message}); recomputing`); }
+}
+
 // ---- rows + grammar, both sides ----
 interface Row { snap: RowSnap; tags: any }
 type RowMap = Map<string, Row>;
@@ -187,27 +206,55 @@ const rowsB: RowMap = new Map(), rowsH: RowMap = new Map();
 const answered = new Map(clauseDocs.filter((d) => !d.isToken).map((d) => [d.oracleId as string, d.segmentHash as string])); // each side compares it with ITS OWN segmentHash of the current text
 const grammarOnlyB = new Set<string>(), grammarOnlyH = new Set<string>();
 const grammarEntries: GrammarEntry[] = [];
+const cachedGrammar = new Map((cached?.grammar ?? []).map(([id, complete, records]) => [id, { complete, records } as GrammarSnap]));
+const baseGrammar: [string, boolean, string][] = [];
 for (const c of allCards) {
-  const gb = B.grammarClauseRecords(c), gh = H.grammarClauseRecords(c);
-  grammarEntries.push({ id: c._id, name: c.name, base: { complete: gb.complete, records: JSON.stringify(gb.records) }, head: { complete: gh.complete, records: JSON.stringify(gh.records) } });
+  const gb = cached ? undefined : B.grammarClauseRecords(c), gh = H.grammarClauseRecords(c);
+  const baseSnap: GrammarSnap = cached ? cachedGrammar.get(c._id)! : { complete: gb!.complete, records: JSON.stringify(gb!.records) };
+  if (!cached) baseGrammar.push([c._id, baseSnap.complete, baseSnap.records]);
+  grammarEntries.push({ id: c._id, name: c.name, base: baseSnap, head: { complete: gh.complete, records: JSON.stringify(gh.records) } });
   for (const [side, g, rows, only_, scope] of [[B, gb, rowsB, grammarOnlyB, scopeB], [H, gh, rowsH, grammarOnlyH, scopeH]] as const) {
-    if (!scope.has(c._id) || !g.complete) continue;
+    if (!g || !scope.has(c._id) || !g.complete) continue;
     if (answered.get(c._id) === side.segmentHash(c.oracleText ?? "", c.typeLine ?? "", c.keywords ?? [])) continue;
     only_.add(c._id);
     const tags = side.deriveCardTags(side.deriveInputOf(c, c._id, c.name, g.records, undefined, g.readings));
     rows.set(c._id, { snap: snapOf(c.name, tags, true), tags });
   }
 }
-log(`grammar pass over ${allCards.length} cards done; grammar-only rows BASE ${grammarOnlyB.size}, HEAD ${grammarOnlyH.size}`);
-for (const doc of clauseDocs) {
-  const source = doc.isToken ? tokenSrc.get(doc.oracleId) : cardById.get(doc.oracleId);
-  if (!source) continue;
-  for (const [side, rows, only_] of [[B, rowsB, grammarOnlyB], [H, rowsH, grammarOnlyH]] as const) {
-    if (!doc.isToken && only_.has(doc.oracleId)) continue;
-    const r = side.deriveRow({ doc, source, isToken: !!doc.isToken });
-    rows.set(doc.oracleId, { snap: snapOf(doc.name, r.tags, r.fromGrammar), tags: r.tags });
-  }
+if (cached) {
+  for (const id of cached.grammarOnly) grammarOnlyB.add(id);
+  for (const [id, name, fromGrammar, tags] of cached.rows) rowsB.set(id, { snap: snapOf(name, tags, fromGrammar), tags });
 }
+log(`grammar pass over ${allCards.length} cards done; grammar-only rows BASE ${grammarOnlyB.size}, HEAD ${grammarOnlyH.size}${cached ? " (BASE from cache)" : ""}`);
+/** Derive one side's clause docs. Parallel: one worker pool per side, pointed at THAT side's own tree (`derive-worker.ts`), so BASE is still computed by BASE's code;
+ *  results come back in input order, so the rows are the serial loop's. A tree with no usable worker entry (an old base), or a pool that fails, falls back to the serial loop. */
+async function deriveSide(label: string, side: Side, root: string, skip: Set<string>, into: RowMap): Promise<void> {
+  const items: { doc: any; source: any; isToken: boolean }[] = [];
+  for (const doc of clauseDocs) {
+    const source = doc.isToken ? tokenSrc.get(doc.oracleId) : cardById.get(doc.oracleId);
+    if (!source) continue;
+    if (!doc.isToken && skip.has(doc.oracleId)) continue;
+    items.push({ doc, source, isToken: !!doc.isToken });
+  }
+  let results: { tags: any; fromGrammar: boolean }[] | undefined;
+  if (!values.serial) {
+    const entry = join(root, "packages/tagger/src/derive-worker.ts");
+    const usableEntry = existsSync(entry) && /serveWorker\(/.test(readFileSync(entry, "utf8"));
+    if (!usableEntry) log(`${label}: no worker entry in ${root}; deriving serially`);
+    else {
+      const pool = createPool<(typeof items)[number], { tags: any; fromGrammar: boolean }>(pathToFileURL(entry), { workers: num(values.workers, availableParallelism(), "--workers") });
+      try { results = await pool.map(items); }
+      catch (e) { log(`${label}: worker pool failed (${(e as Error).message}); deriving serially`); results = undefined; }
+      finally { await pool.close(); }
+    }
+  }
+  items.forEach((it, i) => {
+    const r = results ? results[i]! : side.deriveRow(it);
+    into.set(it.doc.oracleId, { snap: snapOf(it.doc.name, r.tags, r.fromGrammar), tags: r.tags });
+  });
+}
+if (!cached) await deriveSide("BASE", B, baseRoot, grammarOnlyB, rowsB);
+await deriveSide("HEAD", H, REPO, grammarOnlyH, rowsH);
 log(`rows derived: BASE ${rowsB.size}, HEAD ${rowsH.size}`);
 
 const keep = (name: string): boolean => !only || only.has(name);
@@ -228,8 +275,24 @@ if (!values["no-ratchets"]) {
   };
   const bank = (f: string): unknown => JSON.parse(readFileSync(join(REPO, "packages/instruments", f), "utf8"));
   const bankedDropped = bank("dropped-clauses.json") as RatchetInputs["dropped"], bankedRoles = bank("role-membership.json") as RatchetInputs["roles"], bankedUntagged = bank("role-membership-untagged.json") as string[];
+  // NEVER CACHED: BASE's ratchet measurement runs partly on HEAD's code (ratchet-measure.ts, INERT_VERBS via dropped-clauses-core, `--matcher head`).
   ratchets = ratchetReport(measure(B, rowsB, matcherMode === "own" ? B.matcher : H.matcher), measure(H, rowsH, H.matcher), { dropped: bankedDropped, roles: bankedRoles, untagged: bankedUntagged });
   log(`ratchets measured: dropped-clauses ${ratchets.dropped.base.actions} -> ${ratchets.dropped.head.actions}, role-ratchet gained ${ratchets.roles.gained.length} lost ${ratchets.roles.lost.length}, untagged ${ratchets.untagged.base} -> ${ratchets.untagged.head}`);
+}
+
+if (!cached && !values["no-cache"]) {
+  // Written to a temp name and renamed: a reader never sees half a file. A failed write (disk full, tree moved) costs the cache, never the run.
+  // CEILING: files of other keys under this sha are stale corpora and are never pruned (~50 MB each); the tree is the user's cache to clear.
+  const tmp = `${cacheFile}.${process.pid}.tmp`;
+  try {
+    const payload: BaseCache = { rows: [...rowsB].map(([id, r]) => [id, r.snap.name, r.snap.fromGrammar, r.tags]), grammarOnly: [...grammarOnlyB], grammar: baseGrammar };
+    writeFileSync(tmp, JSON.stringify(payload));
+    renameSync(tmp, cacheFile);
+    log(`BASE rows cached to ${cacheFile}`);
+  } catch (e) {
+    log(`BASE rows not cached (${(e as Error).message})`);
+    rmSync(tmp, { force: true });
+  }
 }
 
 // ---- pair reasons, spread over worker threads (results come back in input order, so the report equals a one-worker run) ----
