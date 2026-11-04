@@ -9,8 +9,14 @@
  *    --pair-sample N  pair reasons for N seeded, stable cards, changed or not: what a MATCHER-only change does. Default: SAMPLE_DEFAULT when the
  *                   matcher's code differs between BASE and the working tree, else 0
  *    --no-ratchets  skip the in-memory role-ratchet and dropped-clauses (BASE -> HEAD, and HEAD against the banked snapshots)
- *    --workers N    worker threads for the pair phase (default: every core but one); the output does not depend on it
+ *    --workers N    worker threads for the pair phase (default: every core but one) and the derive pools (default: every core); the output does not depend on it
+ *    --serial       derive rows on the main thread, the pre-#1486 loop. Same output (proved byte-identical); for reproducing that proof
+ *    --no-cache     recompute BASE instead of reading `~/.cache/edh-impact/<sha>/rows-<key>.json`, and write nothing. The cache holds BASE's own rows, never HEAD's;
+ *                   its key is the base sha, the matcher mode and a digest of every cardClauses / cards / tokens document, so a changed corpus misses by itself
  *    --matcher      `own` (default): each side's own matcher, which is the truth. `head`: HEAD's on both sides, to isolate what the rows alone did
+ *
+ *  ITERATING: `--pair-sample 0` (no matcher sample, which alone is ~9 min when matcher code differs) while you edit; the first run per BASE/corpus pays for BASE (~3 min), later runs read it from the cache.
+ *  Run the default sample ONCE, on the final tree. Timings on 4 vCPU, 32.8k rows: cold ~170 s + pairs, warm ~90 s + pairs, before #1486 ~300 s + pairs.
  *
  *  The pure diffs are in derive-impact-core.ts. Rows mirror derive-corpus: a card with no answered clause doc that the grammar reads completely
  *  derives from its printed text (`clauseSource: "grammar"`); every other clause doc goes through `deriveRow`. Pair reasons are over every other
