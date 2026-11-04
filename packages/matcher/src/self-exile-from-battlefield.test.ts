@@ -66,3 +66,13 @@ test("Séance's token copy, exiled at the next end step, is an exile from the ba
   expect(exileTags(card("Séance", true), soulherder).length).toBeGreaterThan(0);
   expect(exileTags(card("Mordor on the March", true), soulherder).length).toBeGreaterThan(0);
 });
+
+/** A TOKEN IS NOT A CARD (CR 108.2, CR 111.1): The War Doctor's "one or more other cards are put into exile from anywhere" hears a card exile, never a token's. */
+test("a token exiled at the end step (Saheeli Rai) does not feed The War Doctor; a card exile (Necropotence) does", () => {
+  const doctor = card("The War Doctor");
+  const trigger = doctor.tags!.abilities!.map((a) => a.trigger).find((t) => t?.verbs.includes("exiled"));
+  expect(trigger?.subject.token).toBe(false);
+  expect(exileTags(card("Saheeli Rai"), doctor)).toEqual([]);
+  expect(exileTags(card("Saheeli Rai", true), doctor)).toEqual([]);
+  expect(exileTags(card("Necropotence"), doctor).length).toBeGreaterThan(0);
+});
