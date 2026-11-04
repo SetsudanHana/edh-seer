@@ -178,3 +178,31 @@ test("a list of negations counts every one of them: 'noncreature, nonland card' 
     expect(actionScaling({ verb: "modify-pt", amount })).toBe("per-graveyard");
   }
 });
+
+// "ANY NUMBER OF" IS A CHOICE OF HOW MANY, A BOARD COUNT ONLY WHEN THE CHOSEN THINGS ARE YOURS (#1467,
+// owner 2026-11-04). Real oracle text, the verb and class as the store writes them.
+test("any number of <your permanents> still counts a board; from a library, hand or graveyard it does not (#1467)", () => {
+  // Scapeshift: "Sacrifice any number of lands." -- sacrifice is your battlefield by definition.
+  expect(actionScaling({ verb: "sacrifice", object: "any number of lands" })).toBe("per-permanent");
+  // Paradoxical Outcome: "Return any number of target nonland, nontoken permanents you control to their owners' hands."
+  expect(actionScaling({ verb: "return", object: "any number of target nonland, nontoken permanents you control" })).toBe("per-permanent");
+  expect(actionScaling({ verb: "tap", object: "any number of untapped creatures you control" })).toBe("per-creature");
+  // Genesis Wave: "You may put any number of permanent cards with mana value X or less from among them onto the battlefield."
+  expect(actionScaling({ verb: "put", object: "any number of permanent cards with mana value X or less from among them" })).toBeUndefined();
+  expect(scalingSubject({ verb: "put", object: "any number of permanent cards with mana value X or less from among them" })).toBeUndefined();
+  // A hand, a graveyard and a library are not the board.
+  expect(actionScaling({ verb: "put", object: "any number of land cards from your hand" })).toBeUndefined();
+  expect(actionScaling({ verb: "return", object: "any number of target creature cards with total power 10 or less from your graveyard" })).toBeUndefined();
+  expect(actionScaling({ verb: "search", amount: "any number of", object: "any number of basic land cards" })).toBeUndefined();
+  // A target with no "you control" is anyone's board, not yours: Pyrokinesis.
+  expect(actionScaling({ verb: "deal-damage", amount: "4", object: "any number of target creatures" })).toBeUndefined();
+  // A count stated beside the choice still counts (Jaws of Stone).
+  expect(actionScaling({ verb: "deal-damage", amount: "the number of Mountains you control", object: "any number of targets" })).toBe("per-permanent");
+});
+
+test("a battlefield choice of permanents you OWN keeps its board count: Leave // Chance (#1467 review)", () => {
+  // "Return any number of target permanents you own to your hand." Same shape as Paradoxical Outcome.
+  expect(actionScaling({ verb: "return", object: "any number of target permanents you own" })).toBe("per-permanent");
+  // ...while a reveal that merely mentions a commander you own is still a reveal.
+  expect(actionScaling({ verb: "put", object: "any number of permanent cards from among them" })).toBeUndefined();
+});
