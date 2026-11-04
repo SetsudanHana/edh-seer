@@ -107,9 +107,14 @@ describe("a back face's own graveyard fill is the front face's card", () => {
     expect(rs.every((r) => r.text.startsWith("Invasion of Vryn fills your graveyard toward"))).toBe(true);
   });
 
-  test("Emet-Selch // Hades -> Overlord of the Balemurk: the back's fill collapses into the front's reason", () => {
+  // WAS a collapse test, and its fill was the DEFECT of #1509: Hades' "Echo of the Lost" is an ability
+  // word (its printed text lets you play cards from your graveyard), and keying it to `echo` handed the
+  // back face a self-sacrifice. The only fill left is the front face's own loot discard, which names
+  // the card that really fills the graveyard.
+  test("Emet-Selch // Hades -> Overlord of the Balemurk: an ability word is no echo fill (#1509)", () => {
     const rs = pairReasonsAcrossFaces(FIX["Emet-Selch, Unsundered"]!, FIX["Overlord of the Balemurk"]!, H)
-      .filter((r) => r.tag.startsWith("graveyard-recursion") && r.text.includes("is in the graveyard"));
-    expect(rs.map((r) => r.text)).toEqual(["When Emet-Selch, Unsundered is in the graveyard, Overlord of the Balemurk can bring it back"]);
+      .filter((r) => r.tag.startsWith("graveyard-recursion"));
+    expect(rs.map((r) => r.text).filter((t) => t.includes("is in the graveyard"))).toEqual([]);
+    expect(rs.length).toBeGreaterThan(0);
   });
 });

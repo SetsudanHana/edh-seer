@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Characteristics, GameEvent } from "@edh-seer/tagger";
-import { impliedEvents, impliedGraveyardEvents, impliedCounterEvents, enterAsCopyAbilities, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
+import { keywordEvents, impliedEvents, impliedGraveyardEvents, impliedCounterEvents, enterAsCopyAbilities, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import type { CardTags } from "@edh-seer/tagger";
 import { subjectMatches } from "./subject.js";
 
@@ -803,4 +803,33 @@ test("a self leaves/sacrifice/dies and a self graveyard fill carry allTypes for 
   // a one-type card and a stale allTypes
   const solo = selfLeavesTypes([{ verb: "dies", subject: { control: "you", token: null, self: true, allTypes: ["artifact", "creature"] } }] as GameEvent[], chars(["creature"]));
   expect(solo[0]!.subject.allTypes).toBeUndefined();
+});
+
+// #1509: AN ABILITY WORD IS NOT ITS FIRST WORD. Scryfall lists ability and flavor words in `keywords`
+// beside the real ones; the keywords below are the stored `cards.keywords` of five cards whose first
+// word is a real key. Echo of the Lost / Echo of the First Murder are ETB exile abilities, Devour
+// Intellect an ETB exile, Undying Vengeance a damage trigger, Toxic Spores a life-loss trigger.
+test("an ability word whose first word is a keyword emits nothing", () => {
+  const verbs = (k: string[]) => keywordEvents(kw(k)).map((e) => `${e.verb}${e.subject.counter ? `:${e.subject.counter}` : ""}`);
+  expect(verbs(["Vigilance", "Echo of the Lost", "Transform"])).not.toContain("sacrifice");   // Emet-Selch // Hades
+  expect(verbs(["Echo of the Lost"])).toEqual([]);
+  expect(verbs(["Echo of the First Murder", "Equip", "Daemon Sword"])).toEqual([]);           // Drach'Nyen
+  expect(verbs(["Devour Intellect", "Body Thief"])).toEqual([]);                              // Intellect Devourer
+  expect(verbs(["Unreliable Visions", "Undying Vengeance"])).toEqual([]);                     // Shadow of the Goblin
+  expect(verbs(["Flying", "Toxic Spores"])).toEqual([]);                                      // Vrock
+});
+
+test("real keywords still emit, bare, with an argument, or as a whole multi-word key", () => {
+  const verbs = (k: string[]) => keywordEvents(kw(k)).map((e) => e.verb);
+  expect(verbs(["Echo"])).toEqual(["sacrifice", "dies"]);                 // Albino Troll's stored row
+  expect(verbs(["Echo {1}{G}"])).toEqual(["sacrifice", "dies"]);
+  expect(verbs(["Annihilator 2"])).toEqual(["sacrifice"]);
+  expect(verbs(["Annihilator X"])).toEqual(["sacrifice"]);
+  expect(verbs(["Devour 2"])).toContain("sacrifice");
+  expect(verbs(["Ward {2}"])).toEqual(keywordEvents(kw(["Ward"])).map((e) => e.verb));
+  expect(verbs(["Echo — Pay {2}"])).toEqual(["sacrifice", "dies"]);
+  expect(verbs(["Cumulative upkeep"])).toContain("counter-added");   // whole key, not "cumulative"
+  // "Basic landcycling" is a SEARCH key (keywordAbilities), untouched by this change.
+  expect(keywordAbilities(kw(["Basic landcycling"])).some((a) => a.effect.kind === "search")).toBe(true);
+  expect(verbs(["Protection from Demons"])).toEqual(keywordEvents(kw(["Protection"])).map((e) => e.verb));
 });
