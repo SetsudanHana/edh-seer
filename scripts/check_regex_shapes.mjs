@@ -109,17 +109,22 @@ export function shapesOf({ body }, line = "") {
 
   // R1. \s*/\s+ beside .* / .+ or another \s*/\s+ (at most a literal between): the quantifiers can
   // split a run of spaces many ways, and an unanchored start retries from every position. #1358, #1479.
-  const pair = new RegExp(`(?:${SPACE_Q}|${DOT_Q})${LIT}(?:${SPACE_Q}|${DOT_Q})`, "g");
+  const pair = new RegExp(`(${SPACE_Q}|${DOT_Q})(${LIT})(${SPACE_Q}|${DOT_Q})`, "g");
   for (const m of body.matchAll(pair)) {
     if (inClass(m.index)) continue;
     if (!m[0].includes("\\s")) continue; // `.*.*` is a different defect
+    // `\s*\/\s*`: one mandatory punctuation char that \s cannot match splits the two runs, so a run of
+    // spaces has one way to divide. Words (`\s+and\s+`) and any `.*` stay flagged.
+    if (m[1].startsWith("\\s") && m[3].startsWith("\\s") && /^\\?[^\w\s]$/.test(m[2])) continue;
     hits.push("space-adjacent");
     break;
   }
   // R2. \s*/\s+ directly beside an optional group `(...)?`: `\.?\s*(?:\([^)]*\))?\s*$`, #208, #1297.
+  // A group that cannot match whitespace at all (`(?:es)?\s+`) shares nothing with the \s run.
+  const spaceCapable = (g) => /\\[sSWDB]|(?<!\\)\.| |\[\^|\[[^\]]*\\s/.test(body.slice(g.open, g.close));
   for (const m of tokens(SPACE_Q)) {
     const end = m.index + m[0].length;
-    if (groups.some((g) => g.optional && (g.open === end || g.close + 1 === m.index || g.close + 1 + 1 === m.index && /[?*]/.test(body[g.close + 1])))) { hits.push("space-optional-group"); break; }
+    if (groups.some((g) => g.optional && spaceCapable(g) && (g.open === end || g.close + 1 === m.index || g.close + 2 === m.index && /[?*]/.test(body[g.close + 1])))) { hits.push("space-optional-group"); break; }
   }
   // R3. `(?:^|\n)\s*`: the newline and \s* overlap. Use /^.../m. #1063.
   if (/\(\??:?\^\|\\n\)\\s[*+]/.test(body)) hits.push("newline-space");
@@ -219,6 +224,8 @@ const MUST_PASS = [
   String.raw`s.replace(/\s+/g, " ")`,
   String.raw`s.split(/[,;]+/)`,
   String.raw`x.match(/(?:\{[^{}]+\})+/)`,
+  String.raw`x.match(/search(?:es)?\s+(?:your|their)\b/i)`,
+  String.raw`x.match(/\d+\s*\/\s*\d+/)`,
   String.raw`x.match(/\[[^[\]]+\]/)`,
   String.raw`x.match(/^Enchant ([^\n]+)$/m)`,
   String.raw`const half = total / 2 / 3;`,

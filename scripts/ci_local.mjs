@@ -7,6 +7,11 @@
  *  one step skipped (you have node_modules). MONGO_TEST_URI defaults to the local container, as CI's
  *  service does, so the database suites run instead of skipping.
  *
+ *  ADVISORY LAST STEP: `lint:redos` runs after the ci.yml steps and only WARNS. The scanner reads
+ *  regex literals and has no data flow, while CodeQL's js/polynomial-redos alerts only on regexes
+ *  applied to library input, so a hit may be a regex CodeQL accepts. CodeQL stays the gate; judge each
+ *  hit. `npm run lint:redos` on its own is strict (exit 1). Its self-test still blocks here.
+ *
  *  Run: node scripts/ci_local.mjs [--self-test | --list]. Node built-ins only. */
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -35,7 +40,8 @@ function selfTest() {
   const got = parseSteps(sample);
   must(got.length === 1 && got[0] === "npm run a && b", "only the test job's steps, without npm ci");
   const real = parseSteps(readFileSync(WORKFLOW, "utf8"));
-  for (const need of ["npm run typecheck", "npm test", "npm run lint:bins", "npm run lint:ceilings", "npm run lint", "npm run lint:redos"]) {
+  must(!real.includes("npm run lint:redos"), "lint:redos is advisory and local-only; ci.yml must not run it");
+  for (const need of ["npm run typecheck", "npm test", "npm run lint:bins", "npm run lint:ceilings", "npm run lint"]) {
     must(real.includes(need), `ci.yml's test job no longer runs \`${need}\``);
   }
   console.log(`self-test: ${real.length} steps read from ci.yml`);
@@ -55,6 +61,16 @@ function main() {
     const code = r.status ?? 1;
     console.log(`=== exit ${code} in ${((Date.now() - t) / 1000).toFixed(1)}s: ${cmd}`);
     if (code !== 0) { console.log(`\nci:local FAILED at step ${i + 1}/${steps.length}: ${cmd}`); return code; }
+  }
+  const scan = (a) => spawnSync("node", ["scripts/check_regex_shapes.mjs", ...a], { cwd: ROOT, encoding: "utf8" });
+  const self = scan(["--self-test"]);
+  if (self.status !== 0) { process.stdout.write(self.stdout + self.stderr); console.log("\nci:local FAILED: lint:redos self-test (a broken scanner must fail)"); return self.status ?? 1; }
+  const found = scan([]);
+  process.stdout.write(found.stdout + found.stderr);
+  if (found.status === 0) console.log("\nlint:redos: 0 CodeQL-shape warnings in added lines");
+  else {
+    const n = (found.stdout.match(/^\S+:\d+: /gm) ?? []).length;
+    console.log(`\nlint:redos: ${n} CodeQL-shape warning(s) in added lines \u2014 judge each (CodeQL fails the PR on a real one)`);
   }
   console.log(`\nci:local: all ${steps.length} steps passed in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
   return 0;
