@@ -2,7 +2,7 @@ import type { Card, CardFace } from "@edh-seer/engine";
 import type { CardTags, GameEvent } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 import { parseTypeLine } from "./typeline.js";
-import { printedAllTypes } from "./implied.js";
+import { printedAllTypes, selfFillTypes } from "./implied.js";
 
 /** The printed faces of a card. `Card.faces` when the document carries it; otherwise the combined
  *  type line split on " // ", which is a no-op for a genuinely single-faced line. An absent `faces`
@@ -72,6 +72,47 @@ export function enteringFaceName(p: DeckCard, e: GameEvent): string | undefined 
   const faces = printedFaces(p.parent.card);
   if (e.subject.transformed) return faces[1]?.name;
   return /\btransformed\b/i.test(faces[p.face]?.oracleText ?? "") ? undefined : faces[0]?.name;
+}
+
+/** THE PRODUCER'S OWN CARD IN A GRAVEYARD IS ITS FRONT FACE (CR 712.8a: a double-faced card in a zone
+ *  other than the battlefield or stack has only its front face's characteristics). A back face that
+ *  sacrifices itself (Overloaded Mage-Ring, an Artifact) leaves a BATTLE in the graveyard, so a
+ *  recursion that returns "target artifact card", a count of artifact cards there, or a graveyard
+ *  threshold cannot see it (#1505). Retypes a `self` graveyard fill only, and only for a BACK face of
+ *  a two-faced card; read by the recursion, per-graveyard scaling and graveyard-threshold channels.
+ *
+ *  THE WHOLE IDENTITY IS REBUILT, not just the type list: `selfFillTypes` also stamps `historic`,
+ *  `outlaw` and the supertypes off the card, and a Battle -- Siege is not historic though its
+ *  Artifact back is. So the clause-stated identity is dropped and `selfFillTypes` is run again over
+ *  the PARENT card's characteristics, whose `faces[0]` is the front face (`zoneTypes`).
+ *
+ *  A leaves-the-battlefield event ("dies", "put into a graveyard from the battlefield") looks back in
+ *  time, seeing the permanent as it last existed, and keeps the back face's type, so `producerEvents`
+ *  and the event channel are untouched.
+ *  CEILING: a disturb back ("if it would be put into a graveyard from anywhere, exile it instead") and
+ *  Hades, Sorcerer of Eld's "if a card would be put into your graveyard from anywhere, exile it
+ *  instead" should make no fill at all; they are retyped here like any other back, not refused. */
+export function graveyardIdentity(p: DeckCard, e: GameEvent): GameEvent {
+  if (frontFaceOf(p, e) === undefined) return e;
+  const front = p.parent!.tags?.characteristics;
+  if (!front?.faces?.[0]) return e;
+  const { type: _t, subtype: _s, allTypes: _a, historic: _h, outlaw: _o, legendary: _l, basic: _b, snow: _sn,
+    colors: _c, stats: _st, ...rest } = e.subject;
+  return selfFillTypes([{ ...e, subject: rest }], front)[0]!;
+}
+
+/** The FRONT face's name when a `self` graveyard fill of this node is retyped by `graveyardIdentity`:
+ *  the card in the graveyard is that face (CR 712.8a), so a sentence names it, as `enteringFaceName`
+ *  does for a re-entry. Undefined when the fill is not retyped. */
+export function graveyardFaceName(p: DeckCard, e: GameEvent): string | undefined {
+  const front = frontFaceOf(p, e);
+  return front && p.parent!.tags?.characteristics.faces?.[0] ? front.name : undefined;
+}
+
+function frontFaceOf(p: DeckCard, e: GameEvent): CardFace | undefined {
+  if (e.subject.self !== true || p.face === undefined || p.face < 1 || !p.parent) return undefined;
+  const faces = printedFaces(p.parent.card);
+  return faces.length === 2 ? faces[0] : undefined;
 }
 
 function faceClass(face: CardFace | undefined): { type?: string[]; subtype?: string[]; allTypes?: string[] } {
