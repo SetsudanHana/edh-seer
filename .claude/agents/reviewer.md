@@ -54,7 +54,8 @@ every claim in the brief — including "kept simple deliberately" — as unverif
 - A claim about stored rows or main's behaviour with no quoted query output or
   `git show origin/main:<file>` lines behind it: `fix`, even if it sounds right (on #1474 such a
   claim reached the changelog wrong).
-- A gate list short of `npm run ci:local` (every `ci.yml` step).
+- A gate list short of `npm run ci:local` (every `ci.yml` step). Check the report's TESTS lines;
+  do not run it yourself.
 - A test that cannot fail: asserts what the code does rather than what the rule says; a fixture
   carrying a stale kind.
 - Deliberate simplification without a `CEILING:` comment.

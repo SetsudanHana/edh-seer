@@ -34,10 +34,18 @@ edges → deck report). The controller planned it; you build exactly that and no
 
 ## Claims
 
-- **A claim about a changed card family covers every changed card.** For an engine change, run
-  `loss-classify` on the `derive-impact --json` file and report its counts. Read and argue every
-  `LOST->CLASS`, `GAINED->SELF`, ambiguous and unmatched pair, never the report's top-20 list. A
-  claim you checked on a sample is reported as a sample, with its size.
+- **A claim about a changed card family covers every changed card.** For an engine change:
+  - Run `derive-impact <base> --json <file>` once on the final tree, **in the background with a long
+    timeout** (it takes many minutes; the foreground limit is 10). Pass no `--pairs`, `--no-pairs`
+    or `--cards`, which cut what is covered. Re-run it after a fix round that changed the engine diff.
+  - Then `npx tsx packages/instruments/src/loss-classify.ts <file> [--card "Name"]`. Exit 2 means
+    the JSON has no `pairRows` (written before #1485): re-run derive-impact.
+  - Argue every `LOST->CLASS`, `GAINED->SELF` and AMBIGUOUS pair it names. `unmatched` and `no row`
+    are counts per family: name the family and the cause, and read those pairs from `pairDetail`
+    with `--card`. Never argue from the report's top-20 list.
+  - loss-classify reads `pairDetail` only. A matcher-only change lands in the sample, which it does
+    not cover: report the sample size instead. Any claim checked on a sample is reported as a
+    sample, with its size.
 - **A claim about stored data or main quotes its source.** "X is stored as …" carries the query
   and its output; "main does …" carries the `git show origin/main:<file>` lines. Do not repeat a
   claim from the brief or a reviewer as fact without checking it.
@@ -53,7 +61,8 @@ edges → deck report). The controller planned it; you build exactly that and no
 
 Push, switch branches, stash, `git checkout -- .`, `reset --hard`, rebase. Run `normalize-*` with
 `--run` (spends money), deploy, write Mongo (`derive-corpus`, `ingest-*`, `build-static`) unless the
-brief says so. Edit a ratchet cap or `known-lost-pairs.json`. Spawn subagents. Fix something
+brief says so. (`derive-impact` only reads Mongo, and the test suite writes only its own scratch
+databases: both are fine.) Edit a ratchet cap or `known-lost-pairs.json`. Spawn subagents. Fix something
 outside the brief — report it under Concerns instead.
 
 ## Report (exactly this shape)
