@@ -2002,7 +2002,7 @@ function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
  *  and a producer removing ITSELF is not removing a host. 42 corpus Auras carry the shape, 4 in the
  *  71 decks; the other 109 Aura dies-triggers say "when enchanted creature dies" and already read as
  *  a `dies:creature` demand. */
-function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abilities"][number], e: GameEvent, t: GameEvent, h: Hierarchy): boolean {
+function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abilities"][number], e: GameEvent, t: GameEvent, h: Hierarchy, abilities: CardTags["abilities"]): boolean {
   const host = chars.enchants;
   if (!host || t.subject.self !== true || (t.verb !== "dies" && t.verb !== "leaves")) return false;
   if (e.verb !== "dies" && e.verb !== "leaves") return false;
@@ -2016,8 +2016,27 @@ function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abiliti
     if (e.verb === "leaves" && t.verb === "dies") return false;
   }
   if (e.subject.self === true) return false;
+  // WHOSE CREATURE (#1513). An Aura you put on an OPPONENT's creature is never sent to the graveyard by your own creature's departure.
+  if (e.subject.control === "you" && hostIsOpponents(host, abilities)) return false;
   const { zone: _z, fromZone: _f, ...printed } = e.subject;
   return subjectMatches({ ...printed, zone: e.subject.zone ?? "battlefield" }, host.zone === undefined ? { ...host, zone: "battlefield" } : host, h);
+}
+
+/** AN AURA THAT HURTS ITS HOST IS PUT ON AN OPPONENT'S CREATURE (#1513). A printed "Enchant creature an opponent controls" is `control: opp`
+ *  and `subjectMatches` honours it. A plain "Enchant creature" is stored `control: any` for Rancor and Bitter Chill alike, so the side is read off what the Aura does
+ *  to its host: it only takes from it (an `untap-denial`, `restriction` or `debuff` static, or "that player sacrifices that creature unless they pay", the
+ *  controller as payer -- Slow Motion) and gives it nothing (`pump`, `keyword-grant`). Undying Rage (+2/+2, can't block) is a gift.
+ *  CEILING: a heuristic over the stored effect kinds, not a printed fact. Of the 31 corpus Auras with a self dies/leaves trigger and an Enchant line,
+ *  5 read opponent-side (Bitter Chill, Cessation, Despondency, Sluggishness, Slow Motion); the rest give the host something, grant nothing readable
+ *  (Chime of Night, Krovikan Whispers, Reality Acid) or enchant a non-creature. A debuff Aura someone puts on their own creature (a Pacifism on a creature
+ *  they mean to sacrifice) is the cost, and `Enchant creature you control` is already `control: you`. */
+// Read from the ORIGINAL abilities: `withLiveKills` blanks the fact kinds (`restriction`, `untap-denial`) in the copy the pair loop walks.
+const HOST_TAKES = new Set(["untap-denial", "restriction", "debuff"]);
+const HOST_GIVES = new Set(["pump", "keyword-grant"]);
+function hostIsOpponents(host: NonNullable<CardTags["characteristics"]["enchants"]>, abilities: CardTags["abilities"]): boolean {
+  if (host.control !== undefined && host.control !== "any") return host.control === "opp";
+  const takes = abilities.some((x) => HOST_TAKES.has(x.effect.kind) || (x.unless?.payer === "controller" && (x.emits ?? []).some((m) => m.verb === "sacrifice")));
+  return takes && !abilities.some((x) => HOST_GIVES.has(x.effect.kind));
 }
 
 /** AN UNTYPED LAND PUT RESOLVES AGAINST THE DECK'S OWN LANDS (owner ruling 2026-09-16, recall v6
@@ -2152,7 +2171,7 @@ export function directedReasons(p0: DeckCard, c0: DeckCard, h: Hierarchy, opts: 
   if (silencedBy(p, c, h)) return [];
   // Both sides carry tags from here on, which is what `TaggedCard` records for the channels.
   const cLosesOnEnter = (c0.tags?.abilities ?? []).some((a) => isSelfLoss(a) && a.trigger?.subject?.self === true && a.trigger.verbs.includes("enters"));
-  const s: PairScope = { p: p as TaggedCard, c: c as TaggedCard, h, opts, pEvents: pEventsFor(p.tags, c.tags), reasons: [], cLosesOnEnter };
+  const s: PairScope = { p: p as TaggedCard, c: c as TaggedCard, h, opts, pEvents: pEventsFor(p.tags, c.tags), reasons: [], cLosesOnEnter, cAbilitiesRaw: c0.tags?.abilities };
   // THE ORDER IS PART OF THE OUTPUT. Each channel appends to one list, and `dedupeReasons` keeps the
   // first of two identical claims, so reordering these calls can change which one survives.
   eventEdges(s);
@@ -2227,11 +2246,13 @@ interface PairScope {
   replacementOnly?: boolean;
   /** The consumer's own enters trigger loses its controller the game: nobody puts it into play except by casting. */
   cLosesOnEnter?: boolean;
+  /** The consumer's abilities as derived: `c.tags` is the copy `withLiveKills` blanked (fact kinds, refused triggers). */
+  cAbilitiesRaw?: CardTags["abilities"];
 }
 
 // EVENT EDGES: a producer event against a consumer trigger. The main channel; every other
 // channel below is a relation this one cannot express.
-function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairScope): void {
+function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbilitiesRaw }: PairScope): void {
   // The producer's own implied events, for `landPutFor`; built only where a deck is known.
   const ownEvents: ReadonlySet<string> = opts.landTypes
     ? new Set(impliedEvents(p.tags.characteristics).map((x) => JSON.stringify(normalizeZoneEvent(x))))
@@ -2291,7 +2312,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
         const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject, ...(a.trigger.amount ? { amountIs: a.trigger.amount } : {}), ...(a.trigger.victim ? { victimIs: a.trigger.victim } : {}) });
         // `e` is `e0` when it matches as authored, or an untyped land put resolved against the
         // deck's lands to the subtype this trigger names (`landPutFor`); null is no match.
-        const viaHost = auraHostLeaves(c.tags.characteristics, a, e0, t, h);
+        const viaHost = auraHostLeaves(c.tags.characteristics, a, e0, t, h, cAbilitiesRaw ?? c.tags.abilities);
         const e = viaHost ? e0 : landPutFor(e0, t, opts.landTypes, ownEvents, h);
         if (!e) continue;
         // TOKENS MEDIATE (Task 7, tokens-as-nodes, 2026-08-16). A maker's own "a Treasure enters"
