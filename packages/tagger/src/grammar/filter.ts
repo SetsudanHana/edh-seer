@@ -141,6 +141,8 @@ interface Group {
    *  alternative. "creatures BLOCKING enchanted creature" is a participle with an object, not more
    *  adjectives. */
   nounSeen?: boolean;
+  /** This alternative's noun was "token"/"tokens" (#1499: "a card or token" is either). */
+  tokenWord?: boolean;
   /** This alternative is an ability ("activated ability"), with the kinds it names. */
   ability?: boolean;
   kinds?: string[];
@@ -484,8 +486,8 @@ function nominalWord(c: Cursor, r: Reading): boolean | null {
     c.i++; return true;
   }
   switch (w) {
-    case "token": r.token = true; r.tokenHead = true; g.nounSeen = true; c.i++; return true;
-    case "tokens": r.token = true; r.tokenHead = true; r.plural = true; g.nounSeen = true; c.i++; return true;
+    case "token": r.token = true; r.tokenHead = true; g.tokenWord = true; g.nounSeen = true; c.i++; return true;
+    case "tokens": r.token = true; r.tokenHead = true; g.tokenWord = true; r.plural = true; g.nounSeen = true; c.i++; return true;
     case "nontoken": r.token = false; c.i++; return true;
     case "card": case "cards": g.head = "card"; g.nounSeen = true; c.i++; return true;
     // "a source you control": any object that deals damage, so no type.
@@ -2233,6 +2235,9 @@ function lower(r: Reading): SubjectFilter | null {
     return spellOrAbility;
   }
   if (!r.ability && r.abilityKinds.length) return null;
+  // "a card or token", "a creature card or creature token": one alternative names CARDS, another TOKENS, so the subject is
+  // either (#1499; the legacy `parseToken` says the same). "Elf or Warrior token" names no card alternative and stays token.
+  if (r.token === true && r.groups.some((g) => g.tokenWord) && r.groups.some((g) => g.head === "card" && !g.tokenWord)) r.token = null;
   const out: SubjectFilter = { control: r.control ?? "any", token: r.token };
   if (r.abilityKinds.length) out.abilityKind = r.abilityKinds as NonNullable<SubjectFilter["abilityKind"]>;
   if (r.owner) out.owner = r.owner;

@@ -98,8 +98,15 @@ function parseControl(t: string): Control {
   return "any";
 }
 
+/** "a card or token", "a creature card or creature token", "tokens or cards": CARDS joined to TOKENS by "or" is either (#1499). One adjective/noun word is allowed before the second noun. */
+// CEILING: only "card(s) or|and/or [one word] token(s)" and its mirror are read here. A comma list ("a land card, creature card, or token"),
+// two words before the second noun ("a creature token or a creature card"), plain "and" ("each token and card") and "a nontoken creature card
+// or token" still read token true (or false), while grammar/filter.ts reads them per alternative as null -- none is in the corpus today (#1499).
+const CARD_OR_TOKEN = /\bcards? (?:or|and\/or) (?:\w+ )?tokens?\b|\btokens? (?:or|and\/or) (?:\w+ )?cards?\b/;
+
 function parseToken(t: string): boolean | null {
   if (/\bnontoken\b|\b(?:isn'?t|is not|isn’t) a token\b/.test(t)) return false;
+  if (CARD_OR_TOKEN.test(t)) return null;
   if (/\btokens?\b/.test(t)) return true;
   return null;
 }
