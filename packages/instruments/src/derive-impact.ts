@@ -25,8 +25,8 @@ import { pathToFileURL } from "node:url";
 import { connect, loadConfig } from "@edh-seer/data";
 import { createPool, defaultWorkers } from "@edh-seer/data/parallel";
 import {
-  chooseMatcher, classifyRows, impactJson, formatReport, ratchetReport, grammarReport, nodeModulesHash, pairsReport, sampleIds, snapOf, splitMatcherCode, treeVerdict,
-  type CardPairs, type GrammarEntry, type RatchetInputs, type ImpactReport, type PairSection, type RowSnap,
+  baseRowsKey, chooseMatcher, classifyRows, clauseKey, docDigest, impactJson, formatReport, ratchetReport, grammarReport, nodeModulesHash, pairsReport, sampleIds, snapOf, splitMatcherCode, treeVerdict,
+  type CardPairs, type GrammarEntry, type GrammarSnap, type RatchetInputs, type ImpactReport, type PairSection, type RowSnap,
 } from "./derive-impact-core.js";
 import { reach } from "./derive-impact-graph.js";
 import { buildPairRows } from "./loss-classify-core.js";
@@ -40,9 +40,9 @@ const git = (...args: string[]): string => execFileSync("git", args, { cwd: REPO
 
 const { positionals, values } = parseArgs({
   allowPositionals: true, strict: true,
-  options: { cards: { type: "string" }, json: { type: "string" }, pairs: { type: "string" }, "no-pairs": { type: "boolean", default: false }, "no-ratchets": { type: "boolean", default: false }, serial: { type: "boolean", default: false }, "pair-sample": { type: "string" }, workers: { type: "string" }, matcher: { type: "string" } },
+  options: { cards: { type: "string" }, json: { type: "string" }, pairs: { type: "string" }, "no-pairs": { type: "boolean", default: false }, "no-ratchets": { type: "boolean", default: false }, "no-cache": { type: "boolean", default: false }, serial: { type: "boolean", default: false }, "pair-sample": { type: "string" }, workers: { type: "string" }, matcher: { type: "string" } },
 });
-if (positionals.length !== 1) { console.error('usage: derive-impact.ts <BASE-ref> [--cards "A|B"] [--json out.json] [--pairs N] [--no-pairs] [--no-ratchets] [--serial] [--pair-sample N] [--workers N] [--matcher own|head]'); process.exit(2); }
+if (positionals.length !== 1) { console.error('usage: derive-impact.ts <BASE-ref> [--cards "A|B"] [--json out.json] [--pairs N] [--no-pairs] [--no-ratchets] [--serial] [--no-cache] [--pair-sample N] [--workers N] [--matcher own|head]'); process.exit(2); }
 const only = values.cards ? new Set(values.cards.split("|").map((s) => s.trim()).filter(Boolean)) : null;
 const num = (v: string | undefined, dflt: number, flag: string): number => {
   if (v === undefined) return dflt;
@@ -180,6 +180,19 @@ const allCards = await store.cards.find({}).toArray() as any[];
 const cardById = new Map(allCards.map((c) => [c._id as string, c]));
 log(`read ${clauseDocs.length} clause docs (${tokenIds.length} tokens), ${allCards.length} cards (derive scope BASE ${scopeB.size}, HEAD ${scopeH.size})`);
 
+// ---- BASE rows cache (#1486): what BASE's own code made of THIS corpus, stored under its tree ----
+interface BaseCache { rows: [string, string, boolean, any][]; grammarOnly: string[]; grammar: [string, boolean, string][]; ratchets?: RatchetInputs }
+const cacheKey = baseRowsKey({ baseSha, matcher: matcherMode, clauseKeys: clauseDocs.map(clauseKey), cardDigests: allCards.map(docDigest), tokenDigests: tokenDocs.map(docDigest) });
+const cacheFile = join(baseRoot, `rows-${cacheKey}.json`);
+let cached: BaseCache | undefined;
+if (!values["no-cache"] && existsSync(cacheFile)) {
+  try {
+    const c = JSON.parse(readFileSync(cacheFile, "utf8")) as BaseCache;
+    if (c.ratchets || values["no-ratchets"]) { cached = c; log(`BASE rows from cache (${cacheFile})`); }
+    else log("BASE rows cache has no ratchet measurement; recomputing");
+  } catch (e) { log(`BASE rows cache unreadable (${(e as Error).message}); recomputing`); }
+}
+
 // ---- rows + grammar, both sides ----
 interface Row { snap: RowSnap; tags: any }
 type RowMap = Map<string, Row>;
@@ -187,18 +200,26 @@ const rowsB: RowMap = new Map(), rowsH: RowMap = new Map();
 const answered = new Map(clauseDocs.filter((d) => !d.isToken).map((d) => [d.oracleId as string, d.segmentHash as string])); // each side compares it with ITS OWN segmentHash of the current text
 const grammarOnlyB = new Set<string>(), grammarOnlyH = new Set<string>();
 const grammarEntries: GrammarEntry[] = [];
+const cachedGrammar = new Map((cached?.grammar ?? []).map(([id, complete, records]) => [id, { complete, records } as GrammarSnap]));
+const baseGrammar: [string, boolean, string][] = [];
 for (const c of allCards) {
-  const gb = B.grammarClauseRecords(c), gh = H.grammarClauseRecords(c);
-  grammarEntries.push({ id: c._id, name: c.name, base: { complete: gb.complete, records: JSON.stringify(gb.records) }, head: { complete: gh.complete, records: JSON.stringify(gh.records) } });
+  const gb = cached ? undefined : B.grammarClauseRecords(c), gh = H.grammarClauseRecords(c);
+  const baseSnap: GrammarSnap = cached ? cachedGrammar.get(c._id)! : { complete: gb!.complete, records: JSON.stringify(gb!.records) };
+  if (!cached) baseGrammar.push([c._id, baseSnap.complete, baseSnap.records]);
+  grammarEntries.push({ id: c._id, name: c.name, base: baseSnap, head: { complete: gh.complete, records: JSON.stringify(gh.records) } });
   for (const [side, g, rows, only_, scope] of [[B, gb, rowsB, grammarOnlyB, scopeB], [H, gh, rowsH, grammarOnlyH, scopeH]] as const) {
-    if (!scope.has(c._id) || !g.complete) continue;
+    if (!g || !scope.has(c._id) || !g.complete) continue;
     if (answered.get(c._id) === side.segmentHash(c.oracleText ?? "", c.typeLine ?? "", c.keywords ?? [])) continue;
     only_.add(c._id);
     const tags = side.deriveCardTags(side.deriveInputOf(c, c._id, c.name, g.records, undefined, g.readings));
     rows.set(c._id, { snap: snapOf(c.name, tags, true), tags });
   }
 }
-log(`grammar pass over ${allCards.length} cards done; grammar-only rows BASE ${grammarOnlyB.size}, HEAD ${grammarOnlyH.size}`);
+if (cached) {
+  for (const id of cached.grammarOnly) grammarOnlyB.add(id);
+  for (const [id, name, fromGrammar, tags] of cached.rows) rowsB.set(id, { snap: snapOf(name, tags, fromGrammar), tags });
+}
+log(`grammar pass over ${allCards.length} cards done; grammar-only rows BASE ${grammarOnlyB.size}, HEAD ${grammarOnlyH.size}${cached ? " (BASE from cache)" : ""}`);
 /** Derive one side's clause docs. Parallel: one worker pool per side, pointed at THAT side's own tree (`derive-worker.ts`), so BASE is still computed by BASE's code;
  *  results come back in input order, so the rows are the serial loop's. A tree with no usable worker entry (an old base), or a pool that fails, falls back to the serial loop. */
 async function deriveSide(label: string, side: Side, root: string, skip: Set<string>, into: RowMap): Promise<void> {
@@ -226,7 +247,7 @@ async function deriveSide(label: string, side: Side, root: string, skip: Set<str
     into.set(it.doc.oracleId, { snap: snapOf(it.doc.name, r.tags, r.fromGrammar), tags: r.tags });
   });
 }
-await deriveSide("BASE", B, baseRoot, grammarOnlyB, rowsB);
+if (!cached) await deriveSide("BASE", B, baseRoot, grammarOnlyB, rowsB);
 await deriveSide("HEAD", H, REPO, grammarOnlyH, rowsH);
 log(`rows derived: BASE ${rowsB.size}, HEAD ${rowsH.size}`);
 
@@ -236,7 +257,7 @@ const rows = classifyRows(snaps(rowsB), snaps(rowsH));
 const grammar = grammarReport(grammarEntries.filter((e) => keep(e.name)));
 
 // ---- the two by-name ratchets, in memory (the bins' own measuring functions, each commit's own tagger / matcher / docs.ts, no Mongo write) ----
-let ratchets: ReturnType<typeof ratchetReport> | undefined;
+let ratchets: ReturnType<typeof ratchetReport> | undefined, baseRatchets: RatchetInputs | undefined;
 if (!values["no-ratchets"]) {
   const canonical = new Map(clauseDocs.filter((d) => !d.isToken).map((d) => [d.oracleId as string, d.canonical]));
   const measure = (side: Side, rowsOf: RowMap, detectors: RoleDetectors): RatchetInputs => {
@@ -248,8 +269,18 @@ if (!values["no-ratchets"]) {
   };
   const bank = (f: string): unknown => JSON.parse(readFileSync(join(REPO, "packages/instruments", f), "utf8"));
   const bankedDropped = bank("dropped-clauses.json") as RatchetInputs["dropped"], bankedRoles = bank("role-membership.json") as RatchetInputs["roles"], bankedUntagged = bank("role-membership-untagged.json") as string[];
-  ratchets = ratchetReport(measure(B, rowsB, matcherMode === "own" ? B.matcher : H.matcher), measure(H, rowsH, H.matcher), { dropped: bankedDropped, roles: bankedRoles, untagged: bankedUntagged });
+  baseRatchets = cached?.ratchets ?? measure(B, rowsB, matcherMode === "own" ? B.matcher : H.matcher);
+  ratchets = ratchetReport(baseRatchets, measure(H, rowsH, H.matcher), { dropped: bankedDropped, roles: bankedRoles, untagged: bankedUntagged });
   log(`ratchets measured: dropped-clauses ${ratchets.dropped.base.actions} -> ${ratchets.dropped.head.actions}, role-ratchet gained ${ratchets.roles.gained.length} lost ${ratchets.roles.lost.length}, untagged ${ratchets.untagged.base} -> ${ratchets.untagged.head}`);
+}
+
+if (!cached && !values["no-cache"]) {
+  // Written to a temp name and renamed: a reader never sees half a file. The files of other keys under this sha are stale corpora; they stay (the tree is the user's cache to clear).
+  const tmp = `${cacheFile}.${process.pid}.tmp`;
+  const payload: BaseCache = { rows: [...rowsB].map(([id, r]) => [id, r.snap.name, r.snap.fromGrammar, r.tags]), grammarOnly: [...grammarOnlyB], grammar: baseGrammar, ...(baseRatchets ? { ratchets: baseRatchets } : {}) };
+  writeFileSync(tmp, JSON.stringify(payload));
+  renameSync(tmp, cacheFile);
+  log(`BASE rows cached to ${cacheFile}`);
 }
 
 // ---- pair reasons, spread over worker threads (results come back in input order, so the report equals a one-worker run) ----

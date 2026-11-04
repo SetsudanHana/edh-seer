@@ -251,6 +251,27 @@ export function treeVerdict(st: TreeStat, uid: number): "ok" | string {
 /** A fingerprint of the repo's top-level node_modules listing; the cached tree links into it, so a different listing means dangling or missing modules. */
 export const nodeModulesHash = (names: string[]): string => createHash("sha1").update([...names].sort().join("\n")).digest("hex");
 
+// ---- BASE rows cache (#1486) ----
+
+const sha1 = (x: string): string => createHash("sha1").update(x).digest("hex");
+/** Content digest of one Mongo document (key order is the stored order, which is stable). */
+export const docDigest = (d: unknown): string => sha1(JSON.stringify(d));
+/** One `cardClauses` doc as the key sees it: `oracleId:segmentHash:normalizeVersion`, plus a digest of the stored answer (`canonical`), which derive reads and the version does not pin. */
+export const clauseKey = (d: { oracleId: string; segmentHash: string; normalizeVersion: number; canonical?: unknown }): string => `${d.oracleId}:${d.segmentHash}:${d.normalizeVersion}:${docDigest(d.canonical ?? null).slice(0, 16)}`;
+export interface BaseRowsKeyInput {
+  baseSha: string; matcher: MatcherMode;
+  /** `clauseKey` of every cardClauses doc */ clauseKeys: string[];
+  /** `docDigest` of every card document (derive reads oracleText, typeLine, keywords, legalities ... of them) */ cardDigests: string[];
+  /** `docDigest` of every token document */ tokenDigests: string[];
+}
+/** What BASE's rows (and its ratchet measurement) are a function of, besides BASE's own code (named by the sha): the three Mongo collections derive reads, and the matcher mode the BASE ratchet runs with.
+ *  Counts are hashed with the lists, so a list cannot gain what another loses. The clause keys are sorted: Mongo's order is not a fact. */
+export function baseRowsKey(i: BaseRowsKeyInput): string {
+  const h = createHash("sha1");
+  h.update(`sha ${i.baseSha}\nmatcher ${i.matcher}\nclauses ${i.clauseKeys.length}\n${[...i.clauseKeys].sort().join("\n")}\ncards ${i.cardDigests.length}\n${[...i.cardDigests].sort().join("\n")}\ntokens ${i.tokenDigests.length}\n${[...i.tokenDigests].sort().join("\n")}`);
+  return h.digest("hex").slice(0, 20);
+}
+
 // ---- summary ----
 
 // ---- ratchets ----
