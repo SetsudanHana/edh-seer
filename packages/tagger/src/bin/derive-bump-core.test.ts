@@ -23,6 +23,20 @@ describe("rewriteDeriveVersion", () => {
       "export const OTHER = 1;",
     ]);
   });
+  it("does not double the issue tag when the note already starts with it (#1506)", () => {
+    for (const note of ["#1412 -- a note", "#1412: a note", "#1412 — a note", "  #1412 --   a note"]) {
+      expect(rewriteDeriveVersion(SRC, 1412, note).text).toContain("// 410: #1412 -- a note\n");
+    }
+    // Only the SAME issue's leading tag is stripped: another issue or a later mention stays.
+    expect(rewriteDeriveVersion(SRC, 1412, "#1395 -- follow-up").text).toContain("// 410: #1412 -- #1395 -- follow-up\n");
+    expect(rewriteDeriveVersion(SRC, 1412, "fixes #1412 shape").text).toContain("// 410: #1412 -- fixes #1412 shape\n");
+    expect(rewriteDeriveVersion(SRC, 1412, "#14120 -- other").text).toContain("// 410: #1412 -- #14120 -- other\n");
+    // One separator only: a note that starts with a minus sign keeps it.
+    expect(rewriteDeriveVersion(SRC, 1412, "#1412 -- -1/-1 counters").text).toContain("// 410: #1412 -- -1/-1 counters\n");
+  });
+  it("refuses a note that is only its own issue tag", () => {
+    for (const note of ["#1412", "#1412 --", " #1412 :  "]) expect(() => rewriteDeriveVersion(SRC, 1412, note)).toThrow(/only the issue tag/);
+  });
   it("throws on zero consts", () => {
     expect(() => rewriteDeriveVersion("// 1: x\nconst A = 1;", 1, "n")).toThrow(/exactly once/);
   });
