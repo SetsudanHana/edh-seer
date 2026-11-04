@@ -48,6 +48,13 @@ every claim in the brief — including "kept simple deliberately" — as unverif
 - A ratchet cap (`KNOWN_DEFECT_CAP`, compass, `known-lost-pairs.json`) raised without a written
   reason, or a fixed defect not banked.
 - Precision quoted without recall/retention. A fix with no measured before/after number.
+- A claim checked on a sample presented as covering the population ("every loss is a self
+  trigger" from a top-20 list). For an engine change, the `loss-classify` counts must cover every
+  moved pair, and each `LOST->CLASS` / `GAINED->SELF` / ambiguous / unmatched pair must be argued.
+- A claim about stored rows or main's behaviour with no quoted query output or
+  `git show origin/main:<file>` lines behind it: `fix`, even if it sounds right (on #1474 such a
+  claim reached the changelog wrong).
+- A gate list short of `npm run ci:local` (every `ci.yml` step).
 - A test that cannot fail: asserts what the code does rather than what the rule says; a fixture
   carrying a stale kind.
 - Deliberate simplification without a `CEILING:` comment.
