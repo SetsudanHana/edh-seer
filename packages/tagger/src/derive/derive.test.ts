@@ -6212,10 +6212,10 @@ describe("#1266 graveyard owner on an exiled emit", () => {
     expect(es.every((e) => e.victimMay !== true)).toBe(true);
   });
 
-  it("an exile that names a hand AND a graveyard keeps the zone the model gave (Identity Crisis stays unzoned)", () => {
-    const [e] = exiledOf([{ id: 1, abilityType: "spell", actions: [{ verb: "exile", object: "all cards from target player's hand and graveyard" }] }],
+  it("an exile that names a hand AND a graveyard is one emit per zone (Identity Crisis, #1311)", () => {
+    const es = exiledOf([{ id: 1, abilityType: "spell", actions: [{ verb: "exile", object: "all cards from target player's hand and graveyard" }] }],
     "Identity Crisis", { 1: "Exile all cards from target player's hand and graveyard." });
-    expect(e?.subject.fromZone).toBeUndefined();
+    expect(es.map((e) => e.subject.fromZone).sort()).toEqual(["graveyard", "hand"]);
   });
 });
 

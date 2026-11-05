@@ -433,7 +433,7 @@ const PUTS_FROM_YARD_ONTO_BATTLEFIELD = /\bputs? [^.]*?\bgraveyards? onto the ba
 const USES_THE_EXILED_CARD_2 = /\bcop(?:y|ies) (?:it|them|that card|those cards|the exiled cards?)\b|\b(?:play|cast) [^.]*?\bfrom among cards exiled (?:this way|with)\b/i;
 // "your graveyard", and "your hand or graveyard" / "your hand and/or graveyard" (Mairsil): the graveyard half is still yours.
 const YOUR_YARD = /\byour (?:(?:hand|library)(?: or| and\/or| and) )?graveyard\b/i;
-const OTHER_YARD = /\b(?:target player'?s?|opponents?'?s?|each player'?s?|their)\s+graveyards?\b/i;
+const OTHER_YARD = /\b(?:target player'?s?|that player'?s?|opponents?'?s?|each player'?s?|their)\s+graveyards?\b/i;
 
 export function exilesOwnGraveyard(object: string, clauseText: string): boolean {
   if (YOUR_YARD.test(object)) return true;
@@ -465,8 +465,8 @@ export function exilesFromYourGraveyard(object: string, clauseText: string): boo
 /** An exile whose object names graveyards (and no other zone) takes its cards from one, though the model stored no origin: "up to twice X target cards from
  *  graveyards" (Erebos's Intervention), "from a single graveyard", "all graveyards", "that player's graveyard", "from defending player's graveyard"
  *  (#1266). A hand or library named beside it, a battlefield half ("all creatures and graveyards", "from the battlefield and/or creature cards from graveyards": Angel of Serenity; "put there from the battlefield" is only the history of a card in the yard), or a destination ("into that player's graveyard")
- *  keeps the model's reading: one `fromZone` cannot hold two zones. CEILING: Identity Crisis, Thought Distortion, Ashiok's -10 and Ultimate Nullification
- *  (a graveyard half beside a hand or the battlefield) stay unzoned. */
+ *  keeps the model's reading: one `fromZone` cannot hold two zones. A trailing hand/graveyard list is split into one exile per zone BEFORE this (`splitMultiZoneExiles`, #1311).
+ *  CEILING: Ultimate Nullification and Angel of Serenity (a graveyard half beside the battlefield) stay unzoned. */
 const OTHER_ZONE_WORD = /\b(?:hands?|librar(?:y|ies)|into|onto|instead)\b|\band graveyards?\b|\bthe battlefield (?:and|or)\b|\bon the battlefield\b|^this \w+ (?:and|or)\b/i;
 export function exileNamesOnlyGraveyards(object: string): boolean {
   return ANY_YARD.test(object) && !OTHER_ZONE_WORD.test(object);

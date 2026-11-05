@@ -621,7 +621,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 450: #1501 -- a power/toughness definition filed under a zone verb (Seize the Storm's Elemental token, exile) is a CDA and emits no zone move. derive-impact vs 449: 1 row changed; pair reasons -82 / +0, loss-classify lost 82 (class 41, ambiguous 41, unmatched 0), every one the token as producer through its false exiled/leaves-graveyard self emit; role-ratchet 0/0; dropped-clauses 4,913 -> 4,913.
 // 451: #1502 -- An end-step exile of a token its maker just made is claimed by the maker's own leaves/exiled emits (6 unclaimed battlefield exiles: Zektar Shrine Expedition, Gruesome Encore, Living Laser, Nahiri, Flamerush Rider, Altair; plus the zoneless ones); a model exile whose toZone is battlefield is a put (Gruesome Encore: no false graveyard exile, its Exile it is a battlefield exile of the creature); a trailing 'unless' on the next-end-step token cleanup is read (Sauron: Wraith creature token exiled from the battlefield).
 // 452: #1496 -- A card that leaves its own graveyard leaves its owner's: self returns and exiles from a graveyard are control you, not any
-export const DERIVE_VERSION = 452;
+// 453: #1311 -- a multi-zone exile is one `exiled` emit per zone it names (`splitMultiZoneExiles`, before `collapseZoneSearches`): a search over 'graveyard, hand, and library' followed by 'exile them' (Surgical Extraction, Cranial Extraction, Slaughter Games, Lost Legacy, Memoricide, Eradicate, The End ...; zones from the stored search run, else the printed header of the one search) and an exile whose object ends in a 'hand and graveyard' list (Identity Crisis, Thought Distortion, Ashiok's -10). 'target opponent's / target player's' headers make every half `opp` (Bojuka Bog's convention); 'its owner's / its controller's / that player's' stay `any`. OTHER_YARD learns 'that player's graveyard' (Pick the Brain's delirium count names yours). Census (DERIVE 452 stored + oracle text, exile sentences naming two or more of graveyard/hand/library): 110 cards, of which ~45 are the search-and-exile family. Measured (derive-impact 31b6ac6d -> final tree): 30 rows changed, 7 source flips (Deicide, Eradicate, Quash, Scour, Sowing Salt, Splinter grammar -> model: the new graveyard-hate effect subject differs between the readings; Crumble to Dust model -> grammar); role-ratchet gained 54 (27 cards x answer:graveyard + role:graveyardHate) lost 0; dropped-clauses 4,853 unchanged; loss-classify: 26 cards, lost 177 (self 118, class 42, unmatched 17), gained 422 (class 405, unmatched 17), GAINED->SELF 0. The unsplit cards are named in `splitMultiZoneExiles`' CEILING.
+export const DERIVE_VERSION = 453;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -2077,6 +2078,65 @@ const PLAYER_OBJECT_VERBS: ReadonlySet<string> = new Set(["draw", "mill", "disca
  *  the card's class, which its object carries. */
 const UNNAMED_IS_YOU: ReadonlySet<string> = new Set(["draw", "mill", "scry", "surveil"]);
 
+/** ONE EXILE THAT TAKES CARDS FROM SEVERAL ZONES IS ONE EXILE PER ZONE (#1311). An action carries ONE `fromZone`, and every consumer reads one, so a multi-zone exile named only its last zone, or none: the graveyard half
+ *  was lost and the graveyard-hate rule could not see it. Two printed shapes, each split into one `exile` per zone the text names, every other field kept:
+ *   - a SEARCH-AND-EXILE: a run of `search` actions over different zones ("Search its owner's graveyard, hand, and library for ... and exile them": Surgical Extraction, Cranial Extraction, Slaughter Games, Lost Legacy,
+ *     The End, Eradicate) followed at once by an exile of what was found (a pronoun, "cards found ...", or the search's own object) that states no zone, or one of the searched zones. The zones are the searches'. Runs before
+ *     `collapseZoneSearches`, which keeps only the library member.
+ *   - an exile whose object ends in a hand/graveyard/library LIST joined by "and" ("all cards from target player's hand and graveyard": Identity Crisis, Thought Distortion; "from all opponents' hands and graveyards":
+ *     Ashiok's -10). "or" is a choice of one zone (Memory Leak) and names no second exile. Every zone of the list is named in the object, so none is invented.
+ *  CEILING: Ultimate Nullification (the grammar reads 'all creatures and graveyards' as one object) and Angel of Serenity ('creatures from the battlefield and/or creature cards from graveyards') keep the single zone: their zones are
+ *  not a trailing list. A search whose zones are not all in the stored run (the model stored only the library member) names only the zones stored. Counterbore and Test of Talents (the search itself carries `toZone: exile` and
+ *  there is no exile action), Doomsday ('exile the rest'), Chandra, Heart of Fire's -9 derive no split. Invasive Surgery's graveyard half reads owner you (its delirium count names yours). */
+const SPLITTABLE_ZONES: ReadonlySet<string> = new Set(["graveyard", "hand", "library"]);
+const FOUND_BY_SEARCH = /^(?:it|them|those cards|that card|the cards|(?:(?:all|any number of) )?cards (?:with|found)\b.*)$/i;
+const ZONE_LIST_TAIL = /\b(hands?|graveyards?|librar(?:y|ies)),? (?:and )?(hands?|graveyards?|librar(?:y|ies))$/i;
+const ZONE_OF_WORD = (w: string): string => (w.startsWith("hand") ? "hand" : w.startsWith("graveyard") ? "graveyard" : "library");
+/** The zones a clause's ONE printed search names, in order ("Search target opponent's graveyard, hand, and library for ..." stored as a single search with no origin: Slaughter Games, Pick the Brain, Invasive Surgery).
+ *  Empty unless the text holds exactly one "search" and a " for " after it. Word tests only. */
+function searchHeaderOf(text: string | undefined): string {
+  const parts = (text ?? "").toLowerCase().split("search ");
+  return parts.length !== 2 ? "" : parts[1]!.split(" for ")[0]!;
+}
+/** WHOSE ZONES A SEARCH TAKES FROM, when the printed header says an opponent: "Search target opponent's graveyard, hand, and library" (Slaughter Games, Ancient Vendetta) and "target player's" (Cranial Extraction, Memoricide; a target
+ *  player is the opponent, the convention Bojuka Bog's "target player's graveyard" already reads). "its owner's" / "its controller's" / "that player's" can be you, and stay `any`. */
+const OPPONENT_HEADER = /\btarget (?:opponent|player)'s\b/;
+function searchedZonesOf(text: string | undefined): string[] {
+  const header = searchHeaderOf(text);
+  return (["graveyard", "hand", "library"] as const).filter((z) => new RegExp(`\\b${z}\\b`).test(header)).sort((u, v) => header.indexOf(u) - header.indexOf(v));
+}
+function splitMultiZoneExiles(clause: ClauseRecord, text?: string): ClauseRecord {
+  const acts = clause.actions ?? [];
+  if (!acts.some((a) => a.verb === "exile")) return clause;
+  const out: Action[] = [];
+  let changed = false;
+  for (let i = 0; i < acts.length; i++) {
+    const a = acts[i]!;
+    if (a.verb === "search") {
+      let j = i;
+      const zones: string[] = [];
+      while (j < acts.length && acts[j]!.verb === "search" && SPLITTABLE_ZONES.has(acts[j]!.fromZone ?? "") && !zones.includes(acts[j]!.fromZone!)) { zones.push(acts[j]!.fromZone!); j++; }
+      if (zones.length < 2) { j = i + 1; zones.splice(0, zones.length, ...searchedZonesOf(text)); }
+      const x = acts[j];
+      const foundObject = x !== undefined && (FOUND_BY_SEARCH.test((x.object ?? "").trim()) || (x.object ?? "").trim() === (a.object ?? "").trim());
+      if (zones.length >= 2 && x?.verb === "exile" && foundObject && (!x.fromZone || zones.includes(x.fromZone)) && (!x.toZone || x.toZone === "exile")) {
+        const theirs = OPPONENT_HEADER.test(searchHeaderOf(text));
+        out.push(...acts.slice(i, j), ...zones.map((z) => ({ ...x, ...(theirs ? { object: `${(x.object ?? "").trim()} from an opponent's ${z}` } : {}), fromZone: z, toZone: "exile" }) as Action));
+        i = j; changed = true; continue;
+      }
+      out.push(a);
+      continue;
+    }
+    const tail = a.verb === "exile" && !a.fromZone ? ZONE_LIST_TAIL.exec((a.object ?? "").trim()) : null;
+    if (tail && ZONE_OF_WORD(tail[1]!.toLowerCase()) !== ZONE_OF_WORD(tail[2]!.toLowerCase()) && !/ or |battlefield|\binto\b|\bonto\b/i.test(a.object ?? "")) {
+      out.push(...[tail[1]!, tail[2]!].map((w) => ({ ...a, fromZone: ZONE_OF_WORD(w.toLowerCase()) }) as Action));
+      changed = true; continue;
+    }
+    out.push(a);
+  }
+  return changed ? { ...clause, actions: out } : clause;
+}
+
 /** ONE PRINTED SEARCH OVER SEVERAL ZONES IS ONE SEARCH ABILITY (#1391 F3). "Search its owner's graveyard, hand, and library for all cards with that name" (Eradicate, Extirpate, Kassandra) is stored as one `search` action per zone,
  *  same object, differing only in `fromZone`; the model's store and the grammar's own records both write it so. A run of CONSECUTIVE searches with the same object, amount and optionality and pairwise-different zones collapses
  *  to one, keeping the library member (its `search` emit and `librarySearch` are the event "whenever you search your library" hears), else the first. Two separately printed searches never match: they differ in object, or
@@ -2655,6 +2715,7 @@ export function deriveAbilities(
       : withGrammarActions(clause, rehomed ?? clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName, readings?.[clause.id]?.actions);
     // A LIFE TOTAL SET READS OFF ITS PRINTED CLAUSE (#1333, CR 119.5): a loss at an opponent / target player (Sorin Markov), "lose all but 1 life" (Soulgorger Orgg) and a genuine set's own recipient.
     clause = withLifeSetReadings(clause, rehomed ?? clauseTexts?.[clause.id]);
+    clause = splitMultiZoneExiles(clause, rehomed ?? clauseTexts?.[clause.id]);
     if (collapseSearches) clause = collapseZoneSearches(clause);
     clause = splitDoesTheSame(clause, clauseTexts?.[clause.id]);
     // WHICH FACE PRINTS THIS CLAUSE. Stamped onto every ability the clause derives below, so the
