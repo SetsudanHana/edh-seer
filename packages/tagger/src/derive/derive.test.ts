@@ -8185,3 +8185,228 @@ test("Seize the Storm's Elemental token: a P/T definition filed as an exile keep
   expect(abilities[0]?.effect.scaling).toBe("per-graveyard");
   expect(abilities[0]?.effect.scalingSubject).toMatchObject({ type: ["instant", "sorcery"], zone: "graveyard" });
 });
+
+/** A TOKEN THE CARD CREATES IS NEVER THE CARD (#1520). Clauses as the store has them. */
+describe("a created token is not self (#1520)", () => {
+  test("Duggan: the model's `investigate` with object 'Duggan' makes a Clue that is not Duggan", () => {
+    // Stored clause 2 of Duggan, Private Detective (clauseSource "model"): db.cardClauses.findOne({oracleId: ...}).canonical, the object is the card's own name.
+    const text = "Whenever Duggan enters or attacks, investigate.";
+    const { abilities } = deriveAbilities([
+      { id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "Duggan", control: "you" }, actions: [{ verb: "investigate", object: "Duggan", optional: false }] },
+      { id: 2, abilityType: "triggered", trigger: { event: "attacks", subject: "Duggan", control: "you" }, actions: [{ verb: "investigate", object: "Duggan", optional: false }] },
+    ] as never, "Duggan, Private Detective", { 2: text }, undefined, text);
+    const emits = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "create-token" || e.verb === "enters");
+    expect(emits.length).toBeGreaterThan(0);
+    for (const e of emits) {
+      expect(e.subject.self).toBeUndefined();
+      expect(e.subject).toMatchObject({ token: true, subtype: "clue", type: "artifact", control: "you" });
+    }
+    // The card's own `enters` TRIGGER stays the card's own.
+    expect(abilities.filter((a) => a.trigger?.verbs.includes("enters")).every((a) => a.trigger?.subject.self === true)).toBe(true);
+  });
+  test("control: a card that investigates with no object still makes a Clue (Forensic Gadgeteer shape)", () => {
+    const { abilities } = deriveAbilities([
+      { id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "you", control: "you" }, actions: [{ verb: "investigate", object: "", optional: false }] },
+    ] as never, "Forensic Gadgeteer");
+    const e = abilities.flatMap((a) => a.emits ?? []).find((x) => x.verb === "create-token");
+    expect(e?.subject).toMatchObject({ token: true, subtype: "clue", type: "artifact" });
+    expect(e?.subject.self).toBeUndefined();
+  });
+});
+
+/** A COST OR REPLACEMENT OBJECT IS NOT THE CARD'S OWN SUBJECT (#1520, shape 2). Oracle text as the corpus has it; the grammar reads these cards. */
+describe("another object named in the clause stays out of the self subject (#1520)", () => {
+  const grammarEmits = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities.flatMap((a) => a.emits ?? []);
+  };
+  const LANDS: [string, string, string][] = [
+    ["Balduvian Trading Post", "mountain", "If this land would enter, sacrifice an untapped Mountain instead. If you do, put this land onto the battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add {C}{R}.\n{1}, {T}: This land deals 1 damage to target attacking creature."],
+    ["Heart of Yavimaya", "forest", "If this land would enter, sacrifice a Forest instead. If you do, put this land onto the battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add {G}.\n{T}: Target creature gets +1/+1 until end of turn."],
+    ["Kjeldoran Outpost", "plains", "If this land would enter, sacrifice a Plains instead. If you do, put this land onto the battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add {W}.\n{1}{W}, {T}: Create a 1/1 white Soldier creature token."],
+    ["Soldevi Excavations", "island", "If this land would enter, sacrifice an untapped Island instead. If you do, put this land onto the battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add {C}{U}.\n{1}, {T}: Scry 1."],
+  ];
+  test("Lake of the Dead: the card's own trip to the graveyard is the land, the sacrificed Swamp is its own sacrifice", () => {
+    const e = grammarEmits("Lake of the Dead", "Land", "If this land would enter, sacrifice a Swamp instead. If you do, put this land onto the battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add {B}.\n{T}, Sacrifice a Swamp: Add {B}{B}{B}{B}.");
+    const own = e.filter((x) => x.verb === "enters-graveyard");
+    expect(own.length).toBeGreaterThan(0);
+    for (const x of own) { expect(x.subject.self).toBe(true); expect(x.subject.subtype).toBeUndefined(); expect(x.subject.type).toBe("land"); }
+    // Not dropped: the sacrificed Swamp is a real sacrifice.
+    expect(e.some((x) => x.verb === "sacrifice" && x.subject.subtype === "swamp" && x.subject.self !== true)).toBe(true);
+  });
+  test("control: 'sacrifice this creature' alone stays one self sacrifice", () => {
+    const { abilities } = deriveAbilities([{ id: 1, abilityType: "activated", actions: [{ verb: "sacrifice", object: "this creature", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "draw", object: "a card", amount: "1", optional: false }] }] as never, "Test Imp");
+    const sac = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "sacrifice");
+    expect(sac).toHaveLength(1);
+    expect(sac[0]!.subject.self).toBe(true);
+  });
+  test("Goblin Plate Mail: 'attach this Equipment to the amassed Army' is the Equipment's own attach, the Army is what it attaches to", () => {
+    // Stored clause 1 of Goblin Plate Mail (clauseSource "model").
+    const text = "When this Equipment enters, amass Goblins 1, then attach this Equipment to the amassed Army.";
+    const { abilities } = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this", control: "you" }, actions: [
+      { verb: "amass", object: "Goblins", fromZone: null, toZone: null, amount: "1", optional: false },
+      { verb: "attach", object: "this Equipment to the amassed Army", fromZone: null, toZone: null, amount: null, optional: false },
+    ] }] as never, "Goblin Plate Mail", { 1: text }, undefined, text);
+    const att = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "attached");
+    expect(att.length).toBeGreaterThan(0);
+    for (const e of att) { expect(e.subject.self).toBe(true); expect(e.subject.subtype).toBe("equipment"); }
+  });
+  test("Ich-Tekik: a counter on the card is the card's, the counter on each Golem is the Golems'", () => {
+    const e = grammarEmits("Ich-Tekik, Salvage Splicer", "Legendary Creature \u2014 Phyrexian Human Artificer", "Whenever an artifact is put into a graveyard from the battlefield, put a +1/+1 counter on Ich-Tekik and a +1/+1 counter on each Golem you control.").filter((x) => x.verb === "counter-added");
+    expect(e).toHaveLength(2);
+    const own = e.filter((x) => x.subject.self === true);
+    expect(own).toHaveLength(1);
+    expect(own[0]!.subject.subtype).toBeUndefined();
+    expect(own[0]!.subject.scope).toBeUndefined();
+    const golems = e.filter((x) => x.subject.self !== true);
+    expect(golems).toHaveLength(1);
+    expect(golems[0]!.subject).toMatchObject({ subtype: "golem", scope: "each", counter: "+1/+1" });
+  });
+  test("control: Angelic Renewal's 'return that card' is still the creature that died, typed (the self-'it' read is for a bare 'it')", () => {
+    const text = "Whenever a creature is put into your graveyard from the battlefield, you may sacrifice this enchantment. If you do, return that card to the battlefield.";
+    const { abilities } = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "a creature", control: "you" }, actions: [
+      { verb: "sacrifice", object: "this enchantment", fromZone: null, toZone: null, amount: null, optional: true },
+      { verb: "return", object: "that card", fromZone: "graveyard", toZone: "battlefield", amount: null, optional: false },
+    ] }] as never, "Angelic Renewal", { 1: text }, undefined, text);
+    const e = abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "enters");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject.type).toBe("creature");
+  });
+  test("control: Thunderclap Drake's 'copy it' after a sacrifice cost still reads the cast spell the trigger names, not the sacrificed creature", () => {
+    const text = "{2}{U}, Sacrifice this creature: When you next cast an instant or sorcery spell this turn, copy it for each time you've cast your commander from the command zone this game.";
+    const { abilities } = deriveAbilities([{ id: 3, abilityType: "activated", trigger: { event: "cast", subject: "an instant or sorcery spell", control: "you" }, actions: [
+      { verb: "sacrifice", object: "this creature", fromZone: null, toZone: null, amount: null, optional: false },
+      { verb: "copy", object: "it", fromZone: null, toZone: null, amount: "for each time you've cast your commander from the command zone this game", optional: false },
+    ] }] as never, "Thunderclap Drake", { 3: text }, undefined, text);
+    const e = abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "copy");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject.type).toEqual(["instant", "sorcery"]);
+  });
+  test.each(LANDS)("%s: own enters-graveyard is the land, the sacrificed %s is its own sacrifice", (name, land, text) => {
+    const e = grammarEmits(name, "Land", text);
+    const own = e.filter((x) => x.verb === "enters-graveyard");
+    expect(own.length).toBeGreaterThan(0);
+    for (const x of own) { expect(x.subject.self).toBe(true); expect(x.subject.subtype).toBeUndefined(); expect(x.subject.type).toBe("land"); }
+    expect(e.filter((x) => x.subject.self === true && x.subject.subtype === land)).toEqual([]);
+    expect(e.some((x) => x.verb === "sacrifice" && x.subject.subtype === land && x.subject.self !== true)).toBe(true);
+  });
+});
+
+/** A COUNTER'S KIND IS NEVER A SUBTYPE (#1520, shape 3). Oracle text as the corpus has it; Font of Agonies, Helix Pinnacle, Legacy's Allure and Dragon's Hoard are grammar-read, Nine Lives is model-read. */
+describe("a counter kind is not a subtype (#1520)", () => {
+  const grammarEmits = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities.flatMap((a) => a.emits ?? []);
+  };
+  const CASES: [string, string, string, string][] = [
+    ["Font of Agonies", "Enchantment", "Whenever you pay life, put that many blood counters on this enchantment.\n{1}{B}, Remove four blood counters from this enchantment: Destroy target creature.", "blood"],
+    ["Helix Pinnacle", "Enchantment", "Shroud (This enchantment can't be the target of spells or abilities.)\n{X}: Put X tower counters on this enchantment.\nAt the beginning of your upkeep, if there are 100 or more tower counters on this enchantment, you win the game.", "tower"],
+    ["Legacy's Allure", "Enchantment", "At the beginning of your upkeep, you may put a treasure counter on this enchantment.\nSacrifice this enchantment: Gain control of target creature with power less than or equal to the number of treasure counters on this enchantment. (This effect lasts indefinitely.)", "treasure"],
+    ["Dragon's Hoard", "Artifact", "Whenever a Dragon you control enters, put a gold counter on this artifact.\n{T}, Remove a gold counter from this artifact: Draw a card.\n{T}: Add one mana of any color.", "gold"],
+  ];
+  test.each(CASES)("%s: the counter carries `counter` and no subtype", (name, typeLine, text, kind) => {
+    const e = grammarEmits(name, typeLine, text).filter((x) => x.verb === "counter-added" || x.verb === "counter-removed");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) { expect(x.subject.counter).toBe(kind); expect(x.subject.subtype).toBeUndefined(); expect(x.subject.self).toBe(true); }
+  });
+  test("Nine Lives (model): 'incarnation' is the counter kind, not a subtype", () => {
+    // Stored clause 2 of Nine Lives (clauseSource "model").
+    const text = "If a source would deal damage to you, prevent that damage and put an incarnation counter on this enchantment.";
+    const { abilities } = deriveAbilities([{ id: 2, abilityType: "static", actions: [
+      { verb: "prevent", object: "damage to you", fromZone: null, toZone: null, amount: null, optional: false },
+      { verb: "add-counter", object: "incarnation", fromZone: null, toZone: null, amount: "1", optional: false },
+    ] }] as never, "Nine Lives", { 2: text }, undefined, text);
+    const e = abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "counter-added");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) { expect(x.subject.counter).toBe("incarnation"); expect(x.subject.subtype).toBeUndefined(); }
+  });
+  test("Bloodletter Quill (model): 'a blood counter from this artifact' is the counter, not a Blood", () => {
+    // Stored clause 2 of Bloodletter Quill (clauseSource "model"): the object names the kind AND the card it comes off.
+    const text = "{U}{B}: Remove a blood counter from this artifact.";
+    const { abilities } = deriveAbilities([{ id: 2, abilityType: "activated", actions: [{ verb: "remove-counter", object: "a blood counter from this artifact", fromZone: null, toZone: null, amount: null, optional: false }] }] as never, "Bloodletter Quill", { 2: text }, undefined, text);
+    const e = abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "counter-removed");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) { expect(x.subject).toMatchObject({ counter: "blood", self: true, type: "artifact" }); expect(x.subject.subtype).toBeUndefined(); }
+  });
+  test("control: Baton of Courage's 'a charge counter' keeps `counter: charge` (the kind is read off the object either way)", () => {
+    const text = "Remove a charge counter from this artifact: Target creature gets +1/+1 until end of turn.";
+    const { abilities } = deriveAbilities([{ id: 3, abilityType: "activated", actions: [
+      { verb: "remove-counter", object: "a charge counter", fromZone: null, toZone: null, amount: null, optional: false },
+      { verb: "modify-pt", object: "target creature", amount: "+1/+1", optional: false },
+    ] }] as never, "Baton of Courage", { 3: text }, undefined, text);
+    const e = abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "counter-removed");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject).toMatchObject({ counter: "charge", self: true });
+  });
+  test("control: Dismantle's 'a +1/+1 counter or a charge counter' names two kinds and stays kindless", () => {
+    const text = "Destroy target artifact. If that artifact had counters on it, put that many +1/+1 counters or charge counters on an artifact you control.";
+    const { abilities } = deriveAbilities([{ id: 1, abilityType: "spell", actions: [
+      { verb: "destroy", object: "target artifact", fromZone: null, toZone: null, amount: null, optional: false },
+      { verb: "add-counter", object: "+1/+1 counters or charge counters", fromZone: null, toZone: null, amount: "that many", optional: false },
+    ] }] as never, "Dismantle", { 1: text }, undefined, text);
+    const e = abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "counter-added");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject.counter).toBeUndefined();
+  });
+  test("control: a counter put on a named class keeps the class's subtype, and a +1/+1 counter stays", () => {
+    const e = grammarEmits("Test Shaman", "Creature \u2014 Goblin Shaman", "{T}: Put a +1/+1 counter on target Goblin.").filter((x) => x.verb === "counter-added");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject).toMatchObject({ counter: "+1/+1", subtype: "goblin" });
+  });
+});
+
+/** #1520 FIX ROUND. Stored model rows (db.cardClauses canonical) of the named cards, derived through `deriveAbilities` / `deriveCardTags`. */
+describe("#1520 fix round", () => {
+  const act = (verb: string, object: string, extra: object = {}) => ({ verb, object, fromZone: null, toZone: null, amount: null, optional: false, ...extra });
+  const emitsOf = (clauses: object[], name: string, text: string, typeLine = "Creature") => {
+    const card = { name, typeLine, oracleText: text, keywords: [] as string[] };
+    return deriveCardTags(deriveInputOf(card as never, "x", name, clauses as never, undefined, undefined)).abilities.flatMap((a) => a.emits ?? []);
+  };
+  test("Mox Diamond: its own trip to the graveyard is its owner's (you), typed artifact", () => {
+    const e = emitsOf([{ id: 1, abilityType: "static", actions: [act("discard", "a land card", { optional: true }), act("put", "this artifact", { toZone: "battlefield" }), act("put", "it", { toZone: "graveyard" })] }],
+      "Mox Diamond", "If this artifact would enter, you may discard a land card instead. If you do, put this artifact onto the battlefield. If you don't, put it into its owner's graveyard.", "Artifact").filter((x) => x.verb === "enters-graveyard");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject).toMatchObject({ self: true, control: "you", type: "artifact" });
+  });
+  test("Lake of the Dead (grammar): its own enters-graveyard is `you`", () => {
+    const card = { name: "Lake of the Dead", typeLine: "Land", oracleText: "If this land would enter, sacrifice a Swamp instead. If you do, put this land onto the battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add {B}.", keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    const e = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings)).abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "enters-graveyard");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject).toMatchObject({ self: true, control: "you" });
+  });
+  test("Kimoyo Beads: 'return it to the battlefield under its owner's control' enters under you", () => {
+    const e = emitsOf([{ id: 4, abilityType: "triggered", actions: [act("gain-life", "you", { amount: "3" }), act("exile", "this artifact"), act("return", "it", { fromZone: "exile", toZone: "battlefield" })] }],
+      "Kimoyo Beads", "Prime Bead \u2014 You gain 3 life. Exile this artifact, then return it to the battlefield under its owner's control.", "Artifact").filter((x) => x.verb === "enters");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject).toMatchObject({ self: true, control: "you" });
+  });
+  test("Aurification: 'put a gold counter on it' is the creature that dealt the damage", () => {
+    const e = emitsOf([{ id: 1, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "a creature", control: "any" }, actions: [act("add-counter", "gold counter")] }],
+      "Aurification", "Whenever a creature deals damage to you, put a gold counter on it.", "Enchantment").filter((x) => x.verb === "counter-added");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) { expect(x.subject).toMatchObject({ counter: "gold", type: "creature", control: "any" }); expect(x.subject.self).toBeUndefined(); }
+  });
+  test("control: Ticket Turbotubes' ticket counter (named for no recipient) stays the card's own, as before", () => {
+    const e = emitsOf([{ id: 2, abilityType: "activated", actions: [act("add-counter", "ticket")] }], "Ticket Turbotubes", "{T}: Add one mana of any color.\n{3}, {T}: You get {TK} (a ticket counter).", "Artifact").filter((x) => x.verb === "counter-added");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject.self).toBe(true);
+  });
+  test("Westvale Abbey: 'transform this land, then untap it' types the untap `permanent`, whichever face is up", () => {
+    const e = emitsOf([{ id: 3, abilityType: "activated", actions: [act("sacrifice", "five creatures", { amount: "5" }), act("transform", "this land"), act("untap", "it")] }],
+      "Westvale Abbey // Ormendahl, Profane Prince", "{5}, {T}, Sacrifice five creatures: Transform this land, then untap it.", "Land").filter((x) => x.verb === "untaps");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) { expect(x.subject.self).toBe(true); expect(x.subject.type).toBe("permanent"); }
+  });
+  test("Glyph of Delusion: an instant's glyph counters go on the target creature, not on the card", () => {
+    const text = "Put X glyph counters on target creature that target Wall blocked this turn, where X is the power of that blocked creature. The creature gains \"This creature doesn't untap during your untap step if it has a glyph counter on it\" and \"At the beginning of your upkeep, remove a glyph counter from this creature.\"";
+    const e = emitsOf([
+      { id: 1, abilityType: "spell", actions: [act("add-counter", "glyph", { amount: "X" }), act("grant-ability", "This creature doesn't untap during your untap step if it has a glyph counter on it")] },
+      { id: 2, abilityType: "triggered", trigger: { event: "upkeep", subject: "your upkeep", control: "you" }, actions: [act("remove-counter", "glyph")] },
+    ], "Glyph of Delusion", text, "Instant").filter((x) => x.verb === "counter-added");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) { expect(x.subject.self).toBeUndefined(); expect(x.subject).toMatchObject({ counter: "glyph", type: "creature" }); expect(x.subject.subtype).toBeUndefined(); }
+  });
+});
