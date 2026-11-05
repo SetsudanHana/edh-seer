@@ -32,3 +32,16 @@ test.each([
 ])("a counter on your own creature, or on target creature an opponent controls, still feeds %s -> %s", (producer, consumer) => {
   expect(counterReasons(producer, consumer)).not.toEqual([]);
 });
+
+// An UNTYPED +1/+1 placer that is not marked self ("put a +1/+1 counter on it": Heartfire Hero names itself, Ich-Tekik's creature type is unread) is still a counter you put on your own permanent.
+test.each([
+  ["Heartfire Hero", "Generous Patron"],
+  ["Heartfire Hero", "Kros, Defense Contractor"],
+  ["Heartfire Hero", "Bold Plagiarist"],
+])("an untyped +1/+1 counter with no stated recipient feeds no payoff for opponents' creatures (%s -> %s)", (producer, consumer) => {
+  expect(counterReasons(producer, consumer)).toEqual([]);
+});
+
+test("...and still feeds a payoff for your own creatures", () => {
+  expect(counterReasons("Heartfire Hero", "Terrasymbiosis")).not.toEqual([]);
+});
