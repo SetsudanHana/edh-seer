@@ -31,6 +31,13 @@ describe("a self emit named by the card's name carries no subtype the card lacks
     expect(exile("Urza's Sylex")).toEqual(["artifact"]);
     expect(exile("The Stone Brain")).toEqual(["artifact"]);
   });
+  test("a name word before punctuation is still a name word: Blood for the Blood God! keeps no `god`, and its type is the card's own", () => {
+    const ex = rowOf("Blood for the Blood God!").tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "exiled" && e.subject.self === true);
+    expect(ex.map((e) => [e.subject.type, e.subject.subtype])).toEqual([["instant", undefined]]);
+  });
+  test("The Beast (stored model clauses): no `beast`", () => {
+    expect(selfSubtypes(rowOf("The Beast, Deathless Prince"))).toEqual([]);
+  });
   test("kept: The Locust God is a God, and its own leave still says so", () => {
     expect(selfSubtypes(rowOf("The Locust God"))).toContain("leaves:god");
   });

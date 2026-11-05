@@ -602,5 +602,80 @@
     ]
    }
   ]
+ },
+ "Blood for the Blood God!": {
+  "source": {
+   "name": "Blood for the Blood God!",
+   "typeLine": "Instant",
+   "oracleText": "This spell costs {1} less to cast for each creature that died this turn.\nDiscard your hand, then draw eight cards. Blood for the Blood God! deals 8 damage to each opponent. Exile Blood for the Blood God!",
+   "keywords": [],
+   "colors": [
+    "B",
+    "R"
+   ],
+   "manaValue": 11,
+   "colorIdentity": [
+    "B",
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{8}{B}{B}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "this spell costs {1} less to cast for each creature that died this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "your hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "8",
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "8",
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "Blood for the Blood God!",
+      "fromZone": "stack",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
  }
 }
