@@ -1078,5 +1078,177 @@
     ]
    }
   ]
+ },
+ "Rift Elemental": {
+  "source": {
+   "name": "Rift Elemental",
+   "typeLine": "Creature — Elemental",
+   "oracleText": "{1}{R}, Remove a time counter from a permanent you control or suspended card you own: This creature gets +2/+0 until end of turn.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "a time counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "modify-pt",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+2/+0",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Kate Stewart": {
+  "source": {
+   "name": "Kate Stewart",
+   "typeLine": "Legendary Creature — Human Scientist",
+   "oracleText": "Whenever you put one or more time counters on a permanent you control, create a 1/1 white Soldier creature token.\nWhenever Kate Stewart attacks, you may pay {8}. If you do, attacking creatures get +X/+X until end of turn, where X is the number of time counters among permanents you control.",
+   "keywords": [],
+   "colors": [
+    "R",
+    "U",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R",
+    "U",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{1}{U}{R}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "put-into-graveyard",
+     "subject": "one or more time counters on a permanent you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "1/1 white Soldier creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "Kate Stewart",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "attacking creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+X/+X where X is the number of time counters among permanents you control",
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Taigam, Master Opportunist": {
+  "source": {
+   "name": "Taigam, Master Opportunist",
+   "typeLine": "Legendary Creature — Human Monk",
+   "oracleText": "Flurry — Whenever you cast your second spell each turn, copy it, then exile the spell you cast with four time counters on it. If it doesn't have suspend, it gains suspend. (At the beginning of its owner's upkeep, they remove a time counter. When the last is removed, they may play it without paying its mana cost. If it's a creature, it has haste.)",
+   "keywords": [
+    "Flurry"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "your second spell each turn",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "the spell you cast",
+      "fromZone": null,
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "time",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "4",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "suspend",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
  }
 }

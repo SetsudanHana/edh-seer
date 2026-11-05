@@ -32,3 +32,10 @@ test.each([
 ])("a +1/+1 counter put on a returned or battlefield creature still feeds %s -> %s", (producer, consumer) => {
   expect(counterReasons(producer, consumer)).not.toEqual([]);
 });
+
+// Rift Elemental's cost removes a time counter "from a permanent you control OR SUSPENDED CARD you own": a suspend-style time counter on an exiled card is a true supply (CR 702.62a: suspend exiles the card with time counters).
+// Kate Stewart's "time counters on a permanent you control" is not.
+test.each(["Delay", "Taigam, Master Opportunist"])("%s's time counter on an exiled card feeds Rift Elemental's suspended-card cost, not Kate Stewart", (producer) => {
+  expect(pairReasons(dc(producer), dc("Rift Elemental"), H).some((r) => r.tag.startsWith("counter-removed"))).toBe(true);
+  expect(counterReasons(producer, "Kate Stewart")).toEqual([]);
+});
