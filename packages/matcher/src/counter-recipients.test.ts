@@ -45,3 +45,17 @@ test.each([
 test("...and still feeds a payoff for your own creatures", () => {
   expect(counterReasons("Heartfire Hero", "Terrasymbiosis")).not.toEqual([]);
 });
+
+// #1522 fix round: the counter lands on a permanent an OPPONENT controls, so the payoffs for "a creature you don't control" are fed.
+test.each([
+  ["Yes Man, Personal Securitron", "Generous Patron"], // "Target opponent gains control of Yes Man. When they do, ... put a quest counter on Yes Man"
+  ["Yes Man, Personal Securitron", "Kros, Defense Contractor"],
+  ["Jon Irenicus, Shattered One", "Generous Patron"], // "target opponent gains control of up to one target creature you control. Put two +1/+1 counters on it"
+  ["Jon Irenicus, Shattered One", "Kros, Defense Contractor"],
+])("a counter on a creature handed to an opponent still feeds %s -> %s", (producer, consumer) => {
+  expect(counterReasons(producer, consumer)).not.toEqual([]);
+});
+
+test("a creature you keep (Rogue Skycaptain) still feeds no payoff for an opponent's creatures", () => {
+  expect(counterReasons("Rogue Skycaptain", "Generous Patron")).toEqual([]);
+});

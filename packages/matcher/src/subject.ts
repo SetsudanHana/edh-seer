@@ -370,8 +370,11 @@ export function counterAddMatches(producer: SubjectFilter, consumer: SubjectFilt
   // A +1/+1 COUNTER WITH NO STATED RECIPIENT IS ONE YOU PUT ON YOUR OWN PERMANENT (#1522): "put a +1/+1 counter on it" (a persist or undying return, a kicker's "enters with", "her") never lands on a creature an opponent
   // controls, and the wildcard fed Generous Patron's and Kros's "a creature you don't control" and Bold Plagiarist's "an opponent puts counters" from 441 such producers (measured). Only this kind: an untyped stun, -1/-1 or shield
   // counter is aimed at an opponent's creature as often as not ("tap target creature an opponent controls and put a stun counter on it"), and a KINDLESS untyped emit (a proliferate) picks any permanent.
-  // CEILING: a +1/+1 placer whose unstated recipient CAN be an opponent's creature is refused too: Agitator Ant, Orzhov Advokist, Noble Heritage, Oversimplify and Alexios ("each player may put counters on a creature they control") truly feed Bold
-  // Plagiarist, and Invoke Justice's "creatures target player controls" feeds Generous Patron and Kros (7 of the 1,323 refused pairs, read by hand); the rest ("target creature or Vehicle") name an opponent's creature in theory only.
+  // A card that also emits an opponent's `gains-control` is stamped `opp` before it gets here (`opponentOwnedCounter`, edges.ts: Jon Irenicus's counters on the creature he hands over), so it is not refused.
+  // CEILING: a +1/+1 placer whose unstated recipient CAN be an opponent's creature is refused too. About 13 of the 1,323 pairs the first round refused were true, read by hand: Agitator Ant, Orzhov Advokist, Noble Heritage,
+  // Oversimplify and Alexios -> Bold Plagiarist ("each player may put counters on a creature they control"); Invoke Justice and Stumpsquall Hydra ("among it and any number of commanders") -> Generous Patron and Kros;
+  // Gluntch, the Bestower and Mikey & Mona -> Bold Plagiarist; arguably Unity of Purpose and Nissa's Judgment -> Generous Patron and Kros ("each of up to two target creatures", stored untyped). The theoretical tail
+  // (target creature or Vehicle, named an opponent's in theory only) is Lathiel, Rhino, Willowdusk, Jared Carthalion, Agonasaur Rex, Light the Way and Nakia.
   if (producer.counter === "+1/+1" && producer.control === "any" && consumer.control === "opp") return false;
   if (consumer.token !== null && producer.token !== null && consumer.token !== producer.token) return false;
   return true;
