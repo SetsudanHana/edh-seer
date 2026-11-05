@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { deriveRow } from "./derive-worker.js";
+import { deriveAsCorpus, deriveRow } from "./derive-worker.js";
 import { grammarClauseRecords } from "./grammar/clause-record.js";
 import { deriveCardTags, foldGrantTwins } from "./derive/derive.js";
 import { deriveInputOf } from "./derive-input.js";
@@ -345,4 +345,15 @@ test("Archghoul of Thraben stays on the grammar: the stored mill emit is typed Z
   const emits = row.tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "mill");
   expect(emits.length).toBeGreaterThan(0);
   expect(emits.every((e) => (e.subject as { subtype?: string }).subtype === undefined)).toBe(true);
+});
+
+// #1482: a clause doc bought for text the card no longer prints derives, in `derive-corpus`, from the printed text alone. `deriveAsCorpus` (what derive-identity compares) must do the same.
+test("deriveAsCorpus: a stale-hash clause doc on a grammar-complete card takes the grammar-only pass", () => {
+  const source = { name: "Overwrite the Multiverse", oracleText: "Exile all creatures. Empower Jace X, where X is the number of creatures exiled this way.", typeLine: "Sorcery", keywords: ["Empower"], manaCost: "{X}{W}{U}", colors: ["W", "U"] };
+  const g = grammarClauseRecords(source as never);
+  expect(g.complete).toBe(true);
+  const grammarOnly = deriveCardTags(deriveInputOf(source as never, "x", source.name, g.records, undefined, g.readings));
+  const stale = deriveAsCorpus({ doc: { oracleId: "x", name: source.name, canonical: [], segmentHash: "stale" } as never, source, isToken: false });
+  expect(stale.fromGrammar).toBe(true);
+  expect(stale.tags.abilities).toEqual(grammarOnly.abilities);
 });

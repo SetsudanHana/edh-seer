@@ -4,18 +4,20 @@
 // MANA FIELDS ARE COMPARED TOO (#1376 review): `pick` once read abilities / unclaimed / characteristics only, so a fold that changed a card's manaLines (T'Challa's per-cycle token line) read as identical.
 // It now also reads manaLines, staticFixer, landFetch, isOneShot, suspendOnly and unknownTriggers.
 import { connect, loadConfig } from "@edh-seer/data";
+// 2026-11-05 (#1482): `deriveAsCorpus` also takes derive-corpus's grammar-only pass for a clause doc whose stored hash is stale (an erratum), which `deriveRow` alone never does: 2 cards read "different" on every clean run.
 // THE SAME CALL derive-corpus MAKES (2026-10-06). This built its own DeriveInput and so never took the
 // card-by-card grammar switch (#896 task 7) `deriveRow` applies: after a clean `derive-corpus --force`
 // it still read "identical 29458, different 2640", and every one of the 2,640 was a card the switch
 // had moved to its grammar reading. A proof that re-derives by a different path proves nothing.
-import { deriveRow } from "../../packages/tagger/src/derive-worker.js";
+import { deriveAsCorpus, deriveGrammarOnly, grammarOnlyReading } from "../../packages/tagger/src/derive-worker.js";
+import { deriveScopeFilter } from "../../packages/tagger/src/derive-scope.js";
 const store = await connect(loadConfig());
 const stored = new Map((await store.db.collection("cardTagsDerived").find({ isToken: { $ne: true } }).toArray()).map((d: any) => [d.oracleId, d]));
 let same = 0, diff = 0;
 for (const doc of await store.db.collection("cardClauses").find({ isToken: { $ne: true } }).toArray() as any[]) {
   const src = await store.cards.findOne({ _id: doc.oracleId } as never) as any;
   if (!src) continue;
-  const tags = deriveRow({ doc, source: src, isToken: false }).tags as any;
+  const tags = deriveAsCorpus({ doc, source: src, isToken: false }).tags as any;
   const old = stored.get(doc.oracleId) ?? {};
   const pick = (t: any) => JSON.stringify({ abilities: t.abilities, unclaimed: t.unclaimed, characteristics: t.characteristics, manaLines: t.manaLines, staticFixer: t.staticFixer, landFetch: t.landFetch, isOneShot: t.isOneShot, suspendOnly: t.suspendOnly, unknownTriggers: t.unknownTriggers });
   if (pick(tags) === pick(old)) same++; else { diff++; if (diff <= 10 || process.env.ALL) console.log("DIFF", doc.name);
@@ -31,5 +33,18 @@ for (const doc of await store.db.collection("cardClauses").find({ isToken: { $ne
     }
     if (process.env.SHOW === doc.name) { const a = JSON.parse(pick(tags)), b = JSON.parse(pick(old)); for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) if (JSON.stringify(a[k]) !== JSON.stringify(b[k])) console.log(k, "\nNEW", String(JSON.stringify(a[k])).slice(0, 1500), "\nOLD", String(JSON.stringify(b[k])).slice(0, 1500)); } }
 }
+// 2026-11-05 (#1482): a card with NO clause doc that derive-corpus derives from the grammar alone (scope: `deriveScopeFilter`, the bin's own).
+const answered = new Set<string>();
+let grammarOnly = 0;
+for (const d of await store.db.collection("cardClauses").find({ isToken: { $ne: true } }, { projection: { oracleId: 1 } }).toArray() as any[]) answered.add(d.oracleId);
+for (const src of await store.cards.find(deriveScopeFilter() as never).toArray() as any[]) {
+  if (answered.has(src._id)) continue;
+  const r = grammarOnlyReading(src, undefined);
+  if (!r) continue;
+  grammarOnly++;
+  const pick = (t: any) => JSON.stringify({ abilities: t.abilities, unclaimed: t.unclaimed, characteristics: t.characteristics, manaLines: t.manaLines, staticFixer: t.staticFixer, landFetch: t.landFetch, isOneShot: t.isOneShot, suspendOnly: t.suspendOnly, unknownTriggers: t.unknownTriggers });
+  if (pick(deriveGrammarOnly(src, src._id, src.name, r.g)) === pick(stored.get(src._id) ?? {})) same++; else { diff++; console.log("DIFF (no clause doc)", src.name); }
+}
+console.log(`of which no clause doc, grammar-only: ${grammarOnly}`);
 console.log(`identical ${same}, different ${diff}`);
 await store.close();

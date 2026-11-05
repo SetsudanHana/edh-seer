@@ -9,7 +9,7 @@ import { deriveDiff, lostClaims, lostScaledAmount, lostSubjectFields, lostTrigge
 import triage from "../grammar-only-triage.json" with { type: "json" };
 import { BACK_REF_AMOUNT, QUANTIFIER_AMOUNT, deriveCardTags, foldGrantTwins } from "./derive/derive.js";
 import { alignVerbs } from "./grammar/action.js";
-import type { CardClausesDoc, DerivedTagsDoc } from "./clause-store.js";
+import { segmentHash, type CardClausesDoc, type DerivedTagsDoc } from "./clause-store.js";
 import type { CardTags } from "./schema.js";
 import type { ClauseRecord } from "./canonicalize.js";
 
@@ -83,6 +83,32 @@ export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
     }
   }
   return { tags: rederived(source, doc, doc.canonical as ClauseRecord[], undefined, tags, isToken), fromGrammar: false };
+}
+
+/** The grammar's reading of a card that derive-corpus derives from its printed text alone (#1482; G-T1): the grammar reads it completely and no stored answer matches the text it prints now
+ *  (`storedHash` is the clause doc's segmentHash, undefined when the card has none; a mismatch is an erratum: Plan for All Outcomes, Overwrite the Multiverse). Null when the card is not one.
+ *  The bin and `deriveAsCorpus` (what derive-identity compares) share this and `deriveGrammarOnly`, so they cannot drift. */
+export function grammarOnlyReading(source: Record<string, unknown>, storedHash: string | undefined): { hash: string; g: ReturnType<typeof grammarClauseRecords> } | null {
+  const s = source as { oracleText?: string; typeLine?: string; keywords?: string[] };
+  const hash = segmentHash(s.oracleText ?? "", s.typeLine ?? "", s.keywords ?? []);
+  if (storedHash === hash) return null;
+  const g = grammarClauseRecords(source as never);
+  return g.complete ? { hash, g } : null;
+}
+
+/** The tags the grammar-only pass stores: the grammar's records, the default derive options. */
+export function deriveGrammarOnly(source: Record<string, unknown>, oracleId: string, name: string, g: ReturnType<typeof grammarClauseRecords>): CardTags {
+  return deriveCardTags(deriveInputOf(source as never, oracleId, name, g.records, undefined, g.readings));
+}
+
+/** What `derive-corpus --force` stores for a clause doc, grammar-only pass included. `derive-identity` called `deriveRow` alone and so read two stale-answer cards as "different" on every clean run. */
+export function deriveAsCorpus(item: DeriveItem): DeriveResult {
+  const { doc, source, isToken } = item;
+  if (!isToken) {
+    const r = grammarOnlyReading(source as Record<string, unknown>, doc.segmentHash);
+    if (r) return { tags: deriveGrammarOnly(source as Record<string, unknown>, doc.oracleId, doc.name, r.g), fromGrammar: true };
+  }
+  return deriveRow(item);
 }
 
 /** Same shape as `charsFrom`, plus `token: true` -- or, for a layout-`emblem` row, `emblem: true`

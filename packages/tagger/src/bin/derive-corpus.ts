@@ -7,12 +7,9 @@
  *  Usage: tsx src/bin/derive-corpus.ts [--force] */
 import { deriveScopeFilter } from "../derive-scope.js";
 import { connect, loadConfig } from "@edh-seer/data";
-import { deriveInputOf } from "../derive-input.js";
 import { createPool } from "@edh-seer/data/parallel";
-import type { DeriveItem, DeriveResult } from "../derive-worker.js";
-import { grammarClauseRecords } from "../grammar/clause-record.js";
+import { deriveGrammarOnly, grammarOnlyReading, type DeriveItem, type DeriveResult } from "../derive-worker.js";
 import { DERIVE_VERSION } from "../derive/derive.js";
-import { deriveCardTags } from "../derive/derive.js";
 import { unpricedLoyaltyLines } from "../derive/mana-lines.js";
 import {
   CLAUSES_COLLECTION, DERIVED_COLLECTION, derivedRow, ensureClauseIndexes, needsDerive, segmentHash,
@@ -53,12 +50,12 @@ for await (const card of store.cards.find(deriveScopeFilter() as never).project(
   if (answeredHash.get(c._id) === hash) continue;
   const source = await store.cards.findOne({ _id: c._id } as never) as unknown as { _id: string; name: string } | null;
   if (!source) continue;
-  const g = grammarClauseRecords(source as never);
-  if (!g.complete) continue;
+  const g = grammarOnlyReading(source as never, answeredHash.get(c._id))?.g;
+  if (!g) continue;
   grammarOnly.add(c._id);
   const existing = await derivedCol.findOne({ oracleId: c._id });
   if (!FORCE && existing?.deriveVersion === DERIVE_VERSION && existing.segmentHash === hash && existing.clauseSource === "grammar") continue;
-  const tags = deriveCardTags(deriveInputOf(source as never, c._id, source.name, g.records, undefined, g.readings));
+  const tags = deriveGrammarOnly(source as never, c._id, source.name, g);
   // normalizeVersion 0: no answer was bought, so a later bought one always reads as new.
   // replaceOne, not $set: the stored row is exactly the fresh one, so a key derive stopped producing goes (#1181).
   await derivedCol.replaceOne({ oracleId: c._id }, derivedRow(tags, { deriveVersion: DERIVE_VERSION, normalizeVersion: 0, segmentHash: hash, clauseSource: "grammar" }), { upsert: true });
