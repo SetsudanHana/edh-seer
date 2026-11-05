@@ -1069,3 +1069,32 @@ test("suggestionByKey is the parent-gap subset of suggestions, keyed by buildPar
   }
   expect(Object.keys(r.suggestionByKey)).toHaveLength(r.suggestions.length - lands.length);
 });
+
+// #1530: stax taxes OTHER players. Derived records below are the real ones read from Mongo (DERIVE 459).
+describe("stax.effect: a tax on the caster's own spells is not stax", () => {
+  const taxAb = (subject: object, extra: object = {}): CardTags["abilities"] => [{ kind: "static", repeats: "continuous", effect: { kind: "tax", subject }, ...extra } as never];
+  const staxOf = (c: DeckCard) => detectBuildCategories([c]).get("stax") ?? new Set<string>();
+  test("Strive / per-target self-taxes are not stax", () => {
+    const strive = mk("Officious Interrogation", "This spell costs {W}{U} more to cast for each target beyond the first.", "Sorcery", taxAb({ control: "any", token: null, type: "spell", self: true }));
+    expect(staxOf(strive)).toEqual(new Set());
+  });
+  test("\"Red spells you cast cost {R} more\" is a drawback, not stax", () => {
+    const leech = mk("Ruby Leech", "Red spells you cast cost {R} more to cast.", "Creature", taxAb({ control: "you", token: null, type: "spell", scope: "all", colors: ["R"] }));
+    expect(staxOf(leech)).toEqual(new Set());
+    // Its subject types as `creature`, the same as Heat Wave's below, so only the printed text tells them apart.
+    const scarecrow = mk("Geist-Fueled Scarecrow", "Creature spells you cast cost {1} more to cast.", "Artifact Creature", taxAb({ control: "you", token: null, type: "creature", scope: "all" }));
+    expect(staxOf(scarecrow)).toEqual(new Set());
+  });
+  test("real stax keeps the role: Thalia, Sphere of Resistance, opponents-only, and a propaganda that names your permanents", () => {
+    const thalia = mk("Thalia, Guardian of Thraben", "Noncreature spells cost {1} more to cast.", "Creature", taxAb({ control: "any", token: null }));
+    const sphere = mk("Sphere of Resistance", "Spells cost {1} more to cast.", "Artifact", taxAb({ control: "any", token: null }));
+    const arbiter = mk("God-Pharaoh's Statue", "Spells your opponents cast cost {2} more to cast.", "Artifact", taxAb({ control: "opp", token: null, type: "spell", scope: "all" }));
+    const oathkeeper = mk("Onakke Oathkeeper", "Creatures can't attack planeswalkers you control unless their controller pays {1} for each creature they control that's attacking a planeswalker you control.", "Creature", taxAb({ control: "you", token: null, type: "planeswalker", scope: "all" }));
+    expect(staxOf(thalia)).toEqual(new Set(["Thalia, Guardian of Thraben"]));
+    expect(staxOf(sphere)).toEqual(new Set(["Sphere of Resistance"]));
+    expect(staxOf(arbiter)).toEqual(new Set(["God-Pharaoh's Statue"]));
+    expect(staxOf(oathkeeper)).toEqual(new Set(["Onakke Oathkeeper"]));
+    const heatWave = mk("Heat Wave", "Nonblue creatures can't block creatures you control unless their controller pays 1 life for each blocking creature they control.", "Enchantment", taxAb({ control: "you", token: null, type: "creature", scope: "all" }, { scaling: "per-creature" }));
+    expect(staxOf(heatWave)).toEqual(new Set(["Heat Wave"]));
+  });
+});
