@@ -45,7 +45,7 @@ import { stationThresholdFor, thresholdFor, thresholdSubjectFor } from "./thresh
 import { addsManaText, deriveMana, production } from "./mana-lines.js";
 import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
-import { isSelfSubject, SELF_REFERENCE, withoutArticle } from "./self-reference.js";
+import { isSelfSubject, SELF_REFERENCE, splitSelfAnd, withoutArticle } from "./self-reference.js";
 import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, boundedByEnchantLine, exiledAcrossClauses, PLURAL_BACKREF, pluralAntecedent, pluralIsDelayed, PRONOUN_OBJECT, withoutCombatRole, zoneAfterEvent } from "./references.js";
 import { triggerHasCue } from "../clause-store.js";
 import { emblemRecipient } from "../emblem.js";
@@ -3252,7 +3252,10 @@ export function deriveAbilities(
         && sourceOf((clause.actions ?? []).indexOf(action)).to === "trigger";
       const selfByIf = /^it$/i.test((action.object ?? "").trim()) && /\bif (?:this (?:card|creature|permanent)|~) is exiled\b/i.test(text)
         && sourceOf((clause.actions ?? []).indexOf(action)).to === "trigger";
-      const antecedent = actorPronoun ? "a player" : selfByIf ? undefined : PRONOUN_OBJECT.test((action.object ?? "").trim())
+      // A PRONOUN WHOSE NEAREST NAMED OBJECT IS THE CARD IS THE CARD, not an earlier object the walk skipped past (#1520): Lake of the Dead's "sacrifice a Swamp instead. If you do, put this land onto the battlefield. If you don't, put IT into its owner's
+      // graveyard" is the land, and `antecedentIsSelf` says so (it stops at the nearest name) while `antecedentSource` skips the card's own name to look for a class, found the Swamp, and the land's graveyard entry came out a self `swamp`.
+      const selfPronoun = PRONOUN_OBJECT.test((action.object ?? "").trim()) && antecedentIsSelf((clause.actions ?? []).indexOf(action));
+      const antecedent = actorPronoun ? "a player" : selfByIf || selfPronoun ? undefined : PRONOUN_OBJECT.test((action.object ?? "").trim())
         ? antecedentFor((clause.actions ?? []).indexOf(action))
         : undefined;
       // "Return THIS card to the battlefield" (Reassembling Skeleton, Drownyard Temple) emits an
@@ -3341,7 +3344,10 @@ export function deriveAbilities(
         return (src.to === "action" && (clause.actions ?? [])[src.action]?.toZone === "battlefield")
           || /\bwould (?:die|leave the battlefield)\b[^.]*\bexile (?:it|them|that creature|that card|those creatures) instead\b/i.test(text);
       })();
-      const emits = temporaryRider ? [] : narrowSelfExiledSpell(actionEmits(antecedent ? { ...action, object: antecedent, ...(zone ? { fromZone: zone } : {}) } : action, ownCounterText(action, clause.actions ?? [], text, true), { self: emitsSelf, cardName, ...(clause.trigger && clauseGrants?.[clause.id as number] === undefined ? { trigger: { event: clause.trigger.event, subject: clause.trigger.subject, control: clause.trigger.control, self: isSelfSubject(clause.trigger.subject ?? "", cardName) } } : {}) }), text, cardText)
+      // THE CARD AND ANOTHER OBJECT IN ONE SACRIFICE (#1520): "Sacrifice this artifact and thirteen Blood tokens" (Glass-Cast Heart) is two sacrifices; the Blood merged into the card's own subject and made a self `blood`. The head is the card's own action (stamped self below), the tail an action of its own, emitted
+      // after the stamp. CEILING: `sacrifice` only (the six stored objects of this shape, five with a class tail): "this creature and the top card of your library" (exile), "this creature and another creature" (fight, modify-pt) and the rest keep reading the whole object.
+      const selfJoin = action.verb === "sacrifice" && emitsSelf && antecedent === undefined ? splitSelfAnd(action.object ?? "") : undefined;
+      const emits = temporaryRider ? [] : narrowSelfExiledSpell(actionEmits(antecedent ? { ...action, object: antecedent, ...(zone ? { fromZone: zone } : {}) } : selfJoin ? { ...action, object: selfJoin.head } : action, ownCounterText(action, clause.actions ?? [], text, true), { self: emitsSelf, cardName, ...(clause.trigger && clauseGrants?.[clause.id as number] === undefined ? { trigger: { event: clause.trigger.event, subject: clause.trigger.subject, control: clause.trigger.control, self: isSelfSubject(clause.trigger.subject ?? "", cardName) } } : {}) }), text, cardText)
         // A graveyard leave read from a pointer, a list or beside a chooser is still the graveyard its printed source names (#1470).
         .map((e) => (e.subject.zone === "graveyard" || e.subject.fromZone === "graveyard") && e.subject.self !== true && (e.subject.control === "any" || e.subject.control === "opp") && graveyardOwner(action, text, cardText, clauseGrants?.[clause.id as number] !== undefined)
           ? { ...e, subject: { ...e.subject, control: "you" as const } } : e)
@@ -3412,6 +3418,7 @@ export function deriveAbilities(
         const { self: _self, ...rest } = e.subject;
         e.subject = { ...rest, ...grantedTo };
       }
+      if (selfJoin) emits.push(...actionEmits({ ...action, object: selfJoin.tail }, text, { self: false, cardName }));
       // AND "YOU" IN A GRANTED ABILITY IS THE RECIPIENT'S CONTROLLER (CR 113.8: an ability's
       // controller is the controller of the object it is on). Hellish Rebuke's "You lose 2 life"
       // is the opponent whose permanent carries it, so the emit reads `opp` -- the same seat

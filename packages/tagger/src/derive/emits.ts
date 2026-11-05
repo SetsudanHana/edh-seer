@@ -798,6 +798,13 @@ const PT_DEFINITION = /\b(?:power|toughness)(?: and toughness)? (?:is|are) (?:ea
 const PT_CARRIER_VERBS: ReadonlySet<string> = new Set(["modify-pt", "create", "grant-ability", "animate", "other"]);
 export const definesPowerToughness = (a: Action): boolean => !PT_CARRIER_VERBS.has(a.verb ?? "") && PT_DEFINITION.test(a.object ?? "");
 
+/** The attached object of "this Equipment to the amassed Army": what stands before the first " to " (`indexOf`, no backtracking), when it is a self reference. */
+function attachHead(object: string): string | undefined {
+  const at = object.toLowerCase().indexOf(" to ");
+  const head = at < 0 ? "" : object.slice(0, at).trim();
+  return SELF_REFERENCE.test(head) ? head : undefined;
+}
+
 export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean; trigger?: CounterTrigger; cardName?: string } = {}): GameEvent[] {
   if (definesPowerToughness(action)) return [];
   // A LIFE TOTAL SET THAT IS A LOSS (#1333, CR 119.5): "target opponent's life total becomes 10" is the `lose-life` a printed "target opponent loses N life" is; a plain set emits nothing.
@@ -863,7 +870,9 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // "those counters"), the recipient is only in the sentence -- "put two +1/+1 counters on each other
   // Moogle you control". Parsed from there so the emit says what gets them; a pronoun or the card
   // itself stays with the self logic in derive.
-  const recipient = (action.verb === "add-counter" && counterKindOf(action.object ?? "") !== undefined)
+  // A COUNTER ON THE CARD ITSELF NAMES NO OTHER RECIPIENT (#1520): Ich-Tekik's "a +1/+1 counter on Ich-Tekik and a +1/+1 counter on each Golem you control" reads the whole text for the emit, and its first (own) counter took the
+  // Golems' phrase as its recipient, a self `golem` scope `each`.
+  const recipient = (action.verb === "add-counter" && counterKindOf(action.object ?? "") !== undefined && opts.self !== true)
     ? counterRecipient(clauseText ?? "", opts.self !== true, opts.trigger)
     : undefined;
   // A BID THE MODEL STORED AS ONE `other` ("You and target spell's controller bid life ... If you win the bidding, counter that spell", Mages' Contest) still counters that spell.
@@ -877,7 +886,9 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // gate (canReachRecipient) refused an opponent-or-permanent multiplier. The tail is cut before any recipient parse.
   // CEILING: the exclusion is dropped, not carried as `subject.except` -- the matcher reads `except` on the consumer side only (matcher/src/subject.ts), so an
   // emit-side one would be ignored there anyway.
-  const damageObject = action.verb === "deal-damage" || action.verb === "lose-life" ? cutExceptTail(action.object ?? "") : (action.object ?? "");
+  // WHAT THE CARD ATTACHES TO IS NOT THE CARD (#1520): "attach this Equipment to the amassed Army" (Goblin Plate Mail) read the Army into the Equipment's own subject. Cut at the first " to ", for the card's own attach only.
+  const attachedSelf = action.verb === "attach" && opts.self === true ? attachHead(action.object ?? "") : undefined;
+  const damageObject = action.verb === "deal-damage" || action.verb === "lose-life" ? cutExceptTail(action.object ?? "") : (attachedSelf ?? action.object ?? "");
   const listed = action.verb === "deal-damage" || action.verb === "lose-life" ? damageRecipient(damageObject) : undefined;
   // ...and damage to "target player" / "target opponent" is player-only (#1294), no "any target".
   const playerOnly = action.verb === "deal-damage" && listed === undefined ? playerOnlyRecipient(damageObject) : undefined;

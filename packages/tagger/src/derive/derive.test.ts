@@ -8213,3 +8213,78 @@ describe("a created token is not self (#1520)", () => {
     expect(e?.subject.self).toBeUndefined();
   });
 });
+
+/** A COST OR REPLACEMENT OBJECT IS NOT THE CARD'S OWN SUBJECT (#1520, shape 2). Oracle text as the corpus has it; the grammar reads these cards. */
+describe("another object named in the clause stays out of the self subject (#1520)", () => {
+  const grammarEmits = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities.flatMap((a) => a.emits ?? []);
+  };
+  const LANDS: [string, string, string][] = [
+    ["Balduvian Trading Post", "mountain", "If this land would enter, sacrifice an untapped Mountain instead. If you do, put this land onto the battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add {C}{R}.\n{1}, {T}: This land deals 1 damage to target attacking creature."],
+    ["Heart of Yavimaya", "forest", "If this land would enter, sacrifice a Forest instead. If you do, put this land onto the battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add {G}.\n{T}: Target creature gets +1/+1 until end of turn."],
+    ["Kjeldoran Outpost", "plains", "If this land would enter, sacrifice a Plains instead. If you do, put this land onto the battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add {W}.\n{1}{W}, {T}: Create a 1/1 white Soldier creature token."],
+    ["Soldevi Excavations", "island", "If this land would enter, sacrifice an untapped Island instead. If you do, put this land onto the battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add {C}{U}.\n{1}, {T}: Scry 1."],
+  ];
+  test("Lake of the Dead: the card's own trip to the graveyard is the land, the sacrificed Swamp is its own sacrifice", () => {
+    const e = grammarEmits("Lake of the Dead", "Land", "If this land would enter, sacrifice a Swamp instead. If you do, put this land onto the battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add {B}.\n{T}, Sacrifice a Swamp: Add {B}{B}{B}{B}.");
+    const own = e.filter((x) => x.verb === "enters-graveyard");
+    expect(own.length).toBeGreaterThan(0);
+    for (const x of own) { expect(x.subject.self).toBe(true); expect(x.subject.subtype).toBeUndefined(); }
+    // Not dropped: the sacrificed Swamp is a real sacrifice.
+    expect(e.some((x) => x.verb === "sacrifice" && x.subject.subtype === "swamp" && x.subject.self !== true)).toBe(true);
+  });
+  test("Glass-Cast Heart: 'sacrifice this artifact and thirteen Blood tokens' is the artifact's own sacrifice and the Blood tokens' own", () => {
+    // Stored clause 3 of Glass-Cast Heart (clauseSource "model"): db.cardClauses.findOne({oracleId: ...}).canonical.
+    const text = "{B}{B}, {T}, Sacrifice this artifact and thirteen Blood tokens: Each opponent loses 13 life and you gain 13 life.";
+    const { abilities } = deriveAbilities([{ id: 3, abilityType: "activated", actions: [
+      { verb: "sacrifice", object: "this artifact and thirteen Blood tokens", fromZone: null, toZone: null, amount: null, optional: false },
+      { verb: "lose-life", object: "each opponent", amount: "13", optional: false },
+      { verb: "gain-life", object: "you", amount: "13", optional: false },
+    ] }] as never, "Glass-Cast Heart", { 3: text }, undefined, text);
+    const sac = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "sacrifice" || e.verb === "dies");
+    const own = sac.filter((e) => e.subject.self === true);
+    expect(own.map((e) => e.verb).sort()).toEqual(["dies", "sacrifice"]);
+    for (const e of own) { expect(e.subject.subtype).toBeUndefined(); expect(e.subject.token).not.toBe(true); expect(e.subject.type).toBe("artifact"); }
+    const blood = sac.filter((e) => e.subject.self !== true);
+    expect(blood.map((e) => e.verb).sort()).toEqual(["dies", "sacrifice"]);
+    for (const e of blood) expect(e.subject).toMatchObject({ token: true, subtype: "blood" });
+  });
+  test("control: 'sacrifice this creature' alone stays one self sacrifice", () => {
+    const { abilities } = deriveAbilities([{ id: 1, abilityType: "activated", actions: [{ verb: "sacrifice", object: "this creature", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "draw", object: "a card", amount: "1", optional: false }] }] as never, "Test Imp");
+    const sac = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "sacrifice");
+    expect(sac).toHaveLength(1);
+    expect(sac[0]!.subject.self).toBe(true);
+  });
+  test("Goblin Plate Mail: 'attach this Equipment to the amassed Army' is the Equipment's own attach, the Army is what it attaches to", () => {
+    // Stored clause 1 of Goblin Plate Mail (clauseSource "model").
+    const text = "When this Equipment enters, amass Goblins 1, then attach this Equipment to the amassed Army.";
+    const { abilities } = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this", control: "you" }, actions: [
+      { verb: "amass", object: "Goblins", fromZone: null, toZone: null, amount: "1", optional: false },
+      { verb: "attach", object: "this Equipment to the amassed Army", fromZone: null, toZone: null, amount: null, optional: false },
+    ] }] as never, "Goblin Plate Mail", { 1: text }, undefined, text);
+    const att = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "attached");
+    expect(att.length).toBeGreaterThan(0);
+    for (const e of att) { expect(e.subject.self).toBe(true); expect(e.subject.subtype).toBe("equipment"); }
+  });
+  test("Ich-Tekik: a counter on the card is the card's, the counter on each Golem is the Golems'", () => {
+    const e = grammarEmits("Ich-Tekik, Salvage Splicer", "Legendary Creature \u2014 Phyrexian Human Artificer", "Whenever an artifact is put into a graveyard from the battlefield, put a +1/+1 counter on Ich-Tekik and a +1/+1 counter on each Golem you control.").filter((x) => x.verb === "counter-added");
+    expect(e).toHaveLength(2);
+    const own = e.filter((x) => x.subject.self === true);
+    expect(own).toHaveLength(1);
+    expect(own[0]!.subject.subtype).toBeUndefined();
+    expect(own[0]!.subject.scope).toBeUndefined();
+    const golems = e.filter((x) => x.subject.self !== true);
+    expect(golems).toHaveLength(1);
+    expect(golems[0]!.subject).toMatchObject({ subtype: "golem", scope: "each", counter: "+1/+1" });
+  });
+  test.each(LANDS)("%s: own enters-graveyard is the land, the sacrificed %s is its own sacrifice", (name, land, text) => {
+    const e = grammarEmits(name, "Land", text);
+    const own = e.filter((x) => x.verb === "enters-graveyard");
+    expect(own.length).toBeGreaterThan(0);
+    for (const x of own) { expect(x.subject.self).toBe(true); expect(x.subject.subtype).toBeUndefined(); }
+    expect(e.filter((x) => x.subject.self === true && x.subject.subtype === land)).toEqual([]);
+    expect(e.some((x) => x.verb === "sacrifice" && x.subject.subtype === land && x.subject.self !== true)).toBe(true);
+  });
+});
