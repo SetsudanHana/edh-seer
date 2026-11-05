@@ -8279,6 +8279,26 @@ describe("another object named in the clause stays out of the self subject (#152
     expect(golems).toHaveLength(1);
     expect(golems[0]!.subject).toMatchObject({ subtype: "golem", scope: "each", counter: "+1/+1" });
   });
+  test("control: Angelic Renewal's 'return that card' is still the creature that died, typed (the self-'it' read is for a bare 'it')", () => {
+    const text = "Whenever a creature is put into your graveyard from the battlefield, you may sacrifice this enchantment. If you do, return that card to the battlefield.";
+    const { abilities } = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "a creature", control: "you" }, actions: [
+      { verb: "sacrifice", object: "this enchantment", fromZone: null, toZone: null, amount: null, optional: true },
+      { verb: "return", object: "that card", fromZone: "graveyard", toZone: "battlefield", amount: null, optional: false },
+    ] }] as never, "Angelic Renewal", { 1: text }, undefined, text);
+    const e = abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "enters");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject.type).toBe("creature");
+  });
+  test("Blistercoil Weird: 'untap it' after 'this creature gets +1/+1' is the creature itself, not an instant or sorcery", () => {
+    const text = "Whenever you cast an instant or sorcery spell, this creature gets +1/+1 until end of turn. Untap it.";
+    const { abilities } = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "an instant or sorcery spell", control: "you" }, actions: [
+      { verb: "modify-pt", object: "this creature", fromZone: null, toZone: null, amount: "+1/+1", optional: false },
+      { verb: "untap", object: "it", fromZone: null, toZone: null, amount: null, optional: false },
+    ] }] as never, "Blistercoil Weird", { 1: text }, undefined, text);
+    const e = abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "untaps");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) { expect(x.subject.self).toBe(true); expect(x.subject.type).toBeUndefined(); }
+  });
   test.each(LANDS)("%s: own enters-graveyard is the land, the sacrificed %s is its own sacrifice", (name, land, text) => {
     const e = grammarEmits(name, "Land", text);
     const own = e.filter((x) => x.verb === "enters-graveyard");
@@ -8325,6 +8345,26 @@ describe("a counter kind is not a subtype (#1520)", () => {
     const e = abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "counter-removed");
     expect(e.length).toBeGreaterThan(0);
     for (const x of e) { expect(x.subject).toMatchObject({ counter: "blood", self: true, type: "artifact" }); expect(x.subject.subtype).toBeUndefined(); }
+  });
+  test("control: Baton of Courage's 'a charge counter' keeps `counter: charge` (the kind is read off the object either way)", () => {
+    const text = "Remove a charge counter from this artifact: Target creature gets +1/+1 until end of turn.";
+    const { abilities } = deriveAbilities([{ id: 3, abilityType: "activated", actions: [
+      { verb: "remove-counter", object: "a charge counter", fromZone: null, toZone: null, amount: null, optional: false },
+      { verb: "modify-pt", object: "target creature", amount: "+1/+1", optional: false },
+    ] }] as never, "Baton of Courage", { 3: text }, undefined, text);
+    const e = abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "counter-removed");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject).toMatchObject({ counter: "charge", self: true });
+  });
+  test("control: Dismantle's 'a +1/+1 counter or a charge counter' names two kinds and stays kindless", () => {
+    const text = "Destroy target artifact. If that artifact had counters on it, put that many +1/+1 counters or charge counters on an artifact you control.";
+    const { abilities } = deriveAbilities([{ id: 1, abilityType: "spell", actions: [
+      { verb: "destroy", object: "target artifact", fromZone: null, toZone: null, amount: null, optional: false },
+      { verb: "add-counter", object: "+1/+1 counters or charge counters", fromZone: null, toZone: null, amount: "that many", optional: false },
+    ] }] as never, "Dismantle", { 1: text }, undefined, text);
+    const e = abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "counter-added");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject.counter).toBeUndefined();
   });
   test("control: a counter put on a named class keeps the class's subtype, and a +1/+1 counter stays", () => {
     const e = grammarEmits("Test Shaman", "Creature \u2014 Goblin Shaman", "{T}: Put a +1/+1 counter on target Goblin.").filter((x) => x.verb === "counter-added");

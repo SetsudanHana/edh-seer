@@ -798,20 +798,6 @@ const PT_DEFINITION = /\b(?:power|toughness)(?: and toughness)? (?:is|are) (?:ea
 const PT_CARRIER_VERBS: ReadonlySet<string> = new Set(["modify-pt", "create", "grant-ability", "animate", "other"]);
 export const definesPowerToughness = (a: Action): boolean => !PT_CARRIER_VERBS.has(a.verb ?? "") && PT_DEFINITION.test(a.object ?? "");
 
-/** A COUNTER'S KIND IS NOT A SUBTYPE (#1520). An add-counter's object that IS the kind ("blood counter", "tower", "gold counter") was parsed as a permanent, so Font of Agonies' own counter carried subtype `blood` beside `counter: "blood"`
- *  (Helix Pinnacle tower, Legacy's Allure treasure, Dragon's Hoard gold, Spell Satchel book, Nine Lives incarnation ...). The comma parts naming the kind are dropped ("this, oil" keeps "this", "target creature, +1/+1" keeps the creature). */
-function withoutCounterKind(object: string): string {
-  if (counterKindOf(object) === undefined) {
-    // "a blood counter from this artifact" (Bloodletter Quill): the kind word and its "counter(s)" noun come out of the phrase, whatever else it names stays. Word scan, no regex.
-    const words = object.split(" ");
-    const at = words.findIndex((w, i) => i > 0 && /^counters?$/i.test(w) && counterKindOf(words[i - 1]!) !== undefined);
-    if (at < 0) return object;
-    const lead = at >= 2 && ["a", "an", "one", "two", "three", "x"].includes(words[at - 2]!.toLowerCase()) ? at - 2 : at - 1;
-    return [...words.slice(0, lead), ...words.slice(at + 1)].join(" ").trim();
-  }
-  return object.split(",").filter((part) => counterKindOf(part.replace(/^\s*or\s+/, "")) === undefined).join(",").trim();
-}
-
 /** The attached object of "this Equipment to the amassed Army": what stands before the first " to " (`indexOf`, no backtracking), when it is a self reference. */
 function attachHead(object: string): string | undefined {
   const at = object.toLowerCase().indexOf(" to ");
@@ -906,7 +892,14 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   const listed = action.verb === "deal-damage" || action.verb === "lose-life" ? damageRecipient(damageObject) : undefined;
   // ...and damage to "target player" / "target opponent" is player-only (#1294), no "any target".
   const playerOnly = action.verb === "deal-damage" && listed === undefined ? playerOnlyRecipient(damageObject) : undefined;
-  const subject = listed ?? playerOnly ?? parseSubjectWhole(recipient ?? (action.verb === "add-counter" || action.verb === "remove-counter" ? withoutCounterKind(damageObject) : damageObject));
+  const subject = listed ?? playerOnly ?? parseSubjectWhole(recipient ?? damageObject);
+  // A COUNTER'S KIND IS NOT A SUBTYPE (#1520). An add-counter's object that NAMES the kind ("blood counter", "tower", "gold counter", "a blood counter from this artifact") was parsed as a permanent, so Font of Agonies' own counter carried subtype
+  // `blood` beside `counter: "blood"` (Helix Pinnacle tower, Legacy's Allure treasure, Dragon's Hoard gold, Spell Satchel book, Nine Lives incarnation ...). The kind words of the OBJECT leave the subtype; a recipient's own subtype ("target Goblin") is not touched.
+  if ((action.verb === "add-counter" || action.verb === "remove-counter") && recipient === undefined && listed === undefined && playerOnly === undefined && subject.subtype !== undefined) {
+    const kinds = new Set((action.object ?? "").split(/[\s,]+/).map((w) => counterKindOf(w)).filter((k): k is string => k !== undefined));
+    const left = [subject.subtype].flat().filter((t) => !kinds.has(String(t).toLowerCase()));
+    if (left.length === 0) delete subject.subtype; else subject.subtype = left.length === 1 ? left[0]! : left;
+  }
   // A TOKEN THAT IS A COPY IS CONTROLLED BY ITS CREATOR, NOT BY WHAT IT COPIES (#1295, CR 111.2: the player who creates a
   // token is its owner and it enters under that player's control unless the effect says otherwise). "Create two tokens
   // that are copies of target permanent an opponent controls" (Venser, Fervent Forger) parsed the original's control and

@@ -3253,9 +3253,9 @@ export function deriveAbilities(
         && sourceOf((clause.actions ?? []).indexOf(action)).to === "trigger";
       const selfByIf = /^it$/i.test((action.object ?? "").trim()) && /\bif (?:this (?:card|creature|permanent)|~) is exiled\b/i.test(text)
         && sourceOf((clause.actions ?? []).indexOf(action)).to === "trigger";
-      // A PRONOUN WHOSE NEAREST NAMED OBJECT IS THE CARD IS THE CARD, not an earlier object the walk skipped past (#1520): Lake of the Dead's "sacrifice a Swamp instead. If you do, put this land onto the battlefield. If you don't, put IT into its owner's
+      // AN "IT" WHOSE NEAREST NAMED OBJECT IS THE CARD IS THE CARD, not an earlier object the walk skipped past (#1520): Lake of the Dead's "sacrifice a Swamp instead. If you do, put this land onto the battlefield. If you don't, put IT into its owner's
       // graveyard" is the land, and `antecedentIsSelf` says so (it stops at the nearest name) while `antecedentSource` skips the card's own name to look for a class, found the Swamp, and the land's graveyard entry came out a self `swamp`.
-      const selfPronoun = PRONOUN_OBJECT.test((action.object ?? "").trim()) && antecedentIsSelf((clause.actions ?? []).indexOf(action));
+      const selfPronoun = /^it$/i.test((action.object ?? "").trim()) && antecedentIsSelf((clause.actions ?? []).indexOf(action));
       const antecedent = actorPronoun ? "a player" : selfByIf || selfPronoun ? undefined : PRONOUN_OBJECT.test((action.object ?? "").trim())
         ? antecedentFor((clause.actions ?? []).indexOf(action))
         : undefined;
