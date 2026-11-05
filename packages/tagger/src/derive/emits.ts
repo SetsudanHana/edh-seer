@@ -811,26 +811,62 @@ function isQuantity(gap: string): boolean {
   return words.length <= 4 && words.every((w) => QUANTITY_WORDS.has(w) || /^\d+$/.test(w));
 }
 
-/** "exile that card with a blood counter on it instead", "exile it with three time counters on it": the counter of this KIND is put on what the sentence exiles (#1523), so the card is in exile. The words between
- *  the last "exile(s)" before the phrase and its "with" must not return the card or put it onto the battlefield: "exile target creature, then return that card ... with a +1/+1 counter on it" (Daydream) is a battlefield
- *  permanent's counter. `exiled` is no verb here ("exiled cards with hit counters on them" is a card already there). Index scans and one anchored regex, no nested quantifier.
- *  CEILING: two limits. (1) Only the "with <quantity> <kind> counters on it" shape is read, not "exile it and put a hit counter on it" (Ravenloft Adventurer, Etrata, Jhoira of the Ghitu, Tasha, Mairsil, Lara Croft, Myra ...):
- *  those keep feeding battlefield counter payoffs through the untyped wildcard, about 16 cards and roughly 1,800 false reasons (reviewer's estimate from Ravenloft Adventurer 110, Etrata 110, Jhoira 113 each). (2) The quantity
- *  between "with" and the kind is at most four words from a closed list (`QUANTITY_WORDS`) or digits; a longer or unlisted amount ("with a number of time counters equal to its mana value" is listed) is not read. */
+/** "exile that card with a blood counter on it instead", "exile it with three time counters on it", "exile it and put a hit counter on it": the counter of this KIND is put on what the sentence exiles (#1523), so the card is in exile.
+ *  Two shapes. (a) "<exile> ... with <quantity> <kind> counters on it": the words between the last "exile(s)" before the phrase and its "with" must not return the card or put it onto the battlefield
+ *  ("exile target creature, then return that card ... with a +1/+1 counter on it", Daydream, is a battlefield permanent's counter). (b) "<exile> ... put <quantity> <kind> counters on it/them/that card/each of them/the exiled card"
+ *  (Ravenloft Adventurer, Etrata, Mairsil, Tasha, Suspend, "exile cards ... until you exile a nonland card. Put three time counters on it", Kang Prime): the exile is in the same sentence or the one just before it, and between the
+ *  exile and the "put" nothing returns the card, puts it onto the battlefield, creates a token or is a cost (a colon: "Exile this card from your graveyard: Tap target creature ... and put a stun counter on it",
+ *  Constrictor Sage) -- except for "the exiled card", which names the exile outright (Jhoira of the Ghitu: "Exile a nonland card from your hand: Put four time counters on the exiled card").
+ *  `exiled` is no verb here ("exiled cards with hit counters on them" is a card already there). Index scans and anchored regexes, no nested quantifier.
+ *  CEILING: three limits. (1) The quantity between "with"/"put" and the kind is at most four words from a closed list (`QUANTITY_WORDS`) or digits; a longer or unlisted amount is not read.
+ *  (2) Shape (b) reads two sentences back at most, the middle one only a "put it into your hand": "exile ... . Create a token. Put X +1/+1 counters on it" is refused, and so is a counter put three sentences after the exile
+ *  (Syx, Robot Overlord reads a battlefield creature). "exiled this way" with no "exile" verb in the sentence or the two before is not read.
+ *  (3) The pronoun's antecedent is not parsed: "exile it ... and put a counter on it" with "it" meaning another object in the sentence is stamped when no refused word stands between (the words above are the whole list). */
+const EXILED_PRONOUN = /^counters? on (?:it|them|that card|those cards|each of them|each of those cards|the exiled cards?)\b/;
+const NOT_EXILE_ONLY = ["return", "battlefield", " put ", "create", "onto", "choose"] as const;
 function exilesWithCounter(clauseText: string, kind: string | undefined): boolean {
   if (!kind) return false;
   const needle = `${kind.toLowerCase()} counter`;
-  for (const sentence of clauseText.toLowerCase().split(".")) {
+  const sentences = clauseText.toLowerCase().split(".").map((s) => s.trim());
+  for (let i = 0; i < sentences.length; i++) {
+    const sentence = sentences[i]!;
     for (let at = sentence.indexOf(needle); at >= 0; at = sentence.indexOf(needle, at + 1)) {
+      const rest = sentence.slice(at + kind.length + 1);
+      if (!EXILED_PRONOUN.test(rest)) continue;
       const withAt = sentence.lastIndexOf(" with ", at);
-      if (withAt < 0 || !isQuantity(sentence.slice(withAt + 6, at))) continue;
-      if (!/^counters? on (?:it|them|that card|those cards)\b/.test(sentence.slice(at + kind.length + 1))) continue;
-      const head = sentence.slice(0, withAt);
+      if (withAt >= 0 && isQuantity(sentence.slice(withAt + 6, at))) {
+        const head = sentence.slice(0, withAt);
+        let exileAt = -1;
+        for (const m of head.matchAll(/\bexiles?\b/g)) exileAt = m.index ?? -1;
+        if (exileAt >= 0) {
+          const between = head.slice(exileAt);
+          if (!between.includes("return") && !between.includes("battlefield") && !between.includes(" put ")) return true;
+        }
+        continue;
+      }
+      // Shape (b). "the exiled card" names the exile by itself (Jhoira of the Ghitu: the cost "Exile a nonland card from your hand" is not in the clause text).
+      if (/^counters? on the exiled cards?\b/.test(rest)) return true;
+      // The last "put" before the counter, with only a quantity between.
+      const padded = ` ${sentence.slice(0, at)}`;
+      const putAt = padded.lastIndexOf(" put ");
+      if (putAt < 0 || !isQuantity(padded.slice(putAt + 5))) continue;
+      const lead = padded.slice(0, putAt);
+      let exile = "";
       let exileAt = -1;
-      for (const m of head.matchAll(/\bexiles?\b/g)) exileAt = m.index ?? -1;
-      if (exileAt < 0) continue;
-      const between = head.slice(exileAt);
-      if (!between.includes("return") && !between.includes("battlefield") && !between.includes(" put ")) return true;
+      for (const m of lead.matchAll(/\bexiles?\b|\b(?:is|are) exiled\b/g)) exileAt = m.index ?? -1;
+      if (exileAt >= 0) exile = lead.slice(exileAt);
+      else {
+        // The exile sentence is the one before, or two before when the middle one only sends a card to the hand ("Exile the top card. If it's a land card, put it into your hand. Otherwise, put a study counter on it", Kianne).
+        for (let back = 1; back <= 2 && i - back >= 0 && exile === ""; back++) {
+          const prev = sentences[i - back]!;
+          let prevAt = -1;
+          for (const m of prev.matchAll(/\bexiles?\b/g)) prevAt = m.index ?? -1;
+          if (prevAt >= 0) exile = [prev.slice(prevAt), ...sentences.slice(i - back + 1, i), lead].join(" ");
+        }
+      }
+      if (exile === "" || NOT_EXILE_ONLY.some((w) => exile.replace(" put it into your hand", "").includes(w))) continue;
+      if (exile.includes(":")) continue;
+      return true;
     }
   }
   return false;
