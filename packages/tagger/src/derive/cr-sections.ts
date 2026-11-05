@@ -161,7 +161,7 @@ export const SECTIONS: Record<string, Status> = {
   "610": { verdict: "MODELLED", note: "one-shot effects — every action verb is one; the emit/kind tables" },
   "612": { verdict: "OPEN", note: "text-changing effects — 13 cards change text (Mind Bend, Sleight of Mind …); unmodelled and unlikely to matter", probe: /\bchange the text of\b/i },
   "613": { verdict: "OPEN", note: "interaction of continuous effects (layers) — no layer model; the same hole 611 records" },
-  "616": { verdict: "N/A", note: "interaction of replacement/prevention effects — follows 614/615, which are OPEN; nothing to model until they are" },
+  "616": { verdict: "N/A", note: "interaction of replacement/prevention effects — follows 614 (OPEN) and 615 (PARTIAL: prevention and damage-change kinds, #1469); no interaction order is modelled" },
   "803": { verdict: "N/A", note: "attack left/right — not EDH" },
   "804": { verdict: "N/A", note: "deploy creatures — not EDH" },
   "805": { verdict: "N/A", note: "shared team turns — not EDH" },

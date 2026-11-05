@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { deriveAbilities } from "./derive.js";
-import { damageReplacementOf, preventionOf, redirectsDamage } from "./prevention.js";
+import { damageDealerPhrase, damageReplacementOf, preventionOf, redirectsDamage, replacedDamageRecipient } from "./prevention.js";
 
 /** Stored clause rows, copied from the corpus (cardClauses.clauses, 2026-11-05), and the printed text of each clause. */
 const run = (abilityType: string, actions: object[], text: string, name: string, trigger?: object, cost?: string) =>
@@ -28,7 +28,7 @@ describe("#1469 prevention (CR 615) and damage-change (CR 614) kinds", () => {
       "{1}: The next time a red source of your choice would deal damage to you this turn, prevent that damage.", "Circle of Protection: Red", undefined, "{1}");
     expect(a!.effect.kind).toBe("prevention");
     expect(a!.effect.subject).toMatchObject({ control: "you", player: true });
-    expect(a!.prevention).toMatchObject({ damage: "any", amount: "all", duration: "this-turn", from: { colors: ["R"] } });
+    expect(a!.prevention).toMatchObject({ damage: "any", amount: "next-instance", duration: "this-turn", from: { colors: ["R"] } });
   });
 
   it("Heal prevents a shield of 1 to any target; Kor Haven prevents combat damage dealt by a target attacker", () => {
@@ -111,5 +111,63 @@ describe("#1469 'can't be prevented' is no prevention", () => {
     const abs = run("static", [{ verb: "prevent", object: "combat damage that would be dealt by creatures you control" }], "Combat damage that would be dealt by creatures you control can't be prevented.", "Questing Beast");
     expect(kinds(abs)).not.toContain("prevention");
     expect(kinds(abs)).not.toContain("damage-change");
+  });
+});
+
+describe("#1469 fix round", () => {
+  it("Goblin Psychopath: the damage-carrying `other` carries the redirect and its coin flip stays unclaimed", () => {
+    const res = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" },
+      actions: [{ verb: "flip-coin", object: "" }, { verb: "other", object: "if you lose the flip, the next time it would deal combat damage this turn, it deals that damage to you instead" }] }] as never,
+      "Goblin Psychopath", { 1: "Whenever this creature attacks or blocks, flip a coin. If you lose the flip, the next time it would deal combat damage this turn, it deals that damage to you instead." });
+    expect(res.abilities.map((a) => a.effect.kind)).toContain("damage-change");
+    expect(res.unclaimed.map((a) => a.verb)).toContain("flip-coin");
+    expect(res.unclaimed.map((a) => a.verb)).not.toContain("other");
+  });
+
+  it("the recipient of a redirect is the damaged one, never the new recipient or a cut list", () => {
+    expect(replacedDamageRecipient("All damage that would be dealt to you is dealt to enchanted creature instead.")).toBe("you");
+    expect(replacedDamageRecipient("The next 2 damage that a source of your choice would deal to you and/or permanents you control this turn is dealt to any target instead.")).toBeUndefined();
+    expect(replacedDamageRecipient("If a source would deal damage to a player, a planeswalker, or a battle, it deals that damage to you instead.")).toBeUndefined();
+    expect(replacedDamageRecipient("If a source would deal combat damage this turn, it deals that damage to you instead.")).toBeUndefined();
+  });
+
+  it("a prevention's recipient stops at 'during' / 'while', refuses lists and pronouns", () => {
+    expect(preventionOf("Prevent all damage that would be dealt to Gideon Blackblade during your turn.")?.recipient).toBe("gideon blackblade");
+    expect(preventionOf("Prevent all damage that would be dealt to this creature while it has a +1/+1 counter on it.")?.recipient).toBe("this creature");
+    expect(preventionOf("Prevent all damage that would be dealt to those permanents this turn.")?.recipient).toBeUndefined();
+    expect(preventionOf("Prevent the next 2 damage that would be dealt to you and/or permanents you control this turn.")?.recipient).toBeUndefined();
+  });
+
+  it("the source of a prevention is the card itself for 'this creature', a bounded phrase, never a pronoun", () => {
+    const [a] = run("static", [{ verb: "prevent", object: "all combat damage that would be dealt by this creature" }], "Prevent all combat damage that would be dealt by this creature.", "Weeping Angel");
+    expect(a!.prevention?.from?.self).toBe(true);
+    expect(damageDealerPhrase("prevent all damage that would be dealt to this creature this turn, then remove a counter from it")).toBeUndefined();
+    expect(damageDealerPhrase("prevent all combat damage that would be dealt by that creature this turn")).toBeUndefined();
+  });
+
+  it("a plural 'enchanted creatures' is no host; the singular is; a quoted grant's 'this creature' is the host", () => {
+    const plural = run("static", [{ verb: "prevent", object: "all damage that would be dealt by enchanted creatures" }], "Prevent all damage that would be dealt by enchanted creatures.", "Wall");
+    expect(plural[0]!.host).toBeUndefined();
+    const single = run("static", [{ verb: "prevent", object: "all damage that would be dealt to enchanted creature" }], "Prevent all damage that would be dealt to enchanted creature.", "Aura");
+    expect(single[0]!.host).toBe(true);
+  });
+
+  it("the CR 615.8 next instance: 'the next time ... prevent that damage' is next-instance, 'all damage' is all", () => {
+    expect(preventionOf("The next time a source of your choice would deal damage to you this turn, prevent that damage.")?.amount).toBe("next-instance");
+    expect(preventionOf("If damage would be dealt to this creature, prevent that damage.")?.amount).toBe("all");
+    expect(preventionOf("Prevent all damage that would be dealt to you this turn.")?.amount).toBe("all");
+  });
+
+  it("Ojer Axonil's floor is `increased`", () => {
+    const [a] = run("static", [{ verb: "deal-damage", object: "an amount equal to Ojer Axonil's power" }],
+      "If a red source you control would deal an amount of noncombat damage less than Ojer Axonil's power to an opponent, that source deals damage equal to Ojer Axonil's power instead.", "Ojer Axonil, Deepest Might // Temple of Power");
+    expect(a!.effect).toMatchObject({ kind: "damage-change", damageChange: "increased" });
+  });
+
+  it("'halved' reads a long line without backtracking", () => {
+    const t = `${"damage dealt to ".repeat(2000)}is halved`;
+    const t0 = Date.now();
+    expect(damageReplacementOf(`${t} instead`)).toBe("halved");
+    expect(Date.now() - t0).toBeLessThan(500);
   });
 });

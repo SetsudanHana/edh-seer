@@ -1153,7 +1153,8 @@ export interface Effect {
   /** WHAT A `damage-multiplier` DOES TO THE DAMAGE (#1345), read off the printed clause. The kind alone made every
    *  reason say "doubles the damage": Fiery Emancipation triples, Torbran adds 2, Benevolent Unicorn takes 1 off. Absent
    *  when the clause text was not at hand (the sentence says "changes the damage" then). A toughness-as-damage static
-   *  (Doran) is told apart by its stat predicate, not by this field. */
+   *  (Doran) is told apart by its stat predicate, not by this field.
+   *  ON A `damage-change` (#1469) it says how the damage is changed without multiplying: reduced, halved, capped, fixed, increased, redirected. */
   damageChange?: DamageChange;
   /** WHAT AN `animate` MAKES ITS OBJECT (#1364): "target land you control becomes a 3/3 Elemental creature" -> `{ type: "creature", subtype: "elemental", stats: 3/3 }`; "All lands are 1/1 creatures"; "a blue Fish".
    *  The RESULT of the change (types, subtypes, base P/T, colours), read off the printed clause. NEVER THE SUBJECT: `subject` is what is targeted or affected, and `spellTargeting` (matcher) reads a
@@ -1165,8 +1166,9 @@ export interface Effect {
   becomes?: SubjectFilter;
 }
 
-/** `plus` is "that much damage plus N" (the number is `Ability.change` when stated). A reduction, a fixed number, a redirect, a mill
- *  or counters are no damage multiplier since #1456 and carry neither the kind nor a value here. */
+/** On a `damage-multiplier`: `twice`, `thrice` and `plus` ("that much damage plus N", the number is `Ability.change` when stated). A reduction, a fixed number, a redirect, a mill
+ *  or counters are no damage multiplier since #1456; since #1469 a reduction, half, cap, fixed number, floor or redirect is the `damage-change` kind and carries `reduced`, `halved`,
+ *  `capped`, `fixed`, `increased` or `redirected` here (a mill or counters stay plain triggers, #1465). */
 export type DamageChange = "twice" | "thrice" | "plus" | "reduced" | "halved" | "capped" | "fixed" | "increased" | "redirected";
 
 /** WHAT A `prevention` ABILITY PREVENTS (#1469, CR 615): the damage (all of it, combat only, noncombat only), how much ("all"; a number or "x" for a shield, CR 615.7; "next-instance" for the next time a source deals damage,
@@ -1278,7 +1280,7 @@ export interface Ability {
   librarySearch?: "yours" | "other";
   /** THE EFFECT APPLIES TO THE PERMANENT THIS CARD IS ATTACHED TO (#1315): an Aura's "enchanted creature / permanent" (CR 303.4, Aura), an
    *  Equipment's "equipped creature" (CR 301.5, Equipment). Set only on the effect kinds that are done TO a host -- `pump`, `debuff`, `keyword-grant`,
-   *  `speed-increase`, `type-grant`, `ability-loss`, `animate`, `evasion`, `restriction` -- and only when the printed recipient IS the host: "enchanted creature gets +2/+0",
+   *  `speed-increase`, `type-grant`, `ability-loss`, `animate`, `evasion`, `restriction`, and (#1469) `prevention` -- and only when the printed recipient IS the host: "enchanted creature gets +2/+0",
    *  "As long as enchanted creature is black, it gets +1/+1" (the `it`), and the "Otherwise, it gets -3/-3" half of an either-or Aura (Clutch of Undeath).
    *  Not set for another class on the same card (Inner Demon's "all non-Demon creatures get -2/-2", Vampirism's "other creatures you control"), for a class of
    *  enchanted creatures (the Magemarks' "creatures you control that are enchanted"), or for a player ("enchanted creature's controller").

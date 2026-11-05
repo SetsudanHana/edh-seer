@@ -1409,6 +1409,8 @@ const CANT_ATTACK_OR_BLOCK = /^(.*?\S)\s+(?:can['\u2019]t|cannot)\s+(?:attack|bl
 const CANT_BE_TARGETED = /^(.*?\S)\s+(?:(?:can['\u2019]t|cannot)\s+)?be the targets? of\b/i;
 /** An Aura's or Equipment's host by any noun ("enchanted permanent", "enchanted land", "equipped creature"): the host is `Ability.host`, never a class (#1423). */
 const HOST_WORD = /^(?:enchanted|equipped)\b/i;
+/** The SINGULAR host phrase ("enchanted creature", "equipped permanent"), not "enchanted creatures" (a class: Wall of Putrid Flesh). */
+const SINGULAR_HOST = /^(?:enchanted|equipped) (?:creature|permanent|land|artifact)\b(?!s)/i;
 /** A recipient that is a LIST ("players and permanents", "lands on the battlefield and land cards in graveyards") or holds another sentence's verb: the filter reads one class, so it is left unnamed. */
 const RECIPIENT_LIST = /,| (?:and|or) |\b(?:can['\u2019]t|cannot)\b/i;
 /** Who LOSES abilities: "Creatures lose all abilities", "Enchanted creature loses all abilities". */
@@ -2952,7 +2954,9 @@ export function deriveAbilities(
     // of an ordinary ability (no `replacement`, no `change`) and the mill / counter placement keeps its ordinary effect and emits.
     const resultActions = clause.actions ?? [];
     const damageResult = nonMultiplying && resultActions.length > 0 && resultActions.every((a) => a.verb === "mill" || a.verb === "add-counter");
-    const refusedDamageReplacement = nonMultiplying && !damageResult;
+    // A FLOOR THE TEMPLATES DO NOT READ (#1469, Ojer Axonil: "would deal an amount of noncombat damage less than ... power ..., that source deals damage equal to ... power instead") is a `damage-change` too.
+    // CEILING: only `increased` is read beyond the templates; 7 commander-legal redirects the templates miss stay unread (Heroic Sacrifice, Gideon's Sacrifice, Mirror Strike, Reverberation, Soltari Guerrillas, Blood of the Martyr, Ascent of the Worthy).
+    const refusedDamageReplacement = (nonMultiplying && !damageResult) || (replacementRead === null && damageReplacementOf(text) === "increased");
     const replacement = refusedDamageReplacement || damageResult ? null : replacementRead;
     let trigger: Ability["trigger"];
     let grammarExtra: { verbs: Verb[]; subject: SubjectFilter }[] = [];
@@ -3275,8 +3279,11 @@ export function deriveAbilities(
       const replacedBy = refusedDamageReplacement ? damageReplacementOf(text) : undefined;
       if (refusedDamageReplacement) {
         if (replacedBy === undefined) { unclaimed.push(action); continue; }
-        // The clause's FIRST action carries the ability through the ordinary path below; the others are its words and claim nothing.
-        if (action !== (clause.actions ?? []).find((x) => !INERT_VERBS.has(x.verb ?? ""))) continue;
+        // The clause's DAMAGE-CARRYING action (deal-damage / other / prevent; else the first real one) carries the ability through the ordinary path below; every other action stays unclaimed
+        // (Goblin Psychopath's coin flip is the coin flip it was, not a silent word of the redirect).
+        const actionsOf = (clause.actions ?? []).filter((x) => !INERT_VERBS.has(x.verb ?? ""));
+        const carrier = actionsOf.find((x) => x.verb === "deal-damage" || x.verb === "other" || x.verb === "prevent") ?? actionsOf[0];
+        if (action !== carrier) { unclaimed.push(action); continue; }
       }
       // "that damage can't be prevented or dealt instead to ..." (Lava Burst, #1465) forbids prevention; it is no prevention (Whippoorwill's same wording stops claiming `prevented` too). CEILING: stays unclaimed until prevention has a kind.
       if (action.verb === "prevent" && /\bcan't be prevented or dealt instead\b/i.test(action.object ?? "")) { unclaimed.push(action); continue; }
@@ -3931,7 +3938,11 @@ export function deriveAbilities(
         const read = preventionOf(text);
         if (read) {
           const dealerPhrase = read.dealer;
-          const from = clauseGrants?.[clause.id as number] === undefined && dealerPhrase !== undefined && !HOST_WORD.test(dealerPhrase) && !RECIPIENT_LIST.test(dealerPhrase) ? subjectFrom(dealerPhrase, cardName, enchantText) : undefined;
+          const granted = clauseGrants?.[clause.id as number] !== undefined;
+          const dealerSelf = dealerPhrase !== undefined && (SELF_REFERENCE.test(dealerPhrase) || isSelfSubject(dealerPhrase, cardName));
+          const fromRead = !granted && dealerPhrase !== undefined && !HOST_WORD.test(dealerPhrase) && !RECIPIENT_LIST.test(dealerPhrase) ? subjectFrom(dealerPhrase, cardName, enchantText) : undefined;
+          // "this creature would deal damage" is the card itself, not a class of creatures (Weeping Angel, Mercenaries, Barbed Wire).
+          const from = fromRead && dealerSelf ? { ...fromRead, self: true as const } : fromRead;
           ability.prevention = {
             damage: read.damage,
             ...(read.amount !== undefined ? { amount: read.amount } : {}),
@@ -3939,7 +3950,9 @@ export function deriveAbilities(
             ...(from && (from.type !== undefined || from.subtype !== undefined || from.colors !== undefined || from.control !== "any" || from.scope === "target" || from.combat !== undefined || from.self === true) ? { from } : {}),
           };
           // An Aura's or Equipment's "enchanted creature" is the host (CR 303.4), on either side of the damage.
-          if (HOST_WORD.test(read.recipient ?? "") || HOST_WORD.test(dealerPhrase ?? "")) ability.host = true;
+          // ...and so is a quoted grant's own "this creature" (Caduceus, Staff of Hermes: the equipped creature, CR 301.5).
+          const grantedSelf = granted && (SELF_REFERENCE.test(read.recipient ?? "") || SELF_REFERENCE.test(dealerPhrase ?? ""));
+          if (SINGULAR_HOST.test(read.recipient ?? "") || SINGULAR_HOST.test(dealerPhrase ?? "") || grantedSelf) ability.host = true;
         }
       }
       if (effectKind === "restriction") { const r = restrictedActions(action.object ?? "", text, sameCant); if (r) ability.restricts = r; }

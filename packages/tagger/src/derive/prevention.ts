@@ -45,8 +45,8 @@ function cutAtFirst(phrase: string, stops: readonly string[]): string {
   return phrase.slice(0, end).trim();
 }
 
-const RECIPIENT_STOPS = [" this turn", " this combat", " by ", " from ", ",", " until ", " instead", " where ", " if ", " unless ", " and dealt by", " that would be dealt", " would be dealt"];
-const RECIPIENT_MARKERS = ["dealt to ", "deal damage to ", "deal combat damage to ", "deal noncombat damage to ", "deal non-combat damage to ", "damage to "];
+const RECIPIENT_STOPS = [" this turn", " this combat", " by ", " from ", ",", " until ", " instead", " where ", " if ", " unless ", " and dealt by", " that would be dealt", " would be dealt", " is dealt", " are dealt", " during", " while", " it deals", " that source deals"];
+const RECIPIENT_MARKERS = ["dealt to ", "would deal to ", "deal damage to ", "deal combat damage to ", "deal noncombat damage to ", "deal non-combat damage to ", "damage to "];
 
 /** WHO THE DAMAGE WOULD HURT, as printed: "you", "creatures you control", "target creature", "this creature", "any target". Undefined when the sentence names no recipient ("all combat damage that would be dealt
  *  this turn"). The phrase is not read here; `derive.ts` parses it. */
@@ -55,7 +55,19 @@ export function damageRecipientPhrase(sentence: string): string | undefined {
   const tail = afterFirst(s, RECIPIENT_MARKERS);
   if (tail === undefined) return undefined;
   const phrase = cutAtFirst(tail, RECIPIENT_STOPS);
-  return phrase === "" ? undefined : phrase;
+  // CEILING: a recipient LIST ("you and/or permanents you control", "target creature, planeswalker, or battle") names no single class and stays unset, as does a pronoun ("that creature", "those permanents").
+  if (phrase === "" || phrase.includes("and/or") || /^(?:that|those|it|them|they)\b/.test(phrase) || listContinues(tail.slice(phrase.length))) return undefined;
+  return phrase;
+}
+
+/** True when the text right after a recipient's cut point goes on listing recipients: ", or X", ", and X", ", X, or Y". */
+function listContinues(rest: string): boolean {
+  if (!rest.startsWith(",")) return false;
+  const tail = rest.slice(1).trimStart();
+  if (tail.startsWith("or ") || tail.startsWith("and ")) return true;
+  const next = tail.indexOf(",");
+  const item = next >= 0 ? tail.slice(next + 1).trimStart() : "";
+  return item.startsWith("or ") || item.startsWith("and ");
 }
 
 const DEALER_STOPS = [" this turn", " this combat", ",", " until ", " instead", " to ", " would deal", " where "];
@@ -65,8 +77,14 @@ const DEALER_LEADS = ["the next time ", "all combat damage ", "all noncombat dam
  *  no class and returns undefined, as does anything the whitelist of shapes below does not know. */
 export function damageDealerPhrase(sentence: string): string | undefined {
   let phrase: string | undefined;
-  const by = sentence.indexOf(" by ");
-  const from = sentence.indexOf(" from ");
+  // The damage's own frame ends at the first comma after the word "damage": a " from " or " by " after it belongs to another clause (Ugin's Conjurant's "remove counters from it").
+  const dmg = sentence.indexOf("damage");
+  const comma = dmg < 0 ? -1 : sentence.indexOf(",", dmg);
+  const within = (i: number) => i >= 0 && (comma < 0 || i < comma);
+  const byAt = sentence.indexOf(" by ");
+  const fromAt = sentence.indexOf(" from ");
+  const by = within(byAt) ? byAt : -1;
+  const from = within(fromAt) ? fromAt : -1;
   const would = sentence.indexOf(" would deal");
   if (by >= 0 && sentence.indexOf("dealt") >= 0 && sentence.indexOf("dealt") < by) phrase = cutAtFirst(sentence.slice(by + 4), DEALER_STOPS.filter((x) => x !== " to "));
   else if (from >= 0) phrase = cutAtFirst(sentence.slice(from + 6), DEALER_STOPS);
@@ -80,6 +98,8 @@ export function damageDealerPhrase(sentence: string): string | undefined {
   phrase = phrase.replace(/ of your choice$/, "").replace(/ of the chosen (?:color|type)$/, "").trim();
   if (phrase === "" || phrase === "a source" || phrase === "any source" || phrase === "that damage" || phrase === "it") return undefined;
   if (phrase.includes(" and ") || phrase.includes(" or ") || phrase.includes(" with ")) return undefined;
+  // A pronoun names no class ("that creature", "that source", "it"): unset, never a wildcard class.
+  if (/^(?:that|those|it|them|they)\b/.test(phrase)) return undefined;
   return phrase;
 }
 
@@ -121,7 +141,7 @@ export function preventionOf(clauseText: string): PreventionRead | undefined {
   let amount: PreventedAmount | undefined;
   if (words[0] === "all" && words[1] === "but") amount = undefined;
   else if (words[0] === "all") amount = "all";
-  else if (words[0] === "that" && words[1] === "damage") amount = "all";
+  else if (words[0] === "that" && words[1] === "damage") amount = sentence.includes("the next time ") ? "next-instance" : "all";
   else if (words[0] === "the" && words[1] === "next") {
     const n = amountWord(words[2] ?? "");
     if (n !== undefined && (words[3] === "damage" || (words[3] === "combat" && words[4] === "damage"))) amount = n;
@@ -180,7 +200,7 @@ export function damageReplacementOf(clauseText: string): DamageChange | undefine
   const lower = clauseText.toLowerCase().replace(/’/g, "'");
   if (!lower.includes("instead")) return undefined;
   if (/\bminus (?:\d+|one|two|three|four|five|x)\b/.test(lower)) return "reduced";
-  if (/\bhalf (?:that|the) damage\b|\bdamage (?:dealt to [a-z ]+ )?is halved\b/.test(lower)) return "halved";
+  if (/\bhalf (?:that|the) damage\b/.test(lower) || (lower.includes("damage") && lower.includes(" is halved"))) return "halved";
   const sentence = lower.split(/\. |\n/).find((x) => x.includes("would deal") && x.includes("instead")) ?? "";
   const dealt = dealsNumber(sentence);
   if (dealt !== undefined) {
@@ -209,5 +229,9 @@ export function replacedDamageRecipient(clauseText: string): string | undefined 
   if (sentence === undefined) return undefined;
   const at = Math.min(...["would deal", "would be dealt"].map((m) => sentence.indexOf(m)).filter((i) => i >= 0));
   const comma = sentence.indexOf(",", at);
-  return damageRecipientPhrase(sentence.slice(at, comma < 0 ? undefined : comma));
+  const head = sentence.slice(at, comma < 0 ? undefined : comma);
+  const phrase = damageRecipientPhrase(head);
+  // A recipient list that runs past the comma ("to a player, a planeswalker, or a battle") is unset, not cut at its first item.
+  if (phrase !== undefined && comma >= 0 && head.trimEnd().endsWith(phrase) && listContinues(sentence.slice(comma))) return undefined;
+  return phrase;
 }
