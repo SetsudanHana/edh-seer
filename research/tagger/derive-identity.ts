@@ -4,18 +4,19 @@
 // MANA FIELDS ARE COMPARED TOO (#1376 review): `pick` once read abilities / unclaimed / characteristics only, so a fold that changed a card's manaLines (T'Challa's per-cycle token line) read as identical.
 // It now also reads manaLines, staticFixer, landFetch, isOneShot, suspendOnly and unknownTriggers.
 import { connect, loadConfig } from "@edh-seer/data";
+// 2026-11-05 (#1482): `deriveAsCorpus` also takes derive-corpus's grammar-only pass for a clause doc whose stored hash is stale (an erratum), which `deriveRow` alone never does: 2 cards read "different" on every clean run.
 // THE SAME CALL derive-corpus MAKES (2026-10-06). This built its own DeriveInput and so never took the
 // card-by-card grammar switch (#896 task 7) `deriveRow` applies: after a clean `derive-corpus --force`
 // it still read "identical 29458, different 2640", and every one of the 2,640 was a card the switch
 // had moved to its grammar reading. A proof that re-derives by a different path proves nothing.
-import { deriveRow } from "../../packages/tagger/src/derive-worker.js";
+import { deriveAsCorpus } from "../../packages/tagger/src/derive-worker.js";
 const store = await connect(loadConfig());
 const stored = new Map((await store.db.collection("cardTagsDerived").find({ isToken: { $ne: true } }).toArray()).map((d: any) => [d.oracleId, d]));
 let same = 0, diff = 0;
 for (const doc of await store.db.collection("cardClauses").find({ isToken: { $ne: true } }).toArray() as any[]) {
   const src = await store.cards.findOne({ _id: doc.oracleId } as never) as any;
   if (!src) continue;
-  const tags = deriveRow({ doc, source: src, isToken: false }).tags as any;
+  const tags = deriveAsCorpus({ doc, source: src, isToken: false }).tags as any;
   const old = stored.get(doc.oracleId) ?? {};
   const pick = (t: any) => JSON.stringify({ abilities: t.abilities, unclaimed: t.unclaimed, characteristics: t.characteristics, manaLines: t.manaLines, staticFixer: t.staticFixer, landFetch: t.landFetch, isOneShot: t.isOneShot, suspendOnly: t.suspendOnly, unknownTriggers: t.unknownTriggers });
   if (pick(tags) === pick(old)) same++; else { diff++; if (diff <= 10 || process.env.ALL) console.log("DIFF", doc.name);

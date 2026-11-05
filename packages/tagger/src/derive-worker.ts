@@ -9,7 +9,7 @@ import { deriveDiff, lostClaims, lostScaledAmount, lostSubjectFields, lostTrigge
 import triage from "../grammar-only-triage.json" with { type: "json" };
 import { BACK_REF_AMOUNT, QUANTIFIER_AMOUNT, deriveCardTags, foldGrantTwins } from "./derive/derive.js";
 import { alignVerbs } from "./grammar/action.js";
-import type { CardClausesDoc, DerivedTagsDoc } from "./clause-store.js";
+import { segmentHash, type CardClausesDoc, type DerivedTagsDoc } from "./clause-store.js";
 import type { CardTags } from "./schema.js";
 import type { ClauseRecord } from "./canonicalize.js";
 
@@ -83,6 +83,21 @@ export function deriveRow({ doc, source, isToken }: DeriveItem): DeriveResult {
     }
   }
   return { tags: rederived(source, doc, doc.canonical as ClauseRecord[], undefined, tags, isToken), fromGrammar: false };
+}
+
+/** What `derive-corpus --force` stores for a clause doc, grammar-only pass included (#1482). A card the grammar reads completely whose clause doc was bought for text it no longer prints
+ *  (an erratum: Plan for All Outcomes, Overwrite the Multiverse, "Empower Jace" reminder text) is NOT derived through `deriveRow` by the bin: its first pass takes the grammar's records
+ *  with the default options. `derive-identity` called `deriveRow` alone and so read two stale-answer cards as "different" on every clean run. Same test as the bin: stored hash vs printed hash. */
+export function deriveAsCorpus(item: DeriveItem): DeriveResult {
+  const { doc, source, isToken } = item;
+  if (!isToken) {
+    const s = source as { oracleText?: string; typeLine?: string; keywords?: string[] };
+    const g = grammarClauseRecords(source as never);
+    if (g.complete && doc.segmentHash !== segmentHash(s.oracleText ?? "", s.typeLine ?? "", s.keywords ?? [])) {
+      return { tags: deriveCardTags(deriveInputOf(source as never, doc.oracleId, doc.name, g.records, undefined, g.readings)), fromGrammar: true };
+    }
+  }
+  return deriveRow(item);
 }
 
 /** Same shape as `charsFrom`, plus `token: true` -- or, for a layout-`emblem` row, `emblem: true`
