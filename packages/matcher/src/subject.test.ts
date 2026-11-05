@@ -572,3 +572,13 @@ test("a producer type list with allTypes is an AND; without it, an OR (#1385)", 
   // A single-type producer is refused when that type is excluded, as before.
   expect(subjectMatches(s({ control: "any", type: "artifact" }), parseSubject("a nonartifact permanent") as SubjectFilter, H)).toBe(false);
 });
+
+test("a counter put on a card in exile reaches no battlefield counter demand, and still reaches a demand that names exile (#1523)", () => {
+  const h: Hierarchy = {};
+  const onExiled: SubjectFilter = { control: "any", token: null, counter: "blood", zone: "exile" };
+  const onBoard: SubjectFilter = { control: "any", token: null, counter: "blood" };
+  const battlefield = parseSubject("a creature you control");
+  expect(counterAddMatches(onExiled, battlefield, h)).toBe(false);
+  expect(counterAddMatches(onBoard, battlefield, h)).toBe(true);
+  expect(counterAddMatches(onExiled, { ...battlefield, zone: "exile" }, h)).toBe(true);
+});

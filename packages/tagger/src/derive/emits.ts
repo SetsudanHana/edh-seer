@@ -804,6 +804,28 @@ const PT_DEFINITION = /\b(?:power|toughness)(?: and toughness)? (?:is|are) (?:ea
 const PT_CARRIER_VERBS: ReadonlySet<string> = new Set(["modify-pt", "create", "grant-ability", "animate", "other"]);
 export const definesPowerToughness = (a: Action): boolean => !PT_CARRIER_VERBS.has(a.verb ?? "") && PT_DEFINITION.test(a.object ?? "");
 
+/** "exile that card with a blood counter on it instead", "exile it with three time counters on it": the counter of this KIND is put on what the sentence exiles (#1523), so the card is in exile. The words between
+ *  the last "exile(s)" before the phrase and its "with" must not return the card or put it onto the battlefield: "exile target creature, then return that card ... with a +1/+1 counter on it" (Daydream) is a battlefield
+ *  permanent's counter. `exiled` is no verb here ("exiled cards with hit counters on them" is a card already there). Index scans and one anchored regex, no nested quantifier. */
+function exilesWithCounter(clauseText: string, kind: string | undefined): boolean {
+  if (!kind) return false;
+  const needle = `${kind.toLowerCase()} counter`;
+  for (const sentence of clauseText.toLowerCase().split(".")) {
+    for (let at = sentence.indexOf(needle); at >= 0; at = sentence.indexOf(needle, at + 1)) {
+      const withAt = sentence.lastIndexOf(" with ", at);
+      if (withAt < 0 || at - withAt > 16) continue;
+      if (!/^counters? on (?:it|them|that card|those cards)\b/.test(sentence.slice(at + kind.length + 1))) continue;
+      const head = sentence.slice(0, withAt);
+      let exileAt = -1;
+      for (const m of head.matchAll(/\bexiles?\b/g)) exileAt = m.index ?? -1;
+      if (exileAt < 0) continue;
+      const between = head.slice(exileAt);
+      if (!between.includes("return") && !between.includes("battlefield") && !between.includes(" put ")) return true;
+    }
+  }
+  return false;
+}
+
 /** The attached object of "this Equipment to the amassed Army": what stands before the first " to " (`indexOf`, no backtracking), when it is a self reference. */
 function attachHead(object: string): string | undefined {
   const at = object.toLowerCase().indexOf(" to ");
@@ -1128,6 +1150,8 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       ...(createsAToken && subject.token !== true ? { token: true as const } : {}),
       ...(arrivesTapped && verb === "enters" ? { entersTapped: true as const } : {}),
       ...(leftTheGraveyard && verb === "leaves" ? { zone: "graveyard" } : {}),
+      // A COUNTER ON A CARD EXILED WITH IT is on a card in exile (#1523: Rayami "exile that card with a blood counter on it", Darigaaz Reincarnated, suspend), not on a battlefield permanent.
+      ...(verb === "counter-added" && exilesWithCounter(clauseText ?? "", counter) ? { zone: "exile" } : {}),
       ...(from ? { fromZone: from } : {}),
       ...(counter ? { counter } : {}),
       ...(tokenType ? { type: tokenType } : {}),

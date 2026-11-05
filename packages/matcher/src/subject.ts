@@ -340,6 +340,8 @@ function targetReachesSubtype(producer: SubjectFilter, consumer: SubjectFilter, 
 }
 
 export function counterAddMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
+  // A COUNTER ON A CARD IN EXILE is on no battlefield permanent (#1523: Rayami's blood counter on an exiled creature card): a demand that names no zone is a battlefield one.
+  if (producer.zone === "exile" && consumer.zone === undefined) return false;
   // A kind MISMATCH is real information on either path: a +1/+1 placer is not a poison enabler.
   if (consumer.counter !== undefined && producer.counter !== undefined
     && consumer.counter !== producer.counter) return false;
