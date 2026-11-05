@@ -2016,6 +2016,9 @@ function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abiliti
     if (e.verb === "leaves" && t.verb === "dies") return false;
   }
   if (e.subject.self === true) return false;
+  // A SPELL LEAVING THE STACK REMOVES NO HOST (#1310). A spell cast from a graveyard and exiled instead of going there (Impulsivity, Invoke Calamity) leaves the STACK, and an Aura only goes to the
+  // graveyard when its host leaves the BATTLEFIELD (CR 704.5m). Below, `fromZone` is stripped so a stated graveyard or battlefield origin reads as the class alone; the stack origin is refused first.
+  if (e.subject.fromZone === "stack") return false;
   // WHOSE CREATURE (#1513). An Aura you put on an OPPONENT's creature is never sent to the graveyard by your own creature's departure.
   const side = e.subject.control === "you" || e.subject.control === "opp" ? auraHostSide(host, abilities) : undefined;
   if ((e.subject.control === "you" && side === "opp") || (e.subject.control === "opp" && side === "own")) return false;
