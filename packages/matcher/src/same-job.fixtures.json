@@ -2584,7 +2584,8 @@
        "subject": {
         "control": "any",
         "self": true,
-        "token": null
+        "token": null,
+        "type": "artifact"
        },
        "verb": "enters-graveyard"
       }

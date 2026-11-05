@@ -186,6 +186,16 @@ export function antecedentIsSelf(actions: readonly Action[], idx: number, cardNa
   return false;
 }
 
+/** The nearest earlier named object, when it is the card itself: the phrase a bare "it" stands for in "put this land onto the battlefield. If you don't, put IT into its owner's graveyard" (#1520). */
+export function selfAntecedentText(actions: readonly Action[], idx: number, cardName: string | undefined): string | undefined {
+  for (let i = idx - 1; i >= 0; i--) {
+    const o = (actions[i]?.object ?? "").trim();
+    if (o === "" || PRONOUN_OBJECT.test(o) || ZONE_OBJECT.test(o)) continue;
+    return SELF_REFERENCE.test(o) || isSelfSubject(o, cardName) ? o : undefined;
+  }
+  return undefined;
+}
+
 /** "THE EXILED CARD" IS WHAT AN EARLIER CLAUSE EXILED (#860). Isochron Scepter exiles "an instant
  *  card with mana value 2 or less from your hand" in one clause and copies "the exiled card" in the
  *  next; Surge to Victory exiles "target instant or sorcery card" and copies it from a later

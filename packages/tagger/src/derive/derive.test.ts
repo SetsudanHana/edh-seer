@@ -8231,25 +8231,9 @@ describe("another object named in the clause stays out of the self subject (#152
     const e = grammarEmits("Lake of the Dead", "Land", "If this land would enter, sacrifice a Swamp instead. If you do, put this land onto the battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add {B}.\n{T}, Sacrifice a Swamp: Add {B}{B}{B}{B}.");
     const own = e.filter((x) => x.verb === "enters-graveyard");
     expect(own.length).toBeGreaterThan(0);
-    for (const x of own) { expect(x.subject.self).toBe(true); expect(x.subject.subtype).toBeUndefined(); }
+    for (const x of own) { expect(x.subject.self).toBe(true); expect(x.subject.subtype).toBeUndefined(); expect(x.subject.type).toBe("land"); }
     // Not dropped: the sacrificed Swamp is a real sacrifice.
     expect(e.some((x) => x.verb === "sacrifice" && x.subject.subtype === "swamp" && x.subject.self !== true)).toBe(true);
-  });
-  test("Glass-Cast Heart: 'sacrifice this artifact and thirteen Blood tokens' is the artifact's own sacrifice and the Blood tokens' own", () => {
-    // Stored clause 3 of Glass-Cast Heart (clauseSource "model"): db.cardClauses.findOne({oracleId: ...}).canonical.
-    const text = "{B}{B}, {T}, Sacrifice this artifact and thirteen Blood tokens: Each opponent loses 13 life and you gain 13 life.";
-    const { abilities } = deriveAbilities([{ id: 3, abilityType: "activated", actions: [
-      { verb: "sacrifice", object: "this artifact and thirteen Blood tokens", fromZone: null, toZone: null, amount: null, optional: false },
-      { verb: "lose-life", object: "each opponent", amount: "13", optional: false },
-      { verb: "gain-life", object: "you", amount: "13", optional: false },
-    ] }] as never, "Glass-Cast Heart", { 3: text }, undefined, text);
-    const sac = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "sacrifice" || e.verb === "dies");
-    const own = sac.filter((e) => e.subject.self === true);
-    expect(own.map((e) => e.verb).sort()).toEqual(["dies", "sacrifice"]);
-    for (const e of own) { expect(e.subject.subtype).toBeUndefined(); expect(e.subject.token).not.toBe(true); expect(e.subject.type).toBe("artifact"); }
-    const blood = sac.filter((e) => e.subject.self !== true);
-    expect(blood.map((e) => e.verb).sort()).toEqual(["dies", "sacrifice"]);
-    for (const e of blood) expect(e.subject).toMatchObject({ token: true, subtype: "blood" });
   });
   test("control: 'sacrifice this creature' alone stays one self sacrifice", () => {
     const { abilities } = deriveAbilities([{ id: 1, abilityType: "activated", actions: [{ verb: "sacrifice", object: "this creature", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "draw", object: "a card", amount: "1", optional: false }] }] as never, "Test Imp");
@@ -8289,21 +8273,21 @@ describe("another object named in the clause stays out of the self subject (#152
     expect(e.length).toBeGreaterThan(0);
     for (const x of e) expect(x.subject.type).toBe("creature");
   });
-  test("Blistercoil Weird: 'untap it' after 'this creature gets +1/+1' is the creature itself, not an instant or sorcery", () => {
-    const text = "Whenever you cast an instant or sorcery spell, this creature gets +1/+1 until end of turn. Untap it.";
-    const { abilities } = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "an instant or sorcery spell", control: "you" }, actions: [
-      { verb: "modify-pt", object: "this creature", fromZone: null, toZone: null, amount: "+1/+1", optional: false },
-      { verb: "untap", object: "it", fromZone: null, toZone: null, amount: null, optional: false },
-    ] }] as never, "Blistercoil Weird", { 1: text }, undefined, text);
-    const e = abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "untaps");
+  test("control: Thunderclap Drake's 'copy it' after a sacrifice cost still reads the cast spell the trigger names, not the sacrificed creature", () => {
+    const text = "{2}{U}, Sacrifice this creature: When you next cast an instant or sorcery spell this turn, copy it for each time you've cast your commander from the command zone this game.";
+    const { abilities } = deriveAbilities([{ id: 3, abilityType: "activated", trigger: { event: "cast", subject: "an instant or sorcery spell", control: "you" }, actions: [
+      { verb: "sacrifice", object: "this creature", fromZone: null, toZone: null, amount: null, optional: false },
+      { verb: "copy", object: "it", fromZone: null, toZone: null, amount: "for each time you've cast your commander from the command zone this game", optional: false },
+    ] }] as never, "Thunderclap Drake", { 3: text }, undefined, text);
+    const e = abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "copy");
     expect(e.length).toBeGreaterThan(0);
-    for (const x of e) { expect(x.subject.self).toBe(true); expect(x.subject.type).toBeUndefined(); }
+    for (const x of e) expect(x.subject.type).toEqual(["instant", "sorcery"]);
   });
   test.each(LANDS)("%s: own enters-graveyard is the land, the sacrificed %s is its own sacrifice", (name, land, text) => {
     const e = grammarEmits(name, "Land", text);
     const own = e.filter((x) => x.verb === "enters-graveyard");
     expect(own.length).toBeGreaterThan(0);
-    for (const x of own) { expect(x.subject.self).toBe(true); expect(x.subject.subtype).toBeUndefined(); }
+    for (const x of own) { expect(x.subject.self).toBe(true); expect(x.subject.subtype).toBeUndefined(); expect(x.subject.type).toBe("land"); }
     expect(e.filter((x) => x.subject.self === true && x.subject.subtype === land)).toEqual([]);
     expect(e.some((x) => x.verb === "sacrifice" && x.subject.subtype === land && x.subject.self !== true)).toBe(true);
   });

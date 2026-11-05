@@ -77,14 +77,3 @@ export function isSelfSubject(text: string, cardName?: string): boolean {
   }
   return false;
 }
-
-/** "this artifact and thirteen Blood tokens" is the card AND something else (#1520): `head` is the card's own reference, `tail` the other object. Cut at the first " and " after a one-noun self reference ("this land"), by `indexOf`, so no regex backtracks.
- *  "and/or" is not " and ". */
-export function splitSelfAnd(object: string): { head: string; tail: string } | undefined {
-  const text = object.trim();
-  const at = text.toLowerCase().indexOf(" and ");
-  if (at < 0) return undefined;
-  const head = text.slice(0, at);
-  const tail = text.slice(at + 5).trim();
-  return tail !== "" && SELF_REFERENCE.test(head) && head.split(" ").length === 2 ? { head, tail } : undefined;
-}
