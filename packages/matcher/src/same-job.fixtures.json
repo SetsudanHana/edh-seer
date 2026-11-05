@@ -2582,7 +2582,7 @@
      "emits": [
       {
        "subject": {
-        "control": "any",
+        "control": "you",
         "self": true,
         "token": null,
         "type": "artifact"

@@ -8356,3 +8356,69 @@ describe("a counter kind is not a subtype (#1520)", () => {
     for (const x of e) expect(x.subject).toMatchObject({ counter: "+1/+1", subtype: "goblin" });
   });
 });
+
+/** #1520 FIX ROUND. Stored model rows (db.cardClauses canonical) of the named cards, derived through `deriveAbilities` / `deriveCardTags`. */
+describe("#1520 fix round", () => {
+  const act = (verb: string, object: string, extra: object = {}) => ({ verb, object, fromZone: null, toZone: null, amount: null, optional: false, ...extra });
+  const emitsOf = (clauses: object[], name: string, text: string, typeLine = "Creature") => {
+    const card = { name, typeLine, oracleText: text, keywords: [] as string[] };
+    return deriveCardTags(deriveInputOf(card as never, "x", name, clauses as never, undefined, undefined)).abilities.flatMap((a) => a.emits ?? []);
+  };
+  test("Mox Diamond: its own trip to the graveyard is its owner's (you), typed artifact", () => {
+    const e = emitsOf([{ id: 1, abilityType: "static", actions: [act("discard", "a land card", { optional: true }), act("put", "this artifact", { toZone: "battlefield" }), act("put", "it", { toZone: "graveyard" })] }],
+      "Mox Diamond", "If this artifact would enter, you may discard a land card instead. If you do, put this artifact onto the battlefield. If you don't, put it into its owner's graveyard.", "Artifact").filter((x) => x.verb === "enters-graveyard");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject).toMatchObject({ self: true, control: "you", type: "artifact" });
+  });
+  test("Lake of the Dead (grammar): its own enters-graveyard is `you`", () => {
+    const card = { name: "Lake of the Dead", typeLine: "Land", oracleText: "If this land would enter, sacrifice a Swamp instead. If you do, put this land onto the battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add {B}.", keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    const e = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings)).abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "enters-graveyard");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject).toMatchObject({ self: true, control: "you" });
+  });
+  test("Kimoyo Beads: 'return it to the battlefield under its owner's control' enters under you", () => {
+    const e = emitsOf([{ id: 4, abilityType: "triggered", actions: [act("gain-life", "you", { amount: "3" }), act("exile", "this artifact"), act("return", "it", { fromZone: "exile", toZone: "battlefield" })] }],
+      "Kimoyo Beads", "Prime Bead \u2014 You gain 3 life. Exile this artifact, then return it to the battlefield under its owner's control.", "Artifact").filter((x) => x.verb === "enters");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject).toMatchObject({ self: true, control: "you" });
+  });
+  test("Rayami: a counter on the card exiled with it is in exile, not on the battlefield", () => {
+    const e = emitsOf([{ id: 1, abilityType: "static", actions: [act("exile", "that card", { fromZone: "battlefield", toZone: "exile" }), act("add-counter", "blood", { amount: "1" })] }],
+      "Rayami, First of the Fallen", "If a nontoken creature would die, exile that card with a blood counter on it instead.").filter((x) => x.verb === "counter-added");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject).toMatchObject({ counter: "blood", zone: "exile" });
+  });
+  test("Darigaaz Reincarnated: 'exile it with three egg counters on it' is in exile", () => {
+    const e = emitsOf([{ id: 2, abilityType: "static", actions: [act("exile", "this", { fromZone: "battlefield", toZone: "exile" }), act("add-counter", "egg", { amount: "three" })] }],
+      "Darigaaz Reincarnated", "Flying, trample, haste\nIf Darigaaz would die, instead exile it with three egg counters on it.\nAt the beginning of your upkeep, if this card is exiled with an egg counter on it, remove an egg counter from it. Then if this card has no egg counters on it, return it to the battlefield.").filter((x) => x.verb === "counter-added");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject.zone).toBe("exile");
+  });
+  test("control: a counter put on a battlefield permanent in a clause that also exiles keeps no zone", () => {
+    const e = emitsOf([{ id: 1, abilityType: "spell", actions: [act("exile", "target creature"), act("add-counter", "+1/+1 counter")] }],
+      "Test Spell", "Exile target creature you don't control. Put a +1/+1 counter on target creature you control.", "Sorcery").filter((x) => x.verb === "counter-added");
+    for (const x of e) expect(x.subject.zone).toBeUndefined();
+  });
+  test("Aurification: 'put a gold counter on it' is the creature that dealt the damage", () => {
+    const e = emitsOf([{ id: 1, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "a creature", control: "any" }, actions: [act("add-counter", "gold counter")] }],
+      "Aurification", "Whenever a creature deals damage to you, put a gold counter on it.", "Enchantment").filter((x) => x.verb === "counter-added");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) { expect(x.subject).toMatchObject({ counter: "gold", type: "creature", control: "any" }); expect(x.subject.self).toBeUndefined(); }
+  });
+  test("Westvale Abbey: 'transform this land, then untap it' types the untap by no phrase the transform replaced", () => {
+    const e = emitsOf([{ id: 3, abilityType: "activated", actions: [act("sacrifice", "five creatures", { amount: "5" }), act("transform", "this land"), act("untap", "it")] }],
+      "Westvale Abbey // Ormendahl, Profane Prince", "{5}, {T}, Sacrifice five creatures: Transform this land, then untap it.", "Land").filter((x) => x.verb === "untaps");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) { expect(x.subject.self).toBe(true); expect(x.subject.type).toBeUndefined(); }
+  });
+  test("Glyph of Delusion: an instant's glyph counters go on the target creature, not on the card", () => {
+    const text = "Put X glyph counters on target creature that target Wall blocked this turn, where X is the power of that blocked creature. The creature gains \"This creature doesn't untap during your untap step if it has a glyph counter on it\" and \"At the beginning of your upkeep, remove a glyph counter from this creature.\"";
+    const e = emitsOf([
+      { id: 1, abilityType: "spell", actions: [act("add-counter", "glyph", { amount: "X" }), act("grant-ability", "This creature doesn't untap during your untap step if it has a glyph counter on it")] },
+      { id: 2, abilityType: "triggered", trigger: { event: "upkeep", subject: "your upkeep", control: "you" }, actions: [act("remove-counter", "glyph")] },
+    ], "Glyph of Delusion", text, "Instant").filter((x) => x.verb === "counter-added");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) { expect(x.subject.self).toBeUndefined(); expect(x.subject).toMatchObject({ counter: "glyph", type: "creature" }); expect(x.subject.subtype).toBeUndefined(); }
+  });
+});

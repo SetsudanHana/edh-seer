@@ -23,7 +23,7 @@ import { librarySearchOwner, printsSearch } from "./library-search.js";
 import { damageDealerOf, granteeDealer, grantedDealerIsGranter, damageHitsSelf, damageRecipient, playerOnlyRecipient } from "./damage-recipient.js";
 import { actionRecipients, damagedPlayerIsOpponent, sacrificerIsTargeted, sentenceNamesAPlayer, thatPlayerIsOpponent, victimDeclines } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
-import { CARD_TYPES, namesAClass, parseSubject, parseCounter } from "./subject.js";
+import { CARD_TYPES, namesAClass, parseSubject, parseCounter, counterKindOf } from "./subject.js";
 import { parse as parseFilterRaw, stableJson } from "../grammar/filter.js";
 import { memoizeCloned } from "../memo.js";
 import { selfAsTilde } from "../grammar/self-as-tilde.js";
@@ -3257,9 +3257,12 @@ export function deriveAbilities(
       // `antecedentIsSelf` says so (it stops at the nearest name) while `antecedentSource` skips the card's own name to look for a class, found the Swamp, and the land's graveyard entry came out a self `swamp`. Only when the walk lands on an earlier
       // ACTION of the clause: an "it" that reaches the trigger's object ("... Sacrifice this creature: When you next cast an instant or sorcery spell, copy it", Thunderclap Drake) is that object and keeps its old reading. The "it" then
       // reads as the card's own phrase ("this land"), so the emit keeps the card's own type instead of naming nothing.
-      const selfIt = /^it$/i.test((action.object ?? "").trim()) && sourceOf((clause.actions ?? []).indexOf(action)).to === "action"
+      const selfItAt = /^it$/i.test((action.object ?? "").trim()) && sourceOf((clause.actions ?? []).indexOf(action)).to === "action"
         ? selfAntecedentText(clause.actions ?? [], (clause.actions ?? []).indexOf(action), cardName) : undefined;
-      const antecedent = actorPronoun ? "a player" : selfByIf ? undefined : selfIt !== undefined ? selfIt : PRONOUN_OBJECT.test((action.object ?? "").trim())
+      // ...unless a TRANSFORM sits between: after "Transform this land, then untap it" (Westvale Abbey) the permanent has only its back face's characteristics (CR 712.8e), so "this land" no longer describes it. It stays the card, untyped.
+      const afterTransform = selfItAt !== undefined && (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).some((x) => x.verb === "transform");
+      const selfIt = afterTransform ? undefined : selfItAt;
+      const antecedent = actorPronoun ? "a player" : selfByIf || afterTransform ? undefined : selfIt !== undefined ? selfIt : PRONOUN_OBJECT.test((action.object ?? "").trim())
         ? antecedentFor((clause.actions ?? []).indexOf(action))
         : undefined;
       // "Return THIS card to the battlefield" (Reassembling Skeleton, Drownyard Temple) emits an
@@ -3275,7 +3278,8 @@ export function deriveAbilities(
       const classEnters = action.verb === "add-counter" && enteringClass(text) !== undefined && clauseGrants?.[clause.id as number] === undefined;
       const emitsSelf = action.verb !== "fight" && !classEnters && (selfByIf || SELF_REFERENCE.test((action.object ?? "").trim())
         || /^this$/i.test((action.object ?? "").trim())
-        || isSelfSubject(action.object ?? "", cardName)
+        // A COUNTER KIND IS NO CARD NAME (#1520): Glyph of Delusion's object "glyph" is the first word of its name, which `isSelfSubject` reads as the card ("Imskir" for Imskir Iron-Eater).
+        || (isSelfSubject(action.object ?? "", cardName) && !((action.verb === "add-counter" || action.verb === "remove-counter") && counterKindOf(action.object ?? "") !== undefined))
         || (action.verb === "deal-damage" && damageHitsSelf(action.object ?? "", text))
         // "prevent that damage" aimed at the card ("If damage would be dealt to Khârn the Betrayer, prevent that damage ..."): the damage prevented is dealt to the card, so the emit is a self reference (#1403).
         // The object may be the grammar's "that damage", so the recipient is read off the printed text. CEILING: one recipient phrase before a comma or full stop.
@@ -3438,8 +3442,8 @@ export function deriveAbilities(
           if (!trigger && e.subject.control === "any" && DEALS_DAMAGE_TO_YOU.test(text)) e.subject.control = "opp";
         }
       }
-      // THE CARD ITSELF LEAVING A GRAVEYARD leaves its OWNER's, which is yours (#1496). After every step that stamps `self` (the pronoun and the refused-trigger reads above), and beside the other graveyard-owner read (#1470, `graveyardOwner`), which is for non-self emits.
-      for (const e of emits) if ((e.subject.zone === "graveyard" || e.subject.fromZone === "graveyard") && e.subject.self === true && e.subject.control === "any" && selfGraveyardOwner(action) && !(e.verb === "enters" && ANOTHER_CONTROLS_ENTRY.test(text))) e.subject = { ...e.subject, control: "you" };
+      // THE CARD ITSELF LEAVING A GRAVEYARD leaves its OWNER's, which is yours (#1496). After every step that stamps `self` (the pronoun and the refused-trigger reads above), and beside the other graveyard-owner read (#1470, `graveyardOwner`), which is for non-self emits. A self `enters-graveyard` is the card's own trip to its owner's graveyard too (#1520: Mox Diamond, Lake of the Dead), and so is a self-"it" return (Kimoyo Beads "under its owner's control").
+      for (const e of emits) if ((e.subject.zone === "graveyard" || e.subject.fromZone === "graveyard" || e.verb === "enters-graveyard" || (selfIt !== undefined && e.verb === "enters")) && e.subject.self === true && e.subject.control === "any" && selfGraveyardOwner(action) && !(e.verb === "enters" && ANOTHER_CONTROLS_ENTRY.test(text))) e.subject = { ...e.subject, control: "you" };
       // THE VICTIM MAY DECLINE (#1295): "its controller may sacrifice it", "unless that player sacrifices it". The event
       // is real when it happens, and not removal: see `GameEvent.victimMay`.
       if (victimDeclines(text, action.verb ?? "")) for (const e of emits) e.victimMay = true;
