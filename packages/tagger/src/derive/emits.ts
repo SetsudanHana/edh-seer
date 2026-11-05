@@ -798,6 +798,13 @@ const PT_DEFINITION = /\b(?:power|toughness)(?: and toughness)? (?:is|are) (?:ea
 const PT_CARRIER_VERBS: ReadonlySet<string> = new Set(["modify-pt", "create", "grant-ability", "animate", "other"]);
 export const definesPowerToughness = (a: Action): boolean => !PT_CARRIER_VERBS.has(a.verb ?? "") && PT_DEFINITION.test(a.object ?? "");
 
+/** A COUNTER'S KIND IS NOT A SUBTYPE (#1520). An add-counter's object that IS the kind ("blood counter", "tower", "gold counter") was parsed as a permanent, so Font of Agonies' own counter carried subtype `blood` beside `counter: "blood"`
+ *  (Helix Pinnacle tower, Legacy's Allure treasure, Dragon's Hoard gold, Spell Satchel book, Nine Lives incarnation ...). The comma parts naming the kind are dropped ("this, oil" keeps "this", "target creature, +1/+1" keeps the creature). */
+function withoutCounterKind(object: string): string {
+  if (counterKindOf(object) === undefined) return object;
+  return object.split(",").filter((part) => counterKindOf(part.replace(/^\s*or\s+/, "")) === undefined).join(",").trim();
+}
+
 /** The attached object of "this Equipment to the amassed Army": what stands before the first " to " (`indexOf`, no backtracking), when it is a self reference. */
 function attachHead(object: string): string | undefined {
   const at = object.toLowerCase().indexOf(" to ");
@@ -892,7 +899,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   const listed = action.verb === "deal-damage" || action.verb === "lose-life" ? damageRecipient(damageObject) : undefined;
   // ...and damage to "target player" / "target opponent" is player-only (#1294), no "any target".
   const playerOnly = action.verb === "deal-damage" && listed === undefined ? playerOnlyRecipient(damageObject) : undefined;
-  const subject = listed ?? playerOnly ?? parseSubjectWhole(recipient ?? damageObject);
+  const subject = listed ?? playerOnly ?? parseSubjectWhole(recipient ?? (action.verb === "add-counter" || action.verb === "remove-counter" ? withoutCounterKind(damageObject) : damageObject));
   // A TOKEN THAT IS A COPY IS CONTROLLED BY ITS CREATOR, NOT BY WHAT IT COPIES (#1295, CR 111.2: the player who creates a
   // token is its owner and it enters under that player's control unless the effect says otherwise). "Create two tokens
   // that are copies of target permanent an opponent controls" (Venser, Fervent Forger) parsed the original's control and

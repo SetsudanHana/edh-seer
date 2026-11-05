@@ -8288,3 +8288,39 @@ describe("another object named in the clause stays out of the self subject (#152
     expect(e.some((x) => x.verb === "sacrifice" && x.subject.subtype === land && x.subject.self !== true)).toBe(true);
   });
 });
+
+/** A COUNTER'S KIND IS NEVER A SUBTYPE (#1520, shape 3). Oracle text as the corpus has it; Font of Agonies, Helix Pinnacle, Legacy's Allure and Dragon's Hoard are grammar-read, Nine Lives is model-read. */
+describe("a counter kind is not a subtype (#1520)", () => {
+  const grammarEmits = (name: string, typeLine: string, oracleText: string) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card as never);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities.flatMap((a) => a.emits ?? []);
+  };
+  const CASES: [string, string, string, string][] = [
+    ["Font of Agonies", "Enchantment", "Whenever you pay life, put that many blood counters on this enchantment.\n{1}{B}, Remove four blood counters from this enchantment: Destroy target creature.", "blood"],
+    ["Helix Pinnacle", "Enchantment", "Shroud (This enchantment can't be the target of spells or abilities.)\n{X}: Put X tower counters on this enchantment.\nAt the beginning of your upkeep, if there are 100 or more tower counters on this enchantment, you win the game.", "tower"],
+    ["Legacy's Allure", "Enchantment", "At the beginning of your upkeep, you may put a treasure counter on this enchantment.\nSacrifice this enchantment: Gain control of target creature with power less than or equal to the number of treasure counters on this enchantment. (This effect lasts indefinitely.)", "treasure"],
+    ["Dragon's Hoard", "Artifact", "Whenever a Dragon you control enters, put a gold counter on this artifact.\n{T}, Remove a gold counter from this artifact: Draw a card.\n{T}: Add one mana of any color.", "gold"],
+  ];
+  test.each(CASES)("%s: the counter carries `counter` and no subtype", (name, typeLine, text, kind) => {
+    const e = grammarEmits(name, typeLine, text).filter((x) => x.verb === "counter-added" || x.verb === "counter-removed");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) { expect(x.subject.counter).toBe(kind); expect(x.subject.subtype).toBeUndefined(); expect(x.subject.self).toBe(true); }
+  });
+  test("Nine Lives (model): 'incarnation' is the counter kind, not a subtype", () => {
+    // Stored clause 2 of Nine Lives (clauseSource "model").
+    const text = "If a source would deal damage to you, prevent that damage and put an incarnation counter on this enchantment.";
+    const { abilities } = deriveAbilities([{ id: 2, abilityType: "static", actions: [
+      { verb: "prevent", object: "damage to you", fromZone: null, toZone: null, amount: null, optional: false },
+      { verb: "add-counter", object: "incarnation", fromZone: null, toZone: null, amount: "1", optional: false },
+    ] }] as never, "Nine Lives", { 2: text }, undefined, text);
+    const e = abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "counter-added");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) { expect(x.subject.counter).toBe("incarnation"); expect(x.subject.subtype).toBeUndefined(); }
+  });
+  test("control: a counter put on a named class keeps the class's subtype, and a +1/+1 counter stays", () => {
+    const e = grammarEmits("Test Shaman", "Creature \u2014 Goblin Shaman", "{T}: Put a +1/+1 counter on target Goblin.").filter((x) => x.verb === "counter-added");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject).toMatchObject({ counter: "+1/+1", subtype: "goblin" });
+  });
+});
