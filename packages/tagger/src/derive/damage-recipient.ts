@@ -166,7 +166,7 @@ export function damageRecipient(object: string): SubjectFilter | undefined {
 const PLAYER_ONLY_OBJECTS: ReadonlySet<string> = new Set([
   "target player", "target opponent", "that player", "that opponent",
   // #1465: a recipient that names only a player, left untyped and so read as "could be a creature" (Price of Progress, Browbeat, Curse of Shaken Faith, Khorvath's Fury)
-  "each player", "any player", "the player", "each other player", "each opponent", "each foe", "enchanted player", "the chosen player", "each other opponent", "defending player", "any opponent", "each of your opponents", "chosen opponent", "an opponent",
+  "each player", "any player", "the player", "each other player", "another target player", "another target opponent", "each opponent", "each foe", "enchanted player", "the chosen player", "each other opponent", "defending player", "any opponent", "each of your opponents", "chosen opponent", "an opponent",
 ]);
 /** What may follow the noun without changing who is hit: a qualifier on the same player ("target player who attacked this turn", "target opponent chosen at random", "target opponent previously dealt damage by it"). */
 const PLAYER_QUALIFIERS: ReadonlySet<string> = new Set(["who", "whose", "chosen", "previously", "at"]);

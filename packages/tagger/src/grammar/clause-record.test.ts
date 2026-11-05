@@ -952,11 +952,12 @@ test("a Station threshold row reads past its 'N+ |' bar: D-7 Battle Cruiser's tr
   expect(g.records[2]).toMatchObject({ id: 3, abilityType: "static" });
 });
 
-test("Those Old Scientists: a reminder wrapped mid-sentence is one reminder line; the next blocker is chapter III's 'choose up to two target cards'", () => {
+test("Those Old Scientists: a reminder wrapped mid-sentence is one reminder line; chapter III's choose carries into the owners' shuffle (#1452)", () => {
   const g = grammarClauseRecords({ name: "Those Old Scientists", typeLine: "Enchantment \u2014 Saga", keywords: [], oracleText: "(As this Saga enters and after your draw\nstep, add a lore counter. Sacrifice after III.)\nI \u2014 Draw two cards, then discard two cards.\nII \u2014 Return up to one target artifact, instant, or sorcery card from your graveyard to your hand.\nIII \u2014 Choose up to two target cards in graveyards. The owners of those cards shuffle them into their libraries." });
   expect(g.records[0]).toMatchObject({ id: 1, abilityType: "none" });
-  expect(g.records.filter((r) => r.trigger?.event === "chapter").map((r) => r.trigger!.subject)).toEqual(["chapter I", "chapter II"]);
-  expect(g.blocker).toEqual({ clause: 4, kind: "action", phrase: "choose up to two target cards in graveyards" });
+  expect(g.records.filter((r) => r.trigger?.event === "chapter").map((r) => r.trigger!.subject)).toEqual(["chapter I", "chapter II", "chapter III"]);
+  expect(g.blocker).toBeUndefined();
+  expect(g.records.at(-1)!.actions!.map((a) => [a.verb, a.object])).toEqual([["shuffle", "up to two target cards in graveyards"]]);
 });
 
 test("a chapter that states its trigger mid-sentence is refused, never read as a plain chapter: Nightmares and Daydreams, The Sea Devils", () => {
@@ -1675,19 +1676,71 @@ test("the 'spend mana as though it were mana of any color' rider stays visible a
   }
 });
 
-// #1349 part 3: "Choose target creature." stays a BLOCKER until #1452 carries the chosen target into the sentence that refers back to it ("it", "that creature"); reading it as an `other` hid the target (Quag Feast lost targetedRemoval).
+// #1452: "Choose target X." is its own sentence and the next sentence refers back to the target ("it", "that creature", "the chosen permanent", "those cards"). The choose records no action of its own
+// (reading it as an `other` hid the target: Quag Feast lost targetedRemoval, #1349 part 3) and the chosen target takes the place of each reference that follows, as the bought reading writes it.
 const THE_INNER_LIGHT = {"name":"The Inner Light","typeLine":"Enchantment — Saga","keywords":["Treasure"],"oracleText":"(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Return target green or white creature card from your graveyard to the battlefield.\nII — Choose target creature. Whenever it deals combat damage to a player this turn, you draw that many cards.\nIII — You gain life equal to the greatest power among creatures you control. Create a Treasure token."};
 const THOSE_OLD_SCIENTISTS = {"name":"Those Old Scientists","typeLine":"Enchantment — Saga","keywords":[],"oracleText":"(As this Saga enters and after your draw\nstep, add a lore counter. Sacrifice after III.)\nI — Draw two cards, then discard two cards.\nII — Return up to one target artifact, instant, or sorcery card from your graveyard to your hand.\nIII — Choose up to two target cards in graveyards. The owners of those cards shuffle them into their libraries."};
+const LWAXANA_TROI = {"name":"Lwaxana Troi, Charming Guest","typeLine":"Legendary Creature — Betazoid Advisor","keywords":[],"oracleText":"You may choose not to untap Lwaxana Troi during your untap step.\n{2}, {T}: Choose another target creature you control. For as long as Lwaxana Troi remains tapped, if a triggered ability of that creature triggers, that ability triggers an additional time."};
 const IN_THE_PALE_MOONLIGHT = {"name":"In the Pale Moonlight","typeLine":"Enchantment — Saga","keywords":["Investigate"],"oracleText":"(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Each opponent sacrifices a nontoken creature of their choice.\nII — Investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")\nIII — You may sacrifice an artifact or creature. If you do, create two 2/2 black Romulan creature tokens."};
-
-// "Choose target X." stays a BLOCKER (#1349 part 3): the sentence is the only place the target is stated, and the next sentence says "it" / "the chosen permanent". Read as an unclaimed `other`, Quag Feast lost its
-// targeted-removal scope (control opp, scope target) to a bare "permanent". Target carry-over is its own issue.
 const QUAG_FEAST = {"name":"Quag Feast","typeLine":"Sorcery","keywords":["Mill"],"oracleText":"Choose target creature, planeswalker, or Vehicle. Mill two cards, then destroy the chosen permanent if its mana value is less than or equal to the number of cards in your graveyard."};
 
-test("'Choose target X.' stays a blocker: Quag Feast, The Inner Light, Those Old Scientists", () => {
-  expect(grammarClauseRecords(QUAG_FEAST).blocker).toMatchObject({ clause: 1, kind: "action", phrase: "choose target creature, planeswalker, or Vehicle" });
-  expect(grammarClauseRecords(THE_INNER_LIGHT).blocker).toMatchObject({ kind: "action", phrase: "choose target creature" });
-  expect(grammarClauseRecords(THOSE_OLD_SCIENTISTS).blocker).toMatchObject({ kind: "action", phrase: "choose up to two target cards in graveyards" });
+test("'Choose target X.' carries its target into the sentence that refers back to it: Quag Feast", () => {
+  const g = grammarClauseRecords(QUAG_FEAST);
+  expect(g.blocker).toBeUndefined();
+  expect(g.complete).toBe(true);
+  // No action of its own, and the destroy names the chosen target outright, as the bought reading writes it.
+  expect(g.records[0]!.actions!.map((a) => [a.verb, a.object])).toContainEqual(["destroy", "target creature, planeswalker, or Vehicle"]);
+  expect(g.records[0]!.actions!.map((a) => a.verb)).toEqual(["mill", "destroy"]);
+});
+
+test("the three upcoming 'Choose target X.' cards read completely", () => {
+  for (const c of [THE_INNER_LIGHT, THOSE_OLD_SCIENTISTS, LWAXANA_TROI]) expect(grammarClauseRecords(c).blocker, c.name).toBeUndefined();
+});
+
+test("a 'Choose target X.' nothing refers back to, or whose referent cannot be carried, stays a blocker", () => {
+  const read = (oracleText: string) => grammarClauseRecords({ name: "X", typeLine: "Sorcery", oracleText }).blocker;
+  // nothing refers back to it
+  expect(read("Choose target creature. Draw a card.")).toMatchObject({ kind: "action", phrase: "choose target creature" });
+  // two targets: "it" does not say which
+  expect(read("Choose target creature you control and target creature you don't control. Exile it.")).toMatchObject({ kind: "action" });
+  // a noun the target is not: "that card" is not a creature
+  expect(read("Choose target creature. Exile that card.")).toMatchObject({ kind: "action", phrase: "choose target creature" });
+  // another object is named before the pronoun: "it" may be that card
+  expect(read("Choose target creature. Search your library for a card and put it into your hand.")).toMatchObject({ kind: "action" });
+});
+
+// The failed #1349 attempt read the choose as an `other` and 55 cards moved onto worse readings. The bar here: the carried card derives the SAME abilities as its bought (stored) reading, every one of them.
+const STORED_1452: Record<string, { card: { name: string; typeLine: string; keywords?: string[]; oracleText: string }; canonical: unknown[] }> = {
+  "Quag Feast": { card: QUAG_FEAST, canonical: [{"id":1,"abilityType":"spell","actions":[{"verb":"mill","object":null,"fromZone":null,"toZone":null,"amount":"2","optional":false},{"verb":"destroy","object":"target creature, planeswalker, or Vehicle","fromZone":null,"toZone":null,"amount":null,"optional":false}]}] },
+  "Eidolon of Astral Winds": { card: {"name":"Eidolon of Astral Winds","typeLine":"Enchantment Creature \u2014 Eidolon","keywords":["Vigilance"],"oracleText":"Vigilance\nConstellation \u2014 Whenever this creature or another enchantment you control enters, choose target creature you control. Until end of turn, that creature has base power and toughness 4/4 and gains flying."},
+    canonical: [{"id":1,"abilityType":"none","actions":[{"verb":"none","object":"Vigilance","fromZone":null,"toZone":null}]},{"id":2,"abilityType":"triggered","trigger":{"event":"enters","subject":"this creature or another enchantment you control","control":"you"},"actions":[{"verb":"modify-pt","object":"target creature you control","fromZone":null,"toZone":null,"amount":"4/4","optional":false},{"verb":"grant-ability","object":"target creature you control, flying","fromZone":null,"toZone":null,"amount":null,"optional":false}]}] },
+  "Atomic Microsizer": { card: {"name":"Atomic Microsizer","typeLine":"Artifact \u2014 Equipment","keywords":["Equip"],"oracleText":"Equipped creature gets +1/+0.\nWhenever equipped creature attacks, choose up to one target creature. That creature can't be blocked this turn and has base power and toughness 1/1 until end of turn.\nEquip {2}"},
+    canonical: [{"id":1,"abilityType":"static","actions":[{"verb":"modify-pt","object":"equipped creature","fromZone":null,"toZone":null,"amount":"+1/+0","optional":false}]},{"id":2,"abilityType":"triggered","trigger":{"event":"attacks","subject":"equipped creature","control":"you"},"actions":[{"verb":"cant","object":"be blocked this turn","fromZone":null,"toZone":null,"amount":null,"optional":false},{"verb":"modify-pt","object":"target creature","fromZone":null,"toZone":null,"amount":"base 1/1","optional":false}]},{"id":3,"abilityType":"none","actions":[{"verb":"none","object":"Equip {2}","fromZone":null,"toZone":null}]}] },
+  "Aurelia, Exemplar of Justice": { card: {"name":"Aurelia, Exemplar of Justice","typeLine":"Legendary Creature \u2014 Angel","keywords":["Flying","Mentor"],"oracleText":"Flying\nMentor (Whenever this creature attacks, put a +1/+1 counter on target attacking creature with lesser power.)\nAt the beginning of combat on your turn, choose up to one target creature you control. Until end of turn, that creature gets +2/+0, gains trample if it's red, and gains vigilance if it's white."},
+    canonical: [{"id":1,"abilityType":"none","actions":[{"verb":"none","object":"Flying","fromZone":null,"toZone":null}]},{"id":2,"abilityType":"none","actions":[{"verb":"none","object":"Mentor","fromZone":null,"toZone":null}]},{"id":3,"abilityType":"triggered","trigger":{"event":"begin-combat","subject":"you","control":"you"},"actions":[{"verb":"modify-pt","object":"that creature","fromZone":null,"toZone":null,"amount":"+2/+0","optional":false},{"verb":"grant-ability","object":"that creature gains trample if it's red","fromZone":null,"toZone":null,"amount":null,"optional":false},{"verb":"grant-ability","object":"that creature gains vigilance if it's white","fromZone":null,"toZone":null,"amount":null,"optional":false}]}] },
+};
+
+test("a carried 'Choose target X.' derives the abilities of the bought reading: Quag Feast, Eidolon of Astral Winds, Atomic Microsizer, Aurelia", () => {
+  for (const [name, { card, canonical }] of Object.entries(STORED_1452)) {
+    const g = grammarClauseRecords(card);
+    expect(g.complete, name).toBe(true);
+    const opts = { foldGrantTwins: false, collapseZoneSearches: false };
+    const bought = deriveCardTags(deriveInputOf(card as never, "x", name, canonical as never), opts);
+    const read = deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings), opts);
+    expect(deriveDiff(bought.abilities, read.abilities), name).toBeNull();
+  }
+});
+
+test("Quag Feast's destroy keeps its targeted dies emit: an opponent's creature, planeswalker or Vehicle, scope target (it lost it as an `other`, #1349)", () => {
+  const g = grammarClauseRecords(QUAG_FEAST);
+  const tags = deriveCardTags(deriveInputOf(QUAG_FEAST as never, "x", QUAG_FEAST.name, g.records, undefined, g.readings));
+  const dies = tags.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "dies");
+  expect(dies?.subject).toMatchObject({ control: "opp", scope: "target", anyOf: [{ type: ["creature", "planeswalker"] }, { subtype: "vehicle" }] });
+});
+
+test("a delayed trigger inside the carried sentence is not read away (Tamiyo, Field Researcher's '+1: Choose up to two target creatures. Until your next turn, whenever either of those creatures deals combat damage, you draw a card')", () => {
+  const read = (oracleText: string) => grammarClauseRecords({ name: "X", typeLine: "Legendary Planeswalker \u2014 Tamiyo", oracleText }).blocker;
+  expect(read("+1: Choose up to two target creatures. Until your next turn, whenever either of those creatures deals combat damage, you draw a card.")).toMatchObject({ kind: "action" });
 });
 
 test("In the Pale Moonlight reads once 'Romulan' is a known creature type", () => {

@@ -2496,6 +2496,9 @@ test("damage divided among, or dealt to each of, N targets carries scope target 
     ["its controller", "Each creature deals 1 damage to its controller."],
     ["each opponent", "Purphoros deals 2 damage to each opponent."],
     ["any player", "Browbeat deals 5 damage to any player unless that player has you draw three cards."],
+    // #1452: "choose another target player" carried into the damage (The Lord of Pain) is still only a player, and no removal
+    ["another target player", "Whenever a player casts their first spell each turn, choose another target player. The Lord of Pain deals damage equal to that spell's mana value to the chosen player."],
+    ["another target opponent", "Choose another target opponent. This spell deals 2 damage to the chosen opponent."],
   ] as const) expect(scopeOf(object, text), object).toMatchObject({ player: true });
 });
 
