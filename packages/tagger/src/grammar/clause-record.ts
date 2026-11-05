@@ -10,7 +10,7 @@ import { effectGates } from "../derive/effect-gate.js";
 import { interveningIfOf } from "../derive/intervening-if.js";
 import { SELF_REFERENCE } from "../derive/self-reference.js";
 import { segment, STATION_BAR } from "../segment.js";
-import { amountOf, parseActions, unreadPhrases, type ActionReading } from "./action.js";
+import { amountOf, carriedIntoNextClause, parseActions, unreadPhrases, type ActionReading } from "./action.js";
 import { effectText, missedCost, printedPreamble, withoutAbilityWord } from "./preamble.js";
 import { selfAsTilde } from "./self-as-tilde.js";
 import { parseTrigger, type TriggerReading } from "./trigger.js";
@@ -393,7 +393,10 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
   const overflow: ClauseRecord[] = [];
   let nextId = Math.max(0, ...clauses.map((c) => c.id)) + 1;
   const readings: Record<number, { trigger?: TriggerReading[]; actions?: ActionReading[] }> = {};
-  for (const c of clauses) {
+  // The text of a clause after a lone "Choose target X." chapter before it (#1452), by clause id: the chosen target in place of the references to it.
+  const carriedText = new Map<number, string>();
+  for (const clause of clauses) {
+    const c = carriedText.has(clause.id) ? { ...clause, text: carriedText.get(clause.id)! } : clause;
     // A SAGA'S REMINDER LINE ("(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)") is the store's
     // inert record, the text as printed (CR 714.3 and 704.5s are what it reminds of). Any other reminder-only line states nothing and has no record.
     if (c.kind === "reminder") {
@@ -479,6 +482,16 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     const colon = bare !== c.text && !cost ? bare.indexOf(": ") : -1;
     if (colon > 0 && !/[."]/.test(bare.slice(0, colon)) && /^(?:\{|(?:Pay|Sacrifice|Discard|Exile|Tap|Remove|Return|Put)\b)/.test(bare)) {
       return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: bare.slice(0, colon) } };
+    }
+    // A LONE "Choose target X." chapter clause: the chapter's next clause (the segmenter splits a chapter's sentences that open with a trigger word, "II — Choose target creature. Whenever it deals combat
+    // damage to a player this turn, ...") is the effect that uses it. The choose is no action; the target stands where that clause says "it".
+    const following = c.kind === "chapter" && type === "triggered" ? clauses.find((n) => n.id === c.id + 1) : undefined;
+    const carried = following && following.kind === "chapter" && following.marker === undefined ? carriedIntoNextClause(effect, following.text) : undefined;
+    if (carried !== undefined) {
+      carriedText.set(following!.id, carried);
+      record.actions = [{ verb: "none", object: "" } as Action];
+      records.push(record);
+      continue;
     }
     const unread = unreadPhrases(effect, type, cost);
     if (unread.length) return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: unread[0]! } };

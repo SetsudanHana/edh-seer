@@ -1667,7 +1667,8 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
     t = have[2]!;
   }
   // "target artifact creature's controller sacrifices it": a target's controller.
-  const owner = /^(target [a-z -]{1,40}?'s (?:controller|owner)|the controller of target [a-z -]{1,40}?) (?=sacrifices|discards|draws|loses|gains|returns|puts|creates|mills|exiles|shuffles)/i.exec(t);
+  // "the owners of up to two target cards in graveyards shuffle ..." (#1452): the owners of a chosen target, once "those cards" is the target.
+  const owner = /^(target [a-z -]{1,40}?'s (?:controller|owner)|the controller of target [a-z -]{1,40}?|the owners of (?:up to \w+|any number of) target [a-z -]{1,40}?) (?=sacrifices|discards|draws|loses|gains|returns|puts|creates|mills|exiles|shuffles?\b)/i.exec(t);
   if (owner && !actor) { actor = { control: "any", scope: "that", text: owner[1]! }; t = t.slice(owner[0].length); }
   else for (const [word, who] of ACTORS) {
     if (t.toLowerCase().startsWith(word + " ")) { actor = { ...who!, text: t.slice(0, word.length) }; t = t.slice(word.length + 1); break; }
@@ -1778,6 +1779,90 @@ const OR_ALTERNATIVE = / or (?=(?:pay|sacrifice|discard|draw|mill|exile|lose|rev
  *  ("If you have no cards in hand, choose one or more instead", Captain James T. Kirk). */
 const MODAL_INTRO = /^(?:(?:if [^,]{1,80}, )?choose (?:(?:one|two|three|four|five|up to \w+)(?: or (?:more|both))?(?: that hasn't been chosen)?|any number|up to \w+ (?:\{P\})+ worth of modes)(?: instead)?(?: —)?|you may choose the same mode more than once)$/i;
 
+/** "Choose target creature." / "Choose another target creature you control." / "Choose up to two target cards in graveyards." as a sentence of its own (#1452). */
+const CHOOSE_TARGET = /^choose ((?:another |other |up to (?:one|two|three|four|five|\d+) |any number of )?target .+)$/i;
+/** The nouns a chosen target and a later reference to it are compared by ("that creature" refers back to a "target creature you control"). */
+const CHOSEN_NOUNS = /\b(creature|permanent|card|player|opponent|planeswalker|artifact|land|enchantment|spell|vehicle|battle)(s?)\b/gi;
+/** A reference back to the chosen target: "the chosen permanent", "that creature", "those cards", or a bare "it" / "them". Not "its" or "that creature's" (a possessive is read as it is). */
+const CHOSEN_REF = /\b(?:(?:the chosen|that|those) ([a-z]+)\b(?!['\u2019])|(it|them)\b(?!['\u2019]))/gi;
+/** Something that introduces another thing a bare "it" could mean: an article, a number, "target", "each", "all". Before a bare pronoun it makes the pronoun ambiguous. */
+const INTRODUCES_OBJECT = /\b(?:an?|another|each|all|any|target|one|two|three|four|five|six|x|\d+|up to|the top)\s/i;
+
+interface Chosen {
+  /** The sentence as printed, for the blocker. */
+  sentence: string;
+  /** The target as the bought reading writes it in the effect that uses it: "target creature, planeswalker, or Vehicle"; "up to one" is dropped (the store writes "target creature"). */
+  text: string;
+  plural: boolean;
+  nouns: Set<string>;
+  /** Printed words of every later sentence, up to the one being read: what a bare pronoun might mean instead. */
+  since: string;
+  used: boolean;
+  refused: boolean;
+}
+
+function chosenTarget(s: string): Chosen | undefined {
+  const m = CHOOSE_TARGET.exec(s);
+  if (!m) return undefined;
+  const words = m[1]!;
+  // Two targets ("Choose target creature you control and target creature you don't control"), a count per kicker, a roll or a coin after it: "it" does not say which.
+  if (words.split(/\btarget\b/i).length !== 2 || /,? then |\bfor each\b|\band\/or players\b/i.test(words)) return undefined;
+  const nouns = new Set<string>();
+  let plural = /^(?:any number of|up to (?!one\b))/i.test(words), first = true;
+  for (const n of words.slice(words.toLowerCase().indexOf("target") + 6).matchAll(CHOSEN_NOUNS)) {
+    nouns.add(n[1]!.toLowerCase());
+    if (first) { plural ||= n[2] !== ""; first = false; }
+  }
+  if (nouns.size === 0) return undefined;
+  return { sentence: s.replace(/^([A-Z])/, (ch) => ch.toLowerCase()), text: words.replace(/^up to one /i, ""), plural, nouns, since: "", used: false, refused: false };
+}
+
+/** The sentence with each reference back to the chosen target replaced by the target as stated. A reference this cannot carry (another kind of thing, a number that does not match, a bare
+ *  pronoun with another thing named before it) leaves the sentence as printed and refuses the choose, so the card keeps it as its blocker. */
+function carriedSentence(s: string, c: Chosen, ownTrigger = false): string {
+  const before = c.since;
+  c.since = `${c.since} ${s}`;
+  // A DELAYED TRIGGER INSIDE THE EFFECT ("Until your next turn, whenever either of those creatures deals combat damage, you draw a card", Tamiyo, Field Researcher) is a trigger the clause record has none for: read
+  // with the target in it, the draw lost its trigger and became an unconditional one. A trigger that is a clause of its own (a Saga chapter's second clause) is `carriedIntoNextClause`'s, which keeps it.
+  // TWO "BECOMES" PHRASES ("that permanent becomes saddled if it's a Mount and becomes an artifact creature if it's a Vehicle", Alacrian Armory): the predicate reader keeps one animate with the second phrase inside its
+  // condition, and the first half vanishes with no unclaimed record. Refused here, narrower than un-reading "becomes saddled" for every card.
+  // CEILING: only a CARRIED sentence is refused; the same sentence with the target stated in it still reads as one animate.
+  if (/\bbecomes\b[^.]*\band becomes\b/i.test(s)) { CHOSEN_REF.lastIndex = 0; if (CHOSEN_REF.test(s)) { c.refused = true; return s; } }
+  if (!ownTrigger && /\b(?:whenever|when|at the beginning of)\b/i.test(s)) { CHOSEN_REF.lastIndex = 0; if (CHOSEN_REF.test(s)) { c.refused = true; return s; } }
+  return s.replace(CHOSEN_REF, (m: string, noun: string | undefined, pronoun: string | undefined, at: number) => {
+    if (c.refused) return m;
+    let plural: boolean;
+    if (pronoun !== undefined) {
+      plural = pronoun.toLowerCase() === "them";
+      if (INTRODUCES_OBJECT.test(`${before} ${s.slice(0, at)}`)) { c.refused = true; return m; }
+    } else {
+      const lower = noun!.toLowerCase();
+      const single = lower.replace(/s$/, "");
+      if (!["creature", "permanent", "card", "player", "opponent", "planeswalker", "artifact", "land", "enchantment", "spell", "vehicle", "battle"].includes(single)) return m;
+      plural = single !== lower;
+      const generic = single === "permanent" && !c.nouns.has("card") && !c.nouns.has("spell") && !c.nouns.has("player") && !c.nouns.has("opponent");
+      if (!c.nouns.has(single) && !generic) { if (/^the chosen/i.test(m)) c.refused = true; return m; }
+    }
+    if (plural !== c.plural) { c.refused = true; return m; }
+    // The target stated outright in a COMPARISON or a COUNT ("a card with the same name as that card", "shares a card type with the chosen card", "for each opponent who controls one of those permanents") would
+    // make that phrase a targeted one: Extirpate's library search read as a search for a basic land, Spirit-Sister's Call's sacrifice as a targeted sacrifice. The bought readings keep the bare class there.
+    if (/\b(?:with|as|than)\s$/i.test(s.slice(0, at)) || /\bfor each\b/i.test(s.slice(0, at))) { c.refused = true; return m; }
+    c.used = true;
+    return c.text;
+  });
+}
+
+/** A clause that is only "Choose target X." (a Saga chapter's first sentence, which the segmenter splits from the "Whenever it deals combat damage to a player this turn, ..." after it): the text of
+ *  the NEXT clause with the chosen target in place of each reference to it, or `undefined` when the effect is no lone choose or the next clause refers back to nothing this can carry. */
+export function carriedIntoNextClause(effect: string, next: string): string | undefined {
+  const lone = effect.trim().replace(/\.$/, "");
+  if (lone.includes(". ")) return undefined;
+  const chosen = chosenTarget(lone);
+  if (!chosen) return undefined;
+  const text = carriedSentence(next, chosen, true);
+  return chosen.used && !chosen.refused ? text : undefined;
+}
+
 /** DIAGNOSTIC (instruments only): the action phrases of a clause the grammar did not read, as
  *  printed -- what `packages/instruments/src/action-blockers.ts` clusters to rank the next work. */
 export function unreadPhrases(effect: string, type: string | null, cost?: string): string[] {
@@ -1785,7 +1870,20 @@ export function unreadPhrases(effect: string, type: string | null, cost?: string
   try { parseActions(effect, type, cost); return unread; } finally { unread = null; }
 }
 
+/** Whether the last `readActions` call (with `carry`) met a "Choose target X." it could not carry: `parseActions` then reads the text again without the carry. */
+let carryRefused = false;
+
 export function parseActions(effect: string, type: string | null, cost?: string): ActionReading[] {
+  const unreadBefore = unread?.length ?? 0;
+  const read = readActions(effect, type, cost, true);
+  if (!carryRefused) return read;
+  // A choose this cannot carry (nothing refers back to it, a reference it cannot place) leaves the text exactly as it was read before the carry existed: the choose is an unread phrase, and no
+  // sentence after it has the target written in. A half-carried reading would hand a bought card (the overlay `withGrammarActions` makes) a target its stored reading has no claim to.
+  unread?.splice(unreadBefore);
+  return readActions(effect, type, cost, false);
+}
+
+function readActions(effect: string, type: string | null, cost: string | undefined, carry: boolean): ActionReading[] {
   const out: ActionReading[] = [];
   counterOnSelf = false;
   staticAbility = type === "static";
@@ -1836,6 +1934,7 @@ export function parseActions(effect: string, type: string | null, cost?: string)
   // silently missing: an unconsumed look stays an unread phrase and the card blocks.
   let pendingLook: string | null = null;
   const sentences = unquoted.split(/(?<=\.)\s+/);
+  let chosen: Chosen | undefined, refusedAny = false;
   for (const [sentenceAt, raw] of sentences.entries()) {
     let s = raw.trim().replace(/\.$/, "");
     if (s === "") continue;
@@ -1849,6 +1948,15 @@ export function parseActions(effect: string, type: string | null, cost?: string)
     // triggered or activated modal ability. The modes are their own clauses (the segmenter), and the store
     // records the parent with no action of its own, so this sentence reads as nothing.
     if (MODAL_INTRO.test(s)) continue;
+    // "Choose target creature. Exile it." (#1452): the choose records no action, as the store has it; the target it names stands where each later reference to it is (`carriedSentence`),
+    // the way the bought reading writes the effect that uses it. A choose nothing refers back to, or whose references this cannot carry, stays unread (see the end of the loop).
+    // CEILING: only ONE target in the sentence; a reference in a later CLAUSE (Heroic Sacrifice's "When that creature dies this turn") is the trigger grammar's, not carried here.
+    const choose = carry ? chosenTarget(s) : undefined;
+    if (choose) {
+      if (chosen && (!chosen.used || chosen.refused)) { unread?.push(chosen.sentence); refusedAny = true; }
+      chosen = choose; mayBefore = false; continue;
+    }
+    if (chosen) s = carriedSentence(s, chosen);
     // THE SENTENCES THAT CLAIM NOTHING (#1349 part 2, task C1), as the store writes them: a lone `none` (or no action at all) beside the clause's real ones.
     // "You may look at the top card of your library any time" / "Play with the top card of your library revealed" (Courser of Kruphix, Future Sight): the library
     // stays where it is, and what the revealed card lets you DO is the next sentence's. "Choose a color" / "Choose a number between 0 and 10": the store drops the
@@ -2068,6 +2176,9 @@ export function parseActions(effect: string, type: string | null, cost?: string)
     if (ifYouDoAfterMay) for (let i = at; i < out.length; i++) out[i] = { ...out[i]!, optional: true };
   }
   if (pendingLook !== null) unread?.push(pendingLook);
+  if (chosen && (!chosen.used || chosen.refused)) { unread?.push(chosen.sentence); refusedAny = true; }
+  // Set at the very end, after any nested `parseActions` (a granted ability's quoted text) has set and cleared it.
+  carryRefused = refusedAny;
   return out;
 }
 

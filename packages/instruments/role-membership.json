@@ -2112,7 +2112,7 @@
 "Call of the Ring": ["role:draw"],
 "Call the Bloodline": ["wincon:go-wide"],
 "Call the Cavalry": ["wincon:go-wide"],
-"Call the Coppercoats": ["wincon:go-wide"],
+"Call the Coppercoats": ["role:stax","wincon:go-wide"],
 "Call the Gatewatch": ["role:tutor"],
 "Call the Mountain Chocobo": ["wincon:go-wide"],
 "Call the Scions": ["role:ramp","wincon:go-wide"],
