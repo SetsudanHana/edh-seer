@@ -140,6 +140,22 @@ export function shapesOf({ body }, line = "") {
   // tail to fail, and a `split` is not a search, so neither counts.
   const lead = body.match(new RegExp(`^${SPACE_Q}`));
   if (lead && body.length > lead[0].length && !/\.split\(/.test(line) && /\.(search|exec|replace|replaceAll|test|match)\(/.test(line)) hits.push("leading-space");
+  // R7. The class form of R6: an UNANCHORED leading quantified class with a tail, run as a search. A long
+  // run of the class's characters that the tail then rejects is rescanned from every start. #1469
+  // (`/[.,;]+(?= |$)/g` on a run of commas).
+  const leadClass = body.match(/^\[(?:\\.|[^\]\\])*\][*+]\??/);
+  if (leadClass && body.length > leadClass[0].length && !/\.split\(/.test(line) && /\.(search|exec|replace|replaceAll|test|match)\(/.test(line)) hits.push("leading-class");
+  // R8. In an UNANCHORED pattern, a quantified class that can match a space, directly followed by a space
+  // (literal or \s): the run of spaces splits between the two many ways, retried from every start. #1469
+  // (`(?:dealt to [a-z ]+ )?is halved`). An anchored `^…` pattern has one start, and CodeQL passes those here.
+  for (const [a, b] of body.startsWith("^") ? [] : classes) {
+    const q = body[b + 1];
+    if (q !== "+" && q !== "*") continue;
+    const cls = body.slice(a, b + 1);
+    if (cls.startsWith("[^") || !(cls.includes(" ") || cls.includes("\\s"))) continue;
+    const after = body.slice(b + 2).replace(/^\?/, "");
+    if (after.startsWith(" ") || after.startsWith("\\s")) { hits.push("space-class-then-space"); break; }
+  }
   return [...new Set(hits)];
 }
 
@@ -150,6 +166,8 @@ const REWRITE = {
   "delimiter-class-in-repeated-group": "use [^{}] / [^[\\]] (exclude the opener too) inside a repeated group",
   "tag-strip": "read HTML with DOMParser (`.body.textContent`); do not strip tags with a regex",
   "leading-space": "search for a literal (` except\\b`) and `slice`, or anchor the pattern with ^",
+  "leading-class": "walk the string once (a char loop or indexOf), or anchor the pattern with ^",
+  "space-class-then-space": "take the space out of the class, or find the literal tail with indexOf and slice",
 };
 
 /** `[{ rule, pattern }]` for one source line; comment lines yield nothing. */
@@ -216,6 +234,9 @@ const MUST_FLAG = [
   String.raw`x.replace(/<[^>]+>/g, "")`,
   String.raw`const strip = (h) => h.replace(/<[^>]+>/g, "");`,
   String.raw`const f = (s) => /\s*foo/.test(s);`,
+  String.raw`const rest = s.replace(/[.,;]+(?= |$)/g, "");`,
+  String.raw`if (/\bdamage (?:dealt to [a-z ]+ )?is halved\b/.test(t)) return "halved";`,
+  String.raw`x.match(/[^ ]+ x/)`,
 ];
 const MUST_PASS = [
   String.raw`s.search(/ except\b/i)`,
@@ -236,6 +257,10 @@ const MUST_PASS = [
   String.raw`// s.search(/\s+except\b/i)`,
   String.raw`const s = "/\\s+and\\s+/"; // text only`,
   String.raw`x.match(/[\s+]/)`,
+  String.raw`x.match(/^[a-z]+ is halved/)`,
+  String.raw`x.match(/^the next [\w ]*?spell (?:with [\w ]+ )?you cast$/i)`,
+  String.raw`x.replace(/[.,;]/g, "")`,
+  String.raw`x.match(/\bdamage (?:dealt to [a-z]+ )?is halved\b/)`,
 ];
 
 function selfTest() {
