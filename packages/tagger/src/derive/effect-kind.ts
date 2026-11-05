@@ -785,9 +785,10 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
     // onto the battlefield" is read from the text as well.
     // NOT YOUR OWN YARD: the ruling is about taking from THEIRS; an own-graveyard exile stays as it
     // was (null), so this widening moves no card that only ever touched its owner's graveyard.
-    if (r.kind === "graveyard-hate" && !exilesOwnGraveyard(action.object ?? "", clauseText) && (action.toZone === "battlefield" || PUTS_FROM_YARD_ONTO_BATTLEFIELD.test(clauseText)
+    const ownYard = action.fromOwner !== "opp" && exilesOwnGraveyard(action.object ?? "", clauseText);
+    if (r.kind === "graveyard-hate" && !ownYard && (action.toZone === "battlefield" || PUTS_FROM_YARD_ONTO_BATTLEFIELD.test(clauseText)
       || USES_THE_EXILED_CARD_2.test(clauseText.slice(Math.max(0, clauseText.search(/\bexile/i)))))) return "graveyard-recursion";
-    if (r.kind === "graveyard-hate" && exilesOwnGraveyard(action.object ?? "", clauseText)) return null;
+    if (r.kind === "graveyard-hate" && ownYard) return null;
     // THE BOTTOM IS NOT THE TOP. `toZone: "library"` says nothing about position and the canonical
     // action has no field for it, so the clause text decides. Of the 359 corpus cards with a
     // put library|hand -> library action, 311 say "on the bottom" -- Dig Through Time and

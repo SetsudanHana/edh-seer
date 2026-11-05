@@ -54,6 +54,9 @@ export interface Action {
   /** WHO DOES AN ACTION THE GRAMMAR READ WITH A NAMED PLAYER ("you and target opponent each create a Treasure token", #1391 F2; "each other player sacrifices a creature", #1395): a
    *  `create`'s stored object is only the token, and a clause with two actions of one verb has no single actor to cue, so the player rides here. Set at derive time (`withGrammarActions`), never stored; read where derive settles an action's controller. */
   actor?: "you" | "opp";
+  /** WHOSE ZONE A SPLIT MULTI-ZONE EXILE TAKES FROM, when the printed words (or the ruling on the search-and-exile hate cards, 2026-11-05) make it the opponent's (#1311, `splitMultiZoneExiles`). Set at derive time, never stored; it
+   *  rides here instead of in the object string so a pronoun object ("those cards": Ancient Vendetta's `up to four`) still resolves to its antecedent. */
+  fromOwner?: "opp";
 }
 
 export interface ClauseRecord {
