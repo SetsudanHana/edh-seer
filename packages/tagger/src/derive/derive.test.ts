@@ -8318,6 +8318,14 @@ describe("a counter kind is not a subtype (#1520)", () => {
     expect(e.length).toBeGreaterThan(0);
     for (const x of e) { expect(x.subject.counter).toBe("incarnation"); expect(x.subject.subtype).toBeUndefined(); }
   });
+  test("Bloodletter Quill (model): 'a blood counter from this artifact' is the counter, not a Blood", () => {
+    // Stored clause 2 of Bloodletter Quill (clauseSource "model"): the object names the kind AND the card it comes off.
+    const text = "{U}{B}: Remove a blood counter from this artifact.";
+    const { abilities } = deriveAbilities([{ id: 2, abilityType: "activated", actions: [{ verb: "remove-counter", object: "a blood counter from this artifact", fromZone: null, toZone: null, amount: null, optional: false }] }] as never, "Bloodletter Quill", { 2: text }, undefined, text);
+    const e = abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "counter-removed");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) { expect(x.subject).toMatchObject({ counter: "blood", self: true, type: "artifact" }); expect(x.subject.subtype).toBeUndefined(); }
+  });
   test("control: a counter put on a named class keeps the class's subtype, and a +1/+1 counter stays", () => {
     const e = grammarEmits("Test Shaman", "Creature \u2014 Goblin Shaman", "{T}: Put a +1/+1 counter on target Goblin.").filter((x) => x.verb === "counter-added");
     expect(e.length).toBeGreaterThan(0);

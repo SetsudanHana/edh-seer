@@ -801,7 +801,14 @@ export const definesPowerToughness = (a: Action): boolean => !PT_CARRIER_VERBS.h
 /** A COUNTER'S KIND IS NOT A SUBTYPE (#1520). An add-counter's object that IS the kind ("blood counter", "tower", "gold counter") was parsed as a permanent, so Font of Agonies' own counter carried subtype `blood` beside `counter: "blood"`
  *  (Helix Pinnacle tower, Legacy's Allure treasure, Dragon's Hoard gold, Spell Satchel book, Nine Lives incarnation ...). The comma parts naming the kind are dropped ("this, oil" keeps "this", "target creature, +1/+1" keeps the creature). */
 function withoutCounterKind(object: string): string {
-  if (counterKindOf(object) === undefined) return object;
+  if (counterKindOf(object) === undefined) {
+    // "a blood counter from this artifact" (Bloodletter Quill): the kind word and its "counter(s)" noun come out of the phrase, whatever else it names stays. Word scan, no regex.
+    const words = object.split(" ");
+    const at = words.findIndex((w, i) => i > 0 && /^counters?$/i.test(w) && counterKindOf(words[i - 1]!) !== undefined);
+    if (at < 0) return object;
+    const lead = at >= 2 && ["a", "an", "one", "two", "three", "x"].includes(words[at - 2]!.toLowerCase()) ? at - 2 : at - 1;
+    return [...words.slice(0, lead), ...words.slice(at + 1)].join(" ").trim();
+  }
   return object.split(",").filter((part) => counterKindOf(part.replace(/^\s*or\s+/, "")) === undefined).join(",").trim();
 }
 
