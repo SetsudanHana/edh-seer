@@ -122,6 +122,20 @@ export interface PreventionRead {
 
 /** The prevention a printed clause states (CR 615.1a: the word "prevent"), or undefined when it holds no prevention. "Can't be prevented" is no prevention.
  *  CEILING: only the FIRST prevention sentence of a clause is read (Desperate Gambit, Spirit Link-style clauses with two); a recipient or source that is a list ("you and/or permanents you control", "to and dealt by this creature") stays unset. */
+/** Drop a run of `.`, `,` or `;` that ends a word (followed by a space or the end), in one linear pass.
+ *  The regex form `/[.,;]+(?= |$)/g` rescans a long comma run from every start (CodeQL js/polynomial-redos). */
+function dropTrailingPunctuation(text: string): string {
+  let out = "";
+  let run = "";
+  for (const ch of text) {
+    if (ch === "." || ch === "," || ch === ";") { run += ch; continue; }
+    if (ch !== " ") out += run;
+    run = "";
+    out += ch;
+  }
+  return out;
+}
+
 export function preventionOf(clauseText: string): PreventionRead | undefined {
   const lower = clauseText.toLowerCase().replace(/’/g, "'");
   let at = -1;
@@ -136,7 +150,7 @@ export function preventionOf(clauseText: string): PreventionRead | undefined {
   if (at < 0) return undefined;
   const sentence = sentenceAt(lower, at);
   // The text from the verb on says how much; the whole sentence says who and when ("If damage would be dealt to Khârn, prevent that damage").
-  const rest = lower.slice(at + "prevent".length).trimStart().replace(/[.,;]+(?= |$)/g, "");
+  const rest = dropTrailingPunctuation(lower.slice(at + "prevent".length).trimStart());
   const words = rest.split(" ");
   let amount: PreventedAmount | undefined;
   if (words[0] === "all" && words[1] === "but") amount = undefined;
