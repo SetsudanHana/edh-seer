@@ -604,6 +604,9 @@ export function selfLeavesTypes(events: GameEvent[], chars: Characteristics): Ga
     const allTypes = printedAllTypes(types);
     return { ...e, subject: {
       ...(types.length ? rest : e.subject),
+      // A COUNTER ON THE CARD ITSELF IS ON A PERMANENT YOU CONTROL (#1522): the emit's `control: "any"` is the counter's, not the recipient's, and read as one it fed "a creature you don't control"
+      // (Generous Patron, Kros) and "an opponent puts counters" (Bold Plagiarist) from Ajani's Pridemate. A stated controller is kept (Pardic Dragon's "that player may put a time counter on this card"), and `opponentOwnedCounter` (edges.ts) states `opp` for a card handed to an opponent (Yes Man). CEILING: a card an opponent controls by some other route (a stolen Pridemate) is not modelled.
+      ...(e.verb === "counter-added" && e.subject.control === "any" ? { control: "you" as const } : {}),
       ...(types.length ? { type: types } : {}),
       ...(allTypes ? { allTypes } : {}),
       ...(subtypes.length ? { subtype: subtypes } : {}),

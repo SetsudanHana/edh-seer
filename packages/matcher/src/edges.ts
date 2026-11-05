@@ -518,6 +518,22 @@ function selfDealer(d: SubjectFilter): boolean {
  *  (Rakdos Charm, Missy, Sarkhan the Mad, Saskia the Unyielding, Enchanter's Bane, Beastie Beatdown, Goblin Tinkerer, Aura Barbs, Stalking Yeti, Form of the Dinosaur, Dizzying Gaze, Rage Forger, Ingris Stingerquill,
  *  Swooping Pteranodon, the second half of Pain for All): both families are now read off the sentence. Deleting the regex would stamp the card's colour on those ~20 and on any future unread pronoun. */
 function authoredEmit(a: CardTags["abilities"][number], e: GameEvent, tags: CardTags): GameEvent {
+  return authoredEmitSized(a, opponentOwnedCounter(a, e, tags), tags);
+}
+
+/** A COUNTER THAT LANDS ON A PERMANENT AN OPPONENT CONTROLS (#1522 fix round), told from the card's own text where the emit's controller is unstated ("any"):
+ *  - Yes Man's "Target opponent gains control of Yes Man. When they do, put a quest counter on Yes Man": a SELF counter in an ability whose trigger is a self `gains-control` by an opponent.
+ *  - Jon Irenicus's "target opponent gains control of up to one target creature you control. Put two +1/+1 counters on it": an untyped +1/+1 counter beside, under the SAME trigger, an opponent's `gains-control` of a target (not Alexios's own handover, whose counter lands on yours as well; not Iroh's, whose counter is on your token).
+ *  Without it `selfLeavesTypes` stamps a self counter `you` and `counterAddMatches` refuses an untyped +1/+1 one to an opponent consumer, losing Generous Patron and Kros. */
+function opponentOwnedCounter(a: CardTags["abilities"][number], e: GameEvent, tags: CardTags): GameEvent {
+  if (e.verb !== "counter-added" || e.subject.control !== "any") return e;
+  const selfHandover = e.subject.self === true && a.trigger?.verbs.includes("gains-control") === true && a.trigger.subject.control === "opp" && a.trigger.subject.self === true;
+  const untypedPlusOne = e.subject.self !== true && e.subject.counter === "+1/+1" && list(e.subject.type).length === 0 && list(e.subject.subtype).length === 0
+    && tags.abilities.some((b) => JSON.stringify(b.trigger) === JSON.stringify(a.trigger) && (b.emits ?? []).some((x) => x.verb === "gains-control" && x.subject.control === "opp" && x.subject.scope === "target" && x.subject.self !== true));
+  return selfHandover || untypedPlusOne ? { ...e, subject: { ...e.subject, control: "opp" } } : e;
+}
+
+function authoredEmitSized(a: CardTags["abilities"][number], e: GameEvent, tags: CardTags): GameEvent {
   const sized = a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e;
   if (!(sized.dealer !== undefined && selfDealer(sized.dealer) && a.grantedBy === undefined && (sized.dealer.self === true || !OTHER_CREATURE_AMOUNT.test(a.amount ?? "")))) return sized;
   // A SPELL IS THE SOURCE OF ITS OWN DAMAGE (#1465): an instant's or sorcery's on-cast damage is dealt by that spell, so the dealer carries the card's spell types and a trigger on "an instant or sorcery spell you control
