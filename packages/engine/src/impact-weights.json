@@ -44,6 +44,8 @@
     "trigger-suppression": 0.2,
     "untap-denial": 0.2,
     "life-total-set": 0.2,
+    "prevention": 0.2,
+    "damage-change": 0.2,
     "to-hand": 0.2,
     "exile-processing": 0.6,
     "keyword-grant": 0.3,

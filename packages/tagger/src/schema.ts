@@ -1048,6 +1048,15 @@ export const EFFECT_KINDS = [
   // for how long. A fact kind like `restriction`: the pair channels read it blank. NOT the positive `untap`, NOT "you may choose not to untap" (a permission, Amber Prison), and a CONDITIONAL denial
   // ("if it has a depletion counter on it": Veldt; "As long as enchanted creature isn't legendary": Stunning Strike) is left unread.
   "untap-denial",
+  // PREVENTION (CR 615.1a: "effects that use the word 'prevent' are prevention effects"; #1469): Fog, Circle of Protection: Red, Healing Salve, Kor Haven. `effect.subject` is who or what the damage would hurt (absent
+  // for "all combat damage that would be dealt this turn" and for a list or an Aura's host: `host`), `Ability.prevention` is which damage, how much, for how long and from which source. A fact kind like
+  // `restriction`: the pair channels read it blank, and the `prevented` emit it always carried (a payoff that hears damage being prevented) is unchanged. NOT "can't be prevented" (Lava Burst, Isengard
+  // Unleashed: a prohibition of a replacement, left unread), and a redirect ("is dealt to any target instead", CR 614.9) is `damage-change`.
+  "prevention",
+  // DAMAGE-CHANGE (CR 614 replacement of damage that does NOT multiply it; #1469): `Effect.damageChange` says how: `reduced` (Benevolent Unicorn, Lashknife Barrier), `halved` (Ghosts of the Innocent), `capped`
+  // (Divine Presence, Forethought Amulet), `fixed` (Equal Treatment), `increased` (Mijo, Ojer Axonil: a floor or an exact-amount raise, not the multipliers' "plus N"), `redirected` (CR 614.9: Harsh Judgment, Jade Monolith,
+  // Goblin Psychopath, Shield Dancer). The multipliers (double, triple, plus) stay `damage-multiplier`. A fact kind like `restriction`: no burn demand, no damage trigger. Owner ruling 2026-10-22: a redirect is not removal.
+  "damage-change",
   // LIFE-TOTAL-SET (CR 119.5: "If an effect sets a player's life total to a specific number, the player gains or loses the necessary amount of life to end up with the new total"; #1333, owner ruling
   // 2026-11-01): "Your life total becomes 26" (Providence), "each player's life total becomes the highest" (Arbiter of Knollridge), Worldfire, Biorhythm, Blessed Wind's 20, Torgaar's "half their starting
   // life total", Lich's Mirror and The Golden Throne's replacement. `effect.subject` is whose life total (you / each player / target player). No direction: the change is a gain or a loss as the total
@@ -1144,7 +1153,8 @@ export interface Effect {
   /** WHAT A `damage-multiplier` DOES TO THE DAMAGE (#1345), read off the printed clause. The kind alone made every
    *  reason say "doubles the damage": Fiery Emancipation triples, Torbran adds 2, Benevolent Unicorn takes 1 off. Absent
    *  when the clause text was not at hand (the sentence says "changes the damage" then). A toughness-as-damage static
-   *  (Doran) is told apart by its stat predicate, not by this field. */
+   *  (Doran) is told apart by its stat predicate, not by this field.
+   *  ON A `damage-change` (#1469) it says how the damage is changed without multiplying: reduced, halved, capped, fixed, increased, redirected. */
   damageChange?: DamageChange;
   /** WHAT AN `animate` MAKES ITS OBJECT (#1364): "target land you control becomes a 3/3 Elemental creature" -> `{ type: "creature", subtype: "elemental", stats: 3/3 }`; "All lands are 1/1 creatures"; "a blue Fish".
    *  The RESULT of the change (types, subtypes, base P/T, colours), read off the printed clause. NEVER THE SUBJECT: `subject` is what is targeted or affected, and `spellTargeting` (matcher) reads a
@@ -1156,9 +1166,20 @@ export interface Effect {
   becomes?: SubjectFilter;
 }
 
-/** `plus` is "that much damage plus N" (the number is `Ability.change` when stated). A reduction, a fixed number, a redirect, a mill
- *  or counters are no damage multiplier since #1456 and carry neither the kind nor a value here. */
-export type DamageChange = "twice" | "thrice" | "plus";
+/** On a `damage-multiplier`: `twice`, `thrice` and `plus` ("that much damage plus N", the number is `Ability.change` when stated). A reduction, a fixed number, a redirect, a mill
+ *  or counters are no damage multiplier since #1456; since #1469 a reduction, half, cap, fixed number, floor or redirect is the `damage-change` kind and carries `reduced`, `halved`,
+ *  `capped`, `fixed`, `increased` or `redirected` here (a mill or counters stay plain triggers, #1465). */
+export type DamageChange = "twice" | "thrice" | "plus" | "reduced" | "halved" | "capped" | "fixed" | "increased" | "redirected";
+
+/** WHAT A `prevention` ABILITY PREVENTS (#1469, CR 615): the damage (all of it, combat only, noncombat only), how much ("all"; a number or "x" for a shield, CR 615.7; "next-instance" for the next time a source deals damage,
+ *  CR 615.8), for how long (`this-turn` as printed; `continuous` for a static ability printing none), and from which source (`from`: "a red source", "creatures your opponents control", "target creature"). Who is hurt is
+ *  `effect.subject`. Every field but `damage` is absent when the printed sentence does not state it. */
+export interface Prevention {
+  damage: "any" | "combat" | "noncombat";
+  amount?: "all" | "next-instance" | "x" | number;
+  duration?: "this-turn" | "continuous";
+  from?: SubjectFilter;
+}
 
 export type TokenMultiplier = "twice" | "thrice" | "additional" | "one-of-each" | "replaced";
 
@@ -1259,7 +1280,7 @@ export interface Ability {
   librarySearch?: "yours" | "other";
   /** THE EFFECT APPLIES TO THE PERMANENT THIS CARD IS ATTACHED TO (#1315): an Aura's "enchanted creature / permanent" (CR 303.4, Aura), an
    *  Equipment's "equipped creature" (CR 301.5, Equipment). Set only on the effect kinds that are done TO a host -- `pump`, `debuff`, `keyword-grant`,
-   *  `speed-increase`, `type-grant`, `ability-loss`, `animate`, `evasion`, `restriction` -- and only when the printed recipient IS the host: "enchanted creature gets +2/+0",
+   *  `speed-increase`, `type-grant`, `ability-loss`, `animate`, `evasion`, `restriction`, and (#1469) `prevention` -- and only when the printed recipient IS the host: "enchanted creature gets +2/+0",
    *  "As long as enchanted creature is black, it gets +1/+1" (the `it`), and the "Otherwise, it gets -3/-3" half of an either-or Aura (Clutch of Undeath).
    *  Not set for another class on the same card (Inner Demon's "all non-Demon creatures get -2/-2", Vampirism's "other creatures you control"), for a class of
    *  enchanted creatures (the Magemarks' "creatures you control that are enchanted"), or for a player ("enchanted creature's controller").
@@ -1277,6 +1298,8 @@ export interface Ability {
   grantedBy?: number;
   /** WHICH ACTIONS A `restriction` ABILITY FORBIDS (#1315): `attack`, `block`, or both ("can't attack or block"). Only on an ability of effect kind `restriction`. */
   restricts?: ("attack" | "block")[];
+  /** WHAT A `prevention` ABILITY PREVENTS (#1469; CR 615). See `Prevention`. ABSENT on every other ability. */
+  prevention?: Prevention;
   /** WHAT A `targeting-ban` ABILITY KEEPS FROM TARGETING IT, AND WHOSE (#1423; CR 115.1, hexproof CR 702.11, shroud CR 702.18). `by` is `spell`, `ability`, both ("spells or abilities"), or `activated-ability`
    *  (Peace Talks: "spells or activated abilities"). `source` is the filter on the SOURCE of the spell or ability: `control: "opp"` for "your opponents control" (Shielding Plax), else `any` (Ground Seal, shroud);
    *  `colors` / `notColors` (WUBRG letters) for "blue spells or abilities from blue sources" (Spellbane Centaur) and "nongreen" (Thrun, Gaea's Revenge); `type` for "abilities from artifact sources" (Artifact Ward);

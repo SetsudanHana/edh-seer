@@ -7721,3 +7721,28 @@ test("Necrodominance's exile of 'a card or token' feeds The War Doctor's card-ex
   expect(hears(either)).toBe(true);
   expect(hears(tokenOnly)).toBe(false);
 });
+
+// #1469: a `prevention` that scales with a count (Shield of the Avatar: "prevent X damage, where X is the number of creatures you control") is read blank by the pair channels like every fact kind, but keeps the
+// `scaling` it derived with, so the `scales` edge it always formed (a creature entering grows the shield) stays.
+test("a scaling prevention keeps its scales edge though its kind is a fact kind (#1469)", () => {
+  const maker: CardTags = {
+    oracleId: "p", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 2, power: "1", toughness: "1", token: false, keywords: [] },
+    abilities: [{ kind: "triggered", effect: { kind: "token-generation" }, trigger: { verbs: ["attacks"], subject: { control: "you", token: null, self: true } },
+      emits: [{ verb: "enters", subject: { control: "you", token: true, type: "creature" } }] }],
+  };
+  const shield = (effect: Record<string, unknown>): CardTags => ({
+    oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["artifact"], subtypes: ["equipment"], colors: [], identity: [], cmc: 3, power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{ kind: "static", effect: effect as never, prevention: { damage: "any", amount: "x", duration: "continuous" }, emits: [{ verb: "prevented", subject: { control: "any", token: null } }],
+      count: { floor: 0, ceiling: null, scalesWith: { control: "you", token: null, type: "creature", scope: "all" } } }],
+  });
+  const scales = (c: CardTags) => directedReasons(
+    { card: { name: "Maker" } as DeckCard["card"], tags: maker },
+    { card: { name: "Shield" } as DeckCard["card"], tags: c }, H,
+  ).filter((r) => r.tag.startsWith("scales:"));
+  const withScaling = scales(shield({ kind: "prevention", scaling: "per-creature", scalingSubject: { control: "you", token: null, type: "creature", scope: "all", zone: "battlefield" } }));
+  const blankBefore = scales(shield({ kind: "", scaling: "per-creature", scalingSubject: { control: "you", token: null, type: "creature", scope: "all", zone: "battlefield" } }));
+  expect(blankBefore.length).toBeGreaterThan(0);
+  expect(withScaling.length).toBe(blankBefore.length);
+});

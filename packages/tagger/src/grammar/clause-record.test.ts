@@ -1646,9 +1646,9 @@ test("#1378: prevent N, two extra turns, flip two coins and connive X derive the
     expect(g.complete, name).toBe(true);
     return tags.abilities.map((a) => [a.effect.kind, a.amount, a.count?.scalesWith] as const);
   };
-  expect(amounts("Orbs of Warding", "Artifact", "You have hexproof. (You can't be the target of spells or abilities your opponents control.)\nIf a creature would deal damage to you, prevent 1 of that damage.")).toContainEqual(["", "1", undefined]);
-  expect(amounts("Shield of the Realm", "Artifact — Equipment", "If a source would deal damage to equipped creature, prevent 2 of that damage.\nEquip {1}")).toContainEqual(["", "2", undefined]);
-  expect(amounts("Plated Pegasus", "Creature — Pegasus", "Flash\nFlying\nIf a spell would deal damage to a permanent or player, prevent 1 damage that spell would deal to that permanent or player.")).toContainEqual(["", "1", undefined]);
+  expect(amounts("Orbs of Warding", "Artifact", "You have hexproof. (You can't be the target of spells or abilities your opponents control.)\nIf a creature would deal damage to you, prevent 1 of that damage.")).toContainEqual(["prevention", "1", undefined]);
+  expect(amounts("Shield of the Realm", "Artifact — Equipment", "If a source would deal damage to equipped creature, prevent 2 of that damage.\nEquip {1}")).toContainEqual(["prevention", "2", undefined]);
+  expect(amounts("Plated Pegasus", "Creature — Pegasus", "Flash\nFlying\nIf a spell would deal damage to a permanent or player, prevent 1 damage that spell would deal to that permanent or player.")).toContainEqual(["prevention", "1", undefined]);
   expect(amounts("Time Stretch", "Sorcery", "Target player takes two extra turns after this one.")).toEqual([["extra-turn", "2", undefined]]);
   expect(amounts("Two-Headed Giant", "Creature — Giant", "Whenever this creature attacks, flip two coins. If both coins come up heads, this creature gains double strike until end of turn. If both coins come up tails, this creature gains menace until end of turn."))
     .toContainEqual(["", "2", undefined]);

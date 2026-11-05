@@ -66,7 +66,7 @@ export const SECTIONS: Record<string, Status> = {
   "607": { verdict: "OPEN", note: "linked abilities — 'exiled with' pairs; the per-clause shared-trigger ceiling is this", probe: /exiled with/i },
   "611": { verdict: "PARTIAL", note: "continuous effects — statics derive, layers do not; `namesItsTargets` is the only mesh guard" },
   "614": { verdict: "OPEN", note: "REPLACEMENT EFFECTS — the largest gap in the engine. No shape for 'if X would Y, instead Z'", probe: /\bwould\b[^.]{0,80}\binstead\b/i },
-  "615": { verdict: "OPEN", note: "prevention effects — 'prevent' has no model; a prevented damage still emits", probe: /\bprevent\b/i },
+  "615": { verdict: "PARTIAL", note: "prevention effects — `prevention` kind with Ability.prevention (damage, amount, duration, source) and a `damage-change` kind for the CR 614 reductions and redirects (#1469); a fact kind, forms no pair edge; shield bookkeeping (615.7 used up) and 615.12+ unmodelled, a prevented damage still emits `prevented`", probe: /\bprevent\b/i },
 
   // --- MULTIPLAYER (800s) and VARIANTS (900s). EDH is a multiplayer variant, so these are not
   // optional colour: 903 IS the format. Swept 2026-08-15 after the 7xx pass.
@@ -161,7 +161,7 @@ export const SECTIONS: Record<string, Status> = {
   "610": { verdict: "MODELLED", note: "one-shot effects — every action verb is one; the emit/kind tables" },
   "612": { verdict: "OPEN", note: "text-changing effects — 13 cards change text (Mind Bend, Sleight of Mind …); unmodelled and unlikely to matter", probe: /\bchange the text of\b/i },
   "613": { verdict: "OPEN", note: "interaction of continuous effects (layers) — no layer model; the same hole 611 records" },
-  "616": { verdict: "N/A", note: "interaction of replacement/prevention effects — follows 614/615, which are OPEN; nothing to model until they are" },
+  "616": { verdict: "N/A", note: "interaction of replacement/prevention effects — follows 614 (OPEN) and 615 (PARTIAL: prevention and damage-change kinds, #1469); no interaction order is modelled" },
   "803": { verdict: "N/A", note: "attack left/right — not EDH" },
   "804": { verdict: "N/A", note: "deploy creatures — not EDH" },
   "805": { verdict: "N/A", note: "shared team turns — not EDH" },

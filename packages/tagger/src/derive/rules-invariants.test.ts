@@ -157,7 +157,7 @@ const PROSE: Record<string, string> = {
   "603.7": "schema: `delayedBy` names what created a delayed trigger",
   "606": "loyalty abilities", "606.3": "loyalty cost is a counter change", "608": "resolves, a word", "609.7": "damage from a source",
   "611": "continuous effects: NOT AN EVENT verbs", "613": "layers: OPEN", "613.1f": "P/T layer", "614.17": "cant: NOT AN EVENT",
-  "615": "prevent: OPEN", "615.13": "prevented, a word", "700.11": "descended", "700.12": "outlaw", "700.13": "crime", "700.14": "expend",
+  "615": "prevent: PARTIAL (prevention and damage-change kinds, #1469)", "615.13": "prevented, a word", "700.11": "descended", "700.12": "outlaw", "700.13": "crime", "700.14": "expend",
   "700.16": "worthy", "700.4": "dies (matcher asserts it)", "700.8": "party", "700.9": "modified",
   "701.10": "double: OPEN", "701.11": "triple: OPEN", "701.12": "exchange: OPEN", "701.14": "fight emits non-combat-damage", "701.17": "mill",
   "701.19": "regenerate is a shield, emits nothing", "701.20": "reveal: OPEN", "701.24": "shuffle: OPEN", "701.22": "scry", "701.22a": "scry never touches a graveyard",
@@ -177,6 +177,11 @@ const PROSE: Record<string, string> = {
   "707.10": "schema / effect-kind: an ability is the third copyable object, kind copy-ability (AC12; derive.test asserts Gogo)",
   "707.2": "effect-kind: a clone's 'except it has this ability' is an exception to the copy, not the object copied (effect-kind.test asserts Cryptoplasm)",
   "605.3b": "schema: a mana ability does not use the stack, so 'activated' as an object excludes it (AC12)", "603.8": "state triggers — prompt rule", "603.12": "reflexive — prompt rule",
+  "615.1a": "derive/prevention.test.ts — an effect that uses the word 'prevent' is `prevention` (Fog, Circle of Protection: Red, Kor Haven; #1469)",
+  "615.7": "derive/prevention.test.ts — 'the next N damage' is a shield: `prevention` with `amount: N` (Heal; #1469)",
+  "615.8": "derive/prevention.test.ts — 'the next time a source would deal damage, prevent that damage' is `amount: next-instance`, one instance whatever its size (Circle of Protection: Red; #1469)",
+  "614.1a": "derive/prevention.test.ts — 'instead' marks a damage replacement that reduces, halves, caps, fixes or raises the damage: `damage-change` (Benevolent Unicorn, Ghosts of the Innocent, Divine Presence, Equal Treatment; #1469)",
+  "614.9": "derive/prevention.test.ts — a redirection effect is `damage-change` / `redirected`, not a prevention (Harsh Judgment, Goblin Psychopath, Jade Monolith; #1469)",
   "605.1b": "derive.ts stampManaRider CEILING: a triggered mana ability must trigger from mana, which Carnival of Souls' does not; no triggered rider is stamped (#1426)",
 };
 

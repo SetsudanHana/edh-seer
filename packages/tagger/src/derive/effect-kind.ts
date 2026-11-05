@@ -10,6 +10,7 @@ import type { Action } from "../canonicalize.js";
 import type { EffectKind } from "../schema.js";
 import { parseSubject, spellMove } from "./subject.js";
 import { readToHand, type ToHandRead } from "./to-hand.js";
+import { damageReplacementOf, preventionOf } from "./prevention.js";
 import { targetingBanOf, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
 
 /** Zone-sensitive rules, checked before the plain lookup. Order matters within this list.
@@ -614,6 +615,14 @@ const PAYS_LIFE = /\bpays? (?:\d+|x|any amount of) life\b/i;
 const LOSES_LIFE = /\bloses? (?:\d+|x|that much|half|life)\b/i;
 export function actionEffectKind(action: Action, clauseText = "", occurrence = 0): EffectKind | null {
   const verb = action.verb ?? "";
+  // CR 615.1a: an effect that uses the word "prevent" is a prevention effect (#1469); one whose printed clause REPLACES the damage with a reduced, capped, redirected ... amount (CR 614) is a `damage-change`, whichever verb the
+  // store filed it under (Lashknife Barrier's "minus 1", Jade Monolith's "deals that damage to you instead"). "That damage can't be prevented or dealt instead" is no prevention: the caller leaves it unclaimed.
+  // CEILING: a stored `prevent` whose printed clause states no prevention and no replacement ("the damage can't be prevented": Urza's Rage, Wild Slash, Questing Beast; 20 cards) is no prevention and stays kindless, as before, with the
+  // false `prevented` emit it always carried; only Lava Burst's "can't be prevented or dealt instead" is refused outright (derive.ts).
+  if (verb === "prevent" && !PROHIBITED_REDIRECT.test(clauseText)) {
+    if (damageReplacementOf(clauseText) !== undefined) return "damage-change";
+    return clauseText === "" || preventionOf(clauseText) !== undefined ? "prevention" : null;
+  }
   // CR 614.1c — "this creature enters with three +1/+1 counters on it" is a REPLACEMENT EFFECT on
   // the card's own entry, not an ability that places counters later. The FACT already derived
   // correctly (a self `counter-added` emit with the right counter kind); what was missing is the

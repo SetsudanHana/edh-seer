@@ -27,6 +27,9 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   "targeting-ban": [() => "restricts what can target it", "restricts what can target it"],
   "trigger-suppression": [() => "stops some abilities from triggering", "stops some abilities from triggering"],
   "untap-denial": [() => "keeps permanents from untapping", "keeps permanents from untapping"],
+  // Damage prevented or changed (#1469): whom, how much and from what are `effect.subject` and `Ability.prevention` / `Effect.damageChange`, not on the row. No pair reason is built from either.
+  prevention: [() => "prevents damage", "prevents damage"],
+  "damage-change": [() => "changes how damage is dealt", "changes how damage is dealt"],
   // A life total set to a number (#1333): whose, and to what, are not on the row. No pair reason is built from it.
   "life-total-set": [() => "sets a life total", "sets a life total"],
   // Cards put into your hand from the top of your library are not drawn (the tagger's `to-hand` kind), so the row says "puts", never "draws".
