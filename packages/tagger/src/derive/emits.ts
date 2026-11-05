@@ -873,7 +873,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // A COUNTER ON THE CARD ITSELF NAMES NO OTHER RECIPIENT (#1520): Ich-Tekik's "a +1/+1 counter on Ich-Tekik and a +1/+1 counter on each Golem you control" reads the whole text for the emit, and its first (own) counter took the
   // Golems' phrase as its recipient, a self `golem` scope `each`.
   const recipient = (action.verb === "add-counter" && counterKindOf(action.object ?? "") !== undefined && opts.self !== true)
-    ? counterRecipient(clauseText ?? "", opts.self !== true, opts.trigger)
+    ? counterRecipient(clauseText ?? "", true, opts.trigger)
     : undefined;
   // A BID THE MODEL STORED AS ONE `other` ("You and target spell's controller bid life ... If you win the bidding, counter that spell", Mages' Contest) still counters that spell.
   if (action.verb === "other" && (action.object ?? "").toLowerCase().includes("counter that spell")) {
