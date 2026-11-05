@@ -35,6 +35,7 @@ import { branchesAlike, counterIsTheCardsOwn, effectGates, FLIP_VERB_WORDS, isOt
 import { parseGate } from "./gate.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { damageTriggerReads } from "./damage-trigger.js";
+import { damageReplacementOf, preventionOf, replacedDamageRecipient } from "./prevention.js";
 import { damageChangeOf, damageRecipientOf, damageResultVerbs, isDamageMultiplication, replacementOf } from "./replacement.js";
 import { countOf } from "./event-count.js";
 import { reductionOf } from "./reduction.js";
@@ -628,7 +629,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 457: #1523 -- A counter put on a card exiled with it ("exile that card with a blood counter on it": Rayami, Darigaaz Reincarnated, Delay, the suspend-style spells, Dauthi Voidwalker, Mari) is stamped zone exile, per counter kind, and not after a return or put onto the battlefield (Daydream, Spaceshift keep their battlefield +1/+1 counter); `counterAddMatches` refuses an exile-zone producer against a demand that names no zone, so it stops feeding battlefield counter payoffs (Generous Patron, Kros, Bold Plagiarist, Aragorn, Kate Stewart, the doublers, proliferate). Rift Elemental's "or suspended card you own" cost keeps its time-counter supply (17 true pairs, `counterCostEdges`). Measured (derive-impact vs 4ade5971, 32,799 rows): 34 rows changed (+ The Eleventh Doctor: its "with a number of time counters on it" is a quantity phrase the window now reads), 0 source flips; pair reasons of the changed rows +0 / -3,557 on 33 cards, loss-classify: lost 3,557 (self 28 = Aragorn, class 289, unmatched 3,240), gained 0, GAINED->SELF 0; census of the 34 producers x 32,272 derived cards, same rows with and without the stamp: -3,588, +0 = counter-added:any 2,728 (proliferate 2,700 over 90 consumers, plus Aragorn's 28 self pairs), counter-added:creature 364, counter-added:permanent 198, counter-added:goblin 28 (The Great Goblin), counter-removed 270 (creature 150, permanent 90, -land 30); every lost family judged false (a card in exile is no creature or permanent; CR 701.34a proliferate chooses permanents and players). Ratchets at 457: role-ratchet gained 0, lost 0 (31,271 -> 31,271 memberships); dropped-clauses 4,853 -> 4,853, new 0, fixed 0. NOT done: the shape "exile it and put a hit counter on it" (Ravenloft Adventurer, Etrata, Jhoira of the Ghitu, Tasha, Mairsil, Lara Croft, Myra) is not stamped (banked CEILING, emits.ts exilesWithCounter): about 16 cards and roughly 1,800 false reasons. The Eleventh Doctor's emit still carries `self: true` although the counter is on the exiled card.
 // 458: #1523 -- part 2: a counter put on the card an effect exiles ("exile it and put a hit counter on it", "exile cards ... until you exile a nonland card. Put three time counters on it", "Put four time counters on the exiled card") is stamped zone exile like the "with a counter on it" shape; the exile must be in the counter's sentence or the one or two before it, with no return, battlefield, token creation, cost or other object chosen between Measured (derive-impact vs 7beee4c0, 32,799 rows): 19 rows changed (Alaundo the Seer, Cosima, Ecstatic Beauty, Etrata, Flamewar, Jhoira of the Ghitu, Kang Prime, Kianne, Mairsil, Pako, Ravenloft Adventurer, Sinister Concierge, Suspend, Tasha, The Master Formed Anew, The Parting of the Ways, The Tenth Doctor, Uvilda, Zethi), 0 source flips; pair reasons of the changed rows +0 / -1,665, loss-classify: lost 1,665 (self 14, class 143, unmatched 1,508), gained 0, GAINED->SELF 0; census of the 19 producers x 32,272 derived cards, same rows with and without the stamp: -2,069 / +27, the 27 being Pako and Cosima re-reporting the same producer-consumer pair on their battlefield +1/+1 ability index once the exile one is refused (the pair existed before); lost = counter-added:any 1,545 (proliferate over 91 consumers), creature 216, permanent 125, goblin 15, counter-removed creature 85 / permanent 48 / -land 16 (Soul Diviner-type "remove a counter from a permanent you control" costs); every lost family judged false from printed text (a card in exile is no creature or permanent; CR 701.34a proliferate chooses permanents and players). No consumer demands a counter in exile (0 trigger demands with zone exile queried); Etrata, Mairsil, Tasha, Flamewar and Ravenloft Adventurer's "cards in exile with N counters" conditions are `gate: unknown` / `scalesWith`, never edges, and Rift Elemental keeps its suspended-card supply (0 lost, Jhoira test). Lara Croft was already stamped at 457 (its second sentence "play a card from exile with a discovery counter on it" is the with-shape). Ratchets at 458: role-ratchet gained 0, lost 0 (31,271 -> 31,271); dropped-clauses 4,853 -> 4,853, new 0, fixed 0. Open: Mairsil's and The Master Formed Anew's counter emits still carry `self: true` although the counter is on the exiled card (as The Eleventh Doctor's; inert under the exile refusal); Myra the Magnificent stays unstamped (its counter is on an Attraction).
 // 459: #1452 -- A "Choose [another / up to N] target X." sentence of its own carries its target: it records no action, and the target as stated (scope target, the control and the type the choose sentence gives; "up to one" dropped, as the store writes it) stands where each later "it" / "them" / "that creature" / "the chosen permanent" / "those cards" is, the way the bought reading writes the effect that uses it (Quag Feast's dies emit stays {opp, target, creature/planeswalker/Vehicle}). A lone choose chapter hands the target to the chapter's next clause (The Inner Light's "Whenever it deals combat damage"). Refused, and read exactly as before: nothing refers back, two targets, another kind of thing, a bare pronoun after another object, a reference in a comparison / count ("same name as that card", "for each"), a delayed trigger inside the sentence (Tamiyo, Field Researcher). "The owners of up to two target cards ... shuffle" reads (Those Old Scientists); damage to "another target player" carries player: true (The Lord of Pain). derive-impact vs 3ce96d6b: 17 rows changed, 3 added (The Inner Light, Those Old Scientists, Lwaxana Troi), 51 model->grammar source flips (36 with identical tags); grammar complete 28,424 -> 28,486 (62 gained, 0 lost); pair reasons of the changed rows +24,162 / -21 (per card: the 3 added cards +23,978, the other changed cards about +184, a pair between two of them counted on both); the 21 lost are Vengeful Villagers' stun counter, once an untyped wildcard, now on a creature an opponent controls; role-ratchet +1 (Call the Coppercoats +stax, the self-tax every Strive spell already has), dropped-clauses 4,853 -> 4,851 (new 2, fixed 4); a carried sentence with two "becomes" phrases is refused (Alacrian Armory), and a model-path textless twin of a choose-target sentence takes its partner's reading (Daretti, Rocketeer Engineer)
-export const DERIVE_VERSION = 459;
+// 460: #1469 -- two fact effect kinds: prevention (CR 615.1a; Fog, Circle of Protection, Heal, Kor Haven) with Ability.prevention {damage, amount, duration, from} and effect.subject = who is hurt, and damage-change (CR 614 reduced / halved / capped / fixed / increased / redirected) for the damage replacements #1456 left unread (Benevolent Unicorn, Lashknife Barrier, Ghosts of the Innocent, Divine Presence, Forethought Amulet, Equal Treatment, Harsh Judgment, Goblin Psychopath, Jade Monolith ...); both in FACT_KINDS, a damage-change emits no prevented event
+export const DERIVE_VERSION = 460;
 
 /** A sentence with a "Choose [another / up to N] target X." of its own (#1452). */
 const CHOOSES_TARGET = /\bchoose (?:another |other |up to \w+ |any number of )?target\b/i;
@@ -1610,6 +1612,18 @@ const ATTACKS_YOU = /\battacks? you\b/i;
 const DAMAGE_REDIRECT = /\bwould (?:be dealt|deal)\b[^.]{0,160}?\b(?:is|are) dealt to [^.]{0,80}?\binstead\b/i;
 const BURN_RECIPIENT_KINDS: ReadonlySet<string> = new Set(["damage", "player-life-loss", "drain"]);
 
+/** The subject a prevention or damage change hurts, from the printed recipient phrase; undefined when it names no single class (a list, a pronoun, an Aura's host). "you" and the other player phrases carry `player: true`. */
+function damageHurtSubject(phrase: string, cardName?: string, cardText = ""): SubjectFilter | undefined {
+  const p = phrase.trim();
+  if (p === "" || HOST_WORD.test(p) || RECIPIENT_LIST.test(p) || /^(?:it|that creature|they|them|him|her|that permanent|that player)$/i.test(p)) return undefined;
+  if (/^(?:you|each player|players|target player|an opponent|each opponent|target opponent|your opponents|opponents)$/i.test(p)) {
+    return { ...parseSubject(/^you$/i.test(p) ? "you" : p.replace(/^(?:an|each|target|your)\s+/i, "")), player: true, ...(/^you$/i.test(p) ? { control: "you" as const } : /opponent/i.test(p) ? { control: "opp" as const } : {}) };
+  }
+  const s = subjectFrom(p, cardName, cardText);
+  if (SELF_REFERENCE.test(p) || isSelfSubject(p, cardName)) s.self = true;
+  return s;
+}
+
 function effectSubject(
   action: Action, kind: string, triggerIsSelf = false, clauseText = "", cardName?: string, cardText = "", cantOccurrence = 0, granted = false,
 ): ReturnType<typeof parseSubject> {
@@ -1637,6 +1651,11 @@ function effectSubject(
   // A "gets +1/+0 and" ahead of it is not the subject. "enchanted creature" and the other narrowings the filter cannot hold stay unnamed.
   // CEILING: "enchanted / equipped creature" and the other narrowings stay unnamed, and a STATIC keeps no subject (`namesItsTargets`): 328 of the 541
   // derived evasion abilities carry no type, subtype or self. WHOSE it is, an Aura's / Equipment's host, is `Ability.host` (derive 370), not the subject.
+  // WHO THE DAMAGE WOULD HURT, for a `prevention` (#1469; CR 615) or a `damage-change` (CR 614): the printed recipient, unnamed when the sentence names none, a list, an Aura's host or a granted ability's own "this creature".
+  if (kind === "prevention" || kind === "damage-change") {
+    const who = kind === "prevention" ? preventionOf(clauseText)?.recipient : replacedDamageRecipient(clauseText);
+    return (!granted && who !== undefined ? damageHurtSubject(who, cardName, cardText) : undefined) ?? parseSubject("");
+  }
   // WHO IS PROTECTED from a `targeting-ban` (#1423, CR 115.1): "Enchanted creature" is the host (unnamed here, `Ability.host`), "this creature" / the card's name is `self`, a list is unnamed rather than half read.
   if (kind === "targeting-ban") {
     const left = targetingBanSubjectInObject(action.object ?? "") ?? recipientBefore(clauseText, CANT_BE_TARGETED);
@@ -3252,7 +3271,13 @@ export function deriveAbilities(
       if (INERT_VERBS.has(action.verb ?? "")) continue;
       if (misfiled.has(action) || refusedPlural.has(action)) { unclaimed.push(action); continue; }
       if (keywordActionOnStaticClause(kind, action.verb)) { unclaimed.push(action); continue; }
-      if (refusedDamageReplacement) { unclaimed.push(action); continue; }
+      // ...BUT ONE THAT REDUCES, HALVES, CAPS, FIXES, RAISES OR REDIRECTS THE DAMAGE IS A `damage-change` (#1469): the clause's first action carries the ability, the others are its words and claim nothing.
+      const replacedBy = refusedDamageReplacement ? damageReplacementOf(text) : undefined;
+      if (refusedDamageReplacement) {
+        if (replacedBy === undefined) { unclaimed.push(action); continue; }
+        // The clause's FIRST action carries the ability through the ordinary path below; the others are its words and claim nothing.
+        if (action !== (clause.actions ?? []).find((x) => !INERT_VERBS.has(x.verb ?? ""))) continue;
+      }
       // "that damage can't be prevented or dealt instead to ..." (Lava Burst, #1465) forbids prevention; it is no prevention (Whippoorwill's same wording stops claiming `prevented` too). CEILING: stays unclaimed until prevention has a kind.
       if (action.verb === "prevent" && /\bcan't be prevented or dealt instead\b/i.test(action.object ?? "")) { unclaimed.push(action); continue; }
       // See antecedentFor: a pronoun object inherits the thing named earlier in the same clause.
@@ -3317,7 +3342,7 @@ export function deriveAbilities(
       const stealsASpell = (clause.actions ?? []).some((x) => x.verb === "gain-control" && /\bspells?\b/i.test(x.object ?? ""));
       // The n-th identical `cant` of a clause is the n-th printed "can't attack|block" (Aragorn, King of Gondor stores one object twice).
       const sameCant = action.verb === "cant" ? (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).filter((x) => x.verb === "cant" && x.object === action.object).length : 0;
-      const read = replacement?.kind ?? actionEffectKind(action, text, sameCant);
+      const read = replacement?.kind ?? (replacedBy !== undefined ? "damage-change" : actionEffectKind(action, text, sameCant));
       // A DAMAGE REPLACEMENT THAT DOES NOT MULTIPLY IS NO DAMAGE MULTIPLIER (#1456): a reduction, a fixed number, a redirect, a mill or counters leave the action unclaimed (see `damageChangeOf`).
       const effectKind = read === "retarget" && stealsASpell ? null : read === "damage-multiplier" && !isDamageMultiplication(text) ? null : read;
       // THE MODEL FILES ONE PRINTED DENIAL TWICE (#1423): a stored `untap` beside a stored `cant | untap during ...` of the same clause (Glacial Grasp, Illithid Harvester) is that `cant`'s twin, one ability.
@@ -3391,6 +3416,8 @@ export function deriveAbilities(
         .filter(() => replacement === null)
         // A DENIED UNTAP IS NO UNTAP EVENT (#1423): the model's `untap` verb for "doesn't untap" (Melancholy, Reveka) would otherwise emit `untaps` and feed every untap watcher.
         .filter(() => effectKind !== "untap-denial")
+        // A DAMAGE CHANGE IS NO PREVENTION (#1469): a reduced, capped or redirected damage event is a replacement (CR 614), so no `prevented` event happens and no damage is dealt by the clause itself.
+        .filter(() => effectKind !== "damage-change")
         // ROADMAP I7. The permanent arrives under a controller the schema cannot name, so the emit
         // claims nothing rather than claiming everyone. See `entersUnderAnotherPlayer`.
         .filter((e) => !(e.verb === "enters" && entersUnderAnotherPlayer(cardText)));
@@ -3867,6 +3894,8 @@ export function deriveAbilities(
           || effectKind === "untap-denial"
           // ...and so is whose life total a `life-total-set` sets (#1333; a fact kind, no pair channel reads it).
           || effectKind === "life-total-set"
+          // ...and so is whom a `prevention` or `damage-change` protects or hurts (#1469; fact kinds).
+          || effectKind === "prevention" || effectKind === "damage-change"
           || (effectKind === "graveyard-recursion" && subject.zone === "graveyard")
           // A STATIC GRAVEYARD-HATE REPLACEMENT (Leyline of the Void, Rest in Peace, #1266) keeps whose graveyard it hits; the `zone: graveyard` matches no printed card, like the recursion above.
           || (effectKind === "graveyard-hate" && subject.zone === "graveyard" && graveyardReplacement(text)?.kind === "hate"))
@@ -3897,6 +3926,22 @@ export function deriveAbilities(
       if (trigger) ability.trigger = trigger;
       // The effect lands on the permanent this card is attached to (#1315): a marker, never a subject -- see `Ability.host`.
       if (hostEffect(action, effectKind, text)) ability.host = true;
+      if (effectKind === "damage-change") ability.effect = { ...ability.effect, damageChange: replacedBy ?? damageReplacementOf(text) ?? "redirected" };
+      if (effectKind === "prevention") {
+        const read = preventionOf(text);
+        if (read) {
+          const dealerPhrase = read.dealer;
+          const from = clauseGrants?.[clause.id as number] === undefined && dealerPhrase !== undefined && !HOST_WORD.test(dealerPhrase) && !RECIPIENT_LIST.test(dealerPhrase) ? subjectFrom(dealerPhrase, cardName, enchantText) : undefined;
+          ability.prevention = {
+            damage: read.damage,
+            ...(read.amount !== undefined ? { amount: read.amount } : {}),
+            ...(read.duration ?? (kind === "static" ? "continuous" : undefined) ? { duration: read.duration ?? "continuous" } : {}),
+            ...(from && (from.type !== undefined || from.subtype !== undefined || from.colors !== undefined || from.control !== "any" || from.scope === "target" || from.combat !== undefined || from.self === true) ? { from } : {}),
+          };
+          // An Aura's or Equipment's "enchanted creature" is the host (CR 303.4), on either side of the damage.
+          if (HOST_WORD.test(read.recipient ?? "") || HOST_WORD.test(dealerPhrase ?? "")) ability.host = true;
+        }
+      }
       if (effectKind === "restriction") { const r = restrictedActions(action.object ?? "", text, sameCant); if (r) ability.restricts = r; }
       if (effectKind === "untap-denial") { const u = untapDenialFor(action.verb ?? "", action.object ?? "", text, sameCant); if (u) ability.untapDenial = u.denial; }
       if (effectKind === "trigger-suppression") { const t = triggerSuppressionOf(action.object ?? "", text, sameCant); if (t) ability.suppresses = t.suppression; }
@@ -3948,6 +3993,8 @@ export function deriveAbilities(
           if (n) ability.amount = n[0].toLowerCase();
         }
       }
+      // A DAMAGE CHANGE STATES NO AMOUNT (#1469). CEILING: a redirect shield's size ("the next 1 damage ... is dealt to another creature instead", Carom) and a reduction's "that much damage minus 1" are not recorded: the grammar's `prevent` carries the 1 and the stored answer does not, so keeping it split 9 redirect cards off the grammar switch.
+      if (effectKind === "damage-change") delete ability.amount;
       // HOW MANY CARDS REACH YOUR HAND, whether they are a pick from a larger look, and the three riders hand-fill roles read (#1302, CR 121.5): read off the put's own object and clause, never the clause's `amount`.
       // A `to-hand` ability keeps the count on `amount`; a typed dig (`search`) keeps `amount` as it was (edges read it) and carries the count on `toHand`, which is also what marks it as hand-fill.
       if (handRead) {

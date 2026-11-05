@@ -2473,9 +2473,10 @@ test("a damage replacement that mills or places counters is a plain trigger on t
   expect(lava.map((a) => a.effect.kind)).toContain("damage");
   expect(lava.map((a) => a.emits?.map((e) => e.verb)).flat()).not.toContain("prevented");
 
-  // out of scope: a reduction stays unread
-  expect(run("static", [{ verb: "deal-damage", object: "a permanent or player", amount: "that much damage minus 1" }],
-    "If a spell would deal damage to a permanent or player, it deals that much damage minus 1 to that permanent or player instead.", "Benevolent Unicorn")).toEqual([]);
+  // a reduction is a `damage-change` since #1469 (see prevention.test.ts): no multiplier, no emits
+  const unicorn = run("static", [{ verb: "deal-damage", object: "a permanent or player", amount: "that much damage minus 1" }],
+    "If a spell would deal damage to a permanent or player, it deals that much damage minus 1 to that permanent or player instead.", "Benevolent Unicorn");
+  expect(unicorn.map((a) => a.effect.kind)).toEqual(["damage-change"]);
 });
 
 // #1465: damage whose printed recipients are TARGETS (CR 115.1) is an untyped targeted emit, like "any target".

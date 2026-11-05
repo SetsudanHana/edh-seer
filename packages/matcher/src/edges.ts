@@ -1945,10 +1945,10 @@ function ownBoardKill(a: Ability): number | undefined {
  *  "re-firing" Acererak's return-to-hand, Arid Archway's sentence losing its surveil). The same
  *  object back when nothing changes, so the per-tags caches downstream still hit. */
 /** Kinds that record a fact for loop economics and claim nothing pairwise: `bounce` (#802),
- *  `play-from-top` (#856), `extra-loyalty` (#859), `retarget` (#1266), `evasion` and `restriction` (#1315), `targeting-ban`, `trigger-suppression` and `untap-denial` (#1423), `life-total-set` (#1333) and `to-hand` (#1302). Each derived blank before its kind existed, so reading it blank keeps
+ *  `play-from-top` (#856), `extra-loyalty` (#859), `retarget` (#1266), `evasion` and `restriction` (#1315), `targeting-ban`, `trigger-suppression` and `untap-denial` (#1423), `life-total-set` (#1333), `to-hand` (#1302), `prevention` and `damage-change` (#1469). Each derived blank before its kind existed, so reading it blank keeps
  *  every edge where it was. */
 // play-from-top and extra-loyalty are read raw by `playFromTopEdges` and `extraLoyaltyEdges`.
-export const FACT_KINDS: ReadonlySet<string> = new Set(["bounce", "play-from-top", "extra-loyalty", "retarget", "evasion", "restriction", "targeting-ban", "trigger-suppression", "untap-denial", "life-total-set", "to-hand"]);
+export const FACT_KINDS: ReadonlySet<string> = new Set(["bounce", "play-from-top", "extra-loyalty", "retarget", "evasion", "restriction", "targeting-ban", "trigger-suppression", "untap-denial", "life-total-set", "to-hand", "prevention", "damage-change"]);
 /** A fact kind's `static:<kind>` theme tag. No reason ever carries it, so it can only count in a deck's tag frequency and never score an edge. */
 export function isFactStaticTag(tag: string): boolean {
   return tag.startsWith("static:") && FACT_KINDS.has(tag.slice("static:".length));
@@ -1999,7 +1999,10 @@ function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
       if (why === "refused-trigger") { const { emits: _emits, ...rest } = a; return { ...rest, effect: { kind: "" as const } }; }
       // A SELF "YOU LOSE THE GAME" TRIGGER IS NEVER A PAYOFF: it reads as a blank static with no trigger (its emits stay for a rescue consumer, see `pEventsFor`).
       if (why === "self-loss") { const { trigger: _trigger, ...rest } = a; return { ...rest, kind: "static" as const, effect: { kind: "" as const } }; }
-      const b = FACT_KINDS.has(a.effect.kind) ? { ...a, effect: { kind: "" as const } } : a;
+      // A `prevention` / `damage-change` that SCALES ("prevent X damage, where X is the number of creatures you control": Shield of the Avatar, Battlefield Medic) keeps the scaling it derived with as a blank (#1469), or the `scales` edges it always formed (20,681 on Shield of the Avatar) go with the kind.
+      const blank = (e: Ability["effect"]) => (e.kind === "prevention" || e.kind === "damage-change") && (e.scaling || e.scalingSubject)
+        ? { kind: "" as const, ...(e.scaling ? { scaling: e.scaling } : {}), ...(e.scalingSubject ? { scalingSubject: e.scalingSubject } : {}) } : { kind: "" as const };
+      const b = FACT_KINDS.has(a.effect.kind) ? { ...a, effect: blank(a.effect) } : a;
       return dead(b) ? { ...b, emits: (b.emits ?? []).filter((e) => e.verb !== "dies") } : b;
     }) };
     byFloor.set(floor, out);
