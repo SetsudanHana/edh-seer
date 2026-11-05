@@ -617,8 +617,8 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
   const verb = action.verb ?? "";
   // CR 615.1a: an effect that uses the word "prevent" is a prevention effect (#1469); one whose printed clause REPLACES the damage with a reduced, capped, redirected ... amount (CR 614) is a `damage-change`, whichever verb the
   // store filed it under (Lashknife Barrier's "minus 1", Jade Monolith's "deals that damage to you instead"). "That damage can't be prevented or dealt instead" is no prevention: the caller leaves it unclaimed.
-  // CEILING: a stored `prevent` whose printed clause states no prevention and no replacement ("the damage can't be prevented": Urza's Rage, Wild Slash, Questing Beast; 20 cards) is no prevention and stays kindless, as before, with the
-  // false `prevented` emit it always carried; only Lava Burst's "can't be prevented or dealt instead" is refused outright (derive.ts).
+  // A stored `prevent` whose printed clause states no prevention and no replacement ("the damage can't be prevented": Urza's Rage, Wild Slash, Questing Beast) is no prevention and stays kindless; derive.ts emits no `prevented` for it (#1534).
+  // Lava Burst's "can't be prevented or dealt instead" is refused outright (derive.ts).
   if (verb === "prevent" && !PROHIBITED_REDIRECT.test(clauseText)) {
     if (damageReplacementOf(clauseText) !== undefined) return "damage-change";
     return clauseText === "" || preventionOf(clauseText) !== undefined ? "prevention" : null;
