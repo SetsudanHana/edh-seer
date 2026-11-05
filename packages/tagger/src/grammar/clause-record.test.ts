@@ -1743,6 +1743,28 @@ test("a delayed trigger inside the carried sentence is not read away (Tamiyo, Fi
   expect(read("+1: Choose up to two target creatures. Until your next turn, whenever either of those creatures deals combat damage, you draw a card.")).toMatchObject({ kind: "action" });
 });
 
+// #1452 fix round. Alacrian Armory: "that permanent becomes saddled if it's a Mount and becomes an artifact creature if it's a Vehicle" read as ONE animate with the second verb phrase inside its condition, so the saddle half vanished with
+// no unclaimed record. A carried sentence with a second "becomes" stays refused, and the card keeps the stored reading (which keeps the saddle half as an unclaimed `other`).
+test("Alacrian Armory stays refused: a carried sentence with two 'becomes' phrases would hide one of them", () => {
+  const ALACRIAN = { name: "Alacrian Armory", typeLine: "Artifact", keywords: [], oracleText: "Creatures you control get +0/+1 and have vigilance.\nAt the beginning of combat on your turn, choose up to one target Mount or Vehicle you control. Until end of turn, that permanent becomes saddled if it's a Mount and becomes an artifact creature if it's a Vehicle." };
+  expect(grammarClauseRecords(ALACRIAN).blocker).toMatchObject({ kind: "action", phrase: "choose up to one target Mount or Vehicle you control" });
+});
+
+// Daretti, Rocketeer Engineer: the model stores "enters" (clause 2) and "attacks" (clause 3) as two records with the same actions. The carried reading of clause 2 (scope target) made clause 3, read without it, differ from its twin, so
+// the attacks limb derived twice (two sacrifices and two returns). The textless sibling takes its partner's reading.
+test("Daretti, Rocketeer Engineer derives one ability per limb from the stored records", () => {
+  const card = { name: "Daretti, Rocketeer Engineer", typeLine: "Legendary Creature \u2014 Goblin Artificer", keywords: [], oracleText: "Daretti's power is equal to the greatest mana value among artifacts you control.\nWhenever Daretti enters or attacks, choose target artifact card in your graveyard. You may sacrifice an artifact. If you do, return the chosen card to the battlefield." };
+  const act = (verb: string, object: string, extra: object = {}) => ({ verb, object, fromZone: null, toZone: null, amount: null, optional: false, ...extra });
+  const limb = (id: number, event: string) => ({ id, abilityType: "triggered", trigger: { event, subject: "Daretti", control: "you" }, actions: [act("sacrifice", "an artifact", { optional: true }), act("return", "the chosen artifact card", { fromZone: "graveyard", toZone: "battlefield" })] });
+  const canonical = [{ id: 1, abilityType: "static", actions: [act("modify-pt", "Daretti's power is equal to the greatest mana value among artifacts you control")] }, limb(2, "enters"), limb(3, "attacks")];
+  const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, canonical as never));
+  const perVerb = (verb: string) => tags.abilities.filter((a) => a.trigger?.verbs.includes(verb as never));
+  for (const verb of ["enters", "attacks"]) {
+    expect(perVerb(verb).filter((a) => a.effect.kind === "graveyard-recursion").length, `${verb} returns`).toBe(1);
+    expect(perVerb(verb).filter((a) => (a.emits ?? []).some((e) => e.verb === "sacrifice")).length, `${verb} sacrifices`).toBe(1);
+  }
+});
+
 test("In the Pale Moonlight reads once 'Romulan' is a known creature type", () => {
   expect(grammarClauseRecords(IN_THE_PALE_MOONLIGHT).blocker).toBeUndefined();
 });

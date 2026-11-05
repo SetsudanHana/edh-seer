@@ -1824,6 +1824,10 @@ function carriedSentence(s: string, c: Chosen, ownTrigger = false): string {
   c.since = `${c.since} ${s}`;
   // A DELAYED TRIGGER INSIDE THE EFFECT ("Until your next turn, whenever either of those creatures deals combat damage, you draw a card", Tamiyo, Field Researcher) is a trigger the clause record has none for: read
   // with the target in it, the draw lost its trigger and became an unconditional one. A trigger that is a clause of its own (a Saga chapter's second clause) is `carriedIntoNextClause`'s, which keeps it.
+  // TWO "BECOMES" PHRASES ("that permanent becomes saddled if it's a Mount and becomes an artifact creature if it's a Vehicle", Alacrian Armory): the predicate reader keeps one animate with the second phrase inside its
+  // condition, and the first half vanishes with no unclaimed record. Refused here, narrower than un-reading "becomes saddled" for every card.
+  // CEILING: only a CARRIED sentence is refused; the same sentence with the target stated in it still reads as one animate.
+  if (/\bbecomes\b[^.]*\band becomes\b/i.test(s)) { CHOSEN_REF.lastIndex = 0; if (CHOSEN_REF.test(s)) { c.refused = true; return s; } }
   if (!ownTrigger && /\b(?:whenever|when|at the beginning of)\b/i.test(s)) { CHOSEN_REF.lastIndex = 0; if (CHOSEN_REF.test(s)) { c.refused = true; return s; } }
   return s.replace(CHOSEN_REF, (m: string, noun: string | undefined, pronoun: string | undefined, at: number) => {
     if (c.refused) return m;
