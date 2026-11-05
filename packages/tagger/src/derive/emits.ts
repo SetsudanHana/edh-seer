@@ -341,7 +341,10 @@ function counterRecipient(clauseText: string, named = true, trigger?: CounterTri
   const stop = tail.search(/[.;,]/);
   if (stop >= 0) tail = tail.slice(0, stop);
   const forEach = tail.search(/\sfor each\b/i);
-  return forEach >= 0 ? tail.slice(0, forEach).trimEnd() : tail;
+  const upTo = forEach >= 0 ? tail.slice(0, forEach).trimEnd() : tail;
+  // "target creature that target Wall blocked this turn" (Glyph of Delusion, #1520): the relative clause names ANOTHER target, whose Wall is not the recipient's subtype.
+  const relative = upTo.indexOf(" that target ");
+  return relative >= 0 ? upTo.slice(0, relative) : upTo;
 }
 
 /** The trigger the clause hangs on, as far as a counter's recipient needs it (#1438). `self`: its subject is the card itself. */
@@ -387,6 +390,8 @@ function triggerClass(trigger: CounterTrigger): string | undefined {
   if (trigger.self === true || !trigger.subject) return undefined;
   const subject = trigger.subject.trim();
   if (/^(?:~|this\b|it$)|\bcards?\b/i.test(subject)) return undefined;
+  // "Whenever a creature deals damage to you, put a gold counter on IT" (Aurification, #1520): the creature that dealt it.
+  if (trigger.event === "damage-dealt") return /^an? (?:\w+ )?creatures?$/i.test(subject) ? subject : undefined;
   if (trigger.event === "enters") return /\bcontrol\b/i.test(subject) || trigger.control !== "you" ? subject : `${subject} you control`;
   const spell = trigger.event === "cast" ? /^an? ((?:nontoken |non-?\w+ )?(?:creature|artifact|enchantment|planeswalker|permanent|land)) spell$/i.exec(subject) : null;
   return spell && trigger.control === "you" ? `${spell[1]} you control` : undefined;
@@ -396,7 +401,7 @@ function triggerClass(trigger: CounterTrigger): string | undefined {
  *  names; typed so a consumer that wants a creature sees the supply (#1438). Only a PUT in the first counter sentence, with no target named before it ("tap target creature ... put a stun counter on it" is the target), and
  *  only on an ENTERS trigger: "return it ... with a flying counter on it" (Salvation Swan) and a card's own "put five counters on it" (Hooded Hydra, no trigger) are not this. */
 function triggerBound(clauseText: string, trigger?: CounterTrigger): string | undefined {
-  if (!trigger || trigger.event !== "enters" || conditionedOnRecipient(clauseText)) return undefined;
+  if (!trigger || (trigger.event !== "enters" && trigger.event !== "damage-dealt") || conditionedOnRecipient(clauseText)) return undefined;
   const first = firstCounterPhrase(clauseText);
   if (!first || !/\bputs?\b/i.test(first.before) || /\btarget\b/i.test(clauseText.slice(0, first.at))) return undefined;
   if (!/^(?:that\s+(?:creature|permanent)|it)\b/i.test(first.rest)) return undefined;
