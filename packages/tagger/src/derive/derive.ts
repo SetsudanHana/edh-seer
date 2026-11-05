@@ -3528,11 +3528,17 @@ export function deriveAbilities(
         for (const e of emits) if ((e.verb === "exiled" || e.verb === "leaves") && e.subject.fromZone === "stack" && e.subject.control === "any") e.subject.control = "you";
       }
       // #1310: "Exile <this card>" as the last line of an instant or sorcery (Rise of the Eldrazi, Invoke Calamity, Sins of the Past) is the resolving spell leaving the STACK, and the stored clause states no origin
-      // (`fromZone: null`). Left unstated it read as a permanent exiled from the battlefield: a spell is no creature or permanent for "whenever a creature is exiled" (Kaya's Ghostform, Hero of Bretagard).
+      // (`fromZone: null`). Left unstated, a typed reader ("whenever a creature / artifact / permanent is exiled": Kaya's Ghostform, Hero of Bretagard) took the self emit, because its subject carries no type of its own; a stack origin is what the matcher's `originMatches` refuses those readers on. (The three rows that lost pairs here, Rise of the Eldrazi, Game Plan and Harness Infinity, also read the card's own name as a subtype on the self subject; filed separately.)
       // The stack origin keeps The War Doctor's "put into exile from anywhere" (the matcher's one stack exception) and drops the typed readers.
       // CEILING: keyed on the clause kind (`on-cast`: the spell's own resolution), not on the card's type line, so a permanent card whose clause the model filed as a spell would read the same; only a self exile with no stated origin.
-      if (kind === "on-cast" && emitsSelf && !grantedTo && action.verb === "exile" && action.fromZone == null) {
-        for (const e of emits) if ((e.verb === "exiled" || e.verb === "leaves") && e.subject.self === true && e.subject.fromZone === undefined && e.subject.zone === undefined) e.subject.fromZone = "stack";
+      // "Exile THIS SPELL and four cards named X from your graveyard" (Sphinx's Approach, Dragon's Approach) is stored as one object with the graveyard origin the NAMED cards have: the spell itself is on the stack,
+      // so its self `exiled` emit is stamped stack. The named cards' own graveyard exile stays in the clause's effect (`graveyard-recursion`), which is not rewritten: splitting the action made the effect
+      // subject the card's name and added 4,636 `graveyard-recursion` reasons (measured, derive-impact #1310 round 2), so the split was reverted.
+      // CEILING: only the exact head "this spell and "; the named cards get no `exiled` emit of their own (their `leaves` is the card's self leave, as before).
+      const spellAndOthers = action.verb === "exile" && action.fromZone === "graveyard" && /^this spell and \S/i.test((action.object ?? "").trim());
+      if (kind === "on-cast" && emitsSelf && !grantedTo && action.verb === "exile" && (action.fromZone == null || spellAndOthers)) {
+        // Only the `exiled` emit is the spell's: the `leaves` emit keeps its graveyard origin, because the four named cards DO leave a graveyard (Fang, Murktide Regent hear it: measured -48 true reasons when stamped).
+        for (const e of emits) if ((e.verb === "exiled" || e.verb === "leaves") && e.subject.self === true && (spellAndOthers ? e.verb === "exiled" : e.subject.fromZone === undefined && e.subject.zone === undefined)) { e.subject.fromZone = "stack"; delete e.subject.zone; }
       }
       // #1266 task 2: an opponent's-graveyard replacement says so on its emits too (Leyline of the Void, Valgavoth); "a graveyard" stays `any`.
       // CR 614.6: "If an event is replaced, it never happens": the card never entered (or left) a graveyard, so there is no `leaves`, and the `exiled` emit names no graveyard origin

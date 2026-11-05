@@ -54,3 +54,19 @@ test("kept: a spell exiled from the stack is a card put into exile from anywhere
     expect(reasons(p, "The War Doctor", exiledAny).length).toBeGreaterThan(0);
   }
 });
+
+/** "You may exile this spell and four cards named X from your graveyard" (Sphinx's Approach, Dragon's Approach): the stored action has ONE object and fromZone graveyard, so the spell itself was read as a
+ *  card exiled from a graveyard. The spell is exiled from the stack; only the four named cards come from the graveyard. */
+test.each(["Sphinx's Approach", "Dragon's Approach"])("%s: the spell is exiled from the stack, the named cards' graveyard exile stays, and no typed exile reader hears the spell", (n) => {
+  const p = derived(n);
+  const exiles = p.tags!.abilities!.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "exiled");
+  const self = exiles.filter((e) => e.subject.self === true);
+  expect(self.length).toBeGreaterThan(0);
+  expect(self.every((e) => e.subject.fromZone === "stack")).toBe(true);
+  // The clause's graveyard-recursion effect is unchanged (the action is not split: see derive.ts), and the `leaves` stays a graveyard leave: the four named cards leave a graveyard.
+  expect(p.tags!.abilities!.some((a) => a.effect.kind === "graveyard-recursion" && a.effect.subject?.zone === "graveyard")).toBe(true);
+  expect(reasons(p, "Murktide Regent", /^leaves-graveyard:/).length).toBeGreaterThan(0);
+  expect(reasons(p, "Fang, Fearless l'Cie", /^leaves-graveyard:/).length).toBeGreaterThan(0);
+  for (const c of ["Kaya's Ghostform", "Hero of Bretagard"]) expect(reasons(p, c, exiledAny)).toEqual([]);
+  expect(reasons(p, "The War Doctor", exiledAny).length).toBeGreaterThan(0);
+});
