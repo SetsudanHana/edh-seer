@@ -433,7 +433,7 @@ const PUTS_FROM_YARD_ONTO_BATTLEFIELD = /\bputs? [^.]*?\bgraveyards? onto the ba
 const USES_THE_EXILED_CARD_2 = /\bcop(?:y|ies) (?:it|them|that card|those cards|the exiled cards?)\b|\b(?:play|cast) [^.]*?\bfrom among cards exiled (?:this way|with)\b/i;
 // "your graveyard", and "your hand or graveyard" / "your hand and/or graveyard" (Mairsil): the graveyard half is still yours.
 const YOUR_YARD = /\byour (?:(?:hand|library)(?: or| and\/or| and) )?graveyard\b/i;
-const OTHER_YARD = /\b(?:target player'?s?|opponents?'?s?|each player'?s?|their)\s+graveyards?\b/i;
+const OTHER_YARD = /\b(?:target player'?s?|that player'?s?|opponents?'?s?|each player'?s?|their)\s+graveyards?\b/i;
 
 export function exilesOwnGraveyard(object: string, clauseText: string): boolean {
   if (YOUR_YARD.test(object)) return true;
@@ -465,8 +465,8 @@ export function exilesFromYourGraveyard(object: string, clauseText: string): boo
 /** An exile whose object names graveyards (and no other zone) takes its cards from one, though the model stored no origin: "up to twice X target cards from
  *  graveyards" (Erebos's Intervention), "from a single graveyard", "all graveyards", "that player's graveyard", "from defending player's graveyard"
  *  (#1266). A hand or library named beside it, a battlefield half ("all creatures and graveyards", "from the battlefield and/or creature cards from graveyards": Angel of Serenity; "put there from the battlefield" is only the history of a card in the yard), or a destination ("into that player's graveyard")
- *  keeps the model's reading: one `fromZone` cannot hold two zones. CEILING: Identity Crisis, Thought Distortion, Ashiok's -10 and Ultimate Nullification
- *  (a graveyard half beside a hand or the battlefield) stay unzoned. */
+ *  keeps the model's reading: one `fromZone` cannot hold two zones. A trailing hand/graveyard list is split into one exile per zone BEFORE this (`splitMultiZoneExiles`, #1311).
+ *  CEILING: Ultimate Nullification and Angel of Serenity (a graveyard half beside the battlefield) stay unzoned. */
 const OTHER_ZONE_WORD = /\b(?:hands?|librar(?:y|ies)|into|onto|instead)\b|\band graveyards?\b|\bthe battlefield (?:and|or)\b|\bon the battlefield\b|^this \w+ (?:and|or)\b/i;
 export function exileNamesOnlyGraveyards(object: string): boolean {
   return ANY_YARD.test(object) && !OTHER_ZONE_WORD.test(object);
@@ -785,9 +785,10 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
     // onto the battlefield" is read from the text as well.
     // NOT YOUR OWN YARD: the ruling is about taking from THEIRS; an own-graveyard exile stays as it
     // was (null), so this widening moves no card that only ever touched its owner's graveyard.
-    if (r.kind === "graveyard-hate" && !exilesOwnGraveyard(action.object ?? "", clauseText) && (action.toZone === "battlefield" || PUTS_FROM_YARD_ONTO_BATTLEFIELD.test(clauseText)
+    const ownYard = action.fromOwner !== "opp" && exilesOwnGraveyard(action.object ?? "", clauseText);
+    if (r.kind === "graveyard-hate" && !ownYard && (action.toZone === "battlefield" || PUTS_FROM_YARD_ONTO_BATTLEFIELD.test(clauseText)
       || USES_THE_EXILED_CARD_2.test(clauseText.slice(Math.max(0, clauseText.search(/\bexile/i)))))) return "graveyard-recursion";
-    if (r.kind === "graveyard-hate" && exilesOwnGraveyard(action.object ?? "", clauseText)) return null;
+    if (r.kind === "graveyard-hate" && ownYard) return null;
     // THE BOTTOM IS NOT THE TOP. `toZone: "library"` says nothing about position and the canonical
     // action has no field for it, so the clause text decides. Of the 359 corpus cards with a
     // put library|hand -> library action, 311 say "on the bottom" -- Dig Through Time and

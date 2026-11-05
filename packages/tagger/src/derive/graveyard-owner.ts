@@ -23,8 +23,10 @@ const YOUR_GRAVEYARD = /\b(?:in|from|into) your graveyard\b|\byour graveyard\b/i
 /** A quoted ability granted to a permanent is another ability's text: its "your graveyard" is not the antecedent of a pointer outside the quotes (Kaya the Inexorable's emblem). */
 const QUOTED = /"[^"]*"/g;
 
-export function graveyardOwner(action: { object?: string | null; fromZone?: string | null }, clauseText: string, cardText: string, granted = false): "you" | undefined {
+export function graveyardOwner(action: { object?: string | null; fromZone?: string | null; fromOwner?: "opp" }, clauseText: string, cardText: string, granted = false): "you" | undefined {
   if (action.fromZone !== "graveyard") return undefined;
+  // A split search-and-exile read as the opponent's (#1311): Invasive Surgery's delirium count names YOUR graveyard, the graveyard searched is "that spell's controller's".
+  if (action.fromOwner === "opp") return undefined;
   const object = (action.object ?? "").trim();
   // A graveyard the object itself puts on another player stays unread, before anything in the clause can claim it.
   // ...and so does one object naming both ("a creature card from an opponent's graveyard and a creature card from your graveyard", Dawnbreak Reclaimer): two owners in one emit is not readable as either.
