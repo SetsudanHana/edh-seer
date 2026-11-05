@@ -1,0 +1,606 @@
+{
+ "Gerrard, Weatherlight Hero": {
+  "source": {
+   "name": "Gerrard, Weatherlight Hero",
+   "typeLine": "Legendary Creature — Human Soldier",
+   "oracleText": "First strike\nWhen Gerrard dies, exile it and return to the battlefield all artifact and creature cards in your graveyard that were put there from the battlefield this turn.",
+   "keywords": [
+    "First strike"
+   ],
+   "colors": [
+    "R",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{2}{R}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "First strike",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "Gerrard, Weatherlight Hero",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "Gerrard, Weatherlight Hero",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "all artifact and creature cards in your graveyard that were put there from the battlefield this turn",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Turtles in Time": {
+  "source": {
+   "name": "Turtles in Time",
+   "typeLine": "Sorcery",
+   "oracleText": "Return all creatures to their owners' hands. Each player may shuffle their hand and graveyard into their library, then each player who does draws seven cards.\nExile Turtles in Time.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}{U}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all creatures",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "their hand and graveyard",
+      "fromZone": null,
+      "toZone": "library",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "draw",
+      "object": "cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "7",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "Turtles in Time",
+      "fromZone": "stack",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Stone of Erech": {
+  "source": {
+   "name": "Stone of Erech",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "If a creature an opponent controls would die, exile it instead.\n{2}, {T}, Sacrifice Stone of Erech: Exile target player's graveyard. Draw a card.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 1,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a creature an opponent controls",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "Stone of Erech",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "target player's graveyard",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Bob, Reluctant HYDRA Agent": {
+  "source": {
+   "name": "Bob, Reluctant HYDRA Agent",
+   "typeLine": "Legendary Creature — Human Coward Villain",
+   "oracleText": "Whenever Bob attacks alone, return him to his owner's hand. If you do, each opponent loses 2 life and you gain 2 life.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "Bob, Reluctant HYDRA Agent",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "Bob, Reluctant HYDRA Agent",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Urza's Sylex": {
+  "source": {
+   "name": "Urza's Sylex",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "{2}{W}{W}, {T}, Exile Urza's Sylex: Each player chooses six lands they control. Destroy all other permanents. Activate only as a sorcery.\nWhen Urza's Sylex is put into exile from the battlefield, you may pay {2}. If you do, search your library for a planeswalker card, reveal it, put it into your hand, then shuffle.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "Urza's Sylex",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "destroy",
+      "object": "all other permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "exiled",
+     "subject": "Urza's Sylex",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a planeswalker card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "The Locust God": {
+  "source": {
+   "name": "The Locust God",
+   "typeLine": "Legendary Creature — God",
+   "oracleText": "Flying\nWhenever you draw a card, create a 1/1 blue and red Insect creature token with flying and haste.\n{2}{U}{R}: Draw a card, then discard a card.\nWhen The Locust God dies, return it to its owner's hand at the beginning of the next end step.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{4}{U}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "draw",
+     "subject": "a card",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 blue and red Insect creature token with flying and haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "The Locust God",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "The Locust God",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "The Beast, Deathless Prince": {
+  "source": {
+   "name": "The Beast, Deathless Prince",
+   "typeLine": "Legendary Creature — Demon",
+   "oracleText": "When you cast this spell, gain control of target creature until end of turn. Untap it. It gains menace and haste until end of turn.\nThe Beast enters tapped with six stun counters on it. (If it would become untapped, remove a stun counter from it instead.)\nWhenever a creature deals combat damage to its owner, untap The Beast and draw a card.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "R"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "manaCost": "{2}{B}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "this spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-control",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "untap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "menace and haste until end of turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "stun",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "six",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "a creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "untap",
+      "object": "The Beast",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "The Stone Brain": {
+  "source": {
+   "name": "The Stone Brain",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "{2}, {T}, Exile The Stone Brain: Choose a card name. Search target opponent's graveyard, hand, and library for up to four cards with that name and exile them. That player shuffles, then draws a card for each card exiled from their hand this way. Activate only as a sorcery.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 2,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "The Stone Brain",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "search",
+      "object": "up to four cards with a chosen name",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "search",
+      "object": "up to four cards with a chosen name",
+      "fromZone": "hand",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "search",
+      "object": "up to four cards with a chosen name",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "cards with the chosen name",
+      "fromZone": null,
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "target opponent's library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "target opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "equal to the number of cards exiled from their hand this way",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ }
+}
