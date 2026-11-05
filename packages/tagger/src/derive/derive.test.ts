@@ -8185,3 +8185,31 @@ test("Seize the Storm's Elemental token: a P/T definition filed as an exile keep
   expect(abilities[0]?.effect.scaling).toBe("per-graveyard");
   expect(abilities[0]?.effect.scalingSubject).toMatchObject({ type: ["instant", "sorcery"], zone: "graveyard" });
 });
+
+/** A TOKEN THE CARD CREATES IS NEVER THE CARD (#1520). Clauses as the store has them. */
+describe("a created token is not self (#1520)", () => {
+  test("Duggan: the model's `investigate` with object 'Duggan' makes a Clue that is not Duggan", () => {
+    // Stored clause 2 of Duggan, Private Detective (clauseSource "model"): db.cardClauses.findOne({oracleId: ...}).canonical, the object is the card's own name.
+    const text = "Whenever Duggan enters or attacks, investigate.";
+    const { abilities } = deriveAbilities([
+      { id: 2, abilityType: "triggered", trigger: { event: "enters", subject: "Duggan", control: "you" }, actions: [{ verb: "investigate", object: "Duggan", optional: false }] },
+      { id: 2, abilityType: "triggered", trigger: { event: "attacks", subject: "Duggan", control: "you" }, actions: [{ verb: "investigate", object: "Duggan", optional: false }] },
+    ] as never, "Duggan, Private Detective", { 2: text }, undefined, text);
+    const emits = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "create-token" || e.verb === "enters");
+    expect(emits.length).toBeGreaterThan(0);
+    for (const e of emits) {
+      expect(e.subject.self).toBeUndefined();
+      expect(e.subject).toMatchObject({ token: true, subtype: "clue", type: "artifact", control: "you" });
+    }
+    // The card's own `enters` TRIGGER stays the card's own.
+    expect(abilities.filter((a) => a.trigger?.verbs.includes("enters")).every((a) => a.trigger?.subject.self === true)).toBe(true);
+  });
+  test("control: a card that investigates with no object still makes a Clue (Forensic Gadgeteer shape)", () => {
+    const { abilities } = deriveAbilities([
+      { id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "you", control: "you" }, actions: [{ verb: "investigate", object: "", optional: false }] },
+    ] as never, "Forensic Gadgeteer");
+    const e = abilities.flatMap((a) => a.emits ?? []).find((x) => x.verb === "create-token");
+    expect(e?.subject).toMatchObject({ token: true, subtype: "clue", type: "artifact" });
+    expect(e?.subject.self).toBeUndefined();
+  });
+});

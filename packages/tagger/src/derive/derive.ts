@@ -3404,8 +3404,10 @@ export function deriveAbilities(
       if (dealer !== undefined && !("self" in dealer && grantedTo)) for (const e of emits) if (e.dealer !== undefined) e.dealer = "self" in dealer ? { ...e.dealer, self: true } : { ...dealer.other };
       // "Whenever another creature you control dies, it deals damage equal to its power": the dealer has left the battlefield (CR 113.6), so no self or host damage trigger hears it (#1462 review).
       if (dealer?.gone === true) for (const e of emits) if (e.dealer !== undefined) e.dealerGone = true;
+      // A TOKEN THE ACTION CREATES IS NEVER THE CARD (#1520): the model files Duggan's "investigate" with the card's own name as its object, and the Clue is not Duggan.
+      const makesAToken = emits.some((e) => e.verb === "create-token");
       if (emitsSelf) for (const e of emits) {
-        if (!grantedTo) { e.subject.self = true; continue; }
+        if (!grantedTo) { if (!makesAToken) e.subject.self = true; continue; }
         // The granted ability's "this permanent"/"it" is the recipient -- see `grantedTo`.
         const { self: _self, ...rest } = e.subject;
         e.subject = { ...rest, ...grantedTo };

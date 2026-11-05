@@ -909,6 +909,8 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // a Clue token", #794). The emit carried no subtype, so `tokenTypeFor` below never filled the type
   // and an artifact-token payoff (Stridehangar Automaton) heard nothing from Forensic Gadgeteer.
   if (action.verb === "investigate" && subject.subtype === undefined && subject.type === undefined) { subject.subtype = "clue"; subject.token = true; }
+  // ...AND THE CLUE IS NOT THE CARD (#1520): the model files Duggan's investigate with the card's own name as its object, which read `self`; the investigator is its controller.
+  if (action.verb === "investigate" && opts.self === true) { delete subject.self; subject.control = "you"; }
   // EXILE'S DESTINATION IS IN THE VERB (CR 406.2: "exile" means put into the exile zone), and the
   // model writes it out less often than not -- Swords to Plowshares, Path to Exile and Deadly
   // Rollick all record `exile target creature` with `toZone: null`, while Ephemerate happened to
