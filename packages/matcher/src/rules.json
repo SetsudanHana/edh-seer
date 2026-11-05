@@ -38,6 +38,7 @@
     "selection": "\\bscry\\b|\\bsurveil\\b|look at the top \\w+ cards?",
     "impulseDraw": "exile the top (?:\\w+ )?cards? of your library[\\s\\S]*?you may play",
     "neutraliseAura": "(?:^|\\n)enchant (?<class>[^\\n]+)(?=[\\s\\S]*?enchanted (?:creature|permanent)[^.]*?(?:loses all (?:other card types and )?abilities|is a colou?rless land))",
+    "ownSpellsCostMore": "\\bspells you cast cost (?:\\{[^}]+\\})+ more\\b",
     "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't",
     "typedRemoval": "(?:destroy|exile)[^.:]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
     "exileRemoval": "exile[^.:]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
@@ -224,9 +225,9 @@
     {
       "id": "stax.effect",
       "category": "stax",
-      "match": [{ "op": "effectKind", "in": ["tax"] }],
-      "not": [{ "op": "countsAsLand" }],
-      "why": "`forced-sacrifice` is deliberately excluded: the tagger labels edict removal with that kind too, so including it flags Generous Gift as stax."
+      "match": [{ "op": "effectKind", "in": ["tax"], "notSelf": true }],
+      "not": [{ "op": "countsAsLand" }, { "op": "oracle", "pattern": "ownSpellsCostMore" }],
+      "why": "`forced-sacrifice` is deliberately excluded: the tagger labels edict removal with that kind too, so including it flags Generous Gift as stax. STAX TAXES OTHER PLAYERS (#1530): a tax on the card itself (Strive and \"costs more for each target beyond the first\": Launch the Fleet, Officious Interrogation; `subject.self`, read per ability) and a tax on the caster's own spells (\"Red spells you cast cost {R} more\": the Leeches, Geist-Fueled Scarecrow) are drawbacks, not stax. The own-spell tax is read from the printed text, not from the derived subject: the subject is `control: you` for it, but also for Onakke Oathkeeper and Heat Wave (\"creatures can't attack planeswalkers you control unless ...\"), which tax the opponent, and the subject types (`spell`, `creature`) do not tell them apart. CEILING: the own-spell refusal is card-level, so a card with that line AND a real tax would lose stax (0 today). CEILING: Fireball's \"This spell costs {1} more to cast for each target beyond the first\" derives a tax with `control: any` and no `self` flag, so it stays stax (a derive defect; the Strive cards derive `self`)."
     },
     {
       "id": "ramp.costReduction",
