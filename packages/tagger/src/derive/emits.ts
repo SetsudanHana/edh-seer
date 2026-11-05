@@ -804,16 +804,26 @@ const PT_DEFINITION = /\b(?:power|toughness)(?: and toughness)? (?:is|are) (?:ea
 const PT_CARRIER_VERBS: ReadonlySet<string> = new Set(["modify-pt", "create", "grant-ability", "animate", "other"]);
 export const definesPowerToughness = (a: Action): boolean => !PT_CARRIER_VERBS.has(a.verb ?? "") && PT_DEFINITION.test(a.object ?? "");
 
+const QUANTITY_WORDS: ReadonlySet<string> = new Set(["a", "an", "the", "x", "y", "that", "many", "number", "of", "another", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "twelve", "twenty"]);
+/** The words between "with" and the counter kind name only an amount: "a", "three", "x", "5", "that many", "a number of" (The Eleventh Doctor). */
+function isQuantity(gap: string): boolean {
+  const words = gap.trim().split(" ");
+  return words.length <= 4 && words.every((w) => QUANTITY_WORDS.has(w) || /^\d+$/.test(w));
+}
+
 /** "exile that card with a blood counter on it instead", "exile it with three time counters on it": the counter of this KIND is put on what the sentence exiles (#1523), so the card is in exile. The words between
  *  the last "exile(s)" before the phrase and its "with" must not return the card or put it onto the battlefield: "exile target creature, then return that card ... with a +1/+1 counter on it" (Daydream) is a battlefield
- *  permanent's counter. `exiled` is no verb here ("exiled cards with hit counters on them" is a card already there). Index scans and one anchored regex, no nested quantifier. */
+ *  permanent's counter. `exiled` is no verb here ("exiled cards with hit counters on them" is a card already there). Index scans and one anchored regex, no nested quantifier.
+ *  CEILING: two limits. (1) Only the "with <quantity> <kind> counters on it" shape is read, not "exile it and put a hit counter on it" (Ravenloft Adventurer, Etrata, Jhoira of the Ghitu, Tasha, Mairsil, Lara Croft, Myra ...):
+ *  those keep feeding battlefield counter payoffs through the untyped wildcard, about 16 cards and roughly 1,800 false reasons (reviewer's estimate from Ravenloft Adventurer 110, Etrata 110, Jhoira 113 each). (2) The quantity
+ *  between "with" and the kind is at most four words from a closed list (`QUANTITY_WORDS`) or digits; a longer or unlisted amount ("with a number of time counters equal to its mana value" is listed) is not read. */
 function exilesWithCounter(clauseText: string, kind: string | undefined): boolean {
   if (!kind) return false;
   const needle = `${kind.toLowerCase()} counter`;
   for (const sentence of clauseText.toLowerCase().split(".")) {
     for (let at = sentence.indexOf(needle); at >= 0; at = sentence.indexOf(needle, at + 1)) {
       const withAt = sentence.lastIndexOf(" with ", at);
-      if (withAt < 0 || at - withAt > 16) continue;
+      if (withAt < 0 || !isQuantity(sentence.slice(withAt + 6, at))) continue;
       if (!/^counters? on (?:it|them|that card|those cards)\b/.test(sentence.slice(at + kind.length + 1))) continue;
       const head = sentence.slice(0, withAt);
       let exileAt = -1;

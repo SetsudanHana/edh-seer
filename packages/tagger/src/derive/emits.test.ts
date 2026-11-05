@@ -808,6 +808,8 @@ describe("a counter on an exiled card is stamped zone exile", () => {
     ["three egg counters", "If Darigaaz would die, instead exile it with three egg counters on it."],
     ["three time counters", "Counter target spell. If the spell is countered this way, exile it with three time counters on it instead of putting it into its owner's graveyard."],
     ["a void counter", "If a card would be put into an opponent's graveyard from anywhere, instead exile it with a void counter on it."],
+    ["a number of time counters", "Whenever The Eleventh Doctor deals combat damage to a player, you may exile a card from your hand with a number of time counters on it equal to its mana value."],
+    ["X delay counters", "Target spell's controller exiles it with X delay counters on it."],
   ])("%s", (object, text) => { expect(zoneOf(object, text)).toBe("exile"); });
   test.each([
     ["a +1/+1 counter", "Exile target creature you control, then return that card to the battlefield under its owner's control with a +1/+1 counter on it."],
