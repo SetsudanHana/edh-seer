@@ -273,3 +273,38 @@ describe("a card the search found on the battlefield or in a hand has no graveya
     expect(zonesOfHalves(s)).toEqual(["graveyard", "hand", "library"]);
   });
 });
+
+describe("every zone half carries the printed 'if' gate of its one exile (#1311 round 3)", () => {
+  const halvesOf = (abilities: Ab) => abilities.filter((a) => (a.emits ?? []).some((e) => e.verb === "exiled" && ["graveyard", "hand", "library"].includes(e.subject.fromZone ?? "")));
+  test("Deicide: 'If the exiled card is a God card' gates the hand and the library half", () => {
+    const text = "Exile target enchantment. If the exiled card is a God card, search its controller's graveyard, hand, and library for any number of cards with the same name as that card and exile them. Then that player shuffles.";
+    const { abilities } = deriveAbilities([{ id: 1, abilityType: "spell", actions: [A("exile", "target enchantment", "battlefield", "exile"), A("search", "any number of cards with the same name as that card", "graveyard"), A("search", "any number of cards with the same name as that card", "hand"), A("search", "any number of cards with the same name as that card", "library"), A("exile", "cards found by search", null, "exile"), A("shuffle", "that player's library")] }] as never, "Deicide", { 1: text }, undefined, text);
+    const halves = halvesOf(abilities);
+    expect(halves.length).toBe(2);
+    expect(halves.every((a) => a.gate !== undefined)).toBe(true);
+  });
+  test("Pick the Brain: the delirium gate is on the hand and the library half", () => {
+    const text = "Delirium — If there are four or more card types among cards in your graveyard, search that player's graveyard, hand, and library for any number of cards with the same name as the exiled card, exile those cards, then that player shuffles.";
+    const oracle = `Target opponent reveals their hand. You choose a nonland card from it and exile that card.\n${text}`;
+    const { abilities } = deriveAbilities([{ id: 2, abilityType: "spell", actions: [A("search", "target player's graveyard, hand, and library for any number of cards with the same name as the exiled card"), A("exile", "those cards"), A("shuffle", "target player's library")] }] as never, "Pick the Brain", { 2: text }, undefined, oracle);
+    const halves = halvesOf(abilities);
+    expect(halves.length).toBe(2);
+    expect(halves.every((a) => a.gate !== undefined)).toBe(true);
+  });
+  test("Invasive Surgery: all three halves are gated, and none is typed 'spell'", () => {
+    const text = "Delirium — If there are four or more card types among cards in your graveyard, search the graveyard, hand, and library of that spell's controller for any number of cards with the same name as that spell, exile those cards, then that player shuffles.";
+    const { abilities } = deriveAbilities([{ id: 1, abilityType: "spell", actions: [A("counter-spell", "target sorcery spell")] },
+      { id: 2, abilityType: "spell", actions: [A("search", "any number of cards with the same name as that spell", "graveyard"), A("search", "any number of cards with the same name as that spell", "hand"), A("search", "any number of cards with the same name as that spell", "library"), A("exile", "those cards", null, "exile"), A("shuffle", "that player's library")] }] as never,
+    "Invasive Surgery", { 1: "Counter target sorcery spell.", 2: text }, undefined, `Counter target sorcery spell.\n${text}`);
+    const halves = halvesOf(abilities);
+    expect(halves.length).toBe(3);
+    expect(halves.every((a) => a.gate !== undefined)).toBe(true);
+  });
+  test("Invasive Surgery: the cards named after 'that spell' are not typed 'spell' (search emit and halves)", () => {
+    const text = "Delirium — If there are four or more card types among cards in your graveyard, search the graveyard, hand, and library of that spell's controller for any number of cards with the same name as that spell, exile those cards, then that player shuffles.";
+    const { abilities } = deriveAbilities([{ id: 2, abilityType: "spell", actions: [A("search", "any number of cards with the same name as that spell", "graveyard"), A("search", "any number of cards with the same name as that spell", "hand"), A("search", "any number of cards with the same name as that spell", "library"), A("exile", "those cards", null, "exile"), A("shuffle", "that player's library")] }] as never,
+    "Invasive Surgery", { 2: text }, undefined, text);
+    const typed = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.subject.type === "spell");
+    expect(typed).toEqual([]);
+  });
+});

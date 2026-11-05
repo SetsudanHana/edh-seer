@@ -621,7 +621,7 @@ import { chosenColorOf } from "./chosen-color.js";
 // 450: #1501 -- a power/toughness definition filed under a zone verb (Seize the Storm's Elemental token, exile) is a CDA and emits no zone move. derive-impact vs 449: 1 row changed; pair reasons -82 / +0, loss-classify lost 82 (class 41, ambiguous 41, unmatched 0), every one the token as producer through its false exiled/leaves-graveyard self emit; role-ratchet 0/0; dropped-clauses 4,913 -> 4,913.
 // 451: #1502 -- An end-step exile of a token its maker just made is claimed by the maker's own leaves/exiled emits (6 unclaimed battlefield exiles: Zektar Shrine Expedition, Gruesome Encore, Living Laser, Nahiri, Flamerush Rider, Altair; plus the zoneless ones); a model exile whose toZone is battlefield is a put (Gruesome Encore: no false graveyard exile, its Exile it is a battlefield exile of the creature); a trailing 'unless' on the next-end-step token cleanup is read (Sauron: Wraith creature token exiled from the battlefield).
 // 452: #1496 -- A card that leaves its own graveyard leaves its owner's: self returns and exiles from a graveyard are control you, not any
-// 453: #1311 -- a multi-zone exile is one `exiled` emit per zone it names (`splitMultiZoneExiles`, before `collapseZoneSearches`): a search over 'graveyard, hand, and library' followed by 'exile them' (Surgical Extraction, Cranial Extraction, Slaughter Games, Lost Legacy, Memoricide, Eradicate, The End ...; zones from the stored search run, else the printed header of the one search) and an exile whose object ends in a 'hand and graveyard' list (Identity Crisis, Thought Distortion, Ashiok's -10). OWNER RULING 2026-11-05: on these hate cards 'its owner's / its controller's / that spell's controller's / that player's' (with a target opponent / target player / damaged player before it) is the opponent's, so every half is `opp` (`Action.fromOwner`, a field and not an edit of the object, so 'those cards' keeps its amount: Ancient Vendetta 'up to four'); Invasive Surgery's graveyard half is no longer your graveyard. CR 903.5b: a card found on the battlefield or in a hand has no graveyard copy, so that half is not emitted (Crumble to Dust, Eradicate, Scour, Splinter, Deicide, The End, Sowing Salt, Lobotomy, Pick the Brain, Reap Intellect, Shimian Specter; a CEILING). A card-typed hand/library half of a search no longer reads `spell` (Quash). OTHER_YARD learns 'that player's graveyard' (Pick the Brain's delirium count names yours). Census (DERIVE 452 stored + oracle text, exile sentences naming two or more of graveyard/hand/library): 110 cards, of which ~45 are the search-and-exile family. Measured (derive-impact 31b6ac6d -> final tree): 30 rows changed, 7 source flips (Deicide, Eradicate, Quash, Scour, Sowing Salt, Splinter grammar -> model: the new graveyard-hate effect subject differs between the readings; Crumble to Dust model -> grammar); role-ratchet gained 54 (27 cards x answer:graveyard + role:graveyardHate) lost 0; dropped-clauses 4,853 unchanged; loss-classify: 26 cards, lost 177 (self 118, class 42, unmatched 17), gained 422 (class 405, unmatched 17), GAINED->SELF 0. The unsplit cards are named in `splitMultiZoneExiles`' CEILING.
+// 453: #1311 -- a multi-zone exile is one `exiled` emit per zone it names (`splitMultiZoneExiles`, before `collapseZoneSearches`): a search over 'graveyard, hand, and library' followed by 'exile them' (Surgical Extraction, Cranial Extraction, Slaughter Games, Lost Legacy, Memoricide, Eradicate, The End ...; zones from the stored search run, else the printed header of the one search) and an exile whose object ends in a 'hand and graveyard' list (Identity Crisis, Thought Distortion, Ashiok's -10). OWNER RULING 2026-11-05: on these hate cards 'its owner's / its controller's / that spell's controller's / that player's' (with a target opponent / target player / damaged player before it) is the opponent's, so every half is `opp` (`Action.fromOwner`, a field and not an edit of the object, so 'those cards' keeps its amount: Ancient Vendetta 'up to four'); Invasive Surgery's graveyard half is no longer your graveyard. CR 903.5b: a card found on the battlefield or in a hand has no graveyard copy, so that half is not emitted (Crumble to Dust, Eradicate, Scour, Splinter, Deicide, The End, Sowing Salt, Lobotomy, Pick the Brain, Reap Intellect, Shimian Specter; a CEILING). A card-typed hand/library half of a search no longer reads `spell` (Quash, Invasive Surgery's 'any number of cards with the same name as that spell'; Counterbore's search emit too). Every zone half after the first carries its source exile's printed 'if' gate (`Action.splitFrom`: Deicide's God gate, the delirium gate of Pick the Brain and Invasive Surgery). OTHER_YARD learns 'that player's graveyard' (Pick the Brain's delirium count names yours). Census (DERIVE 452 stored + oracle text, exile sentences naming two or more of graveyard/hand/library): 110 cards, of which ~45 are the search-and-exile family. Measured (derive-impact 31b6ac6d -> final tree): 30 rows changed, 7 source flips (Deicide, Eradicate, Quash, Scour, Sowing Salt, Splinter grammar -> model: the new graveyard-hate effect subject differs between the readings; Crumble to Dust model -> grammar); role-ratchet gained 54 (27 cards x answer:graveyard + role:graveyardHate) lost 0; dropped-clauses 4,853 unchanged; loss-classify: 26 cards, lost 177 (self 118, class 42, unmatched 17), gained 422 (class 405, unmatched 17), GAINED->SELF 0. The unsplit cards are named in `splitMultiZoneExiles`' CEILING.
 export const DERIVE_VERSION = 453;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
@@ -2155,7 +2155,7 @@ function splitMultiZoneExiles(clause: ClauseRecord, text?: string, cardText = ""
       if (zones.length >= 2 && x?.verb === "exile" && foundObject && (!x.fromZone || zones.includes(x.fromZone)) && (!x.toZone || x.toZone === "exile")) {
         const theirs = searchOwnerOf(searchHeaderOf(text), before);
         const kept = nameIsLoneCopy(before) ? zones.filter((z) => z !== "graveyard") : zones;
-        out.push(...acts.slice(i, j), ...kept.map((z) => ({ ...x, ...(theirs ? { fromOwner: theirs } : {}), fromZone: z, toZone: "exile" }) as Action));
+        out.push(...acts.slice(i, j), ...kept.map((z, n) => ({ ...x, ...(theirs ? { fromOwner: theirs } : {}), ...(n > 0 ? { splitFrom: true } : {}), fromZone: z, toZone: "exile" }) as Action));
         i = j; changed = true; continue;
       }
       out.push(a);
@@ -2164,7 +2164,7 @@ function splitMultiZoneExiles(clause: ClauseRecord, text?: string, cardText = ""
     const tail = a.verb === "exile" && !a.fromZone ? ZONE_LIST_TAIL.exec((a.object ?? "").trim()) : null;
     if (tail && ZONE_OF_WORD(tail[1]!.toLowerCase()) !== ZONE_OF_WORD(tail[2]!.toLowerCase()) && !/ or |battlefield|\binto\b|\bonto\b/i.test(a.object ?? "")) {
       const owner = listOwnerOf((a.object ?? "").trim(), before !== "" ? before : cardLower);
-      out.push(...[tail[1]!, tail[2]!].map((w) => ({ ...a, ...(owner ? { fromOwner: owner } : {}), fromZone: ZONE_OF_WORD(w.toLowerCase()) }) as Action));
+      out.push(...[tail[1]!, tail[2]!].map((w, n) => ({ ...a, ...(owner ? { fromOwner: owner } : {}), ...(n > 0 ? { splitFrom: true } : {}), fromZone: ZONE_OF_WORD(w.toLowerCase()) }) as Action));
       changed = true; continue;
     }
     out.push(a);
@@ -3220,8 +3220,11 @@ export function deriveAbilities(
       clause = { ...clause, actions: rewritten };
     }
     // The trailing "if" of each action's sentence (#1357), read once per clause from the effect body (the text after the trigger preamble, an intervening if and an ability word).
-    const gateReads = clauseText ? effectGates(effectText(clauseText, cardName ?? ""), (clause.actions ?? []).map((a) => a.verb ?? "")) : undefined;
-    const alike = clauseText ? branchesAlike(effectText(clauseText, cardName ?? ""), (clause.actions ?? []).map((a) => a.verb ?? "")) : undefined;
+    // A SPLIT ZONE HALF IS THE SAME PRINTED VERB AS THE HALF BEFORE IT (#1311): the gates are matched to the printed verbs, so the later halves are left out of the list and read the first half's gate (`gateOf`).
+    const printedVerbs = (clause.actions ?? []).filter((a) => a.splitFrom !== true).map((a) => a.verb ?? "");
+    const gateReads = clauseText ? effectGates(effectText(clauseText, cardName ?? ""), printedVerbs) : undefined;
+    const alike = clauseText ? branchesAlike(effectText(clauseText, cardName ?? ""), printedVerbs) : undefined;
+    const printedIndexOf = (a: Action): number => (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(a) + 1).filter((x) => x.splitFrom !== true).length - 1;
     for (const action of clause.actions ?? []) {
       // A PRINTED "Casualty N" keyword line is the spell's own sacrifice outlet (Make Disappear):
       // Scryfall's keyword list drops the N, so the line itself is read. See `casualtySacrifice`.
@@ -3504,11 +3507,13 @@ export function deriveAbilities(
         && damagedPlayerIsOpponent(text, trigger?.subject.self === true, cardName)) {
         for (const e of emits) if (e.verb === "leaves" && e.subject.control === "any" && e.subject.zone === "graveyard") e.subject.control = "opp";
       }
+      // A split search-and-exile's "those cards" is the cards the search named (#1311): the strip reads that object (Invasive Surgery's halves).
+      const namedObject = (action.fromOwner === "opp" && antecedent !== undefined && antecedent !== "a player" ? antecedent : action.object ?? "").trim();
       // #1306 shape 2: "all cards from target spell's controller's graveyard" (Grip of Amnesia), "all cards with the same name as that spell from their graveyard" (Bloodbond March) move
       // CARDS in a graveyard; the word "spell" is only whose they are / what they are named after, so the emit is not typed `spell`.
-      if ((action.fromZone === "graveyard" || action.fromZone === "hand" || action.fromZone === "library") && /^(?:all )?cards?\b/i.test((action.object ?? "").trim())) {
+      if ((action.fromZone === "graveyard" || action.fromZone === "hand" || action.fromZone === "library") && /^(?:(?:all|any number of) )?cards?\b/i.test(namedObject)) {
         // ...but "with the same name as THAT spell" after "casts a creature spell" is a card of the spell's own type (Bloodbond March returns creature cards).
-        const named = /\bsame name as that spell\b/i.test(action.object ?? "") && trigger?.subject.type !== undefined && trigger.subject.type !== "spell" ? trigger.subject.type : undefined;
+        const named = /\bsame name as that spell\b/i.test(namedObject) && trigger?.subject.type !== undefined && trigger.subject.type !== "spell" ? trigger.subject.type : undefined;
         for (const e of emits) if (e.subject.type === "spell") { if (named !== undefined) e.subject.type = named; else delete e.subject.type; }
       }
       // #1266: THE CARD A TRIGGER EXILES is in the graveyard of whoever the trigger names: "Whenever a creature YOU control dies, exile it" (Promise of Tomorrow), "When this creature dies, exile it"
@@ -3960,7 +3965,7 @@ export function deriveAbilities(
       }
       // THE CONDITION THIS EFFECT IS GATED ON (#1357, owner 2026-10-27): an "if <condition>" that governs the action (trailing, in its own conjunct, or leading its sentence, #1357 part 2), parsed by the one `parseGate` and carried by THIS ability only (an ungated action of the
       // same clause has none). The deck demand it makes is the existing `conditionCares`, set on the ability itself: an instant has no trigger for the clause-level pass below to hang it on. See effect-gate.ts for what is no gate.
-      const gateText = gateReads?.gates[(clause.actions ?? []).indexOf(action)];
+      const gateText = gateReads?.gates[printedIndexOf(action)];
       if (gateText) {
         const otherwise = isOtherwiseGate(gateText);
         // THE FACE THE ABILITY IS PRINTED ON names itself: "~" in a back face's ability is the back face (Bruce Banner // The Incredible Hulk), never the front.
@@ -3974,7 +3979,7 @@ export function deriveAbilities(
         // The gate's OWN demand rides on the gate (the weigher reads only this); `conditionCares` below is the merged themes/ratings field, which also takes the trigger's intervening-if demand.
         ability.gate = parsedGate.kind === "unknown" && gateCares.length > 0 ? { ...parsedGate, cares: gateCares } : parsedGate;
         if (gateCares.length > 0) ability.conditionCares = gateCares;
-        if (!otherwise && alike?.[(clause.actions ?? []).indexOf(action)]) ability.otherwiseAlike = true;
+        if (!otherwise && alike?.[printedIndexOf(action)]) ability.otherwiseAlike = true;
       }
       // A RETURN THAT LANDS LATER (#801, Shirei): read on THIS action's own sentence, so an immediate
       // return beside a delayed one stays immediate (Gift of Immortality, Swift Warkite; review). The

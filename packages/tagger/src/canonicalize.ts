@@ -57,6 +57,8 @@ export interface Action {
   /** WHOSE ZONE A SPLIT MULTI-ZONE EXILE TAKES FROM, when the printed words (or the ruling on the search-and-exile hate cards, 2026-11-05) make it the opponent's (#1311, `splitMultiZoneExiles`). Set at derive time, never stored; it
    *  rides here instead of in the object string so a pronoun object ("those cards": Ancient Vendetta's `up to four`) still resolves to its antecedent. */
   fromOwner?: "opp";
+  /** A zone half of a split multi-zone exile that is NOT the first (#1311): it is the same printed "exile" as the half before it, so it shares that half's "if" gate. Set at derive time, never stored. */
+  splitFrom?: true;
 }
 
 export interface ClauseRecord {
