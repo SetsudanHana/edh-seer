@@ -6262,7 +6262,9 @@ describe("#1266 graveyard replacement effects", () => {
       { verb: "exile", object: "Sins of the Past" }] }], "Sins of the Past",
     { 1: "Until end of turn, you may cast target instant or sorcery card from your graveyard without paying its mana cost. If that spell would be put into your graveyard, exile it instead. Exile Sins of the Past." });
     const ex = a.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "exiled");
-    expect(ex.filter((e) => e.subject.fromZone === "stack")).toHaveLength(1);
+    // The rider's spell is the one NOT-self stack exile; the card's own named exile is self, and since #1310 it too leaves the stack (it is a spell's last line).
+    expect(ex.filter((e) => e.subject.fromZone === "stack" && e.subject.self !== true)).toHaveLength(1);
+    expect(ex.filter((e) => e.subject.self === true).every((e) => e.subject.fromZone === "stack")).toBe(true);
     expect(ex.some((e) => e.subject.self === true)).toBe(true);
   });
 
