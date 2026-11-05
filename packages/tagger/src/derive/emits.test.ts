@@ -821,6 +821,7 @@ describe("a counter on an exiled card is stamped zone exile", () => {
     ["a hit counter", "If a creature an opponent controls would die, instead exile it and put a hit counter on it."],
     ["a time counter", "Whenever you attack, exile cards from the top of your library until you exile a nonland card. Put three time counters on it. If it doesn't have suspend, it gains suspend."],
     ["a study counter", "Exile the top card of your library. If it's a land card, put it into your hand. Otherwise, put a study counter on it."],
+    ["four time counters", "Exile the top three cards of your library. You may play those cards until end of turn. Put four time counters on each of those cards that has suspend."],
     ["a fetch counter", "Whenever Pako attacks, exile the top card of each player's library and put a fetch counter on each of them."],
     ["four time counters", "Put four time counters on the exiled card. If it doesn't have suspend, it gains suspend."],
     ["a voyage counter", "Whenever a land you control enters, if Cosima is exiled, you may put a voyage counter on it."],
@@ -830,6 +831,7 @@ describe("a counter on an exiled card is stamped zone exile", () => {
     ["a +1/+1 counter", "Exile target creature you control, then return it to the battlefield. Put a +1/+1 counter on it."],
     ["X +1/+1 counters", "Exile target creature card from a graveyard. Create a 0/0 Fractal creature token. Put X +1/+1 counters on it."],
     ["a midway counter", "Exile target instant or sorcery card from your graveyard and choose an Attraction you control that doesn't have a midway counter on it. Put a midway counter on it."],
+    ["two +1/+1 counters", "If they guess right, exile that creature. Then you may reveal the name of an invader you control. If you do, put two +1/+1 counters on it."],
     ["two +1/+1 counters", "If they guess right, exile that creature. If they guess wrong, they lose 3 life. Then you may reveal the name of an invader. If you do, put two +1/+1 counters on it."],
   ])("%s is on a battlefield permanent: %s", (object, text) => { expect(zoneOf(object, text)).toBeUndefined(); });
 });

@@ -814,16 +814,21 @@ function isQuantity(gap: string): boolean {
 /** "exile that card with a blood counter on it instead", "exile it with three time counters on it", "exile it and put a hit counter on it": the counter of this KIND is put on what the sentence exiles (#1523), so the card is in exile.
  *  Two shapes. (a) "<exile> ... with <quantity> <kind> counters on it": the words between the last "exile(s)" before the phrase and its "with" must not return the card or put it onto the battlefield
  *  ("exile target creature, then return that card ... with a +1/+1 counter on it", Daydream, is a battlefield permanent's counter). (b) "<exile> ... put <quantity> <kind> counters on it/them/that card/each of them/the exiled card"
- *  (Ravenloft Adventurer, Etrata, Mairsil, Tasha, Suspend, "exile cards ... until you exile a nonland card. Put three time counters on it", Kang Prime): the exile is in the same sentence or the one just before it, and between the
+ *  (Ravenloft Adventurer, Etrata, Mairsil, Tasha, Suspend, "exile cards ... until you exile a nonland card. Put three time counters on it", Kang Prime): the exile is in the same sentence, the one just before it, or two before it when the middle one is a hand move or an impulse play of the exiled cards (`isExileFollowUp`), and between the
  *  exile and the "put" nothing returns the card, puts it onto the battlefield, creates a token or is a cost (a colon: "Exile this card from your graveyard: Tap target creature ... and put a stun counter on it",
  *  Constrictor Sage) -- except for "the exiled card", which names the exile outright (Jhoira of the Ghitu: "Exile a nonland card from your hand: Put four time counters on the exiled card").
  *  `exiled` is no verb here ("exiled cards with hit counters on them" is a card already there). Index scans and anchored regexes, no nested quantifier.
  *  CEILING: three limits. (1) The quantity between "with"/"put" and the kind is at most four words from a closed list (`QUANTITY_WORDS`) or digits; a longer or unlisted amount is not read.
- *  (2) Shape (b) reads two sentences back at most, the middle one only a "put it into your hand": "exile ... . Create a token. Put X +1/+1 counters on it" is refused, and so is a counter put three sentences after the exile
+ *  (2) Shape (b) reads two sentences back at most, and then only when the middle sentence is "put it/that card into your hand" (Kianne) or "you may play/cast those cards / it / that card ..." (Ecstatic Beauty); any other middle sentence refuses: "exile ... . Create a token. Put X +1/+1 counters on it" is refused, and so is a counter put three sentences after the exile
  *  (Syx, Robot Overlord reads a battlefield creature). "exiled this way" with no "exile" verb in the sentence or the two before is not read.
  *  (3) The pronoun's antecedent is not parsed: "exile it ... and put a counter on it" with "it" meaning another object in the sentence is stamped when no refused word stands between (the words above are the whole list). */
 const EXILED_PRONOUN = /^counters? on (?:it|them|that card|those cards|each of them|each of those cards|the exiled cards?)\b/;
 const NOT_EXILE_ONLY = ["return", "battlefield", " put ", "create", "onto", "choose"] as const;
+/** The one sentence allowed between an exile and a counter sentence two back: a card sent to the hand ("If it's a land card, put it into your hand", Kianne) or an impulse play of what was exiled ("You may play those cards until end of turn", Ecstatic Beauty). */
+function isExileFollowUp(sentence: string): boolean {
+  return sentence.endsWith("put it into your hand") || sentence.endsWith("put that card into your hand")
+    || sentence.startsWith("you may play those cards") || sentence.startsWith("you may cast those cards") || sentence.startsWith("you may play it ") || sentence.startsWith("you may play that card ");
+}
 function exilesWithCounter(clauseText: string, kind: string | undefined): boolean {
   if (!kind) return false;
   const needle = `${kind.toLowerCase()} counter`;
@@ -861,7 +866,10 @@ function exilesWithCounter(clauseText: string, kind: string | undefined): boolea
           const prev = sentences[i - back]!;
           let prevAt = -1;
           for (const m of prev.matchAll(/\bexiles?\b/g)) prevAt = m.index ?? -1;
-          if (prevAt >= 0) exile = [prev.slice(prevAt), ...sentences.slice(i - back + 1, i), lead].join(" ");
+          if (prevAt < 0) continue;
+          // Two back: the middle sentence must be a hand move or an impulse play of the exiled cards, nothing else (Syx: "Then you may reveal the name of an invader you control. If you do, put two +1/+1 counters on it").
+          if (back === 2 && !isExileFollowUp(sentences[i - 1]!)) continue;
+          exile = [prev.slice(prevAt), ...sentences.slice(i - back + 1, i), lead].join(" ");
         }
       }
       if (exile === "" || NOT_EXILE_ONLY.some((w) => exile.replace(" put it into your hand", "").includes(w))) continue;

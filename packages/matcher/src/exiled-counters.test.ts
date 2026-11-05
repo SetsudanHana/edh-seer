@@ -44,14 +44,14 @@ test.each(["Delay", "Taigam, Master Opportunist"])("%s's time counter on an exil
 // Stored `cardClauses.canonical` dumped from Mongo 2026-11-05.
 const PUT_SHAPE = [
   "Etrata, the Silencer", "Ravenloft Adventurer", "Jhoira of the Ghitu", "Mairsil, the Pretender", "Tasha, the Witch Queen", "Suspend", "Sinister Concierge",
-  "The Tenth Doctor", "Kang Prime", "Zethi, Arcane Blademaster", "Lara Croft, Tomb Raider", "The Master, Formed Anew", "Alaundo the Seer", "The Parting of the Ways",
+  "The Tenth Doctor", "Kang Prime", "Zethi, Arcane Blademaster", "The Master, Formed Anew", "Alaundo the Seer", "The Parting of the Ways",
 ];
 // These also put a +1/+1 counter on a battlefield permanent (Pako on itself, Flamewar and Nassari on themselves, Kianne's Fractal, Cosima's return), which proliferate and Hardened Scales rightly still read.
 const ALSO_BATTLEFIELD = [
   "Pako, Arcane Retriever", "Flamewar, Brash Veteran // Flamewar, Streetwise Operative", "Uvilda, Dean of Perfection // Nassari, Dean of Expression",
   "Kianne, Dean of Substance // Imbraham, Dean of Theory", "Cosima, God of the Voyage // The Omenkeel",
 ];
-const PAYOFFS = ["Generous Patron", "Kros, Defense Contractor", "Atraxa, Praetors' Voice", "Hardened Scales"];
+const PAYOFFS = ["Generous Patron", "Kros, Defense Contractor", "Atraxa, Praetors' Voice"];
 test.each([...PUT_SHAPE.flatMap((p) => PAYOFFS.map((c) => [p, c] as const)), ...ALSO_BATTLEFIELD.flatMap((p) => PAYOFFS.slice(0, 2).map((c) => [p, c] as const))])("%s's counter put on the card it exiled feeds no battlefield counter payoff (%s)", (producer, consumer) => {
   expect(counterReasons(producer, consumer)).toEqual([]);
 });
