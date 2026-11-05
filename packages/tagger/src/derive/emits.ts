@@ -391,6 +391,7 @@ function triggerClass(trigger: CounterTrigger): string | undefined {
   const subject = trigger.subject.trim();
   if (/^(?:~|this\b|it$)|\bcards?\b/i.test(subject)) return undefined;
   // "Whenever a creature deals damage to you, put a gold counter on IT" (Aurification, #1520): the creature that dealt it.
+  // CEILING: the bound creature is typed `creature` with no `scope: "target"`, so it does not reach its type's subtypes the way a target does (`targetReachesSubtype`): Curse of Stalked Prey's counter no longer feeds The Great Goblin, Invisible Woman, Cloaked Cadet or Mauhur (#1520).
   if (trigger.event === "damage-dealt") return /^an? (?:\w+ )?creatures?$/i.test(subject) ? subject : undefined;
   if (trigger.event === "enters") return /\bcontrol\b/i.test(subject) || trigger.control !== "you" ? subject : `${subject} you control`;
   const spell = trigger.event === "cast" ? /^an? ((?:nontoken |non-?\w+ )?(?:creature|artifact|enchantment|planeswalker|permanent|land)) spell$/i.exec(subject) : null;

@@ -8394,11 +8394,11 @@ describe("#1520 fix round", () => {
     expect(e.length).toBeGreaterThan(0);
     for (const x of e) expect(x.subject.self).toBe(true);
   });
-  test("Westvale Abbey: 'transform this land, then untap it' types the untap by no phrase the transform replaced", () => {
+  test("Westvale Abbey: 'transform this land, then untap it' types the untap `permanent`, whichever face is up", () => {
     const e = emitsOf([{ id: 3, abilityType: "activated", actions: [act("sacrifice", "five creatures", { amount: "5" }), act("transform", "this land"), act("untap", "it")] }],
       "Westvale Abbey // Ormendahl, Profane Prince", "{5}, {T}, Sacrifice five creatures: Transform this land, then untap it.", "Land").filter((x) => x.verb === "untaps");
     expect(e.length).toBeGreaterThan(0);
-    for (const x of e) { expect(x.subject.self).toBe(true); expect(x.subject.type).toBeUndefined(); }
+    for (const x of e) { expect(x.subject.self).toBe(true); expect(x.subject.type).toBe("permanent"); }
   });
   test("Glyph of Delusion: an instant's glyph counters go on the target creature, not on the card", () => {
     const text = "Put X glyph counters on target creature that target Wall blocked this turn, where X is the power of that blocked creature. The creature gains \"This creature doesn't untap during your untap step if it has a glyph counter on it\" and \"At the beginning of your upkeep, remove a glyph counter from this creature.\"";
