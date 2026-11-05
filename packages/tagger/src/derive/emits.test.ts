@@ -798,3 +798,22 @@ describe("a power/toughness definition is a CDA, not the zone move its verb name
     expect(e.length).toBeGreaterThan(0);
   });
 });
+
+/** #1523: a counter put on a card EXILED WITH IT is on a card in exile. Only when the counter's own phrase follows the exile ("exile it with three time counters on it"); a card exiled and then RETURNED with a counter
+ *  (Daydream) has the counter on a battlefield permanent, and another sentence's exile is not this counter's. */
+describe("a counter on an exiled card is stamped zone exile", () => {
+  const zoneOf = (object: string, text: string) => actionEmits({ verb: "add-counter", object }, text).find((e) => e.verb === "counter-added")?.subject.zone;
+  test.each([
+    ["a blood counter", "If a nontoken creature would die, exile that card with a blood counter on it instead."],
+    ["three egg counters", "If Darigaaz would die, instead exile it with three egg counters on it."],
+    ["three time counters", "Counter target spell. If the spell is countered this way, exile it with three time counters on it instead of putting it into its owner's graveyard."],
+    ["a void counter", "If a card would be put into an opponent's graveyard from anywhere, instead exile it with a void counter on it."],
+    ["a number of time counters", "Whenever The Eleventh Doctor deals combat damage to a player, you may exile a card from your hand with a number of time counters on it equal to its mana value."],
+    ["X delay counters", "Target spell's controller exiles it with X delay counters on it."],
+  ])("%s", (object, text) => { expect(zoneOf(object, text)).toBe("exile"); });
+  test.each([
+    ["a +1/+1 counter", "Exile target creature you control, then return that card to the battlefield under its owner's control with a +1/+1 counter on it."],
+    ["a finality counter", "Return a creature card from your graveyard to the battlefield with a finality counter on it. Exile Charnel Serenade with three time counters on it."],
+    ["a +1/+1 counter", "Put a +1/+1 counter on target creature."],
+  ])("%s is on the battlefield: %s", (object, text) => { expect(zoneOf(object, text)).toBeUndefined(); });
+});

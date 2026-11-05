@@ -4010,8 +4010,10 @@ function counterCostEdges({ p, c, h, pEvents, reasons }: PairScope): void {
     if (removal.subject.self === true) continue; // removes from ITSELF: nothing else can feed it
     const saga = p.tags.characteristics.subtypes.some((t) => t.toLowerCase() === "saga");
     const lore = saga && subjectMatches(characteristicsSubject(p.tags, p.card.name), want, h);
+    // "Remove a time counter from a permanent you control or SUSPENDED CARD you own" (Rift Elemental): the second half is a card in exile, which `counterAddMatches` refuses to a zoneless demand (#1523) and the filter does not carry.
+    const orSuspended = cost.includes("suspended card");
     const supply = lore ? undefined : pEvents.find((e) => e.verb === "counter-added" && e.subject.control !== "opp"
-      && counterAddMatches({ ...e.subject, self: undefined }, want, h));
+      && counterAddMatches({ ...e.subject, self: undefined, ...(orSuspended && e.subject.zone === "exile" ? { zone: undefined } : {}) }, want, h));
     if (!lore && !supply) continue;
     // The effect the cost pays for sits on a sibling ability of the same clause when derive split it.
     const paid = ca.effect.kind ? ca : c.tags.abilities.find((b) => b.clause === ca.clause && b.kind === ca.kind && b.effect.kind);
