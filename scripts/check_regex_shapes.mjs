@@ -149,11 +149,13 @@ export function shapesOf({ body }, line = "") {
   // (literal or \s): the run of spaces splits between the two many ways, retried from every start. #1469
   // (`(?:dealt to [a-z ]+ )?is halved`). An anchored `^…` pattern has one start, and CodeQL passes those here.
   for (const [a, b] of body.startsWith("^") ? [] : classes) {
-    const q = body[b + 1];
-    if (q !== "+" && q !== "*") continue;
+    const quant = body.slice(b + 1).match(/^(?:[*+]|\{\d*,\d*\})\??/);
+    if (!quant) continue;
     const cls = body.slice(a, b + 1);
-    if (cls.startsWith("[^") || !(cls.includes(" ") || cls.includes("\\s"))) continue;
-    const after = body.slice(b + 2).replace(/^\?/, "");
+    // A negated class matches a space unless it names one; a positive class only if it lists one.
+    const spaceCapable = cls.startsWith("[^") ? !(cls.includes(" ") || cls.includes("\\s")) : cls.includes(" ") || cls.includes("\\s");
+    if (!spaceCapable) continue;
+    const after = body.slice(b + 1 + quant[0].length).replace(/^\)/, "");
     if (after.startsWith(" ") || after.startsWith("\\s")) { hits.push("space-class-then-space"); break; }
   }
   return [...new Set(hits)];
@@ -237,6 +239,7 @@ const MUST_FLAG = [
   String.raw`const rest = s.replace(/[.,;]+(?= |$)/g, "");`,
   String.raw`if (/\bdamage (?:dealt to [a-z ]+ )?is halved\b/.test(t)) return "halved";`,
   String.raw`x.match(/[^ ]+ x/)`,
+  String.raw`const m = t.match(/\bif\s+([^.]{0,60}?)\s+would deal\b/i);`,
 ];
 const MUST_PASS = [
   String.raw`s.search(/ except\b/i)`,
