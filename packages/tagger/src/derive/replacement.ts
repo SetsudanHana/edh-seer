@@ -147,6 +147,14 @@ export function damageRecipientOf(clauseText: string): "creature" | "opponent" |
   }
 }
 
+/** THE SOURCE A DAMAGE MULTIPLIER NAMES (#1537): the phrase between "if" and "would deal" ("a source you control", "a red source you control", "a source an opponent controls"), so a doubler the grammar reads with a bare "that damage" object keeps its controller, type and colour.
+ *  Undefined for a phrase with a comma (a coin-flip lead-in, Desperate Gambit) or no such frame. */
+export function damageSourceOf(clauseText: string): string | undefined {
+  const m = clauseText.match(/\bif\s+([^.]{0,60}?)\s+would deal\b/i);
+  const source = m?.[1]?.trim();
+  return source && !source.includes(",") ? source : undefined;
+}
+
 /** True when a `damage-multiplier` read off this clause really multiplies or adds. An empty text carries no
  *  evidence either way, so it is not refused (the kind was read without the clause at hand). */
 export function isDamageMultiplication(clauseText: string): boolean {
