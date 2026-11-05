@@ -23,7 +23,7 @@ import { librarySearchOwner, printsSearch } from "./library-search.js";
 import { damageDealerOf, granteeDealer, grantedDealerIsGranter, damageHitsSelf, damageRecipient, playerOnlyRecipient } from "./damage-recipient.js";
 import { actionRecipients, damagedPlayerIsOpponent, sacrificerIsTargeted, sentenceNamesAPlayer, thatPlayerIsOpponent, victimDeclines } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
-import { namesAClass, parseSubject, parseCounter } from "./subject.js";
+import { CARD_TYPES, namesAClass, parseSubject, parseCounter } from "./subject.js";
 import { parse as parseFilterRaw, stableJson } from "../grammar/filter.js";
 import { memoizeCloned } from "../memo.js";
 import { selfAsTilde } from "../grammar/self-as-tilde.js";
@@ -623,7 +623,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 452: #1496 -- A card that leaves its own graveyard leaves its owner's: self returns and exiles from a graveyard are control you, not any
 // 453: #1311 -- a multi-zone exile is one `exiled` emit per zone it names (`splitMultiZoneExiles`, before `collapseZoneSearches`): a search over 'graveyard, hand, and library' followed by 'exile them' (Surgical Extraction, Cranial Extraction, Slaughter Games, Lost Legacy, Memoricide, Eradicate, The End ...; zones from the stored search run, else the printed header of the one search) and an exile whose object ends in a 'hand and graveyard' list (Identity Crisis, Thought Distortion, Ashiok's -10). OWNER RULING 2026-11-05: on these hate cards 'its owner's / its controller's / that spell's controller's / that player's' (with a target opponent / target player / damaged player before it) is the opponent's, so every half is `opp` (`Action.fromOwner`, a field and not an edit of the object, so 'those cards' keeps its amount: Ancient Vendetta 'up to four'); Invasive Surgery's graveyard half is no longer your graveyard. CR 903.5b: a card found on the battlefield or in a hand has no graveyard copy, so that half is not emitted (Crumble to Dust, Eradicate, Scour, Splinter, Deicide, The End, Sowing Salt, Lobotomy, Pick the Brain, Reap Intellect, Shimian Specter; a CEILING). A card-typed hand/library half of a search no longer reads `spell` (Quash, Invasive Surgery's 'any number of cards with the same name as that spell'; Counterbore's search emit too). Every zone half after the first carries its source exile's printed 'if' gate (`Action.splitFrom`: Deicide's God gate, the delirium gate of Pick the Brain and Invasive Surgery). OTHER_YARD learns 'that player's graveyard' (Pick the Brain's delirium count names yours). Census (DERIVE 452 stored + oracle text, exile sentences naming two or more of graveyard/hand/library): 110 cards, of which ~45 are the search-and-exile family. Measured (derive-impact 31b6ac6d -> final tree): 30 rows changed, 7 source flips (Deicide, Eradicate, Quash, Scour, Sowing Salt, Splinter grammar -> model: the new graveyard-hate effect subject differs between the readings; Crumble to Dust model -> grammar); role-ratchet gained 54 (27 cards x answer:graveyard + role:graveyardHate) lost 0; dropped-clauses 4,853 unchanged; loss-classify: 26 cards, lost 177 (self 118, class 42, unmatched 17), gained 422 (class 405, unmatched 17), GAINED->SELF 0. The unsplit cards are named in `splitMultiZoneExiles`' CEILING.
 // 454: #1310 -- An instant or sorcery's own 'Exile <this card>' with no stated origin (Rise of the Eldrazi, Invoke Calamity, Sins of the Past, Game Plan, Harness Infinity) is an exile from the stack (`fromZone: "stack"` on its `exiled` and `leaves` self emits, kind on-cast): it stops feeding 'whenever a creature / artifact / permanent is exiled' readers (Kaya's Ghostform, Soulherder, Syr Vondam, The War Games, Hero of Bretagard ...) and keeps The War Doctor's 'put into exile from anywhere'. MATCHER, same change: `auraHostLeaves` refuses a stack-origin leave (CR 704.5m: an Aura goes to the graveyard when its HOST leaves the battlefield; a spell leaving the stack removes none). Measured (derive-impact 118d3072 -> the #1310 tree): 85 rows changed, 0 source flips; pair reasons of changed rows -65 lost (dies 44, exiled 15, leaves 6), 0 gained; loss-classify 5 cards, lost 65 (self 48, class 15, ambiguous 2), GAINED->SELF 0; role-ratchet 0/0, dropped-clauses 4,853 unchanged. Matcher-only census (224 stack-leaving producers x 1,547 leaves/dies/exiled consumers, BASE vs HEAD matcher on the same rows): lost dies:aura 1,525 (98 producers), leaves:aura 272 (91), dies:enchantment 90 (Eye of Nidhogg), gained 0. Kept: every graveyard-leave reason (Murktide Regent, Fang ...) and every The War Doctor exile reason.
-export const DERIVE_VERSION = 454;
+// 455: #1518 -- A self emit takes nothing from words of the card's NAME: its subtype is dropped when it is a name word the card's type line lacks ('exile Turtles in Time', 'exile Gerrard, Weatherlight Hero'; The Locust God's real god stays), and its type, read off the same words, is replaced by the card's printed card types (Urza's Sylex land -> artifact, +3 pairs; Gerrard -3, no artifact). 16 rows changed, pair reasons +3/-3 (exiled), role-ratchet +0/-0, dropped-clauses 4,853 -> 4,853.
+export const DERIVE_VERSION = 455;
 
 /** "Whenever another creature you control attacks, IT gains trample" (Stonehoof Chieftain): a grant
  *  to the triggering object. "they" covers the batched "one or more creatures ... attack". */
@@ -4578,6 +4579,30 @@ function foldRepeatedVerbTwins(abilities: Ability[], clauseTexts?: Record<number
  *  CEILING: only an IDENTICAL twin folds; a branch that differs (Grow from the Ashes' two basic lands against one, a kicked amount) stays, and the alternative still counts as a second ability. An "instead"
  *  inside a quoted granted ability is not excluded (15 corpus cards, none with an identical twin at 406). */
 const hasInstead = (text: string | undefined): boolean => text !== undefined && /\b(?:instead|your choice of)\b/i.test(text.replace(/\([^()]*\)/g, ""));
+/** #1518: a self emit's subtype that is a word of the card's own name (plural allowed) and not one of the card's own subtypes is the name read as a noun phrase, so it is dropped.
+ *  A subtype the card really has stays (The Locust God is a God). The emit's type, read off the same words, is replaced by the card's own printed types. A counter kind is its own field and is left alone. CEILING: any word of the name matches, so a subtype the card's text names that
+ *  happens to be in the name too (Desert Nomads' "Deserts") is dropped from its self subject as well; that subject is not a class there anyway. */
+function stripNameSubtype(a: Ability, cardName: string | undefined, ownSubtypes: readonly string[], ownTypes: readonly string[]): Ability {
+  if (!cardName || !a.emits?.some((e) => e.subject.self === true && e.subject.subtype !== undefined)) return a;
+  const words = new Set(cardName.toLowerCase().split(/[^a-z0-9'-]+/).filter((w) => w !== ""));
+  const own = new Set(ownSubtypes.map((t) => t.toLowerCase()));
+  const fromName = (t: string): boolean => !own.has(t.toLowerCase()) && (words.has(t.toLowerCase()) || words.has(`${t.toLowerCase()}s`) || words.has(`${t.toLowerCase()}es`));
+  return {
+    ...a,
+    emits: a.emits.map((e) => {
+      const st = e.subject.subtype;
+      if (e.subject.self !== true || st === undefined || e.subject.counter !== undefined) return e;
+      const kept = [st].flat().filter((t) => !fromName(t));
+      if (kept.length === [st].flat().length) return e;
+      // THE TYPE GOES WITH THE SUBTYPE: it was read off the same name words (Urza's Sylex: `urza's` -> land), and an untyped self exile is refused by every class demand, so the card's own printed types
+      // stand in -- The Stone Brain is the artifact it exiles.
+      const { subtype: _st, type: _ty, ...rest } = e.subject;
+      const types = ownTypes.map((t) => t.toLowerCase()).filter((t) => (CARD_TYPES as readonly string[]).includes(t));
+      return { ...e, subject: { ...rest, ...(types.length === 0 ? {} : { type: types.length === 1 ? types[0]! : types }), ...(kept.length === 0 ? {} : { subtype: kept.length === 1 ? kept[0]! : kept }) } };
+    }),
+  };
+}
+
 export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: boolean; collapseZoneSearches?: boolean } = {}): CardTags {
   const chars = input.characteristics;
   const derived = deriveAbilitiesOf(input, opts);
@@ -4656,6 +4681,8 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
   const spellOnceRaw = pinned.map((a) => a.kind === "on-cast" || a.repeats === "once" || !isSpellFace(a.face) ? a : { ...a, repeats: "once" as const })
     // A SELF "YOU LOSE THE GAME" ABILITY CLAIMS NOTHING (#1252, #1264), decided on the FINAL emits: every control fill above has run.
     .map(stampSelfLoss)
+    // A SELF SUBJECT TAKES NO SUBTYPE FROM THE CARD'S NAME (#1518): "Exile Turtles in Time" / "exile Gerrard, Weatherlight Hero" parse the name as a noun phrase, and a word of it (`turtle`, `hero`, `stone`) landed in `subtype`.
+    .map((a) => stripNameSubtype(a, input.name, chars.subtypes, (chars.faces ? chars.faces[a.face ?? 0]?.types : undefined) ?? chars.types))
     // A TRIGGER THAT NAMES ONLY CARDS HEARS NO TOKEN (#1495): read off the clause's stored subject phrase, on every ability that carries the trigger.
     .map((a) => a.trigger === undefined ? a : { ...a, trigger: cardsNotTokens(a.trigger, input.clauses.filter((c) => normalizeTriggerVerb(c.trigger?.event ?? "") === a.trigger!.verbs[0]).map((c) => c.trigger?.subject ?? "")) })
     .map((a, _i, all) => stampManaRider(a, all, input.clauseTexts))
