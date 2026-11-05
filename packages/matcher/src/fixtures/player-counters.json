@@ -1,0 +1,930 @@
+{
+ "Harnessed Lightning": {
+  "source": {
+   "name": "Harnessed Lightning",
+   "typeLine": "Instant",
+   "oracleText": "Choose target creature. You get {E}{E}{E} (three energy counters), then you may pay any amount of {E}. Harnessed Lightning deals that much damage to that creature.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{1}{R}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "a446b9f8-cb22-408a-93ff-bee44a0dccc0"
+    }
+   ],
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{E}{E}{E}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "any amount of {E} paid",
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Crypt Cobra": {
+  "source": {
+   "name": "Crypt Cobra",
+   "typeLine": "Creature — Snake",
+   "oracleText": "Whenever this creature attacks and isn't blocked, defending player gets a poison counter. (A player with ten or more poison counters loses the game.)",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{3}{B}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Poison Counter",
+     "typeLine": "Card",
+     "printingId": "8a9cb417-8709-4336-be36-2fb0cea31fe1"
+    }
+   ],
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "poison",
+      "amount": "1",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Atraxa, Praetors' Voice": {
+  "source": {
+   "name": "Atraxa, Praetors' Voice",
+   "typeLine": "Legendary Creature — Phyrexian Angel Horror",
+   "oracleText": "Flying, vigilance, deathtouch, lifelink\nAt the beginning of your end step, proliferate. (Choose any number of permanents and/or players, then give each another counter of each kind already there.)",
+   "keywords": [
+    "Deathtouch",
+    "Flying",
+    "Lifelink",
+    "Vigilance",
+    "Proliferate"
+   ],
+   "colors": [
+    "B",
+    "G",
+    "U",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "G",
+    "U",
+    "W"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{G}{W}{U}{B}",
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, vigilance, deathtouch, lifelink",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "proliferate",
+      "object": "each counter on any number of targets",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Contentious Plan": {
+  "source": {
+   "name": "Contentious Plan",
+   "typeLine": "Sorcery",
+   "oracleText": "Proliferate. (Choose any number of permanents and/or players, then give each another counter of each kind already there.)\nDraw a card.",
+   "keywords": [
+    "Proliferate"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{1}{U}",
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "proliferate",
+      "object": "",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Territorial Gorger": {
+  "source": {
+   "name": "Territorial Gorger",
+   "typeLine": "Creature — Gremlin",
+   "oracleText": "Trample\nWhenever you get one or more {E} (energy counters), this creature gets +2/+2 until end of turn.",
+   "keywords": [
+    "Trample"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{3}{R}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "a446b9f8-cb22-408a-93ff-bee44a0dccc0"
+    }
+   ],
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "counter-added",
+     "subject": "energy",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+2/+2",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Mizzix of the Izmagnus": {
+  "source": {
+   "name": "Mizzix of the Izmagnus",
+   "typeLine": "Legendary Creature — Goblin Wizard",
+   "oracleText": "Whenever you cast an instant or sorcery spell with mana value greater than the number of experience counters you have, you get an experience counter.\nInstant and sorcery spells you cast cost {1} less to cast for each experience counter you have.",
+   "keywords": [],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{2}{U}{R}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Experience",
+     "typeLine": "Card",
+     "printingId": "1374bfa2-9714-486d-90aa-7a9b8d8ef3a8"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Mizzix of the Izmagnus",
+     "typeLine": "Legendary Creature — Goblin Wizard",
+     "printingId": "b6b71c74-6aec-4d66-b9ff-7270ce27920f"
+    }
+   ],
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant or sorcery spell with mana value greater than the number of experience counters you have",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "experience",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "instant and sorcery spells you cast cost {1} less to cast for each experience counter you have",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Meren of Clan Nel Toth": {
+  "source": {
+   "name": "Meren of Clan Nel Toth",
+   "typeLine": "Legendary Creature — Human Shaman",
+   "oracleText": "Whenever another creature you control dies, you get an experience counter.\nAt the beginning of your end step, choose target creature card in your graveyard. If that card's mana value is less than or equal to the number of experience counters you have, return it to the battlefield. Otherwise, put it into your hand.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{2}{B}{G}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Experience",
+     "typeLine": "Card",
+     "printingId": "edf99449-b176-460b-afb3-14a35e3ae35a"
+    }
+   ],
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "another creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "experience counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target creature card in your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "target creature card in your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Generous Patron": {
+  "source": {
+   "name": "Generous Patron",
+   "typeLine": "Creature — Elf Advisor",
+   "oracleText": "When this creature enters, support 2. (Put a +1/+1 counter on each of up to two other target creatures.)\nWhenever you put one or more counters on a creature you don't control, draw a card.",
+   "keywords": [
+    "Support"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{2}{G}",
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "support",
+      "object": "a creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "counter-added",
+     "subject": "a creature you don't control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Kros, Defense Contractor": {
+  "source": {
+   "name": "Kros, Defense Contractor",
+   "typeLine": "Legendary Creature — Cat Advisor",
+   "oracleText": "At the beginning of your upkeep, put a shield counter on target creature an opponent controls.\nWhenever you put one or more counters on a creature you don't control, tap that creature and goad it. It gains trample until your next turn. (Until your next turn, that creature attacks each combat if able and attacks a player other than you if able.)",
+   "keywords": [
+    "Goad"
+   ],
+   "colors": [
+    "G",
+    "U",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G",
+    "U",
+    "W"
+   ],
+   "power": "2",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{1}{G}{W}{U}",
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "shield",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "counter-added",
+     "subject": "a creature you don't control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "goad",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "trample until your next turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Bold Plagiarist": {
+  "source": {
+   "name": "Bold Plagiarist",
+   "typeLine": "Creature — Vampire Rogue",
+   "oracleText": "Flash\nWhenever an opponent puts one or more counters on a creature they control, they put the same number and kind of counters on this creature.",
+   "keywords": [
+    "Flash"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "layout": "normal",
+   "manaCost": "{3}{B}",
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "counter-added",
+     "subject": "a creature an opponent controls",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "the same number and kind of counters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Metallic Mimic": {
+  "source": {
+   "name": "Metallic Mimic",
+   "typeLine": "Artifact Creature — Shapeshifter",
+   "oracleText": "As this creature enters, choose a creature type.\nThis creature is the chosen type in addition to its other types.\nEach other creature you control of the chosen type enters with an additional +1/+1 counter on it.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 2,
+   "colorIdentity": [],
+   "power": "2",
+   "toughness": "1",
+   "layout": "normal",
+   "manaCost": "{2}",
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this creature enters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "this creature is the chosen type in addition to its other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1 counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Hardened Scales": {
+  "source": {
+   "name": "Hardened Scales",
+   "typeLine": "Enchantment",
+   "oracleText": "If one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 counters are put on it instead.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{G}",
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "amount": "N+1",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Winding Constrictor": {
+  "source": {
+   "name": "Winding Constrictor",
+   "typeLine": "Creature — Snake",
+   "oracleText": "If one or more counters would be put on an artifact or creature you control, that many plus one of each of those kinds of counters are put on that permanent instead.\nIf you would get one or more counters, you get that many plus one of each of those kinds of counters instead.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{B}{G}",
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "that many plus one of each of those kinds of counters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "that many plus one of each of those kinds of counters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Fynn, the Fangbearer": {
+  "source": {
+   "name": "Fynn, the Fangbearer",
+   "typeLine": "Legendary Creature — Human Warrior",
+   "oracleText": "Deathtouch (Any amount of damage this deals to a creature is enough to destroy it.)\nWhenever a creature you control with deathtouch deals combat damage to a player, that player gets two poison counters. (A player with ten or more poison counters loses the game.)",
+   "keywords": [
+    "Deathtouch"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{1}{G}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Poison Counter",
+     "typeLine": "Card",
+     "printingId": "8a9cb417-8709-4336-be36-2fb0cea31fe1"
+    }
+   ],
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Deathtouch",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "a creature you control with deathtouch",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "poison",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Aether Herder": {
+  "source": {
+   "name": "Aether Herder",
+   "typeLine": "Creature — Elf Artificer Druid",
+   "oracleText": "When this creature enters, you get {E}{E} (two energy counters).\nWhenever this creature attacks, you may pay {E}{E}. If you do, create a 1/1 colorless Servo artifact creature token.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{3}{G}",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Energy Reserve",
+     "typeLine": "Card",
+     "printingId": "a446b9f8-cb22-408a-93ff-bee44a0dccc0"
+    },
+    {
+     "component": "token",
+     "name": "Servo",
+     "typeLine": "Token Artifact Creature — Servo",
+     "printingId": "e1980809-4c81-4080-92cd-31776962a4e1"
+    }
+   ],
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "energy",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 colorless Servo artifact creature token",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ }
+}

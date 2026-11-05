@@ -316,9 +316,9 @@ export function graveyardFillMatches(producer: SubjectFilter, consumer: SubjectF
  *  proliferate adds) wildcards type/subtype/counter because the kind is unknown; control/token
  *  stay strict. A counter-TYPED producer (a normal counter placer) delegates to subjectMatches so
  *  its kind must match. */
-/** Counters that sit on a PLAYER, never on a permanent: energy (CR 107.14), poison (122.1f), rad
+/** Counters that sit on a PLAYER, never on a permanent: energy (CR 107.14), ticket (107.17), poison (122.1f), rad
  *  (122.1i) and experience. */
-const PLAYER_COUNTERS: ReadonlySet<string> = new Set(["energy", "experience", "poison", "rad"]);
+const PLAYER_COUNTERS: ReadonlySet<string> = new Set(["energy", "experience", "poison", "rad", "ticket"]);
 
 /** A TARGET REACHES ANY PERMANENT OF ITS STATED TYPE (#1421): "put a +1/+1 counter on target creature" can land on a Goblin, so it satisfies "a Goblin you control with a counter"
  *  (The Great Goblin). Only for `scope: "target"`, and only the SUBTYPE narrowing the producer leaves unstated is dropped, and only when that subtype can be of the producer's type
@@ -345,6 +345,11 @@ export function counterAddMatches(producer: SubjectFilter, consumer: SubjectFilt
   // A kind MISMATCH is real information on either path: a +1/+1 placer is not a poison enabler.
   if (consumer.counter !== undefined && producer.counter !== undefined
     && consumer.counter !== producer.counter) return false;
+  // A PLAYER'S COUNTER IS NEVER ON A PERMANENT (#1526). An energy, experience, poison, rad or ticket emit goes on a player, so it never feeds a demand that names a creature or permanent to receive it
+  // (Generous Patron's "a creature you don't control"): 93 such producers fed three payoffs 279 false reasons through the untyped wildcard below. A demand with no recipient type ("a permanent or player":
+  // All Will Be One, Vorinclex) and a proliferate (which also chooses players) still take it.
+  if (producer.counter !== undefined && PLAYER_COUNTERS.has(producer.counter) && consumer.counter === undefined
+    && (arr(consumer.type).length > 0 || arr(consumer.subtype).length > 0)) return false;
   // A COUNTER ON A PERMANENT IS NEVER A PLAYER'S COUNTER. A kindless emit that names the permanent it
   // lands on (a card's own counters, "a counter on target creature") cannot be the energy Territorial
   // Gorger's "whenever you get one or more {E}" waits for, so the unknown-kind wildcard below must not
