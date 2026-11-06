@@ -107,9 +107,7 @@ test("counters are no longer counted as targeted removal", () => {
 });
 
 test("board wipe is distinguished from targeted removal (wipe wins, not double-counted)", () => {
-  const m = detectBuildCategories([
-    mk("Wrath of God", "Destroy all creatures. They can't be regenerated.", "Sorcery"),
-  ]);
+  const m = detectBuildCategories([realCard("Wrath of God")]);
   expect(m.get("boardWipe")).toEqual(new Set(["Wrath of God"]));
   expect(m.get("targetedRemoval")?.has("Wrath of God")).toBeFalsy();
 });
@@ -140,7 +138,7 @@ const completeShell = (): DeckCard[] => {
   cards.push(renamed("Demystify", "Wipe Ench"));
   cards.push(renamed("Hero's Downfall", "Wipe Walker"));
   cards.push(renamed("Stone Rain", "Wipe Land"));
-  for (let i = 0; i < pop.boardWipes; i++) cards.push(mk(`Wipe ${i}`, "Destroy all creatures.", "Sorcery"));
+  for (let i = 0; i < pop.boardWipes; i++) cards.push(renamed("Wrath of God", `Wipe ${i}`));
   for (let i = 0; i < 36; i++) cards.push(mk(`Land ${i}`, "", "Basic Land — Forest"));
   return cards;
 };
