@@ -633,7 +633,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 461: #1534 -- prevented family: a 'prevented this way' trigger is a back-reference to the sentence (ref: sentence, refused by the matcher); a prevent action with no prevention read (can't be prevented, life-total floor, 'instead' replacements) emits no prevented event. Measured (derive-impact vs a3227407, 32,802 rows): 40 rows changed (the 4 payoffs, 34 non-preventing producers, Wolverine, Fierce Fighter, Serra the Benevolent Emblem), 8 model->grammar source flips (7 differ only by the dropped prevented ability; Insult // Injury's grammar doubler loses 'a source you control', 0 pairs, #1537), pair reasons +0 / -2,296 (prevented family only, all LOST->CLASS or ambiguous with a prevented consumer, gained 0, GAINED->SELF 0); census of 520 prevented producers x the 5 prevented-trigger consumers: 2,556 -> 430 pairs, Selfless Squire keeps its class reading from the 485 real preventers; role-ratchet 0/0, dropped-clauses 4,842 -> 4,876 (43 new: the prevent clauses that were falsely claimed now show as unread; 9 'fixed' are the same clauses moving from partial to whole-clause drops, not fixes)
 // 462: #1537 -- a damage multiplier whose grammar object is bare takes the source it names (Insult // Injury 'a source you control': effect subject and double emit any -> you; Goblin Goliath effect subject any -> you)
 // 463: #1364 -- Effect.becomesLasts: an animate's becomes counts as a kindred only when it LASTS (animateLasts, CR 611.2a; owner 2026-11-06). Timed animates (until end of turn / combat, this turn, any other until) and unknown durations carry no flag; for as long as, until your next turn and a stated-nothing change do. Read by the matcher kindred readers only.
-export const DERIVE_VERSION = 463;
+// 464: #1542 -- A static's stored subject says who it applies to: a grant to 'cards in your graveyard/hand' keeps its zone (Solemn Doomguide, Mishra, Aminatou), an Equipment/Aura host's 'is a Wizard' is no Wizard lord (25 host rows), and a self predicate 'it ... is a Knight' (Skyknight Squire) names no class. Measured (derive-impact vs 2b28d2ce, final): 39 rows changed, 0 source flips; host and self false lords removed: 23 host cards / 25 rows plus Skyknight Squire, about 165.6k static pairs lost (50 of 50 sampled false). The ZONE change alone would lose 18,291 TRUE pairs (a zoned subject matches no printed card), so the matcher ignores the zone of a zoned keyword-grant for the match against a PRINTED card (`isZonedCardGrant`): the 15 zone producers now lose 1,943 pairs, all token consumers (1,697 `[via token]` + 246 token nodes), 0 real cards, 0 gained. role-ratchet gained 0 / lost 0, dropped-clauses 4,876 -> 4,876 (new 0, fixed 0), panel-score precision 100.0% [99.2, 100.0], retention 98.4% (428 held, 7 lost), by-name ratchet ok.
+export const DERIVE_VERSION = 464;
 
 /** A sentence with a "Choose [another / up to N] target X." of its own (#1452). */
 const CHOOSES_TARGET = /\bchoose (?:another |other |up to \w+ |any number of )?target\b/i;
@@ -1477,6 +1478,21 @@ function grantedRecipientOf(cardText: string, clauseText: string): string | unde
   return who.replace(/^(?:choose )?/i, "");
 }
 
+/** THE ZONE A GRANT'S RECIPIENT CARDS ARE IN (#1542): "Each creature card IN YOUR GRAVEYARD that's a Cleric has unearth" (Solemn Doomguide), "Each enchantment card in your hand has miracle"
+ *  (Aminatou). `parseSubject` drops the phrase, and a recipient with no zone reads as a lord over the battlefield. Strings ops, no regex over the phrase (a space-capable class beside a space is the shape CodeQL fails).
+ *  CEILING: the four zones a card-grant names; "cards in all graveyards" and a list of zones ("your hand or graveyard") are read as the first zone named. */
+const GRANT_ZONES: Readonly<Record<string, string>> = { graveyard: "graveyard", graveyards: "graveyard", hand: "hand", hands: "hand", exile: "exile", library: "library", libraries: "library" };
+function grantRecipientZone(who: string): string | undefined {
+  const words = who.toLowerCase().split(" ");
+  for (let i = 0; i + 2 < words.length; i++) {
+    if (words[i] !== "card" && words[i] !== "cards") continue;
+    if (words[i + 1] !== "in" && words[i + 1] !== "from") continue;
+    // "in your graveyard", "in each player's hand", "in all graveyards": the zone word is within the next four.
+    for (const w of words.slice(i + 2, i + 6)) { const zone = GRANT_ZONES[w]; if (zone) return zone; }
+  }
+  return undefined;
+}
+
 function grantRecipient(clauseText: string): string | undefined {
   // "AS YOU CAST <spells> THIS TURN, THEY GAIN …" (Yidris, Maelstrom Wielder): the recipient is the
   // spells, and the pronoun the grant verb follows only points back at them (#681).
@@ -1721,7 +1737,11 @@ function effectSubject(
       if (becomesLead !== undefined && (SELF_REFERENCE.test(becomesLead) || isSelfSubject(becomesLead, cardName))) {
         return { ...subjectFrom(becomesLead, cardName, cardText), self: true };
       }
+      // A HOST IS NOT A CLASS (#1542): "Equipped creature is a Wizard in addition to its other types and has ..." (Astrologian's Planisphere) reads its recipient up to the grant verb, type words and all.
+      if (SINGULAR_HOST.test(who.trim())) return parseSubject("");
       const s = parseSubject(who);
+      const cardZone = grantRecipientZone(who);
+      if (cardZone) s.zone = cardZone;
       // A grant EARNS an edge only when it is typal. "Creatures you control gain haste until end of
       // turn" reaches every creature in the deck -- the ordinary-card claim the rubric calls false,
       // and the mesh that made `static` the engine's worst family. Naming a SUBTYPE is what makes it
@@ -1757,6 +1777,15 @@ function effectSubject(
     }
   }
   const object = action.object ?? "";
+  // A PREDICATE WITH NO RECIPIENT (#1542): Skyknight Squire's "it has flying and is a Knight in addition to its other types" is stored as a `modify-pt` whose object is "is a Knight in addition to its other types".
+  // The type is what the recipient BECOMES, never the class it is; the recipient is the clause head ("it", "this creature": the card itself; an Aura's or Equipment's host: unnamed).
+  if (action.verb === "modify-pt" && /^(?:is|are|becomes?) an? /i.test(object.trim())) {
+    const sentence = clauseText.replace(SUBORDINATE, "").trim();
+    const cut = sentence.search(/ (?:has|have|gets?|gains?|is|are|becomes?) /i);
+    const head = (cut > 0 ? sentence.slice(0, cut) : "").trim();
+    if (SELF_REFERENCE.test(head) || /^it$/i.test(head) || isSelfSubject(head, cardName)) return { ...parseSubject(""), self: true };
+    return parseSubject("");
+  }
   // A self-referential effect applies to the card itself, and everything after the self-reference is
   // a CONDITION rather than a subject. Excalibur, Sword of Eden reads "This spell costs {X} less to
   // cast, where X is the total mana value of historic permanents you control": parsing the whole
@@ -3944,7 +3973,14 @@ export function deriveAbilities(
       if (effectKind === "animate") { const becomes = animateResult(clauseText); if (becomes) ability.effect = { ...ability.effect, becomes, ...(animateLasts(clauseText) ? { becomesLasts: true as const } : {}) }; }
       if (trigger) ability.trigger = trigger;
       // The effect lands on the permanent this card is attached to (#1315): a marker, never a subject -- see `Ability.host`.
-      if (hostEffect(action, effectKind, text)) ability.host = true;
+      if (hostEffect(action, effectKind, text)) {
+        ability.host = true;
+        // A HOST IS NOT A CLASS (#1542): the marker says who it lands on, so a class subject read off the same sentence ("Equipped creature is a Wizard", "Enchanted creature is a black Zombie") is a lord that is not there. Static only: a triggered host keeps its own.
+        if (kind === "static" && ability.effect.subject && (ability.effect.subject.scope === "all" || ability.effect.subject.scope === "each")) {
+          const { subject: _hostClass, ...rest } = ability.effect;
+          ability.effect = rest as typeof ability.effect;
+        }
+      }
       if (effectKind === "damage-change") ability.effect = { ...ability.effect, damageChange: replacedBy ?? damageReplacementOf(text) ?? "redirected" };
       if (effectKind === "prevention") {
         const read = preventionOf(text);

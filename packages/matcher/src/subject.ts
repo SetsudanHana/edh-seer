@@ -34,6 +34,12 @@ function impliesHistoric(s: SubjectFilter): boolean {
 
 /** Does the concrete producer subject satisfy the consumer filter? Every field the consumer
  *  leaves unset is a wildcard; a field it sets must be satisfied by the producer. */
+/** A GRANT TO CARDS IN A GRAVEYARD OR HAND IS STILL A CLASS OF THE DECK'S CARDS (#1542; owner ruling 2026-09-10, "a type is a class too"): Solemn Doomguide's unearth, Dregscape Sliver's unearth, Master of Keys' escape,
+ *  Aminatou's miracle and Tectonic Reformation's cycling are earned by every printed card of the class, whichever zone it will be in. Derive keeps the zone (it is what the grant says), so the zone is ignored for the MATCH
+ *  against a printed card. A token is never a card in either zone, so the callers refuse token consumers. Only a `keyword-grant` (Homing Sliver's slivercycling stores no `grants`): a zoned recursion (Lurrus) stays zone-scoped. */
+export const isZonedCardGrant = (a: { effect: { kind: string; subject?: SubjectFilter } }): boolean =>
+  a.effect.kind === "keyword-grant" && (a.effect.subject?.zone === "graveyard" || a.effect.subject?.zone === "hand");
+
 export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
   // A DISJUNCTION: satisfied by any branch, with the shared fields outside still binding. Checked
   // first so the outer subject is tested without its branches, then each branch on its own.
