@@ -63,3 +63,23 @@ test("controls: a real lord keeps its class (Field Marshal), a real Equipment gr
   expect(b.host).toBe(true);
   expect(b.grants).toEqual(expect.arrayContaining(["hexproof", "haste"]));
 });
+
+/** "CAN BLOCK <class> AS THOUGH IT HAD <keyword>" IS THE CARD'S OWN BLOCKING PERMISSION (#1545), not a grant to the class. Real text and
+ *  stored rows (Mongo `cards`, `cardClauses.canonical`), read 2026-11-06. */
+const hunter = () => grant("Dragon Hunter", "Creature — Human Knight", "Protection from Dragons (This creature can't be blocked, targeted, dealt damage, enchanted, or equipped by Dragons.)\nThis creature can block Dragons as though it had reach.",
+  [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Protection from Dragons", fromZone: null, toZone: null }] }, { id: 2, abilityType: "static", actions: [g("can block Dragons as though it had reach")] }]);
+const dryad = () => grant("Heartwood Dryad", "Creature — Dryad", "This creature can block creatures with shadow as though it had shadow.",
+  [{ id: 1, abilityType: "static", actions: [g("can block creatures with shadow as though it had shadow")] }]);
+const diffusion = () => grant("Wall of Diffusion", "Creature — Wall", "Defender (This creature can't attack.)\nReach\nThis creature can block creatures with shadow as though it had shadow.",
+  [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Defender", fromZone: null, toZone: null }] }, { id: 2, abilityType: "static", actions: [g("can block creatures with shadow as though it had shadow")] }]);
+
+test("block-as-though: the card's own blocking permission is no keyword lord (Dragon Hunter, Heartwood Dryad, Wall of Diffusion)", () => {
+  for (const abs of [hunter(), dryad(), diffusion()]) {
+    for (const a of abs.filter((x) => x.effect.kind === "keyword-grant")) {
+      expect(a.effect.subject?.subtype, "subtype").toBeUndefined();
+      expect(a.effect.subject?.keyword, "keyword").toBeUndefined();
+      expect(a.effect.subject?.scope, "scope").toBeUndefined();
+      expect(a.grants, "grants").toBeUndefined();
+    }
+  }
+});
