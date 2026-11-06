@@ -1,0 +1,2928 @@
+{
+ "Ultimate Magic: Meteor": {
+  "source": {
+   "_id": "31cc5d9d-9384-4a9b-ba7f-6a4edbcb7a35",
+   "name": "Ultimate Magic: Meteor",
+   "typeLine": "Sorcery",
+   "oracleText": "Ultimate Magic: Meteor deals 7 damage to each creature. If this spell was cast from exile, for each opponent, choose an artifact or land that player controls. Destroy the chosen permanents.\nForetell {5}{R} (During your turn, you may pay {2} and exile this card from your hand face down. Cast it on a later turn for its foretell cost.)",
+   "keywords": [
+    "Foretell"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}{R}",
+   "layout": "normal",
+   "releasedAt": "2025-06-13",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Ultimate Magic: Holy",
+     "typeLine": "Instant",
+     "printingId": "6c85ce70-7080-430e-8560-81bc09ca329e"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Ultimate Magic: Meteor",
+     "typeLine": "Sorcery",
+     "printingId": "809276a9-4804-422f-abb0-ba302f329e6e"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Lifestream's Blessing",
+     "typeLine": "Instant",
+     "printingId": "d1d50fa8-e92c-4531-b773-b9ef406e8c44"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Foretell",
+     "typeLine": "Card",
+     "printingId": "207b3d62-2541-4a51-8152-3c54218ab6f7"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each creature",
+      "amount": "7",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "destroy",
+      "object": "chosen artifacts or lands",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "exile",
+      "object": "chosen artifacts or lands",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Foretell {5}{R}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "3a1df275280296860b0cd9b9539e266017c8488a965f3b09ab00eef8afee22bb"
+ },
+ "Sadistic Shell Game": {
+  "source": {
+   "_id": "88c3fc46-f2f5-440c-80a6-fed5b42cd340",
+   "name": "Sadistic Shell Game",
+   "typeLine": "Sorcery",
+   "oracleText": "Starting with the next opponent in turn order, each player chooses a creature you don't control. Destroy the chosen creatures.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{B}",
+   "layout": "normal",
+   "releasedAt": "2024-09-27",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "the chosen creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "d6f627e6f04dc6feee8276ad5bbacad89780d93dfd406871cbfb3921f86ab121"
+ },
+ "Tunnel of Love": {
+  "source": {
+   "_id": "e6dd25bd-8017-4691-86ba-466c68d9fd8a",
+   "name": "Tunnel of Love",
+   "typeLine": "Artifact — Attraction",
+   "oracleText": "Visit — Choose an opponent. They choose a creature they control, then you choose a creature you control. You may exile the chosen creatures. If you do, return them to the battlefield under their owners' control at the beginning of the next end step. Otherwise, the chosen creatures fight each other.",
+   "keywords": [
+    "Fight"
+   ],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "",
+   "layout": "normal",
+   "releasedAt": "2022-10-07",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "fight",
+      "object": "the chosen creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "exile",
+      "object": "the chosen creatures",
+      "fromZone": null,
+      "toZone": "exile",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "return",
+      "object": "the chosen creatures",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "42ce2d27793eeb5321377a453915aa9d781f96279025d33b73669481daf6d317"
+ },
+ "Wash Out": {
+  "source": {
+   "_id": "54748cb1-d92a-4212-ad76-417ee79b5ef1",
+   "name": "Wash Out",
+   "typeLine": "Sorcery",
+   "oracleText": "Return all permanents of the color of your choice to their owners' hands.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{U}",
+   "layout": "normal",
+   "releasedAt": "2022-07-08",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all permanents of the color of your choice",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "356981ade05ebc901e34cf8a6f4893706ad1ca0f4354401653d3f12ba95b2f0a"
+ },
+ "Razia's Purification": {
+  "source": {
+   "_id": "60e95faf-1496-4298-9588-52b50b05fc6b",
+   "name": "Razia's Purification",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player chooses three permanents they control, then sacrifices the rest.",
+   "keywords": [],
+   "colors": [
+    "R",
+    "W"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{R}{W}",
+   "layout": "normal",
+   "releasedAt": "2005-10-07",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "permanents they control other than the three chosen",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "b4f3f219c5d1e181db9749e809d5fe455078ca6e995dd198c0af93013a0184a9"
+ },
+ "Council's Judgment": {
+  "source": {
+   "_id": "acf4d685-a718-42f7-9a7a-dee069ae8db2",
+   "name": "Council's Judgment",
+   "typeLine": "Sorcery",
+   "oracleText": "Will of the council — Starting with you, each player votes for a nonland permanent you don't control. Exile each permanent with the most votes or tied for most votes.",
+   "keywords": [
+    "Will of the council"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}{W}",
+   "layout": "normal",
+   "releasedAt": "2024-04-19",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "vote",
+      "object": "a nonland permanent you don't control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "each permanent with the most votes or tied for most votes",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "3e75c282ffc4b013637297784f513382f7506740be7424a0c86f82416f8d05af"
+ },
+ "End Hostilities": {
+  "source": {
+   "_id": "7b2e2c4b-b8fd-440c-8a79-de6532022745",
+   "name": "End Hostilities",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy all creatures and all permanents attached to creatures.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{W}{W}",
+   "layout": "normal",
+   "releasedAt": "2014-09-26",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "destroy",
+      "object": "all permanents attached to creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "4717c50f17d4b55a87be0d40a6a3d51edf402aaef977cb12a6ac7855b32389a8"
+ },
+ "All Is Dust": {
+  "source": {
+   "_id": "14693689-d087-43b6-9c3f-63ab0648fc20",
+   "name": "All Is Dust",
+   "typeLine": "Kindred Sorcery — Eldrazi",
+   "oracleText": "Each player sacrifices all permanents they control that are one or more colors.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 7,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{7}",
+   "layout": "normal",
+   "releasedAt": "2023-08-04",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "all permanents that are one or more colors",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "fe10fa5c477d7d34c02622ff91a6eb3e746b026fa98526ef77012e27cc761fe1"
+ },
+ "Liliana of the Veil": {
+  "source": {
+   "_id": "0ba134d8-ee7d-48ec-8dc6-57942b8e9261",
+   "name": "Liliana of the Veil",
+   "typeLine": "Legendary Planeswalker — Liliana",
+   "oracleText": "+1: Each player discards a card.\n−2: Target player sacrifices a creature.\n−6: Separate all permanents target player controls into two piles. That player sacrifices all permanents in the pile of their choice.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}{B}",
+   "layout": "normal",
+   "releasedAt": "2025-01-24",
+   "gameChanger": false,
+   "reserved": false,
+   "loyalty": "3"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "all permanents in the pile of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "498c9b5ee19e71b01ebe140f827b089ef8c27e2ad47ba79ae75add2eeece71fe"
+ },
+ "Apocalypse": {
+  "source": {
+   "_id": "82c8f5dd-563d-4fd0-bd43-7ee2001d3777",
+   "name": "Apocalypse",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile all permanents. You discard your hand.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{R}{R}{R}",
+   "layout": "normal",
+   "releasedAt": "1997-10-14",
+   "gameChanger": false,
+   "reserved": true
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "your hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ab185d9300ebf3cb82da3dd0765e786ccda05e47d701744c6f012b71a0b4d5e1"
+ },
+ "Worldfire": {
+  "source": {
+   "_id": "ae0b8c13-0a71-4a60-bf9f-6e2da9503e9c",
+   "name": "Worldfire",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile all permanents. Exile all cards from all hands and graveyards. Each player's life total becomes 1.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 9,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{6}{R}{R}{R}",
+   "layout": "normal",
+   "releasedAt": "2012-07-13",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all permanents",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "all cards from all hands",
+      "fromZone": "hand",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "all cards from all graveyards",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "set-life",
+      "object": "each player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "3f47ded5771e35e6e5516be6363c437cb9e780a750ada3a66e74224d540c0c5d"
+ },
+ "Dimensional Breach": {
+  "source": {
+   "_id": "70d4f764-fca1-477a-9b0f-bbfcc1f7dfb1",
+   "name": "Dimensional Breach",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile all permanents. For as long as any of those cards remain exiled, at the beginning of each player's upkeep, that player returns one of the exiled cards they own to the battlefield.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}{W}{W}",
+   "layout": "normal",
+   "releasedAt": "2003-05-26",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "each player",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all permanents",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "one of the exiled cards they own",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "bdb0b8980ce3d6404b5a4f45a8f4eec47fdb78493335da613b77d4c618526753"
+ },
+ "Mount Doom": {
+  "source": {
+   "_id": "995c8dac-fd27-468a-abd4-02372cf0c850",
+   "name": "Mount Doom",
+   "typeLine": "Legendary Land",
+   "oracleText": "{T}, Pay 1 life: Add {B} or {R}.\n{1}{B}{R}, {T}: Mount Doom deals 1 damage to each opponent.\n{5}{B}{R}, {T}, Sacrifice Mount Doom and a legendary artifact: Choose up to two creatures, then destroy the rest. Activate only as a sorcery.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [
+    "B",
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "",
+   "producedMana": [
+    "B",
+    "R"
+   ],
+   "layout": "normal",
+   "releasedAt": "2023-06-23",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{B} or {R}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "Mount Doom and a legendary artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "destroy",
+      "object": "creatures other than up to two chosen creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "490565c43076943fa6781ab63a4562d09a08555b77b1e7ecc018959f766acb59"
+ },
+ "Mega Flare": {
+  "source": {
+   "_id": "891c6ca5-d238-4ac2-8df4-c6dc9a807562",
+   "name": "Mega Flare",
+   "typeLine": "Sorcery",
+   "oracleText": "Kicker {3}{R}{R}\nIf this spell was kicked, create a 6/6 red Dragon creature token with flying.\nFor each opponent, choose up to one target creature that player controls. Mega Flare deals damage equal to the greatest power among creatures you control to each of the chosen creatures.",
+   "keywords": [
+    "Kicker"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{R}",
+   "layout": "normal",
+   "releasedAt": "2025-12-05",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Dragon",
+     "typeLine": "Token Creature — Dragon",
+     "printingId": "7c66280f-287b-4294-9984-32484de2568a"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Kicker {3}{R}{R}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 6/6 red Dragon creature token with flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each of the chosen creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the greatest power among creatures you control",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6e27e09afc56675a30a8094486951dcc1c34c27b0fbfc3bb606ae42ac813059a"
+ },
+ "Armageddon": {
+  "source": {
+   "_id": "c9ed8b01-959a-47d6-891e-0abbdccf6e4f",
+   "name": "Armageddon",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy all lands.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{W}",
+   "layout": "normal",
+   "releasedAt": "2018-03-16",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all lands",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "4ae5cae1522802f09fe6f389e77b89108cffdd021603ac22eb2d5507444669d0"
+ },
+ "Divine Reckoning": {
+  "source": {
+   "_id": "15d8b339-7520-43c9-b2dc-4a936357042b",
+   "name": "Divine Reckoning",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player chooses a creature they control. Destroy the rest.\nFlashback {5}{W}{W} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+   "keywords": [
+    "Flashback"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}{W}",
+   "layout": "normal",
+   "releasedAt": "2019-08-23",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "creatures not chosen by their controller",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flashback {5}{W}{W}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f4a97ca2b010465481752a7d81be4ebf2d564a2928c1371b6e09a6b8a12278a0"
+ },
+ "Consuming Tide": {
+  "source": {
+   "_id": "24cd8f54-c1d4-4040-93bf-a7b9b719ac30",
+   "name": "Consuming Tide",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player chooses a nonland permanent they control. Return all nonland permanents not chosen this way to their owners' hands. Then you draw a card for each opponent who has more cards in their hand than you.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{U}{U}",
+   "layout": "normal",
+   "releasedAt": "2021-11-19",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all nonland permanents not chosen this way",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each opponent who has more cards in their hand than you",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "176dc82bc10645a03136c3d7b761139a4fd3c336b63ef3272114090e1c588aad"
+ },
+ "Stick Together": {
+  "source": {
+   "_id": "4abda0ad-0a2b-4bd9-81c7-56329e62311d",
+   "name": "Stick Together",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player chooses a party from among creatures they control, then sacrifices the rest. (To choose a party, choose up to one each of Cleric, Rogue, Warrior, and Wizard.)",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{W}{W}",
+   "layout": "normal",
+   "releasedAt": "2022-06-10",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "creatures not in a chosen party",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "d81eeec0055c8c0d22f8ef73223e3ffdbbe6598819ccf13aa80e506f680e881e"
+ },
+ "The Eternal Wanderer": {
+  "source": {
+   "_id": "20a1671d-e8a4-4cf1-87a7-f2f6319f4b9e",
+   "name": "The Eternal Wanderer",
+   "typeLine": "Legendary Planeswalker",
+   "oracleText": "No more than one creature can attack The Eternal Wanderer each combat.\n+1: Exile up to one target artifact or creature. Return that card to the battlefield under its owner's control at the beginning of that player's next end step.\n0: Create a 2/2 white Samurai creature token with double strike.\n−4: For each player, choose a creature that player controls. Each player sacrifices all creatures they control not chosen this way.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{W}{W}",
+   "layout": "normal",
+   "releasedAt": "2023-02-10",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "The Eternal Wanderer",
+     "typeLine": "Legendary Planeswalker",
+     "printingId": "73088dcd-56e0-4421-834b-bfb8edfe8b68"
+    },
+    {
+     "component": "token",
+     "name": "Samurai",
+     "typeLine": "Token Creature — Samurai",
+     "printingId": "70750c90-3856-4d6d-923b-2ab91b1d7049"
+    }
+   ],
+   "loyalty": "5"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "more than one creature can attack The Eternal Wanderer each combat",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "up to one target artifact or creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "return",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 2/2 white Samurai creature token with double strike",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "all creatures each player controls not chosen this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "43a6161ec65e1e2111c84d32551221732e695cc820cdad96bd78df41bde51da0"
+ },
+ "Winnowing": {
+  "source": {
+   "_id": "8b834f83-951b-4b5c-b9f1-3d860baa3c0e",
+   "name": "Winnowing",
+   "typeLine": "Sorcery",
+   "oracleText": "Convoke (Your creatures can help cast this spell. Each creature you tap while casting this spell pays for {1} or one mana of that creature's color.)\nFor each player, you choose a creature that player controls. Then each player sacrifices all other creatures they control that don't share a creature type with the chosen creature they control.",
+   "keywords": [
+    "Convoke"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{W}{W}",
+   "layout": "normal",
+   "releasedAt": "2026-01-23",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Convoke",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "all other creatures a player controls that don't share a creature type with the chosen creature that player controls",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f4a086298853d51a26f358b11fcc2fe41892d7cc7b8b8d4cf2f1204ed92c142a"
+ },
+ "Unstable Glyphbridge // Sandswirl Wanderglyph": {
+  "source": {
+   "_id": "fcd54631-ea47-49a7-ad5f-9a9a51a815ba",
+   "name": "Unstable Glyphbridge // Sandswirl Wanderglyph",
+   "typeLine": "Artifact // Artifact Creature — Golem",
+   "oracleText": "When this artifact enters, if you cast it, for each player, choose a creature with power 2 or less that player controls. Then destroy all creatures except creatures chosen this way.\nCraft with artifact {3}{W}{W} ({3}{W}{W}, Exile this artifact, Exile another artifact you control or an artifact card from your graveyard: Return this card transformed under its owner's control. Craft only as a sorcery.)\n//\nFlying\nWhenever an opponent casts a spell during their turn, they can't attack you or planeswalkers you control this turn.\nEach opponent who attacked you or a planeswalker you control this turn can't cast spells.",
+   "keywords": [
+    "Flying",
+    "Craft",
+    "Transform"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "transform",
+   "releasedAt": "2023-11-17",
+   "gameChanger": false,
+   "reserved": false,
+   "faces": [
+    {
+     "name": "Unstable Glyphbridge",
+     "typeLine": "Artifact",
+     "oracleText": "When this artifact enters, if you cast it, for each player, choose a creature with power 2 or less that player controls. Then destroy all creatures except creatures chosen this way.\nCraft with artifact {3}{W}{W} ({3}{W}{W}, Exile this artifact, Exile another artifact you control or an artifact card from your graveyard: Return this card transformed under its owner's control. Craft only as a sorcery.)",
+     "colors": [
+      "W"
+     ],
+     "manaCost": "{3}{W}{W}",
+     "artCrop": "https://cards.scryfall.io/art_crop/front/d/7/d70f48e7-582c-4dd2-a64e-6fd03fa6b77e.jpg?1783913805"
+    },
+    {
+     "name": "Sandswirl Wanderglyph",
+     "typeLine": "Artifact Creature — Golem",
+     "oracleText": "Flying\nWhenever an opponent casts a spell during their turn, they can't attack you or planeswalkers you control this turn.\nEach opponent who attacked you or a planeswalker you control this turn can't cast spells.",
+     "colors": [
+      "W"
+     ],
+     "manaCost": "",
+     "power": "5",
+     "toughness": "3",
+     "colorIndicator": [
+      "W"
+     ],
+     "artCrop": "https://cards.scryfall.io/art_crop/back/d/7/d70f48e7-582c-4dd2-a64e-6fd03fa6b77e.jpg?1783913805"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures except creatures chosen this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Craft with artifact {3}{W}{W}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "attack you or planeswalkers you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "cast spells",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "cc61866f004015cc9a93545190f5e49e02df0cce37b225d5c7549ec40693bf59"
+ },
+ "Harsh Mercy": {
+  "source": {
+   "_id": "dcd65c9b-4aaa-42af-869f-de179ae57c9f",
+   "name": "Harsh Mercy",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player chooses a creature type. Destroy all creatures that aren't of a type chosen this way. They can't be regenerated.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}",
+   "layout": "normal",
+   "releasedAt": "2023-08-04",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures that aren't of a type chosen this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "496b6fd5a03f6699f1f3b767bb8de0e62e98423cf90ed440f3b9e81b969a9a68"
+ },
+ "Expel the Interlopers": {
+  "source": {
+   "_id": "744b7e93-c893-4770-a3bb-6a45b7f8e4f7",
+   "name": "Expel the Interlopers",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose a number between 0 and 10. Destroy all creatures with power greater than or equal to the chosen number.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{W}{W}",
+   "layout": "normal",
+   "releasedAt": "2025-04-11",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures with power greater than or equal to the chosen number",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "7d2207393547fea879afddd21ddfbfbb226f606dd5ae190c39535ee7d2988cd2"
+ },
+ "Sculpted Sunburst": {
+  "source": {
+   "_id": "aee0388f-544e-4c28-a34f-29cc0a97d424",
+   "name": "Sculpted Sunburst",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose a creature you control, then each opponent chooses a creature they control with equal or lesser power. If you chose a creature this way, exile each creature not chosen by any player this way.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{W}{W}",
+   "layout": "normal",
+   "releasedAt": "2022-06-10",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "each creature not chosen by any player this way",
+      "fromZone": null,
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "69698729c588280073cb6206421ff2a6b0eea45758bf614eddaf2b47e854798e"
+ },
+ "Planar Overlay": {
+  "source": {
+   "_id": "a7be1624-04cc-4ed5-8b05-63b633893dee",
+   "name": "Planar Overlay",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player chooses a land they control of each basic land type. Return those lands to their owners' hands.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{U}",
+   "layout": "normal",
+   "releasedAt": "2001-02-05",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "lands chosen by each player (one of each basic land type)",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "681158a5c6adf301554c9424c8406763e54dad76b6ee5e5e809391a6c4f87ba9"
+ },
+ "Bend or Break": {
+  "source": {
+   "_id": "4362efe4-339d-40e1-bd72-3cc9e41bf93f",
+   "name": "Bend or Break",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player separates all nontoken lands they control into two piles. For each player, one of their piles is chosen by one of their opponents of their choice. Destroy all lands in the chosen piles. Tap all lands in the other piles.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{R}",
+   "layout": "normal",
+   "releasedAt": "2000-10-02",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "lands in the chosen piles",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "lands in the other piles",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "d731b37d642784d37e0148a063d6d32cd6edee5c15227206d76cbdc7b8995009"
+ },
+ "Call to the Void": {
+  "source": {
+   "_id": "c2db2c28-3ddc-41ce-a0c2-ddc555dea133",
+   "name": "Call to the Void",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player secretly chooses a creature they control and a creature they don't control. Then those choices are revealed. Destroy each creature chosen this way.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{B}",
+   "layout": "normal",
+   "releasedAt": "2022-06-10",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "each creature chosen this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "046d3507214a1670b990d81fef8c037341c9bb61dbfdd4e7f3c3bee421446929"
+ },
+ "Druid of Purification": {
+  "source": {
+   "_id": "5bb32efd-9e58-4021-bbda-4ffccfa1d601",
+   "name": "Druid of Purification",
+   "typeLine": "Creature — Human Druid",
+   "oracleText": "When this creature enters, starting with you, each player may choose an artifact or enchantment you don't control. Destroy each permanent chosen this way.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "manaCost": "{3}{G}",
+   "layout": "normal",
+   "releasedAt": "2021-07-23",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "each artifact or enchantment chosen this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ebe839193b2de8f6b131534c48eed8c0c026b353495978d33714cb4b7f57daee"
+ },
+ "Grenzo's Rebuttal": {
+  "source": {
+   "_id": "afcfcb74-ee64-4528-8498-2e8109ad5142",
+   "name": "Grenzo's Rebuttal",
+   "typeLine": "Sorcery",
+   "oracleText": "Create a 4/4 red Ogre creature token. Starting with you, each player chooses an artifact, a creature, and a land from among the permanents controlled by the player to their left. Destroy each permanent chosen this way.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{R}{R}",
+   "layout": "normal",
+   "releasedAt": "2014-06-06",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Ogre",
+     "typeLine": "Token Creature — Ogre",
+     "printingId": "efaa37e5-302e-4b4b-bb2d-6a0f9f80cd3f"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "each permanent chosen this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a 4/4 red Ogre creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "4bf769656973236059c5e8c6b84da2778895c4cb13063dfc30b27392bf59909c"
+ },
+ "The Horus Heresy": {
+  "source": {
+   "_id": "fc315174-d063-41dd-9379-11d95c5fd4ed",
+   "name": "The Horus Heresy",
+   "typeLine": "Enchantment — Saga",
+   "oracleText": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — For each opponent, gain control of up to one target nonlegendary creature that player controls for as long as this Saga remains on the battlefield.\nII — Draw a card for each creature you control but don't own.\nIII — Starting with you, each player chooses a creature. Destroy each creature chosen this way.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "R",
+    "U"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B",
+    "R",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{U}{B}{R}",
+   "layout": "saga",
+   "releasedAt": "2022-10-07",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "chapter I",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-control",
+      "object": "up to one target nonlegendary creature that player controls",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "chapter II",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "amount": "1 for each creature you control but don't own",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "chapter III",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "each creature chosen this way",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "645396d1df9415634afbd1664acc91f2b01305f9d9ec7d2d3a60cbf408519e35"
+ },
+ "Teferi, Who Slows the Sunset": {
+  "source": {
+   "_id": "98c389ed-b960-42e2-9c76-a062f77c9a78",
+   "name": "Teferi, Who Slows the Sunset",
+   "typeLine": "Legendary Planeswalker — Teferi",
+   "oracleText": "+1: Choose up to one target artifact, up to one target creature, and up to one target land. Untap the chosen permanents you control. Tap the chosen permanents you don't control. You gain 2 life.\n−2: Look at the top three cards of your library. Put one of them into your hand and the rest on the bottom of your library in any order.\n−7: You get an emblem with \"Untap all permanents you control during each opponent's untap step\" and \"You draw a card during each opponent's draw step.\"",
+   "keywords": [],
+   "colors": [
+    "U",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}{U}",
+   "layout": "normal",
+   "releasedAt": "2021-09-24",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Teferi, Who Slows the Sunset Emblem",
+     "typeLine": "Emblem",
+     "printingId": "a970bebc-08e1-4125-a4c5-8883dfd5a5ca"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Teferi, Who Slows the Sunset",
+     "typeLine": "Legendary Planeswalker — Teferi",
+     "printingId": "b94bc06c-6351-43d3-a58d-b28dc6d4705c"
+    }
+   ],
+   "loyalty": "4"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "untap",
+      "object": "the chosen permanents you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "the chosen permanents you don't control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "one of them",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "emblem",
+      "object": "an emblem with \"Untap all permanents you control during each opponent's untap step\" and \"You draw a card during each opponent's draw step.\"",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "a813a60091031c1f24e2a9ddb47d92715b085909da881340df1d46e57031bfcb"
+ },
+ "Patriarch's Bidding": {
+  "source": {
+   "_id": "25fc3bc2-d852-4f52-9adb-c7e35c06f3af",
+   "name": "Patriarch's Bidding",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player chooses a creature type. Each player returns all creature cards of a type chosen this way from their graveyard to the battlefield.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{B}{B}",
+   "layout": "normal",
+   "releasedAt": "2021-06-18",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all creature cards of a type chosen this way",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f648513ab8b8f1b5952bb94ce5b25b74996a220b3d4d6b5e81ab0f058b8e8b66"
+ },
+ "Temple Altisaur": {
+  "source": {
+   "_id": "1f499d39-b963-45c0-9604-d3cab98c9e05",
+   "name": "Temple Altisaur",
+   "typeLine": "Creature — Dinosaur",
+   "oracleText": "If a source would deal damage to another Dinosaur you control, prevent all but 1 of that damage.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "manaCost": "{4}{W}",
+   "layout": "normal",
+   "releasedAt": "2023-11-17",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "prevent",
+      "object": "all but 1 of that damage",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "41f38984533de456585f8ec931f8080d35447c4da2bfad949a3297b58d1071ea"
+ },
+ "Kindred Dominance": {
+  "source": {
+   "_id": "ccaa44f2-96be-44e2-884f-c31baa3908d5",
+   "name": "Kindred Dominance",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose a creature type. Destroy all creatures that aren't of the chosen type.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}{B}{B}",
+   "layout": "normal",
+   "releasedAt": "2026-06-26",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures that aren't of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ccf8a1eb533c09e2dc8649213dc5a8cc1f00529c2852605d14b798a1edbc03c7"
+ },
+ "Hew the Entwood": {
+  "source": {
+   "_id": "8818bbf8-58ec-4070-a81a-c7ce248057ab",
+   "name": "Hew the Entwood",
+   "typeLine": "Sorcery",
+   "oracleText": "Sacrifice any number of lands. Reveal the top X cards of your library, where X is the number of lands sacrificed this way. Choose any number of artifact and/or land cards revealed this way. Put all nonland cards chosen this way onto the battlefield, then put all land cards chosen this way onto the battlefield tapped, then put the rest on the bottom of your library in a random order.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{R}{R}",
+   "layout": "normal",
+   "releasedAt": "2023-06-23",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "any number of lands",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "all nonland cards chosen this way",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "all land cards chosen this way",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "all land cards chosen this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "c4d1ff40f74eb02e7bd0dc2f481b087c3e12bf34fa84598db8487f194f4dfabf"
+ },
+ "Pox Plague": {
+  "source": {
+   "_id": "c505d304-9428-4532-87a2-167c69f16969",
+   "name": "Pox Plague",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player loses half their life, then discards half the cards in their hand, then sacrifices half the permanents they control of their choice. Round down each time.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{B}{B}{B}{B}{B}",
+   "layout": "normal",
+   "releasedAt": "2026-04-24",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "half their life",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "discard",
+      "object": "half the cards in their hand",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "sacrifice",
+      "object": "half the permanents they control of their choice",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "21ee569393822856203dc762f31f59a6e9604b4298fabae8aee4586a1e7590a1"
+ },
+ "Earth-Cult Elemental": {
+  "source": {
+   "_id": "043d8dee-379f-4706-ad47-0bb562717007",
+   "name": "Earth-Cult Elemental",
+   "typeLine": "Creature — Elemental",
+   "oracleText": "Siege Monster — When this creature enters, roll a d20.\n1—9 | Each player sacrifices a permanent of their choice.\n10—19 | Each opponent sacrifices a permanent of their choice.\n20 | Each opponent sacrifices two permanents of their choice.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "manaCost": "{4}{R}{R}",
+   "layout": "normal",
+   "releasedAt": "2021-07-23",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "roll-dice",
+      "object": "a d20",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a permanent of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a permanent of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "two permanents of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "02b6c1297a8479041c5b1fc06cf05a85551e3b00cf695806d5e26727ee27eaad"
+ },
+ "Greater Harvester": {
+  "source": {
+   "_id": "1e8f17ab-4616-44de-adfd-010882cfcd42",
+   "name": "Greater Harvester",
+   "typeLine": "Creature — Horror",
+   "oracleText": "At the beginning of your upkeep, sacrifice a permanent.\nWhenever this creature deals combat damage to a player, that player sacrifices two permanents of their choice.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "5",
+   "toughness": "6",
+   "manaCost": "{2}{B}{B}{B}",
+   "layout": "normal",
+   "releasedAt": "2004-02-06",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a permanent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "two permanents of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "two",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "d3a129edc039753df062db7fbc44fb419e3442ffec67f9acc4000e2a846d26dc"
+ },
+ "Nicol Bolas, Planeswalker": {
+  "source": {
+   "_id": "05e9b55e-6329-48ec-b7d7-24c6b9692244",
+   "name": "Nicol Bolas, Planeswalker",
+   "typeLine": "Legendary Planeswalker — Bolas",
+   "oracleText": "+3: Destroy target noncreature permanent.\n−2: Gain control of target creature.\n−9: Nicol Bolas deals 7 damage to target player or planeswalker. That player or that planeswalker's controller discards seven cards, then sacrifices seven permanents of their choice.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "R",
+    "U"
+   ],
+   "manaValue": 8,
+   "colorIdentity": [
+    "B",
+    "R",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{U}{B}{B}{R}",
+   "layout": "normal",
+   "releasedAt": "2017-06-16",
+   "gameChanger": false,
+   "reserved": false,
+   "loyalty": "5"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target noncreature permanent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "gain-control",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "target player or planeswalker",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "7",
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "seven cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "7",
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "seven permanents of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "7",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "3b680a836c4260549d15ebc1cf8f1bba551365d5b287e46a9de56d368221e942"
+ },
+ "Archfiend of Spite": {
+  "source": {
+   "_id": "6beec974-891f-4354-8621-ac403c07509a",
+   "name": "Archfiend of Spite",
+   "typeLine": "Creature — Demon",
+   "oracleText": "Flying\nWhenever a source an opponent controls deals damage to this creature, that source's controller loses that much life unless they sacrifice that many permanents of their choice.\nMadness {3}{B}{B} (If you discard this card, discard it into exile. When you do, cast it for its madness cost or put it into your graveyard.)",
+   "keywords": [
+    "Flying",
+    "Madness"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "manaCost": "{5}{B}{B}",
+   "layout": "normal",
+   "releasedAt": "2019-08-23",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "a source an opponent controls",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "that much",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that much",
+      "optional": true
+     },
+     {
+      "verb": "sacrifice",
+      "object": "that many permanents of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that many",
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Madness {3}{B}{B}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "413196878defcfcf39eee9ea9f3b5468f388da84bf9db48e4ff6a1938ab1cb78"
+ },
+ "Curse of the Cabal": {
+  "source": {
+   "_id": "cafede0d-aa14-4266-b619-321ac756262d",
+   "name": "Curse of the Cabal",
+   "typeLine": "Sorcery",
+   "oracleText": "Target player sacrifices half the permanents they control of their choice, rounded down.\nSuspend 2—{2}{B}{B} (Rather than cast this card from your hand, you may pay {2}{B}{B} and exile it with two time counters on it. At the beginning of your upkeep, remove a time counter. When the last is removed, you may cast it without paying its mana cost.)\nAt the beginning of each player's upkeep, if this card is suspended, that player may sacrifice a permanent of their choice. If the player does, put two time counters on this card.",
+   "keywords": [
+    "Suspend"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 10,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{9}{B}",
+   "layout": "normal",
+   "releasedAt": "2006-10-06",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "half the permanents they control of their choice, rounded down",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "each player",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a permanent of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "add-counter",
+      "object": "time",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "12382919b99e100e234991c02f7796d0a8e15e050dc28be13fabaa1bc4e6f9c5"
+ },
+ "Balancing Act": {
+  "source": {
+   "_id": "4c68282b-776f-463a-9652-f611538c53ee",
+   "name": "Balancing Act",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player chooses a number of permanents they control equal to the number of permanents controlled by the player who controls the fewest, then sacrifices the rest. Each player discards cards the same way.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}{W}",
+   "layout": "normal",
+   "releasedAt": "2001-10-01",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "permanents they control equal to the number of permanents controlled by the player who controls the fewest",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "cards the same way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "54cac5a2ce5c0159abcc946719d1c539ce81c3f714538267e10760f1022a5536"
+ },
+ "Scourglass": {
+  "source": {
+   "_id": "78541a40-c27a-49c0-aa3e-5a48b97065f0",
+   "name": "Scourglass",
+   "typeLine": "Artifact",
+   "oracleText": "{T}, Sacrifice this artifact: Destroy all permanents except for artifacts and lands. Activate only during your upkeep.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{W}{W}",
+   "layout": "normal",
+   "releasedAt": "2008-10-03",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "destroy",
+      "object": "all permanents except for artifacts and lands",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "74145dcd4d9eb4b9686be093de41d64f8265def069c721c2f12fad41cf0cd1a1"
+ },
+ "Cyclone Summoner": {
+  "source": {
+   "_id": "2088e791-9ce5-4e97-a4ce-f51adaa3f42b",
+   "name": "Cyclone Summoner",
+   "typeLine": "Creature — Giant Wizard",
+   "oracleText": "When this creature enters, if you cast it from your hand, return all permanents to their owners' hands except for Giants, Wizards, and lands.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "7",
+   "toughness": "7",
+   "manaCost": "{5}{U}{U}",
+   "layout": "normal",
+   "releasedAt": "2021-02-05",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all permanents except for Giants, Wizards, and lands",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "all permanents except for Giants, Wizards, and lands",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f9fdaf57e36e20bad5b31c78c7368bc895a7f264e50994bb143c845c9a2d2d81"
+ },
+ "Selective Obliteration": {
+  "source": {
+   "_id": "9f95027a-5f04-48b4-99a0-8913be3a520a",
+   "name": "Selective Obliteration",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player chooses a color. Then exile each permanent unless it's colorless or it's only the color its controller chose.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 5,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{C}{C}",
+   "layout": "normal",
+   "releasedAt": "2024-06-14",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "each permanent unless it's colorless or it's only the color its controller chose",
+      "fromZone": null,
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "0bc98d49279113fd84edebe5cad5935a9b11d877c4747df5942300e282c02aa7"
+ },
+ "Liliana, Dreadhorde General": {
+  "source": {
+   "_id": "5e958212-6a5b-4288-8d31-f1572619d7dc",
+   "name": "Liliana, Dreadhorde General",
+   "typeLine": "Legendary Planeswalker — Liliana",
+   "oracleText": "Whenever a creature you control dies, draw a card.\n+1: Create a 2/2 black Zombie creature token.\n−4: Each player sacrifices two creatures of their choice.\n−9: Each opponent chooses a permanent they control of each permanent type and sacrifices the rest.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{B}{B}",
+   "layout": "normal",
+   "releasedAt": "2024-11-15",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Liliana, Dreadhorde General",
+     "typeLine": "Legendary Planeswalker — Liliana",
+     "printingId": "7a097413-b77c-45e8-a4ac-5b2dc1d34e16"
+    },
+    {
+     "component": "token",
+     "name": "Zombie",
+     "typeLine": "Token Creature — Zombie",
+     "printingId": "e29a360b-11fd-42ba-82ba-de8f7e136c20"
+    }
+   ],
+   "loyalty": "6"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "a creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 2/2 black Zombie creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "two creatures of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a permanent of each permanent type each opponent controls, and the rest",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "14ef2916208e40ccbe253ceb4c2cea58602876911a081e404e7d7e0f93132362"
+ },
+ "Bearer of the Heavens": {
+  "source": {
+   "_id": "54e86bc8-ff48-49be-902c-4923d59901a7",
+   "name": "Bearer of the Heavens",
+   "typeLine": "Creature — Giant",
+   "oracleText": "When this creature dies, destroy all permanents at the beginning of the next end step.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 8,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "10",
+   "toughness": "10",
+   "manaCost": "{7}{R}",
+   "layout": "normal",
+   "releasedAt": "2014-05-02",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "c0faa6a372abfb167cc30198a21d36007e67016ce6b5e88569d2e5d8223e2b53"
+ },
+ "Thieves' Auction": {
+  "source": {
+   "_id": "230ee0b4-eb75-457f-b171-72d585cfb5aa",
+   "name": "Thieves' Auction",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile all nontoken permanents. Starting with you, each player chooses one of the exiled cards and puts it onto the battlefield tapped under their control. Repeat this process until all cards exiled this way have been chosen.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{R}{R}{R}",
+   "layout": "normal",
+   "releasedAt": "2003-07-28",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all nontoken permanents",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "one of the exiled cards",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "a14fbdcdd56d0219c2b3124f5682f3c25de50d5996af4a3d93d84c2825501c68"
+ },
+ "Worldpurge": {
+  "source": {
+   "_id": "285ecbd5-ff7c-4919-ab0b-7fc05e5a0a0a",
+   "name": "Worldpurge",
+   "typeLine": "Sorcery",
+   "oracleText": "Return all permanents to their owners' hands. Each player chooses up to seven cards in their hand, then shuffles the rest into their library. Each player loses all unspent mana.",
+   "keywords": [],
+   "colors": [
+    "U",
+    "W"
+   ],
+   "manaValue": 8,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{W/U}{W/U}{W/U}{W/U}",
+   "layout": "normal",
+   "releasedAt": "2008-05-02",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all permanents",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "unspent cards",
+      "fromZone": "hand",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "52afe29aabe9d69199ffe33a7d59153d3b35fdc9a01f5f08877a65fe463a66ff"
+ }
+}

@@ -219,7 +219,8 @@ function landPlayVerbs(subject: SubjectFilter): Verb[] | undefined {
  *  names the single thing arriving and has none. That is the whole discriminator, and it separates
  *  all fourteen object shapes the corpus actually contains. */
 function tapVerbs(subject: SubjectFilter): Verb[] | undefined {
-  return subject.scope ? ["taps"] : undefined;
+  // A picked set ("Tap the chosen permanents you don't control": Teferi, Who Slows the Sunset) is a tap of permanents on the battlefield though it has no mass scope (#1557).
+  return subject.scope || subject.selection === "chosen" ? ["taps"] : undefined;
 }
 
 /** A SWEEP DEBUFF IS A WIPE (owner ruling 2026-09-10; recall v5 #156, Toxic Deluge -> Espers to
