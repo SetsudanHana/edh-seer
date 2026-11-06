@@ -1137,6 +1137,11 @@ describe("ramp.landPut is derived", () => {
     for (const control of ["you", "any", "opp"])
       expect(ruleMatches(rule, plus(land("land", "exile"), "exiled", { control, type: "land", fromZone: "battlefield" }), set), control).toBe(false);
   });
+  test("a craft cost that exiles a land from the battlefield is no swap (Kaslem's Stonetree: Craft with Cave), while Wormfang Newt's still is (#1500)", () => {
+    const craft = { control: "you", type: "land", subtype: "cave", fromZone: "battlefield", viaCraft: true };
+    expect(ruleMatches(rule, plus(land("land", "library"), "exiled", craft), set)).toBe(true);
+    expect(ruleMatches(rule, plus(land("land", "library"), "exiled", { ...craft, viaCraft: undefined }), set)).toBe(false);
+  });
   test("an exile from the LIBRARY is the land drop itself (Venture Forth)", () => {
     expect(ruleMatches(rule, plus(land("land", "exile"), "exiled", { control: "you", type: "land", fromZone: "library" }), set)).toBe(true);
   });

@@ -107,6 +107,8 @@ export type RuleClause =
       /** The emit is an EDICT (`SubjectFilter.edict`): the sacrifice or death is forced on a player the ability TARGETS ("Target player sacrifices a creature of their choice": Diabolic Edict, Chainer's Edict). The
        *  creature is not itself targeted, so such an emit carries no `scope: "target"` and this is how the role reads it (#1295: it replaces the printed `targetPlayerSacrifices` pattern). */
       edict?: true;
+      /** Refuse an emit that is a CRAFT COST's exile of its materials (`SubjectFilter.viaCraft`, #1500): a separate optional activation (CR 702.167a), never the swap or destruction the rule guards against (Kaslem's Stonetree: Craft with Cave, beside its land drop). */
+      notViaCraft?: true;
       /** Refuse an EDICT emit (`SubjectFilter.edict`): "Target player sacrifices two creatures" forces a choice on one named player and is not a wipe (#1266, `boardWipe.text`). */
       notEdict?: true;
       /** Refuse an emit whose subject is LANDS ONLY (`landOnlySubject`: "Destroy all lands", "each player sacrifices a land", "nonbasic lands"): mass land denial is stax, not a board wipe (owner 2026-11-06, `boardWipe.text`). A subject that also names another type ("artifacts, creatures, and lands": Jokulhaups) is not land-only. */
@@ -648,6 +650,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           clause.verbs.includes(e.verb)
           && (clause.abilityKind === undefined || clause.abilityKind.includes(a.effect.kind))
           && (clause.edict !== true || e.subject.edict === true)
+          && (clause.notViaCraft !== true || e.subject.viaCraft !== true)
           && (clause.notEdict !== true || e.subject.edict !== true)
           && (clause.notBlockCombat !== true || !blockCombat(a, e.subject))
           && (clause.notTokenOnly !== true || e.subject.token !== true)

@@ -72,3 +72,18 @@ test("a craft exile is a real exile and leave: it still feeds an ordinary leaves
   const patrol = fromText("Ninth Bridge Patrol", "Creature — Dwarf Soldier", "Whenever another creature you control leaves the battlefield, put a +1/+1 counter on this creature.");
   expect(pairReasons(tithing, patrol, H).filter((r) => r.producer === tithing.card.name && r.consumer === "Ninth Bridge Patrol").length).toBeGreaterThan(0);
 });
+
+/** A COST REDUCTION ON A KIND OF ABILITY REACHES ONLY A CARD THAT HAS ONE (#1500 review). The craft ability is an activated ability of an artifact, so "activated abilities of artifacts you control cost {1} less" reaches it, and
+ *  "Exhaust abilities" / "Equip abilities" do not. Oracle text read from Mongo `cards` 2026-11-06. */
+const gadgeteer = fromText("Forensic Gadgeteer", "Creature — Vedalken Artificer Detective", "Whenever you cast an artifact spell, investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")\nActivated abilities of artifacts you control cost {1} less to activate. This effect can't reduce the mana in that cost to less than one mana.", ["Investigate"]);
+const boomScholar = fromText("Boom Scholar", "Creature — Goblin Advisor", "Exhaust abilities of other permanents you control cost {2} less to activate.\nExhaust — {4}{R}{G}: Creatures and Vehicles you control gain trample until end of turn. Put two +1/+1 counters on this creature. (Activate each exhaust ability only once.)", ["Exhaust"]);
+const headmaster = fromText("Bureau Headmaster", "Creature — Human Assassin", "Equipment spells you cast cost {1} less to cast.\nEquip abilities you activate cost {1} less to activate.");
+const exhaustCard = fromText("Wasteland Raider", "Creature — Human Warrior", "Exhaust — {2}{R}: Put two +1/+1 counters on this creature. (Activate each exhaust ability only once.)", ["Exhaust"]);
+const costRed = (p: DeckCard, c: DeckCard) => pairReasons(p, c, H).filter((r) => r.producer === p.card.name && r.consumer === c.card.name && r.tag === "static:cost-reduction");
+
+test("an ability discount for a KIND of ability reaches only a card with that kind (Boom Scholar's exhaust, Bureau Headmaster's equip)", () => {
+  expect(costRed(gadgeteer, tithing).length).toBeGreaterThan(0);
+  expect(costRed(boomScholar, tithing)).toEqual([]);
+  expect(costRed(headmaster, tithing)).toEqual([]);
+  expect(costRed(boomScholar, exhaustCard).length).toBeGreaterThan(0);
+});
