@@ -634,7 +634,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 462: #1537 -- a damage multiplier whose grammar object is bare takes the source it names (Insult // Injury 'a source you control': effect subject and double emit any -> you; Goblin Goliath effect subject any -> you)
 // 463: #1364 -- Effect.becomesLasts: an animate's becomes counts as a kindred only when it LASTS (animateLasts, CR 611.2a; owner 2026-11-06). Timed animates (until end of turn / combat, this turn, any other until) and unknown durations carry no flag; for as long as, until your next turn and a stated-nothing change do. Read by the matcher kindred readers only.
 // 464: #1542 -- A static's stored subject says who it applies to: a grant to 'cards in your graveyard/hand' keeps its zone (Solemn Doomguide, Mishra, Aminatou), an Equipment/Aura host's 'is a Wizard' is no Wizard lord (25 host rows), and a self predicate 'it ... is a Knight' (Skyknight Squire) names no class. Measured (derive-impact vs 2b28d2ce, final): 39 rows changed, 0 source flips; host and self false lords removed: 23 host cards / 25 rows plus Skyknight Squire, about 165.6k static pairs lost (50 of 50 sampled false). The ZONE change alone would lose 18,291 TRUE pairs (a zoned subject matches no printed card), so the matcher ignores the zone of a zoned keyword-grant for the match against a PRINTED card (`isZonedCardGrant`): the 15 zone producers now lose 1,943 pairs, all token consumers (1,697 `[via token]` + 246 token nodes), 0 real cards, 0 gained. role-ratchet gained 0 / lost 0, dropped-clauses 4,876 -> 4,876 (new 0, fixed 0), panel-score precision 100.0% [99.2, 100.0], retention 98.4% (428 held, 7 lost), by-name ratchet ok.
-export const DERIVE_VERSION = 464;
+// 465: #1545 -- "This creature can block <class> as though it had <keyword>" is the card's own blocking permission, not a keyword grant to the class: the clause's recipient is none and it names no `grants` (Dragon Hunter, Heartwood Dryad, Wall of Diffusion; Aetherflame Wall's "didn't have" form already read so). Measured (derive-impact vs 464, full): 3 rows changed, 0 added/removed, grammar complete 28,486 unchanged; pair reasons gained 0, lost 560, all Dragon Hunter's static keyword-grant pairs to Dragon-class cards (497 direct, 63 via token; false: it gives no Dragon reach); Heartwood Dryad and Wall of Diffusion lost 0 pairs (their all-creatures grant was already refused by the board gate); panel precision 100.0% / retention 98.4% (428 held, 7 lost) by-name ratchet ok; role-ratchet and dropped-clauses unchanged (dropped-clauses 4,876).
+export const DERIVE_VERSION = 465;
 
 /** A sentence with a "Choose [another / up to N] target X." of its own (#1452). */
 const CHOOSES_TARGET = /\bchoose (?:another |other |up to \w+ |any number of )?target\b/i;
@@ -1554,10 +1555,16 @@ function withoutQuotedAbilities(text: string): string {
   }
   return out;
 }
+/** "THIS CREATURE CAN BLOCK <class> AS THOUGH IT HAD <keyword>" (#1545: Dragon Hunter, Heartwood Dryad, Wall of Diffusion) is the card's own blocking
+ *  permission, never a keyword handed to the class it names. String ops only. */
+function blocksAsThoughHad(object: string): boolean {
+  const t = object.trim().toLowerCase();
+  return t.startsWith("can block ") && (t.includes(" as though it had ") || t.includes(" as though they had "));
+}
 function grantedKeywords(objects: string[]): string[] {
   // "can attack as though it didn't have defender", "can block creatures with shadow as though they didn't have shadow" name a keyword the
   // thing does NOT have, never one it is handed: Walking Bulwark, Mobile Fort and Glade Watcher read "grants defender" (#1349).
-  const text = objects.map(withoutQuotedAbilities).join(" ").toLowerCase().replace(/(?:creatures with \w+ )?as though (?:it|they) (?:didn't|did not) have \w+/g, " ");
+  const text = objects.filter((o) => !blocksAsThoughHad(o)).map(withoutQuotedAbilities).join(" ").toLowerCase().replace(/(?:creatures with \w+ )?as though (?:it|they) (?:didn't|did not) have \w+/g, " ");
   const named = KEYWORD_ABILITIES.filter((k) => new RegExp(`(?:^|[^a-z])${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:$|[^a-z])`).test(text));
   // LANDWALK IS ONE KEYWORD WITH A LAND TYPE (CR 702.14): "islandwalk" and "swampwalk" are instances,
   // not names on the list, so 47 grants named no keyword (S-T1, 2026-10-06).
@@ -1725,6 +1732,8 @@ function effectSubject(
     const who = recipientBefore(clauseText, LOSES_ABILITIES);
     return who && !UNEXPRESSIBLE_NARROWING.test(who) ? parseSubject(who) : parseSubject("");
   }
+  // A BLOCKING PERMISSION OF THE CARD'S OWN (#1545) names a class it may block, not a recipient.
+  if (action.verb === "grant-ability" && blocksAsThoughHad(action.object ?? "")) return parseSubject("");
   if (action.verb === "grant-ability" || action.verb === "copy") {
     const who = action.verb === "copy"
       ? recipientBefore(clauseText, COPIED_INTO)
