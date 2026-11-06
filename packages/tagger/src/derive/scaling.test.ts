@@ -71,7 +71,7 @@ test("the counted subject carries the type and whose graveyard", () => {
   expect(scalingSubject({ verb: "draw", object: "a card", amount: "a card for each creature card in their graveyard" },
     "Each player draws a card for each creature card in their graveyard."))
     .toMatchObject({ type: "creature", zone: "graveyard", control: "you" });
-  expect(scalingSubject({ verb: "create", object: "a 2/2 black Zombie creature token" },
+  expect(scalingSubject({ verb: "create", object: "a 2/2 black Zombie creature token", amount: "1 for each creature card in their graveyard" },
     "At the beginning of each upkeep, if this enchantment is on the battlefield, each player creates a 2/2 black Zombie creature token with haste named Tombspawn for each creature card in their graveyard."))
     .toMatchObject({ type: "creature", zone: "graveyard", control: "you" });
   expect(scalingSubject({ verb: "lose-life", amount: "1 life for each creature card in their graveyard" },
