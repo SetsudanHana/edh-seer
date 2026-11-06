@@ -858,17 +858,18 @@ test("a board wipe is a mass effect on the battlefield, in any of its shapes", (
   expect(notWipes.map((d) => d.card.name).filter((n) => found.has(n))).toEqual([]);
 });
 
-// MASS LAND DESTRUCTION IS STAX, NOT A WIPE (owner 2026-11-06: "It should be mass land denial rather than boardwipe, so it is stax piece"). It was main's behaviour, unruled, until then.
-test("mass land destruction is stax and not a board wipe; a wipe that also hits lands stays a wipe", () => {
+// MASS LAND DESTRUCTION IS STAX, NOT A WIPE (owner 2026-11-06: "It should be mass land denial rather than boardwipe, so it is stax piece"); A WIPE THAT ALSO DESTROYS LANDS IS BOTH (owner 2026-11-06, #1554).
+test("mass land destruction is stax and not a wipe; a wipe that also hits lands is both", () => {
   const roles = (names: string[]): Map<string, Set<string>> => detectBuildCategories(names.map((n) => realCard(n)));
-  const denial = ["Armageddon", "Ravages of War", "Ruination", "Global Ruin", "Sunder", "Natural Balance", "Planar Overlay", "Omen of Fire"];
-  const m = roles([...denial, "Jokulhaups", "Wrath of God", "Stone Rain"]);
+  const denial = ["Armageddon", "Ravages of War", "Ruination", "Global Ruin", "Sunder", "Natural Balance", "Planar Overlay", "Omen of Fire", "Acid Rain"];
+  const both = ["Wildfire", "Death Cloud", "Jokulhaups", "Obliterate", "Decree of Annihilation"];
+  const m = roles([...denial, ...both, "Wrath of God", "Stone Rain"]);
   const has = (cat: string, n: string): boolean => m.get(cat)?.has(n) === true;
   expect(denial.filter((n) => has("boardWipe", n))).toEqual([]);
   expect(denial.filter((n) => !has("stax", n))).toEqual([]);
-  // Jokulhaups destroys artifacts, creatures and lands: a wipe. Whether it is also stax is an open owner question, so it is not pinned either way.
-  expect(has("boardWipe", "Jokulhaups")).toBe(true);
-  // Wrath of God is unchanged.
+  expect(both.filter((n) => !has("boardWipe", n))).toEqual([]);
+  expect(both.filter((n) => !has("stax", n))).toEqual([]);
+  // Wrath of God is a wipe and nothing else.
   expect(has("boardWipe", "Wrath of God")).toBe(true);
   expect(has("stax", "Wrath of God")).toBe(false);
   // A single land destruction (scope target) is neither.

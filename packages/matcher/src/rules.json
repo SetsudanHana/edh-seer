@@ -1,5 +1,5 @@
 {
-  "version": 39,
+  "version": 40,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -391,9 +391,12 @@
     {
       "id": "stax.landDenial",
       "category": "stax",
-      "match": [{ "op": "emits", "verbs": ["dies", "exiled", "leaves"], "control": ["opp", "any"], "scope": ["all", "each"], "zone": [null], "fromZone": ["battlefield", null], "notBlockCombat": true, "notTokenOnly": true, "notSelf": true, "notBesideTargetedKill": true, "landOnly": true }],
-      "not": [{ "op": "countsAsLand" }, { "op": "rule", "id": "boardWipe.text" }],
-      "why": "MASS LAND DENIAL IS STAX (owner 2026-11-06: mass land destruction is mass land denial, a stax piece, not a board wipe). The ability EMITS a destroy, exile, sacrifice or bounce (`dies`, `exiled`, `leaves` from the battlefield) at every land, or every land of a kind (\"nonbasic lands\", \"all Forests\"), of any controller or the opponents (`scope` all or each; `control` you is a mass bounce of your own and never counts): Armageddon, Ravages of War, Ruination, Global Ruin, Sunder, Natural Balance, Planar Overlay, Omen of Fire. It reads the same derived emits as `boardWipe.text`, which refuses a land-only subject. A single land destruction (Stone Rain: scope target) is neither. A creature wipe that ALSO hits lands (Jokulhaups, Obliterate, Apocalypse, Decree of Annihilation) stays `boardWipe` and is refused here (`not` rule `boardWipe.text`): whether it is ALSO stax is an open owner question, and the refusal keeps main's answer (not stax) until the owner rules."
+      "match": [{ "op": "anyOf", "clauses": [
+        { "op": "emits", "verbs": ["dies", "exiled", "leaves"], "control": ["opp", "any"], "scope": ["all", "each"], "zone": [null], "fromZone": ["battlefield", null], "notBlockCombat": true, "notTokenOnly": true, "notSelf": true, "notBesideTargetedKill": true, "landOnly": true },
+        { "op": "emits", "verbs": ["dies", "exiled", "leaves"], "control": ["opp", "any"], "scope": ["all", "each"], "zone": [null], "fromZone": ["battlefield", null], "notBlockCombat": true, "notTokenOnly": true, "notSelf": true, "notBesideTargetedKill": true, "includesLand": true }
+      ] }],
+      "not": [{ "op": "countsAsLand" }],
+      "why": "MASS LAND DENIAL IS STAX (owner 2026-11-06: mass land destruction is mass land denial, a stax piece, not a board wipe). The ability EMITS a destroy, exile, sacrifice or bounce (`dies`, `exiled`, `leaves` from the battlefield) at every land, or every land of a kind (\"nonbasic lands\", \"all Forests\"), of any controller or the opponents (`scope` all or each; `control` you is a mass bounce of your own and never counts): Armageddon, Ravages of War, Ruination, Global Ruin, Sunder, Natural Balance, Planar Overlay, Omen of Fire. It reads the same derived emits as `boardWipe.text`, which refuses a land-only subject. A single land destruction (Stone Rain: scope target) is neither. A WIPE THAT ALSO DESTROYS LANDS IS BOTH a `boardWipe` and stax (owner 2026-11-06, #1554): the land can be its own emit (Wildfire, Death Cloud, Pox, Destructive Force, Devastating Dreams, Restore Balance, Decree of Annihilation's cycling trigger) or part of a combined type list (`includesLand`: \"artifacts, creatures, and lands\" in Jokulhaups, Obliterate, Decree of Annihilation) (Devastation, Catastrophe, Soulscour). CEILING: Apocalypse (\"all permanents\") is NOT stax: derive files it as a bare `permanent` subject, the same shape as Wash Out, Razia's Purification and Council's Judgment (the restriction is dropped), and counting it measured 45 false stax cards. There is no `boardWipe.text` refusal any more. Type-keyed land destruction (Acid Rain, Boil, Tsunami, Flashfires, Stench of Evil) stays stax, as shipped."
     },
     {
       "id": "stax.text",
