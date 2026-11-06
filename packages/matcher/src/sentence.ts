@@ -764,14 +764,17 @@ export function staticGrantSentence(
   return `${producer} gives ${consumer} ${phrase}`;
 }
 
+/** "a Soldier", "an Elemental": the article by the noun's first letter (a vowel letter takes "an"; every creature type that starts with one is sounded with a vowel: Elemental, Angel, Imp, Ape, Elk, Illusion). */
+const withArticle = (noun: string): string => (noun.length > 0 && "AEIOUaeiou".includes(noun[0]!) ? `an ${noun}` : `a ${noun}`);
+
 /** A LORD REACHING WHAT A CARD ANIMATES INTO (#1364 part 2). The consumer is not the kindred on its type line: it BECOMES it ("Boros Keyrune becomes a Soldier"), and the lord's grant reaches it then.
  *  `self` is the card itself ("Boros Keyrune can become a Soldier"); otherwise it animates a permanent ("Brave the Wilds turns a land into an Elemental"). */
 export function animatedKindredSentence(producer: string, consumer: string, kind: string, self: boolean, effectKind: string, keywords?: readonly string[]): string {
   const noun = kind.charAt(0).toUpperCase() + kind.slice(1);
   const gives = effectKind === "keyword-grant" && keywords?.length ? keywordList(keywords) : GRANT_PHRASES[effectKind] ?? `its ${effectKind.replace(/-/g, " ")}`;
   return self
-    ? `${consumer} can become a ${noun}, and ${producer} gives ${noun}s ${gives}`
-    : `${consumer} turns a permanent into a ${noun}, and ${producer} gives ${noun}s ${gives}`;
+    ? `${consumer} can become ${withArticle(noun)}, and ${producer} gives ${noun}s ${gives}`
+    : `${consumer} turns a permanent into ${withArticle(noun)}, and ${producer} gives ${noun}s ${gives}`;
 }
 
 /** A COUNT OF A KINDRED COUNTING WHAT A CARD ANIMATES INTO (#1364 part 2): "Omnath counts the Elementals you control", and Brave the Wilds makes a land one. */

@@ -83,3 +83,10 @@ test("an unknown duration is refused: an 'until' that is not 'your next turn' re
   expect(animateLasts("This land becomes a 3/3 Elemental creature until a player casts a spell.")).toBe(false);
   expect(animateLasts("")).toBe(false);
 });
+
+test("a trigger's preamble and an intervening if are not the animate's duration (Emergent Haunting, Rootwise Survivor, Does Machines)", () => {
+  expect(animateLasts("At the beginning of your end step, if you haven't cast a spell from your hand this turn and this enchantment isn't a creature, it becomes a 3/3 Spirit creature with flying in addition to its other types.")).toBe(true);
+  expect(animateLasts("At the beginning of combat on your turn, put three +1/+1 counters on target artifact you control. If it isn't a creature, it becomes a 0/0 Robot creature in addition to its other types.")).toBe(true);
+  // ...but the effect's own duration still ends it.
+  expect(animateLasts("At the beginning of your end step, if you control a land, this enchantment becomes a 3/3 Spirit creature until end of turn.")).toBe(false);
+});

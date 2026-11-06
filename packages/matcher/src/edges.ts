@@ -3141,6 +3141,11 @@ function grantsToSpellsYouCast(s: SubjectFilter | undefined): boolean {
 /** The static kinds that reach a PERMANENT as a lord does, and so reach a card that animates into the lord's kindred (#1364 part 2). Not `cost-reduction` (it reduces SPELLS cast: a land animated into an
  *  Elemental is no Elemental spell), `type-grant`, `damage-multiplier` or any other. */
 const ANIMATED_LORD_KINDS: ReadonlySet<string> = new Set(["pump", "keyword-grant"]);
+/** Keywords a card has only as a SPELL or in another zone, never as a permanent on the battlefield: a grant of one reaches no animated permanent (Solemn Doomguide's unearth, Ashling's evoke). */
+const OFF_BATTLEFIELD_GRANTS: ReadonlySet<string> = new Set([
+  "evoke", "unearth", "flashback", "escape", "embalm", "eternalize", "disturb", "jump-start", "retrace", "madness", "miracle", "foretell", "plot", "dash", "cascade", "storm", "convoke", "delve", "improvise",
+  "emerge", "replicate", "rebound", "casualty", "cleave", "overload", "bestow", "prowl", "spectacle", "suspend", "surge", "kicker", "multikicker", "entwine", "buyback", "splice", "flash", "aftermath",
+]);
 
 function staticEdges({ p, c, h, reasons }: PairScope): void {
   const staticClaim = (c: DeckCard, a: CardTags["abilities"][number]): Reason | undefined => {
@@ -3225,6 +3230,11 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
       // WHAT C BECOMES (#1364 part 2): a lord that names a kindred also reaches a permanent C animates into that kindred (Field Marshal's Soldiers pump Boros Keyrune's Soldier). Only an anthem / lord
       // of a PERMANENT (`pump`, `keyword-grant`) that C's printed shape does not already meet, named by a kindred and never by a bare type, and never a card with itself.
       if (a.kind !== "static" || !ANIMATED_LORD_KINDS.has(a.effect.kind) || !namesKindred(printedMatchable) || p.card.name === c.card.name) return undefined;
+      // ...and only a lord whose stored subject can be trusted to be a class of PERMANENTS on the battlefield (Opus review): not a grant scoped to a zone (Ashling's "spells you cast from your hand"), not
+      // one that works off the battlefield (unearth, evoke), not an attachment's host, not a threshold static (a self reading stored as a class), and not a granted ENTERS trigger.
+      if (printedMatchable.fromZone !== undefined || printedMatchable.zone !== undefined || a.host === true || a.threshold !== undefined) return undefined;
+      if (a.grants?.some((k) => OFF_BATTLEFIELD_GRANTS.has(k))) return undefined;
+      if (p.tags.abilities.some((x) => x.grantedBy !== undefined && x.grantedBy === a.clause && x.trigger?.verbs.includes("enters") === true)) return undefined;
       for (const k of animatedKindreds(c.tags, printed)) {
         const hit = kindredReaching(k, printedMatchable, (shape, want) => subjectMatches(shape, want, h));
         if (hit !== undefined) { animated = { kind: hit, self: k.self }; break; }
