@@ -103,6 +103,26 @@ export type RuleClause =
       /** The emit is an EDICT (`SubjectFilter.edict`): the sacrifice or death is forced on a player the ability TARGETS ("Target player sacrifices a creature of their choice": Diabolic Edict, Chainer's Edict). The
        *  creature is not itself targeted, so such an emit carries no `scope: "target"` and this is how the role reads it (#1295: it replaces the printed `targetPlayerSacrifices` pattern). */
       edict?: true;
+      /** Refuse an EDICT emit (`SubjectFilter.edict`): "Target player sacrifices two creatures" forces a choice on one named player and is not a wipe (#1266, `boardWipe.text`). */
+      notEdict?: true;
+      /** At least ONE of the subject's types is in this list, where `type` needs EVERY type in its list: "each creature and each planeswalker" passes `typeAny: [creature, permanent]`, a planeswalker-only subject ("each planeswalker they control": Kumano Faces Kakkazan) does not. */
+      typeAny?: string[];
+      /** Refuse an emit that only a BLOCK makes: the ability triggers on "blocks" / "becomes blocked" ("When this creature blocks a creature, destroy both creatures": Alaborn Zealot, Dead-Iron Sledge, Venom), or its subject is
+       *  a `combat: blocking` creature ("each creature blocking it": Plague Wight, Gomazoa). That is a combat result against the blocked creature, not a sweep (#1266, `boardWipe.text`). */
+      notBlockCombat?: true;
+      /** Refuse an emit about the ATTACHMENTS of something, which derive reads as a mass of their own: a subject whose subtype is aura or equipment and whose type is not `permanent` ("Destroy all Equipment attached to that creature": Blastfire Bolt, Awaken the Sleeper,
+       *  Corrosive Ooze) or a TOKEN-ONLY one ("exile all other tokens created with this creature": Faerie Artisans). Neither is a board (#1266, `boardWipe.text`). */
+      notAttachmentOrTokens?: true;
+      /** Refuse an `opp` `dies` / `leaves` emit that a COUNTED sacrifice makes (the same ability also emits `sacrifice` and carries a number other than X as its `amount`): "each opponent sacrifices three creatures" (Portal to Phyrexia), "... the creature
+       *  with the greatest power" (Crackling Doom, amount 1) are edicts of a fixed size, and derive scopes a plural or superlative object `all` all the same.
+       *  A sacrifice by EVERY player keeps its number (Barter in Blood, "two creatures each"; CEILING: Tectonic Hellion's "each player who controls the most lands sacrifices two" rides with it). A sacrifice with no number ("sacrifices the rest": Cataclysm, Slaughter the Strong; "thirteen creatures": Blasphemous Edict) or X (Death Cloud) is a wipe and stays (#1266). */
+      notCountedSacrifice?: true;
+      /** Under a `debuff` ability, keep only a ONE-SHOT shrink that lowers toughness (#1266, `boardWipe.text`): derive writes a `dies` emit for every "get -N/-N" including "-1/-0" (Cumber Stone, Hell Swarm),
+       *  and a power-only shrink kills nothing; a CONTINUOUS one ("Other black creatures get -1/-1", Kaervek, Elesh Norn) is a static hoser, not a sweep. An emit under any other ability kind is not touched. */
+      oneShotToughnessDebuff?: true;
+      /** Refuse a MASS kill / exile / bounce emit (`scope` all or each; a damage emit is never refused) when another ability of the SAME clause carries a TARGETED dies / exiled / leaves: "Exile target nonland permanent ... and all other nonland permanents with the
+       *  same name" (Banishment), "Destroy target artifact and all other artifacts with the same name", "Return target creature and all Auras attached to it" widen one target, they do not wipe a board (#1266). */
+      notBesideTargetedKill?: true;
       /** Refuse an emit the victim may decline (`GameEvent.victimMay`): "its controller may sacrifice it" (Star Athlete, Livio), "unless that player sacrifices it" (Enchanter's Bane). It is the opponent's choice with an
        *  alternative, which is not removal (#1295). */
       notVictimMay?: true;
@@ -130,6 +150,9 @@ export type RuleClause =
   /** The card prints one of these KEYWORDS (Scryfall's `card.keywords`, compared case-insensitively). For a rule whose cue lives only in keyword reminder text, which derive does not read: Transmute and
    *  Transfigure search the library, and Typecycling does too (#1266). Compose with `not` to leave a keyword out (Landcycling fetches a land). */
   | { op: "keyword"; in: string[] }
+  /** The card matches ANOTHER rule of the set, by id (match and `not` both). One definition of a role read by two rules: `removal.targeted` refuses what `boardWipe.text` takes (#1266), so a mass effect
+   *  is not counted twice. The id must name a rule; an unknown one throws, as an unknown pattern does. */
+  | { op: "rule"; id: string }
   /** Card subtypes, from the tagged characteristics -- "equipment", "aura", a creature type. */
   | { op: "subtype"; in: string[] }
   /** Printed power minus mana value, at least this much. The one stat predicate the taxonomy needs
@@ -501,6 +524,9 @@ function lowersToughness(amount: string | undefined): boolean {
   return m !== null && (m[1] === "-" || m[1] === "−") && m[2] !== "0";
 }
 
+const subtypesOf = (s: { subtype?: unknown }): string[] => (s.subtype === undefined ? [] : [s.subtype].flat().map((t) => String(t).toLowerCase()));
+const KILL_VERBS: readonly string[] = ["dies", "exiled", "leaves"];
+
 function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
   switch (clause.op) {
     case "oracle":
@@ -529,6 +555,11 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
     case "keyword": {
       const wanted = new Set(clause.in.map((k) => k.toLowerCase()));
       return (dc.card.keywords ?? []).some((k) => wanted.has(k.toLowerCase()));
+    }
+    case "rule": {
+      const other = set.rules.find((r) => r.id === clause.id);
+      if (other === undefined) throw new Error(`unknown rule: ${clause.id}`);
+      return ruleMatches(other, dc, set);
     }
     case "enchants": {
       const e = dc.tags?.characteristics?.enchants as (Parameters<typeof subjectTypes>[0] & { control?: string; anyOf?: { control?: string }[] }) | undefined;
@@ -592,12 +623,19 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
     case "emits":
       return (dc.tags?.abilities ?? []).some((a) =>
         (clause.notOwnedByYou !== true || a.effect.subject?.owner !== "you")
+        && (clause.oneShotToughnessDebuff !== true || a.effect.kind !== "debuff" || (lowersToughness(a.amount) && a.repeats !== "continuous"))
         && (clause.notFromHandCost !== true || !/from your hand/i.test(a.cost ?? ""))
         && (clause.notFlickered !== true || !(dc.tags?.abilities ?? []).some((f) => f.effect.kind === "flicker" && f.clause === a.clause && f.delayedUntil === undefined && f.returnIf !== true && f.effect.subject?.control !== "opp"))
         && (a.emits ?? []).some((e) =>
           clause.verbs.includes(e.verb)
           && (clause.abilityKind === undefined || clause.abilityKind.includes(a.effect.kind))
           && (clause.edict !== true || e.subject.edict === true)
+          && (clause.notEdict !== true || e.subject.edict !== true)
+          && (clause.notBlockCombat !== true || (e.subject.combat !== "blocking" && !(a.trigger?.verbs ?? []).some((v) => v === "blocks" || v === "becomes-blocked")))
+          && (clause.notAttachmentOrTokens !== true || (e.subject.token !== true && (!subtypesOf(e.subject).some((t) => t === "aura" || t === "equipment") || [e.subject.type].flat().includes("permanent"))))
+          && (clause.notCountedSacrifice !== true || e.subject.control !== "opp" || !(a.emits ?? []).some((g) => g.verb === "sacrifice") || a.amount === undefined || a.amount === "" || a.amount.toUpperCase() === "X")
+          && (clause.notBesideTargetedKill !== true || !KILL_VERBS.includes(e.verb) || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause
+            && (f.emits ?? []).some((g) => g.subject.scope === "target" && KILL_VERBS.includes(g.verb))))
           && (clause.notVictimMay !== true || e.victimMay !== true)
           && (clause.notOwnedByYou !== true || e.subject.owner !== "you")
           && (clause.notSelf !== true || e.subject.self !== true)
@@ -607,6 +645,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.control === undefined || clause.control.includes(e.subject.control))
           && (clause.zone === undefined || clause.zone.includes(e.subject.zone ?? null))
           && (clause.type === undefined || (subjectTypes(e.subject).length > 0 && subjectTypes(e.subject).every((t) => clause.type!.includes(t))))
+          && (clause.typeAny === undefined || subjectTypes(e.subject).some((t) => clause.typeAny!.includes(t)))
           && (clause.scope === undefined || clause.scope.includes(e.subject.scope ?? null))
           && (clause.fromZone === undefined || clause.fromZone.includes(e.subject.fromZone ?? null))
           && (clause.counter === undefined || (e.subject.counter !== undefined && clause.counter.includes(e.subject.counter))))

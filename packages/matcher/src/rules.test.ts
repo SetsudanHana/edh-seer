@@ -53,28 +53,32 @@ test("an unknown pattern name throws rather than never matching", () => {
 
 test("`not` vetoes, `match` conjoins, `anyOf` disjoins", () => {
   const set = loadRules();
-  const card = mk("Test", "Destroy all creatures.");
-  expect(ruleMatches({ id: "a", match: [{ op: "oracle", pattern: "boardWipe" }] }, card, set)).toBe(true);
+  const card = realCard("Wrath of God");
+  expect(ruleMatches({ id: "a", match: [{ op: "rule", id: "boardWipe.text" }] }, card, set)).toBe(true);
   expect(ruleMatches({
     id: "b",
-    match: [{ op: "oracle", pattern: "boardWipe" }],
-    not: [{ op: "oracle", pattern: "boardWipe" }],
+    match: [{ op: "rule", id: "boardWipe.text" }],
+    not: [{ op: "rule", id: "boardWipe.text" }],
   }, card, set)).toBe(false);
   expect(ruleMatches({
     id: "c",
     match: [{ op: "anyOf", clauses: [
       { op: "oracle", pattern: "graveyardHate" },
-      { op: "oracle", pattern: "boardWipe" },
+      { op: "rule", id: "boardWipe.text" },
     ] }],
   }, card, set)).toBe(true);
+});
+
+test("a `rule` clause naming no rule throws, as an unknown pattern does", () => {
+  expect(() => ruleMatches({ id: "x", match: [{ op: "rule", id: "nope.text" }] }, realCard("Wrath of God"), loadRules())).toThrow(/unknown rule/i);
 });
 
 /** The `else if` that used to give wipes precedence over targeted removal is a `not` clause now, so
  *  it needs the same test it had as code. */
 test("a board wipe is not also counted as targeted removal", () => {
-  const m = detectBuildCategories([mk("Wrath", "Destroy all creatures.", "Sorcery")]);
-  expect(m.get("boardWipe")?.has("Wrath")).toBe(true);
-  expect(m.get("targetedRemoval")?.has("Wrath")).toBeUndefined();
+  const m = detectBuildCategories([realCard("Wrath of God")]);
+  expect(m.get("boardWipe")?.has("Wrath of God")).toBe(true);
+  expect(m.get("targetedRemoval")?.has("Wrath of God")).toBeUndefined();
 });
 
 /** The land branch used to `continue`, so no land could reach the nonland detectors. That is a
@@ -805,52 +809,41 @@ test("the strip takes the SENTENCE, because one clause can name two words", () =
   expect(ruleMatches(protectionRule(), c)).toBe(false);
 });
 
-// THE WIPE PATTERN, MEASURED AGAINST COMMANDER SALT'S boardWipes ON THE SIX CACHED DECKS (2026-09-05):
-// the old five-shape regex found 7 of 16 with 0 false; this one finds 16 of 16 with 2 (Fiery
-// Confluence's each-creature mode and Chandra, Bold Pyromancer's ultimate, both defensible). The
-// old one also called every "each player sacrifices a creature" EDICT a wipe (Fleshbag Marauder,
-// Plaguecrafter, Szat's Will -- 15 cards in the 71 decks) and every "return all ... cards from your
-// graveyard" recursion one. Every quoted line is oracle text fetched from the corpus, not memory.
-test("a board wipe is a mass effect on the battlefield, in any of its printed shapes", () => {
-  const wipes: [string, string][] = [
-    ["Wrath of God", "Destroy all creatures. They can't be regenerated."],
-    ["Farewell", "Choose one or more —\n• Exile all artifacts.\n• Exile all creatures.\n• Exile all enchantments.\n• Exile all graveyards."],
-    ["Blasphemous Act", "This spell costs {1} less to cast for each creature on the battlefield.\nBlasphemous Act deals 13 damage to each creature."],
-    ["Toxic Deluge", "As an additional cost to cast this spell, pay X life.\nAll creatures get -X/-X until end of turn."],
-    ["The Meathook Massacre", "When The Meathook Massacre enters, each creature gets -X/-X until end of turn."],
-    ["Massacre Girl", "Menace\nWhen Massacre Girl enters, each other creature gets -1/-1 until end of turn."],
-    ["Living Death", "Each player exiles all creature cards from their graveyard, then sacrifices all creatures they control, then puts all cards they exiled this way onto the battlefield."],
-    ["Blasphemous Edict", "Each player sacrifices thirteen creatures of their choice."],
-    ["Cyclonic Rift", "Return target nonland permanent you don't control to its owner's hand.\nOverload {6}{U} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")"],
-    ["Vandalblast", "Destroy target artifact you don't control.\nOverload {4}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")"],
-    ["Black Sun's Zenith", "Put X -1/-1 counters on each creature. Shuffle Black Sun's Zenith into its owner's library."],
-    ["Delayed Blast Fireball", "Delayed Blast Fireball deals 2 damage to each opponent and each creature they control."],
-    ["Chandra Nalaar", "−8: Chandra Nalaar deals 10 damage to target player or planeswalker and each creature that player or that planeswalker's controller controls."],
-    ["Desynchronization", "Return each nonland permanent that's not historic to its owner's hand."],
-    ["Calamity of the Titans", "Exile each creature and planeswalker with mana value less than the revealed card's mana value."],
-    ["Plague Wind", "Destroy all creatures you don't control. They can't be regenerated."],
+// THE WIPE RULE READS DERIVED DATA (#1266; it was the printed `boardWipe` pattern). The cards below are REAL: their oracle text and derived abilities are in `fixtures/removal-derived.json`, and the list
+// started as the 2026-09-05 measurement against Commander Salt's boardWipes on six cached decks (the old regex found 7 of 16; Fiery Confluence's each-creature mode and Chandra, Bold Pyromancer's
+// ultimate were the two defensible extras). The old pattern also called every "each player sacrifices a creature" EDICT a wipe (Fleshbag Marauder, Plaguecrafter, Szat's Will) and every "return all
+// ... cards from your graveyard" recursion one. Overload is a printed KEYWORD (Scryfall `keywords`), which derive does not read: the fixture carries none, so the test sets it.
+const overloaded = (name: string): DeckCard => { const dc = realCard(name); return { ...dc, card: { ...dc.card, keywords: ["Overload"] } }; };
+test("a board wipe is a mass effect on the battlefield, in any of its shapes", () => {
+  const wipes: DeckCard[] = [
+    realCard("Wrath of God"), realCard("Damnation"), realCard("Plague Wind"), realCard("Farewell"), realCard("Austere Command"),
+    realCard("Blasphemous Act"), realCard("Toxic Deluge"), realCard("The Meathook Massacre"), realCard("Massacre Girl"), realCard("Black Sun's Zenith"),
+    realCard("Living Death"), realCard("Blasphemous Edict"), realCard("Cataclysm"), realCard("Delayed Blast Fireball"), realCard("Chandra Nalaar"),
+    realCard("Desynchronization"), realCard("Calamity of the Titans"), realCard("Cower in Fear"),
+    // "Destroy all lands" is kept as the owner's line has always had it: the old pattern read `lands?` (Armageddon, Ravages of War, Ruination).
+    realCard("Armageddon"),
+    // One-sided: an opponent-only mass effect is still a wipe.
+    // Overload turns "target" into "each", and derive reads only the targeted half.
+    overloaded("Cyclonic Rift"), overloaded("Vandalblast"),
+    // "Destroy all creatures target player controls": derive scopes it `target` (a known imprecision), so the printed `massOfTargetPlayer` pattern carries it.
+    realCard("Mogg Infestation"), realCard("Primeval Light"),
   ];
-  const notWipes: [string, string][] = [
-    ["Fleshbag Marauder", "When this creature enters, each player sacrifices a creature of their choice."],
-    ["Rest in Peace", "When this enchantment enters, exile all graveyards.\nIf a card or token would be put into a graveyard from anywhere, exile it instead."],
-    ["Gallifrey Stands", "When Gallifrey Stands enters, return all Doctor cards from your graveyard to your hand."],
-    ["Emrakul, the World Anew", "When Emrakul leaves the battlefield, sacrifice all creatures you control."],
-    ["Eldritch Immunity", "Target creature you control gains protection from each color until end of turn.\nOverload {4}{C} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")"],
-    ["Mizzix's Mastery", "Exile target card that's an instant or sorcery from your graveyard. For each card exiled this way, copy it, and you may cast the copy without paying its mana cost. Exile Mizzix's Mastery.\nOverload {5}{R}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")"],
-    ["Coat of Arms", "Each creature gets +1/+1 for each other creature on the battlefield that shares at least one creature type with it."],
-    ["Wisdom of Ages", "Return all instant and sorcery cards from your graveyard to your hand. You have no maximum hand size for the rest of the game."],
-    // PERSONA ROUND 2026-09-25, oracle text from Scryfall. A token-copier cleaning up ITS OWN tokens
-    // wipes nothing, and burn to each opponent and their planeswalkers touches no creature.
-    ["Arcane Artisan", "{2}{U}, {T}: Target player draws a card, then exiles a card from their hand. If a creature card is exiled this way, that player creates a token that's a copy of that card.\nWhen this creature leaves the battlefield, exile all tokens created with it at the beginning of the next end step."],
-    // #961: a polymorph exiles ONLY its caster's creatures, to replace them from the library.
-    ["Mass Polymorph", "Exile all creatures you control, then reveal cards from the top of your library until you reveal that many creature cards. Put all creature cards revealed this way onto the battlefield, then shuffle the rest of the revealed cards into your library."],
-    ["Synthetic Destiny", "Exile all creatures you control. At the beginning of the next end step, reveal cards from the top of your library until you reveal that many creature cards, put all creature cards revealed this way onto the battlefield, then shuffle the rest of the revealed cards into your library."],
-    ["Cavalier of Flame", "{1}{R}: Creatures you control get +1/+0 and gain haste until end of turn.\nWhen this creature enters, discard any number of cards, then draw that many cards.\nWhen this creature dies, it deals X damage to each opponent and each planeswalker they control, where X is the number of land cards in your graveyard."],
+  const notWipes: DeckCard[] = [
+    realCard("Fleshbag Marauder"), realCard("Rest in Peace"), realCard("Gallifrey Stands"), realCard("Emrakul, the World Anew"), realCard("Eldritch Immunity"), realCard("Mizzix's Mastery"),
+    realCard("Coat of Arms"), realCard("Wisdom of Ages"), realCard("Arcane Artisan"), realCard("Mass Polymorph"), realCard("Synthetic Destiny"),
+    // A single target is removal, not a wipe.
+    realCard("Doom Blade"),
+    // A power-only shrink, a continuous one, and an opponent's counted sacrifice kill nothing in bulk.
+    realCard("Cumber Stone"), realCard("Kaervek, the Spiteful"), realCard("Crackling Doom"), realCard("Portal to Phyrexia"),
+    // Burn at a player and the planeswalkers they control touches no creature.
+    realCard("Cavalier of Flame"),
+    // A target widened by "and all other ... with the same name", and a block's "destroy both creatures".
+    realCard("Banishment"), realCard("Alaborn Zealot"),
   ];
-  const m = detectBuildCategories([...wipes, ...notWipes].map(([n, t]) => mk(n, t, "Sorcery")));
+  const m = detectBuildCategories([...wipes, ...notWipes]);
   const found = m.get("boardWipe") ?? new Set<string>();
-  expect(wipes.map(([n]) => n).filter((n) => !found.has(n))).toEqual([]);
-  expect(notWipes.map(([n]) => n).filter((n) => found.has(n))).toEqual([]);
+  expect(wipes.map((d) => d.card.name).filter((n) => !found.has(n))).toEqual([]);
+  expect(notWipes.map((d) => d.card.name).filter((n) => found.has(n))).toEqual([]);
 });
 
 // A DRAW THAT COMES BACK (owner, 2026-09-05). `repeats` narrows `effectKind` on the SAME ability.
