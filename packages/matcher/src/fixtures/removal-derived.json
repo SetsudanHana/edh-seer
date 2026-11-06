@@ -23230,5 +23230,348 @@
     }
    }
   ]
+ },
+ "Gideon, Champion of Justice": {
+  "oracleText": "+1: Put a loyalty counter on Gideon for each creature target opponent controls.\n0: Until end of turn, Gideon becomes a Human Soldier creature with power and toughness each equal to the number of loyalty counters on him and gains indestructible. He's still a planeswalker. Prevent all damage that would be dealt to him this turn.\n−15: Exile all other permanents.",
+  "typeLine": "Legendary Planeswalker — Gideon",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "counter": "loyalty"
+     },
+     "scaling": "per-opponent"
+    },
+    "cost": "+1",
+    "amount": "1 for each creature target opponent controls",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "loyalty",
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "animate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "self": true
+     },
+     "becomes": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "subtype": [
+       "human",
+       "soldier"
+      ]
+     }
+    },
+    "cost": "0",
+    "clause": 2,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "0"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "self": true
+     }
+    },
+    "cost": "0",
+    "clause": 2,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "0"
+    },
+    "grants": [
+     "indestructible"
+    ]
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "prevention",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "prevention": {
+     "damage": "any",
+     "amount": "all",
+     "duration": "this-turn"
+    },
+    "cost": "0",
+    "emits": [
+     {
+      "verb": "prevented",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "scope": "all"
+     }
+    },
+    "payment": {
+     "loyalty": "0"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "−15",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "other": true,
+       "type": "permanent",
+       "scope": "all"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "other": true,
+       "type": "permanent",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "other": true,
+      "type": "permanent",
+      "scope": "all"
+     }
+    },
+    "payment": {
+     "loyalty": "-15"
+    }
+   }
+  ]
+ },
+ "Urza's Sylex": {
+  "oracleText": "{2}{W}{W}, {T}, Exile Urza's Sylex: Each player chooses six lands they control. Destroy all other permanents. Activate only as a sorcery.\nWhen Urza's Sylex is put into exile from the battlefield, you may pay {2}. If you do, search your library for a planeswalker card, reveal it, put it into your hand, then shuffle.",
+  "typeLine": "Legendary Artifact",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}{W}{W}, {T}, Exile Urza's Sylex",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "self": true,
+       "type": "artifact"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "self": true,
+       "type": "artifact"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}{W}{W}",
+     "tap": true,
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}{W}{W}, {T}, Exile Urza's Sylex",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "other": true,
+       "type": "permanent",
+       "scope": "all",
+       "selection": "all-but"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "other": true,
+      "type": "permanent",
+      "scope": "all"
+     }
+    },
+    "payment": {
+     "mana": "{2}{W}{W}",
+     "tap": true,
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "planeswalker"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "exiled"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true,
+      "fromZone": "battlefield"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "planeswalker",
+       "fromZone": "library"
+      }
+     }
+    ],
+    "librarySearch": "yours",
+    "toZone": "hand",
+    "clause": 2,
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "exiled"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true,
+      "fromZone": "battlefield"
+     }
+    },
+    "emits": [
+     {
+      "verb": "shuffle",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2
+   }
+  ]
  }
 }

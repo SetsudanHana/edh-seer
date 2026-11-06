@@ -536,7 +536,7 @@ function landOnlySubject(subject: { type?: string | string[]; subtype?: unknown;
 /** The `SubjectFilter` fields that narrow WHICH permanents a bare `type: permanent` names (#1557): a colour, a chosen colour or type, a rule derive marks (`selection`: all-but, votes, pile, attached-to, chosen), a supertype, a status, a keyword, a counter, a stat, a subtype.
  *  A subject carrying any of them is not "all permanents". */
 const NARROWS_PERMANENT: readonly string[] = ["chosenColor", "chosenType", "colors", "notColors", "colorCount", "allColors", "selection", "notType", "allTypes", "subtype", "notSubtype", "legendary", "basic", "snow", "tapped",
-  "keyword", "notKeyword", "counter", "stats", "other", "owner", "named", "combat", "modified", "historic", "outlaw", "commander", "relation"];
+  "keyword", "notKeyword", "counter", "stats", "owner", "named", "combat", "modified", "historic", "outlaw", "commander", "relation"];
 
 /** A subject that INCLUDES lands (#1554): its type list names `land` (or a land type), or a branch of its `anyOf` does ("artifacts, creatures, and lands": Jokulhaups, Obliterate; "creatures and lands": Devastation), or it is a genuinely UNRESTRICTED `permanent`
  *  (#1557: Apocalypse, Worldfire, Dimensional Breach: "all permanents" names lands, and no field narrows it -- see `NARROWS_PERMANENT`).
