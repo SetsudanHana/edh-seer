@@ -22143,5 +22143,1092 @@
     }
    }
   ]
+ },
+ "Worldfire": {
+  "oracleText": "Exile all permanents. Exile all cards from all hands and graveyards. Each player's life total becomes 1.",
+  "typeLine": "Sorcery",
+  "manaValue": 9,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "permanent",
+       "scope": "all",
+       "fromZone": "battlefield"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "permanent",
+       "scope": "all",
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "permanent",
+      "scope": "all",
+      "fromZone": "battlefield"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all",
+       "fromZone": "hand"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "scope": "all",
+      "fromZone": "hand"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "all",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all",
+       "fromZone": "graveyard"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "scope": "all",
+      "fromZone": "graveyard"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "life-total-set",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "each"
+     }
+    },
+    "amount": "1",
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Dimensional Breach": {
+  "oracleText": "Exile all permanents. For as long as any of those cards remain exiled, at the beginning of each player's upkeep, that player returns one of the exiled cards they own to the battlefield.",
+  "typeLine": "Sorcery",
+  "manaValue": 7,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "each"
+     }
+    },
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "permanent",
+       "scope": "all",
+       "fromZone": "battlefield"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "permanent",
+       "scope": "all",
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "permanent",
+      "scope": "all",
+      "fromZone": "battlefield"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "each"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "fromZone": "exile"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Wash Out": {
+  "oracleText": "Return all permanents of the color of your choice to their owners' hands.",
+  "typeLine": "Sorcery",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "bounce",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "permanent",
+      "scope": "all",
+      "chosenColor": true,
+      "zone": "battlefield"
+     }
+    },
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "chosenColor": true,
+       "type": "permanent",
+       "scope": "all",
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "chosenColor": true,
+      "type": "permanent",
+      "scope": "all",
+      "fromZone": "battlefield"
+     }
+    }
+   }
+  ]
+ },
+ "Razia's Purification": {
+  "oracleText": "Each player chooses three permanents they control, then sacrifices the rest.",
+  "typeLine": "Sorcery",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "selection": "all-but",
+       "type": "permanent",
+       "scope": "all"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "selection": "all-but",
+       "type": "permanent",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "selection": "all-but",
+      "type": "permanent",
+      "scope": "all"
+     }
+    }
+   }
+  ]
+ },
+ "Council's Judgment": {
+  "oracleText": "Will of the council — Starting with you, each player votes for a nonland permanent you don't control. Exile each permanent with the most votes or tied for most votes.",
+  "typeLine": "Sorcery",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "vote",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ]
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "selection": "votes",
+       "type": "permanent",
+       "scope": "each"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "selection": "votes",
+       "type": "permanent",
+       "scope": "each"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "selection": "votes",
+      "type": "permanent",
+      "scope": "each"
+     }
+    }
+   }
+  ]
+ },
+ "End Hostilities": {
+  "oracleText": "Destroy all creatures and all permanents attached to creatures.",
+  "typeLine": "Sorcery",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "selection": "attached-to",
+       "type": "permanent",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "selection": "attached-to",
+      "type": "permanent",
+      "scope": "all"
+     }
+    }
+   }
+  ]
+ },
+ "All Is Dust": {
+  "oracleText": "Each player sacrifices all permanents they control that are one or more colors.",
+  "typeLine": "Kindred Sorcery — Eldrazi",
+  "manaValue": 7,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "colorCount": "colored",
+       "type": "permanent",
+       "scope": "all"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "colorCount": "colored",
+       "type": "permanent",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "colorCount": "colored",
+      "type": "permanent",
+      "scope": "all"
+     }
+    }
+   }
+  ]
+ },
+ "Liliana of the Veil": {
+  "oracleText": "+1: Each player discards a card.\n−2: Target player sacrifices a creature.\n−6: Separate all permanents target player controls into two piles. That player sacrifices all permanents in the pile of their choice.",
+  "typeLine": "Legendary Planeswalker — Liliana",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "+1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "discard",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "each"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "+1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "discard",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "−2",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "edict": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "edict": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "-2"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "−6",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "selection": "pile",
+       "type": "permanent",
+       "scope": "all"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "selection": "pile",
+       "type": "permanent",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "selection": "pile",
+      "type": "permanent",
+      "scope": "all"
+     }
+    },
+    "payment": {
+     "loyalty": "-6"
+    }
+   }
+  ]
+ },
+ "Ultimate Magic: Meteor": {
+  "oracleText": "Ultimate Magic: Meteor deals 7 damage to each creature. If this spell was cast from exile, for each opponent, choose an artifact or land that player controls. Destroy the chosen permanents.\nForetell {5}{R} (During your turn, you may pay {2} and exile this card from your hand face down. Cast it on a later turn for its foretell cost.)",
+  "typeLine": "Sorcery",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "each"
+     }
+    },
+    "amount": "7",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "each"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 7,
+     "ceiling": 7
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "selection": "chosen",
+       "type": [
+        "artifact",
+        "land"
+       ]
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "selection": "chosen",
+       "type": [
+        "artifact",
+        "land"
+       ]
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "selection": "chosen",
+       "type": [
+        "artifact",
+        "land"
+       ]
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Mount Doom": {
+  "oracleText": "{T}, Pay 1 life: Add {B} or {R}.\n{1}{B}{R}, {T}: Mount Doom deals 1 damage to each opponent.\n{5}{B}{R}, {T}, Sacrifice Mount Doom and a legendary artifact: Choose up to two creatures, then destroy the rest. Activate only as a sorcery.",
+  "typeLine": "Legendary Land",
+  "manaValue": 0,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}, Pay 1 life",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "life": "1"
+    },
+    "claimsNothing": "mana-rider"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}, Pay 1 life",
+    "amount": "1",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "life": "1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "scope": "each",
+      "player": true
+     }
+    },
+    "cost": "{1}{B}{R}, {T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each",
+       "player": true
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}{B}{R}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{5}{B}{R}, {T}, Sacrifice Mount Doom and a legendary artifact",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "legendary": true,
+       "type": "artifact",
+       "subtype": "mount"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "legendary": true,
+       "type": "artifact",
+       "subtype": "mount"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "payment": {
+     "mana": "{5}{B}{R}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "legendary": true,
+        "type": "artifact",
+        "subtype": "mount"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{5}{B}{R}, {T}, Sacrifice Mount Doom and a legendary artifact",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "other": true,
+       "selection": "all-but",
+       "type": "creature",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "other": true,
+      "selection": "all-but",
+      "type": "creature",
+      "scope": "all"
+     }
+    },
+    "payment": {
+     "mana": "{5}{B}{R}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "legendary": true,
+        "type": "artifact",
+        "subtype": "mount"
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Teferi, Who Slows the Sunset": {
+  "oracleText": "+1: Choose up to one target artifact, up to one target creature, and up to one target land. Untap the chosen permanents you control. Tap the chosen permanents you don't control. You gain 2 life.\n−2: Look at the top three cards of your library. Put one of them into your hand and the rest on the bottom of your library in any order.\n−7: You get an emblem with \"Untap all permanents you control during each opponent's untap step\" and \"You draw a card during each opponent's draw step.\"",
+  "typeLine": "Legendary Planeswalker — Teferi",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "+1",
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "untap",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "selection": "chosen",
+      "type": "permanent"
+     }
+    },
+    "cost": "+1",
+    "emits": [
+     {
+      "verb": "untaps",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "selection": "chosen",
+       "type": "permanent"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "+1",
+    "emits": [
+     {
+      "verb": "taps",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "selection": "chosen",
+       "type": "permanent"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "to-hand",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "−2",
+    "amount": "1",
+    "chooses": true,
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "-2"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "emblem",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "permanent",
+      "scope": "each"
+     }
+    },
+    "cost": "−7",
+    "clause": 3,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "-7"
+    }
+   }
+  ]
  }
 }
