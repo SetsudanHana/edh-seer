@@ -797,6 +797,19 @@ function cutExceptTail(object: string): string {
   return at > 0 ? object.slice(0, at) : object;
 }
 
+/** A DAMAGE OBJECT THAT IS THE WHOLE SENTENCE names the DEALER first (#1549): Missy's villainous choice is stored as "each artifact creature you control deals 1 damage to that opponent",
+ *  and the dealers' "each artifact creature you control" was read as the recipient, so one opponent's pinged life became damage to every creature and artifact (a false board wipe).
+ *  The recipient is what follows " damage to "; the dealer is read from the clause text by `damageDealerOf`. A sentence with no " deal(s) " before it is left alone.
+ *  CEILING: only the first " damage to " after a " deal"/" deals"; the one corpus card is Missy (model path, 1 object in 34,740). */
+function recipientAfterDeals(object: string): string {
+  const lower = object.toLowerCase();
+  const dealt = Math.max(lower.indexOf(" deals "), lower.indexOf(" deal "));
+  if (dealt <= 0) return object;
+  const marker = " damage to ";
+  const to = lower.indexOf(marker, dealt);
+  return to < 0 ? object : object.slice(to + marker.length);
+}
+
 /** A SENTENCE THAT DEFINES POWER OR TOUGHNESS (#1501). "This creature's power and toughness are each equal to ..." is a characteristic-defining ability (CR 604.3), whatever verb the model
  *  filed it under; the Elemental token of Seize the Storm came back as an `exile` and emitted `exiled` and a graveyard `leaves`. Verbs that legitimately carry such text keep it: the real reading
  *  (`modify-pt`), a token's quoted text (`create`, `grant-ability`), `animate`, and `other` (which emits nothing and stays unclaimed, Fungal Behemoth). One literal-space regex, no nested quantifiers. */
@@ -948,6 +961,10 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // emit it made High Fae Trickster -- a creature -- feed noncreature-only prowess, and Najal read as
   // casting sorceries. 10 corpus clauses.
   if (action.verb === "cast" && /\bas though (?:it|they) had flash\b/i.test(clauseText ?? "")) return [];
+  // A CAST OF "ALL PERMANENTS / CREATURES" IS THE CONDITION MISFILED AS AN ACTION (#1549): Cyclone Summoner's "if you cast it from your hand, return all permanents ... to their owners' hands" and Sunderflock's "if you've cast ..., return all non-Elemental creatures"
+  // were stored as a second action `cast` with the RETURN's object. No card casts all its permanents or creatures (the corpus holds exactly these two such objects); read as an emit it fed every cast payoff once the class was no longer narrowed by an exception list.
+  // Narrow on purpose: "each instant or sorcery card exiled with this enchantment" (Eye of the Storm, a copy resolved to its antecedent) is a real cast.
+  if (action.verb === "cast" && /^all (?:\S+ )?(?:permanents|creatures)\b/i.test((action.object ?? "").trim())) return [];
   // WHERE A COUNTER GOES (DERIVE 173, overview item 8): when the object is the COUNTER ("+1/+1",
   // "those counters"), the recipient is only in the sentence -- "put two +1/+1 counters on each other
   // Moogle you control". Parsed from there so the emit says what gets them; a pronoun or the card
@@ -970,7 +987,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // emit-side one would be ignored there anyway.
   // WHAT THE CARD ATTACHES TO IS NOT THE CARD (#1520): "attach this Equipment to the amassed Army" (Goblin Plate Mail) read the Army into the Equipment's own subject. Cut at the first " to ", for the card's own attach only.
   const attachedSelf = action.verb === "attach" && opts.self === true ? attachHead(action.object ?? "") : undefined;
-  const damageObject = action.verb === "deal-damage" || action.verb === "lose-life" ? cutExceptTail(action.object ?? "") : (attachedSelf ?? action.object ?? "");
+  const damageObject = action.verb === "deal-damage" || action.verb === "lose-life" ? cutExceptTail(action.verb === "deal-damage" ? recipientAfterDeals(action.object ?? "") : action.object ?? "") : (attachedSelf ?? action.object ?? "");
   const listed = action.verb === "deal-damage" || action.verb === "lose-life" ? damageRecipient(damageObject) : undefined;
   // ...and damage to "target player" / "target opponent" is player-only (#1294), no "any target".
   const playerOnly = action.verb === "deal-damage" && listed === undefined ? playerOnlyRecipient(damageObject) : undefined;

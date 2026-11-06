@@ -998,3 +998,34 @@ test("a token copy of a permanent keeps its target only when the permanent can b
   expect(copyOf("target non-creature artifact")).not.toHaveProperty("scope");
   expect(copyOf("target permanent an opponent controls")).not.toHaveProperty("scope"); // Ignite the Cloneforge!
 });
+
+/** #1549 -- "OF YOUR CHOICE" IS THE CHOICE, NOT THE CONTROLLER. Extinction, Wash Out, Root Greevil read `you` off it and the derived boardWipe rule (which ignores a mass of your own) missed them. */
+test('"of your choice" does not name who controls the object', () => {
+  expect(parseSubject("all creatures of the creature type of your choice").control).toBe("any");
+  expect(parseSubject("all permanents of the color of your choice").control).toBe("any");
+  // The cue after it still counts.
+  expect(parseSubject("a creature of your choice that defending player controls").control).toBe("opp");
+  expect(parseSubject("a creature of your choice you control").control).toBe("you");
+});
+
+test('a comparison with a count of your cards ("than the number of cards in your hand") is a count, not the controller', () => {
+  expect(parseSubject("each creature with power greater than the number of cards in your hand").control).toBe("any");
+  expect(parseSubject("all creatures with power greater than target creature's power")).toMatchObject({ control: "any", scope: "all" });
+});
+
+test('"other than this creature" is an exclusion on one object, "all ... other than" stays a class', () => {
+  expect(parseSubject("a creature other than this creature").scope).toBeUndefined();
+  expect(parseSubject("all creatures other than this creature").scope).toBe("all");
+  expect(parseSubject("other creatures you control").scope).toBe("all");
+});
+
+test('"one of those Dragons" and "each of the chosen creatures" are not the class', () => {
+  expect(parseSubject("one of those Dragons").scope).toBeUndefined();
+  expect(parseSubject("each of the chosen creatures").scope).toBeUndefined();
+  expect(parseSubject("each creature").scope).toBe("each");
+});
+
+test('"except for" spares, it does not name the class', () => {
+  expect(parseSubject("all other permanents except for lands and tokens")).toMatchObject({ type: "permanent", scope: "all" });
+  expect(parseSubject("all other permanents except for lands and tokens").token).toBeNull();
+});

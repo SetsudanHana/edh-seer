@@ -17,7 +17,7 @@ export const TYPES = [
  *  the multiplier. `parseControl` matched the nearest player and handed the tokens to the opponent,
  *  so the card supplied nothing to its own deck's token payoffs — the opposite of what it does.
  *  Same family as C6, one layer along, and it is the second half of roadmap I2. */
-export const COUNT_PHRASE = /\b(?:for each\b|where [xyz] is\b|equal to the (?:number|total)\b|times the (?:number|total)\b)/i;
+export const COUNT_PHRASE = /\b(?:for each\b|where [xyz] is\b|equal to the (?:number|total)\b|times the (?:number|total)\b|than (?:or equal to )?the (?:number|total) of\b|than target [a-z]+'s (?:power|toughness|mana value)\b)/i;
 
 /** "YOU" / "YOUR" IN A CONDITION ON THE OBJECT IS NOT WHO CONTROLS IT (#1295). Premature Burial's "target nonblack creature
  *  that entered SINCE YOUR LAST TURN ENDED" and Blazing Hope's "power greater than or equal to YOUR LIFE TOTAL" are
@@ -27,6 +27,8 @@ export const COUNT_PHRASE = /\b(?:for each\b|where [xyz] is\b|equal to the (?:nu
  *  Vehicle, Wrenn and Realmbreaker's speed gain read `you` off them) but removing them moved 10 cards no removal reads, with no
  *  consumer to measure them against; left as they were. */
 const NOT_A_CONTROLLER = /\bsince\s+your\s+(?:(?:last|previous|most recent)\s+)?turn(?:\s+(?:ended|began))?\b|\b(?:to|than)\s+your\s+life total\b/gi;
+/** "OF YOUR CHOICE" NAMES THE CHOOSER, NOT THE CONTROLLER (#1549): Extinction's "all creatures of the creature type of your choice" and Wash Out's "all permanents of the color of your choice" read control `you` and the derived boardWipe rule (a mass of your own never counts) missed them. A literal-space pattern: oracle text is single-spaced. */
+const OF_YOUR_CHOICE = /\bof your choice\b/gi;
 /** WHAT THE OBJECT'S OWN WORDS SAY ABOUT WHO CONTROLS IT, when the control words are absent (#1295): a creature "attacking you" is an
  *  opponent's (nothing attacks its own controller), and a creature "that crewed it" or "that saddled it" is yours (only you tap your own
  *  creatures to crew your Vehicle). Not in `parseControl`: the filter grammar reads these phrases as `control: any` beside a `combatWith`
@@ -76,7 +78,7 @@ function parseControl(t: string): Control {
   if (head.trim().length > 0) t = head;
   // Negation first: "you don't control" must not fall through to the "you control" branch below.
   if (/\byou (?:don'?t|do not|don’t) control\b/.test(t)) return "opp";
-  t = t.replace(NOT_A_CONTROLLER, " ").replace(ATTACKED_OPPONENT, "attacking");
+  t = t.replace(NOT_A_CONTROLLER, " ").replace(OF_YOUR_CHOICE, " ").replace(ATTACKED_OPPONENT, "attacking");
   // COMBAT NAMES THE OPPONENT WITHOUT SAYING "OPPONENT". Measured over the derived corpus: 12 clause
   // actions say "defending player" and all 12 mean an opponent (11 sit on an `attacks` trigger the
   // card's controller owns; the 12th, Elturel Survivors, is a characteristic-defining "+X/+0 where X
@@ -404,14 +406,18 @@ function parseNotSubtypes(t: string): string[] | undefined {
  *  ("creatures you control" is an anthem) and a bare singular says nothing, so it stays unset. */
 function parseScope(t: string, pluralType: boolean): SubjectFilter["scope"] {
   if (/\btarget\b/.test(t)) return "target";
+  // "EACH OF THE CHOSEN creatures" (Mega Flare: one chosen creature per opponent; Oracle en-Vec) is a set the card picked earlier, not every creature of the class.
+  if (/\b(?:each|all) of the chosen\b/.test(t)) return undefined;
   if (/\beach\b|\bevery\b/.test(t)) return "each";
   if (/\ball\b/.test(t)) return "all";
   // "OTHER Merfolk you control", "other artifact creatures you control" -- a class minus this card,
   // which is a mass effect however the noun pluralises. Needed because several creature types are
   // their own plural ("Merfolk"), so the plural test below cannot see them and Svyelun's ward grant
   // was dropped by `namesItsTargets` for want of a scope. Checked AFTER `target`, so "another target
-  // creature" stays spot-scoped.
-  if (/\bother\b/.test(t)) return "all";
+  // creature" stays spot-scoped. NOT "a creature OTHER THAN this creature" (Xathrid Demon's sacrifice): one object that is not the card, a singular noun with an exclusion.
+  if (/\bother\b(?!\s+than\b)/.test(t)) return "all";
+  // "ONE OF THOSE Dragons" (Zurgo and Ojutai's "return one of those Dragons") is one of an antecedent's set, not the class: the plural noun is the antecedent's.
+  if (/\bone of (?:those|these)\b/.test(t)) return undefined;
   return pluralType ? "all" : undefined;
 }
 
@@ -825,13 +831,17 @@ export function namesAClass(s: Partial<SubjectFilter>): boolean {
   return (s.anyOf?.length ?? 0) > 0 && s.anyOf!.every((b) => b.type !== undefined || b.subtype !== undefined || namesAClass(b));
 }
 
+const EXCEPT_FOR = / except for /;
+
 export function parseSubject(text: string): SubjectFilter {
   // EVERY FIELD IS READ FROM THE TOKEN, NOT FROM THE ABILITY IT IS GRANTED (#1387; #1385 cut the types alone). Cut first, so the counter in Zabu's
   // landfall ability, the "creatures with flying" a Drone can block, the "each opponent" an Imp damages and the Mounts a Pilot crews are not the
   // token's counter, scope, control or subtype. A quoted NAME stays; an emblem's quoted text IS its subject and stays (see `stripTokenAbility`).
   // The tail after "and attach it to ..." is the Aura's host, not the token; and "a copy of the card Armadillo Cloak" names a card, whose
   // words are not subtypes (The Dogronmaster).
-  const whole = stripTokenAbility(text.toLowerCase().trim()).split(ATTACHED_TO)[0].split(AND_ATTACH)[0]
+  // WHAT AN "except for" LIST SPARES IS NOT THE CLASS (#1549): Elspeth Tirel's "all other permanents except for lands and tokens" read `token: true`, type `land`, and Scourglass's "all permanents except for a ..." the spared types. Cut at the list, as the damage path does (`cutExceptTail`).
+  // CEILING: the exclusion is dropped, not carried as `except`; only the "except for" form (a bare "except creatures chosen this way" or "except it's" keeps its words).
+  const whole = stripTokenAbility(text.toLowerCase().trim()).split(ATTACHED_TO)[0].split(AND_ATTACH)[0].split(EXCEPT_FOR)[0]
     .replace(COPY_OF_NAMED_CARD, "$1").trim();
   // A COUNT IS A MAGNITUDE, NOT A CLASS (recall v6 #77, 2026-09-10). "a Treasure token for each
   // nontoken creature that died this turn" (Gadrak) read `type: creature` off the count, so the
