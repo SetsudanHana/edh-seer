@@ -877,6 +877,20 @@ test("mass land destruction is stax and not a wipe; a wipe that also hits lands 
   expect(has("stax", "Stone Rain")).toBe(false);
 });
 
+// ALL PERMANENTS NAMES LANDS; A RESTRICTED PERMANENT SUBJECT DOES NOT (#1557, Rules 41). Derive 468 keeps the restriction on the subject (chosenColor, colorCount, selection), so only a genuinely unrestricted `permanent` is land-including.
+test("an unrestricted permanent wipe is stax too; a restricted one, and a per-opponent choice, are not", () => {
+  const m = detectBuildCategories([
+    "Apocalypse", "Worldfire", "Dimensional Breach", "Wash Out", "Razia's Purification", "Council's Judgment", "End Hostilities", "All Is Dust", "Liliana of the Veil", "Ultimate Magic: Meteor", "Gideon, Champion of Justice", "Urza's Sylex", "Wrath of God",
+  ].map((n) => realCard(n)));
+  const has = (cat: "stax" | "boardWipe", n: string): boolean => m.get(cat)?.has(n) === true;
+  for (const n of ["Apocalypse", "Worldfire", "Dimensional Breach", "Gideon, Champion of Justice"]) { expect(has("stax", n), `${n} stax`).toBe(true); expect(has("boardWipe", n), `${n} boardWipe`).toBe(true); }
+  for (const n of ["Urza's Sylex", "Wash Out", "Razia's Purification", "Council's Judgment", "End Hostilities", "All Is Dust", "Liliana of the Veil", "Ultimate Magic: Meteor", "Wrath of God"]) expect(has("stax", n), `${n} stax`).toBe(false);
+  // Meteor's destroy is one chosen permanent per opponent, but its 7 damage to each creature is still a wipe.
+  expect(has("boardWipe", "Ultimate Magic: Meteor")).toBe(true);
+  // The restricted ones stay the wipes they were.
+  for (const n of ["Wash Out", "Razia's Purification", "End Hostilities", "All Is Dust"]) expect(has("boardWipe", n), `${n} boardWipe`).toBe(true);
+});
+
 // A DRAW THAT COMES BACK (owner, 2026-09-05). `repeats` narrows `effectKind` on the SAME ability.
 test("effectKind with `repeats` is tested per ability, not per card", () => {
   const card = (abilities: unknown[]): DeckCard => ({
