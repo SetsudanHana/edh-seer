@@ -121,6 +121,7 @@ const TESTED: Record<string, string> = {
   "603.2h": "grammar/restriction.test.ts — 'Do this only once each turn' is a restriction sentence the action grammar absorbs; derive reads it off the printed clause (#1349)",
   "602.5": "threshold.test.ts — 'activate only if' gates the whole ability, the one later sentence that is not a rider",
   "611.3a": "threshold.test.ts / derive.test.ts — a static's 'as long as' count is a threshold on the ability",
+  "611.2a": "animate-result.test.ts — an animate lasts unless its clause states a duration that ends it (Effect.becomesLasts)",
   "702.5a": "characteristics.test.ts — an Aura's Enchant line is carried as `characteristics.enchants`",
   "301.5b": "damaged-player-graveyard.test.ts (matcher) — equip attaches to a creature you control, so the player it damages is an opponent (#1250)",
   "511.2": "matcher leaves-without-dying.test.ts — an 'at end of combat' destroy triggers as the step begins, so it still kills an attacker (Goblin Sappers -> Kardur)",

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { animateResult } from "./animate-result.js";
+import { animateLasts, animateResult } from "./animate-result.js";
 
 /** `Effect.becomes` is read off the printed clause (#1364). Real oracle text (Mongo `cards`). */
 const pt = (p: number, t: number) => [{ metric: "power", op: "eq", value: p }, { metric: "toughness", op: "eq", value: t }];
@@ -59,4 +59,34 @@ test("whitespace runs and unmatched openers are linear (CodeQL js/polynomial-red
     animateResult(text);
     expect(performance.now() - t0, text.slice(0, 30)).toBeLessThan(50);
   }
+});
+
+/** HOW LONG AN ANIMATE LASTS (#1364, owner 2026-11-06: only a LASTING animate makes a kindred). CR 611.2a: no stated duration lasts until the end of the game. Real oracle text (Mongo `cards`). */
+test("a timed animate does not last: until end of turn, this turn, until end of combat (Mutavault, Boros Keyrune, Gideon Jura, Jade Statue, Kamahl's Will)", () => {
+  expect(animateLasts("{1}: This land becomes a 2/2 creature with all creature types until end of turn. It's still a land.")).toBe(false);
+  expect(animateLasts("{R}{W}: This artifact becomes a 1/1 red and white Soldier artifact creature with double strike until end of turn.")).toBe(false);
+  expect(animateLasts("{2}: This artifact becomes a 3/6 Golem artifact creature until end of combat. Activate only during combat.")).toBe(false);
+  expect(animateLasts("Until end of turn, any number of target lands you control become 1/1 Elemental creatures with vigilance, indestructible, and haste. They're still lands.")).toBe(false);
+  expect(animateLasts("Target land you control becomes a 3/3 Elemental creature with haste this turn.")).toBe(false);
+  expect(animateLasts("{X}{1}: This artifact becomes an X/X Construct artifact creature. Sacrifice it at the beginning of the next end step.")).toBe(false);
+  expect(animateLasts("When this creature enters, any number of target noncreature artifacts you control become 3/3 artifact creatures. Sacrifice them at the beginning of the next end step.")).toBe(false);
+});
+
+test("a stated-nothing animate lasts, so does 'for as long as' and 'until your next turn' (Brave the Wilds, Wall of Resurgence, Opal Caryatid, Sylvan Awakening)", () => {
+  expect(animateLasts("If this spell was bargained, target land you control becomes a 3/3 Elemental creature with haste that's still a land.")).toBe(true);
+  expect(animateLasts("When this creature enters, you may put three +1/+1 counters on target land you control. If you do, that land becomes a 0/0 Elemental creature with haste that's still a land.")).toBe(true);
+  expect(animateLasts("Until your next turn, all lands you control become 2/2 Elemental creatures with reach, indestructible, and haste. They're still lands.")).toBe(true);
+  expect(animateLasts("Target artifact becomes a 0/4 Wall artifact creature with defender for as long as you control this Saga.")).toBe(true);
+});
+
+test("an unknown duration is refused: an 'until' that is not 'your next turn' reads as timed", () => {
+  expect(animateLasts("This land becomes a 3/3 Elemental creature until a player casts a spell.")).toBe(false);
+  expect(animateLasts("")).toBe(false);
+});
+
+test("a trigger's preamble and an intervening if are not the animate's duration (Emergent Haunting, Rootwise Survivor, Does Machines)", () => {
+  expect(animateLasts("At the beginning of your end step, if you haven't cast a spell from your hand this turn and this enchantment isn't a creature, it becomes a 3/3 Spirit creature with flying in addition to its other types.")).toBe(true);
+  expect(animateLasts("At the beginning of combat on your turn, put three +1/+1 counters on target artifact you control. If it isn't a creature, it becomes a 0/0 Robot creature in addition to its other types.")).toBe(true);
+  // ...but the effect's own duration still ends it.
+  expect(animateLasts("At the beginning of your end step, if you control a land, this enchantment becomes a 3/3 Spirit creature until end of turn.")).toBe(false);
 });
