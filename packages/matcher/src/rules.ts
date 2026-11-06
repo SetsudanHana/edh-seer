@@ -30,6 +30,10 @@ export type RuleClause =
       /** A `debuff` that can KILL: the amount's TOUGHNESS part is negative ("-5/-5", "-0/-3", "-X/-X, where X is ...", "-1/-1"). "-2/-0" shrinks power and kills nothing; an amount that
        *  is not a P/T pair at all does not match. A scaling or unreadable toughness ("-X") counts: the number is not printed, and the card states it as a lethal-shaped shrink. */
       toughnessDown?: true;
+      /** Refuse an ability that only a BLOCK makes (see the `emits` option of the same name): "each creature blocking it gets -1/-1" (Plague Wight, Baneblade Scoundrel, Knight of Valor) (#1266). */
+      notBlockCombat?: true;
+      /** Refuse a TOKEN-ONLY effect subject ("Creature tokens get -2/-2": Bloodline Culling) (#1266). */
+      notTokenOnly?: true;
       /** Refuse an ability that happens on one side of a coin flip (`Ability.onFlip`): Orcish Captain's "If you lose the flip, it gets -0/-2" shrinks your own Orc by chance, and is no removal (#1295 item 5). */
       notOnFlip?: true;
       /** Whose library a PRINTED search reads (`Ability.librarySearch`, #1266): present on the ability and in this list; absent never matches, which is how a typed dig (derive's `search` kind also covers
@@ -107,16 +111,20 @@ export type RuleClause =
       notEdict?: true;
       /** At least ONE of the subject's types is in this list, where `type` needs EVERY type in its list: "each creature and each planeswalker" passes `typeAny: [creature, permanent]`, a planeswalker-only subject ("each planeswalker they control": Kumano Faces Kakkazan) does not. */
       typeAny?: string[];
-      /** Refuse an emit that only a BLOCK makes: the ability triggers on "blocks" / "becomes blocked" ("When this creature blocks a creature, destroy both creatures": Alaborn Zealot, Dead-Iron Sledge, Venom), or its subject is
-       *  a `combat: blocking` creature ("each creature blocking it": Plague Wight, Gomazoa). That is a combat result against the blocked creature, not a sweep (#1266, `boardWipe.text`). */
+      /** Refuse an ability that only a BLOCK makes (#1266, `boardWipe.text`): it triggers on "blocks" / "becomes blocked" ("When this creature blocks a creature, destroy both creatures": Alaborn Zealot, Dead-Iron Sledge), or its subject is a creature
+       *  `combat: blocking` / `combatWith` blocking ("each creature blocking it gets -1/-1": Plague Wight, Baneblade Scoundrel, Gomazoa). That is a combat result against the blocked creature, not a sweep. Read by `emits` and `effectKind`. */
       notBlockCombat?: true;
-      /** Refuse an emit about the ATTACHMENTS of something, which derive reads as a mass of their own: a subject whose subtype is aura or equipment and whose type is not `permanent` ("Destroy all Equipment attached to that creature": Blastfire Bolt, Awaken the Sleeper,
-       *  Corrosive Ooze) or a TOKEN-ONLY one ("exile all other tokens created with this creature": Faerie Artisans). Neither is a board (#1266, `boardWipe.text`). */
-      notAttachmentOrTokens?: true;
-      /** Refuse an `opp` `dies` / `leaves` emit that a COUNTED sacrifice makes (the same ability also emits `sacrifice` and carries a number other than X as its `amount`): "each opponent sacrifices three creatures" (Portal to Phyrexia), "... the creature
-       *  with the greatest power" (Crackling Doom, amount 1) are edicts of a fixed size, and derive scopes a plural or superlative object `all` all the same.
-       *  A sacrifice by EVERY player keeps its number (Barter in Blood, "two creatures each"; CEILING: Tectonic Hellion's "each player who controls the most lands sacrifices two" rides with it). A sacrifice with no number ("sacrifices the rest": Cataclysm, Slaughter the Strong; "thirteen creatures": Blasphemous Edict) or X (Death Cloud) is a wipe and stays (#1266). */
-      notCountedSacrifice?: true;
+      /** Refuse a TOKEN-ONLY subject (`token: true`: "exile all other tokens created with this creature", Faerie Artisans; "Creature tokens get -2/-2", Bloodline Culling; "exile all tokens", Aether Snap). Read by `emits` and `effectKind`. */
+      notTokenOnly?: true;
+      /** Refuse an emit about the ATTACHMENTS of a target: a subject whose subtype is aura or equipment (type not `permanent`) when ANOTHER ability of the SAME clause has a TARGETED emit ("Blastfire Bolt deals 5 damage to target creature. Destroy all Equipment
+       *  attached to that creature", Awaken the Sleeper). Derive keeps no attached-to link, so the subject alone cannot tell that from "Destroy all Auras" (Serene Heart, Pure // Simple), which is a mass removal and stays. CEILING: an attachment sweep with no
+       *  other ability in its clause (Strip Bare, Corrosive Ooze) is not told apart and counts. */
+      notAttachedTo?: true;
+      /** Refuse a `dies` / `exiled` / `leaves` emit by an OPPONENT whose ability carries a plain NUMBER as its amount ("each opponent sacrifices three creatures": Portal to Phyrexia; "... the creature with the greatest power": Crackling Doom; "exiles two permanents they control":
+       *  Bane of Bala Ged; "each opponent returns a nonland permanent": Discovery // Dispersal). Derive scopes a plural, superlative or chosen object `all` or `each` all the same, and those are edicts of a fixed size. A sacrifice with no number ("sacrifices the rest":
+       *  Cataclysm, Slaughter the Strong; "thirteen creatures": Blasphemous Edict), X (Death Cloud), or one by EVERY player (Barter in Blood, "two creatures each") keeps its number and stays. CEILING: Tectonic Hellion ("each player who controls the most lands
+       *  sacrifices two") rides with the every-player case. */
+      notCountedOppKill?: true;
       /** Under a `debuff` ability, keep only a ONE-SHOT shrink that lowers toughness (#1266, `boardWipe.text`): derive writes a `dies` emit for every "get -N/-N" including "-1/-0" (Cumber Stone, Hell Swarm),
        *  and a power-only shrink kills nothing; a CONTINUOUS one ("Other black creatures get -1/-1", Kaervek, Elesh Norn) is a static hoser, not a sweep. An emit under any other ability kind is not touched. */
       oneShotToughnessDebuff?: true;
@@ -525,6 +533,10 @@ function lowersToughness(amount: string | undefined): boolean {
 }
 
 const subtypesOf = (s: { subtype?: unknown }): string[] => (s.subtype === undefined ? [] : [s.subtype].flat().map((t) => String(t).toLowerCase()));
+/** An ability that only a BLOCK makes: it triggers on "blocks" / "becomes blocked", or `subject` is a creature blocking (`combat`) or blocking WITH another (`combatWith`). See `notBlockCombat`. */
+function blockCombat(a: { trigger?: { verbs?: string[] } }, subject: { combat?: string; combatWith?: { role?: string } }): boolean {
+  return subject.combat === "blocking" || subject.combatWith?.role === "blocking" || (a.trigger?.verbs ?? []).some((v) => v === "blocks" || v === "becomes-blocked");
+}
 const KILL_VERBS: readonly string[] = ["dies", "exiled", "leaves"];
 
 function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
@@ -605,6 +617,8 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.reachesPermanent !== true || abilityReachesPermanent(a))
         && (clause.notLandOnly !== true || !(a.effect.subject !== undefined && landOnlySubject(a.effect.subject)))
         && (clause.toughnessDown !== true || lowersToughness(a.amount))
+        && (clause.notBlockCombat !== true || !blockCombat(a, a.effect.subject ?? {}))
+        && (clause.notTokenOnly !== true || a.effect.subject?.token !== true)
         // The count of a hand-fill: `amount` on a `to-hand` ability, `toHand` on a typed dig that kept its `search` kind (a `search` ability with neither is no hand-fill, so none of the three options below match it).
         && (clause.pickOne !== true || (a.chooses === true && (a.effect.kind === "to-hand" ? a.amount : a.toHand) === "1"))
         && (clause.toHand !== true || a.toHand !== undefined)
@@ -631,9 +645,11 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.abilityKind === undefined || clause.abilityKind.includes(a.effect.kind))
           && (clause.edict !== true || e.subject.edict === true)
           && (clause.notEdict !== true || e.subject.edict !== true)
-          && (clause.notBlockCombat !== true || (e.subject.combat !== "blocking" && !(a.trigger?.verbs ?? []).some((v) => v === "blocks" || v === "becomes-blocked")))
-          && (clause.notAttachmentOrTokens !== true || (e.subject.token !== true && (!subtypesOf(e.subject).some((t) => t === "aura" || t === "equipment") || [e.subject.type].flat().includes("permanent"))))
-          && (clause.notCountedSacrifice !== true || e.subject.control !== "opp" || !(a.emits ?? []).some((g) => g.verb === "sacrifice") || a.amount === undefined || a.amount === "" || a.amount.toUpperCase() === "X")
+          && (clause.notBlockCombat !== true || !blockCombat(a, e.subject))
+          && (clause.notTokenOnly !== true || e.subject.token !== true)
+          && (clause.notAttachedTo !== true || [e.subject.type].flat().includes("permanent") || !subtypesOf(e.subject).some((t) => t === "aura" || t === "equipment")
+            || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause && (f.emits ?? []).some((g) => g.subject.scope === "target")))
+          && (clause.notCountedOppKill !== true || e.subject.control !== "opp" || !KILL_VERBS.includes(e.verb) || a.amount === undefined || !/^\d+$/.test(a.amount))
           && (clause.notBesideTargetedKill !== true || !KILL_VERBS.includes(e.verb) || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause
             && (f.emits ?? []).some((g) => g.subject.scope === "target" && KILL_VERBS.includes(g.verb))))
           && (clause.notVictimMay !== true || e.victimMay !== true)

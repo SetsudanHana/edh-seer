@@ -20665,5 +20665,493 @@
     }
    }
   ]
+ },
+ "Typhoon": {
+  "oracleText": "Typhoon deals damage to each opponent equal to the number of Islands that player controls.",
+  "typeLine": "Sorcery",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "scope": "each",
+      "player": true
+     }
+    },
+    "amount": "the number of Islands that player controls",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each",
+       "player": true
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "subtype": "island",
+      "scope": "all"
+     }
+    }
+   }
+  ]
+ },
+ "Treacherous Terrain": {
+  "oracleText": "Treacherous Terrain deals damage to each opponent equal to the number of lands that player controls.\nBasic landcycling {2} ({2}, Discard this card: Search your library for a basic land card, reveal it, put it into your hand, then shuffle.)",
+  "typeLine": "Sorcery",
+  "manaValue": 8,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "scope": "each",
+      "player": true
+     },
+     "scaling": "per-permanent"
+    },
+    "amount": "the number of lands that player controls",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each",
+       "player": true
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "land",
+      "scope": "all"
+     }
+    }
+   }
+  ]
+ },
+ "Plague Wight": {
+  "oracleText": "Whenever this creature becomes blocked, each creature blocking it gets -1/-1 until end of turn.",
+  "typeLine": "Creature — Zombie",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "debuff",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "each",
+      "combatWith": {
+       "role": "blocking",
+       "with": "ref"
+      }
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "becomes-blocked"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "-1/-1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "combat": "blocking",
+       "type": "creature",
+       "scope": "each"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle"
+   }
+  ]
+ },
+ "Dead Drop": {
+  "oracleText": "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)\nTarget player sacrifices two creatures of their choice.",
+  "typeLine": "Sorcery",
+  "manaValue": 10,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "all",
+       "edict": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "all",
+       "edict": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   }
+  ]
+ },
+ "Blastfire Bolt": {
+  "oracleText": "Blastfire Bolt deals 5 damage to target creature. Destroy all Equipment attached to that creature.",
+  "typeLine": "Instant",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "amount": "5",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 5,
+     "ceiling": 5
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "subtype": "equipment",
+       "scope": "all"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "subtype": "equipment",
+      "scope": "all"
+     }
+    }
+   }
+  ]
+ },
+ "Faerie Artisans": {
+  "oracleText": "Flying\nWhenever a nontoken creature an opponent controls enters, create a token that's a copy of that creature except it's an artifact in addition to its other types. Then exile all other tokens created with this creature.",
+  "typeLine": "Creature — Faerie Artificer",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "type": [
+       "creature",
+       "artifact"
+      ],
+      "allTypes": [
+       "artifact",
+       "creature"
+      ],
+      "scope": "all"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "opp",
+      "token": false,
+      "type": "creature"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": [
+        "creature",
+        "artifact"
+       ],
+       "allTypes": [
+        "artifact",
+        "creature"
+       ]
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": [
+        "creature",
+        "artifact"
+       ],
+       "allTypes": [
+        "artifact",
+        "creature"
+       ]
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "opp",
+      "token": false,
+      "type": "creature"
+     }
+    },
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": true,
+       "type": "creature",
+       "scope": "all"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": true,
+       "type": "creature",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": true,
+      "type": "creature",
+      "scope": "all"
+     }
+    }
+   }
+  ]
+ },
+ "Bloodline Culling": {
+  "oracleText": "Choose one —\n• Target creature gets -5/-5 until end of turn.\n• Creature tokens get -2/-2 until end of turn.",
+  "typeLine": "Instant",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "debuff",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "amount": "-5/-5",
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "debuff",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "type": "creature",
+      "scope": "all"
+     }
+    },
+    "amount": "-2/-2",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": true,
+       "type": "creature",
+       "scope": "all"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Serene Heart": {
+  "oracleText": "Destroy all Auras.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "subtype": "aura",
+       "scope": "all"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "subtype": "aura",
+      "scope": "all"
+     }
+    }
+   }
+  ]
  }
 }

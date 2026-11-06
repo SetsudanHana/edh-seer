@@ -820,8 +820,10 @@ test("a board wipe is a mass effect on the battlefield, in any of its shapes", (
     realCard("Blasphemous Act"), realCard("Toxic Deluge"), realCard("The Meathook Massacre"), realCard("Massacre Girl"), realCard("Black Sun's Zenith"),
     realCard("Living Death"), realCard("Blasphemous Edict"), realCard("Cataclysm"), realCard("Delayed Blast Fireball"), realCard("Chandra Nalaar"),
     realCard("Desynchronization"), realCard("Calamity of the Titans"), realCard("Cower in Fear"),
-    // "Destroy all lands" is kept as the owner's line has always had it: the old pattern read `lands?` (Armageddon, Ravages of War, Ruination).
+    // "Destroy all lands" is main's behaviour, NOT an owner ruling: the old pattern read `lands?` (Armageddon, Ravages of War, Ruination) and this rule keeps it until the owner says otherwise.
     realCard("Armageddon"),
+    // A global Aura / Equipment sweep was a wipe on main and stays; only the attachments of a TARGET are refused (below).
+    realCard("Serene Heart"), realCard("Pure // Simple"),
     // One-sided: an opponent-only mass effect is still a wipe.
     // Overload turns "target" into "each", and derive reads only the targeted half.
     overloaded("Cyclonic Rift"), overloaded("Vandalblast"),
@@ -839,6 +841,16 @@ test("a board wipe is a mass effect on the battlefield, in any of its shapes", (
     realCard("Cavalier of Flame"),
     // A target widened by "and all other ... with the same name", and a block's "destroy both creatures".
     realCard("Banishment"), realCard("Alaborn Zealot"),
+    // `notEdict`: "Target player sacrifices two creatures" forces a choice on one named player.
+    realCard("Dead Drop"),
+    // `notAttachedTo`: "Destroy all Equipment attached to that creature" rides on a targeted spell.
+    realCard("Blastfire Bolt"),
+    // `notTokenOnly`: both a kill emit (Faerie Artisans, "exile all other tokens created with this creature") and a debuff (Bloodline Culling, "Creature tokens get -2/-2").
+    realCard("Faerie Artisans"), realCard("Bloodline Culling"),
+    // `notBlockCombat` on a debuff: "each creature blocking it gets -1/-1".
+    realCard("Plague Wight"),
+    // Burn at a player, by the number of lands they control, touches no creature (`massOfTargetPlayer` needs a permanent noun).
+    realCard("Typhoon"), realCard("Treacherous Terrain"),
   ];
   const m = detectBuildCategories([...wipes, ...notWipes]);
   const found = m.get("boardWipe") ?? new Set<string>();
@@ -1214,7 +1226,12 @@ describe("removal.targeted is derived", () => {
     for (const n of ["Murder", "Swords to Plowshares", "Chaos Warp", "Cyclonic Rift", "Tragic Slip", "Dismember"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
   });
   test("wording the printed pattern missed holds: a multicoloured permanent (Pure // Simple), 'creature or Vehicle' (Daring Demolition), 'target Spirit' (Rend Spirit)", () => {
-    for (const n of ["Pure // Simple", "Daring Demolition", "Rend Spirit"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
+    // Pure // Simple's whole card is a wipe (its Simple half destroys all Auras and Equipment, as on main), so the multicoloured claim is read off its first half alone.
+    const pure = blank("Pure // Simple");
+    const firstHalf: DeckCard = { ...pure, tags: { ...pure.tags!, abilities: pure.tags!.abilities.filter((a) => a.clause === 1) } };
+    expect(ruleMatches(rule, pure, set), "whole card").toBe(false);
+    expect(ruleMatches(rule, firstHalf, set), "Pure // Simple, first half").toBe(true);
+    for (const n of ["Daring Demolition", "Rend Spirit"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
   });
   test("an exile whose emit names no origin zone still holds (Karlov), and so does an 'until this leaves' exile, whose return derive reads as an opponent's flicker (Fairgrounds Warden)", () => {
     for (const n of ["Karlov of the Ghost Council", "Fairgrounds Warden"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
