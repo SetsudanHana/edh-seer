@@ -97,7 +97,7 @@
   "packages/tagger/src/derive/replacement.ts": 10,
   "packages/tagger/src/derive/scaling.ts": 4,
   "packages/tagger/src/derive/selection-text.ts": 1,
-  "packages/tagger/src/derive/subject.ts": 12,
+  "packages/tagger/src/derive/subject.ts": 11,
   "packages/tagger/src/derive/threshold.ts": 2,
   "packages/tagger/src/derive/to-hand.ts": 5,
   "packages/tagger/src/derive/token-kinds.ts": 1,

@@ -441,7 +441,7 @@ const ALL_BUT = /\ball but that many\b|\bother than (?:up to )?(?:the |one |a )?
 const SPARED = /\band the rest\b/;
 /** A NUMBER OF THEM, PICKED BY A PLAYER, not the class: "two permanents of their choice" (Earth-Cult Elemental, Greater Harvester, Nicol Bolas), "half the permanents they control of their choice" (Pox Plague, Curse of the Cabal),
  *  "that many permanents of their choice" (Archfiend of Spite), "permanents they control equal to the number of ..." (Balancing Act). Not "the creature type / color / name of your choice" (a class narrowed by a choice).
- *  CEILING: "two permanents defending player controls" (Bane of Bala Ged) names no choice and is not read. */
+ */
 const PLAYER_PICKS = /(?<!\b(?:type|colou?r|name|kind) )\bof (?:their|your|his or her|each player's) choice\b/;
 const COUNTED = /\bequal to the number of\b/;
 /** ...but not a stat compared to a count ("each permanent with mana value equal to the number of charge counters") or a number of tokens made ("Food tokens equal to the number of opponents"): those name a class or a quantity, not a pick. */
@@ -576,6 +576,8 @@ function parseColors(t: string): string[] | undefined {
 const CHOSEN = /\bof the chosen\b|\bthe chosen (?:type|color|colour)\b/i;
 /** ...and the COLOUR case (#1360): a chosen colour is `chosenColor`, never `chosenType` (which the matcher resolves to a subtype). "color and type" is both words and stays a type. */
 const CHOSEN_COLOR = /\bof the chosen colou?r\b|\bthe chosen colou?r\b|\bof the colou?r of your choice\b/i;
+/** ...but the colour of a damage SOURCE is not the colour of what is protected: "by sources of the color of your choice" (Avacyn, Guardian Angel; Prismatic Strands). */
+const SOURCE_COLOR = /\bsources? of the colou?r of your choice\b/;
 const CHOSEN_COLOR_AND_TYPE = /\bchosen colou?r and (?:creature )?type\b/i;
 
 /** The ORIGIN zone the text names: "casts a spell from a graveyard" (River Kelpie), "casts a
@@ -923,7 +925,7 @@ export function parseSubject(text: string): SubjectFilter {
     if (ownership.owner) out.owner = ownership.owner;
     if (ownership.control && out.control === "any") out.control = ownership.control;
   }
-  if (CHOSEN_COLOR.test(t) && !CHOSEN_COLOR_AND_TYPE.test(t)) out.chosenColor = true;
+  if (CHOSEN_COLOR.test(t.replace(SOURCE_COLOR, "")) && !CHOSEN_COLOR_AND_TYPE.test(t)) out.chosenColor = true;
   else if (CHOSEN.test(t)) out.chosenType = true;
   const counter = parseCounter(t);
   if (counter) out.counter = counter;

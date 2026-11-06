@@ -7,10 +7,12 @@ import type { Ability, SubjectFilter } from "../schema.js";
  *  CEILING: the clause is the unit, so a clause with a pile elsewhere marks every bare permanent mass in it. */
 const UNLESS = /\bpermanents? unless\b/i;
 const PILES = /\bpiles?\b/i;
+/** "Each player chooses six lands they control. Destroy all other permanents." (Urza's Sylex): "other" is "other than the chosen", not "other than this card" (Gideon, Champion of Justice's "Exile all other permanents" is). */
+const OTHER_THAN_CHOSEN = /\bchooses?\b[^.]*\.[^.]*\ball other permanents\b/i;
 
 const bare = (s: SubjectFilter): boolean => {
   const types = [s.type].flat();
-  const { control: _c, token: _t, type: _ty, scope, ...rest } = s as SubjectFilter & Record<string, unknown>;
+  const { control: _c, token: _t, type: _ty, scope, other: _o, ...rest } = s as SubjectFilter & Record<string, unknown>;
   return types.length === 1 && types[0] === "permanent" && (scope === "all" || scope === "each") && Object.keys(rest).length === 0;
 };
 
@@ -18,7 +20,7 @@ export function selectionFromText(abilities: Ability[], clauseTexts: Record<numb
   return abilities.map((a) => {
     if (!a.emits?.some((e) => bare(e.subject))) return a;
     const text = a.clause === undefined ? cardText : clauseTexts?.[Math.trunc(Number(a.clause))] ?? cardText;
-    const selection = UNLESS.test(text) ? "all-but" as const : PILES.test(text) ? "pile" as const : undefined;
+    const selection = UNLESS.test(text) || OTHER_THAN_CHOSEN.test(text) ? "all-but" as const : PILES.test(text) ? "pile" as const : undefined;
     if (!selection) return a;
     return { ...a, emits: a.emits.map((e) => (bare(e.subject) ? { ...e, subject: { ...e.subject, selection } } : e)) };
   });

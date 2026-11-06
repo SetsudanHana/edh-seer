@@ -3049,5 +3049,338 @@
    }
   ],
   "segmentHash": "d5133ea869391a730701df4ee5d953831390240b3f556d8dcb8f355152e157fc"
+ },
+ "Urza's Sylex": {
+  "source": {
+   "_id": "fb4d99c2-daec-430a-9ca2-5a178a96618b",
+   "name": "Urza's Sylex",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "{2}{W}{W}, {T}, Exile Urza's Sylex: Each player chooses six lands they control. Destroy all other permanents. Activate only as a sorcery.\nWhen Urza's Sylex is put into exile from the battlefield, you may pay {2}. If you do, search your library for a planeswalker card, reveal it, put it into your hand, then shuffle.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}",
+   "layout": "normal",
+   "releasedAt": "2022-11-18",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "Urza's Sylex",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "destroy",
+      "object": "all other permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "exiled",
+     "subject": "Urza's Sylex",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a planeswalker card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "9597d1ae69cc00de340390ec834e19657aebcbbd2a99a65d6d5a3411200683e5"
+ },
+ "Avacyn, Guardian Angel": {
+  "source": {
+   "_id": "6da0b6d2-3c5e-49ef-9264-076269c04744",
+   "name": "Avacyn, Guardian Angel",
+   "typeLine": "Legendary Creature — Angel",
+   "oracleText": "Flying, vigilance\n{1}{W}: Prevent all damage that would be dealt to another target creature this turn by sources of the color of your choice.\n{5}{W}{W}: Prevent all damage that would be dealt to target player or planeswalker this turn by sources of the color of your choice.",
+   "keywords": [
+    "Flying",
+    "Vigilance"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "5",
+   "toughness": "4",
+   "manaCost": "{2}{W}{W}{W}",
+   "layout": "normal",
+   "releasedAt": "2014-07-18",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "prevent",
+      "object": "all damage that would be dealt to another target creature this turn by sources of the color of your choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "prevent",
+      "object": "all damage that would be dealt to target player or planeswalker this turn by sources of the color of your choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "b118e793b9ebf30a869cf9edfd2fefe524f85caf32332376f280f9719bfc3cfa"
+ },
+ "Prismatic Strands": {
+  "source": {
+   "_id": "8e414ad6-ba19-44a1-a291-2e420734a6dd",
+   "name": "Prismatic Strands",
+   "typeLine": "Instant",
+   "oracleText": "Prevent all damage that sources of the color of your choice would deal this turn.\nFlashback—Tap an untapped white creature you control. (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+   "keywords": [
+    "Flashback"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}",
+   "layout": "normal",
+   "releasedAt": "2019-08-23",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "prevent",
+      "object": "all damage that sources of the color of your choice would deal this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flashback—Tap an untapped white creature you control.",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "3bc89d11ce565962e6aa88fb166b2cef25df0b2c9a520b6be78b0e9c2a10f6a7"
+ },
+ "Gideon, Champion of Justice": {
+  "source": {
+   "_id": "5843bf12-27db-4e7d-81ee-98874bea72c7",
+   "name": "Gideon, Champion of Justice",
+   "typeLine": "Legendary Planeswalker — Gideon",
+   "oracleText": "+1: Put a loyalty counter on Gideon for each creature target opponent controls.\n0: Until end of turn, Gideon becomes a Human Soldier creature with power and toughness each equal to the number of loyalty counters on him and gains indestructible. He's still a planeswalker. Prevent all damage that would be dealt to him this turn.\n−15: Exile all other permanents.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}{W}",
+   "layout": "normal",
+   "releasedAt": "2021-04-23",
+   "gameChanger": false,
+   "reserved": false,
+   "loyalty": "4"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "loyalty counter",
+      "amount": "number of creatures target opponent controls",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "animate",
+      "object": "Gideon",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "grant-ability",
+      "object": "indestructible",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "prevent",
+      "object": "all damage that would be dealt to Gideon",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all other permanents",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "486f94883e0bb38934bcf37135dbbcb1779eaf5d8508ad55174e43fbb8834884"
+ },
+ "Root Greevil": {
+  "source": {
+   "_id": "e43b25be-fe67-4eaa-80df-85718f38f904",
+   "name": "Root Greevil",
+   "typeLine": "Creature — Beast",
+   "oracleText": "{2}{G}, {T}, Sacrifice this creature: Destroy all enchantments of the color of your choice.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "manaCost": "{3}{G}",
+   "layout": "normal",
+   "releasedAt": "2001-02-05",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "destroy",
+      "object": "all enchantments of the color of your choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "64d7951ccff21734b8c92dc37b366340138a2df826202f64950d61f375e33588"
  }
 }

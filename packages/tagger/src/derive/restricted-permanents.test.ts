@@ -106,3 +106,18 @@ describe("a stat or a token count compared to a number is no pick (the triage re
     expect(parseSubject("permanents they control equal to the number of permanents controlled by the player who controls the fewest").selection).toBe("chosen");
   });
 });
+
+describe("the colour of a damage SOURCE is not the colour of the thing protected; 'all other' after a choice is an all-but (round 2)", () => {
+  test.each([["Avacyn, Guardian Angel"], ["Prismatic Strands"]])("%s: no chosenColor on any emit", (name) => {
+    const all = rowOf(name).tags.abilities.flatMap((a) => a.emits ?? []);
+    expect(all.filter((e) => e.subject.chosenColor === true).map((e) => e.verb)).toEqual([]);
+  });
+  test("CONTROL: Wash Out and Root Greevil keep chosenColor", () => {
+    expect(emits("Wash Out", "leaves").map((e) => e.subject.chosenColor)).toEqual([true]);
+    expect(rowOf("Root Greevil").tags.abilities.flatMap((a) => a.emits ?? []).some((e) => e.subject.chosenColor === true)).toBe(true);
+  });
+  test("Urza's Sylex: 'destroy all other permanents' after 'chooses six lands' is all-but; Gideon's 'exile all other permanents' is not", () => {
+    expect(emits("Urza's Sylex", "dies").filter((e) => [e.subject.type].flat().includes("permanent")).map((e) => e.subject.selection)).toEqual(["all-but"]);
+    expect(emits("Gideon, Champion of Justice", "exiled").map((e) => [e.subject.scope, e.subject.other, e.subject.selection])).toEqual([["all", true, undefined]]);
+  });
+});
