@@ -261,6 +261,13 @@ export interface SubjectFilter {
    *  minus `dies` (CR 700.4). Demand only -- read by `eventMatches`, never stamped on a producer, so
    *  a consumer that does not ask is unaffected. 5 corpus cards. */
   withoutDying?: true;
+  /** THE EXILE IS THE COST OF A CRAFT ABILITY (CR 702.167a: "[Cost], Exile this permanent, Exile [materials] from among permanents you control and/or cards in your graveyard"; #1500, owner
+   *  ruling 2026-11-06). STAMPED on the `exiled` and `leaves` emits a craft ability's materials make, from the battlefield and from a graveyard, and DEMANDED by a trigger whose printed
+   *  words say so: Market Gnome's "exiled from the battlefield while you're activating a craft ability". A trigger carrying it hears ONLY an emit carrying it, so an ordinary exile or
+   *  a flicker (Swords to Plowshares, Ephemerate) never reaches it; an emit carrying it still feeds an ordinary "whenever a permanent you control is exiled", the exile being a real one.
+   *  A MARKER AND NOT A `cost` FIELD ON PURPOSE: no SubjectFilter field names how an event came about, and `entersTapped`, `notCast` and `withoutDying` are the shape for that (a boolean
+   *  the matcher reads in `eventMatches`, never in `subjectMatches`, where it would demand the card BE exiled by a craft; the `entersTapped` mistake). */
+  viaCraft?: true;
   /** The subject demands the LEGENDARY supertype. "Legendary creatures you control get +2/+2"
    *  (Serah Farron) and Jodah's +X/+X derived a subject of EVERY creature without it, which were the
    *  two widest meshes in the derived population at x53 and x51. Shaped exactly like `historic`:

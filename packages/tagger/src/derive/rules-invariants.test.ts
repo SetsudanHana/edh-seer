@@ -46,6 +46,7 @@ const TESTED: Record<string, string> = {
   "723.3": "derive/either-or-players.test.ts — only control of the player changes, so Cruel Entertainment's two player-controls-player actions are unclaimed, not two 'you gain control' emits (#1401 G)",
   "502.3": "derive.test.ts — \"doesn't untap during its controller's untap step\" is `untap-denial` with its duration: continuous (Hold for Questioning, Choke), the next untap step (Frost Trickster), for as long as (Icefall Regent) (#1423)",
   "702.11": "derive.test.ts — hexproof's scoped printed form is `targeting-ban` by spells or abilities your opponents control (Shielding Plax, Canopy Cover, #1423)",
+  "702.167a": "derive/craft.test.ts — a craft ability is an activated ability whose cost exiles its materials (#1500)",
   "702.18": "derive.test.ts — shroud's scoped printed form is `targeting-ban` with no source restriction (Ground Seal's cards in graveyards, #1423)",
   "115.7": "derive.test.ts — an effect that changes the target(s) of / chooses new targets for a TARGET spell or ability is `retarget`; your own copy's new targets are not (#1266, #491)",
   "115.1": "grammar/filter.test.ts — what a spell targets is `targets` (#896)",

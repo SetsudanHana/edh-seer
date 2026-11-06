@@ -918,6 +918,24 @@ const reducesItself = (oracleText: string | undefined): boolean =>
 const reducesAnAbility = (oracleText: string | undefined): boolean =>
   /\bless to activate\b|\bactivated abilities .{0,40}\bcost\b/i.test(oracleText ?? "");
 
+/** THE KIND OF ABILITY A REDUCER NAMES (#1500 review): "EXHAUST abilities of other permanents you control cost {2} less" (Boom Scholar), "EQUIP abilities you activate cost {1} less" (Bureau Headmaster, Nahiri, Bladehold
+ *  War-Whip), Boast, Ninjutsu, Cycling, Power-up. It discounts only a card that HAS that keyword ability, and the craft ability every craft card now carries is none of them. Read off the line that carries the cue; a reducer naming
+ *  no keyword ("activated abilities of artifacts you control") returns undefined and the consumer's own ability list decides, as before.
+ *  CEILING: card-scoped like `reducesAnAbility`; the consumer's ability is found by Scryfall keyword or a line opening with the word, so a granted or quoted ability of that kind is not seen. */
+const ABILITY_KIND = ["equip", "exhaust", "boast", "ninjutsu", "cycling", "power-up"] as const;
+function reducedAbilityKind(oracleText: string | undefined): string | undefined {
+  for (const line of (oracleText ?? "").split("\n")) {
+    const l = line.toLowerCase();
+    if (!reducesAnAbility(l)) continue;
+    for (const kind of ABILITY_KIND) if (l.includes(`${kind} abilities`)) return kind;
+  }
+  return undefined;
+}
+/** The card prints that kind of ability: Scryfall lists it as a keyword, OR a line of the text opens with it ("Equip worthy {1}", Mjölnir, is no keyword; "Exhaust — {2}{R}: ..."). */
+const hasAbilityKind = (card: { keywords?: readonly string[]; oracleText?: string }, kind: string): boolean =>
+  (card.keywords ?? []).some((k) => k.toLowerCase().endsWith(kind))
+  || (card.oracleText ?? "").split("\n").some((line) => line.toLowerCase().startsWith(kind));
+
 /** A cost reduction cannot take generic mana below zero (CR 118.7), so "spells you cast cost {1}
  *  less" does NOTHING to a card costing exactly `{U}`.
  *
@@ -1206,6 +1224,16 @@ function originMatches(producer: SubjectFilter, consumer: SubjectFilter, verb: s
  *  would report holes the engine does not actually have. */
 export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy): boolean {
   if (!verbSatisfies(producer, consumer)) return false;
+  // "EXILED WHILE YOU'RE ACTIVATING A CRAFT ABILITY" (Market Gnome, #1500) hears only the exile a craft cost makes (`viaCraft`, stamped by derive on the craft ability's material exiles): an ordinary exile
+  // or flicker is no craft cost. Read HERE and not in `subjectMatches`, where the identity gates compare an emit against a card's printed characteristics and would demand the card BE exiled by a craft.
+  // The reverse is open on purpose: a craft exile is a real exile (CR 702.167a) and feeds an ordinary "whenever a permanent you control is exiled".
+  if (consumer.subject.viaCraft === true && producer.subject.viaCraft !== true) return false;
+  // THE MATERIAL IS NOT THE GNOME'S "creature": "this creature" types the self trigger `creature`, but the card is an ARTIFACT creature and a craft with artifact exiles it (702.167b), so an artifact emit failed the
+  // type intersection below. The class is dropped for this one comparison; `directedReasons`' self gate then asks the real question, whether the emit's class (artifact, a Dinosaur, an Island) could BE this card.
+  if (consumer.subject.viaCraft === true && consumer.subject.self === true && consumer.subject.type !== undefined) {
+    const { type: _classOfThis, ...classless } = consumer.subject;
+    consumer = { ...consumer, subject: classless };
+  }
   // The trigger as printed, for the gates that ask whether it names WHICH spell: a `targets` met
   // below is stripped from `consumer`, and "a spell that targets this creature" must still narrow.
   const asked = consumer;
@@ -3291,6 +3319,9 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
         const costs = activationCosts(c.tags);
         // An ability discount needs an ability to discount — see `reducesAnAbility`.
         if (!costs.length) return undefined;
+        // "Exhaust abilities" / "Equip abilities ...": only a card with that kind of ability (see `reducedAbilityKind`).
+        const kind = reducedAbilityKind(p.card.oracleText);
+        if (kind !== undefined && !hasAbilityKind(c.card, kind)) return undefined;
         // CR 118.7 ON THE ACTIVATED SIDE. Owner's ruling 2026-08-23, OVERTURNING a cached REAL:
         // "the consumer has activated abilities" is necessary and not sufficient. `{T}: Add {C}` has
         // no mana in its cost at all, so `{1} less to activate` removes nothing.
