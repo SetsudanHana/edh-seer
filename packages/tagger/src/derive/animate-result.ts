@@ -140,3 +140,21 @@ export function animateResult(clauseText: string): SubjectFilter | undefined {
   }
   return undefined;
 }
+
+/** The one "until" that does not end an animate within the turn: "Until your next turn, all lands you control become 2/2 Elemental creatures" (Sylvan Awakening), which the owner keeps (2026-11-06). */
+const KEPT_UNTIL = "until your next turn";
+/** Timed cues, each a literal needle in the lower-cased, single-spaced text. */
+const TIMED_CUES = ["until ", "this turn", "this combat", "end of turn", "end of combat", "end step", "cleanup step"];
+
+/** DOES THIS ANIMATE LAST? (#1364, owner 2026-11-06: only a lasting animate makes a kindred.) CR 611.2a: a continuous effect of a resolving spell or ability lasts as long as it states, and with no stated
+ *  duration until the end of the game; a static ability's lasts while it applies. So an animate lasts unless its clause states a duration that ends it: "until end of turn" / "until end of combat" (Mutavault,
+ *  the Keyrunes, the Gideons), "this turn", "this combat", or any other "until"; and a rider that ends it ("Sacrifice it at the beginning of the next end step": Chimeric Coils, Depthshaker Titan). "For as long as" and "until your next turn" last.
+ *  CEILING: UNKNOWN COUNTS AS TIMED. The whole clause is read, not just the sentence with the result, and every "until" that is not "until your next turn" refuses, so a permanent change whose clause also
+ *  carries a timed rider ("It gains haste until end of turn") reads as timed and makes no kindred; a clause that is empty or over the length cap lasts for nothing. A duration worded without one of the
+ *  needles above would read as lasting. */
+export function animateLasts(clauseText: string): boolean {
+  if (clauseText.length === 0 || clauseText.length > MAX_CLAUSE) return false;
+  const flat = strip(clauseText).replace(/[^\S\n]+/g, " ").toLowerCase();
+  const kept = flat.split(KEPT_UNTIL).join(" ");
+  return !TIMED_CUES.some((cue) => kept.includes(cue));
+}

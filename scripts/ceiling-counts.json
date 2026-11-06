@@ -68,6 +68,7 @@
   "packages/tagger/src/bin/gen-schema-docs.ts": 1,
   "packages/tagger/src/derive-input.ts": 1,
   "packages/tagger/src/derive-worker.ts": 2,
+  "packages/tagger/src/derive/animate-result.ts": 1,
   "packages/tagger/src/derive/cant-kinds.ts": 2,
   "packages/tagger/src/derive/chosen-color.ts": 1,
   "packages/tagger/src/derive/damage-recipient.ts": 6,

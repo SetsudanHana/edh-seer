@@ -12,8 +12,10 @@ import { CREATURE_SUBTYPES } from "@edh-seer/tagger/subtypes";
  *  WHICH ANIMATES COUNT: the result states a creature type AND a creature subtype (a bare "creature" names no kindred, and reading it would mesh every animator with every creature-type-less lord);
  *  not an Aura's host (an enchanted creature is not this card's permanent, and its controller is often the opponent); and only the card itself or a permanent YOU control (an animate of `any` lands, Living
  *  Plane, animates the opponent's too, and a clause that does not say whose is not read as ours). A land type ("becomes an Island") and a spell or Aura subtype are no creature type.
- *  CEILING: a conditional or timed animate (an activated man-land, "until end of turn") counts as the kindred for the pair, as the engine pairs an activated pump with the creatures it could reach; the pair
- *  is "while it is animated", which the sentence says. */
+ *  ONLY A LASTING ANIMATE MAKES A KINDRED (owner 2026-11-06): `Effect.becomesLasts`, read off the clause by derive. "Until end of turn" animates (man-lands, Keyrunes, the Gideons, Kamahl's Will) make none; "for as long
+ *  as", "until your next turn" and a change with no stated duration do.
+ *  CEILING: TIMED MAKES NO KINDRED, AND AN UNKNOWN DURATION COUNTS AS TIMED (owner 2026-11-06): a card whose clause cannot be read for its duration, or carries any "until" but "until your next turn", is refused, so a
+ *  permanent change with a timed rider in its clause is missed. A static whose effect only applies on your turn (Bello) lasts as long as the static does. */
 const CREATURE_TYPES: ReadonlySet<string> = new Set(CREATURE_SUBTYPES);
 const list = (v: string | string[] | undefined): string[] => (v === undefined ? [] : Array.isArray(v) ? v : [v]);
 
@@ -33,7 +35,7 @@ export function animatedKindreds(tags: CardTags, printed: SubjectFilter): Animat
   const out: AnimatedKindred[] = [];
   for (const a of tags.abilities) {
     const becomes = a.effect.kind === "animate" ? a.effect.becomes : undefined;
-    if (becomes === undefined || a.host === true) continue;
+    if (becomes === undefined || a.host === true || a.effect.becomesLasts !== true) continue;
     const subject = a.effect.subject;
     const self = subject?.self === true;
     if (!self && subject?.control !== "you") continue;

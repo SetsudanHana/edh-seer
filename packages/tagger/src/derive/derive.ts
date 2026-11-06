@@ -17,7 +17,7 @@ import { ZONE_SCOPED_KINDS, actionEffectKind, activationBanClass, handFillRead, 
 import { actionEmits, definesPowerToughness, casualtySacrifice, enteringClass, millsOwnLibrary, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, narrowSelfExiledSpell, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, activationConditionOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
-import { animateResult } from "./animate-result.js";
+import { animateLasts, animateResult } from "./animate-result.js";
 import { hostEffect } from "./host.js";
 import { librarySearchOwner, printsSearch } from "./library-search.js";
 import { damageDealerOf, granteeDealer, grantedDealerIsGranter, damageHitsSelf, damageRecipient, playerOnlyRecipient } from "./damage-recipient.js";
@@ -632,7 +632,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 460: #1469 -- two fact effect kinds: prevention (CR 615.1a; Fog, Circle of Protection, Heal, Kor Haven) with Ability.prevention {damage, amount, duration, from} and effect.subject = who is hurt, and damage-change (CR 614 reduced / halved / capped / fixed / increased / redirected) for the damage replacements #1456 left unread (Benevolent Unicorn, Lashknife Barrier, Ghosts of the Innocent, Divine Presence, Forethought Amulet, Equal Treatment, Harsh Judgment, Goblin Psychopath, Jade Monolith ...); both in FACT_KINDS, a damage-change emits no prevented event
 // 461: #1534 -- prevented family: a 'prevented this way' trigger is a back-reference to the sentence (ref: sentence, refused by the matcher); a prevent action with no prevention read (can't be prevented, life-total floor, 'instead' replacements) emits no prevented event. Measured (derive-impact vs a3227407, 32,802 rows): 40 rows changed (the 4 payoffs, 34 non-preventing producers, Wolverine, Fierce Fighter, Serra the Benevolent Emblem), 8 model->grammar source flips (7 differ only by the dropped prevented ability; Insult // Injury's grammar doubler loses 'a source you control', 0 pairs, #1537), pair reasons +0 / -2,296 (prevented family only, all LOST->CLASS or ambiguous with a prevented consumer, gained 0, GAINED->SELF 0); census of 520 prevented producers x the 5 prevented-trigger consumers: 2,556 -> 430 pairs, Selfless Squire keeps its class reading from the 485 real preventers; role-ratchet 0/0, dropped-clauses 4,842 -> 4,876 (43 new: the prevent clauses that were falsely claimed now show as unread; 9 'fixed' are the same clauses moving from partial to whole-clause drops, not fixes)
 // 462: #1537 -- a damage multiplier whose grammar object is bare takes the source it names (Insult // Injury 'a source you control': effect subject and double emit any -> you; Goblin Goliath effect subject any -> you)
-export const DERIVE_VERSION = 462;
+// 463: #1364 -- Effect.becomesLasts: an animate's becomes counts as a kindred only when it LASTS (animateLasts, CR 611.2a; owner 2026-11-06). Timed animates (until end of turn / combat, this turn, any other until) and unknown durations carry no flag; for as long as, until your next turn and a stated-nothing change do. Read by the matcher kindred readers only.
+export const DERIVE_VERSION = 463;
 
 /** A sentence with a "Choose [another / up to N] target X." of its own (#1452). */
 const CHOOSES_TARGET = /\bchoose (?:another |other |up to \w+ |any number of )?target\b/i;
@@ -3940,7 +3941,7 @@ export function deriveAbilities(
       // HOW A DAMAGE MULTIPLIER CHANGES THE DAMAGE (#1345), off the clause the verb path and the template both sit in.
       if (effectKind === "damage-multiplier") { const damageChange = damageChangeOf(text); if (damageChange) ability.effect = { ...ability.effect, damageChange }; }
       // WHAT AN ANIMATE MAKES ITS OBJECT lives in its own slot, never the subject (#1364; see `Effect.becomes`).
-      if (effectKind === "animate") { const becomes = animateResult(clauseText); if (becomes) ability.effect = { ...ability.effect, becomes }; }
+      if (effectKind === "animate") { const becomes = animateResult(clauseText); if (becomes) ability.effect = { ...ability.effect, becomes, ...(animateLasts(clauseText) ? { becomesLasts: true as const } : {}) }; }
       if (trigger) ability.trigger = trigger;
       // The effect lands on the permanent this card is attached to (#1315): a marker, never a subject -- see `Ability.host`.
       if (hostEffect(action, effectKind, text)) ability.host = true;
