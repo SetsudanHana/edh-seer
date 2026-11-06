@@ -1159,7 +1159,7 @@ export interface Effect {
   /** WHAT AN `animate` MAKES ITS OBJECT (#1364): "target land you control becomes a 3/3 Elemental creature" -> `{ type: "creature", subtype: "elemental", stats: 3/3 }`; "All lands are 1/1 creatures"; "a blue Fish".
    *  The RESULT of the change (types, subtypes, base P/T, colours), read off the printed clause. NEVER THE SUBJECT: `subject` is what is targeted or affected, and `spellTargeting` (matcher) reads a
    *  `scope: target` creature-typed subject as "aimed at a creature you control" (Brave the Wilds targets a land).
-   *  NO READER TAKES IT YET: it is data only, and no matcher or instrument code reads `becomes`. The follow-up is kindred supply (an animated Golem as a Golem).
+   *  READ ONLY BY THE KINDRED READERS (matcher `becomes-kindred.ts`): a lord that names a kindred reaches the permanent this animate makes one, and a count of the kindred counts it (an animated Golem as a Golem). NEVER BY `spellTargeting` or any reader that aims.
    *  Set on an animate whose printed clause states a result that reads, with a type or subtype. A SELF animate also keeps the result in its subject, as the store writes it, and `becomes` repeats it.
    *  ABSENT MEANS "NOT SAID", NOT "NOT A RESULT": a colour or a P/T alone, a type "of your choice", a copy, an "or" between alternatives (Tundra Kavu), coordinated noun phrases
    *  (Life and Limb), a name cut by a comma (Tenth District Hero) and a clause stating two different results (Primal Clay) are left unread. */

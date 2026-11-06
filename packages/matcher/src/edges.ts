@@ -18,9 +18,10 @@ import {
   lifeLostFeedsScaling,
   effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, typeGrantNoun, recursionTargetSentence, playFromTopSentence, extraLoyaltySentence, imprintSentence, tutorSentence, digsRatherThanSearches, winconSentence, thresholdSentence, countedNounPlural, graveyardThresholdSentence, auraHostSentence, processorSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
+  staticGrantSentence, animatedKindredSentence, animatedCountSentence, typeGrantNoun, recursionTargetSentence, playFromTopSentence, extraLoyaltySentence, imprintSentence, tutorSentence, digsRatherThanSearches, winconSentence, thresholdSentence, countedNounPlural, graveyardThresholdSentence, auraHostSentence, processorSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand, creatureTypeDemand } from "./land-conditions.js";
+import { animatedKindreds, kindredReaching, namesKindred } from "./becomes-kindred.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
 import { BASIC_LAND_TYPE_SET, SUPERTYPES, parseTypeLineAllFaces } from "./typeline.js";
 import { enteringFaceName, faceDeckCards, graveyardFaceName, graveyardIdentity } from "./faces.js";
@@ -2941,14 +2942,25 @@ function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
     // the same cue `copySubject` refuses: the emit then names what was copied, not what was made.
     const makes = counted.token === true && !COPY_REPLACES_TYPE_CUE.test(p.card.oracleText ?? "") && pEvents.some((e) => e.verb === "create-token" && e.subject.token === true
       && subjectMatches((({ zone: _ez, scope: _sc, ...s }) => s)(e.subject) as SubjectFilter, printed, h));
-    if (!makes && !subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h)) continue;
+    const pPrinted = characteristicsSubject(p.tags, p.card.name);
+    const printedMeets = subjectMatches(pPrinted, printed, h);
+    // WHAT P BECOMES (#1364 part 2): "for each Elemental you control" counts a land that P animates into an Elemental (Brave the Wilds, Omnath's count). A KINDRED count only (a bare type is the whole board),
+    // of your own board, never a token count, and never a card counting itself.
+    let animatedKind: string | undefined;
+    if (!makes && !printedMeets) {
+      if (counted.token === true || counted.control !== "you" || !namesKindred(printed) || p.card.name === c.card.name) continue;
+      for (const k of animatedKindreds(p.tags, pPrinted)) animatedKind ??= kindredReaching(k, printed, (shape, want) => subjectMatches(shape, want, h));
+      if (animatedKind === undefined) continue;
+    }
     // A SPELL COUNTS AS IT IS CAST (issue #506): an on-cast count, or any count on an instant or a
     // sorcery, happens once -- Thwart the Grave's "costs {1} less for each creature in your party".
     const cTypes = c.tags.characteristics.types ?? [];
     const whenCast = a.kind === "on-cast" || (cTypes.length > 0 && cTypes.every((t) => t === "instant" || t === "sorcery"));
     reasons.push({
       tag: `scales:${themeSubjectKey(counted)}`,
-      text: boardCountFeedsScaling(p.card.name, c.card.name, a.effect.kind, makes && !subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h), whenCast),
+      text: animatedKind !== undefined
+        ? animatedCountSentence(p.card.name, c.card.name, animatedKind, a.effect.kind, whenCast)
+        : boardCountFeedsScaling(p.card.name, c.card.name, a.effect.kind, makes && !printedMeets, whenCast),
       effectKind: a.effect.kind,
       // An on-cast count happens once (overview item 6c, see the sibling above).
       repeatability: whenCast ? "oneshot" : a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : "triggered",
@@ -3126,6 +3138,10 @@ function grantsToSpellsYouCast(s: SubjectFilter | undefined): boolean {
   // gains flashback" is one card, and admitting it linked Recoup to every sorcery in the deck.
   return s?.control === "you" && s.scope !== "target" && types.length > 0 && types.every((t) => SPELL_CLASS.has(t));
 }
+/** The static kinds that reach a PERMANENT as a lord does, and so reach a card that animates into the lord's kindred (#1364 part 2). Not `cost-reduction` (it reduces SPELLS cast: a land animated into an
+ *  Elemental is no Elemental spell), `type-grant`, `damage-multiplier` or any other. */
+const ANIMATED_LORD_KINDS: ReadonlySet<string> = new Set(["pump", "keyword-grant"]);
+
 function staticEdges({ p, c, h, reasons }: PairScope): void {
   const staticClaim = (c: DeckCard, a: CardTags["abilities"][number]): Reason | undefined => {
     if (!c.tags) return undefined;
@@ -3203,7 +3219,18 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
     // deletes the edge outright -- Sludge Monster's anthem stopped reaching anything. The dedicated
     // counter-presence pass below is what supplies that state.
     const { counter: _stateOnly, ...printedMatchable } = a.effect.subject;
-    if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), printedMatchable, h)) return undefined;
+    const printed = characteristicsSubject(c.tags, c.card.name);
+    let animated: { kind: string; self: boolean } | undefined;
+    if (!subjectMatches(printed, printedMatchable, h)) {
+      // WHAT C BECOMES (#1364 part 2): a lord that names a kindred also reaches a permanent C animates into that kindred (Field Marshal's Soldiers pump Boros Keyrune's Soldier). Only an anthem / lord
+      // of a PERMANENT (`pump`, `keyword-grant`) that C's printed shape does not already meet, named by a kindred and never by a bare type, and never a card with itself.
+      if (a.kind !== "static" || !ANIMATED_LORD_KINDS.has(a.effect.kind) || !namesKindred(printedMatchable) || p.card.name === c.card.name) return undefined;
+      for (const k of animatedKindreds(c.tags, printed)) {
+        const hit = kindredReaching(k, printedMatchable, (shape, want) => subjectMatches(shape, want, h));
+        if (hit !== undefined) { animated = { kind: hit, self: k.self }; break; }
+      }
+      if (animated === undefined) return undefined;
+    }
     // A KEYWORD THE CARD ALREADY PRINTS IS NOT GIVEN TO IT AGAIN when a second instance is redundant
     // (CR 702.9c and its siblings). Owner 2026-10-02: "flying flying gives you nothing additional,
     // but dethrone dethrone works". The claim keeps only the keywords that are new to the card, and
@@ -3274,7 +3301,9 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
       tag: a.kind === "static"
         ? `static:${a.effect.kind}`
         : tagKey(a.effect.kind, themeSubjectKey(a.effect.subject)),
-      text: a.effect.kind === "cost-reduction"
+      text: animated !== undefined
+        ? animatedKindredSentence(p.card.name, c.card.name, animated.kind, animated.self, a.effect.kind, a.grants && grants)
+        : a.effect.kind === "cost-reduction"
         ? costReductionSentence(p.card.name, c.card.name)
         : staticGrantSentence(p.card.name, c.card.name, a.effect.kind === "damage-multiplier" ? phraseKindOf(a.effect, a.change) : a.effect.kind,
           typeGrantNoun(a.effect.subject?.type, c.tags.characteristics.types), a.grants && grants),

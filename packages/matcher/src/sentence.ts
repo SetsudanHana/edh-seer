@@ -764,6 +764,25 @@ export function staticGrantSentence(
   return `${producer} gives ${consumer} ${phrase}`;
 }
 
+/** A LORD REACHING WHAT A CARD ANIMATES INTO (#1364 part 2). The consumer is not the kindred on its type line: it BECOMES it ("Boros Keyrune becomes a Soldier"), and the lord's grant reaches it then.
+ *  `self` is the card itself ("Boros Keyrune can become a Soldier"); otherwise it animates a permanent ("Brave the Wilds turns a land into an Elemental"). */
+export function animatedKindredSentence(producer: string, consumer: string, kind: string, self: boolean, effectKind: string, keywords?: readonly string[]): string {
+  const noun = kind.charAt(0).toUpperCase() + kind.slice(1);
+  const gives = effectKind === "keyword-grant" && keywords?.length ? keywordList(keywords) : GRANT_PHRASES[effectKind] ?? `its ${effectKind.replace(/-/g, " ")}`;
+  return self
+    ? `${consumer} can become a ${noun}, and ${producer} gives ${noun}s ${gives}`
+    : `${consumer} turns a permanent into a ${noun}, and ${producer} gives ${noun}s ${gives}`;
+}
+
+/** A COUNT OF A KINDRED COUNTING WHAT A CARD ANIMATES INTO (#1364 part 2): "Omnath counts the Elementals you control", and Brave the Wilds makes a land one. */
+export function animatedCountSentence(producer: string, consumer: string, kind: string, effectKind?: string, countsWhenCast = false): string {
+  const noun = kind.charAt(0).toUpperCase() + kind.slice(1);
+  const grows = (effectKind && COUNT_GROWS[effectKind]) ?? "does more";
+  return countsWhenCast
+    ? `When you cast ${consumer}, it counts the ${noun}s you control, and ${producer} can make one`
+    : `${consumer} counts the ${noun}s you control and ${grows}; ${producer} can make one`;
+}
+
 /** THE KEYWORDS A GRANT HANDS OUT, AS PROSE (`Ability.grants`, #857): "reach", "flying and first
  *  strike", "flying, first strike and trample". Only CR keyword abilities are ever listed, so a quoted
  *  ability (Feywild Visitor's trigger, the J12 case) still reads "an extra ability". */
