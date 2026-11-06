@@ -535,7 +535,7 @@ function landOnlySubject(subject: { type?: string | string[]; subtype?: unknown;
 
 /** A subject that INCLUDES lands (#1554): its type list names `land` (or a land type), or a branch of its `anyOf` does ("artifacts, creatures, and lands": Jokulhaups, Obliterate; "creatures and lands": Devastation).
  *  CEILING: a bare `type: permanent` does NOT count. Derive files "all permanents" (Apocalypse, Worldfire) and "all permanents of the chosen colour" (Wash Out), "all but N permanents" (Razia's Purification)
- *  and "each permanent with the most votes" (Council's Judgment) as the same `permanent` subject, dropping the restriction, so a rule on it measured 45 false stax cards. Apocalypse stays a wipe only until derive keeps the restriction. */
+ *  and "each permanent with the most votes" (Council's Judgment) as the same `permanent` subject, dropping the restriction, so a rule on it measured 45 false stax cards. Apocalypse stays a wipe only until derive keeps the restriction (#1557). */
 function includesLandSubject(subject: { type?: string | string[]; subtype?: unknown; notType?: string[]; anyOf?: { type?: string | string[]; subtype?: unknown; notType?: string[] }[] }): boolean {
   if ((subject.notType ?? []).includes("land")) return false;
   const types = subject.type !== undefined ? [subject.type].flat() : subject.subtype !== undefined ? [subject.subtype].flat() : [];
