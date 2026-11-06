@@ -109,6 +109,10 @@ export type RuleClause =
       edict?: true;
       /** Refuse an EDICT emit (`SubjectFilter.edict`): "Target player sacrifices two creatures" forces a choice on one named player and is not a wipe (#1266, `boardWipe.text`). */
       notEdict?: true;
+      /** Refuse an emit whose subject is LANDS ONLY (`landOnlySubject`: "Destroy all lands", "each player sacrifices a land", "nonbasic lands"): mass land denial is stax, not a board wipe (owner 2026-11-06, `boardWipe.text`). A subject that also names another type ("artifacts, creatures, and lands": Jokulhaups) is not land-only. */
+      notLandOnly?: true;
+      /** Require an emit whose subject is LANDS ONLY (see `notLandOnly`): the shape `stax.landDenial` reads. */
+      landOnly?: true;
       /** At least ONE of the subject's types is in this list, where `type` needs EVERY type in its list: "each creature and each planeswalker" passes `typeAny: [creature, permanent]`, a planeswalker-only subject ("each planeswalker they control": Kumano Faces Kakkazan) does not. */
       typeAny?: string[];
       /** Refuse an ability that only a BLOCK makes (#1266, `boardWipe.text`): it triggers on "blocks" / "becomes blocked" ("When this creature blocks a creature, destroy both creatures": Alaborn Zealot, Dead-Iron Sledge), or its subject is a creature
@@ -123,7 +127,7 @@ export type RuleClause =
       /** Refuse a `dies` / `exiled` / `leaves` emit by an OPPONENT whose ability carries a plain NUMBER as its amount ("each opponent sacrifices three creatures": Portal to Phyrexia; "... the creature with the greatest power": Crackling Doom; "exiles two permanents they control":
        *  Bane of Bala Ged; "each opponent returns a nonland permanent": Discovery // Dispersal). Derive scopes a plural, superlative or chosen object `all` or `each` all the same, and those are edicts of a fixed size. A sacrifice with no number ("sacrifices the rest":
        *  Cataclysm, Slaughter the Strong; "thirteen creatures": Blasphemous Edict), X (Death Cloud), or one by EVERY player (Barter in Blood, "two creatures each") keeps its number and stays. CEILING: Tectonic Hellion ("each player who controls the most lands
-       *  sacrifices two") rides with the every-player case. */
+       *  sacrifices two") rides with the every-player case; being land-only, it lands in `stax.landDenial`, not `boardWipe.text` (#1551). */
       notCountedOppKill?: true;
       /** Under a `debuff` ability, keep only a ONE-SHOT shrink that lowers toughness (#1266, `boardWipe.text`): derive writes a `dies` emit for every "get -N/-N" including "-1/-0" (Cumber Stone, Hell Swarm),
        *  and a power-only shrink kills nothing; a CONTINUOUS one ("Other black creatures get -1/-1", Kaervek, Elesh Norn) is a static hoser, not a sweep. An emit under any other ability kind is not touched. */
@@ -661,6 +665,8 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.control === undefined || clause.control.includes(e.subject.control))
           && (clause.zone === undefined || clause.zone.includes(e.subject.zone ?? null))
           && (clause.type === undefined || (subjectTypes(e.subject).length > 0 && subjectTypes(e.subject).every((t) => clause.type!.includes(t))))
+          && (clause.notLandOnly !== true || !landOnlySubject(e.subject))
+          && (clause.landOnly !== true || landOnlySubject(e.subject))
           && (clause.typeAny === undefined || subjectTypes(e.subject).some((t) => clause.typeAny!.includes(t)))
           && (clause.scope === undefined || clause.scope.includes(e.subject.scope ?? null))
           && (clause.fromZone === undefined || clause.fromZone.includes(e.subject.fromZone ?? null))

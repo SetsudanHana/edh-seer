@@ -21153,5 +21153,752 @@
     }
    }
   ]
+ },
+ "Ravages of War": {
+  "oracleText": "Destroy all lands.",
+  "typeLine": "Sorcery",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "land",
+      "scope": "all"
+     }
+    }
+   }
+  ]
+ },
+ "Ruination": {
+  "oracleText": "Destroy all nonbasic lands.",
+  "typeLine": "Sorcery",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "basic": false,
+       "type": "land",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "basic": false,
+      "type": "land",
+      "scope": "all"
+     }
+    }
+   }
+  ]
+ },
+ "Global Ruin": {
+  "oracleText": "Each player chooses from the lands they control a land of each basic land type, then sacrifices the rest.",
+  "typeLine": "Sorcery",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "each"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "each"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "land",
+      "scope": "each"
+     }
+    }
+   }
+  ]
+ },
+ "Jokulhaups": {
+  "oracleText": "Destroy all artifacts, creatures, and lands. They can't be regenerated.",
+  "typeLine": "Sorcery",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "land"
+       ],
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "land"
+      ],
+      "scope": "all"
+     }
+    }
+   }
+  ]
+ },
+ "Sunder": {
+  "oracleText": "Return all lands to their owners' hands.",
+  "typeLine": "Instant",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "bounce",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "land",
+      "scope": "all",
+      "zone": "battlefield"
+     }
+    },
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "all",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "land",
+      "scope": "all",
+      "fromZone": "battlefield"
+     }
+    }
+   }
+  ]
+ },
+ "Natural Balance": {
+  "oracleText": "Each player who controls six or more lands chooses five lands they control and sacrifices the rest. Each player who controls four or fewer lands may search their library for up to X basic land cards and put them onto the battlefield, where X is five minus the number of lands they control. Then each player who searched their library this way shuffles.",
+  "typeLine": "Sorcery",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "all"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "land",
+      "scope": "all"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "land",
+      "basic": true
+     },
+     "scaling": "x-cost"
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "search",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "basic": true,
+       "type": "land",
+       "fromZone": "library"
+      }
+     }
+    ],
+    "librarySearch": "other",
+    "toZone": "battlefield",
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "basic": true,
+       "type": "land",
+       "fromZone": "library"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "shuffle",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Planar Overlay": {
+  "oracleText": "Each player chooses a land they control of each basic land type. Return those lands to their owners' hands.",
+  "typeLine": "Sorcery",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "bounce",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "land",
+      "scope": "each",
+      "zone": "battlefield"
+     }
+    },
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "each",
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "land",
+      "scope": "each",
+      "fromZone": "battlefield"
+     }
+    }
+   }
+  ]
+ },
+ "Omen of Fire": {
+  "oracleText": "Return all Islands to their owners' hands. Each player sacrifices a Plains or a white permanent of their choice for each white permanent they control.",
+  "typeLine": "Instant",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "bounce",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "subtype": "island",
+      "scope": "all",
+      "zone": "battlefield"
+     }
+    },
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "subtype": "island",
+       "scope": "all",
+       "fromZone": "battlefield",
+       "type": "land"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "subtype": "island",
+      "scope": "all",
+      "fromZone": "battlefield",
+      "type": "land"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "",
+     "scaling": "per-opponent"
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "colors": [
+        "W"
+       ],
+       "anyOf": [
+        {
+         "subtype": "plains"
+        },
+        {
+         "type": "permanent"
+        }
+       ]
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "colors": [
+        "W"
+       ],
+       "anyOf": [
+        {
+         "subtype": "plains"
+        },
+        {
+         "type": "permanent"
+        }
+       ]
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Obliterate": {
+  "oracleText": "This spell can't be countered.\nDestroy all artifacts, creatures, and lands. They can't be regenerated.",
+  "typeLine": "Sorcery",
+  "manaValue": 8,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "land"
+       ],
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "land"
+      ],
+      "scope": "all"
+     }
+    }
+   }
+  ]
+ },
+ "Apocalypse": {
+  "oracleText": "Exile all permanents. You discard your hand.",
+  "typeLine": "Sorcery",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "permanent",
+       "scope": "all",
+       "fromZone": "battlefield"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "permanent",
+       "scope": "all",
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "permanent",
+      "scope": "all",
+      "fromZone": "battlefield"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "all",
+    "emits": [
+     {
+      "verb": "discard",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Decree of Annihilation": {
+  "oracleText": "Exile all artifacts, creatures, and lands from the battlefield, all cards from all graveyards, and all cards from all hands.\nCycling {5}{R}{R} ({5}{R}{R}, Discard this card: Draw a card.)\nWhen you cycle this card, destroy all lands.",
+  "typeLine": "Sorcery",
+  "manaValue": 10,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "land"
+       ],
+       "scope": "all",
+       "fromZone": "battlefield"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "land"
+       ],
+       "scope": "all",
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "land"
+      ],
+      "scope": "all",
+      "fromZone": "battlefield"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "all",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all",
+       "fromZone": "graveyard"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "scope": "all",
+      "fromZone": "graveyard"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all",
+       "fromZone": "hand"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "scope": "all",
+      "fromZone": "hand"
+     }
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 3,
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "land",
+      "scope": "all"
+     }
+    },
+    "repeats": "once"
+   }
+  ]
  }
 }

@@ -820,8 +820,8 @@ test("a board wipe is a mass effect on the battlefield, in any of its shapes", (
     realCard("Blasphemous Act"), realCard("Toxic Deluge"), realCard("The Meathook Massacre"), realCard("Massacre Girl"), realCard("Black Sun's Zenith"),
     realCard("Living Death"), realCard("Blasphemous Edict"), realCard("Cataclysm"), realCard("Delayed Blast Fireball"), realCard("Chandra Nalaar"),
     realCard("Desynchronization"), realCard("Calamity of the Titans"), realCard("Cower in Fear"),
-    // "Destroy all lands" is main's behaviour, NOT an owner ruling: the old pattern read `lands?` (Armageddon, Ravages of War, Ruination) and this rule keeps it until the owner says otherwise.
-    realCard("Armageddon"),
+    // A creature wipe that ALSO hits lands names another type and stays a wipe (owner 2026-11-06: only a land-only mass is land denial, below).
+    realCard("Jokulhaups"),
     // A global Aura / Equipment sweep was a wipe on main and stays; only the attachments of a TARGET are refused (below).
     realCard("Serene Heart"), realCard("Pure // Simple"),
     // One-sided: an opponent-only mass effect is still a wipe.
@@ -856,6 +856,24 @@ test("a board wipe is a mass effect on the battlefield, in any of its shapes", (
   const found = m.get("boardWipe") ?? new Set<string>();
   expect(wipes.map((d) => d.card.name).filter((n) => !found.has(n))).toEqual([]);
   expect(notWipes.map((d) => d.card.name).filter((n) => found.has(n))).toEqual([]);
+});
+
+// MASS LAND DESTRUCTION IS STAX, NOT A WIPE (owner 2026-11-06: "It should be mass land denial rather than boardwipe, so it is stax piece"). It was main's behaviour, unruled, until then.
+test("mass land destruction is stax and not a board wipe; a wipe that also hits lands stays a wipe", () => {
+  const roles = (names: string[]): Map<string, Set<string>> => detectBuildCategories(names.map((n) => realCard(n)));
+  const denial = ["Armageddon", "Ravages of War", "Ruination", "Global Ruin", "Sunder", "Natural Balance", "Planar Overlay", "Omen of Fire"];
+  const m = roles([...denial, "Jokulhaups", "Wrath of God", "Stone Rain"]);
+  const has = (cat: string, n: string): boolean => m.get(cat)?.has(n) === true;
+  expect(denial.filter((n) => has("boardWipe", n))).toEqual([]);
+  expect(denial.filter((n) => !has("stax", n))).toEqual([]);
+  // Jokulhaups destroys artifacts, creatures and lands: a wipe. Whether it is also stax is an open owner question, so it is not pinned either way.
+  expect(has("boardWipe", "Jokulhaups")).toBe(true);
+  // Wrath of God is unchanged.
+  expect(has("boardWipe", "Wrath of God")).toBe(true);
+  expect(has("stax", "Wrath of God")).toBe(false);
+  // A single land destruction (scope target) is neither.
+  expect(has("boardWipe", "Stone Rain")).toBe(false);
+  expect(has("stax", "Stone Rain")).toBe(false);
 });
 
 // A DRAW THAT COMES BACK (owner, 2026-09-05). `repeats` narrows `effectKind` on the SAME ability.
