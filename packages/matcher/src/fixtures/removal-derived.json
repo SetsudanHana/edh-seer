@@ -21900,5 +21900,248 @@
     "repeats": "once"
    }
   ]
+ },
+ "Wildfire": {
+  "oracleText": "Each player sacrifices four lands of their choice. Wildfire deals 4 damage to each creature.",
+  "typeLine": "Sorcery",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "4",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "all"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 4,
+     "ceiling": 4
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "each"
+     }
+    },
+    "amount": "4",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "each"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 4,
+     "ceiling": 4
+    }
+   }
+  ]
+ },
+ "Acid Rain": {
+  "oracleText": "Destroy all Forests.",
+  "typeLine": "Sorcery",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "subtype": "forest",
+       "scope": "all",
+       "type": "land"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "subtype": "forest",
+      "scope": "all",
+      "type": "land"
+     }
+    }
+   }
+  ]
+ },
+ "Death Cloud": {
+  "oracleText": "Each player loses X life, discards X cards, sacrifices X creatures of their choice, then sacrifices X lands of their choice.",
+  "typeLine": "Sorcery",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "player-life-loss",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "each"
+     },
+     "scaling": "x-cost"
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "each"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "",
+     "scaling": "x-cost"
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "discard",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "each"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "all"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "all"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   }
+  ]
  }
 }

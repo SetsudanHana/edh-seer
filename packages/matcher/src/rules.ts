@@ -115,6 +115,8 @@ export type RuleClause =
       notLandOnly?: true;
       /** Require an emit whose subject is LANDS ONLY (see `notLandOnly`): the shape `stax.landDenial` reads. */
       landOnly?: true;
+      /** Require an emit whose subject INCLUDES lands (`includesLandSubject`): a type list naming land ("artifacts, creatures, and lands": Jokulhaups, Obliterate, Decree of Annihilation), a branch of an `anyOf` that does, not a bare "permanent" (see `includesLandSubject`). Where `landOnly` needs lands and nothing else, this takes the combined subjects (owner 2026-11-06, #1554). */
+      includesLand?: true;
       /** At least ONE of the subject's types is in this list, where `type` needs EVERY type in its list: "each creature and each planeswalker" passes `typeAny: [creature, permanent]`, a planeswalker-only subject ("each planeswalker they control": Kumano Faces Kakkazan) does not. */
       typeAny?: string[];
       /** Refuse an ability that only a BLOCK makes (#1266, `boardWipe.text`): it triggers on "blocks" / "becomes blocked" ("When this creature blocks a creature, destroy both creatures": Alaborn Zealot, Dead-Iron Sledge), or its subject is a creature
@@ -531,6 +533,16 @@ function landOnlySubject(subject: { type?: string | string[]; subtype?: unknown;
   return subject.anyOf !== undefined && subject.anyOf.length > 0 && subject.anyOf.every(landOnlySubject);
 }
 
+/** A subject that INCLUDES lands (#1554): its type list names `land` (or a land type), or a branch of its `anyOf` does ("artifacts, creatures, and lands": Jokulhaups, Obliterate; "creatures and lands": Devastation).
+ *  CEILING: a bare `type: permanent` does NOT count. Derive files "all permanents" (Apocalypse, Worldfire) and "all permanents of the chosen colour" (Wash Out), "all but N permanents" (Razia's Purification)
+ *  and "each permanent with the most votes" (Council's Judgment) as the same `permanent` subject, dropping the restriction, so a rule on it measured 45 false stax cards. Apocalypse stays a wipe only until derive keeps the restriction. */
+function includesLandSubject(subject: { type?: string | string[]; subtype?: unknown; notType?: string[]; anyOf?: { type?: string | string[]; subtype?: unknown; notType?: string[] }[] }): boolean {
+  if ((subject.notType ?? []).includes("land")) return false;
+  const types = subject.type !== undefined ? [subject.type].flat() : subject.subtype !== undefined ? [subject.subtype].flat() : [];
+  if (types.some((t) => t === "land" || LAND_TYPES.has(String(t).toLowerCase()))) return true;
+  return (subject.anyOf ?? []).some(includesLandSubject);
+}
+
 /** A debuff amount ("-5/-5", "-0/-3", "-X/-X, where X is the mana value of the exiled card") whose TOUGHNESS half is negative: the half after the slash opens with a minus
  *  and is not "-0". `+2/-2` counts (it kills a 2-toughness creature); "-2/-0" and "-2/+0" do not. */
 function lowersToughness(amount: string | undefined): boolean {
@@ -670,6 +682,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.type === undefined || (subjectTypes(e.subject).length > 0 && subjectTypes(e.subject).every((t) => clause.type!.includes(t))))
           && (clause.notLandOnly !== true || !landOnlySubject(e.subject))
           && (clause.landOnly !== true || landOnlySubject(e.subject))
+          && (clause.includesLand !== true || includesLandSubject(e.subject))
           && (clause.typeAny === undefined || subjectTypes(e.subject).some((t) => clause.typeAny!.includes(t)))
           && (clause.scope === undefined || clause.scope.includes(e.subject.scope ?? null))
           && (clause.fromZone === undefined || clause.fromZone.includes(e.subject.fromZone ?? null))
