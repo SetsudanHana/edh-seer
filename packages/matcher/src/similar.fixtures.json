@@ -939,6 +939,7 @@
        "subject": {
         "control": "you",
         "fromZone": "library",
+        "selection": "named-set",
         "token": null
        },
        "verb": "search"

@@ -3382,5 +3382,85 @@
    }
   ],
   "segmentHash": "64d7951ccff21734b8c92dc37b366340138a2df826202f64950d61f375e33588"
+ },
+ "Eye of Singularity": {
+  "source": {
+   "_id": "e13edf92-cdba-4c24-b81b-088b1554fde6",
+   "name": "Eye of Singularity",
+   "typeLine": "World Enchantment",
+   "oracleText": "When this enchantment enters, destroy each permanent with the same name as another permanent, except for basic lands. They can't be regenerated.\nWhenever a permanent other than a basic land enters, destroy all other permanents with that name. They can't be regenerated.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{W}",
+   "layout": "normal",
+   "releasedAt": "1997-02-03",
+   "gameChanger": false,
+   "reserved": true
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this enchantment",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "each permanent with the same name as another permanent, except for basic lands",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a permanent other than a basic land",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all other permanents with that name",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f47c347c16b461aaa66382f202074d0a4496a693b8bbd9bdc27e7e55c5d893ad"
  }
 }

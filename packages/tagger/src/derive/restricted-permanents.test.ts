@@ -121,3 +121,9 @@ describe("the colour of a damage SOURCE is not the colour of the thing protected
     expect(emits("Gideon, Champion of Justice", "exiled").map((e) => [e.subject.scope, e.subject.other, e.subject.selection])).toEqual([["all", true, undefined]]);
   });
 });
+
+describe("'all other permanents with that name' names a set (Eye of Singularity)", () => {
+  test("both dies emits carry a selection", () => {
+    expect(emits("Eye of Singularity", "dies").map((e) => e.subject.selection)).toEqual(["all-but", "named-set"]);
+  });
+});
