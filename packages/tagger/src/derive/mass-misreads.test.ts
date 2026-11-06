@@ -95,3 +95,13 @@ describe("a `cast` stored with a mass object is the condition, not a cast", () =
     expect(shape("Cyclone Summoner", "leaves")).toEqual([["any", "all", "permanent"]]);
   });
 });
+
+describe('"of your choice" on a non-permanent choice keeps its `you` (review of #1549)', () => {
+  test("Boneyard Parley: the cards put onto the battlefield under your control are `you`", () => {
+    expect(emits("Boneyard Parley", "enters").map((e) => e.subject.control)).toEqual(["you"]);
+  });
+  test("Nyx Lotus: the mana is yours", () => {
+    const a = rowOf("Nyx Lotus").tags.abilities.find((x) => x.effect.kind === "mana-generation")!;
+    expect(a.effect.subject?.control).toBe("you");
+  });
+});

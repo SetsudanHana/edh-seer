@@ -29,6 +29,9 @@ export const COUNT_PHRASE = /\b(?:for each\b|where [xyz] is\b|equal to the (?:nu
 const NOT_A_CONTROLLER = /\bsince\s+your\s+(?:(?:last|previous|most recent)\s+)?turn(?:\s+(?:ended|began))?\b|\b(?:to|than)\s+your\s+life total\b/gi;
 /** "OF YOUR CHOICE" NAMES THE CHOOSER, NOT THE CONTROLLER (#1549): Extinction's "all creatures of the creature type of your choice" and Wash Out's "all permanents of the color of your choice" read control `you` and the derived boardWipe rule (a mass of your own never counts) missed them. A literal-space pattern: oracle text is single-spaced. */
 const OF_YOUR_CHOICE = /\bof your choice\b/gi;
+/** ...but only when a PERMANENT class heads the phrase: "a color of your choice" (Nyx Lotus' mana) and "the pile of your choice" (Boneyard Parley's "put all cards from the pile ... under your control") name a choice that is not a permanent, and their `you` was right.
+ *  CEILING: those two stay `you`, as before; a choice of cards ("a card of your choice") is not stripped either. */
+const PERMANENT_NOUN = /\b(?:creature|permanent|artifact|enchantment|land|planeswalker|battle)s?\b/;
 /** WHAT THE OBJECT'S OWN WORDS SAY ABOUT WHO CONTROLS IT, when the control words are absent (#1295): a creature "attacking you" is an
  *  opponent's (nothing attacks its own controller), and a creature "that crewed it" or "that saddled it" is yours (only you tap your own
  *  creatures to crew your Vehicle). Not in `parseControl`: the filter grammar reads these phrases as `control: any` beside a `combatWith`
@@ -78,7 +81,8 @@ function parseControl(t: string): Control {
   if (head.trim().length > 0) t = head;
   // Negation first: "you don't control" must not fall through to the "you control" branch below.
   if (/\byou (?:don'?t|do not|don’t) control\b/.test(t)) return "opp";
-  t = t.replace(NOT_A_CONTROLLER, " ").replace(OF_YOUR_CHOICE, " ").replace(ATTACKED_OPPONENT, "attacking");
+  if (PERMANENT_NOUN.test(t)) t = t.replace(OF_YOUR_CHOICE, " ");
+  t = t.replace(NOT_A_CONTROLLER, " ").replace(ATTACKED_OPPONENT, "attacking");
   // COMBAT NAMES THE OPPONENT WITHOUT SAYING "OPPONENT". Measured over the derived corpus: 12 clause
   // actions say "defending player" and all 12 mean an opponent (11 sit on an `attacks` trigger the
   // card's controller owns; the 12th, Elturel Survivors, is a characteristic-defining "+X/+0 where X

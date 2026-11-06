@@ -3,7 +3,7 @@
   "parsed": 6820,
   "groups": {
     "control": {
-      "distinct": 78,
+      "distinct": 79,
       "label": "grammar right",
       "rule": "CR 112.2",
       "why": "Two shapes, both right. (1) 'spells you cast' (70 of 73): a spell's controller is the player who put it on the stack, so the caster is the controller -- parseSubject's control regex knows 'you control' and 'your' but not 'you cast', and answered any. (2) 'of an opponent's choice' / 'of your choice' (6): the chooser is not the controller; parseSubject read 'opponent'/'your' anywhere and answered opp/you. A Clue, Food or Treasure 'of your choice' is created under the creator's control by CONTROLLER_DEFAULT, not by this word. The 'that targets only' member names the TARGET's controller, not the spell's, and the subject is refused (restricted) either way. 'a token that's a copy of a permanent you control': 'you control' names the ORIGINAL, not the token, which CONTROLLER_DEFAULT gives its creator (CR 111.2). (3) the quote leak of #1387 is fixed: parseSubject now cuts a token's quoted ability before it reads any field, so the Prydwen's Knight (\"... under your control this turn.\") agrees with the grammar and left this group."
