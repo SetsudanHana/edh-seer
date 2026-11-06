@@ -452,7 +452,7 @@ const NUMBERED = /^(?:up to )?(?:two|three|four|five|six|seven|eight|nine|ten|x|
 const MOST_VOTES = /\bmost votes\b/;
 const A_PILE = /\bpiles?\b/;
 /** "all nontoken permanents with a name originally printed in the Homelands expansion" (Apocalypse Chime): a set picked out by its names. */
-const NAME_SET = /\bwith a name originally printed\b|\bwith (?:that|the same) name\b/;
+const NAME_SET = /\bwith a name originally printed\b|\bpermanents with that name\b/;
 
 /** The quantifier the text used. An explicit word wins; otherwise a plural noun is a mass effect
  *  ("creatures you control" is an anthem) and a bare singular says nothing, so it stays unset. */

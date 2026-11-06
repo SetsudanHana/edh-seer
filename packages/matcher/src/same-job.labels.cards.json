@@ -4871,7 +4871,6 @@
      "thresholdSubject": {
       "control": "you",
       "scope": "all",
-      "selection": "named-set",
       "token": null,
       "type": "land"
      }
