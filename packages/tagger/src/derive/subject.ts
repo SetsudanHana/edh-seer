@@ -406,12 +406,41 @@ function parseNotSubtypes(t: string): string[] | undefined {
   return found.length ? found : undefined;
 }
 
+/** "the chosen creatures", "chosen artifacts or lands": a determiner "chosen" before the noun, not "chosen type" / "chosen color"; "each creature chosen this way" (Call to the Void, Druid of Purification, Grenzo's Rebuttal, The Horus Heresy).
+ *  NOT "all land cards chosen this way" (Hew the Entwood: any number of the cards), "permanents chosen this way" (Mist of Stagnation) or "a type chosen this way" (Patriarch's Bidding), which keep the mass they read before. */
+const CHOSEN_SET = /^(?:the |each of the )?chosen\s+(?!type\b|colou?r\b|target\b|name\b|player\b|opponent\b|card name\b)|^each [a-z ]{1,40}? chosen this way\b/;
+/** ...but a COMPLEMENT of a choice is the mass, not the choice: "creatures not chosen this way" (Consuming Tide, The Eternal Wanderer), "creatures not chosen by their controller" (Divine Reckoning), "all creatures except creatures chosen this way" (Unstable Glyphbridge),
+ *  "creatures that aren't of a type chosen this way" (Harsh Mercy), "creatures other than Zenos and the chosen creature". Read as the chosen set they lost their board wipe (#1557 first measure: 12 true wipes).
+ *  NOT a class narrowed by a choice ("creatures that aren't of the chosen type": `chosenType`), nor "the chosen direction". */
+const NOT_CHOSEN = /\b(?:not|aren'?t|isn'?t|don'?t|weren'?t|except|other than|besides|but)\b[^.]{0,80}\bchosen\b(?!\s+(?:creature\s+)?(?:type|colou?r|direction)\b)/;
+
+/** "all but" / "other than (up to) the three chosen": everything except a number the players keep (#1557: Razia's Purification, Mount Doom). */
+const ALL_BUT = /\ball but that many\b|\bother than (?:up to )?(?:the |one |a )?(?:\w+ )?chosen\b/;
+/** "a permanent of each permanent type each opponent controls, and the rest" (Liliana, Dreadhorde General): the spared are named, the rest is the class.
+ *  CEILING: "unless it's colorless or it's only the color its controller chose" (Selective Obliteration) is cut off the object before it gets here, so it stays a bare `permanent`. */
+const SPARED = /\band the rest\b/;
+/** A NUMBER OF THEM, PICKED BY A PLAYER, not the class: "two permanents of their choice" (Earth-Cult Elemental, Greater Harvester, Nicol Bolas), "half the permanents they control of their choice" (Pox Plague, Curse of the Cabal),
+ *  "that many permanents of their choice" (Archfiend of Spite), "permanents they control equal to the number of ..." (Balancing Act). Not "the creature type / color / name of your choice" (a class narrowed by a choice).
+ *  CEILING: "two permanents defending player controls" (Bane of Bala Ged) names no choice and is not read. */
+const PLAYER_PICKS = /(?<!\b(?:type|colou?r|name|kind) )\bof (?:their|your|his or her|each player's) choice\b/;
+const COUNTED = /\bequal to the number of\b/;
+/** ...but not a stat compared to a count ("each permanent with mana value equal to the number of charge counters") or a number of tokens made ("Food tokens equal to the number of opponents"): those name a class or a quantity, not a pick. */
+const COUNT_OF_STAT = /\bwith\b|\btokens?\b/;
+/** ...and a NUMBER LEADS the plural: "two permanents they control" (Bane of Bala Ged) is two of them, not all.
+ *  CEILING: only the permanent class is read this way downstream (a marker nothing matches on); "three creatures" keeps its mass scope. */
+const NUMBERED = /^(?:up to )?(?:two|three|four|five|six|seven|eight|nine|ten|x|\d+) /;
+const MOST_VOTES = /\bmost votes\b/;
+const A_PILE = /\bpiles?\b/;
+
 /** The quantifier the text used. An explicit word wins; otherwise a plural noun is a mass effect
  *  ("creatures you control" is an anthem) and a bare singular says nothing, so it stays unset. */
 function parseScope(t: string, pluralType: boolean): SubjectFilter["scope"] {
   if (/\btarget\b/.test(t)) return "target";
   // "EACH OF THE CHOSEN creatures" (Mega Flare: one chosen creature per opponent; Oracle en-Vec) is a set the card picked earlier, not every creature of the class.
   if (/\b(?:each|all) of the chosen\b/.test(t)) return undefined;
+  // "THE CHOSEN CREATURES" / "CHOSEN ARTIFACTS OR LANDS" (#1557: Ultimate Magic: Meteor, "for each opponent, choose an artifact or land that player controls. Destroy the chosen permanents"; Sadistic Shell Game, Tunnel of Love) are the things the card picked
+  // earlier, one per chooser, not every permanent of the class. Not "of the chosen type / color" (a class narrowed by a choice) and not a target ("chosen target Vehicle").
+  if (CHOSEN_SET.test(t) && !NOT_CHOSEN.test(t) && !/\bof the chosen\b/.test(t)) return undefined;
   if (/\beach\b|\bevery\b/.test(t)) return "each";
   if (/\ball\b/.test(t)) return "all";
   // "OTHER Merfolk you control", "other artifact creatures you control" -- a class minus this card,
@@ -524,7 +553,7 @@ function parseColors(t: string): string[] | undefined {
  *  Kinship, none of which has a creature type at all. */
 const CHOSEN = /\bof the chosen\b|\bthe chosen (?:type|color|colour)\b/i;
 /** ...and the COLOUR case (#1360): a chosen colour is `chosenColor`, never `chosenType` (which the matcher resolves to a subtype). "color and type" is both words and stays a type. */
-const CHOSEN_COLOR = /\bof the chosen colou?r\b|\bthe chosen colou?r\b/i;
+const CHOSEN_COLOR = /\bof the chosen colou?r\b|\bthe chosen colou?r\b|\bof the colou?r of your choice\b/i;
 const CHOSEN_COLOR_AND_TYPE = /\bchosen colou?r and (?:creature )?type\b/i;
 
 /** The ORIGIN zone the text names: "casts a spell from a graveyard" (River Kelpie), "casts a
@@ -619,6 +648,8 @@ function tappedStatus(t: string): boolean | undefined {
 }
 
 /** Colour COUNT (the grammar's `colorCount`), not a colour: "multicolored creature", "monocolored permanent". */
+const COLORED = /\bone or more colou?rs\b|(?<![-\w])colou?red\s+(?:permanent|creature|artifact|land)s?\b/i;
+const COLORLESS_ONLY = /\bnon-?colou?red\b|\bcolou?rless\b/i;
 const MULTICOLORED = /\bmulti-?colou?red\b/i;
 const MONOCOLORED = /\bmono-?colou?red\b/i;
 
@@ -845,7 +876,8 @@ export function parseSubject(text: string): SubjectFilter {
   // words are not subtypes (The Dogronmaster).
   // WHAT AN "except for" LIST SPARES IS NOT THE CLASS (#1549): Elspeth Tirel's "all other permanents except for lands and tokens" read `token: true`, type `land`, and Scourglass's "all permanents except for a ..." the spared types. Cut at the list, as the damage path does (`cutExceptTail`).
   // CEILING: the exclusion is dropped, not carried as `except`; only the "except for" form (a bare "except creatures chosen this way" or "except it's" keeps its words).
-  const whole = stripTokenAbility(text.toLowerCase().trim()).split(ATTACHED_TO)[0].split(AND_ATTACH)[0].split(EXCEPT_FOR)[0]
+  const lowered = stripTokenAbility(text.toLowerCase().trim());
+  const whole = lowered.split(ATTACHED_TO)[0].split(AND_ATTACH)[0].split(EXCEPT_FOR)[0]
     .replace(COPY_OF_NAMED_CARD, "$1").trim();
   // A COUNT IS A MAGNITUDE, NOT A CLASS (recall v6 #77, 2026-09-10). "a Treasure token for each
   // nontoken creature that died this turn" (Gadrak) read `type: creature` off the count, so the
@@ -903,6 +935,8 @@ export function parseSubject(text: string): SubjectFilter {
   const tapped = tappedStatus(t);
   if (tapped !== undefined) out.tapped = tapped;
   if (MULTICOLORED.test(t)) out.colorCount = "multi";
+  // "permanents that are one or more colors" (All Is Dust), "colored permanents": every colour but colourless. Not "noncolored" / "colorless".
+  else if (COLORED.test(t) && !COLORLESS_ONLY.test(t)) out.colorCount = "colored";
   else if (MONOCOLORED.test(t)) out.colorCount = "mono";
   // A keyword counter is a counter, so the counter reading wins where both could fire.
   const keywords = counter ? undefined : parseKeywords(t);
@@ -950,6 +984,18 @@ export function parseSubject(text: string): SubjectFilter {
   const origin = t.match(ORIGIN_ZONE);
   if (origin) out.fromZone = origin[1].toLowerCase();
   if (colors) out.colors = colors;
+  // A SET NARROWED BY A RULE NO OTHER FIELD CARRIES (#1557): the subject is not "every <class>", and a bare `permanent` must not read as Apocalypse's.
+  // CEILING: a marker, not a filter -- nothing matches on it, and the all-but number, the vote and the pile are not modelled.
+  // (Not a target: the card picks it, no rule narrows it.)
+  const selection = scope === "target" ? undefined
+    : ALL_BUT.test(t) || NOT_CHOSEN.test(t) || EXCEPT_FOR.test(lowered) || SPARED.test(t) ? "all-but" as const
+    : MOST_VOTES.test(t) ? "votes" as const
+    : A_PILE.test(t) && type !== undefined ? "pile" as const
+    : scope === undefined && CHOSEN_SET.test(t) && !/\bof the chosen\b/.test(t) ? "chosen" as const
+    : (scope === "all" || scope === "each") && (PLAYER_PICKS.test(t) || (COUNTED.test(lowered) && !COUNT_OF_STAT.test(lowered)) || (NUMBERED.test(t) && type === "permanent")) ? "chosen" as const
+    : (scope === "all" || scope === "each") && out.token !== true && ATTACHED_TO.test(text.toLowerCase()) && !/\btokens?\b/.test(text.toLowerCase()) ? "attached-to" as const
+    : undefined;
+  if (selection) out.selection = selection;
   if (type) out.type = type;
   if (notType?.length) out.notType = notType;
   const notSubtype = parseNotSubtypes(t);
