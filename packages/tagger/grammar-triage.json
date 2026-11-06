@@ -471,7 +471,7 @@
       "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
     },
     "nameRelation": {
-      "distinct": 51,
+      "distinct": 49,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. nameRelation: 'with the chosen name', 'with that name', 'with the same name as ...', 'with different names'. (Two members joined from nameRelation,type in #1385: 'a Vampire spell with the same name as a card exiled with this enchantment', 'target spell with the same name as a card exiled with this creature' -- parseSubject now cuts the self-named card from the type sweep, so the type no longer differs.)"
@@ -1867,6 +1867,12 @@
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read (City in a Bottle). other: the grammar reads 'one or more other'; printedIn: as under `printedIn,selection`; parseSubject marks `selection: named-set` (#1557)."
+    },
+    "nameRelation,selection": {
+      "distinct": 2,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "Every member read (2: 'all permanents with that name', Moratorium Stone; 'all other permanents with that name', Eye of Singularity). nameRelation: the grammar carries the name relation as a field, as in the `nameRelation` group; parseSubject has none and marks the subject `selection: named-set` (#1557) so a rule cannot read it as every permanent."
     }
   }
 }
