@@ -1,0 +1,340 @@
+{
+ "Esix, Fractal Bloom": {
+  "source": {
+   "name": "Esix, Fractal Bloom",
+   "typeLine": "Legendary Creature — Fractal",
+   "oracleText": "Flying\nThe first time you would create one or more tokens during each of your turns, you may instead choose a creature other than Esix and create that many tokens that are copies of that creature.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "G",
+    "U"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "G",
+    "U"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{4}{G}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a token that is a copy of a chosen creature other than Esix",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that many",
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Mulldrifter": {
+  "source": {
+   "name": "Mulldrifter",
+   "typeLine": "Creature — Elemental",
+   "oracleText": "Flying\nWhen this creature enters, draw two cards.\nEvoke {2}{U} (You may cast this spell for its evoke cost. If you do, it's sacrificed when it enters.)",
+   "keywords": [
+    "Flying",
+    "Evoke"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{4}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Evoke {2}{U}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Kokusho, the Evening Star": {
+  "source": {
+   "name": "Kokusho, the Evening Star",
+   "typeLine": "Legendary Creature — Dragon Spirit",
+   "oracleText": "Flying\nWhen Kokusho dies, each opponent loses 5 life. You gain life equal to the life lost this way.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{4}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "Kokusho, the Evening Star",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "5",
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "5",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Champion of Wits": {
+  "source": {
+   "name": "Champion of Wits",
+   "typeLine": "Creature — Snake Wizard",
+   "oracleText": "When this creature enters, you may draw cards equal to its power. If you do, discard two cards.\nEternalize {5}{U}{U} ({5}{U}{U}, Exile this card from your graveyard: Create a token that's a copy of it, except it's a 4/4 black Zombie Snake Wizard with no mana cost. Eternalize only as a sorcery.)",
+   "keywords": [
+    "Eternalize"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "2",
+   "toughness": "1",
+   "manaCost": "{2}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "cards equal to its power",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "discard",
+      "object": "two cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Eternalize {5}{U}{U}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Boneyard Parley": {
+  "source": {
+   "name": "Boneyard Parley",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile up to five target creature cards from graveyards. An opponent separates those cards into two piles. Put all cards from the pile of your choice onto the battlefield under your control and the rest into their owners' graveyards.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "up to five target creature cards from graveyards",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "all cards from the pile of your choice",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "exile",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Nyx Lotus": {
+  "source": {
+   "name": "Nyx Lotus",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "Nyx Lotus enters tapped.\n{T}: Choose a color. Add an amount of mana of that color equal to your devotion to that color. (Your devotion to a color is the number of mana symbols of that color in the mana costs of permanents you control.)",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "a color of your choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "equal to your devotion to that color",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,1140 @@
+{
+ "Extinction": {
+  "source": {
+   "name": "Extinction",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy all creatures of the creature type of your choice.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures of the creature type of your choice",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Wash Out": {
+  "source": {
+   "name": "Wash Out",
+   "typeLine": "Sorcery",
+   "oracleText": "Return all permanents of the color of your choice to their owners' hands.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all permanents of the color of your choice",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Root Greevil": {
+  "source": {
+   "name": "Root Greevil",
+   "typeLine": "Creature — Beast",
+   "oracleText": "{2}{G}, {T}, Sacrifice this creature: Destroy all enchantments of the color of your choice.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "manaCost": "{3}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "destroy",
+      "object": "all enchantments of the color of your choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Nightmare Unmaking": {
+  "source": {
+   "name": "Nightmare Unmaking",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose one —\n• Exile each creature with power greater than the number of cards in your hand.\n• Exile each creature with power less than the number of cards in your hand.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "each creature with power greater than the number of cards in your hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "each creature with power less than the number of cards in your hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Witch's Vengeance": {
+  "source": {
+   "name": "Witch's Vengeance",
+   "typeLine": "Sorcery",
+   "oracleText": "Creatures of the creature type of your choice get -3/-3 until end of turn.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "creatures of the creature type of your choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-3/-3",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Space Beleren": {
+  "source": {
+   "name": "Space Beleren",
+   "typeLine": "Legendary Planeswalker — Jace",
+   "oracleText": "Space sculptor (Space Beleren divides the battlefield into alpha, beta, and gamma sectors. If a creature isn't assigned to a sector, its controller assigns it to one. Opponents assign first.)\n+1: Creatures in each sector can be blocked this turn only by creatures in the same sector.\n−1: Put a +1/+1 counter on each creature in the sector of your choice.\n−5: Destroy all creatures in the sector of your choice.",
+   "keywords": [],
+   "colors": [
+    "U",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "creatures in each sector can be blocked this turn only by creatures in the same sector",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures in the sector of your choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Xathrid Demon": {
+  "source": {
+   "name": "Xathrid Demon",
+   "typeLine": "Creature — Demon",
+   "oracleText": "Flying, trample\nAt the beginning of your upkeep, sacrifice a creature other than this creature, then each opponent loses life equal to the sacrificed creature's power. If you can't sacrifice a creature, tap this creature and you lose 7 life.",
+   "keywords": [
+    "Flying",
+    "Trample"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "7",
+   "toughness": "7",
+   "manaCost": "{3}{B}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature other than this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the sacrificed creature's power",
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "7",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Zurgo and Ojutai": {
+  "source": {
+   "name": "Zurgo and Ojutai",
+   "typeLine": "Legendary Creature — Orc Dragon",
+   "oracleText": "Flying, haste\nZurgo and Ojutai has hexproof as long as it entered this turn.\nWhenever one or more Dragons you control deal combat damage to a player or battle, look at the top three cards of your library. Put one of them into your hand and the rest on the bottom of your library in any order. You may return one of those Dragons to its owner's hand.",
+   "keywords": [
+    "Flying",
+    "Haste"
+   ],
+   "colors": [
+    "R",
+    "U",
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R",
+    "U",
+    "W"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{2}{U}{R}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, haste",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "hexproof",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "one or more Dragons you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "one of them",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "one of those Dragons",
+      "fromZone": null,
+      "toZone": "hand",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Mega Flare": {
+  "source": {
+   "name": "Mega Flare",
+   "typeLine": "Sorcery",
+   "oracleText": "Kicker {3}{R}{R}\nIf this spell was kicked, create a 6/6 red Dragon creature token with flying.\nFor each opponent, choose up to one target creature that player controls. Mega Flare deals damage equal to the greatest power among creatures you control to each of the chosen creatures.",
+   "keywords": [
+    "Kicker"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Kicker {3}{R}{R}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 6/6 red Dragon creature token with flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each of the chosen creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the greatest power among creatures you control",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Missy": {
+  "source": {
+   "name": "Missy",
+   "typeLine": "Legendary Creature — Time Lord Rogue",
+   "oracleText": "Whenever another nonartifact creature dies, return it to the battlefield under your control face down and tapped. It's a 2/2 Cyberman artifact creature.\nAt the beginning of your end step, each opponent faces a villainous choice — Each artifact creature you control deals 1 damage to that opponent, or you draw a card and chaos ensues.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "R",
+    "U"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B",
+    "R",
+    "U"
+   ],
+   "power": "4",
+   "toughness": "5",
+   "manaCost": "{3}{U}{B}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "another nonartifact creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "animate",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2/2",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "artifact creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "face-a-villainous-choice",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "each artifact creature you control deals 1 damage to that opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Fell the Mighty": {
+  "source": {
+   "name": "Fell the Mighty",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy all creatures with power greater than target creature's power.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures with power greater than target creature's power",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Elspeth Tirel": {
+  "source": {
+   "name": "Elspeth Tirel",
+   "typeLine": "Legendary Planeswalker — Elspeth",
+   "oracleText": "+2: You gain 1 life for each creature you control.\n−2: Create three 1/1 white Soldier creature tokens.\n−5: Destroy all other permanents except for lands and tokens.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{W}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "1 life for each creature you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "three 1/1 white Soldier creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all other permanents except for lands and tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Scourglass": {
+  "source": {
+   "name": "Scourglass",
+   "typeLine": "Artifact",
+   "oracleText": "{T}, Sacrifice this artifact: Destroy all permanents except for artifacts and lands. Activate only during your upkeep.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{W}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "destroy",
+      "object": "all permanents except for artifacts and lands",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Magister of Worth": {
+  "source": {
+   "name": "Magister of Worth",
+   "typeLine": "Creature — Angel",
+   "oracleText": "Flying\nWill of the council — When this creature enters, starting with you, each player votes for grace or condemnation. If grace gets more votes, each player returns each creature card from their graveyard to the battlefield. If condemnation gets more votes or the vote is tied, destroy all creatures other than this creature.",
+   "keywords": [
+    "Flying",
+    "Will of the council"
+   ],
+   "colors": [
+    "B",
+    "W"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B",
+    "W"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{4}{W}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "each creature card from their graveyard",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "destroy",
+      "object": "all creatures other than this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Demonic Taskmaster": {
+  "source": {
+   "name": "Demonic Taskmaster",
+   "typeLine": "Creature — Demon",
+   "oracleText": "Flying\nAt the beginning of your upkeep, sacrifice a creature other than this creature.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "4",
+   "toughness": "3",
+   "manaCost": "{2}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature other than this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Wrath of God": {
+  "source": {
+   "name": "Wrath of God",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy all creatures. They can't be regenerated.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Cyclone Summoner": {
+  "source": {
+   "name": "Cyclone Summoner",
+   "typeLine": "Creature — Giant Wizard",
+   "oracleText": "When this creature enters, if you cast it from your hand, return all permanents to their owners' hands except for Giants, Wizards, and lands.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "7",
+   "toughness": "7",
+   "manaCost": "{5}{U}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all permanents except for Giants, Wizards, and lands",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "all permanents except for Giants, Wizards, and lands",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Sunderflock": {
+  "source": {
+   "name": "Sunderflock",
+   "typeLine": "Creature — Elemental",
+   "oracleText": "This spell costs {X} less to cast, where X is the greatest mana value among Elementals you control.\nFlying\nWhen this creature enters, if you cast it, return all non-Elemental creatures to their owners' hands.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 9,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{7}{U}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "this spell costs X less to cast, where X is the greatest mana value among Elementals you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all non-Elemental creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "all non-Elemental creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Boneyard Parley": {
+  "source": {
+   "name": "Boneyard Parley",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile up to five target creature cards from graveyards. An opponent separates those cards into two piles. Put all cards from the pile of your choice onto the battlefield under your control and the rest into their owners' graveyards.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "up to five target creature cards from graveyards",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "all cards from the pile of your choice",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "exile",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Nyx Lotus": {
+  "source": {
+   "name": "Nyx Lotus",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "Nyx Lotus enters tapped.\n{T}: Choose a color. Add an amount of mana of that color equal to your devotion to that color. (Your devotion to a color is the number of mana symbols of that color in the mana costs of permanents you control.)",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "a color of your choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "equal to your devotion to that color",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ }
+}
