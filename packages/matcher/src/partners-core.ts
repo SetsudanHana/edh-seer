@@ -1,4 +1,5 @@
 import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
+import { isZonedCardGrant } from "./subject.js";
 // THE SUBPATH, NOT THE PACKAGE ROOT. `static-lookup.ts` pulls this module into the BROWSER, and
 // tagger's barrel reaches `otags/functional.ts`, which `readFileSync`s a JSON file at import
 // time -- a value import of the root took every client test down with "The URL must be of
@@ -1545,7 +1546,7 @@ export const staticKeysOfAbility = (a: CardTags["abilities"][number]): string[] 
   // A ZONE-SCOPED subject reaches no printed card -- `subjectMatches` refuses any zone the card's
   // characteristics do not sit in, so `staticClaim` never verifies one. Lurrus's graveyard recursion
   // (DERIVE 166 keeps the subject) otherwise named every nonland type as a whole-board reach.
-  if (s.zone !== undefined) return [];
+  if (s.zone !== undefined && !isZonedCardGrant(a)) return [];
   const types = concreteTypes(asList(s.type));
   const subtypes = asList(s.subtype).map((x) => x.toLowerCase());
   if (types.length === 0 && subtypes.length === 0) return [];

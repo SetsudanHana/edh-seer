@@ -6,7 +6,7 @@ import crKeywords from "@edh-seer/tagger/cr-keywords" with { type: "json" };
 /** The closed six, per CR 205.4a plus the un-set `host`/`elite`. A supertype is not a card type and
  *  must never be keyed as one -- see `impliedEntryThemeTags`. */
 import type { DeckCard, Hierarchy } from "./types.js";
-import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
+import { isZonedCardGrant, subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
 import { enterAsCopyAbilities, impliedEvents, preparedAbilities, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, printedAllTypes, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { normalizeZoneEvent, tagKey, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
@@ -3223,7 +3223,12 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
     // not a printed characteristic, and this pass matches against the type line. Demanding it here
     // deletes the edge outright -- Sludge Monster's anthem stopped reaching anything. The dedicated
     // counter-presence pass below is what supplies that state.
-    const { counter: _stateOnly, ...printedMatchable } = a.effect.subject;
+    const { counter: _stateOnly, ...printedMatchable0 } = a.effect.subject;
+    // A GRANT TO CARDS IN A GRAVEYARD OR HAND reaches the printed card of its class (see `isZonedCardGrant`), never a token.
+    const zoneGrant = isZonedCardGrant(a);
+    if (zoneGrant && c.isToken) return undefined;
+    const { zone: _grantZone, ...unzoned } = printedMatchable0;
+    const printedMatchable = zoneGrant ? unzoned : printedMatchable0;
     const printed = characteristicsSubject(c.tags, c.card.name);
     let animated: { kind: string; self: boolean } | undefined;
     if (!subjectMatches(printed, printedMatchable, h)) {
@@ -3232,7 +3237,7 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
       if (a.kind !== "static" || !ANIMATED_LORD_KINDS.has(a.effect.kind) || !namesKindred(printedMatchable) || p.card.name === c.card.name) return undefined;
       // ...and only a lord whose stored subject can be trusted to be a class of PERMANENTS on the battlefield (Opus review): not a grant scoped to a zone (Ashling's "spells you cast from your hand"), not
       // one that works off the battlefield (unearth, evoke), not an attachment's host, not a threshold static (a self reading stored as a class), and not a granted ENTERS trigger.
-      if (printedMatchable.fromZone !== undefined || printedMatchable.zone !== undefined || a.host === true || a.threshold !== undefined) return undefined;
+      if (printedMatchable.fromZone !== undefined || a.effect.subject.zone !== undefined || a.host === true || a.threshold !== undefined) return undefined;
       if (a.grants?.some((k) => OFF_BATTLEFIELD_GRANTS.has(k))) return undefined;
       if (p.tags.abilities.some((x) => x.grantedBy !== undefined && x.grantedBy === a.clause && x.trigger?.verbs.includes("enters") === true)) return undefined;
       for (const k of animatedKindreds(c.tags, printed)) {
