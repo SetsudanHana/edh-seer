@@ -533,13 +533,20 @@ function landOnlySubject(subject: { type?: string | string[]; subtype?: unknown;
   return subject.anyOf !== undefined && subject.anyOf.length > 0 && subject.anyOf.every(landOnlySubject);
 }
 
-/** A subject that INCLUDES lands (#1554): its type list names `land` (or a land type), or a branch of its `anyOf` does ("artifacts, creatures, and lands": Jokulhaups, Obliterate; "creatures and lands": Devastation).
- *  CEILING: a bare `type: permanent` does NOT count. Derive files "all permanents" (Apocalypse, Worldfire) and "all permanents of the chosen colour" (Wash Out), "all but N permanents" (Razia's Purification)
- *  and "each permanent with the most votes" (Council's Judgment) as the same `permanent` subject, dropping the restriction, so a rule on it measured 45 false stax cards. Apocalypse stays a wipe only until derive keeps the restriction (#1557). */
+/** The `SubjectFilter` fields that narrow WHICH permanents a bare `type: permanent` names (#1557): a colour, a chosen colour or type, a rule derive marks (`selection`: all-but, votes, pile, attached-to, chosen), a supertype, a status, a keyword, a counter, a stat, a subtype.
+ *  A subject carrying any of them is not "all permanents". */
+const NARROWS_PERMANENT: readonly string[] = ["chosenColor", "chosenType", "colors", "notColors", "colorCount", "allColors", "selection", "notType", "allTypes", "subtype", "notSubtype", "legendary", "basic", "snow", "tapped",
+  "keyword", "notKeyword", "counter", "stats", "other", "owner", "named", "combat", "modified", "historic", "outlaw", "commander", "relation"];
+
+/** A subject that INCLUDES lands (#1554): its type list names `land` (or a land type), or a branch of its `anyOf` does ("artifacts, creatures, and lands": Jokulhaups, Obliterate; "creatures and lands": Devastation), or it is a genuinely UNRESTRICTED `permanent`
+ *  (#1557: Apocalypse, Worldfire, Dimensional Breach: "all permanents" names lands, and no field narrows it -- see `NARROWS_PERMANENT`).
+ *  CEILING: a bare `permanent` that derive still files without its restriction counts. Derive 468 marks "of the color of your choice" (Wash Out), "all but N" (Razia's Purification, Mount Doom), "the permanent with the most votes" (Council's Judgment), "attached to creatures" (End Hostilities),
+ *  "colored permanents" (All Is Dust) and "the pile of their choice" (Liliana of the Veil); a restriction written some other way and not read stays an unrestricted `permanent` here; the pile (Whims of the Fates), "unless" (Selective Obliteration) and name-set (Apocalypse Chime) restrictions are read since derive 468 (`selection`) */
 function includesLandSubject(subject: { type?: string | string[]; subtype?: unknown; notType?: string[]; anyOf?: { type?: string | string[]; subtype?: unknown; notType?: string[] }[] }): boolean {
   if ((subject.notType ?? []).includes("land")) return false;
   const types = subject.type !== undefined ? [subject.type].flat() : subject.subtype !== undefined ? [subject.subtype].flat() : [];
   if (types.some((t) => t === "land" || LAND_TYPES.has(String(t).toLowerCase()))) return true;
+  if (types.includes("permanent") && !NARROWS_PERMANENT.some((k) => (subject as Record<string, unknown>)[k] !== undefined)) return true;
   return (subject.anyOf ?? []).some(includesLandSubject);
 }
 
