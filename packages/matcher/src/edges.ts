@@ -1206,6 +1206,16 @@ function originMatches(producer: SubjectFilter, consumer: SubjectFilter, verb: s
  *  would report holes the engine does not actually have. */
 export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy): boolean {
   if (!verbSatisfies(producer, consumer)) return false;
+  // "EXILED WHILE YOU'RE ACTIVATING A CRAFT ABILITY" (Market Gnome, #1500) hears only the exile a craft cost makes (`viaCraft`, stamped by derive on the craft ability's material exiles): an ordinary exile
+  // or flicker is no craft cost. Read HERE and not in `subjectMatches`, where the identity gates compare an emit against a card's printed characteristics and would demand the card BE exiled by a craft.
+  // The reverse is open on purpose: a craft exile is a real exile (CR 702.167a) and feeds an ordinary "whenever a permanent you control is exiled".
+  if (consumer.subject.viaCraft === true && producer.subject.viaCraft !== true) return false;
+  // THE MATERIAL IS NOT THE GNOME'S "creature": "this creature" types the self trigger `creature`, but the card is an ARTIFACT creature and a craft with artifact exiles it (702.167b), so an artifact emit failed the
+  // type intersection below. The class is dropped for this one comparison; `directedReasons`' self gate then asks the real question, whether the emit's class (artifact, a Dinosaur, an Island) could BE this card.
+  if (consumer.subject.viaCraft === true && consumer.subject.self === true && consumer.subject.type !== undefined) {
+    const { type: _classOfThis, ...classless } = consumer.subject;
+    consumer = { ...consumer, subject: classless };
+  }
   // The trigger as printed, for the gates that ask whether it names WHICH spell: a `targets` met
   // below is stripped from `consumer`, and "a spell that targets this creature" must still narrow.
   const asked = consumer;

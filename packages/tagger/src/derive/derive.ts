@@ -41,6 +41,7 @@ import { countOf } from "./event-count.js";
 import { reductionOf } from "./reduction.js";
 import crKeywords from "./cr-keywords.json" with { type: "json" };
 import { paymentOf } from "./payment.js";
+import { CRAFT_EFFECT_TEXT, craftOf } from "./craft.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
 import { stationThresholdFor, thresholdFor, thresholdSubjectFor } from "./threshold.js";
 import { addsManaText, deriveMana, production } from "./mana-lines.js";
@@ -636,7 +637,8 @@ import { chosenColorOf } from "./chosen-color.js";
 // 464: #1542 -- A static's stored subject says who it applies to: a grant to 'cards in your graveyard/hand' keeps its zone (Solemn Doomguide, Mishra, Aminatou), an Equipment/Aura host's 'is a Wizard' is no Wizard lord (25 host rows), and a self predicate 'it ... is a Knight' (Skyknight Squire) names no class. Measured (derive-impact vs 2b28d2ce, final): 39 rows changed, 0 source flips; host and self false lords removed: 23 host cards / 25 rows plus Skyknight Squire, about 165.6k static pairs lost (50 of 50 sampled false). The ZONE change alone would lose 18,291 TRUE pairs (a zoned subject matches no printed card), so the matcher ignores the zone of a zoned keyword-grant for the match against a PRINTED card (`isZonedCardGrant`): the 15 zone producers now lose 1,943 pairs, all token consumers (1,697 `[via token]` + 246 token nodes), 0 real cards, 0 gained. role-ratchet gained 0 / lost 0, dropped-clauses 4,876 -> 4,876 (new 0, fixed 0), panel-score precision 100.0% [99.2, 100.0], retention 98.4% (428 held, 7 lost), by-name ratchet ok.
 // 465: #1545 -- "This creature can block <class> as though it had <keyword>" is the card's own blocking permission, not a keyword grant to the class: the clause's recipient is none and it names no `grants` (Dragon Hunter, Heartwood Dryad, Wall of Diffusion; Aetherflame Wall's "didn't have" form already read so). Measured (derive-impact vs 464, full): 3 rows changed, 0 added/removed, grammar complete 28,486 unchanged; pair reasons gained 0, lost 560, all Dragon Hunter's static keyword-grant pairs to Dragon-class cards (497 direct, 63 via token; false: it gives no Dragon reach); Heartwood Dryad and Wall of Diffusion lost 0 pairs (their all-creatures grant was already refused by the board gate); panel precision 100.0% / retention 98.4% (428 held, 7 lost) by-name ratchet ok; role-ratchet and dropped-clauses unchanged (dropped-clauses 4,876).
 // 466: #1549 -- mass-effect misreads that made the derived boardWipe rule miss real wipes or claim non-wipes, fixed in the subject parser (derive/subject.ts) and the emit builder (emits.ts). (1) "of your choice" is the CHOICE, not the controller, when a permanent class heads the phrase: "all creatures of the creature type of your choice" was control `you` (Extinction, Wash Out, Root Greevil, Space Beleren, Witch's Vengeance, Riptide Chronologist; "a source of your choice" in 53 prevention rows is unchanged). "a color of your choice" (Nyx Lotus) and "the pile of your choice" (Boneyard Parley) keep `you`, as before (CEILING). Diaochan and Selective Snare "target creature of your choice" go `you` -> `opp`, matching every "destroy target creature", so they no longer reach "creature you control dies". (2) "greater than the number of cards in your hand" and "greater than target creature's power" are COUNTS, cut like "equal to the number" (Nightmare Unmaking was `you`, Fell the Mighty one target, Zar Ojanen's land counters). (3) "except for <list>" names the SPARED, not the class (Elspeth Tirel token lands, Scourglass and Elesh Norn the spared types, Slash the Ranks `commander`, Whelming Wave / Slinn Voda the spared subtypes, Eye of Singularity); the exclusion is dropped (CEILING): Elspeth Tirel now over-claims about 150 pairs of the 3,045 gained (land 112, token deaths about 40), Elesh Norn about 39 (artifact and land deaths). (4) "a creature other than this creature" is one object, not `scope: all` (Xathrid Demon, Demonic Taskmaster, Lord / Liege of the Pit, Minion of Leshrac, Esix, Impelled Giant). (5) "one of those Dragons" (Zurgo and Ojutai, Godsend, Haphazard Bombardment) and "each of the chosen creatures" (Mega Flare, Oracle en-Vec) are not the class. (6) a damage object that is the whole sentence reads the recipient after " damage to " (Missy). (7) a `cast` action stored with the object "all permanents" / "all <x> creatures" is the "if you cast it" condition misfiled (Cyclone Summoner, Sunderflock), no emit. (8) A STATIC copy-token maker keeps what it copies as `copyOf` (Esix, Mirrormind Crown, Moonlit Meditation: "would create ... instead ... copies", which also keep `token: true`; Delina, Wild Mage: "create a token that's a copy of that creature"); without it `copySubject` refused the token-generation once "other than" stopped being scope `all`, and about 3,440 true copy pairs (Esix -> Mulldrifter, Champion of Wits, Kokusho) went. No class of its own, so none is a go-wide board (Esix, Mirrormind Crown, Moonlit Meditation lose wincon:go-wide: a replacement, not a board). Measured (derive-impact vs 39496ca2, final tree, impact-1549b.json): 78 rows changed, 0 added/removed, 3 source flips (Disa the Restless model to grammar, Sunderflock model to grammar, Wormfang Drake grammar to model); pair reasons of the changed rows +14,746 / -2,843; loss-classify 34 cards: lost 2,843 (self 1,041, class 451, ambiguous 7, unmatched 1,339, no row 5), gained 14,746 (self 7,108, class 1,342, ambiguous 39, unmatched 6,118, no row 139); LOST->CLASS 450 = Diaochan 210 (first destroy `you` -> `opp`, no edge to "creature you control dies"), Sunderflock 141 (misfiled cast), Minion of Leshrac 21 (a self tap read as a class tap), Missy 20 (damage to each opponent creature), Selective Snare 20 (`you` -> `opp`), Impelled Giant 19 (a singular tap cost is now unclaimed, like Springleaf Drum), Elesh Norn 14 (spared artifacts), Elspeth Tirel 3 (spared tokens), Slash the Ranks 2 (spared commanders), Sporogenic Infection 1; GAINED->SELF 7,084 = Delina 3,427 (her copies re-trigger enter triggers), Elspeth Tirel 844, Scourglass 804, Fell the Mighty 766, Slash the Ranks 750, Cyclone Summoner 174, Whelming Wave 114, Slinn Voda 112, Elesh Norn 72 (all real mass kills and bounces, the Aura / "when this dies" self pairs main's wipes already pair), and 16 Wormfang. Role-ratchet gained 8 (boardWipe: Elspeth Tirel, Extinction, Fell the Mighty, Nightmare Unmaking, Root Greevil, Space Beleren, Wash Out; targetedRemoval: Selective Snare) lost 11 (boardWipe: Godsend, Haphazard Bombardment, Mega Flare, Missy, Oracle en-Vec, Xathrid Demon, Zurgo and Ojutai; targetedRemoval: Fell the Mighty; wincon:go-wide: Esix, Mirrormind Crown, Moonlit Meditation); dropped-clauses 4,876 -> 4,879 (Cyclone Summoner +1:cast, Impelled Giant and Minion of Leshrac +2:tap), neither ratchet banked here.
-export const DERIVE_VERSION = 466;
+// 467: #1500 -- Craft cost modelled (CR 702.167a/b, owner ruling 2026-11-06): a printed 'Craft with <materials> <cost>' line is read into the activated ability it means; its material exiles (battlefield and graveyard) emit exiled+leaves stamped SubjectFilter.viaCraft (a boolean marker like entersTapped/withoutDying, read only in the matcher's eventMatches). Market Gnome's 'while you're activating a craft ability' narrowing is represented as viaCraft on its exiled-self trigger, which hears only a viaCraft emit. Craft exiles still feed ordinary exile/leaves consumers (a real exile). Unreadable materials (Enigma Jewel's 'with activated abilities') stay unread.
+export const DERIVE_VERSION = 467;
 
 /** A sentence with a "Choose [another / up to N] target X." of its own (#1452). */
 const CHOOSES_TARGET = /\bchoose (?:another |other |up to \w+ |any number of )?target\b/i;
@@ -2096,10 +2098,13 @@ const TEMPORAL = /\b(?:next|this turn|this combat|each turn)\b/g;
  *  a count (`threshold`), an entry that was no cast (`notCast`), "the first instant spell" (the
  *  class inside the if, #178), "enters tapped" (`entersTapped`), an event amount ("5 or more
  *  damage", `amount`). Anything else refuses the claim (owner, 2026-10-01). */
+const CRAFT_COST_NARROWING = "while you're activating a craft ability";
 function narrowingRepresented(r: TriggerReading, text: string): boolean {
   const left = (r.narrowing ?? "").replace(TEMPORAL, "").replace(/\s+/g, " ").trim();
   if (left === "") return true;
   if (left === "tapped" && r.event === "enters") return true;
+  // MARKET GNOME (#1500): the exile is a craft ability's cost, carried as `viaCraft` on the trigger's subject (see `CRAFT_COST_NARROWING`); the matcher hears only a craft exile.
+  if (left === CRAFT_COST_NARROWING && r.event === "exiled") return true;
   if (left === "without being played" && r.event === "enters") return true;
   // Orcish Bowmasters: "EXCEPT THE FIRST ONE THEY DRAW IN EACH OF THEIR DRAW STEPS" leaves out the
   // turn-based draw (CR 504.1), which no card supplies: every draw a producer makes still counts.
@@ -2489,6 +2494,7 @@ function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, c
   if (verb === "enters" && /\btransformed\b/.test(r.narrowing ?? "")) return { refused: "enters-transformed", subject };
   if (r.condition && !classifyCondition(r.condition.text, { threshold: thresholdFor(text) !== undefined, selfDiesOnCreatureCard: verb === "dies" && subject.self === true && creatureCard === true }).represented) return { refused: `if:${r.event}`, subject };
   if (r.narrowing && !narrowingRepresented(r, text)) return { refused: `narrowing:${r.event}`, subject };
+  if (verb === "exiled" && (r.narrowing ?? "").replace(/\s+/g, " ").trim() === CRAFT_COST_NARROWING) subject.viaCraft = true;
   // "Whenever a creature with deathtouch blocks or becomes blocked BY THIS CREATURE" (Mirror Shield, granted to the host): the watched creature is the OPPOSING one and the named blocker is the host or the card, so the
   // stored subject "this creature" would be a live self trigger on the wrong object. Refused rather than guessed (#1375 review).
   if (verb === "becomes-blocked" && blockedBySelf(text, cardName)) return { refused: "blocked-by-self", subject };
@@ -2754,6 +2760,17 @@ export function deriveAbilities(
   // `exile | ... | graveyard>battlefield`: the only exile with a battlefield destination in all of `cardClauses.canonical` (census 2026-11-04). Read as the exile it was filed as it emitted a false
   // `exiled:creature` from a graveyard and left its own "Exile it" unclaimed. It is the verb a real reanimation uses (Reanimate stores `put`), so the pass below reads it as one.
   clauses = clauses.map((c) => (c.actions ?? []).some((a) => a.verb === "exile" && a.toZone === "battlefield") ? { ...c, actions: (c.actions ?? []).map((a) => (a.verb === "exile" && a.toZone === "battlefield" ? { ...a, verb: "put" } : a)) } : c);
+  // A PRINTED CRAFT LINE IS THE ACTIVATED ABILITY IT MEANS (#1500, CR 702.167a): the store files "Craft with creature {4}{B}" as an inert `none` action, so the exile of its materials, the cost, was never an
+  // event. Rewritten to an activated clause of those exiles (the ordinary cost-exile path derives them), with the cost in CR's words; the exiles are stamped `viaCraft` below. See `craft.ts`.
+  const craftClauses = new Set<number>();
+  for (const c of clauses) {
+    const craft = craftOf(clauseTexts?.[c.id as number] ?? "");
+    if (craft) craftClauses.add(c.id as number);
+    else continue;
+    clauseTexts = { ...clauseTexts, [c.id]: CRAFT_EFFECT_TEXT };
+    clauseCosts = { ...clauseCosts, [c.id]: craft.cost };
+    clauses = clauses.map((x) => (x.id === c.id ? { id: x.id, abilityType: "activated", actions: craft.actions } : x));
+  }
   // The whole card's text, for the phantom-trigger guard below. CARD-scoped on purpose and never
   // per clause -- see `triggerHasCue`, where scoping it to the clause was measured and refuses 18
   // real modal triggers to catch 1 phantom. Absent `clauseTexts` disables the guard rather than
@@ -4345,6 +4362,7 @@ export function deriveAbilities(
       // which is wrong on every row of any card whose first clause derives nothing (Samut: 4
       // clauses, 3 abilities, every zipped row a lie).
       abilities[i] = { ...abilities[i], clause: clause.id };
+      if (craftClauses.has(clause.id as number)) abilities[i] = { ...abilities[i], emits: abilities[i].emits?.map((e) => (e.verb === "exiled" || e.verb === "leaves" ? { ...e, subject: { ...e.subject, viaCraft: true as const } } : e)) };
       if (inherits && headerTrigger && abilities[i].trigger) abilities[i] = { ...abilities[i], trigger: headerTrigger };
       else if (inherits && headerRefused.length > 0 && abilities[i].trigger) { const { trigger: _t, ...untriggered } = abilities[i]; abilities[i] = untriggered; }
       const repeats = exhaust ? "once" : delayed?.repeats ?? repeatsFor(abilities[i], text, cost, rawTrigger);

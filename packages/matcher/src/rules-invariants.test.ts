@@ -97,6 +97,7 @@ const PROSE: Record<string, string> = {
   "310.6": "edges: a battle's defence is a counter (canCarryCounters, AL4)",
   "702.63": "edges: vanishing puts time counters on (canCarryCounters, AL4)",
   "702.32": "edges: fading puts fade counters on (canCarryCounters, AL4)",
+  "702.167a": "craft-cost.test.ts — a craft exile feeds an ordinary exile consumer, and Market Gnome hears only it (#1500)",
   "606.3": "partners-core effectOrder: a loyalty ability is once a round, so it ranks with the taps (AN3)",
   "606.6": "goldfish/mana-lines: a negative loyalty cost needs that many counters, so a \"-N\" mana ability is played iff the starting loyalty covers it, for floor(loyalty / N) turns (asserted in goldfish.test.ts)",
   "301.7a": "partners-core: a Vehicle prints power and toughness without being a creature, so it carries `pow`/`tou` in the index and answers a Power range -- printed, not \"is a creature\"",
