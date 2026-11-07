@@ -3258,6 +3258,10 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
     // not a printed characteristic, and this pass matches against the type line. Demanding it here
     // deletes the edge outright -- Sludge Monster's anthem stopped reaching anything. The dedicated
     // counter-presence pass below is what supplies that state.
+    // A CHOSEN TYPE IS THE DECK'S MAIN CREATURE TYPE (owner ruling 2026-11-07, #1526 part 2): in a deck `resolveChosenTypes` has already turned `chosenType` into that subtype, so Metallic Mimic pairs
+    // with the deck's Elves and no other creature. Reaching this line STILL `chosenType: true` means there is no deck (a card page, a partner suggestion, the compass's pair isolation), and
+    // `subjectMatches` does not read the flag, so the subject is an anthem over every creature (Mimic: 547 consumers).
+    // CEILING: no-deck chosen-type statics stay a wildcard over their type; what a card with no deck should pair with is an open question for the owner on #1526 (refusal was rejected for the deck case).
     const { counter: _stateOnly, ...printedMatchable0 } = a.effect.subject;
     // A GRANT TO CARDS IN A GRAVEYARD OR HAND reaches the printed card of its class (see `isZonedCardGrant`), never a token.
     const zoneGrant = isZonedCardGrant(a);
