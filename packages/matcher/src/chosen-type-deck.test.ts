@@ -5,6 +5,7 @@ import type { CardLookup } from "@edh-seer/data/resolve";
 import { normalizeName } from "@edh-seer/data/names";
 import { analyzeDecklist } from "./orchestrate.js";
 import { loadHierarchy, pairReasons } from "./index.js";
+import { refuseUnresolvedChosenTypes } from "./chosen-type.js";
 import type { DeckCard } from "./types.js";
 import fixtures from "./fixtures/chosen-type-deck.json" with { type: "json" };
 
@@ -48,4 +49,26 @@ const mimicStatic = (c: string) => pairReasons(dc("Metallic Mimic"), dc(c), load
 test("with no deck, Metallic Mimic pairs with a creature that cares about a creature type (a lord) and with no other creature", () => {
   expect(mimicStatic("Elvish Archdruid")).not.toEqual([]);
   for (const plain of ["Grizzly Bears", "Serra Angel", "Llanowar Elves", "Elvish Mystic"]) expect(mimicStatic(plain), plain).toEqual([]);
+});
+
+// The same ruling for the other readers of an unresolved chosen creature type: a trigger that watches it (Kindred Discovery, the consumer side), a recursion that reaches it (Haunting Voyage), a cost reduction (Herald's Horn).
+const pairOf = (a: string, b: string, tag: RegExp) => pairReasons(dc(a), dc(b), loadHierarchy()).filter((r) => tag.test(r.tag));
+
+test("with no deck, a trigger on 'a creature of the chosen type' (Kindred Discovery) hears a creature that cares about a creature type and no other", () => {
+  expect(pairOf("Kindred Discovery", "Elvish Archdruid", /^enters:creature/)).not.toEqual([]);
+  for (const plain of ["Grizzly Bears", "Serra Angel", "Llanowar Elves"]) expect(pairOf("Kindred Discovery", plain, /^enters:creature/), plain).toEqual([]);
+});
+
+test("with no deck, Herald's Horn (cost reduction) and Haunting Voyage (recursion) pair with no creature that ignores creature types, and leave no tag behind that names no type", () => {
+  for (const plain of ["Grizzly Bears", "Serra Angel", "Llanowar Elves"]) {
+    expect(pairOf("Herald's Horn", plain, /cost-reduction/), plain).toEqual([]);
+    expect(pairReasons(dc("Haunting Voyage"), dc(plain), loadHierarchy()).filter((r) => /recursion|__none__/.test(r.tag)), plain).toEqual([]);
+  }
+  expect(pairOf("Herald's Horn", "Elvish Archdruid", /cost-reduction/)).not.toEqual([]);
+});
+
+test("'odd or even' is not a creature-type choice: Extinction Event's tags are left exactly as they were, Haunting Voyage's are not", () => {
+  const ee = dc("Extinction Event"), hv = dc("Haunting Voyage");
+  expect(refuseUnresolvedChosenTypes(ee.tags!, ee.card.oracleText)).toBe(ee.tags);
+  expect(refuseUnresolvedChosenTypes(hv.tags!, hv.card.oracleText)).not.toBe(hv.tags);
 });

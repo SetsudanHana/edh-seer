@@ -2235,7 +2235,7 @@ export function directedReasons(p0: DeckCard, c0: DeckCard, h: Hierarchy, opts: 
   // `refuseUnresolvedChosenTypes`). In a deck `resolveChosenTypes` has run and there is nothing left to refuse. A card paired with itself keeps its own.
   const refusedFor = <T extends DeckCard>(x: T, other: DeckCard): T => {
     if (!other.tags || p0 === c0) return x;
-    const t = refuseUnresolvedChosenTypes(x.tags!);
+    const t = refuseUnresolvedChosenTypes(x.tags!, x.card.oracleText);
     return t === x.tags || caresAboutCreatureType(other.tags, h) ? x : { ...x, tags: t };
   };
   const p = refusedFor(p1, c1);

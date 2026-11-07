@@ -559,5 +559,99 @@
     ]
    }
   ]
+ },
+ "Haunting Voyage": {
+  "source": {
+   "name": "Haunting Voyage",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose a creature type. Return up to two creature cards of that type from your graveyard to the battlefield. If this spell was foretold, return all creature cards of that type from your graveyard to the battlefield instead.\nForetell {5}{B}{B} (During your turn, you may pay {2} and exile this card from your hand face down. Cast it on a later turn for its foretell cost.)",
+   "keywords": [
+    "Foretell"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{B}{B}",
+   "layout": "normal",
+   "_id": "334c284e-7bc3-4c18-9f8d-4d846f80008e"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "up to two creature cards of the chosen type",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "all creature cards of the chosen type",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Foretell {5}{B}{B}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Extinction Event": {
+  "source": {
+   "name": "Extinction Event",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose odd or even. Exile each creature with mana value of the chosen quality. (Zero is even.)",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{B}",
+   "layout": "normal",
+   "_id": "0a11a3a8-ee5f-4caf-bf84-c8248e07c825"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "each creature with mana value of the chosen quality",
+      "fromZone": null,
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
  }
 }
