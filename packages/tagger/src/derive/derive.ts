@@ -643,7 +643,8 @@ import { selectionFromText } from "./selection-text.js";
 // 469: #1416 -- 'each player ... their graveyard' scaling counts ANY player's graveyard (owner ruling 2026-11-07, the literal reading; the 2026-11-06 `you` reading is superseded): scalingSubject reads "their" as `any` when the clause's player is `each player` and no opponent / target / defending / enchanted / that player is named, and stays `opp` otherwise (Riverchurn Monument, Eldritch Pact, Origin of Black Widow). 3 cards move opp -> any, from the corpus census of 'their graveyard' counts: Nature's Resurgence, Tombstone Stairwell, Grave Consequences. derive-impact vs 468 main: 3 rows changed, 0 source flips, grammar complete 28,486 -> 28,486; pair reasons +6,486 gained / -0 lost, all scales:creature on Nature's Resurgence and Tombstone Stairwell (each +3,243 / -0; Grave Consequences, an untyped count, moves no pair); the gained are every creature-card fill of any graveyard (self-mill, discard, sacrifice, cycling, surveil, deaths, opponent-directed removal and mill); role-ratchet 31,310 -> 31,310; dropped-clauses 4,878 -> 4,878.
 // 470: #1082 -- battalion (owner ruling 2026-11-06): "Whenever this creature and at least two other creatures attack" is the card's OWN attack trigger (subject.self), the other attackers recorded as Ability.trigger.alongside {atLeast: 2} and not checked, like oncePerTurn; an explicit exception to the 2026-10-01 narrowing refusal, for exactly "<self> and at least two other creatures attack" (one other, another creature, a class, equipped creature, different players, three other still refuse as narrowing:attacks). Measured (derive-impact vs 4b8e2411, impact-1082.json): 22 rows changed (all 22 battalion cards), 0 added/removed, 0 source flips; loss-classify 22 cards: gained 83 (all doubles, 100% true: Isshin/Windcrag Siege/Wulfgar 22 each, Delney 10 = the power<=2 cards, Annie Joins Up 6 = the legendary ones, Twinflame Travelers 1 = Warmind Infantry), lost 3 LOST->CLASS (Captain America's counters on each attacking creature now control:you, so Bold Plagiarist / Generous Patron / Kros no longer pair: correct, the attackers are the controller's own). role-ratchet gained 0 lost 0 (31,310 -> 31,310); dropped-clauses 4,878 -> 4,878.
 // 471: #1444 -- mill action vs a library-to-graveyard move (CR 701.17a, owner ruling 2026-11-06): SubjectFilter.notMillAction is stamped on a `mill` emit whose clause (effect text AND cost text) never says mill/mills/milled/milling (or that definition): look-at-top then put into the graveyard (Archghoul of Thraben, Territory Culler), manifest dread, bottom-card-to-graveyard, reveal-until-then-graveyard (Mind Funeral, Hermit Druid). 216 abilities on 209 cards carry it (a record with no text of its own, where the model split one printed clause in two, reads the card's whole printed text: Gathering Stone clause 4, Celestus Sanctifier clause 3) (of 817 mill-emitting abilities, tokens included); "put the top N cards of their library into their graveyard" is CR 701.17a's own definition of mill and is NOT stamped (the Jace, Telepath Unbound emblem's token text); a cost mill (Millikin, Deranged Assistant, The Warring Triad, Sinister Concoction, Rot Farm Skeleton) is worded in the cost and is NOT stamped. The emit stays `mill`, so every graveyard consumer (supplyForms, impliedGraveyardEvents, recursion, delirium, counts) is untouched; only a trigger on the mill action (eventMatches: Zellix, Glowing One, Mirelurk Queen, The Wise Mothman, Screeching Scorchbeast, Infesting Radroach, Lo and Li) refuses a stamped producer. MEASURED (derive-impact 9c78f5bc, 209 changed rows, 0 added/removed): pair reasons +0 gained / -124 lost, all family mill, 124 LOST->CLASS and 0 GAINED->SELF, 50 producers; the 7 consumers that lose are Lo and Li 37, Glowing One 17, Mirelurk Queen 17, Screeching Scorchbeast 17, The Wise Mothman 17, Zellix 15, Infesting Radroach 4, and no graveyard-fill consumer moves. role-ratchet gained 0 / lost 0 (31,310 memberships); dropped-clauses 4,878 -> 4,878 (new 0, fixed 0); grammar complete 28,486 -> 28,486.
-export const DERIVE_VERSION = 471;
+// 472: #1562 -- a library-to-graveyard move the printed clause never makes is no longer claimed (withPrintedZoneFacts): Warp World's "puts all cards revealed this way that weren't put onto the battlefield on the bottom of their library" was stored as a put into the graveyard (the grammar reads one of its three puts, so the counts differ and the store stood) and is now a put into the library, claimed as the reveal's remainder (DIG_REMAINDER also reads "all cards revealed this way that weren't put"); a plain manifest the store filed as `manifest-dread` (Orochi Soul-Reaver, Ghastly Conscription, Primordial Mist, Cryptic Pursuit) is `manifest` (enters, no mill). CENSUS: of the 209 cards / 216 abilities stamped notMillAction (#1444), 5 cards claim a fill nothing makes (these 5); the rest really move a card library -> graveyard (Genesis Wave, Old Stickfingers, Cellar Door, Grenzo and Moment of Truth were read from oracle text); 36 cards store manifest-dread, 32 say "manifest(s) dread". MEASURED (derive-impact 5aa01a6f, 7 changed rows, 0 added/removed): pair reasons +0 gained / -7,929 lost, graveyard-recursion -5,773, scales -926, threshold -900, enters-graveyard -184, mill -140, graveyard-intercept -6, every one a false graveyard-fill pair of the 5 producers (Warp World 1,615, Ghastly Conscription 1,605, Orochi Soul-Reaver 1,605, Cryptic Pursuit 1,552, Primordial Mist 1,552); the two other changed rows are Genesis Storm and Knickknack Ouphe, whose identical bottom-of-library remainder is now claimed (no pair moves). role-ratchet gained 0 / lost 0 (31,310); dropped-clauses 4,878 -> 4,876 (new 0, fixed 2: Genesis Storm, Knickknack Ouphe); grammar complete 28,486 -> 28,486.
+export const DERIVE_VERSION = 472;
 
 /** A sentence with a "Choose [another / up to N] target X." of its own (#1452). */
 const CHOOSES_TARGET = /\bchoose (?:another |other |up to \w+ |any number of )?target\b/i;
@@ -876,8 +877,8 @@ const ZONE_WORD = / (?:onto|into|on|in)\s/i;
 const withoutZoneTail = (s: string): string => { const at = s.search(ZONE_WORD); return at < 0 ? s : s.slice(0, at); };
 /** "put a card named Ezio into your hand": the searched card, by name (the planeswalker-named wizards, "search your library and/or graveyard"). */
 const NAMED_FOUND = /^(?:an? )?card named /i;
-/** "The rest", "the other(s)", "the remaining cards": what a dig leaves after the part it took. */
-const DIG_REMAINDER = /^the (?:rest|others?|remaining cards?)\b/i;
+/** "The rest", "the other(s)", "the remaining cards": what a dig leaves after the part it took. Also "all cards revealed this way that weren't put onto the battlefield" (Warp World, #1562), the same remainder worded by what it is not. */
+const DIG_REMAINDER = /^(?:the (?:rest|others?|remaining cards?)|all cards revealed this way that weren't put)\b/i;
 
 /** THE PUT THAT IS ANOTHER EFFECT'S DESTINATION (#1301). Called for every `put`; sets `toZone` on the search or counter it follows, and returns true when an
  *  ORPHAN put (`unclaimed`: it derived no event of its own) is claimed here:
@@ -2305,6 +2306,28 @@ function withLifeSetReadings(clause: ClauseRecord, text: string | undefined): Cl
   if (!clause.actions?.some((a) => a.verb === "set-life")) return clause;
   return { ...clause, actions: clause.actions.map((a) => (a.verb === "set-life" ? lifeSetRewrite(a, text ?? "") ?? a : a)) };
 }
+/** A ZONE THE PRINTED CLAUSE NEVER NAMES IS NOT CLAIMED (#1562): two store errors that filed a library card as going to a graveyard.
+ *  (1) A `put` stored library -> graveyard whose clause says the cards go "on the bottom of ... library" and never says graveyard or mill (Warp World's "puts all cards revealed this way that weren't put onto the
+ *      battlefield on the bottom of their library"; the action grammar reads one of that card's three puts, so the counts differ and the store stood) is a put into the library: the bottom is no event, it fills no graveyard.
+ *  (2) A `manifest-dread` whose clause never says "manifest dread" / "manifests dread" is the plain MANIFEST (CR 701.40a: put it onto the battlefield face down, no graveyard half; Orochi Soul-Reaver, Ghastly Conscription,
+ *      Primordial Mist, Cryptic Pursuit), which emits `enters` and no `mill` (CR 701.62a's graveyard half is manifest dread's alone).
+ *  CEILING: read off the clause's own printed text only (a record with no text keeps the stored verb and zone), and only the bottom-of-the-library wording for (1). */
+const BOTTOM_OF_LIBRARY = /\bon the bottom of (?:your|their|its owner's|that player's|his or her|a|the) librar(?:y|ies)\b/i;
+const NAMES_A_GRAVEYARD = /\bgraveyards?\b|\bmill/i;
+const SAYS_MANIFEST_DREAD = /\bmanifest(?:s|ed|ing)? dread\b/i;
+function withPrintedZoneFacts(clause: ClauseRecord, text: string | undefined): ClauseRecord {
+  if (text === undefined || text.trim() === "" || !clause.actions?.length) return clause;
+  const bottom = BOTTOM_OF_LIBRARY.test(text) && !NAMES_A_GRAVEYARD.test(text);
+  const plainManifest = /\bmanifest/i.test(text) && !SAYS_MANIFEST_DREAD.test(text);
+  if (!bottom && !plainManifest) return clause;
+  let changed = false;
+  const actions = clause.actions.map((a) => {
+    if (bottom && a.verb === "put" && a.fromZone === "library" && a.toZone === "graveyard") { changed = true; return { ...a, toZone: "library" as const }; }
+    if (plainManifest && a.verb === "manifest-dread") { changed = true; return { ...a, verb: "manifest" as const }; }
+    return a;
+  });
+  return changed ? { ...clause, actions } : clause;
+}
 function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost: string | undefined, cardName: string | undefined, precomputed?: ActionReading[]): ClauseRecord {
   if (!text || !clause.actions?.length) return clause;
   // PRECOMPUTED READINGS (G-T3): `grammarClauseRecords` already ran `parseActions` on this exact
@@ -2853,6 +2876,7 @@ export function deriveAbilities(
       : withGrammarActions(clause, rehomed ?? clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName, readings?.[clause.id]?.actions);
     // A LIFE TOTAL SET READS OFF ITS PRINTED CLAUSE (#1333, CR 119.5): a loss at an opponent / target player (Sorin Markov), "lose all but 1 life" (Soulgorger Orgg) and a genuine set's own recipient.
     clause = withLifeSetReadings(clause, rehomed ?? clauseTexts?.[clause.id]);
+    clause = withPrintedZoneFacts(clause, rehomed ?? clauseTexts?.[clause.id]);
     clause = splitMultiZoneExiles(clause, rehomed ?? clauseTexts?.[clause.id], cardText);
     if (collapseSearches) clause = collapseZoneSearches(clause);
     clause = splitDoesTheSame(clause, clauseTexts?.[clause.id]);
