@@ -59,14 +59,14 @@ test("chosenKindOf stamps chosenKind beside chosenType, from the ability's own c
 test("two choices on one card: each ability takes the kind of the clause that holds it", () => {
   const both = "As this enters, choose a creature type.\nAt the beginning of your upkeep, choose a card type. Spells of the chosen type cost {1} less.";
   const [a] = chosenKindOf([ability(2, subject({ type: "spell", chosenType: true }))], { 1: "As this enters, choose a creature type.", 2: "At the beginning of your upkeep, choose a card type. Spells of the chosen type cost {1} less." }, both);
-  expect(a!.effect.subject.chosenKind).toBe("card-type");
+  expect(a!.effect.subject!.chosenKind).toBe("card-type");
   const [u] = chosenKindOf([ability(3, subject({ type: "spell", chosenType: true }))], { 3: "Spells of the chosen type cost {1} less." }, both);
-  expect(u!.effect.subject.chosenKind).toBeUndefined();
+  expect(u!.effect.subject!.chosenKind).toBeUndefined();
 });
 
 test("a nested chosenType (an exception: 'creatures that aren't of the chosen type') is stamped too, and an ability with no chosenType is returned as it was", () => {
   const plain = ability(1, subject({ type: "creature" }));
   const [x, p] = chosenKindOf([ability(1, subject({ type: "creature", except: [{ chosenType: true }] } as never)), plain], undefined, "Choose a creature type. Destroy all creatures that aren't of the chosen type.");
-  expect((x!.effect.subject.except as SubjectFilter[])[0]).toMatchObject({ chosenType: true, chosenKind: "creature-type" });
+  expect((x!.effect.subject!.except as SubjectFilter[])[0]).toMatchObject({ chosenType: true, chosenKind: "creature-type" });
   expect(p).toBe(plain);
 });
