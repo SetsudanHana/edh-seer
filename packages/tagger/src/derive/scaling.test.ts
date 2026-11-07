@@ -65,6 +65,18 @@ test("the counted subject carries the type and whose graveyard", () => {
   // of THEIR yard, which your own fillers do not feed.
   expect(scalingSubject({ verb: "mill", amount: "cards equal to the number of cards in their graveyard" }))
     .toMatchObject({ zone: "graveyard", control: "opp" });
+  // "EACH PLAYER ... THEIR GRAVEYARD" counts EVERY player's yard (owner ruling 2026-11-07, #1416, the literal
+  // reading: control any), so any fill of any graveyard feeds it. Nature's
+  // Resurgence, Tombstone Stairwell. An opponent or target player's "their" stays the opponent's.
+  expect(scalingSubject({ verb: "draw", object: "a card", amount: "a card for each creature card in their graveyard" },
+    "Each player draws a card for each creature card in their graveyard."))
+    .toMatchObject({ type: "creature", zone: "graveyard", control: "any" });
+  expect(scalingSubject({ verb: "create", object: "a 2/2 black Zombie creature token", amount: "1 for each creature card in their graveyard" },
+    "At the beginning of each upkeep, if this enchantment is on the battlefield, each player creates a 2/2 black Zombie creature token with haste named Tombspawn for each creature card in their graveyard."))
+    .toMatchObject({ type: "creature", zone: "graveyard", control: "any" });
+  expect(scalingSubject({ verb: "lose-life", amount: "1 life for each creature card in their graveyard" },
+    "Target opponent loses 2 life for each creature card in their graveyard."))
+    .toMatchObject({ zone: "graveyard", control: "opp" });
   // No count, no subject.
   expect(scalingSubject({ verb: "draw", amount: "2" })).toBeUndefined();
 });
