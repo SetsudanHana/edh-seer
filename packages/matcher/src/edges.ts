@@ -2236,7 +2236,7 @@ export function directedReasons(p0: DeckCard, c0: DeckCard, h: Hierarchy, opts: 
   const refusedFor = <T extends DeckCard>(x: T, other: DeckCard): T => {
     if (!other.tags || p0 === c0) return x;
     const t = refuseUnresolvedChosenTypes(x.tags!, x.card.oracleText);
-    return t === x.tags || caresAboutCreatureType(other.tags, h) ? x : { ...x, tags: t };
+    return t === x.tags || caresAboutCreatureType(other.tags) ? x : { ...x, tags: t };
   };
   const p = refusedFor(p1, c1);
   const c = p0 === c0 ? p : refusedFor(c1, p1);

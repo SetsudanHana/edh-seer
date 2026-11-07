@@ -1,6 +1,9 @@
 import type { CardTags, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { impliesType } from "./hierarchy.js";
+import { CREATURE_SUBTYPES } from "@edh-seer/tagger/subtypes";
+
+const CREATURE_SUBTYPE_SET: ReadonlySet<string> = new Set(CREATURE_SUBTYPES.map((x) => x.toLowerCase()));
 
 /** A subtype guaranteed absent from every card, so an unresolved chooser matches nothing. */
 const NO_MATCH = "__none__";
@@ -85,16 +88,15 @@ function resolveSubject(subject: SubjectFilter, counts: Map<string, number>, hie
 /** DOES THIS CARD CARE ABOUT A CREATURE TYPE? (owner ruling 2026-11-07, #1526 part 2, no-deck view). Read off DERIVED data, never a name: some ability of the card has a subject that names a creature subtype
  *  (`subtype`, or one `anyOf` branch's) or is itself a chosen type -- a trigger subject ("whenever another Elf enters"), a class it acts on (Elvish Archdruid's "Other Elf creatures you control get +1/+1",
  *  a tutor's "search for a Goblin card"), or the class whose triggers it doubles. Left out: a `self` subject (the card's own type line), and the token a `token-generation` / `clone` makes (a Goblin that MAKES a
- *  Goblin token cares about nothing). A land subtype ("Forest") is not a creature type: `hierarchy` says which subtypes are.
- *  Census 2026-11-07 over 18,040 non-token creature cards: 1,596 care (54 of them changelings; the rest by a trigger, effect, scaling or doublesOf subject, an emit naming a type -- a cost to tap or sacrifice one -- or a chosen type), so Llanowar Elves and Grizzly Bears do not.
+ *  Goblin token cares about nothing). A land or equipment subtype ("Forest", "Equipment") is not a creature type: the tagger's `CREATURE_SUBTYPES` says which are.
+ *  Census 2026-11-07 over 18,040 non-token creature cards: 1,647 care (54 of them changelings; the rest by a trigger, effect, scaling or doublesOf subject, an emit naming a type -- a cost to tap or sacrifice one -- or a chosen type), so Llanowar Elves and Grizzly Bears do not.
  *  CEILING: a tutor or reveal that merely names a type (Boggart Harbinger, Priest of the Wakening Sun) counts as caring, as does a card that names a type it is not itself a member of; both are wider than "lord".
  *  CEILING: the other way, derive does not record a type named only in a CONDITION, a cost REVEAL or a greatest-of count (Akki Ronin's "a Samurai or Warrior attacks alone", Academy Journeymage's "if you control a Wizard", Sunderflock's "Elementals you control",
- *  Sadistic Skymarcher's "reveal a Vampire"), so those kindred payoffs read as not caring and lose the pair. About 566 of the 16,000 losing consumers print one of their own subtypes outside a token or a self reference (a text census, not a count).
+ *  Sadistic Skymarcher's "reveal a Vampire"), so those kindred payoffs read as not caring and lose the pair. Roughly 560 of the 16,500 losing consumers print one of their own subtypes outside a token or a self reference (a text census, not a count).
  *  Read by `staticEdges` only for an UNRESOLVED chosen type, i.e. with no deck. */
-export function caresAboutCreatureType(tags: CardTags, hierarchy: Hierarchy): boolean {
-  // The hierarchy lists every card type a subtype appears under, so Forest, Mountain, Island, Equipment, Food and Saga read as creature subtypes too (a Forest Dryad, a reconfigure Equipment creature). A type that is ALSO
-  // a land or planeswalker type is a land or equipment, not a tribe: Timbermaw Larva counting Forests does not care about a creature type.
-  const isCreatureType = (sub: string): boolean => impliesType(hierarchy, sub, "creature") && !impliesType(hierarchy, sub, "land") && !impliesType(hierarchy, sub, "planeswalker");
+export function caresAboutCreatureType(tags: CardTags): boolean {
+  // THE CREATURE-SUBTYPE LIST, not the hierarchy: the hierarchy lists every card type a subtype appears under, so Forest, Equipment, Food, Shrine, Treasure and Spacecraft read as creature subtypes too.
+  const isCreatureType = (sub: string): boolean => CREATURE_SUBTYPE_SET.has(sub.toLowerCase());
   const names = (s: SubjectFilter | undefined): boolean => {
     if (!s || s.self === true) return false;
     if (s.chosenType === true) return true;
