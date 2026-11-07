@@ -101,17 +101,47 @@ const SUBTYPE_FORMS: ReadonlySet<string> = (() => {
   return out;
 })();
 
-/** Blank (to spaces, length kept) every span that opens with `open` and ends at the first `close` within `reach` characters, and (by default) without a full stop in between. Linear: one pass, no backtracking. */
-function blankSpans(text: string, lower: string, open: string, close: string, reach: number, sentence = true): string {
+/** Blank (to spaces, length kept) every clause that opens with `open` and runs to the EARLIEST of `closers` (left in place) within `reach` characters; the end of the text closes a clause with no closer; a clause longer than `reach` is left alone, and so is one that
+ *  lacks `must` when it is given. Linear: indexOf scans only, no backtracking. */
+function blankClause(text: string, lower: string, open: string, closers: readonly string[], reach: number, must?: string): string {
   const chars = text.split("");
   let from = 0;
   for (;;) {
     const at = lower.indexOf(open, from);
     if (at < 0) break;
-    const end = lower.indexOf(close, at + open.length);
-    if (end < 0 || end - at > reach || (sentence && lower.slice(at, end).includes("."))) { from = at + open.length; continue; }
-    for (let i = at; i < end + close.length; i++) chars[i] = " ";
-    from = end + close.length;
+    const start = at + open.length;
+    let end = -1;
+    for (const c of closers) { const k = lower.indexOf(c, start); if (k >= 0 && (end < 0 || k < end)) end = k; }
+    if (end < 0) end = lower.length;
+    if (end - at > reach || (must !== undefined && !lower.slice(at, end).includes(must))) { from = start; continue; }
+    for (let i = at; i < end; i++) chars[i] = " ";
+    from = end;
+  }
+  return chars.join("");
+}
+
+/** Blank the title that opens a line and ends at " — " (an ability word or a named ability), when it is at most 50 characters. */
+function blankTitles(text: string, lower: string): string {
+  const chars = text.split("");
+  for (let at = lower.indexOf(" \u2014 "); at >= 0; at = lower.indexOf(" \u2014 ", at + 3)) {
+    const lineStart = lower.lastIndexOf("\n", at) + 1;
+    if (at - lineStart <= 50) for (let i = lineStart; i < at; i++) chars[i] = " ";
+  }
+  return chars.join("");
+}
+
+/** Blank the (up to) five words before every "token", back to the clause start: "a 1/1 white Soldier creature token" is what a card MAKES, wherever the verb is ("tokens plus a ... Soldier creature token are created instead"). */
+function blankTokenNouns(text: string, lower: string): string {
+  const chars = text.split("");
+  for (let at = lower.indexOf("token"); at >= 0; at = lower.indexOf("token", at + 5)) {
+    let i = at, words = 0;
+    while (i > 0 && words < 5) {
+      const c = lower[i - 1]!;
+      if (c === "." || c === "," || c === ":" || c === ";" || c === "\n") break;
+      if (c === " " && i - 1 < at) words++;
+      i--;
+    }
+    for (let k = i; k < at + 5; k++) chars[k] = " ";
   }
   return chars.join("");
 }
@@ -127,40 +157,55 @@ function blankAll(text: string, lower: string, needle: string): string {
 
 /** Does the card's PRINTED text name a creature type? The fallback for what derive does not record: a type named only in a condition ("if you control a Wizard"), a trigger derive dropped ("whenever a Samurai or Warrior you
  *  control attacks alone"), a greatest-of count ("Elementals you control") or a reveal cost ("reveal a Vampire card"). Read after removing what is NOT the card caring:
- *  reminder text in parentheses; the card's own name (and its short name before a comma, and each face's); "this creature"; a token-creation phrase ("create ... token(s)", "amass Orcs"); and "except it's a ... in addition to
- *  its other types" (a copy's added type). The type line is not part of oracle text, so the card's own subtypes are not read at all.
+ *  reminder text in parentheses; the card's own name (and its short name before a comma, and each face's); "this creature"; what it MAKES (the clause of a "create ... token", the five words before any "token", "named ...", "amass Orcs");
+ *  what it BECOMES or is also ("becomes a Human until end of turn", "is also a Cleric", "except it's a Zombie"); a "Partner" line; a type named as an enemy ("protection from Clerics", "can't be blocked by Walls", "deals damage to a Dinosaur"); and an ability title before an em dash ("Spear of the Void Dragon — ..."). The type line is not part of oracle text, so the card's own subtypes are not read at all.
  *  A type is a WORD that starts upper-case (printed subtypes are capitalised, "wall" and "head" are not) and is a singular or plural `CREATURE_SUBTYPES` entry. Linear throughout: indexOf scans and one character pass, no regex over the text.
- *  CEILING: a type named for any reason counts (protection from Clerics, "can't be blocked by Saprolings", "target Dragon"), as does one in another card's name ("named Arachnus Web" is no subtype, but "Sliver Hive" would be); and a
- *  sentence-initial capitalised ordinary word that is also a subtype ("Head", "Seal") reads as a type. */
+ *  CEILING: any other mention of a type counts ("target Dragon", "can't be blocked except by Spirits", "Fish you control"), as does one in another card's name quoted in the text ("Shivan Dragon" in Garth One-Eye) and a copy's added
+ *  type the clause rules above miss (Cyber-Controller's "They're 2/2 Cyberman artifact creatures", Figure of Fable's "If this creature is a Scout"); a sentence-initial capitalised ordinary word that is also a subtype ("Head") reads as a type.
+ *  The other way, a type named only in reminder text (Soulshift's "Spirit card", Amplify's "Soldier card", Affinity for outlaws) is dropped with the reminder, and a face the card does not print the type on does not carry it (Smitten Swordmaster's adventure). */
 export function printedTextNamesCreatureType(name: string, oracleText: string | undefined): boolean {
   if (!oracleText) return false;
   let text = oracleText;
   let lower = text.toLowerCase();
   if (lower.length !== text.length) return false;
-  // reminder text
-  const chars = text.split("");
+  // reminder text: dropped outright (not blanked), so a clause's reach is not spent on text that is gone
+  let kept = "";
   let depth = 0;
-  for (let i = 0; i < chars.length; i++) {
-    const c = chars[i]!;
+  for (const c of text) {
     if (c === "(") depth++;
-    if (depth > 0) chars[i] = " ";
-    if (c === ")" && depth > 0) depth--;
+    if (depth === 0) kept += c;
+    else if (c === ")") { depth--; if (depth === 0) kept += " "; }
   }
-  text = chars.join(""); lower = text.toLowerCase();
+  text = kept; lower = text.toLowerCase();
+  if (lower.length !== text.length) return false;
   const needles = new Set<string>(["this creature", "this spell", "this permanent"]);
   for (const face of name.split(" // ")) { needles.add(face); needles.add(face.split(",")[0]!); }
   for (const nd of needles) { text = blankAll(text, lower, nd); lower = text.toLowerCase(); }
-  text = blankSpans(text, lower, "create", "token", 200); lower = text.toLowerCase();
-  text = blankSpans(text, lower, "amass ", " ", 30, false); lower = text.toLowerCase();
-  text = blankSpans(text, lower, "except it's", "other types", 120); lower = text.toLowerCase();
+  const step = (f: (t: string, l: string) => string): void => { text = f(text, lower); lower = text.toLowerCase(); };
+  step((t, l) => blankClause(t, l, "create", [".", "\n"], 300, "token"));
+  step((t, l) => blankTokenNouns(t, l));
+  step((t, l) => blankClause(t, l, "named ", [".", "\n"], 80));
+  step((t, l) => blankClause(t, l, "amass ", [" "], 30));
+  step((t, l) => blankClause(t, l, "becomes ", [".", "\n", ",", " until", " with", " in addition"], 80));
+  step((t, l) => blankClause(t, l, "become ", [".", "\n", ",", " until", " with", " in addition"], 80));
+  step((t, l) => blankClause(t, l, "is also ", [".", "\n"], 80));
+  step((t, l) => blankAll(t, l, "meets the eye"));
+  for (const o of ["except it's", "except they're", "except he's", "except she's", "except his ", "except her ", "except its ", "except if "]) step((t, l) => blankClause(t, l, o, [".", "\n"], 300));
+  step((t, l) => blankClause(t, l, "partner", [".", "\n"], 120));
+  // A TYPE NAMED AS AN ENEMY is no kindred: protection from Clerics, "can't be blocked by Walls", "deals damage to a Dinosaur, destroy it".
+  for (const o of ["protection from ", "blocked by ", "deals damage to "]) step((t, l) => blankClause(t, l, o, [".", "\n", ","], 80));
+  // An ABILITY NAME before an em dash ("Spear of the Void Dragon -- Whenever ...", "Bad Wolf -- ...") is a title, not a type.
+  step((t, l) => blankTitles(t, l));
   const isWordChar = (c: string): boolean => (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c === "'" || c === "\u2019" || c === "-";
   let i = 0;
   while (i < text.length) {
     if (!isWordChar(text[i]!)) { i++; continue; }
     let j = i;
     while (j < text.length && isWordChar(text[j]!)) j++;
-    const first = text[i]!;
-    if (first >= "A" && first <= "Z" && SUBTYPE_FORMS.has(lower.slice(i, j))) return true;
+    // "non-Dragon" is a negated type: the type is the part after the hyphen.
+    const k = lower.startsWith("non-", i) ? i + 4 : i;
+    const first = text[k]!;
+    if (first >= "A" && first <= "Z" && SUBTYPE_FORMS.has(lower.slice(k, j))) return true;
     i = j;
   }
   return false;
