@@ -850,6 +850,10 @@ export interface GameEvent {
    *  Matcher-only, written by `impliedGraveyardEvents`. Read by the recursion pass: a random fill
    *  does not promise a card of a noncreature class (Takenuma -> Emry, owner FALSE 2026-09-28). */
   milled?: true;
+  /** THE CARDS THIS DEATH PUTS IN THE GRAVEYARD ARE EXILED BY THE SAME ABILITY (#1523 part 2): Sword of the Ages' "then exile this artifact and THOSE CREATURE CARDS". The death is real (a death
+   *  trigger hears it) but no card stays, so `impliedGraveyardEvents` carries the mark to the implied graveyard fill and the recursion, graveyard-count and threshold readers refuse it.
+   *  Matcher-read; STAMPED by derive on the sacrifice and dies emits of a non-self sacrifice whose clause exiles "those ... cards" / "the sacrificed ... cards". */
+  exiledAtOnce?: true;
   /** WHERE AN IMPLIED GRAVEYARD FILL CAME FROM when it was not the battlefield: a RANDOM mill
    *  takes it off the library, a discard out of the hand. A surveil or a tutor is chosen and carries none. Matcher-only, written by
    *  `impliedGraveyardEvents` beside `milled` (which stays, because the noncreature-class gate reads

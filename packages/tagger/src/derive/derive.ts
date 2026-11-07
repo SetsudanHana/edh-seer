@@ -1306,6 +1306,8 @@ const UNEXPRESSIBLE_NARROWING = /\bwith counters on (?:them|it)\b|\bequipped cre
  *  record their own return this way, and without it the self-recursion gate in edges.ts never fired
  *  for them: every graveyard fill in the deck "enabled" a card that only ever returns itself. */
 const SELF_BARE = /^this$/i;
+/** "...then exile this artifact and THOSE CREATURE CARDS" / "exile THE SACRIFICED CARDS": the objects just sacrificed are exiled (#1523 part 2). */
+const EXILES_THE_SACRIFICED = /\bexile\b[^.]*\b(?:those|the sacrificed)(?: \w+)? cards?\b/i;
 
 /** Whose zone the effect reads, when the ZONE PHRASE says. "Return target creature card from YOUR
  *  graveyard" states the owner in the phrase the normalizer collapses into `fromZone: "graveyard"`,
@@ -3605,6 +3607,10 @@ export function deriveAbilities(
       }
       // THE CARD ITSELF LEAVING A GRAVEYARD leaves its OWNER's, which is yours (#1496). After every step that stamps `self` (the pronoun and the refused-trigger reads above), and beside the other graveyard-owner read (#1470, `graveyardOwner`), which is for non-self emits. A self `enters-graveyard` is the card's own trip to its owner's graveyard too (#1520: Mox Diamond, Lake of the Dead), and so is a self-"it" return (Kimoyo Beads "under its owner's control").
       for (const e of emits) if ((e.subject.zone === "graveyard" || e.subject.fromZone === "graveyard" || e.verb === "enters-graveyard" || (selfIt !== undefined && e.verb === "enters")) && e.subject.self === true && e.subject.control === "any" && selfGraveyardOwner(action) && !(e.verb === "enters" && ANOTHER_CONTROLS_ENTRY.test(text))) e.subject = { ...e.subject, control: "you" };
+      // THE CARDS SACRIFICED ARE EXILED BY THE SAME ABILITY (#1523 part 2): Sword of the Ages, "...then exile this artifact and those creature cards". The deaths happen, but no card stays in the graveyard, so the
+      // sacrifice / dies emits of the OTHER objects sacrificed carry `exiledAtOnce` and the matcher's recursion, graveyard-count and threshold readers refuse the fill. Corpus census (oracle text, 2026-11-07): Sword is the only card.
+      // CEILING: the card's own sacrifice in the same sentence ("exile this artifact") is not marked, only the objects a "those ... cards" / "the sacrificed ... cards" names; read off the clause text.
+      if (action.verb === "sacrifice" && EXILES_THE_SACRIFICED.test(text)) for (const e of emits) if (e.subject.self !== true && (e.verb === "dies" || e.verb === "sacrifice")) e.exiledAtOnce = true;
       // THE VICTIM MAY DECLINE (#1295): "its controller may sacrifice it", "unless that player sacrifices it". The event
       // is real when it happens, and not removal: see `GameEvent.victimMay`.
       if (victimDeclines(text, action.verb ?? "")) for (const e of emits) e.victimMay = true;

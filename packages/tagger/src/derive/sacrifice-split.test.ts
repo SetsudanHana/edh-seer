@@ -37,7 +37,9 @@ describe("a creature tail makes the card a sacrifice outlet", () => {
     expect(selfOf(rowOf(name)).filter((s) => s.verb === "dies").length).toBe(1);
   });
   test("Sword of the Ages: the tail is a class, not the card", () => {
-    expect(tailOf(rowOf("Sword of the Ages")).every((s) => s.self === undefined)).toBe(true);
+    const tail = tailOf(rowOf("Sword of the Ages"));
+    expect(tail.length).toBeGreaterThan(0);
+    expect(tail.every((s) => s.self === undefined)).toBe(true);
   });
   test("Kyscu Drake on the grammar path: the card, and one separate creature tail (the grammar already read two objects)", () => {
     const row = grammarRowOf("Kyscu Drake");
@@ -67,5 +69,15 @@ describe("the payment holds both objects (the cost is not free of the tail)", ()
     const s = sac("Mount Doom");
     expect(s[0]!.subject.self).toBe(true);
     expect(s[1]!.subject).toMatchObject({ legendary: true, type: "artifact" });
+  });
+});
+
+describe("a sacrifice whose cards the same ability exiles (#1523 part 2 fix)", () => {
+  const exiled = (name: string) => rowOf(name).tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "dies" || e.verb === "sacrifice").map((e) => [e.verb, e.subject.self === true, e.exiledAtOnce === true]);
+  test("Sword of the Ages: the creature tail is marked, the card itself is not", () => {
+    expect(exiled("Sword of the Ages")).toEqual([["sacrifice", true, false], ["dies", true, false], ["sacrifice", false, true], ["dies", false, true]]);
+  });
+  test.each(["Emrakul's Evangel", "Magus of the Order", "Viscera Seer", "Ashnod's Altar"])("%s: nothing is exiled, nothing is marked", (name) => {
+    expect(exiled(name).every(([, , m]) => m === false)).toBe(true);
   });
 });
