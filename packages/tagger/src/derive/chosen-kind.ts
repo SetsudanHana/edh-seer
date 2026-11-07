@@ -28,7 +28,8 @@ function kindsIn(text: string): Set<ChosenKind> {
   if (/\bchooses? (?:an? )?(?:card|permanent|nonland permanent|spell) type\b|\bcard type of your choice\b/i.test(t)) out.add("card-type");
   // "choose artifact, creature, or land", "choose Island or Swamp", "choose white Citizen, blue Camarid, ...": a choice from a printed LIST, read by what its members are.
   for (const m of t.matchAll(/\bchooses? ([^.:\n]{3,200}?)(?:\.|\n|$|:)/gi)) {
-    const body = m[1]!;
+    // a list ends where its sentence's own words resume: "chooses artifact, creature, or land during their untap step" (Storage Matrix)
+    const body = m[1]!.split(/\s(?:during|at|as|when|then)\s/i)[0]!;
     if (!/,| or /.test(body)) continue;
     const items = body.split(/,\s*(?:or\s+)?|\s+or\s+/).map((x) => x.trim().toLowerCase()).filter(Boolean);
     if (items.length < 2 || items.length > 12) continue;

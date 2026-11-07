@@ -18,6 +18,7 @@ const T = {
   winding: "Choose creature or land. Reveal the top four cards of your library. Put all cards of the chosen type revealed this way into your hand and the rest into your graveyard.",
   seasonOfGathering: "Choose up to five {P} worth of modes. You may choose the same mode more than once.\n{P}{P} — Choose artifact or enchantment. Destroy all permanents of the chosen type.",
   riptide: "As this artifact enters, choose a color and a creature type.\n{4}, {T}: Create an X/X creature token of the chosen color and type, where X is the number of charge counters on this artifact.",
+  storageMatrix: "As long as this artifact is untapped, each player chooses artifact, creature, or land during their untap step. That player can untap only permanents of the chosen type this step.",
   calloused: "You may choose not to untap this creature during your untap step.\nAs this creature enters, an opponent chooses a creature type.\n{T}: Gain control of target creature that isn't of the chosen type for as long as this creature remains tapped.",
 };
 
@@ -33,6 +34,7 @@ test("a text's choice is classified by what it says is chosen", () => {
   expect(chosenKindOfText(T.creeping)).toBe("card-type");
   expect(chosenKindOfText(T.winding)).toBe("card-type");
   expect(chosenKindOfText(T.seasonOfGathering)).toBe("card-type");
+  expect(chosenKindOfText(T.storageMatrix)).toBe("card-type");
   expect(chosenKindOfText(T.extinctionEvent)).toBe("parity");
   expect(chosenKindOfText(T.shimmer)).toBe("land-type");
   expect(chosenKindOfText(T.rootsOfLife)).toBe("land-type");
