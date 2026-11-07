@@ -835,3 +835,58 @@ describe("a counter on an exiled card is stamped zone exile", () => {
     ["two +1/+1 counters", "If they guess right, exile that creature. If they guess wrong, they lose 3 life. Then you may reveal the name of an invader. If you do, put two +1/+1 counters on it."],
   ])("%s is on a battlefield permanent: %s", (object, text) => { expect(zoneOf(object, text)).toBeUndefined(); });
 });
+
+// #1444 (owner 2026-11-06): CR 701.17a defines MILL as a keyword action; a card put from the library into the graveyard by other words is not milled. The emit stays `mill` (graveyard
+// consumers still read the move) and carries `notMillAction` when the clause never says mill, so only a trigger on the action itself can refuse it.
+describe("a library-to-graveyard move the clause does not word as mill (#1444)", () => {
+  const archghoul = "Whenever this creature or another Zombie you control dies, look at the top card of your library. If it's a Zombie card, you may reveal it and put it into your hand. If you don't put the card into your hand, you may put it into your graveyard.";
+  test("look at the top, then put it into the graveyard: a mill emit marked notMillAction", () => {
+    const e = actionEmits({ verb: "put", object: "it", fromZone: "library", toZone: "graveyard" }, archghoul);
+    expect(e.map((x) => x.verb)).toContain("mill");
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBe(true);
+  });
+  test("a mill action the clause words as mill is unmarked", () => {
+    const e = actionEmits({ verb: "mill", object: "three cards", amount: "3" }, "Target player mills three cards.");
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBeUndefined();
+  });
+  test("the model's mill verb on a clause that never says mill is marked too", () => {
+    const e = actionEmits({ verb: "mill", object: "the rest" }, "Reveal the top five cards of your library. Put the rest into your graveyard.");
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBe(true);
+  });
+  test("manifest dread's graveyard half is marked", () => {
+    const e = actionEmits({ verb: "manifest-dread", object: "" }, "Manifest dread.");
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBe(true);
+  });
+  test("a mill paid as a COST is worded in the cost, not the effect (Millikin, Deranged Assistant, The Warring Triad, Sinister Concoction, Rot Farm Skeleton)", () => {
+    const e = actionEmits({ verb: "mill", object: "a card", amount: "1" }, "Add {C}.", { costText: "{T}, Mill a card" });
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBeUndefined();
+    const bare = actionEmits({ verb: "mill", object: "a card", amount: "1" }, "Add {C}.");
+    expect(bare.find((x) => x.verb === "mill")?.subject.notMillAction).toBe(true);
+  });
+  test("the keyword action's own definition is a mill (CR 701.17a: 'put the top N cards of their library into their graveyard'): an emblem's token text, Jace Telepath Unbound", () => {
+    const e = actionEmits({ verb: "mill", object: "the top five cards of their library", amount: "5" }, "Whenever you cast a spell, target opponent puts the top five cards of their library into their graveyard.");
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBeUndefined();
+    const bottom = actionEmits({ verb: "put", object: "the bottom card", fromZone: "library", toZone: "graveyard" }, "{3}, {T}: Target player puts the bottom card of their library into their graveyard.");
+    expect(bottom.find((x) => x.verb === "mill")?.subject.notMillAction).toBe(true);
+  });
+  test("a record with no text of its own (the model split one printed clause in two) reads the card's printed text: stamped only when the WHOLE card never mills (Gathering Stone, Celestus Sanctifier)", () => {
+    const gathering = "When this artifact enters and at the beginning of your upkeep, look at the top card of your library. If it's a card of the chosen type, you may reveal it and put it into your hand. If you don't put the card into your hand, you may put it into your graveyard.";
+    const e = actionEmits({ verb: "mill", object: "it" }, "", { cardText: gathering });
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBe(true);
+    const celestus = "Whenever day becomes night or night becomes day, look at the top two cards of your library. Put one of them into your graveyard.";
+    expect(actionEmits({ verb: "mill", object: "one of them" }, undefined, { cardText: celestus }).find((x) => x.verb === "mill")?.subject.notMillAction).toBe(true);
+    // Visage of Dread mills elsewhere on the card: the text-less record stays unstamped.
+    const visage = "When this creature enters, each player mills two cards.\nWhenever this creature attacks, look at the top card of your library. You may put it into your graveyard.";
+    expect(actionEmits({ verb: "mill", object: "it" }, "", { cardText: visage }).find((x) => x.verb === "mill")?.subject.notMillAction).toBeUndefined();
+    // Nothing to read at all: no claim.
+    expect(actionEmits({ verb: "mill", object: "it" }, "", {}).find((x) => x.verb === "mill")?.subject.notMillAction).toBeUndefined();
+  });
+  test("no clause text: nothing is claimed either way", () => {
+    const e = actionEmits({ verb: "mill", object: "three cards", amount: "3" });
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBeUndefined();
+  });
+  test("a put into the graveyard that the clause words as mill elsewhere in the sentence stays unmarked", () => {
+    const e = actionEmits({ verb: "put", object: "the rest", fromZone: "library", toZone: "graveyard" }, "Mill four cards, then put the rest into your graveyard.");
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBeUndefined();
+  });
+});

@@ -542,6 +542,17 @@ function manifestsDreadYourself(text: string): boolean {
   });
 }
 
+/** THE MILL KEYWORD ACTION IS WORDED (CR 701.17a), #1444: mill / mills / milled / milling in the clause, or CR 701.17a's own definition of it, "put(s) the top [N] card(s) of [a player's] library into [their] graveyard" (an emblem's token text, Jace, Telepath Unbound: "mills five cards" is printed "puts the top five cards of their library into their graveyard"; the BOTTOM card is not). A `mill` emit whose clause has none of them is a library-to-graveyard move (`SubjectFilter.notMillAction`). */
+const MILL_ACTION_WORD = /\bmill(?:s|ed|ing)?\b|\bputs? the top (?:cards?|\w+ cards?) of (?:your|their|his or her|its|that player's|target player's|target opponent's|each opponent's|an opponent's) library into (?:your|their|his or her|its|that player's|target player's|target opponent's|each opponent's|an opponent's) graveyard\b/i;
+
+/** IS THIS `mill` EMIT'S CLAUSE FREE OF THE MILL ACTION (#1444)? The clause's own text and cost text are read. A record with NO text of its own (the model split one printed clause in two and the second id has no `segment()` text: Gathering Stone clause 4,
+ *  Celestus Sanctifier clause 3) reads the card's whole printed text instead, and is unworded only when the WHOLE card never says mill (Visage of Dread mills elsewhere, so its text-less record stays unstamped). With no text at all: no claim (fails open). */
+function millActionUnworded(clauseText: string | undefined, costText: string | undefined, cardText: string | undefined): boolean {
+  const own = clauseText?.trim() ?? "";
+  const basis = own !== "" ? `${own} ${costText ?? ""}` : (cardText ?? "").trim();
+  return basis !== "" && !MILL_ACTION_WORD.test(basis);
+}
+
 /** A MILL MADE BY A PUT (OR A MANIFEST DREAD) NAMES WHOSE LIBRARY (#1401 part 2): "Reveal the top five cards of YOUR library ... Put the rest into your graveyard" (Benefaction of Rhonas, Hermit Druid,
  *  Fact or Fiction, Tower Geist) moves cards library -> graveyard, so it emits `mill`, but the put's object ("the rest") names no player and `CONTROLLER_DEFAULT` does not cover `put`, so the mill
  *  read `any` and satisfied the opponent-mill gate of a recursion over an opponent's graveyard (edges.ts reanimatorEdges, ruling #729). The clause says "your library" and no other player's library:
@@ -901,7 +912,7 @@ function attachHead(object: string): string | undefined {
   return SELF_REFERENCE.test(head) ? head : undefined;
 }
 
-export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean; trigger?: CounterTrigger; cardName?: string } = {}): GameEvent[] {
+export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean; trigger?: CounterTrigger; cardName?: string; costText?: string; cardText?: string } = {}): GameEvent[] {
   if (definesPowerToughness(action)) return [];
   // A LIFE TOTAL SET THAT IS A LOSS (#1333, CR 119.5): "target opponent's life total becomes 10" is the `lose-life` a printed "target opponent loses N life" is; a plain set emits nothing.
   const lifeLoss = action.verb === "set-life" ? lifeSetRewrite(action, clauseText ?? "") : undefined;
@@ -1224,6 +1235,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       ...(leftTheGraveyard && verb === "leaves" ? { zone: "graveyard" } : {}),
       // A COUNTER ON A CARD EXILED WITH IT is on a card in exile (#1523: Rayami "exile that card with a blood counter on it", Darigaaz Reincarnated, suspend), not on a battlefield permanent.
       ...(verb === "counter-added" && exilesWithCounter(clauseText ?? "", counter) ? { zone: "exile" } : {}),
+      ...(verb === "mill" && millActionUnworded(clauseText, opts.costText, opts.cardText) ? { notMillAction: true as const } : {}),
       ...(from ? { fromZone: from } : {}),
       ...(counter ? { counter } : {}),
       ...(tokenType ? { type: tokenType } : {}),

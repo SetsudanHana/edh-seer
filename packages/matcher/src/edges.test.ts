@@ -7746,3 +7746,36 @@ test("a scaling prevention keeps its scales edge though its kind is a fact kind 
   expect(blankBefore.length).toBeGreaterThan(0);
   expect(withScaling.length).toBe(blankBefore.length);
 });
+
+// #1444 (owner 2026-11-06): only a trigger on the MILL keyword action (CR 701.17a) needs a clause that mills; every graveyard consumer keeps reading the library-to-graveyard move.
+describe("mill action vs a library-to-graveyard move (#1444)", () => {
+  const zellix = base("Zellix, Sanity Flayer", [{
+    kind: "triggered", trigger: { verbs: ["mill"], subject: { control: "any", token: null, type: "creature" }, batched: true },
+    effect: { kind: "token-generation" }, emits: [{ verb: "create-token", subject: { control: "you", token: true, type: "creature", subtype: "horror" } }],
+  }]);
+  const archghoul = base("Archghoul of Thraben", [{
+    kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "you", token: null, subtype: "zombie" } },
+    effect: { kind: "mill" }, emits: [{ verb: "mill", subject: { control: "you", token: null, type: "creature", fromZone: "library", notMillAction: true } }],
+  }]);
+  const hermit = base("Mill Spell", [{
+    kind: "activated", effect: { kind: "mill" }, emits: [{ verb: "mill", subject: { control: "you", token: null, type: "creature" } }],
+  }]);
+  const reanimator = base("Muldrotha-style Reanimator", [{
+    kind: "static", effect: { kind: "graveyard-recursion", subject: { type: "creature", control: "you", token: null, zone: "graveyard" } },
+  }]);
+  const putIntoYard = base("Syr Konrad-style", [{
+    kind: "triggered", trigger: { verbs: ["enters-graveyard"], subject: { type: "creature", control: "any", token: null } }, effect: { kind: "drain" },
+  }]);
+  const mills = (p: DeckCard, c: DeckCard) => directedReasons(p, c, H).filter((r) => r.tag.startsWith("mill"));
+  test("Archghoul -> Zellix: no mill-action pair", () => {
+    expect(mills(archghoul, zellix)).toEqual([]);
+    expect(pairReasons(archghoul, zellix, H)).toEqual([]);
+  });
+  test("a real mill -> Zellix: the pair is kept", () => {
+    expect(mills(hermit, zellix).length).toBeGreaterThan(0);
+  });
+  test("Archghoul -> a graveyard-fill consumer: the pair is kept", () => {
+    expect(directedReasons(archghoul, putIntoYard, H).length).toBeGreaterThan(0);
+    expect(directedReasons(archghoul, reanimator, H).length).toBeGreaterThan(0);
+  });
+});
