@@ -47,7 +47,7 @@ import { stationThresholdFor, thresholdFor, thresholdSubjectFor } from "./thresh
 import { addsManaText, deriveMana, production } from "./mana-lines.js";
 import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
-import { isSelfSubject, SELF_REFERENCE, withoutArticle } from "./self-reference.js";
+import { isSelfSubject, SELF_REFERENCE, selfAndTail, withoutArticle } from "./self-reference.js";
 import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, boundedByEnchantLine, exiledAcrossClauses, PLURAL_BACKREF, pluralAntecedent, pluralIsDelayed, PRONOUN_OBJECT, selfAntecedentText, withoutCombatRole, zoneAfterEvent } from "./references.js";
 import { triggerHasCue } from "../clause-store.js";
 import { emblemRecipient } from "../emblem.js";
@@ -2788,6 +2788,23 @@ export function deriveAbilities(
   // `exile | ... | graveyard>battlefield`: the only exile with a battlefield destination in all of `cardClauses.canonical` (census 2026-11-04). Read as the exile it was filed as it emitted a false
   // `exiled:creature` from a graveyard and left its own "Exile it" unclaimed. It is the verb a real reanimation uses (Reanimate stores `put`), so the pass below reads it as one.
   clauses = clauses.map((c) => (c.actions ?? []).some((a) => a.verb === "exile" && a.toZone === "battlefield") ? { ...c, actions: (c.actions ?? []).map((a) => (a.verb === "exile" && a.toZone === "battlefield" ? { ...a, verb: "put" } : a)) } : c);
+  // "SACRIFICE THIS ARTIFACT AND THIRTEEN BLOOD TOKENS" IS TWO SACRIFICES (#1523 part 2, owner ruling 2026-11-07): the card, and a tail that is its own sacrifice emit, the way a lone cost sacrifice is (Ashnod's Altar, Viscera Seer).
+  // Read whole, the tail's words merged into the card's self subject (Glass-Cast Heart's artifact `blood`, Sword of the Ages' `creature`). A creature tail makes the card a sacrifice outlet that feeds "when this creature dies"
+  // (the ruled convention); a Blood-token tail feeds token deaths only. Cost sacrifices only (the object is in the cost text); the tail is yours (CR 701.21a), pinned below with `costSacrifice`.
+  const splitTails = new Set<Action>();
+  clauses = clauses.map((c) => {
+    if (!/\bsacrifice\b/i.test(clauseCosts?.[c.id as number] ?? "")) return c;
+    let changed = false;
+    const actions = (c.actions ?? []).flatMap((a): Action[] => {
+      const parts = a.verb === "sacrifice" && typeof a.object === "string" ? selfAndTail(a.object, cardName) : null;
+      if (!parts) return [a];
+      changed = true;
+      const tail: Action = { ...a, object: parts.tail };
+      splitTails.add(tail);
+      return [{ ...a, object: parts.self }, tail];
+    });
+    return changed ? { ...c, actions } : c;
+  });
   // A PRINTED CRAFT LINE IS THE ACTIVATED ABILITY IT MEANS (#1500, CR 702.167a): the store files "Craft with creature {4}{B}" as an inert `none` action, so the exile of its materials, the cost, was never an
   // event. Rewritten to an activated clause of those exiles (the ordinary cost-exile path derives them), with the cost in CR's words; the exiles are stamped `viaCraft` below. See `craft.ts`.
   const craftClauses = new Set<number>();
@@ -3857,7 +3874,7 @@ export function deriveAbilities(
       // action, since the clause lists cost actions first -- is pinned here (recall v4, 2026-09-09).
       // CEILING: unlike `costDiscard`, this pin does not look at WHO may activate ("Any player may activate this ability") -- an opponent's cost sacrifice reads `you`; left as it was (#1395).
       const costSacrifice = action.verb === "sacrifice" && /\bsacrifice\b/i.test(cost)
-        && (clause.actions ?? []).find((x) => x.verb === "sacrifice") === action;
+        && ((clause.actions ?? []).find((x) => x.verb === "sacrifice") === action || splitTails.has(action));
       if (costSacrifice) {
         for (const e of emits) if (e.subject.control === "any") e.subject.control = "you";
         if (subject && subject.control === "any") subject.control = "you";
