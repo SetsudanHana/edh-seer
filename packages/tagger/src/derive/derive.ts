@@ -2411,7 +2411,7 @@ function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost
   return { ...clause, actions: out };
 }
 
-type GrammarTrigger = { verbs: Verb[]; subject: SubjectFilter; blocker?: SubjectFilter; batched?: true } | { refused: string; subject?: SubjectFilter };
+type GrammarTrigger = { verbs: Verb[]; subject: SubjectFilter; blocker?: SubjectFilter; batched?: true; alongside?: { atLeast: number } } | { refused: string; subject?: SubjectFilter };
 
 function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, siblingEvents: string[], precomputed?: TriggerReading[], curse?: boolean, creatureCard?: boolean, textlessSibling?: boolean): GrammarTrigger[] | null {
   // An Aura's "enchanted permanent" is the class its own face's Enchant line names (see subjectFrom).
@@ -2523,7 +2523,7 @@ function grammarTriggerFrom(r: TriggerReading, text: string, preamble: string, c
   // Only an attacking creature becomes blocked (CR 509.1h): "an attacking creature becomes blocked" states the event, not a narrowing.
   if (verb === "becomes-blocked" && subject.combat === "attacking") delete subject.combat;
   if (subject.sharesTypeWith === "self" && GRANTED_TO_COMMANDER.test(cardText)) subject.sharesTypeWith = "commander";
-  return { verbs: [verb], subject, ...(verb === "becomes-blocked" && r.blocker ? { blocker: r.blocker, ...(r.batched ? { batched: true as const } : {}) } : {}) };
+  return { verbs: [verb], subject, ...(verb === "attacks" && r.alongside ? { alongside: r.alongside } : {}), ...(verb === "becomes-blocked" && r.blocker ? { blocker: r.blocker, ...(r.batched ? { batched: true as const } : {}) } : {}) };
 }
 
 /** "those tokens" / "the token": not a PRONOUN_OBJECT, so it never resolves and emitted a wildcard token tap (Dog Walker). */

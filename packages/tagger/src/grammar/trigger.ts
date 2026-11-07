@@ -37,6 +37,8 @@ export interface TriggerReading {
   /** A `becomes-blocked` reading's "by ..." phrase, read (#1381): the filter on the blocking creature(s), and whether the trigger fires once per batch of them. */
   blocker?: SubjectFilter;
   batched?: true;
+  /** BATTALION (#1082, owner 2026-11-06): "this creature and at least N other creatures attack" is the card's own attack; N is recorded, never checked. */
+  alongside?: { atLeast: number };
 }
 
 /** A player phrase as an actor: whose the event is, and a narrowing when the phrase picks out one
@@ -727,6 +729,11 @@ function bodyPlain(text: string): TriggerReading | TriggerReading[] | null {
   const along = ALONG_WITH.exec(rest);
   if (along) {
     const read = objectReading(`${along[1]} ${along[3]}`);
+    // BATTALION (#1082, owner 2026-11-06): exactly "<this card> and at least two other creatures attack" is the card's own attack trigger, the condition recorded and unchecked (like `oncePerTurn`),
+    // an explicit exception to the 2026-10-01 narrowing refusal. Every other along-with phrase (one other, another creature, a class, equipped creature, different players) stays a narrowing.
+    if (!Array.isArray(read) && read && read.event === "attacks" && read.subject?.self === true && along[2] === "and at least two other creatures" && !along[4]) {
+      return { ...read, alongside: { atLeast: 2 } };
+    }
     return read && withNarrowing(read, along[4] ? `${along[2]} ${along[4]}` : along[2]!);
   }
   return special(rest) ?? countersPut(rest) ?? countersRemoved(rest) ?? damageReceived(rest) ?? actorReadings(rest) ?? objectReading(rest) ?? eitherTrigger(rest);
