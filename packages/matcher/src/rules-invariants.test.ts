@@ -75,6 +75,7 @@ const TESTED: Record<string, string> = {
   "712.8a": "legality.test.ts — 712.8a: Umori reads a double-faced card by its FRONT face",
   "702.145b": "reanimate-self-etb.test.ts — a DAYBOUND card enters transformed at night, so its back face is reachable from a graveyard return (Howlpack Piper)",
   "603.2c": "edge-magnitude.test.ts — a batched ('one or more') consumer hears the whole batch once, so the magnitude caps at one",
+  "603.12": "reflexive-sacrifice.test.ts — a reflexive sacrifice trigger hears only its own card's sacrifice, never another card's outlet (#1565)",
   "202.3": "stats.test.ts — mana value is a whole number, so a mana-value parity test holds and 0 is even (#713)",
   "712.14": "faces.test.ts — a card putting itself back onto the battlefield enters FRONT face up unless transformed (#715)",
   "305.7": "mana-colour-sources.test.ts — a land that makes every land a Swamp or a Forest (Urborg, Yavimaya) is one itself: it taps for that colour (#1169)",

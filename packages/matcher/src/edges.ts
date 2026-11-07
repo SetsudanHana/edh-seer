@@ -25,7 +25,7 @@ import { animatedKindreds, kindredReaching, namesKindred } from "./becomes-kindr
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
 import { BASIC_LAND_TYPE_SET, SUPERTYPES, parseTypeLineAllFaces } from "./typeline.js";
 import { enteringFaceName, faceDeckCards, graveyardFaceName, graveyardIdentity } from "./faces.js";
-import { claimsNothing, isManaRider, isRefusedTrigger, isSelfLoss } from "./claims.js";
+import { claimsNothing, isManaRider, isReflexiveTrigger, isRefusedTrigger, isSelfLoss } from "./claims.js";
 import { magnitudeOf, mergeMagnitude } from "./edge-magnitude.js";
 import type { LandTypes } from "./chosen-type.js";
 
@@ -416,7 +416,7 @@ export function cardCaresTags(tags: CardTags): Set<string> {
     // has somewhere to go (the deck's re-firers); the others simply say nothing about what the deck
     // wants, so they are dropped rather than re-keyed. Left deliberately narrow: an extra combat is
     // the analogous supply for a self `attacks` trigger and is its own item.
-    if (a.trigger && a.trigger.subject?.self !== true) {
+    if (a.trigger && a.trigger.subject?.self !== true && !isReflexiveTrigger(a)) {
       for (const v of a.trigger.verbs) {
         // The zone is passed only so a graveyard leave/enter (a CARD, not a permanent) is not given
         // the permanent class; the key keeps its legacy spelling (`leaves:`, no `-graveyard`) here.
@@ -2369,6 +2369,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
       // A REPLACEMENT'S TRIGGER IS MATCHED FROM ITS OWN SIDE (owner, 2026-09-29): see `directedReasons`.
       if ((a.replacement === true) !== (replacementOnly === true)) continue;
       if (!a.trigger) continue;
+      if (isReflexiveTrigger(a)) continue;
       if (a.effect.kind === "proliferate" && notAnOrigin.has(JSON.stringify(e0))) continue;
       for (const rawVerb of a.trigger.verbs) {
         const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject, ...(a.trigger.amount ? { amountIs: a.trigger.amount } : {}), ...(a.trigger.victim ? { victimIs: a.trigger.victim } : {}) });

@@ -14,7 +14,7 @@ import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
 import { FACT_KINDS, POLYMORPH_HIT_MV, eventTagKey, ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, isPolymorph, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
 import { impliedCounterEvents, impliedGraveyardEvents, keywordAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
-import { isRefusedTrigger, isSelfLoss } from "./claims.js";
+import { isReflexiveTrigger, isRefusedTrigger, isSelfLoss } from "./claims.js";
 import { parseSubject } from "@edh-seer/tagger/subject";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "./hierarchy.js";
 import { choosesColour, isBackground as isBackgroundCard, isLegalCommander, pairingLicense } from "./legality.js";
@@ -385,7 +385,7 @@ const withOnly = (d: DeckCard, a: CardTags["abilities"][number]): DeckCard => (d
  *  card's keyword, not an ability, and stays fact-less. */
 const demandFactsOfCard = perCard((d: DeckCard): Map<string, number[]> =>
   demandFactsOf(claimingAbilitiesOf(d), (a) => [
-    ...(a.trigger?.subject?.self === true ? []
+    ...(a.trigger?.subject?.self === true || isReflexiveTrigger(a) ? []
       : (a.trigger?.verbs ?? []).flatMap((v) => splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)))),
     ...(a.conditionCares ?? []).filter((t) => POOL_CONDITION_FAMILIES.test(t)).flatMap(conditionDemandKeys),
     ...staticKeysOfAbility(a),
@@ -757,6 +757,7 @@ export function partnersFor(
       // one, so both reach `cast|artifact` at the same price; the narrower one is the closer pair.
       const events = new Map<string, { score: number; tags: Set<string>; width: number }>();
       for (const a of claimingAbilitiesOf(c)) {
+        if (isReflexiveTrigger(a)) continue;
         for (const verb of a.trigger?.verbs ?? []) {
           // ONE EVENT PER TYPE (roadmap AK5): a trigger naming two types proposes two, and the
           // candidate keeps whichever scores best -- so a partner is still listed once, under the
@@ -1078,6 +1079,7 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] => {
       kind: a.kind,
       ...(a.clause !== undefined ? { clause: a.clause } : {}),
       ...(a.cost ? { cost: a.cost } : {}),
+      // CEILING: this row PRINTS the ability's trigger for the card page, so a reflexive trigger (#1565) still shows its `when`; the page row is a description, not a demand.
       when: (a.trigger?.verbs ?? []).flatMap((v) =>
         splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent))),
       // THE TRIGGER IS THE CARD ITSELF: the key cannot carry it, so the row says it beside the key.
@@ -1194,7 +1196,7 @@ export const demandKeysOf = perCard((d: DeckCard): string[] => [
   // the deck must cover and ranked attackers as his partners (owner, 2026-09-05). The deck report
   // already gates self triggers; the page now does the same.
   ...claimingAbilitiesOf(d).flatMap((a) =>
-    a.trigger?.subject?.self === true ? []
+    a.trigger?.subject?.self === true || isReflexiveTrigger(a) ? []
       : (a.trigger?.verbs ?? []).flatMap((v) => splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)))),
   // AN INTERVENING IF IS A DEMAND TOO (owner, 2026-09-29): Resplendent Angel's "if you gained 5 or
   // more life this turn" fires at the end step, so its TRIGGER names no lifegain, and the card was
