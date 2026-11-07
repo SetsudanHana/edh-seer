@@ -85,6 +85,87 @@ function resolveSubject(subject: SubjectFilter, counts: Map<string, number>, hie
   return { ...rest, subtype: top };
 }
 
+/** EVERY WRITTEN FORM OF A CREATURE SUBTYPE: the singular and its plural ("Elf"/"Elves", "Wolf"/"Wolves", "Fox"/"Foxes", "Faerie"/"Faeries", "Mouse"/"Mice"). Single words only (a multi-word subtype is one token in no oracle text this reads), and three letters or more. */
+const SUBTYPE_FORMS: ReadonlySet<string> = (() => {
+  const out = new Set<string>();
+  for (const raw of CREATURE_SUBTYPE_SET) {
+    if (raw.length < 3 || raw.includes(" ")) continue;
+    out.add(raw);
+    if (raw.endsWith("fe")) out.add(raw.slice(0, -2) + "ves");
+    else if (raw.endsWith("f")) out.add(raw.slice(0, -1) + "ves");
+    else if (/[^aeiou]y$/.test(raw)) out.add(raw.slice(0, -1) + "ies");
+    else if (/(?:s|x|z|ch|sh)$/.test(raw)) out.add(raw + "es");
+    else out.add(raw + "s");
+  }
+  out.add("mice"); out.add("fungi");
+  return out;
+})();
+
+/** Blank (to spaces, length kept) every span that opens with `open` and ends at the first `close` within `reach` characters, and (by default) without a full stop in between. Linear: one pass, no backtracking. */
+function blankSpans(text: string, lower: string, open: string, close: string, reach: number, sentence = true): string {
+  const chars = text.split("");
+  let from = 0;
+  for (;;) {
+    const at = lower.indexOf(open, from);
+    if (at < 0) break;
+    const end = lower.indexOf(close, at + open.length);
+    if (end < 0 || end - at > reach || (sentence && lower.slice(at, end).includes("."))) { from = at + open.length; continue; }
+    for (let i = at; i < end + close.length; i++) chars[i] = " ";
+    from = end + close.length;
+  }
+  return chars.join("");
+}
+
+/** Blank every occurrence of `needle` (compared lower-case). */
+function blankAll(text: string, lower: string, needle: string): string {
+  if (needle.length < 3) return text;
+  const chars = text.split("");
+  const n = needle.toLowerCase();
+  for (let at = lower.indexOf(n); at >= 0; at = lower.indexOf(n, at + n.length)) for (let i = at; i < at + n.length; i++) chars[i] = " ";
+  return chars.join("");
+}
+
+/** Does the card's PRINTED text name a creature type? The fallback for what derive does not record: a type named only in a condition ("if you control a Wizard"), a trigger derive dropped ("whenever a Samurai or Warrior you
+ *  control attacks alone"), a greatest-of count ("Elementals you control") or a reveal cost ("reveal a Vampire card"). Read after removing what is NOT the card caring:
+ *  reminder text in parentheses; the card's own name (and its short name before a comma, and each face's); "this creature"; a token-creation phrase ("create ... token(s)", "amass Orcs"); and "except it's a ... in addition to
+ *  its other types" (a copy's added type). The type line is not part of oracle text, so the card's own subtypes are not read at all.
+ *  A type is a WORD that starts upper-case (printed subtypes are capitalised, "wall" and "head" are not) and is a singular or plural `CREATURE_SUBTYPES` entry. Linear throughout: indexOf scans and one character pass, no regex over the text.
+ *  CEILING: a type named for any reason counts (protection from Clerics, "can't be blocked by Saprolings", "target Dragon"), as does one in another card's name ("named Arachnus Web" is no subtype, but "Sliver Hive" would be); and a
+ *  sentence-initial capitalised ordinary word that is also a subtype ("Head", "Seal") reads as a type. */
+export function printedTextNamesCreatureType(name: string, oracleText: string | undefined): boolean {
+  if (!oracleText) return false;
+  let text = oracleText;
+  let lower = text.toLowerCase();
+  if (lower.length !== text.length) return false;
+  // reminder text
+  const chars = text.split("");
+  let depth = 0;
+  for (let i = 0; i < chars.length; i++) {
+    const c = chars[i]!;
+    if (c === "(") depth++;
+    if (depth > 0) chars[i] = " ";
+    if (c === ")" && depth > 0) depth--;
+  }
+  text = chars.join(""); lower = text.toLowerCase();
+  const needles = new Set<string>(["this creature", "this spell", "this permanent"]);
+  for (const face of name.split(" // ")) { needles.add(face); needles.add(face.split(",")[0]!); }
+  for (const nd of needles) { text = blankAll(text, lower, nd); lower = text.toLowerCase(); }
+  text = blankSpans(text, lower, "create", "token", 200); lower = text.toLowerCase();
+  text = blankSpans(text, lower, "amass ", " ", 30, false); lower = text.toLowerCase();
+  text = blankSpans(text, lower, "except it's", "other types", 120); lower = text.toLowerCase();
+  const isWordChar = (c: string): boolean => (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c === "'" || c === "\u2019" || c === "-";
+  let i = 0;
+  while (i < text.length) {
+    if (!isWordChar(text[i]!)) { i++; continue; }
+    let j = i;
+    while (j < text.length && isWordChar(text[j]!)) j++;
+    const first = text[i]!;
+    if (first >= "A" && first <= "Z" && SUBTYPE_FORMS.has(lower.slice(i, j))) return true;
+    i = j;
+  }
+  return false;
+}
+
 /** DOES THIS CARD CARE ABOUT A CREATURE TYPE? (owner ruling 2026-11-07, #1526 part 2, no-deck view). Read off DERIVED data, never a name: some ability of the card has a subject that names a creature subtype
  *  (`subtype`, or one `anyOf` branch's) or is itself a chosen type -- a trigger subject ("whenever another Elf enters"), a class it acts on (Elvish Archdruid's "Other Elf creatures you control get +1/+1",
  *  a tutor's "search for a Goblin card"), or the class whose triggers it doubles. Left out: a `self` subject (the card's own type line), and the token a `token-generation` / `clone` makes (a Goblin that MAKES a
@@ -94,7 +175,17 @@ function resolveSubject(subject: SubjectFilter, counts: Map<string, number>, hie
  *  CEILING: the other way, derive does not record a type named only in a CONDITION, a cost REVEAL or a greatest-of count (Akki Ronin's "a Samurai or Warrior attacks alone", Academy Journeymage's "if you control a Wizard", Sunderflock's "Elementals you control",
  *  Sadistic Skymarcher's "reveal a Vampire"), so those kindred payoffs read as not caring and lose the pair. Roughly 560 of the 16,500 losing consumers print one of their own subtypes outside a token or a self reference (a text census, not a count).
  *  Read by `staticEdges` only for an UNRESOLVED chosen type, i.e. with no deck. */
-export function caresAboutCreatureType(tags: CardTags): boolean {
+export function caresAboutCreatureType(tags: CardTags, card: { name: string; oracleText?: string }): boolean {
+  const hit = caresCache.get(tags);
+  if (hit !== undefined) return hit;
+  const out = caresFromTags(tags) || printedTextNamesCreatureType(card.name, card.oracleText);
+  caresCache.set(tags, out);
+  return out;
+}
+
+const caresCache = new WeakMap<CardTags, boolean>();
+
+function caresFromTags(tags: CardTags): boolean {
   // THE CREATURE-SUBTYPE LIST, not the hierarchy: the hierarchy lists every card type a subtype appears under, so Forest, Equipment, Food, Shrine, Treasure and Spacecraft read as creature subtypes too.
   const isCreatureType = (sub: string): boolean => CREATURE_SUBTYPE_SET.has(sub.toLowerCase());
   const names = (s: SubjectFilter | undefined): boolean => {
@@ -104,11 +195,13 @@ export function caresAboutCreatureType(tags: CardTags): boolean {
   };
   // A CHANGELING IS EVERY CREATURE TYPE, so it is in whatever type is chosen (deck mode pairs it with the deck's lord for the same reason: `extractCharacteristics` gives it every subtype).
   if ((tags.characteristics.keywords ?? []).some((k) => k.toLowerCase() === "changeling")) return true;
+  // A TOKEN MAKER (token-generation, or any ability that emits a created token: "amass Orcs" is a counter-placement that creates an Army) names the type of what it makes, not one it cares about.
+  const makesToken = (a: CardTags["abilities"][number]): boolean => a.effect.kind === "token-generation" || (a.emits ?? []).some((e) => e.verb === "create-token");
   return tags.abilities.some((a) => names(a.trigger?.subject) || names(a.doublesOf) || names(a.effect.scalingSubject)
-    || (a.effect.kind !== "token-generation" && a.effect.kind !== "clone" && names(a.effect.subject))
+    || (a.effect.kind !== "token-generation" && a.effect.kind !== "clone" && !makesToken(a) && names(a.effect.subject))
     // An EMIT names a type when the card does something to that class: a cost ("Tap five untapped Clerics": a `taps` emit), a sacrifice, a blank effect whose "dies" emit is the chosen type (Tsabo's Decree). Not the TOKEN it
     // makes (`create-token`, or any emit of a `token-generation` ability, or a token subject): an Elf that makes Elf tokens is a body, not a payoff.
-    || (a.effect.kind !== "token-generation" && (a.emits ?? []).some((e) => e.verb !== "create-token" && e.subject.token !== true && names(e.subject))));
+    || (!makesToken(a) && (a.emits ?? []).some((e) => e.verb !== "create-token" && e.subject.token !== true && names(e.subject))));
 }
 
 /** An unresolved chosen CREATURE type: `chosenType` on a subject whose type is `creature`. Any other chosen-type subject (a card type, a land type, odd or even, "an opponent chooses") is not this. */

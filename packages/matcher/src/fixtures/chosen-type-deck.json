@@ -653,5 +653,333 @@
     ]
    }
   ]
+ },
+ "Akki Ronin": {
+  "source": {
+   "name": "Akki Ronin",
+   "typeLine": "Creature — Goblin Samurai",
+   "oracleText": "Whenever a Samurai or Warrior you control attacks alone, you may discard a card. If you do, draw a card.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "1",
+   "toughness": "3",
+   "manaCost": "{1}{R}",
+   "layout": "normal",
+   "_id": "4b4c76e1-c480-4d10-93d4-483ef2debc4b"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "a Samurai or Warrior you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Academy Journeymage": {
+  "source": {
+   "name": "Academy Journeymage",
+   "typeLine": "Creature — Human Wizard",
+   "oracleText": "This spell costs {1} less to cast if you control a Wizard.\nWhen this creature enters, return target creature an opponent controls to its owner's hand.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "3",
+   "toughness": "2",
+   "manaCost": "{4}{U}",
+   "layout": "normal",
+   "_id": "b400700c-1d82-4721-a166-56f88ba6ad19"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "casting cost",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target creature an opponent controls",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Goldmeadow Stalwart": {
+  "source": {
+   "name": "Goldmeadow Stalwart",
+   "typeLine": "Creature — Kithkin Soldier",
+   "oracleText": "As an additional cost to cast this spell, reveal a Kithkin card from your hand or pay {3}.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{W}",
+   "layout": "normal",
+   "_id": "1aff8653-12c5-4549-915f-ac2fd6dfd43b"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "reveal a Kithkin card from your hand or pay {3}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Rhovanion Rampager": {
+  "source": {
+   "name": "Rhovanion Rampager",
+   "typeLine": "Creature — Wolf",
+   "oracleText": "Whenever this creature attacks, you may sacrifice another creature. If you do, put a number of +1/+1 counters on this creature equal to the sacrificed creature's power.\nWhen this creature dies, amass Goblins X, where X is this creature's power. (Put X +1/+1 counters on an Army you control. It's also a Goblin. If you don't control an Army, create a 0/0 black Goblin Army creature token first.)",
+   "keywords": [
+    "Amass"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "3",
+   "toughness": "2",
+   "manaCost": "{2}{B}",
+   "layout": "normal",
+   "_id": "008a11c1-d283-49fe-abd7-ff4fe8b1fe79"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "another creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "sacrificed creature's power",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "amass",
+      "object": "Goblins",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "this creature's power",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Ambassador Oak": {
+  "source": {
+   "name": "Ambassador Oak",
+   "typeLine": "Creature — Treefolk Warrior",
+   "oracleText": "When this creature enters, create a 1/1 green Elf Warrior creature token.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{3}{G}",
+   "layout": "normal",
+   "_id": "4045c24e-098f-4582-8c50-576a94c7b705"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 green Elf Warrior creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Sunderflock": {
+  "source": {
+   "name": "Sunderflock",
+   "typeLine": "Creature — Elemental",
+   "oracleText": "This spell costs {X} less to cast, where X is the greatest mana value among Elementals you control.\nFlying\nWhen this creature enters, if you cast it, return all non-Elemental creatures to their owners' hands.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 9,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{7}{U}{U}",
+   "layout": "normal",
+   "_id": "c01b221f-3993-43ab-8cde-b42fb344e2a7"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "this spell costs X less to cast, where X is the greatest mana value among Elementals you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all non-Elemental creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "all non-Elemental creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
  }
 }

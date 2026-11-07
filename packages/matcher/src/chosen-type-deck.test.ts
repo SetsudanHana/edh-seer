@@ -72,3 +72,12 @@ test("'odd or even' is not a creature-type choice: Extinction Event's tags are l
   expect(refuseUnresolvedChosenTypes(ee.tags!, ee.card.oracleText)).toBe(ee.tags);
   expect(refuseUnresolvedChosenTypes(hv.tags!, hv.card.oracleText)).not.toBe(hv.tags);
 });
+
+// DERIVE DOES NOT RECORD A TYPE NAMED ONLY IN A CONDITION, A COST OR A COUNT, so the printed text is read too (owner decision 2026-11-07, #1526 part 2): a kindred payoff the derived path misses still pairs.
+test("with no deck, a kindred payoff derive does not see (type named in a trigger, a condition, a count or a reveal cost) still pairs with Metallic Mimic", () => {
+  for (const payoff of ["Akki Ronin", "Academy Journeymage", "Goldmeadow Stalwart", "Sunderflock"]) expect(mimicStatic(payoff), payoff).not.toEqual([]);
+});
+
+test("with no deck, a card that only MAKES a creature of a type (Ambassador Oak's Elf Warrior token, Rhovanion Rampager's amass Goblins) is not a type-caring card", () => {
+  for (const maker of ["Ambassador Oak", "Rhovanion Rampager"]) expect(mimicStatic(maker), maker).toEqual([]);
+});
