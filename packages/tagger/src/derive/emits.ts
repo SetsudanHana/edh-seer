@@ -543,7 +543,7 @@ function manifestsDreadYourself(text: string): boolean {
 }
 
 /** THE MILL KEYWORD ACTION IS WORDED (CR 701.17a), #1444: mill / mills / milled / milling in the clause, or CR 701.17a's own definition of it, "put(s) the top [N] card(s) of [a player's] library into [their] graveyard" (an emblem's token text, Jace, Telepath Unbound: "mills five cards" is printed "puts the top five cards of their library into their graveyard"; the BOTTOM card is not). A `mill` emit whose clause has none of them is a library-to-graveyard move (`SubjectFilter.notMillAction`). */
-const MILL_ACTION_WORD = /\bmill(?:s|ed|ing)?\b|\bputs?\s+the\s+top\s+(?:\w+\s+)?cards?\s+of\s+(?:your|their|his or her|its|that player's|target player's|target opponent's|each opponent's|an opponent's)\s+library\s+into\s+(?:your|their|his or her|its|that player's|target player's|target opponent's|each opponent's|an opponent's)\s+graveyard\b/i;
+const MILL_ACTION_WORD = /\bmill(?:s|ed|ing)?\b|\bputs? the top (?:cards?|\w+ cards?) of (?:your|their|his or her|its|that player's|target player's|target opponent's|each opponent's|an opponent's) library into (?:your|their|his or her|its|that player's|target player's|target opponent's|each opponent's|an opponent's) graveyard\b/i;
 
 /** A MILL MADE BY A PUT (OR A MANIFEST DREAD) NAMES WHOSE LIBRARY (#1401 part 2): "Reveal the top five cards of YOUR library ... Put the rest into your graveyard" (Benefaction of Rhonas, Hermit Druid,
  *  Fact or Fiction, Tower Geist) moves cards library -> graveyard, so it emits `mill`, but the put's object ("the rest") names no player and `CONTROLLER_DEFAULT` does not cover `put`, so the mill
