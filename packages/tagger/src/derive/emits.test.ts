@@ -857,6 +857,12 @@ describe("a library-to-graveyard move the clause does not word as mill (#1444)",
     const e = actionEmits({ verb: "manifest-dread", object: "" }, "Manifest dread.");
     expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBe(true);
   });
+  test("a mill paid as a COST is worded in the cost, not the effect (Millikin, Deranged Assistant, The Warring Triad, Sinister Concoction, Rot Farm Skeleton)", () => {
+    const e = actionEmits({ verb: "mill", object: "a card", amount: "1" }, "Add {C}.", { costText: "{T}, Mill a card" });
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBeUndefined();
+    const bare = actionEmits({ verb: "mill", object: "a card", amount: "1" }, "Add {C}.");
+    expect(bare.find((x) => x.verb === "mill")?.subject.notMillAction).toBe(true);
+  });
   test("no clause text: nothing is claimed either way", () => {
     const e = actionEmits({ verb: "mill", object: "three cards", amount: "3" });
     expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBeUndefined();

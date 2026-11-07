@@ -904,7 +904,7 @@ function attachHead(object: string): string | undefined {
   return SELF_REFERENCE.test(head) ? head : undefined;
 }
 
-export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean; trigger?: CounterTrigger; cardName?: string } = {}): GameEvent[] {
+export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean; trigger?: CounterTrigger; cardName?: string; costText?: string } = {}): GameEvent[] {
   if (definesPowerToughness(action)) return [];
   // A LIFE TOTAL SET THAT IS A LOSS (#1333, CR 119.5): "target opponent's life total becomes 10" is the `lose-life` a printed "target opponent loses N life" is; a plain set emits nothing.
   const lifeLoss = action.verb === "set-life" ? lifeSetRewrite(action, clauseText ?? "") : undefined;
@@ -1227,7 +1227,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       ...(leftTheGraveyard && verb === "leaves" ? { zone: "graveyard" } : {}),
       // A COUNTER ON A CARD EXILED WITH IT is on a card in exile (#1523: Rayami "exile that card with a blood counter on it", Darigaaz Reincarnated, suspend), not on a battlefield permanent.
       ...(verb === "counter-added" && exilesWithCounter(clauseText ?? "", counter) ? { zone: "exile" } : {}),
-      ...(verb === "mill" && clauseText !== undefined && clauseText.trim() !== "" && !MILL_ACTION_WORD.test(clauseText) ? { notMillAction: true as const } : {}),
+      ...(verb === "mill" && clauseText !== undefined && clauseText.trim() !== "" && !MILL_ACTION_WORD.test(`${clauseText} ${opts.costText ?? ""}`) ? { notMillAction: true as const } : {}),
       ...(from ? { fromZone: from } : {}),
       ...(counter ? { counter } : {}),
       ...(tokenType ? { type: tokenType } : {}),
