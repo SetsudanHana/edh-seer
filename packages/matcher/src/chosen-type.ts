@@ -150,6 +150,20 @@ function blankTokenNouns(text: string, lower: string): string {
   return chars.join("");
 }
 
+/** Blank a TYPE GIVEN TO SOMETHING: "... is a black Demon in addition to its other colors and types" (Blade of the Oni), "are Slivers in addition to their other creature types" (Hivestone), from the "is a" / "are" before it to the "in addition". A card that
+ *  grants a type is not one that cares about it. Census 2026-11-07: 72 cards print one, all equipment, auras, recursion and lords of a made-up type. Within one sentence and 90 characters. */
+function blankAdditions(text: string, lower: string): string {
+  const chars = text.split("");
+  for (const key of ["in addition to its other", "in addition to their other"]) {
+    for (let k = lower.indexOf(key); k >= 0; k = lower.indexOf(key, k + 1)) {
+      let from = -1;
+      for (const o of [" is a ", " is an ", " are ", " becomes a ", " becomes an ", " become ", " is "]) from = Math.max(from, lower.lastIndexOf(o, k));
+      if (from > Math.max(lower.lastIndexOf(".", k), lower.lastIndexOf("\n", k)) && k - from < 90) for (let i = from; i < k; i++) chars[i] = " ";
+    }
+  }
+  return chars.join("");
+}
+
 /** Blank every occurrence of `needle` (compared lower-case). */
 function blankAll(text: string, lower: string, needle: string): string {
   if (needle.length < 3) return text;
@@ -162,25 +176,38 @@ function blankAll(text: string, lower: string, needle: string): string {
 /** Does the card's PRINTED text name a creature type? The fallback for what derive does not record: a type named only in a condition ("if you control a Wizard"), a trigger derive dropped ("whenever a Samurai or Warrior you
  *  control attacks alone"), a greatest-of count ("Elementals you control") or a reveal cost ("reveal a Vampire card"). Read after removing what is NOT the card caring:
  *  reminder text in parentheses; the card's own name (and its short name before a comma, and each face's); "this creature"; what it MAKES (the clause of a "create ... token", the five words before any "token", "named ...", "amass Orcs");
- *  what it BECOMES or is also ("becomes a Human until end of turn", "is also a Cleric", "except it's a Zombie"); a "Partner" line; a type named as an enemy ("protection from Clerics", "can't be blocked by Walls", "deals damage to a Dinosaur"); and an ability title before an em dash ("Spear of the Void Dragon — ..."). The type line is not part of oracle text, so the card's own subtypes are not read at all.
+ *  what it BECOMES or is also ("becomes a Human until end of turn", "is also a Cleric", "except it's a Zombie", "except the copy is a 1/1 Spirit"); a type GIVEN ("is a black Demon in addition to its other colors and types"); a "Partner" line; a type named as an enemy ("protection from Clerics", "can't be blocked by Walls", "deals damage to a Dinosaur"); and an ability title before an em dash ("Spear of the Void Dragon — ..."). The type line is not part of oracle text, so the card's own subtypes are not read at all.
  *  A type is a WORD that starts upper-case (printed subtypes are capitalised, "wall" and "head" are not) and is a singular or plural `CREATURE_SUBTYPES` entry. Linear throughout: indexOf scans and one character pass, no regex over the text.
  *  CEILING: any other mention of a type counts ("target Dragon", "can't be blocked except by Spirits", "Fish you control"), as does one in another card's name quoted in the text ("Shivan Dragon" in Garth One-Eye) and a copy's added
  *  type the clause rules above miss (Cyber-Controller's "They're 2/2 Cyberman artifact creatures", Figure of Fable's "If this creature is a Scout"); a sentence-initial capitalised ordinary word that is also a subtype ("Head") reads as a type.
  *  CEILING: the tags path counts a grant's subject (a lord's "other Heroes have hexproof" is a keyword-grant, so grants cannot be dropped wholesale): Ursine Champion's "becomes a Bear Berserker" is stored as a keyword-grant of Bear and Berserker, and a
  *  subtype derive took from the card's own name (Wolverine) reads as a named type. Both are false keeps.
- *  The other way, a type named only in reminder text (Soulshift's "Spirit card", Amplify's "Soldier card", Affinity for outlaws) is dropped with the reminder, and a face the card does not print the type on does not carry it (Smitten Swordmaster's adventure). */
+ *  The other way, a type named only in reminder text is dropped with the reminder, except on the line of a keyword that names its type nowhere else (`REMINDER_NAMES_TYPE`: Soulshift, Amplify, Affinity for, Prowl, Freerunning, a typecycling), and a face the card does not print the type on does not carry it (Smitten Swordmaster's adventure). */
+/** THE KEYWORDS WHOSE TYPE IS ONLY IN THEIR REMINDER TEXT (#1568; census 2026-11-07, 294 cards name a type only inside a parenthesis, and these are the ones that care): Soulshift "return target Spirit card" (25 cards), Amplify "for each Zombie card you reveal"
+ *  (9), Affinity for outlaws "for each Assassin, Mercenary, Pirate, Rogue, and/or Warlock" (1), Prowl "with a Faerie or Rogue" (10), Freerunning "with an Assassin or commander" (11) and a typecycling of a creature type
+ *  "Search your library for a Wizard card" (Wizardcycling, Slivercycling, 4). The line of one of these keeps its reminder; every other reminder is dropped (Mutate's "non-Human", Saddle's "Mount", an amass or incubate token, "Doctor's companion").
+ *  CEILING: the keyword must open its line, as it is printed; one after a comma (a "Flying, soulshift 3" line) is not read. */
+const REMINDER_NAMES_TYPE = /^(?:soulshift|amplify|affinity for|prowl|freerunning|[a-z]+cycling)\b/i;
+
 export function printedTextNamesCreatureType(name: string, oracleText: string | undefined): boolean {
   if (!oracleText) return false;
   let text = oracleText;
   let lower = text.toLowerCase();
   if (lower.length !== text.length) return false;
-  // reminder text: dropped outright (not blanked), so a clause's reach is not spent on text that is gone
+  // reminder text: dropped outright (not blanked), so a clause's reach is not spent on text that is gone. EXCEPT on the line of a keyword that NAMES its type only there (REMINDER_NAMES_TYPE).
   let kept = "";
-  let depth = 0;
-  for (const c of text) {
-    if (c === "(") depth++;
-    if (depth === 0) kept += c;
-    else if (c === ")") { depth--; if (depth === 0) kept += " "; }
+  for (const line of text.split("\n")) {
+    let out = "";
+    if (REMINDER_NAMES_TYPE.test(line)) out = line.replace(/[()]/g, " ");
+    else {
+      let depth = 0;
+      for (const c of line) {
+        if (c === "(") depth++;
+        if (depth === 0) out += c;
+        else if (c === ")") { depth--; if (depth === 0) out += " "; }
+      }
+    }
+    kept += (kept === "" ? "" : "\n") + out;
   }
   text = kept; lower = text.toLowerCase();
   if (lower.length !== text.length) return false;
@@ -196,7 +223,8 @@ export function printedTextNamesCreatureType(name: string, oracleText: string | 
   step((t, l) => blankClause(t, l, "become ", [".", "\n", ",", " until", " with", " in addition"], 80));
   step((t, l) => blankClause(t, l, "is also ", [".", "\n"], 80));
   step((t, l) => blankAll(t, l, "meets the eye"));
-  for (const o of ["except it's", "except they're", "except he's", "except she's", "except his ", "except her ", "except its ", "except if "]) step((t, l) => blankClause(t, l, o, [".", "\n"], 300));
+  for (const o of ["except it's", "except they're", "except he's", "except she's", "except his ", "except her ", "except its ", "except if ", "except the "]) step((t, l) => blankClause(t, l, o, [".", "\n"], 300));
+  step((t, l) => blankAdditions(t, l));
   step((t, l) => blankClause(t, l, "partner", [".", "\n"], 120));
   // A TYPE NAMED AS AN ENEMY is no kindred: protection from Clerics, "can't be blocked by Walls", "deals damage to a Dinosaur, destroy it".
   for (const o of ["protection from ", "blocked by ", "deals damage to "]) step((t, l) => blankClause(t, l, o, [".", "\n", ","], 80));
