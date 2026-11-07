@@ -80,7 +80,10 @@ function resolveColor(subject: SubjectFilter, identity: readonly string[] | unde
 function resolveSubject(subject: SubjectFilter, counts: Map<string, number>, hierarchy: Hierarchy, identity?: readonly string[]): SubjectFilter {
   if (subject.chosenColor === true) return resolveColor(subject, identity);
   if (subject.chosenType !== true) return subject;
-  const { chosenType, ...rest } = subject;
+  // ONLY A CREATURE-TYPE CHOICE IS THE DECK'S CREATURE TYPE (#1568). A card type (Cloud Key), odd or even (Extinction Event), a land type (Shimmer) or a planeswalker type (Leori) is not a creature subtype of the deck and is left
+  // as it was derived. No kind recorded (`chosenKind` absent: the printed words named no single choice) is read as the creature type it always was.
+  if (subject.chosenKind !== undefined && subject.chosenKind !== "creature-type") return subject;
+  const { chosenType, chosenKind: _kind, ...rest } = subject;
   const top = topSubtype(counts, hierarchy, arr(subject.type));
   return { ...rest, subtype: top };
 }
@@ -238,7 +241,8 @@ function caresFromTags(tags: CardTags): boolean {
   const isCreatureType = (sub: string): boolean => CREATURE_SUBTYPE_SET.has(sub.toLowerCase());
   const names = (s: SubjectFilter | undefined): boolean => {
     if (!s || s.self === true) return false;
-    if (s.chosenType === true) return true;
+    // A chosen CREATURE type (or one derive could not name the kind of); a card type, odd or even, a land type or a planeswalker type (Cloud Key, Extinction Event, Shimmer, Leori) names no creature type (#1568).
+    if (s.chosenType === true && (s.chosenKind === undefined || s.chosenKind === "creature-type")) return true;
     return [...arr(s.subtype), ...(s.anyOf ?? []).flatMap((b) => arr(b.subtype))].some(isCreatureType);
   };
   // A CHANGELING IS EVERY CREATURE TYPE, so it is in whatever type is chosen (deck mode pairs it with the deck's lord for the same reason: `extractCharacteristics` gives it every subtype).
@@ -252,8 +256,10 @@ function caresFromTags(tags: CardTags): boolean {
     || (!makesToken(a) && (a.emits ?? []).some((e) => e.verb !== "create-token" && e.subject.token !== true && names(e.subject))));
 }
 
-/** An unresolved chosen CREATURE type: `chosenType` on a subject whose type is `creature`. Any other chosen-type subject (a card type, a land type, odd or even, "an opponent chooses") is not this. */
-const chosenCreatureType = (s: SubjectFilter | undefined): s is SubjectFilter => s?.chosenType === true && arr(s.type).includes("creature");
+/** An unresolved chosen CREATURE type. By the derived KIND (#1568): `chosenKind: "creature-type"` on a subject of any type (Gathering Stone's "spells of the chosen type" is a creature-type choice on a spell subject). A subject with NO kind
+ *  (derive could not name one: the printed words make no single choice) falls back to the old reading, a `creature` subject in a card whose words say "creature type" (`cue`). Any other kind (a card type, odd or even, a land type, a planeswalker type) is not this. */
+const chosenCreatureType = (s: SubjectFilter | undefined, cue: boolean): s is SubjectFilter =>
+  s?.chosenType === true && (s.chosenKind === "creature-type" || (s.chosenKind === undefined && cue && arr(s.type).includes("creature")));
 
 /** THE NO-DECK READING OF "OF THE CHOSEN TYPE" (owner ruling 2026-11-07, #1526 part 2). With a deck `resolveChosenTypes` has already turned every chosen type into the deck's main creature type. With none (a card
  *  page, a partner suggestion, the compass's pair isolation) the type is unresolved, and `subjectMatches` does not read the flag, so Metallic Mimic paired with every creature (an anthem). The ruling: such a card pairs
@@ -268,11 +274,12 @@ const chosenCreatureType = (s: SubjectFilter | undefined): s is SubjectFilter =>
  *  recursion, a cheat or a copy reaches, the doubled class. What is NOT is the TOKEN a `token-generation` makes of the chosen type (Riptide Replicator, Kindred Charge): that is a supply, it pairs with whatever wants a
  *  token (a doubler), and the type of the token is no demand of anyone's. Molten Echoes keeps its token supply too and loses only the trigger that watches the chosen type.
  *
- *  SCOPE, by the card's printed text, because the derived subject cannot tell the choices apart: only a card that says "creature type" is read, and not one whose chosen type is a NEGATION ("creatures that aren't of the
- *  chosen type": Kindred Dominance, Crippling Fear, Raise the Palisade, Callous Oppressor) or is chosen by an opponent. "Odd or even" (Extinction Event, Zimone's Hypothesis) and a card-type choice have no
- *  "creature type" in them and are left as they were.
- *  CEILING: the scope is a text cue, and only subjects typed `creature` are refused. A chosen-type subject of another type (Cloud Key / Gathering Stone "spell", Ichormoon Gauntlet "permanent", an untyped one) is
- *  left the wildcard it was. A card that prints both a creature-type choice and a negated one would be read as the first. */
+ *  SCOPE, by the derived KIND (#1568): only a subject whose `chosenKind` is `creature-type` is read, whatever its type (Gathering Stone's spells, Door of Destinies' spell trigger, Rimefire Torque's permanents, Pack's Disdain's count). "Odd or even"
+ *  (Extinction Event, Zimone's Hypothesis), a card-type choice (Cloud Key, Stenn), a land type (Shimmer) and a planeswalker type (Leori) are other kinds and are left as they were. A subject with NO kind, because derive found no single choice in the words
+ *  (a stored reading, a card whose text names two choices), keeps the old reading: a `creature` subject in a card whose printed words say "creature type".
+ *  CEILING: a chosen type that is a NEGATION ("creatures that aren't of the chosen type": Kindred Dominance, Crippling Fear, Raise the Palisade, Callous Oppressor) or is chosen by an opponent is still told apart by the printed words, not by
+ *  derive, which does not carry either. A card that prints both a creature-type choice and a negated one would be read as the first.
+ *  CEILING: a card-type, land-type, parity or planeswalker-type choice is not refused without a deck: Cloud Key still pairs with whatever it matched. The owner ruling is about a chosen CREATURE type. */
 const refusedCache = new WeakMap<CardTags, CardTags>();
 const NEGATED_OR_OPPONENT_CHOICE = /\b(?:aren't|isn't|not) of the chosen type|\bopponent chooses a creature type/i;
 export function refuseUnresolvedChosenTypes(tags: CardTags, oracleText: string | undefined): CardTags {
@@ -280,11 +287,12 @@ export function refuseUnresolvedChosenTypes(tags: CardTags, oracleText: string |
   if (hit) return hit;
   // Two halves: the TRIGGER that watches the chosen type (Kindred Discovery), and the BODY that acts on it (effect, emits, doubled class). A trigger that is NOT chosen -- Elvish Soultiller's "When this creature dies"
   // -- is kept when only the body is: it is the card hearing an event, which holds in any deck.
-  const watches = (a: CardTags["abilities"][number]): boolean => chosenCreatureType(a.trigger?.subject);
+  const cue = /creature type/i.test(oracleText ?? "");
+  const watches = (a: CardTags["abilities"][number]): boolean => chosenCreatureType(a.trigger?.subject, cue);
   const acts = (a: CardTags["abilities"][number]): boolean => a.effect.kind !== "token-generation"
-    && (chosenCreatureType(a.doublesOf) || chosenCreatureType(a.effect.subject) || (a.emits ?? []).some((e) => chosenCreatureType(e.subject)));
+    && (chosenCreatureType(a.doublesOf, cue) || chosenCreatureType(a.effect.subject, cue) || (a.emits ?? []).some((e) => chosenCreatureType(e.subject, cue)));
   const touches = (a: CardTags["abilities"][number]): boolean => watches(a) || acts(a);
-  const inScope = /creature type/i.test(oracleText ?? "") && !NEGATED_OR_OPPONENT_CHOICE.test(oracleText ?? "");
+  const inScope = !NEGATED_OR_OPPONENT_CHOICE.test(oracleText ?? "");
   const out = !inScope || !tags.abilities.some(touches) ? tags : {
     ...tags,
     abilities: tags.abilities.map((a) => {

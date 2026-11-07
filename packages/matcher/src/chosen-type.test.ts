@@ -197,3 +197,24 @@ test("Heraldic Banner does not pump Metallic Mimic, in a colourless deck either"
   expect(subjectMatches(mimic, none, NO_HIERARCHY)).toBe(false);
   expect(subjectMatches(SHARD, none, NO_HIERARCHY)).toBe(true);
 });
+
+// #1568: ONLY A CREATURE-TYPE CHOICE IS THE DECK'S CREATURE TYPE. Cloud Key chooses a card type, Extinction Event odd or even, Shimmer a land type, Leori a planeswalker type: none is a creature subtype of the deck.
+test("resolveChosenTypes resolves a creature-type choice and leaves every other kind exactly as it was", () => {
+  const counts = new Map([["elf", 5], ["goblin", 2]]);
+  const hierarchy: Hierarchy = { elf: ["creature"], goblin: ["creature"] };
+  const subj = (chosenKind?: string) => ({ type: "creature", control: "you", token: null, chosenType: true, ...(chosenKind ? { chosenKind } : {}) }) as never;
+  const resolved = resolveChosenTypes(tagsWith([], [
+    { kind: "static", effect: { kind: "cost-reduction", subject: subj("creature-type") } },
+    { kind: "static", effect: { kind: "cost-reduction", subject: subj("card-type") } },
+    { kind: "static", effect: { kind: "cost-reduction", subject: subj("parity") } },
+    { kind: "static", effect: { kind: "cost-reduction", subject: subj("land-type") } },
+    { kind: "static", effect: { kind: "cost-reduction", subject: subj("planeswalker-type") } },
+    { kind: "static", effect: { kind: "cost-reduction", subject: subj() } },
+  ] as never), counts, hierarchy);
+  const [cre, card, par, land, pw, unknown] = resolved.abilities.map((a) => a.effect.subject!);
+  expect(cre).toMatchObject({ subtype: "elf" });
+  expect(cre!.chosenType).toBeUndefined();
+  for (const s of [card, par, land, pw]) { expect(s!.subtype).toBeUndefined(); expect(s!.chosenType).toBe(true); }
+  // no kind recorded (a stored reading from before #1568): the old behaviour, a creature-type choice
+  expect(unknown).toMatchObject({ subtype: "elf" });
+});

@@ -1218,5 +1218,375 @@
     ]
    }
   ]
+ },
+ "Cloud Key": {
+  "source": {
+   "name": "Cloud Key",
+   "typeLine": "Artifact",
+   "oracleText": "As this artifact enters, choose artifact, creature, enchantment, instant, or sorcery.\nSpells you cast of the chosen type cost {1} less to cast.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}",
+   "layout": "normal",
+   "_id": "2a838818-d590-4374-9a63-d9e6381a0f0d"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose artifact, creature, enchantment, instant, or sorcery",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "spells you cast of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "2996be56a550db55064b4bd57032ab49e18caad6d264a03e26c25df90f4e1f4e"
+ },
+ "Gathering Stone": {
+  "source": {
+   "name": "Gathering Stone",
+   "typeLine": "Artifact",
+   "oracleText": "As this artifact enters, choose a creature type.\nSpells you cast of the chosen type cost {1} less to cast.\nWhen this artifact enters and at the beginning of your upkeep, look at the top card of your library. If it's a card of the chosen type, you may reveal it and put it into your hand. If you don't put the card into your hand, you may put it into your graveyard.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}",
+   "layout": "normal",
+   "_id": "9f6d6e90-7462-46e5-bf2f-725b4badc394"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "Spells you cast of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this artifact",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "a card of the chosen type",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "the card",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "a card of the chosen type",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "the card",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "7b15b0c507dfe68c1df2dacc54bc32de46381c80671dbb12dedb03075680b6a0"
+ },
+ "Leyline of Transformation": {
+  "source": {
+   "name": "Leyline of Transformation",
+   "typeLine": "Enchantment",
+   "oracleText": "If this card is in your opening hand, you may begin the game with it on the battlefield.\nAs this enchantment enters, choose a creature type.\nCreatures you control are the chosen type in addition to their other types. The same is true for creature spells you control and creature cards you own that aren't on the battlefield.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{U}{U}",
+   "layout": "normal",
+   "_id": "cfaa13d6-9992-4223-8bd7-c44046505555"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "play",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "creatures you control, creature spells you control, and creature cards you own that aren't on the battlefield are the chosen type in addition to their other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "14ba217760dabe13322667556444c13e22855e488d1ed563461acaf1cf881e0e"
+ },
+ "Stenn, Paranoid Partisan": {
+  "source": {
+   "name": "Stenn, Paranoid Partisan",
+   "typeLine": "Legendary Creature — Human Wizard",
+   "oracleText": "As Stenn enters, choose a card type other than creature or land.\nSpells you cast of the chosen type cost {1} less to cast.\n{1}{W}{U}: Exile Stenn. Return it to the battlefield under its owner's control at the beginning of the next end step.",
+   "keywords": [],
+   "colors": [
+    "U",
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{W}{U}",
+   "layout": "normal",
+   "_id": "03d2d7dd-54b6-469e-8b1c-c48db8cc0925"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a card type other than creature or land",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "spells you cast of the chosen type cost {1} less to cast",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "Stenn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "702730d96795f8bba0df4526438370861b1f0f7e20f250cdd4307378bb8129ce"
+ },
+ "Shimmer": {
+  "source": {
+   "name": "Shimmer",
+   "typeLine": "Enchantment",
+   "oracleText": "As this enchantment enters, choose a land type.\nEach land of the chosen type has phasing. (It phases in or out before its controller untaps during each of their untap steps. While it's phased out, it's treated as though it doesn't exist.)",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{U}{U}",
+   "layout": "normal",
+   "_id": "f557fb2c-581b-4a8d-8766-1e46e92224fa"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a land type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "phasing",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "1eda5c400a0289cc0be26d46d79f4321aeec206cf8234248ceefb5749e99e506"
+ },
+ "Tribal Unity": {
+  "source": {
+   "name": "Tribal Unity",
+   "typeLine": "Instant",
+   "oracleText": "Creatures of the creature type of your choice get +X/+X until end of turn.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{X}{2}{G}",
+   "layout": "normal",
+   "_id": "6b4ee935-4474-4757-9fab-978a2e1e72a0"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "creatures of the creature type of your choice",
+      "amount": "+X/+X",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "aa50792cfed568535d6295d019d5a5081c5bb5b50d8bd3e23ec68480e3458782"
  }
 }
