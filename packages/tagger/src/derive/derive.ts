@@ -52,6 +52,7 @@ import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, b
 import { triggerHasCue } from "../clause-store.js";
 import { emblemRecipient } from "../emblem.js";
 import { chosenColorOf } from "./chosen-color.js";
+import { chosenKindOf } from "./chosen-kind.js";
 import { selectionFromText } from "./selection-text.js";
 
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
@@ -4961,7 +4962,8 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
       }) };
     });
   // A CHOSEN COLOUR IS NOT A CHOSEN TYPE (#1360): a stored reading's `chosenType` on a colour choice becomes `chosenColor`.
-  const spellOnce = selectionFromText(chosenColorOf(spellOnceRaw, input.clauseTexts, input.oracleText ?? ""), input.clauseTexts, input.oracleText ?? "");
+  // ...AND WHAT A CHOSEN TYPE CHOSE (#1568): `chosenKind` beside `chosenType`, so the matcher resolves only a creature-type choice to the deck's creature type.
+  const spellOnce = selectionFromText(chosenKindOf(chosenColorOf(spellOnceRaw, input.clauseTexts, input.oracleText ?? ""), input.clauseTexts, input.oracleText ?? ""), input.clauseTexts, input.oracleText ?? "");
   // A CREATURE ONLY UNDER A CONDITION (#797): the action grammar reads "As long as your devotion to red
   // is less than five, Purphoros isn't a creature" as the card itself that "can't be a creature".
   // Read off the printed text, which reaches the Theros gods the store filed as something else.

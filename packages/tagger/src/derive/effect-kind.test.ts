@@ -281,6 +281,15 @@ test("granting a type in addition to its other types is a type-grant", () => {
     .toBe("type-grant");
 });
 
+// #1568 part 2: the PLURAL "in addition to THEIR other types" is the same grant. TYPE_GRANT only read "its", so Leyline of Transformation
+// (and 20 more: Swampbenders, Graaz, Hivestone, March of the World Ooze ...) was a keyword-grant of nothing.
+test("'are the chosen type in addition to their other types' is a type-grant (Leyline of Transformation), not a keyword-grant", () => {
+  const object = "creatures you control, creature spells you control, and creature cards you own that aren't on the battlefield are the chosen type in addition to their other types";
+  expect(actionEffectKind({ verb: "grant-ability", object })).toBe("type-grant");
+  expect(actionEffectKind({ verb: "grant-ability", object: "Lands you control are Swamps in addition to their other types" })).toBe("type-grant");
+  expect(actionEffectKind({ verb: "grant-ability", object: "other creatures you control are Juggernauts in addition to their other creature types" })).toBe("type-grant");
+});
+
 test("a plain keyword grant is untouched", () => {
   expect(actionEffectKind({ verb: "grant-ability", object: "creatures you control have ward {1}" }))
     .toBe("keyword-grant");

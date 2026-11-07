@@ -256,6 +256,10 @@ test("\"of the chosen type\" is recorded, not dropped", () => {
   // A subject that names a real subtype is NOT a chooser and must keep parsing as itself.
   expect(parseSubject("other Merfolk creatures you control").chosenType).toBeUndefined();
   expect(parseSubject("target creature").chosenType).toBeUndefined();
+  // #1568 part 3: "of the chosen" followed by something that is not a type or a quality is a chosen OBJECT (Ichormoon Gauntlet's counter kind, Mega Flare's creatures, Selective Adaptation's cards, Bitter Feud's players).
+  for (const t of ["a counter of the chosen kind", "each of the chosen creatures", "one of the chosen cards", "a source controlled by one of the chosen players"]) expect(parseSubject(t).chosenType, t).toBeUndefined();
+  expect(parseSubject("each creature with mana value of the chosen quality").chosenType).toBe(true);
+  expect(parseSubject("a permanent of the chosen creature type").chosenType).toBe(true);
 });
 
 test("an ORIGIN zone named in the text is a real constraint", () => {
