@@ -863,6 +863,12 @@ describe("a library-to-graveyard move the clause does not word as mill (#1444)",
     const bare = actionEmits({ verb: "mill", object: "a card", amount: "1" }, "Add {C}.");
     expect(bare.find((x) => x.verb === "mill")?.subject.notMillAction).toBe(true);
   });
+  test("the keyword action's own definition is a mill (CR 701.17a: 'put the top N cards of their library into their graveyard'): an emblem's token text, Jace Telepath Unbound", () => {
+    const e = actionEmits({ verb: "mill", object: "the top five cards of their library", amount: "5" }, "Whenever you cast a spell, target opponent puts the top five cards of their library into their graveyard.");
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBeUndefined();
+    const bottom = actionEmits({ verb: "put", object: "the bottom card", fromZone: "library", toZone: "graveyard" }, "{3}, {T}: Target player puts the bottom card of their library into their graveyard.");
+    expect(bottom.find((x) => x.verb === "mill")?.subject.notMillAction).toBe(true);
+  });
   test("no clause text: nothing is claimed either way", () => {
     const e = actionEmits({ verb: "mill", object: "three cards", amount: "3" });
     expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBeUndefined();
