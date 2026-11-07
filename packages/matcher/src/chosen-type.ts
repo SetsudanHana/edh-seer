@@ -82,6 +82,68 @@ function resolveSubject(subject: SubjectFilter, counts: Map<string, number>, hie
   return { ...rest, subtype: top };
 }
 
+/** DOES THIS CARD CARE ABOUT A CREATURE TYPE? (owner ruling 2026-11-07, #1526 part 2, no-deck view). Read off DERIVED data, never a name: some ability of the card has a subject that names a creature subtype
+ *  (`subtype`, or one `anyOf` branch's) or is itself a chosen type -- a trigger subject ("whenever another Elf enters"), a class it acts on (Elvish Archdruid's "Other Elf creatures you control get +1/+1",
+ *  a tutor's "search for a Goblin card"), or the class whose triggers it doubles. Left out: a `self` subject (the card's own type line), and the token a `token-generation` / `clone` makes (a Goblin that MAKES a
+ *  Goblin token cares about nothing). A land subtype ("Forest") is not a creature type: `hierarchy` says which subtypes are.
+ *  Census 2026-11-07 over 18,040 non-token creature cards: 1,414 care (464 by a trigger subject, 1,032 by an effect subject, 8 by doublesOf; a card can do more than one), so Llanowar Elves and Grizzly Bears do not.
+ *  CEILING: a tutor or reveal that merely names a type (Boggart Harbinger, Priest of the Wakening Sun) counts as caring, as does a card that names a type it is not itself a member of; both are wider than "lord".
+ *  Read by `staticEdges` only for an UNRESOLVED chosen type, i.e. with no deck. */
+export function caresAboutCreatureType(tags: CardTags, hierarchy: Hierarchy): boolean {
+  const names = (s: SubjectFilter | undefined): boolean => {
+    if (!s || s.self === true) return false;
+    if (s.chosenType === true) return true;
+    return [...arr(s.subtype), ...(s.anyOf ?? []).flatMap((b) => arr(b.subtype))].some((sub) => impliesType(hierarchy, sub, "creature"));
+  };
+  return tags.abilities.some((a) => names(a.trigger?.subject) || names(a.doublesOf)
+    || (a.effect.kind !== "token-generation" && a.effect.kind !== "clone" && names(a.effect.subject)));
+}
+
+/** An unresolved chosen CREATURE type: `chosenType` on a subject whose type is `creature`. Any other chosen-type subject (a card type, a land type, odd or even, "an opponent chooses") is not this. */
+const chosenCreatureType = (s: SubjectFilter | undefined): s is SubjectFilter => s?.chosenType === true && arr(s.type).includes("creature");
+
+/** THE NO-DECK READING OF "OF THE CHOSEN TYPE" (owner ruling 2026-11-07, #1526 part 2). With a deck `resolveChosenTypes` has already turned every chosen type into the deck's main creature type. With none (a card
+ *  page, a partner suggestion, the compass's pair isolation) the type is unresolved, and `subjectMatches` does not read the flag, so Metallic Mimic paired with every creature (an anthem). The ruling: such a card pairs
+ *  ONLY with creatures that care about a creature type (`caresAboutCreatureType`). This is the tags half of it: the card with each unresolved creature-type subject made unmatchable -- exactly what
+ *  `resolveChosenTypes` does for a deck with no subtypes -- for `directedReasons` to use when the OTHER card does not care. Returns the same object when there is nothing to refuse; memoised, because event
+ *  caches key on the tags object.
+ *
+ *  What is refused is the card's DEMAND for a typed creature: a trigger subject (Kindred Discovery, Vanquisher's Banner), an anthem / cost reduction / counters rider (Metallic Mimic, Herald's Horn), the class
+ *  recursion, a cheat or a copy reaches, the doubled class. What is NOT refused is the TOKEN a `token-generation` makes of the chosen type (Riptide Replicator): that is a supply, it pairs with whatever
+ *  wants a token (a doubler), and the type of the token is no demand of anyone's. Its trigger (Molten Echoes) still is a demand.
+ *  CEILING: only subjects typed `creature` are refused. A chosen-type subject of another type (Cloud Key / Gathering Stone "spell", Ichormoon Gauntlet "permanent", an untyped one) is left the wildcard it was,
+ *  because the derived subject cannot tell a creature-type choice from a card-type, land-type or odd/even one. */
+const refusedCache = new WeakMap<CardTags, CardTags>();
+export function refuseUnresolvedChosenTypes(tags: CardTags): CardTags {
+  const hit = refusedCache.get(tags);
+  if (hit) return hit;
+  const refuse = (s: SubjectFilter): SubjectFilter => {
+    if (!chosenCreatureType(s)) return s;
+    const { chosenType: _c, ...rest } = s;
+    return { ...rest, subtype: NO_MATCH };
+  };
+  const touches = (a: CardTags["abilities"][number]): boolean => chosenCreatureType(a.trigger?.subject) || chosenCreatureType(a.doublesOf)
+    || (a.effect.kind !== "token-generation" && (chosenCreatureType(a.effect.subject) || (a.emits ?? []).some((e) => chosenCreatureType(e.subject))));
+  const out = !tags.abilities.some(touches) ? tags : {
+    ...tags,
+    abilities: tags.abilities.map((a) => {
+      if (!touches(a)) return a;
+      const supply = a.effect.kind === "token-generation";
+      return {
+        ...a,
+        ...(a.trigger ? { trigger: { ...a.trigger, subject: refuse(a.trigger.subject) } } : {}),
+        ...(a.doublesOf ? { doublesOf: refuse(a.doublesOf) } : {}),
+        ...(supply ? {} : {
+          effect: a.effect.subject ? { ...a.effect, subject: refuse(a.effect.subject) } : a.effect,
+          ...(a.emits ? { emits: a.emits.map((e) => ({ ...e, subject: refuse(e.subject) })) } : {}),
+        }),
+      };
+    }),
+  };
+  refusedCache.set(tags, out);
+  return out;
+}
+
 /** Replace every chosenType:true subject in the card's abilities with the deck's top subtype
  *  among the subject's legal types (or the deck's global top subtype when the subject has no
  *  type constraint). Returns a new CardTags; the input is never mutated. */

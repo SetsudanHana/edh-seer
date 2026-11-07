@@ -41,10 +41,11 @@ test("the chosen type follows the deck: with two Advisors as the most common typ
 });
 
 // No deck, no main type (a card page, a partner suggestion, the compass's pair isolation): `pairReasons` is handed two cards and the chosen type is unresolved.
-// Pinned as it is today (see the CEILING in `staticEdges`) -- unresolved reads as every creature, the anthem the ruling rejects for a deck. What a card with no deck should do is the open question on #1526.
-test("with no deck the chosen type is unresolved and Mimic still pairs with a creature of any type (open question for the owner)", () => {
-  const H = loadHierarchy();
-  const consumers = (c: string) => pairReasons(dc("Metallic Mimic"), dc(c), H).filter((r) => r.producer === "Metallic Mimic" && r.consumer === c && r.tag === "static:enters-with-counters");
-  expect(consumers("Grizzly Bears")).not.toEqual([]);
-  expect(consumers("Serra Angel")).not.toEqual([]);
+// OWNER RULING 2026-11-07 (#1526 part 2, no-deck view): an unresolved chosen-type creature subject pairs ONLY with creatures that themselves care about a creature type -- other lords and kindred
+// payoffs. Not every creature (Mimic paired with 547), and not nothing.
+const mimicStatic = (c: string) => pairReasons(dc("Metallic Mimic"), dc(c), loadHierarchy()).filter((r) => r.producer === "Metallic Mimic" && r.consumer === c && r.tag === "static:enters-with-counters");
+
+test("with no deck, Metallic Mimic pairs with a creature that cares about a creature type (a lord) and with no other creature", () => {
+  expect(mimicStatic("Elvish Archdruid")).not.toEqual([]);
+  for (const plain of ["Grizzly Bears", "Serra Angel", "Llanowar Elves", "Elvish Mystic"]) expect(mimicStatic(plain), plain).toEqual([]);
 });

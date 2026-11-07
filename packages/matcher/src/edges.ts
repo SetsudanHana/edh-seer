@@ -28,6 +28,7 @@ import { enteringFaceName, faceDeckCards, graveyardFaceName, graveyardIdentity }
 import { claimsNothing, isManaRider, isReflexiveTrigger, isRefusedTrigger, isSelfLoss } from "./claims.js";
 import { magnitudeOf, mergeMagnitude } from "./edge-magnitude.js";
 import type { LandTypes } from "./chosen-type.js";
+import { caresAboutCreatureType, refuseUnresolvedChosenTypes } from "./chosen-type.js";
 
 const list = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
@@ -2227,8 +2228,18 @@ function silencedBy(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
 }
 
 export function directedReasons(p0: DeckCard, c0: DeckCard, h: Hierarchy, opts: ReasonOptions = {}): Reason[] {
-  const p = withLiveKills(p0, opts);
-  const c = p0 === c0 ? p : withLiveKills(c0, opts);
+  const p1 = withLiveKills(p0, opts);
+  const c1 = p0 === c0 ? p1 : withLiveKills(c0, opts);
+  if (!p1.tags || !c1.tags) return [];
+  // AN UNRESOLVED CHOSEN CREATURE TYPE (no deck: a card page, a partner suggestion, pair isolation) pairs only with a creature that itself cares about a creature type (owner ruling 2026-11-07, #1526 part 2;
+  // `refuseUnresolvedChosenTypes`). In a deck `resolveChosenTypes` has run and there is nothing left to refuse. A card paired with itself keeps its own.
+  const refusedFor = <T extends DeckCard>(x: T, other: DeckCard): T => {
+    if (!other.tags || p0 === c0) return x;
+    const t = refuseUnresolvedChosenTypes(x.tags!);
+    return t === x.tags || caresAboutCreatureType(other.tags, h) ? x : { ...x, tags: t };
+  };
+  const p = refusedFor(p1, c1);
+  const c = p0 === c0 ? p : refusedFor(c1, p1);
   if (!p.tags || !c.tags) return [];
   if (silencedBy(p, c, h)) return [];
   // Both sides carry tags from here on, which is what `TaggedCard` records for the channels.
@@ -3258,10 +3269,6 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
     // not a printed characteristic, and this pass matches against the type line. Demanding it here
     // deletes the edge outright -- Sludge Monster's anthem stopped reaching anything. The dedicated
     // counter-presence pass below is what supplies that state.
-    // A CHOSEN TYPE IS THE DECK'S MAIN CREATURE TYPE (owner ruling 2026-11-07, #1526 part 2): in a deck `resolveChosenTypes` has already turned `chosenType` into that subtype, so Metallic Mimic pairs
-    // with the deck's Elves and no other creature. Reaching this line STILL `chosenType: true` means there is no deck (a card page, a partner suggestion, the compass's pair isolation), and
-    // `subjectMatches` does not read the flag, so the subject is an anthem over every creature (Mimic: 547 consumers).
-    // CEILING: no-deck chosen-type statics stay a wildcard over their type; what a card with no deck should pair with is an open question for the owner on #1526 (refusal was rejected for the deck case).
     const { counter: _stateOnly, ...printedMatchable0 } = a.effect.subject;
     // A GRANT TO CARDS IN A GRAVEYARD OR HAND reaches the printed card of its class (see `isZonedCardGrant`), never a token.
     const zoneGrant = isZonedCardGrant(a);
