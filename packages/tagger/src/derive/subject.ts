@@ -576,7 +576,7 @@ function parseColors(t: string): string[] | undefined {
  *
  *  ONLY A TYPE OR A QUALITY (#1568): "of the chosen kind" (Ichormoon Gauntlet's counter), "of the chosen creatures" (Mega Flare, Oracle en-Vec), "of the chosen cards" (Selective Adaptation) and "of the chosen players" (Bitter Feud)
  *  are a chosen OBJECT, and the bare "of the chosen" read all of them as a chosen type, which `resolveChosenTypes` then turned into the deck's top subtype. "Of the chosen quality" is odd-or-even (Extinction Event). */
-const CHOSEN = /\bof the chosen(?: (?:creature|card|land|permanent|basic land|planeswalker))? (?:type|quality)\b|\bof the chosen (?:colou?r)\b|\bthe chosen (?:type|color|colour)\b/i;
+const CHOSEN = /\bof the chosen(?: (?:creature|card|land|permanent|basic land|planeswalker))? (?:type|quality)\b|\bof the chosen colou?rs?\b|\bthe chosen (?:type|color|colour)\b/i;
 /** ...and the COLOUR case (#1360): a chosen colour is `chosenColor`, never `chosenType` (which the matcher resolves to a subtype). "color and type" is both words and stays a type. */
 const CHOSEN_COLOR = /\bof the chosen colou?r\b|\bthe chosen colou?r\b|\bof the colou?r of your choice\b/i;
 /** ...but the colour of a damage SOURCE is not the colour of what is protected: "by sources of the color of your choice" (Avacyn, Guardian Angel; Prismatic Strands). */

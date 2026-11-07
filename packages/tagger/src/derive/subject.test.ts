@@ -258,6 +258,8 @@ test("\"of the chosen type\" is recorded, not dropped", () => {
   expect(parseSubject("target creature").chosenType).toBeUndefined();
   // #1568 part 3: "of the chosen" followed by something that is not a type or a quality is a chosen OBJECT (Ichormoon Gauntlet's counter kind, Mega Flare's creatures, Selective Adaptation's cards, Bitter Feud's players).
   for (const t of ["a counter of the chosen kind", "each of the chosen creatures", "one of the chosen cards", "a source controlled by one of the chosen players"]) expect(parseSubject(t).chosenType, t).toBeUndefined();
+  // the PLURAL colour stays a chosen mark (Seal of the Guildpact, Tablet of the Guilds): `chosenColorOf` turns it into chosenColor from the clause
+  expect(parseSubject("each of the chosen colors").chosenType).toBe(true);
   expect(parseSubject("each creature with mana value of the chosen quality").chosenType).toBe(true);
   expect(parseSubject("a permanent of the chosen creature type").chosenType).toBe(true);
 });
