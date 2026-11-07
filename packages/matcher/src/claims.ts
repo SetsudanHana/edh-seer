@@ -13,3 +13,5 @@ export const isRefusedTrigger = (a: Ability): boolean => claimsNothing(a) === "r
 /** A rider of a mana ability (#1423): a fact-kind ability that a mana ability's own clause carries (Cinder Marsh's "This land doesn't untap during your next untap step"), no ability of its own to copy. */
 export const isManaRider = (a: Ability): boolean => claimsNothing(a) === "mana-rider";
 export const isSelfLoss = (a: Ability): boolean => claimsNothing(a) === "self-loss";
+/** A reflexive trigger ("you may sacrifice it. When you do, ...", CR 603.12, #1565) follows only its own card's sacrifice: it asks nothing of the deck, though its emits still supply. */
+export const isReflexiveTrigger = (a: Ability): boolean => a.trigger?.reflexive === true;

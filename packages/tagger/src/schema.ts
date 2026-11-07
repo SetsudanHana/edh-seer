@@ -1407,6 +1407,10 @@ export interface Ability {
      *  the way `oncePerTurn` is a cap and not a narrowing (an explicit exception to the 2026-10-01 rule that an unrepresented narrowing refuses the claim). Only that exact shape; "at least one other",
      *  a class ("other Warrior"), "different players" and "equipped creature and ..." still refuse. */
     alongside?: { atLeast: number };
+    /** A REFLEXIVE TRIGGER (CR 603.12, #1565): "you may sacrifice it. When you do, ..." The store numbers the "When you do" sentence as the previous sentence's event (`sacrificed`), so the
+     *  trigger reads like "whenever <subject> is sacrificed" -- but it follows only the sacrifice THIS card's own resolving ability just made, never another card's outlet. The matcher
+     *  forms no event demand from it (the card pays its own cost); its emits still supply. Written on a `sacrifice` trigger only; only `true` is written. */
+    reflexive?: true;
   };
   /** THIS ABILITY CLAIMS NO CARDS, AND IS STILL AN ABILITY OF ITS KIND (#1264). One stored field for the two
    *  classes derive can decide from the card alone; the matcher reads it in one place (`claimsNothing`,
