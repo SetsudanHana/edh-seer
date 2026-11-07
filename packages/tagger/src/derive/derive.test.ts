@@ -8463,6 +8463,7 @@ describe("a library-to-graveyard move the printed clause never makes (#1562)", (
     expect(verbsOf(r)).not.toContain("mill");
     expect(verbsOf(r)).not.toContain("enters-graveyard");
     expect(r.abilities.some((a) => a.effect.kind === "mill")).toBe(false);
+    expect(r.unclaimed).toEqual([]); // the bottom put is the reveal's remainder, claimed like "put the rest on the bottom"
   });
   test("a put into a graveyard the clause does name stays a mill (Genesis Wave)", () => {
     const r = deriveAbilities(
