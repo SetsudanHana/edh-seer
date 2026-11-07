@@ -2305,6 +2305,28 @@ function withLifeSetReadings(clause: ClauseRecord, text: string | undefined): Cl
   if (!clause.actions?.some((a) => a.verb === "set-life")) return clause;
   return { ...clause, actions: clause.actions.map((a) => (a.verb === "set-life" ? lifeSetRewrite(a, text ?? "") ?? a : a)) };
 }
+/** A ZONE THE PRINTED CLAUSE NEVER NAMES IS NOT CLAIMED (#1562): two store errors that filed a library card as going to a graveyard.
+ *  (1) A `put` stored library -> graveyard whose clause says the cards go "on the bottom of ... library" and never says graveyard or mill (Warp World's "puts all cards revealed this way that weren't put onto the
+ *      battlefield on the bottom of their library"; the action grammar reads one of that card's three puts, so the counts differ and the store stood) is a put into the library: the bottom is no event, it fills no graveyard.
+ *  (2) A `manifest-dread` whose clause never says "manifest dread" / "manifests dread" is the plain MANIFEST (CR 701.40a: put it onto the battlefield face down, no graveyard half; Orochi Soul-Reaver, Ghastly Conscription,
+ *      Primordial Mist, Cryptic Pursuit), which emits `enters` and no `mill` (CR 701.62a's graveyard half is manifest dread's alone).
+ *  CEILING: read off the clause's own printed text only (a record with no text keeps the stored verb and zone), and only the bottom-of-the-library wording for (1). */
+const BOTTOM_OF_LIBRARY = /\bon the bottom of (?:your|their|its owner's|that player's|his or her|a|the) librar(?:y|ies)\b/i;
+const NAMES_A_GRAVEYARD = /\bgraveyards?\b|\bmill/i;
+const SAYS_MANIFEST_DREAD = /\bmanifest(?:s|ed|ing)? dread\b/i;
+function withPrintedZoneFacts(clause: ClauseRecord, text: string | undefined): ClauseRecord {
+  if (text === undefined || text.trim() === "" || !clause.actions?.length) return clause;
+  const bottom = BOTTOM_OF_LIBRARY.test(text) && !NAMES_A_GRAVEYARD.test(text);
+  const plainManifest = /\bmanifest/i.test(text) && !SAYS_MANIFEST_DREAD.test(text);
+  if (!bottom && !plainManifest) return clause;
+  let changed = false;
+  const actions = clause.actions.map((a) => {
+    if (bottom && a.verb === "put" && a.fromZone === "library" && a.toZone === "graveyard") { changed = true; return { ...a, toZone: "library" as const }; }
+    if (plainManifest && a.verb === "manifest-dread") { changed = true; return { ...a, verb: "manifest" as const }; }
+    return a;
+  });
+  return changed ? { ...clause, actions } : clause;
+}
 function withGrammarActions(clause: ClauseRecord, text: string | undefined, cost: string | undefined, cardName: string | undefined, precomputed?: ActionReading[]): ClauseRecord {
   if (!text || !clause.actions?.length) return clause;
   // PRECOMPUTED READINGS (G-T3): `grammarClauseRecords` already ran `parseActions` on this exact
@@ -2853,6 +2875,7 @@ export function deriveAbilities(
       : withGrammarActions(clause, rehomed ?? clauseTexts?.[clause.id], clauseCosts?.[clause.id], cardName, readings?.[clause.id]?.actions);
     // A LIFE TOTAL SET READS OFF ITS PRINTED CLAUSE (#1333, CR 119.5): a loss at an opponent / target player (Sorin Markov), "lose all but 1 life" (Soulgorger Orgg) and a genuine set's own recipient.
     clause = withLifeSetReadings(clause, rehomed ?? clauseTexts?.[clause.id]);
+    clause = withPrintedZoneFacts(clause, rehomed ?? clauseTexts?.[clause.id]);
     clause = splitMultiZoneExiles(clause, rehomed ?? clauseTexts?.[clause.id], cardText);
     if (collapseSearches) clause = collapseZoneSearches(clause);
     clause = splitDoesTheSame(clause, clauseTexts?.[clause.id]);

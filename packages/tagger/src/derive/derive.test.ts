@@ -8444,3 +8444,44 @@ describe("#1520 fix round", () => {
     for (const x of e) { expect(x.subject.self).toBeUndefined(); expect(x.subject).toMatchObject({ counter: "glyph", type: "creature" }); expect(x.subject.subtype).toBeUndefined(); }
   });
 });
+
+// #1562: a library-to-graveyard claim the printed clause never makes. The store filed Warp World's "puts all cards revealed this way that weren't put onto the battlefield on the BOTTOM of their library" as a
+// put into the graveyard (the grammar reads one of its three puts, so the counts differ and the store stands), and wrote a plain MANIFEST (Orochi Soul-Reaver, Ghastly Conscription, Primordial Mist, Cryptic Pursuit)
+// as `manifest-dread`, whose emit includes the graveyard half of CR 701.62a. Neither moves a card library -> graveyard.
+describe("a library-to-graveyard move the printed clause never makes (#1562)", () => {
+  const verbsOf = (r: ReturnType<typeof deriveAbilities>) => r.abilities.flatMap((a) => a.emits ?? []).map((e) => e.verb);
+  test("Warp World: the cards not put onto the battlefield go to the bottom of the library, not a graveyard", () => {
+    const text = "Each player shuffles all permanents they own into their library, then reveals that many cards from the top of their library. Each player puts all artifact, creature, and land cards revealed this way onto the battlefield, then does the same for enchantment cards, then puts all cards revealed this way that weren't put onto the battlefield on the bottom of their library.";
+    const r = deriveAbilities(
+      [{ id: 1, abilityType: "spell", actions: [
+        { verb: "shuffle", object: "permanents they own", fromZone: "battlefield", toZone: "library" },
+        { verb: "reveal", object: "that many cards from the top of their library" },
+        { verb: "put", object: "artifact, creature, and land cards revealed this way", fromZone: "library", toZone: "battlefield" },
+        { verb: "put", object: "enchantment cards revealed this way", fromZone: "library", toZone: "battlefield" },
+        { verb: "put", object: "all cards revealed this way that weren't put onto the battlefield", fromZone: "library", toZone: "graveyard" }] }],
+      "Warp World", { 1: text });
+    expect(verbsOf(r)).not.toContain("mill");
+    expect(verbsOf(r)).not.toContain("enters-graveyard");
+    expect(r.abilities.some((a) => a.effect.kind === "mill")).toBe(false);
+  });
+  test("a put into a graveyard the clause does name stays a mill (Genesis Wave)", () => {
+    const r = deriveAbilities(
+      [{ id: 1, abilityType: "spell", actions: [{ verb: "put", object: "permanent cards with mana value X or less from among them", fromZone: "library", toZone: "battlefield" },
+        { verb: "put", object: "all cards revealed this way that weren't put onto the battlefield", fromZone: "library", toZone: "graveyard" }] }],
+      "Genesis Wave", { 1: "Reveal the top X cards of your library. You may put any number of permanent cards with mana value X or less from among them onto the battlefield. Then put all cards revealed this way that weren't put onto the battlefield into your graveyard." });
+    expect(verbsOf(r)).toContain("mill");
+  });
+  test("a plain manifest the store filed as manifest dread emits no mill (Orochi Soul-Reaver, Cryptic Pursuit)", () => {
+    const r = deriveAbilities(
+      [{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "an instant or sorcery spell", control: "you" }, actions: [{ verb: "manifest-dread", object: "the top card of your library" }] }],
+      "Cryptic Pursuit", { 1: "Whenever you cast an instant or sorcery spell from your hand, manifest the top card of your library." });
+    expect(verbsOf(r)).toContain("enters");
+    expect(verbsOf(r)).not.toContain("mill");
+  });
+  test("a manifest dread (and a third-person 'manifests dread') still mills", () => {
+    const r = deriveAbilities(
+      [{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature" }, actions: [{ verb: "counter-spell", object: "target spell" }, { verb: "manifest-dread", object: "its controller" }] }],
+      "Fear of Impostors", { 1: "When this creature enters, counter target spell. Its controller manifests dread." });
+    expect(verbsOf(r)).toContain("mill");
+  });
+});
