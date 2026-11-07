@@ -1389,6 +1389,10 @@ export interface Ability {
     /** THE TRIGGER WATCHES THE PERMANENT THIS CARD IS ATTACHED TO (#1471): "Whenever enchanted creature deals damage, you gain that much life" (Armadillo Cloak, Spirit Link), "equipped creature" (Neko-Te). Written on damage triggers only;
      *  the subject is a plain creature (the host's identity is not a filter), so this is the one record that it is the HOST and not every creature. The matcher then hears only a damage producer whose dealer can be a creature you control. */
     host?: true;
+    /** BATTALION (#1082, owner 2026-11-06): "Whenever this creature and at least two other creatures attack" is this card's OWN attack trigger (`subject.self`); the other attackers are recorded here and NOT checked,
+     *  the way `oncePerTurn` is a cap and not a narrowing (an explicit exception to the 2026-10-01 rule that an unrepresented narrowing refuses the claim). Only that exact shape; "at least one other",
+     *  a class ("other Warrior"), "different players" and "equipped creature and ..." still refuse. */
+    alongside?: { atLeast: number };
   };
   /** THIS ABILITY CLAIMS NO CARDS, AND IS STILL AN ABILITY OF ITS KIND (#1264). One stored field for the two
    *  classes derive can decide from the card alone; the matcher reads it in one place (`claimsNothing`,

@@ -4554,6 +4554,36 @@ test("an intervening if or a narrowing derive cannot represent refuses the claim
   expect(trig("Whenever an opponent draws a card except the first one they draw in each of their draw steps, draw a card.", "draw").abilities[0]?.trigger).toMatchObject({ verbs: ["draw"], subject: { control: "opp" } });
 });
 
+// #1082 (owner ruling 2026-11-06): BATTALION is the card's OWN attack trigger; "at least two other creatures" is recorded (`trigger.alongside`), not checked.
+// An exception to the 2026-10-01 refusal, for exactly this shape.
+test("battalion reads as the card's own attack trigger, the two-other-attackers condition recorded", () => {
+  const battalion = (name: string, text: string) => deriveAbilities([{
+    id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature and at least two other creatures", control: "you" },
+    actions: [{ verb: "gain", object: "indestructible" }],
+  }], name, { 1: text });
+  for (const [name, text] of [
+    ["Frontline Medic", "Battalion — Whenever this creature and at least two other creatures attack, creatures you control gain indestructible until end of turn."],
+    ["Boros Strike-Captain", "Battalion — Whenever this creature and at least two other creatures attack, exile the top card of your library."],
+    ["Tajic, Blade of the Legion", "Battalion — Whenever Tajic and at least two other creatures attack, Tajic gets +5/+5 until end of turn."],
+  ] as const) {
+    const r = battalion(name, text);
+    expect(r.unknownTriggers, name).toEqual([]);
+    expect(r.abilities[0]?.trigger, name).toMatchObject({ verbs: ["attacks"], subject: { self: true }, alongside: { atLeast: 2 } });
+  }
+  // Only that shape: other narrowings, other counts and other watched creatures stay refused.
+  for (const text of [
+    "Whenever this creature and at least one other creature attack, draw a card.",
+    "Whenever this creature and another creature attack different players, draw a card.",
+    "Whenever this creature and at least one other Warrior attack, draw a card.",
+    "Whenever equipped creature and at least one other creature attack, draw a card.",
+    "Whenever a creature you control attacks alone, draw a card.",
+  ]) {
+    const r = battalion("Some Card", text);
+    expect(r.abilities.some((a) => a.trigger), text).toBe(false);
+    expect(r.unknownTriggers.some((u) => u.startsWith("narrowing:")), text).toBe(true);
+  }
+});
+
 test("the printed event and whose it is win over the stored ones", () => {
   // Stored as the model wrote it: event `other`, control `you`. Printed: any creature's death.
   const { abilities } = deriveAbilities([{
