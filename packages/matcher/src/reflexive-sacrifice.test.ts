@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
-import { deriveRow } from "../../tagger/src/derive-worker.js";
+import { deriveRow } from "@edh-seer/tagger/derive-worker";
 import { loadHierarchy, pairReasons } from "./index.js";
 import type { DeckCard } from "./types.js";
 import fixtures from "./reflexive-sacrifice.fixtures.json" with { type: "json" };
@@ -20,7 +20,7 @@ const card = (name: string): DeckCard => {
 /** The same card as if derive had never stamped `trigger.reflexive`: every row below must pair with it, or the row proves nothing. */
 const unflagged = (c: DeckCard): DeckCard => ({
   ...c,
-  tags: { ...c.tags, abilities: c.tags.abilities.map((a) => (a.trigger?.reflexive ? { ...a, trigger: (({ reflexive: _r, ...t }) => t)(a.trigger) } : a)) } as CardTags,
+  tags: { ...c.tags!, abilities: c.tags!.abilities.map((a) => (a.trigger?.reflexive ? { ...a, trigger: (({ reflexive: _r, ...t }) => t)(a.trigger) } : a)) } as CardTags,
 });
 const sacReasons = (producer: DeckCard, consumer: DeckCard) => pairReasons(producer, consumer, H).filter((r) => r.tag.startsWith("sacrifice:"));
 
@@ -44,7 +44,7 @@ describe("a reflexive sacrifice trigger hears no other card's outlet", () => {
   });
   test("Gorbag's and Caesar's mode bullets carry the flag too", () => {
     for (const name of ["Gorbag of Minas Morgul", "Caesar, Legion's Emperor"]) {
-      const triggered = card(name).tags.abilities.filter((a) => a.trigger?.verbs.includes("sacrifice"));
+      const triggered = card(name).tags!.abilities.filter((a) => a.trigger?.verbs.includes("sacrifice"));
       expect(triggered.length, name).toBeGreaterThan(1);
       for (const a of triggered) expect(a.trigger?.reflexive, `${name} clause ${a.clause}`).toBe(true);
     }
