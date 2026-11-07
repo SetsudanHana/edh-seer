@@ -1,0 +1,1222 @@
+{
+ "Metallic Mimic": {
+  "source": {
+   "name": "Metallic Mimic",
+   "typeLine": "Artifact Creature — Shapeshifter",
+   "oracleText": "As this creature enters, choose a creature type.\nThis creature is the chosen type in addition to its other types.\nEach other creature you control of the chosen type enters with an additional +1/+1 counter on it.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 2,
+   "colorIdentity": [],
+   "power": "2",
+   "toughness": "1",
+   "manaCost": "{2}",
+   "layout": "normal",
+   "_id": "1f91297a-ec2b-4ea8-9198-aa1daac20ff8"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this creature enters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "this creature is the chosen type in addition to its other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1 counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Llanowar Elves": {
+  "source": {
+   "name": "Llanowar Elves",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "{T}: Add {G}.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{G}",
+   "producedMana": [
+    "G"
+   ],
+   "layout": "normal",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Llanowar Elves",
+     "typeLine": "Creature — Elf Druid",
+     "printingId": "11bd6cef-f887-4b07-a957-4c53cb3c9c87"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Marwyn's Kindred",
+     "typeLine": "Sorcery",
+     "printingId": "8ef95e7a-9f07-41f8-908b-2df93e03d391"
+    }
+   ],
+   "_id": "68954295-54e3-4303-a6bc-fc4547a4e3a3"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Elvish Mystic": {
+  "source": {
+   "name": "Elvish Mystic",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "{T}: Add {G}.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{G}",
+   "producedMana": [
+    "G"
+   ],
+   "layout": "normal",
+   "_id": "3f3b2c10-21f8-4e13-be83-4ef3fa36e123"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Elvish Archdruid": {
+  "source": {
+   "name": "Elvish Archdruid",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "Other Elf creatures you control get +1/+1.\n{T}: Add {G} for each Elf you control.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{G}{G}",
+   "producedMana": [
+    "G"
+   ],
+   "layout": "normal",
+   "_id": "6e2c2423-d854-4478-99e6-64f29851f026"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Other Elf creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G} for each Elf you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Generous Patron": {
+  "source": {
+   "name": "Generous Patron",
+   "typeLine": "Creature — Elf Advisor",
+   "oracleText": "When this creature enters, support 2. (Put a +1/+1 counter on each of up to two other target creatures.)\nWhenever you put one or more counters on a creature you don't control, draw a card.",
+   "keywords": [
+    "Support"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "4",
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "_id": "fb084141-cb80-479e-b5d4-114c1f31eb6c"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "support",
+      "object": "a creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "counter-added",
+     "subject": "a creature you don't control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Grizzly Bears": {
+  "source": {
+   "name": "Grizzly Bears",
+   "typeLine": "Creature — Bear",
+   "oracleText": "",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{G}",
+   "layout": "normal",
+   "_id": "14c8f55d-d177-4c25-a931-ebeb9e6062a0"
+  },
+  "canonical": []
+ },
+ "Serra Angel": {
+  "source": {
+   "name": "Serra Angel",
+   "typeLine": "Creature — Angel",
+   "oracleText": "Flying\nVigilance (Attacking doesn't cause this creature to tap.)",
+   "keywords": [
+    "Flying",
+    "Vigilance"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{3}{W}{W}",
+   "layout": "normal",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Treizeci, Sun of Serra",
+     "typeLine": "Legendary Creature — Human Knight",
+     "printingId": "ad2bbfa1-81e0-4683-b1dc-a3aaa9837690"
+    }
+   ],
+   "_id": "4b7ac066-e5c7-43e6-9e7e-2739b24a905d"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Kros, Defense Contractor": {
+  "source": {
+   "name": "Kros, Defense Contractor",
+   "typeLine": "Legendary Creature — Cat Advisor",
+   "oracleText": "At the beginning of your upkeep, put a shield counter on target creature an opponent controls.\nWhenever you put one or more counters on a creature you don't control, tap that creature and goad it. It gains trample until your next turn. (Until your next turn, that creature attacks each combat if able and attacks a player other than you if able.)",
+   "keywords": [
+    "Goad"
+   ],
+   "colors": [
+    "G",
+    "U",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G",
+    "U",
+    "W"
+   ],
+   "power": "2",
+   "toughness": "4",
+   "manaCost": "{1}{G}{W}{U}",
+   "layout": "normal",
+   "_id": "debeb004-3157-43cf-95fd-220777417ff7"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "shield",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "counter-added",
+     "subject": "a creature you don't control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "goad",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "trample until your next turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Kindred Discovery": {
+  "source": {
+   "name": "Kindred Discovery",
+   "typeLine": "Enchantment",
+   "oracleText": "As this enchantment enters, choose a creature type.\nWhenever a creature you control of the chosen type enters or attacks, draw a card.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{U}{U}",
+   "layout": "normal",
+   "_id": "005ee549-1bf5-478f-bc3f-3e791bd7eecf"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a creature you control of the chosen type",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "a creature you control of the chosen type",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Herald's Horn": {
+  "source": {
+   "name": "Herald's Horn",
+   "typeLine": "Artifact",
+   "oracleText": "As this artifact enters, choose a creature type.\nCreature spells you cast of the chosen type cost {1} less to cast.\nAt the beginning of your upkeep, look at the top card of your library. If it's a creature card of the chosen type, you may reveal it and put it into your hand.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}",
+   "layout": "normal",
+   "_id": "c02c5547-b9c9-4b2d-9d12-e87bfba8f2d2"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "creature spells you cast of the chosen type cost {1} less",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "your",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Haunting Voyage": {
+  "source": {
+   "name": "Haunting Voyage",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose a creature type. Return up to two creature cards of that type from your graveyard to the battlefield. If this spell was foretold, return all creature cards of that type from your graveyard to the battlefield instead.\nForetell {5}{B}{B} (During your turn, you may pay {2} and exile this card from your hand face down. Cast it on a later turn for its foretell cost.)",
+   "keywords": [
+    "Foretell"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{B}{B}",
+   "layout": "normal",
+   "_id": "334c284e-7bc3-4c18-9f8d-4d846f80008e"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "up to two creature cards of the chosen type",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "all creature cards of the chosen type",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Foretell {5}{B}{B}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Extinction Event": {
+  "source": {
+   "name": "Extinction Event",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose odd or even. Exile each creature with mana value of the chosen quality. (Zero is even.)",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{B}",
+   "layout": "normal",
+   "_id": "0a11a3a8-ee5f-4caf-bf84-c8248e07c825"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "each creature with mana value of the chosen quality",
+      "fromZone": null,
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Akki Ronin": {
+  "source": {
+   "name": "Akki Ronin",
+   "typeLine": "Creature — Goblin Samurai",
+   "oracleText": "Whenever a Samurai or Warrior you control attacks alone, you may discard a card. If you do, draw a card.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "1",
+   "toughness": "3",
+   "manaCost": "{1}{R}",
+   "layout": "normal",
+   "_id": "4b4c76e1-c480-4d10-93d4-483ef2debc4b"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "a Samurai or Warrior you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Academy Journeymage": {
+  "source": {
+   "name": "Academy Journeymage",
+   "typeLine": "Creature — Human Wizard",
+   "oracleText": "This spell costs {1} less to cast if you control a Wizard.\nWhen this creature enters, return target creature an opponent controls to its owner's hand.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "3",
+   "toughness": "2",
+   "manaCost": "{4}{U}",
+   "layout": "normal",
+   "_id": "b400700c-1d82-4721-a166-56f88ba6ad19"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "casting cost",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target creature an opponent controls",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Goldmeadow Stalwart": {
+  "source": {
+   "name": "Goldmeadow Stalwart",
+   "typeLine": "Creature — Kithkin Soldier",
+   "oracleText": "As an additional cost to cast this spell, reveal a Kithkin card from your hand or pay {3}.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{W}",
+   "layout": "normal",
+   "_id": "1aff8653-12c5-4549-915f-ac2fd6dfd43b"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "reveal a Kithkin card from your hand or pay {3}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Rhovanion Rampager": {
+  "source": {
+   "name": "Rhovanion Rampager",
+   "typeLine": "Creature — Wolf",
+   "oracleText": "Whenever this creature attacks, you may sacrifice another creature. If you do, put a number of +1/+1 counters on this creature equal to the sacrificed creature's power.\nWhen this creature dies, amass Goblins X, where X is this creature's power. (Put X +1/+1 counters on an Army you control. It's also a Goblin. If you don't control an Army, create a 0/0 black Goblin Army creature token first.)",
+   "keywords": [
+    "Amass"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "3",
+   "toughness": "2",
+   "manaCost": "{2}{B}",
+   "layout": "normal",
+   "_id": "008a11c1-d283-49fe-abd7-ff4fe8b1fe79"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "another creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "sacrificed creature's power",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "amass",
+      "object": "Goblins",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "this creature's power",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Ambassador Oak": {
+  "source": {
+   "name": "Ambassador Oak",
+   "typeLine": "Creature — Treefolk Warrior",
+   "oracleText": "When this creature enters, create a 1/1 green Elf Warrior creature token.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{3}{G}",
+   "layout": "normal",
+   "_id": "4045c24e-098f-4582-8c50-576a94c7b705"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 green Elf Warrior creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Sunderflock": {
+  "source": {
+   "name": "Sunderflock",
+   "typeLine": "Creature — Elemental",
+   "oracleText": "This spell costs {X} less to cast, where X is the greatest mana value among Elementals you control.\nFlying\nWhen this creature enters, if you cast it, return all non-Elemental creatures to their owners' hands.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 9,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{7}{U}{U}",
+   "layout": "normal",
+   "_id": "c01b221f-3993-43ab-8cde-b42fb344e2a7"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "this spell costs X less to cast, where X is the greatest mana value among Elementals you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all non-Elemental creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "all non-Elemental creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Hardened Scales": {
+  "source": {
+   "name": "Hardened Scales",
+   "typeLine": "Enchantment",
+   "oracleText": "If one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 counters are put on it instead.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{G}",
+   "layout": "normal",
+   "_id": "a1f3da21-af6d-450e-bf0b-985d158418e6"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "amount": "N+1",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Doubling Season": {
+  "source": {
+   "name": "Doubling Season",
+   "typeLine": "Enchantment",
+   "oracleText": "If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.\nIf an effect would put one or more counters on a permanent you control, it puts twice that many of those counters on that permanent instead.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{G}",
+   "layout": "normal",
+   "_id": "01546b7d-a233-4176-8843-d732074dc5b6"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "twice that many tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "twice that many counters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Elvish Soultiller": {
+  "source": {
+   "name": "Elvish Soultiller",
+   "typeLine": "Creature — Elf Mutant",
+   "oracleText": "When this creature dies, choose a creature type. Shuffle all creature cards of that type from your graveyard into your library.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "5",
+   "toughness": "4",
+   "manaCost": "{3}{G}{G}",
+   "layout": "normal",
+   "_id": "10b0b60f-9976-41f9-855b-1786b6f86f55"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "shuffle",
+      "object": "all creature cards of the chosen type from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Viscera Seer": {
+  "source": {
+   "name": "Viscera Seer",
+   "typeLine": "Creature — Vampire Wizard",
+   "oracleText": "Sacrifice a creature: Scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
+   "keywords": [
+    "Scry"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{B}",
+   "layout": "normal",
+   "_id": "f82a4e85-526d-4456-b700-7760043a31be"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "scry",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Captain America, Super-Soldier": {
+  "source": {
+   "name": "Captain America, Super-Soldier",
+   "typeLine": "Legendary Creature — Human Soldier Hero",
+   "oracleText": "First strike\nCaptain America enters with a shield counter on him. (If he would be dealt damage or destroyed, remove a shield counter from him instead.)\nAs long as Captain America has a shield counter on him, you and other Heroes you control have hexproof.",
+   "keywords": [
+    "First strike"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "3",
+   "toughness": "2",
+   "manaCost": "{1}{W}{W}",
+   "layout": "normal",
+   "_id": "ac1b6ffc-12a9-4d9c-a9fc-68a839a40738"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "First strike",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "shield counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "hexproof",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ }
+}

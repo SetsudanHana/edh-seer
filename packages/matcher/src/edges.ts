@@ -28,6 +28,7 @@ import { enteringFaceName, faceDeckCards, graveyardFaceName, graveyardIdentity }
 import { claimsNothing, isManaRider, isReflexiveTrigger, isRefusedTrigger, isSelfLoss } from "./claims.js";
 import { magnitudeOf, mergeMagnitude } from "./edge-magnitude.js";
 import type { LandTypes } from "./chosen-type.js";
+import { caresAboutCreatureType, refuseUnresolvedChosenTypes } from "./chosen-type.js";
 
 const list = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
@@ -2227,8 +2228,19 @@ function silencedBy(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
 }
 
 export function directedReasons(p0: DeckCard, c0: DeckCard, h: Hierarchy, opts: ReasonOptions = {}): Reason[] {
-  const p = withLiveKills(p0, opts);
-  const c = p0 === c0 ? p : withLiveKills(c0, opts);
+  const p1 = withLiveKills(p0, opts);
+  const c1 = p0 === c0 ? p1 : withLiveKills(c0, opts);
+  if (!p1.tags || !c1.tags) return [];
+  // AN UNRESOLVED CHOSEN CREATURE TYPE (no deck: a card page, a partner suggestion, pair isolation) pairs only with a creature that itself cares about a creature type (owner ruling 2026-11-07, #1526 part 2;
+  // `refuseUnresolvedChosenTypes`). In a deck `resolveChosenTypes` has run and there is nothing left to refuse. A card paired with itself keeps its own.
+  const refusedFor = <T extends DeckCard>(x: T, other: DeckCard): T => {
+    // THE RULING IS ABOUT CREATURE PARTNERS (review of #1526): a non-creature partner (Hardened Scales, Doubling Season, a draw payoff) is paired as it always was, with or without a deck.
+    if (!other.tags || p0 === c0 || !other.tags.characteristics.types.some((t) => t.toLowerCase() === "creature")) return x;
+    const t = refuseUnresolvedChosenTypes(x.tags!, x.card.oracleText);
+    return t === x.tags || caresAboutCreatureType(other.tags, other.card) ? x : { ...x, tags: t };
+  };
+  const p = refusedFor(p1, c1);
+  const c = p0 === c0 ? p : refusedFor(c1, p1);
   if (!p.tags || !c.tags) return [];
   if (silencedBy(p, c, h)) return [];
   // Both sides carry tags from here on, which is what `TaggedCard` records for the channels.
