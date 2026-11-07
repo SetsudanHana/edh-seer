@@ -95,6 +95,7 @@ const SUBTYPE_FORMS: ReadonlySet<string> = (() => {
     else if (raw.endsWith("f")) out.add(raw.slice(0, -1) + "ves");
     else if (/[^aeiou]y$/.test(raw)) out.add(raw.slice(0, -1) + "ies");
     else if (/(?:s|x|z|ch|sh)$/.test(raw)) out.add(raw + "es");
+    else if (raw.endsWith("o")) { out.add(raw + "s"); out.add(raw + "es"); }
     else out.add(raw + "s");
   }
   out.add("mice"); out.add("fungi");
@@ -162,6 +163,8 @@ function blankAll(text: string, lower: string, needle: string): string {
  *  A type is a WORD that starts upper-case (printed subtypes are capitalised, "wall" and "head" are not) and is a singular or plural `CREATURE_SUBTYPES` entry. Linear throughout: indexOf scans and one character pass, no regex over the text.
  *  CEILING: any other mention of a type counts ("target Dragon", "can't be blocked except by Spirits", "Fish you control"), as does one in another card's name quoted in the text ("Shivan Dragon" in Garth One-Eye) and a copy's added
  *  type the clause rules above miss (Cyber-Controller's "They're 2/2 Cyberman artifact creatures", Figure of Fable's "If this creature is a Scout"); a sentence-initial capitalised ordinary word that is also a subtype ("Head") reads as a type.
+ *  CEILING: the tags path counts a grant's subject (a lord's "other Heroes have hexproof" is a keyword-grant, so grants cannot be dropped wholesale): Ursine Champion's "becomes a Bear Berserker" is stored as a keyword-grant of Bear and Berserker, and a
+ *  subtype derive took from the card's own name (Wolverine) reads as a named type. Both are false keeps.
  *  The other way, a type named only in reminder text (Soulshift's "Spirit card", Amplify's "Soldier card", Affinity for outlaws) is dropped with the reminder, and a face the card does not print the type on does not carry it (Smitten Swordmaster's adventure). */
 export function printedTextNamesCreatureType(name: string, oracleText: string | undefined): boolean {
   if (!oracleText) return false;
@@ -275,16 +278,21 @@ const NEGATED_OR_OPPONENT_CHOICE = /\b(?:aren't|isn't|not) of the chosen type|\b
 export function refuseUnresolvedChosenTypes(tags: CardTags, oracleText: string | undefined): CardTags {
   const hit = refusedCache.get(tags);
   if (hit) return hit;
-  const touches = (a: CardTags["abilities"][number]): boolean => chosenCreatureType(a.trigger?.subject)
-    || (a.effect.kind !== "token-generation" && (chosenCreatureType(a.doublesOf) || chosenCreatureType(a.effect.subject) || (a.emits ?? []).some((e) => chosenCreatureType(e.subject))));
+  // Two halves: the TRIGGER that watches the chosen type (Kindred Discovery), and the BODY that acts on it (effect, emits, doubled class). A trigger that is NOT chosen -- Elvish Soultiller's "When this creature dies"
+  // -- is kept when only the body is: it is the card hearing an event, which holds in any deck.
+  const watches = (a: CardTags["abilities"][number]): boolean => chosenCreatureType(a.trigger?.subject);
+  const acts = (a: CardTags["abilities"][number]): boolean => a.effect.kind !== "token-generation"
+    && (chosenCreatureType(a.doublesOf) || chosenCreatureType(a.effect.subject) || (a.emits ?? []).some((e) => chosenCreatureType(e.subject)));
+  const touches = (a: CardTags["abilities"][number]): boolean => watches(a) || acts(a);
   const inScope = /creature type/i.test(oracleText ?? "") && !NEGATED_OR_OPPONENT_CHOICE.test(oracleText ?? "");
   const out = !inScope || !tags.abilities.some(touches) ? tags : {
     ...tags,
     abilities: tags.abilities.map((a) => {
       if (!touches(a)) return a;
-      const { trigger: _t, emits: _e, doublesOf: _d, ...rest } = a;
+      const { trigger, emits, doublesOf: _d, ...rest } = a;
       // A token maker keeps its supply and loses only the trigger that watches the chosen type.
-      return a.effect.kind === "token-generation" ? { ...rest, ...(a.emits ? { emits: a.emits } : {}) } : { ...rest, effect: { kind: "" as const } };
+      if (a.effect.kind === "token-generation") return { ...rest, ...(emits ? { emits } : {}) };
+      return { ...rest, ...(trigger && !watches(a) ? { trigger } : {}), effect: { kind: "" as const } };
     }),
   };
   refusedCache.set(tags, out);

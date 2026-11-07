@@ -2234,7 +2234,8 @@ export function directedReasons(p0: DeckCard, c0: DeckCard, h: Hierarchy, opts: 
   // AN UNRESOLVED CHOSEN CREATURE TYPE (no deck: a card page, a partner suggestion, pair isolation) pairs only with a creature that itself cares about a creature type (owner ruling 2026-11-07, #1526 part 2;
   // `refuseUnresolvedChosenTypes`). In a deck `resolveChosenTypes` has run and there is nothing left to refuse. A card paired with itself keeps its own.
   const refusedFor = <T extends DeckCard>(x: T, other: DeckCard): T => {
-    if (!other.tags || p0 === c0) return x;
+    // THE RULING IS ABOUT CREATURE PARTNERS (review of #1526): a non-creature partner (Hardened Scales, Doubling Season, a draw payoff) is paired as it always was, with or without a deck.
+    if (!other.tags || p0 === c0 || !other.tags.characteristics.types.some((t) => t.toLowerCase() === "creature")) return x;
     const t = refuseUnresolvedChosenTypes(x.tags!, x.card.oracleText);
     return t === x.tags || caresAboutCreatureType(other.tags, other.card) ? x : { ...x, tags: t };
   };

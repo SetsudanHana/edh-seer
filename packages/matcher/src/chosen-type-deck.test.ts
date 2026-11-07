@@ -81,3 +81,17 @@ test("with no deck, a kindred payoff derive does not see (type named in a trigge
 test("with no deck, a card that only MAKES a creature of a type (Ambassador Oak's Elf Warrior token, Rhovanion Rampager's amass Goblins) is not a type-caring card", () => {
   for (const maker of ["Ambassador Oak", "Rhovanion Rampager"]) expect(mimicStatic(maker), maker).toEqual([]);
 });
+
+// REVIEW OF #1526 (Opus, BLOCK): the ruling is about CREATURE partners. A non-creature partner is paired exactly as it was.
+test("with no deck, Metallic Mimic still pairs with a non-creature that cares about its counters (Hardened Scales, Doubling Season)", () => {
+  expect(pairOf("Metallic Mimic", "Hardened Scales", /counter-added/)).not.toEqual([]);
+  expect(pairReasons(dc("Metallic Mimic"), dc("Doubling Season"), loadHierarchy())).not.toEqual([]);
+});
+
+test("with no deck, a chosen-type card's SELF trigger survives (Elvish Soultiller's 'when this creature dies' still hears Viscera Seer's sacrifice)", () => {
+  expect(pairOf("Elvish Soultiller", "Viscera Seer", /^dies:/)).not.toEqual([]);
+});
+
+test("'Heroes' is the plural of 'Hero': Captain America's 'other Heroes you control' is a creature-type payoff", () => {
+  expect(mimicStatic("Captain America, Super-Soldier")).not.toEqual([]);
+});
