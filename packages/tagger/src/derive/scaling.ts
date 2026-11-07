@@ -141,9 +141,9 @@ const PARTY = /\bin your party\b/i;
 const PARTY_TYPES = ["cleric", "rogue", "warrior", "wizard"];
 
 /** "EACH PLAYER ... THEIR GRAVEYARD" (Nature's Resurgence, Tombstone Stairwell, Grave Consequences):
- *  every player counts their own yard, YOURS included (owner ruling 2026-11-06, #1416), so the count
- *  is read as `you` -- the part that pays you. The literal any-player reading was rejected (+6,330
- *  joins). An opponent, target or defending player in the clause keeps "their" as the opponent's. */
+ *  every player counts their own yard, YOURS included, so the count is read LITERALLY as `any`
+ *  (owner ruling 2026-11-07, #1416; the 2026-11-06 `you` reading is superseded). Every fill of any
+ *  graveyard feeds it, opponent-directed ones too. An opponent, target or defending player in the clause keeps "their" as the opponent's. */
 const EACH_PLAYER = /^(?!.*\b(?:opponents?|target players?|defending player|enchanted player|that player)\b).*\beach player\b/is;
 
 /** WHAT a graveyard count counts, as a subject the matcher can compare a fill against.
@@ -155,7 +155,7 @@ const EACH_PLAYER = /^(?!.*\b(?:opponents?|target players?|defending player|ench
  *  `graveyardFillMatches` exactly as a reanimator demand goes through it.
  *
  *  The OWNER matters and is read from the same phrase: "your graveyard" is yours, "all graveyards" is
- *  anyone's, and "their graveyard" is the OPPONENT's (but "each player ... their", yours) — Riverchurn Monument mills each target player
+ *  anyone's, and "their graveyard" is the OPPONENT's (but "each player ... their", anyone's) — Riverchurn Monument mills each target player
  *  for the size of THEIR yard, which your own fillers do not feed. */
 export function scalingSubject(action: Action, clauseText?: string): SubjectFilter | undefined {
   // LIFE LOST THIS TURN counts a player's losses, not a board: whose losses is the subject.
@@ -169,7 +169,7 @@ export function scalingSubject(action: Action, clauseText?: string): SubjectFilt
   if (GRAVEYARD_COUNT.test(text)) {
     const subject = parseSubject(noun.split(/\s{1,4}in\s{1,4}/i)[0]);
     subject.zone = "graveyard";
-    subject.control = /\btheir\b/i.test(noun) ? (EACH_PLAYER.test(clauseText ?? "") ? "you" : "opp")
+    subject.control = /\btheir\b/i.test(noun) ? (EACH_PLAYER.test(clauseText ?? "") ? "any" : "opp")
       : /\ball graveyards?\b|\beach graveyard\b/i.test(noun) ? "any"
       : "you";
     return subject;
