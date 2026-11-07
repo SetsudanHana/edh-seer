@@ -869,6 +869,18 @@ describe("a library-to-graveyard move the clause does not word as mill (#1444)",
     const bottom = actionEmits({ verb: "put", object: "the bottom card", fromZone: "library", toZone: "graveyard" }, "{3}, {T}: Target player puts the bottom card of their library into their graveyard.");
     expect(bottom.find((x) => x.verb === "mill")?.subject.notMillAction).toBe(true);
   });
+  test("a record with no text of its own (the model split one printed clause in two) reads the card's printed text: stamped only when the WHOLE card never mills (Gathering Stone, Celestus Sanctifier)", () => {
+    const gathering = "When this artifact enters and at the beginning of your upkeep, look at the top card of your library. If it's a card of the chosen type, you may reveal it and put it into your hand. If you don't put the card into your hand, you may put it into your graveyard.";
+    const e = actionEmits({ verb: "mill", object: "it" }, "", { cardText: gathering });
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBe(true);
+    const celestus = "Whenever day becomes night or night becomes day, look at the top two cards of your library. Put one of them into your graveyard.";
+    expect(actionEmits({ verb: "mill", object: "one of them" }, undefined, { cardText: celestus }).find((x) => x.verb === "mill")?.subject.notMillAction).toBe(true);
+    // Visage of Dread mills elsewhere on the card: the text-less record stays unstamped.
+    const visage = "When this creature enters, each player mills two cards.\nWhenever this creature attacks, look at the top card of your library. You may put it into your graveyard.";
+    expect(actionEmits({ verb: "mill", object: "it" }, "", { cardText: visage }).find((x) => x.verb === "mill")?.subject.notMillAction).toBeUndefined();
+    // Nothing to read at all: no claim.
+    expect(actionEmits({ verb: "mill", object: "it" }, "", {}).find((x) => x.verb === "mill")?.subject.notMillAction).toBeUndefined();
+  });
   test("no clause text: nothing is claimed either way", () => {
     const e = actionEmits({ verb: "mill", object: "three cards", amount: "3" });
     expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBeUndefined();

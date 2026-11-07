@@ -281,7 +281,9 @@ export interface SubjectFilter {
    *  graveyard consumer (reanimation, delirium, "put into your graveyard from anywhere", graveyard counts) still reads the move; a TRIGGER ON THE MILL ACTION (Zellix, Glowing One, Mirelurk Queen,
    *  The Wise Mothman, Screeching Scorchbeast, Infesting Radroach, Lo and Li) refuses an emit carrying it, in `eventMatches`. The INVERSE of "worded as mill" on purpose: an emit with no clause text,
    *  or one of a path this stamp never reaches, fails OPEN (today's reading) instead of silently losing a real mill's edges.
-   *  CEILING: read from the clause's own words, so a clause that both mills and puts the rest into the graveyard (the mill word anywhere in it) leaves its put-emit unstamped. */
+   *  CEILING: read from the clause's own words, and a record with NO text of its own (the model split one printed clause in two) reads the card's whole printed text, so it is stamped only when the WHOLE card never says mill.
+   *  The residual is that last case: a text-less record on a card that mills elsewhere is never stamped, even if the record itself is a look-at-top put. Measured 2026-11-07 at DERIVE 471: 3 text-less mill
+   *  abilities are left unstamped (Visage of Dread, the Moloid token, the Jace, Telepath Unbound emblem token), all three read as real mills by the #1444 review, so 0 known false instances. */
   notMillAction?: true;
   /** The subject demands the LEGENDARY supertype. "Legendary creatures you control get +2/+2"
    *  (Serah Farron) and Jodah's +X/+X derived a subject of EVERY creature without it, which were the
