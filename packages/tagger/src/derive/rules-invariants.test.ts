@@ -19,6 +19,7 @@ const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2"
 const TESTED: Record<string, string> = {
   "609.4b": "grammar/clause-record.test.ts — a spend-mana-as-any-colour rider changes how a cost is paid, not the cost: it stays an unclaimed `other` after the cast or play, never stripped (Evelyn, Tinybones, #1355)",
   "701.62": "manifest dread: its mill is of your library (emits.test.ts, manifest dread mills the top-two card of YOUR library)",
+  "701.62a": "manifest dread alone puts the cards not manifested into the graveyard; a plain manifest emits no mill (derive.test.ts, a library-to-graveyard move the printed clause never makes, #1562)",
   "104.2b": "derive.test.ts — a win-game VERB derives the win-game kind (Epic Struggle, Laboratory Maniac, #1266)",
   "603.1": "matcher partners-core.test.ts — a claimsNothing ability is still a triggered ability: a copier is offered the copies|triggered key (#1253)",
   "306.5b": "derive/mana-lines.test.ts — a planeswalker's printed loyalty rides on each of its loyalty-cost mana lines (ManaLine.startLoyalty, #1169)",
