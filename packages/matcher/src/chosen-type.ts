@@ -284,10 +284,12 @@ function caresFromTags(tags: CardTags): boolean {
     || (!makesToken(a) && (a.emits ?? []).some((e) => e.verb !== "create-token" && e.subject.token !== true && names(e.subject))));
 }
 
-/** An unresolved chosen CREATURE type. By the derived KIND (#1568): `chosenKind: "creature-type"` on a subject of any type (Gathering Stone's "spells of the chosen type" is a creature-type choice on a spell subject). A subject with NO kind
+/** An unresolved chosen CREATURE type. By the derived KIND (#1568): `chosenKind: "creature-type"` on a subject that NAMES A TYPE, whichever it is (Gathering Stone's "spells of the chosen type" is a creature-type choice on a spell subject; Rimefire Torque's is a permanent).
+ *  An UNTYPED subject is left alone: Gathering Stone's "put it into your graveyard" carries `chosenType` from the clause beside it ("a card of the chosen type") and is a graveyard fill of ANY card, a true pair with every recursion creature (measured: refusing it lost
+ *  ~800 census rows, all true), so an untyped chosen-type subject keeps the wildcard it was. A subject with NO kind
  *  (derive could not name one: the printed words make no single choice) falls back to the old reading, a `creature` subject in a card whose words say "creature type" (`cue`). Any other kind (a card type, odd or even, a land type, a planeswalker type) is not this. */
 const chosenCreatureType = (s: SubjectFilter | undefined, cue: boolean): s is SubjectFilter =>
-  s?.chosenType === true && (s.chosenKind === "creature-type" || (s.chosenKind === undefined && cue && arr(s.type).includes("creature")));
+  s?.chosenType === true && (s.chosenKind === "creature-type" ? s.type !== undefined : s.chosenKind === undefined && cue && arr(s.type).includes("creature"));
 
 /** THE NO-DECK READING OF "OF THE CHOSEN TYPE" (owner ruling 2026-11-07, #1526 part 2). With a deck `resolveChosenTypes` has already turned every chosen type into the deck's main creature type. With none (a card
  *  page, a partner suggestion, the compass's pair isolation) the type is unresolved, and `subjectMatches` does not read the flag, so Metallic Mimic paired with every creature (an anthem). The ruling: such a card pairs
@@ -302,11 +304,12 @@ const chosenCreatureType = (s: SubjectFilter | undefined, cue: boolean): s is Su
  *  recursion, a cheat or a copy reaches, the doubled class. What is NOT is the TOKEN a `token-generation` makes of the chosen type (Riptide Replicator, Kindred Charge): that is a supply, it pairs with whatever wants a
  *  token (a doubler), and the type of the token is no demand of anyone's. Molten Echoes keeps its token supply too and loses only the trigger that watches the chosen type.
  *
- *  SCOPE, by the derived KIND (#1568): only a subject whose `chosenKind` is `creature-type` is read, whatever its type (Gathering Stone's spells, Door of Destinies' spell trigger, Rimefire Torque's permanents, Pack's Disdain's count). "Odd or even"
+ *  SCOPE, by the derived KIND (#1568): only a subject whose `chosenKind` is `creature-type` AND that names a type is read, whatever the type (Gathering Stone's spells, Door of Destinies' spell trigger, Rimefire Torque's permanents, Pack's Disdain's count). "Odd or even"
  *  (Extinction Event, Zimone's Hypothesis), a card-type choice (Cloud Key, Stenn), a land type (Shimmer) and a planeswalker type (Leori) are other kinds and are left as they were. A subject with NO kind, because derive found no single choice in the words
  *  (a stored reading, a card whose text names two choices), keeps the old reading: a `creature` subject in a card whose printed words say "creature type".
  *  CEILING: a chosen type that is a NEGATION ("creatures that aren't of the chosen type": Kindred Dominance, Crippling Fear, Raise the Palisade, Callous Oppressor) or is chosen by an opponent is still told apart by the printed words, not by
  *  derive, which does not carry either. A card that prints both a creature-type choice and a negated one would be read as the first.
+ *  CEILING: an UNTYPED chosen-type subject is not refused (Dawn-Blessed Pennant's "return target card of the chosen type", Gathering Stone's graveyard fill): it stays the wildcard it was, so a recursion that really asks for the chosen type still pairs with every card that fills a graveyard.
  *  CEILING: a card-type, land-type, parity or planeswalker-type choice is not refused without a deck: Cloud Key still pairs with whatever it matched. The owner ruling is about a chosen CREATURE type. */
 const refusedCache = new WeakMap<CardTags, CardTags>();
 const NEGATED_OR_OPPONENT_CHOICE = /\b(?:aren't|isn't|not) of the chosen type|\bopponent chooses a creature type/i;

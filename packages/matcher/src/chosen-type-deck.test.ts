@@ -145,3 +145,12 @@ test("a card whose own chosen type is a card type, a land type or odd or even do
   for (const n of ["Cloud Key", "Stenn, Paranoid Partisan", "Shimmer", "Extinction Event"]) expect(cares(n), n).toBe(false);
   for (const n of ["Kindred Discovery", "Gathering Stone", "Herald's Horn"]) expect(cares(n), n).toBe(true);
 });
+
+test("an UNTYPED creature-type subject (Gathering Stone's 'put it into your graveyard', a graveyard fill of any card) is left the wildcard it was; a typed one is refused", () => {
+  const gs = tagsOf("Gathering Stone");
+  const untyped = (t: CardTags): CardTags => ({ ...t, abilities: t.abilities.filter((a) => a.effect.subject?.type === undefined && a.trigger?.subject?.type !== "spell") });
+  const fills = untyped(gs);
+  expect(fills.abilities.length).toBeGreaterThan(0);
+  expect(refuseUnresolvedChosenTypes(fills, "")).toBe(fills);
+  expect(JSON.stringify(refuseUnresolvedChosenTypes(gs, "").abilities)).toContain('"mill"');
+});
