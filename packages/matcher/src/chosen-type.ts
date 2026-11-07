@@ -150,15 +150,22 @@ function blankTokenNouns(text: string, lower: string): string {
   return chars.join("");
 }
 
-/** Blank a TYPE GIVEN TO SOMETHING: "... is a black Demon in addition to its other colors and types" (Blade of the Oni), "are Slivers in addition to their other creature types" (Hivestone), from the "is a" / "are" before it to the "in addition". A card that
- *  grants a type is not one that cares about it. Census 2026-11-07: 72 cards print one, all equipment, auras, recursion and lords of a made-up type. Within one sentence and 90 characters. */
+/** Blank a TYPE GIVEN TO ONE THING: "... is a black Demon in addition to its other colors and types" (Blade of the Oni), "Equipped creature ... is a Knight in addition to its other types" (Monk's Fist), "That creature is a black Zombie in addition ..." (Rise from the Grave), from the
+ *  "is a" / "are" before it to the "in addition". A card that hands a type to a host, a reanimated creature or itself is not one that cares about it.
+ *  NOT a MASS grant: "Creatures you control are Slivers in addition to their other creature types" (Hivestone), "Other creatures have ... and are Bears in addition" (Kudo), "Each creature you control is a Vampire" (Mephidross Vampire) make a whole class a type, which is what a kindred payoff
+ *  wants, so they keep caring (the recipient phrase, the sentence up to the verb, names a class: `MASS_RECIPIENT`). Census 2026-11-07: 72 cards print "in addition to its/their other", 50 of them a single host (blanked) and 22 a class (kept).
+ *  Within one sentence and 90 characters. */
+const MASS_RECIPIENT = /\b(?:you|your opponents) (?:control|own)\b|^(?:other |all |each |every )?(?:non-?[a-z-]+ )?(?:creatures?|permanents?|lands?|artifacts?|enchantments?)\b/i;
 function blankAdditions(text: string, lower: string): string {
   const chars = text.split("");
   for (const key of ["in addition to its other", "in addition to their other"]) {
     for (let k = lower.indexOf(key); k >= 0; k = lower.indexOf(key, k + 1)) {
       let from = -1;
       for (const o of [" is a ", " is an ", " are ", " becomes a ", " becomes an ", " become ", " is "]) from = Math.max(from, lower.lastIndexOf(o, k));
-      if (from > Math.max(lower.lastIndexOf(".", k), lower.lastIndexOf("\n", k)) && k - from < 90) for (let i = from; i < k; i++) chars[i] = " ";
+      const start = Math.max(lower.lastIndexOf(".", k), lower.lastIndexOf("\n", k)) + 1;
+      if (from < start || k - from >= 90) continue;
+      if (MASS_RECIPIENT.test(text.slice(start, from).trim())) continue;
+      for (let i = from; i < k; i++) chars[i] = " ";
     }
   }
   return chars.join("");

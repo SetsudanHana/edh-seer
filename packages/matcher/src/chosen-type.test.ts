@@ -235,6 +235,9 @@ const TEXT = {
   blade: "Menace\nEquipped creature has base power and toughness 5/5, has menace, and is a black Demon in addition to its other colors and types.\nReconfigure {2}{B}{B} ({2}{B}{B}: Attach to target creature you control; or unattach from a creature. Reconfigure only as a sorcery. While attached, this isn't a creature.)",
   enkira: "When Enkira, Hostile Scavenger enters, create two Walker tokens. (They're 2/2 black Zombie creatures.)\nAs long as Enkira is equipped, it must be blocked if able.\nWhenever Enkira and at least two Zombies attack, Enkira gains indestructible until end of turn.",
   hivestone: "Creatures you control are Slivers in addition to their other creature types.",
+  kudo: "Other creatures have base power and toughness 2/2 and are Bears in addition to their other types.",
+  monksFist: "Equipped creature gets +1/+0 and is a Monk in addition to its other types.",
+  riseFromTheGrave: "Put target creature card from a graveyard onto the battlefield under your control. That creature is a black Zombie in addition to its other colors and types.",
   archdruid: "Other Elf creatures you control get +1/+1.",
 };
 
@@ -254,10 +257,13 @@ test("a reminder of any OTHER keyword stays dropped: Mutate's 'non-Human', Saddl
   expect(names("Enkira, Hostile Scavenger", TEXT.enkira.split("\n").slice(0, 2).join("\n"))).toBe(false);
 });
 
-test("a type ADDED to a copy or an equipped creature is no kindred (Donal's 'except the copy is a 1/1 Spirit', Blade of the Oni's 'is a black Demon', Hivestone's Slivers), a type named beside it still is", () => {
+test("a type ADDED to ONE thing (a copy, an equipped or reanimated creature) is no kindred (Donal's 'except the copy is a 1/1 Spirit', Blade of the Oni's 'is a black Demon'), a type given to a whole CLASS still is (Hivestone, Kudo), and a type named beside it still is", () => {
   expect(names("Donal, Herald of Wings", TEXT.donal)).toBe(false);
   expect(names("Blade of the Oni", TEXT.blade)).toBe(false);
-  expect(names("Hivestone", TEXT.hivestone)).toBe(false);
+  expect(names("Monk's Fist", TEXT.monksFist)).toBe(false);
+  expect(names("Rise from the Grave", TEXT.riseFromTheGrave)).toBe(false);
+  expect(names("Hivestone", TEXT.hivestone)).toBe(true);
+  expect(names("Kudo, King Among Bears", TEXT.kudo)).toBe(true);
   // Enkira's Walker tokens are made, and her Zombies are a real care
   expect(names("Enkira, Hostile Scavenger", TEXT.enkira)).toBe(true);
   expect(names("Elvish Archdruid", TEXT.archdruid)).toBe(true);
