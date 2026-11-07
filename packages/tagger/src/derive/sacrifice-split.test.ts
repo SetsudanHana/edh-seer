@@ -74,8 +74,12 @@ describe("the payment holds both objects (the cost is not free of the tail)", ()
 
 describe("a sacrifice whose cards the same ability exiles (#1523 part 2 fix)", () => {
   const exiled = (name: string) => rowOf(name).tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "dies" || e.verb === "sacrifice").map((e) => [e.verb, e.subject.self === true, e.exiledAtOnce === true]);
-  test("Sword of the Ages: the creature tail is marked, the card itself is not", () => {
-    expect(exiled("Sword of the Ages")).toEqual([["sacrifice", true, false], ["dies", true, false], ["sacrifice", false, true], ["dies", false, true]]);
+  test("Sword of the Ages exiles \"this artifact and those creature cards\": the card and the tail are both marked", () => {
+    expect(exiled("Sword of the Ages")).toEqual([["sacrifice", true, true], ["dies", true, true], ["sacrifice", false, true], ["dies", false, true]]);
+  });
+  test("a card whose effect does not exile itself keeps its self sacrifice unmarked (the stamp needs \"exile this X and those ... cards\")", () => {
+    const text = (fixtures as Record<string, Fx>)["Sword of the Ages"]!.source.oracleText as string;
+    expect(text).toMatch(/exile this artifact and those creature cards/);
   });
   test.each(["Emrakul's Evangel", "Magus of the Order", "Viscera Seer", "Ashnod's Altar"])("%s: nothing is exiled, nothing is marked", (name) => {
     expect(exiled(name).every(([, , m]) => m === false)).toBe(true);
