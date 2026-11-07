@@ -10,6 +10,7 @@
  *  PHYSICAL NAMES throughout: report edges and reasons name the FACE that does the work, `report.cards` maps it back (`cardName ?? name`). */
 import type { DeckReport, Reason } from "@edh-seer/engine";
 import { normalizeName } from "@edh-seer/data/names";
+import { isReflexiveTrigger } from "./claims.js";
 import { StaticLookup, shardOf } from "./static-lookup.js";
 import { decodeIndex, deckCards } from "./suggest-static.js";
 import { faceDeckCards } from "./faces.js";
@@ -141,7 +142,7 @@ export async function redundancyFor(input: {
   // ASKS for the event the seed triggers on is "same trigger, same result" by construction (Warstorm Surge, Terror of the Peaks for Impact Tremors).
   // The trigger keys are `demandKeysOf`'s own reading (a card's own `self` trigger is no demand); the askers are the `c` list of that key's shard.
   const triggerKeys = [...new Set((seedDc.tags.abilities ?? []).flatMap((a) =>
-    !a.trigger || a.trigger.subject?.self === true ? []
+    !a.trigger || a.trigger.subject?.self === true || isReflexiveTrigger(a) ? []
       : a.trigger.verbs.flatMap((v) => splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)))))];
   const buckets = seedBuckets(seedCard, { drainIsDamage: true });
   // ONE UNREADABLE SHARD DROPS THAT BUCKET, not the result. A READ ERROR IS NOT AN ABSENT KEY: it is tracked apart (`failed`), because "no such key" is a

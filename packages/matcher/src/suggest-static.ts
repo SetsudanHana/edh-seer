@@ -13,6 +13,7 @@
 import { loadImpactWeights, type DeckReport, type ImpactWeights, type Reason } from "@edh-seer/engine";
 import { cardStrength, type CardLink, type Strength } from "./card-strength.js";
 import { rolesOfCard } from "./quality.js";
+import { isReflexiveTrigger } from "./claims.js";
 import { sameJob } from "./same-job.js";
 import { extendRoutes, findRoutes, indexRoutes, type RouteHop } from "./routes.js";
 import { docToCard } from "@edh-seer/data/docs";
@@ -723,7 +724,7 @@ export async function suggestForDeck(input: {
   const unsized = new Set<string>();
   for (const d of deckDcs) {
     for (const a of d.tags?.abilities ?? []) {
-      if (!a.trigger || a.trigger.subject.self === true) continue;
+      if (!a.trigger || a.trigger.subject.self === true || isReflexiveTrigger(a)) continue;
       const keys = a.trigger.verbs.flatMap((v) => splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent))).flatMap(demandForms);
       for (const k of keys) {
         if (a.trigger.amount) sized.set(k, [...(sized.get(k) ?? []), a.trigger.amount]);
