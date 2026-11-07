@@ -542,6 +542,9 @@ function manifestsDreadYourself(text: string): boolean {
   });
 }
 
+/** THE MILL KEYWORD ACTION IS WORDED (CR 701.17a), #1444: mill / mills / milled / milling in the clause. A `mill` emit whose clause has none of them is a library-to-graveyard move (`SubjectFilter.notMillAction`). */
+const MILL_ACTION_WORD = /\bmill(?:s|ed|ing)?\b/i;
+
 /** A MILL MADE BY A PUT (OR A MANIFEST DREAD) NAMES WHOSE LIBRARY (#1401 part 2): "Reveal the top five cards of YOUR library ... Put the rest into your graveyard" (Benefaction of Rhonas, Hermit Druid,
  *  Fact or Fiction, Tower Geist) moves cards library -> graveyard, so it emits `mill`, but the put's object ("the rest") names no player and `CONTROLLER_DEFAULT` does not cover `put`, so the mill
  *  read `any` and satisfied the opponent-mill gate of a recursion over an opponent's graveyard (edges.ts reanimatorEdges, ruling #729). The clause says "your library" and no other player's library:
@@ -1224,6 +1227,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       ...(leftTheGraveyard && verb === "leaves" ? { zone: "graveyard" } : {}),
       // A COUNTER ON A CARD EXILED WITH IT is on a card in exile (#1523: Rayami "exile that card with a blood counter on it", Darigaaz Reincarnated, suspend), not on a battlefield permanent.
       ...(verb === "counter-added" && exilesWithCounter(clauseText ?? "", counter) ? { zone: "exile" } : {}),
+      ...(verb === "mill" && clauseText !== undefined && clauseText.trim() !== "" && !MILL_ACTION_WORD.test(clauseText) ? { notMillAction: true as const } : {}),
       ...(from ? { fromZone: from } : {}),
       ...(counter ? { counter } : {}),
       ...(tokenType ? { type: tokenType } : {}),

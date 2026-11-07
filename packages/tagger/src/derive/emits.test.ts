@@ -835,3 +835,34 @@ describe("a counter on an exiled card is stamped zone exile", () => {
     ["two +1/+1 counters", "If they guess right, exile that creature. If they guess wrong, they lose 3 life. Then you may reveal the name of an invader. If you do, put two +1/+1 counters on it."],
   ])("%s is on a battlefield permanent: %s", (object, text) => { expect(zoneOf(object, text)).toBeUndefined(); });
 });
+
+// #1444 (owner 2026-11-06): CR 701.17a defines MILL as a keyword action; a card put from the library into the graveyard by other words is not milled. The emit stays `mill` (graveyard
+// consumers still read the move) and carries `notMillAction` when the clause never says mill, so only a trigger on the action itself can refuse it.
+describe("a library-to-graveyard move the clause does not word as mill (#1444)", () => {
+  const archghoul = "Whenever this creature or another Zombie you control dies, look at the top card of your library. If it's a Zombie card, you may reveal it and put it into your hand. If you don't put the card into your hand, you may put it into your graveyard.";
+  test("look at the top, then put it into the graveyard: a mill emit marked notMillAction", () => {
+    const e = actionEmits({ verb: "put", object: "it", fromZone: "library", toZone: "graveyard" }, archghoul);
+    expect(e.map((x) => x.verb)).toContain("mill");
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBe(true);
+  });
+  test("a mill action the clause words as mill is unmarked", () => {
+    const e = actionEmits({ verb: "mill", object: "three cards", amount: "3" }, "Target player mills three cards.");
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBeUndefined();
+  });
+  test("the model's mill verb on a clause that never says mill is marked too", () => {
+    const e = actionEmits({ verb: "mill", object: "the rest" }, "Reveal the top five cards of your library. Put the rest into your graveyard.");
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBe(true);
+  });
+  test("manifest dread's graveyard half is marked", () => {
+    const e = actionEmits({ verb: "manifest-dread", object: "" }, "Manifest dread.");
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBe(true);
+  });
+  test("no clause text: nothing is claimed either way", () => {
+    const e = actionEmits({ verb: "mill", object: "three cards", amount: "3" });
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBeUndefined();
+  });
+  test("a put into the graveyard that the clause words as mill elsewhere in the sentence stays unmarked", () => {
+    const e = actionEmits({ verb: "put", object: "the rest", fromZone: "library", toZone: "graveyard" }, "Mill four cards, then put the rest into your graveyard.");
+    expect(e.find((x) => x.verb === "mill")?.subject.notMillAction).toBeUndefined();
+  });
+});

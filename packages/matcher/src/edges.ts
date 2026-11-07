@@ -1224,6 +1224,9 @@ function originMatches(producer: SubjectFilter, consumer: SubjectFilter, verb: s
  *  would report holes the engine does not actually have. */
 export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy): boolean {
   if (!verbSatisfies(producer, consumer)) return false;
+  // A TRIGGER ON THE MILL ACTION HEARS ONLY A MILL (#1444, CR 701.17a; owner 2026-11-06): "whenever a player mills" (Zellix, Glowing One) is not met by "look at the top card ... put it into your graveyard"
+  // or manifest dread, which move the same cards without the keyword action. Derive stamps those `notMillAction`; they still feed every graveyard consumer (an `enters-graveyard` demand, recursion, delirium, a count).
+  if (consumer.verb === "mill" && producer.verb === "mill" && producer.subject.notMillAction === true) return false;
   // "EXILED WHILE YOU'RE ACTIVATING A CRAFT ABILITY" (Market Gnome, #1500) hears only the exile a craft cost makes (`viaCraft`, stamped by derive on the craft ability's material exiles): an ordinary exile
   // or flicker is no craft cost. Read HERE and not in `subjectMatches`, where the identity gates compare an emit against a card's printed characteristics and would demand the card BE exiled by a craft.
   // The reverse is open on purpose: a craft exile is a real exile (CR 702.167a) and feeds an ordinary "whenever a permanent you control is exiled".

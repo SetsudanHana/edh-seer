@@ -275,6 +275,14 @@ export interface SubjectFilter {
    *  A MARKER AND NOT A `cost` FIELD ON PURPOSE: no SubjectFilter field names how an event came about, and `entersTapped`, `notCast` and `withoutDying` are the shape for that (a boolean
    *  the matcher reads in `eventMatches`, never in `subjectMatches`, where it would demand the card BE exiled by a craft; the `entersTapped` mistake). */
   viaCraft?: true;
+  /** A LIBRARY-TO-GRAVEYARD MOVE THE CLAUSE DOES NOT WORD AS MILL (#1444, owner ruling 2026-11-06). CR 701.17a defines MILL as a keyword action ("put that many cards from the top of their library into
+   *  their graveyard"); "look at the top card ... put it into your graveyard" (Archghoul of Thraben), manifest dread, "put the bottom card of its library into its graveyard" and "reveal until X,
+   *  put them into your graveyard" move the same cards without the action. STAMPED on the `mill` emit whose clause text never says mill/mills/milled. The emit keeps the verb `mill` so every
+   *  graveyard consumer (reanimation, delirium, "put into your graveyard from anywhere", graveyard counts) still reads the move; a TRIGGER ON THE MILL ACTION (Zellix, Glowing One, Mirelurk Queen,
+   *  The Wise Mothman, Screeching Scorchbeast, Infesting Radroach, Lo and Li) refuses an emit carrying it, in `eventMatches`. The INVERSE of "worded as mill" on purpose: an emit with no clause text,
+   *  or one of a path this stamp never reaches, fails OPEN (today's reading) instead of silently losing a real mill's edges.
+   *  CEILING: read from the clause's own words, so a clause that both mills and puts the rest into the graveyard (the mill word anywhere in it) leaves its put-emit unstamped. */
+  notMillAction?: true;
   /** The subject demands the LEGENDARY supertype. "Legendary creatures you control get +2/+2"
    *  (Serah Farron) and Jodah's +X/+X derived a subject of EVERY creature without it, which were the
    *  two widest meshes in the derived population at x53 and x51. Shaped exactly like `historic`:
