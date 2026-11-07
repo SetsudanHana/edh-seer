@@ -1008,7 +1008,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // take the card's own names out of the object before it is read (`selfAsTilde`, then the tilde itself).
   // CEILING: only double / triple. The same word read as a class survives where another path reads the name: Phelddagrif's "{G}: Phelddagrif gains trample" (a grant's recipient, subtype `phelddagrif`). Of the 5 cards whose name is
   // a creature type and whose tags carry it, the other 3 (Coward // Killer, Lizard Connors's Curse, Aurochs) say the TYPE, so stripping every name would delete a real reference.
-  const ownNameOut = (t: string): string => (action.verb === "double" || action.verb === "triple") && opts.cardName ? selfAsTilde(t, opts.cardName).replace(/\s*~\s*/g, " ").trim() : t;
+  const ownNameOut = (t: string): string => (action.verb === "double" || action.verb === "triple") && opts.cardName ? selfAsTilde(t, opts.cardName).split("~").map((x) => x.trim()).filter(Boolean).join(" ") : t;
   const subject = listed ?? playerOnly ?? parseSubjectWhole(ownNameOut(recipient ?? damageObject));
   // A COUNTER'S KIND IS NOT A SUBTYPE (#1520). An add-counter's object that NAMES the kind ("blood counter", "tower", "gold counter", "a blood counter from this artifact") was parsed as a permanent, so Font of Agonies' own counter carried subtype
   // `blood` beside `counter: "blood"` (Helix Pinnacle tower, Legacy's Allure treasure, Dragon's Hoard gold, Spell Satchel book, Nine Lives incarnation ...). The kind words of the OBJECT leave the subtype; a recipient's own subtype ("target Goblin") is not touched.

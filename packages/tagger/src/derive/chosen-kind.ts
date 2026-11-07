@@ -31,7 +31,7 @@ function kindsIn(text: string): Set<ChosenKind> {
     // a list ends where its sentence's own words resume: "chooses artifact, creature, or land during their untap step" (Storage Matrix)
     const body = m[1]!.split(/\s(?:during|at|as|when|then)\s/i)[0]!;
     if (!/,| or /.test(body)) continue;
-    const items = body.split(/,\s*(?:or\s+)?|\s+or\s+/).map((x) => x.trim().toLowerCase()).filter(Boolean);
+    const items = body.split(",").flatMap((part) => part.split(" or ")).map((x) => x.trim().toLowerCase()).filter(Boolean);
     if (items.length < 2 || items.length > 12) continue;
     const bare = items.map((x) => { const w = x.split(" "); return w.length > 1 && COLOURS.has(w[0]!) ? w.slice(1).join(" ") : x; });
     if (bare.every((x) => CARD_TYPES.has(x))) out.add("card-type");
