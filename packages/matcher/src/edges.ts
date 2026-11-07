@@ -2752,6 +2752,8 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       // CEILING: this is class DENSITY dressed as a type list -- lands and creatures fill most of a
       // Commander deck, so a random card is often one. An owner ruling on density would replace it.
       if (e.milled === true && namesNoncreatureClass(a.effect.subject)) continue;
+      // A FILL THE SAME ABILITY EXILES AT ONCE leaves no card to return (Sword of the Ages' "exile ... those creature cards", #1523 part 2); its death still feeds the death triggers.
+      if (e.exiledAtOnce === true) continue;
       if (!graveyardFillMatches(e.subject, a.effect.subject, h)) continue;
       // A SELF-scoped recursion returns the card ITSELF ("return this card from your graveyard"), so
       // a fill enables it only if that fill could contain THAT card. Reassembling Skeleton is a real
@@ -2899,6 +2901,7 @@ function graveyardScalingEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       // this one: its `scalingSubject` is `{historic: true, zone: graveyard}` with no type or
       // subtype. The set is now {tax, win-game, extra-turn, extra-phase}.
       if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
+      if (e.exiledAtOnce === true) continue; // exiled by the same ability: no card is left to count (#1523 part 2)
       if (!graveyardFillMatches(e.subject, a.effect.scalingSubject, h)) continue;
       const tag = `scales:${themeSubjectKey(keyedOn(a.effect.scalingSubject, e.subject))}`;
       if (said.has(tag)) continue;
@@ -3089,7 +3092,7 @@ function countGateEdges({ p, c, h, pEvents, reasons }: PairScope): void {
     // THE PRODUCER'S OWN CARD IN THE GRAVEYARD IS ITS FRONT FACE (`graveyardIdentity`, #1505).
     const seen = pEvents.map((raw) => ({ raw, e: graveyardIdentity(p, raw) }));
     const fill = seen.find(({ e }) => e.verb === "enters" && e.subject.zone === "graveyard" && !e.implied
-      && e.subject.token !== true && reaches(e) && graveyardFillMatches(e.subject, counted, h));
+      && e.subject.token !== true && e.exiledAtOnce !== true && reaches(e) && graveyardFillMatches(e.subject, counted, h));
     if (!fill) continue;
     countsSeen.add(`${tag}|${a.threshold.atLeast}|gy`);
     reasons.push({

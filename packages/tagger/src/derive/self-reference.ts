@@ -77,3 +77,20 @@ export function isSelfSubject(text: string, cardName?: string): boolean {
   }
   return false;
 }
+
+/** "Sacrifice THIS ARTIFACT AND THIRTEEN BLOOD TOKENS" / "Sacrifice MOUNT DOOM AND A LEGENDARY ARTIFACT" is two objects in one cost part (#1523 part 2, owner ruling 2026-11-07): the card, and a tail that is
+ *  a sacrifice of its own, read like any other cost sacrifice (Ashnod's Altar's "a creature"). Read whole it was the card's self subject with the tail's words merged in (Glass-Cast Heart's artifact
+ *  carried `blood`, Sword of the Ages' carried `creature`).
+ *  The head is a bare self-reference (`this <noun>` or the card's name, no "other"), the tail a counted noun phrase: a verb after the "and" ("sacrifice this enchantment and counter that spell") is
+ *  another action and no tail. CEILING: split at the FIRST "and" that follows a self head; a card whose own name holds " and " is found by trying each one. */
+const COUNTED_TAIL = /^(?:an?|another|any number of|x|\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\b/i;
+export function selfAndTail(object: string, cardName?: string): { self: string; tail: string } | null {
+  let at = object.indexOf(" and ");
+  while (at > 0) {
+    const head = object.slice(0, at).trim();
+    const tail = object.slice(at + 5).trim();
+    if (COUNTED_TAIL.test(tail) && isSelfSubject(head, cardName)) return { self: head, tail };
+    at = object.indexOf(" and ", at + 5);
+  }
+  return null;
+}

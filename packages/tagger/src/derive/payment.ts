@@ -13,14 +13,14 @@
  *  subject as `amount` ("1", "2", "X", "any", "all"), never as the subject's `scope`. */
 import type { CostObject, Payment } from "../schema.js";
 import { parseSubject } from "./subject.js";
-import { isSelfSubject } from "./self-reference.js";
+import { isSelfSubject, selfAndTail } from "./self-reference.js";
 
-const WORDS: Record<string, string> = { a: "1", an: "1", another: "1", one: "1", two: "2", three: "3", four: "4", five: "5", six: "6", seven: "7", x: "X" };
+const WORDS: Record<string, string> = { a: "1", an: "1", another: "1", one: "1", two: "2", three: "3", four: "4", five: "5", six: "6", seven: "7", eight: "8", nine: "9", ten: "10", eleven: "11", twelve: "12", thirteen: "13", x: "X" };
 /** The count a cost object opens with, and the rest of it. */
 function counted(text: string): { amount: string; rest: string } {
   const t = text.trim();
   if (/^any number of\b/i.test(t)) return { amount: "any", rest: t.replace(/^any number of\s+/i, "") };
-  const m = /^(\d+|a|an|another|one|two|three|four|five|six|seven|x)\b\s*/i.exec(t);
+  const m = /^(\d+|a|an|another|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|x)\b\s*/i.exec(t);
   if (!m) return { amount: "1", rest: t };
   // "another" is a count AND a narrowing: keep it on the subject.
   return { amount: /^\d+$/.test(m[1]!) ? m[1]! : WORDS[m[1]!.toLowerCase()]!, rest: m[1]!.toLowerCase() === "another" ? t : t.slice(m[0].length) };
@@ -74,7 +74,12 @@ export function paymentOf(cost: string | undefined, cardName?: string): Payment 
     } else if ((m = /^([+−-])\s*(\d+|X)$/i.exec(part))) p.loyalty = `${m[1] === "+" ? "+" : "-"}${m[2]!.toUpperCase()}`;
     else if (/^0$/.test(part)) p.loyalty = "0";
     else if ((m = /^pay (\d+|X) life$/i.exec(part))) p.life = m[1]!.toUpperCase();
-    else if ((m = /^sacrifice (.+)$/i.exec(part))) push(p, "sacrifice", objectOf(m[1]!, cardName));
+    else if ((m = /^sacrifice (.+)$/i.exec(part))) {
+      // "Sacrifice this artifact and thirteen Blood tokens" (#1523 part 2): the card, and the tail as a cost object of its own. `SELF_OBJECT` reads a part that OPENS with "this", so the tail was swallowed.
+      const split = selfAndTail(m[1]!, cardName);
+      if (split) { push(p, "sacrifice", objectOf(split.self, cardName)); push(p, "sacrifice", objectOf(split.tail, cardName)); }
+      else push(p, "sacrifice", objectOf(m[1]!, cardName));
+    }
     else if ((m = /^discard (.+)$/i.exec(part))) {
       const what = m[1]!;
       if (/^your hand$/i.test(what)) push(p, "discard", { amount: "all", subject: { control: "you", token: null } });

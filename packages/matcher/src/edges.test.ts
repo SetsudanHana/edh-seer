@@ -7631,6 +7631,24 @@ test("a recursion whose subject comes from the battlefield is fed by a sacrifice
   expect(hits(mill, recursion())).toBeGreaterThan(0);
 });
 
+// SWORD OF THE AGES EXILES THE CREATURES IT SACRIFICED (#1523 part 2): "then exile this artifact and those creature cards". The deaths are real (death triggers hear them), but no card
+// stays in the graveyard, so a recursion, a graveyard count or a threshold must not read the sacrifice as a fill.
+test("a sacrifice whose cards are exiled at once feeds death triggers and no lasting graveyard reader", () => {
+  const outlet = (exiledAtOnce: boolean) => base("Outlet", [{
+    kind: "activated", effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "you", token: null, type: "creature", scope: "all" }, ...(exiledAtOnce ? { exiledAtOnce: true } : {}) } as never],
+  }]);
+  const recursion = base("Breath of Life", [{ kind: "on-cast", effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "creature", zone: "graveyard" } } }]);
+  const scaler = base("Scaler", [{ kind: "static", effect: { kind: "cost-reduction", scaling: "per-graveyard", scalingSubject: { control: "you", token: null, type: "creature", zone: "graveyard" } } } as never]);
+  const deathTrigger = base("Kingfisher", [{ kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "you", token: null, type: "creature", self: true } }, effect: { kind: "draw-card" } }]);
+  const hits = (c: ReturnType<typeof base>, prefix: string, exiled: boolean) => directedReasons(outlet(exiled), c, H).filter((r) => r.tag.startsWith(prefix)).length;
+  expect(hits(recursion, "graveyard-recursion", false)).toBeGreaterThan(0);
+  expect(hits(recursion, "graveyard-recursion", true)).toBe(0);
+  expect(hits(scaler, "scales", false)).toBeGreaterThan(0);
+  expect(hits(scaler, "scales", true)).toBe(0);
+  expect(hits(deathTrigger, "dies", true)).toBeGreaterThan(0);
+});
+
 // #1266 (burn): a damage emit of "target player or planeswalker" is one event per half (player, planeswalker). The sentence names the DEALER for a damage or life-loss trigger, so the halves
 // read as one line and score one claim; for a `damaged` trigger the player half is "a player", never the card itself or "a permanent".
 describe("a damage emit split per half (#1266)", () => {
