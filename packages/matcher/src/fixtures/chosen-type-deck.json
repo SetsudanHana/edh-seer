@@ -1588,5 +1588,494 @@
    }
   ],
   "segmentHash": "aa50792cfed568535d6295d019d5a5081c5bb5b50d8bd3e23ec68480e3458782"
+ },
+ "Door of Destinies": {
+  "source": {
+   "name": "Door of Destinies",
+   "typeLine": "Artifact",
+   "oracleText": "As this artifact enters, choose a creature type.\nWhenever you cast a spell of the chosen type, put a charge counter on this artifact.\nCreatures you control of the chosen type get +1/+1 for each charge counter on this artifact.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}",
+   "layout": "normal",
+   "_id": "9b6d3dcf-aa5a-4516-bd48-a0723e86bfd1"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell of the chosen type",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "charge counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Creatures you control of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+1 for each charge counter on this artifact",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Dawn-Blessed Pennant": {
+  "source": {
+   "name": "Dawn-Blessed Pennant",
+   "typeLine": "Artifact",
+   "oracleText": "As this artifact enters, choose Elemental, Elf, Faerie, Giant, Goblin, Kithkin, Merfolk, or Treefolk.\nWhenever a permanent you control of the chosen type enters, you gain 1 life.\n{2}, {T}, Sacrifice this artifact: Return target card of the chosen type from your graveyard to your hand.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 1,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}",
+   "layout": "normal",
+   "_id": "311eef28-21e9-44fa-96df-d281f0a9ba34"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose Elemental, Elf, Faerie, Giant, Goblin, Kithkin, Merfolk, or Treefolk",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a permanent you control of the chosen type",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "target card of the chosen type",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Oloro, Ageless Ascetic": {
+  "source": {
+   "name": "Oloro, Ageless Ascetic",
+   "typeLine": "Legendary Creature — Giant Soldier",
+   "oracleText": "At the beginning of your upkeep, you gain 2 life.\nWhenever you gain life, you may pay {1}. If you do, draw a card and each opponent loses 1 life.\nAt the beginning of your upkeep, if Oloro is in the command zone, you gain 2 life.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "U",
+    "W"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B",
+    "U",
+    "W"
+   ],
+   "power": "4",
+   "toughness": "5",
+   "manaCost": "{3}{W}{U}{B}",
+   "layout": "normal",
+   "_id": "620ff5f2-7d3f-467f-943d-3b62c2135023"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "life-gained",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": true
+     },
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Chronicle of Victory": {
+  "source": {
+   "name": "Chronicle of Victory",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "As Chronicle of Victory enters, choose a creature type.\nCreatures you control of the chosen type get +2/+2 and have first strike and trample.\nWhenever you cast a spell of the chosen type, draw a card.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 6,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{6}",
+   "layout": "normal",
+   "_id": "e949b362-4988-4482-ac51-c1049af9040c"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "creatures you control of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+2/+2",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "creatures you control of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "first strike",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "creatures you control of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "trample",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell of the chosen type",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Reflections of Littjara": {
+  "source": {
+   "name": "Reflections of Littjara",
+   "typeLine": "Enchantment",
+   "oracleText": "As this enchantment enters, choose a creature type.\nWhenever you cast a spell of the chosen type, copy that spell. (A copy of a permanent spell becomes a token.)",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{U}",
+   "layout": "normal",
+   "_id": "c3fdfb94-2d10-4743-864c-a59fdd57d8b7"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this enchantment enters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell of the chosen type",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "that spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Rimefire Torque": {
+  "source": {
+   "name": "Rimefire Torque",
+   "typeLine": "Artifact",
+   "oracleText": "As this artifact enters, choose a creature type.\nWhenever a permanent you control of the chosen type enters, put a charge counter on this artifact.\n{T}, Remove three charge counters from this artifact: When you next cast an instant or sorcery spell this turn, copy it. You may choose new targets for the copy.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{U}",
+   "layout": "normal",
+   "_id": "c33e99c6-189e-4dcf-8b6a-64937dbad361"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a permanent you control of the chosen type",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "charge counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "charge counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "copy",
+      "object": "an instant or sorcery spell you next cast this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Doc Samson, Super Psychiatrist": {
+  "source": {
+   "name": "Doc Samson, Super Psychiatrist",
+   "typeLine": "Legendary Creature — Gamma Doctor Hero",
+   "oracleText": "If you would put one or more counters on a permanent you control, put that many plus one of each of those kinds of counters on that permanent instead.\n{T}: Add X mana of any one color, where X is Doc Samson's power.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "3",
+   "toughness": "6",
+   "manaCost": "{4}{G}",
+   "layout": "normal",
+   "_id": "699610c9-c991-4faf-b712-d015ef0799ad"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "each kind of counter being put on a permanent you control",
+      "amount": "that many plus one",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "X mana of any one color, where X is Doc Samson's power",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
  }
 }

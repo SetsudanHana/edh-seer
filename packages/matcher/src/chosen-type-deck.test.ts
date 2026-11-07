@@ -154,3 +154,13 @@ test("an UNTYPED creature-type subject (Gathering Stone's 'put it into your grav
   expect(refuseUnresolvedChosenTypes(fills, "")).toBe(fills);
   expect(JSON.stringify(refuseUnresolvedChosenTypes(gs, "").abilities)).toContain('"mill"');
 });
+
+// OWNER RULING 2026-11-07 (#1568): the no-deck refusal is of the chosen-type DEMAND (which creatures a card reaches), not of a side effect that does not depend on the chosen type. A counter a card puts on itself,
+// life, a draw, a copy of the spell still pairs with any creature that uses it. (The brief named "Doc Samson, Soul Diviner"; the corpus card that uses counters is Doc Samson, Super Psychiatrist.)
+test("with no deck, a chosen-type card's side effect still pairs with a creature that uses it (counters on itself, life gain), and its chosen-type demand still does not", () => {
+  expect(pairOf("Door of Destinies", "Doc Samson, Super Psychiatrist", /counter-added/)).not.toEqual([]);
+  expect(pairOf("Rimefire Torque", "Doc Samson, Super Psychiatrist", /counter-added/)).not.toEqual([]);
+  expect(pairOf("Dawn-Blessed Pennant", "Oloro, Ageless Ascetic", /gain-life/)).not.toEqual([]);
+  expect(mimicStatic("Grizzly Bears")).toEqual([]);
+  expect(pairReasons(dc("Door of Destinies"), dc("Grizzly Bears"), loadHierarchy())).toEqual([]);
+});

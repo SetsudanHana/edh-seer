@@ -327,18 +327,26 @@ export function refuseUnresolvedChosenTypes(tags: CardTags, oracleText: string |
   // -- is kept when only the body is: it is the card hearing an event, which holds in any deck.
   const cue = /creature type/i.test(oracleText ?? "");
   const watches = (a: CardTags["abilities"][number]): boolean => chosenCreatureType(a.trigger?.subject, cue);
-  const acts = (a: CardTags["abilities"][number]): boolean => a.effect.kind !== "token-generation"
-    && (chosenCreatureType(a.doublesOf, cue) || chosenCreatureType(a.effect.subject, cue) || (a.emits ?? []).some((e) => chosenCreatureType(e.subject, cue)));
-  const touches = (a: CardTags["abilities"][number]): boolean => watches(a) || acts(a);
+  const chosenEmit = (e: NonNullable<CardTags["abilities"][number]["emits"]>[number]): boolean => chosenCreatureType(e.subject, cue);
+  // The parts of an ability that NAME the chosen type: the class its effect reaches, the class it doubles, the event it listens to, an emit whose subject is the chosen type.
+  const effectChosen = (a: CardTags["abilities"][number]): boolean => a.effect.kind !== "token-generation" && (chosenCreatureType(a.doublesOf, cue) || chosenCreatureType(a.effect.subject, cue));
+  const touches = (a: CardTags["abilities"][number]): boolean => watches(a) || effectChosen(a) || (a.emits ?? []).some(chosenEmit);
   const inScope = !NEGATED_OR_OPPONENT_CHOICE.test(oracleText ?? "");
   const out = !inScope || !tags.abilities.some(touches) ? tags : {
     ...tags,
     abilities: tags.abilities.map((a) => {
       if (!touches(a)) return a;
+      // OWNER RULING 2026-11-07 (#1568): the refusal is of the chosen-type DEMAND only. A side effect that does not depend on the chosen type is a supply for whoever uses it (Door of Destinies' charge counter on
+      // itself, Dawn-Blessed Pennant's life, Chronicle of Victory's draw, Reflections of Littjara's copy), so it stays: the ability keeps its effect and every emit whose subject is not the chosen type, and loses
+      // the trigger that watches the chosen type (that trigger is the demand), the doubled class and any chosen-type emit. The pair loop reads an ability's emits without its trigger (a token maker already relied on it).
       const { trigger, emits, doublesOf: _d, ...rest } = a;
-      // A token maker keeps its supply and loses only the trigger that watches the chosen type.
-      if (a.effect.kind === "token-generation") return { ...rest, ...(emits ? { emits } : {}) };
-      return { ...rest, ...(trigger && !watches(a) ? { trigger } : {}), effect: { kind: "" as const } };
+      const kept = (emits ?? []).filter((e) => !chosenEmit(e));
+      return {
+        ...rest,
+        ...(trigger && !watches(a) ? { trigger } : {}),
+        ...(kept.length ? { emits: kept } : {}),
+        ...(effectChosen(a) ? { effect: { kind: "" as const } } : {}),
+      };
     }),
   };
   refusedCache.set(tags, out);
