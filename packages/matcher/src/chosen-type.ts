@@ -329,7 +329,9 @@ export function refuseUnresolvedChosenTypes(tags: CardTags, oracleText: string |
   const watches = (a: CardTags["abilities"][number]): boolean => chosenCreatureType(a.trigger?.subject, cue);
   const chosenEmit = (e: NonNullable<CardTags["abilities"][number]["emits"]>[number]): boolean => chosenCreatureType(e.subject, cue);
   // The parts of an ability that NAME the chosen type: the class its effect reaches, the class it doubles, the event it listens to, an emit whose subject is the chosen type.
-  const effectChosen = (a: CardTags["abilities"][number]): boolean => a.effect.kind !== "token-generation" && (chosenCreatureType(a.doublesOf, cue) || chosenCreatureType(a.effect.subject, cue));
+  const effectChosen = (a: CardTags["abilities"][number]): boolean => a.effect.kind !== "token-generation" && (chosenCreatureType(a.doublesOf, cue) || chosenCreatureType(a.effect.subject, cue)
+    // An effect with no subject of its own whose EVERY emit names the chosen type is that demand (Mirror of the Forebears' clone of "a creature of the chosen type"): nothing of it survives the emits.
+    || (a.effect.subject === undefined && (a.emits ?? []).length > 0 && (a.emits ?? []).every(chosenEmit)));
   const touches = (a: CardTags["abilities"][number]): boolean => watches(a) || effectChosen(a) || (a.emits ?? []).some(chosenEmit);
   const inScope = !NEGATED_OR_OPPONENT_CHOICE.test(oracleText ?? "");
   const out = !inScope || !tags.abilities.some(touches) ? tags : {
@@ -340,7 +342,9 @@ export function refuseUnresolvedChosenTypes(tags: CardTags, oracleText: string |
       // itself, Dawn-Blessed Pennant's life, Chronicle of Victory's draw, Reflections of Littjara's copy), so it stays: the ability keeps its effect and every emit whose subject is not the chosen type, and loses
       // the trigger that watches the chosen type (that trigger is the demand), the doubled class and any chosen-type emit. The pair loop reads an ability's emits without its trigger (a token maker already relied on it).
       const { trigger, emits, doublesOf: _d, ...rest } = a;
-      const kept = (emits ?? []).filter((e) => !chosenEmit(e));
+      // An ability whose EFFECT reaches the chosen class has emits that are that same reach seen from the event side (Outbreak's `dies` of "all creatures of that type" carries no flag of its own), so they go with it.
+      // A token maker keeps ALL its emits (the supply of the token, whatever its type) and only loses the trigger.
+      const kept = a.effect.kind === "token-generation" ? (emits ?? []) : effectChosen(a) ? [] : (emits ?? []).filter((e) => !chosenEmit(e));
       return {
         ...rest,
         ...(trigger && !watches(a) ? { trigger } : {}),
