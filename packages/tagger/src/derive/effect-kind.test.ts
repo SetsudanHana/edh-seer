@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { actionEffectKind, bounceOrigin, extraLoyalty, extraPhaseName, playsFromTop } from "./effect-kind.js";
+import { actionEffectKind, grantedTypeOf, bounceOrigin, extraLoyalty, extraPhaseName, playsFromTop } from "./effect-kind.js";
 import { deriveAbilities } from "./derive.js";
 import { EFFECT_KINDS } from "../schema.js";
 
@@ -279,6 +279,15 @@ test("granting a creature type is a type-grant, not a keyword-grant", () => {
 test("granting a type in addition to its other types is a type-grant", () => {
   expect(actionEffectKind({ verb: "grant-ability", object: "target creature becomes a Vampire in addition to its other types" }))
     .toBe("type-grant");
+});
+
+// #1568 part 2: the PLURAL "in addition to THEIR other types" is the same grant. TYPE_GRANT only read "its", so Leyline of Transformation
+// (and 20 more: Swampbenders, Graaz, Hivestone, March of the World Ooze ...) was a keyword-grant of nothing.
+test("'are the chosen type in addition to their other types' is a type-grant (Leyline of Transformation), not a keyword-grant", () => {
+  const object = "creatures you control, creature spells you control, and creature cards you own that aren't on the battlefield are the chosen type in addition to their other types";
+  expect(actionEffectKind({ verb: "grant-ability", object })).toBe("type-grant");
+  expect(actionEffectKind({ verb: "grant-ability", object: "Lands you control are Swamps in addition to their other types" })).toBe("type-grant");
+  expect(actionEffectKind({ verb: "grant-ability", object: "other creatures you control are Juggernauts in addition to their other creature types" })).toBe("type-grant");
 });
 
 test("a plain keyword grant is untouched", () => {
@@ -1114,4 +1123,13 @@ test("#1423 the WORDS decide where the model filed 'doesn't untap' under the pos
   // A grant of a quoted ability that denies the untap (Mindbender Spores) stays a grant.
   expect(kind("grant-ability", "that creature gains \"This creature doesn't untap during your untap step if it has a fungus counter on it\"",
     "The creature gains \"This creature doesn't untap during your untap step if it has a fungus counter on it\".")).toBe("keyword-grant");
+});
+
+test("grantedTypeOf reads the type a type-grant hands out, singular and lowercase (#1568)", () => {
+  expect(grantedTypeOf("Artifacts you control are Foods in addition to their other types and have x")).toBe("food");
+  expect(grantedTypeOf("Artifacts you control are Clues in addition to their other types")).toBe("clue");
+  expect(grantedTypeOf("Noncreature artifacts you control are Equipment in addition to their other types")).toBe("equipment");
+  expect(grantedTypeOf("Each creature you control is a Mercenary in addition to its other creature types")).toBe("mercenary");
+  expect(grantedTypeOf("Mercenaries you control are Heroes in addition to their other types")).toBe("hero");
+  expect(grantedTypeOf("Each creature is every creature type")).toBeUndefined();
 });

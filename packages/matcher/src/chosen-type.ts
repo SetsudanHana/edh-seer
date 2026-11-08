@@ -2,6 +2,7 @@ import type { CardTags, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { impliesType } from "./hierarchy.js";
 import { CREATURE_SUBTYPES } from "@edh-seer/tagger/subtypes";
+import { withoutParentheses } from "@edh-seer/tagger/reminder";
 
 const CREATURE_SUBTYPE_SET: ReadonlySet<string> = new Set(CREATURE_SUBTYPES.map((x) => x.toLowerCase()));
 
@@ -80,25 +81,28 @@ function resolveColor(subject: SubjectFilter, identity: readonly string[] | unde
 function resolveSubject(subject: SubjectFilter, counts: Map<string, number>, hierarchy: Hierarchy, identity?: readonly string[]): SubjectFilter {
   if (subject.chosenColor === true) return resolveColor(subject, identity);
   if (subject.chosenType !== true) return subject;
-  const { chosenType, ...rest } = subject;
+  // ONLY A CREATURE-TYPE CHOICE IS THE DECK'S CREATURE TYPE (#1568). A card type (Cloud Key), odd or even (Extinction Event), a land type (Shimmer) or a planeswalker type (Leori) is not a creature subtype of the deck and is left
+  // as it was derived. No kind recorded (`chosenKind` absent: the printed words named no single choice) is read as the creature type it always was.
+  if (subject.chosenKind !== undefined && subject.chosenKind !== "creature-type") return subject;
+  const { chosenType, chosenKind: _kind, ...rest } = subject;
   const top = topSubtype(counts, hierarchy, arr(subject.type));
   return { ...rest, subtype: top };
 }
 
 /** EVERY WRITTEN FORM OF A CREATURE SUBTYPE: the singular and its plural ("Elf"/"Elves", "Wolf"/"Wolves", "Fox"/"Foxes", "Faerie"/"Faeries", "Mouse"/"Mice"). Single words only (a multi-word subtype is one token in no oracle text this reads), and three letters or more. */
-const SUBTYPE_FORMS: ReadonlySet<string> = (() => {
-  const out = new Set<string>();
+const SUBTYPE_FORMS: ReadonlyMap<string, string> = (() => {
+  const out = new Map<string, string>();
   for (const raw of CREATURE_SUBTYPE_SET) {
     if (raw.length < 3 || raw.includes(" ")) continue;
-    out.add(raw);
-    if (raw.endsWith("fe")) out.add(raw.slice(0, -2) + "ves");
-    else if (raw.endsWith("f")) out.add(raw.slice(0, -1) + "ves");
-    else if (/[^aeiou]y$/.test(raw)) out.add(raw.slice(0, -1) + "ies");
-    else if (/(?:s|x|z|ch|sh)$/.test(raw)) out.add(raw + "es");
-    else if (raw.endsWith("o")) { out.add(raw + "s"); out.add(raw + "es"); }
-    else out.add(raw + "s");
+    out.set(raw, raw);
+    if (raw.endsWith("fe")) out.set(raw.slice(0, -2) + "ves", raw);
+    else if (raw.endsWith("f")) out.set(raw.slice(0, -1) + "ves", raw);
+    else if (/[^aeiou]y$/.test(raw)) out.set(raw.slice(0, -1) + "ies", raw);
+    else if (/(?:s|x|z|ch|sh)$/.test(raw)) out.set(raw + "es", raw);
+    else if (raw.endsWith("o")) { out.set(raw + "s", raw); out.set(raw + "es", raw); }
+    else out.set(raw + "s", raw);
   }
-  out.add("mice"); out.add("fungi");
+  out.set("mice", "mouse"); out.set("fungi", "fungus");
   return out;
 })();
 
@@ -147,6 +151,27 @@ function blankTokenNouns(text: string, lower: string): string {
   return chars.join("");
 }
 
+/** Blank a TYPE GIVEN TO ONE THING: "... is a black Demon in addition to its other colors and types" (Blade of the Oni), "Equipped creature ... is a Knight in addition to its other types" (Monk's Fist), "That creature is a black Zombie in addition ..." (Rise from the Grave), from the
+ *  "is a" / "are" before it to the "in addition". A card that hands a type to a host, a reanimated creature or itself is not one that cares about it.
+ *  NOT a MASS grant: "Creatures you control are Slivers in addition to their other creature types" (Hivestone), "Other creatures have ... and are Bears in addition" (Kudo), "Each creature you control is a Vampire" (Mephidross Vampire) make a whole class a type, which is what a kindred payoff
+ *  wants, so they keep caring (the recipient phrase, the sentence up to the verb, names a class: `MASS_RECIPIENT`). Census (re-counted, #1568 review): 358 non-token cards print "in addition to its/their other", 157 of them creatures; the 72 first quoted here was a sub-count of the cards this path reads (50 a single host, blanked, 22 a class, kept).
+ *  Within one sentence and 90 characters. */
+const MASS_RECIPIENT = /\b(?:you|your opponents) (?:control|own)\b|^(?:other |all |each |every )?(?:non-?[a-z-]+ )?(?:creatures?|permanents?|lands?|artifacts?|enchantments?)\b/i;
+function blankAdditions(text: string, lower: string): string {
+  const chars = text.split("");
+  for (const key of ["in addition to its other", "in addition to their other"]) {
+    for (let k = lower.indexOf(key); k >= 0; k = lower.indexOf(key, k + 1)) {
+      let from = -1;
+      for (const o of [" is a ", " is an ", " are ", " becomes a ", " becomes an ", " become ", " is "]) from = Math.max(from, lower.lastIndexOf(o, k));
+      const start = Math.max(lower.lastIndexOf(".", k), lower.lastIndexOf("\n", k)) + 1;
+      if (from < start || k - from >= 90) continue;
+      if (MASS_RECIPIENT.test(text.slice(start, from).trim())) continue;
+      for (let i = from; i < k; i++) chars[i] = " ";
+    }
+  }
+  return chars.join("");
+}
+
 /** Blank every occurrence of `needle` (compared lower-case). */
 function blankAll(text: string, lower: string, needle: string): string {
   if (needle.length < 3) return text;
@@ -159,25 +184,46 @@ function blankAll(text: string, lower: string, needle: string): string {
 /** Does the card's PRINTED text name a creature type? The fallback for what derive does not record: a type named only in a condition ("if you control a Wizard"), a trigger derive dropped ("whenever a Samurai or Warrior you
  *  control attacks alone"), a greatest-of count ("Elementals you control") or a reveal cost ("reveal a Vampire card"). Read after removing what is NOT the card caring:
  *  reminder text in parentheses; the card's own name (and its short name before a comma, and each face's); "this creature"; what it MAKES (the clause of a "create ... token", the five words before any "token", "named ...", "amass Orcs");
- *  what it BECOMES or is also ("becomes a Human until end of turn", "is also a Cleric", "except it's a Zombie"); a "Partner" line; a type named as an enemy ("protection from Clerics", "can't be blocked by Walls", "deals damage to a Dinosaur"); and an ability title before an em dash ("Spear of the Void Dragon — ..."). The type line is not part of oracle text, so the card's own subtypes are not read at all.
+ *  what it BECOMES or is also ("becomes a Human until end of turn", "is also a Cleric", "except it's a Zombie", "except the copy is a 1/1 Spirit"); a type GIVEN ("is a black Demon in addition to its other colors and types"); a "Partner" line; a type named as an enemy ("protection from Clerics", "can't be blocked by Walls", "deals damage to a Dinosaur"); and an ability title before an em dash ("Spear of the Void Dragon — ..."). The type line is not part of oracle text, so the card's own subtypes are not read at all.
  *  A type is a WORD that starts upper-case (printed subtypes are capitalised, "wall" and "head" are not) and is a singular or plural `CREATURE_SUBTYPES` entry. Linear throughout: indexOf scans and one character pass, no regex over the text.
  *  CEILING: any other mention of a type counts ("target Dragon", "can't be blocked except by Spirits", "Fish you control"), as does one in another card's name quoted in the text ("Shivan Dragon" in Garth One-Eye) and a copy's added
  *  type the clause rules above miss (Cyber-Controller's "They're 2/2 Cyberman artifact creatures", Figure of Fable's "If this creature is a Scout"); a sentence-initial capitalised ordinary word that is also a subtype ("Head") reads as a type.
  *  CEILING: the tags path counts a grant's subject (a lord's "other Heroes have hexproof" is a keyword-grant, so grants cannot be dropped wholesale): Ursine Champion's "becomes a Bear Berserker" is stored as a keyword-grant of Bear and Berserker, and a
  *  subtype derive took from the card's own name (Wolverine) reads as a named type. Both are false keeps.
- *  The other way, a type named only in reminder text (Soulshift's "Spirit card", Amplify's "Soldier card", Affinity for outlaws) is dropped with the reminder, and a face the card does not print the type on does not carry it (Smitten Swordmaster's adventure). */
+ *  The other way, a type named only in reminder text is dropped with the reminder, except on the line of a keyword that names its type nowhere else (`REMINDER_NAMES_TYPE`: Soulshift, Amplify, Affinity for, Prowl, Freerunning, a typecycling), and a face the card does not print the type on does not carry it (Smitten Swordmaster's adventure). */
+/** THE KEYWORDS WHOSE TYPE IS ONLY IN THEIR REMINDER TEXT (#1568; census 2026-11-07, 294 cards name a type only inside a parenthesis, and these are the ones that care): Soulshift "return target Spirit card" (25 cards), Amplify "for each Zombie card you reveal"
+ *  (9), Affinity for outlaws "for each Assassin, Mercenary, Pirate, Rogue, and/or Warlock" (1), Prowl "with a Faerie or Rogue" (10), Freerunning "with an Assassin or commander" (11) and a typecycling of a creature type
+ *  "Search your library for a Wizard card" (Wizardcycling, Slivercycling, 4). The line of one of these keeps its reminder; every other reminder is dropped (Mutate's "non-Human", Saddle's "Mount", an amass or incubate token, "Doctor's companion").
+ *  CEILING: the keyword must open its line, as it is printed; one after a comma (a "Flying, soulshift 3" line) is not read. */
+const REMINDER_NAMES_TYPE = /^(?:soulshift|amplify|affinity for|prowl|freerunning|[a-z]+cycling)\b/i;
+
+/** "deals 1 damage to ", "deals X damage to ": the amounts a damage clause names its victim after. A bare "damage to " is not read (a Prowl reminder's "combat damage to a player this turn with a Faerie" names a type it wants). */
+const DEALS_AMOUNT: readonly string[] = [...Array.from({ length: 10 }, (_, i) => String(i + 1)), "x", "that much"].map((n) => `deals ${n} damage to `);
+
 export function printedTextNamesCreatureType(name: string, oracleText: string | undefined): boolean {
+  return scanPrintedCreatureTypes(name, oracleText, () => true);
+}
+
+/** THE CREATURE TYPES THE PRINTED TEXT NAMES, singular and lower-case, under the same clause rules as `printedTextNamesCreatureType` (#1568). `skipNegated` leaves out a type written "non-Spirit" (Rend Flesh), which a card that only EXCLUDES a type does not use. */
+export function printedCreatureTypes(name: string, oracleText: string | undefined, skipNegated = false): Set<string> {
+  const out = new Set<string>();
+  scanPrintedCreatureTypes(name, oracleText, (type, negated) => { if (!(skipNegated && negated)) out.add(type); return false; });
+  return out;
+}
+
+/** Walks the types the printed text names (after the blanking described above), handing each to `visit(type, negated)`; stops and answers true as soon as `visit` does. */
+function scanPrintedCreatureTypes(name: string, oracleText: string | undefined, visit: (type: string, negated: boolean) => boolean): boolean {
   if (!oracleText) return false;
   let text = oracleText;
   let lower = text.toLowerCase();
   if (lower.length !== text.length) return false;
-  // reminder text: dropped outright (not blanked), so a clause's reach is not spent on text that is gone
+  // reminder text: dropped outright (not blanked), so a clause's reach is not spent on text that is gone. EXCEPT on the line of a keyword that NAMES its type only there (REMINDER_NAMES_TYPE).
   let kept = "";
-  let depth = 0;
-  for (const c of text) {
-    if (c === "(") depth++;
-    if (depth === 0) kept += c;
-    else if (c === ")") { depth--; if (depth === 0) kept += " "; }
+  for (const line of text.split("\n")) {
+    let out = "";
+    if (REMINDER_NAMES_TYPE.test(line)) out = line.replace(/[()]/g, " ");
+    else out = withoutParentheses(line);
+    kept += (kept === "" ? "" : "\n") + out;
   }
   text = kept; lower = text.toLowerCase();
   if (lower.length !== text.length) return false;
@@ -193,10 +239,11 @@ export function printedTextNamesCreatureType(name: string, oracleText: string | 
   step((t, l) => blankClause(t, l, "become ", [".", "\n", ",", " until", " with", " in addition"], 80));
   step((t, l) => blankClause(t, l, "is also ", [".", "\n"], 80));
   step((t, l) => blankAll(t, l, "meets the eye"));
-  for (const o of ["except it's", "except they're", "except he's", "except she's", "except his ", "except her ", "except its ", "except if "]) step((t, l) => blankClause(t, l, o, [".", "\n"], 300));
+  for (const o of ["except it's", "except they're", "except he's", "except she's", "except his ", "except her ", "except its ", "except if ", "except the "]) step((t, l) => blankClause(t, l, o, [".", "\n"], 300));
+  step((t, l) => blankAdditions(t, l));
   step((t, l) => blankClause(t, l, "partner", [".", "\n"], 120));
-  // A TYPE NAMED AS AN ENEMY is no kindred: protection from Clerics, "can't be blocked by Walls", "deals damage to a Dinosaur, destroy it".
-  for (const o of ["protection from ", "blocked by ", "deals damage to "]) step((t, l) => blankClause(t, l, o, [".", "\n", ","], 80));
+  // A TYPE NAMED AS AN ENEMY is no kindred: protection from Clerics, "can't be blocked by Walls", "deals damage to a Dinosaur, destroy it", "deals 1 damage to each Human creature".
+  for (const o of ["protection from ", "blocked by ", "deals damage to ", ...DEALS_AMOUNT]) step((t, l) => blankClause(t, l, o, [".", "\n", ","], 80));
   // An ABILITY NAME before an em dash ("Spear of the Void Dragon -- Whenever ...", "Bad Wolf -- ...") is a title, not a type.
   step((t, l) => blankTitles(t, l));
   const isWordChar = (c: string): boolean => (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c === "'" || c === "\u2019" || c === "-";
@@ -206,9 +253,11 @@ export function printedTextNamesCreatureType(name: string, oracleText: string | 
     let j = i;
     while (j < text.length && isWordChar(text[j]!)) j++;
     // "non-Dragon" is a negated type: the type is the part after the hyphen.
-    const k = lower.startsWith("non-", i) ? i + 4 : i;
+    const negated = lower.startsWith("non-", i);
+    const k = negated ? i + 4 : i;
     const first = text[k]!;
-    if (first >= "A" && first <= "Z" && SUBTYPE_FORMS.has(lower.slice(k, j))) return true;
+    const type = first >= "A" && first <= "Z" ? SUBTYPE_FORMS.get(lower.slice(k, j)) : undefined;
+    if (type !== undefined && visit(type, negated)) return true;
     i = j;
   }
   return false;
@@ -238,7 +287,8 @@ function caresFromTags(tags: CardTags): boolean {
   const isCreatureType = (sub: string): boolean => CREATURE_SUBTYPE_SET.has(sub.toLowerCase());
   const names = (s: SubjectFilter | undefined): boolean => {
     if (!s || s.self === true) return false;
-    if (s.chosenType === true) return true;
+    // A chosen CREATURE type (or one derive could not name the kind of); a card type, odd or even, a land type or a planeswalker type (Cloud Key, Extinction Event, Shimmer, Leori) names no creature type (#1568).
+    if (s.chosenType === true && (s.chosenKind === undefined || s.chosenKind === "creature-type")) return true;
     return [...arr(s.subtype), ...(s.anyOf ?? []).flatMap((b) => arr(b.subtype))].some(isCreatureType);
   };
   // A CHANGELING IS EVERY CREATURE TYPE, so it is in whatever type is chosen (deck mode pairs it with the deck's lord for the same reason: `extractCharacteristics` gives it every subtype).
@@ -252,8 +302,12 @@ function caresFromTags(tags: CardTags): boolean {
     || (!makesToken(a) && (a.emits ?? []).some((e) => e.verb !== "create-token" && e.subject.token !== true && names(e.subject))));
 }
 
-/** An unresolved chosen CREATURE type: `chosenType` on a subject whose type is `creature`. Any other chosen-type subject (a card type, a land type, odd or even, "an opponent chooses") is not this. */
-const chosenCreatureType = (s: SubjectFilter | undefined): s is SubjectFilter => s?.chosenType === true && arr(s.type).includes("creature");
+/** An unresolved chosen CREATURE type. By the derived KIND (#1568): `chosenKind: "creature-type"` on a subject that NAMES A TYPE, whichever it is (Gathering Stone's "spells of the chosen type" is a creature-type choice on a spell subject; Rimefire Torque's is a permanent).
+ *  An UNTYPED subject is left alone: Gathering Stone's "put it into your graveyard" carries `chosenType` from the clause beside it ("a card of the chosen type") and is a graveyard fill of ANY card, a true pair with every recursion creature (measured: refusing it lost
+ *  ~800 census rows, all true), so an untyped chosen-type subject keeps the wildcard it was. A subject with NO kind
+ *  (derive could not name one: the printed words make no single choice) falls back to the old reading, a `creature` subject in a card whose words say "creature type" (`cue`). Any other kind (a card type, odd or even, a land type, a planeswalker type) is not this. */
+const chosenCreatureType = (s: SubjectFilter | undefined, cue: boolean): s is SubjectFilter =>
+  s?.chosenType === true && (s.chosenKind === "creature-type" ? s.type !== undefined : s.chosenKind === undefined && cue && arr(s.type).includes("creature"));
 
 /** THE NO-DECK READING OF "OF THE CHOSEN TYPE" (owner ruling 2026-11-07, #1526 part 2). With a deck `resolveChosenTypes` has already turned every chosen type into the deck's main creature type. With none (a card
  *  page, a partner suggestion, the compass's pair isolation) the type is unresolved, and `subjectMatches` does not read the flag, so Metallic Mimic paired with every creature (an anthem). The ruling: such a card pairs
@@ -268,11 +322,13 @@ const chosenCreatureType = (s: SubjectFilter | undefined): s is SubjectFilter =>
  *  recursion, a cheat or a copy reaches, the doubled class. What is NOT is the TOKEN a `token-generation` makes of the chosen type (Riptide Replicator, Kindred Charge): that is a supply, it pairs with whatever wants a
  *  token (a doubler), and the type of the token is no demand of anyone's. Molten Echoes keeps its token supply too and loses only the trigger that watches the chosen type.
  *
- *  SCOPE, by the card's printed text, because the derived subject cannot tell the choices apart: only a card that says "creature type" is read, and not one whose chosen type is a NEGATION ("creatures that aren't of the
- *  chosen type": Kindred Dominance, Crippling Fear, Raise the Palisade, Callous Oppressor) or is chosen by an opponent. "Odd or even" (Extinction Event, Zimone's Hypothesis) and a card-type choice have no
- *  "creature type" in them and are left as they were.
- *  CEILING: the scope is a text cue, and only subjects typed `creature` are refused. A chosen-type subject of another type (Cloud Key / Gathering Stone "spell", Ichormoon Gauntlet "permanent", an untyped one) is
- *  left the wildcard it was. A card that prints both a creature-type choice and a negated one would be read as the first. */
+ *  SCOPE, by the derived KIND (#1568): only a subject whose `chosenKind` is `creature-type` AND that names a type is read, whatever the type (Gathering Stone's spells, Door of Destinies' spell trigger, Rimefire Torque's permanents, Pack's Disdain's count). "Odd or even"
+ *  (Extinction Event, Zimone's Hypothesis), a card-type choice (Cloud Key, Stenn), a land type (Shimmer) and a planeswalker type (Leori) are other kinds and are left as they were. A subject with NO kind, because derive found no single choice in the words
+ *  (a stored reading, a card whose text names two choices), keeps the old reading: a `creature` subject in a card whose printed words say "creature type".
+ *  CEILING: a chosen type that is a NEGATION ("creatures that aren't of the chosen type": Kindred Dominance, Crippling Fear, Raise the Palisade, Callous Oppressor) or is chosen by an opponent is still told apart by the printed words, not by
+ *  derive, which does not carry either. A card that prints both a creature-type choice and a negated one would be read as the first.
+ *  CEILING: an UNTYPED chosen-type subject is not refused (Dawn-Blessed Pennant's "return target card of the chosen type", Gathering Stone's graveyard fill): it stays the wildcard it was, so a recursion that really asks for the chosen type still pairs with every card that fills a graveyard.
+ *  CEILING: a card-type, land-type, parity or planeswalker-type choice is not refused without a deck: Cloud Key still pairs with whatever it matched. The owner ruling is about a chosen CREATURE type. */
 const refusedCache = new WeakMap<CardTags, CardTags>();
 const NEGATED_OR_OPPONENT_CHOICE = /\b(?:aren't|isn't|not) of the chosen type|\bopponent chooses a creature type/i;
 export function refuseUnresolvedChosenTypes(tags: CardTags, oracleText: string | undefined): CardTags {
@@ -280,19 +336,39 @@ export function refuseUnresolvedChosenTypes(tags: CardTags, oracleText: string |
   if (hit) return hit;
   // Two halves: the TRIGGER that watches the chosen type (Kindred Discovery), and the BODY that acts on it (effect, emits, doubled class). A trigger that is NOT chosen -- Elvish Soultiller's "When this creature dies"
   // -- is kept when only the body is: it is the card hearing an event, which holds in any deck.
-  const watches = (a: CardTags["abilities"][number]): boolean => chosenCreatureType(a.trigger?.subject);
-  const acts = (a: CardTags["abilities"][number]): boolean => a.effect.kind !== "token-generation"
-    && (chosenCreatureType(a.doublesOf) || chosenCreatureType(a.effect.subject) || (a.emits ?? []).some((e) => chosenCreatureType(e.subject)));
-  const touches = (a: CardTags["abilities"][number]): boolean => watches(a) || acts(a);
-  const inScope = /creature type/i.test(oracleText ?? "") && !NEGATED_OR_OPPONENT_CHOICE.test(oracleText ?? "");
+  const cue = /creature type/i.test(oracleText ?? "");
+  const watches = (a: CardTags["abilities"][number]): boolean => chosenCreatureType(a.trigger?.subject, cue);
+  const chosenEmit = (e: NonNullable<CardTags["abilities"][number]["emits"]>[number]): boolean => chosenCreatureType(e.subject, cue);
+  // The parts of an ability that NAME the chosen type: the class its effect reaches, the class it doubles, the event it listens to, an emit whose subject is the chosen type.
+  const effectChosen = (a: CardTags["abilities"][number]): boolean => a.effect.kind !== "token-generation" && (chosenCreatureType(a.doublesOf, cue) || chosenCreatureType(a.effect.subject, cue)
+    // An effect with no subject of its own whose EVERY emit names the chosen type is that demand (Mirror of the Forebears' clone of "a creature of the chosen type"): nothing of it survives the emits.
+    || (a.effect.subject === undefined && (a.emits ?? []).length > 0 && (a.emits ?? []).every(chosenEmit)));
+  // A COUNT OF THE CHOSEN CLASS (Banner of Kinship, Kindred Charge, Pack's Disdain: "for each creature you control of the chosen type") is the same demand: the number grows with the type. Only the scaling goes; the effect and its
+  // type-free emits stay (#1568 review).
+  const scaledChosen = (a: CardTags["abilities"][number]): boolean => chosenCreatureType(a.effect.scalingSubject, cue) || chosenCreatureType(typeof a.count?.scalesWith === "object" ? a.count.scalesWith : undefined, cue);
+  const touches = (a: CardTags["abilities"][number]): boolean => watches(a) || effectChosen(a) || scaledChosen(a) || (a.emits ?? []).some(chosenEmit);
+  const inScope = !NEGATED_OR_OPPONENT_CHOICE.test(oracleText ?? "");
   const out = !inScope || !tags.abilities.some(touches) ? tags : {
     ...tags,
     abilities: tags.abilities.map((a) => {
       if (!touches(a)) return a;
+      // OWNER RULING 2026-11-07 (#1568): the refusal is of the chosen-type DEMAND only. A side effect that does not depend on the chosen type is a supply for whoever uses it (Door of Destinies' charge counter on
+      // itself, Dawn-Blessed Pennant's life, Chronicle of Victory's draw, Reflections of Littjara's copy), so it stays: the ability keeps its effect and every emit whose subject is not the chosen type, and loses
+      // the trigger that watches the chosen type (that trigger is the demand), the doubled class and any chosen-type emit. The pair loop reads an ability's emits without its trigger (a token maker already relied on it).
       const { trigger, emits, doublesOf: _d, ...rest } = a;
-      // A token maker keeps its supply and loses only the trigger that watches the chosen type.
-      if (a.effect.kind === "token-generation") return { ...rest, ...(emits ? { emits } : {}) };
-      return { ...rest, ...(trigger && !watches(a) ? { trigger } : {}), effect: { kind: "" as const } };
+      // An ability whose EFFECT reaches the chosen class has emits that are that same reach seen from the event side (Outbreak's `dies` of "all creatures of that type" carries no flag of its own), so they go with it.
+      // A token maker keeps ALL its emits (the supply of the token, whatever its type) and only loses the trigger.
+      const kept = a.effect.kind === "token-generation" ? (emits ?? []) : effectChosen(a) ? [] : (emits ?? []).filter((e) => !chosenEmit(e));
+      const scaled = !effectChosen(a) && scaledChosen(a);
+      const { scalingSubject: _s, scaling: _sc, ...effectRest } = rest.effect;
+      const { scalesWith: _w, ...countRest } = rest.count ?? {};
+      return {
+        ...rest,
+        ...(trigger && !watches(a) ? { trigger } : {}),
+        ...(kept.length ? { emits: kept } : {}),
+        ...(effectChosen(a) ? { effect: { kind: "" as const } } : scaled ? { effect: effectRest } : {}),
+        ...(scaled && rest.count ? { count: countRest as typeof rest.count } : {}),
+      };
     }),
   };
   refusedCache.set(tags, out);

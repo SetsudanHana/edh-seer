@@ -53,6 +53,9 @@ export type PlayerCondition = { of?: "controller" | "owner" } & (
   | { kind: "coin" }
 );
 
+/** What a "the chosen type" subject refers back to (#1568, `SubjectFilter.chosenKind`). */
+export type ChosenKind = "creature-type" | "card-type" | "land-type" | "planeswalker-type" | "parity";
+
 export interface SubjectFilter {
   /** THE OBJECT IS THE ONE THE TRIGGER IS ABOUT, not another of its class (#896 task 4, #823): Mari,
    *  the Killing Quill's "whenever a creature an opponent controls dies, exile IT". The other fields
@@ -181,6 +184,10 @@ export interface SubjectFilter {
   token: boolean | null;
   /** Marks "the chosen type" (Kindred Discovery); resolved deck-aware in Stage 2. */
   chosenType?: boolean;
+  /** WHAT `chosenType` chose (#1568), stamped beside it by derive (`chosen-kind.ts`) from the printed words. `chosenType` alone cannot tell "choose a creature type" (Kindred Discovery) from "choose artifact, creature, enchantment, instant, or sorcery" (Cloud Key),
+   *  "odd or even" (Extinction Event), a land type (Shimmer) or a planeswalker type (Leori), and the matcher resolves it to the deck's top creature subtype whatever it was. Only `creature-type` is resolved that way and refused without a deck. Absent = unknown (the
+   *  text names no choice, or two kinds): the matcher falls back to the old text cue. Never set by the LLM. */
+  chosenKind?: ChosenKind;
   /** Marks "of the chosen color" / "of that color" / "of a color of your choice" (Heraldic Banner, Prism Ring, Crossroads Village): the subject is narrowed by a colour the player chose, which is a fact of the game and not of the deck (#1360). It is NOT `chosenType`: the matcher resolves `chosenType` to a deck SUBTYPE, and a colour is not one. Counted as a narrowing wherever `chosenType` is, resolved by nothing: the unresolved subject claims no more than its class. "of the chosen color and type" (a token) is `chosenType`. */
   chosenColor?: boolean;
   /** THE SET IS NARROWED BY A RULE DERIVE DOES NOT MODEL (#1557). "All permanents" read off "all permanents of the color of your choice" (`chosenColor`, `colorCount`) says what it is; these four have
@@ -1495,6 +1502,9 @@ export interface Ability {
   /** The CR keyword abilities a `keyword-grant` hands out, lowercased: ["undying"], ["haste",
    *  "hexproof"] (#857, DERIVE 213). The effect subject says who gets them. */
   grants?: string[];
+  /** The type a `type-grant` hands out, lowercased and singular: "food" (Gourmand's Talent, Ragost), "clue" (Senator Peacock), "equipment" (Dan Lewis) (#1568, owner ruling 2026-11-08). Present only on a type-grant whose
+   *  printed text names it ("are Foods in addition to their other types"). `effect.subject` says who gets it; for a whole non-creature class the matcher pairs the GRANTED type with the cards that use it. */
+  grantsType?: string;
   /** WHAT CREATED THIS DELAYED TRIGGER ("when you next cast ... this turn", CR 603.7):
    *  "chapter" (Summon: Fenrir's II), "spell" (Doublecast), or the activation cost that makes it --
    *  Yuna, Grand Summoner's "{T}". Present only on such a trigger (`delayedTriggerRepeats`). It

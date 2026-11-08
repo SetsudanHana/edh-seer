@@ -1,6 +1,6 @@
 import type { Reason } from "@edh-seer/engine";
 import type { Ability, CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
-import { LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
+import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import { tokenKindsWith } from "@edh-seer/tagger/token-kinds";
 import crKeywords from "@edh-seer/tagger/cr-keywords" with { type: "json" };
 /** The closed six, per CR 205.4a plus the un-set `host`/`elite`. A supertype is not a card type and
@@ -28,7 +28,7 @@ import { enteringFaceName, faceDeckCards, graveyardFaceName, graveyardIdentity }
 import { claimsNothing, isManaRider, isReflexiveTrigger, isRefusedTrigger, isSelfLoss } from "./claims.js";
 import { magnitudeOf, mergeMagnitude } from "./edge-magnitude.js";
 import type { LandTypes } from "./chosen-type.js";
-import { caresAboutCreatureType, refuseUnresolvedChosenTypes } from "./chosen-type.js";
+import { caresAboutCreatureType, printedCreatureTypes, refuseUnresolvedChosenTypes } from "./chosen-type.js";
 
 const list = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
@@ -3194,6 +3194,105 @@ const OFF_BATTLEFIELD_GRANTS: ReadonlySet<string> = new Set([
   "emerge", "replicate", "rebound", "casualty", "cleave", "overload", "bestow", "prowl", "spectacle", "suspend", "surge", "kicker", "multikicker", "entwine", "buyback", "splice", "flash", "aftermath",
 ]);
 
+/** A TYPE-GRANT OVER A WHOLE NON-CREATURE CLASS (owner ruling 2026-11-08, #1568): "artifacts you control are Foods / Clues / Equipment in addition to their other types" (Gourmand's Talent, Ragost, Senator Peacock, Dan Lewis).
+ *  The recipient is a class of artifacts, lands or enchantments with no subtype and no single host. */
+function wholeNonCreatureClass(s: SubjectFilter): boolean {
+  const types = Array.isArray(s.type) ? s.type : s.type ? [s.type] : [];
+  // "All permanents" / "nonland permanents you control" is the whole board, not a creature class: a creature in a permanent umbrella's expansion does not make it one.
+  const umbrella = types.includes("permanent") || (types.includes("creature") && types.length >= 4);
+  return (s.scope === "all" || s.scope === "each") && s.subtype === undefined && types.length > 0 && (umbrella || !types.includes("creature")) && s.self !== true;
+}
+/** A TYPE-GRANT OVER THE WHOLE CREATURE CLASS (owner ruling 2026-11-08, extending the class ruling to creatures): "creatures you control are Slivers / every creature type / the chosen type / artifacts in addition to their other types"
+ *  (Hivestone, Roshan, Laughing Jasper Flint, March of the World Ooze, Graaz, Ashaya, The Flesh Is Weak, Maskwood Nexus, Arcane Adaptation, Leyline of Transformation, Xenograft). The recipient is every creature of a side, with no
+ *  subtype and no single host; a state narrowing (a +1/+1 counter) leaves it a class.
+ *  CEILING: a user derive stores no subject for is not read, so it loses the pair (Bladeback Sliver's hellbent Sliver grant, At Knifepoint's and Hellspur Posse Boss's "outlaws", which are Assassins and Mercenaries by CR 700.12, Quick Sliver's
+ *  Sliver spells); recall is read from derived data, as for the non-creature classes.
+ *  CEILING: the BASE POWER AND TOUGHNESS that a class grant sets in the same sentence (Graaz's 5/3 Juggernauts, March of the World Ooze's 6/6 Oozes, Kudo's 2/2 Bears, Raised by Giants' 10/10 Giants) is not stored on the type-grant, so a card that uses
+ *  that size is not read as a user of the grant; the owner's ruling for the base P/T is #1572, not implemented here. */
+function wholeCreatureClass(s: SubjectFilter): boolean {
+  const types = Array.isArray(s.type) ? s.type : s.type ? [s.type] : [];
+  return (s.scope === "all" || s.scope === "each") && s.subtype === undefined && types.length === 1 && types[0] === "creature" && s.self !== true;
+}
+const CREATURE_SUBTYPE_LOWER: ReadonlySet<string> = new Set(CREATURE_SUBTYPES.map((x) => x.toLowerCase()));
+const CARD_TYPES: ReadonlySet<string> = new Set(["artifact", "enchantment", "land", "planeswalker", "battle"]);
+/** Effects that are not a BATTLEFIELD reader of the type: a grant of "artifacts you control are Foods" reaches permanents, which have a controller (CR 108.4), so a library search (Stoneforge Mystic), a graveyard return (Auriok Survivors),
+ *  a play-from-top (Galea) and a spell cost reducer (Danitha) read the type where the grant does not reach. A token maker is read through its trigger and cost, never through the token it creates. `type-grant` and `animate` are another granter. */
+const NOT_A_BATTLEFIELD_READER: ReadonlySet<string> = new Set(["search", "graveyard-recursion", "play-from-top", "cost-reduction", "type-grant", "animate", "token-generation", "create-token", "token-doubling"]);
+/** Does the card USE the type `granted` ON THE BATTLEFIELD (derived data only; owner ruling 2026-11-08, #1568 review 2): a trigger on it ("Whenever you sacrifice a Clue", "Whenever an Equipment enters"), a cost or an effect that sacrifices
+ *  or attaches it ("Sacrifice a Food", "attach target Equipment"), forage, a count of it, or a lord over it ("Foods you control have ...").
+ *  Not a card that only MAKES the type, merely is one, grants the same type, or reads it in the library, a graveyard, on the stack or in a spell's cost.
+ *  CEILING: an attach that derive stores as no emit (an Equipment attacher read from a keyword-grant, a reconfigure) is not read; recall is measured per type in the #1568 review. A subtype that comes from the card's own name (`named`: Food Fight) is skipped.
+ *  CEILING: Bludgeon Brawl ("Each noncreature, non-Equipment artifact is an Equipment with equip {X}") derives as `animate`, not a type-grant, so it is no class grant. */
+export function usesGrantedType(tags: CardTags, granted: string): boolean {
+  // A CARD TYPE GRANTED (Enchanted Evening's enchantments, Toph's lands) is used by what counts, triggers on, or sacrifices that type; "destroy target artifact" or an enchantress lord names it without using the grant.
+  if (CARD_TYPES.has(granted)) {
+    const typed = (s: Partial<SubjectFilter> | undefined): boolean => s !== undefined && s.self !== true && s.named === undefined && (s.zone === undefined || s.zone === "battlefield")
+      && (Array.isArray(s.type) ? s.type : s.type ? [s.type] : []).includes(granted) && !(Array.isArray(s.type) ? s.type : [s.type]).includes("spell");
+    return tags.abilities.some((a) => (a.trigger !== undefined && !a.trigger.verbs.includes("create-token") && !a.trigger.verbs.includes("cast") && typed(a.trigger.subject))
+      || typed(a.effect.scalingSubject) || typed(a.thresholdSubject) || a.payment?.sacrifice?.some((x) => typed(x.subject)) === true);
+  }
+  const names = (s: Partial<SubjectFilter> | undefined): boolean => s !== undefined && s.self !== true && s.named === undefined
+    && !(Array.isArray(s.type) ? s.type : [s.type]).includes("spell") && (s.zone === undefined || s.zone === "battlefield") && (s.fromZone === undefined || s.fromZone === "battlefield") && (Array.isArray(s.subtype) ? s.subtype : s.subtype ? [s.subtype] : []).includes(granted);
+  // The clauses that hand the same type out: a sibling keyword-grant on that sentence is the granter again, not a user.
+  const granting = new Set(tags.abilities.filter((a) => a.effect.kind === "type-grant" && a.grantsType === granted).map((a) => a.clause));
+  // A card that IS the type (an Equipment's own "attach it to target creature", "this Equipment gains ...") reads itself, which derive does not always mark `self`.
+  // A CREATURE type is the exception: a Sliver lord is a Sliver and still a lord (Muscle Sliver "All Sliver creatures get +1/+1" is a Hivestone user).
+  const isGranted = tags.characteristics.subtypes?.includes(granted) === true && !CREATURE_SUBTYPE_LOWER.has(granted);
+  return tags.abilities.some((a) => {
+    const maker = NOT_A_BATTLEFIELD_READER.has(a.effect.kind) || a.emits?.some((e) => e.verb === "create-token") === true;
+    const events = a.trigger !== undefined && !a.trigger.verbs.includes("create-token") && !a.trigger.verbs.includes("cast") && names(a.trigger.subject);
+    const lord = !maker && !granting.has(a.clause) && !isGranted && names(a.effect.subject);
+    const emitted = !granting.has(a.clause) && !isGranted && a.effect.kind !== "search" && a.effect.kind !== "graveyard-recursion" && a.effect.kind !== "play-from-top" && a.emits?.some((e) => (e.verb === "sacrifice" || e.verb === "attached") && names(e.subject)) === true;
+    return events || lord || emitted || names(a.effect.scalingSubject) || names(a.thresholdSubject)
+      || a.payment?.sacrifice?.some((x) => names(x.subject)) === true
+      // Forage (exile three cards from your graveyard or sacrifice a Food) is read from its derived verb, in a trigger ("Whenever you forage") or an effect ("you may forage").
+      || (granted === "food" && (a.trigger?.verbs.includes("forage") === true || a.emits?.some((e) => e.verb === "forage") === true || /\bforage\b/i.test(a.cost ?? "")));
+  });
+}
+
+/** Does the card USE A CREATURE TYPE, so that a grant of "every creature type" or "the chosen type" to creatures (Maskwood Nexus, Arcane Adaptation, Leyline of Transformation, Xenograft, Omo) gives it something (#1568 final review)?
+ *  `caresAboutCreatureType` is the chosen-type DEMAND test and is wider: a changeling "cares" because it is in whatever type is chosen, but a grant gives a changeling nothing, so it does not count here; nor does a type that is only EXCLUDED ("non-Spirit": Rend Flesh),
+ *  an enemy (Scorch the Fields' damage to each Human), the type of a token or a body the card makes or becomes (Rusted Relic's Golem), or a card name quoted in the text (Garth One-Eye's Shivan Dragon).
+ *  `offBattlefield` is whether the GRANT reaches more than creatures on the battlefield. Maskwood Nexus, Arcane Adaptation and Leyline say "the same is true for creature spells you control and creature cards you own that aren't on the battlefield", so a Goblin
+ *  tutor, a Goblin cost reducer or a Goblin cast trigger reads it; Xenograft and Omo reach only the battlefield, where those do not (Taigam's Dragon spells), as `usesGrantedType` has it.
+ *  Derived data decides WHICH ability reads a type (a trigger on it, a lord over it, a sacrifice or tap of it, a count of it, a doubled class, a chosen creature type); the printed words decide whether the type it names survives the clause rules of
+ *  `printedCreatureTypes` (negation, enemies, tokens, names, becomes).
+ *  CEILING: a payoff derive stores no type subject for (Akki Ronin's "a Samurai or Warrior attacks alone", Academy Journeymage's "if you control a Wizard") is not read, and a type that also appears in an excluded clause of the same card (a lord that is also "protection from Elves") is kept.
+ *  CEILING: whether the grant reaches off the battlefield is read off the producer's printed words ("creature cards you own that aren't on the battlefield"), not from derive. */
+export function usesCreatureType(tags: CardTags, card: { name: string; oracleText?: string }, offBattlefield: boolean): boolean {
+  const cache = usesCreatureTypeCache.get(tags) ?? [undefined, undefined];
+  const cached = cache[offBattlefield ? 1 : 0];
+  if (cached !== undefined) return cached;
+  let printed: Set<string> | undefined;
+  const isType = (sub: string): boolean => CREATURE_SUBTYPE_LOWER.has(sub.toLowerCase());
+  const names = (s: Partial<SubjectFilter> | undefined): boolean => {
+    if (s === undefined || s.self === true || s.named !== undefined || s.control === "opp") return false;
+    if (!offBattlefield) {
+      if ((Array.isArray(s.type) ? s.type : [s.type]).includes("spell")) return false;
+      if ((s.zone !== undefined && s.zone !== "battlefield") || (s.fromZone !== undefined && s.fromZone !== "battlefield")) return false;
+    }
+    if (s.chosenType === true && (s.chosenKind === undefined || s.chosenKind === "creature-type")) return true;
+    const subs = [...(Array.isArray(s.subtype) ? s.subtype : s.subtype ? [s.subtype] : []), ...(s.anyOf ?? []).flatMap((b) => Array.isArray(b.subtype) ? b.subtype : b.subtype ? [b.subtype] : [])].filter(isType);
+    if (subs.length === 0) return false;
+    printed ??= printedCreatureTypes(card.name, card.oracleText, true);
+    return subs.some((x) => printed!.has(x.toLowerCase()));
+  };
+  const out = tags.abilities.some((a) => {
+    const maker = (offBattlefield ? OTHER_GRANTER_OR_MAKER : NOT_A_BATTLEFIELD_READER).has(a.effect.kind) || a.emits?.some((e) => e.verb === "create-token") === true;
+    return (a.trigger !== undefined && !a.trigger.verbs.includes("create-token") && (offBattlefield || !a.trigger.verbs.includes("cast")) && names(a.trigger.subject))
+      || names(a.doublesOf) || names(a.effect.scalingSubject) || names(a.thresholdSubject)
+      || (!maker && names(a.effect.subject))
+      || (!maker && (a.emits ?? []).some((e) => e.verb !== "create-token" && e.subject.token !== true && names(e.subject)))
+      || a.payment?.sacrifice?.some((x) => names(x.subject)) === true;
+  });
+  cache[offBattlefield ? 1 : 0] = out;
+  usesCreatureTypeCache.set(tags, cache);
+  return out;
+}
+const OTHER_GRANTER_OR_MAKER: ReadonlySet<string> = new Set(["type-grant", "animate", "token-generation", "create-token", "token-doubling"]);
+const usesCreatureTypeCache = new WeakMap<CardTags, [boolean | undefined, boolean | undefined]>();
+const GRANT_REACHES_OFF_BATTLEFIELD = /creature cards you own that aren't on the battlefield/i;
+
 function staticEdges({ p, c, h, reasons }: PairScope): void {
   const staticClaim = (c: DeckCard, a: CardTags["abilities"][number]): Reason | undefined => {
     if (!c.tags) return undefined;
@@ -3266,6 +3365,49 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
     // self-trigger gate depends on, and widening it there is exactly how the `entersTapped` strip
     // silently deleted 29 real claims.
     if (a.effect.subject.self === true) return undefined;
+    // A TYPE HANDED TO A WHOLE NON-CREATURE CLASS PAIRS WITH THE CARDS THAT USE THAT TYPE, NOT WITH EVERY RECIPIENT (owner ruling 2026-11-08, #1568): Gourmand's Talent pairs with Food payoffs, not with Sol Ring.
+    // A grant over the whole CREATURE class follows the same rule, below.
+    // ...and so does the ability handed out in the same sentence ("... and have '{2}, {T}, Sacrifice this artifact: You gain 3 life'"), whose recipient is the same class.
+    const wholeClass = (x: SubjectFilter): boolean => wholeNonCreatureClass(x) || wholeCreatureClass(x);
+    const classGrant = wholeClass(a.effect.subject)
+      ? (a.effect.kind === "type-grant" ? a : a.kind === "static" ? p.tags.abilities.find((x) => x.effect.kind === "type-grant" && x.clause === a.clause && x.effect.subject !== undefined && wholeClass(x.effect.subject)) : undefined)
+      : undefined;
+    // A grant over the whole CREATURE class (owner ruling 2026-11-08) pairs with the cards that use the granted type: a named creature subtype (Slivers, Oozes) is used by a battlefield demand that names it; a card type
+    // (The Flesh Is Weak's artifacts) the same way; "every creature type" or "the chosen type" (no `grantsType`: Maskwood Nexus, Arcane Adaptation, Xenograft, Leyline) by a card that uses a creature type on the battlefield (`usesCreatureType`: not a changeling, a negation, an enemy or a token, and not a spell or a library read when the grant reaches the battlefield only).
+    const creatureGrant = classGrant !== undefined && classGrant.effect.subject !== undefined && wholeCreatureClass(classGrant.effect.subject);
+    if (classGrant !== undefined && creatureGrant && classGrant.grantsType === undefined) {
+      if (!usesCreatureType(c.tags, c.card, GRANT_REACHES_OFF_BATTLEFIELD.test(p.card.oracleText ?? ""))) return undefined;
+      return {
+        tag: `static:${a.effect.kind}`,
+        text: `${p.card.name} gives your creatures a creature type, and ${c.card.name} uses a creature type`,
+        effectKind: a.effect.kind,
+        repeatability: "static",
+        consumer: c.card.name,
+        producer: p.card.name,
+      };
+    }
+    if (classGrant?.grantsType !== undefined) {
+      if (!usesGrantedType(c.tags, classGrant.grantsType)) return undefined;
+      const gt = classGrant.grantsType;
+      if (creatureGrant) {
+        return {
+          tag: `static:${a.effect.kind}`,
+          text: `${p.card.name} makes your creatures ${gt[0]!.toUpperCase()}${gt.slice(1)}${CARD_TYPES.has(gt) ? "s" : ""}, and ${c.card.name} uses that type`,
+          effectKind: a.effect.kind,
+          repeatability: "static",
+          consumer: c.card.name,
+          producer: p.card.name,
+        };
+      }
+      return {
+        tag: `static:${a.effect.kind}`,
+        text: `${p.card.name} makes your permanents ${gt === "equipment" ? "Equipment" : `${gt[0]!.toUpperCase()}${gt.slice(1)}s`}, and ${c.card.name} uses that type`,
+        effectKind: a.effect.kind,
+        repeatability: "static",
+        consumer: c.card.name,
+        producer: p.card.name,
+      };
+    }
     // A counter-presence condition ("creatures you control WITH a +1/+1 counter") is a BOARD STATE,
     // not a printed characteristic, and this pass matches against the type line. Demanding it here
     // deletes the edge outright -- Sludge Monster's anthem stopped reaching anything. The dedicated

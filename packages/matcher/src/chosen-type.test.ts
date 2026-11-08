@@ -197,3 +197,74 @@ test("Heraldic Banner does not pump Metallic Mimic, in a colourless deck either"
   expect(subjectMatches(mimic, none, NO_HIERARCHY)).toBe(false);
   expect(subjectMatches(SHARD, none, NO_HIERARCHY)).toBe(true);
 });
+
+// #1568: ONLY A CREATURE-TYPE CHOICE IS THE DECK'S CREATURE TYPE. Cloud Key chooses a card type, Extinction Event odd or even, Shimmer a land type, Leori a planeswalker type: none is a creature subtype of the deck.
+test("resolveChosenTypes resolves a creature-type choice and leaves every other kind exactly as it was", () => {
+  const counts = new Map([["elf", 5], ["goblin", 2]]);
+  const hierarchy: Hierarchy = { elf: ["creature"], goblin: ["creature"] };
+  const subj = (chosenKind?: string) => ({ type: "creature", control: "you", token: null, chosenType: true, ...(chosenKind ? { chosenKind } : {}) }) as never;
+  const resolved = resolveChosenTypes(tagsWith([], [
+    { kind: "static", effect: { kind: "cost-reduction", subject: subj("creature-type") } },
+    { kind: "static", effect: { kind: "cost-reduction", subject: subj("card-type") } },
+    { kind: "static", effect: { kind: "cost-reduction", subject: subj("parity") } },
+    { kind: "static", effect: { kind: "cost-reduction", subject: subj("land-type") } },
+    { kind: "static", effect: { kind: "cost-reduction", subject: subj("planeswalker-type") } },
+    { kind: "static", effect: { kind: "cost-reduction", subject: subj() } },
+  ] as never), counts, hierarchy);
+  const [cre, card, par, land, pw, unknown] = resolved.abilities.map((a) => a.effect.subject!);
+  expect(cre).toMatchObject({ subtype: "elf" });
+  expect(cre!.chosenType).toBeUndefined();
+  for (const s of [card, par, land, pw]) { expect(s!.subtype).toBeUndefined(); expect(s!.chosenType).toBe(true); }
+  // no kind recorded (a stored reading from before #1568): the old behaviour, a creature-type choice
+  expect(unknown).toMatchObject({ subtype: "elf" });
+});
+
+// #1568 part 4 and 5: the printed-text fallback of `caresAboutCreatureType`. Real oracle texts (cards.oracleText, 2026-11-07).
+import { printedTextNamesCreatureType as names } from "./chosen-type.js";
+const TEXT = {
+  kami: "At the beginning of your upkeep, sacrifice this creature unless you pay {G}.\nSoulshift 3 (When this creature dies, you may return target Spirit card with mana value 3 or less from your graveyard to your hand.)",
+  harbinger: "Protection from non-Spirit creatures\nSoulshift 4 (When this creature dies, you may return target Spirit card with mana value 4 or less from your graveyard to your hand.)",
+  brawler: "Amplify 1 (As this creature enters, put a +1/+1 counter on it for each Zombie card you reveal in your hand.)\nWhenever this creature attacks or blocks, you lose 1 life for each +1/+1 counter on it.",
+  brute: "Affinity for outlaws (This spell costs {1} less to cast for each Assassin, Mercenary, Pirate, Rogue, and/or Warlock you control.)\nTrample",
+  faerie: "Flying\nProwl {2}{U} (You may cast this for its prowl cost if you dealt combat damage to a player this turn with a Faerie or Rogue.)\nWhen this creature enters, if its prowl cost was paid, draw a card.",
+  harlequin: "Freerunning {1}{B} (You may cast this spell for its freerunning cost if you dealt combat damage to a player this turn with an Assassin or commander.)\nWhen this creature enters, you draw a card and you lose 1 life.",
+  stepThrough: "Return two target creatures to their owners' hands.\nWizardcycling {2} ({2}, Discard this card: Search your library for a Wizard card, reveal it, put it into your hand, then shuffle.)",
+  illuna: "Mutate {3}{R/G}{U}{U} (If you cast this spell for its mutate cost, put it over or under target non-Human creature you own. They mutate into the creature on top plus all abilities from under it.)\nFlying, trample\nWhenever this creature mutates, exile cards from the top of your library until you exile a nonland permanent card. Put that card onto the battlefield or into your hand.",
+  bronco: "Whenever this creature attacks, reveal the top card of your library and put it into your hand. You lose life equal to that card's mana value if this creature isn't saddled. Otherwise, each opponent loses that much life.\nSaddle 3 (Tap any number of other creatures you control with total power 3 or more: This Mount becomes saddled until end of turn. Saddle only as a sorcery.)",
+  donal: "Whenever you cast a nonlegendary creature spell with flying, you may copy it, except the copy is a 1/1 Spirit in addition to its other types. Do this only once each turn. (The copy becomes a token.)",
+  blade: "Menace\nEquipped creature has base power and toughness 5/5, has menace, and is a black Demon in addition to its other colors and types.\nReconfigure {2}{B}{B} ({2}{B}{B}: Attach to target creature you control; or unattach from a creature. Reconfigure only as a sorcery. While attached, this isn't a creature.)",
+  enkira: "When Enkira, Hostile Scavenger enters, create two Walker tokens. (They're 2/2 black Zombie creatures.)\nAs long as Enkira is equipped, it must be blocked if able.\nWhenever Enkira and at least two Zombies attack, Enkira gains indestructible until end of turn.",
+  hivestone: "Creatures you control are Slivers in addition to their other creature types.",
+  kudo: "Other creatures have base power and toughness 2/2 and are Bears in addition to their other types.",
+  monksFist: "Equipped creature gets +1/+0 and is a Monk in addition to its other types.",
+  riseFromTheGrave: "Put target creature card from a graveyard onto the battlefield under your control. That creature is a black Zombie in addition to its other colors and types.",
+  archdruid: "Other Elf creatures you control get +1/+1.",
+};
+
+test("a type named ONLY in the reminder of Soulshift, Amplify, Affinity, Prowl, Freerunning or a typecycling is still named", () => {
+  expect(names("Kami of the Tended Garden", TEXT.kami)).toBe(true);
+  expect(names("Harbinger of Spring", TEXT.harbinger)).toBe(true);
+  expect(names("Embalmed Brawler", TEXT.brawler)).toBe(true);
+  expect(names("Hellspur Brute", TEXT.brute)).toBe(true);
+  expect(names("Latchkey Faerie", TEXT.faerie)).toBe(true);
+  expect(names("Merciless Harlequin", TEXT.harlequin)).toBe(true);
+  expect(names("Step Through", TEXT.stepThrough)).toBe(true);
+});
+
+test("a reminder of any OTHER keyword stays dropped: Mutate's 'non-Human', Saddle's 'Mount', a token's 'Zombie creatures'", () => {
+  expect(names("Illuna, Apex of Wishes", TEXT.illuna)).toBe(false);
+  expect(names("Caustic Bronco", TEXT.bronco)).toBe(false);
+  expect(names("Enkira, Hostile Scavenger", TEXT.enkira.split("\n").slice(0, 2).join("\n"))).toBe(false);
+});
+
+test("a type ADDED to ONE thing (a copy, an equipped or reanimated creature) is no kindred (Donal's 'except the copy is a 1/1 Spirit', Blade of the Oni's 'is a black Demon'), a type given to a whole CLASS still is (Hivestone, Kudo), and a type named beside it still is", () => {
+  expect(names("Donal, Herald of Wings", TEXT.donal)).toBe(false);
+  expect(names("Blade of the Oni", TEXT.blade)).toBe(false);
+  expect(names("Monk's Fist", TEXT.monksFist)).toBe(false);
+  expect(names("Rise from the Grave", TEXT.riseFromTheGrave)).toBe(false);
+  expect(names("Hivestone", TEXT.hivestone)).toBe(true);
+  expect(names("Kudo, King Among Bears", TEXT.kudo)).toBe(true);
+  // Enkira's Walker tokens are made, and her Zombies are a real care
+  expect(names("Enkira, Hostile Scavenger", TEXT.enkira)).toBe(true);
+  expect(names("Elvish Archdruid", TEXT.archdruid)).toBe(true);
+});

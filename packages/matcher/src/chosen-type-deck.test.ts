@@ -5,7 +5,7 @@ import type { CardLookup } from "@edh-seer/data/resolve";
 import { normalizeName } from "@edh-seer/data/names";
 import { analyzeDecklist } from "./orchestrate.js";
 import { loadHierarchy, pairReasons } from "./index.js";
-import { refuseUnresolvedChosenTypes } from "./chosen-type.js";
+import { caresAboutCreatureType, refuseUnresolvedChosenTypes, resolveChosenTypes } from "./chosen-type.js";
 import type { DeckCard } from "./types.js";
 import fixtures from "./fixtures/chosen-type-deck.json" with { type: "json" };
 
@@ -94,4 +94,94 @@ test("with no deck, a chosen-type card's SELF trigger survives (Elvish Soultille
 
 test("'Heroes' is the plural of 'Hero': Captain America's 'other Heroes you control' is a creature-type payoff", () => {
   expect(mimicStatic("Captain America, Super-Soldier")).not.toEqual([]);
+});
+
+// #1568: THE DERIVED SUBJECT SAYS WHAT WAS CHOSEN (`chosenKind`), so neither the deck resolution nor the no-deck refusal reads the printed words.
+const subjectsOfTags = (t: CardTags) => t.abilities.flatMap((a) => [a.trigger?.subject, a.effect.subject, a.doublesOf, ...(a.emits ?? []).map((e) => e.subject)]).filter((s) => s?.chosenType === true);
+
+test("derive stamps the kind: Cloud Key chose a card type, Gathering Stone a creature type, Extinction Event odd or even", () => {
+  expect(subjectsOfTags(tagsOf("Cloud Key")).map((s) => s!.chosenKind)).toEqual(["card-type"]);
+  expect(subjectsOfTags(tagsOf("Stenn, Paranoid Partisan")).map((s) => s!.chosenKind)).toEqual(["card-type"]);
+  expect(new Set(subjectsOfTags(tagsOf("Gathering Stone")).map((s) => s!.chosenKind))).toEqual(new Set(["creature-type"]));
+  expect(new Set(subjectsOfTags(tagsOf("Extinction Event")).map((s) => s!.chosenKind))).toEqual(new Set(["parity"]));
+  expect(new Set(subjectsOfTags(tagsOf("Kindred Discovery")).map((s) => s!.chosenKind))).toEqual(new Set(["creature-type"]));
+});
+
+test("in a deck of Elves, Cloud Key's card-type choice is NOT resolved to the Elf subtype; Kindred Discovery's creature-type choice is", () => {
+  const counts = new Map([["elf", 9], ["goblin", 1]]);
+  const key = resolveChosenTypes(tagsOf("Cloud Key"), counts, loadHierarchy());
+  expect(JSON.stringify(key.abilities)).not.toContain('"subtype":"elf"');
+  expect(subjectsOfTags(key).map((s) => s!.chosenKind)).toEqual(["card-type"]);
+  const kd = resolveChosenTypes(tagsOf("Kindred Discovery"), counts, loadHierarchy());
+  expect(JSON.stringify(kd.abilities)).toContain('"subtype":"elf"');
+});
+
+test("with no deck the refusal keys on the kind: a creature-type choice is refused whatever the subject's type or the printed words, a card-type or parity choice never is", () => {
+  const gs = tagsOf("Gathering Stone"), ck = tagsOf("Cloud Key"), ee = tagsOf("Extinction Event");
+  // Gathering Stone's chosen subjects are spells and untyped cards, not creatures: the old creature-subject scope left them the wildcard they were.
+  expect(refuseUnresolvedChosenTypes(gs, "")).not.toBe(gs);
+  // the words say "creature type" but the derived kind says what was chosen
+  expect(refuseUnresolvedChosenTypes(ck, "creature type")).toBe(ck);
+  expect(refuseUnresolvedChosenTypes(ee, "creature type")).toBe(ee);
+});
+
+test("a subject with NO kind falls back to the printed cue: 'creature type' in the words refuses it, other words do not", () => {
+  const strip = (t: CardTags): CardTags => ({ ...t, abilities: JSON.parse(JSON.stringify(t.abilities).replaceAll(/"chosenKind":"[a-z-]+",?/g, "").replaceAll(",}", "}")) });
+  // (the refusal is memoised on the tags object, so each reading gets its own copy)
+  const [a, b] = [strip(tagsOf("Kindred Discovery")), strip(tagsOf("Kindred Discovery"))];
+  expect(JSON.stringify(a)).not.toContain("chosenKind");
+  expect(refuseUnresolvedChosenTypes(a, "choose a creature type")).not.toBe(a);
+  expect(refuseUnresolvedChosenTypes(b, "choose a card type")).toBe(b);
+});
+
+test("Leyline of Transformation 'creatures you control are the chosen type in addition to their other types' is a type-grant, not a keyword-grant", () => {
+  const kinds = tagsOf("Leyline of Transformation").abilities.map((a) => a.effect.kind);
+  expect(kinds).toContain("type-grant");
+  expect(kinds).not.toContain("keyword-grant");
+});
+
+test("a card whose own chosen type is a card type, a land type or odd or even does not CARE about a creature type; a creature-type choice does", () => {
+  const cares = (n: string) => caresAboutCreatureType(tagsOf(n), F[n]!.source as never);
+  for (const n of ["Cloud Key", "Stenn, Paranoid Partisan", "Shimmer", "Extinction Event"]) expect(cares(n), n).toBe(false);
+  for (const n of ["Kindred Discovery", "Gathering Stone", "Herald's Horn"]) expect(cares(n), n).toBe(true);
+});
+
+test("an UNTYPED creature-type subject (Gathering Stone's 'put it into your graveyard', a graveyard fill of any card) is left the wildcard it was; a typed one is refused", () => {
+  const gs = tagsOf("Gathering Stone");
+  const untyped = (t: CardTags): CardTags => ({ ...t, abilities: t.abilities.filter((a) => a.effect.subject?.type === undefined && a.trigger?.subject?.type !== "spell") });
+  const fills = untyped(gs);
+  expect(fills.abilities.length).toBeGreaterThan(0);
+  expect(refuseUnresolvedChosenTypes(fills, "")).toBe(fills);
+  expect(JSON.stringify(refuseUnresolvedChosenTypes(gs, "").abilities)).toContain('"mill"');
+});
+
+// OWNER RULING 2026-11-07 (#1568): the no-deck refusal is of the chosen-type DEMAND (which creatures a card reaches), not of a side effect that does not depend on the chosen type. A counter a card puts on itself,
+// life, a draw, a copy of the spell still pairs with any creature that uses it. (The brief named "Doc Samson, Soul Diviner"; the corpus card that uses counters is Doc Samson, Super Psychiatrist.)
+test("with no deck, a chosen-type card's side effect still pairs with a creature that uses it (counters on itself, life gain), and its chosen-type demand still does not", () => {
+  expect(pairOf("Door of Destinies", "Doc Samson, Super Psychiatrist", /counter-added/)).not.toEqual([]);
+  expect(pairOf("Rimefire Torque", "Doc Samson, Super Psychiatrist", /counter-added/)).not.toEqual([]);
+  expect(pairOf("Dawn-Blessed Pennant", "Oloro, Ageless Ascetic", /gain-life/)).not.toEqual([]);
+  expect(mimicStatic("Grizzly Bears")).toEqual([]);
+  expect(pairReasons(dc("Door of Destinies"), dc("Grizzly Bears"), loadHierarchy())).toEqual([]);
+});
+
+// #1568 review: "Each creature with a gold counter on it is a Wall in addition to its other creature types and has defender" read its recipient up to "have/has", the GRANTED type included, so the new type-grant was a class of Walls and
+// Aurification paired `static:type-grant` with every Wall. The recipient is what gets the type, never the type.
+test("a type-grant's recipient leaves the granted type out: Aurification does not pair with Wall of Mist; Armed with Proof's Clues are not Equipment", () => {
+  expect(pairReasons(dc("Aurification"), dc("Wall of Mist"), loadHierarchy()).filter((r) => r.tag === "static:type-grant")).toEqual([]);
+  for (const n of ["Aurification", "Armed with Proof"]) {
+    const g = tagsOf(n).abilities.find((a) => a.effect.kind === "type-grant")!;
+    expect(JSON.stringify(g.effect.subject), n).not.toMatch(/"(?:wall|equipment)"/);
+  }
+});
+
+// #1568 review: a COUNT of the chosen class is the demand too. Banner of Kinship's "for each creature you control of the chosen type" kept its `scalingSubject` without the choice (the split threw the tail away), and with no deck
+// it paired `scales:creature` with every creature that ignores creature types.
+test("with no deck, Banner of Kinship and Kindred Charge do not pair `scales` with a creature that ignores creature types, and Banner still pairs with a lord", () => {
+  for (const c of ["Banner of Kinship", "Kindred Charge"]) {
+    if (!F[c]) continue;
+    expect(pairOf(c, "Grizzly Bears", /^scales/), c).toEqual([]);
+  }
+  expect(pairOf("Banner of Kinship", "Grizzly Bears", /^scales/)).toEqual([]);
+  expect(pairOf("Banner of Kinship", "Elvish Archdruid", /^scales/)).not.toEqual([]);
 });

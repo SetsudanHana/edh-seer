@@ -17,6 +17,7 @@ const TESTED: Record<string, string> = {
   "603.1": "partners-core.test.ts — a claimsNothing ability is still a triggered ability: a copier is offered the copies|triggered key (#1253)",
   "113.6": "implied.test.ts — a creature only under a condition enters, attacks and connects as no creature; its cast stays a creature spell (#797)",
   "118.6": "castability.test.ts — a card with no mana cost is refused; a {0} card and a multi-face card are not (#978)",
+  "108.4": "type-grant-class.test.ts — a card in a library or graveyard has no controller, so a grant over 'artifacts you control' is used only by battlefield readers of the type (#1568)",
   "702.37": "edges.test.ts — a card with morph can be face down: it meets 'a face-down creature you control' (#896 task 3)",
   "702.168": "edges.test.ts — a card with disguise can be face down, as morph (#896 task 3)",
   "702.74a": "implied.test.ts — evoke sacrifices the creature as it enters",
