@@ -359,7 +359,7 @@ export const TYPE_GRANT =
 /** The type a type-grant hands out, lowercased and singular ("Artifacts you control are Foods in addition to their other types" -> "food"; Dan Lewis' "Equipment" stays). Undefined when the text does not name one
  *  (a chosen type, "every creature type", "is also a Zombie" is read the same way). #1568 */
 export function grantedTypeOf(text: string | undefined): string | undefined {
-  const m = /\b(?:is|are|becomes?)\s+(?:also\s+)?(?:an?\s+)?([A-Z][A-Za-z-]+)\s+in addition to (?:its|their) other (?:creature )?types\b/.exec(text ?? "");
+  const m = /\b(?:is|are|becomes?)\s+(?:also\s+)?(?:an?\s+)?([A-Z][A-Za-z-]+|artifacts?|enchantments?|lands?)\s+in addition to (?:its|their) other (?:creature )?types\b/.exec(text ?? "");
   if (!m) return undefined;
   const w = m[1]!.toLowerCase();
   return w.endsWith("ies") ? `${w.slice(0, -3)}y` : w.endsWith("oes") ? w.slice(0, -2) : w.endsWith("s") && !/(?:ss|us)$/.test(w) ? w.slice(0, -1) : w;

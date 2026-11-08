@@ -3198,8 +3198,11 @@ const OFF_BATTLEFIELD_GRANTS: ReadonlySet<string> = new Set([
  *  The recipient is a class of artifacts, lands or enchantments with no subtype and no single host. */
 function wholeNonCreatureClass(s: SubjectFilter): boolean {
   const types = Array.isArray(s.type) ? s.type : s.type ? [s.type] : [];
-  return (s.scope === "all" || s.scope === "each") && s.subtype === undefined && types.length > 0 && !types.includes("creature") && s.self !== true;
+  // "All permanents" / "nonland permanents you control" is the whole board, not a creature class: a creature in a permanent umbrella's expansion does not make it one.
+  const umbrella = types.includes("permanent") || (types.includes("creature") && types.length >= 4);
+  return (s.scope === "all" || s.scope === "each") && s.subtype === undefined && types.length > 0 && (umbrella || !types.includes("creature")) && s.self !== true;
 }
+const CARD_TYPES: ReadonlySet<string> = new Set(["artifact", "enchantment", "land", "planeswalker", "battle"]);
 /** Effects that are not a BATTLEFIELD reader of the type: a grant of "artifacts you control are Foods" reaches permanents, which have a controller (CR 108.4), so a library search (Stoneforge Mystic), a graveyard return (Auriok Survivors),
  *  a play-from-top (Galea) and a spell cost reducer (Danitha) read the type where the grant does not reach. A token maker is read through its trigger and cost, never through the token it creates. `type-grant` and `animate` are another granter. */
 const NOT_A_BATTLEFIELD_READER: ReadonlySet<string> = new Set(["search", "graveyard-recursion", "play-from-top", "cost-reduction", "type-grant", "animate", "token-generation", "create-token", "token-doubling"]);
@@ -3209,6 +3212,13 @@ const NOT_A_BATTLEFIELD_READER: ReadonlySet<string> = new Set(["search", "gravey
  *  CEILING: an attach that derive stores as no emit (an Equipment attacher read from a keyword-grant, a reconfigure) is not read; recall is measured per type in the #1568 review. A subtype that comes from the card's own name (`named`: Food Fight) is skipped.
  *  CEILING: Bludgeon Brawl ("Each noncreature, non-Equipment artifact is an Equipment with equip {X}") derives as `animate`, not a type-grant, so it is no class grant. */
 export function usesGrantedType(tags: CardTags, granted: string): boolean {
+  // A CARD TYPE GRANTED (Enchanted Evening's enchantments, Toph's lands) is used by what counts, triggers on, or sacrifices that type; "destroy target artifact" or an enchantress lord names it without using the grant.
+  if (CARD_TYPES.has(granted)) {
+    const typed = (s: Partial<SubjectFilter> | undefined): boolean => s !== undefined && s.self !== true && s.named === undefined && (s.zone === undefined || s.zone === "battlefield")
+      && (Array.isArray(s.type) ? s.type : s.type ? [s.type] : []).includes(granted) && !(Array.isArray(s.type) ? s.type : [s.type]).includes("spell");
+    return tags.abilities.some((a) => (a.trigger !== undefined && !a.trigger.verbs.includes("create-token") && !a.trigger.verbs.includes("cast") && typed(a.trigger.subject))
+      || typed(a.effect.scalingSubject) || typed(a.thresholdSubject) || a.payment?.sacrifice?.some((x) => typed(x.subject)) === true);
+  }
   const names = (s: Partial<SubjectFilter> | undefined): boolean => s !== undefined && s.self !== true && s.named === undefined
     && !(Array.isArray(s.type) ? s.type : [s.type]).includes("spell") && (s.zone === undefined || s.zone === "battlefield") && (s.fromZone === undefined || s.fromZone === "battlefield") && (Array.isArray(s.subtype) ? s.subtype : s.subtype ? [s.subtype] : []).includes(granted);
   // The clauses that hand the same type out: a sibling keyword-grant on that sentence is the granter again, not a user.
@@ -3301,12 +3311,17 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
     if (a.effect.subject.self === true) return undefined;
     // A TYPE HANDED TO A WHOLE NON-CREATURE CLASS PAIRS WITH THE CARDS THAT USE THAT TYPE, NOT WITH EVERY RECIPIENT (owner ruling 2026-11-08, #1568): Gourmand's Talent pairs with Food payoffs, not with Sol Ring.
     // Creature classes (Maskwood Nexus) stay literal: they pair with every creature they reach.
-    if (a.effect.kind === "type-grant" && a.grantsType !== undefined && wholeNonCreatureClass(a.effect.subject)) {
-      if (!usesGrantedType(c.tags, a.grantsType)) return undefined;
+    // ...and so does the ability handed out in the same sentence ("... and have '{2}, {T}, Sacrifice this artifact: You gain 3 life'"), whose recipient is the same class.
+    const classGrant = wholeNonCreatureClass(a.effect.subject)
+      ? (a.effect.kind === "type-grant" ? a : a.kind === "static" ? p.tags.abilities.find((x) => x.effect.kind === "type-grant" && x.clause === a.clause && x.effect.subject !== undefined && wholeNonCreatureClass(x.effect.subject)) : undefined)
+      : undefined;
+    if (classGrant?.grantsType !== undefined) {
+      if (!usesGrantedType(c.tags, classGrant.grantsType)) return undefined;
+      const gt = classGrant.grantsType;
       return {
-        tag: "static:type-grant",
-        text: `${p.card.name} makes your permanents ${a.grantsType === "equipment" ? "Equipment" : `${a.grantsType[0]!.toUpperCase()}${a.grantsType.slice(1)}s`}, and ${c.card.name} uses that type`,
-        effectKind: "type-grant",
+        tag: `static:${a.effect.kind}`,
+        text: `${p.card.name} makes your permanents ${gt === "equipment" ? "Equipment" : `${gt[0]!.toUpperCase()}${gt.slice(1)}s`}, and ${c.card.name} uses that type`,
+        effectKind: a.effect.kind,
         repeatability: "static",
         consumer: c.card.name,
         producer: p.card.name,

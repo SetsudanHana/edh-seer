@@ -20,6 +20,18 @@ test("the granted type is stamped on the type-grant: food, clue, equipment", () 
   }
 });
 
+// The ability handed out in the same sentence has the same recipient, and is the same class grant: no static tag at all pairs the producer with Sol Ring.
+const staticTags = (p: string, c: string) => pairReasons(dc(p), dc(c), loadHierarchy()).filter((r) => r.producer === p && r.tag.startsWith("static:")).map((r) => r.tag);
+test("the ability granted beside the type does not pair with every artifact either: Gourmand's Talent, Senator Peacock, Dan Lewis x Sol Ring have no static pair", () => {
+  for (const p of ["Gourmand's Talent", "Senator Peacock", "Dan Lewis", "Ragost, Deft Gastronaut"]) expect(staticTags(p, "Sol Ring"), p).toEqual([]);
+});
+
+test("a CARD type granted to the whole board pairs with what uses that type: Enchanted Evening x Eidolon of Blossoms, not x Sol Ring; Encroaching Mycosynth x Sol Ring none", () => {
+  expect(grant("Enchanted Evening", "Eidolon of Blossoms")).not.toEqual([]);
+  expect(grant("Enchanted Evening", "Sol Ring")).toEqual([]);
+  expect(grant("Encroaching Mycosynth", "Grizzly Bears")).toEqual([]);
+});
+
 test("Gourmand's Talent pairs with no artifact that merely receives Food: not Sol Ring", () => {
   expect(grant("Gourmand's Talent", "Sol Ring")).toEqual([]);
   expect(grant("Senator Peacock", "Sol Ring")).toEqual([]);
