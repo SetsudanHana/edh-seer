@@ -153,7 +153,7 @@ function blankTokenNouns(text: string, lower: string): string {
 /** Blank a TYPE GIVEN TO ONE THING: "... is a black Demon in addition to its other colors and types" (Blade of the Oni), "Equipped creature ... is a Knight in addition to its other types" (Monk's Fist), "That creature is a black Zombie in addition ..." (Rise from the Grave), from the
  *  "is a" / "are" before it to the "in addition". A card that hands a type to a host, a reanimated creature or itself is not one that cares about it.
  *  NOT a MASS grant: "Creatures you control are Slivers in addition to their other creature types" (Hivestone), "Other creatures have ... and are Bears in addition" (Kudo), "Each creature you control is a Vampire" (Mephidross Vampire) make a whole class a type, which is what a kindred payoff
- *  wants, so they keep caring (the recipient phrase, the sentence up to the verb, names a class: `MASS_RECIPIENT`). Census 2026-11-07: 72 cards print "in addition to its/their other", 50 of them a single host (blanked) and 22 a class (kept).
+ *  wants, so they keep caring (the recipient phrase, the sentence up to the verb, names a class: `MASS_RECIPIENT`). Census (re-counted, #1568 review): 358 non-token cards print "in addition to its/their other", 157 of them creatures; the 72 first quoted here was a sub-count of the cards this path reads (50 a single host, blanked, 22 a class, kept).
  *  Within one sentence and 90 characters. */
 const MASS_RECIPIENT = /\b(?:you|your opponents) (?:control|own)\b|^(?:other |all |each |every )?(?:non-?[a-z-]+ )?(?:creatures?|permanents?|lands?|artifacts?|enchantments?)\b/i;
 function blankAdditions(text: string, lower: string): string {
@@ -332,7 +332,10 @@ export function refuseUnresolvedChosenTypes(tags: CardTags, oracleText: string |
   const effectChosen = (a: CardTags["abilities"][number]): boolean => a.effect.kind !== "token-generation" && (chosenCreatureType(a.doublesOf, cue) || chosenCreatureType(a.effect.subject, cue)
     // An effect with no subject of its own whose EVERY emit names the chosen type is that demand (Mirror of the Forebears' clone of "a creature of the chosen type"): nothing of it survives the emits.
     || (a.effect.subject === undefined && (a.emits ?? []).length > 0 && (a.emits ?? []).every(chosenEmit)));
-  const touches = (a: CardTags["abilities"][number]): boolean => watches(a) || effectChosen(a) || (a.emits ?? []).some(chosenEmit);
+  // A COUNT OF THE CHOSEN CLASS (Banner of Kinship, Kindred Charge, Pack's Disdain: "for each creature you control of the chosen type") is the same demand: the number grows with the type. Only the scaling goes; the effect and its
+  // type-free emits stay (#1568 review).
+  const scaledChosen = (a: CardTags["abilities"][number]): boolean => chosenCreatureType(a.effect.scalingSubject, cue) || chosenCreatureType(typeof a.count?.scalesWith === "object" ? a.count.scalesWith : undefined, cue);
+  const touches = (a: CardTags["abilities"][number]): boolean => watches(a) || effectChosen(a) || scaledChosen(a) || (a.emits ?? []).some(chosenEmit);
   const inScope = !NEGATED_OR_OPPONENT_CHOICE.test(oracleText ?? "");
   const out = !inScope || !tags.abilities.some(touches) ? tags : {
     ...tags,
@@ -345,11 +348,15 @@ export function refuseUnresolvedChosenTypes(tags: CardTags, oracleText: string |
       // An ability whose EFFECT reaches the chosen class has emits that are that same reach seen from the event side (Outbreak's `dies` of "all creatures of that type" carries no flag of its own), so they go with it.
       // A token maker keeps ALL its emits (the supply of the token, whatever its type) and only loses the trigger.
       const kept = a.effect.kind === "token-generation" ? (emits ?? []) : effectChosen(a) ? [] : (emits ?? []).filter((e) => !chosenEmit(e));
+      const scaled = !effectChosen(a) && scaledChosen(a);
+      const { scalingSubject: _s, scaling: _sc, ...effectRest } = rest.effect;
+      const { scalesWith: _w, ...countRest } = rest.count ?? {};
       return {
         ...rest,
         ...(trigger && !watches(a) ? { trigger } : {}),
         ...(kept.length ? { emits: kept } : {}),
-        ...(effectChosen(a) ? { effect: { kind: "" as const } } : {}),
+        ...(effectChosen(a) ? { effect: { kind: "" as const } } : scaled ? { effect: effectRest } : {}),
+        ...(scaled && rest.count ? { count: countRest as typeof rest.count } : {}),
       };
     }),
   };

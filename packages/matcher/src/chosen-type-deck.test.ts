@@ -174,3 +174,14 @@ test("a type-grant's recipient leaves the granted type out: Aurification does no
     expect(JSON.stringify(g.effect.subject), n).not.toMatch(/"(?:wall|equipment)"/);
   }
 });
+
+// #1568 review: a COUNT of the chosen class is the demand too. Banner of Kinship's "for each creature you control of the chosen type" kept its `scalingSubject` without the choice (the split threw the tail away), and with no deck
+// it paired `scales:creature` with every creature that ignores creature types.
+test("with no deck, Banner of Kinship and Kindred Charge do not pair `scales` with a creature that ignores creature types, and Banner still pairs with a lord", () => {
+  for (const c of ["Banner of Kinship", "Kindred Charge"]) {
+    if (!F[c]) continue;
+    expect(pairOf(c, "Grizzly Bears", /^scales/), c).toEqual([]);
+  }
+  expect(pairOf("Banner of Kinship", "Grizzly Bears", /^scales/)).toEqual([]);
+  expect(pairOf("Banner of Kinship", "Elvish Archdruid", /^scales/)).not.toEqual([]);
+});
