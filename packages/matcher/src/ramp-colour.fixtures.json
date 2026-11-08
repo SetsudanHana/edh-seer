@@ -9684,7 +9684,7 @@
       "kind": "type-grant",
       "subject": {
        "control": "you",
-       "scope": "each",
+       "scope": "all",
        "token": null,
        "type": "land"
       }
@@ -11197,7 +11197,6 @@
       "subject": {
        "control": "you",
        "scope": "all",
-       "subtype": "swamp",
        "token": null,
        "type": "land"
       }
