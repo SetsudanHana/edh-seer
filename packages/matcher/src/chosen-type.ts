@@ -90,19 +90,19 @@ function resolveSubject(subject: SubjectFilter, counts: Map<string, number>, hie
 }
 
 /** EVERY WRITTEN FORM OF A CREATURE SUBTYPE: the singular and its plural ("Elf"/"Elves", "Wolf"/"Wolves", "Fox"/"Foxes", "Faerie"/"Faeries", "Mouse"/"Mice"). Single words only (a multi-word subtype is one token in no oracle text this reads), and three letters or more. */
-const SUBTYPE_FORMS: ReadonlySet<string> = (() => {
-  const out = new Set<string>();
+const SUBTYPE_FORMS: ReadonlyMap<string, string> = (() => {
+  const out = new Map<string, string>();
   for (const raw of CREATURE_SUBTYPE_SET) {
     if (raw.length < 3 || raw.includes(" ")) continue;
-    out.add(raw);
-    if (raw.endsWith("fe")) out.add(raw.slice(0, -2) + "ves");
-    else if (raw.endsWith("f")) out.add(raw.slice(0, -1) + "ves");
-    else if (/[^aeiou]y$/.test(raw)) out.add(raw.slice(0, -1) + "ies");
-    else if (/(?:s|x|z|ch|sh)$/.test(raw)) out.add(raw + "es");
-    else if (raw.endsWith("o")) { out.add(raw + "s"); out.add(raw + "es"); }
-    else out.add(raw + "s");
+    out.set(raw, raw);
+    if (raw.endsWith("fe")) out.set(raw.slice(0, -2) + "ves", raw);
+    else if (raw.endsWith("f")) out.set(raw.slice(0, -1) + "ves", raw);
+    else if (/[^aeiou]y$/.test(raw)) out.set(raw.slice(0, -1) + "ies", raw);
+    else if (/(?:s|x|z|ch|sh)$/.test(raw)) out.set(raw + "es", raw);
+    else if (raw.endsWith("o")) { out.set(raw + "s", raw); out.set(raw + "es", raw); }
+    else out.set(raw + "s", raw);
   }
-  out.add("mice"); out.add("fungi");
+  out.set("mice", "mouse"); out.set("fungi", "fungus");
   return out;
 })();
 
@@ -197,7 +197,22 @@ function blankAll(text: string, lower: string, needle: string): string {
  *  CEILING: the keyword must open its line, as it is printed; one after a comma (a "Flying, soulshift 3" line) is not read. */
 const REMINDER_NAMES_TYPE = /^(?:soulshift|amplify|affinity for|prowl|freerunning|[a-z]+cycling)\b/i;
 
+/** "deals 1 damage to ", "deals X damage to ": the amounts a damage clause names its victim after. A bare "damage to " is not read (a Prowl reminder's "combat damage to a player this turn with a Faerie" names a type it wants). */
+const DEALS_AMOUNT: readonly string[] = [...Array.from({ length: 10 }, (_, i) => String(i + 1)), "x", "that much"].map((n) => `deals ${n} damage to `);
+
 export function printedTextNamesCreatureType(name: string, oracleText: string | undefined): boolean {
+  return scanPrintedCreatureTypes(name, oracleText, () => true);
+}
+
+/** THE CREATURE TYPES THE PRINTED TEXT NAMES, singular and lower-case, under the same clause rules as `printedTextNamesCreatureType` (#1568). `skipNegated` leaves out a type written "non-Spirit" (Rend Flesh), which a card that only EXCLUDES a type does not use. */
+export function printedCreatureTypes(name: string, oracleText: string | undefined, skipNegated = false): Set<string> {
+  const out = new Set<string>();
+  scanPrintedCreatureTypes(name, oracleText, (type, negated) => { if (!(skipNegated && negated)) out.add(type); return false; });
+  return out;
+}
+
+/** Walks the types the printed text names (after the blanking described above), handing each to `visit(type, negated)`; stops and answers true as soon as `visit` does. */
+function scanPrintedCreatureTypes(name: string, oracleText: string | undefined, visit: (type: string, negated: boolean) => boolean): boolean {
   if (!oracleText) return false;
   let text = oracleText;
   let lower = text.toLowerCase();
@@ -227,8 +242,8 @@ export function printedTextNamesCreatureType(name: string, oracleText: string | 
   for (const o of ["except it's", "except they're", "except he's", "except she's", "except his ", "except her ", "except its ", "except if ", "except the "]) step((t, l) => blankClause(t, l, o, [".", "\n"], 300));
   step((t, l) => blankAdditions(t, l));
   step((t, l) => blankClause(t, l, "partner", [".", "\n"], 120));
-  // A TYPE NAMED AS AN ENEMY is no kindred: protection from Clerics, "can't be blocked by Walls", "deals damage to a Dinosaur, destroy it".
-  for (const o of ["protection from ", "blocked by ", "deals damage to "]) step((t, l) => blankClause(t, l, o, [".", "\n", ","], 80));
+  // A TYPE NAMED AS AN ENEMY is no kindred: protection from Clerics, "can't be blocked by Walls", "deals damage to a Dinosaur, destroy it", "deals 1 damage to each Human creature".
+  for (const o of ["protection from ", "blocked by ", "deals damage to ", ...DEALS_AMOUNT]) step((t, l) => blankClause(t, l, o, [".", "\n", ","], 80));
   // An ABILITY NAME before an em dash ("Spear of the Void Dragon -- Whenever ...", "Bad Wolf -- ...") is a title, not a type.
   step((t, l) => blankTitles(t, l));
   const isWordChar = (c: string): boolean => (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c === "'" || c === "\u2019" || c === "-";
@@ -238,9 +253,11 @@ export function printedTextNamesCreatureType(name: string, oracleText: string | 
     let j = i;
     while (j < text.length && isWordChar(text[j]!)) j++;
     // "non-Dragon" is a negated type: the type is the part after the hyphen.
-    const k = lower.startsWith("non-", i) ? i + 4 : i;
+    const negated = lower.startsWith("non-", i);
+    const k = negated ? i + 4 : i;
     const first = text[k]!;
-    if (first >= "A" && first <= "Z" && SUBTYPE_FORMS.has(lower.slice(k, j))) return true;
+    const type = first >= "A" && first <= "Z" ? SUBTYPE_FORMS.get(lower.slice(k, j)) : undefined;
+    if (type !== undefined && visit(type, negated)) return true;
     i = j;
   }
   return false;

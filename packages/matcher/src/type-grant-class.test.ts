@@ -69,6 +69,27 @@ test("every creature type, or a chosen one, pairs with the cards that care about
   }
 });
 
+// #1568 final review: a grant of every / the chosen creature type gives a changeling nothing and a card that only EXCLUDES, fights or makes a type no payoff. Read from `usesCreatureType`, not `caresAboutCreatureType` (the chosen-type demand test).
+test("every creature type pairs with a card that uses a creature type: Maskwood Nexus x Lord of Atlantis keeps its pair", () => {
+  expect(grant("Maskwood Nexus", "Lord of Atlantis")).not.toEqual([]);
+});
+
+test("every creature type gives a changeling and a card that excludes, fights, or makes a type nothing: Maskwood Nexus x Changeling Outcast, Rend Flesh, Scorch the Fields, Rusted Relic, Garth One-Eye none", () => {
+  for (const c of ["Changeling Outcast", "Rend Flesh", "Scorch the Fields", "Rusted Relic", "Garth One-Eye"]) {
+    expect(grant("Maskwood Nexus", c), c).toEqual([]);
+    expect(grant("Arcane Adaptation", c), c).toEqual([]);
+  }
+});
+
+test("a grant that reaches creature spells and cards off the battlefield (Maskwood Nexus, Arcane Adaptation) is used by a tutor and a cost reducer; Xenograft, which reaches the battlefield only, is not", () => {
+  for (const c of ["Goblin Matron", "Goblin Warchief"]) {
+    expect(grant("Maskwood Nexus", c), c).not.toEqual([]);
+    expect(grant("Arcane Adaptation", c), c).not.toEqual([]);
+  }
+  expect(grant("Xenograft", "Goblin Matron")).toEqual([]);
+  expect(grant("Xenograft", "Elvish Archdruid")).not.toEqual([]);
+});
+
 test("a card type granted to creatures pairs with what uses it: The Flesh Is Weak x Sol Ring none", () => {
   expect(grant("The Flesh Is Weak", "Sol Ring")).toEqual([]);
   expect(grant("The Flesh Is Weak", "Grizzly Bears")).toEqual([]);
