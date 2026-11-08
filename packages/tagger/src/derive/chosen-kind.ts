@@ -1,4 +1,5 @@
 import type { Ability, ChosenKind } from "../schema.js";
+import { withoutParentheses } from "./reminder.js";
 import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "./subtypes.js";
 
 /** WHAT WAS CHOSEN, for every `chosenType` subject (#1568). `chosenType` says "narrowed by a choice made as the permanent entered"; it never said WHICH choice, and the matcher resolves it to the deck's most common CREATURE subtype
@@ -19,7 +20,7 @@ const COLOURS = new Set(["white", "blue", "black", "red", "green"]);
 
 /** The kinds of every choice a text makes, "choose X" in the reminder-free words. */
 function kindsIn(text: string): Set<ChosenKind> {
-  const t = text.replace(/\([^)]*\)/g, " ");
+  const t = withoutParentheses(text);
   const out = new Set<ChosenKind>();
   if (/\bchooses? odd or even\b/i.test(t) || /\bchosen quality\b/i.test(t)) out.add("parity");
   if (/\bchooses? (?:an? )?(?:colou?r and (?:an? )?)?creature type\b|\bcreature type of your choice\b|\bchosen creature type\b|\bcreature type you chose\b/i.test(t)) out.add("creature-type");

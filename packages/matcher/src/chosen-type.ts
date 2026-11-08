@@ -2,6 +2,7 @@ import type { CardTags, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { impliesType } from "./hierarchy.js";
 import { CREATURE_SUBTYPES } from "@edh-seer/tagger/subtypes";
+import { withoutParentheses } from "@edh-seer/tagger/reminder";
 
 const CREATURE_SUBTYPE_SET: ReadonlySet<string> = new Set(CREATURE_SUBTYPES.map((x) => x.toLowerCase()));
 
@@ -206,14 +207,7 @@ export function printedTextNamesCreatureType(name: string, oracleText: string | 
   for (const line of text.split("\n")) {
     let out = "";
     if (REMINDER_NAMES_TYPE.test(line)) out = line.replace(/[()]/g, " ");
-    else {
-      let depth = 0;
-      for (const c of line) {
-        if (c === "(") depth++;
-        if (depth === 0) out += c;
-        else if (c === ")") { depth--; if (depth === 0) out += " "; }
-      }
-    }
+    else out = withoutParentheses(line);
     kept += (kept === "" ? "" : "\n") + out;
   }
   text = kept; lower = text.toLowerCase();
