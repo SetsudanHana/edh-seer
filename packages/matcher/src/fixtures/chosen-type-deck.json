@@ -167,9 +167,6 @@
    "power": "2",
    "toughness": "2",
    "manaCost": "{1}{G}{G}",
-   "producedMana": [
-    "G"
-   ],
    "layout": "normal",
    "_id": "6e2c2423-d854-4478-99e6-64f29851f026"
   },
@@ -2073,6 +2070,295 @@
       "optional": false,
       "fromZone": null,
       "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Aurification": {
+  "source": {
+   "name": "Aurification",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever a creature deals damage to you, put a gold counter on it.\nEach creature with a gold counter on it is a Wall in addition to its other creature types and has defender. (Those creatures can't attack.)\nWhen this enchantment leaves the battlefield, remove all gold counters from all creatures.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}{W}",
+   "layout": "normal",
+   "_id": "3d98a656-1737-486f-9b25-449b7c871d1f"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "a creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "gold counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "is a Wall in addition to its other creature types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "has defender",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this enchantment",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "gold counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Wall of Mist": {
+  "source": {
+   "name": "Wall of Mist",
+   "typeLine": "Creature — Wall",
+   "oracleText": "Defender",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "0",
+   "toughness": "5",
+   "manaCost": "{1}{U}",
+   "layout": "normal",
+   "_id": "b2ca8824-6bd8-4aa3-b156-618118eb98a4"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Armed with Proof": {
+  "source": {
+   "name": "Armed with Proof",
+   "typeLine": "Enchantment",
+   "oracleText": "When this enchantment enters, investigate twice. (To investigate, create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")\nClues you control are Equipment in addition to their other types and have \"Equipped creature gets +2/+0\" and equip {2}.",
+   "keywords": [
+    "Investigate"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}",
+   "layout": "normal",
+   "_id": "b401a490-d25f-4029-bb91-8999e140c6a1"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this enchantment",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "investigate",
+      "object": null,
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "Clues you control are Equipment in addition to their other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "Equipped creature gets +2/+0",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "equip {2}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Banner of Kinship": {
+  "source": {
+   "name": "Banner of Kinship",
+   "typeLine": "Artifact",
+   "oracleText": "As this artifact enters, choose a creature type. This artifact enters with a fellowship counter on it for each creature you control of the chosen type.\nCreatures you control of the chosen type get +1/+1 for each fellowship counter on this artifact.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 5,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}",
+   "layout": "normal",
+   "_id": "8c220dbd-6572-4715-aae6-dd09a4252d68"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "fellowship",
+      "amount": "for each creature you control of the chosen type",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Creatures you control of the chosen type",
+      "amount": "+1/+1 for each fellowship counter on this artifact",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Kindred Charge": {
+  "source": {
+   "name": "Kindred Charge",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose a creature type. For each creature you control of the chosen type, create a token that's a copy of that creature. Those tokens gain haste. Exile them at the beginning of the next end step.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{R}{R}",
+   "layout": "normal",
+   "_id": "eb0b5b5f-54d3-49c6-9ad8-d44a5551acdb"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a token that's a copy of each creature you control of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "those tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
      }
     ]
    }

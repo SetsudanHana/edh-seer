@@ -164,3 +164,13 @@ test("with no deck, a chosen-type card's side effect still pairs with a creature
   expect(mimicStatic("Grizzly Bears")).toEqual([]);
   expect(pairReasons(dc("Door of Destinies"), dc("Grizzly Bears"), loadHierarchy())).toEqual([]);
 });
+
+// #1568 review: "Each creature with a gold counter on it is a Wall in addition to its other creature types and has defender" read its recipient up to "have/has", the GRANTED type included, so the new type-grant was a class of Walls and
+// Aurification paired `static:type-grant` with every Wall. The recipient is what gets the type, never the type.
+test("a type-grant's recipient leaves the granted type out: Aurification does not pair with Wall of Mist; Armed with Proof's Clues are not Equipment", () => {
+  expect(pairReasons(dc("Aurification"), dc("Wall of Mist"), loadHierarchy()).filter((r) => r.tag === "static:type-grant")).toEqual([]);
+  for (const n of ["Aurification", "Armed with Proof"]) {
+    const g = tagsOf(n).abilities.find((a) => a.effect.kind === "type-grant")!;
+    expect(JSON.stringify(g.effect.subject), n).not.toMatch(/"(?:wall|equipment)"/);
+  }
+});

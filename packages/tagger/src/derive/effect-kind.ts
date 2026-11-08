@@ -353,7 +353,7 @@ const SPEED_KEYWORDS = /\b(haste|double strike)\b/i;
 /** Text that confers a TYPE rather than an ability. "in addition to its other types" is the
  *  templating for a one-off (Mockingbird, Tyrite Sanctum); "is every creature type" / "every land
  *  type" is the changeling-wide form (Maskwood Nexus, Omo, Planar Nexus). A PLURAL recipient says "their other types" (Leyline of Transformation, Swampbenders, Hivestone, #1568). */
-const TYPE_GRANT =
+export const TYPE_GRANT =
   /\bin addition to (?:its|their) other (?:creature )?types\b|\bis every\b|\bevery (?:creature|land|artifact|nonbasic land) type\b|\b(?:is|becomes) also an? [A-Z]/;
 
 /** `cost-modify` is one verb because the clause states one action; the direction is in the object,

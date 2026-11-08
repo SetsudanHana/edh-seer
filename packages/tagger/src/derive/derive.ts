@@ -13,7 +13,7 @@ import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Char
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
 import { targetingBanOf, targetingBanSubjectInObject, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
-import { ZONE_SCOPED_KINDS, actionEffectKind, activationBanClass, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
+import { TYPE_GRANT, ZONE_SCOPED_KINDS, actionEffectKind, activationBanClass, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
 import { actionEmits, definesPowerToughness, casualtySacrifice, enteringClass, millsOwnLibrary, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, narrowSelfExiledSpell, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, activationConditionOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
@@ -1754,9 +1754,13 @@ function effectSubject(
   // A BLOCKING PERMISSION OF THE CARD'S OWN (#1545) names a class it may block, not a recipient.
   if (action.verb === "grant-ability" && blocksAsThoughHad(action.object ?? "")) return parseSubject("");
   if (action.verb === "grant-ability" || action.verb === "copy") {
-    const who = action.verb === "copy"
+    const whoRaw = action.verb === "copy"
       ? recipientBefore(clauseText, COPIED_INTO)
       : grantRecipient(clauseText);
+    // A TYPE-GRANT'S RECIPIENT STOPS AT THE VERB THAT HANDS THE TYPE OVER (#1568 review): "Each creature with a gold counter on it is a Wall in addition to its other creature types and has defender" is read up to "has", so the
+    // recipient text carried "is a Wall" and the class was Walls (Aurification paired with every Wall; Armed with Proof's Clues were Equipment). The recipient is what GETS the type.
+    const typeCut = whoRaw !== undefined && action.verb === "grant-ability" && TYPE_GRANT.test(action.object ?? "") ? whoRaw.search(/\s+(?:is|are|becomes?)\s/i) : -1;
+    const who = typeCut > 0 ? whoRaw!.slice(0, typeCut).trim() : whoRaw;
     if (who) {
       // A GRANT IN A SELF-ANIMATE SENTENCE IS THE CARD'S OWN (#1349 review): "this creature becomes a Rhino with base power and
       // toughness 4/4 and gains trample" hands the trample to the card, not to a Rhino class (Skinshifter, Paragon of the Amesha,
