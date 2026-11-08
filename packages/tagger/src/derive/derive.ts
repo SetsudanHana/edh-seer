@@ -1759,7 +1759,7 @@ function effectSubject(
       : grantRecipient(clauseText);
     // A TYPE-GRANT'S RECIPIENT STOPS AT THE VERB THAT HANDS THE TYPE OVER (#1568 review): "Each creature with a gold counter on it is a Wall in addition to its other creature types and has defender" is read up to "has", so the
     // recipient text carried "is a Wall" and the class was Walls (Aurification paired with every Wall; Armed with Proof's Clues were Equipment). The recipient is what GETS the type.
-    const typeCut = whoRaw !== undefined && action.verb === "grant-ability" && TYPE_GRANT.test(action.object ?? "") ? whoRaw.search(/\s+(?:is|are|becomes?)\s/i) : -1;
+    const typeCut = whoRaw !== undefined && action.verb === "grant-ability" && (TYPE_GRANT.test(action.object ?? "") || TYPE_GRANT.test(whoRaw)) ? whoRaw.search(/\s+(?:is|are|becomes?)\s/i) : -1;
     const who = typeCut > 0 ? whoRaw!.slice(0, typeCut).trim() : whoRaw;
     if (who) {
       // A GRANT IN A SELF-ANIMATE SENTENCE IS THE CARD'S OWN (#1349 review): "this creature becomes a Rhino with base power and
@@ -1808,7 +1808,20 @@ function effectSubject(
       return s;
     }
   }
-  const object = action.object ?? "";
+  let object = action.object ?? "";
+  // A TYPE-GRANT WITH NO GRANT VERB TO CUT AT ("Creatures you control are Slivers in addition to their other creature types", Hivestone) hands the whole sentence over as the object, so the recipient was read
+  // up to the end and carried the granted type (Hivestone paired with Muscle Sliver and not Grizzly Bears; Ashaya x Forest; The Flesh Is Weak x Sol Ring; #1568 review 2). The recipient is what stops at the verb; a pronoun
+  // or demonstrative recipient ("That creature becomes a Vampire") names no class and reads as no recipient, like an unbounded grant above.
+  if (kind === "type-grant" && action.verb === "grant-ability" && TYPE_GRANT.test(clauseText)) {
+    // The sentence that hands the type over, read from the CLAUSE (the stored object is "becomes an artifact in addition ...", "gains Vampire type in addition ...", "is a Vampire in addition ..." as often as the whole sentence).
+    const sentence = clauseText.replace(CLAUSE_PREAMBLE, "").split(/(?<=\.)\s+|\n/).filter((x) => TYPE_GRANT.test(x)).pop()?.replace(SUBORDINATE, "").trim() ?? "";
+    const cut = sentence.search(/\s+(?:is|are|becomes?|gains?)\s/i);
+    if (cut > 0) {
+      const head = sentence.slice(0, cut).trim();
+      if (/^(?:it|they|them|that|those|the|this|these)\b/i.test(head) && !/\byou control\b/i.test(head)) return parseSubject("");
+      object = head;
+    }
+  }
   // A PREDICATE WITH NO RECIPIENT (#1542): Skyknight Squire's "it has flying and is a Knight in addition to its other types" is stored as a `modify-pt` whose object is "is a Knight in addition to its other types".
   // The type is what the recipient BECOMES, never the class it is; the recipient is the clause head ("it", "this creature": the card itself; an Aura's or Equipment's host: unnamed).
   if (action.verb === "modify-pt" && /^(?:is|are|becomes?) an? /i.test(object.trim())) {

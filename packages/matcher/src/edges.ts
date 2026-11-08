@@ -3200,15 +3200,31 @@ function wholeNonCreatureClass(s: SubjectFilter): boolean {
   const types = Array.isArray(s.type) ? s.type : s.type ? [s.type] : [];
   return (s.scope === "all" || s.scope === "each") && s.subtype === undefined && types.length > 0 && !types.includes("creature") && s.self !== true;
 }
-/** Does the card USE the type `granted` (derived data only): a trigger on it ("Whenever you sacrifice a Clue"), a cost that sacrifices it ("Sacrifice a Food"), a count of it, or a lord over it ("Foods you control have ...").
- *  A card that only MAKES the type (a create-token effect) or merely is one does not use it. */
+/** Effects that are not a BATTLEFIELD reader of the type: a grant of "artifacts you control are Foods" reaches permanents, which have a controller (CR 108.4), so a library search (Stoneforge Mystic), a graveyard return (Auriok Survivors),
+ *  a play-from-top (Galea) and a spell cost reducer (Danitha) read the type where the grant does not reach. A token maker is read through its trigger and cost, never through the token it creates. `type-grant` and `animate` are another granter. */
+const NOT_A_BATTLEFIELD_READER: ReadonlySet<string> = new Set(["search", "graveyard-recursion", "play-from-top", "cost-reduction", "type-grant", "animate", "token-generation", "create-token", "token-doubling"]);
+/** Does the card USE the type `granted` ON THE BATTLEFIELD (derived data only; owner ruling 2026-11-08, #1568 review 2): a trigger on it ("Whenever you sacrifice a Clue", "Whenever an Equipment enters"), a cost or an effect that sacrifices
+ *  or attaches it ("Sacrifice a Food", "attach target Equipment"), forage, a count of it, or a lord over it ("Foods you control have ...").
+ *  Not a card that only MAKES the type, merely is one, grants the same type, or reads it in the library, a graveyard, on the stack or in a spell's cost.
+ *  CEILING: an attach that derive stores as no emit (an Equipment attacher read from a keyword-grant, a reconfigure) is not read; recall is measured per type in the #1568 review. A subtype that comes from the card's own name (`named`: Food Fight) is skipped.
+ *  CEILING: Bludgeon Brawl ("Each noncreature, non-Equipment artifact is an Equipment with equip {X}") derives as `animate`, not a type-grant, so it is no class grant. */
 export function usesGrantedType(tags: CardTags, granted: string): boolean {
-  const names = (s: Partial<SubjectFilter> | undefined): boolean => s !== undefined && s.self !== true && (Array.isArray(s.subtype) ? s.subtype : s.subtype ? [s.subtype] : []).includes(granted);
-  // A MAKER IS NOT A USER: a token-generation effect, or a replacement on creating the type (Academy Manufactor), is fed by a Food maker and uses no granted Food.
-  return tags.abilities.filter((a) => a.effect.kind !== "token-generation" && a.effect.kind !== "token-doubling" && a.trigger?.verbs.includes("create-token") !== true && a.emits?.some((e) => e.verb === "create-token") !== true)
-    .some((a) => names(a.trigger?.subject) || names(a.effect.scalingSubject) || names(a.thresholdSubject)
-    || a.payment?.sacrifice?.some((x) => names(x.subject)) === true
-    || (a.effect.kind !== "create-token" && a.effect.kind !== "type-grant" && names(a.effect.subject)));
+  const names = (s: Partial<SubjectFilter> | undefined): boolean => s !== undefined && s.self !== true && s.named === undefined
+    && !(Array.isArray(s.type) ? s.type : [s.type]).includes("spell") && (s.zone === undefined || s.zone === "battlefield") && (s.fromZone === undefined || s.fromZone === "battlefield") && (Array.isArray(s.subtype) ? s.subtype : s.subtype ? [s.subtype] : []).includes(granted);
+  // The clauses that hand the same type out: a sibling keyword-grant on that sentence is the granter again, not a user.
+  const granting = new Set(tags.abilities.filter((a) => a.effect.kind === "type-grant" && a.grantsType === granted).map((a) => a.clause));
+  // A card that IS the type (an Equipment's own "attach it to target creature", "this Equipment gains ...") reads itself, which derive does not always mark `self`.
+  const isGranted = tags.characteristics.subtypes?.includes(granted) === true;
+  return tags.abilities.some((a) => {
+    const maker = NOT_A_BATTLEFIELD_READER.has(a.effect.kind) || a.emits?.some((e) => e.verb === "create-token") === true;
+    const events = a.trigger !== undefined && !a.trigger.verbs.includes("create-token") && !a.trigger.verbs.includes("cast") && names(a.trigger.subject);
+    const lord = !maker && !granting.has(a.clause) && !isGranted && names(a.effect.subject);
+    const emitted = !granting.has(a.clause) && !isGranted && a.effect.kind !== "search" && a.effect.kind !== "graveyard-recursion" && a.effect.kind !== "play-from-top" && a.emits?.some((e) => (e.verb === "sacrifice" || e.verb === "attached") && names(e.subject)) === true;
+    return events || lord || emitted || names(a.effect.scalingSubject) || names(a.thresholdSubject)
+      || a.payment?.sacrifice?.some((x) => names(x.subject)) === true
+      // Forage (exile three cards from your graveyard or sacrifice a Food) is read from its derived verb, in a trigger ("Whenever you forage") or an effect ("you may forage").
+      || (granted === "food" && (a.trigger?.verbs.includes("forage") === true || a.emits?.some((e) => e.verb === "forage") === true || /\bforage\b/i.test(a.cost ?? "")));
+  });
 }
 
 function staticEdges({ p, c, h, reasons }: PairScope): void {

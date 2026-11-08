@@ -37,10 +37,41 @@ test("Gourmand's Talent and Ragost pair with a card that uses Food", () => {
 
 test("Senator Peacock pairs with a Clue payoff, Dan Lewis with an Equipment payoff", () => {
   expect(grant("Senator Peacock", "Tireless Tracker")).not.toEqual([]);
-  expect(grant("Dan Lewis", "Stoneforge Mystic")).not.toEqual([]);
+  for (const c of ["Puresteel Paladin", "Adelbert Steiner"]) expect(grant("Dan Lewis", c), c).not.toEqual([]);
   expect(grant("Senator Peacock", "Peregrin Took")).toEqual([]);
 });
 
 test("a creature class stays literal: Maskwood Nexus still pairs with Grizzly Bears", () => {
   expect(grant("Maskwood Nexus", "Grizzly Bears")).not.toEqual([]);
+});
+
+// #1568 review 2 (Opus): the grant reaches BATTLEFIELD permanents, so a library search, a graveyard return, a cast trigger or a spell cost reducer that names Equipment does not use the granted type.
+test("Dan Lewis does not pair with a card that reads Equipment in the library, a graveyard, on the stack or in a spell's cost", () => {
+  for (const c of ["Stoneforge Mystic", "Steelshaper's Gift", "Sram, Senior Edificer", "Danitha Capashen, Paragon", "Galea, Kindler of Hope", "Auriok Survivors"]) expect(grant("Dan Lewis", c), c).toEqual([]);
+});
+
+// A maker's trigger or cost still uses the type: "Whenever you sacrifice a Food, create <another token>" is a Food user; only the token it creates is not a use.
+test("a trigger that sacrifices the granted type pairs even when the ability makes another token (Confectioner, Ulvenwald Mysteries, Chishiro)", () => {
+  expect(grant("Gourmand's Talent", "Experimental Confectioner")).not.toEqual([]);
+  expect(grant("Senator Peacock", "Ulvenwald Mysteries")).not.toEqual([]);
+  expect(grant("Dan Lewis", "Chishiro, the Shattered Blade")).not.toEqual([]);
+});
+
+// Effect-side use: a sacrifice or an attach inside the effect, and forage (which is sacrificing a Food).
+test("a sacrifice or attach inside the effect, and forage, count as use (Campsite Cuisine, Pippin's Bravery, Treetop Sentries, Brass Squire, Armory Automaton)", () => {
+  for (const c of ["Campsite Cuisine", "Pippin's Bravery", "Treetop Sentries"]) expect(grant("Gourmand's Talent", c), c).not.toEqual([]);
+  for (const c of ["Brass Squire", "Armory Automaton"]) expect(grant("Dan Lewis", c), c).not.toEqual([]);
+});
+
+// A subtype that comes from the card's own name is no use of the type.
+test("Food Fight's own name is no Food use", () => {
+  expect(grant("Gourmand's Talent", "Food Fight")).toEqual([]);
+});
+
+// The recipient stops at the verb through every path, so the granted type is no class: Hivestone reaches creatures, not Slivers; Ashaya reaches creatures, not Forests; The Flesh Is Weak reaches creatures, not Sol Ring.
+test("a type-grant whose sentence has no grant verb leaves the granted type out of its recipient", () => {
+  expect(grant("Hivestone", "Grizzly Bears")).not.toEqual([]);
+  expect(grant("Ashaya, Soul of the Wild", "Grizzly Bears")).not.toEqual([]);
+  expect(grant("Ashaya, Soul of the Wild", "Forest")).toEqual([]);
+  expect(grant("The Flesh Is Weak", "Sol Ring")).toEqual([]);
 });
