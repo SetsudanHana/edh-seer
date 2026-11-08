@@ -350,6 +350,9 @@ const PAYABLE = /\bunless\b[^.]*\bpay/i;
  *  a near-miss would be worse than silence — it is consumed as if it were true. */
 const SPEED_KEYWORDS = /\b(haste|double strike)\b/i;
 
+/** The value of a base power and toughness set, as `Ability.amount` stores it: "5/3", "base 1/1". Linear. */
+export const BASE_PT_VALUE = /^(?:base )?\d{1,2}\/\d{1,2}$/i;
+
 /** Text that confers a TYPE rather than an ability. "in addition to its other types" is the
  *  templating for a one-off (Mockingbird, Tyrite Sanctum); "is every creature type" / "every land
  *  type" is the changeling-wide form (Maskwood Nexus, Omo, Planar Nexus). A PLURAL recipient says "their other types" (Leyline of Transformation, Swampbenders, Hivestone, #1568). */
@@ -666,7 +669,8 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
   // the table, and the clause layer records it as `modify-pt` with an unsigned "2/2", which mapped
   // to `pump` and fed Laboratory Maniac's anthem payoffs (owner-judged FALSE, 2026-08-15: "it is
   // removal, you always would target opponent creatures"). Neither a pump nor a debuff: no kind.
-  if (verb === "modify-pt" && !/^\s*[+-]/.test(String(action.amount ?? "")) && /\bbase power\b/i.test(clauseText)) return null;
+  // ...except a NUMERIC set ("5/3", "base 1/1"), which is `base-pt-set` (#1572): derive keeps it only as a static over a class (see the drop beside `abilities.push`); everything else it names stays unread.
+  if (verb === "modify-pt" && !/^\s*[+-]/.test(String(action.amount ?? "")) && /\bbase power\b/i.test(clauseText)) return BASE_PT_VALUE.test(String(action.amount ?? "").trim()) ? "base-pt-set" : null;
   // THE MODEL ANSWERS `other` FOR "change the target of" and misfiled it as `cost-modify` on some (Divert, Deflection, Shunt), so the words decide, not the verb.
   if (retargetObject(action.object ?? "", verb, clauseText) !== undefined) return "retarget";
   if (verb === "other" && WINS.test(`${action.object ?? ""} ${clauseText}`)) return "win-game";

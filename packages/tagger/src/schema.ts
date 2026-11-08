@@ -1106,6 +1106,11 @@ export const EFFECT_KINDS = [
   // ("1", "2", "X", `pile`, `all`) and `Ability.chooses` marks a pick from a larger look. NOT a search (that is `search`), NOT a return from the graveyard or exile, NOT a
   // put into another player's hand, NOT a bounce. A fact kind like `bounce`: the pair channels read it blank.
   "to-hand",
+  // BASE-PT-SET (CR 613.4b: layer 7b, "effects that set power and/or toughness to a specific number or value"; #1572, owner ruling 2026-11-08): a STATIC set of the BASE power and toughness of a whole class of creatures --
+  // Graaz ("other creatures you control have base power and toughness 5/3"), March of the World Ooze (6/6), Kudo (2/2), Raised by Giants (10/10), Harmonious Archon (3/3), Sigarda's Summons, Humility (1/1).
+  // `Ability.amount` is the set value ("5/3"), `effect.subject` the class. NOT a pump (it sets, it does not add: an anthem pairs with every creature, this pairs with the ones it raises) and NOT a debuff.
+  // Single-target and until-end-of-turn sets, an Aura's host and a value that is a count or a mana value stay unread, as they were.
+  "base-pt-set",
 ] as const;
 
 export type EffectKind = (typeof EFFECT_KINDS)[number];

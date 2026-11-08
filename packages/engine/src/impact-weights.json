@@ -47,6 +47,7 @@
     "prevention": 0.2,
     "damage-change": 0.2,
     "to-hand": 0.2,
+    "base-pt-set": 0.45,
     "exile-processing": 0.6,
     "keyword-grant": 0.3,
     "speed-increase": 0.3,

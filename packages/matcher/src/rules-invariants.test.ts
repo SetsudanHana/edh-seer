@@ -23,6 +23,7 @@ const TESTED: Record<string, string> = {
   "702.74a": "implied.test.ts — evoke sacrifices the creature as it enters",
   "702.66": "implied.test.ts — delve is a graveyard demand (the descend tags, no edge)",
   "704.5m": "edges.test.ts — a producer removing what an Aura enchants supplies the Aura's own dies trigger",
+  "613.4b": "base-pt-class.test.ts — a class set of base power and toughness pairs with what it upgrades and with power payoffs, not with every creature (#1572)",
   "614": "edges.test.ts — CR 614 multiplier still edges the maker, never the token",
   "601.2f": "edges.test.ts — keeps it when the consumer has an ADDITIONAL COST",
   "704.5j": "edges.test.ts — copy: a token copy of a legend fires its entry trigger AND its death trigger",

@@ -1,0 +1,1342 @@
+{
+ "March of the World Ooze": {
+  "source": {
+   "name": "March of the World Ooze",
+   "typeLine": "Enchantment",
+   "oracleText": "Creatures you control have base power and toughness 6/6 and are Oozes in addition to their other types.\nWhenever an opponent casts a spell, if it's not their turn, you create a 3/3 green Elephant creature token.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{G}{G}{G}",
+   "layout": "normal",
+   "_id": "a04696c4-4138-47e2-8da4-81d61748519f"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Creatures you control",
+      "amount": "6/6",
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "grant-ability",
+      "object": "Creatures you control are Oozes in addition to their other types",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 3/3 green Elephant creature token",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Graaz, Unstoppable Juggernaut": {
+  "source": {
+   "name": "Graaz, Unstoppable Juggernaut",
+   "typeLine": "Legendary Artifact Creature — Juggernaut",
+   "oracleText": "Juggernauts you control attack each combat if able.\nJuggernauts you control can't be blocked by Walls.\nOther creatures you control have base power and toughness 5/3 and are Juggernauts in addition to their other creature types.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 8,
+   "colorIdentity": [],
+   "power": "7",
+   "toughness": "5",
+   "manaCost": "{8}",
+   "layout": "normal",
+   "_id": "aebfdcc0-c5b9-4737-8498-764a5021b087"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "Juggernauts you control not attack each combat if able",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "Juggernauts you control be blocked by Walls",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "other creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "5/3",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "other creatures you control are Juggernauts in addition to their other creature types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Kudo, King Among Bears": {
+  "source": {
+   "name": "Kudo, King Among Bears",
+   "typeLine": "Legendary Creature — Bear",
+   "oracleText": "Other creatures have base power and toughness 2/2 and are Bears in addition to their other types.",
+   "keywords": [],
+   "colors": [
+    "G",
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G",
+    "W"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{G}{W}",
+   "layout": "normal",
+   "_id": "070d22cf-2eed-4d04-b932-4b8339ea9b7a"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "Other creatures have base power and toughness 2/2 and are Bears in addition to their other types.",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Raised by Giants": {
+  "source": {
+   "name": "Raised by Giants",
+   "typeLine": "Legendary Enchantment — Background",
+   "oracleText": "Commander creatures you own have base power and toughness 10/10 and are Giants in addition to their other types.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}{G}",
+   "layout": "normal",
+   "_id": "1682cf24-17a3-49ad-8b6f-9b7f13ebf53c"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Commander creatures you own",
+      "amount": "10/10",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "grant-ability",
+      "object": "Commander creatures you own are Giants in addition to their other types",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Master of the Hunt": {
+  "source": {
+   "name": "Master of the Hunt",
+   "typeLine": "Creature — Human",
+   "oracleText": "{2}{G}{G}: Create a 1/1 green Wolf creature token named Wolves of the Hunt. It has \"bands with other creatures named Wolves of the Hunt.\" (Any creatures named Wolves of the Hunt can attack in a band as long as at least one has \"bands with other creatures named Wolves of the Hunt.\" Bands are blocked as a group. If at least two creatures named Wolves of the Hunt you control, one of which has \"bands with other creatures named Wolves of the Hunt,\" are blocking or being blocked by the same creature, you divide that creature's combat damage, not its controller, among any of the creatures it's being blocked by or is blocking.)",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{2}{G}{G}",
+   "layout": "normal",
+   "_id": "cdf89ad2-ce08-4708-88c2-8acdc861526d"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 green Wolf creature token named Wolves of the Hunt with bands with other creatures named Wolves of the Hunt",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Dwarven Castle Guard": {
+  "source": {
+   "name": "Dwarven Castle Guard",
+   "typeLine": "Creature — Dwarf Soldier",
+   "oracleText": "When this creature dies, create a 1/1 colorless Hero creature token.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "2",
+   "toughness": "1",
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "_id": "b51e0ae3-126b-4b7e-9dd1-818a5b8e512a"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 colorless Hero creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Molten Monstrosity": {
+  "source": {
+   "name": "Molten Monstrosity",
+   "typeLine": "Creature — Hellion",
+   "oracleText": "This spell costs {X} less to cast, where X is the greatest power among creatures you control.\nTrample",
+   "keywords": [
+    "Trample"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 8,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{7}{R}",
+   "layout": "normal",
+   "_id": "ea55886c-48a1-4339-81fd-03dbaa116c28"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "This spell costs {X} less to cast, where X is the greatest power among creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Llanowar Elves": {
+  "source": {
+   "name": "Llanowar Elves",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "{T}: Add {G}.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{G}",
+   "layout": "normal",
+   "_id": "68954295-54e3-4303-a6bc-fc4547a4e3a3"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Gigantosaurus": {
+  "source": {
+   "name": "Gigantosaurus",
+   "typeLine": "Creature — Dinosaur",
+   "oracleText": "",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "10",
+   "toughness": "10",
+   "manaCost": "{G}{G}{G}{G}{G}",
+   "layout": "normal",
+   "_id": "e666bae7-dd51-4921-8b89-7e8d423caba0"
+  },
+  "canonical": []
+ },
+ "Sol Ring": {
+  "source": {
+   "name": "Sol Ring",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Add {C}{C}.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 1,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}",
+   "layout": "normal",
+   "_id": "6ad8011d-3471-4369-9d68-b264cc027487"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Grizzly Bears": {
+  "source": {
+   "name": "Grizzly Bears",
+   "typeLine": "Creature — Bear",
+   "oracleText": "",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{G}",
+   "layout": "normal",
+   "_id": "14c8f55d-d177-4c25-a931-ebeb9e6062a0"
+  },
+  "canonical": []
+ },
+ "Garruk's Packleader": {
+  "source": {
+   "name": "Garruk's Packleader",
+   "typeLine": "Creature — Beast",
+   "oracleText": "Whenever another creature you control with power 3 or greater enters, you may draw a card.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{4}{G}",
+   "layout": "normal",
+   "_id": "13279222-422d-4447-9451-2463b0c714c6"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "another creature you control with power 3 or greater",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Temur Battle Rage": {
+  "source": {
+   "name": "Temur Battle Rage",
+   "typeLine": "Instant",
+   "oracleText": "Target creature gains double strike until end of turn.\nFerocious — That creature also gains trample until end of turn if you control a creature with power 4 or greater.",
+   "keywords": [
+    "Ferocious"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{R}",
+   "layout": "normal",
+   "_id": "2fdc0d17-b683-4263-949e-4f74ec76badf"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "double strike",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "trample",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Selvala, Heart of the Wilds": {
+  "source": {
+   "name": "Selvala, Heart of the Wilds",
+   "typeLine": "Legendary Creature — Elf Scout",
+   "oracleText": "Whenever another creature enters, its controller may draw a card if its power is greater than each other creature's power.\n{G}, {T}: Add X mana in any combination of colors, where X is the greatest power among creatures you control.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "manaCost": "{1}{G}{G}",
+   "layout": "normal",
+   "_id": "1d725121-e50c-42f0-9128-56802f07c89e"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "another creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "mana in any combination of colors",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Humility": {
+  "source": {
+   "name": "Humility",
+   "typeLine": "Enchantment",
+   "oracleText": "All creatures lose all abilities and have base power and toughness 1/1.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}{W}",
+   "layout": "normal",
+   "_id": "ed7bdb3e-5c51-4547-9266-76a791e0b2b0"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "have abilities",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "modify-pt",
+      "object": "all creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1/1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Godhead of Awe": {
+  "source": {
+   "name": "Godhead of Awe",
+   "typeLine": "Creature — Spirit Avatar",
+   "oracleText": "Flying\nOther creatures have base power and toughness 1/1.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "U",
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{W/U}{W/U}{W/U}{W/U}{W/U}",
+   "layout": "normal",
+   "_id": "1ed5751a-4b45-4cd2-b19c-ac84508de4f8"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "other creatures",
+      "amount": "base 1/1",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Harmonious Archon": {
+  "source": {
+   "name": "Harmonious Archon",
+   "typeLine": "Creature — Archon",
+   "oracleText": "Flying\nNon-Archon creatures have base power and toughness 3/3.\nWhen this creature enters, create two 1/1 white Human creature tokens.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "4",
+   "toughness": "5",
+   "manaCost": "{4}{W}{W}",
+   "layout": "normal",
+   "_id": "ed8392b8-71e9-4874-a5bd-3c9fa5605780"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Non-Archon creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3/3",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "two 1/1 white Human creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Turn to Frog": {
+  "source": {
+   "name": "Turn to Frog",
+   "typeLine": "Instant",
+   "oracleText": "Until end of turn, target creature loses all abilities and becomes a blue Frog with base power and toughness 1/1.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{U}",
+   "layout": "normal",
+   "_id": "74c4c1e2-c50d-4c8f-889a-0d5674dc6d67"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "target creature loses all abilities",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "animate",
+      "object": "target creature becomes a blue Frog creature with base power and toughness 1/1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Glorious Anthem": {
+  "source": {
+   "name": "Glorious Anthem",
+   "typeLine": "Enchantment",
+   "oracleText": "Creatures you control get +1/+1.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}{W}",
+   "layout": "normal",
+   "_id": "e3886fe8-9b76-4613-8891-4ec74657c087"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Beast Within": {
+  "source": {
+   "name": "Beast Within",
+   "typeLine": "Instant",
+   "oracleText": "Destroy target permanent. Its controller creates a 3/3 green Beast creature token.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "_id": "7735eeba-693b-47e2-bd51-414379cf1016"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target permanent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a 3/3 green Beast creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Hordeling Outburst": {
+  "source": {
+   "name": "Hordeling Outburst",
+   "typeLine": "Sorcery",
+   "oracleText": "Create three 1/1 red Goblin creature tokens.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{R}{R}",
+   "layout": "normal",
+   "_id": "a6450b8e-eb18-431c-9eb7-7daf107978b2"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "three 1/1 red Goblin creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Spearbreaker Behemoth": {
+  "source": {
+   "name": "Spearbreaker Behemoth",
+   "typeLine": "Creature — Beast",
+   "oracleText": "Indestructible\n{1}: Target creature with power 5 or greater gains indestructible until end of turn.",
+   "keywords": [
+    "Indestructible"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{5}{G}{G}",
+   "layout": "normal",
+   "_id": "025f8db8-11d1-4c59-8e1f-004c9c843fd8"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Indestructible",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "indestructible until end of turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Heir of the Wilds": {
+  "source": {
+   "name": "Heir of the Wilds",
+   "typeLine": "Creature — Human Warrior",
+   "oracleText": "Deathtouch\nFerocious — Whenever this creature attacks, if you control a creature with power 4 or greater, this creature gets +1/+1 until end of turn.",
+   "keywords": [
+    "Ferocious",
+    "Deathtouch"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{G}",
+   "layout": "normal",
+   "_id": "35cb88aa-6ed9-4a2d-9bbc-5937e1df4f4a"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Deathtouch",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Curse of Conformity": {
+  "source": {
+   "name": "Curse of Conformity",
+   "typeLine": "Enchantment — Aura Curse",
+   "oracleText": "Enchant player\nNonlegendary creatures enchanted player controls have base power and toughness 3/3 and lose all creature types.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{W}",
+   "layout": "normal",
+   "_id": "71de5f9a-73e4-4a93-b199-b280687f71eb"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant player",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Nonlegendary creatures enchanted player controls",
+      "amount": "3/3",
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "other",
+      "object": "Nonlegendary creatures enchanted player controls lose all creature types",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Sludge Monster": {
+  "source": {
+   "name": "Sludge Monster",
+   "typeLine": "Creature — Horror",
+   "oracleText": "Whenever this creature enters or attacks, put a slime counter on up to one other target creature.\nNon-Horror creatures with slime counters on them lose all abilities and have base power and toughness 2/2.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{3}{U}{U}",
+   "layout": "normal",
+   "_id": "2802fc92-49a0-43c8-bc10-24882eeee3f1"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "slime counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "have abilities; Non-Horror creatures with slime counters on them lose all abilities",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "modify-pt",
+      "object": "Non-Horror creatures with slime counters on them",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2/2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "slime counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Sigarda's Summons": {
+  "source": {
+   "name": "Sigarda's Summons",
+   "typeLine": "Enchantment",
+   "oracleText": "Creatures you control with +1/+1 counters on them have base power and toughness 4/4, have flying, and are Angels in addition to their other types.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{W}{W}",
+   "layout": "normal",
+   "_id": "7fd06710-0721-4e3e-90ed-d0ccecb1919a"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Creatures you control with +1/+1 counters on them",
+      "amount": "4/4",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "grant-ability",
+      "object": "flying",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "grant-ability",
+      "object": "Angel creature type",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Cathars' Crusade": {
+  "source": {
+   "name": "Cathars' Crusade",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever a creature you control enters, put a +1/+1 counter on each creature you control.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{W}{W}",
+   "layout": "normal",
+   "_id": "cc65ac73-5bef-4ecb-ad8e-39199084c027"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Sleek Schooner": {
+  "source": {
+   "name": "Sleek Schooner",
+   "typeLine": "Artifact — Vehicle",
+   "oracleText": "Crew 1 (Tap any number of creatures you control with total power 1 or more: This Vehicle becomes an artifact creature until end of turn.)",
+   "keywords": [
+    "Crew"
+   ],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [],
+   "power": "4",
+   "toughness": "3",
+   "manaCost": "{3}",
+   "layout": "normal",
+   "_id": "3284010f-aeb2-493e-9252-3b953a192a94"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Crew 1",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Archon of the Wild Rose": {
+  "source": {
+   "name": "Archon of the Wild Rose",
+   "typeLine": "Creature — Archon",
+   "oracleText": "Flying\nOther creatures you control that are enchanted by Auras you control have base power and toughness 4/4 and have flying.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{2}{W}{W}",
+   "layout": "normal",
+   "_id": "180efbd4-0f77-41cc-8ae2-2e6ccf853d10"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "other creatures you control that are enchanted by Auras you control",
+      "amount": "4/4",
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "grant-ability",
+      "object": "other creatures you control that are enchanted by Auras you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ }
+}

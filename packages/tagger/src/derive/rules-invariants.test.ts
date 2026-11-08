@@ -18,6 +18,7 @@ import { emblemRecipient } from "../emblem.js";
 const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b"]);
 const TESTED: Record<string, string> = {
   "609.4b": "grammar/clause-record.test.ts — a spend-mana-as-any-colour rider changes how a cost is paid, not the cost: it stays an unclaimed `other` after the cast or play, never stripped (Evelyn, Tinybones, #1355)",
+  "613.4b": "effect-kind.test.ts — a set of base power and toughness is `base-pt-set`, neither a pump nor a debuff (Sludge Monster, Godhead of Awe); matcher base-pt-class.test.ts pairs a class set with what it upgrades (#1572)",
   "701.62": "manifest dread: its mill is of your library (emits.test.ts, manifest dread mills the top-two card of YOUR library)",
   "701.62a": "manifest dread alone puts the cards not manifested into the graveyard; a plain manifest emits no mill (derive.test.ts, a library-to-graveyard move the printed clause never makes, #1562)",
   "104.2b": "derive.test.ts — a win-game VERB derives the win-game kind (Epic Struggle, Laboratory Maniac, #1266)",

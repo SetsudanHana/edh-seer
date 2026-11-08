@@ -59,7 +59,8 @@ test("a named creature type granted to every creature pairs with its payoffs and
   expect(grant("Hivestone", "Muscle Sliver")).not.toEqual([]);
   for (const p of ["March of the World Ooze", "Roshan, Hidden Magister", "Graaz, Unstoppable Juggernaut"]) expect(grant(p, "Grizzly Bears"), p).toEqual([]);
   expect(staticTags("Hivestone", "Grizzly Bears")).toEqual([]);
-  expect(staticTags("March of the World Ooze", "Grizzly Bears")).toEqual([]);
+  // The 6/6 base set beside the type grant (#1572) is its own ability and pairs with the 2/2 it upgrades: only the TYPE half is gated here.
+  expect(staticTags("March of the World Ooze", "Grizzly Bears")).toEqual(["static:base-pt-set"]);
 });
 
 test("every creature type, or a chosen one, pairs with the cards that care about a creature type: Maskwood Nexus, Arcane Adaptation, Xenograft, Leyline of Transformation", () => {
