@@ -3204,7 +3204,9 @@ function wholeNonCreatureClass(s: SubjectFilter): boolean {
 }
 /** A TYPE-GRANT OVER THE WHOLE CREATURE CLASS (owner ruling 2026-11-08, extending the class ruling to creatures): "creatures you control are Slivers / every creature type / the chosen type / artifacts in addition to their other types"
  *  (Hivestone, Roshan, Laughing Jasper Flint, March of the World Ooze, Graaz, Ashaya, The Flesh Is Weak, Maskwood Nexus, Arcane Adaptation, Leyline of Transformation, Xenograft). The recipient is every creature of a side, with no
- *  subtype and no single host; a state narrowing (a +1/+1 counter) leaves it a class. */
+ *  subtype and no single host; a state narrowing (a +1/+1 counter) leaves it a class.
+ *  CEILING: a user derive stores no subject for is not read, so it loses the pair (Bladeback Sliver's hellbent Sliver grant, At Knifepoint's and Hellspur Posse Boss's "outlaws", which are Assassins and Mercenaries by CR 700.12, Quick Sliver's
+ *  Sliver spells); recall is read from derived data, as for the non-creature classes. */
 function wholeCreatureClass(s: SubjectFilter): boolean {
   const types = Array.isArray(s.type) ? s.type : s.type ? [s.type] : [];
   return (s.scope === "all" || s.scope === "each") && s.subtype === undefined && types.length === 1 && types[0] === "creature" && s.self !== true;
