@@ -1,6 +1,6 @@
 import type { Reason } from "@edh-seer/engine";
 import type { Ability, CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
-import { LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
+import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import { tokenKindsWith } from "@edh-seer/tagger/token-kinds";
 import crKeywords from "@edh-seer/tagger/cr-keywords" with { type: "json" };
 /** The closed six, per CR 205.4a plus the un-set `host`/`elite`. A supertype is not a card type and
@@ -3202,6 +3202,14 @@ function wholeNonCreatureClass(s: SubjectFilter): boolean {
   const umbrella = types.includes("permanent") || (types.includes("creature") && types.length >= 4);
   return (s.scope === "all" || s.scope === "each") && s.subtype === undefined && types.length > 0 && (umbrella || !types.includes("creature")) && s.self !== true;
 }
+/** A TYPE-GRANT OVER THE WHOLE CREATURE CLASS (owner ruling 2026-11-08, extending the class ruling to creatures): "creatures you control are Slivers / every creature type / the chosen type / artifacts in addition to their other types"
+ *  (Hivestone, Roshan, Laughing Jasper Flint, March of the World Ooze, Graaz, Ashaya, The Flesh Is Weak, Maskwood Nexus, Arcane Adaptation, Leyline of Transformation, Xenograft). The recipient is every creature of a side, with no
+ *  subtype and no single host; a state narrowing (a +1/+1 counter) leaves it a class. */
+function wholeCreatureClass(s: SubjectFilter): boolean {
+  const types = Array.isArray(s.type) ? s.type : s.type ? [s.type] : [];
+  return (s.scope === "all" || s.scope === "each") && s.subtype === undefined && types.length === 1 && types[0] === "creature" && s.self !== true;
+}
+const CREATURE_SUBTYPE_LOWER: ReadonlySet<string> = new Set(CREATURE_SUBTYPES.map((x) => x.toLowerCase()));
 const CARD_TYPES: ReadonlySet<string> = new Set(["artifact", "enchantment", "land", "planeswalker", "battle"]);
 /** Effects that are not a BATTLEFIELD reader of the type: a grant of "artifacts you control are Foods" reaches permanents, which have a controller (CR 108.4), so a library search (Stoneforge Mystic), a graveyard return (Auriok Survivors),
  *  a play-from-top (Galea) and a spell cost reducer (Danitha) read the type where the grant does not reach. A token maker is read through its trigger and cost, never through the token it creates. `type-grant` and `animate` are another granter. */
@@ -3224,7 +3232,8 @@ export function usesGrantedType(tags: CardTags, granted: string): boolean {
   // The clauses that hand the same type out: a sibling keyword-grant on that sentence is the granter again, not a user.
   const granting = new Set(tags.abilities.filter((a) => a.effect.kind === "type-grant" && a.grantsType === granted).map((a) => a.clause));
   // A card that IS the type (an Equipment's own "attach it to target creature", "this Equipment gains ...") reads itself, which derive does not always mark `self`.
-  const isGranted = tags.characteristics.subtypes?.includes(granted) === true;
+  // A CREATURE type is the exception: a Sliver lord is a Sliver and still a lord (Muscle Sliver "All Sliver creatures get +1/+1" is a Hivestone user).
+  const isGranted = tags.characteristics.subtypes?.includes(granted) === true && !CREATURE_SUBTYPE_LOWER.has(granted);
   return tags.abilities.some((a) => {
     const maker = NOT_A_BATTLEFIELD_READER.has(a.effect.kind) || a.emits?.some((e) => e.verb === "create-token") === true;
     const events = a.trigger !== undefined && !a.trigger.verbs.includes("create-token") && !a.trigger.verbs.includes("cast") && names(a.trigger.subject);
@@ -3312,12 +3321,37 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
     // A TYPE HANDED TO A WHOLE NON-CREATURE CLASS PAIRS WITH THE CARDS THAT USE THAT TYPE, NOT WITH EVERY RECIPIENT (owner ruling 2026-11-08, #1568): Gourmand's Talent pairs with Food payoffs, not with Sol Ring.
     // Creature classes (Maskwood Nexus) stay literal: they pair with every creature they reach.
     // ...and so does the ability handed out in the same sentence ("... and have '{2}, {T}, Sacrifice this artifact: You gain 3 life'"), whose recipient is the same class.
-    const classGrant = wholeNonCreatureClass(a.effect.subject)
-      ? (a.effect.kind === "type-grant" ? a : a.kind === "static" ? p.tags.abilities.find((x) => x.effect.kind === "type-grant" && x.clause === a.clause && x.effect.subject !== undefined && wholeNonCreatureClass(x.effect.subject)) : undefined)
+    const wholeClass = (x: SubjectFilter): boolean => wholeNonCreatureClass(x) || wholeCreatureClass(x);
+    const classGrant = wholeClass(a.effect.subject)
+      ? (a.effect.kind === "type-grant" ? a : a.kind === "static" ? p.tags.abilities.find((x) => x.effect.kind === "type-grant" && x.clause === a.clause && x.effect.subject !== undefined && wholeClass(x.effect.subject)) : undefined)
       : undefined;
+    // A grant over the whole CREATURE class (owner ruling 2026-11-08) pairs with the cards that use the granted type: a named creature subtype (Slivers, Oozes) is used by a battlefield demand that names it; a card type
+    // (The Flesh Is Weak's artifacts) the same way; "every creature type" or "the chosen type" (no `grantsType`: Maskwood Nexus, Arcane Adaptation, Xenograft, Leyline) by a kindred payoff, a card that cares about a creature type.
+    const creatureGrant = classGrant !== undefined && classGrant.effect.subject !== undefined && wholeCreatureClass(classGrant.effect.subject);
+    if (classGrant !== undefined && creatureGrant && classGrant.grantsType === undefined) {
+      if (!caresAboutCreatureType(c.tags, c.card)) return undefined;
+      return {
+        tag: `static:${a.effect.kind}`,
+        text: `${p.card.name} gives your creatures a creature type, and ${c.card.name} cares about a creature type`,
+        effectKind: a.effect.kind,
+        repeatability: "static",
+        consumer: c.card.name,
+        producer: p.card.name,
+      };
+    }
     if (classGrant?.grantsType !== undefined) {
       if (!usesGrantedType(c.tags, classGrant.grantsType)) return undefined;
       const gt = classGrant.grantsType;
+      if (creatureGrant) {
+        return {
+          tag: `static:${a.effect.kind}`,
+          text: `${p.card.name} makes your creatures ${gt[0]!.toUpperCase()}${gt.slice(1)}${CARD_TYPES.has(gt) ? "s" : ""}, and ${c.card.name} uses that type`,
+          effectKind: a.effect.kind,
+          repeatability: "static",
+          consumer: c.card.name,
+          producer: p.card.name,
+        };
+      }
       return {
         tag: `static:${a.effect.kind}`,
         text: `${p.card.name} makes your permanents ${gt === "equipment" ? "Equipment" : `${gt[0]!.toUpperCase()}${gt.slice(1)}s`}, and ${c.card.name} uses that type`,

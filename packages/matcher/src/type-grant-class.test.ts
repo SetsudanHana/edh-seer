@@ -6,7 +6,7 @@ import type { DeckCard } from "./types.js";
 import fixtures from "./fixtures/type-grant-class.json" with { type: "json" };
 
 /** #1568, owner ruling 2026-11-08: a type grant over a WHOLE NON-CREATURE class ("artifacts you control are Foods / Clues / Equipment in addition to their other types") pairs with the cards that USE the granted
- *  type, not with every artifact that merely receives it. Creature classes (Maskwood Nexus) stay literal. Stored documents and clauses dumped from Mongo 2026-11-08. */
+ *  type, not with every artifact that merely receives it. Creature classes (Maskwood Nexus) follow the same rule (ruling extended 2026-11-08). Stored documents and clauses dumped from Mongo 2026-11-08. */
 const F = fixtures as unknown as Record<string, { source: Record<string, unknown> & { _id: string }; canonical: ClauseRecord[] }>;
 const dc = (name: string): DeckCard => ({
   card: F[name]!.source as unknown as DeckCard["card"],
@@ -53,8 +53,25 @@ test("Senator Peacock pairs with a Clue payoff, Dan Lewis with an Equipment payo
   expect(grant("Senator Peacock", "Peregrin Took")).toEqual([]);
 });
 
-test("a creature class stays literal: Maskwood Nexus still pairs with Grizzly Bears", () => {
-  expect(grant("Maskwood Nexus", "Grizzly Bears")).not.toEqual([]);
+// Owner ruling 2026-11-08 (extends the class ruling to creatures): a grant over the whole CREATURE class pairs with the cards that USE the granted type, not with every creature it reaches.
+test("a named creature type granted to every creature pairs with its payoffs and lords, not with Grizzly Bears: Hivestone, March of the World Ooze, Roshan, Graaz", () => {
+  expect(grant("Hivestone", "Grizzly Bears")).toEqual([]);
+  expect(grant("Hivestone", "Muscle Sliver")).not.toEqual([]);
+  for (const p of ["March of the World Ooze", "Roshan, Hidden Magister", "Graaz, Unstoppable Juggernaut"]) expect(grant(p, "Grizzly Bears"), p).toEqual([]);
+  expect(staticTags("Hivestone", "Grizzly Bears")).toEqual([]);
+  expect(staticTags("March of the World Ooze", "Grizzly Bears")).toEqual([]);
+});
+
+test("every creature type, or a chosen one, pairs with the cards that care about a creature type: Maskwood Nexus, Arcane Adaptation, Xenograft, Leyline of Transformation", () => {
+  for (const p of ["Maskwood Nexus", "Arcane Adaptation", "Xenograft", "Leyline of Transformation"]) {
+    expect(grant(p, "Grizzly Bears"), p).toEqual([]);
+    expect(grant(p, "Elvish Archdruid"), p).not.toEqual([]);
+  }
+});
+
+test("a card type granted to creatures pairs with what uses it: The Flesh Is Weak x Sol Ring none", () => {
+  expect(grant("The Flesh Is Weak", "Sol Ring")).toEqual([]);
+  expect(grant("The Flesh Is Weak", "Grizzly Bears")).toEqual([]);
 });
 
 // #1568 review 2 (Opus): the grant reaches BATTLEFIELD permanents, so a library search, a graveyard return, a cast trigger or a spell cost reducer that names Equipment does not use the granted type.
@@ -82,8 +99,7 @@ test("Food Fight's own name is no Food use", () => {
 
 // The recipient stops at the verb through every path, so the granted type is no class: Hivestone reaches creatures, not Slivers; Ashaya reaches creatures, not Forests; The Flesh Is Weak reaches creatures, not Sol Ring.
 test("a type-grant whose sentence has no grant verb leaves the granted type out of its recipient", () => {
-  expect(grant("Hivestone", "Grizzly Bears")).not.toEqual([]);
-  expect(grant("Ashaya, Soul of the Wild", "Grizzly Bears")).not.toEqual([]);
+  expect(grant("Ashaya, Soul of the Wild", "Grizzly Bears")).toEqual([]);
   expect(grant("Ashaya, Soul of the Wild", "Forest")).toEqual([]);
   expect(grant("The Flesh Is Weak", "Sol Ring")).toEqual([]);
 });
