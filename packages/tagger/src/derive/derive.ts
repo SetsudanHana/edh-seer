@@ -1455,6 +1455,21 @@ const CLAUSE_PREAMBLE = /^(?:when|whenever|at)\b[^,]*,\s*|^[^:."\u201c]{1,60}:\s
  *  strip does. */
 const SUBORDINATE = /^(?:as long as|if|unless|while|during|whenever|when|at|for each|until)\b[^,]*,\s*/i;
 
+/** Where the whitespace before the first of `verbs` (a whole word, case-insensitive) starts, or -1: a linear scan in place of /\s+(?:is|are|...)\s/i. A verb at the very start has no whitespace before it and is not found. */
+function verbCut(text: string, verbs: readonly string[]): number {
+  let i = 0;
+  while (i < text.length) {
+    while (i < text.length && !/\s/.test(text[i]!)) i++;
+    const wsStart = i;
+    while (i < text.length && /\s/.test(text[i]!)) i++;
+    let end = i;
+    while (end < text.length && !/\s/.test(text[end]!)) end++;
+    if (wsStart < i && end < text.length && verbs.includes(text.slice(i, end).toLowerCase())) return wsStart;
+    i = end;
+  }
+  return -1;
+}
+
 /** The recipient stated to the LEFT of the verb that hands the ability over. A leading trigger or
  *  cost is stripped first, so "{T}: Creatures you control gain haste" does not read the cost as the
  *  recipient — then only the last SENTENCE is kept, because a clause may set something up first
@@ -1759,7 +1774,7 @@ function effectSubject(
       : grantRecipient(clauseText);
     // A TYPE-GRANT'S RECIPIENT STOPS AT THE VERB THAT HANDS THE TYPE OVER (#1568 review): "Each creature with a gold counter on it is a Wall in addition to its other creature types and has defender" is read up to "has", so the
     // recipient text carried "is a Wall" and the class was Walls (Aurification paired with every Wall; Armed with Proof's Clues were Equipment). The recipient is what GETS the type.
-    const typeCut = whoRaw !== undefined && action.verb === "grant-ability" && (TYPE_GRANT.test(action.object ?? "") || TYPE_GRANT.test(whoRaw)) ? whoRaw.search(/\s+(?:is|are|becomes?)\s/i) : -1;
+    const typeCut = whoRaw !== undefined && action.verb === "grant-ability" && (TYPE_GRANT.test(action.object ?? "") || TYPE_GRANT.test(whoRaw)) ? verbCut(whoRaw, ["is", "are", "become", "becomes"]) : -1;
     const who = typeCut > 0 ? whoRaw!.slice(0, typeCut).trim() : whoRaw;
     if (who) {
       // A GRANT IN A SELF-ANIMATE SENTENCE IS THE CARD'S OWN (#1349 review): "this creature becomes a Rhino with base power and
@@ -1815,7 +1830,7 @@ function effectSubject(
   if (kind === "type-grant" && action.verb === "grant-ability" && TYPE_GRANT.test(clauseText)) {
     // The sentence that hands the type over, read from the CLAUSE (the stored object is "becomes an artifact in addition ...", "gains Vampire type in addition ...", "is a Vampire in addition ..." as often as the whole sentence).
     const sentence = clauseText.replace(CLAUSE_PREAMBLE, "").split(/(?<=\.)\s+|\n/).filter((x) => TYPE_GRANT.test(x)).pop()?.replace(SUBORDINATE, "").trim() ?? "";
-    const cut = sentence.search(/\s+(?:is|are|becomes?|gains?)\s/i);
+    const cut = verbCut(sentence, ["is", "are", "become", "becomes", "gain", "gains"]);
     if (cut > 0) {
       const head = sentence.slice(0, cut).trim();
       if (/^(?:it|they|them|that|those|the|this|these)\b/i.test(head) && !/\byou control\b/i.test(head)) return parseSubject("");

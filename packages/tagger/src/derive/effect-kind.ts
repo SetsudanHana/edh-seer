@@ -359,10 +359,29 @@ export const TYPE_GRANT =
 /** The type a type-grant hands out, lowercased and singular ("Artifacts you control are Foods in addition to their other types" -> "food"; Dan Lewis' "Equipment" stays). Undefined when the text does not name one
  *  (a chosen type, "every creature type", "is also a Zombie" is read the same way). #1568 */
 export function grantedTypeOf(text: string | undefined): string | undefined {
-  const m = /\b(?:is|are|becomes?)\s+(?:also\s+)?(?:an?\s+)?([A-Z][A-Za-z-]+|artifacts?|enchantments?|lands?)(?: lands?)?\s+in addition to (?:its|their) other (?:creature )?types\b/.exec(text ?? "");
-  if (!m) return undefined;
-  const w = m[1]!.toLowerCase();
-  return w.endsWith("ies") ? `${w.slice(0, -3)}y` : w.endsWith("oes") ? w.slice(0, -2) : w.endsWith("s") && !/(?:ss|us)$/.test(w) ? w.slice(0, -1) : w;
+  // Read token by token (linear, no backtracking): "<is|are|become(s)> [also] [a|an] WORD [lands] in addition to its|their other [creature] types".
+  const t = (text ?? "").split(/\s+/);
+  const VERB = /^(?:is|are|becomes?)$/;
+  const WORD = /^(?:[A-Z][A-Za-z-]+|artifacts?|enchantments?|lands?)$/;
+  const preceded = (p: number): boolean => {
+    let q = p - 1;
+    if (t[q] === "a" || t[q] === "an") q--;
+    if (t[q] === "also") q--;
+    return q >= 0 && VERB.test(t[q]!);
+  };
+  for (let i = 0; i + 4 < t.length; i++) {
+    if (t[i] !== "in" || t[i + 1] !== "addition" || t[i + 2] !== "to" || (t[i + 3] !== "its" && t[i + 3] !== "their") || t[i + 4] !== "other") continue;
+    let e = i + 5;
+    if (t[e] === "creature") e++;
+    if (!/^types(?![A-Za-z0-9_])/.test(t[e] ?? "")) continue;
+    const j = i - 1;
+    if (j < 1) continue;
+    const word = /^lands?$/.test(t[j]!) && WORD.test(t[j - 1] ?? "") && preceded(j - 1) ? t[j - 1]! : WORD.test(t[j]!) && preceded(j) ? t[j]! : undefined;
+    if (word === undefined) continue;
+    const w = word.toLowerCase();
+    return w.endsWith("ies") ? `${w.slice(0, -3)}y` : w.endsWith("oes") ? w.slice(0, -2) : w.endsWith("s") && !/(?:ss|us)$/.test(w) ? w.slice(0, -1) : w;
+  }
+  return undefined;
 }
 
 /** `cost-modify` is one verb because the clause states one action; the direction is in the object,
