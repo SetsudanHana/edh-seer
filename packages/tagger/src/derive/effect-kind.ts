@@ -356,6 +356,15 @@ const SPEED_KEYWORDS = /\b(haste|double strike)\b/i;
 export const TYPE_GRANT =
   /\bin addition to (?:its|their) other (?:creature )?types\b|\bis every\b|\bevery (?:creature|land|artifact|nonbasic land) type\b|\b(?:is|becomes) also an? [A-Z]/;
 
+/** The type a type-grant hands out, lowercased and singular ("Artifacts you control are Foods in addition to their other types" -> "food"; Dan Lewis' "Equipment" stays). Undefined when the text does not name one
+ *  (a chosen type, "every creature type", "is also a Zombie" is read the same way). #1568 */
+export function grantedTypeOf(text: string | undefined): string | undefined {
+  const m = /\b(?:is|are|becomes?)\s+(?:also\s+)?(?:an?\s+)?([A-Z][A-Za-z-]+)\s+in addition to (?:its|their) other (?:creature )?types\b/.exec(text ?? "");
+  if (!m) return undefined;
+  const w = m[1]!.toLowerCase();
+  return w.endsWith("ies") ? `${w.slice(0, -3)}y` : w.endsWith("oes") ? w.slice(0, -2) : w.endsWith("s") && !/(?:ss|us)$/.test(w) ? w.slice(0, -1) : w;
+}
+
 /** `cost-modify` is one verb because the clause states one action; the direction is in the object,
  *  and the two directions are OPPOSITE kinds the engine already consumes heavily (cost-reduction on
  *  610 cards, tax on 615). Foundry Inspector and Urza's Incubator carry live flat cost-reduction

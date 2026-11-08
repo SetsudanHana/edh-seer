@@ -1502,6 +1502,9 @@ export interface Ability {
   /** The CR keyword abilities a `keyword-grant` hands out, lowercased: ["undying"], ["haste",
    *  "hexproof"] (#857, DERIVE 213). The effect subject says who gets them. */
   grants?: string[];
+  /** The type a `type-grant` hands out, lowercased and singular: "food" (Gourmand's Talent, Ragost), "clue" (Senator Peacock), "equipment" (Dan Lewis) (#1568, owner ruling 2026-11-08). Present only on a type-grant whose
+   *  printed text names it ("are Foods in addition to their other types"). `effect.subject` says who gets it; for a whole non-creature class the matcher pairs the GRANTED type with the cards that use it. */
+  grantsType?: string;
   /** WHAT CREATED THIS DELAYED TRIGGER ("when you next cast ... this turn", CR 603.7):
    *  "chapter" (Summon: Fenrir's II), "spell" (Doublecast), or the activation cost that makes it --
    *  Yuna, Grand Summoner's "{T}". Present only on such a trigger (`delayedTriggerRepeats`). It

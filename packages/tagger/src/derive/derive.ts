@@ -13,7 +13,7 @@ import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Char
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
 import { targetingBanOf, targetingBanSubjectInObject, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
-import { TYPE_GRANT, ZONE_SCOPED_KINDS, actionEffectKind, activationBanClass, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
+import { TYPE_GRANT, grantedTypeOf, ZONE_SCOPED_KINDS, actionEffectKind, activationBanClass, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
 import { actionEmits, definesPowerToughness, casualtySacrifice, enteringClass, millsOwnLibrary, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, narrowSelfExiledSpell, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, activationConditionOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
@@ -4480,6 +4480,11 @@ export function deriveAbilities(
           ? grantedKeywords([text ?? ""]).filter((k) => k === "haste" || k === "double strike") : [];
         const grants = [...new Set([...granted, ...doubled])];
         if (grants.length > 0) abilities[i] = { ...abilities[i], grants };
+      }
+      // WHICH TYPE A TYPE-GRANT HANDS OUT (#1568, owner ruling 2026-11-08): a whole non-creature class that becomes Foods pairs with the cards that use Foods, so the granted type is kept beside the recipient.
+      if (abilities[i].effect?.kind === "type-grant") {
+        const grantsType = grantedTypeOf(text);
+        if (grantsType) abilities[i] = { ...abilities[i], grantsType };
       }
       const reduces = abilities[i].effect?.kind === "cost-reduction" ? reductionOf(text ?? "", abilities[i].amount) : undefined;
       if (reduces) abilities[i] = { ...abilities[i], reduces };

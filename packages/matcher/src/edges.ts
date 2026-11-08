@@ -3194,6 +3194,23 @@ const OFF_BATTLEFIELD_GRANTS: ReadonlySet<string> = new Set([
   "emerge", "replicate", "rebound", "casualty", "cleave", "overload", "bestow", "prowl", "spectacle", "suspend", "surge", "kicker", "multikicker", "entwine", "buyback", "splice", "flash", "aftermath",
 ]);
 
+/** A TYPE-GRANT OVER A WHOLE NON-CREATURE CLASS (owner ruling 2026-11-08, #1568): "artifacts you control are Foods / Clues / Equipment in addition to their other types" (Gourmand's Talent, Ragost, Senator Peacock, Dan Lewis).
+ *  The recipient is a class of artifacts, lands or enchantments with no subtype and no single host. */
+function wholeNonCreatureClass(s: SubjectFilter): boolean {
+  const types = Array.isArray(s.type) ? s.type : s.type ? [s.type] : [];
+  return (s.scope === "all" || s.scope === "each") && s.subtype === undefined && types.length > 0 && !types.includes("creature") && s.self !== true;
+}
+/** Does the card USE the type `granted` (derived data only): a trigger on it ("Whenever you sacrifice a Clue"), a cost that sacrifices it ("Sacrifice a Food"), a count of it, or a lord over it ("Foods you control have ...").
+ *  A card that only MAKES the type (a create-token effect) or merely is one does not use it. */
+export function usesGrantedType(tags: CardTags, granted: string): boolean {
+  const names = (s: Partial<SubjectFilter> | undefined): boolean => s !== undefined && s.self !== true && (Array.isArray(s.subtype) ? s.subtype : s.subtype ? [s.subtype] : []).includes(granted);
+  // A MAKER IS NOT A USER: a token-generation effect, or a replacement on creating the type (Academy Manufactor), is fed by a Food maker and uses no granted Food.
+  return tags.abilities.filter((a) => a.effect.kind !== "token-generation" && a.effect.kind !== "token-doubling" && a.trigger?.verbs.includes("create-token") !== true && a.emits?.some((e) => e.verb === "create-token") !== true)
+    .some((a) => names(a.trigger?.subject) || names(a.effect.scalingSubject) || names(a.thresholdSubject)
+    || a.payment?.sacrifice?.some((x) => names(x.subject)) === true
+    || (a.effect.kind !== "create-token" && a.effect.kind !== "type-grant" && names(a.effect.subject)));
+}
+
 function staticEdges({ p, c, h, reasons }: PairScope): void {
   const staticClaim = (c: DeckCard, a: CardTags["abilities"][number]): Reason | undefined => {
     if (!c.tags) return undefined;
@@ -3266,6 +3283,19 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
     // self-trigger gate depends on, and widening it there is exactly how the `entersTapped` strip
     // silently deleted 29 real claims.
     if (a.effect.subject.self === true) return undefined;
+    // A TYPE HANDED TO A WHOLE NON-CREATURE CLASS PAIRS WITH THE CARDS THAT USE THAT TYPE, NOT WITH EVERY RECIPIENT (owner ruling 2026-11-08, #1568): Gourmand's Talent pairs with Food payoffs, not with Sol Ring.
+    // Creature classes (Maskwood Nexus) stay literal: they pair with every creature they reach.
+    if (a.effect.kind === "type-grant" && a.grantsType !== undefined && wholeNonCreatureClass(a.effect.subject)) {
+      if (!usesGrantedType(c.tags, a.grantsType)) return undefined;
+      return {
+        tag: "static:type-grant",
+        text: `${p.card.name} makes your permanents ${a.grantsType === "equipment" ? "Equipment" : `${a.grantsType[0]!.toUpperCase()}${a.grantsType.slice(1)}s`}, and ${c.card.name} uses that type`,
+        effectKind: "type-grant",
+        repeatability: "static",
+        consumer: c.card.name,
+        producer: p.card.name,
+      };
+    }
     // A counter-presence condition ("creatures you control WITH a +1/+1 counter") is a BOARD STATE,
     // not a printed characteristic, and this pass matches against the type line. Demanding it here
     // deletes the edge outright -- Sludge Monster's anthem stopped reaching anything. The dedicated
