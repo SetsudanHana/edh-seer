@@ -11202,6 +11202,7 @@
        "type": "land"
       }
      },
+     "grantsType": "swamp",
      "kind": "static",
      "repeats": "continuous"
     }
