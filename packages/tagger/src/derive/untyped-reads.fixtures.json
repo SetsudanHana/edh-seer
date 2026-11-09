@@ -1,0 +1,885 @@
+{
+ "Cut the Tethers": {
+  "source": {
+   "_id": "9af9b8de-eff6-48da-979b-4125e7965a11",
+   "name": "Cut the Tethers",
+   "typeLine": "Sorcery",
+   "oracleText": "For each Spirit, return it to its owner's hand unless that player pays {3}.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": [
+     "tribe:spirit"
+    ]
+   },
+   "manaCost": "{2}{U}{U}",
+   "layout": "normal",
+   "releasedAt": "2004-10-01",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false,
+      "unless": {
+       "cost": "{3}",
+       "payer": "controller"
+      }
+     }
+    ]
+   }
+  ],
+  "segmentHash": "7de23f410c125f8bb416f747aba0dd46708b7ef6c65fa660412791fb417c3fda"
+ },
+ "Slogurk, the Overslime": {
+  "source": {
+   "_id": "cee836f1-87a4-43db-a6ea-55575a4ce781",
+   "name": "Slogurk, the Overslime",
+   "typeLine": "Legendary Creature — Ooze",
+   "oracleText": "Trample\nWhenever a land card is put into your graveyard from anywhere, put a +1/+1 counter on Slogurk.\nRemove three +1/+1 counters from Slogurk: Return it to its owner's hand.\nWhen Slogurk leaves the battlefield, return up to three target land cards from your graveyard to your hand.",
+   "keywords": [
+    "Trample"
+   ],
+   "colors": [
+    "G",
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G",
+    "U"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "tags": {
+    "produces": [
+     "counter:+1/+1",
+     "graveyard",
+     "tribe:ooze",
+     "tribe-nontoken:ooze"
+    ],
+    "cares": [
+     "graveyard"
+    ]
+   },
+   "manaCost": "{1}{G}{U}",
+   "layout": "normal",
+   "releasedAt": "2021-09-24",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "put-into-graveyard",
+     "subject": "a land card",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "Slogurk",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "up to three target land cards",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "bbcbca6b8ac3b28d69c7487ca12d4a7b3c79e367fe36c8da02d30b0db63806bd"
+ },
+ "Mutant Chain Reaction": {
+  "source": {
+   "_id": "ea9fc868-374b-4acc-be0d-4283907b4524",
+   "name": "Mutant Chain Reaction",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy up to one target artifact, enchantment, or creature with flying. Create a Mutagen token. (It's an artifact with \"{1}, {T}, Sacrifice this token: Put a +1/+1 counter on target creature. Activate only as a sorcery.\")",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "counter:+1/+1",
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "releasedAt": "2026-03-06",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Mutagen",
+     "typeLine": "Token Artifact — Mutagen",
+     "printingId": "6559c423-449c-4e8e-8384-3ce78183e317"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "up to one target artifact, enchantment, or creature with flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "create",
+      "object": "a Mutagen token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "5e6d4a3c3e1e8658cafb7c40393927202be26855856b583d7cdc1d14634c9bb2"
+ },
+ "Shower of Arrows": {
+  "source": {
+   "_id": "efcbca5a-743c-4b16-a7cf-b07335b31ced",
+   "name": "Shower of Arrows",
+   "typeLine": "Instant",
+   "oracleText": "Destroy target artifact, enchantment, or creature with flying. Scry 1.",
+   "keywords": [
+    "Scry"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "removal",
+     "cast:instant"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "releasedAt": "2023-06-23",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target artifact, enchantment, or creature with flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "scry",
+      "object": "1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "37fef5d7a8e3b75705fabd6701091c530f2b17bb6e5f8de62bab33d1d2db090e"
+ },
+ "Vivien Reid": {
+  "source": {
+   "_id": "b5f20a6d-8c3e-452f-9d98-4886f0fa052a",
+   "name": "Vivien Reid",
+   "typeLine": "Legendary Planeswalker — Vivien",
+   "oracleText": "+1: Look at the top four cards of your library. You may reveal a creature or land card from among them and put it into your hand. Put the rest on the bottom of your library in a random order.\n−3: Destroy target artifact, enchantment, or creature with flying.\n−8: You get an emblem with \"Creatures you control get +2/+2 and have vigilance, trample, and indestructible.\"",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "removal"
+    ],
+    "cares": []
+   },
+   "manaCost": "{3}{G}{G}",
+   "layout": "normal",
+   "releasedAt": "2024-11-15",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Vivien Reid",
+     "typeLine": "Legendary Planeswalker — Vivien",
+     "printingId": "162a3a3b-257e-46c7-bb29-65627b00363d"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Vivien Reid Emblem",
+     "typeLine": "Emblem — Vivien",
+     "printingId": "a804d502-1092-4ff3-93d9-d1b0ac0f07d5"
+    }
+   ],
+   "loyalty": "5"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "a creature or land card",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target artifact, enchantment, or creature with flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "emblem",
+      "object": "Creatures you control get +2/+2 and have vigilance, trample, and indestructible",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "e9fc1704a4ad6c5d160493723cdbdd81993f2b80b9aadf53c086377bfc97767b"
+ },
+ "Atraxa's Fall": {
+  "source": {
+   "_id": "22677153-bd87-4ff8-af92-ced4da2aac6c",
+   "name": "Atraxa's Fall",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy target artifact, battle, enchantment, or creature with flying.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "removal",
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{G}",
+   "layout": "normal",
+   "releasedAt": "2023-04-21",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target artifact, battle, enchantment, or creature with flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "403919ee07cf1ab47f646d3172fe9493ea97d196dc458b2e56beee1f98f5b75e"
+ },
+ "Shoot Down": {
+  "source": {
+   "_id": "2a89feeb-9e66-4539-bd75-7d9d53f52d49",
+   "name": "Shoot Down",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile target artifact, enchantment, or creature with flying.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "removal",
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "manaCost": "{3}{G}",
+   "layout": "normal",
+   "releasedAt": "2022-11-18",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target artifact, enchantment, or creature with flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "d3010e70dbf8ae7eeae88856c3f8acb43fbb734dd59ca115f2128d70efe9642e"
+ },
+ "Storm, Shaker of Skies": {
+  "source": {
+   "_id": "5d936655-8e46-4e30-8f9c-4fa1a4d34a17",
+   "name": "Storm, Shaker of Skies",
+   "typeLine": "Legendary Creature — Mutant Hero",
+   "oracleText": "Flying\nWhen Storm enters, destroy up to one target artifact, enchantment, or creature with flying.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "4",
+   "toughness": "3",
+   "tags": {
+    "produces": [
+     "tribe:mutant",
+     "tribe-nontoken:mutant",
+     "tribe:hero",
+     "tribe-nontoken:hero"
+    ],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "manaCost": "{4}{G}{G}",
+   "layout": "normal",
+   "releasedAt": "2026-06-26",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Storm, Shaker of Skies",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "up to one target artifact, enchantment, or creature with flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "bdf303bb576912493d7004ba9f0b522318bc9e16f4ba38fb9edd560793347a9e"
+ },
+ "Spellpyre Phoenix": {
+  "source": {
+   "_id": "a86710da-e498-4ca1-832c-8ba4abd6fa46",
+   "name": "Spellpyre Phoenix",
+   "typeLine": "Creature — Phoenix",
+   "oracleText": "Flying\nWhen this creature enters, you may return target instant or sorcery card with a cycling ability from your graveyard to your hand.\nAt the beginning of each end step, if you cycled two or more cards this turn, return this card from your graveyard to your hand.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "4",
+   "toughness": "2",
+   "tags": {
+    "produces": [
+     "tribe:phoenix",
+     "tribe-nontoken:phoenix"
+    ],
+    "cares": [
+     "graveyard"
+    ]
+   },
+   "manaCost": "{3}{R}{R}",
+   "layout": "normal",
+   "releasedAt": "2020-04-17",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target instant or sorcery card with a cycling ability",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "you cycled two or more cards this turn",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "this card",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "b12de037191dfcd17ddb97e5c56cb43b0043ce804ed94fa2a005b58c2960a9a8"
+ },
+ "Thraben Exorcism": {
+  "source": {
+   "_id": "b43e25d8-1c8b-4316-84f3-c4ec6f77092e",
+   "name": "Thraben Exorcism",
+   "typeLine": "Instant",
+   "oracleText": "Exile target Spirit, creature with disturb, or enchantment.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:instant"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "releasedAt": "2021-09-24",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target Spirit, creature with disturb, or enchantment",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "12e46e7356f131df841604319f29cdfffb3b81d9113b4d9da7f7514f4885ebb0"
+ },
+ "Whirler Rogue": {
+  "source": {
+   "_id": "7060f2c8-fca0-4b7a-bddf-37682f434596",
+   "name": "Whirler Rogue",
+   "typeLine": "Creature — Human Rogue Artificer",
+   "oracleText": "When this creature enters, create two 1/1 colorless Thopter artifact creature tokens with flying.\nTap two untapped artifacts you control: Target creature can't be blocked this turn.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "tags": {
+    "produces": [
+     "token",
+     "creature-etb",
+     "sacrifice-fodder",
+     "tribe:human",
+     "tribe-nontoken:human",
+     "tribe:rogue",
+     "tribe-nontoken:rogue",
+     "tribe:artificer",
+     "tribe-nontoken:artificer"
+    ],
+    "cares": [
+     "artifact"
+    ]
+   },
+   "manaCost": "{2}{U}{U}",
+   "layout": "normal",
+   "releasedAt": "2024-04-19",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Thopter",
+     "typeLine": "Token Artifact Creature — Thopter",
+     "printingId": "bbac8690-2b00-4afe-8a2d-8e10c34843fc"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "two 1/1 colorless Thopter artifact creature tokens with flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "be blocked",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "c34875943c3fa944c1346f59d346d807dcaf16db2da70f21887ff18863ce121d"
+ },
+ "Sorceress's Schemes": {
+  "source": {
+   "_id": "945e56b9-709f-4bb3-8a6b-0a04d9202a03",
+   "name": "Sorceress's Schemes",
+   "typeLine": "Sorcery",
+   "oracleText": "Return target instant or sorcery card from your graveyard or exiled card with flashback you own to your hand. Add {R}.\nFlashback {4}{R} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+   "keywords": [
+    "Flashback"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana",
+     "cast:sorcery"
+    ],
+    "cares": [
+     "graveyard"
+    ]
+   },
+   "manaCost": "{3}{R}",
+   "producedMana": [
+    "R"
+   ],
+   "layout": "normal",
+   "releasedAt": "2025-06-13",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target instant or sorcery card from your graveyard or exiled card with flashback you own",
+      "fromZone": null,
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{R}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flashback {4}{R}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "1c3bbc57f8e712b1ff21f6d64eff365cb97d5541a000e793ce0774ff72f07bc2"
+ },
+ "Broken Wings": {
+  "source": {
+   "_id": "5e316864-d55c-496f-8f46-773567896864",
+   "name": "Broken Wings",
+   "typeLine": "Instant",
+   "oracleText": "Destroy target artifact, enchantment, or creature with flying.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "removal",
+     "cast:instant"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "releasedAt": "2025-02-14",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target artifact, enchantment, or creature with flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "4cdb5f360a099ac7c4b633dbd129e194c2b08b28cda50046711ff4925a968ef5"
+ }
+}

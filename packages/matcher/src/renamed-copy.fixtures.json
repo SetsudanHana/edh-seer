@@ -1,0 +1,374 @@
+{
+ "Ludevic, Necrogenius // Olag, Ludevic's Hubris": {
+  "source": {
+   "_id": "f6f684f6-0c8a-4676-ba4e-d3e064293128",
+   "name": "Ludevic, Necrogenius // Olag, Ludevic's Hubris",
+   "typeLine": "Legendary Creature — Human Wizard // Legendary Creature — Zombie",
+   "oracleText": "Whenever Ludevic enters or attacks, mill a card.\n{X}{U}{U}{B}{B}, Exile X creature cards from your graveyard: Transform Ludevic. X can't be 0. Activate only as a sorcery.\n//\nAs this creature transforms into Olag, Ludevic's Hubris, it becomes a copy of a creature card exiled with it, except its name is Olag, Ludevic's Hubris, it's 4/4, and it's a legendary blue and black Zombie in addition to its other colors and types. Put a number of +1/+1 counters on Olag equal to the number of creature cards exiled with it.",
+   "keywords": [
+    "Transform",
+    "Mill"
+   ],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "counter:+1/+1",
+     "graveyard",
+     "tribe:human",
+     "tribe-nontoken:human",
+     "tribe:wizard",
+     "tribe-nontoken:wizard",
+     "tribe:legendary",
+     "tribe-nontoken:legendary",
+     "tribe:creature",
+     "tribe-nontoken:creature",
+     "tribe:—",
+     "tribe-nontoken:—",
+     "tribe:zombie",
+     "tribe-nontoken:zombie",
+     "attack-trigger"
+    ],
+    "cares": [
+     "graveyard"
+    ]
+   },
+   "layout": "transform",
+   "releasedAt": "2021-09-24",
+   "gameChanger": false,
+   "reserved": false,
+   "faces": [
+    {
+     "name": "Ludevic, Necrogenius",
+     "typeLine": "Legendary Creature — Human Wizard",
+     "oracleText": "Whenever Ludevic enters or attacks, mill a card.\n{X}{U}{U}{B}{B}, Exile X creature cards from your graveyard: Transform Ludevic. X can't be 0. Activate only as a sorcery.",
+     "colors": [
+      "B",
+      "U"
+     ],
+     "manaCost": "{U}{B}",
+     "power": "2",
+     "toughness": "3",
+     "artCrop": "https://cards.scryfall.io/art_crop/front/7/8/788288f6-7944-48f4-91b0-f452e209c9ce.jpg?1783925561"
+    },
+    {
+     "name": "Olag, Ludevic's Hubris",
+     "typeLine": "Legendary Creature — Zombie",
+     "oracleText": "As this creature transforms into Olag, Ludevic's Hubris, it becomes a copy of a creature card exiled with it, except its name is Olag, Ludevic's Hubris, it's 4/4, and it's a legendary blue and black Zombie in addition to its other colors and types. Put a number of +1/+1 counters on Olag equal to the number of creature cards exiled with it.",
+     "colors": [
+      "B",
+      "U"
+     ],
+     "manaCost": "",
+     "power": "4",
+     "toughness": "4",
+     "colorIndicator": [
+      "B",
+      "U"
+     ],
+     "artCrop": "https://cards.scryfall.io/art_crop/back/7/8/788288f6-7944-48f4-91b0-f452e209c9ce.jpg?1783925561"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Ludevic",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "Ludevic",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "X creature cards from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": "X",
+      "optional": false
+     },
+     {
+      "verb": "transform",
+      "object": "Ludevic",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "a creature card exiled with it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "modify-pt",
+      "object": "Olag, Ludevic's Hubris",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "4/4",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "legendary blue and black Zombie in addition to its other colors and types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the number of creature cards exiled with it",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "60facc5344c8b63cb5cc00f6121a878a937fc631de307d7632d79208f2609533"
+ },
+ "Child of Alara": {
+  "source": {
+   "_id": "70dbe8a9-505d-41c2-9b5b-a991d13ab459",
+   "name": "Child of Alara",
+   "typeLine": "Legendary Creature — Avatar",
+   "oracleText": "Trample\nWhen Child of Alara dies, destroy all nonland permanents. They can't be regenerated.",
+   "keywords": [
+    "Trample"
+   ],
+   "colors": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "tags": {
+    "produces": [
+     "tribe:avatar",
+     "tribe-nontoken:avatar"
+    ],
+    "cares": []
+   },
+   "manaCost": "{W}{U}{B}{R}{G}",
+   "layout": "normal",
+   "releasedAt": "2022-07-08",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "Child of Alara",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all nonland permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "751e398039ff9b0c8511a2aa6c955c96f34403f29e6d7f99b4c1a94038736c1a"
+ },
+ "Sakashima the Impostor": {
+  "source": {
+   "_id": "a7243d25-22a2-4df5-adaf-1f40f5330ec1",
+   "name": "Sakashima the Impostor",
+   "typeLine": "Legendary Creature — Human Rogue",
+   "oracleText": "You may have Sakashima the Impostor enter as a copy of any creature on the battlefield, except its name is Sakashima the Impostor, it's legendary in addition to its other types, and it has \"{2}{U}{U}: Return Sakashima the Impostor to its owner's hand at the beginning of the next end step.\"",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "3",
+   "toughness": "1",
+   "tags": {
+    "produces": [
+     "tribe:human",
+     "tribe-nontoken:human",
+     "tribe:rogue",
+     "tribe-nontoken:rogue"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{U}{U}",
+   "layout": "normal",
+   "releasedAt": "2005-06-03",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "any creature on the battlefield",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "Sakashima the Impostor",
+      "toZone": "hand",
+      "optional": false,
+      "fromZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "3029e858dbda521f9c46b86c09600745f9234f384e019a5076cb0ce68d6de295"
+ },
+ "Clone": {
+  "source": {
+   "_id": "42226b87-0746-4ebf-9fd0-108d508462af",
+   "name": "Clone",
+   "typeLine": "Creature — Shapeshifter",
+   "oracleText": "You may have this creature enter as a copy of any creature on the battlefield.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "0",
+   "toughness": "0",
+   "tags": {
+    "produces": [
+     "tribe:shapeshifter",
+     "tribe-nontoken:shapeshifter"
+    ],
+    "cares": []
+   },
+   "manaCost": "{3}{U}",
+   "layout": "normal",
+   "releasedAt": "2013-07-19",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "any creature on the battlefield",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ee414ff3a7597ca4dc21470d0090f177b400ee233250c005ab8cfc75b12dcba7"
+ }
+}

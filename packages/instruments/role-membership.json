@@ -3370,6 +3370,7 @@
 "Cut a Deal": ["role:draw"],
 "Cut of the Profits": ["role:draw"],
 "Cut the Earthly Bond": ["answer:artifact","answer:creature","answer:enchantment","answer:land","answer:planeswalker","role:targetedRemoval"],
+"Cut the Tethers": ["role:boardWipe"],
 "Cutthroat Negotiator": ["role:draw","role:ramp"],
 "Cybernetica Datasmith": ["role:draw","wincon:go-wide"],
 "Cybership": ["wincon:go-wide"],

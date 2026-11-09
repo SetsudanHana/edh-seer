@@ -12,7 +12,7 @@ import { normalizeZoneEvent, tagKey, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { baseSetStrength, nodePower, pairsAsUpgrade, powerNeeds, raisedToken, readsPower } from "./base-pt-set.js";
 import { hasMediatingToken } from "./tokens.js";
-import { auraReachContext, eventReachesAura, removalReachesAura } from "./aura-reach.js";
+import { auraReachContext, eventReachesAura, namesAClass, removalReachesAura } from "./aura-reach.js";
 import {
   copySentence, costReductionSentence, temporaryCopySentence, counterPresenceSentence, createsSentence,
   enterAsCopySentence, entersAsCopyOfSentence, fetchSentence, proliferateSentence, counterCostSentence, effectPhrase, phraseKindOf, creatureConditionSentence,
@@ -1046,9 +1046,9 @@ function exilesOnlyBlockCounterparts(oracleText: string | undefined): boolean {
   return exiles.length > 0 && exiles.every((x) => x.includes("blocking or blocked by") || x.includes("blocked by"));
 }
 
-/** A recursion restricted to cards the consumer's OWN earlier action put in the graveyard. */
+/** A recursion restricted to cards the consumer's OWN earlier action put in the graveyard. "From among the cards milled this way" (Szarekh, the Silent King: it takes an artifact creature card of ITS mill; 10 corpus cards print that shape, #1577) is the same set. */
 const recursionIsSelfSupplied = (oracleText: string | undefined): boolean =>
-  /\bfrom among (?:those|them)\b|\bput into (?:a|your|their|its owner's) graveyard this way\b|\bput there [^.]{0,30}this turn\b|\bfrom the battlefield this turn\b/i
+  /\bfrom among (?:those|them)\b|\bfrom among the cards [a-z ]{0,20}this way\b|\bamong (?:the )?cards? (?:milled|discarded|revealed|exiled) this way\b|\bput into (?:a|your|their|its owner's) graveyard this way\b|\bput there [^.]{0,30}this turn\b|\bfrom the battlefield this turn\b/i
     .test(oracleText ?? "");
 
 /** An UNTYPED recursion on an ability that carries its own graveyard-entry trigger: it returns the
@@ -2103,14 +2103,14 @@ function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abiliti
  *  itself: it counts when `eventReachesAura` says it could take the Aura off the battlefield (the rules of the host route, aura-reach.ts), and the trigger is then judged without its subtype and control. The self-identity gate
  *  (`subjectMatches` on the Aura's printed characteristics) and every other `eventMatches` gate still run on it. Returns the event to use, or null.
  *  CEILING: only an Aura's own trigger (not a granted one) with the subtype `aura` and a leave or death verb; an event that already matches as printed (a "destroy target Aura") is not touched; a stated subtype on the event is held against the Aura;
- *  the printed opponent-only cue list is the host route's ("that player controls" after a combat-damage trigger, "defending player controls" are not on it, so Aberrant, Dawning Purist and Kogla keep their pair); an untyped removal pairs nothing here (the host route still reads it). */
+ *  the printed opponent-only cue list is the host route's ("defending player controls" and a "that player controls" the sentence itself ties to an opponent or to our own dealer are on it since #1577: Aberrant, Dawning Purist; Kogla keeps its pair through the whole-card cue reading, its "Return target Human you control" is a target of yours; a dealer named by the card's name is not read); an untyped removal pairs nothing here, and since #1577 nothing on the host route either (`namesAClass`). */
 function auraOwnLeaves(chars: CardTags["characteristics"], a: CardTags["abilities"][number], e: GameEvent, t: GameEvent, h: Hierarchy, producer: readonly GameEvent[], producerText: string): boolean {
   if (chars.enchants === undefined || a.grantedBy !== undefined || t.subject.self !== true || (t.verb !== "dies" && t.verb !== "leaves")) return false;
   if (!list(t.subject.subtype).includes("aura") || list(t.subject.type).length > 0) return false;
   // THE EVENT NAMES A CLASS, AND THE WHOLE OF IT. An untyped removal (a bare "it": Bomb Squad's destroy, Cut the Tethers' return of a Spirit) states no class that could be an Aura, and a `selection` (a named set, "all but the chosen",
   // a vote, a pile) is a part of the class the engine cannot test: neither reaches an Aura.
   const s = e.subject;
-  if (s.selection !== undefined || !(s.type !== undefined || s.subtype !== undefined || (s.anyOf ?? []).some((b) => b.type !== undefined || b.subtype !== undefined))) return false;
+  if ((s.selection !== undefined && s.selection !== "counted") || !namesAClass(s)) return false;
   const aura = characteristicsSubject({ characteristics: chars } as CardTags);
   if (!eventReachesAura(e, auraReachContext(producer, producerText, aura), aura, h)) return false;
   const { subtype: _aura, ...rest } = t.subject;
@@ -4418,6 +4418,10 @@ function counterCostEdges({ p, c, h, pEvents, reasons }: PairScope): void {
 // ability's own `temporary` departure (DERIVE 173), not guessed; it repeats as that ability does.
 /** "Enter(s) as a copy of" -- a clone permanent, never a token copy or a "becomes a copy". */
 const ENTERS_AS_COPY_CUE = /\benters? as a copy of\b/i;
+/** A RENAMED COPY IS NOT A SECOND LEGEND (#1577, CR 704.5j: the legend rule is about two legendary permanents with the same NAME). "..., except its name is Sakashima the Impostor" / "except its name is Olag, Ludevic's Hubris" gives the copy another name, so a copied
+ *  Child of Alara and the original are two different names and nothing goes to the graveyard.
+ *  CEILING: read off the printed text of the whole card, and only the legend-rule death is withheld (an entry trigger, a temporary copy's departure, the clone's own edge keep their claims). */
+const RENAMED_COPY_CUE = /\bexcept (?:its|their) name is\b/i;
 function copyFamilyEdges({ p, c, h, reasons }: PairScope): void {
   const copy = copySubject(p);
   // A CLONE LINKS TO WHAT IT CAN COPY (owner ruling 2026-09-28, #712): "a weak but real edge" --
@@ -4470,6 +4474,7 @@ function copyFamilyEdges({ p, c, h, reasons }: PairScope): void {
           // pass the day the twin existed.
           if (rawVerb === "enters" && a.trigger.subject.fromZone !== undefined) continue;
           if (rawVerb === "dies" && !legendary && !departs) continue;
+          if (rawVerb === "dies" && !departs && RENAMED_COPY_CUE.test(p.card.oracleText ?? "")) continue;
           const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
           const byLegendRule = rawVerb === "dies" && legendary;
           if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), copy.subject, h)) continue;

@@ -1,0 +1,2205 @@
+{
+ "Dreadhound": {
+  "source": {
+   "_id": "5ed533a7-82b0-4a71-a9e9-4dffe9d18851",
+   "name": "Dreadhound",
+   "typeLine": "Creature — Demon Dog",
+   "oracleText": "When this creature enters, mill three cards. (Put the top three cards of your library into your graveyard.)\nWhenever a creature dies or a creature card is put into a graveyard from a library, each opponent loses 1 life.",
+   "keywords": [
+    "Mill"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "tags": {
+    "produces": [
+     "graveyard",
+     "tribe:demon",
+     "tribe-nontoken:demon",
+     "tribe:dog",
+     "tribe-nontoken:dog"
+    ],
+    "cares": [
+     "creature-death",
+     "sacrifice-event",
+     "ramp"
+    ]
+   },
+   "manaCost": "{4}{B}{B}",
+   "layout": "normal",
+   "releasedAt": "2021-09-24",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "a creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "put-into-graveyard",
+     "subject": "a creature card from a library",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "1e90bd1a3a525631b1eb1d6ef41a232b837d5a395318be496b8d2638f92f8f87"
+ },
+ "Kindred Discovery": {
+  "source": {
+   "_id": "005ee549-1bf5-478f-bc3f-3e791bd7eecf",
+   "name": "Kindred Discovery",
+   "typeLine": "Enchantment",
+   "oracleText": "As this enchantment enters, choose a creature type.\nWhenever a creature you control of the chosen type enters or attacks, draw a card.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "card-draw",
+     "enchantment",
+     "attack-trigger"
+    ],
+    "cares": [
+     "tribe:*"
+    ]
+   },
+   "manaCost": "{3}{U}{U}",
+   "layout": "normal",
+   "releasedAt": "2026-06-26",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a creature you control of the chosen type",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "a creature you control of the chosen type",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "1b6d915a7a870f11704175fdac64fcd9cbef26846b1385099ab0c5fa72e60e42"
+ },
+ "Elemental Expressionist": {
+  "source": {
+   "_id": "dfc45c58-821c-42f3-ab48-05b912748bdf",
+   "name": "Elemental Expressionist",
+   "typeLine": "Creature — Orc Wizard",
+   "oracleText": "Magecraft — Whenever you cast or copy an instant or sorcery spell, choose target creature you control. Until end of turn, it gains \"If this creature would leave the battlefield, exile it instead of putting it anywhere else\" and \"When this creature is put into exile, create a 4/4 blue and red Elemental creature token.\" (Each instance of that ability triggers separately.)",
+   "keywords": [
+    "Magecraft"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "tags": {
+    "produces": [
+     "token",
+     "creature-etb",
+     "sacrifice-fodder",
+     "tribe:orc",
+     "tribe-nontoken:orc",
+     "tribe:wizard",
+     "tribe-nontoken:wizard",
+     "tribe:elemental"
+    ],
+    "cares": [
+     "cast:instant",
+     "cast:sorcery"
+    ]
+   },
+   "manaCost": "{U/R}{U/R}{U/R}{U/R}",
+   "layout": "normal",
+   "releasedAt": "2021-04-23",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Elemental Expressionist",
+     "typeLine": "Creature — Orc Wizard",
+     "printingId": "34b6e53f-f605-430e-9455-b3653cbd8e1d"
+    },
+    {
+     "component": "token",
+     "name": "Elemental",
+     "typeLine": "Token Creature — Elemental",
+     "printingId": "3d0b9b88-705e-4df0-8a93-3e240b81355b"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant or sorcery spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "target creature you control gains \"If this creature would leave the battlefield, exile it instead of putting it anywhere else\"",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "copy",
+     "subject": "an instant or sorcery spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "target creature you control gains \"If this creature would leave the battlefield, exile it instead of putting it anywhere else\"",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "exiled",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 4/4 blue and red Elemental creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "09716d74eb39066c934854809390039f394e5e2250bb0f2a445a0cdb3f786a9c"
+ },
+ "Kaya's Ghostform": {
+  "source": {
+   "_id": "b15c6203-6311-44eb-916d-a4c271960c74",
+   "name": "Kaya's Ghostform",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature or planeswalker you control\nWhen enchanted permanent dies or is put into exile, return that card to the battlefield under your control.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "enchantment",
+     "aura"
+    ],
+    "cares": []
+   },
+   "manaCost": "{B}",
+   "layout": "normal",
+   "releasedAt": "2019-05-03",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature or planeswalker you control",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "enchanted permanent",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "that card",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "exiled",
+     "subject": "enchanted permanent",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "8433373b7200f18506f1235a2d31c5f3b72d6e4ac69e282d49878e58c612047d"
+ },
+ "Lumbering Worldwagon": {
+  "source": {
+   "_id": "7e60a641-1f2d-45ff-b3f2-d389be938b22",
+   "name": "Lumbering Worldwagon",
+   "typeLine": "Artifact — Vehicle",
+   "oracleText": "This Vehicle's power is equal to the number of lands you control.\nWhenever this Vehicle enters or attacks, you may search your library for a basic land card, put it onto the battlefield tapped, then shuffle.\nCrew 4",
+   "keywords": [
+    "Crew"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "*",
+   "toughness": "4",
+   "tags": {
+    "produces": [
+     "ramp",
+     "land-etb",
+     "mana",
+     "attack-trigger"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "releasedAt": "2025-02-14",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this, power equals the number of lands you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this Vehicle",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a basic land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this Vehicle",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a basic land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Crew 4",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "1f087fecd383a5aa00641904bfeba57276a26eeacded83d67290f5b41d311367"
+ },
+ "Fear of Sleep Paralysis": {
+  "source": {
+   "_id": "a3a1f149-febe-4ff6-9e34-8b82ef21c2ee",
+   "name": "Fear of Sleep Paralysis",
+   "typeLine": "Enchantment Creature — Nightmare",
+   "oracleText": "Flying\nEerie — Whenever this creature or another enchantment you control enters and whenever you fully unlock a Room, tap up to one target creature and put a stun counter on it.\nStun counters can't be removed from permanents your opponents control. (They won't untap if they have stun counters.)",
+   "keywords": [
+    "Flying",
+    "Eerie"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "tags": {
+    "produces": [
+     "tribe:nightmare",
+     "tribe-nontoken:nightmare",
+     "enchantment"
+    ],
+    "cares": [
+     "ramp",
+     "enchantment"
+    ]
+   },
+   "manaCost": "{5}{U}",
+   "layout": "normal",
+   "releasedAt": "2024-09-27",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature or another enchantment you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "up to one target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "add-counter",
+      "object": "stun",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "stun counters be removed from permanents your opponents control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "unlocked",
+     "subject": "you fully unlock a Room",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "up to one target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "add-counter",
+      "object": "stun",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "c39d5f6bbabb40c2ea06e7f9b9bee99eee3869f8b8a9f61d58a4bc9c4e0cded8"
+ },
+ "Goldspan Dragon": {
+  "source": {
+   "_id": "716b3ea2-45b7-4a8f-af72-de7f4e510eff",
+   "name": "Goldspan Dragon",
+   "typeLine": "Creature — Dragon",
+   "oracleText": "Flying, haste\nWhenever this creature attacks or becomes the target of a spell, create a Treasure token.\nTreasures you control have \"{T}, Sacrifice this artifact: Add two mana of any one color.\"",
+   "keywords": [
+    "Flying",
+    "Treasure",
+    "Haste"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "tags": {
+    "produces": [
+     "artifact",
+     "treasure",
+     "token",
+     "mana",
+     "sacrifice-fodder",
+     "tribe:dragon",
+     "tribe-nontoken:dragon",
+     "attack-trigger"
+    ],
+    "cares": []
+   },
+   "manaCost": "{3}{R}{R}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "releasedAt": "2026-04-24",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "b4f61b5e-9c53-40b1-b93e-3ffa351ff052"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, haste",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "becomes-target",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "two mana of any one color",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "3bdb40ee9f42cd40983f0c88920f4c35e6db4834bfe7a358388dd53825f49fbe"
+ },
+ "Ultima, Origin of Oblivion": {
+  "source": {
+   "_id": "baa337ce-edc6-4ee5-a898-68e9dbb4ab93",
+   "name": "Ultima, Origin of Oblivion",
+   "typeLine": "Legendary Creature — God",
+   "oracleText": "Flying\nWhenever Ultima attacks, put a blight counter on target land. For as long as that land has a blight counter on it, it loses all land types and abilities and has \"{T}: Add {C}.\"\nWhenever you tap a land for {C}, add an additional {C}.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [],
+   "manaValue": 5,
+   "colorIdentity": [],
+   "power": "4",
+   "toughness": "4",
+   "tags": {
+    "produces": [
+     "mana",
+     "tribe:god",
+     "tribe-nontoken:god",
+     "attack-trigger"
+    ],
+    "cares": []
+   },
+   "manaCost": "{5}",
+   "producedMana": [
+    "C"
+   ],
+   "layout": "normal",
+   "releasedAt": "2025-06-13",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "blight counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be a land type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "have abilities",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "Add {C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "tapped-for-mana",
+     "subject": "a land",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "additional",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "0c3d30c6e2b746b23259be63d0ca714fc33a3c2af81a1ff2608785f0e4b176f7"
+ },
+ "Phantasmal Image": {
+  "source": {
+   "_id": "bde94af8-faea-41ff-8eed-ba642eac9968",
+   "name": "Phantasmal Image",
+   "typeLine": "Creature — Illusion",
+   "oracleText": "You may have this creature enter as a copy of any creature on the battlefield, except it's an Illusion in addition to its other types and it has \"When this creature becomes the target of a spell or ability, sacrifice it.\"",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "0",
+   "toughness": "0",
+   "tags": {
+    "produces": [
+     "tribe:illusion",
+     "tribe-nontoken:illusion"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{U}",
+   "layout": "normal",
+   "releasedAt": "2021-07-23",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "any creature on the battlefield",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "grant-ability",
+      "object": "Illusion creature type",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "grant-ability",
+      "object": "When this creature becomes the target of a spell or ability, sacrifice it",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "becomes-target",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this creature",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "209abd8c37a49b36d0922f8690d6751664fb881c2acdfb740b1095ac955d3569"
+ },
+ "Dragonhawk, Fate's Tempest": {
+  "source": {
+   "_id": "f7f435bc-1716-4412-9505-a1f2f2d83d08",
+   "name": "Dragonhawk, Fate's Tempest",
+   "typeLine": "Legendary Creature — Bird Dragon",
+   "oracleText": "Flying\nWhenever Dragonhawk enters or attacks, exile the top X cards of your library, where X is the number of creatures you control with power 4 or greater. You may play those cards until your next end step. At the beginning of your next end step, Dragonhawk deals 2 damage to each opponent for each of those cards that are still exiled.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "tags": {
+    "produces": [
+     "tribe:bird",
+     "tribe-nontoken:bird",
+     "tribe:dragon",
+     "tribe-nontoken:dragon",
+     "attack-trigger"
+    ],
+    "cares": []
+   },
+   "manaCost": "{3}{R}{R}",
+   "layout": "normal",
+   "releasedAt": "2024-08-02",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Dragonhawk",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top X cards of your library, where X is the number of creatures you control with power 4 or greater",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "play",
+      "object": "those cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2.1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "Dragonhawk",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top X cards of your library, where X is the number of creatures you control with power 4 or greater",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "play",
+      "object": "those cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "your next end step",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2 for each of those cards that are still exiled",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "97c590d2f9f0a791e0f834c9a34bd433a1d272471dda1004ca13a79fe72397cb"
+ },
+ "Sapphire Dragon // Psionic Pulse": {
+  "source": {
+   "_id": "53015c41-af2d-43e2-a690-d8877537b8dd",
+   "name": "Sapphire Dragon // Psionic Pulse",
+   "typeLine": "Creature — Dragon // Instant — Adventure",
+   "oracleText": "Flying\nWhenever this creature attacks or blocks, scry 2.\n//\nCounter target noncreature spell. (Then exile this card. You may cast the creature later from exile.)",
+   "keywords": [
+    "Scry",
+    "Flying"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "5",
+   "toughness": "6",
+   "tags": {
+    "produces": [
+     "tribe:dragon",
+     "tribe-nontoken:dragon",
+     "tribe:instant",
+     "tribe-nontoken:instant",
+     "tribe:—",
+     "tribe-nontoken:—",
+     "tribe:adventure",
+     "tribe-nontoken:adventure",
+     "attack-trigger"
+    ],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "manaCost": "{5}{U}{U} // {2}{U}",
+   "layout": "adventure",
+   "releasedAt": "2022-06-10",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "On an Adventure",
+     "typeLine": "Card",
+     "printingId": "5e289bb3-f6de-450d-9f7e-77e2e70cb7cc"
+    }
+   ],
+   "faces": [
+    {
+     "name": "Sapphire Dragon",
+     "typeLine": "Creature — Dragon",
+     "oracleText": "Flying\nWhenever this creature attacks or blocks, scry 2.",
+     "colors": [],
+     "manaCost": "{5}{U}{U}",
+     "power": "5",
+     "toughness": "6"
+    },
+    {
+     "name": "Psionic Pulse",
+     "typeLine": "Instant — Adventure",
+     "oracleText": "Counter target noncreature spell. (Then exile this card. You may cast the creature later from exile.)",
+     "colors": [],
+     "manaCost": "{2}{U}"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "scry",
+      "object": "2",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "counter-spell",
+      "object": "target noncreature spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "blocks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "scry",
+      "object": "2",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6baaf660a6fa6d946c50049a952d31fff1b786aad2e12863ee6736f21ed3f3de"
+ },
+ "Professor Onyx": {
+  "source": {
+   "_id": "9df2e909-ed13-456a-9636-7398732009a9",
+   "name": "Professor Onyx",
+   "typeLine": "Legendary Planeswalker — Liliana",
+   "oracleText": "Magecraft — Whenever you cast or copy an instant or sorcery spell, each opponent loses 2 life and you gain 2 life.\n+1: You lose 1 life. Look at the top three cards of your library. Put one of them into your hand and the rest into your graveyard.\n−3: Each opponent sacrifices a creature with the greatest power among creatures that player controls.\n−8: Each opponent may discard a card. If they don't, they lose 3 life. Repeat this process six more times.",
+   "keywords": [
+    "Magecraft"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "graveyard",
+     "lifegain"
+    ],
+    "cares": [
+     "ramp",
+     "cast:instant",
+     "cast:sorcery"
+    ]
+   },
+   "manaCost": "{4}{B}{B}",
+   "layout": "normal",
+   "releasedAt": "2024-09-27",
+   "gameChanger": false,
+   "reserved": false,
+   "loyalty": "5"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant or sorcery spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "amount": "1",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "put",
+      "object": "one of them",
+      "fromZone": "library",
+      "toZone": "hand",
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature with the greatest power among creatures that player controls",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "a card",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "amount": "3",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 101,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "copy",
+     "subject": "an instant or sorcery spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "30b3d4167515ea700399f3d0b2f4d2fe519d2161a1f210f737aa561ac453b2d8"
+ },
+ "Visage of Dread // Dread Osseosaur": {
+  "source": {
+   "_id": "7cad43df-31c9-47b5-bc05-4a0f6544b396",
+   "name": "Visage of Dread // Dread Osseosaur",
+   "typeLine": "Artifact // Creature — Dinosaur Skeleton Horror",
+   "oracleText": "When this artifact enters, target opponent reveals their hand. You choose an artifact or creature card from it. That player discards that card.\nCraft with two creatures {5}{B} ({5}{B}, Exile this artifact, Exile the two from among creatures you control and/or creature cards in your graveyard: Return this card transformed under its owner's control. Craft only as a sorcery.)\n//\nMenace\nWhenever this creature enters or attacks, you may mill two cards. (You may put the top two cards of your library into your graveyard.)",
+   "keywords": [
+    "Craft",
+    "Transform",
+    "Menace",
+    "Mill"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "graveyard",
+     "tribe:dinosaur",
+     "tribe-nontoken:dinosaur",
+     "tribe:skeleton",
+     "tribe-nontoken:skeleton",
+     "tribe:horror",
+     "tribe-nontoken:horror",
+     "attack-trigger"
+    ],
+    "cares": [
+     "graveyard"
+    ]
+   },
+   "layout": "transform",
+   "releasedAt": "2023-11-17",
+   "gameChanger": false,
+   "reserved": false,
+   "faces": [
+    {
+     "name": "Visage of Dread",
+     "typeLine": "Artifact",
+     "oracleText": "When this artifact enters, target opponent reveals their hand. You choose an artifact or creature card from it. That player discards that card.\nCraft with two creatures {5}{B} ({5}{B}, Exile this artifact, Exile the two from among creatures you control and/or creature cards in your graveyard: Return this card transformed under its owner's control. Craft only as a sorcery.)",
+     "colors": [
+      "B"
+     ],
+     "manaCost": "{1}{B}",
+     "artCrop": "https://cards.scryfall.io/art_crop/front/3/d/3d4b61c6-3e88-49f5-9e16-aa8a59653327.jpg?1783913773"
+    },
+    {
+     "name": "Dread Osseosaur",
+     "typeLine": "Creature — Dinosaur Skeleton Horror",
+     "oracleText": "Menace\nWhenever this creature enters or attacks, you may mill two cards. (You may put the top two cards of your library into your graveyard.)",
+     "colors": [
+      "B"
+     ],
+     "manaCost": "",
+     "power": "5",
+     "toughness": "4",
+     "colorIndicator": [
+      "B"
+     ],
+     "artCrop": "https://cards.scryfall.io/art_crop/back/3/d/3d4b61c6-3e88-49f5-9e16-aa8a59653327.jpg?1783913773"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "an artifact or creature card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Craft with two creatures {5}{B}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Menace",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "e8f2c5ada56c4fd5929523693ccddf72fb0b952c29b0c4ba9606689aea335310"
+ },
+ "Supernatural Stamina": {
+  "source": {
+   "_id": "65756e6d-9825-4ed6-91c4-79f1e3bd4ae5",
+   "name": "Supernatural Stamina",
+   "typeLine": "Instant",
+   "oracleText": "Until end of turn, target creature gets +2/+0 and gains \"When this creature dies, return it to the battlefield tapped under its owner's control.\"",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:instant"
+    ],
+    "cares": [
+     "creature-death",
+     "sacrifice-event"
+    ]
+   },
+   "manaCost": "{B}",
+   "layout": "normal",
+   "releasedAt": "2023-08-04",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+2/+0",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "target creature, When this creature dies, return it to the battlefield tapped under its owner's control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "this creature",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "c8efa6fed77c57d0542e9a2c2760b77e19711bfa2a381d71962e3057e9b58e8c"
+ },
+ "Urza's Saga": {
+  "source": {
+   "_id": "4c6a0c30-b547-4eff-8ff4-0ca25803c076",
+   "name": "Urza's Saga",
+   "typeLine": "Enchantment Land — Urza's Saga",
+   "oracleText": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — This Saga gains \"{T}: Add {C}.\"\nII — This Saga gains \"{2}, {T}: Create a 0/0 colorless Construct artifact creature token with 'This token gets +1/+1 for each artifact you control.'\"\nIII — Search your library for an artifact card with mana cost {0} or {1}, put it onto the battlefield, then shuffle.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "token",
+     "creature-etb",
+     "sacrifice-fodder",
+     "mana",
+     "tribe:construct",
+     "enchantment"
+    ],
+    "cares": [
+     "artifact"
+    ]
+   },
+   "manaCost": "",
+   "producedMana": [
+    "C"
+   ],
+   "layout": "saga",
+   "releasedAt": "2021-06-18",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Urza's Saga",
+     "typeLine": "Enchantment Land — Urza's Saga",
+     "printingId": "2138dfbb-a4e3-49db-b908-95d0b2b7e82f"
+    },
+    {
+     "component": "token",
+     "name": "Construct",
+     "typeLine": "Token Artifact Creature — Construct",
+     "printingId": "a7caaf39-8f16-4f1d-bee6-a45674306319"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "I",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "an activated ability that taps this Saga for {C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "II",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "an activated ability that costs {2} and tap, create a 0/0 colorless Construct artifact creature token with 'This token gets +1/+1 for each artifact you control.'",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 0/0 colorless Construct artifact creature token with 'This token gets +1/+1 for each artifact you control.'",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 6,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "III",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for an artifact card with mana cost {0} or {1}",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6b603df327f4b93caa8db429fd6ef20634d48ecd1475fcef98bcc2af61a7e7f0"
+ },
+ "Tetzin, Gnome Champion // The Golden-Gear Colossus": {
+  "source": {
+   "_id": "e12b38e5-621b-4b2c-8c04-c15c41d4fc70",
+   "name": "Tetzin, Gnome Champion // The Golden-Gear Colossus",
+   "typeLine": "Legendary Artifact Creature — Gnome // Legendary Artifact Creature — Gnome",
+   "oracleText": "Whenever Tetzin or another double-faced artifact you control enters, mill three cards. You may put an artifact card from among them into your hand.\nCraft with six artifacts {4} ({4}, Exile this artifact, Exile the six from among other permanents you control and/or cards from your graveyard: Return this card transformed under its owner's control. Craft only as a sorcery.)\n//\nVigilance, trample\nWhenever The Golden-Gear Colossus enters or attacks, transform up to one other target double-faced artifact you control. Create two 1/1 colorless Gnome artifact creature tokens.",
+   "keywords": [
+    "Craft",
+    "Vigilance",
+    "Transform",
+    "Trample",
+    "Mill"
+   ],
+   "colors": [
+    "R",
+    "U",
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R",
+    "U",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "token",
+     "creature-etb",
+     "sacrifice-fodder",
+     "graveyard",
+     "tribe:gnome",
+     "tribe-nontoken:gnome",
+     "tribe:legendary",
+     "tribe-nontoken:legendary",
+     "tribe:artifact",
+     "tribe-nontoken:artifact",
+     "tribe:creature",
+     "tribe-nontoken:creature",
+     "tribe:—",
+     "tribe-nontoken:—",
+     "attack-trigger"
+    ],
+    "cares": [
+     "graveyard"
+    ]
+   },
+   "layout": "transform",
+   "releasedAt": "2023-11-17",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Gnome",
+     "typeLine": "Token Artifact Creature — Gnome",
+     "printingId": "6def709a-53b3-4520-9544-74ab6472d256"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Tetzin, Gnome Champion // The Golden-Gear Colossus",
+     "typeLine": "Legendary Artifact Creature — Gnome // Legendary Artifact Creature — Gnome",
+     "printingId": "53b2e955-0106-4c28-8897-bcdafd96195f"
+    }
+   ],
+   "faces": [
+    {
+     "name": "Tetzin, Gnome Champion",
+     "typeLine": "Legendary Artifact Creature — Gnome",
+     "oracleText": "Whenever Tetzin or another double-faced artifact you control enters, mill three cards. You may put an artifact card from among them into your hand.\nCraft with six artifacts {4} ({4}, Exile this artifact, Exile the six from among other permanents you control and/or cards from your graveyard: Return this card transformed under its owner's control. Craft only as a sorcery.)",
+     "colors": [
+      "R",
+      "U",
+      "W"
+     ],
+     "manaCost": "{U}{R}{W}",
+     "power": "2",
+     "toughness": "2",
+     "artCrop": "https://cards.scryfall.io/art_crop/front/0/5/0502deea-95ad-4b6d-a3ac-d3adcd607624.jpg?1783913937"
+    },
+    {
+     "name": "The Golden-Gear Colossus",
+     "typeLine": "Legendary Artifact Creature — Gnome",
+     "oracleText": "Vigilance, trample\nWhenever The Golden-Gear Colossus enters or attacks, transform up to one other target double-faced artifact you control. Create two 1/1 colorless Gnome artifact creature tokens.",
+     "colors": [
+      "R",
+      "U",
+      "W"
+     ],
+     "manaCost": "",
+     "power": "6",
+     "toughness": "6",
+     "colorIndicator": [
+      "R",
+      "U",
+      "W"
+     ],
+     "artCrop": "https://cards.scryfall.io/art_crop/back/0/5/0502deea-95ad-4b6d-a3ac-d3adcd607624.jpg?1783913937"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Tetzin or another double-faced artifact",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "an artifact card from among them",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Craft with six artifacts {4}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance, trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "The Golden-Gear Colossus",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "up to one other target double-faced artifact you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "two 1/1 colorless Gnome artifact creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "The Golden-Gear Colossus",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "up to one other target double-faced artifact you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "two 1/1 colorless Gnome artifact creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ec7c1472aeefd6ad0c6f7fbf398102e456a6ceb201d0ab1bcb9fc150b8edd01b"
+ },
+ "Ludevic, Necrogenius // Olag, Ludevic's Hubris": {
+  "source": {
+   "_id": "f6f684f6-0c8a-4676-ba4e-d3e064293128",
+   "name": "Ludevic, Necrogenius // Olag, Ludevic's Hubris",
+   "typeLine": "Legendary Creature — Human Wizard // Legendary Creature — Zombie",
+   "oracleText": "Whenever Ludevic enters or attacks, mill a card.\n{X}{U}{U}{B}{B}, Exile X creature cards from your graveyard: Transform Ludevic. X can't be 0. Activate only as a sorcery.\n//\nAs this creature transforms into Olag, Ludevic's Hubris, it becomes a copy of a creature card exiled with it, except its name is Olag, Ludevic's Hubris, it's 4/4, and it's a legendary blue and black Zombie in addition to its other colors and types. Put a number of +1/+1 counters on Olag equal to the number of creature cards exiled with it.",
+   "keywords": [
+    "Transform",
+    "Mill"
+   ],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "counter:+1/+1",
+     "graveyard",
+     "tribe:human",
+     "tribe-nontoken:human",
+     "tribe:wizard",
+     "tribe-nontoken:wizard",
+     "tribe:legendary",
+     "tribe-nontoken:legendary",
+     "tribe:creature",
+     "tribe-nontoken:creature",
+     "tribe:—",
+     "tribe-nontoken:—",
+     "tribe:zombie",
+     "tribe-nontoken:zombie",
+     "attack-trigger"
+    ],
+    "cares": [
+     "graveyard"
+    ]
+   },
+   "layout": "transform",
+   "releasedAt": "2021-09-24",
+   "gameChanger": false,
+   "reserved": false,
+   "faces": [
+    {
+     "name": "Ludevic, Necrogenius",
+     "typeLine": "Legendary Creature — Human Wizard",
+     "oracleText": "Whenever Ludevic enters or attacks, mill a card.\n{X}{U}{U}{B}{B}, Exile X creature cards from your graveyard: Transform Ludevic. X can't be 0. Activate only as a sorcery.",
+     "colors": [
+      "B",
+      "U"
+     ],
+     "manaCost": "{U}{B}",
+     "power": "2",
+     "toughness": "3",
+     "artCrop": "https://cards.scryfall.io/art_crop/front/7/8/788288f6-7944-48f4-91b0-f452e209c9ce.jpg?1783925561"
+    },
+    {
+     "name": "Olag, Ludevic's Hubris",
+     "typeLine": "Legendary Creature — Zombie",
+     "oracleText": "As this creature transforms into Olag, Ludevic's Hubris, it becomes a copy of a creature card exiled with it, except its name is Olag, Ludevic's Hubris, it's 4/4, and it's a legendary blue and black Zombie in addition to its other colors and types. Put a number of +1/+1 counters on Olag equal to the number of creature cards exiled with it.",
+     "colors": [
+      "B",
+      "U"
+     ],
+     "manaCost": "",
+     "power": "4",
+     "toughness": "4",
+     "colorIndicator": [
+      "B",
+      "U"
+     ],
+     "artCrop": "https://cards.scryfall.io/art_crop/back/7/8/788288f6-7944-48f4-91b0-f452e209c9ce.jpg?1783925561"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Ludevic",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "Ludevic",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "X creature cards from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": "X",
+      "optional": false
+     },
+     {
+      "verb": "transform",
+      "object": "Ludevic",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "a creature card exiled with it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "modify-pt",
+      "object": "Olag, Ludevic's Hubris",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "4/4",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "legendary blue and black Zombie in addition to its other colors and types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the number of creature cards exiled with it",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "60facc5344c8b63cb5cc00f6121a878a937fc631de307d7632d79208f2609533"
+ }
+}

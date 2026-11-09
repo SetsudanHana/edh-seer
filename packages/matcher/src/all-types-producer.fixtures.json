@@ -1,0 +1,468 @@
+{
+ "Mutant Chain Reaction": {
+  "source": {
+   "_id": "ea9fc868-374b-4acc-be0d-4283907b4524",
+   "name": "Mutant Chain Reaction",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy up to one target artifact, enchantment, or creature with flying. Create a Mutagen token. (It's an artifact with \"{1}, {T}, Sacrifice this token: Put a +1/+1 counter on target creature. Activate only as a sorcery.\")",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "counter:+1/+1",
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "releasedAt": "2026-03-06",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Mutagen",
+     "typeLine": "Token Artifact — Mutagen",
+     "printingId": "6559c423-449c-4e8e-8384-3ce78183e317"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "up to one target artifact, enchantment, or creature with flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "create",
+      "object": "a Mutagen token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "5e6d4a3c3e1e8658cafb7c40393927202be26855856b583d7cdc1d14634c9bb2"
+ },
+ "Dross Scorpion": {
+  "source": {
+   "_id": "132786bb-157c-4e2c-8f82-13df6a667448",
+   "name": "Dross Scorpion",
+   "typeLine": "Artifact Creature — Scorpion",
+   "oracleText": "Whenever this creature or another artifact creature dies, you may untap target artifact.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": "3",
+   "toughness": "1",
+   "tags": {
+    "produces": [
+     "tribe:scorpion",
+     "tribe-nontoken:scorpion"
+    ],
+    "cares": [
+     "creature-death",
+     "sacrifice-event"
+    ]
+   },
+   "manaCost": "{4}",
+   "layout": "normal",
+   "releasedAt": "2003-10-02",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature or another artifact creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "untap",
+      "object": "target artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "daf65d4d56452e70f393865cc22f621ff57da73dfb1ada81be655891f50b6dde"
+ },
+ "Airship Crash": {
+  "source": {
+   "_id": "72a0e0f1-e8be-441a-bcaf-029fb1bd1fd2",
+   "name": "Airship Crash",
+   "typeLine": "Instant",
+   "oracleText": "Destroy target artifact, enchantment, or creature with flying.\nCycling {2} ({2}, Discard this card: Draw a card.)",
+   "keywords": [
+    "Cycling"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "card-draw",
+     "removal",
+     "cast:instant"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "releasedAt": "2025-06-13",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target artifact, enchantment, or creature with flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Cycling {2}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6cb1dfae577f06a78b40e49979e33479f7988c231f2d4dbf1e0f09170cb01ea0"
+ },
+ "Szarekh, the Silent King": {
+  "source": {
+   "_id": "9a63f950-2e8a-4617-896c-1d0af538dbc7",
+   "name": "Szarekh, the Silent King",
+   "typeLine": "Legendary Artifact Creature — Necron",
+   "oracleText": "Flying\nMy Will Be Done — Whenever Szarekh attacks, mill three cards. You may put an artifact creature card or Vehicle card from among the cards milled this way into your hand.",
+   "keywords": [
+    "Flying",
+    "My Will Be Done",
+    "Mill"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "tags": {
+    "produces": [
+     "graveyard",
+     "tribe:necron",
+     "tribe-nontoken:necron",
+     "attack-trigger"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{B}{B}{B}",
+   "layout": "normal",
+   "releasedAt": "2022-10-07",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "Szarekh",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "three cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "an artifact creature card or Vehicle card from among the cards milled this way",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "b644f8de2e77bd3955585bd5b4cb5a46030a4ed46b601676a25ef46137465192"
+ },
+ "Murder": {
+  "source": {
+   "_id": "938b4e2c-88d9-4637-bc00-e228920c9a78",
+   "name": "Murder",
+   "typeLine": "Instant",
+   "oracleText": "Destroy target creature.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "removal",
+     "cast:instant"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{B}{B}",
+   "layout": "normal",
+   "releasedAt": "2024-09-27",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "01cf1d5c18b86c2a0ace6e64dba5c112e85269d8989ab7196b12a42a99ff69e0"
+ },
+ "Shatter": {
+  "source": {
+   "_id": "84d32e68-72b9-432d-a023-7bc6a26b8ad0",
+   "name": "Shatter",
+   "typeLine": "Instant",
+   "oracleText": "Destroy target artifact.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "removal",
+     "cast:instant"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{R}",
+   "layout": "normal",
+   "releasedAt": "2018-01-19",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "1d8fd82db0817c1731ccb9dbd3965c68c20d80516609f8548618bf92f7608b7a"
+ },
+ "Nissa's Defeat": {
+  "source": {
+   "_id": "5f808e3b-6b69-4b46-8a92-36d960527acc",
+   "name": "Nissa's Defeat",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy target Forest, green enchantment, or green planeswalker. If that permanent was a Nissa planeswalker, draw a card.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "card-draw",
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "releasedAt": "2017-07-14",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target Forest, green enchantment, or green planeswalker",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "5d95e3ae185bae669f32e0a451611ce090a3bfcb774e1144d0c4db3046534db2"
+ },
+ "Beast Within": {
+  "source": {
+   "_id": "7735eeba-693b-47e2-bd51-414379cf1016",
+   "name": "Beast Within",
+   "typeLine": "Instant",
+   "oracleText": "Destroy target permanent. Its controller creates a 3/3 green Beast creature token.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "removal",
+     "cast:instant"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "releasedAt": "2026-06-26",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Beast",
+     "typeLine": "Token Creature — Beast",
+     "printingId": "62facbb8-1a83-4731-b515-0f7759ee8c3b"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target permanent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a 3/3 green Beast creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "8543d8918ed9fc497faf03440e0a181efb7e918df6ff36251d3e7f9e3599afc6"
+ }
+}

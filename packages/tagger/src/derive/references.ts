@@ -176,14 +176,40 @@ export function antecedentText(actions: readonly Action[], source: Source, trigg
  *  a class found nothing and the pronoun stayed untyped — a wildcard emit that satisfies every
  *  consumer filter, which is how a REANIMATION spell came to "fill the graveyard" for anything
  *  recursive. The antecedent is not missing here, it is the card. */
-export function antecedentIsSelf(actions: readonly Action[], idx: number, cardName: string | undefined): boolean {
+export function antecedentIsSelf(actions: readonly Action[], idx: number, cardName: string | undefined, cost = ""): boolean {
   for (let i = idx - 1; i >= 0; i--) {
     const o = (actions[i]?.object ?? "").trim();
     // A zone names nothing here either -- the same skip `antecedentSource` makes (review).
     if (o === "" || PRONOUN_OBJECT.test(o) || ZONE_OBJECT.test(o)) continue;
-    return SELF_REFERENCE.test(o) || isSelfSubject(o, cardName);
+    return SELF_REFERENCE.test(o) || isSelfSubject(o, cardName) || counterRemovedFromSelf(actions[i]!, cost, cardName);
   }
   return false;
+}
+
+/** "FOR EACH <CLASS>, RETURN IT" (#1577): the pronoun of a clause that opens "For each Spirit," is that class, one at a time (Cut the Tethers: "For each Spirit, return it to its owner's hand unless that player pays {3}"). Returns "each Spirit", or undefined when the head
+ *  is not a plain class (a player or opponent, a card in a zone, a count).
+ *  CEILING: a one-to-four-word head with none of the words below; "for each Spirit you control" keeps its control tail as written; a Spirit that stopped being one (Eye of Nidhogg makes its creature a black Dragon) is still read as a Spirit, so Cut the Tethers x Eye of Nidhogg is a false pair. */
+export function forEachClass(clauseText: string | undefined): string | undefined {
+  const text = (clauseText ?? "").trim();
+  if (!text.toLowerCase().startsWith("for each ")) return undefined;
+  const comma = text.indexOf(",");
+  if (comma < 0) return undefined;
+  const head = text.slice(9, comma).trim();
+  const words = head.toLowerCase().split(" ");
+  if (head === "" || words.length > 4 || words.some((w) => ["player", "players", "opponent", "opponents", "card", "cards", "of", "in", "that", "other", "target", "counter", "counters"].includes(w))) return undefined;
+  return `each ${head}`;
+}
+
+/** A COUNTER REMOVED FROM THE CARD AS THE COST names the card in the COST, not in the action (#1577): "Remove three +1/+1 counters from Slogurk: Return it to its owner's hand" stores `remove-counter | +1/+1` then `return | it`, and the counters are no thing "it"
+ *  can mean. The pronoun is the card whose counters were removed. Only a cost of the form "Remove ... counters from <this card>".
+ *  CEILING: a cost that removes counters from another permanent ("from target creature") is not read as the card, and an effect that removes the counters is not a cost. */
+function counterRemovedFromSelf(action: Action, cost: string, cardName: string | undefined): boolean {
+  if (action.verb !== "remove-counter" || cost === "") return false;
+  const lower = cost.toLowerCase();
+  const at = lower.lastIndexOf(" from ");
+  if (at < 0 || !lower.startsWith("remove ")) return false;
+  const from = cost.slice(at + 6).trim();
+  return SELF_REFERENCE.test(from) || isSelfSubject(from, cardName);
 }
 
 /** The nearest earlier named object, when it is the card itself: the phrase a bare "it" stands for in "put this land onto the battlefield. If you don't, put IT into its owner's graveyard" (#1520). */

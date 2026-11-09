@@ -40,6 +40,38 @@ function impliesHistoric(s: SubjectFilter): boolean {
 export const isZonedCardGrant = (a: { effect: { kind: string; subject?: SubjectFilter } }): boolean =>
   a.effect.kind === "keyword-grant" && (a.effect.subject?.zone === "graveyard" || a.effect.subject?.zone === "hand");
 
+/** ALL PERMANENTS PROVES EVERY PERMANENT SUBTYPE (#1577). "Destroy all permanents other than this Equipment" (Worldslayer), "exile all permanents" (Apocalypse) take an Equipment, a Goblin, a Saga and a Forest with them, and a consumer
+ *  demanding one of those subtypes (`graveyard-recursion:equipment`, "whenever an Equipment dies") is fed. Only a sweep of the whole class: the single type `permanent`, a mass scope (`all` / `each`), and no other narrowing
+ *  than the control, the token flag, "other than this" (`other`), the zone it is read in (the battlefield, or the graveyard it arrives in), a battlefield origin and a negated TYPE (the subtype's own types must not all be negated: "nonland permanents" take no Forest). A target, a single object, a colour,
+ *  a keyword, a stat, a count, a pile / chosen / all-but selection or a negated subtype narrows the class by something the subtype list cannot read, so it proves nothing here. */
+const WHOLE_CLASS_FIELDS: ReadonlySet<string> = new Set(["control", "token", "type", "scope", "other", "notType", "fromZone", "zone"]);
+function sweepsEveryPermanent(p: SubjectFilter): boolean {
+  if (p.scope !== "all" && p.scope !== "each") return false;
+  const types = arr(p.type);
+  if (types.length !== 1 || types[0]!.toLowerCase() !== "permanent") return false;
+  // A SET TAKEN FROM A ZONE THE CARD DID NOT SWEEP (the graveyard "all permanent cards in your graveyard that were put there this turn", a library dig, "exiled with this") is a set the engine cannot read.
+  if (p.fromZone !== undefined && p.fromZone !== "battlefield") return false;
+  return Object.entries(p).every(([k, v]) => v === undefined || WHOLE_CLASS_FIELDS.has(k));
+}
+/** Is this subtype one a permanent can carry that the sweep's negated types leave? (Instant and sorcery subtypes: no.) */
+function permanentSubtypeSurvives(subtype: string, notType: readonly string[] | undefined): boolean {
+  const types = SUBTYPE_TYPES[subtype.toLowerCase()];
+  if (types === undefined) return false;
+  const out = (notType ?? []).map((t) => t.toLowerCase());
+  return types.some((t) => t !== "instant" && t !== "sorcery" && !out.includes(t));
+}
+
+/** A CLASS PRODUCER CAN BE AN OBJECT OF ALL THE TYPES A CONJUNCTION DEMANDS (#1577). "Destroy target artifact" (Shatter, Shower of Arrows) can destroy an artifact creature, so it feeds "whenever an artifact creature dies" (Dross Scorpion), and "destroy target creature"
+ *  can destroy one too. A producer EVENT, a class with a scope (target / all / each) that is not itself a conjunction, satisfies the consumer's `allTypes` when its types meet the conjunction and its `notType` excludes none of it. A printed type line (no scope: a card's
+ *  own characteristics) stays strict, as does a producer conjunction and a producer that names a subtype ("destroy all Auras" is never a creature; "return Human creature cards" is a guess). The merged "artifact, enchantment, or creature with flying" filter used to pass only because its type list held both words.
+ *  CEILING: any one shared type is taken as enough for the rest to be possible; a subtype that rules a type out (a Spirit is never an artifact) is not consulted. */
+function classCanBeAll(producer: SubjectFilter, all: readonly string[], has: ReadonlySet<string>): boolean {
+  if (producer.scope === undefined || producer.scope === null || (producer.allTypes?.length ?? 0) > 0 || arr(producer.subtype).length > 0) return false;
+  if (!all.some((t) => has.has(t.toLowerCase()))) return false;
+  const out = (producer.notType ?? []).map((t) => t.toLowerCase());
+  return !all.some((t) => out.includes(t.toLowerCase()));
+}
+
 export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
   // A DISJUNCTION: satisfied by any branch, with the shared fields outside still binding. Checked
   // first so the outer subject is tested without its branches, then each branch on its own.
@@ -158,6 +190,7 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // The other direction stays a wildcard: token:false means "nontoken", which nearly every
   // permanent already is, and treating it as a condition once let 14 triggers draw edges from the
   // whole creature pool.
+  // CEILING: a class producer that can be a token without saying so ("For each Spirit, return it": Cut the Tethers can return a Spirit token) never meets a token demand (Nadier, Agent of the Duskenel's "a token you control leaves"); the one pair #1577 measured is Cut the Tethers x Nadier.
   if (consumer.token === true && producer.token !== true) return false;
   if (consumer.token !== null && producer.token !== null && consumer.token !== producer.token) {
     return false;
@@ -229,7 +262,7 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   const all = consumer.allTypes ?? [];
   if (all.length > 0) {
     const has = expandTypes(arr(producer.type), arr(producer.subtype), h);
-    if (!all.every((t) => has.has(t.toLowerCase()))) return false;
+    if (!all.every((t) => has.has(t.toLowerCase())) && !classCanBeAll(producer, all, has)) return false;
   }
   // A NEGATED SUBTYPE, the same test one rung down the type line. No abstention clause is needed:
   // unlike a card type, a subtype is never expressed by an umbrella — "a spell" says nothing about
@@ -281,7 +314,8 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   const consumerSubtypes = arr(consumer.subtype);
   if (consumerSubtypes.length > 0) {
     const ok = consumerSubtypes.some((cs) =>
-      arr(producer.subtype).some((ps) => ps.toLowerCase() === cs.toLowerCase()),
+      arr(producer.subtype).some((ps) => ps.toLowerCase() === cs.toLowerCase())
+      || (sweepsEveryPermanent(producer) && permanentSubtypeSurvives(cs, producer.notType)),
     );
     if (!ok) return false;
   }
@@ -307,8 +341,14 @@ function sharedTypeRefuses(producer: SubjectFilter, consumer: SubjectFilter): bo
   return consumer.sharesTypeWith !== undefined || (consumer.notCommander === true && producer.commander === true);
 }
 
+/** A subject that names NO class: no type, no subtype, and no `anyOf` alternative with either (#1577). "Destroy target artifact, enchantment, or creature with flying" has no top-level type and three typed alternatives; read as untyped, a graveyard fill wildcarded every
+ *  recursion demand (Atraxa's Fall "puts cards into the graveyard that Mysterious Stranger can bring back": an instant). */
+function namesNoClass(s: SubjectFilter): boolean {
+  return arr(s.type).length === 0 && arr(s.subtype).length === 0 && !(s.anyOf ?? []).some((b) => arr(b.type).length > 0 || arr(b.subtype).length > 0);
+}
+
 export function graveyardFillMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
-  const untyped = arr(producer.type).length === 0 && arr(producer.subtype).length === 0;
+  const untyped = namesNoClass(producer);
   if (!untyped) return subjectMatches(producer, consumer, h);
   if (sharedTypeRefuses(producer, consumer)) return false;
   if (consumer.control !== "any" && producer.control !== "any" && consumer.control !== producer.control) return false;
@@ -367,7 +407,7 @@ export function counterAddMatches(producer: SubjectFilter, consumer: SubjectFilt
   // the kind tells us nothing about the recipient's type. Including it flipped every counter placer
   // into the strict path it cannot satisfy, and The Great Henge stopped feeding its own +1/+1
   // payoffs the moment the kind was recorded.
-  const untyped = arr(producer.type).length === 0 && arr(producer.subtype).length === 0;
+  const untyped = namesNoClass(producer);
   // A KNOWN PERMANENT WITH AN UNKNOWN KIND (DERIVE 153): a self counter emit is stamped with the
   // card's own types, which puts it on the strict path -- where a consumer's `counter: "+1/+1"`
   // against a producer that recorded no kind read as a mismatch and Shelinda, Yevon Acolyte

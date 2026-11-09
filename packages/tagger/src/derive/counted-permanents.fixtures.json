@@ -1,0 +1,1417 @@
+{
+ "Renounce": {
+  "source": {
+   "_id": "72f9a6f7-ea26-438d-aafa-758239fd3681",
+   "name": "Renounce",
+   "typeLine": "Instant",
+   "oracleText": "Sacrifice any number of permanents. You gain 2 life for each permanent sacrificed this way.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "lifegain",
+     "cast:instant"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "releasedAt": "1999-10-04",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "any number of permanents",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "amount": "2 for each permanent sacrificed this way",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6678bb2d52574f12a8cce6ad77f4c9854f685cd1a80fbacde369b22b87d08673"
+ },
+ "Pitiless Carnage": {
+  "source": {
+   "_id": "186bfdac-ce9c-476f-89b6-ef467487fca5",
+   "name": "Pitiless Carnage",
+   "typeLine": "Sorcery",
+   "oracleText": "Sacrifice any number of permanents you control, then draw that many cards.\nPlot {1}{B}{B} (You may pay {1}{B}{B} and exile this card from your hand. Cast it as a sorcery on a later turn without paying its mana cost. Plot only as a sorcery.)",
+   "keywords": [
+    "Plot"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "manaCost": "{3}{B}",
+   "layout": "normal",
+   "releasedAt": "2024-04-19",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Pitiless Carnage",
+     "typeLine": "Sorcery",
+     "printingId": "2bea6391-e70d-4f36-86b7-fd08440b4976"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Plot",
+     "typeLine": "Card",
+     "printingId": "f07677af-88a4-4ff5-b591-e1e3ac05235d"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "any number of permanents you control",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "draw",
+      "object": "that many cards",
+      "amount": null,
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Plot {1}{B}{B}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "80adfa323d8f15d930d9f2ff56c52d77a80069be3e605d0abf693bec9a80ce66"
+ },
+ "Phyrexian Negator": {
+  "source": {
+   "_id": "f22fcd17-bc24-41df-81ce-6d11208861b9",
+   "name": "Phyrexian Negator",
+   "typeLine": "Creature — Phyrexian Horror",
+   "oracleText": "Trample\nWhenever this creature is dealt damage, sacrifice that many permanents.",
+   "keywords": [
+    "Trample"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "tags": {
+    "produces": [
+     "tribe:phyrexian",
+     "tribe-nontoken:phyrexian",
+     "tribe:horror",
+     "tribe-nontoken:horror"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{B}",
+   "layout": "normal",
+   "releasedAt": "2010-03-19",
+   "gameChanger": false,
+   "reserved": true
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "that many permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "0d7456dc93f260265c0da9ce2a80b81f21d30447b83d23838bc47728f4d3f664"
+ },
+ "Lich": {
+  "source": {
+   "_id": "5b7515f2-7a5a-4e2a-9784-6cbacd768172",
+   "name": "Lich",
+   "typeLine": "Enchantment",
+   "oracleText": "As this enchantment enters, you lose life equal to your life total.\nYou don't lose the game for having 0 or less life.\nIf you would gain life, draw that many cards instead.\nWhenever you're dealt damage, sacrifice that many nontoken permanents. If you can't, you lose the game.\nWhen this enchantment is put into a graveyard from the battlefield, you lose the game.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "lifegain",
+     "enchantment"
+    ],
+    "cares": []
+   },
+   "manaCost": "{B}{B}{B}{B}",
+   "layout": "normal",
+   "releasedAt": "2011-01-10",
+   "gameChanger": false,
+   "reserved": true
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "equal to your life total",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "lose the game for having 0 or less life",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "that many cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damaged",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "that many nontoken permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-game",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this enchantment",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-game",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "1253c7dc7ad40c3d1ed0ff05a2da004d1b6a14cfb679e958f7a8351ced708d5c"
+ },
+ "God-Eternal Bontu": {
+  "source": {
+   "_id": "183891b0-b5ec-47f4-8d09-b9d3cfc4e7f1",
+   "name": "God-Eternal Bontu",
+   "typeLine": "Legendary Creature — Zombie God",
+   "oracleText": "Menace\nWhen God-Eternal Bontu enters, sacrifice any number of other permanents, then draw that many cards.\nWhen God-Eternal Bontu dies or is put into exile from the battlefield, you may put her into her owner's library third from the top.",
+   "keywords": [
+    "Menace"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "5",
+   "toughness": "6",
+   "tags": {
+    "produces": [
+     "tribe:zombie",
+     "tribe-nontoken:zombie",
+     "tribe:god",
+     "tribe-nontoken:god"
+    ],
+    "cares": []
+   },
+   "manaCost": "{3}{B}{B}",
+   "layout": "normal",
+   "releasedAt": "2025-08-01",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Menace",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "God-Eternal Bontu",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "any number of other permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "draw",
+      "object": "cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that many",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "God-Eternal Bontu",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "God-Eternal Bontu",
+      "fromZone": "graveyard",
+      "toZone": "library",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "exiled",
+     "subject": "God-Eternal Bontu",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "God-Eternal Bontu",
+      "fromZone": "exile",
+      "toZone": "library",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "704ae71a5d1d6ccd606de3c6c47489a19dda06bdd93b7775ca4b4607868daa82"
+ },
+ "Shimatsu the Bloodcloaked": {
+  "source": {
+   "_id": "af24dc1c-6726-4788-8be8-609ee19ad2c8",
+   "name": "Shimatsu the Bloodcloaked",
+   "typeLine": "Legendary Creature — Demon Spirit",
+   "oracleText": "As Shimatsu enters, sacrifice any number of permanents. Shimatsu enters with that many +1/+1 counters on it.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "0",
+   "toughness": "0",
+   "tags": {
+    "produces": [
+     "tribe:demon",
+     "tribe-nontoken:demon",
+     "tribe:spirit",
+     "tribe-nontoken:spirit"
+    ],
+    "cares": []
+   },
+   "manaCost": "{3}{R}",
+   "layout": "normal",
+   "releasedAt": "2004-10-01",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "any number of permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that many",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "b14cf7915605c4283f85d2cde03810c7a8ed292cbc984ae0b96a887c8408eec4"
+ },
+ "Dralnu, Lich Lord": {
+  "source": {
+   "_id": "35ab189a-adc8-48d6-82d2-53eb56a4d5e4",
+   "name": "Dralnu, Lich Lord",
+   "typeLine": "Legendary Creature — Zombie Wizard",
+   "oracleText": "If damage would be dealt to Dralnu, sacrifice that many permanents instead.\n{T}: Target instant or sorcery card in your graveyard gains flashback until end of turn. The flashback cost is equal to its mana cost. (You may cast that card from your graveyard for its flashback cost. Then exile it.)",
+   "keywords": [],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "tags": {
+    "produces": [
+     "tribe:zombie",
+     "tribe-nontoken:zombie",
+     "tribe:wizard",
+     "tribe-nontoken:wizard"
+    ],
+    "cares": [
+     "graveyard"
+    ]
+   },
+   "manaCost": "{3}{U}{B}",
+   "layout": "normal",
+   "releasedAt": "2021-03-19",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "that many permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "target instant or sorcery card in your graveyard gains flashback until end of turn. The flashback cost is equal to its mana cost",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f27ca6c6998eccbd77827fc8931afc4f1562e69515be0f1a710315dc17a2a2ec"
+ },
+ "Phyrexian Totem": {
+  "source": {
+   "_id": "65afedc9-9446-4417-8576-807279061342",
+   "name": "Phyrexian Totem",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Add {B}.\n{2}{B}: This artifact becomes a 5/5 black Phyrexian Horror artifact creature with trample until end of turn.\nWhenever this permanent is dealt damage, if it's a creature, sacrifice that many permanents.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "mana"
+    ],
+    "cares": []
+   },
+   "manaCost": "{3}",
+   "producedMana": [
+    "B"
+   ],
+   "layout": "normal",
+   "releasedAt": "2010-03-19",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{B}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "animate",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damaged",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that many",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "e779971e737cddadd681b73d0c278249c51f4be693f3bb555df0c3ecadfebd60"
+ },
+ "Journey to the Lost City": {
+  "source": {
+   "_id": "a5f5e662-b32c-44f1-848d-0228f0fe1eb6",
+   "name": "Journey to the Lost City",
+   "typeLine": "Enchantment",
+   "oracleText": "At the beginning of your upkeep, exile the top four cards of your library, then roll a d20.\n1—9 | You may put a land card from among those cards onto the battlefield.\n10—19 | Create a 2/2 green Wolf creature token, then put a +1/+1 counter on it for each creature card among those cards.\n20 | Put all permanent cards exiled with this enchantment onto the battlefield, then sacrifice it.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "token",
+     "creature-etb",
+     "sacrifice-fodder",
+     "counter:+1/+1",
+     "tribe:wolf",
+     "enchantment"
+    ],
+    "cares": []
+   },
+   "manaCost": "{3}{G}",
+   "layout": "normal",
+   "releasedAt": "2022-06-10",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Wolf",
+     "typeLine": "Token Creature — Wolf",
+     "printingId": "81605b8d-cf1d-49dc-aebb-a857d6796a77"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top four cards of your library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "roll-dice",
+      "object": "a d20",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "a land card from among those cards",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 2/2 green Wolf creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each creature card among those cards",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "all permanent cards exiled with this enchantment",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "978700677ef33ee27e1c3d544bcf7c87af71365a265449b96ed24203fdd8eb10"
+ },
+ "Legions to Ashes": {
+  "source": {
+   "_id": "dc29cb25-57f5-4cac-9764-efa644b41296",
+   "name": "Legions to Ashes",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile target nonland permanent an opponent controls and all tokens that player controls with the same name as that permanent.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{W}{B}",
+   "layout": "normal",
+   "releasedAt": "2022-11-18",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target nonland permanent an opponent controls",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "all tokens that player controls with the same name as that permanent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "455b26375c4a729a7020d40da67678e9f2845cfe3c5a74893da5939f00a56952"
+ },
+ "Apocalypse": {
+  "source": {
+   "_id": "82c8f5dd-563d-4fd0-bd43-7ee2001d3777",
+   "name": "Apocalypse",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile all permanents. You discard your hand.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "graveyard",
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{R}{R}{R}",
+   "layout": "normal",
+   "releasedAt": "1997-10-14",
+   "gameChanger": false,
+   "reserved": true
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "your hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ab185d9300ebf3cb82da3dd0765e786ccda05e47d701744c6f012b71a0b4d5e1"
+ },
+ "Worldfire": {
+  "source": {
+   "_id": "ae0b8c13-0a71-4a60-bf9f-6e2da9503e9c",
+   "name": "Worldfire",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile all permanents. Exile all cards from all hands and graveyards. Each player's life total becomes 1.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 9,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "manaCost": "{6}{R}{R}{R}",
+   "layout": "normal",
+   "releasedAt": "2012-07-13",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all permanents",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "all cards from all hands",
+      "fromZone": "hand",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "all cards from all graveyards",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "set-life",
+      "object": "each player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "3f47ded5771e35e6e5516be6363c437cb9e780a750ada3a66e74224d540c0c5d"
+ },
+ "Hellcarver Demon": {
+  "source": {
+   "_id": "90514aa5-84b6-4be7-b6d0-b05529c97140",
+   "name": "Hellcarver Demon",
+   "typeLine": "Creature — Demon",
+   "oracleText": "Flying\nWhenever this creature deals combat damage to a player, sacrifice all other permanents you control and discard your hand. Exile the top six cards of your library. You may cast any number of spells from among cards exiled this way without paying their mana costs.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "tags": {
+    "produces": [
+     "graveyard",
+     "tribe:demon",
+     "tribe-nontoken:demon"
+    ],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "manaCost": "{3}{B}{B}{B}",
+   "layout": "normal",
+   "releasedAt": "2010-04-23",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "all other permanents you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "your hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "the top six cards of your library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": "6",
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "any number of spells from among cards exiled this way",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "4d7df606bcdfec94710c4389b0b579b143636cdaf2e05e996e4569e54799f2ab"
+ },
+ "Kaervek's Spite": {
+  "source": {
+   "_id": "7d69be1e-701a-4bcb-a83e-38b4174f7828",
+   "name": "Kaervek's Spite",
+   "typeLine": "Instant",
+   "oracleText": "As an additional cost to cast this spell, sacrifice all permanents you control and discard your hand.\nTarget player loses 5 life.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "graveyard",
+     "cast:instant"
+    ],
+    "cares": []
+   },
+   "manaCost": "{B}{B}{B}",
+   "layout": "normal",
+   "releasedAt": "1997-02-03",
+   "gameChanger": false,
+   "reserved": true
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "all permanents you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "your hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "target player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "5",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "9dc985bb4cf5ccf3cfe9ee7571a4ceb13b5dad35441095e265fa9558b9133d53"
+ },
+ "Worldslayer": {
+  "source": {
+   "_id": "31be715f-9ad3-435c-9e52-e108fe96b969",
+   "name": "Worldslayer",
+   "typeLine": "Artifact — Equipment",
+   "oracleText": "Whenever equipped creature deals combat damage to a player, destroy all permanents other than this Equipment.\nEquip {5} ({5}: Attach to target creature you control. Equip only as a sorcery.)",
+   "keywords": [
+    "Equip"
+   ],
+   "colors": [],
+   "manaValue": 5,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "equipment"
+    ],
+    "cares": [
+     "equipment"
+    ]
+   },
+   "manaCost": "{5}",
+   "layout": "normal",
+   "releasedAt": "2011-07-15",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "equipped creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all permanents other than this Equipment",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Equip {5}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "7537cf1df34b134e47296b2c5d393a16dbd4897e518227c20ba12eb69822c027"
+ },
+ "Thieves' Auction": {
+  "source": {
+   "_id": "230ee0b4-eb75-457f-b171-72d585cfb5aa",
+   "name": "Thieves' Auction",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile all nontoken permanents. Starting with you, each player chooses one of the exiled cards and puts it onto the battlefield tapped under their control. Repeat this process until all cards exiled this way have been chosen.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "manaCost": "{4}{R}{R}{R}",
+   "layout": "normal",
+   "releasedAt": "2003-07-28",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all nontoken permanents",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "one of the exiled cards",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "a14fbdcdd56d0219c2b3124f5682f3c25de50d5996af4a3d93d84c2825501c68"
+ },
+ "Worldpurge": {
+  "source": {
+   "_id": "285ecbd5-ff7c-4919-ab0b-7fc05e5a0a0a",
+   "name": "Worldpurge",
+   "typeLine": "Sorcery",
+   "oracleText": "Return all permanents to their owners' hands. Each player chooses up to seven cards in their hand, then shuffles the rest into their library. Each player loses all unspent mana.",
+   "keywords": [],
+   "colors": [
+    "U",
+    "W"
+   ],
+   "manaValue": 8,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "manaCost": "{4}{W/U}{W/U}{W/U}{W/U}",
+   "layout": "normal",
+   "releasedAt": "2008-05-02",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all permanents",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "unspent cards",
+      "fromZone": "hand",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "52afe29aabe9d69199ffe33a7d59153d3b35fdc9a01f5f08877a65fe463a66ff"
+ },
+ "Gideon, Champion of Justice": {
+  "source": {
+   "_id": "5843bf12-27db-4e7d-81ee-98874bea72c7",
+   "name": "Gideon, Champion of Justice",
+   "typeLine": "Legendary Planeswalker — Gideon",
+   "oracleText": "+1: Put a loyalty counter on Gideon for each creature target opponent controls.\n0: Until end of turn, Gideon becomes a Human Soldier creature with power and toughness each equal to the number of loyalty counters on him and gains indestructible. He's still a planeswalker. Prevent all damage that would be dealt to him this turn.\n−15: Exile all other permanents.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [],
+    "cares": []
+   },
+   "manaCost": "{2}{W}{W}",
+   "layout": "normal",
+   "releasedAt": "2021-04-23",
+   "gameChanger": false,
+   "reserved": false,
+   "loyalty": "4"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "loyalty counter",
+      "amount": "number of creatures target opponent controls",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "animate",
+      "object": "Gideon",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "grant-ability",
+      "object": "indestructible",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "prevent",
+      "object": "all damage that would be dealt to Gideon",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all other permanents",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "486f94883e0bb38934bcf37135dbbcb1779eaf5d8508ad55174e43fbb8834884"
+ },
+ "Deep Space 9": {
+  "source": {
+   "_id": "14442f5b-0bad-4c58-b268-d775787571d8",
+   "name": "Deep Space 9",
+   "typeLine": "Legendary Artifact — Spacecraft",
+   "oracleText": "When Deep Space 9 enters and at the beginning of your upkeep, exile the top four cards of your library. Put all permanent cards exiled this way onto the battlefield.\nStation (Tap another creature you control: Put charge counters equal to its power on this Spacecraft. Station only as a sorcery.)\n9+ | Creatures you control get +3/+3.",
+   "keywords": [
+    "Station"
+   ],
+   "colors": [],
+   "manaValue": 9,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [],
+    "cares": [
+     "ramp"
+    ]
+   },
+   "manaCost": "{9}",
+   "layout": "normal",
+   "releasedAt": "2026-11-13",
+   "upcoming": "2026-11-13",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": []
+ }
+}
