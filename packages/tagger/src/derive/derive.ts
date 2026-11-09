@@ -12,6 +12,7 @@ import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb, EventCount } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
+import { replacesEntry } from "./would-enter.js";
 import { targetingBanOf, targetingBanSubjectInObject, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
 import { withBaseSetSplit } from "./base-set.js";
 import { withChosenTypeGrant } from "./chosen-grant.js";
@@ -3575,6 +3576,8 @@ export function deriveAbilities(
         .map((e) => action.fromOwner === "opp" && (e.verb === "exiled" || e.verb === "leaves") && e.subject.self !== true && (e.subject.fromZone === action.fromZone || e.subject.zone === action.fromZone)
           ? { ...e, subject: { ...e.subject, control: "opp" as const } } : e)
         .filter((e) => !(e.verb === "taps" && (tapsCreated || ARRIVES_TAPPED.test(effectText(text, cardName ?? "")))))
+        // A WOULD-ENTER REPLACEMENT IS NO LEAVE (#1575): the card is exiled instead of entering, so it never was on the battlefield to leave it.
+        .filter((e) => !(e.verb === "leaves" && replacesEntry(text)))
         // A SACRIFICE triggered by the card's own LEAVING is drawback, not supply. "When this
         // enchantment leaves the battlefield, that creature's controller sacrifices it" (Necromancy,
         // Animate Dead) is the price of a reanimation aura: the permanent that would be the outlet is
