@@ -17449,7 +17449,7 @@
 "Veteran's Powerblade": ["wincon:voltron"],
 "Veteran's Sidearm": ["wincon:voltron"],
 "Veteran's Voice": ["wincon:voltron"],
-"Vex": ["role:stackInteraction"],
+"Vex": ["role:draw","role:stackInteraction"],
 "Vexilus Praetor": ["role:protection"],
 "Vexing Arcanix": ["role:burn","wincon:burn"],
 "Vexing Bauble": ["role:draw"],
