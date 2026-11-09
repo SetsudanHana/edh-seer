@@ -521,7 +521,7 @@ function counteredCardTypes(text: string): SubjectFilter["type"] | undefined {
  *  Defeat) to a green Forest, "an Aura, creature, or planeswalker card" (Ajani, Mentor of Heroes) to an Aura. The filter grammar reads the alternatives (`anyOf`), each with its own fields; where `parseSubject` merged a subtype, keyword or colour out of such a
  *  list, the grammar's class fields and `anyOf` replace the merged ones and the rest of `parseSubject`'s reading (control, scope, token, origin) stays.
  *  Taken only when every alternative states nothing but a class (type, subtype, keyword, colour, basic, legendary, tapped, combat, status): an alternative that names a player, an ability, a zone, a name or its own control keeps the merged reading.
- *  CEILING: `parseSubject`'s fields outside that class list (a stat, a counter) are kept beside the grammar's anyOf as read. */
+ *  CEILING: `parseSubject`'s fields outside that class list (a stat, a counter) are kept beside the grammar's anyOf as read; a disjunction of colours alone keeps the merged colours list (a multicolored demand reads it). */
 const ALTERNATIVE_FIELDS = ["type", "subtype", "keyword", "colors", "basic", "allTypes", "umbrella", "legendary", "notType", "notSubtype", "notColors", "tapped", "combat", "status", "snow", "token"] as const;
 function withAlternatives(text: string, plain: SubjectFilter): SubjectFilter {
   if (plain.anyOf !== undefined || (plain.subtype === undefined && plain.keyword === undefined && plain.colors === undefined)) return plain;
@@ -529,6 +529,9 @@ function withAlternatives(text: string, plain: SubjectFilter): SubjectFilter {
   if (g === null || g.anyOf === undefined || g.anyOf.length < 2) return plain;
   const allowed = new Set<string>(ALTERNATIVE_FIELDS);
   if (!g.anyOf.every((alt) => Object.keys(alt).every((k) => allowed.has(k)))) return plain;
+  // A COLOUR DISJUNCTION STAYS THE MERGED COLOURS: "a red, green, or white creature" (Behemoth's Herald), "all green creatures or all white creatures" (Reign of Terror). A creature of two of the colours is in both alternatives, and
+  // the matcher reads a multicolored demand (Rienne, Angel of Rebirth; Reborn Hope; Vivid Revival) off the colours list, which one-colour alternatives cannot show.
+  if (g.anyOf.every((alt) => Object.keys(alt).every((k) => k === "colors"))) return plain;
   const merged: Record<string, unknown> = { ...plain };
   for (const k of ALTERNATIVE_FIELDS) if (k !== "token") delete merged[k];
   const read = g as unknown as Record<string, unknown>;

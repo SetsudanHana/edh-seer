@@ -1,0 +1,541 @@
+{
+ "Behemoth's Herald": {
+  "source": {
+   "name": "Behemoth's Herald",
+   "typeLine": "Creature — Elf Shaman",
+   "oracleText": "{2}{G}, {T}, Sacrifice a red creature, a green creature, and a white creature: Search your library for a card named Godsire, put it onto the battlefield, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Godsire",
+     "typeLine": "Creature — Beast",
+     "printingId": "e2539ff7-2b7d-47e3-bd77-3138a6c42d2b"
+    }
+   ],
+   "_id": "967c509f-dbde-44ee-93fa-a01376f34b99"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a red creature, a green creature, and a white creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "search",
+      "object": "your library",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "Godsire",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
+ },
+ "Rienne, Angel of Rebirth": {
+  "source": {
+   "name": "Rienne, Angel of Rebirth",
+   "typeLine": "Legendary Creature — Angel",
+   "oracleText": "Flying\nOther multicolored creatures you control get +1/+0.\nWhenever another multicolored creature you control dies, return it to its owner's hand at the beginning of the next end step.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "G",
+    "R",
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "G",
+    "R",
+    "W"
+   ],
+   "power": "5",
+   "toughness": "4",
+   "manaCost": "{2}{R}{G}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "1ef2415f-f88f-41fb-b084-ea52631a60c1"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "other multicolored creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+0",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "dies",
+     "subject": "another multicolored creature you control",
+     "control": "you"
+    }
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Reign of Terror": {
+  "source": {
+   "name": "Reign of Terror",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy all green creatures or all white creatures. They can't be regenerated. You lose 2 life for each creature that died this way.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{B}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "67d12a5a-9e0c-4550-86ad-cd1e173fea8f"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all green creatures or all white creatures",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2 for each creature that died this way",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Reborn Hope": {
+  "source": {
+   "name": "Reborn Hope",
+   "typeLine": "Sorcery",
+   "oracleText": "Return target multicolored card from your graveyard to your hand.",
+   "keywords": [],
+   "colors": [
+    "G",
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{G}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "683d8deb-2ab4-4c65-9a23-f4e733f06ba2"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target multicolored card from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Spectacular Pileup": {
+  "source": {
+   "name": "Spectacular Pileup",
+   "typeLine": "Sorcery",
+   "oracleText": "All creatures and Vehicles lose indestructible until end of turn, then destroy all creatures and Vehicles.\nCycling {2} ({2}, Discard this card: Draw a card.)",
+   "keywords": [
+    "Cycling"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{W}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "8f7479e6-b2bd-46b1-96ad-34deb43565c1"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "indestructible",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "destroy",
+      "object": "all creatures and Vehicles",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Cycling {2}"
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Jace's Phantasm": {
+  "source": {
+   "name": "Jace's Phantasm",
+   "typeLine": "Creature — Illusion",
+   "oracleText": "Flying\nThis creature gets +4/+4 as long as an opponent has ten or more cards in their graveyard.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{U}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "ab56df8f-0ba3-4d66-bde2-4c9b4acf07e5"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+4/+4",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Blackbloom Rogue // Blackbloom Bog": {
+  "source": {
+   "name": "Blackbloom Rogue // Blackbloom Bog",
+   "typeLine": "Creature — Human Rogue // Land",
+   "oracleText": "Menace (This creature can't be blocked except by two or more creatures.)\nThis creature gets +3/+0 as long as an opponent has eight or more cards in their graveyard.\n//\nThis land enters tapped.\n{T}: Add {B}.",
+   "keywords": [
+    "Menace"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "producedMana": [
+    "B"
+   ],
+   "layout": "modal_dfc",
+   "gameChanger": false,
+   "reserved": false,
+   "faces": [
+    {
+     "name": "Blackbloom Rogue",
+     "typeLine": "Creature — Human Rogue",
+     "oracleText": "Menace (This creature can't be blocked except by two or more creatures.)\nThis creature gets +3/+0 as long as an opponent has eight or more cards in their graveyard.",
+     "colors": [
+      "B"
+     ],
+     "manaCost": "{2}{B}",
+     "power": "2",
+     "toughness": "3",
+     "artCrop": "https://cards.scryfall.io/art_crop/front/3/2/32779721-b021-4bd4-95d1-4a19b78d9faa.jpg?1783929390"
+    },
+    {
+     "name": "Blackbloom Bog",
+     "typeLine": "Land",
+     "oracleText": "This land enters tapped.\n{T}: Add {B}.",
+     "colors": [],
+     "manaCost": "",
+     "artCrop": "https://cards.scryfall.io/art_crop/back/3/2/32779721-b021-4bd4-95d1-4a19b78d9faa.jpg?1783929390"
+    }
+   ],
+   "_id": "34320ebf-da97-44a4-bbeb-a9da06548289"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Menace"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+3/+0",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "This land",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{B}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Ray of Ruin": {
+  "source": {
+   "name": "Ray of Ruin",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile target creature, Vehicle, or nonbasic land. Scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
+   "keywords": [
+    "Scry"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "e36b78ed-4e3e-406d-85b3-fe0deb493418"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target creature, Vehicle, or nonbasic land",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "optional": false
+     },
+     {
+      "verb": "scry",
+      "object": "1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Wrath of God": {
+  "source": {
+   "name": "Wrath of God",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy all creatures. They can't be regenerated.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "34515b16-c9a4-4f98-8c77-416a7a523407"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ }
+}

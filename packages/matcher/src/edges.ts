@@ -3145,7 +3145,7 @@ function countGateEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       // A SELF fill is the producer's own card into YOUR graveyard (a cycling, a channel, a connive's
       // discard stamped with its printed types by `selfFillTypes`), never a death of theirs.
       if (counted.control === "opp") return ctl === "opp" || (ctl === "any" && e.subject.self !== true
-        && (list(e.subject.type).length > 0 || namesAnotherPlayer(p.card.oracleText)));
+        && (list(e.subject.type).length > 0 || (e.subject.anyOf ?? []).some((b) => b.type !== undefined || b.subtype !== undefined) || namesAnotherPlayer(p.card.oracleText)));
       return true;
     };
     // THE PRODUCER'S OWN CARD IN THE GRAVEYARD IS ITS FRONT FACE (`graveyardIdentity`, #1505).
