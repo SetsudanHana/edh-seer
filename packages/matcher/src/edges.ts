@@ -10,6 +10,7 @@ import { isZonedCardGrant, subjectMatches, graveyardFillMatches, counterAddMatch
 import { enterAsCopyAbilities, impliedEvents, preparedAbilities, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, printedAllTypes, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { normalizeZoneEvent, tagKey, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
+import { baseSetStrength, nodePower, pairsAsUpgrade, powerNeeds, raisedToken, readsPower } from "./base-pt-set.js";
 import { hasMediatingToken } from "./tokens.js";
 import {
   copySentence, costReductionSentence, temporaryCopySentence, counterPresenceSentence, createsSentence,
@@ -3207,8 +3208,7 @@ function wholeNonCreatureClass(s: SubjectFilter): boolean {
  *  subtype and no single host; a state narrowing (a +1/+1 counter) leaves it a class.
  *  CEILING: a user derive stores no subject for is not read, so it loses the pair (Bladeback Sliver's hellbent Sliver grant, At Knifepoint's and Hellspur Posse Boss's "outlaws", which are Assassins and Mercenaries by CR 700.12, Quick Sliver's
  *  Sliver spells); recall is read from derived data, as for the non-creature classes.
- *  CEILING: the BASE POWER AND TOUGHNESS that a class grant sets in the same sentence (Graaz's 5/3 Juggernauts, March of the World Ooze's 6/6 Oozes, Kudo's 2/2 Bears, Raised by Giants' 10/10 Giants) is not stored on the type-grant, so a card that uses
- *  that size is not read as a user of the grant; the owner's ruling for the base P/T is #1572, not implemented here. */
+ *  The BASE POWER AND TOUGHNESS a class grant sets in the same sentence (Graaz's 5/3, March of the World Ooze's 6/6, Kudo's 2/2, Raised by Giants' 10/10) is its own `base-pt-set` ability (#1572, `baseSetReason`). */
 function wholeCreatureClass(s: SubjectFilter): boolean {
   const types = Array.isArray(s.type) ? s.type : s.type ? [s.type] : [];
   return (s.scope === "all" || s.scope === "each") && s.subtype === undefined && types.length === 1 && types[0] === "creature" && s.self !== true;
@@ -3293,6 +3293,46 @@ const OTHER_GRANTER_OR_MAKER: ReadonlySet<string> = new Set(["type-grant", "anim
 const usesCreatureTypeCache = new WeakMap<CardTags, [boolean | undefined, boolean | undefined]>();
 const GRANT_REACHES_OFF_BATTLEFIELD = /creature cards you own that aren't on the battlefield/i;
 
+/** Can a creature of the set's class be one the reader looks at? The identity fields only (type, subtype, control, token), either way round: Raised by Giants' commander creature is among "creatures you control with power 4 or greater",
+ *  and March's creatures include a "Zombie token you control", but a commander is no Zombie token (Dreadhorde Invasion). */
+function classesOverlap(read: SubjectFilter, cls: SubjectFilter, h: Hierarchy): boolean {
+  const ids = (x: SubjectFilter): SubjectFilter => ({ ...(x.type !== undefined ? { type: x.type } : {}), ...(x.subtype !== undefined ? { subtype: x.subtype } : {}), ...(x.control !== undefined ? { control: x.control } : {}), ...(x.token !== undefined ? { token: x.token } : {}) }) as SubjectFilter;
+  // A commander is never a token (Raised by Giants' class): a reader of tokens only cannot be reading it.
+  if (cls.commander === true) return read.token !== true;
+  const r = ids(read), k = ids(cls);
+  return subjectMatches(r, k, h) || subjectMatches(k, r, h);
+}
+
+/** A base-P/T set over a class (see base-pt-set.ts) claims C when it upgrades C (a maker of smaller tokens, a creature of smaller power) or when C reads power (`powerNeeds`). The class is the set's own subject. */
+function baseSetReason(p: PairScope["p"], c: DeckCard, a: Ability, h: Hierarchy): Reason | undefined {
+  const s = a.effect.subject;
+  if (!c.tags || !p.tags || s === undefined || s.control === "opp" || (s.other === true && p.card.name === c.card.name)) return undefined;
+  const v = pairsAsUpgrade(p.tags, a);
+  if (v === undefined) return undefined;
+  // CEILING: a set over a class that a board STATE narrows ("creatures you control with a +1/+1 counter": Sigarda's Summons; "enchanted by Auras you control": Archon of the Wild Rose) pairs with nothing: whether C is in the class is not printed on C,
+  // and the owner's ruling pairs a set with what it upgrades, which a state we cannot read does not say.
+  if (s.counter !== undefined || (s.status?.length ?? 0) > 0) return undefined;
+  const { counter: _stateOnly, ...cls } = s;
+  const reason = (why: string, strength?: number): Reason => ({
+    tag: "static:base-pt-set",
+    text: `${p.card.name} sets the base power and toughness of your creatures to ${v.power}/${v.toughness}, and ${why}`,
+    effectKind: "base-pt-set",
+    repeatability: "static",
+    consumer: c.card.name,
+    producer: p.card.name,
+    // Owner ruling 2026-11-09: the pair of a creature or a token maker falls as its own power rises; a power reader stays at 1 (absent).
+    ...(strength !== undefined ? { strength } : {}),
+  });
+  const power = nodePower(c);
+  const token = raisedToken(c.tags, v, (shape) => subjectMatches(shape, cls, h));
+  const reads = readsPower(powerNeeds(c.card, c.tags, (read) => classesOverlap(read, cls, h)), v.power);
+  // A card that READS power stays at strength 1 whatever else it is (a 5/5 Molten Monstrosity); a creature that also makes smaller tokens takes the better of the two.
+  if (power !== undefined && power < v.power && subjectMatches(characteristicsSubject(c.tags, c.card.name), cls, h)) return reason(`${c.card.name} is smaller than that`, reads ? undefined : Math.max(baseSetStrength(v.power, power), token?.strength ?? 0));
+  if (token !== undefined) return reason(`${c.card.name} makes tokens smaller than that`, reads ? undefined : token.strength);
+  if (reads) return reason(`${c.card.name} reads the power of your creatures`);
+  return undefined;
+}
+
 function staticEdges({ p, c, h, reasons }: PairScope): void {
   const staticClaim = (c: DeckCard, a: CardTags["abilities"][number]): Reason | undefined => {
     if (!c.tags) return undefined;
@@ -3365,6 +3405,8 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
     // self-trigger gate depends on, and widening it there is exactly how the `entersTapped` strip
     // silently deleted 29 real claims.
     if (a.effect.subject.self === true) return undefined;
+    // A WHOLE-CLASS BASE POWER AND TOUGHNESS SET IS NOT AN ANTHEM (owner ruling 2026-11-08, #1572): it pairs with the token makers and small creatures it upgrades and with the power payoffs, below.
+    if (a.effect.kind === "base-pt-set") return baseSetReason(p, c, a, h);
     // A TYPE HANDED TO A WHOLE NON-CREATURE CLASS PAIRS WITH THE CARDS THAT USE THAT TYPE, NOT WITH EVERY RECIPIENT (owner ruling 2026-11-08, #1568): Gourmand's Talent pairs with Food payoffs, not with Sol Ring.
     // A grant over the whole CREATURE class follows the same rule, below.
     // ...and so does the ability handed out in the same sentence ("... and have '{2}, {T}, Sacrifice this artifact: You gain 3 life'"), whose recipient is the same class.

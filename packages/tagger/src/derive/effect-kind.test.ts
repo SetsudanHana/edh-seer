@@ -736,10 +736,13 @@ test("a restriction on being blocked is evasion (CR 509.1b); a payable one stays
   expect(actionEffectKind({ verb: "cant", object: "cast this spell except during the declare blockers step" })).toBeNull();
 });
 
-test("setting a base power and toughness is neither a pump nor a debuff", () => {
-  // Sludge Monster: "have base power and toughness 2/2" is removal, and an unsigned "2/2" mapped to pump.
+test("setting a base power and toughness is neither a pump nor a debuff: it is base-pt-set (#1572)", () => {
+  // Sludge Monster: "have base power and toughness 2/2" is removal, and an unsigned "2/2" mapped to pump. It is a set (CR 613.4b), and the matcher refuses a set beside "lose all abilities".
   expect(actionEffectKind({ verb: "modify-pt", object: "Non-Horror creatures with slime counters on them", amount: "2/2" },
-    "Non-Horror creatures with slime counters on them lose all abilities and have base power and toughness 2/2.")).toBeNull();
+    "Non-Horror creatures with slime counters on them lose all abilities and have base power and toughness 2/2.")).toBe("base-pt-set");
+  expect(actionEffectKind({ verb: "modify-pt", object: "other creatures", amount: "base 1/1" }, "Other creatures have base power and toughness 1/1.")).toBe("base-pt-set");
+  // A value that is no printed pair ("X/X", "equal to its mana value") stays unread.
+  expect(actionEffectKind({ verb: "modify-pt", object: "creatures you control", amount: "X/X" }, "Creatures you control have base power and toughness X/X until end of turn.")).toBeNull();
   // A signed modifier keeps its kind either way.
   expect(actionEffectKind({ verb: "modify-pt", object: "creatures you control", amount: "+1/+1" }, "Creatures you control get +1/+1.")).toBe("pump");
   expect(actionEffectKind({ verb: "modify-pt", object: "creatures your opponents control", amount: "-2/-2" }, "")).toBe("debuff");
