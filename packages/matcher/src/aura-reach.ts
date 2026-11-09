@@ -46,9 +46,9 @@ function sentences(text: string): string[] {
   const out: string[] = [];
   let cur = "";
   for (const c of withoutParentheses(text).replace(/’/g, "'").toLowerCase()) {
-    if (c === "." || c === "\n" || c === "•" || c === "—") { out.push(cur); cur = ""; } else cur += c;
+    if (c === "." || c === "\n" || c === "•" || c === "—") { out.push(cur.trim()); cur = ""; } else cur += c;
   }
-  out.push(cur);
+  out.push(cur.trim());
   return out;
 }
 

@@ -28,7 +28,7 @@ describe("removalReachesAura: an untyped event is no proof the card can take an 
 /** #1577 part 3: "THAT PLAYER CONTROLS" / "DEFENDING PLAYER CONTROLS" NAME AN OPPONENT ONLY WHERE THE SENTENCE SAYS WHO THE PLAYER IS. Oracle text quoted from the corpus (cards.oracleText, 2026-11-09). */
 describe("targetsOnlyOpponents: the player the sentence points back to", () => {
   test.each([
-    ["Aberrant", "Whenever this creature deals combat damage to a player, destroy target artifact or enchantment that player controls."],
+    ["Aberrant (ability word before the dash)", "Ravenous (This creature enters with X +1/+1 counters on it. If X is 5 or more, draw a card when it enters.)\nTrample\nHeavy Power Hammer — Whenever this creature deals combat damage to a player, destroy target artifact or enchantment that player controls."],
     ["Dawning Purist", "Whenever this creature deals combat damage to a player, you may destroy target enchantment that player controls."],
     ["Feline Sovereign", "Whenever one or more Cats you control deal combat damage to a player, destroy up to one target artifact or enchantment that player controls."],
     ["Hammer of Ruin", "Whenever equipped creature deals combat damage to a player, you may destroy target Equipment that player controls."],
