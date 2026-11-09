@@ -48,3 +48,35 @@ describe("targetsOnlyOpponents: the player the sentence points back to", () => {
     expect(targetsOnlyOpponents(text)).toBe(false);
   });
 });
+
+/** #1579 part 1: ONE RULE FOR `selection` ON BOTH ROUTES. Oracle text quoted from the corpus (cards.oracleText, 2026-11-09). */
+describe("eventReachesAura: which named sets can include YOUR Aura", () => {
+  const reach = (selection: SubjectFilter["selection"], more: Partial<SubjectFilter> = {}, text = "x"): boolean =>
+    removalReachesAura([ev("sacrifice", { type: "permanent", scope: "all", ...(selection ? { selection } : {}), ...more })], text, aura, H);
+  test("all-but: Cataclysm, 'Each player chooses ... Then each player sacrifices the rest' keeps none of yours safe", () => {
+    expect(reach("all-but")).toBe(true);
+  });
+  test("pile: Whims of the Fates, 'each player separates all permanents they control into three piles'", () => {
+    expect(reach("pile", { scope: "each" })).toBe(true);
+  });
+  test("counted: Renounce, 'sacrifice any number of permanents'", () => {
+    expect(reach("counted", { control: "you" })).toBe(true);
+  });
+  test("counted: Pox Plague, 'sacrifices half the permanents they control of their choice'; Bane of Bala Ged, 'exiles two permanents'", () => {
+    expect(reach("counted", { scope: "each" })).toBe(true);
+    expect(reach("counted")).toBe(true);
+  });
+  test("chosen, a set the card defined: Druid of Purification, 'an artifact or enchantment you don't control. Destroy each permanent chosen this way'; Journey to the Lost City, 'exiled with this enchantment'", () => {
+    expect(reach("chosen")).toBe(false);
+    expect(reach("chosen", { scope: undefined })).toBe(false);
+  });
+  test("votes: Council's Judgment, 'votes for a nonland permanent you don't control'", () => {
+    expect(removalReachesAura([ev("leaves", { type: "permanent", scope: "each", selection: "votes" })], "x", aura, H)).toBe(false);
+  });
+  test("named-set: Apocalypse Chime, a name list the engine cannot test", () => {
+    expect(reach("named-set")).toBe(false);
+  });
+  test("an opponent-only sacrifice still reaches nothing, whatever the selection: Archfiend of Spite", () => {
+    expect(reach("counted", {}, "Whenever a source an opponent controls deals damage to this creature, that source's controller loses that much life unless they sacrifice that many permanents of their choice.")).toBe(false);
+  });
+});

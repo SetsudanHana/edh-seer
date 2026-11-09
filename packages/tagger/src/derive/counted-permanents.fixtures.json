@@ -1413,5 +1413,398 @@
    "reserved": false
   },
   "canonical": []
+ },
+ "Bane of Bala Ged": {
+  "source": {
+   "name": "Bane of Bala Ged",
+   "typeLine": "Creature — Eldrazi",
+   "oracleText": "Whenever this creature attacks, defending player exiles two permanents they control.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 7,
+   "colorIdentity": [],
+   "power": "7",
+   "toughness": "5",
+   "manaCost": "{7}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "38839894-1706-4e11-8310-5ea8dd8866d9"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "two permanents defending player controls",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "fb6613ba69b1ad82dec1ac7c8676c58743f87e898d2090ace92250b81bddf789"
+ },
+ "Earth-Cult Elemental": {
+  "source": {
+   "name": "Earth-Cult Elemental",
+   "typeLine": "Creature — Elemental",
+   "oracleText": "Siege Monster — When this creature enters, roll a d20.\n1—9 | Each player sacrifices a permanent of their choice.\n10—19 | Each opponent sacrifices a permanent of their choice.\n20 | Each opponent sacrifices two permanents of their choice.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "manaCost": "{4}{R}{R}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "043d8dee-379f-4706-ad47-0bb562717007"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "roll-dice",
+      "object": "a d20",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a permanent of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a permanent of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "two permanents of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "02b6c1297a8479041c5b1fc06cf05a85551e3b00cf695806d5e26727ee27eaad"
+ },
+ "Greater Harvester": {
+  "source": {
+   "name": "Greater Harvester",
+   "typeLine": "Creature — Horror",
+   "oracleText": "At the beginning of your upkeep, sacrifice a permanent.\nWhenever this creature deals combat damage to a player, that player sacrifices two permanents of their choice.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "5",
+   "toughness": "6",
+   "manaCost": "{2}{B}{B}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "1e8f17ab-4616-44de-adfd-010882cfcd42"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a permanent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "two permanents of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "two",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "d3a129edc039753df062db7fbc44fb419e3442ffec67f9acc4000e2a846d26dc"
+ },
+ "Baba Lysaga, Night Witch": {
+  "source": {
+   "name": "Baba Lysaga, Night Witch",
+   "typeLine": "Legendary Creature — Human Warlock",
+   "oracleText": "{T}, Sacrifice up to three permanents: If there were three or more card types among the sacrificed permanents, each opponent loses 3 life, you gain 3 life, and you draw three cards.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{1}{B}{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "d6cd4aa1-ff3a-4453-8735-e5ace5cbe386"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "up to three permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "b2abf8086ab99c377b656728a11bb41543095812745b0a6a5ae6d55d9c2a6ed8"
+ },
+ "Nicol Bolas, Planeswalker": {
+  "source": {
+   "name": "Nicol Bolas, Planeswalker",
+   "typeLine": "Legendary Planeswalker — Bolas",
+   "oracleText": "+3: Destroy target noncreature permanent.\n−2: Gain control of target creature.\n−9: Nicol Bolas deals 7 damage to target player or planeswalker. That player or that planeswalker's controller discards seven cards, then sacrifices seven permanents of their choice.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "R",
+    "U"
+   ],
+   "manaValue": 8,
+   "colorIdentity": [
+    "B",
+    "R",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{U}{B}{B}{R}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "05e9b55e-6329-48ec-b7d7-24c6b9692244"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target noncreature permanent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "gain-control",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "target player or planeswalker",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "7",
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "seven cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "7",
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "seven permanents of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "7",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "3b680a836c4260549d15ebc1cf8f1bba551365d5b287e46a9de56d368221e942"
+ },
+ "Pox Plague": {
+  "source": {
+   "name": "Pox Plague",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player loses half their life, then discards half the cards in their hand, then sacrifices half the permanents they control of their choice. Round down each time.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{B}{B}{B}{B}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "c505d304-9428-4532-87a2-167c69f16969"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "half their life",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "discard",
+      "object": "half the cards in their hand",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "sacrifice",
+      "object": "half the permanents they control of their choice",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "21ee569393822856203dc762f31f59a6e9604b4298fabae8aee4586a1e7590a1"
  }
 }

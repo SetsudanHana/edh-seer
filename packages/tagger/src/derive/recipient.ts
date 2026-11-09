@@ -213,6 +213,16 @@ export function actionRecipients(clauseText: string, ctx: ActorContext = {}): Re
 }
 
 
+/** ONE PLAYER DOES EVERY SACRIFICE OF THE CLAUSE (#1579). `actorFor` refuses a verb the clause stores twice, since "Target player sacrifices X. You sacrifice Y." has two actors. An edict repeated for a bigger number or another type has one: "Each opponent sacrifices a creature of their choice. If you have the
+ *  city's blessing, instead each opponent sacrifices half the creatures ..." (Vona's Hunger), "Target opponent sacrifices ... that player sacrifices two of those creatures instead" (Gideon's Triumph), "Target opponent sacrifices a creature. ... Then repeat this process for an enchantment" (Invoke Despair).
+ *  The test: the text has at least one cue-named sacrifice and as many of them as it has sacrifice verbs, and no "you sacrifice". Counted over the printed words, linear scans of one clause.
+ *  CEILING: the cue's WHO decides the control as for a single sacrifice ("target player" stays `any`); a repeat with the SAME verb count but another actor between ("each opponent sacrifices X, then you sacrifice Y") is refused by the "you sacrifice" test only. */
+export function oneSacrificer(clauseText: string): boolean {
+  const verbs = clauseText.match(/\bsacrifices?\b/gi)?.length ?? 0;
+  const cued = clauseText.match(new RegExp(`\\b(?:${WHO})\\s+${ADVERB}sacrifices?\\b`, "gi"))?.length ?? 0;
+  return cued > 0 && cued === verbs && !/\byou\s+sacrifice\b/i.test(clauseText);
+}
+
 /** THE PLAYER IS THE TARGET, NOT THE CREATURE (#1295): "Target player sacrifices a creature of their choice" (Diabolic
  *  Edict), "target opponent sacrifices ..." (Chainer's Edict, Sudden Edict). The first sacrifice sentence is read, as
  *  `actionRecipients` reads it. PLURAL targets and a verb after "and" count ("Any number of target players each lose 2 life and sacrifice a creature of their choice", Priest of Forgotten Gods; Will of the Abzan). `may` is NOT an adverb here: "target opponent MAY sacrifice" is the victim's option

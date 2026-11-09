@@ -81,11 +81,11 @@ describe("the marker stays off what it is not", () => {
   });
 });
 
-describe("a number picked by a player, and an exception list, are marked too (the second measure: 15 of 21 new stax cards were these)", () => {
+describe("a number picked by a player, and an exception list, are marked too (the second measure: 15 of 21 new stax cards were these; a number word leads the plural is `counted`, #1579)", () => {
   const sel = (name: string, verb: string) => emits(name, verb).filter((e) => [e.subject.type].flat().includes("permanent")).map((e) => e.subject.selection);
   test.each([
-    ["Pox Plague", "dies", "chosen"], ["Earth-Cult Elemental", "dies", "chosen"], ["Greater Harvester", "dies", "chosen"], ["Nicol Bolas, Planeswalker", "dies", "chosen"], ["Archfiend of Spite", "dies", "chosen"], ["Curse of the Cabal", "dies", "chosen"], ["Balancing Act", "dies", "chosen"],
-    ["Bane of Bala Ged", "exiled", "chosen"], ["Selective Obliteration", "exiled", "all-but"], ["Whims of the Fates", "dies", "pile"], ["Apocalypse Chime", "dies", "named-set"], ["Scourglass", "dies", "all-but"], ["Cyclone Summoner", "leaves", "all-but"], ["Liliana, Dreadhorde General", "dies", "all-but"],
+    ["Pox Plague", "dies", "counted"], ["Earth-Cult Elemental", "dies", "counted"], ["Greater Harvester", "dies", "counted"], ["Nicol Bolas, Planeswalker", "dies", "counted"], ["Archfiend of Spite", "dies", "counted"], ["Curse of the Cabal", "dies", "counted"], ["Balancing Act", "dies", "counted"],
+    ["Bane of Bala Ged", "exiled", "counted"], ["Selective Obliteration", "exiled", "all-but"], ["Whims of the Fates", "dies", "pile"], ["Apocalypse Chime", "dies", "named-set"], ["Scourglass", "dies", "all-but"], ["Cyclone Summoner", "leaves", "all-but"], ["Liliana, Dreadhorde General", "dies", "all-but"],
   ])("%s: the %s emit is selection %s", (name, verb, want) => {
     expect(sel(name, verb)).toContain(want);
   });
@@ -103,7 +103,7 @@ describe("a stat or a token count compared to a number is no pick (the triage re
     expect(parseSubject(phrase).selection).toBeUndefined();
   });
   test("CONTROL: permanents they control equal to the number the fewest controls is a pick", () => {
-    expect(parseSubject("permanents they control equal to the number of permanents controlled by the player who controls the fewest").selection).toBe("chosen");
+    expect(parseSubject("permanents they control equal to the number of permanents controlled by the player who controls the fewest").selection).toBe("counted");
   });
 });
 

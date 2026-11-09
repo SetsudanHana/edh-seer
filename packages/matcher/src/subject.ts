@@ -190,7 +190,7 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // The other direction stays a wildcard: token:false means "nontoken", which nearly every
   // permanent already is, and treating it as a condition once let 14 triggers draw edges from the
   // whole creature pool.
-  // CEILING: a class producer that can be a token without saying so ("For each Spirit, return it": Cut the Tethers can return a Spirit token) never meets a token demand (Nadier, Agent of the Duskenel's "a token you control leaves"); the one pair #1577 measured is Cut the Tethers x Nadier.
+  // CEILING: a class producer that can be a token without saying so ("For each Spirit, return it": Cut the Tethers can return a Spirit token) never meets a token demand (Nadier, Agent of the Duskenel's "a token you control leaves"); #1579 measured the widening (a class producer with a mass or target scope and no `token: false` meets a token demand): +9,921 pair keys over the 76 cards with a token trigger, 36 consumers, 2,639 producers, about 10 of 40 sampled gains weak or false (a land, a nontoken, a power-only debuff). Left to the owner's ruling, not widened.
   if (consumer.token === true && producer.token !== true) return false;
   if (consumer.token !== null && producer.token !== null && consumer.token !== producer.token) {
     return false;

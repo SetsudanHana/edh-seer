@@ -1,0 +1,1043 @@
+{
+ "Vona's Hunger": {
+  "source": {
+   "name": "Vona's Hunger",
+   "typeLine": "Instant",
+   "oracleText": "Ascend (If you control ten or more permanents, you get the city's blessing for the rest of the game.)\nEach opponent sacrifices a creature of their choice. If you have the city's blessing, instead each opponent sacrifices half the creatures they control of their choice, rounded up.",
+   "keywords": [
+    "Ascend"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "da522912-1bc2-4d70-b426-94d10edb2afe"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Ascend",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature of their choice",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "sacrifice",
+      "object": "half the creatures they control of their choice, rounded up",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "5b6957b4567809098d9a65e46a2ae9278dc8d0b04f515c4afb3014529c39c52f"
+ },
+ "Gideon's Triumph": {
+  "source": {
+   "name": "Gideon's Triumph",
+   "typeLine": "Instant",
+   "oracleText": "Target opponent sacrifices a creature of their choice that attacked or blocked this turn. If you control a Gideon planeswalker, that player sacrifices two of those creatures of their choice instead.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "daec03b6-e3f8-4e44-9766-c64dc23fa3dc"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature of their choice that attacked or blocked this turn",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "sacrifice",
+      "object": "two of those creatures of their choice",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "e430695f8565814213a6787c68cde97c2ac9db0058f1059956f947062b36fb9d"
+ },
+ "Invoke Despair": {
+  "source": {
+   "name": "Invoke Despair",
+   "typeLine": "Sorcery",
+   "oracleText": "Target opponent sacrifices a creature of their choice. If they can't, they lose 2 life and you draw a card. Then repeat this process for an enchantment and a planeswalker.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}{B}{B}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "f9ee4c80-20fb-4322-be02-1c78d37d7a99"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "target opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "an enchantment of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "target opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "a planeswalker of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "target opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "2ccf7490d30b17f43586a872f34196b4eb0fd1190b869be67ebda912c813204d"
+ },
+ "Structural Collapse": {
+  "source": {
+   "name": "Structural Collapse",
+   "typeLine": "Sorcery",
+   "oracleText": "Target player sacrifices an artifact and a land of their choice. Structural Collapse deals 2 damage to that player.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}{R}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "de97ec82-d09d-440e-8c7d-a3f0fb552418"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "target player's artifact of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "target player's land of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "target player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "53aa511f3ed9475bb49699b2a1f655c2824082f851ea482b2e15eb2fc2b0d029"
+ },
+ "Diabolic Edict": {
+  "source": {
+   "name": "Diabolic Edict",
+   "typeLine": "Instant",
+   "oracleText": "Target player sacrifices a creature of their choice.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "058917c1-21ab-488a-9f9c-591c55f3c596"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "586fa74bddb6ac2962143227dbf73ab93154c7ca5f57c2b34cfcf868cf34649c"
+ },
+ "Liliana, Dreadhorde General": {
+  "source": {
+   "name": "Liliana, Dreadhorde General",
+   "typeLine": "Legendary Planeswalker — Liliana",
+   "oracleText": "Whenever a creature you control dies, draw a card.\n+1: Create a 2/2 black Zombie creature token.\n−4: Each player sacrifices two creatures of their choice.\n−9: Each opponent chooses a permanent they control of each permanent type and sacrifices the rest.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{B}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "5e958212-6a5b-4288-8d31-f1572619d7dc"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "a creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 2/2 black Zombie creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "two creatures of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a permanent of each permanent type each opponent controls, and the rest",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "14ef2916208e40ccbe253ceb4c2cea58602876911a081e404e7d7e0f93132362"
+ },
+ "Stronghold Overseer": {
+  "source": {
+   "name": "Stronghold Overseer",
+   "typeLine": "Creature — Demon",
+   "oracleText": "Flying\nShadow (This creature can block or be blocked by only creatures with shadow.)\n{B}{B}: Creatures with shadow get +1/+0 until end of turn and creatures without shadow get -1/-0 until end of turn.",
+   "keywords": [
+    "Flying",
+    "Shadow"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{3}{B}{B}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "bb77b63f-e679-463c-b983-4f2a4ef7bafe"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Shadow",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "creatures with shadow",
+      "amount": "+1/+0",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "modify-pt",
+      "object": "creatures without shadow",
+      "amount": "-1/-0",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "5af8ea24a9a4cef637a5c8890520e55da5bf4d6392465f1cdfa8fbe58253d118"
+ },
+ "Fyndhorn Pollen": {
+  "source": {
+   "name": "Fyndhorn Pollen",
+   "typeLine": "Enchantment",
+   "oracleText": "Cumulative upkeep {1} (At the beginning of your upkeep, put an age counter on this permanent, then sacrifice it unless you pay its upkeep cost for each age counter on it.)\nAll creatures get -1/-0.\n{1}{G}: All creatures get -1/-0 until end of turn.",
+   "keywords": [
+    "Cumulative upkeep"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": true,
+   "_id": "2f18967d-c2cd-449d-a288-df6343672743"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Cumulative upkeep {1}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "all creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-1/-0",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "all creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-1/-0",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "1a4c4f2e488e209fdc1675246eee0b7ad179aee73cb2375d3ce660494559abbb"
+ },
+ "Mouth of the Storm": {
+  "source": {
+   "name": "Mouth of the Storm",
+   "typeLine": "Creature — Elemental",
+   "oracleText": "Flying\nWard {2} (Whenever this creature becomes the target of a spell or ability an opponent controls, counter it unless that player pays {2}.)\nWhen this creature enters, creatures your opponents control get -3/-0 until your next turn.",
+   "keywords": [
+    "Flying",
+    "Ward"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "manaCost": "{6}{U}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "832fbb1f-0ff5-4d6c-b1ee-2231923a6f64"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Ward {2}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "creatures your opponents control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-3/-0",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "be6d7ae43b569fe117dc49c2305d62a24bc3aa5776eea36f3d6eaa6180827094"
+ },
+ "Tidal Influence": {
+  "source": {
+   "name": "Tidal Influence",
+   "typeLine": "Enchantment",
+   "oracleText": "Cast this spell only if no permanents named Tidal Influence are on the battlefield.\nThis enchantment enters with a tide counter on it.\nAt the beginning of your upkeep, put a tide counter on this enchantment.\nAs long as there is exactly one tide counter on this enchantment, all blue creatures get -2/-0.\nAs long as there are exactly three tide counters on this enchantment, all blue creatures get +2/+0.\nWhenever there are four or more tide counters on this enchantment, remove all tide counters from it.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{U}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "b1393388-b8b3-4c54-a086-f5e6d9908972"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "cast this spell if permanents named Tidal Influence are on the battlefield",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "tide",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "your upkeep",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "tide",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "all blue creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-2/-0",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "all blue creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+2/+0",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 6,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "state",
+     "subject": "there are four or more tide counters on this enchantment",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "tide",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "all",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6924131d49575a2be2d7ed68693b981c0431b4635ba021e2163eb42badfd891c"
+ },
+ "Plague Mare": {
+  "source": {
+   "name": "Plague Mare",
+   "typeLine": "Creature — Nightmare Horse",
+   "oracleText": "This creature can't be blocked by white creatures.\nWhen this creature enters, creatures your opponents control get -1/-1 until end of turn.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{B}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "4cd096ac-dd67-4208-a3ad-8e6061b442c6"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "be blocked by white creatures",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "creatures your opponents control",
+      "amount": "-1/-1",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "8bf36813561d5ffdddb88356978a6d0d9367df94517954d0d5cd761dc526a36f"
+ },
+ "Meishin, the Mind Cage": {
+  "source": {
+   "name": "Meishin, the Mind Cage",
+   "typeLine": "Legendary Enchantment",
+   "oracleText": "All creatures get -X/-0, where X is the number of cards in your hand.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{U}{U}{U}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "3b8eea0b-6f8c-449c-9ab8-a22a035465d6"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "all creatures",
+      "amount": "-X/-0, where X is the number of cards in your hand",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "0cef60a754c29ba510c7a701c01f2deded1135cd8bb5d6d46faf2cf59297239c"
+ },
+ "Toxic Deluge": {
+  "source": {
+   "name": "Toxic Deluge",
+   "typeLine": "Sorcery",
+   "oracleText": "As an additional cost to cast this spell, pay X life.\nAll creatures get -X/-X until end of turn.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "afaef788-34d1-460b-b884-9d7ae6ddeb18"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "all creatures",
+      "amount": "-X/-X",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "646b9f5ce60d5d0ef741c69c3cdb40c022210b0046345cf6efceb4377fdcfd93"
+ },
+ "Massacre Wurm": {
+  "source": {
+   "name": "Massacre Wurm",
+   "typeLine": "Creature — Phyrexian Wurm",
+   "oracleText": "When this creature enters, creatures your opponents control get -2/-2 until end of turn.\nWhenever a creature an opponent controls dies, that player loses 2 life.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "6",
+   "toughness": "5",
+   "manaCost": "{3}{B}{B}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "93cf50cf-0ecc-4d3e-abea-778c1ebacec4"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "creatures your opponents control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-2/-2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "a creature an opponent controls",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "that player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "aae80948605522d5e84560a122d72f3120756c6a67be7b34e8ef93ebd4972c00"
+ },
+ "Final Revels": {
+  "source": {
+   "name": "Final Revels",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose one —\n• All creatures get +2/+0 until end of turn.\n• All creatures get -0/-2 until end of turn.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "978aef8e-6af8-4838-97ce-afb84baa9edc"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "all creatures",
+      "amount": "+2/+0",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "all creatures",
+      "amount": "-0/-2",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "fe1157746f737768eb30264ae295d9fbdd493ea8aaaa1b36fe9834464fb792bc"
+ },
+ "Tariff": {
+  "source": {
+   "name": "Tariff",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player sacrifices the creature they control with the greatest mana value unless they pay that creature's mana cost. If two or more creatures a player controls are tied for greatest, that player chooses one.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "e96b0560-1d91-48df-b42f-3b7d9c6d94bd"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "the creature you control with the greatest mana value",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false,
+      "unless": {
+       "cost": "that creature's mana cost",
+       "payer": "you"
+      }
+     },
+     {
+      "verb": "sacrifice",
+      "object": "the creature an opponent controls with the greatest mana value",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false,
+      "unless": {
+       "cost": "that creature's mana cost",
+       "payer": "opponent"
+      }
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ffde3e8f14000a085be19e71ecb7cd46d4da9ae82d9f8448daa8b89e79c2e10b"
+ }
+}

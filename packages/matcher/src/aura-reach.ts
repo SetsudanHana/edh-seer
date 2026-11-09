@@ -84,12 +84,27 @@ export function auraReachContext(producer: readonly GameEvent[], text: string, a
   };
 }
 
+/** CAN THE NAMED SET INCLUDE YOUR AURA? (#1579 part 1). `SubjectFilter.selection` is a marker, not a filter; this is the one reading of it, for both routes (the host route had read none, the direct route refused all but `counted`).
+ *  - `all-but` (Cataclysm: "each player chooses ... sacrifices the rest"; Selective Obliteration; Cyclone Summoner's "except for Giants, Wizards, and lands"), `pile` (Whims of the Fates, Liliana of the Veil) and `counted` (Renounce; Pox Plague's "half the
+ *    permanents they control of their choice"; Bane of Bala Ged's "two permanents") are picked from the whole class by a player who can be you: your Aura can be in it. An opponent-only pick never gets here: it is `control: opp`, or an edict the printed cue refuses (`eventReachesAura`).
+ *  - `chosen` is a set the CARD defined earlier ("each permanent chosen this way": Druid of Purification, "an artifact or enchantment you don't control"; Grenzo's Rebuttal, "an artifact, a creature, and a land"; "exiled with this" / "exiled this way": not on the battlefield). The engine does not know the set, so it reaches nothing.
+ *  - `votes` is a named permanent(s) with the most votes; in the corpus all three (Council's Judgment "a nonland permanent you don't control", Vault 11, Custodi Squire's graveyard) exclude your own battlefield Aura. `named-set` is a list of names (Apocalypse Chime, Golgothian Sylex, Moratorium Stone) the engine cannot test.
+ *  - `attached-to` is judged by `eventReachesAura` (an Aura is attached to something; the creature-removing card takes it with the host).
+ *  CEILING: `votes` is refused as a kind, not read from the card's "you don't control": a future vote over the whole battlefield would lose its Aura pair. Liliana of the Veil's "target player" is read as a player who can be you. */
+export function selectionCanIncludeAura(s: SubjectFilter): boolean {
+  switch (s.selection) {
+    case undefined: case "all-but": case "pile": case "counted": case "attached-to": return true;
+    case "chosen": case "votes": case "named-set": return false;
+  }
+}
+
 /** Could THIS event take the Aura itself (the rules in the header)? The one test both routes use: the host route (`removalReachesAura`) over the producer's events, and the direct route (an enchantment- or permanent-typed removal
  *  against the Aura's own self trigger, edges.ts) over each event. */
 export function eventReachesAura(x: GameEvent, ctx: AuraReachContext, aura: SubjectFilter, h: Hierarchy): boolean {
   const s = x.subject;
   if (x.implied === true || s.self === true || !REMOVAL_VERBS.has(x.verb)) return false;
   if ((s.fromZone !== undefined && s.fromZone !== "battlefield") || s.zone === "graveyard" || s.ref === "trigger" || s.token === true) return false;
+  if (!selectionCanIncludeAura(s)) return false;
   if (s.selection === "attached-to" && ctx.removesCreatures) return false;
   if (s.control !== "you" && (x.verb === "sacrifice" || s.edict === true || x.victimMay === true) && ctx.edictCue) return false;
   if (s.edict === true && s.scope === "target") return false;

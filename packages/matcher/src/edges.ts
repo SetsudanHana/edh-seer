@@ -2107,10 +2107,10 @@ function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abiliti
 function auraOwnLeaves(chars: CardTags["characteristics"], a: CardTags["abilities"][number], e: GameEvent, t: GameEvent, h: Hierarchy, producer: readonly GameEvent[], producerText: string): boolean {
   if (chars.enchants === undefined || a.grantedBy !== undefined || t.subject.self !== true || (t.verb !== "dies" && t.verb !== "leaves")) return false;
   if (!list(t.subject.subtype).includes("aura") || list(t.subject.type).length > 0) return false;
-  // THE EVENT NAMES A CLASS, AND THE WHOLE OF IT. An untyped removal (a bare "it": Bomb Squad's destroy, Cut the Tethers' return of a Spirit) states no class that could be an Aura, and a `selection` (a named set, "all but the chosen",
-  // a vote, a pile) is a part of the class the engine cannot test: neither reaches an Aura.
+  // THE EVENT NAMES A CLASS. An untyped removal (a bare "it": Bomb Squad's destroy, Cut the Tethers' return of a Spirit) states no class that could be an Aura, and a `selection` is read by `selectionCanIncludeAura` (aura-reach.ts,
+  // inside `eventReachesAura`): the one rule both routes use (#1579).
   const s = e.subject;
-  if ((s.selection !== undefined && s.selection !== "counted") || !namesAClass(s)) return false;
+  if (!namesAClass(s)) return false;
   const aura = characteristicsSubject({ characteristics: chars } as CardTags);
   if (!eventReachesAura(e, auraReachContext(producer, producerText, aura), aura, h)) return false;
   const { subtype: _aura, ...rest } = t.subject;

@@ -446,7 +446,7 @@ const PLAYER_PICKS = /(?<!\b(?:type|colou?r|name|kind) )\bof (?:their|your|his o
 const COUNTED = /\bequal to the number of\b/;
 /** ...but not a stat compared to a count ("each permanent with mana value equal to the number of charge counters") or a number of tokens made ("Food tokens equal to the number of opponents"): those name a class or a quantity, not a pick. */
 const COUNT_OF_STAT = /\bwith\b|\btokens?\b/;
-/** ...and a NUMBER LEADS the plural: "two permanents they control" (Bane of Bala Ged) is two of them, not all.
+/** ...and a NUMBER LEADS the plural: "two permanents they control" (Bane of Bala Ged) is two of them, not all: `counted` (a number picked from the whole class), not `chosen` (#1579; "two permanents of their choice" too: Greater Harvester). So is every pick of a number from the class a player makes: "half the permanents they control of their choice" (Pox Plague), "equal to the number of" (Balancing Act). An untyped pick ("damage from a source of your choice": Auriok Replica) keeps `chosen`; `chosen` is otherwise a set the CARD defined.
  *  CEILING: only the permanent class is read this way downstream (a marker nothing matches on); "three creatures" keeps its mass scope. */
 const NUMBERED = /^(?:up to )?(?:two|three|four|five|six|seven|eight|nine|ten|x|\d+) /;
 const MOST_VOTES = /\bmost votes\b/;
@@ -1027,7 +1027,8 @@ export function parseSubject(text: string): SubjectFilter {
     : NAME_SET.test(t) ? "named-set" as const
     : A_PILE.test(t) && type !== undefined ? "pile" as const
     : scope === undefined && CHOSEN_SET.test(t) && !/\bof the chosen\b/.test(t) ? "chosen" as const
-    : (scope === "all" || scope === "each") && (PLAYER_PICKS.test(t) || (COUNTED.test(lowered) && !COUNT_OF_STAT.test(lowered)) || (NUMBERED.test(t) && type === "permanent")) ? "chosen" as const
+    : (scope === "all" || scope === "each") && ((NUMBERED.test(t) && type === "permanent") || (type !== undefined && (PLAYER_PICKS.test(t) || (COUNTED.test(lowered) && !COUNT_OF_STAT.test(lowered))))) ? "counted" as const
+    : (scope === "all" || scope === "each") && (PLAYER_PICKS.test(t) || (COUNTED.test(lowered) && !COUNT_OF_STAT.test(lowered))) ? "chosen" as const
     : (scope === "all" || scope === "each") && out.token !== true && ATTACHED_TO.test(text.toLowerCase()) && !/\btokens?\b/.test(text.toLowerCase()) ? "attached-to" as const
     : undefined;
   if (selection) out.selection = selection;
