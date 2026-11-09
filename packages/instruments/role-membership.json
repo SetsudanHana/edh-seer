@@ -18290,7 +18290,7 @@
 "Worldly Tutor": ["role:tutor"],
 "Worldpurge": ["role:boardWipe","role:stax"],
 "Worlds Within Worlds": ["role:boardWipe"],
-"Worldslayer": ["role:boardWipe","wincon:voltron"],
+"Worldslayer": ["role:boardWipe","role:stax","wincon:voltron"],
 "Worldsoul's Rage": ["answer:creature","answer:planeswalker","role:burn","role:ramp","role:targetedRemoval","wincon:burn"],
 "Worldspine Wurm": ["wincon:go-wide"],
 "Worm Harvest": ["wincon:go-wide"],

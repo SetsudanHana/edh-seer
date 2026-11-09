@@ -1,0 +1,1127 @@
+{
+ "Behemoth's Herald": {
+  "source": {
+   "name": "Behemoth's Herald",
+   "typeLine": "Creature — Elf Shaman",
+   "oracleText": "{2}{G}, {T}, Sacrifice a red creature, a green creature, and a white creature: Search your library for a card named Godsire, put it onto the battlefield, then shuffle.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Godsire",
+     "typeLine": "Creature — Beast",
+     "printingId": "e2539ff7-2b7d-47e3-bd77-3138a6c42d2b"
+    }
+   ],
+   "_id": "967c509f-dbde-44ee-93fa-a01376f34b99"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a red creature, a green creature, and a white creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "search",
+      "object": "your library",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "Godsire",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
+ },
+ "Rienne, Angel of Rebirth": {
+  "source": {
+   "name": "Rienne, Angel of Rebirth",
+   "typeLine": "Legendary Creature — Angel",
+   "oracleText": "Flying\nOther multicolored creatures you control get +1/+0.\nWhenever another multicolored creature you control dies, return it to its owner's hand at the beginning of the next end step.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "G",
+    "R",
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "G",
+    "R",
+    "W"
+   ],
+   "power": "5",
+   "toughness": "4",
+   "manaCost": "{2}{R}{G}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "1ef2415f-f88f-41fb-b084-ea52631a60c1"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "other multicolored creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+0",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "dies",
+     "subject": "another multicolored creature you control",
+     "control": "you"
+    }
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Reign of Terror": {
+  "source": {
+   "name": "Reign of Terror",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy all green creatures or all white creatures. They can't be regenerated. You lose 2 life for each creature that died this way.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{B}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "67d12a5a-9e0c-4550-86ad-cd1e173fea8f"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all green creatures or all white creatures",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2 for each creature that died this way",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Reborn Hope": {
+  "source": {
+   "name": "Reborn Hope",
+   "typeLine": "Sorcery",
+   "oracleText": "Return target multicolored card from your graveyard to your hand.",
+   "keywords": [],
+   "colors": [
+    "G",
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{G}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "683d8deb-2ab4-4c65-9a23-f4e733f06ba2"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target multicolored card from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Spectacular Pileup": {
+  "source": {
+   "name": "Spectacular Pileup",
+   "typeLine": "Sorcery",
+   "oracleText": "All creatures and Vehicles lose indestructible until end of turn, then destroy all creatures and Vehicles.\nCycling {2} ({2}, Discard this card: Draw a card.)",
+   "keywords": [
+    "Cycling"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{W}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "8f7479e6-b2bd-46b1-96ad-34deb43565c1"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "indestructible",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "destroy",
+      "object": "all creatures and Vehicles",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Cycling {2}"
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Jace's Phantasm": {
+  "source": {
+   "name": "Jace's Phantasm",
+   "typeLine": "Creature — Illusion",
+   "oracleText": "Flying\nThis creature gets +4/+4 as long as an opponent has ten or more cards in their graveyard.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{U}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "ab56df8f-0ba3-4d66-bde2-4c9b4acf07e5"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+4/+4",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Blackbloom Rogue // Blackbloom Bog": {
+  "source": {
+   "name": "Blackbloom Rogue // Blackbloom Bog",
+   "typeLine": "Creature — Human Rogue // Land",
+   "oracleText": "Menace (This creature can't be blocked except by two or more creatures.)\nThis creature gets +3/+0 as long as an opponent has eight or more cards in their graveyard.\n//\nThis land enters tapped.\n{T}: Add {B}.",
+   "keywords": [
+    "Menace"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "producedMana": [
+    "B"
+   ],
+   "layout": "modal_dfc",
+   "gameChanger": false,
+   "reserved": false,
+   "faces": [
+    {
+     "name": "Blackbloom Rogue",
+     "typeLine": "Creature — Human Rogue",
+     "oracleText": "Menace (This creature can't be blocked except by two or more creatures.)\nThis creature gets +3/+0 as long as an opponent has eight or more cards in their graveyard.",
+     "colors": [
+      "B"
+     ],
+     "manaCost": "{2}{B}",
+     "power": "2",
+     "toughness": "3",
+     "artCrop": "https://cards.scryfall.io/art_crop/front/3/2/32779721-b021-4bd4-95d1-4a19b78d9faa.jpg?1783929390"
+    },
+    {
+     "name": "Blackbloom Bog",
+     "typeLine": "Land",
+     "oracleText": "This land enters tapped.\n{T}: Add {B}.",
+     "colors": [],
+     "manaCost": "",
+     "artCrop": "https://cards.scryfall.io/art_crop/back/3/2/32779721-b021-4bd4-95d1-4a19b78d9faa.jpg?1783929390"
+    }
+   ],
+   "_id": "34320ebf-da97-44a4-bbeb-a9da06548289"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Menace"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+3/+0",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "This land",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{B}",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Ray of Ruin": {
+  "source": {
+   "name": "Ray of Ruin",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile target creature, Vehicle, or nonbasic land. Scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
+   "keywords": [
+    "Scry"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "e36b78ed-4e3e-406d-85b3-fe0deb493418"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target creature, Vehicle, or nonbasic land",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "optional": false
+     },
+     {
+      "verb": "scry",
+      "object": "1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Wrath of God": {
+  "source": {
+   "name": "Wrath of God",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy all creatures. They can't be regenerated.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "34515b16-c9a4-4f98-8c77-416a7a523407"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Arcade Gannon": {
+  "source": {
+   "name": "Arcade Gannon",
+   "typeLine": "Legendary Creature — Human Doctor",
+   "oracleText": "{T}: Draw a card, then discard a card. Put a quest counter on Arcade Gannon.\nFor Auld Lang Syne — Once during each of your turns, you may cast an artifact or Human spell from your graveyard with mana value less than or equal to the number of quest counters on Arcade Gannon.",
+   "keywords": [
+    "For Auld Lang Syne"
+   ],
+   "colors": [
+    "U",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "manaCost": "{2}{W}{U}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "e001d7e6-71c9-42fa-9d5c-9455da66e4ec"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "quest counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "an artifact or Human spell with mana value less than or equal to the number of quest counters on ~ from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Young Pyromancer": {
+  "source": {
+   "name": "Young Pyromancer",
+   "typeLine": "Creature — Human Shaman",
+   "oracleText": "Whenever you cast an instant or sorcery spell, create a 1/1 red Elemental creature token.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "2",
+   "toughness": "1",
+   "manaCost": "{1}{R}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Elemental",
+     "typeLine": "Token Creature — Elemental",
+     "printingId": "4ace3018-7d6e-4b77-9487-f280fd723d12"
+    }
+   ],
+   "_id": "5fac139a-07d3-4e6c-98e3-d98b199f7a6f"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 red Elemental creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant or sorcery spell",
+     "control": "you"
+    }
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Traxos, Scourge Eternal": {
+  "source": {
+   "name": "Traxos, Scourge Eternal",
+   "typeLine": "Legendary Artifact Creature — Dragon Construct",
+   "oracleText": "Trample\nTraxos doesn't untap during your untap step.\nWhenever you cast an artifact or creature spell, untap Traxos.",
+   "keywords": [
+    "Trample"
+   ],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": "5",
+   "toughness": "4",
+   "manaCost": "{4}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "acf4abde-4034-4fcf-b531-78c935aecd8c"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "untap during your untap step",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "untap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "cast",
+     "subject": "an artifact or creature spell",
+     "control": "you"
+    }
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Purge": {
+  "source": {
+   "name": "Purge",
+   "typeLine": "Instant",
+   "oracleText": "Destroy target artifact creature or black creature. It can't be regenerated.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "d06f0f7c-0270-44be-991a-a5ebbddb0900"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target artifact creature or black creature",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Nissa's Defeat": {
+  "source": {
+   "name": "Nissa's Defeat",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy target Forest, green enchantment, or green planeswalker. If that permanent was a Nissa planeswalker, draw a card.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "5f808e3b-6b69-4b46-8a92-36d960527acc"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target Forest, green enchantment, or green planeswalker",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Thraben Exorcism": {
+  "source": {
+   "name": "Thraben Exorcism",
+   "typeLine": "Instant",
+   "oracleText": "Exile target Spirit, creature with disturb, or enchantment.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "b43e25d8-1c8b-4316-84f3-c4ec6f77092e"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target Spirit, creature with disturb, or enchantment",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Rancor": {
+  "source": {
+   "name": "Rancor",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature\nEnchanted creature gets +2/+0 and has trample.\nWhen this Aura is put into a graveyard from the battlefield, return it to its owner's hand.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "9d2d6479-531c-4ce1-b52b-00e36fa63b64"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "enchanted creature +2/+0",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "enchanted creature has trample",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this Aura",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
+ },
+ "Mutant Chain Reaction": {
+  "source": {
+   "name": "Mutant Chain Reaction",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy up to one target artifact, enchantment, or creature with flying. Create a Mutagen token. (It's an artifact with \"{1}, {T}, Sacrifice this token: Put a +1/+1 counter on target creature. Activate only as a sorcery.\")",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Mutagen",
+     "typeLine": "Token Artifact — Mutagen",
+     "printingId": "6559c423-449c-4e8e-8384-3ce78183e317"
+    }
+   ],
+   "_id": "ea9fc868-374b-4acc-be0d-4283907b4524"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "up to one target artifact, enchantment, or creature with flying",
+      "fromZone": null,
+      "toZone": null,
+      "optional": true
+     },
+     {
+      "verb": "create",
+      "object": "a Mutagen token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Parallax Dementia": {
+  "source": {
+   "name": "Parallax Dementia",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature\nFading 1 (This enchantment enters with one fade counter on it. At the beginning of your upkeep, remove a fade counter from it. If you can't, sacrifice it.)\nEnchanted creature gets +3/+2.\nWhen this Aura leaves the battlefield, destroy enchanted creature. That creature can't be regenerated.",
+   "keywords": [
+    "Fading",
+    "Enchant"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "6ec7a7fb-0bf9-47fa-af2b-5b13b3af3947"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Fading 1"
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "enchanted creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+3/+2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "enchanted creature",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "leaves",
+     "subject": "this Aura",
+     "control": "you"
+    }
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Katilda and Lier": {
+  "source": {
+   "name": "Katilda and Lier",
+   "typeLine": "Legendary Creature — Human",
+   "oracleText": "Whenever you cast a Human spell, target instant or sorcery card in your graveyard gains flashback until end of turn. The flashback cost is equal to its mana cost. (You may cast that card from your graveyard for its flashback cost. Then exile it.)",
+   "keywords": [],
+   "colors": [
+    "G",
+    "U",
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G",
+    "U",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{G}{W}{U}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "1990012e-2a92-4e76-917a-f90fb7a4ed66"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a Human spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "target instant or sorcery card in your graveyard gains flashback until end of turn. The flashback cost is equal to its mana cost",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
+ }
+}

@@ -57,7 +57,7 @@ export function regexLiterals(line) {
         const body = line.slice(i + 1, j);
         let k = j + 1;
         while (k < line.length && /[a-z]/.test(line[k])) k++;
-        out.push({ body, flags: line.slice(j + 1, k) });
+        out.push({ body, flags: line.slice(j + 1, k), start: i, end: k });
         i = k; prev = "r"; prevWord = ""; continue;
       }
       prev = "/"; i++; continue;
@@ -101,7 +101,19 @@ const SPACE_Q = String.raw`\\s[*+]\??`;
 const DOT_Q = String.raw`(?<!\\)\.[*+]\??`;
 
 /** Rule names fired by one regex literal. `line` is the whole source line (for how it is used). */
-export function shapesOf({ body }, line = "") {
+/** Is this literal run as a SEARCH (replace, match, search, test, exec) rather than as a split separator?
+ *  Read off the call the literal sits in: `.replace(` just before it, or `.test(` just after it. A line
+ *  that also calls `.split(" ")` elsewhere no longer hides it (#1578: `tail.trim().replace(/[.,;]+$/, "")
+ *  .split(" ")` passed here and failed CodeQL). Without a position, fall back to the whole line. */
+function searched(lit, line) {
+  if (lit.start === undefined) return !/\.split\(/.test(line) && /\.(search|exec|replace|replaceAll|test|match|matchAll)\(/.test(line);
+  const before = line.slice(0, lit.start).match(/\.(\w+)\(\s*$/);
+  if (before) return before[1] !== "split";
+  return /^\.(test|exec)\(/.test(line.slice(lit.end));
+}
+
+export function shapesOf(lit, line = "") {
+  const { body } = lit;
   const hits = [];
   const { classes, groups } = structure(body);
   const inClass = (p) => classes.some(([a, b]) => p >= a && p <= b);
@@ -139,12 +151,12 @@ export function shapesOf({ body }, line = "") {
   // the engine retries from every space of a long run. #1479 (`/\s+except\b/`). A bare `/\s+/` has no
   // tail to fail, and a `split` is not a search, so neither counts.
   const lead = body.match(new RegExp(`^${SPACE_Q}`));
-  if (lead && body.length > lead[0].length && !/\.split\(/.test(line) && /\.(search|exec|replace|replaceAll|test|match)\(/.test(line)) hits.push("leading-space");
+  if (lead && body.length > lead[0].length && searched(lit, line)) hits.push("leading-space");
   // R7. The class form of R6: an UNANCHORED leading quantified class with a tail, run as a search. A long
   // run of the class's characters that the tail then rejects is rescanned from every start. #1469
   // (`/[.,;]+(?= |$)/g` on a run of commas).
   const leadClass = body.match(/^\[(?:\\.|[^\]\\])*\][*+]\??/);
-  if (leadClass && body.length > leadClass[0].length && !/\.split\(/.test(line) && /\.(search|exec|replace|replaceAll|test|match)\(/.test(line)) hits.push("leading-class");
+  if (leadClass && body.length > leadClass[0].length && searched(lit, line)) hits.push("leading-class");
   // R8. In an UNANCHORED pattern, a quantified class that can match a space, directly followed by a space
   // (literal or \s): the run of spaces splits between the two many ways, retried from every start. #1469
   // (`(?:dealt to [a-z ]+ )?is halved`). An anchored `^…` pattern has one start, and CodeQL passes those here.
@@ -222,6 +234,7 @@ function wholeFiles(files) {
 // ---- 4. Self-test --------------------------------------------------------------------------------
 
 const MUST_FLAG = [
+  String.raw`const words = tail.trim().replace(/[.,;]+$/, "").split(" ");`,
   String.raw`s.search(/\s+except\b/i)`,
   String.raw`s.replace(/\s+except\b/i, "")`,
   String.raw`const r = /\s+and\s+(?=x)/;`,
@@ -242,6 +255,7 @@ const MUST_FLAG = [
   String.raw`const m = t.match(/\bif\s+([^.]{0,60}?)\s+would deal\b/i);`,
 ];
 const MUST_PASS = [
+  String.raw`const words = text.replace(/x/g, "y").split(/[.,;]+ /);`,
   String.raw`s.search(/ except\b/i)`,
   String.raw`/^(?:this\b|it and\b|~)/i.test(s)`,
   String.raw`s.split(/[\s,]+/)`,

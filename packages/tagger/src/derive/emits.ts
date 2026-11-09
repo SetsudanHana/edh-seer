@@ -5,13 +5,16 @@ import { lifeSetRewrite } from "./life-set.js";
 import type { Action } from "../canonicalize.js";
 import type { GameEvent, SubjectFilter, Verb } from "../schema.js";
 import { controlFromRelation, counterKindOf, parseCounter, parseSubject, spellMove, stripTokenAbility, COUNT_PHRASE } from "./subject.js";
-import { LAND_SUBTYPES } from "./subtypes.js";
+import { LAND_SUBTYPES, SUBTYPE_TYPES } from "./subtypes.js";
 import { damageRecipient, isControllerPhrase, playerOnlyRecipient } from "./damage-recipient.js";
 import { tokenTypeFor } from "./token-types.js";
 import { isEnergyObject, permanentHalf } from "./effect-kind.js";
 import { parse as parseFilter } from "../grammar/filter.js";
 import { isSelfSubject, SELF_REFERENCE } from "./self-reference.js";
 import { selfAsTilde } from "../grammar/self-as-tilde.js";
+import { cutCondition, cutSelfException } from "./self-exception.js";
+
+const SELF_EXCEPTION_VERBS: ReadonlySet<string> = new Set(["destroy", "exile", "sacrifice", "return", "put"]);
 
 /** Action verb -> the events it makes available, in order. Verbs absent from this table emit
  *  nothing; a guessed event is worse than silence because it forms edges that are not real. */
@@ -513,6 +516,36 @@ function counteredCardTypes(text: string): SubjectFilter["type"] | undefined {
   const type = parseSubject(`${words.slice(det + 1).join(" ")} spell`).type;
   return type === undefined || type === "spell" ? undefined : type;
 }
+/** ALTERNATIVES ARE ALTERNATIVES, NOT ONE MERGED FILTER (#1575). "Target Spirit, creature with disturb, or enchantment" (Thraben Exorcism) is three things; `parseSubject` merges the words into one filter, `type: [creature, enchantment]` with `subtype: spirit`
+ *  and `keyword: disturb`, so the enchantment alternative demanded the Spirit subtype. "Target creature, Vehicle, or nonbasic land" (Ray of Ruin) merged to a Vehicle-subtyped creature-or-land, "target Forest, green enchantment, or green planeswalker" (Nissa's
+ *  Defeat) to a green Forest, "an Aura, creature, or planeswalker card" (Ajani, Mentor of Heroes) to an Aura. The filter grammar reads the alternatives (`anyOf`), each with its own fields; where `parseSubject` merged a subtype, keyword or colour out of such a
+ *  list, the grammar's class fields and `anyOf` replace the merged ones and the rest of `parseSubject`'s reading (control, scope, token, origin) stays.
+ *  Taken only when every alternative states nothing but a class (type, subtype, keyword, colour, basic, legendary, tapped, combat, status): an alternative that names a player, an ability, a zone, a name or its own control keeps the merged reading.
+ *  CEILING: `parseSubject`'s fields outside that class list (a stat, a counter) are kept beside the grammar's anyOf as read; a disjunction of colours alone keeps the merged colours list (a multicolored demand reads it). */
+const ALTERNATIVE_FIELDS = ["type", "subtype", "keyword", "colors", "basic", "allTypes", "umbrella", "legendary", "notType", "notSubtype", "notColors", "tapped", "combat", "status", "snow", "token"] as const;
+function withAlternatives(text: string, plain: SubjectFilter): SubjectFilter {
+  if (plain.anyOf !== undefined || (plain.subtype === undefined && plain.keyword === undefined && plain.colors === undefined)) return plain;
+  const g = parseFilter(text);
+  if (g === null || g.anyOf === undefined || g.anyOf.length < 2) return plain;
+  const allowed = new Set<string>(ALTERNATIVE_FIELDS);
+  if (!g.anyOf.every((alt) => Object.keys(alt).every((k) => allowed.has(k)))) return plain;
+  // A COLOUR DISJUNCTION STAYS THE MERGED COLOURS: "a red, green, or white creature" (Behemoth's Herald), "all green creatures or all white creatures" (Reign of Terror). A creature of two of the colours is in both alternatives, and
+  // the matcher reads a multicolored demand (Rienne, Angel of Rebirth; Reborn Hope; Vivid Revival) off the colours list, which one-colour alternatives cannot show.
+  if (g.anyOf.every((alt) => Object.keys(alt).every((k) => k === "colors"))) return plain;
+  const merged: Record<string, unknown> = { ...plain };
+  for (const k of ALTERNATIVE_FIELDS) if (k !== "token") delete merged[k];
+  const read = g as unknown as Record<string, unknown>;
+  for (const k of ALTERNATIVE_FIELDS) if (k !== "token" && read[k] !== undefined) merged[k] = read[k];
+  // A CREATURE-SUBTYPED `spell` ALTERNATIVE IS A CREATURE SPELL ("an artifact or Human spell": Arcade Gannon). Typed `spell` it satisfied every instant, sorcery and planeswalker cast trigger (Young Pyromancer, Guttersnipe: about 150 false pairs).
+  // An Aura spell stays `spell` (a permanent spell, no creature subtype).
+  const creatureSpell = (alt: Partial<SubjectFilter>): Partial<SubjectFilter> => {
+    const sub = [alt.subtype].flat()[0];
+    return alt.type === "spell" && typeof sub === "string" && (SUBTYPE_TYPES[sub] ?? []).includes("creature") ? { ...alt, type: "creature" } : alt;
+  };
+  merged.anyOf = g.anyOf.map(creatureSpell);
+  return merged as unknown as SubjectFilter;
+}
+
 /** A CARD NAME WITH A COMMA IS ONE NAME (#1401 part 2): `parseSubject`'s NAMED stops at a comma, so "a card named Vraska, Scheming
  *  Gorgon" read `named: "vraska"` plus `subtype: "gorgon"` (a filter nobody asked for) while the effect subject, which the filter grammar
  *  reads, held the whole name. The name is the grammar's reading; the rest of the phrase is `parseSubject`'s with the name cut out, so
@@ -1009,7 +1042,13 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // CEILING: only double / triple. The same word read as a class survives where another path reads the name: Phelddagrif's "{G}: Phelddagrif gains trample" (a grant's recipient, subtype `phelddagrif`). Of the 5 cards whose name is
   // a creature type and whose tags carry it, the other 3 (Coward // Killer, Lizard Connors's Curse, Aurochs) say the TYPE, so stripping every name would delete a real reference.
   const ownNameOut = (t: string): string => (action.verb === "double" || action.verb === "triple") && opts.cardName ? selfAsTilde(t, opts.cardName).split("~").map((x) => x.trim()).filter(Boolean).join(" ") : t;
-  const subject = listed ?? playerOnly ?? parseSubjectWhole(ownNameOut(recipient ?? damageObject));
+  // AN EXCEPTION THAT IS THE CARD IS `other`, NOT A CLASS, AND A CONDITION ON THE TARGET IS NOT ITS TYPE (#1575): see self-exception.ts. Read for the zone-moving removal verbs only: a pump's or a cost's "other than this creature" keeps its reading.
+  const exceptable = SELF_EXCEPTION_VERBS.has(action.verb ?? "") && listed === undefined && playerOnly === undefined;
+  const selfCut = exceptable ? cutSelfException(cutCondition(recipient ?? damageObject), opts.cardName) : undefined;
+  const subjectText = ownNameOut(selfCut?.head ?? (exceptable ? cutCondition(recipient ?? damageObject) : recipient ?? damageObject));
+  const merged = listed ?? playerOnly ?? parseSubjectWhole(subjectText);
+  let subject = merged;
+  if (selfCut !== undefined) subject.other = true;
   // A COUNTER'S KIND IS NOT A SUBTYPE (#1520). An add-counter's object that NAMES the kind ("blood counter", "tower", "gold counter", "a blood counter from this artifact") was parsed as a permanent, so Font of Agonies' own counter carried subtype
   // `blood` beside `counter: "blood"` (Helix Pinnacle tower, Legacy's Allure treasure, Dragon's Hoard gold, Spell Satchel book, Nine Lives incarnation ...). The kind words of the OBJECT leave the subtype; a recipient's own subtype ("target Goblin") is not touched.
   if ((action.verb === "add-counter" || action.verb === "remove-counter") && recipient === undefined && listed === undefined && playerOnly === undefined && subject.subtype !== undefined) {
@@ -1017,6 +1056,8 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     const left = [subject.subtype].flat().filter((t) => !kinds.has(String(t).toLowerCase()));
     if (left.length === 0) delete subject.subtype; else subject.subtype = left.length === 1 ? left[0]! : left;
   }
+  // ...and alternatives are read AFTER the counter kinds left the subtype (#1575): "gold counters" is no Gold subtype for the grammar's alternatives to be offered instead.
+  if (listed === undefined && playerOnly === undefined) subject = withAlternatives(subjectText, subject);
   // A TOKEN THAT IS A COPY IS CONTROLLED BY ITS CREATOR, NOT BY WHAT IT COPIES (#1295, CR 111.2: the player who creates a
   // token is its owner and it enters under that player's control unless the effect says otherwise). "Create two tokens
   // that are copies of target permanent an opponent controls" (Venser, Fervent Forger) parsed the original's control and

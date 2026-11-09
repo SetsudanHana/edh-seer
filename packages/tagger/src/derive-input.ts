@@ -56,10 +56,28 @@ export function grantedTokenClauses(doc: { oracleText?: string; keywords?: strin
 }
 
 /** Granted clause id -> the clause that grants it, from the same `segment()` call: a `granted` clause carries `parentId`.
- *  Chromatic Lantern's quoted "{T}: Add one mana of any color" is granted by "Lands you control have that ability". */
-export function clauseGrants(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): Record<number, number> {
+ *  Chromatic Lantern's quoted "{T}: Add one mana of any color" is granted by "Lands you control have that ability".
+ *
+ *  A STORED ANSWER THAT NUMBERS ITS CLAUSES OTHERWISE (#1575). The model sometimes splits one printed clause in two ("Whenever you cast or copy ...": Elemental Expressionist stores the cast and the copy trigger as
+ *  clauses 1 and 2 and the quoted token trigger as 3, where `segment()` has the granted clause as 2), so the quoted ability's id is one the segmenter never had, and it read as the card's own. A stored clause
+ *  whose id the segmenter does not have, whose every action object is words of a granted clause's text, and whose trigger event (first four letters) is in that text, is that granted clause: it takes the same parent.
+ *  CEILING: only a stored id the segmenter lacks is matched by content; a stored id the segmenter also has keeps the segmenter's answer even where the model moved a clause onto it (Goldspan Dragon's duplicate 2). */
+export function clauseGrants(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }, clauses?: readonly ClauseRecord[]): Record<number, number> {
   const out: Record<number, number> = {};
-  for (const c of segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "")) if (c.kind === "granted" && c.parentId !== undefined) out[c.id] = c.parentId;
+  const segmented = segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "");
+  for (const c of segmented) if (c.kind === "granted" && c.parentId !== undefined) out[c.id] = c.parentId;
+  if (clauses === undefined) return out;
+  const known = new Set(segmented.map((c) => c.id));
+  const granted = segmented.filter((c) => c.kind === "granted" && c.parentId !== undefined);
+  for (const c of clauses) {
+    if (known.has(c.id) || out[c.id] !== undefined) continue;
+    const objects = (c.actions ?? []).map((a) => String(a.object ?? "").trim().toLowerCase()).filter((o) => o !== "");
+    if (objects.length === 0) continue;
+    // ...and a trigger's event word appears in it (its first four letters: "exiled" / "put into exile"), else "blocks | sacrifice it" is any clause with a pronoun (Dorothea's own block trigger).
+    const stem = (c.trigger?.event ?? "").toLowerCase().slice(0, 4);
+    const g = granted.find((x) => { const t = x.text.toLowerCase(); return objects.every((o) => t.includes(o) && (stem !== "" || o.length >= 4)) && (stem === "" || t.includes(stem)); });
+    if (g !== undefined) out[c.id] = g.parentId!;
+  }
   return out;
 }
 
@@ -156,7 +174,7 @@ export function deriveInputOf(card: CardDocLike, oracleId: string, name: string,
     clauseRequires: clauseRequires(card),
     clauseCosts: clauseCosts(card, activatedIds),
     clauseFaces: clauseFaces(card),
-    clauseGrants: clauseGrants(card),
+    clauseGrants: clauseGrants(card, clauses),
     modalHeads: modalHeads(card),
     manaCosts: faceManaCosts(card),
     ...(faceLoyalties(card) ? { startLoyalty: faceLoyalties(card)! } : {}),

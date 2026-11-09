@@ -1,0 +1,1832 @@
+{
+ "Cleanfall": {
+  "source": {
+   "name": "Cleanfall",
+   "typeLine": "Sorcery — Arcane",
+   "oracleText": "Destroy all enchantments.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "826b1c93-4e5d-4436-8d59-2d7d970f609f"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all enchantments",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Parallax Dementia": {
+  "source": {
+   "name": "Parallax Dementia",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature\nFading 1 (This enchantment enters with one fade counter on it. At the beginning of your upkeep, remove a fade counter from it. If you can't, sacrifice it.)\nEnchanted creature gets +3/+2.\nWhen this Aura leaves the battlefield, destroy enchanted creature. That creature can't be regenerated.",
+   "keywords": [
+    "Fading",
+    "Enchant"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "6ec7a7fb-0bf9-47fa-af2b-5b13b3af3947"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Fading 1"
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "enchanted creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+3/+2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "enchanted creature",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "leaves",
+     "subject": "this Aura",
+     "control": "you"
+    }
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Reality Acid": {
+  "source": {
+   "name": "Reality Acid",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant permanent\nVanishing 3 (This Aura enters with three time counters on it. At the beginning of your upkeep, remove a time counter from it. When the last is removed, sacrifice it.)\nWhen this Aura leaves the battlefield, enchanted permanent's controller sacrifices it.",
+   "keywords": [
+    "Vanishing",
+    "Enchant"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{U}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "232c297d-71b6-429f-99df-39a11dbcea40"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant permanent",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vanishing 3",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this Aura",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "enchanted permanent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
+ },
+ "Rancor": {
+  "source": {
+   "name": "Rancor",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature\nEnchanted creature gets +2/+0 and has trample.\nWhen this Aura is put into a graveyard from the battlefield, return it to its owner's hand.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "9d2d6479-531c-4ce1-b52b-00e36fa63b64"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "enchanted creature +2/+0",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "enchanted creature has trample",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this Aura",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
+ },
+ "Worldslayer": {
+  "source": {
+   "name": "Worldslayer",
+   "typeLine": "Artifact — Equipment",
+   "oracleText": "Whenever equipped creature deals combat damage to a player, destroy all permanents other than this Equipment.\nEquip {5} ({5}: Attach to target creature you control. Equip only as a sorcery.)",
+   "keywords": [
+    "Equip"
+   ],
+   "colors": [],
+   "manaValue": 5,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "31be715f-9ad3-435c-9e52-e108fe96b969"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all permanents other than this Equipment",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "equipped creature",
+     "control": "you"
+    }
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Equip {5}"
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Saw": {
+  "source": {
+   "name": "Saw",
+   "typeLine": "Artifact — Equipment",
+   "oracleText": "Equipped creature gets +2/+0.\nWhenever equipped creature attacks, you may sacrifice a permanent other than that creature or this Equipment. If you do, draw a card.\nEquip {2} ({2}: Attach to target creature you control. Equip only as a sorcery.)",
+   "keywords": [
+    "Equip"
+   ],
+   "colors": [],
+   "manaValue": 2,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "d88bfa98-6869-4d64-a9d2-07a308a67fe2"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "equipped creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+2/+0",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "equipped creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a permanent other than that creature or this Equipment",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Equip {2}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
+ },
+ "Mythos of Nethroi": {
+  "source": {
+   "name": "Mythos of Nethroi",
+   "typeLine": "Instant",
+   "oracleText": "Destroy target nonland permanent if it's a creature or if {G}{W} was spent to cast this spell.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "G",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "16da72a3-d980-4dd8-99f2-8191cce00978"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target nonland permanent if it's a creature or if {G}{W} was spent to cast this spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
+ },
+ "Thraben Exorcism": {
+  "source": {
+   "name": "Thraben Exorcism",
+   "typeLine": "Instant",
+   "oracleText": "Exile target Spirit, creature with disturb, or enchantment.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "b43e25d8-1c8b-4316-84f3-c4ec6f77092e"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target Spirit, creature with disturb, or enchantment",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Banishing Light": {
+  "source": {
+   "name": "Banishing Light",
+   "typeLine": "Enchantment",
+   "oracleText": "When this enchantment enters, exile target nonland permanent an opponent controls until this enchantment leaves the battlefield.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "f28b21a6-f7ce-437a-8c5b-0423cb55cefb"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target nonland permanent an opponent controls",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "enters",
+     "subject": "this enchantment",
+     "control": "you"
+    }
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Tranquil Domain": {
+  "source": {
+   "name": "Tranquil Domain",
+   "typeLine": "Instant",
+   "oracleText": "Destroy all non-Aura enchantments.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "87547bf0-02cf-4d83-9a1f-c82d2f1a22f1"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all non-Aura enchantments",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Murder": {
+  "source": {
+   "name": "Murder",
+   "typeLine": "Instant",
+   "oracleText": "Destroy target creature.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "938b4e2c-88d9-4637-bc00-e228920c9a78"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Disenchant": {
+  "source": {
+   "name": "Disenchant",
+   "typeLine": "Instant",
+   "oracleText": "Destroy target artifact or enchantment.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "a7e97fa9-4b72-4548-b854-5be5f18a6f1a"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target artifact or enchantment",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Pyroblast": {
+  "source": {
+   "name": "Pyroblast",
+   "typeLine": "Instant",
+   "oracleText": "Choose one —\n• Counter target spell if it's blue.\n• Destroy target permanent if it's blue.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{R}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "ecc435e2-deb1-420a-a79f-01dd08747314"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": []
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "counter-spell",
+      "object": "target spell",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target permanent",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Wrath of God": {
+  "source": {
+   "name": "Wrath of God",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy all creatures. They can't be regenerated.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "34515b16-c9a4-4f98-8c77-416a7a523407"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Primeval Spawn": {
+  "source": {
+   "name": "Primeval Spawn",
+   "typeLine": "Creature — Avatar",
+   "oracleText": "If this creature would enter and it wasn't cast or no mana was spent to cast it, exile it instead.\nVigilance, trample, lifelink\nWhen this creature leaves the battlefield, exile the top ten cards of your library. You may cast any number of spells with total mana value 10 or less from among them without paying their mana costs.",
+   "keywords": [
+    "Lifelink",
+    "Vigilance",
+    "Trample"
+   ],
+   "colors": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "manaValue": 10,
+   "colorIdentity": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "power": "10",
+   "toughness": "10",
+   "manaCost": "{5}{W}{U}{B}{R}{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "a11c6601-7e91-4def-bfea-bb34023ef3c6"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance, trample, lifelink",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top ten cards of your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "any number of spells with total mana value 10 or less from among them",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
+ },
+ "Containment Priest": {
+  "source": {
+   "name": "Containment Priest",
+   "typeLine": "Creature — Human Cleric",
+   "oracleText": "Flash\nIf a nontoken creature would enter and it wasn't cast, exile it instead.",
+   "keywords": [
+    "Flash"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "8a76a9b9-3127-45fe-b20f-a8f643276281"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a nontoken creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
+ },
+ "Invoke Despair": {
+  "source": {
+   "name": "Invoke Despair",
+   "typeLine": "Sorcery",
+   "oracleText": "Target opponent sacrifices a creature of their choice. If they can't, they lose 2 life and you draw a card. Then repeat this process for an enchantment and a planeswalker.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}{B}{B}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "f9ee4c80-20fb-4322-be02-1c78d37d7a99"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "target opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "an enchantment of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "target opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "a planeswalker of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "target opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
+ },
+ "End Hostilities": {
+  "source": {
+   "name": "End Hostilities",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy all creatures and all permanents attached to creatures.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{W}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "7b2e2c4b-b8fd-440c-8a79-de6532022745"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "destroy",
+      "object": "all permanents attached to creatures",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Elemental Expressionist": {
+  "source": {
+   "name": "Elemental Expressionist",
+   "typeLine": "Creature — Orc Wizard",
+   "oracleText": "Magecraft — Whenever you cast or copy an instant or sorcery spell, choose target creature you control. Until end of turn, it gains \"If this creature would leave the battlefield, exile it instead of putting it anywhere else\" and \"When this creature is put into exile, create a 4/4 blue and red Elemental creature token.\" (Each instance of that ability triggers separately.)",
+   "keywords": [
+    "Magecraft"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{U/R}{U/R}{U/R}{U/R}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Elemental Expressionist",
+     "typeLine": "Creature — Orc Wizard",
+     "printingId": "34b6e53f-f605-430e-9455-b3653cbd8e1d"
+    },
+    {
+     "component": "token",
+     "name": "Elemental",
+     "typeLine": "Token Creature — Elemental",
+     "printingId": "3d0b9b88-705e-4df0-8a93-3e240b81355b"
+    }
+   ],
+   "_id": "dfc45c58-821c-42f3-ab48-05b912748bdf"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant or sorcery spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "target creature you control gains \"If this creature would leave the battlefield, exile it instead of putting it anywhere else\"",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "copy",
+     "subject": "an instant or sorcery spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "target creature you control gains \"If this creature would leave the battlefield, exile it instead of putting it anywhere else\"",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "exiled",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 4/4 blue and red Elemental creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
+ },
+ "Bomb Squad": {
+  "source": {
+   "name": "Bomb Squad",
+   "typeLine": "Creature — Dwarf",
+   "oracleText": "{T}: Put a fuse counter on target creature.\nAt the beginning of your upkeep, put a fuse counter on each creature with a fuse counter on it.\nWhenever a creature has four or more fuse counters on it, remove all fuse counters from it and destroy it. That creature deals 4 damage to its controller.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{3}{R}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "f2ecb354-8f79-4c39-989e-7aa37ec75154"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "target creature, fuse",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "each creature with a fuse counter on it, fuse",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    }
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "fuse counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "all",
+      "optional": false
+     },
+     {
+      "verb": "destroy",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "its controller",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "4",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "state",
+     "subject": "a creature",
+     "control": "you"
+    }
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Cut the Tethers": {
+  "source": {
+   "name": "Cut the Tethers",
+   "typeLine": "Sorcery",
+   "oracleText": "For each Spirit, return it to its owner's hand unless that player pays {3}.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{U}{U}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "9af9b8de-eff6-48da-979b-4125e7965a11"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false,
+      "unless": {
+       "cost": "{3}",
+       "payer": "controller"
+      }
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
+ },
+ "Ashling, the Limitless": {
+  "source": {
+   "name": "Ashling, the Limitless",
+   "typeLine": "Legendary Creature — Elemental Sorcerer",
+   "oracleText": "Elemental permanent spells you cast from your hand gain evoke {4} as you cast them. (If you cast a spell for its evoke cost, it's sacrificed when it enters.)\nWhenever you sacrifice a nontoken Elemental, create a token that's a copy of it. The token gains haste until end of turn. At the beginning of your next end step, sacrifice it unless you pay {W}{U}{B}{R}{G}.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "manaCost": "{2}{R}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Copy",
+     "typeLine": "Token",
+     "printingId": "61328aec-ba26-4142-a774-96924303786d"
+    }
+   ],
+   "_id": "77a9e7cf-76e9-4323-8504-a5b831de00be"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "evoke {4} as you cast them",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a token that's a copy of it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "haste",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "sacrificed",
+     "subject": "a nontoken Elemental",
+     "control": "you"
+    }
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false,
+      "unless": {
+       "cost": "{W}{U}{B}{R}{G}",
+       "payer": "you"
+      }
+     }
+    ],
+    "trigger": {
+     "event": "end-step",
+     "subject": "you",
+     "control": "you"
+    }
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Slogurk, the Overslime": {
+  "source": {
+   "name": "Slogurk, the Overslime",
+   "typeLine": "Legendary Creature — Ooze",
+   "oracleText": "Trample\nWhenever a land card is put into your graveyard from anywhere, put a +1/+1 counter on Slogurk.\nRemove three +1/+1 counters from Slogurk: Return it to its owner's hand.\nWhen Slogurk leaves the battlefield, return up to three target land cards from your graveyard to your hand.",
+   "keywords": [
+    "Trample"
+   ],
+   "colors": [
+    "G",
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G",
+    "U"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{1}{G}{U}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "cee836f1-87a4-43db-a6ea-55575a4ce781"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "put-into-graveyard",
+     "subject": "a land card",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "Slogurk",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "up to three target land cards",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
+ },
+ "Apocalypse Chime": {
+  "source": {
+   "name": "Apocalypse Chime",
+   "typeLine": "Artifact",
+   "oracleText": "{2}, {T}, Sacrifice this artifact: Destroy all nontoken permanents with a name originally printed in the Homelands expansion. They can't be regenerated.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 2,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": true,
+   "_id": "995e2412-3f69-4aaf-a5d6-ae0ecbb95061"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this artifact",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "destroy",
+      "object": "all nontoken permanents with a name originally printed in the Homelands expansion",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Spirit Loop": {
+  "source": {
+   "name": "Spirit Loop",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature you control\nWhenever enchanted creature deals damage, you gain that much life.\nWhen this Aura is put into a graveyard from the battlefield, return it to its owner's hand.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "6edf5767-10d3-40b0-bfce-daa8633888f6"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature you control"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that much",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "enchanted creature",
+     "control": "any"
+    }
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "this Aura",
+      "fromZone": null,
+      "toZone": "hand",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "dies",
+     "subject": "this Aura",
+     "control": "you"
+    }
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Slow Motion": {
+  "source": {
+   "name": "Slow Motion",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature\nAt the beginning of the upkeep of enchanted creature's controller, that player sacrifices that creature unless they pay {2}.\nWhen this Aura is put into a graveyard from the battlefield, return it to its owner's hand.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{U}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "151388a4-a24b-4089-a323-e7c1d5e6490a"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "enchanted creature's controller",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false,
+      "unless": {
+       "cost": "{2}",
+       "payer": "controller"
+      }
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this Aura",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
+ },
+ "Gift of Wrath": {
+  "source": {
+   "name": "Gift of Wrath",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant artifact or creature\nAs long as enchanted permanent is a creature, it gets +2/+2 and has menace. (It can't be blocked except by two or more creatures.)\nWhen this Aura leaves the battlefield, create a 2/2 red Spirit creature token with menace.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{R}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Spirit",
+     "typeLine": "Token Creature — Spirit",
+     "printingId": "c20e427c-efa5-476c-aa33-e3149648d207"
+    }
+   ],
+   "_id": "9ba31dd0-d78e-4639-a550-bd72cac5898a"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant artifact or creature"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+2/+2",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "menace",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 2/2 red Spirit creature token with menace",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "leaves",
+     "subject": "this Aura",
+     "control": "you"
+    }
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Spreading Algae": {
+  "source": {
+   "name": "Spreading Algae",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant Swamp\nWhen enchanted land becomes tapped, destroy it.\nWhen this Aura is put into a graveyard from the battlefield, return it to its owner's hand.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "a08189f2-1643-496a-8a91-74864528b4db"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant Swamp",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "taps",
+     "subject": "enchanted land",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this Aura",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
+ }
+}

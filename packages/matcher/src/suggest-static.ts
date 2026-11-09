@@ -154,6 +154,10 @@ const YOU_MAY_SACRIFICE = /\byou may sacrifice\b/i;
 // unrelated repeatable exile on another would count the second; none known in the corpus.
 const HELD_EXILE = /\bwhen (?:this|that) [a-z]+ leaves the battlefield\b/i;
 const YOU_MAY_EXILE = /\byou may exile\b/i;
+/** A subject that names creatures: its type, or an `anyOf` branch's ("creatures and Vehicles": Spectacular Pileup), a subtype-only branch counting as a permanent kind that is not a creature. */
+function namesCreature(s: { type?: string | string[]; anyOf?: { type?: string | string[] }[] }): boolean {
+  return [s.type].flat().includes("creature") || (s.anyOf ?? []).some((b) => [b.type].flat().includes("creature"));
+}
 export function killsOwnCreatures(tags: CardTags | null | undefined, oracle = ""): boolean {
   const optional = YOU_MAY_SACRIFICE.test(oracle);
   // A CHOSEN held exile is the player's call, as "you may sacrifice" is (review).
@@ -161,11 +165,11 @@ export function killsOwnCreatures(tags: CardTags | null | undefined, oracle = ""
   return (tags?.abilities ?? []).some((a) => {
     if (a.kind === "activated") return false;
     if (held && a.repeats === "repeatable" && (a.emits ?? []).some((e) => e.verb === "exiled"
-      && [e.subject.type].flat().includes("creature") && e.subject.control !== "opp" && e.subject.self !== true && e.subject.token !== true)) return true;
+      && namesCreature(e.subject) && e.subject.control !== "opp" && e.subject.self !== true && e.subject.token !== true)) return true;
     const sacrifices = (a.emits ?? []).some((e) => e.verb === "sacrifice");
     if (sacrifices && optional) return false;
     return (a.emits ?? []).some((e) =>
-      (e.verb === "dies" || e.verb === "sacrifice") && [e.subject.type].flat().includes("creature")
+      (e.verb === "dies" || e.verb === "sacrifice") && namesCreature(e.subject)
       && e.subject.control !== "opp" && e.subject.self !== true && e.subject.token !== true
       && (a.repeats === "repeatable" || (e.subject.scope === "all" && !sacrifices)));
   });
