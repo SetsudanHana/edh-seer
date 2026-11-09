@@ -1354,7 +1354,7 @@ export interface Ability {
    *  abilities that say it. Additive. Edge code reads it once: `auraHostLeaves` (#1417) feeds a granted host trigger only on the host's own event. ABSENT on every ability no clause grants. */
   grantedBy?: number;
   /** THIS ABILITY EXISTS, OR CAN FIRE, ONLY IF THE CARD WAS CAST (#1513). Primeval Spawn ("If this creature would enter and it wasn't cast or no mana was spent to cast it, exile it instead") is never on the battlefield
-   *  any other way, and Thief of Existence's leave trigger is granted by its own cast trigger ("... Thief of Existence gains 'When this creature leaves the battlefield, ...'"). Stamped by derive on a TRIGGERED ability;
+   *  any other way, and Thief of Existence's leave trigger is granted by its own cast trigger ("... Thief of Existence gains 'When this creature leaves the battlefield, ...'"). So is a leave trigger that returns what a cast-only exile took (#1581: Hypnox's "if you cast it from your hand, exile all cards from target opponent's hand", the Champions' exile in the additional cost): it fires, but returns nothing for a card that entered any other way. Stamped by derive on a TRIGGERED ability;
    *  read once, by the matcher's self-trigger identity gate: a leave that a producer inflicts on a permanent it put onto the battlefield (`GameEvent.ofPut`) is not this card's. ABSENT means not said. */
   castOnly?: true;
   /** AN AURA'S OWN LEAVES / DIES TRIGGER WHOSE EFFECT NAMES THE PERMANENT IT WAS ATTACHED TO (#1513): "When this Aura leaves the battlefield, destroy enchanted creature" (Parallax Dementia), "enchanted permanent's controller

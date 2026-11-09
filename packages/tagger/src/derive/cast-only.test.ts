@@ -20,7 +20,18 @@ describe("castOnly", () => {
     const t = triggered("Thief of Existence");
     expect(t.filter((a) => a.castOnly === true).map((a) => [a.trigger!.verbs[0], a.grantedBy !== undefined])).toEqual([["leaves", true]]);
   });
-  test.each(["Hypnox", "Champion of the Clachan", "Rancor", "Dawn of the Dead"])("%s is left unmarked: its triggers do not need a cast", (name) => {
+  test.each(["Rancor", "Dawn of the Dead"])("%s is left unmarked: its triggers do not need a cast", (name) => {
+    expect(triggered(name).filter((a) => a.castOnly === true)).toEqual([]);
+  });
+  // #1581, owner ruling 2026-11-09. Hypnox: "When this creature enters, if you cast it from your hand, exile all cards from target opponent's hand. When this creature leaves the battlefield, return the exiled cards to their owner's hand."
+  // Champion of the Clachan: "As an additional cost to cast this spell, behold a Kithkin and exile it. ... When this creature leaves the battlefield, return the exiled card to its owner's hand."
+  test.each(["Hypnox", "Champion of the Clachan", "Champion of the Weird", "Champions of the Perfect", "Champion of the Path", "Champions of the Shoal"])(
+    "%s: the leave trigger that returns what a cast-only exile took is marked, and nothing else", (name) => {
+      expect(triggered(name).filter((a) => a.castOnly === true).map((a) => a.trigger!.verbs)).toEqual([["leaves"]]);
+    });
+  // Not cast-only: Tidehollow Sculler ("When this creature enters, ... Exile that card. When this creature leaves the battlefield, return the exiled card") exiles on EVERY entry; Wormfang Behemoth ("When this creature enters,
+  // exile all cards from your hand.") likewise; Furnace Dragon's "if you cast it from your hand" exile has no leave trigger returning it.
+  test.each(["Tidehollow Sculler", "Wormfang Behemoth", "Furnace Dragon"])("%s is left unmarked: its exile is not cast-gated or nothing is returned", (name) => {
     expect(triggered(name).filter((a) => a.castOnly === true)).toEqual([]);
   });
   test("a class-wide \"would enter and it wasn't cast\" (Containment Priest) is not the card's own", () => {
@@ -65,5 +76,13 @@ describe("actsOnHost", () => {
 describe("ofPut: a definite noun phrase", () => {
   test("Sneak Attack: \"Sacrifice the creature at the beginning of the next end step\" is the removal of what the clause put", () => {
     expect(ofPutEmits("Sneak Attack").map((e) => e.verb).sort()).toEqual(["dies", "sacrifice"]);
+  });
+});
+
+describe("the controller of an outside source (#1581)", () => {
+  test("Phyrexian Obliterator: \"that source's controller sacrifices that many permanents\" is the opponent's sacrifice, not yours", () => {
+    const em = tagsOf("Phyrexian Obliterator").abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "sacrifice" || e.verb === "dies");
+    expect(em.length).toBeGreaterThan(0);
+    expect(em.map((e) => e.subject.control)).toEqual(em.map(() => "opp"));
   });
 });

@@ -46,11 +46,28 @@ describe("a creature that can only be on the battlefield if it was cast: what a 
   test.each(["Dawn of the Dead", "Whip of Erebos", "Footsteps of the Goryo", "Zara, Renegade Recruiter"])("%s -> Admonition Angel (an ordinary leave trigger) still pairs: a reanimated creature can leave", (producer) => {
     expect(leaveTags(producer, "Admonition Angel").length).toBeGreaterThan(0);
   });
-  test("Dawn of the Dead -> Hypnox and Champion of the Clachan are left as read (judgement calls, reported)", () => {
-    expect(leaveTags("Dawn of the Dead", "Hypnox").length).toBeGreaterThan(0);
-    expect(leaveTags("Dawn of the Dead", "Champion of the Clachan").length).toBeGreaterThan(0);
+});
+
+/** #1581, owner ruling 2026-11-09. Hypnox ("When this creature enters, if you cast it from your hand, exile all cards from target opponent's hand. When this creature leaves the battlefield, return the exiled cards to their owner's hand.")
+ *  and the Champions ("As an additional cost to cast this spell, behold a Kithkin and exile it. ... When this creature leaves the battlefield, return the exiled card to its owner's hand.") return nothing unless they were cast.
+ *  Tidehollow Sculler exiles on every entry ("When this creature enters, ... Exile that card."), so its leave trigger always returns something. */
+const CAST_ONLY_EXILE = ["Hypnox", "Champion of the Clachan", "Champion of the Weird", "Champions of the Perfect", "Champion of the Path", "Champions of the Shoal"];
+describe("a creature whose leave trigger returns what only a CAST exile took (#1581)", () => {
+  const pairs: [string, string][] = PUT_THEN_REMOVE.flatMap((p) => CAST_ONLY_EXILE.map((c): [string, string] => [p, c]));
+  test.each(pairs)("%s (puts a creature, then removes it) -> %s: no leave reason", (producer, consumer) => {
+    expect(leaveTags(producer, consumer)).toEqual([]);
+  });
+  test.each(["Animate Dead", "Reanimate"])("%s (a reanimator) -> Hypnox and the Champions: no leave reason", (producer) => {
+    for (const c of CAST_ONLY_EXILE) expect(leaveTags(producer, c), c).toEqual([]);
+  });
+  test.each(CAST_ONLY_EXILE)("Ephemerate (a flicker: the flicker itself is a leave of a cast creature) -> %s still pairs", (consumer) => {
+    expect(leaveTags("Ephemerate", consumer).length).toBeGreaterThan(0);
+  });
+  test.each(PUT_THEN_REMOVE)("%s -> Tidehollow Sculler (exiles on every entry) still pairs", (producer) => {
+    expect(leaveTags(producer, "Tidehollow Sculler").length).toBeGreaterThan(0);
   });
 });
+
 
 describe("an Aura whose leave trigger acts on its host is not triggered by the host's own departure", () => {
   test.each(["Parallax Dementia", "Reality Acid"])("Murder (the host dies, the Aura goes with it) -> %s: no host-leaves reason", (aura) => {

@@ -190,3 +190,26 @@ test("a sacrifice that falls on every player is marked, a targeted or optional o
     "It deals 5 damage to target opponent unless that player sacrifices a creature of their choice.", "Whenever a creature dies, each player draws a card.", "Sacrifice a creature: each player loses 1 life.",
   ]) expect(sacrificeFallsOnEveryone(t), t).toBe(false);
 });
+
+/** #1581: Phyrexian Obliterator, "Whenever a source deals damage to this creature, that source's controller sacrifices that many permanents of their choice." The controller of an OUTSIDE source is the actor, and the corpus's
+ *  uses of the phrase are all deterrents or answers aimed at an opponent (Reaper of Sheoldred, Belltower Sphinx, Lava Runner, Broken Ambitions). Unread, the sacrifice derived `you`: the Obliterator was fodder for your own sacrifice payoffs. */
+test("the controller of an outside source (a damager, a spell, an ability) is an opponent", () => {
+  expect(actionRecipients("Whenever a source deals damage to this creature, that source's controller sacrifices that many permanents of their choice.")).toEqual({ sacrifice: "opp" });
+  expect(actionRecipients("Whenever a source deals damage to this creature, that source’s controller sacrifices that many permanents of their choice.")).toEqual({ sacrifice: "opp" });
+  expect(actionRecipients("Whenever a source deals damage to this creature, that source's controller gets a poison counter.")).toEqual({ "add-counter": "opp" });
+  expect(actionRecipients("Whenever a source deals damage to this creature, that source's controller mills that many cards.")).toEqual({ mill: "opp" });
+  expect(actionRecipients("If a source would deal damage to this creature, prevent that damage. The source's controller draws cards equal to the damage prevented this way.")).toEqual({ draw: "any" });
+  expect(actionRecipients("Whenever this creature becomes the target of a spell or ability, that spell or ability's controller sacrifices a land of their choice.")).toEqual({ sacrifice: "opp" });
+  expect(actionRecipients("Counter target spell. If you win, that spell's controller mills four cards.")).toEqual({ mill: "opp" });
+});
+/** A BENEFIT to the outside source's controller is anyone's (review of #1581): Swans of Bryn Argoll draws for whoever damages it, and the classic loop is YOUR Niv-Mizzet damaging it. A cost to them (sacrifices, mills, poison, loses life) stays an opponent's, and so
+ *  does a source or spell "an opponent controls" whatever the verb. */
+test("the controller of an outside source who is GIVEN something is any; one who pays, or an opponent's source, is opp", () => {
+  expect(actionRecipients("Counter target spell. That spell's controller may draw a card.")).toEqual({ draw: "any" });
+  expect(actionRecipients("Whenever a source deals damage to this creature, that source's controller gains 2 life.")).toEqual({ "gain-life": "any" });
+  expect(actionRecipients("Whenever a source an opponent controls deals damage to this creature, that source's controller draws a card.")).toEqual({ draw: "opp" });
+  expect(actionRecipients("Whenever a source deals damage to this creature, that source's controller loses 2 life.")).toEqual({ "lose-life": "opp" });
+});
+test("'that creature's controller' is a different referent and stays unread (Burning Sands: a creature of yours dying)", () => {
+  expect(actionRecipients("Whenever a creature dies, that creature's controller sacrifices a land of their choice.")).toEqual({});
+});
