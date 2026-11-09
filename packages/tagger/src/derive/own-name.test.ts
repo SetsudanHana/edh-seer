@@ -34,7 +34,7 @@ test("what the name stood for is put back: cards NAMED the card keep its types, 
   const self = subj(stripOwnNameSubtypes(emit({ subtype: "human", scope: "all" }), new Set(["human"]), ownNameFacts("Human Torch", "Human Torch gains flying", ["Human"], ["creature"])));
   expect(self).toMatchObject({ self: true, type: "creature" });
   // ...but an EFFECT subject made self stays untyped
-  const grant = stripOwnNameSubtypes({ kind: "static", effect: { kind: "keyword-grant", subject: { control: "any", token: null, subtype: "human" } } } as never, new Set(["human"]), ownNameFacts("Human Torch", "Human Torch gains flying", ["Human"], ["creature"])) as { effect: { subject: Record<string, unknown> } };
+  const grant = stripOwnNameSubtypes({ kind: "static", effect: { kind: "keyword-grant", subject: { control: "any", token: null, subtype: "human" } } } as never, new Set(["human"]), ownNameFacts("Human Torch", "Human Torch gains flying", ["Human"], ["creature"])) as unknown as { effect: { subject: Record<string, unknown> } };
   expect(grant.effect.subject).toMatchObject({ self: true });
   expect(grant.effect.subject.type).toBeUndefined();
   // a subject that keeps a type is not made self
