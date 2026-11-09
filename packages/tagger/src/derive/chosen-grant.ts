@@ -35,7 +35,7 @@ export function chosenGrantSentence(text: string): string | undefined {
 export function withChosenTypeGrant(clause: ClauseRecord, text: string | undefined): ClauseRecord {
   if (text === undefined) return clause;
   const actions = clause.actions ?? [];
-  if (actions.length === 0 || !actions.every((a) => VAGUE.has(a.verb))) return clause;
+  if (actions.length === 0 || !actions.every((a) => VAGUE.has(a.verb ?? ""))) return clause;
   const sentence = chosenGrantSentence(text);
   if (sentence === undefined) return clause;
   return { ...clause, actions: [{ verb: "grant-ability", object: sentence, fromZone: null, toZone: null, amount: null, optional: false }] };

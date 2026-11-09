@@ -1,6 +1,5 @@
 import type { Ability } from "../schema.js";
 import { SUBTYPES } from "./subtypes.js";
-import { withoutParentheses } from "./reminder.js";
 
 /** THE CARD'S OWN NAME IS NOT A CLASS (#1570). A card whose name holds a creature type read the name as that type wherever a subject was parsed from a clause head: "Phelddagrif gains trample" (a grant's recipient) was the class of Phelddagrifs, "Human Torch gains flying" every
  *  Human, "Return Phelddagrif to its owner's hand" and "When Eye of Nidhogg is put into a graveyard" a bounce and a recursion of a class, "creatures you control named Templar Knight" Knights, "time counters on The War Doctor" a count of Doctors. #1568 took the name out of a double /
@@ -8,7 +7,7 @@ import { withoutParentheses } from "./reminder.js";
  *
  *  A subtype that is a WORD OF THE NAME stays only when the card's text says the type itself, which is read two ways: the word appears in the text once the card's own name (full and short forms) is taken out ("Other Goblin creatures" in Goblin Rabblemaster), or it stands in a
  *  CLASS POSITION in the text as printed -- after "a / an / other / another / each / all / every / target / no / a number" and up to three describing words, with no "named" between ("becomes a Coward", "becomes a green Lizard" in Lizard, Connors's Curse, "each other attacking Aurochs").
- *  Not touched: a `self` subject (Arden Angel's own death is an Angel's), a TOKEN subject (a Goblin Rabblemaster's Goblin tokens are Goblins), and a counter kind.
+ *  Not touched: a `self` subject (Arden Angel's own death is an Angel's), a `ref` subject for the card's own subtypes ("When The Scarab God dies, return it"), a TOKEN subject (a Goblin Rabblemaster's Goblin tokens are Goblins), and a counter kind.
  *  CEILING: the class position test is a window of four words, not a parse: a name word that follows "each" or "a" within four words without being a class ("a Phelddagrif's ... ") is read as one, and a type said only by a quoted ability of a token is missed. */
 /** Words that open a class mention. "the / that / this / your / their / its" are not among them: they stand before a name as freely as before a noun ("The Scarab God dies", "on the Eye"). */
 const CLASS_CUES = new Set(["a", "an", "other", "another", "each", "all", "every", "target", "no", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "x", "any", "number"]);
@@ -70,7 +69,8 @@ export function nameOnlyTypes(cardName: string | undefined, oracleText: string |
   const nameWords = new Set(words(cardName).map((w) => w.toLowerCase()));
   const candidates = [...nameWords].flatMap((w) => [w, ...(w.endsWith("es") ? [w.slice(0, -2)] : []), ...(w.endsWith("s") ? [w.slice(0, -1)] : [])]).filter((w) => SUBTYPES.has(w));
   if (candidates.length === 0) return out;
-  const text = withoutParentheses(oracleText ?? "");
+  // The reminder text is read too: a keyword's reminder says a real type (Borg Queen's "It's a Borg artifact creature").
+  const text = oracleText ?? "";
   const elsewhere = new Set(words(withoutOwnName(text, selfForms(cardName))).map((w) => w.toLowerCase()));
   const tokens = text.split(/\s+/).filter((w) => w !== "");
   for (const c of new Set(candidates)) {
@@ -81,7 +81,7 @@ export function nameOnlyTypes(cardName: string | undefined, oracleText: string |
 }
 
 /** The ability with the name-only subtypes taken out of every subject that is not the card itself or a token. */
-export function stripOwnNameSubtypes(a: Ability, drop: ReadonlySet<string>): Ability {
+export function stripOwnNameSubtypes(a: Ability, drop: ReadonlySet<string>, ownSubtypes: ReadonlySet<string> = new Set()): Ability {
   if (drop.size === 0) return a;
   const walk = (v: unknown): unknown => {
     if (Array.isArray(v)) return v.map(walk);
@@ -90,7 +90,8 @@ export function stripOwnNameSubtypes(a: Ability, drop: ReadonlySet<string>): Abi
     const out: Record<string, unknown> = {};
     for (const [k, x] of Object.entries(o)) out[k] = walk(x);
     if (o.subtype !== undefined && o.self !== true && o.token !== true) {
-      const kept = [o.subtype as string | string[]].flat().filter((t) => !drop.has(t.toLowerCase()));
+      // A subject that points back at the trigger's object ("When The Scarab God dies, return it", `ref`) is the card itself there: its own subtypes are real.
+      const kept = [o.subtype as string | string[]].flat().filter((t) => !drop.has(t.toLowerCase()) || (o.ref !== undefined && ownSubtypes.has(t.toLowerCase())));
       if (kept.length === 0) delete out.subtype;
       else out.subtype = kept.length === 1 ? kept[0] : kept;
     }

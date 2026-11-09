@@ -4960,7 +4960,7 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
   const own = [...new Set(creatureFaces.flatMap((f) => f.subtypes.map((x) => x.toLowerCase())))];
   // THE CARD'S OWN NAME IS NOT A CLASS (#1570), before the pin below puts the card's real types into a `sharesTypeWith: self` subject.
   const ownNameOnly = nameOnlyTypes(input.name, input.oracleText);
-  const named = ownNameOnly.size === 0 ? hosted : hosted.map((a) => stripOwnNameSubtypes(a, ownNameOnly));
+  const named = ownNameOnly.size === 0 ? hosted : hosted.map((a) => stripOwnNameSubtypes(a, ownNameOnly, new Set(chars.subtypes.map((t) => t.toLowerCase()))));
   const pinned = own.length === 0 ? named : named.map((a) => a.trigger?.subject.sharesTypeWith !== "self" ? a : {
     ...a,
     trigger: { ...a.trigger, subject: (({ sharesTypeWith: _s, ...rest }) => ({ ...rest, subtype: own }))(a.trigger.subject) },

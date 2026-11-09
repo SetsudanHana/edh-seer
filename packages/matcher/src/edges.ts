@@ -3432,7 +3432,8 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
     // A CHOSEN BASIC LAND TYPE handed to a whole land class (Realmwright, #1570) is used by a card that uses any basic land type on the battlefield (Cabal Coffers' Swamps, a Forest lord).
     // CEILING: with a deck the chosen land type could be narrowed to the deck's main land type, as a chosen creature type is; any of the five counts here.
     if (classGrant !== undefined && !creatureGrant && classGrant.grantsType === undefined && classGrant.grantsChosen === "land-type") {
-      if (!BASIC_LAND_TYPES.some((t) => usesGrantedType(c.tags, t))) return undefined;
+      const consumerTags = c.tags;
+      if (!BASIC_LAND_TYPES.some((t) => usesGrantedType(consumerTags, t))) return undefined;
       return {
         tag: `static:${a.effect.kind}`,
         text: `${p.card.name} gives your lands a basic land type, and ${c.card.name} uses a land type`,
