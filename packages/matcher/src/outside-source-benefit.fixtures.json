@@ -1,0 +1,610 @@
+{
+ "Swans of Bryn Argoll": {
+  "card": {
+   "name": "Swans of Bryn Argoll",
+   "typeLine": "Creature — Bird Spirit",
+   "oracleText": "Flying\nIf a source would deal damage to this creature, prevent that damage. The source's controller draws cards equal to the damage prevented this way.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "U",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": "4",
+   "toughness": "3",
+   "layout": "normal",
+   "manaCost": "{2}{W/U}{W/U}",
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a58f6eb344af194068e",
+   "oracleId": "b187aeeb-5cf5-4b73-a3ef-f39188d2ba33",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "bird",
+     "spirit"
+    ],
+    "layout": "normal",
+    "colors": [
+     "U",
+     "W"
+    ],
+    "identity": [
+     "U",
+     "W"
+    ],
+    "cmc": 4,
+    "power": "4",
+    "toughness": "3",
+    "token": false,
+    "keywords": [
+     "flying"
+    ]
+   },
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "prevention",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "prevention": {
+      "damage": "any",
+      "amount": "all",
+      "duration": "continuous"
+     },
+     "emits": [
+      {
+       "verb": "prevented",
+       "subject": {
+        "control": "any",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "continuous"
+    },
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "draw-card"
+     },
+     "amount": "equal to the damage prevented this way",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "any",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "continuous"
+    }
+   ],
+   "deriveVersion": 484,
+   "normalizeVersion": 14,
+   "segmentHash": "2346e1da7d8129fc1428a0a76233eaad585e2921cf8546bab736de0339128245",
+   "clauseSource": "model"
+  }
+ },
+ "Niv-Mizzet, Parun": {
+  "card": {
+   "name": "Niv-Mizzet, Parun",
+   "typeLine": "Legendary Creature — Dragon Wizard",
+   "oracleText": "This spell can't be countered.\nFlying\nWhenever you draw a card, Niv-Mizzet deals 1 damage to any target.\nWhenever a player casts an instant or sorcery spell, you draw a card.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "layout": "normal",
+   "manaCost": "{U}{U}{U}{R}{R}{R}",
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736acaf6eb344af122335b",
+   "oracleId": "33666a98-812f-4892-9f8d-33e0cbecc340",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "legendary",
+     "creature"
+    ],
+    "subtypes": [
+     "dragon",
+     "wizard"
+    ],
+    "layout": "normal",
+    "colors": [
+     "R",
+     "U"
+    ],
+    "identity": [
+     "R",
+     "U"
+    ],
+    "cmc": 6,
+    "power": "5",
+    "toughness": "5",
+    "token": false,
+    "keywords": [
+     "flying"
+    ]
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "draw"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "non-combat-damage",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "scope": "target"
+       },
+       "dealer": {
+        "control": "you",
+        "token": null,
+        "self": true
+       }
+      }
+     ],
+     "clause": 3,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "cast"
+      ],
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": [
+        "instant",
+        "sorcery"
+       ]
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 4,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "unclaimed": [
+    {
+     "clause": 1,
+     "verb": "cant",
+     "object": "be countered"
+    }
+   ],
+   "deriveVersion": 484,
+   "normalizeVersion": 13,
+   "segmentHash": "6046df2ef884a22b83d96322335a0e6ecdcda10dfd669c7c0423a16b1159b2c0",
+   "clauseSource": "grammar"
+  }
+ },
+ "Niv-Mizzet, the Firemind": {
+  "card": {
+   "name": "Niv-Mizzet, the Firemind",
+   "typeLine": "Legendary Creature — Dragon Wizard",
+   "oracleText": "Flying\nWhenever you draw a card, Niv-Mizzet deals 1 damage to any target.\n{T}: Draw a card.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "layout": "normal",
+   "manaCost": "{2}{U}{U}{R}{R}",
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a736acaf6eb344af1223327",
+   "oracleId": "959acb66-84ca-4535-bca2-ad591895735e",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "legendary",
+     "creature"
+    ],
+    "subtypes": [
+     "dragon",
+     "wizard"
+    ],
+    "layout": "normal",
+    "colors": [
+     "R",
+     "U"
+    ],
+    "identity": [
+     "R",
+     "U"
+    ],
+    "cmc": 6,
+    "power": "4",
+    "toughness": "4",
+    "token": false,
+    "keywords": [
+     "flying"
+    ]
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "draw"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "non-combat-damage",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "scope": "target"
+       },
+       "dealer": {
+        "control": "you",
+        "token": null,
+        "self": true
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 3,
+     "repeats": "per-cycle",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     },
+     "payment": {
+      "tap": true
+     }
+    }
+   ],
+   "deriveVersion": 484,
+   "normalizeVersion": 13,
+   "segmentHash": "4388aa113a8faa155b41264c6d47df108e652768e39182e707640427c9448796",
+   "clauseSource": "grammar"
+  }
+ },
+ "Phyrexian Obliterator": {
+  "card": {
+   "name": "Phyrexian Obliterator",
+   "typeLine": "Creature — Phyrexian Horror",
+   "oracleText": "Trample\nWhenever a source deals damage to this creature, that source's controller sacrifices that many permanents of their choice.",
+   "keywords": [
+    "Trample"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "layout": "normal",
+   "manaCost": "{B}{B}{B}{B}",
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6a932a51f6eb344af1938e54",
+   "oracleId": "41820f91-27cf-41c0-bb5e-9adf6845a6a4",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "creature"
+    ],
+    "subtypes": [
+     "phyrexian",
+     "horror"
+    ],
+    "layout": "normal",
+    "colors": [
+     "B"
+    ],
+    "identity": [
+     "B"
+    ],
+    "cmc": 4,
+    "power": "5",
+    "toughness": "5",
+    "token": false,
+    "keywords": [
+     "trample"
+    ]
+   },
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": ""
+     },
+     "trigger": {
+      "verbs": [
+       "damaged"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     },
+     "emits": [
+      {
+       "verb": "sacrifice",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "selection": "counted",
+        "type": "permanent",
+        "scope": "all"
+       }
+      },
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "selection": "counted",
+        "type": "permanent",
+        "scope": "all"
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "repeatable",
+     "count": {
+      "floor": 0,
+      "ceiling": null,
+      "scalesWith": {
+       "control": "opp",
+       "token": null,
+       "selection": "counted",
+       "type": "permanent",
+       "scope": "all"
+      }
+     }
+    }
+   ],
+   "deriveVersion": 484,
+   "normalizeVersion": 14,
+   "segmentHash": "5134f21a749801feca64c02ec2fcb8867593f4b3cf2314d3ab678e92d32aefd8",
+   "clauseSource": "model"
+  }
+ },
+ "Vex": {
+  "card": {
+   "name": "Vex",
+   "typeLine": "Instant",
+   "oracleText": "Counter target spell. That spell's controller may draw a card.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "normal",
+   "manaCost": "{2}{U}",
+   "gameChanger": false,
+   "commanderLegality": "legal"
+  },
+  "tags": {
+   "_id": "6aa131cb22a4c97a52ec52d4",
+   "oracleId": "fd6ba826-e7b1-4375-8aaf-c3cd3dc7ba07",
+   "schemaVersion": 1,
+   "promptVersion": 0,
+   "model": "derived",
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "U"
+    ],
+    "identity": [
+     "U"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   },
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "counter-spell",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "spell",
+        "scope": "target"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "any",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once",
+     "count": {
+      "floor": 1,
+      "ceiling": 1
+     }
+    }
+   ],
+   "deriveVersion": 484,
+   "normalizeVersion": 19,
+   "segmentHash": "5b61eaf1b523c615eee29f781598b43ccbf2bc53b8a17995afc3d4c5b302eab8",
+   "clauseSource": "model"
+  }
+ }
+}

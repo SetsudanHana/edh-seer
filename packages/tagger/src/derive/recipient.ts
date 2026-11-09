@@ -30,6 +30,8 @@ import type { Control } from "../schema.js";
 // and answers pointed at an opponent, and being wrong here only removes an edge. CEILING: you can damage or counter your own permanent, and that controller is then you; "that creature's controller" is a different referent
 // (Burning Sands: a creature of yours dying) and is not read.
 const OUTSIDE_SOURCE = "(?:that|the) (?:source|spell|ability|spell or ability)['’]s controller";
+/** Verbs that GIVE the outside source's controller something: the draw and the lifegain cues. */
+const OUTSIDE_BENEFITS: ReadonlySet<string> = new Set(["draw", "gain-life"]);
 const OUTSIDE_SOURCE_RE = new RegExp(`^${OUTSIDE_SOURCE}$`);
 const WHO = `its controller|their controller|${OUTSIDE_SOURCE}|target opponent|each opponent|each other player|defending player|attacking player|that player|target player|each player|those players`;
 
@@ -125,7 +127,7 @@ export function thatPlayerIsOpponent(clauseText: string, triggerIsSelf: boolean,
  *  "its controller" is a DECISION, not a reading: the rules let you point Pongify at your own
  *  creature, so the honest rules answer is "any". It is called `opp` because these are removal spells
  *  and that is where they get pointed, and because being wrong here only ever removes an edge. */
-function controlOf(phrase: string, text: string, at: number, ctx: ActorContext): Control | undefined {
+function controlOf(phrase: string, text: string, at: number, ctx: ActorContext, verb = ""): Control | undefined {
   const p = phrase.toLowerCase();
   // AFTER AN UNTARGETED TRIGGER SUBJECT IT IS ANYONE (#650): "Whenever a creature enters, its
   // controller sacrifices ..." (Tainted Aether) points at the creature that entered, which can be
@@ -151,7 +153,9 @@ function controlOf(phrase: string, text: string, at: number, ctx: ActorContext):
     // A creature YOU control has you as its controller (review): `any` would satisfy an opponent's side too.
     return /\byou control\b/i.test(before) ? "you" : "any";
   }
-  if (OUTSIDE_SOURCE_RE.test(p)) return "opp";
+  // ...EXCEPT WHEN THEY ARE GIVEN SOMETHING (review of #1581): "The source's controller draws cards equal to the damage prevented" (Swans of Bryn Argoll) pays your own Niv-Mizzet's damage out to YOU, and "that spell's controller may draw a card"
+  // (Vex) can be your own spell. A benefit to an untyped outside source's controller is `any`; a source or spell "an opponent controls" stays `opp` whatever the verb.
+  if (OUTSIDE_SOURCE_RE.test(p)) return OUTSIDE_BENEFITS.has(verb) && !/\bopponents?\b/i.test(text.slice(0, at)) ? "any" : "opp";
   if (p === "target opponent" || p === "each opponent" || p === "each other player" || p === "defending player" || p === "attacking player") return "opp";
   // "that player" points back at whoever the clause already named. The antecedent is in the same
   // clause, so this one needs no judgment: Massacre Wurm's "a creature an opponent controls dies,
@@ -211,7 +215,7 @@ export function actionRecipients(clauseText: string, ctx: ActorContext = {}): Re
     if (yours && m && yours.index < m.index) continue;
     if (yours && !m) { out[verb] = "you"; continue; }
     if (!m) continue;
-    const control = controlOf(m[1], clauseText, m.index, ctx);
+    const control = controlOf(m[1], clauseText, m.index, ctx, verb);
     // An exile cue speaks only when it states an opponent: "that player exiles the top card of one of their
     // OPPONENTS' libraries" (Shared Fate) is another player's library, which the object already says.
     if (control && !(verb === "exile" && control !== "opp")) out[verb] = control;
