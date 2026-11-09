@@ -12,7 +12,7 @@ type Fx = { source: Record<string, unknown>; canonical: ClauseRecord[] };
 const F = fixtures as unknown as Record<string, Fx>;
 const H = loadHierarchy();
 const card = (name: string): DeckCard => ({ card: F[name]!.source as unknown as DeckCard["card"], tags: deriveCardTags(deriveInputOf(F[name]!.source as never, name, name, F[name]!.canonical)) as CardTags });
-const legendDeath = (p: string, c: string) => pairReasonsAcrossFaces(card(p), card(c), H).filter((r) => r.producer.startsWith(p.split(" //")[0]!) && r.consumer === c && /legend rule/.test(r.text));
+const legendDeath = (p: string, c: string) => pairReasonsAcrossFaces(card(p), card(c), H).filter((r) => (r.producer ?? "").startsWith(p.split(" //")[0]!) && r.consumer === c && /legend rule/.test(r.text));
 
 describe("a renamed copy fires no legend-rule death", () => {
   test.each(["Ludevic, Necrogenius // Olag, Ludevic's Hubris", "Sakashima the Impostor"])("%s -> Child of Alara: none", (producer) => {
