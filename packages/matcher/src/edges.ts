@@ -12,7 +12,7 @@ import { normalizeZoneEvent, tagKey, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { baseSetStrength, nodePower, pairsAsUpgrade, powerNeeds, raisedToken, readsPower } from "./base-pt-set.js";
 import { hasMediatingToken } from "./tokens.js";
-import { auraReachContext, eventReachesAura, removalReachesAura } from "./aura-reach.js";
+import { auraReachContext, eventReachesAura, namesAClass, removalReachesAura } from "./aura-reach.js";
 import {
   copySentence, costReductionSentence, temporaryCopySentence, counterPresenceSentence, createsSentence,
   enterAsCopySentence, entersAsCopyOfSentence, fetchSentence, proliferateSentence, counterCostSentence, effectPhrase, phraseKindOf, creatureConditionSentence,
@@ -2103,14 +2103,14 @@ function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abiliti
  *  itself: it counts when `eventReachesAura` says it could take the Aura off the battlefield (the rules of the host route, aura-reach.ts), and the trigger is then judged without its subtype and control. The self-identity gate
  *  (`subjectMatches` on the Aura's printed characteristics) and every other `eventMatches` gate still run on it. Returns the event to use, or null.
  *  CEILING: only an Aura's own trigger (not a granted one) with the subtype `aura` and a leave or death verb; an event that already matches as printed (a "destroy target Aura") is not touched; a stated subtype on the event is held against the Aura;
- *  the printed opponent-only cue list is the host route's ("that player controls" after a combat-damage trigger, "defending player controls" are not on it, so Aberrant, Dawning Purist and Kogla keep their pair); an untyped removal pairs nothing here (the host route still reads it). */
+ *  the printed opponent-only cue list is the host route's ("defending player controls" and a "that player controls" the sentence itself ties to an opponent or to our own dealer are on it since #1577: Aberrant, Dawning Purist, Kogla; a dealer named by the card's name is not read); an untyped removal pairs nothing here, and since #1577 nothing on the host route either (`namesAClass`). */
 function auraOwnLeaves(chars: CardTags["characteristics"], a: CardTags["abilities"][number], e: GameEvent, t: GameEvent, h: Hierarchy, producer: readonly GameEvent[], producerText: string): boolean {
   if (chars.enchants === undefined || a.grantedBy !== undefined || t.subject.self !== true || (t.verb !== "dies" && t.verb !== "leaves")) return false;
   if (!list(t.subject.subtype).includes("aura") || list(t.subject.type).length > 0) return false;
   // THE EVENT NAMES A CLASS, AND THE WHOLE OF IT. An untyped removal (a bare "it": Bomb Squad's destroy, Cut the Tethers' return of a Spirit) states no class that could be an Aura, and a `selection` (a named set, "all but the chosen",
   // a vote, a pile) is a part of the class the engine cannot test: neither reaches an Aura.
   const s = e.subject;
-  if (s.selection !== undefined || !(s.type !== undefined || s.subtype !== undefined || (s.anyOf ?? []).some((b) => b.type !== undefined || b.subtype !== undefined))) return false;
+  if (s.selection !== undefined || !namesAClass(s)) return false;
   const aura = characteristicsSubject({ characteristics: chars } as CardTags);
   if (!eventReachesAura(e, auraReachContext(producer, producerText, aura), aura, h)) return false;
   const { subtype: _aura, ...rest } = t.subject;
