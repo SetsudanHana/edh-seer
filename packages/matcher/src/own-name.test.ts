@@ -63,6 +63,8 @@ test("what the name stood for is put back (#1570): Myr Servitor's returned cards
   expect(entersOf("Myr Servitor").some((s) => s.named === "myr servitor" && [s.type].flat().includes("creature"))).toBe(true);
   expect(tagsOf("Phelddagrif").abilities.filter((a) => a.effect.kind === "keyword-grant").every((a) => a.effect.subject?.self === true)).toBe(true);
   expect(tagsOf("Human Torch").abilities.filter((a) => a.effect.kind === "keyword-grant").every((a) => a.effect.subject?.self === true)).toBe(true);
+  // Graf Rats exiles itself and Midnight Scavengers: a creature exile (Syr Vondam, Soulherder and Hero of Bretagard hear it), not an exile of every Rat and not of an artifact
+  expect(tagsOf("Graf Rats").abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "exiled").every((e) => e.subject.self === true && e.subject.type === "creature")).toBe(true);
   // no untyped "exile every card" emit is left behind (it paired with every self-exile trigger)
   const bare = tagsOf("Graf Rats").abilities.flatMap((a) => a.emits ?? []).filter((e) => (e.verb === "exiled" || e.verb === "leaves") && e.subject.self !== true && e.subject.type === undefined && e.subject.subtype === undefined && e.subject.named === undefined);
   expect(bare).toEqual([]);

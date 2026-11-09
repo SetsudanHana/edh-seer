@@ -32,7 +32,7 @@ test("what the name stood for is put back: cards NAMED the card keep its types, 
   expect(demon.type).toBeUndefined();
   // a class-less leftover is the card itself
   const self = subj(stripOwnNameSubtypes(emit({ subtype: "human", scope: "all" }), new Set(["human"]), ownNameFacts("Human Torch", "Human Torch gains flying", ["Human"], ["creature"])));
-  expect(self).toMatchObject({ self: true });
+  expect(self).toMatchObject({ self: true, type: "creature" });
   // a subject that keeps a type is not made self
   const typed = subj(stripOwnNameSubtypes(emit({ type: "creature", subtype: "curse" }), new Set(["curse"]), ownNameFacts("Lizard, Connors's Curse", "x", ["Lizard"], ["creature"])));
   expect(typed.self).toBeUndefined();

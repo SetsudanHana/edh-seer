@@ -103,7 +103,7 @@ export function ownNameFacts(cardName: string | undefined, oracleText: string | 
 
 /** The ability with the name-only subtypes taken out of every subject that is not the card itself or a token, and what the name stood for put back:
  *  a subject of cards NAMED this card ("each player returns all cards named Myr Servitor") keeps the card's own types, which the subtype carried (a creature entering is what Authority of the Consuls hears);
- *  a subject left with no class at all (Phelddagrif's "{G}: Phelddagrif gains trample", Eye of Nidhogg's "return it", The War Doctor's "counters on The War Doctor") was the card, so it is `self`. */
+ *  a subject left with no class at all (Phelddagrif's "{G}: Phelddagrif gains trample", Eye of Nidhogg's "return it", The War Doctor's "counters on The War Doctor") was the card, so it is `self`, with the card's printed types. */
 export function stripOwnNameSubtypes(a: Ability, drop: ReadonlySet<string>, facts: OwnNameFacts): Ability {
   if (drop.size === 0) return a;
   const walk = (v: unknown): unknown => {
@@ -120,7 +120,11 @@ export function stripOwnNameSubtypes(a: Ability, drop: ReadonlySet<string>, fact
       if (kept.length === 0 && out.type === undefined && out.anyOf === undefined && out.allTypes === undefined) {
         if (typeof o.named === "string" && facts.nameForms.has(o.named.toLowerCase())) {
           if (!facts.notNamed && facts.ownTypes.length > 0) out.type = facts.ownTypes.length === 1 ? facts.ownTypes[0] : [...facts.ownTypes];
-        } else if (o.named === undefined) out.self = true;
+        } else if (o.named === undefined) {
+          // ...with its printed types, as a self emit has them (#1518: The Stone Brain is the artifact it exiles): Graf Rats' exile of itself and Midnight Scavengers is a creature exile Syr Vondam and Soulherder hear.
+          out.self = true;
+          if (facts.ownTypes.length > 0) out.type = facts.ownTypes.length === 1 ? facts.ownTypes[0] : [...facts.ownTypes];
+        }
       }
     }
     return out;
