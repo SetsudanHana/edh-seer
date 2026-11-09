@@ -15,7 +15,7 @@ import { graveyardReplacement } from "./graveyard-replacement.js";
 import { targetingBanOf, targetingBanSubjectInObject, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
 import { withBaseSetSplit } from "./base-set.js";
 import { withChosenTypeGrant } from "./chosen-grant.js";
-import { nameOnlyTypes, stripOwnNameSubtypes } from "./own-name.js";
+import { nameOnlyTypes, ownNameFacts, stripOwnNameSubtypes } from "./own-name.js";
 import { TYPE_GRANT, grantedTypeOf, ZONE_SCOPED_KINDS, actionEffectKind, activationBanClass, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
 import { actionEmits, definesPowerToughness, casualtySacrifice, enteringClass, millsOwnLibrary, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, narrowSelfExiledSpell, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, activationConditionOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
@@ -4960,7 +4960,7 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
   const own = [...new Set(creatureFaces.flatMap((f) => f.subtypes.map((x) => x.toLowerCase())))];
   // THE CARD'S OWN NAME IS NOT A CLASS (#1570), before the pin below puts the card's real types into a `sharesTypeWith: self` subject.
   const ownNameOnly = nameOnlyTypes(input.name, input.oracleText);
-  const named = ownNameOnly.size === 0 ? hosted : hosted.map((a) => stripOwnNameSubtypes(a, ownNameOnly, new Set(chars.subtypes.map((t) => t.toLowerCase()))));
+  const named = ownNameOnly.size === 0 ? hosted : hosted.map((a) => stripOwnNameSubtypes(a, ownNameOnly, ownNameFacts(input.name, input.oracleText, chars.subtypes, chars.types.filter((t) => (CARD_TYPES as readonly string[]).includes(t.toLowerCase())))));
   const pinned = own.length === 0 ? named : named.map((a) => a.trigger?.subject.sharesTypeWith !== "self" ? a : {
     ...a,
     trigger: { ...a.trigger, subject: (({ sharesTypeWith: _s, ...rest }) => ({ ...rest, subtype: own }))(a.trigger.subject) },

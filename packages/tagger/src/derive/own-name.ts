@@ -80,8 +80,31 @@ export function nameOnlyTypes(cardName: string | undefined, oracleText: string |
   return out;
 }
 
-/** The ability with the name-only subtypes taken out of every subject that is not the card itself or a token. */
-export function stripOwnNameSubtypes(a: Ability, drop: ReadonlySet<string>, ownSubtypes: ReadonlySet<string> = new Set()): Ability {
+/** What the strip needs to put back what the name stood for. */
+export interface OwnNameFacts {
+  /** The card's own creature/land/... subtypes, lowercased. */
+  ownSubtypes: ReadonlySet<string>;
+  /** The card's own printed card types, lowercased ("artifact", "creature"). */
+  ownTypes: readonly string[];
+  /** The card's name and its short forms, lowercased: what a `named` field holds when it names the card. */
+  nameForms: ReadonlySet<string>;
+  /** The text says "not named": a `named` field of this card is then the wrong polarity (Burning-Rune Demon's "cards not named Burning-Rune Demon") and no type is put back. */
+  notNamed: boolean;
+}
+
+export function ownNameFacts(cardName: string | undefined, oracleText: string | undefined, ownSubtypes: readonly string[], ownTypes: readonly string[]): OwnNameFacts {
+  return {
+    ownSubtypes: new Set(ownSubtypes.map((t) => t.toLowerCase())),
+    ownTypes: ownTypes.map((t) => t.toLowerCase()),
+    nameForms: new Set(cardName === undefined ? [] : selfForms(cardName).map((f) => f.toLowerCase())),
+    notNamed: (oracleText ?? "").toLowerCase().includes("not named"),
+  };
+}
+
+/** The ability with the name-only subtypes taken out of every subject that is not the card itself or a token, and what the name stood for put back:
+ *  a subject of cards NAMED this card ("each player returns all cards named Myr Servitor") keeps the card's own types, which the subtype carried (a creature entering is what Authority of the Consuls hears);
+ *  a subject left with no class at all (Phelddagrif's "{G}: Phelddagrif gains trample", Eye of Nidhogg's "return it", The War Doctor's "counters on The War Doctor") was the card, so it is `self`. */
+export function stripOwnNameSubtypes(a: Ability, drop: ReadonlySet<string>, facts: OwnNameFacts): Ability {
   if (drop.size === 0) return a;
   const walk = (v: unknown): unknown => {
     if (Array.isArray(v)) return v.map(walk);
@@ -91,9 +114,14 @@ export function stripOwnNameSubtypes(a: Ability, drop: ReadonlySet<string>, ownS
     for (const [k, x] of Object.entries(o)) out[k] = walk(x);
     if (o.subtype !== undefined && o.self !== true && o.token !== true) {
       // A subject that points back at the trigger's object ("When The Scarab God dies, return it", `ref`) is the card itself there: its own subtypes are real.
-      const kept = [o.subtype as string | string[]].flat().filter((t) => !drop.has(t.toLowerCase()) || (o.ref !== undefined && ownSubtypes.has(t.toLowerCase())));
+      const kept = [o.subtype as string | string[]].flat().filter((t) => !drop.has(t.toLowerCase()) || (o.ref !== undefined && facts.ownSubtypes.has(t.toLowerCase())));
       if (kept.length === 0) delete out.subtype;
       else out.subtype = kept.length === 1 ? kept[0] : kept;
+      if (kept.length === 0 && out.type === undefined && out.anyOf === undefined && out.allTypes === undefined) {
+        if (typeof o.named === "string" && facts.nameForms.has(o.named.toLowerCase())) {
+          if (!facts.notNamed && facts.ownTypes.length > 0) out.type = facts.ownTypes.length === 1 ? facts.ownTypes[0] : [...facts.ownTypes];
+        } else if (o.named === undefined) out.self = true;
+      }
     }
     return out;
   };

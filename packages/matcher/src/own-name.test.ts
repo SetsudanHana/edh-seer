@@ -57,3 +57,13 @@ test("a SELF subject keeps the card's own subtype, a token it makes keeps the ty
   // Goblin Rabblemaster's "Other Goblin creatures you control attack each combat if able" is a lord over the type its name also holds
   expect(subtypeSubjects(tagsOf("Goblin Rabblemaster")).some((x) => x.subject.token !== true && x.subject.self !== true && [x.subject.subtype].flat().includes("goblin"))).toBe(true);
 });
+
+test("what the name stood for is put back (#1570): Myr Servitor's returned cards are still creatures, Phelddagrif's grant and Graf Rats' exile are the card itself", () => {
+  const entersOf = (n: string) => tagsOf(n).abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "enters").map((e) => e.subject);
+  expect(entersOf("Myr Servitor").some((s) => s.named === "myr servitor" && [s.type].flat().includes("creature"))).toBe(true);
+  expect(tagsOf("Phelddagrif").abilities.filter((a) => a.effect.kind === "keyword-grant").every((a) => a.effect.subject?.self === true)).toBe(true);
+  expect(tagsOf("Human Torch").abilities.filter((a) => a.effect.kind === "keyword-grant").every((a) => a.effect.subject?.self === true)).toBe(true);
+  // no untyped "exile every card" emit is left behind (it paired with every self-exile trigger)
+  const bare = tagsOf("Graf Rats").abilities.flatMap((a) => a.emits ?? []).filter((e) => (e.verb === "exiled" || e.verb === "leaves") && e.subject.self !== true && e.subject.type === undefined && e.subject.subtype === undefined && e.subject.named === undefined);
+  expect(bare).toEqual([]);
+});
