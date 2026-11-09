@@ -11,6 +11,7 @@ import { grantedToOwnEmblem, grantedToOwnToken, segment } from "./segment.js";
 import { hasEmblemPart } from "./emblem.js";
 import type { DerivedTagsDoc } from "./clause-store.js";
 import type { ClauseRecord } from "./canonicalize.js";
+import type { Clause } from "./segment.js";
 import type { DeriveInput } from "./derive/derive.js";
 import { missedCost } from "./grammar/preamble.js";
 
@@ -52,6 +53,51 @@ export function grantedTokenClauses(doc: { oracleText?: string; keywords?: strin
   const clauses = segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "");
   const out = new Set(grantedToOwnToken(clauses));
   if (hasEmblemPart(doc.allParts)) for (const id of grantedToOwnEmblem(clauses)) out.add(id);
+  return out;
+}
+
+/** THE CLAUSE A TEXTLESS TWIN WAS PRINTED IN (#1577 part 4). The model splits one printed clause that fires on two events ("dies or is put into a graveyard": Dreadhound, "enters or attacks": Visage of Dread's back face) into two records and numbers the second
+ *  past the segmenter's last id; derive reads such a record as a textless twin of its neighbour (`textless` in derive.ts: no id-keyed map has an entry for it) and folds it, so its id must stay one the segmenter lacks. But every map keyed by clause id is empty for it, and the
+ *  FACE is the one that moves a pair: a back-face twin read as a front-face ability (Visage of Dread's "Whenever this creature attacks" fed the front face's pairs). This maps each such id to the clause whose text holds the most of the record's trigger event, subject, verbs
+ *  and objects (the earlier clause on a tie), so `clauseFaces` can stamp the twin with that clause's face.
+ *  CEILING: the face only. The twin's cost (10 corpus cards), text and grant stay unread, because stamping them would move it out of the textless fold (derive 395, 401: 226 cards). A record whose id the segmenter HAS is never moved: a content match for an in-range id was
+ *  tried and read 5 of 5 sampled aligned records as misplaced (Supernatural Stamina, Urza's Saga, Dain Ironfoot, Abnormal Endurance, Caesar), because a granted clause echoes its granter's words. Census (cardClauses vs segment(), 2026-11-09): 557 of 32,008 stored answers
+ *  number their clauses unlike the segmenter, 222 of them the answer a card is derived from (7,035 model-sourced cards: 185 hold an id the segmenter lacks, 37 a shared id; the other 335 are read as the grammar's own records). Of the 185, 6 sit beside a back-face clause. */
+const ALIGN_STOP = new Set(["the", "and", "your", "you", "this", "that", "its", "each", "with", "from", "into", "onto", "target", "card", "cards", "any", "all", "one", "than", "other", "for", "may", "unless", "creature", "none", "control"]);
+function wordsOf(raw: string, drop: ReadonlySet<string>): Set<string> {
+  const out = new Set<string>();
+  let w = "";
+  const flush = (): void => { if (w.length >= 3 && !drop.has(w)) out.add(w); w = ""; };
+  for (const ch of raw.toLowerCase()) { if ((ch >= "a" && ch <= "z") || (ch >= "0" && ch <= "9")) w += ch; else flush(); }
+  flush();
+  return out;
+}
+export function twinClauseOf(clauses: readonly ClauseRecord[], segmented: readonly Clause[]): Map<number, number> {
+  const known = new Set(segmented.map((c) => c.id));
+  const view = segmented.map((c) => { const words = wordsOf(`${c.text} ${c.cost ?? ""}`, new Set()); return { id: c.id, words, stems: new Set([...words].filter((x) => x.length >= 4).map((x) => x.slice(0, 4))) }; });
+  const out = new Map<number, number>();
+  for (const r of clauses) {
+    if (!Number.isInteger(r.id) || r.id >= 100 || known.has(r.id) || out.has(r.id)) continue;
+    const words = [...wordsOf([r.trigger?.event ?? "", r.trigger?.subject ?? "", ...(r.actions ?? []).flatMap((a) => [a.verb ?? "", String(a.object ?? "")])].join(" "), ALIGN_STOP)];
+    // A word of the record is in the clause: whole for a short word, its first four letters for a longer one ("enters" / "enter", "exiled" / "exile").
+    let best = -1, bestScore = 0;
+    for (const v of view) {
+      const sc = words.filter((x) => v.words.has(x) || (x.length >= 4 && v.stems.has(x.slice(0, 4)))).length;
+      if (sc > bestScore) { best = v.id; bestScore = sc; }
+    }
+    if (best >= 0) out.set(r.id, best);
+  }
+  return out;
+}
+
+/** `clauseFaces`, with every textless twin on its printed clause's face (`twinClauseOf`). */
+export function clauseFacesWithTwins(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }, clauses: readonly ClauseRecord[]): Record<number, number> {
+  const out = clauseFaces(doc);
+  const segmented = segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "");
+  for (const [twin, printed] of twinClauseOf(clauses, segmented)) {
+    const face = segmented.find((c) => c.id === printed)?.face;
+    if (face) out[twin] = face;
+  }
   return out;
 }
 
@@ -173,7 +219,8 @@ export function deriveInputOf(card: CardDocLike, oracleId: string, name: string,
     clauseTexts: clauseTexts(card, activatedIds),
     clauseRequires: clauseRequires(card),
     clauseCosts: clauseCosts(card, activatedIds),
-    clauseFaces: clauseFaces(card),
+    // A stored answer's textless twins sit on their printed clause's face (#1577); the grammar's own records line up by construction.
+    clauseFaces: readings === undefined ? clauseFacesWithTwins(card, clauses) : clauseFaces(card),
     clauseGrants: clauseGrants(card, clauses),
     modalHeads: modalHeads(card),
     manaCosts: faceManaCosts(card),
