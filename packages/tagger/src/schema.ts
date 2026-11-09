@@ -900,6 +900,10 @@ export interface GameEvent {
   /** THIS `leaves` IS A TUCK: a permanent put into its owner's library (Condemn, Oust, Teferi, Hero of Dominaria -3). It left the battlefield, so a leaves payoff hears it, but the
    *  owner's quality ladder puts it BELOW a bounce (exile > destroy / sacrifice > bounce > tuck), which `quality.ts` `permanenceOf` reads. Set by derive (`actionEmits`); never by the LLM. */
   tuck?: true;
+  /** THIS REMOVAL IS OF THE PERMANENT THE SAME CLAUSE PUT ONTO THE BATTLEFIELD (#1513): "Return target creature card from your graveyard to the battlefield. ... Exile it at the beginning of the next end step" (Dawn of the Dead, Whip of Erebos),
+   *  "... Sacrifice that creature ..." (Footsteps of the Goryo), "... Return that creature to its owner's hand ..." (Zara, Ilharg). That permanent was not cast, so a card whose leave trigger exists only when it was cast
+   *  (`Ability.castOnly`) is never what the removal takes. Set by derive on the `exiled` / `leaves` / `sacrifice` / `dies` emits of the pronoun's action; never by the LLM. */
+  ofPut?: true;
   /** WHO DEALT THE DAMAGE — damage verbs only, and only on an AUTHORED emit.
    *
    *  A damage event has two participants and `subject` can only hold one of them. The engine had
@@ -1346,6 +1350,13 @@ export interface Ability {
    *  ability is a `keyword-grant` with empty `grants` and says nothing of what is granted, so a reader that must judge the grant (a buff or a curse) follows this to the
    *  abilities that say it. Additive. Edge code reads it once: `auraHostLeaves` (#1417) feeds a granted host trigger only on the host's own event. ABSENT on every ability no clause grants. */
   grantedBy?: number;
+  /** THIS ABILITY EXISTS, OR CAN FIRE, ONLY IF THE CARD WAS CAST (#1513). Primeval Spawn ("If this creature would enter and it wasn't cast or no mana was spent to cast it, exile it instead") is never on the battlefield
+   *  any other way, and Thief of Existence's leave trigger is granted by its own cast trigger ("... Thief of Existence gains 'When this creature leaves the battlefield, ...'"). Stamped by derive on a TRIGGERED ability;
+   *  read once, by the matcher's self-trigger identity gate: a leave that a producer inflicts on a permanent it put onto the battlefield (`GameEvent.ofPut`) is not this card's. ABSENT means not said. */
+  castOnly?: true;
+  /** AN AURA'S OWN LEAVES / DIES TRIGGER WHOSE EFFECT NAMES THE PERMANENT IT WAS ATTACHED TO (#1513): "When this Aura leaves the battlefield, destroy enchanted creature" (Parallax Dementia), "enchanted permanent's controller
+   *  sacrifices it" (Reality Acid). An Aura that leaves because its host did (CR 704.5m) finds the host gone, so the matcher's host-leaves route (`auraHostLeaves`) does not feed it. ABSENT means not said. */
+  actsOnHost?: true;
   /** WHICH ACTIONS A `restriction` ABILITY FORBIDS (#1315): `attack`, `block`, or both ("can't attack or block"). Only on an ability of effect kind `restriction`. */
   restricts?: ("attack" | "block")[];
   /** WHAT A `prevention` ABILITY PREVENTS (#1469; CR 615). See `Prevention`. ABSENT on every other ability. */

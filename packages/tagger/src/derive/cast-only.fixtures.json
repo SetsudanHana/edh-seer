@@ -1,0 +1,1226 @@
+{
+ "Primeval Spawn": {
+  "source": {
+   "name": "Primeval Spawn",
+   "typeLine": "Creature — Avatar",
+   "oracleText": "If this creature would enter and it wasn't cast or no mana was spent to cast it, exile it instead.\nVigilance, trample, lifelink\nWhen this creature leaves the battlefield, exile the top ten cards of your library. You may cast any number of spells with total mana value 10 or less from among them without paying their mana costs.",
+   "keywords": [
+    "Lifelink",
+    "Vigilance",
+    "Trample"
+   ],
+   "colors": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "manaValue": 10,
+   "colorIdentity": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "power": "10",
+   "toughness": "10",
+   "manaCost": "{5}{W}{U}{B}{R}{G}",
+   "layout": "normal"
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance, trample, lifelink",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top ten cards of your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "any number of spells with total mana value 10 or less from among them",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Thief of Existence": {
+  "source": {
+   "name": "Thief of Existence",
+   "typeLine": "Creature — Eldrazi",
+   "oracleText": "Devoid (This card has no color.)\nWhen you cast this spell, exile up to one target noncreature, nonland permanent an opponent controls with mana value 4 or less. If you do, Thief of Existence gains \"When this creature leaves the battlefield, target opponent draws a card.\"",
+   "keywords": [
+    "Devoid"
+   ],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "manaCost": "{1}{C}{G}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Devoid"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "up to one target noncreature, nonland permanent an opponent controls with mana value 4 or less",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "optional": true
+     },
+     {
+      "verb": "grant-ability",
+      "object": "that ability",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "cast",
+     "subject": "this spell",
+     "control": "you"
+    }
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "target opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "leaves",
+     "subject": "this creature",
+     "control": "you"
+    }
+   }
+  ]
+ },
+ "Parallax Dementia": {
+  "source": {
+   "name": "Parallax Dementia",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature\nFading 1 (This enchantment enters with one fade counter on it. At the beginning of your upkeep, remove a fade counter from it. If you can't, sacrifice it.)\nEnchanted creature gets +3/+2.\nWhen this Aura leaves the battlefield, destroy enchanted creature. That creature can't be regenerated.",
+   "keywords": [
+    "Fading",
+    "Enchant"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Fading 1"
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "enchanted creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+3/+2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "enchanted creature",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "leaves",
+     "subject": "this Aura",
+     "control": "you"
+    }
+   }
+  ]
+ },
+ "Reality Acid": {
+  "source": {
+   "name": "Reality Acid",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant permanent\nVanishing 3 (This Aura enters with three time counters on it. At the beginning of your upkeep, remove a time counter from it. When the last is removed, sacrifice it.)\nWhen this Aura leaves the battlefield, enchanted permanent's controller sacrifices it.",
+   "keywords": [
+    "Vanishing",
+    "Enchant"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{U}",
+   "layout": "normal"
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant permanent",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vanishing 3",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this Aura",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "enchanted permanent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Dawn of the Dead": {
+  "source": {
+   "name": "Dawn of the Dead",
+   "typeLine": "Enchantment",
+   "oracleText": "At the beginning of your upkeep, you lose 1 life.\nAt the beginning of your upkeep, you may return target creature card from your graveyard to the battlefield. That creature gains haste until end of turn. Exile it at the beginning of the next end step.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}{B}{B}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    }
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target creature card from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "optional": true
+     },
+     {
+      "verb": "grant-ability",
+      "object": "haste",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": null,
+      "toZone": "exile",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    }
+   }
+  ]
+ },
+ "Whip of Erebos": {
+  "source": {
+   "name": "Whip of Erebos",
+   "typeLine": "Legendary Enchantment Artifact",
+   "oracleText": "Creatures you control have lifelink.\n{2}{B}{B}, {T}: Return target creature card from your graveyard to the battlefield. It gains haste. Exile it at the beginning of the next end step. If it would leave the battlefield, exile it instead of putting it anywhere else. Activate only as a sorcery.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}{B}",
+   "layout": "normal"
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "lifelink",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target creature card from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Footsteps of the Goryo": {
+  "source": {
+   "name": "Footsteps of the Goryo",
+   "typeLine": "Sorcery — Arcane",
+   "oracleText": "Return target creature card from your graveyard to the battlefield. Sacrifice that creature at the beginning of the next end step.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target creature card from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Zara, Renegade Recruiter": {
+  "source": {
+   "name": "Zara, Renegade Recruiter",
+   "typeLine": "Legendary Creature — Human Pirate",
+   "oracleText": "Flying\nWhenever Zara attacks, look at defending player's hand. You may put a creature card from it onto the battlefield under your control tapped and attacking that player or a planeswalker they control. Return that creature to its owner's hand at the beginning of the next end step.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "power": "4",
+   "toughness": "3",
+   "manaCost": "{3}{U}{R}",
+   "layout": "normal"
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "Zara",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "a creature card",
+      "fromZone": "hand",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "return",
+      "object": "that creature",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Vindictive Triumph": {
+  "source": {
+   "name": "Vindictive Triumph",
+   "typeLine": "Instant",
+   "oracleText": "Exile target creature or planeswalker. If that permanent's mana value was 3 or less, return it to the battlefield tapped under your control. Exile it at the beginning of the next end step.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{W}{B}{B}",
+   "layout": "normal"
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target creature or planeswalker",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Hypnox": {
+  "source": {
+   "name": "Hypnox",
+   "typeLine": "Creature — Nightmare Horror",
+   "oracleText": "Flying\nWhen this creature enters, if you cast it from your hand, exile all cards from target opponent's hand.\nWhen this creature leaves the battlefield, return the exiled cards to their owner's hand.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 11,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "8",
+   "toughness": "8",
+   "manaCost": "{8}{B}{B}{B}",
+   "layout": "normal"
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all cards from target opponent's hand",
+      "fromZone": "hand",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "the exiled cards",
+      "fromZone": "exile",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Champion of the Clachan": {
+  "source": {
+   "name": "Champion of the Clachan",
+   "typeLine": "Creature — Kithkin Knight",
+   "oracleText": "Flash\nAs an additional cost to cast this spell, behold a Kithkin and exile it. (Exile a Kithkin you control or a Kithkin card from your hand.)\nOther Kithkin you control get +1/+1.\nWhen this creature leaves the battlefield, return the exiled card to its owner's hand.",
+   "keywords": [
+    "Behold",
+    "Flash"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "4",
+   "toughness": "5",
+   "manaCost": "{3}{W}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "behold",
+      "object": "a Kithkin",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": null,
+      "toZone": "exile",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "other Kithkin you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "the exiled card",
+      "fromZone": "exile",
+      "toZone": "hand",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "leaves",
+     "subject": "this creature",
+     "control": "you"
+    }
+   }
+  ]
+ },
+ "Rancor": {
+  "source": {
+   "name": "Rancor",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature\nEnchanted creature gets +2/+0 and has trample.\nWhen this Aura is put into a graveyard from the battlefield, return it to its owner's hand.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{G}",
+   "layout": "normal"
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "enchanted creature +2/+0",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "enchanted creature has trample",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this Aura",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Containment Priest": {
+  "source": {
+   "name": "Containment Priest",
+   "typeLine": "Creature — Human Cleric",
+   "oracleText": "Flash\nIf a nontoken creature would enter and it wasn't cast, exile it instead.",
+   "keywords": [
+    "Flash"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{W}",
+   "layout": "normal"
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a nontoken creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Come Back Wrong": {
+  "source": {
+   "name": "Come Back Wrong",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy target creature. If a creature card is put into a graveyard this way, return it to the battlefield under your control. Sacrifice it at the beginning of your next end step.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}",
+   "layout": "normal"
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Ephemerate": {
+  "source": {
+   "name": "Ephemerate",
+   "typeLine": "Instant",
+   "oracleText": "Exile target creature you control, then return it to the battlefield under its owner's control.\nRebound (If you cast this spell from your hand, exile it as it resolves. At the beginning of your next upkeep, you may cast this card from exile without paying its mana cost.)",
+   "keywords": [
+    "Rebound"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{W}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target creature you control",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Rebound"
+     }
+    ]
+   }
+  ]
+ },
+ "Goblin Shrine": {
+  "source": {
+   "name": "Goblin Shrine",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant land\nAs long as enchanted land is a basic Mountain, Goblin creatures get +1/+0.\nWhen this Aura leaves the battlefield, it deals 1 damage to each Goblin creature.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{R}{R}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant land"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "goblin creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+0",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each Goblin creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "leaves",
+     "subject": "this Aura",
+     "control": "you"
+    }
+   }
+  ]
+ },
+ "Chime of Night": {
+  "source": {
+   "name": "Chime of Night",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature\nWhen this Aura is put into a graveyard from the battlefield, destroy target nonblack creature.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target nonblack creature",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "dies",
+     "subject": "this Aura",
+     "control": "you"
+    }
+   }
+  ]
+ },
+ "Purphoros, Bronze-Blooded": {
+  "source": {
+   "name": "Purphoros, Bronze-Blooded",
+   "typeLine": "Legendary Enchantment Creature — God",
+   "oracleText": "Indestructible\nAs long as your devotion to red is less than five, Purphoros isn't a creature.\nOther creatures you control have haste.\n{2}{R}: You may put a red creature card or an artifact creature card from your hand onto the battlefield. Sacrifice it at the beginning of the next end step.",
+   "keywords": [
+    "Indestructible"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "7",
+   "toughness": "6",
+   "manaCost": "{4}{R}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Indestructible"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "be a creature",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "haste",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "a red creature card or an artifact creature card from your hand",
+      "fromZone": "hand",
+      "toZone": "battlefield",
+      "optional": true
+     },
+     {
+      "verb": "sacrifice",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ }
+}

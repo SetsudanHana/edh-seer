@@ -2078,6 +2078,9 @@ function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abiliti
   // A SPELL LEAVING THE STACK REMOVES NO HOST (#1310). A spell cast from a graveyard and exiled instead of going there (Impulsivity, Invoke Calamity) leaves the STACK, and an Aura only goes to the
   // graveyard when its host leaves the BATTLEFIELD (CR 704.5m). Below, `fromZone` is stripped so a stated graveyard or battlefield origin reads as the class alone; the stack origin is refused first.
   if (e.subject.fromZone === "stack") return false;
+  // A TRIGGER THAT ACTS ON THE HOST FINDS IT GONE (#1513). "When this Aura leaves the battlefield, destroy enchanted creature" (Parallax Dementia), "enchanted permanent's controller sacrifices it" (Reality Acid): when the Aura
+  // leaves BECAUSE its host did, the host is already off the battlefield and the trigger has nothing to act on. The Aura removed on its own (a destroy or an exile that names it) still feeds it, on the direct route below.
+  if (a.actsOnHost === true) return false;
   // WHOSE CREATURE (#1513). An Aura you put on an OPPONENT's creature is never sent to the graveyard by your own creature's departure.
   const side = e.subject.control === "you" || e.subject.control === "opp" ? auraHostSide(host, abilities) : undefined;
   if ((e.subject.control === "you" && side === "opp") || (e.subject.control === "opp" && side === "own")) return false;
@@ -2484,6 +2487,10 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
           // entry for anything watching creatures, but it is never the CONSUMER entering, which is
           // the only event a self trigger watches.
           if (identity.self === true) continue;
+          // WHAT A PRODUCER PUT ONTO THE BATTLEFIELD WAS NOT CAST (#1513). Its own removal of that permanent ("Exile it at the beginning of the next end step", Dawn of the Dead; "Sacrifice that creature", Footsteps of the Goryo) is
+          // never the leave of a card that exists, or has this trigger, only if it was cast: a put Primeval Spawn is exiled instead of entering, a put Thief of Existence was never granted its trigger. Removal of a creature already on
+          // the battlefield (Murder, a flicker) is not marked and can be a cast one.
+          if (a.castOnly === true && e.ofPut === true) continue;
           // A CARD AN OPPONENT OWNS IS NEVER A CARD OF THIS DECK (#1502, owner ruling #729): Gruesome Encore's put from "an opponent's graveyard" (CR 400.3: the card is its owner's) emits `owner: opp`, and a
           // deck-mate's own "when this creature enters" is never fired by it. The class triggers ("a creature you control enters") still hear it.
           if (identity.owner === "opp") continue;
