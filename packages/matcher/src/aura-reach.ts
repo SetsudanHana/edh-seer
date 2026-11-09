@@ -16,7 +16,8 @@ import type { Hierarchy } from "./types.js";
  *  on a type list: the subtype belongs to one alternative, so a list drops it (Thraben Exorcism).
  *  CEILING: the printed cues are read over the whole card (a card with an opponent-only mode and an unrestricted one keeps the unrestricted); a type-list subtype is dropped for every alternative, so a subtype on the
  *  Aura-matching alternative is not held against it; an `attached-to` event is taken as host-taking only beside a creature removal; Saw and Mythos of Nethroi are stored creature-only by derive, so their enchantment
- *  alternative is not seen (#1575). Linear scans only. */
+ *  alternative is not seen (#1575). Kept-set read at an even stride, 30 of 1,522 commander-legal pairs: 28 reach the Aura; the 2 false keeps are Elspeth Conquers Death (its chapter I is opponent-only, chapter III unrestricted:
+ *  the whole-card cue) and Cut the Earthly Bond ("target enchanted permanent" takes the host, not the Aura). Linear scans only. */
 const REMOVAL_VERBS = new Set(["dies", "leaves", "exiled", "sacrifice"]);
 const OPPONENT_ONLY = ["an opponent controls", "you don't control", "your opponents control", "an opponent owns"];
 const TARGETING_VERBS = ["destroy", "exile", "return", "put", "sacrifice"];
