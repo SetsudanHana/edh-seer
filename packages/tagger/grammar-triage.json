@@ -908,11 +908,11 @@
       "rule": "printed text",
       "why": "Every member read. nameRelation: 'with the chosen name', 'with that name', 'with the same name as ...', 'with different names'; notType: the negation is the head noun's; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
     },
-    "chosenType,except": {
+    "chosenNegated,chosenType,except": {
       "distinct": 3,
       "label": "grammar right",
       "rule": "printed text",
-      "why": "Every member read. chosenType: 'of the creature type of your choice' is the chosen type; 'of the chosen quality' is a stat's parity, not a type; except: 'except for Merfolk, Krakens ...', 'except for tokens you control'."
+      "why": "Every member read: 'all creatures that aren't of the chosen type' (Kindred Dominance, Raise the Palisade, Crippling Fear). The negation is the same fact in two shapes (#1570): parseSubject says chosenType + chosenNegated on the class, the grammar says the class except the chosen type; the grammar's shape is the structural one."
     },
     "notFromZone": {
       "distinct": 6,
