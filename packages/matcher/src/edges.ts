@@ -2082,13 +2082,13 @@ function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abiliti
   // leaves BECAUSE its host did, the host is already off the battlefield and the trigger has nothing to act on. So a producer that can only take the HOST (a creature-only death, exile or bounce: Murder, Wrath of God, a
   // reanimator's end-step exile) feeds nothing. A producer that can ALSO take the Aura itself keeps its pair: Farewell's "Exile all enchantments" can exile Parallax Dementia, and its trigger then does act.
   // "Can take the Aura" is read over the producer's WHOLE card (`producer`, its events): the modes of one spell are separate abilities in the store (Farewell, Austere Command), so the same ability would miss them. An
-  // event counts when it removes (dies / leaves / exiled / sacrifice) something typed enchantment, permanent or Aura and its control is you or any: the Aura's own trigger is `you`, so an opponent-only removal does not reach it.
+  // event counts when it removes (dies / leaves / exiled / sacrifice) something typed enchantment, permanent or Aura and its control is you or any, OR it is TARGETED whatever control it is stored with: a target can be your own Aura (destroying your own Reality Acid early is a known play), while a mass or edict event aimed only at an opponent cannot reach it.
   // CEILING: the pair is kept with the host reading's reason text ("removes the creature ... enchants") although the removal that makes the trigger count is the producer's other event; the card, not the mode, is the unit
   // (a creature-kill and an unrelated enchantment removal on one card keep each other's pair); the direct route's own gates are untouched.
   if (a.actsOnHost === true) {
     const aura = characteristicsSubject({ characteristics: chars } as CardTags);
     const reachesAura = producer.some((x) => {
-      if (x.implied === true || x.subject.self === true || x.subject.control === "opp") return false;
+      if (x.implied === true || x.subject.self === true || (x.subject.control === "opp" && x.subject.scope !== "target")) return false;
       if (x.verb !== "dies" && x.verb !== "leaves" && x.verb !== "exiled" && x.verb !== "sacrifice") return false;
       const { type, subtype, anyOf, notType, notSubtype } = x.subject;
       const kinds: SubjectFilter = { control: "any", token: null, ...(type !== undefined ? { type } : {}), ...(subtype !== undefined ? { subtype } : {}), ...(anyOf !== undefined ? { anyOf } : {}), ...(notType !== undefined ? { notType } : {}), ...(notSubtype !== undefined ? { notSubtype } : {}) };

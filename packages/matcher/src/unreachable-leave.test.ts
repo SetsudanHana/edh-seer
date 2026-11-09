@@ -63,8 +63,15 @@ describe("an Aura whose leave trigger acts on its host is not triggered by the h
     expect(leaveTags(producer, "Parallax Dementia").length).toBeGreaterThan(0);
     expect(leaveTags(producer, "Reality Acid").length).toBeGreaterThan(0);
   });
-  test.each(["Beast Within", "Revoke Existence", "Shoot Down"])("%s (removes only an opponent's permanent: side rules, the Aura's trigger is yours) -> Parallax Dementia: none", (producer) => {
-    expect(leaveTags(producer, "Parallax Dementia")).toEqual([]);
+  test.each(["Isolate", "Fragmentize", "Beast Within", "Revoke Existence", "Shoot Down"])("%s (a TARGETED removal can be aimed at your own Aura, whatever control it is stored with) -> Reality Acid pairs", (producer) => {
+    expect(leaveTags(producer, "Reality Acid").length).toBeGreaterThan(0);
+  });
+  test("Tranquil Domain (\"Destroy all non-Aura enchantments\": the Aura is excluded) -> Reality Acid: none", () => {
+    expect(leaveTags("Tranquil Domain", "Reality Acid")).toEqual([]);
+  });
+  test("Pharika's Libation (an opponent-only edict cannot choose your Aura) and Portal of Sanctuary (takes the host and its Auras together) -> Parallax Dementia: none", () => {
+    expect(leaveTags("Pharika's Libation", "Parallax Dementia")).toEqual([]);
+    expect(leaveTags("Portal of Sanctuary", "Parallax Dementia")).toEqual([]);
   });
   test.each(["Parallax Dementia", "Reality Acid"])("Wrath of God (creatures only: the Aura goes only because its host did) -> %s: none", (aura) => {
     expect(leaveTags("Wrath of God", aura)).toEqual([]);
