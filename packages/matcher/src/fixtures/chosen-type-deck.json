@@ -4238,5 +4238,460 @@
     ]
    }
   ]
+ },
+ "Sisters of Stone Death": {
+  "source": {
+   "name": "Sisters of Stone Death",
+   "typeLine": "Legendary Creature — Gorgon",
+   "oracleText": "{G}: Target creature blocks Sisters of Stone Death this turn if able.\n{B}{G}: Exile target creature blocking or blocked by Sisters of Stone Death.\n{2}{B}: Put a creature card exiled with Sisters of Stone Death onto the battlefield under your control.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G"
+   ],
+   "manaValue": 8,
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "power": "7",
+   "toughness": "5",
+   "manaCost": "{4}{B}{B}{G}{G}",
+   "layout": "normal",
+   "_id": "38e64b15-47c0-4453-a51e-a53c1aebc8d0"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "target creature can't choose not to block Sisters of Stone Death this turn if able",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target creature blocking or blocked by Sisters of Stone Death",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "a creature card exiled with Sisters of Stone Death",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Mulldrifter": {
+  "source": {
+   "name": "Mulldrifter",
+   "typeLine": "Creature — Elemental",
+   "oracleText": "Flying\nWhen this creature enters, draw two cards.\nEvoke {2}{U} (You may cast this spell for its evoke cost. If you do, it's sacrificed when it enters.)",
+   "keywords": [
+    "Flying",
+    "Evoke"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{4}{U}",
+   "layout": "normal",
+   "_id": "24d0f5e7-0d9e-4b76-900e-a7274e80312d"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Evoke {2}{U}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Thragtusk": {
+  "source": {
+   "name": "Thragtusk",
+   "typeLine": "Creature — Beast",
+   "oracleText": "When this creature enters, you gain 5 life.\nWhen this creature leaves the battlefield, create a 3/3 green Beast creature token.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "5",
+   "toughness": "3",
+   "manaCost": "{4}{G}",
+   "layout": "normal",
+   "_id": "0dd0e91a-d16b-4718-8d11-1a3fcf8e0753"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "5",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 3/3 green Beast creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Gisa, Glorious Resurrector": {
+  "source": {
+   "name": "Gisa, Glorious Resurrector",
+   "typeLine": "Legendary Creature — Human Wizard",
+   "oracleText": "If a creature an opponent controls would die, exile it instead.\nAt the beginning of your upkeep, put all creature cards exiled with Gisa onto the battlefield under your control. They gain decayed. (A creature with decayed can't block. When it attacks, sacrifice it at end of combat.)",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{2}{B}{B}",
+   "layout": "normal",
+   "_id": "f1354b1b-896c-4492-b0c0-3dd07c6d3917"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a creature an opponent controls",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "all creature cards exiled with Gisa",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "decayed",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Wall of Nets": {
+  "source": {
+   "name": "Wall of Nets",
+   "typeLine": "Creature — Wall",
+   "oracleText": "Defender (This creature can't attack.)\nAt end of combat, exile all creatures blocked by this creature.\nWhen this creature leaves the battlefield, return all cards exiled with it to the battlefield under their owners' control.",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "0",
+   "toughness": "7",
+   "manaCost": "{1}{W}{W}",
+   "layout": "normal",
+   "_id": "cd112962-b297-403c-bede-c8b587f379b3"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-of-combat",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all creatures blocked by this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all cards exiled with it",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Mary Read and Anne Bonny": {
+  "source": {
+   "name": "Mary Read and Anne Bonny",
+   "typeLine": "Legendary Creature — Human Assassin Pirate",
+   "oracleText": "Haste\n{T}: Draw a card, then discard a card.\nWhenever you discard an Island, Pirate, or Vehicle card, create a tapped Treasure token.",
+   "keywords": [
+    "Treasure",
+    "Haste"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{1}{U}{R}",
+   "layout": "normal",
+   "_id": "5182de2d-aceb-450e-bd20-8bc7db124334"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Haste",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "discarded",
+     "subject": "an Island, Pirate, or Vehicle card",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a tapped Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Flow of Ideas": {
+  "source": {
+   "name": "Flow of Ideas",
+   "typeLine": "Sorcery",
+   "oracleText": "Draw a card for each Island you control.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}{U}",
+   "layout": "normal",
+   "_id": "dd397a32-06b0-4530-b075-412e2881aa53"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each Island you control",
+      "optional": false
+     }
+    ]
+   }
+  ]
  }
 }

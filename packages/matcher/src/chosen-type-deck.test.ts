@@ -319,3 +319,27 @@ test("Torch the Tower's exile is of a creature or planeswalker: it pairs with a 
   const subjects = tagsOf("Torch the Tower").abilities.flatMap((a) => [a.effect.subject, ...(a.emits ?? []).map((e) => e.subject)]).filter((s) => s !== undefined);
   expect(subjects.some((s) => s!.type === "permanent")).toBe(false);
 });
+
+// #1570 REVIEW ROUND.
+// 1. "EXILED WITH THIS CARD" WHERE THE ONLY EXILE IS OF A CREATURE BLOCKING OR BLOCKED BY THE CARD: only an opponent's creature can block or be blocked by yours, so what it returns is never a deck-mate (Gisa's and The Darkness Crystal's shape).
+const entersOf = (p: string, c: string) => pairReasons(dc(p), dc(c), loadHierarchy()).filter((r) => r.producer === p && /^enters:/.test(r.tag));
+test("Sisters of Stone Death returns only creatures that blocked or were blocked by it, so it fires no deck-mate's enters trigger (Gisa unchanged, Wall of Nets alike)", () => {
+  for (const c of ["Mulldrifter", "Thragtusk"]) {
+    expect(entersOf("Sisters of Stone Death", c), c).toEqual([]);
+    expect(entersOf("Gisa, Glorious Resurrector", c), `Gisa ${c}`).toEqual([]);
+  }
+});
+
+// 2. Ashes of the Fallen's grant has a recipient: the creature cards in your graveyard.
+test("Ashes of the Fallen's type-grant is to the creature cards in your graveyard, not to itself", () => {
+  const g = grantsOf("Ashes of the Fallen");
+  expect(g.length).toBe(1);
+  expect(g[0]!.effect.subject).toMatchObject({ type: "creature", zone: "graveyard", control: "you" });
+  expect(g[0]!.effect.subject!.self).toBeUndefined();
+});
+
+// 3. Realmwright's land type is used on the battlefield: a card that discards an Island, reveals one from hand or searches for one is not a user.
+test("Realmwright pairs with a card that counts Islands on the battlefield and not with one that discards an Island", () => {
+  expect(grantPairs("Realmwright", "Cabal Coffers")).not.toEqual([]);
+  expect(grantPairs("Realmwright", "Mary Read and Anne Bonny")).toEqual([]);
+});

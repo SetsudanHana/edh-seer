@@ -1824,7 +1824,9 @@ function effectSubject(
         const spells = spellsYouCast(s, who, clauseText);
         if (spells) return spells as ReturnType<typeof parseSubject>;
       }
-      if (!boundedGrantClass(s) && !(action.verb === "grant-ability" && everyCreatureYouControl(who, clauseText))) return parseSubject("");
+      // A TYPE-GRANT TO THE CARDS OF ONE ZONE is bounded by the zone (#1570): Ashes of the Fallen's "each creature card in your graveyard has the chosen creature type" is not the whole board and not the card itself.
+      const zonedTypeGrant = kind === "type-grant" && cardZone !== undefined;
+      if (!boundedGrantClass(s) && !zonedTypeGrant && !(action.verb === "grant-ability" && everyCreatureYouControl(who, clauseText))) return parseSubject("");
       return s;
     }
   }

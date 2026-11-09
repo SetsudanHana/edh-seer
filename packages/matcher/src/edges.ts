@@ -1037,7 +1037,13 @@ const isLandOnly = (tags: CardTags): boolean =>
  *  cannot enumerate; "an opponent controls" says your own cards can never be in it. Either alone is
  *  not enough — Ghost Vacuum has the first and returns your graveyard's cards happily. */
 const exilesOnlyOpponents = (oracleText: string | undefined): boolean =>
-  /\bexiled with\b/i.test(oracleText ?? "") && /\ban opponent controls\b/i.test(oracleText ?? "");
+  /\bexiled with\b/i.test(oracleText ?? "") && (/\ban opponent controls\b/i.test(oracleText ?? "") || exilesOnlyBlockCounterparts(oracleText));
+/** ...or whose only exile is of a creature BLOCKING OR BLOCKED BY it (Sisters of Stone Death's "Exile target creature blocking or blocked by Sisters of Stone Death", Wall of Nets' "exile all creatures blocked by this creature", #1570 review): only an opponent's creature blocks
+ *  or is blocked by yours. Read by sentence, string tests only. CEILING: a combat counterpart other than blocking (a creature "dealt combat damage by" the card) is not read: no corpus card pairs it with "exiled with". */
+function exilesOnlyBlockCounterparts(oracleText: string | undefined): boolean {
+  const exiles = (oracleText ?? "").toLowerCase().split(/[.\n]/).filter((x) => x.includes("exile ") && !x.includes("exiled with"));
+  return exiles.length > 0 && exiles.every((x) => x.includes("blocking or blocked by") || x.includes("blocked by"));
+}
 
 /** A recursion restricted to cards the consumer's OWN earlier action put in the graveyard. */
 const recursionIsSelfSupplied = (oracleText: string | undefined): boolean =>
@@ -3211,7 +3217,8 @@ function wholeNonCreatureClass(s: SubjectFilter): boolean {
  *  The BASE POWER AND TOUGHNESS a class grant sets in the same sentence (Graaz's 5/3, March of the World Ooze's 6/6, Kudo's 2/2, Raised by Giants' 10/10) is its own `base-pt-set` ability (#1572, `baseSetReason`). */
 function wholeCreatureClass(s: SubjectFilter): boolean {
   const types = Array.isArray(s.type) ? s.type : s.type ? [s.type] : [];
-  return (s.scope === "all" || s.scope === "each") && s.subtype === undefined && types.length === 1 && types[0] === "creature" && s.self !== true;
+  // ...of the BATTLEFIELD: a grant to the cards of a graveyard or hand (Ashes of the Fallen) is no creature on the board and claims no pair (#1570).
+  return (s.scope === "all" || s.scope === "each") && s.subtype === undefined && types.length === 1 && types[0] === "creature" && s.self !== true && (s.zone === undefined || s.zone === "battlefield");
 }
 const CREATURE_SUBTYPE_LOWER: ReadonlySet<string> = new Set(CREATURE_SUBTYPES.map((x) => x.toLowerCase()));
 const CARD_TYPES: ReadonlySet<string> = new Set(["artifact", "enchantment", "land", "planeswalker", "battle"]);
@@ -3219,6 +3226,8 @@ const BASIC_LAND_TYPES: readonly string[] = ["plains", "island", "swamp", "mount
 /** Effects that are not a BATTLEFIELD reader of the type: a grant of "artifacts you control are Foods" reaches permanents, which have a controller (CR 108.4), so a library search (Stoneforge Mystic), a graveyard return (Auriok Survivors),
  *  a play-from-top (Galea) and a spell cost reducer (Danitha) read the type where the grant does not reach. A token maker is read through its trigger and cost, never through the token it creates. `type-grant` and `animate` are another granter. */
 const NOT_A_BATTLEFIELD_READER: ReadonlySet<string> = new Set(["search", "graveyard-recursion", "play-from-top", "cost-reduction", "type-grant", "animate", "token-generation", "create-token", "token-doubling"]);
+/** Trigger events about a card in a HAND, LIBRARY or GRAVEYARD, which a type granted to permanents does not reach (#1570 review: Realmwright x Mary Read and Anne Bonny's "whenever you discard an Island"). */
+const OFF_BATTLEFIELD_EVENTS: ReadonlySet<string> = new Set(["discard", "draw", "mill", "search", "reveal", "enters-graveyard", "leaves-graveyard"]);
 /** Does the card USE the type `granted` ON THE BATTLEFIELD (derived data only; owner ruling 2026-11-08, #1568 review 2): a trigger on it ("Whenever you sacrifice a Clue", "Whenever an Equipment enters"), a cost or an effect that sacrifices
  *  or attaches it ("Sacrifice a Food", "attach target Equipment"), forage, a count of it, or a lord over it ("Foods you control have ...").
  *  Not a card that only MAKES the type, merely is one, grants the same type, or reads it in the library, a graveyard, on the stack or in a spell's cost.
@@ -3241,7 +3250,7 @@ export function usesGrantedType(tags: CardTags, granted: string): boolean {
   const isGranted = tags.characteristics.subtypes?.includes(granted) === true && !CREATURE_SUBTYPE_LOWER.has(granted);
   return tags.abilities.some((a) => {
     const maker = NOT_A_BATTLEFIELD_READER.has(a.effect.kind) || a.emits?.some((e) => e.verb === "create-token") === true;
-    const events = a.trigger !== undefined && !a.trigger.verbs.includes("create-token") && !a.trigger.verbs.includes("cast") && names(a.trigger.subject);
+    const events = a.trigger !== undefined && !a.trigger.verbs.includes("create-token") && !a.trigger.verbs.includes("cast") && !a.trigger.verbs.some((v) => OFF_BATTLEFIELD_EVENTS.has(v)) && names(a.trigger.subject);
     const lord = !maker && !granting.has(a.clause) && !isGranted && names(a.effect.subject);
     const emitted = !granting.has(a.clause) && !isGranted && a.effect.kind !== "search" && a.effect.kind !== "graveyard-recursion" && a.effect.kind !== "play-from-top" && a.emits?.some((e) => (e.verb === "sacrifice" || e.verb === "attached") && names(e.subject)) === true;
     return events || lord || emitted || names(a.effect.scalingSubject) || names(a.thresholdSubject)
