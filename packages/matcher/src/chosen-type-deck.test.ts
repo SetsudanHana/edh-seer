@@ -308,3 +308,14 @@ test("an opponent-chosen type is no type the card uses or cares about: Callous O
   expect(caresAboutCreatureType(tagsOf("Kindred Dominance"), F["Kindred Dominance"]!.source as never)).toBe(true);
   expect(mimicStatic("Callous Oppressor")).toEqual([]);
 });
+
+// #1570 FIX ROUND: AN ANAPHORIC "THAT PERMANENT" / "A PERMANENT DEALT DAMAGE BY ~" IS THE EARLIER TARGET. Torch the Tower targets "a creature or planeswalker" and then exiles "a permanent dealt damage by Torch the Tower": the exile read as any permanent and paired with
+// sorceries, artifacts and enchantments (37 of 176 pairs once the name-derived 'tower' subtype stopped hiding it).
+const torchPairs = (c: string) => pairReasons(dc("Torch the Tower"), dc(c), loadHierarchy()).filter((r) => r.producer === "Torch the Tower" && /^(?:exiled|leaves|exile-processing)/.test(r.tag));
+
+test("Torch the Tower's exile is of a creature or planeswalker: it pairs with a creature's exile trigger and with no enchantment or artifact", () => {
+  expect(torchPairs("God-Eternal Bontu")).not.toEqual([]);
+  for (const n of ["Baffling End", "Urza's Sylex", "Detention Sphere"]) expect(torchPairs(n), n).toEqual([]);
+  const subjects = tagsOf("Torch the Tower").abilities.flatMap((a) => [a.effect.subject, ...(a.emits ?? []).map((e) => e.subject)]).filter((s) => s !== undefined);
+  expect(subjects.some((s) => s!.type === "permanent")).toBe(false);
+});

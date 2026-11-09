@@ -51,7 +51,7 @@ import { addsManaText, deriveMana, production } from "./mana-lines.js";
 import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
 import { isSelfSubject, SELF_REFERENCE, selfAndTail, withoutArticle } from "./self-reference.js";
-import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, boundedByEnchantLine, exiledAcrossClauses, PLURAL_BACKREF, pluralAntecedent, pluralIsDelayed, PRONOUN_OBJECT, selfAntecedentText, withoutCombatRole, zoneAfterEvent } from "./references.js";
+import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, boundedByEnchantLine, exiledAcrossClauses, permanentAnaphorsResolved, PLURAL_BACKREF, pluralAntecedent, pluralIsDelayed, PRONOUN_OBJECT, selfAntecedentText, withoutCombatRole, zoneAfterEvent } from "./references.js";
 import { triggerHasCue } from "../clause-store.js";
 import { emblemRecipient } from "../emblem.js";
 import { chosenColorOf } from "./chosen-color.js";
@@ -2895,6 +2895,7 @@ export function deriveAbilities(
 
   /** What an earlier clause exiled, for "the exiled card" in a later one (#860). */
   let lastExiled: string | undefined;
+  let lastTarget: string | undefined;
   /** Per clause text, the trigger verbs a record has already read off it (see `misplaced`). */
   const grammarCovered = new Map<string, Map<string, number | string>>();
   /** Re-homed records dropped-if-redundant: clause id -> the id of the record that already read their event off the same sentence. */
@@ -2916,6 +2917,8 @@ export function deriveAbilities(
     const refusedBefore = unknownTriggers.length;
     // "THE EXILED CARD" IS WHAT AN EARLIER CLAUSE EXILED (#860): see `exiledAcrossClauses`.
     ({ clause, lastExiled } = exiledAcrossClauses(clause, lastExiled, cardName));
+    // "THAT PERMANENT" / "A PERMANENT DEALT DAMAGE BY ~" IS THE EARLIER TARGET (#1570).
+    ({ clause, lastTarget } = permanentAnaphorsResolved(clause, lastTarget));
     // The whole clause goes, not just its trigger. What is quoted on a created token is a complete
     // ability -- Vivi's Persistence's Wizard both watches the cast AND deals the damage -- so
     // keeping the effect and dropping the trigger would leave the card claiming to do a thing it

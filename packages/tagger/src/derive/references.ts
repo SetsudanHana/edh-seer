@@ -288,3 +288,38 @@ export function pluralIsDelayed(clauseText: string, object: string): boolean {
 export function withoutCombatRole(cls: string): string {
   return cls.replace(/\b(?:attacking|blocking|blocked)\b(?: or (?:attacking|blocking|blocked)\b)?\s*/gi, "").replace(/\s+/g, " ").trim();
 }
+
+/** AN ANAPHORIC "THAT PERMANENT" / "A PERMANENT DEALT DAMAGE BY ~" IS THE TARGET IT REFERS BACK TO (#1570). Torch the Tower: "deals 2 damage to target creature or planeswalker. If this spell was bargained, instead it deals 3 damage to that permanent ... If a permanent dealt
+ *  damage by Torch the Tower would die this turn, exile it instead." Both name the creature or planeswalker, and read as a bare `permanent` they paired the exile with sorceries, artifacts and enchantments. The object takes its antecedent's TYPE words and control tail:
+ *  "that permanent" from the nearest earlier action of its own clause that targets (kept a target: it is the same one), "a permanent dealt damage by ~ / this way" from the nearest earlier target of the card (a class, not a target: every permanent so damaged).
+ *  Only an antecedent made of card-type words, "or" / "and" and a control tail is carried (`TYPED_TARGET`); a "permanent card with mana value 3 or less", a colour or a "nonland permanent" is not, and the anaphor stays as it was.
+ *  CEILING: "that permanent" with no earlier target in its own clause is not resolved across clauses (it may point at a trigger's permanent); the damage-dealt form takes the card's LAST earlier target. Called once per clause, in order. */
+const ANAPHOR_NOW = /^that permanent$/i;
+const ANAPHOR_DAMAGED = /^(?:an?|each|the) permanent dealt damage (?:this way|by [^,.]{1,60}?)(?: that would die this turn)?$/i;
+const TYPE_WORDS = new Set(["creature", "planeswalker", "artifact", "enchantment", "land", "battle", "or", "and", "an", "opponent", "controls", "you", "don't", "control", "your", "opponents"]);
+function typedTarget(object: string): string | undefined {
+  const o = object.trim();
+  if (!/^target /i.test(o)) return undefined;
+  const words = o.slice(7).toLowerCase().split(" ");
+  if (!words.some((w) => w === "creature" || w === "planeswalker" || w === "artifact" || w === "enchantment" || w === "land" || w === "battle")) return undefined;
+  return words.every((w) => TYPE_WORDS.has(w)) ? o : undefined;
+}
+export function permanentAnaphorsResolved(clause: ClauseRecord, lastTarget: string | undefined): { clause: ClauseRecord; lastTarget: string | undefined } {
+  const actions = clause.actions ?? [];
+  let target = lastTarget;
+  const out = actions.map((a, i) => {
+    const o = (a.object ?? "").trim();
+    let next = a;
+    if (ANAPHOR_NOW.test(o)) {
+      let own: string | undefined;
+      for (let j = i - 1; j >= 0 && own === undefined; j--) own = typedTarget(actions[j]!.object ?? "");
+      if (own !== undefined) next = { ...a, object: own };
+    } else if (ANAPHOR_DAMAGED.test(o) && target !== undefined) {
+      next = { ...a, object: target.slice(7) };
+    }
+    const t = typedTarget(next.object ?? "");
+    if (t !== undefined) target = t;
+    return next;
+  });
+  return { clause: out.some((a, i) => a !== actions[i]) ? { ...clause, actions: out } : clause, lastTarget: target };
+}
