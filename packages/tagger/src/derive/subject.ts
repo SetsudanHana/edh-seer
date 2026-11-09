@@ -447,8 +447,8 @@ const COUNTED = /\bequal to the number of\b/;
 /** ...but not a stat compared to a count ("each permanent with mana value equal to the number of charge counters") or a number of tokens made ("Food tokens equal to the number of opponents"): those name a class or a quantity, not a pick. */
 const COUNT_OF_STAT = /\bwith\b|\btokens?\b/;
 /** ...and a NUMBER LEADS the plural: "two permanents they control" (Bane of Bala Ged) is two of them, not all: `counted` (a number picked from the whole class), not `chosen` (#1579; "two permanents of their choice" too: Greater Harvester). So is every pick of a number from the class a player makes: "half the permanents they control of their choice" (Pox Plague), "equal to the number of" (Balancing Act). An untyped pick ("damage from a source of your choice": Auriok Replica) keeps `chosen`; `chosen` is otherwise a set the CARD defined.
- *  CEILING: only the permanent class is read this way downstream (a marker nothing matches on); "three creatures" keeps its mass scope. */
-const NUMBERED = /^(?:up to )?(?:two|three|four|five|six|seven|eight|nine|ten|x|\d+) /;
+ *  Every class, not only `permanent` (#1579 part 3): "Sacrifice two artifacts" (Breya), "any number of creatures" (Plunge into Darkness), "up to three Zombies" (Ravenous Rotbelly), "five Illusions" (Preston). The matcher reads `counted` as no sweep (massCouldBeToken, sweepsEveryPermanent, the Aura routes). */
+const NUMBERED = /^(?:any number of |one or more (?:other )?|(?:up to )?(?:two|three|four|five|six|seven|eight|nine|ten|x|\d+) )/;
 const MOST_VOTES = /\bmost votes\b/;
 const A_PILE = /\bpiles?\b/;
 /** "all nontoken permanents with a name originally printed in the Homelands expansion" (Apocalypse Chime): a set picked out by its names. */
@@ -926,6 +926,9 @@ export function parseSubject(text: string): SubjectFilter {
   // Control reads the WHOLE text: `parseControl` makes the same cut and keeps its own empty-head
   // fallback ("equal to the number of creatures your opponents control" still names them).
   const out: SubjectFilter = { control: parseControl(whole), token: parseToken(t) };
+  // A SWEEP THAT SPARES TOKENS IS NONTOKEN (#1579 part 3): "destroy all other permanents except for lands and tokens" (Elspeth Tirel), the same words in Elesh Norn // The Argent Etchings. The list is cut off the class above; only its token word is kept.
+  // CEILING: the spared TYPES stay dropped ("except for artifacts and lands": Scourglass), so that sweep still reads as every permanent.
+  if (out.token === null && /\btokens?\b/.test(lowered.split(EXCEPT_FOR).slice(1).join(" "))) out.token = false;
   const ownership = parseOwnership(whole.split(COUNT_PHRASE)[0]!.trim() || whole);
   if (ownership) {
     if (ownership.owner) out.owner = ownership.owner;
@@ -1027,7 +1030,7 @@ export function parseSubject(text: string): SubjectFilter {
     : NAME_SET.test(t) ? "named-set" as const
     : A_PILE.test(t) && type !== undefined ? "pile" as const
     : scope === undefined && CHOSEN_SET.test(t) && !/\bof the chosen\b/.test(t) ? "chosen" as const
-    : (scope === "all" || scope === "each") && ((NUMBERED.test(t) && type === "permanent") || (type !== undefined && (PLAYER_PICKS.test(t) || (COUNTED.test(lowered) && !COUNT_OF_STAT.test(lowered))))) ? "counted" as const
+    : (scope === "all" || scope === "each") && (NUMBERED.test(t) || (type !== undefined && (PLAYER_PICKS.test(t) || (COUNTED.test(lowered) && !COUNT_OF_STAT.test(lowered))))) ? "counted" as const
     : (scope === "all" || scope === "each") && (PLAYER_PICKS.test(t) || (COUNTED.test(lowered) && !COUNT_OF_STAT.test(lowered))) ? "chosen" as const
     : (scope === "all" || scope === "each") && out.token !== true && ATTACHED_TO.test(text.toLowerCase()) && !/\btokens?\b/.test(text.toLowerCase()) ? "attached-to" as const
     : undefined;

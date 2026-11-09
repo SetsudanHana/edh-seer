@@ -73,13 +73,13 @@ function classCanBeAll(producer: SubjectFilter, all: readonly string[], has: Rea
 }
 
 /** A MASS PRODUCER NOT RESTRICTED TO NONTOKENS CAN BE A TOKEN (#1579 part 3, owner ruling 2026-11-09). Only scope all / each qualifies (a wipe, "for each Spirit, return it", an edict on everyone); a single target does not. Refused: a nontoken class, a class read
- *  outside the battlefield, a land-only class (Ravages of War, Gush) a pile (Expose the Culprit) and a numbered pick (selection counted). */
+ *  outside the battlefield, a land-only class (Ravages of War, Gush), every `selection` but all-but (a pile: Expose the Culprit; a numbered pick: counted; a vote: Vault 11; the Auras attached to a creature: Treefolk Mystic) and a named class (Sheltered Valley). */
 function massCouldBeToken(p: SubjectFilter, h: Hierarchy): boolean {
   if (p.token !== null && p.token !== undefined) return false;
   if (p.scope !== "all" && p.scope !== "each") return false;
   if (p.zone !== undefined && p.zone !== "battlefield") return false;
   if (p.fromZone !== undefined && p.fromZone !== "battlefield") return false;
-  if (p.selection === "pile" || p.selection === "counted") return false;
+  if ((p.selection !== undefined && p.selection !== "all-but") || p.named !== undefined) return false;
   const types = expandTypes(arr(p.type), arr(p.subtype), h);
   return !(types.size > 0 && [...types].every((x) => x === "land"));
 }

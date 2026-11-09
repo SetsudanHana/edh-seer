@@ -673,6 +673,14 @@ describe("a mass producer meets a token demand", () => {
     expect(subjectMatches({ ...perish, selection: "pile" }, grismold, HE, true)).toBe(false);
     expect(subjectMatches({ ...perish, selection: "counted" }, grismold, HE, true)).toBe(false);
   });
+  test("Treefolk Mystic (destroy all Auras attached to that creature) and a named class (Sheltered Valley's own name) do not", () => {
+    expect(subjectMatches({ control: "any", token: null, selection: "attached-to", subtype: "aura", scope: "all" }, grismold, HE, true)).toBe(false);
+    expect(subjectMatches({ control: "you", token: null, named: "~", other: true, type: "permanent", scope: "each" }, nadier, HE, true)).toBe(false);
+  });
+  test("a vote (Vault 11), a set the card chose and a named set are picks, not a sweep; all-but is still one", () => {
+    for (const selection of ["votes", "chosen", "named-set"] as const) expect(subjectMatches({ ...perish, selection }, grismold, HE, true)).toBe(false);
+    expect(subjectMatches({ ...perish, selection: "all-but" }, grismold, HE, true)).toBe(true);
+  });
   test("a single sacrificed object with no scope (Imskir Iron-Eater) still does not", () => {
     expect(subjectMatches({ control: "you", token: null, type: "artifact" }, nadier, HE, true)).toBe(false);
   });
