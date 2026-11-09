@@ -115,7 +115,7 @@ export type RuleClause =
       notLandOnly?: true;
       /** Require an emit whose subject is LANDS ONLY (see `notLandOnly`): the shape `stax.landDenial` reads. */
       landOnly?: true;
-      /** Require an emit whose subject INCLUDES lands (`includesLandSubject`): a type list naming land ("artifacts, creatures, and lands": Jokulhaups, Obliterate, Decree of Annihilation), a branch of an `anyOf` that does, not a bare "permanent" (see `includesLandSubject`). Where `landOnly` needs lands and nothing else, this takes the combined subjects (owner 2026-11-06, #1554). */
+      /** Require an emit whose subject INCLUDES lands (`includesLandSubject`): a type list naming land ("artifacts, creatures, and lands": Jokulhaups, Obliterate, Decree of Annihilation), a branch of an `anyOf` that does, or an UNRESTRICTED `permanent` (Apocalypse, Worldfire: "all permanents" names lands). A `permanent` narrowed by a colour, a selection, a negated type, a subtype ... (`NARROWS_PERMANENT`) is not (see `includesLandSubject`). Where `landOnly` needs lands and nothing else, this takes the combined subjects (owner 2026-11-06, #1554). */
       includesLand?: true;
       /** At least ONE of the subject's types is in this list, where `type` needs EVERY type in its list: "each creature and each planeswalker" passes `typeAny: [creature, permanent]`, a planeswalker-only subject ("each planeswalker they control": Kumano Faces Kakkazan) does not. */
       typeAny?: string[];

@@ -40,6 +40,27 @@ function impliesHistoric(s: SubjectFilter): boolean {
 export const isZonedCardGrant = (a: { effect: { kind: string; subject?: SubjectFilter } }): boolean =>
   a.effect.kind === "keyword-grant" && (a.effect.subject?.zone === "graveyard" || a.effect.subject?.zone === "hand");
 
+/** ALL PERMANENTS PROVES EVERY PERMANENT SUBTYPE (#1577). "Destroy all permanents other than this Equipment" (Worldslayer), "exile all permanents" (Apocalypse) take an Equipment, a Goblin, a Saga and a Forest with them, and a consumer
+ *  demanding one of those subtypes (`graveyard-recursion:equipment`, "whenever an Equipment dies") is fed. Only a sweep of the whole class: the single type `permanent`, a mass scope (`all` / `each`), and no other narrowing
+ *  than the control, the token flag, "other than this" (`other`), the zone it is read in (the battlefield, or the graveyard it arrives in), a battlefield origin and a negated TYPE (the subtype's own types must not all be negated: "nonland permanents" take no Forest). A target, a single object, a colour,
+ *  a keyword, a stat, a count, a pile / chosen / all-but selection or a negated subtype narrows the class by something the subtype list cannot read, so it proves nothing here. */
+const WHOLE_CLASS_FIELDS: ReadonlySet<string> = new Set(["control", "token", "type", "scope", "other", "notType", "fromZone", "zone"]);
+function sweepsEveryPermanent(p: SubjectFilter): boolean {
+  if (p.scope !== "all" && p.scope !== "each") return false;
+  const types = arr(p.type);
+  if (types.length !== 1 || types[0]!.toLowerCase() !== "permanent") return false;
+  // A SET TAKEN FROM A ZONE THE CARD DID NOT SWEEP (the graveyard "all permanent cards in your graveyard that were put there this turn", a library dig, "exiled with this") is a set the engine cannot read.
+  if (p.fromZone !== undefined && p.fromZone !== "battlefield") return false;
+  return Object.entries(p).every(([k, v]) => v === undefined || WHOLE_CLASS_FIELDS.has(k));
+}
+/** Is this subtype one a permanent can carry that the sweep's negated types leave? (Instant and sorcery subtypes: no.) */
+function permanentSubtypeSurvives(subtype: string, notType: readonly string[] | undefined): boolean {
+  const types = SUBTYPE_TYPES[subtype.toLowerCase()];
+  if (types === undefined) return false;
+  const out = (notType ?? []).map((t) => t.toLowerCase());
+  return types.some((t) => t !== "instant" && t !== "sorcery" && !out.includes(t));
+}
+
 export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
   // A DISJUNCTION: satisfied by any branch, with the shared fields outside still binding. Checked
   // first so the outer subject is tested without its branches, then each branch on its own.
@@ -281,7 +302,8 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   const consumerSubtypes = arr(consumer.subtype);
   if (consumerSubtypes.length > 0) {
     const ok = consumerSubtypes.some((cs) =>
-      arr(producer.subtype).some((ps) => ps.toLowerCase() === cs.toLowerCase()),
+      arr(producer.subtype).some((ps) => ps.toLowerCase() === cs.toLowerCase())
+      || (sweepsEveryPermanent(producer) && permanentSubtypeSurvives(cs, producer.notType)),
     );
     if (!ok) return false;
   }

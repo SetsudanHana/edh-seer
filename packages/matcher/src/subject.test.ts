@@ -582,3 +582,38 @@ test("a counter put on a card in exile reaches no battlefield counter demand, an
   expect(counterAddMatches(onBoard, battlefield, h)).toBe(true);
   expect(counterAddMatches(onExiled, { ...battlefield, zone: "exile" }, h)).toBe(true);
 });
+
+// ALL PERMANENTS PROVES NO SUBTYPE NARROWING (#1577): an unrestricted mass event typed `permanent` takes an Equipment, a Goblin, a Saga with it.
+const MASS = (o: Partial<SubjectFilter> = {}): SubjectFilter => s({ control: "any", type: "permanent", scope: "all", ...o });
+const HE: Hierarchy = { ...H, equipment: ["artifact"], goblin: ["creature"], saga: ["enchantment"], forest: ["land"], arcane: ["instant"] };
+
+test("an unrestricted mass 'all permanents' event covers every permanent subtype", () => {
+  expect(subjectMatches(MASS({ other: true }), s({ control: "any", subtype: "equipment" }), HE)).toBe(true);
+  expect(subjectMatches(MASS(), s({ control: "any", subtype: "goblin" }), HE)).toBe(true);
+  expect(subjectMatches(MASS({ scope: "each" }), s({ control: "any", subtype: "forest" }), HE)).toBe(true);
+  expect(subjectMatches(MASS({ fromZone: "battlefield" }), s({ control: "any", type: "artifact", subtype: "equipment" }), HE)).toBe(true);
+});
+
+test("'all permanents' is no proof for a non-permanent subtype, a nonland sweep for a land subtype, or a narrowed sweep", () => {
+  expect(subjectMatches(MASS(), s({ control: "any", subtype: "arcane" }), HE)).toBe(false);
+  expect(subjectMatches(MASS({ notType: ["land"] }), s({ control: "any", subtype: "forest" }), HE)).toBe(false);
+  expect(subjectMatches(MASS({ notType: ["land"] }), s({ control: "any", subtype: "equipment" }), HE)).toBe(true);
+  expect(subjectMatches(MASS({ colors: ["R"] }), s({ control: "any", subtype: "equipment" }), HE)).toBe(false);
+  expect(subjectMatches(MASS({ selection: "pile" }), s({ control: "any", subtype: "equipment" }), HE)).toBe(false);
+  expect(subjectMatches(MASS({ notSubtype: ["equipment"] }), s({ control: "any", subtype: "equipment" }), HE)).toBe(false);
+});
+
+test("a TARGET or a single-object permanent proves no subtype", () => {
+  expect(subjectMatches(MASS({ scope: "target" }), s({ control: "any", subtype: "equipment" }), HE)).toBe(false);
+  expect(subjectMatches(s({ control: "any", type: "permanent" }), s({ control: "any", subtype: "equipment" }), HE)).toBe(false);
+});
+
+test("a sweep stamped with a zone (the battlefield it leaves, the graveyard it arrives in) still proves the subtype", () => {
+  expect(subjectMatches(MASS({ zone: "battlefield", other: true }), s({ control: "any", subtype: "equipment", zone: "battlefield" }), HE)).toBe(true);
+  expect(subjectMatches(MASS({ zone: "graveyard", fromZone: "battlefield" }), s({ control: "any", subtype: "equipment", zone: "graveyard" }), HE)).toBe(true);
+});
+
+test("a sweep of a set taken from the graveyard, exile or library proves nothing (Faith's Reward, a dig)", () => {
+  expect(subjectMatches(MASS({ fromZone: "graveyard" }), s({ control: "any", subtype: "equipment" }), HE)).toBe(false);
+  expect(subjectMatches(MASS({ fromZone: "library" }), s({ control: "any", subtype: "equipment" }), HE)).toBe(false);
+});
