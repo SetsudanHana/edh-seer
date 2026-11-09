@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { counterAddMatches, graveyardFillMatches, subjectMatches } from "./subject.js";
 import { isOutlaw } from "./implied.js";
 import { parseSubject } from "@edh-seer/tagger";
@@ -631,4 +631,49 @@ test("CONTROL: an untyped graveyard fill stays a wildcard", () => {
 test("an anyOf counter placement feeds only the classes its alternatives name", () => {
   expect(counterAddMatches({ ...ALTS, counter: "+1/+1" }, s({ control: "any", type: "land", counter: "+1/+1" }), HE)).toBe(false);
   expect(counterAddMatches({ ...ALTS, counter: "+1/+1" }, s({ control: "any", type: "artifact", counter: "+1/+1" }), HE)).toBe(true);
+});
+
+/** #1579 part 3 (owner ruling 2026-11-09): only MASS removal that does not exclude tokens satisfies a "whenever a creature token dies / leaves" payoff. Mass is scope all or each; a single target, a nontoken class and a land-only class do not. */
+describe("a mass producer meets a token demand", () => {
+  const nadier: SubjectFilter = { control: "you", token: true };
+  const drover: SubjectFilter = { control: "any", token: true, type: "creature" };
+  const grismold: SubjectFilter = { control: "any", token: true, type: "creature" };
+  const cutTheTethers: SubjectFilter = { control: "any", token: null, subtype: "spirit", scope: "each", fromZone: "battlefield" };
+  const perish: SubjectFilter = { control: "any", token: null, colors: ["G"], type: "creature", scope: "all" };
+  const murder: SubjectFilter = { control: "opp", token: null, type: ["creature", "planeswalker"], scope: "target" };
+  const sheoldredRecursion: SubjectFilter = { control: "you", token: null, type: "creature", scope: "target", fromZone: "graveyard", zone: "graveyard" };
+  const ravages: SubjectFilter = { control: "any", token: null, type: "land", scope: "all" };
+  test("Cut the Tethers (for each Spirit) feeds Nadier's Nightblade", () => {
+    expect(subjectMatches(cutTheTethers, nadier, HE, true)).toBe(true);
+  });
+  test("Perish (destroy all green creatures) feeds Grismold", () => {
+    expect(subjectMatches(perish, grismold, HE, true)).toBe(true);
+  });
+  test("Murder (destroy target creature) does not feed Twilight Drover", () => {
+    expect(subjectMatches(murder, drover, HE, true)).toBe(false);
+  });
+  test("Sheoldred's graveyard return does not feed Grismold", () => {
+    expect(subjectMatches(sheoldredRecursion, grismold, HE, true)).toBe(false);
+  });
+  test("Ravages of War (destroy all lands) does not feed Grismold or Nadier", () => {
+    expect(subjectMatches(ravages, grismold, HE, true)).toBe(false);
+    expect(subjectMatches(ravages, nadier, HE, true)).toBe(false);
+  });
+  test("a mass class that says nontoken does not", () => {
+    expect(subjectMatches({ ...perish, token: false }, grismold, HE, true)).toBe(false);
+  });
+  test("a mass Island class (Gush) is land-only and does not", () => {
+    expect(subjectMatches({ control: "you", token: null, subtype: "island", scope: "all", fromZone: "battlefield" }, nadier, HE, true)).toBe(false);
+  });
+  test("an ENTERS event never takes a mass class: Deep Space 9's 'put all permanent cards onto the battlefield' is no token", () => {
+    expect(subjectMatches(perish, grismold, HE)).toBe(false);
+    expect(subjectMatches(perish, grismold, HE, false)).toBe(false);
+  });
+  test("a pile (Expose the Culprit) and a numbered pick do not", () => {
+    expect(subjectMatches({ ...perish, selection: "pile" }, grismold, HE, true)).toBe(false);
+    expect(subjectMatches({ ...perish, selection: "counted" }, grismold, HE, true)).toBe(false);
+  });
+  test("a single sacrificed object with no scope (Imskir Iron-Eater) still does not", () => {
+    expect(subjectMatches({ control: "you", token: null, type: "artifact" }, nadier, HE, true)).toBe(false);
+  });
 });

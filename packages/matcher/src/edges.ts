@@ -1226,6 +1226,9 @@ function originMatches(producer: SubjectFilter, consumer: SubjectFilter, verb: s
   return producer.fromZone === consumer.fromZone;
 }
 
+/** The verbs a consumer hears when something leaves: a mass class that may hold a token meets a token demand only here (#1579 part 3). */
+const REMOVAL_VERBS: ReadonlySet<string> = new Set(["dies", "leaves", "exiled", "sacrifice"]);
+
 /** Does a normalized producer event satisfy a normalized consumer trigger event? Verb equality
  *  plus the subject test the verb calls for -- graveyard fills and counter adds have their own
  *  matchers, everything else is plain subsumption. Shared by `directedReasons` and the event
@@ -1371,7 +1374,8 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
       && (list(side.type).length > 0 || list(side.subtype).length > 0) && !list(side.type).some((t) => t === "spell" || t === "instant" || t === "sorcery" || t === "card")) return false;
     return subjectMatches(side, consumer.subject, h);
   }
-  return subjectMatches(producer.subject, consumer.subject, h);
+  // A MASS REMOVAL MEETS A TOKEN DEMAND (#1579 part 3, owner 2026-11-09): only when the consumer hears something LEAVE (a death, a leave, an exile, a sacrifice).
+  return subjectMatches(producer.subject, consumer.subject, h, REMOVAL_VERBS.has(consumer.verb));
 }
 
 /** The producer's stated size against the consumer's required one. Numbers only: "X" and anything

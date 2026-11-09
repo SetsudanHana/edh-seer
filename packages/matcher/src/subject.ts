@@ -72,7 +72,20 @@ function classCanBeAll(producer: SubjectFilter, all: readonly string[], has: Rea
   return !all.some((t) => out.includes(t.toLowerCase()));
 }
 
-export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
+/** A MASS PRODUCER NOT RESTRICTED TO NONTOKENS CAN BE A TOKEN (#1579 part 3, owner ruling 2026-11-09). Only scope all / each qualifies (a wipe, "for each Spirit, return it", an edict on everyone); a single target does not. Refused: a nontoken class, a class read
+ *  outside the battlefield, a land-only class (Ravages of War, Gush) a pile (Expose the Culprit) and a numbered pick (selection counted). */
+function massCouldBeToken(p: SubjectFilter, h: Hierarchy): boolean {
+  if (p.token !== null && p.token !== undefined) return false;
+  if (p.scope !== "all" && p.scope !== "each") return false;
+  if (p.zone !== undefined && p.zone !== "battlefield") return false;
+  if (p.fromZone !== undefined && p.fromZone !== "battlefield") return false;
+  if (p.selection === "pile" || p.selection === "counted") return false;
+  const types = expandTypes(arr(p.type), arr(p.subtype), h);
+  return !(types.size > 0 && [...types].every((x) => x === "land"));
+}
+
+/** `massRemoval`: the caller compares a REMOVAL event (the consumer hears a creature die / leave / be exiled / sacrificed). Only then does a mass class that does not say nontoken meet a token demand (#1579 part 3); an "enters" event never does, since a mass "put all permanent cards onto the battlefield" puts cards, not tokens. */
+export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy, massRemoval = false): boolean {
   // A DISJUNCTION: satisfied by any branch, with the shared fields outside still binding. Checked
   // first so the outer subject is tested without its branches, then each branch on its own.
   if (consumer.anyOf !== undefined && consumer.anyOf.length > 0) {
@@ -80,14 +93,14 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
     // Shared fields are merged INTO each branch rather than checked separately: a branch carries
     // only its type/subtype, and an absent `control` is not a wildcard here — it would fail the
     // equality check below against a producer that states one.
-    return anyOf.some((b) => subjectMatches(producer, { ...shared, ...b }, h));
+    return anyOf.some((b) => subjectMatches(producer, { ...shared, ...b }, h, massRemoval));
   }
   // AND ON THE PRODUCER SIDE (recall v6 #125, 2026-09-10): an emit over "another creature or a
   // Treasure" has no outer type, and an untyped producer fails every typed demand. Any branch
   // satisfying the consumer is a supply, with the shared fields binding each.
   if (producer.anyOf !== undefined && producer.anyOf.length > 0) {
     const { anyOf, ...shared } = producer;
-    return anyOf.some((b) => subjectMatches({ ...shared, ...b }, consumer, h));
+    return anyOf.some((b) => subjectMatches({ ...shared, ...b }, consumer, h, massRemoval));
   }
   // RELATIONS NO PRODUCER STATES (#896): what a spell targets (stated on a spell's cast and checked
   // in `eventMatches` since #713, which removes it before asking here), whose ability it is, what it shares
@@ -104,7 +117,7 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // names no type and no subtype.
   if (consumer.player === true && (producer.type !== undefined || producer.subtype !== undefined || producer.anyOf !== undefined)) return false;
   // EXCLUSIONS ("all creatures except for Merfolk"): a producer that matches one fails.
-  if (consumer.except?.some((x) => subjectMatches(producer, { control: "any", token: null, ...x }, h))) return false;
+  if (consumer.except?.some((x) => subjectMatches(producer, { control: "any", token: null, ...x }, h, massRemoval))) return false;
   // STATUSES and designations (face-down, enchanted, goaded, kicked ...): only a producer whose text
   // states them supplies them, as with `modified`; a negated one fails a producer that states it.
   if (consumer.status?.length && !consumer.status.every((x) => producer.status?.includes(x))) return false;
@@ -190,8 +203,10 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // The other direction stays a wildcard: token:false means "nontoken", which nearly every
   // permanent already is, and treating it as a condition once let 14 triggers draw edges from the
   // whole creature pool.
-  // CEILING: a class producer that can be a token without saying so ("For each Spirit, return it": Cut the Tethers can return a Spirit token) never meets a token demand (Nadier, Agent of the Duskenel's "a token you control leaves"); #1579 measured the widening (a class producer with a mass or target scope and no `token: false` meets a token demand): +9,921 pair keys over the 76 cards with a token trigger, 36 consumers, 2,639 producers, about 10 of 40 sampled gains weak or false (a land, a nontoken, a power-only debuff). Left to the owner's ruling, not widened.
-  if (consumer.token === true && producer.token !== true) return false;
+  // A MASS PRODUCER (scope all / each) that does not say nontoken can be a token (#1579 part 3, owner 2026-11-09): "For each Spirit, return it" (Cut the Tethers) feeds Nadier's Nightblade's "a token you control leaves", "destroy all creatures" feeds Grismold.
+  // A single target does not, nor a nontoken, a land-only, a pile or a counted class, nor an ENTERS event (`massRemoval`).
+  // CEILING: derive stores a sacrifice COST or a chosen number ("Sacrifice two artifacts": Breya, Kuldotha Forgemaster; "sacrifice any number of creatures": Plunge into Darkness, Torgaar; "sacrifice five Illusions": Preston) as scope all with no `selection`, so it passes as mass. Measured over the 76 cards with a token trigger x the whole corpus: +4,530 pair keys, 24 of 40 read at an even stride true; the cost shape is about 1,160 of the 4,530 (161 producers); the NUMBERED rule at derive/subject.ts (`selection: counted`) covers only `permanent`, and widening it to every type is a DERIVE change not made here.
+  if (consumer.token === true && producer.token !== true && !(massRemoval && massCouldBeToken(producer, h))) return false;
   if (consumer.token !== null && producer.token !== null && consumer.token !== producer.token) {
     return false;
   }
