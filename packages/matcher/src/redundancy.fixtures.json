@@ -308,7 +308,6 @@
         ],
         "control": "you",
         "scope": "all",
-        "selection": "counted",
         "stats": [
          {
           "metric": "power",
@@ -334,7 +333,6 @@
         ],
         "control": "you",
         "scope": "all",
-        "selection": "counted",
         "stats": [
          {
           "metric": "power",

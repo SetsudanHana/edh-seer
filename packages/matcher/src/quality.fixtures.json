@@ -388,7 +388,6 @@
        "subject": {
         "control": "you",
         "scope": "all",
-        "selection": "counted",
         "subtype": "treasure",
         "token": true,
         "type": "artifact"
@@ -400,7 +399,6 @@
        "subject": {
         "control": "you",
         "scope": "all",
-        "selection": "counted",
         "subtype": "treasure",
         "token": true,
         "type": "artifact"

@@ -1030,7 +1030,7 @@ export function parseSubject(text: string): SubjectFilter {
     : NAME_SET.test(t) ? "named-set" as const
     : A_PILE.test(t) && type !== undefined ? "pile" as const
     : scope === undefined && CHOSEN_SET.test(t) && !/\bof the chosen\b/.test(t) ? "chosen" as const
-    : (scope === "all" || scope === "each") && (NUMBERED.test(t) || (type !== undefined && (PLAYER_PICKS.test(t) || (COUNTED.test(lowered) && !COUNT_OF_STAT.test(lowered))))) ? "counted" as const
+    : (scope === "all" || scope === "each") && ((NUMBERED.test(t) && out.token !== true) || (type !== undefined && (PLAYER_PICKS.test(t) || (COUNTED.test(lowered) && !COUNT_OF_STAT.test(lowered))))) ? "counted" as const
     : (scope === "all" || scope === "each") && (PLAYER_PICKS.test(t) || (COUNTED.test(lowered) && !COUNT_OF_STAT.test(lowered))) ? "chosen" as const
     : (scope === "all" || scope === "each") && out.token !== true && ATTACHED_TO.test(text.toLowerCase()) && !/\btokens?\b/.test(text.toLowerCase()) ? "attached-to" as const
     : undefined;

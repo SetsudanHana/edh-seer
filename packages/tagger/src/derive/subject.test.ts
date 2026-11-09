@@ -1033,5 +1033,6 @@ test('"one of those Dragons" and "each of the chosen creatures" are not the clas
 
 test('"except for" spares, it does not name the class', () => {
   expect(parseSubject("all other permanents except for lands and tokens")).toMatchObject({ type: "permanent", scope: "all" });
-  expect(parseSubject("all other permanents except for lands and tokens").token).toBeNull();
+  // ...and it spares tokens, so it is a nontoken class (#1579 part 3); it is not the class "tokens".
+  expect(parseSubject("all other permanents except for lands and tokens").token).toBe(false);
 });

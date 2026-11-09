@@ -15,7 +15,7 @@ describe("a number-led or any-number pick is selection counted", () => {
 });
 
 describe("CONTROL: a real sweep stays unmarked", () => {
-  test.each(["all creatures", "each creature", "all artifacts you control", "all other creatures", "creatures you control"])("%s", (t) => {
+  test.each(["two Treasure tokens", "two 1/1 red Goblin creature tokens", "all creatures", "each creature", "all artifacts you control", "all other creatures", "creatures you control"])("%s", (t) => {
     expect(parseSubject(t).selection).toBeUndefined();
   });
 });
