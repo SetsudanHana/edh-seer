@@ -4418,6 +4418,10 @@ function counterCostEdges({ p, c, h, pEvents, reasons }: PairScope): void {
 // ability's own `temporary` departure (DERIVE 173), not guessed; it repeats as that ability does.
 /** "Enter(s) as a copy of" -- a clone permanent, never a token copy or a "becomes a copy". */
 const ENTERS_AS_COPY_CUE = /\benters? as a copy of\b/i;
+/** A RENAMED COPY IS NOT A SECOND LEGEND (#1577, CR 704.5j: the legend rule is about two legendary permanents with the same NAME). "..., except its name is Sakashima the Impostor" / "except its name is Olag, Ludevic's Hubris" gives the copy another name, so a copied
+ *  Child of Alara and the original are two different names and nothing goes to the graveyard.
+ *  CEILING: read off the printed text of the whole card, and only the legend-rule death is withheld (an entry trigger, a temporary copy's departure, the clone's own edge keep their claims). */
+const RENAMED_COPY_CUE = /\bexcept (?:its|their) name is\b/i;
 function copyFamilyEdges({ p, c, h, reasons }: PairScope): void {
   const copy = copySubject(p);
   // A CLONE LINKS TO WHAT IT CAN COPY (owner ruling 2026-09-28, #712): "a weak but real edge" --
@@ -4470,6 +4474,7 @@ function copyFamilyEdges({ p, c, h, reasons }: PairScope): void {
           // pass the day the twin existed.
           if (rawVerb === "enters" && a.trigger.subject.fromZone !== undefined) continue;
           if (rawVerb === "dies" && !legendary && !departs) continue;
+          if (rawVerb === "dies" && !departs && RENAMED_COPY_CUE.test(p.card.oracleText ?? "")) continue;
           const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
           const byLegendRule = rawVerb === "dies" && legendary;
           if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), copy.subject, h)) continue;

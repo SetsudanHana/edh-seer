@@ -617,3 +617,18 @@ test("a sweep of a set taken from the graveyard, exile or library proves nothing
   expect(subjectMatches(MASS({ fromZone: "graveyard" }), s({ control: "any", subtype: "equipment" }), HE)).toBe(false);
   expect(subjectMatches(MASS({ fromZone: "library" }), s({ control: "any", subtype: "equipment" }), HE)).toBe(false);
 });
+
+// AN anyOf PRODUCER IS TYPED, NOT A WILDCARD (#1577): "Destroy target artifact, enchantment, or creature with flying" is three alternatives with no top-level type, and the untyped fast paths of a graveyard fill and a counter placement read it as "nothing is known".
+const ALTS: SubjectFilter = s({ control: "any", scope: "target", zone: "graveyard", anyOf: [{ type: "artifact" }, { type: "enchantment" }, { type: "creature", keyword: ["flying"] }] as never });
+test("an anyOf graveyard fill feeds only the classes its alternatives name", () => {
+  expect(graveyardFillMatches(ALTS, s({ control: "any", type: "instant", zone: "graveyard" }), HE)).toBe(false);
+  expect(graveyardFillMatches(ALTS, s({ control: "any", type: "land", zone: "graveyard" }), HE)).toBe(false);
+  expect(graveyardFillMatches(ALTS, s({ control: "any", type: "artifact", zone: "graveyard" }), HE)).toBe(true);
+});
+test("CONTROL: an untyped graveyard fill stays a wildcard", () => {
+  expect(graveyardFillMatches(s({ control: "any", zone: "graveyard" }), s({ control: "any", type: "instant", zone: "graveyard" }), HE)).toBe(true);
+});
+test("an anyOf counter placement feeds only the classes its alternatives name", () => {
+  expect(counterAddMatches({ ...ALTS, counter: "+1/+1" }, s({ control: "any", type: "land", counter: "+1/+1" }), HE)).toBe(false);
+  expect(counterAddMatches({ ...ALTS, counter: "+1/+1" }, s({ control: "any", type: "artifact", counter: "+1/+1" }), HE)).toBe(true);
+});

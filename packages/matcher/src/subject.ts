@@ -329,8 +329,14 @@ function sharedTypeRefuses(producer: SubjectFilter, consumer: SubjectFilter): bo
   return consumer.sharesTypeWith !== undefined || (consumer.notCommander === true && producer.commander === true);
 }
 
+/** A subject that names NO class: no type, no subtype, and no `anyOf` alternative with either (#1577). "Destroy target artifact, enchantment, or creature with flying" has no top-level type and three typed alternatives; read as untyped, a graveyard fill wildcarded every
+ *  recursion demand (Atraxa's Fall "puts cards into the graveyard that Mysterious Stranger can bring back": an instant). */
+function namesNoClass(s: SubjectFilter): boolean {
+  return arr(s.type).length === 0 && arr(s.subtype).length === 0 && !(s.anyOf ?? []).some((b) => arr(b.type).length > 0 || arr(b.subtype).length > 0);
+}
+
 export function graveyardFillMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
-  const untyped = arr(producer.type).length === 0 && arr(producer.subtype).length === 0;
+  const untyped = namesNoClass(producer);
   if (!untyped) return subjectMatches(producer, consumer, h);
   if (sharedTypeRefuses(producer, consumer)) return false;
   if (consumer.control !== "any" && producer.control !== "any" && consumer.control !== producer.control) return false;
@@ -389,7 +395,7 @@ export function counterAddMatches(producer: SubjectFilter, consumer: SubjectFilt
   // the kind tells us nothing about the recipient's type. Including it flipped every counter placer
   // into the strict path it cannot satisfy, and The Great Henge stopped feeding its own +1/+1
   // payoffs the moment the kind was recorded.
-  const untyped = arr(producer.type).length === 0 && arr(producer.subtype).length === 0;
+  const untyped = namesNoClass(producer);
   // A KNOWN PERMANENT WITH AN UNKNOWN KIND (DERIVE 153): a self counter emit is stamped with the
   // card's own types, which puts it on the strict path -- where a consumer's `counter: "+1/+1"`
   // against a producer that recorded no kind read as a mismatch and Shelinda, Yevon Acolyte
