@@ -80,6 +80,12 @@ export function nameOnlyTypes(cardName: string | undefined, oracleText: string |
   return out;
 }
 
+/** The card's printed types on a subject. Several are a CONJUNCTION (an artifact creature is both), which `allTypes` says; the bare list reads as "either" and would let a noncreature or nonartifact consumer hear an artifact creature. */
+function setTypes(subject: Record<string, unknown>, types: readonly string[]): void {
+  subject.type = types.length === 1 ? types[0] : [...types];
+  if (types.length > 1) subject.allTypes = [...types];
+}
+
 /** What the strip needs to put back what the name stood for. */
 export interface OwnNameFacts {
   /** The card's own creature/land/... subtypes, lowercased. */
@@ -103,15 +109,16 @@ export function ownNameFacts(cardName: string | undefined, oracleText: string | 
 
 /** The ability with the name-only subtypes taken out of every subject that is not the card itself or a token, and what the name stood for put back:
  *  a subject of cards NAMED this card ("each player returns all cards named Myr Servitor") keeps the card's own types, which the subtype carried (a creature entering is what Authority of the Consuls hears);
- *  a subject left with no class at all (Phelddagrif's "{G}: Phelddagrif gains trample", Eye of Nidhogg's "return it", The War Doctor's "counters on The War Doctor") was the card, so it is `self`, with the card's printed types. */
+ *  a subject left with no class at all (Phelddagrif's "{G}: Phelddagrif gains trample", Eye of Nidhogg's "return it", The War Doctor's "counters on The War Doctor") was the card, so it is `self` (with the card's printed types in an emit). */
 export function stripOwnNameSubtypes(a: Ability, drop: ReadonlySet<string>, facts: OwnNameFacts): Ability {
   if (drop.size === 0) return a;
-  const walk = (v: unknown): unknown => {
-    if (Array.isArray(v)) return v.map(walk);
+  // `typed`: the subject sits in an EMIT, where the event's class is what a consumer reads. An effect subject made `self` stays untyped (Scion of the Ur-Dragon's "becomes a copy" with a creature type paired it with every legendary creature's legend rule, Dragon or not).
+  const walk = (v: unknown, typed = false): unknown => {
+    if (Array.isArray(v)) return v.map((x) => walk(x, typed));
     if (v === null || typeof v !== "object") return v;
     const o = v as Record<string, unknown>;
     const out: Record<string, unknown> = {};
-    for (const [k, x] of Object.entries(o)) out[k] = walk(x);
+    for (const [k, x] of Object.entries(o)) out[k] = walk(x, typed || k === "emits");
     if (o.subtype !== undefined && o.self !== true && o.token !== true) {
       // A subject that points back at the trigger's object ("When The Scarab God dies, return it", `ref`) is the card itself there: its own subtypes are real.
       const kept = [o.subtype as string | string[]].flat().filter((t) => !drop.has(t.toLowerCase()) || (o.ref !== undefined && facts.ownSubtypes.has(t.toLowerCase())));
@@ -119,11 +126,11 @@ export function stripOwnNameSubtypes(a: Ability, drop: ReadonlySet<string>, fact
       else out.subtype = kept.length === 1 ? kept[0] : kept;
       if (kept.length === 0 && out.type === undefined && out.anyOf === undefined && out.allTypes === undefined) {
         if (typeof o.named === "string" && facts.nameForms.has(o.named.toLowerCase())) {
-          if (!facts.notNamed && facts.ownTypes.length > 0) out.type = facts.ownTypes.length === 1 ? facts.ownTypes[0] : [...facts.ownTypes];
+          if (!facts.notNamed && facts.ownTypes.length > 0) setTypes(out, facts.ownTypes);
         } else if (o.named === undefined) {
           // ...with its printed types, as a self emit has them (#1518: The Stone Brain is the artifact it exiles): Graf Rats' exile of itself and Midnight Scavengers is a creature exile Syr Vondam and Soulherder hear.
           out.self = true;
-          if (facts.ownTypes.length > 0) out.type = facts.ownTypes.length === 1 ? facts.ownTypes[0] : [...facts.ownTypes];
+          if (typed && facts.ownTypes.length > 0) setTypes(out, facts.ownTypes);
         }
       }
     }

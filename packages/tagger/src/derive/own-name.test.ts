@@ -25,7 +25,7 @@ test("what the name stood for is put back: cards NAMED the card keep its types, 
   const subj = (a: unknown) => (a as { emits: { subject: Record<string, unknown> }[] }).emits[0]!.subject;
   const facts = ownNameFacts("Myr Servitor", "each player returns all cards named Myr Servitor from their graveyard", ["Myr"], ["artifact", "creature"]);
   const named = subj(stripOwnNameSubtypes(emit({ named: "myr servitor", subtype: "myr", scope: "all" }), new Set(["myr"]), facts));
-  expect(named).toMatchObject({ named: "myr servitor", type: ["artifact", "creature"] });
+  expect(named).toMatchObject({ named: "myr servitor", type: ["artifact", "creature"], allTypes: ["artifact", "creature"] });
   expect(named.subtype).toBeUndefined();
   // the wrong-polarity "not named" keeps no type
   const demon = subj(stripOwnNameSubtypes(emit({ named: "burning-rune demon", subtype: "demon" }), new Set(["demon"]), ownNameFacts("Burning-Rune Demon", "two cards not named Burning-Rune Demon", ["Demon"], ["creature"])));
@@ -33,6 +33,10 @@ test("what the name stood for is put back: cards NAMED the card keep its types, 
   // a class-less leftover is the card itself
   const self = subj(stripOwnNameSubtypes(emit({ subtype: "human", scope: "all" }), new Set(["human"]), ownNameFacts("Human Torch", "Human Torch gains flying", ["Human"], ["creature"])));
   expect(self).toMatchObject({ self: true, type: "creature" });
+  // ...but an EFFECT subject made self stays untyped
+  const grant = stripOwnNameSubtypes({ kind: "static", effect: { kind: "keyword-grant", subject: { control: "any", token: null, subtype: "human" } } } as never, new Set(["human"]), ownNameFacts("Human Torch", "Human Torch gains flying", ["Human"], ["creature"])) as { effect: { subject: Record<string, unknown> } };
+  expect(grant.effect.subject).toMatchObject({ self: true });
+  expect(grant.effect.subject.type).toBeUndefined();
   // a subject that keeps a type is not made self
   const typed = subj(stripOwnNameSubtypes(emit({ type: "creature", subtype: "curse" }), new Set(["curse"]), ownNameFacts("Lizard, Connors's Curse", "x", ["Lizard"], ["creature"])));
   expect(typed.self).toBeUndefined();
