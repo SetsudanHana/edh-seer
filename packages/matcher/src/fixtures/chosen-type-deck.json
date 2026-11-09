@@ -2363,5 +2363,317 @@
     ]
    }
   ]
+ },
+ "Kindred Dominance": {
+  "source": {
+   "name": "Kindred Dominance",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose a creature type. Destroy all creatures that aren't of the chosen type.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}{B}{B}",
+   "layout": "normal",
+   "_id": "ccaa44f2-96be-44e2-884f-c31baa3908d5"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures that aren't of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Crippling Fear": {
+  "source": {
+   "name": "Crippling Fear",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose a creature type. Creatures that aren't of the chosen type get -3/-3 until end of turn.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}{B}",
+   "layout": "normal",
+   "_id": "e7a7ba65-ad14-41d5-889b-9bbeae9ab3f7"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Creatures that aren't of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-3/-3",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Raise the Palisade": {
+  "source": {
+   "name": "Raise the Palisade",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose a creature type. Return all creatures that aren't of the chosen type to their owners' hands.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{U}",
+   "layout": "normal",
+   "_id": "f55a3781-fe33-4301-9bb5-6a54b9c13c4f"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all creatures that aren't of the chosen type",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Kindred Judgment": {
+  "source": {
+   "name": "Kindred Judgment",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose a creature type. Destroy all creatures that aren't of the chosen type.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}{W}{W}",
+   "layout": "normal",
+   "_id": "b5dce42a-a769-4d7d-b29e-8722f79d4092"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures that aren't of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Callous Oppressor": {
+  "source": {
+   "name": "Callous Oppressor",
+   "typeLine": "Creature — Octopus",
+   "oracleText": "You may choose not to untap this creature during your untap step.\nAs this creature enters, an opponent chooses a creature type.\n{T}: Gain control of target creature that isn't of the chosen type for as long as this creature remains tapped.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "1",
+   "toughness": "2",
+   "manaCost": "{1}{U}{U}",
+   "layout": "normal",
+   "_id": "de14f6a9-1c62-42e9-b174-3e8b1080e0dc"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "untap",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "an opponent chooses a creature type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "gain-control",
+      "object": "target creature that isn't of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Skemfar Avenger": {
+  "source": {
+   "name": "Skemfar Avenger",
+   "typeLine": "Creature — Elf Berserker",
+   "oracleText": "Whenever another nontoken Elf or Berserker you control dies, you draw a card and you lose 1 life.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "3",
+   "toughness": "1",
+   "manaCost": "{1}{B}",
+   "layout": "normal",
+   "_id": "47c67df1-52f5-459f-b83e-6b971be9b294"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "another nontoken Elf or Berserker you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Miara, Thorn of the Glade": {
+  "source": {
+   "name": "Miara, Thorn of the Glade",
+   "typeLine": "Legendary Creature — Elf Scout",
+   "oracleText": "Whenever Miara or another Elf you control dies, you may pay {1} and 1 life. If you do, draw a card.\nPartner (You can have two commanders if both have partner.)",
+   "keywords": [
+    "Partner"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "1",
+   "toughness": "2",
+   "manaCost": "{1}{B}",
+   "layout": "normal",
+   "_id": "6895d7a2-264b-4731-9294-c02e1e220384"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "Miara or another Elf you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Partner",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
  }
 }

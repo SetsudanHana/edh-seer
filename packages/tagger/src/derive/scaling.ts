@@ -195,7 +195,9 @@ export function scalingSubject(action: Action, clauseText?: string): SubjectFilt
   const subject = parseSubject(qualifier ? `${head} ${qualifier}` : head);
   subject.zone = "battlefield";
   // "for each creature you control OF THE CHOSEN TYPE" (Banner of Kinship, Kindred Charge): the choice sits in the tail the split threw away, so the count was every creature you control. The matcher refuses a creature-type count with no deck (#1568 review).
-  if (parseSubject(noun).chosenType === true) subject.chosenType = true;
+  const whole = parseSubject(noun);
+  if (whole.chosenType === true) subject.chosenType = true;
+  if (whole.chosenNegated === true) subject.chosenNegated = true;
   // "ON THE BATTLEFIELD" IS EVERYONE'S BOARD and "you control" is yours -- the same distinction the
   // graveyard branch draws between "your graveyard" and "all graveyards", and it decides whether an
   // opponent's Goblins count toward the number.

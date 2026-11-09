@@ -577,6 +577,9 @@ function parseColors(t: string): string[] | undefined {
  *  ONLY A TYPE OR A QUALITY (#1568): "of the chosen kind" (Ichormoon Gauntlet's counter), "of the chosen creatures" (Mega Flare, Oracle en-Vec), "of the chosen cards" (Selective Adaptation) and "of the chosen players" (Bitter Feud)
  *  are a chosen OBJECT, and the bare "of the chosen" read all of them as a chosen type, which `resolveChosenTypes` then turned into the deck's top subtype. "Of the chosen quality" is odd-or-even (Extinction Event). */
 const CHOSEN = /\bof the chosen(?: (?:creature|card|land|permanent|basic land|planeswalker))? (?:type|quality)\b|\bof the chosen colou?rs?\b|\bthe chosen (?:type|color|colour)\b/i;
+/** ...NEGATED (#1570): "creatures that aren't of the chosen type" (Kindred Dominance, Crippling Fear, Raise the Palisade, Kindred Judgment), "target creature that isn't of the chosen type" (Callous Oppressor). Census over every card that prints "chosen type" /
+ *  "chosen creature type" beside a negation word: those five and no other (An-Zerrin Ruins' "don't untap" negates the verb, not the type). */
+const NOT_OF_CHOSEN = /\b(?:aren'?t|isn'?t|not) of the chosen\b/;
 /** ...and the COLOUR case (#1360): a chosen colour is `chosenColor`, never `chosenType` (which the matcher resolves to a subtype). "color and type" is both words and stays a type. */
 const CHOSEN_COLOR = /\bof the chosen colou?r\b|\bthe chosen colou?r\b|\bof the colou?r of your choice\b/i;
 /** ...but the colour of a damage SOURCE is not the colour of what is protected: "by sources of the color of your choice" (Avacyn, Guardian Angel; Prismatic Strands). */
@@ -929,7 +932,11 @@ export function parseSubject(text: string): SubjectFilter {
     if (ownership.control && out.control === "any") out.control = ownership.control;
   }
   if (CHOSEN_COLOR.test(t.replace(SOURCE_COLOR, "")) && !CHOSEN_COLOR_AND_TYPE.test(t)) out.chosenColor = true;
-  else if (CHOSEN.test(t)) out.chosenType = true;
+  else if (CHOSEN.test(t)) {
+    out.chosenType = true;
+    // "creatures that aren't of the chosen type" (#1570): the complement of the choice, not the choice.
+    if (NOT_OF_CHOSEN.test(t)) out.chosenNegated = true;
+  }
   const counter = parseCounter(t);
   if (counter) out.counter = counter;
   if (HISTORIC.test(t) && !NOT_HISTORIC.test(t)) out.historic = true;

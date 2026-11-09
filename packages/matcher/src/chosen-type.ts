@@ -84,8 +84,12 @@ function resolveSubject(subject: SubjectFilter, counts: Map<string, number>, hie
   // ONLY A CREATURE-TYPE CHOICE IS THE DECK'S CREATURE TYPE (#1568). A card type (Cloud Key), odd or even (Extinction Event), a land type (Shimmer) or a planeswalker type (Leori) is not a creature subtype of the deck and is left
   // as it was derived. No kind recorded (`chosenKind` absent: the printed words named no single choice) is read as the creature type it always was.
   if (subject.chosenKind !== undefined && subject.chosenKind !== "creature-type") return subject;
-  const { chosenType, chosenKind: _kind, ...rest } = subject;
+  // AN OPPONENT'S CHOICE IS NOT THE DECK'S (#1570): Callous Oppressor's opponent picks a type for its own reasons. Left as it was derived, which no subject test reads, so it is the creature it targets, whatever the type.
+  if (subject.chosenBy === "opponent") return subject;
+  const { chosenType, chosenKind: _kind, chosenNegated, ...rest } = subject;
   const top = topSubtype(counts, hierarchy, arr(subject.type));
+  // A NEGATED CHOICE IS "NOT THE MAIN TYPE" (#1570): Kindred Dominance, Crippling Fear, Raise the Palisade and Kindred Judgment reach the creatures that are NOT the deck's type, i.e. the opponents'. Rewriting it to the type itself pointed the sweep at the deck's own creatures.
+  if (chosenNegated === true) return { ...rest, notSubtype: [...new Set([...(rest.notSubtype ?? []), top])] };
   return { ...rest, subtype: top };
 }
 
@@ -307,7 +311,8 @@ function caresFromTags(tags: CardTags): boolean {
  *  ~800 census rows, all true), so an untyped chosen-type subject keeps the wildcard it was. A subject with NO kind
  *  (derive could not name one: the printed words make no single choice) falls back to the old reading, a `creature` subject in a card whose words say "creature type" (`cue`). Any other kind (a card type, odd or even, a land type, a planeswalker type) is not this. */
 const chosenCreatureType = (s: SubjectFilter | undefined, cue: boolean): s is SubjectFilter =>
-  s?.chosenType === true && (s.chosenKind === "creature-type" ? s.type !== undefined : s.chosenKind === undefined && cue && arr(s.type).includes("creature"));
+  // A NEGATED or OPPONENT-CHOSEN type (#1570) is no demand for a creature of the chosen type: a sweep of "creatures that aren't of the chosen type" or a steal of one reaches whatever the choice leaves, so it is not refused.
+  s?.chosenType === true && s.chosenNegated !== true && s.chosenBy !== "opponent" && (s.chosenKind === "creature-type" ? s.type !== undefined : s.chosenKind === undefined && cue && arr(s.type).includes("creature"));
 
 /** THE NO-DECK READING OF "OF THE CHOSEN TYPE" (owner ruling 2026-11-07, #1526 part 2). With a deck `resolveChosenTypes` has already turned every chosen type into the deck's main creature type. With none (a card
  *  page, a partner suggestion, the compass's pair isolation) the type is unresolved, and `subjectMatches` does not read the flag, so Metallic Mimic paired with every creature (an anthem). The ruling: such a card pairs
@@ -325,12 +330,11 @@ const chosenCreatureType = (s: SubjectFilter | undefined, cue: boolean): s is Su
  *  SCOPE, by the derived KIND (#1568): only a subject whose `chosenKind` is `creature-type` AND that names a type is read, whatever the type (Gathering Stone's spells, Door of Destinies' spell trigger, Rimefire Torque's permanents, Pack's Disdain's count). "Odd or even"
  *  (Extinction Event, Zimone's Hypothesis), a card-type choice (Cloud Key, Stenn), a land type (Shimmer) and a planeswalker type (Leori) are other kinds and are left as they were. A subject with NO kind, because derive found no single choice in the words
  *  (a stored reading, a card whose text names two choices), keeps the old reading: a `creature` subject in a card whose printed words say "creature type".
- *  CEILING: a chosen type that is a NEGATION ("creatures that aren't of the chosen type": Kindred Dominance, Crippling Fear, Raise the Palisade, Callous Oppressor) or is chosen by an opponent is still told apart by the printed words, not by
- *  derive, which does not carry either. A card that prints both a creature-type choice and a negated one would be read as the first.
+ *  A NEGATED choice ("creatures that aren't of the chosen type": Kindred Dominance, Crippling Fear, Raise the Palisade, Kindred Judgment) or an OPPONENT's (Callous Oppressor) is read off the derived `chosenNegated` / `chosenBy` (#1570), not off the printed words, and is not refused:
+ *  it is no demand for a creature of the chosen type. With a deck, the negated one resolves to "not the main type" and the opponent's stays unresolved (`resolveSubject`).
  *  CEILING: an UNTYPED chosen-type subject is not refused (Dawn-Blessed Pennant's "return target card of the chosen type", Gathering Stone's graveyard fill): it stays the wildcard it was, so a recursion that really asks for the chosen type still pairs with every card that fills a graveyard.
  *  CEILING: a card-type, land-type, parity or planeswalker-type choice is not refused without a deck: Cloud Key still pairs with whatever it matched. The owner ruling is about a chosen CREATURE type. */
 const refusedCache = new WeakMap<CardTags, CardTags>();
-const NEGATED_OR_OPPONENT_CHOICE = /\b(?:aren't|isn't|not) of the chosen type|\bopponent chooses a creature type/i;
 export function refuseUnresolvedChosenTypes(tags: CardTags, oracleText: string | undefined): CardTags {
   const hit = refusedCache.get(tags);
   if (hit) return hit;
@@ -347,8 +351,7 @@ export function refuseUnresolvedChosenTypes(tags: CardTags, oracleText: string |
   // type-free emits stay (#1568 review).
   const scaledChosen = (a: CardTags["abilities"][number]): boolean => chosenCreatureType(a.effect.scalingSubject, cue) || chosenCreatureType(typeof a.count?.scalesWith === "object" ? a.count.scalesWith : undefined, cue);
   const touches = (a: CardTags["abilities"][number]): boolean => watches(a) || effectChosen(a) || scaledChosen(a) || (a.emits ?? []).some(chosenEmit);
-  const inScope = !NEGATED_OR_OPPONENT_CHOICE.test(oracleText ?? "");
-  const out = !inScope || !tags.abilities.some(touches) ? tags : {
+  const out = !tags.abilities.some(touches) ? tags : {
     ...tags,
     abilities: tags.abilities.map((a) => {
       if (!touches(a)) return a;

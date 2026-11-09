@@ -185,3 +185,50 @@ test("with no deck, Banner of Kinship and Kindred Charge do not pair `scales` wi
   expect(pairOf("Banner of Kinship", "Grizzly Bears", /^scales/)).toEqual([]);
   expect(pairOf("Banner of Kinship", "Elvish Archdruid", /^scales/)).not.toEqual([]);
 });
+
+// #1570 PART 1: A NEGATED OR OPPONENT-CHOSEN CREATURE TYPE. "Creatures that aren't of the chosen type" (Kindred Dominance, Crippling Fear, Raise the Palisade, Kindred Judgment) is the creatures that are NOT the deck's type;
+// the deck resolution used to rewrite it to the deck's own type, which pointed the sweep at the deck's own creatures. An opponent's choice (Callous Oppressor) is not the deck's type at all.
+const negatedOrOpp = (t: CardTags) => subjectsOfTags(t);
+
+test("derive carries the negation and the chooser on the chosen subject", () => {
+  for (const n of ["Kindred Dominance", "Raise the Palisade", "Kindred Judgment"]) {
+    const s = negatedOrOpp(tagsOf(n));
+    expect(s.length, n).toBeGreaterThan(0);
+    expect(s.every((x) => x!.chosenNegated === true && x!.chosenBy === undefined), n).toBe(true);
+  }
+  expect(negatedOrOpp(tagsOf("Crippling Fear")).every((x) => x!.chosenNegated === true), "Crippling Fear").toBe(true);
+  const co = negatedOrOpp(tagsOf("Callous Oppressor"));
+  expect(co.length).toBeGreaterThan(0);
+  expect(co.every((x) => x!.chosenBy === "opponent" && x!.chosenNegated === true)).toBe(true);
+  // a plain choice carries neither
+  for (const x of negatedOrOpp(tagsOf("Kindred Discovery"))) expect(x!.chosenNegated).toBeUndefined();
+});
+
+test("in a deck of Elves a negated chosen type is 'not the main type': the subject excludes Elf and names no subtype", () => {
+  const counts = new Map([["elf", 9], ["goblin", 1]]);
+  const kd = resolveChosenTypes(tagsOf("Kindred Dominance"), counts, loadHierarchy());
+  const subs = kd.abilities.flatMap((a) => (a.emits ?? []).map((e) => e.subject));
+  expect(subs.length).toBeGreaterThan(0);
+  for (const s of subs) { expect(s.subtype).toBeUndefined(); expect(s.notSubtype).toEqual(["elf"]); expect(s.chosenType).toBeUndefined(); }
+});
+
+test("an opponent-chosen type is not the deck's: Callous Oppressor stays unresolved in a deck of Elves", () => {
+  const counts = new Map([["elf", 9], ["goblin", 1]]);
+  const co = resolveChosenTypes(tagsOf("Callous Oppressor"), counts, loadHierarchy());
+  expect(JSON.stringify(co.abilities)).not.toContain('"elf"');
+  expect(subjectsOfTags(co).length).toBeGreaterThan(0);
+});
+
+const deathEdges = async (decklist: string): Promise<string[]> => {
+  const byName = new Map(Object.entries(F).map(([n, f]) => [normalizeName(n), { ...f.source, searchNames: [normalizeName(n)], tags: { produces: [], cares: [] } }]));
+  const tagsById = new Map(Object.entries(F).map(([n, f]) => [f.source._id, tagsOf(n)]));
+  const lookup: CardLookup = { async findByName(n: string) { return (byName.get(n) ?? null) as never; }, async allCombos() { return []; } };
+  const sources = { lookup, tagsLookup: { findOne: async (id: string) => tagsById.get(id) ?? null }, tokenTags: () => null, tokenArt: async () => new Map<string, string>() } as never;
+  const { report } = await analyzeDecklist(decklist, undefined, async () => sources);
+  return report.edges.flatMap((e) => e.reasons).filter((r) => r.producer === "Kindred Dominance" && r.consumer === "Skemfar Avenger").map((r) => r.tag).sort();
+};
+const ELF_DEATH_DECK = ["Kindred Dominance", "Skemfar Avenger", "Llanowar Elves", "Elvish Mystic", "Elvish Archdruid", "Generous Patron", "Miara, Thorn of the Glade"].map((n) => `1 ${n}`).join("\n");
+
+test("in an Elf deck Kindred Dominance does not count as killing your Elves: no death edge to an 'Elf you control dies' payoff", async () => {
+  expect(await deathEdges(ELF_DEATH_DECK)).toEqual([]);
+});
