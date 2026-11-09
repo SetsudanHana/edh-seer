@@ -44,6 +44,9 @@ describe("ofPut", () => {
     const ex = tagsOf("Vindictive Triumph").abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "exiled");
     expect(ex.map((e) => [e.subject.scope === "target", e.ofPut === true])).toEqual([[true, false], [false, true]]);
   });
+  test("Journey to the Lost City: \"Put all permanent cards exiled with this enchantment onto the battlefield, then sacrifice it\" sacrifices the enchantment, not what was put", () => {
+    expect(ofPutEmits("Journey to the Lost City")).toEqual([]);
+  });
   test.each(["Come Back Wrong", "Ephemerate"])("%s: a removal that is not the pronoun of a put in its clause is unmarked unless it is the sacrifice of the returned card", (name) => {
     const marked = ofPutEmits(name).map((e) => e.verb).sort();
     expect(marked).toEqual(name === "Come Back Wrong" ? ["dies", "sacrifice"] : []);

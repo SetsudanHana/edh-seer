@@ -2079,8 +2079,16 @@ function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abiliti
   // graveyard when its host leaves the BATTLEFIELD (CR 704.5m). Below, `fromZone` is stripped so a stated graveyard or battlefield origin reads as the class alone; the stack origin is refused first.
   if (e.subject.fromZone === "stack") return false;
   // A TRIGGER THAT ACTS ON THE HOST FINDS IT GONE (#1513). "When this Aura leaves the battlefield, destroy enchanted creature" (Parallax Dementia), "enchanted permanent's controller sacrifices it" (Reality Acid): when the Aura
-  // leaves BECAUSE its host did, the host is already off the battlefield and the trigger has nothing to act on. The Aura removed on its own (a destroy or an exile that names it) still feeds it, on the direct route below.
-  if (a.actsOnHost === true) return false;
+  // leaves BECAUSE its host did, the host is already off the battlefield and the trigger has nothing to act on. So an event that could only be the HOST (a creature-only death, exile or bounce: Murder, Wrath of God, Dawn of
+  // the Dead's exile) feeds nothing. An event whose subject could also be the Aura ITSELF ("destroy target permanent", "exile target artifact or enchantment": Beast Within, Revoke Existence) keeps its pair: that removal can take
+  // the Aura, and its trigger then does act.
+  // CEILING: the pair is kept for the Aura-naming events with the host reading's reason text ("removes the creature ... enchants"), which is not the removal that makes the trigger count; the direct route's own control gate (a
+  // producer aimed at an opponent's permanent does not feed an Aura of yours) is not touched.
+  if (a.actsOnHost === true) {
+    // WHAT THE EVENT NAMES, not whose it is or what state it is in: the control the Aura's own trigger carries is judged by the direct route, and a token filter is no type.
+    const { zone: _z, fromZone: _f, owner: _o, counter: _c, entersTapped: _t, ...named } = e.subject;
+    if (!subjectMatches(characteristicsSubject({ characteristics: chars } as CardTags), { ...named, control: "any", token: null }, h)) return false;
+  }
   // WHOSE CREATURE (#1513). An Aura you put on an OPPONENT's creature is never sent to the graveyard by your own creature's departure.
   const side = e.subject.control === "you" || e.subject.control === "opp" ? auraHostSide(host, abilities) : undefined;
   if ((e.subject.control === "you" && side === "opp") || (e.subject.control === "opp" && side === "own")) return false;

@@ -3621,7 +3621,9 @@ export function deriveAbilities(
       // battlefield (or only have a leave trigger) if it was cast (`Ability.castOnly`: Primeval Spawn, Thief of Existence) is not what they remove. A removal of the trigger's object or of the card itself is not this.
       // CEILING: a put of ONE clause only, the pronoun being the sole signal; "exile target creature, then return it" (a flicker) aims at a creature already on the battlefield and is not marked, and a put whose removal is
       // a later clause or another ability ("When it enters, sacrifice it next turn") is left unmarked.
-      if (putsNonToken && putIdx >= 0 && (clause.actions ?? []).indexOf(action) > putIdx && PUT_PRONOUN.test((action.object ?? "").trim()) && !refersToTrigger && !emitsSelf
+      // A SINGULAR PRONOUN AFTER AN "ALL" PUT is the card, not what was put ("Put all permanent cards exiled with this enchantment onto the battlefield, then sacrifice it": Journey to the Lost City sacrifices itself).
+      const singularAfterAll = /^(?:it|that creature|that card|that permanent)$/i.test((action.object ?? "").trim()) && /^all\b/i.test((clause.actions ?? [])[putIdx]?.object ?? "");
+      if (putsNonToken && putIdx >= 0 && (clause.actions ?? []).indexOf(action) > putIdx && PUT_PRONOUN.test((action.object ?? "").trim()) && !refersToTrigger && !emitsSelf && !singularAfterAll
         && (action.verb === "exile" || action.verb === "sacrifice" || (action.verb === "return" && action.toZone === "hand"))) for (const e of emits) e.ofPut = true;
       // CEILING (#1502): only a put that is followed by the pronoun exile reads its `enters` as yours. The same "under your control" on a put with no such exile (Ashen Powder; Chorale of the Void, Helm of Obedience,
       // Nurgle's Conscription and ~70 more, measured 2026-11-04) stays `control: opp`: reading all of them as yours adds 85,377 pairs (80,249 of them into creature ETB consumers), a census of its own.
