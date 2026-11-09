@@ -19,7 +19,7 @@ const SET_OF_THE_CARD = /\bpermanent cards? (?:exiled with|exiled this way|revea
 
 const bare = (s: SubjectFilter): boolean => {
   const types = [s.type].flat();
-  const { control: _c, token: _t, type: _ty, scope, other: _o, ...rest } = s as SubjectFilter & Record<string, unknown>;
+  const { control: _c, token: _t, type: _ty, scope, other: _o, edictAll: _e, ...rest } = s as SubjectFilter & Record<string, unknown>;
   return types.length === 1 && types[0] === "permanent" && (scope === "all" || scope === "each") && Object.keys(rest).length === 0;
 };
 

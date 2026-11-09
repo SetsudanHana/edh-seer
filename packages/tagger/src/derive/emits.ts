@@ -242,6 +242,9 @@ function sweepVerbs(action: Action, subject: SubjectFilter): Verb[] | undefined 
   // the number of card types among cards in your graveyard" -- one half, four corpus sweeps.
   const amount = String(action.amount ?? "");
   if (!/^\s*-/.test(amount) || /\/\s*\+/.test(amount)) return undefined;
+  // A POWER-ONLY DEBUFF KILLS NOTHING (#1579): "-1/-0" (Stronghold Overseer, Fyndhorn Pollen), "-3/-0" (Mouth of the Storm), "-X/-0, where X is ..." (Meishin) leave the toughness alone, so no creature dies of it. A ZERO toughness half
+  // is read as written: "-0/-1" is a death for every X/1 and stays.
+  if (/\/\s*[-\u2212]?0(?![\d.])/.test(amount)) return undefined;
   return subject.scope === "all" || subject.scope === "each" ? ["dies"] : undefined;
 }
 

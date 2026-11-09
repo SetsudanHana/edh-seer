@@ -1,5 +1,5 @@
-import { expect, test } from "vitest";
-import { counterAddMatches, graveyardFillMatches, subjectMatches } from "./subject.js";
+import { describe, expect, test } from "vitest";
+import { counterAddMatches, graveyardFillMatches, isEveryoneEdict, subjectMatches } from "./subject.js";
 import { isOutlaw } from "./implied.js";
 import { parseSubject } from "@edh-seer/tagger";
 import type { SubjectFilter } from "@edh-seer/tagger";
@@ -631,4 +631,90 @@ test("CONTROL: an untyped graveyard fill stays a wildcard", () => {
 test("an anyOf counter placement feeds only the classes its alternatives name", () => {
   expect(counterAddMatches({ ...ALTS, counter: "+1/+1" }, s({ control: "any", type: "land", counter: "+1/+1" }), HE)).toBe(false);
   expect(counterAddMatches({ ...ALTS, counter: "+1/+1" }, s({ control: "any", type: "artifact", counter: "+1/+1" }), HE)).toBe(true);
+});
+
+/** #1579 part 3 (owner ruling 2026-11-09): only MASS removal that does not exclude tokens satisfies a "whenever a creature token dies / leaves" payoff. Mass is scope all or each; a single target, a nontoken class and a land-only class do not. */
+describe("a mass producer meets a token demand", () => {
+  const nadier: SubjectFilter = { control: "you", token: true };
+  const drover: SubjectFilter = { control: "any", token: true, type: "creature" };
+  const grismold: SubjectFilter = { control: "any", token: true, type: "creature" };
+  const cutTheTethers: SubjectFilter = { control: "any", token: null, subtype: "spirit", scope: "each", fromZone: "battlefield" };
+  const perish: SubjectFilter = { control: "any", token: null, colors: ["G"], type: "creature", scope: "all" };
+  const murder: SubjectFilter = { control: "opp", token: null, type: ["creature", "planeswalker"], scope: "target" };
+  const sheoldredRecursion: SubjectFilter = { control: "you", token: null, type: "creature", scope: "target", fromZone: "graveyard", zone: "graveyard" };
+  const ravages: SubjectFilter = { control: "any", token: null, type: "land", scope: "all" };
+  test("Cut the Tethers (for each Spirit) feeds Nadier's Nightblade", () => {
+    expect(subjectMatches(cutTheTethers, nadier, HE, true)).toBe(true);
+  });
+  test("Perish (destroy all green creatures) feeds Grismold", () => {
+    expect(subjectMatches(perish, grismold, HE, true)).toBe(true);
+  });
+  test("Murder (destroy target creature) does not feed Twilight Drover", () => {
+    expect(subjectMatches(murder, drover, HE, true)).toBe(false);
+  });
+  test("Sheoldred's graveyard return does not feed Grismold", () => {
+    expect(subjectMatches(sheoldredRecursion, grismold, HE, true)).toBe(false);
+  });
+  test("Ravages of War (destroy all lands) does not feed Grismold or Nadier", () => {
+    expect(subjectMatches(ravages, grismold, HE, true)).toBe(false);
+    expect(subjectMatches(ravages, nadier, HE, true)).toBe(false);
+  });
+  test("a mass class that says nontoken does not", () => {
+    expect(subjectMatches({ ...perish, token: false }, grismold, HE, true)).toBe(false);
+  });
+  test("a mass Island class (Gush) is land-only and does not", () => {
+    expect(subjectMatches({ control: "you", token: null, subtype: "island", scope: "all", fromZone: "battlefield" }, nadier, HE, true)).toBe(false);
+  });
+  test("an ENTERS event never takes a mass class: Deep Space 9's 'put all permanent cards onto the battlefield' is no token", () => {
+    expect(subjectMatches(perish, grismold, HE)).toBe(false);
+    expect(subjectMatches(perish, grismold, HE, false)).toBe(false);
+  });
+  test("a pile (Expose the Culprit) and a numbered pick do not", () => {
+    expect(subjectMatches({ ...perish, selection: "pile" }, grismold, HE, true)).toBe(false);
+    expect(subjectMatches({ ...perish, selection: "counted" }, grismold, HE, true)).toBe(false);
+  });
+  test("Treefolk Mystic (destroy all Auras attached to that creature) and a named class (Sheltered Valley's own name) do not", () => {
+    expect(subjectMatches({ control: "any", token: null, selection: "attached-to", subtype: "aura", scope: "all" }, grismold, HE, true)).toBe(false);
+    expect(subjectMatches({ control: "you", token: null, named: "~", other: true, type: "permanent", scope: "each" }, nadier, HE, true)).toBe(false);
+  });
+  test("a vote (Vault 11), a set the card chose and a named set are picks, not a sweep; all-but is still one", () => {
+    for (const selection of ["votes", "chosen", "named-set"] as const) expect(subjectMatches({ ...perish, selection }, grismold, HE, true)).toBe(false);
+    expect(subjectMatches({ ...perish, selection: "all-but" }, grismold, HE, true)).toBe(true);
+  });
+  test("a single sacrificed object with no scope (Imskir Iron-Eater) still does not", () => {
+    expect(subjectMatches({ control: "you", token: null, type: "artifact" }, nadier, HE, true)).toBe(false);
+  });
+});
+
+/** #1579 (owner ruling 2026-11-09): "edicts on everyone" are mass removal. "Each player sacrifices a creature" (Innocent Blood, Fleshbag Marauder) is stored with no scope; "each player sacrifices two / X" (Barter in Blood, Pox, Meathook Massacre II) is `counted`; "each opponent" is control opp. A "target player / opponent" edict
+ *  is marked `edict: true` and can be aimed at one player, so it is no edict on everyone. */
+describe("an edict on everyone meets a token demand", () => {
+  const drover: SubjectFilter = { control: "any", token: true, type: "creature" };
+  const innocentBlood: SubjectFilter = { control: "any", token: null, type: "creature", edictAll: true };
+  const barter: SubjectFilter = { control: "any", token: null, selection: "counted", type: "creature", scope: "all", edictAll: true };
+  const liliana: SubjectFilter = { control: "opp", token: null, type: "creature", edictAll: true };
+  const diabolic: SubjectFilter = { control: "any", token: null, type: "creature", edict: true };
+  const unscopedDeath: SubjectFilter = { control: "any", token: null, type: "creature" };
+  test("Innocent Blood, Barter in Blood and an each-opponent edict feed Twilight Drover", () => {
+    expect(subjectMatches(innocentBlood, drover, HE, "edict")).toBe(true);
+    expect(subjectMatches(barter, drover, HE, "edict")).toBe(true);
+    expect(subjectMatches(liliana, { ...drover, control: "opp" }, HE, "edict")).toBe(true);
+  });
+  test("Fleshbag Marauder (each player sacrifices a creature) feeds Grismold", () => {
+    expect(subjectMatches(innocentBlood, { control: "any", token: true, type: "creature" }, HE, "edict")).toBe(true);
+  });
+  test("Diabolic Edict (target player) and a sacrifice cost of your own do not", () => {
+    expect(isEveryoneEdict(diabolic)).toBe(false);
+    expect(subjectMatches(diabolic, drover, HE, "edict")).toBe(false);
+    expect(isEveryoneEdict({ ...innocentBlood, control: "you" })).toBe(false);
+    expect(isEveryoneEdict(innocentBlood)).toBe(true);
+    expect(isEveryoneEdict(barter)).toBe(true);
+  });
+  test("CONTROL: an unscoped death of one destroyed creature (Ohran Viper, Mortal Wound) is no edict", () => {
+    expect(isEveryoneEdict(unscopedDeath)).toBe(false);
+    expect(subjectMatches(unscopedDeath, drover, HE, "edict")).toBe(false);
+  });
+  test("CONTROL: without the edict mode an unscoped class still meets no token demand", () => {
+    expect(subjectMatches(innocentBlood, drover, HE, true)).toBe(false);
+  });
 });

@@ -1828,5 +1828,550 @@
    }
   ],
   "clauseSource": "model"
+ },
+ "Cataclysm": {
+  "source": {
+   "name": "Cataclysm",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player chooses from among the permanents they control an artifact, a creature, an enchantment, and a land, then sacrifices the rest.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "b0479ca4-e925-4aa7-a4fa-f7e01f899ac5"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "permanents not chosen",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Liliana of the Veil": {
+  "source": {
+   "name": "Liliana of the Veil",
+   "typeLine": "Legendary Planeswalker — Liliana",
+   "oracleText": "+1: Each player discards a card.\n−2: Target player sacrifices a creature.\n−6: Separate all permanents target player controls into two piles. That player sacrifices all permanents in the pile of their choice.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "0ba134d8-ee7d-48ec-8dc6-57942b8e9261"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "all permanents in the pile of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Council's Judgment": {
+  "source": {
+   "name": "Council's Judgment",
+   "typeLine": "Sorcery",
+   "oracleText": "Will of the council — Starting with you, each player votes for a nonland permanent you don't control. Exile each permanent with the most votes or tied for most votes.",
+   "keywords": [
+    "Will of the council"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "acf4d685-a718-42f7-9a7a-dee069ae8db2"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "vote",
+      "object": "a nonland permanent you don't control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "each permanent with the most votes or tied for most votes",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Pox Plague": {
+  "source": {
+   "name": "Pox Plague",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player loses half their life, then discards half the cards in their hand, then sacrifices half the permanents they control of their choice. Round down each time.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{B}{B}{B}{B}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "c505d304-9428-4532-87a2-167c69f16969"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "half their life",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "discard",
+      "object": "half the cards in their hand",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "sacrifice",
+      "object": "half the permanents they control of their choice",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Druid of Purification": {
+  "source": {
+   "name": "Druid of Purification",
+   "typeLine": "Creature — Human Druid",
+   "oracleText": "When this creature enters, starting with you, each player may choose an artifact or enchantment you don't control. Destroy each permanent chosen this way.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "manaCost": "{3}{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "5bb32efd-9e58-4021-bbda-4ffccfa1d601"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "each artifact or enchantment chosen this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Selective Obliteration": {
+  "source": {
+   "name": "Selective Obliteration",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player chooses a color. Then exile each permanent unless it's colorless or it's only the color its controller chose.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 5,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{C}{C}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "9f95027a-5f04-48b4-99a0-8913be3a520a"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "each permanent unless it's colorless or it's only the color its controller chose",
+      "fromZone": null,
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Whims of the Fates": {
+  "source": {
+   "name": "Whims of the Fates",
+   "typeLine": "Sorcery",
+   "oracleText": "Starting with you, each player separates all permanents they control into three piles. Then each player chooses one of their piles at random and sacrifices those permanents. (Piles can be empty.)",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}{R}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "7d359434-eb1b-478e-a745-10e2c564d89f"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "permanents each player controls",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Renounce": {
+  "source": {
+   "name": "Renounce",
+   "typeLine": "Instant",
+   "oracleText": "Sacrifice any number of permanents. You gain 2 life for each permanent sacrificed this way.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "72f9a6f7-ea26-438d-aafa-758239fd3681"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "any number of permanents",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "amount": "2 for each permanent sacrificed this way",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Journey to the Lost City": {
+  "source": {
+   "name": "Journey to the Lost City",
+   "typeLine": "Enchantment",
+   "oracleText": "At the beginning of your upkeep, exile the top four cards of your library, then roll a d20.\n1—9 | You may put a land card from among those cards onto the battlefield.\n10—19 | Create a 2/2 green Wolf creature token, then put a +1/+1 counter on it for each creature card among those cards.\n20 | Put all permanent cards exiled with this enchantment onto the battlefield, then sacrifice it.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "a5f5e662-b32c-44f1-848d-0228f0fe1eb6"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top four cards of your library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "roll-dice",
+      "object": "a d20",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "a land card from among those cards",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 2/2 green Wolf creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each creature card among those cards",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "all permanent cards exiled with this enchantment",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "978700677ef33ee27e1c3d544bcf7c87af71365a265449b96ed24203fdd8eb10"
+ },
+ "Baba Lysaga, Night Witch": {
+  "source": {
+   "name": "Baba Lysaga, Night Witch",
+   "typeLine": "Legendary Creature — Human Warlock",
+   "oracleText": "{T}, Sacrifice up to three permanents: If there were three or more card types among the sacrificed permanents, each opponent loses 3 life, you gain 3 life, and you draw three cards.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{1}{B}{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "d6cd4aa1-ff3a-4453-8735-e5ace5cbe386"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "up to three permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "b2abf8086ab99c377b656728a11bb41543095812745b0a6a5ae6d55d9c2a6ed8"
  }
 }

@@ -180,6 +180,9 @@ export interface SubjectFilter {
    *  "target player" or "target opponent". `control` still says whose creature it is (opp for "target
    *  opponent", any for "target player"). Never set by the LLM. */
   edict?: true;
+  /** AN EDICT ON EVERYONE (#1579, owner ruling 2026-11-09): "each player / each opponent sacrifices a creature of their choice" (Innocent Blood, Fleshbag Marauder, Liliana's Triumph), "each player sacrifices X creatures" (Pox, Meathook Massacre II), "at the beginning of each player's upkeep, that player sacrifices" (Call to
+   *  the Grave). Set by derive on the `sacrifice` and `dies` emits of such a sacrifice (not a cost, not "each opponent may", not "unless"). The mass-removal reading of a token payoff (matcher `isEveryoneEdict`) takes it; a `target player` edict carries `edict` instead. Never set by the LLM. */
+  edictAll?: true;
   /** false = nontoken only, true = token only, null = any. */
   token: boolean | null;
   /** Marks "the chosen type" (Kindred Discovery); resolved deck-aware in Stage 2. */
@@ -200,7 +203,7 @@ export interface SubjectFilter {
    *  no field of their own, and the bare `permanent` they left behind was indistinguishable from a real "destroy all permanents" (Apocalypse), so a rule keyed on the class could not tell them apart.
    *  `all-but`: everything EXCEPT a number the players keep ("sacrifices the rest": Razia's Purification, "creatures other than up to two chosen creatures": Mount Doom). `votes`: the permanent(s) with
    *  the most votes (Council's Judgment). `pile`: the pile a player picks (Liliana of the Veil, "all permanents in the pile of their choice"). `attached-to`: only those attached to something ("all
-   *  permanents attached to creatures": End Hostilities). `counted`: a number of them the player picks from the whole class ("sacrifice any number of permanents": Renounce; "that many": Lich), which can be anything of the class but is not every one of it (#1577). `named-set`: only the cards whose NAME is in a printed set (Apocalypse Chime: \"a name originally printed in the Homelands expansion\"). `chosen`: the things the card picked earlier, one per chooser ("for each opponent, choose an artifact or land ... destroy the chosen
+   *  permanents attached to creatures": End Hostilities). `counted`: a number of them the player picks from the whole class ("sacrifice any number of permanents": Renounce; "that many": Lich; "two permanents they control": Bane of Bala Ged; "half the permanents they control of their choice": Pox Plague), which can be anything of the class but is not every one of it (#1577, #1579). `named-set`: only the cards whose NAME is in a printed set (Apocalypse Chime: \"a name originally printed in the Homelands expansion\"). `chosen`: the things the card picked earlier, one per chooser ("for each opponent, choose an artifact or land ... destroy the chosen
    *  permanents": Ultimate Magic: Meteor; Sadistic Shell Game, Tunnel of Love, Teferi's "the chosen permanents"), which carries NO mass `scope`. A marker only: no matcher reads it as a filter, and a consumer with it matches as it did. Set by `parseSubject`; never by the LLM. */
   selection?: "all-but" | "votes" | "pile" | "attached-to" | "chosen" | "named-set" | "counted";
   /** "A spell that SHARES A CREATURE TYPE WITH this creature" (issue #559). `self`: the card's own

@@ -213,6 +213,16 @@ export function actionRecipients(clauseText: string, ctx: ActorContext = {}): Re
 }
 
 
+/** ONE PLAYER DOES EVERY SACRIFICE OF THE CLAUSE (#1579). `actorFor` refuses a verb the clause stores twice, since "Target player sacrifices X. You sacrifice Y." has two actors. An edict repeated for a bigger number or another type has one: "Each opponent sacrifices a creature of their choice. If you have the
+ *  city's blessing, instead each opponent sacrifices half the creatures ..." (Vona's Hunger), "Target opponent sacrifices ... that player sacrifices two of those creatures instead" (Gideon's Triumph), "Target opponent sacrifices a creature. ... Then repeat this process for an enchantment" (Invoke Despair).
+ *  The test: the text has at least one cue-named sacrifice and as many of them as it has sacrifice verbs, and no "you sacrifice". Counted over the printed words, linear scans of one clause.
+ *  CEILING: the cue's WHO decides the control as for a single sacrifice ("target player" stays `any`); a repeat with the SAME verb count but another actor between ("each opponent sacrifices X, then you sacrifice Y") is refused by the "you sacrifice" test only. */
+export function oneSacrificer(clauseText: string): boolean {
+  const verbs = clauseText.match(/\bsacrifices?\b/gi)?.length ?? 0;
+  const cued = clauseText.match(new RegExp(`\\b(?:${WHO})\\s+${ADVERB}sacrifices?\\b`, "gi"))?.length ?? 0;
+  return cued > 0 && cued === verbs && !/\byou\s+sacrifice\b/i.test(clauseText);
+}
+
 /** THE PLAYER IS THE TARGET, NOT THE CREATURE (#1295): "Target player sacrifices a creature of their choice" (Diabolic
  *  Edict), "target opponent sacrifices ..." (Chainer's Edict, Sudden Edict). The first sacrifice sentence is read, as
  *  `actionRecipients` reads it. PLURAL targets and a verb after "and" count ("Any number of target players each lose 2 life and sacrifice a creature of their choice", Priest of Forgotten Gods; Will of the Abzan). `may` is NOT an adverb here: "target opponent MAY sacrifice" is the victim's option
@@ -237,4 +247,13 @@ export function victimDeclines(clauseText: string, verb: string): boolean {
   // "ANY PLAYER MAY EXILE a card from their graveyard" (Carrion Rats, Carrion Wurm), "EACH PLAYER MAY exile any number" (Grave Consequences): the exile is every player's option (#1266, graveyardHate).
   const anyPlayer = verb === "exile" ? "|\\b(?:any|each) player may exiles?\\b" : "";
   return new RegExp(`\\b${DECLINER}\\s+may\\s+(?:(?:also|then)\\s+)*${stem}\\b|\\bunless\\s+${DECLINER}\\s+${stem}\\b`, "i").test(clauseText) || (anyPlayer !== "" && new RegExp(anyPlayer.slice(1), "i").test(clauseText));
+}
+
+/** THE SACRIFICE FALLS ON EVERY PLAYER (#1579, owner ruling 2026-11-09: "edicts on everyone" are mass removal): "Each player sacrifices a creature of their choice" (Innocent Blood, Fleshbag Marauder), "each opponent sacrifices ..." (Liliana's Triumph), "each player ... sacrifices X creatures"
+ *  (Death Cloud, Pox), and "at the beginning of each player's upkeep, that player sacrifices ..." (Call to the Grave). Not "target player" (it can be aimed at one: `sacrificerIsTargeted`), not "each opponent MAY sacrifice" (an option: Braids), and not "unless that player sacrifices" (a price: Demanding Dragon).
+ *  CEILING: read over the printed words of the clause; a clause that also has a targeted or optional edict is read on its first cue only. */
+const EVERYONE_SACRIFICES = /\b(?:each|every) (?:other )?(?:player|opponent)\b(?!'s)[^.]{0,200}?\bsacrifices?\b|\beach (?:player|opponent)'s [^.]{0,80}?,\s*that player (?:(?:also|then) )*sacrifices?\b/i;
+const EVERYONE_MAY = /\b(?:each|every) (?:other )?(?:player|opponent) may\b/i;
+export function sacrificeFallsOnEveryone(clauseText: string): boolean {
+  return EVERYONE_SACRIFICES.test(clauseText) && !EVERYONE_MAY.test(clauseText);
 }

@@ -33,3 +33,19 @@ describe("CONTROL: a real sweep stays unmarked", () => {
     for (const x of e) expect(x.subject.selection).toBeUndefined();
   });
 });
+
+/** #1579 part 2 -- A NUMBER THAT LEADS THE PLURAL IS COUNTED, NOT CHOSEN. "defending player exiles two permanents they control" (Bane of Bala Ged), "that player sacrifices two permanents of their choice" (Greater Harvester), "Each opponent sacrifices two permanents of their choice"
+ *  (Earth-Cult Elemental, d20 result 20), "Sacrifice up to three permanents" (Baba Lysaga), "sacrifices seven permanents of their choice" (Nicol Bolas, Planeswalker) are a number picked from the whole class, which is what `counted` says. "half the permanents they control of their choice"
+ *  (Pox Plague) is a number picked by a player too, and `counted` as well: `chosen` is a set the CARD defined. */
+describe("a numbered permanent mass is counted", () => {
+  test.each([["Bane of Bala Ged", "exiled"], ["Greater Harvester", "sacrifice"], ["Baba Lysaga, Night Witch", "sacrifice"], ["Nicol Bolas, Planeswalker", "sacrifice"], ["Earth-Cult Elemental", "sacrifice"]])("%s (%s): counted", (name, verb) => {
+    const e = rowOf(name).tags.abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === verb && x.subject.scope === "all" && [x.subject.type].flat().includes("permanent"));
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject.selection).toBe("counted");
+  });
+  test("Pox Plague ('half the permanents they control of their choice') is counted", () => {
+    const e = removals("Pox Plague");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject.selection).toBe("counted");
+  });
+});

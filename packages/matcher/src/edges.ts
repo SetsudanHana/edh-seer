@@ -6,7 +6,7 @@ import crKeywords from "@edh-seer/tagger/cr-keywords" with { type: "json" };
 /** The closed six, per CR 205.4a plus the un-set `host`/`elite`. A supertype is not a card type and
  *  must never be keyed as one -- see `impliedEntryThemeTags`. */
 import type { DeckCard, Hierarchy } from "./types.js";
-import { isZonedCardGrant, subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
+import { isEveryoneEdict, isZonedCardGrant, subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
 import { enterAsCopyAbilities, impliedEvents, preparedAbilities, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, printedAllTypes, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { normalizeZoneEvent, tagKey, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
@@ -1226,6 +1226,9 @@ function originMatches(producer: SubjectFilter, consumer: SubjectFilter, verb: s
   return producer.fromZone === consumer.fromZone;
 }
 
+/** The verbs a consumer hears when something leaves: a mass class that may hold a token meets a token demand only here (#1579 part 3). */
+const REMOVAL_VERBS: ReadonlySet<string> = new Set(["dies", "leaves", "exiled", "sacrifice"]);
+
 /** Does a normalized producer event satisfy a normalized consumer trigger event? Verb equality
  *  plus the subject test the verb calls for -- graveyard fills and counter adds have their own
  *  matchers, everything else is plain subsumption. Shared by `directedReasons` and the event
@@ -1371,7 +1374,11 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
       && (list(side.type).length > 0 || list(side.subtype).length > 0) && !list(side.type).some((t) => t === "spell" || t === "instant" || t === "sorcery" || t === "card")) return false;
     return subjectMatches(side, consumer.subject, h);
   }
-  return subjectMatches(producer.subject, consumer.subject, h);
+  // A MASS REMOVAL MEETS A TOKEN DEMAND (#1579 part 3, owner 2026-11-09): only when the consumer hears something LEAVE (a death, a leave, an exile, a sacrifice).
+  // ...and an edict on everyone ("each player / each opponent sacrifices ...") is mass too (owner ruling 2026-11-09): read on a sacrifice or dies emit that the card authored.
+  const removal = REMOVAL_VERBS.has(consumer.verb);
+  const edict = removal && producer.implied !== true && (producer.verb === "sacrifice" || producer.verb === "dies") && isEveryoneEdict(producer.subject);
+  return subjectMatches(producer.subject, consumer.subject, h, edict ? "edict" : removal);
 }
 
 /** The producer's stated size against the consumer's required one. Numbers only: "X" and anything
@@ -2107,10 +2114,10 @@ function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abiliti
 function auraOwnLeaves(chars: CardTags["characteristics"], a: CardTags["abilities"][number], e: GameEvent, t: GameEvent, h: Hierarchy, producer: readonly GameEvent[], producerText: string): boolean {
   if (chars.enchants === undefined || a.grantedBy !== undefined || t.subject.self !== true || (t.verb !== "dies" && t.verb !== "leaves")) return false;
   if (!list(t.subject.subtype).includes("aura") || list(t.subject.type).length > 0) return false;
-  // THE EVENT NAMES A CLASS, AND THE WHOLE OF IT. An untyped removal (a bare "it": Bomb Squad's destroy, Cut the Tethers' return of a Spirit) states no class that could be an Aura, and a `selection` (a named set, "all but the chosen",
-  // a vote, a pile) is a part of the class the engine cannot test: neither reaches an Aura.
+  // THE EVENT NAMES A CLASS. An untyped removal (a bare "it": Bomb Squad's destroy, Cut the Tethers' return of a Spirit) states no class that could be an Aura, and a `selection` is read by `selectionCanIncludeAura` (aura-reach.ts,
+  // inside `eventReachesAura`): the one rule both routes use (#1579).
   const s = e.subject;
-  if ((s.selection !== undefined && s.selection !== "counted") || !namesAClass(s)) return false;
+  if (!namesAClass(s)) return false;
   const aura = characteristicsSubject({ characteristics: chars } as CardTags);
   if (!eventReachesAura(e, auraReachContext(producer, producerText, aura), aura, h)) return false;
   const { subtype: _aura, ...rest } = t.subject;

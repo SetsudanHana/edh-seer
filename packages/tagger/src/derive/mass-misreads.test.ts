@@ -74,9 +74,9 @@ describe("a comparison with a target's stat does not make the mass one target", 
 });
 
 describe('"except for" lists the spared, not the class', () => {
-  test("Elspeth Tirel: the -5 destroys permanents, not token lands", () => {
+  test("Elspeth Tirel: the -5 destroys permanents, not token lands, and it spares tokens (nontoken, #1579 part 3)", () => {
     const d = emits("Elspeth Tirel", "dies");
-    expect(d.map((e) => [e.subject.type, e.subject.token, e.subject.scope])).toEqual([["permanent", null, "all"]]);
+    expect(d.map((e) => [e.subject.type, e.subject.token, e.subject.scope])).toEqual([["permanent", false, "all"]]);
   });
   test("Scourglass: destroys permanents", () => {
     expect(emits("Scourglass", "dies").filter((e) => e.subject.self !== true).map((e) => [e.subject.type, e.subject.scope])).toEqual([["permanent", "all"]]);

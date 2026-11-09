@@ -9,19 +9,19 @@
       "why": "Two shapes, both right. (1) 'spells you cast' (70 of 73): a spell's controller is the player who put it on the stack, so the caster is the controller -- parseSubject's control regex knows 'you control' and 'your' but not 'you cast', and answered any. (2) 'of an opponent's choice' / 'of your choice' (6): the chooser is not the controller; parseSubject read 'opponent'/'your' anywhere and answered opp/you. A Clue, Food or Treasure 'of your choice' is created under the creator's control by CONTROLLER_DEFAULT, not by this word. The 'that targets only' member names the TARGET's controller, not the spell's, and the subject is refused (restricted) either way. 'a token that's a copy of a permanent you control': 'you control' names the ORIGINAL, not the token, which CONTROLLER_DEFAULT gives its creator (CR 111.2). (3) the quote leak of #1387 is fixed: parseSubject now cuts a token's quoted ability before it reads any field, so the Prydwen's Knight (\"... under your control this turn.\") agrees with the grammar and left this group."
     },
     "scope": {
-      "distinct": 69,
+      "distinct": 68,
       "label": "grammar right",
       "rule": "CR 115.1",
       "why": "(1) 'creatures target player controls', 'a creature target opponent controls': the player is the target, the creatures are not -- parseSubject's scope reads 'target' anywhere in the string. (2) 'any number of targets', 'one or two targets': parseSubject's \\btarget\\b misses the plural. (3) 'a creature each opponent controls': the quantifier binds the opponent. (4) Two token names ('Kobolds of Kher Keep', 'Llanowar Elves'): a plural in a NAME is not a mass subject. (5) 'a token that's a copy of target creature': the original is targeted, the token is created, not targeted. Copy tokens of a target ('a token that's a copy of target artifact') are not themselves targeted."
     },
     "fromZone,scope": {
-      "distinct": 66,
+      "distinct": 65,
       "label": "grammar right",
       "rule": "CR 115.1, CR 400.1",
       "why": "'a nonland card from target opponent's hand' (Thoughtseize family): the target is the opponent, not the card, and the card comes from a hand. parseSubject's ORIGIN_ZONE allows only a|an|your|their|the before the zone, so a possessive player ('target opponent's', 'each opponent's') drops the zone, and its scope reads the player's 'target'."
     },
     "other": {
-      "distinct": 55,
+      "distinct": 38,
       "label": "grammar right",
       "rule": "printed text",
       "why": "'up to one other target creature', 'one or more other creatures', 'any number of other permanents': 'other' after a count. parseSubject's `other` regex accepts at most one word before it. Also 'target creature other than this creature', 'all creatures other than this creature': the same fact as 'another' written out."
@@ -75,7 +75,7 @@
       "why": "'a non-creature card from your graveyard': hyphenated. parseSubject's \\bcreature\\b matches inside 'non-creature', the negation then removes the only type, and it falls through to type creature -- the inverse of the text."
     },
     "scope,zone": {
-      "distinct": 5,
+      "distinct": 4,
       "label": "grammar right",
       "rule": "CR 115.1, CR 400.1",
       "why": "'each card in target opponent's hand': the player is targeted and the cards live in a hand."
@@ -123,7 +123,7 @@
       "why": "'a token that's a copy of another target attacking creature': attacking is not a copiable value; the token is not attacking and not targeted."
     },
     "other,subtype": {
-      "distinct": 3,
+      "distinct": 2,
       "label": "grammar right",
       "rule": "printed text",
       "why": "'all permanents other than this Equipment': the subtype names this card, not the class."
@@ -171,7 +171,7 @@
       "why": "'target nonlegendary creature' (`legendary: false`); parseSubject dropped the negation."
     },
     "hasCounter": {
-      "distinct": 13,
+      "distinct": 11,
       "label": "grammar right",
       "rule": "printed text",
       "why": "'a creature you control with a counter on it' (`hasCounter`): some counter, kind unstated; parseSubject read nothing."
@@ -243,7 +243,7 @@
       "why": "'a spell that targets only a single creature other than ~': restricted either way; the subject is a spell."
     },
     "stats": {
-      "distinct": 248,
+      "distinct": 246,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. Stat comparisons parseSubject never reads -- 'mana value 1' (eq), 'mana value 4, 5, or 6' (a run, 4..6; a gap is refused), 'power equal to its toughness' (`vs`), 'total mana value 3 or less' (each card at most 3), and a rhs the text does not fix as `variable`: 'mana value X or less' (X chosen on resolution), 'less than the result', 'lesser power', 'less than or equal to the number of lands you control'. The matcher abstains on `variable` (CEILING in StatPredicate), which is what dropping the words did, but the demand is now said. A variable rhs must start like an amount and hold no verb, so 'power less than this creature's power can't block ...' is refused, not parsed."
@@ -279,7 +279,7 @@
       "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive or relative clause names another object's controller; stats: stat comparisons parseSubject does not read: a bare value ('mana value 1'), a run ('mana value 4, 5, or 6' = 4..6), the subject's own other stat ('power equal to its toughness', `vs`), and a rhs the text does not fix ('mana value X or less', 'less than the result', 'lesser power') as `variable`, where the matcher abstains exactly as the dropped words did."
     },
     "other,stats": {
-      "distinct": 6,
+      "distinct": 4,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. other: 'other than this X' and 'other' after a count; stats: stat comparisons parseSubject does not read: a bare value ('mana value 1'), a run ('mana value 4, 5, or 6' = 4..6), the subject's own other stat ('power equal to its toughness', `vs`), and a rhs the text does not fix ('mana value X or less', 'less than the result', 'lesser power') as `variable`, where the matcher abstains exactly as the dropped words did."
@@ -291,7 +291,7 @@
       "why": "Every member read. fromZone: the origin: 'from the top five cards of your library', 'from any graveyard', 'from its owner's graveyard', 'from all hands'; stats: stat comparisons parseSubject does not read: a bare value ('mana value 1'), a run ('mana value 4, 5, or 6' = 4..6), the subject's own other stat ('power equal to its toughness', `vs`), and a rhs the text does not fix ('mana value X or less', 'less than the result', 'lesser power') as `variable`, where the matcher abstains exactly as the dropped words did."
     },
     "scope,stats": {
-      "distinct": 13,
+      "distinct": 12,
       "label": "grammar right",
       "rule": "CR 115.1, printed text",
       "why": "Every member read. scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; 'each of up to three targets' is targeted; a quantifier inside a token's quoted ability is not the token's; stats: stat comparisons parseSubject does not read: a bare value ('mana value 1'), a run ('mana value 4, 5, or 6' = 4..6), the subject's own other stat ('power equal to its toughness', `vs`), and a rhs the text does not fix ('mana value X or less', 'less than the result', 'lesser power') as `variable`, where the matcher abstains exactly as the dropped words did."
@@ -393,7 +393,7 @@
       "why": "Every member read. anyOf: whole noun phrases joined by and/or ('target creature you control and target creature you don't control', 'another creature you control or a land you control'): their union, shared fields outside and the differing ones per branch; or 'power or toughness N or less' as one branch per stat; other: 'other than this X' and 'other' after a count; type: the type is the head noun's: not a word from a targets-only clause or a token's quoted ability."
     },
     "anyOf,scope,type": {
-      "distinct": 6,
+      "distinct": 5,
       "label": "grammar right",
       "rule": "CR 115.1, printed text",
       "why": "Every member read. anyOf: whole noun phrases joined by and/or ('target creature you control and target creature you don't control', 'another creature you control or a land you control'): their union, shared fields outside and the differing ones per branch; or 'power or toughness N or less' as one branch per stat; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; 'each of up to three targets' is targeted; a quantifier inside a token's quoted ability is not the token's; type: the type is the head noun's: not a word from a targets-only clause or a token's quoted ability."
@@ -453,13 +453,13 @@
       "why": "Every member read. notType: the negation is the head noun's; stats: stat comparisons parseSubject does not read: a bare value ('mana value 1'), a run ('mana value 4, 5, or 6' = 4..6), the subject's own other stat ('power equal to its toughness', `vs`), and a rhs the text does not fix ('mana value X or less', 'less than the result', 'lesser power') as `variable`, where the matcher abstains exactly as the dropped words did; type: the type is the head noun's: not a word from a targets-only clause or a token's quoted ability."
     },
     "history": {
-      "distinct": 73,
+      "distinct": 70,
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. history: what happened to it this turn: dealt damage (by whom), attacked, blocked, entered, died, put into a graveyard (from where), milled, crewed/saddled it."
     },
     "status": {
-      "distinct": 54,
+      "distinct": 50,
       "label": "grammar right",
       "rule": "CR 110.5, CR 701.15, CR 701.60, CR 702.33",
       "why": "Every member read. status: a status or designation: face-down/up, enchanted/equipped after a determiner, blocked/unblocked, goaded, suspected, kicked, renowned, double-faced, modal, suspended, fortified, Adventure, no abilities."
@@ -513,7 +513,7 @@
       "why": "Every member read. abilityOf: whose ability: 'a loyalty ability of a Chandra planeswalker', 'from an artifact source'; control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
     },
     "notStatus": {
-      "distinct": 7,
+      "distinct": 6,
       "label": "grammar right",
       "rule": "CR 110.5",
       "why": "Every member read. notStatus: 'nonattacking', 'that isn't enchanted', 'that aren't blocked'."
@@ -758,12 +758,6 @@
       "rule": "CR 111.4, CR 115.1, printed text",
       "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; named: a token's own name is not a card to look for; a card name runs past its comma and stops at ';'; 'named ~' is one token; notType: the negation is the head noun's; other: 'other than this X' and 'other' after a count; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
     },
-    "anyOf,scope,stats": {
-      "distinct": 1,
-      "label": "grammar right",
-      "rule": "CR 115.1, printed text",
-      "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; stats: stat comparisons parseSubject does not read (a bare value, a run, `vs`, a superlative 'the greatest power among ...', base power and toughness, and a `variable` rhs: X, a count, a named object's stat)."
-    },
     "anyOf,stats,subtype,type": {
       "distinct": 1,
       "label": "grammar right",
@@ -807,7 +801,7 @@
       "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; zone: where the subject lives ('in your graveyard', 'an exiled card')."
     },
     "control,status,subtype": {
-      "distinct": 2,
+      "distinct": 1,
       "label": "grammar right",
       "rule": "CR 108.3, CR 110.5, CR 111.4, CR 112.2, CR 115.1, CR 701.15, CR 701.60, CR 702.33, CR 715",
       "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; status: a status or designation: face-down/up, enchanted/equipped after a determiner, blocked/unblocked, goaded, suspected, kicked, renowned, double-faced, modal, suspended, fortified, Adventure, no abilities; subtype: a word inside a name, a counter kind, a Role's name or a token's quoted ability is not a subtype; Adventure is a card's layout (`status`), not its subtype; a planeswalker subtype counts before 'planeswalker'."
@@ -897,7 +891,7 @@
       "why": "Every member read. abilityKind: the kinds of ability named; anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
     },
     "anyOf,fromZone": {
-      "distinct": 9,
+      "distinct": 8,
       "label": "grammar right",
       "rule": "CR 400.1, printed text",
       "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; fromZone: the origin ('from the top five cards of your library', 'from outside the game')."
@@ -927,7 +921,7 @@
       "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; keyword: keyword lists with commas and 'protection from X', 'that has convoke', 'with a cycling ability'."
     },
     "anyOf,scope": {
-      "distinct": 4,
+      "distinct": 3,
       "label": "grammar right",
       "rule": "CR 115.1, printed text",
       "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject."
@@ -1130,12 +1124,6 @@
       "rule": "CR 400.1, printed text",
       "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; colors: a colour inside 'protection from white' is the keyword's; fromZone: the origin ('from the top five cards of your library', 'from outside the game'); type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
     },
-    "control,owner,scope": {
-      "distinct": 3,
-      "label": "grammar right",
-      "rule": "CR 108.3, CR 112.2, CR 115.1",
-      "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; owner: 'you own', 'an opponent owns', 'you control but don't own'; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject."
-    },
     "restricted": {
       "distinct": 3,
       "label": "grammar right",
@@ -1159,12 +1147,6 @@
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. counter: a counter named in the phrase, including kinds outside the dictionary ('an impostor counter'); none from a stat's rhs; except: 'except for Merfolk, Krakens ...', 'except for tokens you control'."
-    },
-    "nameRelation,scope,stats": {
-      "distinct": 2,
-      "label": "grammar right",
-      "rule": "CR 115.1, printed text",
-      "why": "Every member read. nameRelation: 'with the chosen name', 'with that name', 'with the same name as ...', 'with different names'; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; stats: stat comparisons parseSubject does not read (a bare value, a run, `vs`, a superlative 'the greatest power among ...', base power and toughness, and a `variable` rhs: X, a count, a named object's stat)."
     },
     "anyOf,control,scope,subtype,type": {
       "distinct": 1,
@@ -1815,13 +1797,13 @@
       "why": "Every member read (1: 'a permanent other than a basic land'). The grammar reads a permanent that is not a basic land (`except`); parseSubject read the exclusion as the class (type land, basic). 'other than <X>' names what is spared, never the class."
     },
     "selection": {
-      "distinct": 29,
+      "distinct": 249,
       "label": "grammar wrong",
       "rule": "printed text",
-      "why": "Every member read (29). `selection` is derive's marker (#1557) for a set a rule narrows that no other field carries: 'two creatures of their choice' / 'five lands of their choice' / 'creatures you control equal to the number of lands controlled by the player who controls the fewest' (chosen), 'all Auras attached to it' / 'all permanents attached to creatures' (attached-to). parseSubject is right and the grammar has no such field; to be ported if derive ever switches to the grammar."
+      "why": "Every member read (249). `selection` is derive's marker (#1557) for a set a rule narrows that no other field carries: 'two creatures of their choice' / 'five lands of their choice' (chosen), 'all Auras attached to it' (attached-to), and, since #1579 part 3, a number picked from a class: 'one or more creatures you control', 'any number of untapped creatures you control', 'two artifacts', 'up to three Zombies' (counted; a created token set such as 'two Treasure tokens' is not marked). parseSubject is right and the grammar has no such field; to be ported if derive ever switches to the grammar."
     },
     "except,selection": {
-      "distinct": 10,
+      "distinct": 8,
       "label": "grammar wrong",
       "rule": "printed text",
       "why": "Every member read (10). 'all permanents except for artifacts and lands', 'all creatures except for Mageta': the grammar reads the `except` list; parseSubject drops the tail (#1549 CEILING) and marks the set `selection: all-but` (#1557) so it is not 'every <class>'. Marker only."
@@ -1833,7 +1815,7 @@
       "why": "Both members read (2: Auras attached to permanents, joined by commas): a branch of the list is `attached-to`, which the grammar has no field for."
     },
     "scope,selection": {
-      "distinct": 2,
+      "distinct": 3,
       "label": "grammar wrong",
       "rule": "printed text",
       "why": "Both members read. 'a permanent of each permanent type each opponent controls, and the rest' (Liliana, Dreadhorde General: all-but) and 'lands each player controls equal to the number of lands controlled by the player who controls the fewest, the rest' (Balancing Act: chosen). The scope difference is the one already triaged under `scope`; `selection` is derive's marker (#1557)."
@@ -1873,6 +1855,120 @@
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read (2: 'all permanents with that name', Moratorium Stone; 'all other permanents with that name', Eye of Singularity). nameRelation: the grammar carries the name relation as a field, as in the `nameRelation` group; parseSubject has none and marks the subject `selection: named-set` (#1557) so a rule cannot read it as every permanent."
+    },
+    "anyOf,fromZone,selection": {
+      "distinct": 1,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+    },
+    "anyOf,scope,selection": {
+      "distinct": 1,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+    },
+    "anyOf,scope,selection,stats": {
+      "distinct": 1,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+    },
+    "anyOf,scope,selection,type": {
+      "distinct": 1,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+    },
+    "control,owner,scope,selection": {
+      "distinct": 3,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+    },
+    "control,selection,status,subtype": {
+      "distinct": 1,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+    },
+    "except,selection,token": {
+      "distinct": 2,
+      "label": "grammar wrong",
+      "rule": "printed text",
+      "why": "Both members read: 'all other permanents except for lands and tokens' (Elspeth Tirel), 'each creature except for tokens you control'. parseSubject drops the except list (#1549 CEILING), marks the set all-but and, since #1579 part 3, reads the spared tokens as nontoken (`token: false`); the grammar reads the list as `except` and keeps token unset. parseSubject is right for the token word; the spared types stay dropped."
+    },
+    "fromZone,scope,selection": {
+      "distinct": 1,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+    },
+    "hasCounter,selection": {
+      "distinct": 2,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+    },
+    "history,selection": {
+      "distinct": 3,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+    },
+    "nameRelation,scope,selection,stats": {
+      "distinct": 2,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+    },
+    "notStatus,selection": {
+      "distinct": 1,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+    },
+    "other,selection": {
+      "distinct": 17,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+    },
+    "other,selection,stats": {
+      "distinct": 2,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+    },
+    "other,selection,subtype": {
+      "distinct": 1,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+    },
+    "scope,selection,stats": {
+      "distinct": 1,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+    },
+    "scope,selection,zone": {
+      "distinct": 1,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+    },
+    "selection,stats": {
+      "distinct": 2,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+    },
+    "selection,status": {
+      "distinct": 4,
+      "label": "both wrong",
+      "rule": "printed text",
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     }
   }
 }
