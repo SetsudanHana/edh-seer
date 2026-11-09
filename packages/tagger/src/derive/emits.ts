@@ -523,7 +523,27 @@ function counteredCardTypes(text: string): SubjectFilter["type"] | undefined {
  *  Taken only when every alternative states nothing but a class (type, subtype, keyword, colour, basic, legendary, tapped, combat, status): an alternative that names a player, an ability, a zone, a name or its own control keeps the merged reading.
  *  CEILING: `parseSubject`'s fields outside that class list (a stat, a counter) are kept beside the grammar's anyOf as read; a disjunction of colours alone keeps the merged colours list (a multicolored demand reads it). */
 const ALTERNATIVE_FIELDS = ["type", "subtype", "keyword", "colors", "basic", "allTypes", "umbrella", "legendary", "notType", "notSubtype", "notColors", "tapped", "combat", "status", "snow", "token"] as const;
+/** A KEYWORD TAIL BELONGS TO THE LAST NOUN OF A LIST (#1577). "Destroy target artifact, enchantment, or creature with flying" (Mutant Chain Reaction, Shower of Arrows, Vivien Reid, Atraxa's Fall ... 13 cards) merged to one filter, `type: [creature, artifact,
+ *  enchantment]` with `keyword: flying`, so the enchantment had to fly and a Rancor or Parallax Dementia was refused. The filter grammar merges it too (no `anyOf`), so the alternatives are cut from the text: the nouns of an Oxford-comma list of three or more, the keyword
+ *  on the one it follows. Taken only when every listed noun is a card type `parseSubject` read, the tail is " with <the keywords it read>" at the end, and nothing else (a subtype, a colour, a stat) narrows the list.
+ *  CEILING: a two-noun list ("artifact or creature with flying", "instant or sorcery card with a cycling ability") stays merged, because "with" can reach both there. */
+function keywordOnLastNoun(text: string, plain: SubjectFilter): SubjectFilter | undefined {
+  const types = Array.isArray(plain.type) ? plain.type : [];
+  const keywords = plain.keyword ?? [];
+  if (types.length < 3 || keywords.length === 0 || plain.subtype !== undefined || plain.colors !== undefined || plain.stats !== undefined) return undefined;
+  const lower = text.toLowerCase();
+  const at = lower.lastIndexOf(" with ");
+  if (at < 0) return undefined;
+  const tail = lower.slice(at + 6).trim().split(",").flatMap((p) => p.split(" and ")).map((p) => p.trim()).filter((p) => p !== "");
+  if (tail.length !== keywords.length || !tail.every((k) => keywords.includes(k))) return undefined;
+  const nouns = lower.slice(0, at).split(",").flatMap((p) => p.split(" or ")).map((p) => p.trim().split(" ").pop() ?? "").filter((w) => w !== "");
+  if (nouns.length !== types.length || !nouns.every((n) => types.includes(n))) return undefined;
+  const { type: _t, keyword: _k, ...rest } = plain;
+  return { ...rest, anyOf: nouns.map((n, i) => (i === nouns.length - 1 ? { type: n, keyword: keywords } : { type: n })) } as SubjectFilter;
+}
+
 function withAlternatives(text: string, plain: SubjectFilter): SubjectFilter {
+  if (plain.anyOf === undefined) { const cut = keywordOnLastNoun(text, plain); if (cut !== undefined) return cut; }
   if (plain.anyOf !== undefined || (plain.subtype === undefined && plain.keyword === undefined && plain.colors === undefined)) return plain;
   const g = parseFilter(text);
   if (g === null || g.anyOf === undefined || g.anyOf.length < 2) return plain;

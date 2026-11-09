@@ -53,7 +53,7 @@ import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
 import { isSelfSubject, SELF_REFERENCE, selfAndTail, withoutArticle } from "./self-reference.js";
 import { neverEntersUncast, stampActsOnHost, stampCastOnly } from "./cast-only.js";
-import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, boundedByEnchantLine, exiledAcrossClauses, permanentAnaphorsResolved, PLURAL_BACKREF, pluralAntecedent, pluralIsDelayed, PRONOUN_OBJECT, selfAntecedentText, withoutCombatRole, zoneAfterEvent } from "./references.js";
+import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, boundedByEnchantLine, exiledAcrossClauses, forEachClass, permanentAnaphorsResolved, PLURAL_BACKREF, pluralAntecedent, pluralIsDelayed, PRONOUN_OBJECT, selfAntecedentText, withoutCombatRole, zoneAfterEvent } from "./references.js";
 import { triggerHasCue } from "../clause-store.js";
 import { emblemRecipient } from "../emblem.js";
 import { chosenColorOf } from "./chosen-color.js";
@@ -3111,7 +3111,7 @@ export function deriveAbilities(
     const sourceOf = (idx: number) => antecedentSource(clause.actions ?? [], idx, clause.trigger?.subject, cardName, text);
     const antecedentFor = (idx: number): string | undefined =>
       antecedentText(clause.actions ?? [], sourceOf(idx), clause.trigger?.subject, enchantText);
-    const antecedentIsSelf = (idx: number): boolean => selfAntecedent(clause.actions ?? [], idx, cardName);
+    const antecedentIsSelf = (idx: number): boolean => selfAntecedent(clause.actions ?? [], idx, cardName, cost);
     /** CR 614 multiplier, read off the clause text — the "would ... instead" frame the clause layer
      *  does not record. Bound per CLAUSE because that is where the sentence sits: verified against
      *  all 16 corpus cards carrying one of the templates, and in every case `segment()` gives the
@@ -3477,7 +3477,7 @@ export function deriveAbilities(
       const afterTransform = selfItAt !== undefined && (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).some((x) => x.verb === "transform");
       const selfIt = afterTransform ? undefined : selfItAt;
       const antecedent = actorPronoun ? "a player" : selfByIf ? undefined : afterTransform ? "this permanent" : selfIt !== undefined ? selfIt : PRONOUN_OBJECT.test((action.object ?? "").trim())
-        ? antecedentFor((clause.actions ?? []).indexOf(action))
+        ? antecedentFor((clause.actions ?? []).indexOf(action)) ?? (/^(?:it|them)$/i.test((action.object ?? "").trim()) && !antecedentIsSelf((clause.actions ?? []).indexOf(action)) ? forEachClass(text) : undefined)
         : undefined;
       // "Return THIS card to the battlefield" (Reassembling Skeleton, Drownyard Temple) emits an
       // entry of the card ITSELF. The emit is kept -- a Skeleton returning is a real creature
