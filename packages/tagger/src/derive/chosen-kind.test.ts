@@ -70,3 +70,15 @@ test("a nested chosenType (an exception: 'creatures that aren't of the chosen ty
   expect((x!.effect.subject!.except as SubjectFilter[])[0]).toMatchObject({ chosenType: true, chosenKind: "creature-type" });
   expect(p).toBe(plain);
 });
+
+test("an opponent's choice is stamped chosenBy; the controller's and 'each player' are not (#1570)", () => {
+  const opp = "As this creature enters, an opponent chooses a creature type.\n{T}: Gain control of target creature that isn't of the chosen type.";
+  const [o] = chosenKindOf([ability(2, subject({ type: "creature", chosenType: true }))], { 2: "{T}: Gain control of target creature that isn't of the chosen type." }, opp);
+  expect(o!.effect.subject).toMatchObject({ chosenKind: "creature-type", chosenBy: "opponent" });
+  const mine = "As this enters, choose a creature type.\nCreatures of the chosen type get +1/+1.";
+  const [m] = chosenKindOf([ability(2, subject({ type: "creature", chosenType: true }))], { 2: "Creatures of the chosen type get +1/+1." }, mine);
+  expect(m!.effect.subject!.chosenBy).toBeUndefined();
+  const each = "When this enters, each player chooses a creature type.\nCreatures of the chosen type get +1/+1.";
+  const [e] = chosenKindOf([ability(2, subject({ type: "creature", chosenType: true }))], { 2: "Creatures of the chosen type get +1/+1." }, each);
+  expect(e!.effect.subject!.chosenBy).toBeUndefined();
+});

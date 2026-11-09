@@ -188,6 +188,12 @@ export interface SubjectFilter {
    *  "odd or even" (Extinction Event), a land type (Shimmer) or a planeswalker type (Leori), and the matcher resolves it to the deck's top creature subtype whatever it was. Only `creature-type` is resolved that way and refused without a deck. Absent = unknown (the
    *  text names no choice, or two kinds): the matcher falls back to the old text cue. Never set by the LLM. */
   chosenKind?: ChosenKind;
+  /** THE CHOICE IS NEGATED (#1570): "creatures that aren't of the chosen type" (Kindred Dominance, Crippling Fear, Raise the Palisade, Kindred Judgment, Callous Oppressor's target). The subject is everything BUT the chosen type. A sibling of `chosenKind`, not a
+   *  member of it: WHAT was chosen and whether the subject is the choice or its complement are two facts, and a `creature-type` choice is negated or not independently. Set by `parseSubject`, beside `chosenType`; never by the LLM. */
+  chosenNegated?: true;
+  /** WHO MADE THE CHOICE, when it is not the card's controller (#1570): "an opponent chooses a creature type" (Callous Oppressor). The choice is then no fact of the controller's deck, so the matcher leaves it unresolved. Absent = the controller chose. Stamped
+   *  beside `chosenKind` by derive (`chosen-kind.ts`); never by the LLM. */
+  chosenBy?: "opponent";
   /** Marks "of the chosen color" / "of that color" / "of a color of your choice" (Heraldic Banner, Prism Ring, Crossroads Village): the subject is narrowed by a colour the player chose, which is a fact of the game and not of the deck (#1360). It is NOT `chosenType`: the matcher resolves `chosenType` to a deck SUBTYPE, and a colour is not one. Counted as a narrowing wherever `chosenType` is, resolved by nothing: the unresolved subject claims no more than its class. "of the chosen color and type" (a token) is `chosenType`. */
   chosenColor?: boolean;
   /** THE SET IS NARROWED BY A RULE DERIVE DOES NOT MODEL (#1557). "All permanents" read off "all permanents of the color of your choice" (`chosenColor`, `colorCount`) says what it is; these four have
@@ -1510,6 +1516,10 @@ export interface Ability {
   /** The type a `type-grant` hands out, lowercased and singular: "food" (Gourmand's Talent, Ragost), "clue" (Senator Peacock), "equipment" (Dan Lewis) (#1568, owner ruling 2026-11-08). Present only on a type-grant whose
    *  printed text names it ("are Foods in addition to their other types"). `effect.subject` says who gets it; for a whole non-creature class the matcher pairs the GRANTED type with the cards that use it. */
   grantsType?: string;
+  /** WHAT KIND OF CHOICE A `type-grant` HANDS OUT, when the type it gives is the one chosen as the permanent entered (#1570): "creatures you control are the chosen type in addition to their other types" (Leyline of Transformation, Conspiracy, Arcane Adaptation) is `creature-type`; "lands you control
+   *  are the chosen type" (Realmwright, Thran Portal, Multiversal Passage) is `land-type`. The two are not the same grant: a chosen creature type is used by a lord or a kindred payoff, a chosen basic land type by a card that counts or checks that land. Present with no `grantsType` (a chosen type
+   *  has no name until the game). Absent on a grant of a named or every type. Stamped by derive from the card's printed choice (`chosenKindOfText`); never by the LLM. */
+  grantsChosen?: ChosenKind;
   /** WHAT CREATED THIS DELAYED TRIGGER ("when you next cast ... this turn", CR 603.7):
    *  "chapter" (Summon: Fenrir's II), "spell" (Doublecast), or the activation cost that makes it --
    *  Yuna, Grand Summoner's "{T}". Present only on such a trigger (`delayedTriggerRepeats`). It

@@ -185,3 +185,161 @@ test("with no deck, Banner of Kinship and Kindred Charge do not pair `scales` wi
   expect(pairOf("Banner of Kinship", "Grizzly Bears", /^scales/)).toEqual([]);
   expect(pairOf("Banner of Kinship", "Elvish Archdruid", /^scales/)).not.toEqual([]);
 });
+
+// #1570 PART 1: A NEGATED OR OPPONENT-CHOSEN CREATURE TYPE. "Creatures that aren't of the chosen type" (Kindred Dominance, Crippling Fear, Raise the Palisade, Kindred Judgment) is the creatures that are NOT the deck's type;
+// the deck resolution used to rewrite it to the deck's own type, which pointed the sweep at the deck's own creatures. An opponent's choice (Callous Oppressor) is not the deck's type at all.
+const negatedOrOpp = (t: CardTags) => subjectsOfTags(t);
+
+test("derive carries the negation and the chooser on the chosen subject", () => {
+  for (const n of ["Kindred Dominance", "Raise the Palisade", "Kindred Judgment"]) {
+    const s = negatedOrOpp(tagsOf(n));
+    expect(s.length, n).toBeGreaterThan(0);
+    expect(s.every((x) => x!.chosenNegated === true && x!.chosenBy === undefined), n).toBe(true);
+  }
+  expect(negatedOrOpp(tagsOf("Crippling Fear")).every((x) => x!.chosenNegated === true), "Crippling Fear").toBe(true);
+  const co = negatedOrOpp(tagsOf("Callous Oppressor"));
+  expect(co.length).toBeGreaterThan(0);
+  expect(co.every((x) => x!.chosenBy === "opponent" && x!.chosenNegated === true)).toBe(true);
+  // a plain choice carries neither
+  for (const x of negatedOrOpp(tagsOf("Kindred Discovery"))) expect(x!.chosenNegated).toBeUndefined();
+});
+
+test("in a deck of Elves a negated chosen type is 'not the main type': the subject excludes Elf and names no subtype", () => {
+  const counts = new Map([["elf", 9], ["goblin", 1]]);
+  const kd = resolveChosenTypes(tagsOf("Kindred Dominance"), counts, loadHierarchy());
+  const subs = kd.abilities.flatMap((a) => (a.emits ?? []).map((e) => e.subject));
+  expect(subs.length).toBeGreaterThan(0);
+  for (const s of subs) { expect(s.subtype).toBeUndefined(); expect(s.notSubtype).toEqual(["elf"]); expect(s.chosenType).toBeUndefined(); }
+});
+
+test("an opponent-chosen type is not the deck's: Callous Oppressor stays unresolved in a deck of Elves", () => {
+  const counts = new Map([["elf", 9], ["goblin", 1]]);
+  const co = resolveChosenTypes(tagsOf("Callous Oppressor"), counts, loadHierarchy());
+  expect(JSON.stringify(co.abilities)).not.toContain('"elf"');
+  expect(subjectsOfTags(co).length).toBeGreaterThan(0);
+});
+
+const deathEdges = async (decklist: string): Promise<string[]> => {
+  const byName = new Map(Object.entries(F).map(([n, f]) => [normalizeName(n), { ...f.source, searchNames: [normalizeName(n)], tags: { produces: [], cares: [] } }]));
+  const tagsById = new Map(Object.entries(F).map(([n, f]) => [f.source._id, tagsOf(n)]));
+  const lookup: CardLookup = { async findByName(n: string) { return (byName.get(n) ?? null) as never; }, async allCombos() { return []; } };
+  const sources = { lookup, tagsLookup: { findOne: async (id: string) => tagsById.get(id) ?? null }, tokenTags: () => null, tokenArt: async () => new Map<string, string>() } as never;
+  const { report } = await analyzeDecklist(decklist, undefined, async () => sources);
+  return report.edges.flatMap((e) => e.reasons).filter((r) => r.producer === "Kindred Dominance" && r.consumer === "Skemfar Avenger").map((r) => r.tag).sort();
+};
+const ELF_DEATH_DECK = ["Kindred Dominance", "Skemfar Avenger", "Llanowar Elves", "Elvish Mystic", "Elvish Archdruid", "Generous Patron", "Miara, Thorn of the Glade"].map((n) => `1 ${n}`).join("\n");
+
+test("in an Elf deck Kindred Dominance does not count as killing your Elves: no death edge to an 'Elf you control dies' payoff", async () => {
+  expect(await deathEdges(ELF_DEATH_DECK)).toEqual([]);
+});
+
+// #1570 PART 2: "IS / ARE THE CHOSEN TYPE" IS A TYPE-GRANT. Thirteen cards print it and twelve derived no type-grant (Thran Portal's had no kind of choice): a self grant (Metallic Mimic, Roaming Throne, Adaptive Automaton, Titan of Littjara, Multiversal
+// Passage, Thran Portal), a class grant (Conspiracy, Rukarumel, Lifecraft Engine's Vehicles, Ashes of the Fallen's graveyard, Realmwright's lands) and a host's (Convincing Mirage, Phantasmal Terrain).
+const grantsOf = (n: string) => tagsOf(n).abilities.filter((a) => a.effect.kind === "type-grant");
+
+test("a SELF grant of the chosen type is a type-grant that names no class (Metallic Mimic, Roaming Throne, Adaptive Automaton, Titan of Littjara)", () => {
+  for (const n of ["Metallic Mimic", "Roaming Throne", "Adaptive Automaton", "Titan of Littjara"]) {
+    const g = grantsOf(n);
+    expect(g.length, n).toBe(1);
+    expect(g[0]!.grantsChosen, n).toBe("creature-type");
+    expect(g[0]!.effect.subject === undefined || g[0]!.effect.subject.self === true, n).toBe(true);
+  }
+  // the card's other abilities are untouched
+  expect(tagsOf("Metallic Mimic").abilities.map((a) => a.effect.kind)).toContain("enters-with-counters");
+  expect(tagsOf("Roaming Throne").abilities.map((a) => a.effect.kind)).toContain("trigger-doubling");
+});
+
+test("a land's grant of the chosen BASIC LAND type is a land-type grant (Multiversal Passage, Thran Portal)", () => {
+  for (const n of ["Multiversal Passage", "Thran Portal"]) {
+    const g = grantsOf(n);
+    expect(g.length, n).toBe(1);
+    expect(g[0]!.grantsChosen, n).toBe("land-type");
+    expect(g[0]!.effect.subject === undefined || g[0]!.effect.subject.self === true, n).toBe(true);
+  }
+});
+
+test("a CLASS grant of the chosen type names its class: Conspiracy's creatures, Realmwright's lands", () => {
+  const c = grantsOf("Conspiracy");
+  expect(c.length).toBe(1);
+  expect(c[0]!.grantsChosen).toBe("creature-type");
+  expect(c[0]!.effect.subject).toMatchObject({ type: "creature", control: "you" });
+  const r = grantsOf("Realmwright");
+  expect(r.length).toBe(1);
+  expect(r[0]!.grantsChosen).toBe("land-type");
+  expect(r[0]!.effect.subject).toMatchObject({ type: "land", control: "you" });
+  expect(tagsOf("Conspiracy").abilities.map((a) => a.effect.kind)).not.toContain("keyword-grant");
+});
+
+test("Lifecraft Engine, Rukarumel and Ashes of the Fallen grant the chosen creature type to a class; an Aura's host is no class (Convincing Mirage, Phantasmal Terrain)", () => {
+  for (const n of ["Lifecraft Engine", "Rukarumel, Biologist", "Ashes of the Fallen"]) {
+    const g = grantsOf(n);
+    expect(g.length, n).toBeGreaterThan(0);
+    expect(g.every((x) => x.grantsChosen === "creature-type"), n).toBe(true);
+  }
+  for (const n of ["Convincing Mirage", "Phantasmal Terrain"]) {
+    const g = grantsOf(n);
+    expect(g.length, n).toBe(1);
+    expect(g[0]!.grantsChosen, n).toBe("land-type");
+    expect(g[0]!.effect.subject, n).toBeUndefined();
+  }
+});
+
+const grantPairs = (a: string, b: string) => pairReasons(dc(a), dc(b), loadHierarchy()).filter((r) => r.producer === a && r.tag === "static:type-grant");
+
+test("a class grant pairs with the cards that USE the granted kind of type, and a self grant with none (#1568 class-grant rule)", () => {
+  // creature type: Conspiracy gives every creature of yours a type; a lord of a type uses it, a plain creature and a rock do not
+  expect(grantPairs("Conspiracy", "Elvish Archdruid")).not.toEqual([]);
+  for (const plain of ["Grizzly Bears", "Serra Angel", "Sol Ring"]) expect(grantPairs("Conspiracy", plain), plain).toEqual([]);
+  // land type: Realmwright gives every land of yours a basic land type; a card that counts Swamps uses it, a Forest and a creature type lord do not
+  expect(grantPairs("Realmwright", "Cabal Coffers")).not.toEqual([]);
+  for (const plain of ["Forest", "Elvish Archdruid", "Sol Ring"]) expect(grantPairs("Realmwright", plain), plain).toEqual([]);
+  // a SELF grant claims no class
+  for (const self of ["Metallic Mimic", "Roaming Throne", "Titan of Littjara", "Thran Portal", "Multiversal Passage"]) expect(grantPairs(self, "Elvish Archdruid"), self).toEqual([]);
+});
+
+test("a chosen type handed to a BOUNDED class claims no pair (Lifecraft Engine's Vehicles, Rukarumel's Slivers and nontoken creatures)", () => {
+  for (const n of ["Lifecraft Engine", "Rukarumel, Biologist"]) for (const c of ["Elvish Archdruid", "Grizzly Bears", "Sol Ring", "Conspiracy"]) expect(grantPairs(n, c), `${n} x ${c}`).toEqual([]);
+});
+
+test("an opponent-chosen type is no type the card uses or cares about: Callous Oppressor is paired by neither a creature-type grant nor a chosen-type lord with no deck; Kindred Dominance is (#1570)", () => {
+  expect(grantPairs("Conspiracy", "Callous Oppressor")).toEqual([]);
+  expect(grantPairs("Conspiracy", "Kindred Dominance")).not.toEqual([]);
+  expect(caresAboutCreatureType(tagsOf("Callous Oppressor"), F["Callous Oppressor"]!.source as never)).toBe(false);
+  expect(caresAboutCreatureType(tagsOf("Kindred Dominance"), F["Kindred Dominance"]!.source as never)).toBe(true);
+  expect(mimicStatic("Callous Oppressor")).toEqual([]);
+});
+
+// #1570 FIX ROUND: AN ANAPHORIC "THAT PERMANENT" / "A PERMANENT DEALT DAMAGE BY ~" IS THE EARLIER TARGET. Torch the Tower targets "a creature or planeswalker" and then exiles "a permanent dealt damage by Torch the Tower": the exile read as any permanent and paired with
+// sorceries, artifacts and enchantments (37 of 176 pairs once the name-derived 'tower' subtype stopped hiding it).
+const torchPairs = (c: string) => pairReasons(dc("Torch the Tower"), dc(c), loadHierarchy()).filter((r) => r.producer === "Torch the Tower" && /^(?:exiled|leaves|exile-processing)/.test(r.tag));
+
+test("Torch the Tower's exile is of a creature or planeswalker: it pairs with a creature's exile trigger and with no enchantment or artifact", () => {
+  expect(torchPairs("God-Eternal Bontu")).not.toEqual([]);
+  for (const n of ["Baffling End", "Urza's Sylex", "Detention Sphere"]) expect(torchPairs(n), n).toEqual([]);
+  const subjects = tagsOf("Torch the Tower").abilities.flatMap((a) => [a.effect.subject, ...(a.emits ?? []).map((e) => e.subject)]).filter((s) => s !== undefined);
+  expect(subjects.some((s) => s!.type === "permanent")).toBe(false);
+});
+
+// #1570 REVIEW ROUND.
+// 1. "EXILED WITH THIS CARD" WHERE THE ONLY EXILE IS OF A CREATURE BLOCKING OR BLOCKED BY THE CARD: only an opponent's creature can block or be blocked by yours, so what it returns is never a deck-mate (Gisa's and The Darkness Crystal's shape).
+const entersOf = (p: string, c: string) => pairReasons(dc(p), dc(c), loadHierarchy()).filter((r) => r.producer === p && /^enters:/.test(r.tag));
+test("Sisters of Stone Death returns only creatures that blocked or were blocked by it, so it fires no deck-mate's enters trigger (Gisa unchanged, Wall of Nets alike)", () => {
+  for (const c of ["Mulldrifter", "Thragtusk"]) {
+    expect(entersOf("Sisters of Stone Death", c), c).toEqual([]);
+    expect(entersOf("Gisa, Glorious Resurrector", c), `Gisa ${c}`).toEqual([]);
+  }
+});
+
+// 2. Ashes of the Fallen's grant has a recipient: the creature cards in your graveyard.
+test("Ashes of the Fallen's type-grant is to the creature cards in your graveyard, not to itself", () => {
+  const g = grantsOf("Ashes of the Fallen");
+  expect(g.length).toBe(1);
+  expect(g[0]!.effect.subject).toMatchObject({ type: "creature", zone: "graveyard", control: "you" });
+  expect(g[0]!.effect.subject!.self).toBeUndefined();
+});
+
+// 3. Realmwright's land type is used on the battlefield: a card that discards an Island, reveals one from hand or searches for one is not a user.
+test("Realmwright pairs with a card that counts Islands on the battlefield and not with one that discards an Island", () => {
+  expect(grantPairs("Realmwright", "Cabal Coffers")).not.toEqual([]);
+  expect(grantPairs("Realmwright", "Mary Read and Anne Bonny")).toEqual([]);
+});

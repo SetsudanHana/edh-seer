@@ -2363,5 +2363,2335 @@
     ]
    }
   ]
+ },
+ "Kindred Dominance": {
+  "source": {
+   "name": "Kindred Dominance",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose a creature type. Destroy all creatures that aren't of the chosen type.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}{B}{B}",
+   "layout": "normal",
+   "_id": "ccaa44f2-96be-44e2-884f-c31baa3908d5"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures that aren't of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Crippling Fear": {
+  "source": {
+   "name": "Crippling Fear",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose a creature type. Creatures that aren't of the chosen type get -3/-3 until end of turn.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}{B}",
+   "layout": "normal",
+   "_id": "e7a7ba65-ad14-41d5-889b-9bbeae9ab3f7"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Creatures that aren't of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-3/-3",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Raise the Palisade": {
+  "source": {
+   "name": "Raise the Palisade",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose a creature type. Return all creatures that aren't of the chosen type to their owners' hands.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{U}",
+   "layout": "normal",
+   "_id": "f55a3781-fe33-4301-9bb5-6a54b9c13c4f"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all creatures that aren't of the chosen type",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Kindred Judgment": {
+  "source": {
+   "name": "Kindred Judgment",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose a creature type. Destroy all creatures that aren't of the chosen type.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}{W}{W}",
+   "layout": "normal",
+   "_id": "b5dce42a-a769-4d7d-b29e-8722f79d4092"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures that aren't of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Callous Oppressor": {
+  "source": {
+   "name": "Callous Oppressor",
+   "typeLine": "Creature — Octopus",
+   "oracleText": "You may choose not to untap this creature during your untap step.\nAs this creature enters, an opponent chooses a creature type.\n{T}: Gain control of target creature that isn't of the chosen type for as long as this creature remains tapped.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "1",
+   "toughness": "2",
+   "manaCost": "{1}{U}{U}",
+   "layout": "normal",
+   "_id": "de14f6a9-1c62-42e9-b174-3e8b1080e0dc"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "untap",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "an opponent chooses a creature type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "gain-control",
+      "object": "target creature that isn't of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Skemfar Avenger": {
+  "source": {
+   "name": "Skemfar Avenger",
+   "typeLine": "Creature — Elf Berserker",
+   "oracleText": "Whenever another nontoken Elf or Berserker you control dies, you draw a card and you lose 1 life.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "3",
+   "toughness": "1",
+   "manaCost": "{1}{B}",
+   "layout": "normal",
+   "_id": "47c67df1-52f5-459f-b83e-6b971be9b294"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "another nontoken Elf or Berserker you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Miara, Thorn of the Glade": {
+  "source": {
+   "name": "Miara, Thorn of the Glade",
+   "typeLine": "Legendary Creature — Elf Scout",
+   "oracleText": "Whenever Miara or another Elf you control dies, you may pay {1} and 1 life. If you do, draw a card.\nPartner (You can have two commanders if both have partner.)",
+   "keywords": [
+    "Partner"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "1",
+   "toughness": "2",
+   "manaCost": "{1}{B}",
+   "layout": "normal",
+   "_id": "6895d7a2-264b-4731-9294-c02e1e220384"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "Miara or another Elf you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Partner",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Realmwright": {
+  "source": {
+   "name": "Realmwright",
+   "typeLine": "Creature — Vedalken Wizard",
+   "oracleText": "As this creature enters, choose a basic land type.\nLands you control are the chosen type in addition to their other types.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{U}",
+   "layout": "normal",
+   "_id": "bad869dd-e844-46ca-be53-73c4bc19d09c"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a basic land type as this creature enters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "lands you control are the chosen type in addition to their other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Conspiracy": {
+  "source": {
+   "name": "Conspiracy",
+   "typeLine": "Enchantment",
+   "oracleText": "As this enchantment enters, choose a creature type.\nCreatures you control are the chosen type. The same is true for creature spells you control and creature cards you own that aren't on the battlefield.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{B}{B}",
+   "layout": "normal",
+   "_id": "775d284d-0884-4ae3-a1b5-2b2a50a895b4"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this enchantment enters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "creatures you control have the chosen creature type; creature spells you control and creature cards you own that aren't on the battlefield have the chosen creature type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Roaming Throne": {
+  "source": {
+   "name": "Roaming Throne",
+   "typeLine": "Artifact Creature — Golem",
+   "oracleText": "Ward {2}\nAs this creature enters, choose a creature type.\nThis creature is the chosen type in addition to its other types.\nIf a triggered ability of another creature you control of the chosen type triggers, it triggers an additional time.",
+   "keywords": [
+    "Ward"
+   ],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{4}",
+   "layout": "normal",
+   "_id": "3640c29b-1534-4952-b297-619ade948431"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Ward {2}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this creature enters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "this creature is the chosen type in addition to its other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "trigger-again",
+      "object": "a triggered ability of another creature you control of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Lifecraft Engine": {
+  "source": {
+   "name": "Lifecraft Engine",
+   "typeLine": "Artifact — Vehicle",
+   "oracleText": "As this Vehicle enters, choose a creature type.\nVehicle creatures you control are the chosen creature type in addition to their other types.\nEach creature you control of the chosen type other than this Vehicle gets +1/+1.\nCrew 3",
+   "keywords": [
+    "Crew"
+   ],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{3}",
+   "layout": "normal",
+   "_id": "caa69b51-1efd-4d0e-803b-914a83ccb836"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "each creature you control of the chosen type other than this Vehicle",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Crew 3",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Thran Portal": {
+  "source": {
+   "name": "Thran Portal",
+   "typeLine": "Land — Gate",
+   "oracleText": "This land enters tapped unless you control two or fewer other lands.\nAs this land enters, choose a basic land type.\nThis land is the chosen type in addition to its other types.\nMana abilities of this land cost an additional 1 life to activate.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "",
+   "layout": "normal",
+   "_id": "926ce6a2-7bdd-4380-ac65-bc902ba0c284"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a basic land type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "this is the chosen type in addition to its other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "Mana abilities of this land cost an additional 1 life to activate",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Multiversal Passage": {
+  "source": {
+   "name": "Multiversal Passage",
+   "typeLine": "Land",
+   "oracleText": "As this land enters, choose a basic land type. Then you may pay 2 life. If you don't, it enters tapped.\nThis land is the chosen type.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "",
+   "layout": "normal",
+   "_id": "17770eeb-ecbf-4510-af2d-acececfbe146"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a basic land type as this land enters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "this land is the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Adaptive Automaton": {
+  "source": {
+   "name": "Adaptive Automaton",
+   "typeLine": "Artifact Creature — Construct",
+   "oracleText": "As this creature enters, choose a creature type.\nThis creature is the chosen type in addition to its other types.\nOther creatures you control of the chosen type get +1/+1.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{3}",
+   "layout": "normal",
+   "_id": "53c730c6-2f8c-4af8-b400-b9d573a71e60"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this creature enters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "animate",
+      "object": "this creature becomes the chosen type in addition to its other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "other creatures you control of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Titan of Littjara": {
+  "source": {
+   "name": "Titan of Littjara",
+   "typeLine": "Creature — Illusion",
+   "oracleText": "As this creature enters, choose a creature type.\nThis creature is the chosen type in addition to its other types.\nWhenever this creature enters or attacks, you may draw a card for each other creature you control that shares a creature type with it. If you do, discard a card.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "manaCost": "{4}{U}{U}",
+   "layout": "normal",
+   "_id": "f62250c6-0832-46c8-a800-806589504f5f"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this creature enters",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "this creature is the chosen type in addition to its other types",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card for each other creature you control that shares a creature type with it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card for each other creature you control that shares a creature type with it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Convincing Mirage": {
+  "source": {
+   "name": "Convincing Mirage",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant land\nAs this Aura enters, choose a basic land type.\nEnchanted land is the chosen type.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{U}",
+   "layout": "normal",
+   "_id": "685c4665-e04c-4012-aa5b-888a042c2a21"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant land",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   }
+  ]
+ },
+ "Phantasmal Terrain": {
+  "source": {
+   "name": "Phantasmal Terrain",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant land\nAs this Aura enters, choose a basic land type.\nEnchanted land is the chosen type.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{U}{U}",
+   "layout": "normal",
+   "_id": "7dcbce46-2973-4a9f-93df-95ac41ce668a"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant land",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a basic land type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "enchanted land is the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Rukarumel, Biologist": {
+  "source": {
+   "name": "Rukarumel, Biologist",
+   "typeLine": "Legendary Creature — Human Wizard",
+   "oracleText": "As Rukarumel enters, choose a creature type.\nSlivers you control and nontoken creatures you control are the chosen type in addition to their other creature types. The same is true for creature spells you control and creature cards you own that aren't on the battlefield.\n{3}, {T}: Create a 1/1 colorless Sliver creature token.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{W}{U}{B}{R}{G}",
+   "layout": "normal",
+   "_id": "84391c32-5bb7-4c36-be50-bbb5f8732156"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this enters",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "Slivers you control and nontoken creatures you control become the chosen type in addition to their other creature types; the same is true for creature spells you control and creature cards you own that aren't on the battlefield",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 colorless Sliver creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Ashes of the Fallen": {
+  "source": {
+   "name": "Ashes of the Fallen",
+   "typeLine": "Artifact",
+   "oracleText": "As this artifact enters, choose a creature type.\nEach creature card in your graveyard has the chosen creature type in addition to its other types.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 2,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}",
+   "layout": "normal",
+   "_id": "6437867b-a658-4a71-a8a5-0c5a782d1f84"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "each creature card in your graveyard has the chosen creature type in addition to its other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Xenograft": {
+  "source": {
+   "name": "Xenograft",
+   "typeLine": "Enchantment",
+   "oracleText": "As this enchantment enters, choose a creature type.\nEach creature you control is the chosen type in addition to its other types.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{U}",
+   "layout": "normal",
+   "_id": "76642e7a-3c8f-45b8-9cd7-dac8086bea87"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this enchantment enters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "each creature you control is the chosen type in addition to its other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Arcane Adaptation": {
+  "source": {
+   "name": "Arcane Adaptation",
+   "typeLine": "Enchantment",
+   "oracleText": "As this enchantment enters, choose a creature type.\nCreatures you control are the chosen type in addition to their other types. The same is true for creature spells you control and creature cards you own that aren't on the battlefield.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{U}",
+   "layout": "normal",
+   "_id": "2188c03f-11b6-4651-914a-b4fdd59127e3"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this enchantment enters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "creatures you control, creature spells you control, and creature cards you own not on the battlefield gain the chosen creature type in addition to their other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Cabal Coffers": {
+  "source": {
+   "name": "Cabal Coffers",
+   "typeLine": "Land",
+   "oracleText": "{2}, {T}: Add {B} for each Swamp you control.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "",
+   "layout": "normal",
+   "_id": "7358e164-5704-4e78-9b21-6a9bf2a968ce"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{B} for each Swamp you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Sol Ring": {
+  "source": {
+   "name": "Sol Ring",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Add {C}{C}.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 1,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}",
+   "layout": "normal",
+   "_id": "6ad8011d-3471-4369-9d68-b264cc027487"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Forest": {
+  "source": {
+   "name": "Forest",
+   "typeLine": "Basic Land — Forest",
+   "oracleText": "({T}: Add {G}.)",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "",
+   "layout": "normal",
+   "_id": "b34bb2dc-c1af-4d77-b0b3-a0fb342a5fc6"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "({T}: Add {G}.)",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Swamp": {
+  "source": {
+   "name": "Swamp",
+   "typeLine": "Basic Land — Swamp",
+   "oracleText": "({T}: Add {B}.)",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "",
+   "layout": "normal",
+   "_id": "56719f6a-1a6c-4c0a-8d21-18f7d7350b68"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "({T}: Add {B}.)",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Torch the Tower": {
+  "source": {
+   "name": "Torch the Tower",
+   "typeLine": "Instant",
+   "oracleText": "Bargain (You may sacrifice an artifact, enchantment, or token as you cast this spell.)\nTorch the Tower deals 2 damage to target creature or planeswalker. If this spell was bargained, instead it deals 3 damage to that permanent and you scry 1.\nIf a permanent dealt damage by Torch the Tower would die this turn, exile it instead.",
+   "keywords": [
+    "Bargain",
+    "Scry"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{R}",
+   "layout": "normal",
+   "_id": "10d33e95-3e5d-447e-ba4a-acd3c33b4045"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Bargain",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "target creature or planeswalker",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "that permanent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "scry",
+      "object": "1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a permanent dealt damage by Torch the Tower",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "God-Eternal Bontu": {
+  "source": {
+   "name": "God-Eternal Bontu",
+   "typeLine": "Legendary Creature — Zombie God",
+   "oracleText": "Menace\nWhen God-Eternal Bontu enters, sacrifice any number of other permanents, then draw that many cards.\nWhen God-Eternal Bontu dies or is put into exile from the battlefield, you may put her into her owner's library third from the top.",
+   "keywords": [
+    "Menace"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "5",
+   "toughness": "6",
+   "manaCost": "{3}{B}{B}",
+   "layout": "normal",
+   "_id": "183891b0-b5ec-47f4-8d09-b9d3cfc4e7f1"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Menace",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "God-Eternal Bontu",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "any number of other permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "draw",
+      "object": "cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that many",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "God-Eternal Bontu",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "God-Eternal Bontu",
+      "fromZone": "graveyard",
+      "toZone": "library",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "exiled",
+     "subject": "God-Eternal Bontu",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "God-Eternal Bontu",
+      "fromZone": "exile",
+      "toZone": "library",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Baffling End": {
+  "source": {
+   "name": "Baffling End",
+   "typeLine": "Enchantment",
+   "oracleText": "When this enchantment enters, exile target creature an opponent controls with mana value 3 or less.\nWhen this enchantment leaves the battlefield, target opponent creates a 3/3 green Dinosaur creature token with trample.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "_id": "03c35670-84ac-4825-b395-cefb76ceb89a"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this enchantment",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target creature an opponent controls with mana value 3 or less",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this enchantment",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 3/3 green Dinosaur creature token with trample",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Urza's Sylex": {
+  "source": {
+   "name": "Urza's Sylex",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "{2}{W}{W}, {T}, Exile Urza's Sylex: Each player chooses six lands they control. Destroy all other permanents. Activate only as a sorcery.\nWhen Urza's Sylex is put into exile from the battlefield, you may pay {2}. If you do, search your library for a planeswalker card, reveal it, put it into your hand, then shuffle.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}",
+   "layout": "normal",
+   "_id": "fb4d99c2-daec-430a-9ca2-5a178a96618b"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "Urza's Sylex",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "destroy",
+      "object": "all other permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "exiled",
+     "subject": "Urza's Sylex",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a planeswalker card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Detention Sphere": {
+  "source": {
+   "name": "Detention Sphere",
+   "typeLine": "Enchantment",
+   "oracleText": "When this enchantment enters, you may exile target nonland permanent not named Detention Sphere and all other permanents with the same name as that permanent.\nWhen this enchantment leaves the battlefield, return the exiled cards to the battlefield under their owner's control.",
+   "keywords": [],
+   "colors": [
+    "U",
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}{U}",
+   "layout": "normal",
+   "_id": "0a0b376d-7824-4ba5-8bc9-bc0be12800c5"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this enchantment",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target nonland permanent not named Detention Sphere and all other permanents with the same name as that permanent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this enchantment",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "the exiled cards",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Demonfire": {
+  "source": {
+   "name": "Demonfire",
+   "typeLine": "Sorcery",
+   "oracleText": "Demonfire deals X damage to any target. If a creature dealt damage this way would die this turn, exile it instead.\nHellbent — If you have no cards in hand, this spell can't be countered and the damage can't be prevented.",
+   "keywords": [
+    "Hellbent"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{X}{R}",
+   "layout": "normal",
+   "_id": "314a5c76-1a68-433b-a383-1834400254a8"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "any target",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "a creature dealt damage this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "be countered",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "prevent",
+      "object": "the damage",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Stonesplitter Bolt": {
+  "source": {
+   "name": "Stonesplitter Bolt",
+   "typeLine": "Instant",
+   "oracleText": "Bargain (You may sacrifice an artifact, enchantment, or token as you cast this spell.)\nStonesplitter Bolt deals X damage to target creature or planeswalker. If this spell was bargained, it deals twice X damage to that permanent instead.",
+   "keywords": [
+    "Bargain"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{X}{R}",
+   "layout": "normal",
+   "_id": "1322734c-3c3e-4885-a6d2-d6460a16fca2"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Bargain",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "target creature or planeswalker",
+      "amount": "X",
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "deal-damage",
+      "object": "that permanent",
+      "amount": "twice X",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Systems Override": {
+  "source": {
+   "name": "Systems Override",
+   "typeLine": "Sorcery",
+   "oracleText": "Gain control of target artifact or creature until end of turn. Untap that permanent. It gains haste until end of turn. If it's a Spacecraft, put ten charge counters on it. If you do, remove ten charge counters from it at the beginning of the next end step.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{R}",
+   "layout": "normal",
+   "_id": "4c9d9d47-1eb6-4981-ba83-d5ec04906e71"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "gain-control",
+      "object": "target artifact or creature",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "untap",
+      "object": "that permanent",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "grant-ability",
+      "object": "haste",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "add-counter",
+      "object": "charge",
+      "amount": "ten",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "remove-counter",
+      "object": "charge",
+      "amount": "ten",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Sisters of Stone Death": {
+  "source": {
+   "name": "Sisters of Stone Death",
+   "typeLine": "Legendary Creature — Gorgon",
+   "oracleText": "{G}: Target creature blocks Sisters of Stone Death this turn if able.\n{B}{G}: Exile target creature blocking or blocked by Sisters of Stone Death.\n{2}{B}: Put a creature card exiled with Sisters of Stone Death onto the battlefield under your control.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G"
+   ],
+   "manaValue": 8,
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "power": "7",
+   "toughness": "5",
+   "manaCost": "{4}{B}{B}{G}{G}",
+   "layout": "normal",
+   "_id": "38e64b15-47c0-4453-a51e-a53c1aebc8d0"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "target creature can't choose not to block Sisters of Stone Death this turn if able",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target creature blocking or blocked by Sisters of Stone Death",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "a creature card exiled with Sisters of Stone Death",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Mulldrifter": {
+  "source": {
+   "name": "Mulldrifter",
+   "typeLine": "Creature — Elemental",
+   "oracleText": "Flying\nWhen this creature enters, draw two cards.\nEvoke {2}{U} (You may cast this spell for its evoke cost. If you do, it's sacrificed when it enters.)",
+   "keywords": [
+    "Flying",
+    "Evoke"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{4}{U}",
+   "layout": "normal",
+   "_id": "24d0f5e7-0d9e-4b76-900e-a7274e80312d"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Evoke {2}{U}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Thragtusk": {
+  "source": {
+   "name": "Thragtusk",
+   "typeLine": "Creature — Beast",
+   "oracleText": "When this creature enters, you gain 5 life.\nWhen this creature leaves the battlefield, create a 3/3 green Beast creature token.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "5",
+   "toughness": "3",
+   "manaCost": "{4}{G}",
+   "layout": "normal",
+   "_id": "0dd0e91a-d16b-4718-8d11-1a3fcf8e0753"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "5",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 3/3 green Beast creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Gisa, Glorious Resurrector": {
+  "source": {
+   "name": "Gisa, Glorious Resurrector",
+   "typeLine": "Legendary Creature — Human Wizard",
+   "oracleText": "If a creature an opponent controls would die, exile it instead.\nAt the beginning of your upkeep, put all creature cards exiled with Gisa onto the battlefield under your control. They gain decayed. (A creature with decayed can't block. When it attacks, sacrifice it at end of combat.)",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{2}{B}{B}",
+   "layout": "normal",
+   "_id": "f1354b1b-896c-4492-b0c0-3dd07c6d3917"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a creature an opponent controls",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "all creature cards exiled with Gisa",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "decayed",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Wall of Nets": {
+  "source": {
+   "name": "Wall of Nets",
+   "typeLine": "Creature — Wall",
+   "oracleText": "Defender (This creature can't attack.)\nAt end of combat, exile all creatures blocked by this creature.\nWhen this creature leaves the battlefield, return all cards exiled with it to the battlefield under their owners' control.",
+   "keywords": [
+    "Defender"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "0",
+   "toughness": "7",
+   "manaCost": "{1}{W}{W}",
+   "layout": "normal",
+   "_id": "cd112962-b297-403c-bede-c8b587f379b3"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-of-combat",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all creatures blocked by this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all cards exiled with it",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Mary Read and Anne Bonny": {
+  "source": {
+   "name": "Mary Read and Anne Bonny",
+   "typeLine": "Legendary Creature — Human Assassin Pirate",
+   "oracleText": "Haste\n{T}: Draw a card, then discard a card.\nWhenever you discard an Island, Pirate, or Vehicle card, create a tapped Treasure token.",
+   "keywords": [
+    "Treasure",
+    "Haste"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{1}{U}{R}",
+   "layout": "normal",
+   "_id": "5182de2d-aceb-450e-bd20-8bc7db124334"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Haste",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "discarded",
+     "subject": "an Island, Pirate, or Vehicle card",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a tapped Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Flow of Ideas": {
+  "source": {
+   "name": "Flow of Ideas",
+   "typeLine": "Sorcery",
+   "oracleText": "Draw a card for each Island you control.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}{U}",
+   "layout": "normal",
+   "_id": "dd397a32-06b0-4530-b075-412e2881aa53"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each Island you control",
+      "optional": false
+     }
+    ]
+   }
+  ]
  }
 }

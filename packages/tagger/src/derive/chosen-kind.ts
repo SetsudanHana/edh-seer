@@ -11,8 +11,10 @@ import { CREATURE_SUBTYPES, LAND_SUBTYPES } from "./subtypes.js";
  *
  *  The ability's own clause decides, and the card's text when the clause holds no choice of its own (the usual shape: "As this enters, choose a creature type" is one clause and "creatures of the chosen type" another). A text that makes two
  *  different choices decides nothing, and so does one that makes none: the subject is left without a kind, which the matcher reads as unknown and answers by the old text cue.
- *  CEILING: only the kind of the choice is stamped. WHO chooses ("an opponent chooses a creature type": Callous Oppressor) and whether the subject is the choice or its NEGATION ("creatures that aren't of the chosen type": Kindred Dominance) are not carried; the
- *  matcher still reads those two off the printed words. */
+ *
+ *  WHO CHOOSES is `chosenBy: "opponent"` (#1570), stamped beside the kind when the deciding text has an opponent make that choice ("an opponent chooses a creature type": Callous Oppressor, the only card of the corpus that prints one with "the chosen type"; Grave Sifter,
+ *  Patriarch's Bidding and Harsh Mercy say "each player"). It is a sibling of the kind, not a member of it: what was chosen and who chose it are two facts. Whether the subject is the choice or its NEGATION ("creatures that aren't of the chosen type") is `chosenNegated`,
+ *  set where the subject is parsed (`parseSubject`), since it is a fact of the subject's own words and not of the card's. */
 const CREATURE = new Set(CREATURE_SUBTYPES.filter((s) => !LAND_SUBTYPES.has(s)));
 const BASIC_LAND = new Set(["plains", "island", "swamp", "mountain", "forest"]);
 const CARD_TYPES = new Set(["artifact", "creature", "enchantment", "instant", "sorcery", "land", "planeswalker", "battle", "kindred", "tribal", "non-aura enchantment", "nonland permanent", "permanent", "noncreature", "nonland"]);
@@ -42,19 +44,32 @@ function kindsIn(text: string): Set<ChosenKind> {
   return out;
 }
 
+/** An opponent makes the choice of a type: "an opponent chooses a creature type", "each opponent chooses a land type". Plain string tests, no backtracking. */
+function opponentChooses(text: string): boolean {
+  const t = withoutParentheses(text).toLowerCase();
+  for (let at = t.indexOf("opponent chooses "); at >= 0; at = t.indexOf("opponent chooses ", at + 1)) {
+    const rest = t.slice(at + 17, at + 17 + 40);
+    if (/^(?:an? )?(?:basic |creature |land |card |planeswalker |permanent )*type\b/.test(rest)) return true;
+  }
+  return false;
+}
+
 /** The kind of the one choice this text makes; undefined when it makes none, or more than one kind. */
 export function chosenKindOfText(text: string): ChosenKind | undefined {
   const kinds = kindsIn(text);
   return kinds.size === 1 ? [...kinds][0] : undefined;
 }
 
-const stamp = (v: unknown, kind: ChosenKind): unknown => {
-  if (Array.isArray(v)) return v.map((x) => stamp(x, kind));
+const stamp = (v: unknown, kind: ChosenKind, opponent: boolean): unknown => {
+  if (Array.isArray(v)) return v.map((x) => stamp(x, kind, opponent));
   if (v === null || typeof v !== "object") return v;
   const o = v as Record<string, unknown>;
   const out: Record<string, unknown> = {};
-  for (const [k, x] of Object.entries(o)) out[k] = stamp(x, kind);
-  if (o.chosenType === true && out.chosenKind === undefined) out.chosenKind = kind;
+  for (const [k, x] of Object.entries(o)) out[k] = stamp(x, kind, opponent);
+  if (o.chosenType === true && out.chosenKind === undefined) {
+    out.chosenKind = kind;
+    if (opponent) out.chosenBy = "opponent";
+  }
   return out;
 };
 
@@ -66,6 +81,8 @@ export function chosenKindOf(abilities: Ability[], clauseTexts: Record<number, s
     const kinds = own === undefined ? new Set<ChosenKind>() : kindsIn(own);
     // A clause that makes two choices is not told apart; one that makes none falls to the whole card.
     const kind = kinds.size > 1 ? undefined : kinds.size === 1 ? [...kinds][0] : whole;
-    return kind === undefined ? a : stamp(a, kind) as Ability;
+    // the chooser, read from the same text that decided the kind
+    const opponent = kind !== undefined && opponentChooses(kinds.size === 1 ? own! : cardText);
+    return kind === undefined ? a : stamp(a, kind, opponent) as Ability;
   });
 }
