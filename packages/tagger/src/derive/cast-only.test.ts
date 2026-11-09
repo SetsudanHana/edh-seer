@@ -61,3 +61,9 @@ describe("actsOnHost", () => {
     expect(triggered(name).filter((a) => a.actsOnHost === true)).toEqual([]);
   });
 });
+
+describe("ofPut: a definite noun phrase", () => {
+  test("Sneak Attack: \"Sacrifice the creature at the beginning of the next end step\" is the removal of what the clause put", () => {
+    expect(ofPutEmits("Sneak Attack").map((e) => e.verb).sort()).toEqual(["dies", "sacrifice"]);
+  });
+});

@@ -1124,6 +1124,8 @@ const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
  *  `damage-dealt` clauses; the engine verb is `damaged` since 2026-09-16. */
 const DAMAGE_RECEIVED = /\b(?:is|are|becomes?) dealt\b/i;
 /** The pronoun an exile of a just-put permanent uses (#1502). */
+/** A definite noun phrase that names what the clause just put ("Sacrifice the creature at the beginning of the next end step": Sneak Attack). Read for `ofPut` only; the shared PUT_PRONOUN is untouched. */
+const PUT_NOUN_PHRASE = /^(?:the creature|the permanent)$/i;
 const PUT_PRONOUN = /^(?:it|them|that card|that creature|those creatures|those cards|that permanent)$/i;
 /** "...onto the battlefield under your control" (Gruesome Encore, Ashen Powder): the put permanent is yours whoever's graveyard it came from. */
 const UNDER_YOUR_CONTROL = /\bunder your control\b/;
@@ -3622,8 +3624,8 @@ export function deriveAbilities(
       // CEILING: a put of ONE clause only, the pronoun being the sole signal; "exile target creature, then return it" (a flicker) aims at a creature already on the battlefield and is not marked, and a put whose removal is
       // a later clause or another ability ("When it enters, sacrifice it next turn") is left unmarked.
       // A SINGULAR PRONOUN AFTER AN "ALL" PUT is the card, not what was put ("Put all permanent cards exiled with this enchantment onto the battlefield, then sacrifice it": Journey to the Lost City sacrifices itself).
-      const singularAfterAll = /^(?:it|that creature|that card|that permanent)$/i.test((action.object ?? "").trim()) && /^all\b/i.test((clause.actions ?? [])[putIdx]?.object ?? "");
-      if (putsNonToken && putIdx >= 0 && (clause.actions ?? []).indexOf(action) > putIdx && PUT_PRONOUN.test((action.object ?? "").trim()) && !refersToTrigger && !emitsSelf && !singularAfterAll
+      const singularAfterAll = /^(?:it|that creature|that card|that permanent|the creature|the permanent)$/i.test((action.object ?? "").trim()) && /^all\b/i.test((clause.actions ?? [])[putIdx]?.object ?? "");
+      if (putsNonToken && putIdx >= 0 && (clause.actions ?? []).indexOf(action) > putIdx && (PUT_PRONOUN.test((action.object ?? "").trim()) || PUT_NOUN_PHRASE.test((action.object ?? "").trim())) && !refersToTrigger && !emitsSelf && !singularAfterAll
         && (action.verb === "exile" || action.verb === "sacrifice" || (action.verb === "return" && action.toZone === "hand"))) for (const e of emits) e.ofPut = true;
       // CEILING (#1502): only a put that is followed by the pronoun exile reads its `enters` as yours. The same "under your control" on a put with no such exile (Ashen Powder; Chorale of the Void, Helm of Obedience,
       // Nurgle's Conscription and ~70 more, measured 2026-11-04) stays `control: opp`: reading all of them as yours adds 85,377 pairs (80,249 of them into creature ETB consumers), a census of its own.

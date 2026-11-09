@@ -83,3 +83,39 @@ describe("an Aura whose leave trigger acts on its host is not triggered by the h
     expect(leaveTags("Wrath of God", "Rancor").length).toBeGreaterThan(0);
   });
 });
+
+/** #1513 review round: WHAT CAN REMOVE THE AURA FROM THE BATTLEFIELD. A producer card keeps its pair with Parallax Dementia / Reality Acid only if one of its removal events can take a permanent off the battlefield that may be
+ *  the Aura: not an exile from hand (Sunscour's alternative cost) or a graveyard (Force of Despair), not a token, not an opponent-only target ("an opponent controls": Banishing Light), not an opponent's edict (Invoke Despair:
+ *  "Target opponent sacrifices ... an enchantment"), not one filter's rider held against another type's alternative (Ravnica at War's multicolored, Pyroblast's blue), not a host taken with its Auras (End Hostilities). */
+const bothAuras = (producer: string) => [leaveTags(producer, "Parallax Dementia"), leaveTags(producer, "Reality Acid")];
+describe("reachesAura: only a removal that can take the Aura off the battlefield", () => {
+  test.each([
+    "Sunscour", "Force of Despair", "Kozilek's Command", "Riveteers Charm", // a hand or graveyard exile
+    "Phantom Steed", "Mardu Siegebreaker", "Echoing Assault", // a token
+    "Lord Xander, the Collector", "Invoke Despair", "Starseer Mentor", // an opponent's edict
+    "Banishing Light", "Assassin's Trophy", "Feed the Swarm", "Cyclonic Rift", "Skyclave Apparition", "Leyline Binding", // "an opponent controls" / "you don't control"
+    "Ravnica at War", "Sentinel of the Pearl Trident", // a dropped colour / historic rider
+    "End Hostilities", // the host and its Auras together
+    "Murder",
+  ])("%s -> Parallax Dementia and Reality Acid: none", (producer) => {
+    expect(bothAuras(producer)).toEqual([[], []]);
+  });
+  test.each(["Farewell", "Austere Command", "Cleansing Nova", "Gaius van Baelsar", "Isolate", "Beast Within", "Shoot Down"])("%s still pairs with both", (producer) => {
+    const [p, r] = bothAuras(producer);
+    expect(p!.length).toBeGreaterThan(0);
+    expect(r!.length).toBeGreaterThan(0);
+  });
+  test("Pyroblast (\"Destroy target permanent if it's blue\"): Reality Acid is blue and pairs, the black Parallax Dementia does not", () => {
+    expect(leaveTags("Pyroblast", "Parallax Dementia")).toEqual([]);
+    expect(leaveTags("Pyroblast", "Reality Acid").length).toBeGreaterThan(0);
+  });
+  test("Thraben Exorcism (\"Exile target Spirit, creature with disturb, or enchantment\": the Spirit subtype belongs to the creature alternative) -> Reality Acid still pairs", () => {
+    expect(leaveTags("Thraben Exorcism", "Reality Acid").length).toBeGreaterThan(0);
+  });
+});
+
+describe("a put creature the clause names with a definite noun phrase", () => {
+  test.each(["Primeval Spawn", "Thief of Existence"])("Sneak Attack (\"Sacrifice the creature at the beginning of the next end step\") -> %s: no leave reason", (consumer) => {
+    expect(leaveTags("Sneak Attack", consumer)).toEqual([]);
+  });
+});
