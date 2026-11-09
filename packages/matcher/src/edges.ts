@@ -12,6 +12,7 @@ import { normalizeZoneEvent, tagKey, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { baseSetStrength, nodePower, pairsAsUpgrade, powerNeeds, raisedToken, readsPower } from "./base-pt-set.js";
 import { hasMediatingToken } from "./tokens.js";
+import { removalReachesAura } from "./aura-reach.js";
 import {
   copySentence, costReductionSentence, temporaryCopySentence, counterPresenceSentence, createsSentence,
   enterAsCopySentence, entersAsCopyOfSentence, fetchSentence, proliferateSentence, counterCostSentence, effectPhrase, phraseKindOf, creatureConditionSentence,
@@ -2061,7 +2062,7 @@ function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
  *  and a producer removing ITSELF is not removing a host. 42 corpus Auras carry the shape, 4 in the
  *  71 decks; the other 109 Aura dies-triggers say "when enchanted creature dies" and already read as
  *  a `dies:creature` demand. */
-function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abilities"][number], e: GameEvent, t: GameEvent, h: Hierarchy, abilities: CardTags["abilities"]): boolean {
+function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abilities"][number], e: GameEvent, t: GameEvent, h: Hierarchy, abilities: CardTags["abilities"], producer: readonly GameEvent[], producerText: string): boolean {
   const host = chars.enchants;
   if (!host || t.subject.self !== true || (t.verb !== "dies" && t.verb !== "leaves")) return false;
   if (e.verb !== "dies" && e.verb !== "leaves") return false;
@@ -2078,6 +2079,18 @@ function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abiliti
   // A SPELL LEAVING THE STACK REMOVES NO HOST (#1310). A spell cast from a graveyard and exiled instead of going there (Impulsivity, Invoke Calamity) leaves the STACK, and an Aura only goes to the
   // graveyard when its host leaves the BATTLEFIELD (CR 704.5m). Below, `fromZone` is stripped so a stated graveyard or battlefield origin reads as the class alone; the stack origin is refused first.
   if (e.subject.fromZone === "stack") return false;
+  // A TRIGGER THAT ACTS ON THE HOST FINDS IT GONE (#1513). "When this Aura leaves the battlefield, destroy enchanted creature" (Parallax Dementia), "enchanted permanent's controller sacrifices it" (Reality Acid): when the Aura
+  // leaves BECAUSE its host did, the host is already off the battlefield and the trigger has nothing to act on. So a producer that can only take the HOST (a creature-only death, exile or bounce: Murder, Wrath of God, a
+  // reanimator's end-step exile) feeds nothing. A producer that can ALSO take the Aura itself keeps its pair: Farewell's "Exile all enchantments" can exile Parallax Dementia, and its trigger then does act.
+  // "Can take the Aura" is read over the producer's WHOLE card (`producer`, its events): the modes of one spell are separate abilities in the store (Farewell, Austere Command), so the same ability would miss them. An
+  // event counts by `removalReachesAura` (aura-reach.ts): from the battlefield, no token, a target unless the card prints only opponent targets, a mass event of control you or any, no opponent's edict, not the Aura taken with its host.
+  // CEILING: the pair is kept with the host reading's reason text ("removes the creature ... enchants") although the removal that makes the trigger count is the producer's other event; the card, not the mode, is the unit
+  // (a creature-kill and an unrelated enchantment removal on one card keep each other's pair); the direct route's own gates are untouched.
+  if (a.actsOnHost === true) {
+    const aura = characteristicsSubject({ characteristics: chars } as CardTags);
+    const reachesAura = removalReachesAura(producer, producerText, aura, h);
+    if (!reachesAura) return false;
+  }
   // WHOSE CREATURE (#1513). An Aura you put on an OPPONENT's creature is never sent to the graveyard by your own creature's departure.
   const side = e.subject.control === "you" || e.subject.control === "opp" ? auraHostSide(host, abilities) : undefined;
   if ((e.subject.control === "you" && side === "opp") || (e.subject.control === "opp" && side === "own")) return false;
@@ -2394,7 +2407,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
         const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject, ...(a.trigger.amount ? { amountIs: a.trigger.amount } : {}), ...(a.trigger.victim ? { victimIs: a.trigger.victim } : {}) });
         // `e` is `e0` when it matches as authored, or an untyped land put resolved against the
         // deck's lands to the subtype this trigger names (`landPutFor`); null is no match.
-        const viaHost = auraHostLeaves(c.tags.characteristics, a, e0, t, h, cAbilitiesRaw ?? c.tags.abilities);
+        const viaHost = auraHostLeaves(c.tags.characteristics, a, e0, t, h, cAbilitiesRaw ?? c.tags.abilities, pEvents, p.card.oracleText ?? "");
         const e = viaHost ? e0 : landPutFor(e0, t, opts.landTypes, ownEvents, h);
         if (!e) continue;
         // TOKENS MEDIATE (Task 7, tokens-as-nodes, 2026-08-16). A maker's own "a Treasure enters"
@@ -2484,6 +2497,10 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
           // entry for anything watching creatures, but it is never the CONSUMER entering, which is
           // the only event a self trigger watches.
           if (identity.self === true) continue;
+          // WHAT A PRODUCER PUT ONTO THE BATTLEFIELD WAS NOT CAST (#1513). Its own removal of that permanent ("Exile it at the beginning of the next end step", Dawn of the Dead; "Sacrifice that creature", Footsteps of the Goryo) is
+          // never the leave of a card that exists, or has this trigger, only if it was cast: a put Primeval Spawn is exiled instead of entering, a put Thief of Existence was never granted its trigger. Removal of a creature already on
+          // the battlefield (Murder, a flicker) is not marked and can be a cast one.
+          if (a.castOnly === true && e.ofPut === true) continue;
           // A CARD AN OPPONENT OWNS IS NEVER A CARD OF THIS DECK (#1502, owner ruling #729): Gruesome Encore's put from "an opponent's graveyard" (CR 400.3: the card is its owner's) emits `owner: opp`, and a
           // deck-mate's own "when this creature enters" is never fired by it. The class triggers ("a creature you control enters") still hear it.
           if (identity.owner === "opp") continue;
