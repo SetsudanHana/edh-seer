@@ -3215,6 +3215,7 @@ function wholeCreatureClass(s: SubjectFilter): boolean {
 }
 const CREATURE_SUBTYPE_LOWER: ReadonlySet<string> = new Set(CREATURE_SUBTYPES.map((x) => x.toLowerCase()));
 const CARD_TYPES: ReadonlySet<string> = new Set(["artifact", "enchantment", "land", "planeswalker", "battle"]);
+const BASIC_LAND_TYPES: readonly string[] = ["plains", "island", "swamp", "mountain", "forest"];
 /** Effects that are not a BATTLEFIELD reader of the type: a grant of "artifacts you control are Foods" reaches permanents, which have a controller (CR 108.4), so a library search (Stoneforge Mystic), a graveyard return (Auriok Survivors),
  *  a play-from-top (Galea) and a spell cost reducer (Danitha) read the type where the grant does not reach. A token maker is read through its trigger and cost, never through the token it creates. `type-grant` and `animate` are another granter. */
 const NOT_A_BATTLEFIELD_READER: ReadonlySet<string> = new Set(["search", "graveyard-recursion", "play-from-top", "cost-reduction", "type-grant", "animate", "token-generation", "create-token", "token-doubling"]);
@@ -3428,6 +3429,19 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
         producer: p.card.name,
       };
     }
+    // A CHOSEN BASIC LAND TYPE handed to a whole land class (Realmwright, #1570) is used by a card that uses any basic land type on the battlefield (Cabal Coffers' Swamps, a Forest lord).
+    // CEILING: with a deck the chosen land type could be narrowed to the deck's main land type, as a chosen creature type is; any of the five counts here.
+    if (classGrant !== undefined && !creatureGrant && classGrant.grantsType === undefined && classGrant.grantsChosen === "land-type") {
+      if (!BASIC_LAND_TYPES.some((t) => usesGrantedType(c.tags, t))) return undefined;
+      return {
+        tag: `static:${a.effect.kind}`,
+        text: `${p.card.name} gives your lands a basic land type, and ${c.card.name} uses a land type`,
+        effectKind: a.effect.kind,
+        repeatability: "static",
+        consumer: c.card.name,
+        producer: p.card.name,
+      };
+    }
     if (classGrant?.grantsType !== undefined) {
       if (!usesGrantedType(c.tags, classGrant.grantsType)) return undefined;
       const gt = classGrant.grantsType;
@@ -3450,6 +3464,10 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
         producer: p.card.name,
       };
     }
+    // A CHOSEN TYPE HANDED TO A BOUNDED CLASS claims no pair (#1570): Lifecraft Engine's Vehicles, Rukarumel's Slivers and nontoken creatures. What it gives them is only worth something to a card that uses the chosen type, and which type that is is the deck's, so the
+    // pair is not "applies to every Vehicle" (the generic reading below).
+    // CEILING: such a grant is not paired with the payoffs of the type it gives, as a whole-class grant is; the two cards (Lifecraft Engine, Rukarumel) read the lords and the pump of their other abilities only.
+    if (a.effect.kind === "type-grant" && a.grantsChosen !== undefined) return undefined;
     // A counter-presence condition ("creatures you control WITH a +1/+1 counter") is a BOARD STATE,
     // not a printed characteristic, and this pass matches against the type line. Demanding it here
     // deletes the edge outright -- Sludge Monster's anthem stopped reaching anything. The dedicated

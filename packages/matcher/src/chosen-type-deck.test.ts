@@ -232,3 +232,71 @@ const ELF_DEATH_DECK = ["Kindred Dominance", "Skemfar Avenger", "Llanowar Elves"
 test("in an Elf deck Kindred Dominance does not count as killing your Elves: no death edge to an 'Elf you control dies' payoff", async () => {
   expect(await deathEdges(ELF_DEATH_DECK)).toEqual([]);
 });
+
+// #1570 PART 2: "IS / ARE THE CHOSEN TYPE" IS A TYPE-GRANT. Thirteen cards print it and twelve derived no type-grant (Thran Portal's had no kind of choice): a self grant (Metallic Mimic, Roaming Throne, Adaptive Automaton, Titan of Littjara, Multiversal
+// Passage, Thran Portal), a class grant (Conspiracy, Rukarumel, Lifecraft Engine's Vehicles, Ashes of the Fallen's graveyard, Realmwright's lands) and a host's (Convincing Mirage, Phantasmal Terrain).
+const grantsOf = (n: string) => tagsOf(n).abilities.filter((a) => a.effect.kind === "type-grant");
+
+test("a SELF grant of the chosen type is a type-grant that names no class (Metallic Mimic, Roaming Throne, Adaptive Automaton, Titan of Littjara)", () => {
+  for (const n of ["Metallic Mimic", "Roaming Throne", "Adaptive Automaton", "Titan of Littjara"]) {
+    const g = grantsOf(n);
+    expect(g.length, n).toBe(1);
+    expect(g[0]!.grantsChosen, n).toBe("creature-type");
+    expect(g[0]!.effect.subject === undefined || g[0]!.effect.subject.self === true, n).toBe(true);
+  }
+  // the card's other abilities are untouched
+  expect(tagsOf("Metallic Mimic").abilities.map((a) => a.effect.kind)).toContain("enters-with-counters");
+  expect(tagsOf("Roaming Throne").abilities.map((a) => a.effect.kind)).toContain("trigger-doubling");
+});
+
+test("a land's grant of the chosen BASIC LAND type is a land-type grant (Multiversal Passage, Thran Portal)", () => {
+  for (const n of ["Multiversal Passage", "Thran Portal"]) {
+    const g = grantsOf(n);
+    expect(g.length, n).toBe(1);
+    expect(g[0]!.grantsChosen, n).toBe("land-type");
+    expect(g[0]!.effect.subject === undefined || g[0]!.effect.subject.self === true, n).toBe(true);
+  }
+});
+
+test("a CLASS grant of the chosen type names its class: Conspiracy's creatures, Realmwright's lands", () => {
+  const c = grantsOf("Conspiracy");
+  expect(c.length).toBe(1);
+  expect(c[0]!.grantsChosen).toBe("creature-type");
+  expect(c[0]!.effect.subject).toMatchObject({ type: "creature", control: "you" });
+  const r = grantsOf("Realmwright");
+  expect(r.length).toBe(1);
+  expect(r[0]!.grantsChosen).toBe("land-type");
+  expect(r[0]!.effect.subject).toMatchObject({ type: "land", control: "you" });
+  expect(tagsOf("Conspiracy").abilities.map((a) => a.effect.kind)).not.toContain("keyword-grant");
+});
+
+test("Lifecraft Engine, Rukarumel and Ashes of the Fallen grant the chosen creature type to a class; an Aura's host is no class (Convincing Mirage, Phantasmal Terrain)", () => {
+  for (const n of ["Lifecraft Engine", "Rukarumel, Biologist", "Ashes of the Fallen"]) {
+    const g = grantsOf(n);
+    expect(g.length, n).toBeGreaterThan(0);
+    expect(g.every((x) => x.grantsChosen === "creature-type"), n).toBe(true);
+  }
+  for (const n of ["Convincing Mirage", "Phantasmal Terrain"]) {
+    const g = grantsOf(n);
+    expect(g.length, n).toBe(1);
+    expect(g[0]!.grantsChosen, n).toBe("land-type");
+    expect(g[0]!.effect.subject, n).toBeUndefined();
+  }
+});
+
+const grantPairs = (a: string, b: string) => pairReasons(dc(a), dc(b), loadHierarchy()).filter((r) => r.producer === a && r.tag === "static:type-grant");
+
+test("a class grant pairs with the cards that USE the granted kind of type, and a self grant with none (#1568 class-grant rule)", () => {
+  // creature type: Conspiracy gives every creature of yours a type; a lord of a type uses it, a plain creature and a rock do not
+  expect(grantPairs("Conspiracy", "Elvish Archdruid")).not.toEqual([]);
+  for (const plain of ["Grizzly Bears", "Serra Angel", "Sol Ring"]) expect(grantPairs("Conspiracy", plain), plain).toEqual([]);
+  // land type: Realmwright gives every land of yours a basic land type; a card that counts Swamps uses it, a Forest and a creature type lord do not
+  expect(grantPairs("Realmwright", "Cabal Coffers")).not.toEqual([]);
+  for (const plain of ["Forest", "Elvish Archdruid", "Sol Ring"]) expect(grantPairs("Realmwright", plain), plain).toEqual([]);
+  // a SELF grant claims no class
+  for (const self of ["Metallic Mimic", "Roaming Throne", "Titan of Littjara", "Thran Portal", "Multiversal Passage"]) expect(grantPairs(self, "Elvish Archdruid"), self).toEqual([]);
+});
+
+test("a chosen type handed to a BOUNDED class claims no pair (Lifecraft Engine's Vehicles, Rukarumel's Slivers and nontoken creatures)", () => {
+  for (const n of ["Lifecraft Engine", "Rukarumel, Biologist"]) for (const c of ["Elvish Archdruid", "Grizzly Bears", "Sol Ring", "Conspiracy"]) expect(grantPairs(n, c), `${n} x ${c}`).toEqual([]);
+});

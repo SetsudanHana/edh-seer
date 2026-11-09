@@ -355,9 +355,9 @@ export const BASE_PT_VALUE = /^(?:base )?\d{1,2}\/\d{1,2}$/i;
 
 /** Text that confers a TYPE rather than an ability. "in addition to its other types" is the
  *  templating for a one-off (Mockingbird, Tyrite Sanctum); "is every creature type" / "every land
- *  type" is the changeling-wide form (Maskwood Nexus, Omo, Planar Nexus). A PLURAL recipient says "their other types" (Leyline of Transformation, Swampbenders, Hivestone, #1568). */
+ *  type" is the changeling-wide form (Maskwood Nexus, Omo, Planar Nexus). A PLURAL recipient says "their other types" (Leyline of Transformation, Swampbenders, Hivestone, #1568). THE CHOSEN TYPE is a grant with or without the "in addition" (Conspiracy's "are the chosen type", Convincing Mirage's "is the chosen type", #1570). */
 export const TYPE_GRANT =
-  /\bin addition to (?:its|their) other (?:creature )?types\b|\bis every\b|\bevery (?:creature|land|artifact|nonbasic land) type\b|\b(?:is|becomes) also an? [A-Z]/;
+  /\bin addition to (?:its|their) other (?:creature )?types\b|\bis every\b|\bevery (?:creature|land|artifact|nonbasic land) type\b|\b(?:is|becomes) also an? [A-Z]|\b(?:is|are|becomes?|have|has) the chosen (?:creature |land |basic land )?type\b/;
 
 /** The type a type-grant hands out, lowercased and singular ("Artifacts you control are Foods in addition to their other types" -> "food"; Dan Lewis' "Equipment" stays). Undefined when the text does not name one
  *  (a chosen type, "every creature type", "is also a Zombie" is read the same way). #1568 */

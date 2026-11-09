@@ -1516,6 +1516,10 @@ export interface Ability {
   /** The type a `type-grant` hands out, lowercased and singular: "food" (Gourmand's Talent, Ragost), "clue" (Senator Peacock), "equipment" (Dan Lewis) (#1568, owner ruling 2026-11-08). Present only on a type-grant whose
    *  printed text names it ("are Foods in addition to their other types"). `effect.subject` says who gets it; for a whole non-creature class the matcher pairs the GRANTED type with the cards that use it. */
   grantsType?: string;
+  /** WHAT KIND OF CHOICE A `type-grant` HANDS OUT, when the type it gives is the one chosen as the permanent entered (#1570): "creatures you control are the chosen type in addition to their other types" (Leyline of Transformation, Conspiracy, Arcane Adaptation) is `creature-type`; "lands you control
+   *  are the chosen type" (Realmwright, Thran Portal, Multiversal Passage) is `land-type`. The two are not the same grant: a chosen creature type is used by a lord or a kindred payoff, a chosen basic land type by a card that counts or checks that land. Present with no `grantsType` (a chosen type
+   *  has no name until the game). Absent on a grant of a named or every type. Stamped by derive from the card's printed choice (`chosenKindOfText`); never by the LLM. */
+  grantsChosen?: ChosenKind;
   /** WHAT CREATED THIS DELAYED TRIGGER ("when you next cast ... this turn", CR 603.7):
    *  "chapter" (Summon: Fenrir's II), "spell" (Doublecast), or the activation cost that makes it --
    *  Yuna, Grand Summoner's "{T}". Present only on such a trigger (`delayedTriggerRepeats`). It

@@ -2675,5 +2675,998 @@
     ]
    }
   ]
+ },
+ "Realmwright": {
+  "source": {
+   "name": "Realmwright",
+   "typeLine": "Creature — Vedalken Wizard",
+   "oracleText": "As this creature enters, choose a basic land type.\nLands you control are the chosen type in addition to their other types.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{U}",
+   "layout": "normal",
+   "_id": "bad869dd-e844-46ca-be53-73c4bc19d09c"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a basic land type as this creature enters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "lands you control are the chosen type in addition to their other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Conspiracy": {
+  "source": {
+   "name": "Conspiracy",
+   "typeLine": "Enchantment",
+   "oracleText": "As this enchantment enters, choose a creature type.\nCreatures you control are the chosen type. The same is true for creature spells you control and creature cards you own that aren't on the battlefield.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{B}{B}",
+   "layout": "normal",
+   "_id": "775d284d-0884-4ae3-a1b5-2b2a50a895b4"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this enchantment enters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "creatures you control have the chosen creature type; creature spells you control and creature cards you own that aren't on the battlefield have the chosen creature type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Roaming Throne": {
+  "source": {
+   "name": "Roaming Throne",
+   "typeLine": "Artifact Creature — Golem",
+   "oracleText": "Ward {2}\nAs this creature enters, choose a creature type.\nThis creature is the chosen type in addition to its other types.\nIf a triggered ability of another creature you control of the chosen type triggers, it triggers an additional time.",
+   "keywords": [
+    "Ward"
+   ],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{4}",
+   "layout": "normal",
+   "_id": "3640c29b-1534-4952-b297-619ade948431"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Ward {2}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this creature enters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "this creature is the chosen type in addition to its other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "trigger-again",
+      "object": "a triggered ability of another creature you control of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Lifecraft Engine": {
+  "source": {
+   "name": "Lifecraft Engine",
+   "typeLine": "Artifact — Vehicle",
+   "oracleText": "As this Vehicle enters, choose a creature type.\nVehicle creatures you control are the chosen creature type in addition to their other types.\nEach creature you control of the chosen type other than this Vehicle gets +1/+1.\nCrew 3",
+   "keywords": [
+    "Crew"
+   ],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{3}",
+   "layout": "normal",
+   "_id": "caa69b51-1efd-4d0e-803b-914a83ccb836"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "each creature you control of the chosen type other than this Vehicle",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Crew 3",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Thran Portal": {
+  "source": {
+   "name": "Thran Portal",
+   "typeLine": "Land — Gate",
+   "oracleText": "This land enters tapped unless you control two or fewer other lands.\nAs this land enters, choose a basic land type.\nThis land is the chosen type in addition to its other types.\nMana abilities of this land cost an additional 1 life to activate.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "",
+   "layout": "normal",
+   "_id": "926ce6a2-7bdd-4380-ac65-bc902ba0c284"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a basic land type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "this is the chosen type in addition to its other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "Mana abilities of this land cost an additional 1 life to activate",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Multiversal Passage": {
+  "source": {
+   "name": "Multiversal Passage",
+   "typeLine": "Land",
+   "oracleText": "As this land enters, choose a basic land type. Then you may pay 2 life. If you don't, it enters tapped.\nThis land is the chosen type.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "",
+   "layout": "normal",
+   "_id": "17770eeb-ecbf-4510-af2d-acececfbe146"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a basic land type as this land enters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "this land is the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Adaptive Automaton": {
+  "source": {
+   "name": "Adaptive Automaton",
+   "typeLine": "Artifact Creature — Construct",
+   "oracleText": "As this creature enters, choose a creature type.\nThis creature is the chosen type in addition to its other types.\nOther creatures you control of the chosen type get +1/+1.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{3}",
+   "layout": "normal",
+   "_id": "53c730c6-2f8c-4af8-b400-b9d573a71e60"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this creature enters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "animate",
+      "object": "this creature becomes the chosen type in addition to its other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "other creatures you control of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Titan of Littjara": {
+  "source": {
+   "name": "Titan of Littjara",
+   "typeLine": "Creature — Illusion",
+   "oracleText": "As this creature enters, choose a creature type.\nThis creature is the chosen type in addition to its other types.\nWhenever this creature enters or attacks, you may draw a card for each other creature you control that shares a creature type with it. If you do, discard a card.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "manaCost": "{4}{U}{U}",
+   "layout": "normal",
+   "_id": "f62250c6-0832-46c8-a800-806589504f5f"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this creature enters",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "this creature is the chosen type in addition to its other types",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card for each other creature you control that shares a creature type with it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card for each other creature you control that shares a creature type with it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Convincing Mirage": {
+  "source": {
+   "name": "Convincing Mirage",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant land\nAs this Aura enters, choose a basic land type.\nEnchanted land is the chosen type.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{U}",
+   "layout": "normal",
+   "_id": "685c4665-e04c-4012-aa5b-888a042c2a21"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant land",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   }
+  ]
+ },
+ "Phantasmal Terrain": {
+  "source": {
+   "name": "Phantasmal Terrain",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant land\nAs this Aura enters, choose a basic land type.\nEnchanted land is the chosen type.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{U}{U}",
+   "layout": "normal",
+   "_id": "7dcbce46-2973-4a9f-93df-95ac41ce668a"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant land",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a basic land type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "enchanted land is the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Rukarumel, Biologist": {
+  "source": {
+   "name": "Rukarumel, Biologist",
+   "typeLine": "Legendary Creature — Human Wizard",
+   "oracleText": "As Rukarumel enters, choose a creature type.\nSlivers you control and nontoken creatures you control are the chosen type in addition to their other creature types. The same is true for creature spells you control and creature cards you own that aren't on the battlefield.\n{3}, {T}: Create a 1/1 colorless Sliver creature token.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{W}{U}{B}{R}{G}",
+   "layout": "normal",
+   "_id": "84391c32-5bb7-4c36-be50-bbb5f8732156"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this enters",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "Slivers you control and nontoken creatures you control become the chosen type in addition to their other creature types; the same is true for creature spells you control and creature cards you own that aren't on the battlefield",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 colorless Sliver creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Ashes of the Fallen": {
+  "source": {
+   "name": "Ashes of the Fallen",
+   "typeLine": "Artifact",
+   "oracleText": "As this artifact enters, choose a creature type.\nEach creature card in your graveyard has the chosen creature type in addition to its other types.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 2,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}",
+   "layout": "normal",
+   "_id": "6437867b-a658-4a71-a8a5-0c5a782d1f84"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "each creature card in your graveyard has the chosen creature type in addition to its other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Xenograft": {
+  "source": {
+   "name": "Xenograft",
+   "typeLine": "Enchantment",
+   "oracleText": "As this enchantment enters, choose a creature type.\nEach creature you control is the chosen type in addition to its other types.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{U}",
+   "layout": "normal",
+   "_id": "76642e7a-3c8f-45b8-9cd7-dac8086bea87"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this enchantment enters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "each creature you control is the chosen type in addition to its other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Arcane Adaptation": {
+  "source": {
+   "name": "Arcane Adaptation",
+   "typeLine": "Enchantment",
+   "oracleText": "As this enchantment enters, choose a creature type.\nCreatures you control are the chosen type in addition to their other types. The same is true for creature spells you control and creature cards you own that aren't on the battlefield.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{U}",
+   "layout": "normal",
+   "_id": "2188c03f-11b6-4651-914a-b4fdd59127e3"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose a creature type as this enchantment enters",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "creatures you control, creature spells you control, and creature cards you own not on the battlefield gain the chosen creature type in addition to their other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Cabal Coffers": {
+  "source": {
+   "name": "Cabal Coffers",
+   "typeLine": "Land",
+   "oracleText": "{2}, {T}: Add {B} for each Swamp you control.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "",
+   "layout": "normal",
+   "_id": "7358e164-5704-4e78-9b21-6a9bf2a968ce"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{B} for each Swamp you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Sol Ring": {
+  "source": {
+   "name": "Sol Ring",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Add {C}{C}.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 1,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}",
+   "layout": "normal",
+   "_id": "6ad8011d-3471-4369-9d68-b264cc027487"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Forest": {
+  "source": {
+   "name": "Forest",
+   "typeLine": "Basic Land — Forest",
+   "oracleText": "({T}: Add {G}.)",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "",
+   "layout": "normal",
+   "_id": "b34bb2dc-c1af-4d77-b0b3-a0fb342a5fc6"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "({T}: Add {G}.)",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Swamp": {
+  "source": {
+   "name": "Swamp",
+   "typeLine": "Basic Land — Swamp",
+   "oracleText": "({T}: Add {B}.)",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "",
+   "layout": "normal",
+   "_id": "56719f6a-1a6c-4c0a-8d21-18f7d7350b68"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "({T}: Add {B}.)",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
  }
 }

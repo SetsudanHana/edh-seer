@@ -14,6 +14,8 @@ import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
 import { targetingBanOf, targetingBanSubjectInObject, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
 import { withBaseSetSplit } from "./base-set.js";
+import { withChosenTypeGrant } from "./chosen-grant.js";
+import { nameOnlyTypes, stripOwnNameSubtypes } from "./own-name.js";
 import { TYPE_GRANT, grantedTypeOf, ZONE_SCOPED_KINDS, actionEffectKind, activationBanClass, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
 import { actionEmits, definesPowerToughness, casualtySacrifice, enteringClass, millsOwnLibrary, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, narrowSelfExiledSpell, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, activationConditionOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
@@ -53,7 +55,7 @@ import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, b
 import { triggerHasCue } from "../clause-store.js";
 import { emblemRecipient } from "../emblem.js";
 import { chosenColorOf } from "./chosen-color.js";
-import { chosenKindOf } from "./chosen-kind.js";
+import { chosenKindOf, chosenKindOfText } from "./chosen-kind.js";
 import { selectionFromText } from "./selection-text.js";
 
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
@@ -2942,6 +2944,7 @@ export function deriveAbilities(
     clause = withPrintedZoneFacts(clause, rehomed ?? clauseTexts?.[clause.id]);
     clause = splitMultiZoneExiles(clause, rehomed ?? clauseTexts?.[clause.id], cardText);
     clause = withBaseSetSplit(clause, rehomed ?? clauseTexts?.[clause.id]);
+    clause = withChosenTypeGrant(clause, rehomed ?? clauseTexts?.[clause.id]);
     if (collapseSearches) clause = collapseZoneSearches(clause);
     clause = splitDoesTheSame(clause, clauseTexts?.[clause.id]);
     // WHICH FACE PRINTS THIS CLAUSE. Stamped onto every ability the clause derives below, so the
@@ -4519,6 +4522,11 @@ export function deriveAbilities(
       if (abilities[i].effect?.kind === "type-grant") {
         const grantsType = grantedTypeOf(text);
         if (grantsType) abilities[i] = { ...abilities[i], grantsType };
+        // ...OR THAT IT HANDS OUT THE CHOSEN ONE (#1570): of a creature type, or of a basic land type.
+        if (!grantsType && /\bthe chosen (?:creature |land |basic land )?type\b/i.test(text ?? "")) {
+          const grantsChosen = chosenKindOfText(cardText);
+          if (grantsChosen === "creature-type" || grantsChosen === "land-type") abilities[i] = { ...abilities[i], grantsChosen };
+        }
       }
       const reduces = abilities[i].effect?.kind === "cost-reduction" ? reductionOf(text ?? "", abilities[i].amount) : undefined;
       if (reduces) abilities[i] = { ...abilities[i], reduces };
@@ -4949,7 +4957,10 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
   const creatureFaces = (chars.faces ?? [{ types: chars.types, subtypes: chars.subtypes }])
     .filter((f) => f.types.some((t) => t.toLowerCase() === "creature"));
   const own = [...new Set(creatureFaces.flatMap((f) => f.subtypes.map((x) => x.toLowerCase())))];
-  const pinned = own.length === 0 ? hosted : hosted.map((a) => a.trigger?.subject.sharesTypeWith !== "self" ? a : {
+  // THE CARD'S OWN NAME IS NOT A CLASS (#1570), before the pin below puts the card's real types into a `sharesTypeWith: self` subject.
+  const ownNameOnly = nameOnlyTypes(input.name, input.oracleText);
+  const named = ownNameOnly.size === 0 ? hosted : hosted.map((a) => stripOwnNameSubtypes(a, ownNameOnly));
+  const pinned = own.length === 0 ? named : named.map((a) => a.trigger?.subject.sharesTypeWith !== "self" ? a : {
     ...a,
     trigger: { ...a.trigger, subject: (({ sharesTypeWith: _s, ...rest }) => ({ ...rest, subtype: own }))(a.trigger.subject) },
   });

@@ -1,0 +1,1442 @@
+{
+ "Human Torch": {
+  "source": {
+   "name": "Human Torch",
+   "typeLine": "Legendary Creature — Human Hero",
+   "oracleText": "At the beginning of combat on your turn, if you've cast a noncreature spell this turn, Human Torch gains flying, double strike, and haste until end of turn.\nWhenever Human Torch attacks, you may pay {R}{G}{W}{U}. If you do, until end of turn, whenever he deals combat damage to an opponent, he deals that much damage to each other opponent.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "2",
+   "manaCost": "{3}{R}",
+   "layout": "normal",
+   "_id": "d55cb52d-b35c-4602-a518-cd51f155a2d1"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "begin-combat",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "double strike",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "Human Torch",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each other opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that much",
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Phelddagrif": {
+  "source": {
+   "name": "Phelddagrif",
+   "typeLine": "Legendary Creature — Phelddagrif",
+   "oracleText": "{G}: Phelddagrif gains trample until end of turn. Target opponent creates a 1/1 green Hippo creature token.\n{W}: Phelddagrif gains flying until end of turn. Target opponent gains 2 life.\n{U}: Return Phelddagrif to its owner's hand. Target opponent may draw a card.",
+   "keywords": [],
+   "colors": [
+    "G",
+    "U",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G",
+    "U",
+    "W"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{1}{G}{W}{U}",
+   "layout": "normal",
+   "_id": "d0e99535-0ea0-4aa5-99f5-6c5255b27c38"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "trample until end of turn",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "create",
+      "object": "1/1 green Hippo creature token",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "flying until end of turn",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "gain-life",
+      "object": "target opponent",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "Phelddagrif",
+      "toZone": "hand",
+      "optional": false,
+      "fromZone": null
+     },
+     {
+      "verb": "draw",
+      "object": "target opponent",
+      "amount": "1",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Elder Arthur Maxson": {
+  "source": {
+   "name": "Elder Arthur Maxson",
+   "typeLine": "Legendary Creature — Human Knight",
+   "oracleText": "Creature tokens you control have training. (Whenever a creature token you control attacks with another creature with greater power, put a +1/+1 counter on that token.)\nBlind Betrayal — Sacrifice another creature: Elder Arthur Maxson gains indestructible until end of turn.",
+   "keywords": [
+    "Blind Betrayal"
+   ],
+   "colors": [
+    "B",
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "W"
+   ],
+   "power": "4",
+   "toughness": "2",
+   "manaCost": "{1}{W}{B}",
+   "layout": "normal",
+   "_id": "d95cd013-6f32-4a8b-9c46-a28695eea4f1"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "training",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "another creature",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "grant-ability",
+      "object": "indestructible",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Moon Girl and Devil Dinosaur": {
+  "source": {
+   "name": "Moon Girl and Devil Dinosaur",
+   "typeLine": "Legendary Creature — Human Dinosaur Hero",
+   "oracleText": "Whenever you draw your second card each turn, until end of turn, Moon Girl and Devil Dinosaur's base power and toughness become 6/6 and they gain trample.\nWhenever an artifact you control enters, draw a card. This ability triggers only once each turn.",
+   "keywords": [],
+   "colors": [
+    "G",
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G",
+    "U"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{G}{U}",
+   "layout": "normal",
+   "_id": "bfe0818b-ae13-4174-85c8-24b895d28df0"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "draw",
+     "subject": "your second card",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Moon Girl and Devil Dinosaur",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "6/6",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "trample",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "an artifact you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Scion of the Ur-Dragon": {
+  "source": {
+   "name": "Scion of the Ur-Dragon",
+   "typeLine": "Legendary Creature — Dragon Avatar",
+   "oracleText": "Flying\n{2}: Search your library for a Dragon permanent card and put it into your graveyard. If you do, Scion of the Ur-Dragon becomes a copy of that card until end of turn. Then shuffle.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{W}{U}{B}{R}{G}",
+   "layout": "normal",
+   "_id": "b4031540-584b-4c8a-9e4e-d68ae5cdec5b"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a Dragon permanent card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "that card",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "copy",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Eye of Nidhogg": {
+  "source": {
+   "name": "Eye of Nidhogg",
+   "typeLine": "Legendary Enchantment — Aura",
+   "oracleText": "Enchant creature\nEnchanted creature is a black Dragon with base power and toughness 4/2, has flying and deathtouch, and is goaded. (It attacks each combat if able and attacks a player other than you if able.)\nWhen Eye of Nidhogg is put into a graveyard from the battlefield, return it to its owner's hand.",
+   "keywords": [
+    "Goad",
+    "Enchant"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}",
+   "layout": "normal",
+   "_id": "c288f184-0beb-4cc9-9b0a-5f3c4b9e70d7"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "animate",
+      "object": "enchanted creature, a black Dragon with base power and toughness 4/2",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "deathtouch",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "goad",
+      "object": "enchanted creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "Eye of Nidhogg",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "The War Doctor": {
+  "source": {
+   "name": "The War Doctor",
+   "typeLine": "Legendary Creature — Time Lord Doctor",
+   "oracleText": "Whenever one or more other permanents phase out and whenever one or more other cards are put into exile from anywhere, put a time counter on The War Doctor.\nWhenever The War Doctor attacks, it deals damage equal to the number of time counters on it to any target. If a creature dealt damage this way would die this turn, exile it instead.",
+   "keywords": [],
+   "colors": [
+    "R",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "5",
+   "manaCost": "{2}{R}{W}",
+   "layout": "normal",
+   "_id": "d97553bf-6763-4a7b-8d82-1b438a22aa62"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "phases-out",
+     "subject": "one or more other permanents",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "time",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "exiled",
+     "subject": "one or more other cards from anywhere",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "time",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "The War Doctor",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "any target",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the number of time counters on The War Doctor",
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "a creature dealt damage this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Graf Rats": {
+  "source": {
+   "name": "Graf Rats",
+   "typeLine": "Creature — Rat",
+   "oracleText": "At the beginning of combat on your turn, if you both own and control this creature and a creature named Midnight Scavengers, exile them, then meld them into Chittering Host.",
+   "keywords": [
+    "Meld"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "2",
+   "toughness": "1",
+   "manaCost": "{1}{B}",
+   "layout": "meld",
+   "_id": "852edc00-9d98-427c-9869-7d0c8c121118"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "begin-combat",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "Graf Rats and Midnight Scavengers",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "meld",
+      "object": "them into Chittering Host",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Myr Servitor": {
+  "source": {
+   "name": "Myr Servitor",
+   "typeLine": "Artifact Creature — Myr",
+   "oracleText": "At the beginning of your upkeep, if this creature is on the battlefield, each player returns all cards named Myr Servitor from their graveyard to the battlefield.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 1,
+   "colorIdentity": [],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{1}",
+   "layout": "normal",
+   "_id": "b6a50858-a013-4703-a9d7-5b69ef9bd9ae"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "all cards named Myr Servitor",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Templar Knight": {
+  "source": {
+   "name": "Templar Knight",
+   "typeLine": "Creature — Human Knight",
+   "oracleText": "Vigilance\n{W}, Tap five untapped attacking creatures you control named Templar Knight: Search your library for a legendary artifact card, put it onto the battlefield, then shuffle.\nA deck can have any number of cards named Templar Knight.",
+   "keywords": [
+    "Vigilance"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "3",
+   "toughness": "1",
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "_id": "f9453fe2-fadf-4cd4-8d2c-0eaa0e2d78d6"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a legendary artifact card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "A deck can have any number of cards named Templar Knight",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Phoenix Fleet Airship": {
+  "source": {
+   "name": "Phoenix Fleet Airship",
+   "typeLine": "Artifact — Vehicle",
+   "oracleText": "Flying\nAt the beginning of your end step, if you sacrificed a permanent this turn, create a token that's a copy of this Vehicle.\nAs long as you control eight or more permanents named Phoenix Fleet Airship, this Vehicle is an artifact creature.\nCrew 1",
+   "keywords": [
+    "Flying",
+    "Crew"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{2}{B}{B}",
+   "layout": "normal",
+   "_id": "6ffe71c0-acb5-4ba9-8c2f-719330e1ea69"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a token that's a copy of this Vehicle",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "animate",
+      "object": "this Vehicle",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Crew 1",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Burning-Rune Demon": {
+  "source": {
+   "name": "Burning-Rune Demon",
+   "typeLine": "Creature — Demon Berserker",
+   "oracleText": "Flying\nWhen this creature enters, you may search your library for exactly two cards not named Burning-Rune Demon that have different names. If you do, reveal those cards. An opponent chooses one of them. Put the chosen card into your hand and the other into your graveyard, then shuffle.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "manaCost": "{4}{B}{B}",
+   "layout": "normal",
+   "_id": "d551fae8-6b40-4118-b9db-29d2f5dff405"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for exactly two cards not named Burning-Rune Demon that have different names",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "the chosen card",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the other",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Aurochs": {
+  "source": {
+   "name": "Aurochs",
+   "typeLine": "Creature — Aurochs",
+   "oracleText": "Trample\nWhenever this creature attacks, it gets +1/+0 until end of turn for each other attacking Aurochs.",
+   "keywords": [
+    "Trample"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "manaCost": "{3}{G}",
+   "layout": "normal",
+   "_id": "3961ef7c-4eb4-482e-9cda-d49d6a29c5a9"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+0 for each other attacking Aurochs",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Coward // Killer": {
+  "source": {
+   "name": "Coward // Killer",
+   "typeLine": "Sorcery // Sorcery",
+   "oracleText": "Target creature can't block this turn and becomes a Coward in addition to its other types until end of turn.\nTime travel.\n//\nKiller deals 3 damage to target creature and each other creature that shares a creature type with it.",
+   "keywords": [
+    "Time Travel"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{R} // {2}{R}{R}",
+   "layout": "split",
+   "_id": "21591447-c045-4317-8d0e-705627aa157b"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "block",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "animate",
+      "object": "target creature becomes a Coward",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "time-travel",
+      "object": "you",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "target creature and each other creature that shares a creature type with it",
+      "amount": "3",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Lizard, Connors's Curse": {
+  "source": {
+   "name": "Lizard, Connors's Curse",
+   "typeLine": "Legendary Creature — Lizard Villain",
+   "oracleText": "Trample\nLizard Formula — When Lizard, Connors's Curse enters, up to one other target creature loses all abilities and becomes a green Lizard creature with base power and toughness 4/4.",
+   "keywords": [
+    "Lizard Formula",
+    "Trample"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{2}{G}{G}",
+   "layout": "normal",
+   "_id": "48d1b217-b068-468c-bc6c-4bef9e44cc6e"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "have abilities",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "animate",
+      "object": "green Lizard creature with base power and toughness 4/4",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "The Scorpion God": {
+  "source": {
+   "name": "The Scorpion God",
+   "typeLine": "Legendary Creature — God",
+   "oracleText": "Whenever a creature with a -1/-1 counter on it dies, draw a card.\n{1}{B}{R}: Put a -1/-1 counter on another target creature.\nWhen The Scorpion God dies, return it to its owner's hand at the beginning of the next end step.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "R"
+   ],
+   "power": "6",
+   "toughness": "5",
+   "manaCost": "{3}{B}{R}",
+   "layout": "normal",
+   "_id": "aff223d4-6338-460d-a4d5-d45f522864dc"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "a creature with a -1/-1 counter on it",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "a -1/-1 counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "The Scorpion God",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Serra Avatar": {
+  "source": {
+   "name": "Serra Avatar",
+   "typeLine": "Creature — Avatar",
+   "oracleText": "Serra Avatar's power and toughness are each equal to your life total.\nWhen Serra Avatar is put into a graveyard from anywhere, shuffle it into its owner's library.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "*",
+   "toughness": "*",
+   "manaCost": "{4}{W}{W}{W}",
+   "layout": "normal",
+   "_id": "c363725f-15cf-4955-aaf1-536b1f8daaed"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Serra Avatar",
+      "amount": "your life total",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "Serra Avatar",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "shuffle",
+      "object": "Serra Avatar",
+      "fromZone": null,
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Arden Angel": {
+  "source": {
+   "name": "Arden Angel",
+   "typeLine": "Creature — Angel",
+   "oracleText": "Flying\nAt the beginning of your upkeep, if Arden Angel is in your graveyard, roll a four-sided die. If the result is 1, return Arden Angel from your graveyard to the battlefield.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{4}{W}{W}",
+   "layout": "normal",
+   "_id": "82d51c8a-d42b-48b3-a726-3a8d28d057e5"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "roll-dice",
+      "object": "a four-sided die",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "Arden Angel",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Goblin Rabblemaster": {
+  "source": {
+   "name": "Goblin Rabblemaster",
+   "typeLine": "Creature — Goblin Warrior",
+   "oracleText": "Other Goblin creatures you control attack each combat if able.\nAt the beginning of combat on your turn, create a 1/1 red Goblin creature token with haste.\nWhenever this creature attacks, it gets +1/+0 until end of turn for each other attacking Goblin.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{2}{R}",
+   "layout": "normal",
+   "_id": "24661b81-6bee-4ad8-b3ab-53cb65005c51"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "Other Goblin creatures you control can't not attack each combat if able",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "begin-combat",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 red Goblin creature token with haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature gets +1/+0 until end of turn for each other attacking Goblin",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Elvish Archdruid": {
+  "source": {
+   "name": "Elvish Archdruid",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "Other Elf creatures you control get +1/+1.\n{T}: Add {G} for each Elf you control.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{G}{G}",
+   "layout": "normal",
+   "_id": "6e2c2423-d854-4478-99e6-64f29851f026"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Other Elf creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G} for each Elf you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Goblin Bombardment": {
+  "source": {
+   "name": "Goblin Bombardment",
+   "typeLine": "Enchantment",
+   "oracleText": "Sacrifice a creature: This enchantment deals 1 damage to any target.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{R}",
+   "layout": "normal",
+   "_id": "edad60c6-80de-4033-af1b-a703ac332983"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "any target",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ }
+}
