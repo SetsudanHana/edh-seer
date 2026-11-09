@@ -2061,7 +2061,7 @@ function withLiveKills<T extends DeckCard>(dc: T, opts: ReasonOptions): T {
  *  and a producer removing ITSELF is not removing a host. 42 corpus Auras carry the shape, 4 in the
  *  71 decks; the other 109 Aura dies-triggers say "when enchanted creature dies" and already read as
  *  a `dies:creature` demand. */
-function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abilities"][number], e: GameEvent, t: GameEvent, h: Hierarchy, abilities: CardTags["abilities"]): boolean {
+function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abilities"][number], e: GameEvent, t: GameEvent, h: Hierarchy, abilities: CardTags["abilities"], producer: readonly GameEvent[]): boolean {
   const host = chars.enchants;
   if (!host || t.subject.self !== true || (t.verb !== "dies" && t.verb !== "leaves")) return false;
   if (e.verb !== "dies" && e.verb !== "leaves") return false;
@@ -2079,17 +2079,22 @@ function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abiliti
   // graveyard when its host leaves the BATTLEFIELD (CR 704.5m). Below, `fromZone` is stripped so a stated graveyard or battlefield origin reads as the class alone; the stack origin is refused first.
   if (e.subject.fromZone === "stack") return false;
   // A TRIGGER THAT ACTS ON THE HOST FINDS IT GONE (#1513). "When this Aura leaves the battlefield, destroy enchanted creature" (Parallax Dementia), "enchanted permanent's controller sacrifices it" (Reality Acid): when the Aura
-  // leaves BECAUSE its host did, the host is already off the battlefield and the trigger has nothing to act on. So an event that could only be the HOST (a creature-only death, exile or bounce: Murder, Wrath of God, Dawn of
-  // the Dead's exile) feeds nothing. An event whose subject could also be the Aura ITSELF ("destroy target permanent", "exile target artifact or enchantment": Beast Within, Revoke Existence) keeps its pair: that removal can take
-  // the Aura, and its trigger then does act.
-  // CEILING: the pair is kept for the Aura-naming events with the host reading's reason text ("removes the creature ... enchants"), which is not the removal that makes the trigger count; the direct route's own control gate (a
-  // producer aimed at an opponent's permanent does not feed an Aura of yours) is not touched.
+  // leaves BECAUSE its host did, the host is already off the battlefield and the trigger has nothing to act on. So a producer that can only take the HOST (a creature-only death, exile or bounce: Murder, Wrath of God, a
+  // reanimator's end-step exile) feeds nothing. A producer that can ALSO take the Aura itself keeps its pair: Farewell's "Exile all enchantments" can exile Parallax Dementia, and its trigger then does act.
+  // "Can take the Aura" is read over the producer's WHOLE card (`producer`, its events): the modes of one spell are separate abilities in the store (Farewell, Austere Command), so the same ability would miss them. An
+  // event counts when it removes (dies / leaves / exiled / sacrifice) something typed enchantment, permanent or Aura and its control is you or any: the Aura's own trigger is `you`, so an opponent-only removal does not reach it.
+  // CEILING: the pair is kept with the host reading's reason text ("removes the creature ... enchants") although the removal that makes the trigger count is the producer's other event; the card, not the mode, is the unit
+  // (a creature-kill and an unrelated enchantment removal on one card keep each other's pair); the direct route's own gates are untouched.
   if (a.actsOnHost === true) {
-    // WHAT KINDS OF PERMANENT THE EVENT NAMES, and nothing else: not whose it is, its state, nor a stat / colour / keyword rider ("an artifact, enchantment, or creature with flying" is stored as one merged filter, so its rider cannot be
-    // held against the enchantment in the list). An untyped event names any permanent. The direct route's control gate is not this one.
-    const { type, subtype, anyOf, notType, notSubtype } = e.subject;
-    const kinds: SubjectFilter = { control: "any", token: null, ...(type !== undefined ? { type } : {}), ...(subtype !== undefined ? { subtype } : {}), ...(anyOf !== undefined ? { anyOf } : {}), ...(notType !== undefined ? { notType } : {}), ...(notSubtype !== undefined ? { notSubtype } : {}) };
-    if (!subjectMatches(characteristicsSubject({ characteristics: chars } as CardTags), kinds, h)) return false;
+    const aura = characteristicsSubject({ characteristics: chars } as CardTags);
+    const reachesAura = producer.some((x) => {
+      if (x.implied === true || x.subject.self === true || x.subject.control === "opp") return false;
+      if (x.verb !== "dies" && x.verb !== "leaves" && x.verb !== "exiled" && x.verb !== "sacrifice") return false;
+      const { type, subtype, anyOf, notType, notSubtype } = x.subject;
+      const kinds: SubjectFilter = { control: "any", token: null, ...(type !== undefined ? { type } : {}), ...(subtype !== undefined ? { subtype } : {}), ...(anyOf !== undefined ? { anyOf } : {}), ...(notType !== undefined ? { notType } : {}), ...(notSubtype !== undefined ? { notSubtype } : {}) };
+      return subjectMatches(aura, kinds, h);
+    });
+    if (!reachesAura) return false;
   }
   // WHOSE CREATURE (#1513). An Aura you put on an OPPONENT's creature is never sent to the graveyard by your own creature's departure.
   const side = e.subject.control === "you" || e.subject.control === "opp" ? auraHostSide(host, abilities) : undefined;
@@ -2407,7 +2412,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
         const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject, ...(a.trigger.amount ? { amountIs: a.trigger.amount } : {}), ...(a.trigger.victim ? { victimIs: a.trigger.victim } : {}) });
         // `e` is `e0` when it matches as authored, or an untyped land put resolved against the
         // deck's lands to the subtype this trigger names (`landPutFor`); null is no match.
-        const viaHost = auraHostLeaves(c.tags.characteristics, a, e0, t, h, cAbilitiesRaw ?? c.tags.abilities);
+        const viaHost = auraHostLeaves(c.tags.characteristics, a, e0, t, h, cAbilitiesRaw ?? c.tags.abilities, pEvents);
         const e = viaHost ? e0 : landPutFor(e0, t, opts.landTypes, ownEvents, h);
         if (!e) continue;
         // TOKENS MEDIATE (Task 7, tokens-as-nodes, 2026-08-16). A maker's own "a Treasure enters"

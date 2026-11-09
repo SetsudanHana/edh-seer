@@ -2029,5 +2029,264 @@
     ]
    }
   ]
+ },
+ "Farewell": {
+  "source": {
+   "name": "Farewell",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose one or more —\n• Exile all artifacts.\n• Exile all creatures.\n• Exile all enchantments.\n• Exile all graveyards.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{W}{W}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": []
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all artifacts",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all creatures",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all enchantments",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all graveyards",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Austere Command": {
+  "source": {
+   "name": "Austere Command",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose two —\n• Destroy all artifacts.\n• Destroy all enchantments.\n• Destroy all creatures with mana value 3 or less.\n• Destroy all creatures with mana value 4 or greater.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{W}{W}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": []
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all artifacts",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all enchantments",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures with mana value 3 or less",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures with mana value 4 or greater",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Worldslayer": {
+  "source": {
+   "name": "Worldslayer",
+   "typeLine": "Artifact — Equipment",
+   "oracleText": "Whenever equipped creature deals combat damage to a player, destroy all permanents other than this Equipment.\nEquip {5} ({5}: Attach to target creature you control. Equip only as a sorcery.)",
+   "keywords": [
+    "Equip"
+   ],
+   "colors": [],
+   "manaValue": 5,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all permanents other than this Equipment",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "equipped creature",
+     "control": "you"
+    }
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Equip {5}"
+     }
+    ]
+   }
+  ]
+ },
+ "Cleansing Nova": {
+  "source": {
+   "name": "Cleansing Nova",
+   "typeLine": "Sorcery",
+   "oracleText": "Choose one —\n• Destroy all creatures.\n• Destroy all artifacts and enchantments.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{W}{W}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": []
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all creatures",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "all artifacts and enchantments",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
  }
 }

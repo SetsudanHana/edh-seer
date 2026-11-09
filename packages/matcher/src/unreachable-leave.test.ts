@@ -59,14 +59,12 @@ describe("an Aura whose leave trigger acts on its host is not triggered by the h
   test.each(["Parallax Dementia", "Reality Acid"])("Dawn of the Dead's exile of the creature -> %s: none", (aura) => {
     expect(leaveTags("Dawn of the Dead", aura)).toEqual([]);
   });
-  test.each(["Parallax Dementia", "Reality Acid"])("Beast Within (\"Destroy target permanent\": it can name the Aura itself) -> %s still pairs", (aura) => {
-    expect(leaveTags("Beast Within", aura).length).toBeGreaterThan(0);
+  test.each(["Farewell", "Austere Command", "Cleansing Nova"])("%s (its card also removes every enchantment or permanent, yours included) -> Parallax Dementia and Reality Acid still pair", (producer) => {
+    expect(leaveTags(producer, "Parallax Dementia").length).toBeGreaterThan(0);
+    expect(leaveTags(producer, "Reality Acid").length).toBeGreaterThan(0);
   });
-  test("Revoke Existence (\"Exile target artifact or enchantment\": Reality Acid can enchant an artifact, and is itself an enchantment) -> Reality Acid still pairs", () => {
-    expect(leaveTags("Revoke Existence", "Reality Acid").length).toBeGreaterThan(0);
-  });
-  test.each(["Parallax Dementia", "Reality Acid"])("Shoot Down (\"Exile target artifact, enchantment, or creature with flying\": the rider belongs to the creature, not the enchantment) -> %s still pairs", (aura) => {
-    expect(leaveTags("Shoot Down", aura).length).toBeGreaterThan(0);
+  test.each(["Beast Within", "Revoke Existence", "Shoot Down"])("%s (removes only an opponent's permanent: side rules, the Aura's trigger is yours) -> Parallax Dementia: none", (producer) => {
+    expect(leaveTags(producer, "Parallax Dementia")).toEqual([]);
   });
   test.each(["Parallax Dementia", "Reality Acid"])("Wrath of God (creatures only: the Aura goes only because its host did) -> %s: none", (aura) => {
     expect(leaveTags("Wrath of God", aura)).toEqual([]);
