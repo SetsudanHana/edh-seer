@@ -831,6 +831,8 @@ test("a board wipe is a mass effect on the battlefield, in any of its shapes", (
     realCard("Mogg Infestation"), realCard("Primeval Light"),
     // #1581 control: an EVERY-player counted sacrifice ("sacrifices a third of the creatures they control") keeps its role; only the opponent-side counted pick is refused.
     realCard("Pox"),
+    // #1581 owner ruling 2026-11-09: a 'sacrifice HALF' effect is a wipe in practice, like Pox. Derive stores 'half' as a counted pick with no amount, the same as 'that many', so the printed 'sacrifices half' keeps it.
+    realCard("Vona's Hunger"), realCard("Rakdos the Defiler"),
   ];
   const notWipes: DeckCard[] = [
     realCard("Fleshbag Marauder"), realCard("Rest in Peace"), realCard("Gallifrey Stands"), realCard("Emrakul, the World Anew"), realCard("Eldritch Immunity"), realCard("Mizzix's Mastery"),
@@ -840,7 +842,7 @@ test("a board wipe is a mass effect on the battlefield, in any of its shapes", (
     // A power-only shrink, a continuous one, and an opponent's counted sacrifice kill nothing in bulk.
     realCard("Cumber Stone"), realCard("Kaervek, the Spiteful"), realCard("Crackling Doom"), realCard("Portal to Phyrexia"),
     // #1581: "that source's controller sacrifices that many permanents of their choice" is an opponent's COUNTED sacrifice, a deterrent and no wipe (`selection: counted`).
-    realCard("Phyrexian Obliterator"), realCard("Ravenous Rotbelly"),
+    realCard("Phyrexian Obliterator"), realCard("Ravenous Rotbelly"), realCard("Bane of Bala Ged"),
     // Burn at a player and the planeswalkers they control touches no creature.
     realCard("Cavalier of Flame"),
     // A target widened by "and all other ... with the same name", and a block's "destroy both creatures".
