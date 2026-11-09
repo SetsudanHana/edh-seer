@@ -72,11 +72,10 @@ function classCanBeAll(producer: SubjectFilter, all: readonly string[], has: Rea
   return !all.some((t) => out.includes(t.toLowerCase()));
 }
 
-/** AN EDICT ON EVERYONE (#1579, owner ruling 2026-11-09): "each player sacrifices a creature" (Innocent Blood, Fleshbag Marauder) is stored with no scope, "each player sacrifices two / X creatures" (Barter in Blood, Pox, Meathook Massacre II) as `counted`, "each opponent" as control opp. A
+/** AN EDICT ON EVERYONE (#1579, owner ruling 2026-11-09): "each player sacrifices a creature" (Innocent Blood, Fleshbag Marauder) is stored with no scope, "each player sacrifices two / X creatures" (Barter in Blood, Pox, Meathook Massacre II) as `counted`, "each opponent" as control opp; derive marks them `edictAll`. A
  *  "target player / opponent" edict carries `edict: true` (it can be aimed at one player) and is not one; nor is a sacrifice of your own (control you). Read on a sacrifice or dies producer only (edges.ts eventMatches). */
 export function isEveryoneEdict(s: SubjectFilter): boolean {
-  if (s.edict === true || s.control === "you" || s.self === true || s.type === undefined) return false;
-  return s.scope === undefined || ((s.scope === "all" || s.scope === "each") && s.selection === "counted");
+  return s.edictAll === true && s.edict !== true && s.control !== "you" && s.self !== true && s.type !== undefined;
 }
 
 /** A MASS PRODUCER NOT RESTRICTED TO NONTOKENS CAN BE A TOKEN (#1579 part 3, owner ruling 2026-11-09). Only scope all / each qualifies (a wipe, "for each Spirit, return it", an edict on everyone); a single target does not. Refused: a nontoken class, a class read
@@ -213,7 +212,7 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // whole creature pool.
   // A MASS PRODUCER (scope all / each) that does not say nontoken can be a token (#1579 part 3, owner 2026-11-09): "For each Spirit, return it" (Cut the Tethers) feeds Nadier's Nightblade's "a token you control leaves", "destroy all creatures" feeds Grismold.
   // A single target does not, nor a nontoken, a land-only, a pile or a counted class, nor an ENTERS event (`massRemoval`).
-  // CEILING: derive stores a sacrifice COST or a chosen number ("Sacrifice two artifacts": Breya, Kuldotha Forgemaster; "sacrifice any number of creatures": Plunge into Darkness, Torgaar; "sacrifice five Illusions": Preston) as scope all with no `selection`, so it passes as mass. Measured over the 76 cards with a token trigger x the whole corpus: +4,530 pair keys, 24 of 40 read at an even stride true; the cost shape is about 1,160 of the 4,530 (161 producers); the NUMBERED rule at derive/subject.ts (`selection: counted`) covers only `permanent`, and widening it to every type is a DERIVE change not made here.
+  // CEILING: a mass class is taken to hold a token whenever the card does not say nontoken, with no check that the deck makes one. An "except for" list drops its spared TYPES ("except for artifacts, lands, and Phyrexians": Elesh Norn's back face; Scourglass), so an artifact token (Munitions) is swept wrongly, and a meld's "exile them" (Graf Rats) is stored as a mass. Measured over the 76 cards with a token trigger x the whole corpus: +4,245 pair keys (3,355 mass, 890 edicts on everyone), 38 of 40 mass gains and 40 of 40 edict gains read at an even stride true.
   if (consumer.token === true && producer.token !== true && !(massRemoval && massCouldBeToken(producer, h, massRemoval === "edict"))) return false;
   if (consumer.token !== null && producer.token !== null && consumer.token !== producer.token) {
     return false;

@@ -248,3 +248,12 @@ export function victimDeclines(clauseText: string, verb: string): boolean {
   const anyPlayer = verb === "exile" ? "|\\b(?:any|each) player may exiles?\\b" : "";
   return new RegExp(`\\b${DECLINER}\\s+may\\s+(?:(?:also|then)\\s+)*${stem}\\b|\\bunless\\s+${DECLINER}\\s+${stem}\\b`, "i").test(clauseText) || (anyPlayer !== "" && new RegExp(anyPlayer.slice(1), "i").test(clauseText));
 }
+
+/** THE SACRIFICE FALLS ON EVERY PLAYER (#1579, owner ruling 2026-11-09: "edicts on everyone" are mass removal): "Each player sacrifices a creature of their choice" (Innocent Blood, Fleshbag Marauder), "each opponent sacrifices ..." (Liliana's Triumph), "each player ... sacrifices X creatures"
+ *  (Death Cloud, Pox), and "at the beginning of each player's upkeep, that player sacrifices ..." (Call to the Grave). Not "target player" (it can be aimed at one: `sacrificerIsTargeted`), not "each opponent MAY sacrifice" (an option: Braids), and not "unless that player sacrifices" (a price: Demanding Dragon).
+ *  CEILING: read over the printed words of the clause; a clause that also has a targeted or optional edict is read on its first cue only. */
+const EVERYONE_SACRIFICES = /\b(?:each|every) (?:other )?(?:player|opponent)\b(?!'s)[^.]{0,200}?\bsacrifices?\b|\beach (?:player|opponent)'s [^.]{0,80}?,\s*that player (?:(?:also|then) )*sacrifices?\b/i;
+const EVERYONE_MAY = /\b(?:each|every) (?:other )?(?:player|opponent) may\b/i;
+export function sacrificeFallsOnEveryone(clauseText: string): boolean {
+  return EVERYONE_SACRIFICES.test(clauseText) && !EVERYONE_MAY.test(clauseText);
+}

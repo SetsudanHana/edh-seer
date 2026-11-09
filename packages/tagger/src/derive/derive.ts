@@ -25,7 +25,7 @@ import { animateLasts, animateResult } from "./animate-result.js";
 import { hostEffect } from "./host.js";
 import { librarySearchOwner, printsSearch } from "./library-search.js";
 import { damageDealerOf, granteeDealer, grantedDealerIsGranter, damageHitsSelf, damageRecipient, playerOnlyRecipient } from "./damage-recipient.js";
-import { actionRecipients, damagedPlayerIsOpponent, oneSacrificer, sacrificerIsTargeted, sentenceNamesAPlayer, thatPlayerIsOpponent, victimDeclines } from "./recipient.js";
+import { actionRecipients, damagedPlayerIsOpponent, oneSacrificer, sacrificeFallsOnEveryone, sacrificerIsTargeted, sentenceNamesAPlayer, thatPlayerIsOpponent, victimDeclines } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { CARD_TYPES, namesAClass, parseSubject, parseCounter, counterKindOf } from "./subject.js";
 import { parse as parseFilterRaw, stableJson } from "../grammar/filter.js";
@@ -3983,6 +3983,8 @@ export function deriveAbilities(
       // sacrifice and the card's own are never the victim's. CEILING: "Target player sacrifices X. You sacrifice Y." marks
       // Y's emits too; no corpus card is shaped so.
       if (action.verb === "sacrifice" && !costSacrifice && sacrificerIsTargeted(clauseText) && !victimDeclines(clauseText, "sacrifice")) for (const e of emits) if (e.subject.self !== true) e.subject.edict = true;
+      // ...AND AN EDICT ON EVERYONE IS MARKED `edictAll` (#1579, owner ruling 2026-11-09), so the matcher can tell "each player sacrifices a creature" from the unscoped death of a single destroyed creature.
+      if (action.verb === "sacrifice" && !costSacrifice && sacrificeFallsOnEveryone(clauseText) && !sacrificerIsTargeted(clauseText) && !victimDeclines(clauseText, "sacrifice")) for (const e of emits) if (e.subject.self !== true) e.subject.edictAll = true;
       // A STATED "you" INSIDE A GRANTED ABILITY IS THE RECIPIENT'S CONTROLLER (Hellish Rebuke: "You
       // lose 2 life" is said by the opponent's permanent), the same flip line 1154 applied to the
       // object's own "you" -- the actor cue runs after it and must not undo it.

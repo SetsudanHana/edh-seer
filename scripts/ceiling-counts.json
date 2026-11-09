@@ -96,7 +96,7 @@
   "packages/tagger/src/derive/modal.ts": 3,
   "packages/tagger/src/derive/own-name.ts": 1,
   "packages/tagger/src/derive/prevention.ts": 4,
-  "packages/tagger/src/derive/recipient.ts": 4,
+  "packages/tagger/src/derive/recipient.ts": 5,
   "packages/tagger/src/derive/reduction.ts": 1,
   "packages/tagger/src/derive/references.ts": 7,
   "packages/tagger/src/derive/repeats.ts": 1,

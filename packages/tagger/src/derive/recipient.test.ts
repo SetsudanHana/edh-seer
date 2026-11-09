@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { actionRecipients, sentenceNamesAPlayer } from "./recipient.js";
+import { actionRecipients, sacrificeFallsOnEveryone, sentenceNamesAPlayer } from "./recipient.js";
 
 test("a permanent's controller getting the payout is an opponent", () => {
   // Pongify, Beast Within, Crib Swap, Generous Gift. Rules-wise you MAY point removal at your own
@@ -176,4 +176,17 @@ test("triggerIsSelf alone resolves a damager the text does not name as the card"
   const text = "Whenever Chilling deals combat damage to a player, that player discards a card.";
   expect(actionRecipients(text, { cardName: "Chilling Apparition" })).toEqual({ discard: "any" });
   expect(actionRecipients(text, { triggerIsSelf: true, cardName: "Chilling Apparition" })).toEqual({ discard: "opp" });
+});
+
+/** #1579 (owner ruling 2026-11-09): an edict on everyone is mass removal. "Each player / each opponent sacrifices ..." and a per-upkeep "that player sacrifices" name no target and no option. */
+test("a sacrifice that falls on every player is marked, a targeted or optional one is not", () => {
+  for (const t of [
+    "Each player sacrifices a creature of their choice.", "Each player sacrifices two creatures of their choice.", "When this creature enters, each opponent sacrifices a creature of their choice.",
+    "Each player loses X life, discards X cards, sacrifices X creatures of their choice, then sacrifices X lands of their choice.", "At the beginning of each player's upkeep, that player sacrifices a non-Zombie creature of their choice.",
+    "Each player sacrifices a creature or planeswalker of their choice. Each player who can't discards a card.",
+  ]) expect(sacrificeFallsOnEveryone(t), t).toBe(true);
+  for (const t of [
+    "Target player sacrifices a creature of their choice.", "Target opponent sacrifices a creature of their choice.", "At the beginning of your end step, you may sacrifice an artifact. If you do, each opponent may sacrifice a permanent of their choice.",
+    "It deals 5 damage to target opponent unless that player sacrifices a creature of their choice.", "Whenever a creature dies, each player draws a card.", "Sacrifice a creature: each player loses 1 life.",
+  ]) expect(sacrificeFallsOnEveryone(t), t).toBe(false);
 });

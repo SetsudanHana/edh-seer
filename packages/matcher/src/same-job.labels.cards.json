@@ -7292,6 +7292,7 @@
       "floor": 0,
       "scalesWith": {
        "control": "any",
+       "edictAll": true,
        "scope": "all",
        "token": null,
        "type": "creature"
@@ -7304,6 +7305,7 @@
       {
        "subject": {
         "control": "any",
+        "edictAll": true,
         "scope": "all",
         "token": null,
         "type": "creature"
@@ -7313,6 +7315,7 @@
       {
        "subject": {
         "control": "any",
+        "edictAll": true,
         "scope": "all",
         "token": null,
         "type": "creature"

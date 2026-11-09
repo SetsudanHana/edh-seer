@@ -690,10 +690,11 @@ describe("a mass producer meets a token demand", () => {
  *  is marked `edict: true` and can be aimed at one player, so it is no edict on everyone. */
 describe("an edict on everyone meets a token demand", () => {
   const drover: SubjectFilter = { control: "any", token: true, type: "creature" };
-  const innocentBlood: SubjectFilter = { control: "any", token: null, type: "creature" };
-  const barter: SubjectFilter = { control: "any", token: null, selection: "counted", type: "creature", scope: "all" };
-  const liliana: SubjectFilter = { control: "opp", token: null, type: "creature" };
+  const innocentBlood: SubjectFilter = { control: "any", token: null, type: "creature", edictAll: true };
+  const barter: SubjectFilter = { control: "any", token: null, selection: "counted", type: "creature", scope: "all", edictAll: true };
+  const liliana: SubjectFilter = { control: "opp", token: null, type: "creature", edictAll: true };
   const diabolic: SubjectFilter = { control: "any", token: null, type: "creature", edict: true };
+  const unscopedDeath: SubjectFilter = { control: "any", token: null, type: "creature" };
   test("Innocent Blood, Barter in Blood and an each-opponent edict feed Twilight Drover", () => {
     expect(subjectMatches(innocentBlood, drover, HE, "edict")).toBe(true);
     expect(subjectMatches(barter, drover, HE, "edict")).toBe(true);
@@ -708,6 +709,10 @@ describe("an edict on everyone meets a token demand", () => {
     expect(isEveryoneEdict({ ...innocentBlood, control: "you" })).toBe(false);
     expect(isEveryoneEdict(innocentBlood)).toBe(true);
     expect(isEveryoneEdict(barter)).toBe(true);
+  });
+  test("CONTROL: an unscoped death of one destroyed creature (Ohran Viper, Mortal Wound) is no edict", () => {
+    expect(isEveryoneEdict(unscopedDeath)).toBe(false);
+    expect(subjectMatches(unscopedDeath, drover, HE, "edict")).toBe(false);
   });
   test("CONTROL: without the edict mode an unscoped class still meets no token demand", () => {
     expect(subjectMatches(innocentBlood, drover, HE, true)).toBe(false);

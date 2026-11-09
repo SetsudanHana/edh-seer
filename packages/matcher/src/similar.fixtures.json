@@ -6475,6 +6475,7 @@
       {
        "subject": {
         "control": "opp",
+        "edictAll": true,
         "scope": "all",
         "token": null,
         "type": "creature"
@@ -6484,6 +6485,7 @@
       {
        "subject": {
         "control": "opp",
+        "edictAll": true,
         "scope": "all",
         "token": null,
         "type": "creature"

@@ -180,6 +180,9 @@ export interface SubjectFilter {
    *  "target player" or "target opponent". `control` still says whose creature it is (opp for "target
    *  opponent", any for "target player"). Never set by the LLM. */
   edict?: true;
+  /** AN EDICT ON EVERYONE (#1579, owner ruling 2026-11-09): "each player / each opponent sacrifices a creature of their choice" (Innocent Blood, Fleshbag Marauder, Liliana's Triumph), "each player sacrifices X creatures" (Pox, Meathook Massacre II), "at the beginning of each player's upkeep, that player sacrifices" (Call to
+   *  the Grave). Set by derive on the `sacrifice` and `dies` emits of such a sacrifice (not a cost, not "each opponent may", not "unless"). The mass-removal reading of a token payoff (matcher `isEveryoneEdict`) takes it; a `target player` edict carries `edict` instead. Never set by the LLM. */
+  edictAll?: true;
   /** false = nontoken only, true = token only, null = any. */
   token: boolean | null;
   /** Marks "the chosen type" (Kindred Discovery); resolved deck-aware in Stage 2. */
