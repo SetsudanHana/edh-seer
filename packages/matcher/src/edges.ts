@@ -12,7 +12,7 @@ import { normalizeZoneEvent, tagKey, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { baseSetStrength, nodePower, pairsAsUpgrade, powerNeeds, raisedToken, readsPower } from "./base-pt-set.js";
 import { hasMediatingToken } from "./tokens.js";
-import { removalReachesAura } from "./aura-reach.js";
+import { auraReachContext, eventReachesAura, removalReachesAura } from "./aura-reach.js";
 import {
   copySentence, costReductionSentence, temporaryCopySentence, counterPresenceSentence, createsSentence,
   enterAsCopySentence, entersAsCopyOfSentence, fetchSentence, proliferateSentence, counterCostSentence, effectPhrase, phraseKindOf, creatureConditionSentence,
@@ -2098,6 +2098,20 @@ function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abiliti
   return subjectMatches({ ...printed, zone: e.subject.zone ?? "battlefield" }, host.zone === undefined ? { ...host, zone: "battlefield" } : host, h);
 }
 
+/** THE DIRECT ROUTE: A REMOVAL THAT TAKES THE AURA ITSELF (#1575). An Aura's own "when this Aura leaves the battlefield" trigger is stored with the subtype `aura`, and a removal event typed `enchantment` or `permanent` ("Destroy all enchantments":
+ *  Cleanfall; "destroy all permanents other than this Equipment": Worldslayer; "sacrifice a permanent": Saw) states no subtype, so `eventMatches` could not show it is an Aura and refused it. Here the event is compared with the Aura
+ *  itself: it counts when `eventReachesAura` says it could take the Aura off the battlefield (the rules of the host route, aura-reach.ts), and the trigger is then judged without its subtype and control. The self-identity gate
+ *  (`subjectMatches` on the Aura's printed characteristics) and every other `eventMatches` gate still run on it. Returns the event to use, or null.
+ *  CEILING: only an Aura's own trigger (not a granted one) with the subtype `aura` and a leave or death verb; an event that already matches as printed (a "destroy target Aura") is not touched; a stated subtype on the event is held against the Aura. */
+function auraOwnLeaves(chars: CardTags["characteristics"], a: CardTags["abilities"][number], e: GameEvent, t: GameEvent, h: Hierarchy, producer: readonly GameEvent[], producerText: string): boolean {
+  if (chars.enchants === undefined || a.grantedBy !== undefined || t.subject.self !== true || (t.verb !== "dies" && t.verb !== "leaves")) return false;
+  if (!list(t.subject.subtype).includes("aura") || list(t.subject.type).length > 0) return false;
+  const aura = characteristicsSubject({ characteristics: chars } as CardTags);
+  if (!eventReachesAura(e, auraReachContext(producer, producerText, aura), aura, h)) return false;
+  const { subtype: _aura, ...rest } = t.subject;
+  return eventMatches(e, { ...t, subject: { ...rest, control: "any" } }, h);
+}
+
 /** WHOSE CREATURE AN AURA GOES ON, in both directions (#1513). A printed "Enchant creature an opponent controls" is `control: opp` and a printed "you control"
  *  is `you`; `subjectMatches` honours both. A plain "Enchant creature" is stored `control: any` for Rancor and Bitter Chill alike, so the side is read off what the Aura
  *  does to its host. OPPONENT'S: it only takes from it (an `untap-denial`, `restriction` or `debuff` static, or "that player sacrifices that creature unless they
@@ -2408,7 +2422,8 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
         // `e` is `e0` when it matches as authored, or an untyped land put resolved against the
         // deck's lands to the subtype this trigger names (`landPutFor`); null is no match.
         const viaHost = auraHostLeaves(c.tags.characteristics, a, e0, t, h, cAbilitiesRaw ?? c.tags.abilities, pEvents, p.card.oracleText ?? "");
-        const e = viaHost ? e0 : landPutFor(e0, t, opts.landTypes, ownEvents, h);
+        const viaAura = !viaHost && !eventMatches(e0, t, h) && auraOwnLeaves(c.tags.characteristics, a, e0, t, h, pEvents, p.card.oracleText ?? "");
+        const e = viaHost || viaAura ? e0 : landPutFor(e0, t, opts.landTypes, ownEvents, h);
         if (!e) continue;
         // TOKENS MEDIATE (Task 7, tokens-as-nodes, 2026-08-16). A maker's own "a Treasure enters"
         // event and the Treasure NODE's own implied "it enters" event (Task 6 -- `selfSubject` in
@@ -2533,7 +2548,9 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
           // `counter`, `commander`): **a field that describes the EVENT must be stripped wherever an
           // emit is used to identify a CARD.**
           const { counter: _stateOnly, entersTapped: _arrival, ...printedMatchable } = identity;
-          if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), printedMatchable, h)) continue;
+          // ...except the direct route to an Aura's own trigger (#1575): `eventReachesAura` has already judged whose permanent a target or mass removal can take (a target is aimed at whatever control it is stored with), so the
+          // stored control is not held against the Aura.
+          if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), viaAura ? { ...printedMatchable, control: "any" } : printedMatchable, h)) continue;
         }
         // AN INTERVENING IF ABOUT THE DYING THING'S COUNTERS IS A REFUSAL, NOT AN EDGE (AL4).
         //
