@@ -65,6 +65,9 @@ describe("an Aura whose leave trigger acts on its host is not triggered by the h
   test("Revoke Existence (\"Exile target artifact or enchantment\": Reality Acid can enchant an artifact, and is itself an enchantment) -> Reality Acid still pairs", () => {
     expect(leaveTags("Revoke Existence", "Reality Acid").length).toBeGreaterThan(0);
   });
+  test.each(["Parallax Dementia", "Reality Acid"])("Shoot Down (\"Exile target artifact, enchantment, or creature with flying\": the rider belongs to the creature, not the enchantment) -> %s still pairs", (aura) => {
+    expect(leaveTags("Shoot Down", aura).length).toBeGreaterThan(0);
+  });
   test.each(["Parallax Dementia", "Reality Acid"])("Wrath of God (creatures only: the Aura goes only because its host did) -> %s: none", (aura) => {
     expect(leaveTags("Wrath of God", aura)).toEqual([]);
   });

@@ -2085,9 +2085,11 @@ function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abiliti
   // CEILING: the pair is kept for the Aura-naming events with the host reading's reason text ("removes the creature ... enchants"), which is not the removal that makes the trigger count; the direct route's own control gate (a
   // producer aimed at an opponent's permanent does not feed an Aura of yours) is not touched.
   if (a.actsOnHost === true) {
-    // WHAT THE EVENT NAMES, not whose it is or what state it is in: the control the Aura's own trigger carries is judged by the direct route, and a token filter is no type.
-    const { zone: _z, fromZone: _f, owner: _o, counter: _c, entersTapped: _t, ...named } = e.subject;
-    if (!subjectMatches(characteristicsSubject({ characteristics: chars } as CardTags), { ...named, control: "any", token: null }, h)) return false;
+    // WHAT KINDS OF PERMANENT THE EVENT NAMES, and nothing else: not whose it is, its state, nor a stat / colour / keyword rider ("an artifact, enchantment, or creature with flying" is stored as one merged filter, so its rider cannot be
+    // held against the enchantment in the list). An untyped event names any permanent. The direct route's control gate is not this one.
+    const { type, subtype, anyOf, notType, notSubtype } = e.subject;
+    const kinds: SubjectFilter = { control: "any", token: null, ...(type !== undefined ? { type } : {}), ...(subtype !== undefined ? { subtype } : {}), ...(anyOf !== undefined ? { anyOf } : {}), ...(notType !== undefined ? { notType } : {}), ...(notSubtype !== undefined ? { notSubtype } : {}) };
+    if (!subjectMatches(characteristicsSubject({ characteristics: chars } as CardTags), kinds, h)) return false;
   }
   // WHOSE CREATURE (#1513). An Aura you put on an OPPONENT's creature is never sent to the graveyard by your own creature's departure.
   const side = e.subject.control === "you" || e.subject.control === "opp" ? auraHostSide(host, abilities) : undefined;

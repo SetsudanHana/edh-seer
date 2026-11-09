@@ -1957,5 +1957,77 @@
     ]
    }
   ]
+ },
+ "Shoot Down": {
+  "source": {
+   "name": "Shoot Down",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile target artifact, enchantment, or creature with flying.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{G}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target artifact, enchantment, or creature with flying",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Despark": {
+  "source": {
+   "name": "Despark",
+   "typeLine": "Instant",
+   "oracleText": "Exile target permanent with mana value 4 or greater.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{W}{B}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target permanent with mana value 4 or greater",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "optional": false
+     }
+    ]
+   }
+  ]
  }
 }
