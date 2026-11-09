@@ -61,6 +61,17 @@ function permanentSubtypeSurvives(subtype: string, notType: readonly string[] | 
   return types.some((t) => t !== "instant" && t !== "sorcery" && !out.includes(t));
 }
 
+/** A CLASS PRODUCER CAN BE AN OBJECT OF ALL THE TYPES A CONJUNCTION DEMANDS (#1577). "Destroy target artifact" (Shatter, Shower of Arrows) can destroy an artifact creature, so it feeds "whenever an artifact creature dies" (Dross Scorpion), and "destroy target creature"
+ *  can destroy one too. A producer EVENT, a class with a scope (target / all / each) that is not itself a conjunction, satisfies the consumer's `allTypes` when its types meet the conjunction and its `notType` excludes none of it. A printed type line (no scope: a card's
+ *  own characteristics) stays strict, as does a producer conjunction and a producer that names a subtype ("destroy all Auras" is never a creature; "return Human creature cards" is a guess). The merged "artifact, enchantment, or creature with flying" filter used to pass only because its type list held both words.
+ *  CEILING: any one shared type is taken as enough for the rest to be possible; a subtype that rules a type out (a Spirit is never an artifact) is not consulted. */
+function classCanBeAll(producer: SubjectFilter, all: readonly string[], has: ReadonlySet<string>): boolean {
+  if (producer.scope === undefined || producer.scope === null || (producer.allTypes?.length ?? 0) > 0 || arr(producer.subtype).length > 0) return false;
+  if (!all.some((t) => has.has(t.toLowerCase()))) return false;
+  const out = (producer.notType ?? []).map((t) => t.toLowerCase());
+  return !all.some((t) => out.includes(t.toLowerCase()));
+}
+
 export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
   // A DISJUNCTION: satisfied by any branch, with the shared fields outside still binding. Checked
   // first so the outer subject is tested without its branches, then each branch on its own.
@@ -179,6 +190,7 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // The other direction stays a wildcard: token:false means "nontoken", which nearly every
   // permanent already is, and treating it as a condition once let 14 triggers draw edges from the
   // whole creature pool.
+  // CEILING: a class producer that can be a token without saying so ("For each Spirit, return it": Cut the Tethers can return a Spirit token) never meets a token demand (Nadier, Agent of the Duskenel's "a token you control leaves"); the one pair #1577 measured is Cut the Tethers x Nadier.
   if (consumer.token === true && producer.token !== true) return false;
   if (consumer.token !== null && producer.token !== null && consumer.token !== producer.token) {
     return false;
@@ -250,7 +262,7 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   const all = consumer.allTypes ?? [];
   if (all.length > 0) {
     const has = expandTypes(arr(producer.type), arr(producer.subtype), h);
-    if (!all.every((t) => has.has(t.toLowerCase()))) return false;
+    if (!all.every((t) => has.has(t.toLowerCase())) && !classCanBeAll(producer, all, has)) return false;
   }
   // A NEGATED SUBTYPE, the same test one rung down the type line. No abstention clause is needed:
   // unlike a card type, a subtype is never expressed by an umbrella — "a spell" says nothing about
