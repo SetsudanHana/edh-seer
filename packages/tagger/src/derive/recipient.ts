@@ -25,7 +25,13 @@ import type { Control } from "../schema.js";
 // OPPONENT sacrificing, and it derived `you` -- so Reaper King was "fodder" for Kibo's edict,
 // owner-judged FALSE 2026-09-09. 25 corpus cards print "defending player sacrifices", the
 // annihilator Eldrazi among them.
-const WHO = "its controller|their controller|target opponent|each opponent|each other player|defending player|attacking player|that player|target player|each player|those players";
+// ...AND SO DOES THE CONTROLLER OF AN OUTSIDE SOURCE (#1581): "Whenever a source deals damage to this creature, THAT SOURCE'S CONTROLLER sacrifices that many permanents" (Phyrexian Obliterator), "that spell or ability's controller
+// sacrifices a land" (Lava Runner), "that spell's controller mills four cards" (Broken Ambitions). Unread, the sacrifice derived `you`. Read as an opponent for the reason "its controller" is: the corpus's uses are deterrents
+// and answers pointed at an opponent, and being wrong here only removes an edge. CEILING: you can damage or counter your own permanent, and that controller is then you; "that creature's controller" is a different referent
+// (Burning Sands: a creature of yours dying) and is not read.
+const OUTSIDE_SOURCE = "(?:that|the) (?:source|spell|ability|spell or ability)['’]s controller";
+const OUTSIDE_SOURCE_RE = new RegExp(`^${OUTSIDE_SOURCE}$`);
+const WHO = `its controller|their controller|${OUTSIDE_SOURCE}|target opponent|each opponent|each other player|defending player|attacking player|that player|target player|each player|those players`;
 
 /** The actor must sit immediately against its OWN verb. "each opponent loses 1 life and you gain 1
  *  life" is the commonest drain wording in the corpus, and reading its recipient onto the gain would
@@ -145,6 +151,7 @@ function controlOf(phrase: string, text: string, at: number, ctx: ActorContext):
     // A creature YOU control has you as its controller (review): `any` would satisfy an opponent's side too.
     return /\byou control\b/i.test(before) ? "you" : "any";
   }
+  if (OUTSIDE_SOURCE_RE.test(p)) return "opp";
   if (p === "target opponent" || p === "each opponent" || p === "each other player" || p === "defending player" || p === "attacking player") return "opp";
   // "that player" points back at whoever the clause already named. The antecedent is in the same
   // clause, so this one needs no judgment: Massacre Wurm's "a creature an opponent controls dies,

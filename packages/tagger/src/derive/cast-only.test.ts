@@ -78,3 +78,11 @@ describe("ofPut: a definite noun phrase", () => {
     expect(ofPutEmits("Sneak Attack").map((e) => e.verb).sort()).toEqual(["dies", "sacrifice"]);
   });
 });
+
+describe("the controller of an outside source (#1581)", () => {
+  test("Phyrexian Obliterator: \"that source's controller sacrifices that many permanents\" is the opponent's sacrifice, not yours", () => {
+    const em = tagsOf("Phyrexian Obliterator").abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "sacrifice" || e.verb === "dies");
+    expect(em.length).toBeGreaterThan(0);
+    expect(em.map((e) => e.subject.control)).toEqual(em.map(() => "opp"));
+  });
+});
