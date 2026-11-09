@@ -20,8 +20,19 @@ function selfForms(cardName: string): string[][] {
   return out;
 }
 
+/** Drops trailing ".", "," and ";" by walking back from the end: a linear scan, where `/[.,;]+$/` is polynomial on a long run of punctuation (CodeQL js/polynomial-redos on #1578). */
+function trimTrailingPunctuation(text: string): string {
+  let end = text.length;
+  while (end > 0) {
+    const ch = text.charAt(end - 1);
+    if (ch !== "." && ch !== "," && ch !== ";") break;
+    end--;
+  }
+  return text.slice(0, end);
+}
+
 function isSelfTail(tail: string, cardName: string | undefined): boolean {
-  const words = tail.trim().replace(/[.,;]+$/, "").split(" ").filter((w) => w !== "");
+  const words = trimTrailingPunctuation(tail.trim()).split(" ").filter((w) => w !== "");
   if (words.length === 0) return false;
   const forms = cardName ? selfForms(cardName) : [];
   let i = 0;
