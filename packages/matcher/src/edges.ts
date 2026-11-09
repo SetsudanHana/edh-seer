@@ -305,7 +305,7 @@ const hasSelfEntryTrigger = (tags: CardTags): boolean =>
  *  right, and there is no measurement yet either way. */
 function opponentsPermanent(subject: SubjectFilter | undefined): boolean {
   if (!subject || subject.control !== "opp") return false;
-  return subject.type !== undefined || subject.subtype !== undefined;
+  return subject.type !== undefined || subject.subtype !== undefined || (subject.anyOf ?? []).some((b) => b.type !== undefined || b.subtype !== undefined);
 }
 
 /** A card's set of theme tags (for deck-frequency ranking): one per trigger verb, emit, and

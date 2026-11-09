@@ -2065,5 +2065,131 @@
    }
   ],
   "clauseSource": "model"
+ },
+ "Arcade Gannon": {
+  "source": {
+   "name": "Arcade Gannon",
+   "typeLine": "Legendary Creature — Human Doctor",
+   "oracleText": "{T}: Draw a card, then discard a card. Put a quest counter on Arcade Gannon.\nFor Auld Lang Syne — Once during each of your turns, you may cast an artifact or Human spell from your graveyard with mana value less than or equal to the number of quest counters on Arcade Gannon.",
+   "keywords": [
+    "For Auld Lang Syne"
+   ],
+   "colors": [
+    "U",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "manaCost": "{2}{W}{U}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "e001d7e6-71c9-42fa-9d5c-9455da66e4ec"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "quest counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "an artifact or Human spell with mana value less than or equal to the number of quest counters on ~ from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Mutant Chain Reaction": {
+  "source": {
+   "name": "Mutant Chain Reaction",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy up to one target artifact, enchantment, or creature with flying. Create a Mutagen token. (It's an artifact with \"{1}, {T}, Sacrifice this token: Put a +1/+1 counter on target creature. Activate only as a sorcery.\")",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Mutagen",
+     "typeLine": "Token Artifact — Mutagen",
+     "printingId": "6559c423-449c-4e8e-8384-3ce78183e317"
+    }
+   ],
+   "_id": "ea9fc868-374b-4acc-be0d-4283907b4524"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "up to one target artifact, enchantment, or creature with flying",
+      "fromZone": null,
+      "toZone": null,
+      "optional": true
+     },
+     {
+      "verb": "create",
+      "object": "a Mutagen token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
  }
 }

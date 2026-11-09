@@ -5,7 +5,7 @@ import { lifeSetRewrite } from "./life-set.js";
 import type { Action } from "../canonicalize.js";
 import type { GameEvent, SubjectFilter, Verb } from "../schema.js";
 import { controlFromRelation, counterKindOf, parseCounter, parseSubject, spellMove, stripTokenAbility, COUNT_PHRASE } from "./subject.js";
-import { LAND_SUBTYPES } from "./subtypes.js";
+import { LAND_SUBTYPES, SUBTYPE_TYPES } from "./subtypes.js";
 import { damageRecipient, isControllerPhrase, playerOnlyRecipient } from "./damage-recipient.js";
 import { tokenTypeFor } from "./token-types.js";
 import { isEnergyObject, permanentHalf } from "./effect-kind.js";
@@ -536,7 +536,13 @@ function withAlternatives(text: string, plain: SubjectFilter): SubjectFilter {
   for (const k of ALTERNATIVE_FIELDS) if (k !== "token") delete merged[k];
   const read = g as unknown as Record<string, unknown>;
   for (const k of ALTERNATIVE_FIELDS) if (k !== "token" && read[k] !== undefined) merged[k] = read[k];
-  merged.anyOf = g.anyOf;
+  // A CREATURE-SUBTYPED `spell` ALTERNATIVE IS A CREATURE SPELL ("an artifact or Human spell": Arcade Gannon). Typed `spell` it satisfied every instant, sorcery and planeswalker cast trigger (Young Pyromancer, Guttersnipe: about 150 false pairs).
+  // An Aura spell stays `spell` (a permanent spell, no creature subtype).
+  const creatureSpell = (alt: Partial<SubjectFilter>): Partial<SubjectFilter> => {
+    const sub = [alt.subtype].flat()[0];
+    return alt.type === "spell" && typeof sub === "string" && (SUBTYPE_TYPES[sub] ?? []).includes("creature") ? { ...alt, type: "creature" } : alt;
+  };
+  merged.anyOf = g.anyOf.map(creatureSpell);
   return merged as unknown as SubjectFilter;
 }
 

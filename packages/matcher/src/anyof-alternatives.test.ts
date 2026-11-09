@@ -31,3 +31,21 @@ describe("a typed alternative is a typed death", () => {
     expect(tags("Wrath of God", "Jace's Phantasm").some((t) => t.startsWith("threshold"))).toBe(true);
   });
 });
+
+import { cardThemeTags } from "./edges.js";
+import { killsOwnCreatures } from "./suggest-static.js";
+
+describe("review round of #1575", () => {
+  test("Arcade Gannon (\"an artifact or Human spell\") pairs with no instant or sorcery payoff (Young Pyromancer), and keeps an artifact-cast payoff (Traxos)", () => {
+    expect(tags("Arcade Gannon", "Young Pyromancer")).toEqual([]);
+    expect(tags("Arcade Gannon", "Traxos, Scourge Eternal").some((t) => t.startsWith("cast"))).toBe(true);
+    expect(tags("Arcade Gannon", "Katilda and Lier").some((t) => t.startsWith("cast"))).toBe(true);
+  });
+  test.each(["Purge", "Nissa's Defeat", "Thraben Exorcism"])("%s: opponent-aimed removal is no theme of the deck (anyOf alternatives count as a permanent)", (name) => {
+    const themes = [...cardThemeTags(card(name).tags!)];
+    expect(themes.filter((t) => /^(dies|exiled|leaves):/.test(t))).toEqual([]);
+  });
+  test("Spectacular Pileup (\"creatures and Vehicles\") still kills your own creatures", () => {
+    expect(killsOwnCreatures(card("Spectacular Pileup").tags)).toBe(true);
+  });
+});

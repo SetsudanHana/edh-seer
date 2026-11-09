@@ -537,5 +537,591 @@
    }
   ],
   "clauseSource": "grammar"
+ },
+ "Arcade Gannon": {
+  "source": {
+   "name": "Arcade Gannon",
+   "typeLine": "Legendary Creature — Human Doctor",
+   "oracleText": "{T}: Draw a card, then discard a card. Put a quest counter on Arcade Gannon.\nFor Auld Lang Syne — Once during each of your turns, you may cast an artifact or Human spell from your graveyard with mana value less than or equal to the number of quest counters on Arcade Gannon.",
+   "keywords": [
+    "For Auld Lang Syne"
+   ],
+   "colors": [
+    "U",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "manaCost": "{2}{W}{U}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "e001d7e6-71c9-42fa-9d5c-9455da66e4ec"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "quest counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "an artifact or Human spell with mana value less than or equal to the number of quest counters on ~ from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Young Pyromancer": {
+  "source": {
+   "name": "Young Pyromancer",
+   "typeLine": "Creature — Human Shaman",
+   "oracleText": "Whenever you cast an instant or sorcery spell, create a 1/1 red Elemental creature token.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "2",
+   "toughness": "1",
+   "manaCost": "{1}{R}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Elemental",
+     "typeLine": "Token Creature — Elemental",
+     "printingId": "4ace3018-7d6e-4b77-9487-f280fd723d12"
+    }
+   ],
+   "_id": "5fac139a-07d3-4e6c-98e3-d98b199f7a6f"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 red Elemental creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant or sorcery spell",
+     "control": "you"
+    }
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Traxos, Scourge Eternal": {
+  "source": {
+   "name": "Traxos, Scourge Eternal",
+   "typeLine": "Legendary Artifact Creature — Dragon Construct",
+   "oracleText": "Trample\nTraxos doesn't untap during your untap step.\nWhenever you cast an artifact or creature spell, untap Traxos.",
+   "keywords": [
+    "Trample"
+   ],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": "5",
+   "toughness": "4",
+   "manaCost": "{4}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "acf4abde-4034-4fcf-b531-78c935aecd8c"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "untap during your untap step",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "untap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "cast",
+     "subject": "an artifact or creature spell",
+     "control": "you"
+    }
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Purge": {
+  "source": {
+   "name": "Purge",
+   "typeLine": "Instant",
+   "oracleText": "Destroy target artifact creature or black creature. It can't be regenerated.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "d06f0f7c-0270-44be-991a-a5ebbddb0900"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target artifact creature or black creature",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Nissa's Defeat": {
+  "source": {
+   "name": "Nissa's Defeat",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy target Forest, green enchantment, or green planeswalker. If that permanent was a Nissa planeswalker, draw a card.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "5f808e3b-6b69-4b46-8a92-36d960527acc"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target Forest, green enchantment, or green planeswalker",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Thraben Exorcism": {
+  "source": {
+   "name": "Thraben Exorcism",
+   "typeLine": "Instant",
+   "oracleText": "Exile target Spirit, creature with disturb, or enchantment.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "b43e25d8-1c8b-4316-84f3-c4ec6f77092e"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target Spirit, creature with disturb, or enchantment",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Rancor": {
+  "source": {
+   "name": "Rancor",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature\nEnchanted creature gets +2/+0 and has trample.\nWhen this Aura is put into a graveyard from the battlefield, return it to its owner's hand.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "9d2d6479-531c-4ce1-b52b-00e36fa63b64"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "enchanted creature +2/+0",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "enchanted creature has trample",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this Aura",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
+ },
+ "Mutant Chain Reaction": {
+  "source": {
+   "name": "Mutant Chain Reaction",
+   "typeLine": "Sorcery",
+   "oracleText": "Destroy up to one target artifact, enchantment, or creature with flying. Create a Mutagen token. (It's an artifact with \"{1}, {T}, Sacrifice this token: Put a +1/+1 counter on target creature. Activate only as a sorcery.\")",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Mutagen",
+     "typeLine": "Token Artifact — Mutagen",
+     "printingId": "6559c423-449c-4e8e-8384-3ce78183e317"
+    }
+   ],
+   "_id": "ea9fc868-374b-4acc-be0d-4283907b4524"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "up to one target artifact, enchantment, or creature with flying",
+      "fromZone": null,
+      "toZone": null,
+      "optional": true
+     },
+     {
+      "verb": "create",
+      "object": "a Mutagen token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Parallax Dementia": {
+  "source": {
+   "name": "Parallax Dementia",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature\nFading 1 (This enchantment enters with one fade counter on it. At the beginning of your upkeep, remove a fade counter from it. If you can't, sacrifice it.)\nEnchanted creature gets +3/+2.\nWhen this Aura leaves the battlefield, destroy enchanted creature. That creature can't be regenerated.",
+   "keywords": [
+    "Fading",
+    "Enchant"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "6ec7a7fb-0bf9-47fa-af2b-5b13b3af3947"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Fading 1"
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "enchanted creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+3/+2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "enchanted creature",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "optional": false
+     }
+    ],
+    "trigger": {
+     "event": "leaves",
+     "subject": "this Aura",
+     "control": "you"
+    }
+   }
+  ],
+  "clauseSource": "grammar"
+ },
+ "Katilda and Lier": {
+  "source": {
+   "name": "Katilda and Lier",
+   "typeLine": "Legendary Creature — Human",
+   "oracleText": "Whenever you cast a Human spell, target instant or sorcery card in your graveyard gains flashback until end of turn. The flashback cost is equal to its mana cost. (You may cast that card from your graveyard for its flashback cost. Then exile it.)",
+   "keywords": [],
+   "colors": [
+    "G",
+    "U",
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G",
+    "U",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{G}{W}{U}",
+   "layout": "normal",
+   "gameChanger": false,
+   "reserved": false,
+   "_id": "1990012e-2a92-4e76-917a-f90fb7a4ed66"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a Human spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "target instant or sorcery card in your graveyard gains flashback until end of turn. The flashback cost is equal to its mana cost",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "clauseSource": "model"
  }
 }
