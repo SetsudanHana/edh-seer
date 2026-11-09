@@ -10,7 +10,7 @@ import { isZonedCardGrant, subjectMatches, graveyardFillMatches, counterAddMatch
 import { enterAsCopyAbilities, impliedEvents, preparedAbilities, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, printedAllTypes, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { normalizeZoneEvent, tagKey, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
-import { baseSetStrength, pairsAsUpgrade, powerNeeds, printedPower, raisedToken, readsPower } from "./base-pt-set.js";
+import { baseSetStrength, nodePower, pairsAsUpgrade, powerNeeds, raisedToken, readsPower } from "./base-pt-set.js";
 import { hasMediatingToken } from "./tokens.js";
 import {
   copySentence, costReductionSentence, temporaryCopySentence, counterPresenceSentence, createsSentence,
@@ -3313,9 +3313,9 @@ function baseSetReason(p: PairScope["p"], c: DeckCard, a: Ability, h: Hierarchy)
     // Owner ruling 2026-11-09: the pair of a creature or a token maker falls as its own power rises; a power reader stays at 1 (absent).
     ...(strength !== undefined ? { strength } : {}),
   });
-  const power = printedPower(c.tags);
+  const power = nodePower(c);
   const token = raisedToken(c.tags, v, (shape) => subjectMatches(shape, cls, h));
-  const reads = readsPower(powerNeeds(c.card, c.tags), v.power);
+  const reads = readsPower(powerNeeds(c.card, c.tags, (read) => subjectMatches(read, cls, h)), v.power);
   // A card that READS power stays at strength 1 whatever else it is (a 5/5 Molten Monstrosity); a creature that also makes smaller tokens takes the better of the two.
   if (power !== undefined && power < v.power && subjectMatches(characteristicsSubject(c.tags, c.card.name), cls, h)) return reason(`${c.card.name} is smaller than that`, reads ? undefined : Math.max(baseSetStrength(v.power, power), token?.strength ?? 0));
   if (token !== undefined) return reason(`${c.card.name} makes tokens smaller than that`, reads ? undefined : token.strength);
@@ -4257,8 +4257,6 @@ function counterPresenceEdges({ p, c, h, pEvents, reasons }: PairScope): void {
     for (const ca of c.tags.abilities) {
       const want = ca.effect.subject;
       if (!want?.counter || want.counter !== emit.subject.counter) continue;
-      // A BASE P/T SET OVER "creatures with a +1/+1 counter" (Sigarda's Summons) pairs with what it upgrades and with power payoffs (owner ruling 2026-11-08, #1572), not with every counter placer.
-      if (ca.effect.kind === "base-pt-set") continue;
       // an ability that emits the same event is already covered by the event-edge pass above
       if ((ca.emits ?? []).some((e) => e.verb === "counter-added")) continue;
       if (ca.trigger?.verbs.includes("counter-added")) continue;

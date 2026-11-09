@@ -1338,5 +1338,821 @@
     ]
    }
   ]
+ },
+ "Monstrous Vortex": {
+  "source": {
+   "name": "Monstrous Vortex",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever you cast a creature spell with power 5 or greater, discover X, where X is that spell's mana value. (Exile cards from the top of your library until you exile a nonland card with that mana value or less. Cast it without paying its mana cost or put it into your hand. Put the rest on the bottom in a random order.)",
+   "keywords": [
+    "Discover"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{G}",
+   "layout": "normal",
+   "_id": "6e27956e-ba2f-41a9-8e39-ec54424591b6"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a creature spell with power 5 or greater",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "discover",
+      "object": "X, where X is that spell's mana value",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Sarkhan's Unsealing": {
+  "source": {
+   "name": "Sarkhan's Unsealing",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever you cast a creature spell with power 4, 5, or 6, this enchantment deals 4 damage to any target.\nWhenever you cast a creature spell with power 7 or greater, this enchantment deals 4 damage to each opponent and each creature and planeswalker they control.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{R}",
+   "layout": "normal",
+   "_id": "c27c9514-7b5a-461a-a109-f8abafd83523"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a creature spell with power 4, 5, or 6",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "any target",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "4",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a creature spell with power 7 or greater",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each opponent and each creature and planeswalker they control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "4",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Gwenna, Eyes of Gaea": {
+  "source": {
+   "name": "Gwenna, Eyes of Gaea",
+   "typeLine": "Legendary Creature — Elf Druid Scout",
+   "oracleText": "{T}: Add two mana in any combination of colors. Spend this mana only to cast creature spells or activate abilities of creature sources.\nWhenever you cast a creature spell with power 5 or greater, put a +1/+1 counter on Gwenna and untap it.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "_id": "7d95e72a-461e-4993-a190-847466a4b17c"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "two mana in any combination of colors",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "other",
+      "object": "Spend this mana only to cast creature spells or activate abilities of creature sources",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a creature spell with power 5 or greater",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "untap",
+      "object": "Gwenna",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Spellbreaker Behemoth": {
+  "source": {
+   "name": "Spellbreaker Behemoth",
+   "typeLine": "Creature — Beast",
+   "oracleText": "This spell can't be countered.\nCreature spells you control with power 5 or greater can't be countered.",
+   "keywords": [],
+   "colors": [
+    "G",
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G",
+    "R"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{1}{R}{G}{G}",
+   "layout": "normal",
+   "_id": "cba07472-7212-4411-a9f9-38a48870ad69"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "be countered",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "be countered",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Delney, Streetwise Lookout": {
+  "source": {
+   "name": "Delney, Streetwise Lookout",
+   "typeLine": "Legendary Creature — Human Scout",
+   "oracleText": "Creatures you control with power 2 or less can't be blocked by creatures with power 3 or greater.\nIf a triggered ability of a creature you control with power 2 or less triggers, that ability triggers an additional time.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{2}{W}",
+   "layout": "normal",
+   "_id": "245d0ccf-87b6-460a-8b99-9e2079f2d375"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "be blocked by creatures with power 3 or greater",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "trigger-again",
+      "object": "that ability",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Dreadhorde Invasion": {
+  "source": {
+   "name": "Dreadhorde Invasion",
+   "typeLine": "Enchantment",
+   "oracleText": "At the beginning of your upkeep, you lose 1 life and amass Zombies 1. (Put a +1/+1 counter on an Army you control. It's also a Zombie. If you don't control an Army, create a 0/0 black Zombie Army creature token first.)\nWhenever a Zombie token you control with power 6 or greater attacks, it gains lifelink until end of turn.",
+   "keywords": [
+    "Amass"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}",
+   "layout": "normal",
+   "_id": "01deabbb-af6a-4998-99a7-35b7cfa9ef77"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "amass",
+      "object": "Zombies",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "a Zombie token you control with power 6 or greater",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "lifelink until end of turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Poppet Stitcher // Poppet Factory": {
+  "source": {
+   "name": "Poppet Stitcher // Poppet Factory",
+   "typeLine": "Creature — Human Wizard // Artifact",
+   "oracleText": "Whenever you cast an instant or sorcery spell, create a 2/2 black Zombie creature token with decayed. (It can't block. When it attacks, sacrifice it at end of combat.)\nAt the beginning of your upkeep, if you control three or more creature tokens, you may transform this creature.\n//\nCreature tokens you control lose all abilities and have base power and toughness 3/3.\nAt the beginning of your upkeep, you may transform this artifact.",
+   "keywords": [
+    "Transform"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "transform",
+   "faces": [
+    {
+     "name": "Poppet Stitcher",
+     "typeLine": "Creature — Human Wizard",
+     "oracleText": "Whenever you cast an instant or sorcery spell, create a 2/2 black Zombie creature token with decayed. (It can't block. When it attacks, sacrifice it at end of combat.)\nAt the beginning of your upkeep, if you control three or more creature tokens, you may transform this creature.",
+     "colors": [
+      "U"
+     ],
+     "manaCost": "{2}{U}",
+     "power": "2",
+     "toughness": "3",
+     "artCrop": "https://cards.scryfall.io/art_crop/front/9/9/999038b3-7d64-4554-b341-0675d4af8d8b.jpg?1783925638"
+    },
+    {
+     "name": "Poppet Factory",
+     "typeLine": "Artifact",
+     "oracleText": "Creature tokens you control lose all abilities and have base power and toughness 3/3.\nAt the beginning of your upkeep, you may transform this artifact.",
+     "colors": [
+      "U"
+     ],
+     "manaCost": "",
+     "colorIndicator": [
+      "U"
+     ],
+     "artCrop": "https://cards.scryfall.io/art_crop/back/9/9/999038b3-7d64-4554-b341-0675d4af8d8b.jpg?1783925638"
+    }
+   ],
+   "_id": "bc2d0702-b140-4b78-8a8f-3a6d19073b59"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant or sorcery spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 2/2 black Zombie creature token with decayed",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Creature tokens you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3/3",
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "all abilities",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "this artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Delver of Secrets // Insectile Aberration": {
+  "source": {
+   "name": "Delver of Secrets // Insectile Aberration",
+   "typeLine": "Creature — Human Wizard // Creature — Human Insect",
+   "oracleText": "At the beginning of your upkeep, look at the top card of your library. You may reveal that card. If an instant or sorcery card is revealed this way, transform this creature.\n//\nFlying",
+   "keywords": [
+    "Flying",
+    "Transform"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "transform",
+   "faces": [
+    {
+     "name": "Delver of Secrets",
+     "typeLine": "Creature — Human Wizard",
+     "oracleText": "At the beginning of your upkeep, look at the top card of your library. You may reveal that card. If an instant or sorcery card is revealed this way, transform this creature.",
+     "colors": [
+      "U"
+     ],
+     "manaCost": "{U}",
+     "power": "1",
+     "toughness": "1",
+     "artCrop": "https://cards.scryfall.io/art_crop/front/6/9/6904ea20-e504-47da-95a0-08739fdde260.jpg?1783908173"
+    },
+    {
+     "name": "Insectile Aberration",
+     "typeLine": "Creature — Human Insect",
+     "oracleText": "Flying",
+     "colors": [
+      "U"
+     ],
+     "manaCost": "",
+     "power": "3",
+     "toughness": "2",
+     "colorIndicator": [
+      "U"
+     ],
+     "artCrop": "https://cards.scryfall.io/art_crop/back/6/9/6904ea20-e504-47da-95a0-08739fdde260.jpg?1783908173"
+    }
+   ],
+   "_id": "edd531b9-f615-4399-8c8c-1c5e18c4acbf"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Elemental Appeal": {
+  "source": {
+   "name": "Elemental Appeal",
+   "typeLine": "Sorcery",
+   "oracleText": "Kicker {5} (You may pay an additional {5} as you cast this spell.)\nCreate a 7/1 red Elemental creature token with trample and haste. Exile it at the beginning of the next end step. If this spell was kicked, that creature gets +7/+0 until end of turn.",
+   "keywords": [
+    "Kicker"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{R}{R}{R}{R}",
+   "layout": "normal",
+   "_id": "3bcfc82c-3523-40e3-b236-78ece8a8d69f"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Kicker {5}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 7/1 red Elemental creature token with trample and haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "modify-pt",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+7/+0",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Rebellion of the Flamekin": {
+  "source": {
+   "name": "Rebellion of the Flamekin",
+   "typeLine": "Kindred Enchantment — Elemental",
+   "oracleText": "Whenever you clash, you may pay {1}. If you do, create a 3/1 red Elemental Shaman creature token. If you won, that token gains haste until end of turn. (This ability triggers after the clash ends.)",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{R}",
+   "layout": "normal",
+   "_id": "0e2a283b-c06a-4b54-a627-5b4959318b1a"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "clash",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 3/1 red Elemental Shaman creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": true
+     },
+     {
+      "verb": "grant-ability",
+      "object": "that token gains haste until end of turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Feral Lightning": {
+  "source": {
+   "name": "Feral Lightning",
+   "typeLine": "Sorcery",
+   "oracleText": "Create three 3/1 red Elemental creature tokens with haste. Exile them at the beginning of the next end step.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{R}{R}{R}",
+   "layout": "normal",
+   "_id": "acd17fbf-645b-4c4d-b2c6-44127e3b743d"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "three 3/1 red Elemental creature tokens with haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "them",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Hardened Scales": {
+  "source": {
+   "name": "Hardened Scales",
+   "typeLine": "Enchantment",
+   "oracleText": "If one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 counters are put on it instead.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{G}",
+   "layout": "normal",
+   "_id": "a1f3da21-af6d-450e-bf0b-985d158418e6"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "amount": "N+1",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Walking Ballista": {
+  "source": {
+   "name": "Walking Ballista",
+   "typeLine": "Artifact Creature — Construct",
+   "oracleText": "This creature enters with X +1/+1 counters on it.\n{4}: Put a +1/+1 counter on this creature.\nRemove a +1/+1 counter from this creature: It deals 1 damage to any target.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 0,
+   "colorIdentity": [],
+   "power": "0",
+   "toughness": "0",
+   "manaCost": "{X}{X}",
+   "layout": "normal",
+   "_id": "4b515bb0-f275-4400-8032-3173b799ab40"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "remove-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "any target",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
  }
 }

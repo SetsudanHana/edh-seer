@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { deriveCardTags, deriveInputOf, grammarClauseRecords } from "@edh-seer/tagger";
 import type { CardTags, ClauseRecord } from "@edh-seer/tagger";
-import { loadHierarchy, pairReasons } from "./index.js";
+import { loadHierarchy, pairReasons, pairReasonsAcrossFaces } from "./index.js";
 import type { DeckCard } from "./types.js";
 import fixtures from "./fixtures/base-pt-class.json" with { type: "json" };
 
@@ -65,9 +65,12 @@ test("the type half keeps #1568's gate: March still has no type-grant pair with 
   expect(pairReasons(dc("March of the World Ooze"), dc("Grizzly Bears"), loadHierarchy()).filter((r) => r.tag === "static:type-grant")).toEqual([]);
 });
 
-test("a set over creatures with a +1/+1 counter pairs with no counter placer: Sigarda's Summons x Cathars' Crusade", () => {
-  const all = pairReasons(dc("Sigarda's Summons"), dc("Cathars' Crusade"), loadHierarchy()).filter((r) => r.effectKind === "base-pt-set");
-  expect(all).toEqual([]);
+test("a set over creatures with a +1/+1 counter pairs with the counter placers through the counter-presence pass: Sigarda's Summons x Cathars' Crusade, Walking Ballista (#1572 review; Hardened Scales only modifies a placement and supplies no counter)", () => {
+  for (const c of ["Cathars' Crusade", "Walking Ballista"]) {
+    const rs = pairReasons(dc("Sigarda's Summons"), dc(c), loadHierarchy()).filter((r) => r.effectKind === "base-pt-set" && r.producer === c && r.consumer === "Sigarda's Summons");
+    expect(rs, c).not.toEqual([]);
+    expect(rs.every((r) => r.tag.startsWith("counter-added:")), c).toBe(true);
+  }
 });
 
 test("Kudo derives the same from the model's `other` as from the grammar: base-pt-set 2/2 and a type-grant", () => {
@@ -149,4 +152,40 @@ test("through analyzeDecklist, March's contribution to a 1/1 is larger than to a
   expect(pair("Spearbreaker Behemoth")).toBeDefined();
   // each is fed by March alone, so the payoff authority (the square root of its support) is the pair's contribution
   expect(card("Llanowar Elves").authority!).toBeGreaterThan(card("Spearbreaker Behemoth").authority!);
+});
+
+
+// ---- #1572 review round: five corrections ----
+const faced = (p: string, c: string) => pairReasonsAcrossFaces(dc(p), dc(c), loadHierarchy()).filter((r) => r.effectKind === "base-pt-set" && r.tag === "static:base-pt-set" && r.producer === p);
+
+test("a power reader reads the BATTLEFIELD: a cast trigger on creature spells (Monstrous Vortex, Sarkhan's Unsealing, Gwenna), creature spells in the text (Spellbreaker Behemoth) and a blocker's power (Delney) are no reader", () => {
+  for (const c of ["Monstrous Vortex", "Sarkhan's Unsealing", "Gwenna, Eyes of Gaea", "Spellbreaker Behemoth", "Delney, Streetwise Lookout"]) {
+    const rs = base("March of the World Ooze", c);
+    // a creature below the set power still pairs as one that is upgraded, on the curve, never as a reader at strength 1
+    expect(rs.every((r) => r.strength !== undefined && !r.text.endsWith("reads the power of your creatures")), c).toBe(true);
+  }
+  expect(base("March of the World Ooze", "Monstrous Vortex")).toEqual([]);
+  expect(base("March of the World Ooze", "Sarkhan's Unsealing")).toEqual([]);
+  expect(base("March of the World Ooze", "Spellbreaker Behemoth")[0]?.strength).toBe(0.167);
+});
+
+test("a reader is intersected with the set's class: Dreadhorde Invasion's Zombie token pairs with March (your creatures) and not with Raised by Giants (your commander)", () => {
+  expect(base("March of the World Ooze", "Dreadhorde Invasion")).not.toEqual([]);
+  expect(base("Raised by Giants", "Dreadhorde Invasion")).toEqual([]);
+});
+
+
+test("a set that turns your own creature tokens into vanilla tokens is an upgrade, not removal: Poppet Factory x Hordeling Outburst", () => {
+  expect(faced("Poppet Stitcher // Poppet Factory", "Hordeling Outburst")).not.toEqual([]);
+});
+
+test("a creature whose power is printed on a face pairs: March x Delver of Secrets (a transform card), at the curve for its front face", () => {
+  const rs = faced("March of the World Ooze", "Delver of Secrets // Insectile Aberration");
+  expect(rs.some((r) => r.strength === 0.833 || r.strength === 0.5), JSON.stringify(rs)).toBe(true);
+});
+
+test("a toughness-only shortfall counts only when the token's power is not above the set power: Graaz x Elemental Appeal (7/1) and Kudo x Rebellion of the Flamekin (3/1) lose power; Harmonious Archon x Feral Lightning still pairs", () => {
+  expect(base("Graaz, Unstoppable Juggernaut", "Elemental Appeal")).toEqual([]);
+  expect(base("Kudo, King Among Bears", "Rebellion of the Flamekin")).toEqual([]);
+  expect(base("Harmonious Archon", "Feral Lightning")).not.toEqual([]);
 });

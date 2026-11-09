@@ -1,4 +1,6 @@
 import type { Ability, CardTags, SubjectFilter } from "@edh-seer/tagger";
+import type { DeckCard } from "./types.js";
+import { printedFaces } from "./faces.js";
 
 /** A WHOLE-CLASS BASE POWER AND TOUGHNESS SET (CR 613.4b: layer 7b sets power and/or toughness; #1572, owner ruling 2026-11-08). Graaz ("other creatures you control have base power and toughness 5/3"), March of the World Ooze (6/6),
  *  Kudo (2/2), Raised by Giants (10/10). It pairs with what it UPGRADES -- a token maker whose token is smaller than the set value, a creature whose printed power is smaller -- and with the "power matters" payoffs
@@ -26,12 +28,22 @@ function num(s: string | null | undefined): number | undefined {
 /** The printed base power of a card's characteristics (a token node's included), undefined for a variable or absent power. */
 export const printedPower = (tags: CardTags): number | undefined => num(tags.characteristics.power);
 
+/** The printed power of one node of a deck: a FACE of a transform or modal card reads its own face's printed power (`characteristics.power` is null on those rows), any other node the card's characteristics. */
+export function nodePower(c: DeckCard): number | undefined {
+  if (c.face !== undefined) {
+    const own = num(printedFaces(c.card)[c.face]?.power);
+    if (own !== undefined) return own;
+  }
+  return c.tags ? printedPower(c.tags) : undefined;
+}
+
 /** Is this ability a base set that pairs at all? A 1/1 set is a hose (Humility, Godhead of Awe), a set beside "lose all abilities" over the same class is removal, not an upgrade (Humility, Sludge Monster, Poppet Factory), and an Aura's set lands on the player it enchants.
  *  CEILING: the floor is a set power below 2; a 1/1 set still upgrades a power-0 body (a Wall, a 0/1 token), which is not read. */
 export function pairsAsUpgrade(p: CardTags, a: Ability): { power: number; toughness: number } | undefined {
   const v = baseSetValue(a.amount);
   if (v === undefined || v.power < 2) return undefined;
-  if (p.abilities.some((x) => x.clause === a.clause && x.effect.kind === "ability-loss")) return undefined;
+  // CEILING: a set beside "lose all abilities" is removal when the class is not only yours; over your own creatures (Poppet Factory's tokens become vanilla 3/3s) it is an upgrade.
+  if (a.effect.subject?.control !== "you" && p.abilities.some((x) => x.clause === a.clause && x.effect.kind === "ability-loss")) return undefined;
   // An Aura's class set is aimed at the player it enchants ("creatures enchanted player controls": Curse of Conformity, Overwhelming Splendor), derive keeps only `control: any`.
   if (p.characteristics.subtypes?.includes("aura") === true) return undefined;
   return v;
@@ -55,7 +67,8 @@ export function raisedToken(c: CardTags, v: { power: number; toughness: number }
       if (e.verb !== "create-token" || s.control === "opp" || !(Array.isArray(s.type) ? s.type : [s.type]).includes("creature")) continue;
       const power = s.stats?.find((x) => x.metric === "power" && x.op === "eq")?.value;
       const toughness = s.stats?.find((x) => x.metric === "toughness" && x.op === "eq")?.value;
-      if (((power !== undefined && power < v.power) || (toughness !== undefined && toughness < v.toughness)) && inClass(s)) {
+      // A toughness-only shortfall is an upgrade only when the token's power is not above the set power: a 7/1 becoming 5/3 loses power (Graaz x Elemental Appeal).
+      if (((power !== undefined && power < v.power) || (toughness !== undefined && toughness < v.toughness && (power === undefined || power <= v.power))) && inClass(s)) {
         const strength = power !== undefined && power < v.power ? baseSetStrength(v.power, power) : BASE_SET_FLOOR;
         if (best === undefined || strength > best.strength) best = { shape: s, strength };
       }
@@ -73,15 +86,25 @@ type PowerNeed = number;
  *  "total power" beside "you control", or "power N or greater" beside "you control", with no target and no opponent in it.
  *  CEILING: a power payoff worded another way ("each creature you control with power greater than its base power", "equal to its power") is not read; a threshold above the set power does not pair (Kudo's 2/2 x a power-4 trigger).
  *  CEILING: the printed reading is per sentence, so "creatures you control have total power 8 or greater" counts as a need of 0 (any set power helps a total) rather than as 8; a crew, saddle, station or teamwork cost is not a power payoff. */
-export function powerNeeds(card: { oracleText?: string }, tags: CardTags): PowerNeed[] {
+export function powerNeeds(card: { oracleText?: string }, tags: CardTags, inClass?: (s: SubjectFilter) => boolean): PowerNeed[] {
   const out: PowerNeed[] = [];
+  let derived = false;
+  // A set reaches the BATTLEFIELD (CR 109.2): a creature spell on the stack or a blocker is not read, and the subject read must be one the set's class contains.
   const stat = (s: SubjectFilter | undefined): void => {
     if (s === undefined || s.self === true || s.control === "opp") return;
-    for (const x of s.stats ?? []) if (x.metric === "power" && x.value !== undefined && (x.op === "gte" || x.op === "gt")) out.push(x.op === "gt" ? x.value + 1 : x.value);
+    if ((Array.isArray(s.type) ? s.type : [s.type]).includes("spell") || (s.zone !== undefined && s.zone !== "battlefield") || (s.fromZone !== undefined && s.fromZone !== "battlefield")) return;
+    for (const x of s.stats ?? []) {
+      if (x.metric === "power" && x.value !== undefined && (x.op === "gte" || x.op === "gt")) {
+        derived = true;
+        if (inClass === undefined || inClass(s)) out.push(x.op === "gt" ? x.value + 1 : x.value);
+      }
+    }
   };
   for (const a of tags.abilities) {
     if (a.gate?.kind === "control" && a.gate.minPower !== undefined) out.push(a.gate.minPower);
-    stat(a.trigger?.subject); stat(a.thresholdSubject); stat(a.effect.scalingSubject);
+    // A cast trigger reads the creature SPELL's power on the stack (Monstrous Vortex, Gwenna), not a creature on the battlefield.
+    if (a.trigger?.verbs.includes("cast") !== true) stat(a.trigger?.subject);
+    stat(a.thresholdSubject); stat(a.effect.scalingSubject);
     const amount = (a.amount ?? "").toLowerCase();
     if ((amount.includes("greatest power") || amount.includes("total power")) && amount.includes("you control") && !amount.includes("opponent")) out.push(0);
   }
@@ -92,6 +115,8 @@ export function powerNeeds(card: { oracleText?: string }, tags: CardTags): Power
     const yours = raw.includes("you control");
     if (!yours) continue;
     if (raw.includes("greatest power among") || raw.includes("total power")) out.push(0);
+    // A creature spell's power (Spellbreaker Behemoth) and a blocker's (Delney) are not on your battlefield; a threshold the derived data already read, with its subject, is not read again from the words (Dreadhorde Invasion's Zombie token).
+    if (derived || raw.includes("spell") || raw.includes("blocked by")) continue;
     for (let at = raw.indexOf("power "); at >= 0; at = raw.indexOf("power ", at + 6)) {
       let end = at + 6;
       while (end < raw.length && raw.charCodeAt(end) >= 48 && raw.charCodeAt(end) <= 57) end++;
