@@ -2102,10 +2102,15 @@ function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abiliti
  *  Cleanfall; "destroy all permanents other than this Equipment": Worldslayer; "sacrifice a permanent": Saw) states no subtype, so `eventMatches` could not show it is an Aura and refused it. Here the event is compared with the Aura
  *  itself: it counts when `eventReachesAura` says it could take the Aura off the battlefield (the rules of the host route, aura-reach.ts), and the trigger is then judged without its subtype and control. The self-identity gate
  *  (`subjectMatches` on the Aura's printed characteristics) and every other `eventMatches` gate still run on it. Returns the event to use, or null.
- *  CEILING: only an Aura's own trigger (not a granted one) with the subtype `aura` and a leave or death verb; an event that already matches as printed (a "destroy target Aura") is not touched; a stated subtype on the event is held against the Aura. */
+ *  CEILING: only an Aura's own trigger (not a granted one) with the subtype `aura` and a leave or death verb; an event that already matches as printed (a "destroy target Aura") is not touched; a stated subtype on the event is held against the Aura;
+ *  the printed opponent-only cue list is the host route's ("that player controls" after a combat-damage trigger, "defending player controls" are not on it, so Aberrant, Dawning Purist and Kogla keep their pair); an untyped removal pairs nothing here (the host route still reads it). */
 function auraOwnLeaves(chars: CardTags["characteristics"], a: CardTags["abilities"][number], e: GameEvent, t: GameEvent, h: Hierarchy, producer: readonly GameEvent[], producerText: string): boolean {
   if (chars.enchants === undefined || a.grantedBy !== undefined || t.subject.self !== true || (t.verb !== "dies" && t.verb !== "leaves")) return false;
   if (!list(t.subject.subtype).includes("aura") || list(t.subject.type).length > 0) return false;
+  // THE EVENT NAMES A CLASS, AND THE WHOLE OF IT. An untyped removal (a bare "it": Bomb Squad's destroy, Cut the Tethers' return of a Spirit) states no class that could be an Aura, and a `selection` (a named set, "all but the chosen",
+  // a vote, a pile) is a part of the class the engine cannot test: neither reaches an Aura.
+  const s = e.subject;
+  if (s.selection !== undefined || !(s.type !== undefined || s.subtype !== undefined || (s.anyOf ?? []).some((b) => b.type !== undefined || b.subtype !== undefined))) return false;
   const aura = characteristicsSubject({ characteristics: chars } as CardTags);
   if (!eventReachesAura(e, auraReachContext(producer, producerText, aura), aura, h)) return false;
   const { subtype: _aura, ...rest } = t.subject;

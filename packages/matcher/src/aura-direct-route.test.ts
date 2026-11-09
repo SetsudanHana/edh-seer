@@ -46,4 +46,12 @@ describe("enchantment removal x an Aura's own leave trigger", () => {
   test("a removal never reaches a creature's own leave trigger through this route (Primeval Spawn is no Aura)", () => {
     expect(leaveTags("Cleanfall", "Primeval Spawn")).toEqual([]);
   });
+  test.each([
+    ["Bomb Squad", "Spirit Loop"], ["Cut the Tethers", "Parallax Dementia"], ["Ashling, the Limitless", "Slow Motion"], ["Slogurk, the Overslime", "Gift of Wrath"],
+  ])("%s -> %s: an UNTYPED removal (a bare 'it') says nothing about an Aura and pairs nothing", (producer, aura) => {
+    expect(leaveTags(producer, aura)).toEqual([]);
+  });
+  test("Apocalypse Chime (permanents with a Homelands name: a named set the engine cannot test) -> Spreading Algae: none", () => {
+    expect(leaveTags("Apocalypse Chime", "Spreading Algae")).toEqual([]);
+  });
 });
