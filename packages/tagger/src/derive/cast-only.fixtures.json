@@ -1378,5 +1378,1135 @@
     ]
    }
   ]
+ },
+ "Champion of the Weird": {
+  "source": {
+   "name": "Champion of the Weird",
+   "typeLine": "Creature — Goblin Berserker",
+   "oracleText": "As an additional cost to cast this spell, behold a Goblin and exile it. (Exile a Goblin you control or a Goblin card from your hand.)\nPay 1 life, Blight 2: Target opponent blights 2. Activate only as a sorcery.\nWhen this creature leaves the battlefield, return the exiled card to its owner's hand.",
+   "keywords": [
+    "Blight",
+    "Behold"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{3}{B}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "behold",
+      "object": "a Goblin",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "blight",
+      "object": "target opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "the exiled card",
+      "fromZone": "exile",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Champions of the Perfect": {
+  "source": {
+   "name": "Champions of the Perfect",
+   "typeLine": "Creature — Elf Warrior",
+   "oracleText": "As an additional cost to cast this spell, behold an Elf and exile it. (Exile an Elf you control or an Elf card from your hand.)\nWhenever you cast a creature spell, draw a card.\nWhen this creature leaves the battlefield, return the exiled card to its owner's hand.",
+   "keywords": [
+    "Behold"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "manaCost": "{3}{G}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "behold",
+      "object": "an Elf",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a creature spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "the exiled card",
+      "fromZone": "exile",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Champion of the Path": {
+  "source": {
+   "name": "Champion of the Path",
+   "typeLine": "Creature — Elemental Sorcerer",
+   "oracleText": "As an additional cost to cast this spell, behold an Elemental and exile it. (Exile an Elemental you control or an Elemental card from your hand.)\nWhenever another Elemental you control enters, it deals damage equal to its power to each opponent.\nWhen this creature leaves the battlefield, return the exiled card to its owner's hand.",
+   "keywords": [
+    "Behold"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "7",
+   "toughness": "3",
+   "manaCost": "{3}{R}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "behold",
+      "object": "an Elemental",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "another Elemental you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "its power",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "the exiled card",
+      "fromZone": "exile",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Champions of the Shoal": {
+  "source": {
+   "name": "Champions of the Shoal",
+   "typeLine": "Creature — Merfolk Soldier",
+   "oracleText": "As an additional cost to cast this spell, behold a Merfolk and exile it. (Exile a Merfolk you control or a Merfolk card from your hand.)\nWhenever this creature enters or becomes tapped, tap up to one target creature and put a stun counter on it.\nWhen this creature leaves the battlefield, return the exiled card to its owner's hand.",
+   "keywords": [
+    "Behold"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "4",
+   "toughness": "6",
+   "manaCost": "{3}{U}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "behold",
+      "object": "a Merfolk",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "up to one target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "add-counter",
+      "object": "stun counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "taps",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "up to one target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "add-counter",
+      "object": "stun counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "the exiled card",
+      "fromZone": "exile",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Tidehollow Sculler": {
+  "source": {
+   "name": "Tidehollow Sculler",
+   "typeLine": "Artifact Creature — Zombie",
+   "oracleText": "When this creature enters, target opponent reveals their hand and you choose a nonland card from it. Exile that card.\nWhen this creature leaves the battlefield, return the exiled card to its owner's hand.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B",
+    "W"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{W}{B}",
+   "layout": "normal"
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a nonland card from target opponent's hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "the exiled card",
+      "fromZone": "exile",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Wormfang Behemoth": {
+  "source": {
+   "name": "Wormfang Behemoth",
+   "typeLine": "Creature — Nightmare Fish Beast",
+   "oracleText": "When this creature enters, exile all cards from your hand.\nWhen this creature leaves the battlefield, return the exiled cards to their owner's hand.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{3}{U}{U}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all cards from your hand",
+      "fromZone": "hand",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "the exiled cards",
+      "fromZone": "exile",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Furnace Dragon": {
+  "source": {
+   "name": "Furnace Dragon",
+   "typeLine": "Creature — Dragon",
+   "oracleText": "Affinity for artifacts (This spell costs {1} less to cast for each artifact you control.)\nFlying\nWhen this creature enters, if you cast it from your hand, exile all artifacts.",
+   "keywords": [
+    "Flying",
+    "Affinity"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 9,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{6}{R}{R}{R}",
+   "layout": "normal"
+  },
+  "grammar": true,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Affinity for artifacts",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all artifacts",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Phyrexian Obliterator": {
+  "source": {
+   "name": "Phyrexian Obliterator",
+   "typeLine": "Creature — Phyrexian Horror",
+   "oracleText": "Trample\nWhenever a source deals damage to this creature, that source's controller sacrifices that many permanents of their choice.",
+   "keywords": [
+    "Trample"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{B}{B}{B}{B}",
+   "layout": "normal"
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "that many permanents of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Reaper of Sheoldred": {
+  "source": {
+   "name": "Reaper of Sheoldred",
+   "typeLine": "Creature — Phyrexian Horror",
+   "oracleText": "Infect (This creature deals damage to creatures in the form of -1/-1 counters and to players in the form of poison counters.)\nWhenever a source deals damage to this creature, that source's controller gets a poison counter.",
+   "keywords": [
+    "Infect"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "2",
+   "toughness": "5",
+   "manaCost": "{4}{B}",
+   "layout": "normal",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Poison Counter",
+     "typeLine": "Card",
+     "printingId": "470618f6-f67f-44c6-a086-285632508915"
+    }
+   ]
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Infect",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "poison counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Archfiend of Spite": {
+  "source": {
+   "name": "Archfiend of Spite",
+   "typeLine": "Creature — Demon",
+   "oracleText": "Flying\nWhenever a source an opponent controls deals damage to this creature, that source's controller loses that much life unless they sacrifice that many permanents of their choice.\nMadness {3}{B}{B} (If you discard this card, discard it into exile. When you do, cast it for its madness cost or put it into your graveyard.)",
+   "keywords": [
+    "Flying",
+    "Madness"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "manaCost": "{5}{B}{B}",
+   "layout": "normal"
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "a source an opponent controls",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "that much",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that much",
+      "optional": true
+     },
+     {
+      "verb": "sacrifice",
+      "object": "that many permanents of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that many",
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Madness {3}{B}{B}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Belltower Sphinx": {
+  "source": {
+   "name": "Belltower Sphinx",
+   "typeLine": "Creature — Sphinx",
+   "oracleText": "Flying\nWhenever a source deals damage to this creature, that source's controller mills that many cards.",
+   "keywords": [
+    "Flying",
+    "Mill"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "2",
+   "toughness": "5",
+   "manaCost": "{4}{U}",
+   "layout": "normal"
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damaged",
+     "subject": "this creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "that source's controller",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that many cards",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Crag Saurian": {
+  "source": {
+   "name": "Crag Saurian",
+   "typeLine": "Creature — Lizard",
+   "oracleText": "Whenever a source deals damage to this creature, that source's controller gains control of this creature.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{R}{R}{R}",
+   "layout": "normal"
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damaged",
+     "subject": "this creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "gain-control",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Lava Runner": {
+  "source": {
+   "name": "Lava Runner",
+   "typeLine": "Creature — Lizard",
+   "oracleText": "Haste\nWhenever this creature becomes the target of a spell or ability, that spell or ability's controller sacrifices a land of their choice.",
+   "keywords": [
+    "Haste"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{R}{R}",
+   "layout": "normal"
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Haste",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "becomes-target",
+     "subject": "this creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a land of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Swans of Bryn Argoll": {
+  "source": {
+   "name": "Swans of Bryn Argoll",
+   "typeLine": "Creature — Bird Spirit",
+   "oracleText": "Flying\nIf a source would deal damage to this creature, prevent that damage. The source's controller draws cards equal to the damage prevented this way.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "U",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": "4",
+   "toughness": "3",
+   "manaCost": "{2}{W/U}{W/U}",
+   "layout": "normal"
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "prevent",
+      "object": "damage to this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "the source's controller",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "equal to the damage prevented this way",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Rona, Herald of Invasion // Rona, Tolarian Obliterator": {
+  "source": {
+   "name": "Rona, Herald of Invasion // Rona, Tolarian Obliterator",
+   "typeLine": "Legendary Creature — Human Wizard // Legendary Creature — Phyrexian Wizard",
+   "oracleText": "Whenever you cast a legendary spell, untap Rona.\n{T}: Draw a card, then discard a card.\n{5}{B/P}: Transform Rona. Activate only as a sorcery. ({B/P} can be paid with either {B} or 2 life.)\n//\nTrample\nWhenever a source deals damage to Rona, that source's controller exiles a card from their hand at random. If it's a land card, you may put it onto the battlefield under your control. Otherwise, you may cast it without paying its mana cost.",
+   "keywords": [
+    "Transform",
+    "Trample"
+   ],
+   "colors": [
+    "U",
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "transform",
+   "faces": [
+    {
+     "name": "Rona, Herald of Invasion",
+     "typeLine": "Legendary Creature — Human Wizard",
+     "oracleText": "Whenever you cast a legendary spell, untap Rona.\n{T}: Draw a card, then discard a card.\n{5}{B/P}: Transform Rona. Activate only as a sorcery. ({B/P} can be paid with either {B} or 2 life.)",
+     "colors": [
+      "U"
+     ],
+     "manaCost": "{1}{U}",
+     "power": "1",
+     "toughness": "3",
+     "artCrop": "https://cards.scryfall.io/art_crop/front/f/4/f487b582-e73f-4325-939f-95fc5a9aba49.jpg?1783917031"
+    },
+    {
+     "name": "Rona, Tolarian Obliterator",
+     "typeLine": "Legendary Creature — Phyrexian Wizard",
+     "oracleText": "Trample\nWhenever a source deals damage to Rona, that source's controller exiles a card from their hand at random. If it's a land card, you may put it onto the battlefield under your control. Otherwise, you may cast it without paying its mana cost.",
+     "colors": [
+      "B",
+      "U"
+     ],
+     "manaCost": "",
+     "power": "5",
+     "toughness": "5",
+     "colorIndicator": [
+      "B",
+      "U"
+     ],
+     "artCrop": "https://cards.scryfall.io/art_crop/back/f/4/f487b582-e73f-4325-939f-95fc5a9aba49.jpg?1783917031"
+    }
+   ]
+  },
+  "grammar": false,
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a legendary spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "untap",
+      "object": "Rona",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "Rona",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "a source",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a card from that source's controller's hand at random",
+      "fromZone": "hand",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cast",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
  }
 }

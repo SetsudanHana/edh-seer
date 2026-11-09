@@ -52,7 +52,7 @@ import { addsManaText, deriveMana, production } from "./mana-lines.js";
 import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
 import { isSelfSubject, SELF_REFERENCE, selfAndTail, withoutArticle } from "./self-reference.js";
-import { neverEntersUncast, stampActsOnHost, stampCastOnly } from "./cast-only.js";
+import { exileIsCastOnly, neverEntersUncast, stampActsOnHost, stampCastOnly } from "./cast-only.js";
 import { antecedentIsSelf as selfAntecedent, antecedentSource, antecedentText, boundedByEnchantLine, exiledAcrossClauses, forEachClass, permanentAnaphorsResolved, PLURAL_BACKREF, pluralAntecedent, pluralIsDelayed, PRONOUN_OBJECT, selfAntecedentText, withoutCombatRole, zoneAfterEvent } from "./references.js";
 import { triggerHasCue } from "../clause-store.js";
 import { emblemRecipient } from "../emblem.js";
@@ -5004,6 +5004,7 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
   const isSpellFace = (face: number | undefined): boolean =>
     (chars.faces ? chars.faces[face ?? 0]?.types ?? [] : chars.types).some((t) => /^(?:instant|sorcery)$/i.test(t));
   const entersOnlyCast = neverEntersUncast(input.oracleText ?? "", input.name);
+  const exileCastOnly = exileIsCastOnly(input.oracleText ?? "");
   const spellOnceRaw = pinned.map((a) => a.kind === "on-cast" || a.repeats === "once" || !isSpellFace(a.face) ? a : { ...a, repeats: "once" as const })
     // A SELF "YOU LOSE THE GAME" ABILITY CLAIMS NOTHING (#1252, #1264), decided on the FINAL emits: every control fill above has run.
     .map(stampSelfLoss)
@@ -5015,7 +5016,7 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
     // THE CLAUSE THAT GRANTS A QUOTED ABILITY (#1315): `segment()`'s granted clause and its parent, from `DeriveInput.clauseGrants` (both clause sources).
     .map((a) => { const by = a.clause !== undefined ? input.clauseGrants?.[a.clause as number] : undefined; return by === undefined ? a : { ...a, grantedBy: by }; })
     // WHAT ONLY A CAST CARD HAS, AND WHAT AN AURA'S LEAVE TRIGGER CANNOT REACH (#1513): see cast-only.ts.
-    .map((a, _i, all) => stampCastOnly(a, all, entersOnlyCast))
+    .map((a, _i, all) => stampCastOnly(a, all, entersOnlyCast, exileCastOnly, a.clause !== undefined ? input.clauseTexts?.[a.clause as number] : undefined))
     .map((a) => stampActsOnHost(a, a.clause !== undefined ? input.clauseTexts?.[a.clause as number] : undefined, chars.enchants !== undefined))
     // A DEALER'S `self` IS THE CARD (#1462, #1471). A fight's `dealer.self` (#1471, typed creature) is the CARD fighting: only on its own ability, on a permanent that is not a Saga; a granted ability's fighter is the
     // grantee, and a spell's or chapter's "it" is a creature it picked. A `self` dealer of a deal-damage sentence (#1462, untyped) is the card on every face and kind EXCEPT a granted ability, whose "this creature deals" is
