@@ -1,0 +1,842 @@
+{
+ "Renounce": {
+  "source": {
+   "_id": "72f9a6f7-ea26-438d-aafa-758239fd3681",
+   "name": "Renounce",
+   "typeLine": "Instant",
+   "oracleText": "Sacrifice any number of permanents. You gain 2 life for each permanent sacrificed this way.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "lifegain",
+     "cast:instant"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "releasedAt": "1999-10-04",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "any number of permanents",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "amount": "2 for each permanent sacrificed this way",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6678bb2d52574f12a8cce6ad77f4c9854f685cd1a80fbacde369b22b87d08673"
+ },
+ "Pitiless Carnage": {
+  "source": {
+   "_id": "186bfdac-ce9c-476f-89b6-ef467487fca5",
+   "name": "Pitiless Carnage",
+   "typeLine": "Sorcery",
+   "oracleText": "Sacrifice any number of permanents you control, then draw that many cards.\nPlot {1}{B}{B} (You may pay {1}{B}{B} and exile this card from your hand. Cast it as a sorcery on a later turn without paying its mana cost. Plot only as a sorcery.)",
+   "keywords": [
+    "Plot"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "manaCost": "{3}{B}",
+   "layout": "normal",
+   "releasedAt": "2024-04-19",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Pitiless Carnage",
+     "typeLine": "Sorcery",
+     "printingId": "2bea6391-e70d-4f36-86b7-fd08440b4976"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Plot",
+     "typeLine": "Card",
+     "printingId": "f07677af-88a4-4ff5-b591-e1e3ac05235d"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "any number of permanents you control",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "draw",
+      "object": "that many cards",
+      "amount": null,
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Plot {1}{B}{B}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "80adfa323d8f15d930d9f2ff56c52d77a80069be3e605d0abf693bec9a80ce66"
+ },
+ "Lich": {
+  "source": {
+   "_id": "5b7515f2-7a5a-4e2a-9784-6cbacd768172",
+   "name": "Lich",
+   "typeLine": "Enchantment",
+   "oracleText": "As this enchantment enters, you lose life equal to your life total.\nYou don't lose the game for having 0 or less life.\nIf you would gain life, draw that many cards instead.\nWhenever you're dealt damage, sacrifice that many nontoken permanents. If you can't, you lose the game.\nWhen this enchantment is put into a graveyard from the battlefield, you lose the game.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "lifegain",
+     "enchantment"
+    ],
+    "cares": []
+   },
+   "manaCost": "{B}{B}{B}{B}",
+   "layout": "normal",
+   "releasedAt": "2011-01-10",
+   "gameChanger": false,
+   "reserved": true
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "equal to your life total",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "lose the game for having 0 or less life",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "that many cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damaged",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "that many nontoken permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-game",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this enchantment",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-game",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "1253c7dc7ad40c3d1ed0ff05a2da004d1b6a14cfb679e958f7a8351ced708d5c"
+ },
+ "Phyrexian Negator": {
+  "source": {
+   "_id": "f22fcd17-bc24-41df-81ce-6d11208861b9",
+   "name": "Phyrexian Negator",
+   "typeLine": "Creature — Phyrexian Horror",
+   "oracleText": "Trample\nWhenever this creature is dealt damage, sacrifice that many permanents.",
+   "keywords": [
+    "Trample"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "tags": {
+    "produces": [
+     "tribe:phyrexian",
+     "tribe-nontoken:phyrexian",
+     "tribe:horror",
+     "tribe-nontoken:horror"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{B}",
+   "layout": "normal",
+   "releasedAt": "2010-03-19",
+   "gameChanger": false,
+   "reserved": true
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "that many permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "0d7456dc93f260265c0da9ce2a80b81f21d30447b83d23838bc47728f4d3f664"
+ },
+ "Spirit Loop": {
+  "source": {
+   "_id": "6edf5767-10d3-40b0-bfce-daa8633888f6",
+   "name": "Spirit Loop",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature you control\nWhenever enchanted creature deals damage, you gain that much life.\nWhen this Aura is put into a graveyard from the battlefield, return it to its owner's hand.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "lifegain",
+     "enchantment",
+     "aura"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "releasedAt": "2006-10-06",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature you control",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "enchanted creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "that much",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this Aura",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "this Aura",
+      "toZone": "hand",
+      "optional": false,
+      "fromZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "e2d1a777146f82419e2a28dcccd2da9bef21d42d11a56ff88ed0d72aaf911cc2"
+ },
+ "Parallax Dementia": {
+  "source": {
+   "_id": "6ec7a7fb-0bf9-47fa-af2b-5b13b3af3947",
+   "name": "Parallax Dementia",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature\nFading 1 (This enchantment enters with one fade counter on it. At the beginning of your upkeep, remove a fade counter from it. If you can't, sacrifice it.)\nEnchanted creature gets +3/+2.\nWhen this Aura leaves the battlefield, destroy enchanted creature. That creature can't be regenerated.",
+   "keywords": [
+    "Fading",
+    "Enchant"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "enchantment",
+     "aura"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{B}",
+   "layout": "normal",
+   "releasedAt": "2000-02-14",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Fading 1",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "enchanted creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+3/+2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "enchanted creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "be regenerated",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "1a62f6c4af0b3daf39c307f9a9cd521a26f39837ce17e40b3ce5ebdc67db8978"
+ },
+ "Reality Acid": {
+  "source": {
+   "_id": "232c297d-71b6-429f-99df-39a11dbcea40",
+   "name": "Reality Acid",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant permanent\nVanishing 3 (This Aura enters with three time counters on it. At the beginning of your upkeep, remove a time counter from it. When the last is removed, sacrifice it.)\nWhen this Aura leaves the battlefield, enchanted permanent's controller sacrifices it.",
+   "keywords": [
+    "Vanishing",
+    "Enchant"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "enchantment",
+     "aura"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{U}",
+   "layout": "normal",
+   "releasedAt": "2021-03-19",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant permanent",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vanishing 3",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this Aura",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "enchanted permanent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "5b27a19f56d5b3cc578939a9199af377a1a884df18c83202c64d736ea16df636"
+ },
+ "Bitter Chill": {
+  "source": {
+   "_id": "be0dcad2-8e84-4e9f-b69c-837b40b8fb83",
+   "name": "Bitter Chill",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature\nWhen this Aura enters, tap enchanted creature.\nEnchanted creature doesn't untap during its controller's untap step.\nWhen this Aura is put into a graveyard from the battlefield, you may pay {1}. If you do, scry 1, then draw a card.",
+   "keywords": [
+    "Enchant",
+    "Scry"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "card-draw",
+     "enchantment",
+     "aura"
+    ],
+    "cares": []
+   },
+   "manaCost": "{1}{U}",
+   "layout": "normal",
+   "releasedAt": "2023-09-08",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this Aura",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "enchanted creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "untap during its controller's untap step",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this Aura",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "scry",
+      "object": "1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": true
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "444be328d496666154faf3586c379b685f7a8367ef650187c8b006bbd1d8e410"
+ },
+ "Slow Motion": {
+  "source": {
+   "_id": "151388a4-a24b-4089-a323-e7c1d5e6490a",
+   "name": "Slow Motion",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature\nAt the beginning of the upkeep of enchanted creature's controller, that player sacrifices that creature unless they pay {2}.\nWhen this Aura is put into a graveyard from the battlefield, return it to its owner's hand.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "enchantment",
+     "aura"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{U}",
+   "layout": "normal",
+   "releasedAt": "1999-02-15",
+   "gameChanger": false,
+   "reserved": false
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "enchanted creature's controller",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false,
+      "unless": {
+       "cost": "{2}",
+       "payer": "controller"
+      }
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this Aura",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "4a4a48a84b6c7b753975e08897ccf701f74b692076457e51a1be3ff452261d5a"
+ },
+ "Apocalypse": {
+  "source": {
+   "_id": "82c8f5dd-563d-4fd0-bd43-7ee2001d3777",
+   "name": "Apocalypse",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile all permanents. You discard your hand.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "graveyard",
+     "cast:sorcery"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{R}{R}{R}",
+   "layout": "normal",
+   "releasedAt": "1997-10-14",
+   "gameChanger": false,
+   "reserved": true
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "your hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ab185d9300ebf3cb82da3dd0765e786ccda05e47d701744c6f012b71a0b4d5e1"
+ }
+}

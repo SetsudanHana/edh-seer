@@ -13,8 +13,13 @@ const rowOf = (name: string) => {
 const removals = (name: string) => rowOf(name).tags.abilities.flatMap((a) => a.emits ?? [])
   .filter((e) => ["dies", "leaves", "exiled", "sacrifice", "enters"].includes(e.verb) && [e.subject.type].flat().includes("permanent") && e.subject.scope === "all" && (e.subject.fromZone ?? "battlefield") === "battlefield");
 
-describe("a counted or set-defined permanent mass carries its marker", () => {
-  test.each(["Renounce", "Pitiless Carnage", "Phyrexian Negator", "Lich", "God-Eternal Bontu", "Shimatsu the Bloodcloaked", "Dralnu, Lich Lord", "Phyrexian Totem", "Journey to the Lost City", "Legions to Ashes", "Deep Space 9"])("%s", (name) => {
+describe("a counted permanent mass is marked counted, a set the card defined earlier chosen", () => {
+  test.each(["Renounce", "Pitiless Carnage", "Phyrexian Negator", "Lich", "God-Eternal Bontu", "Shimatsu the Bloodcloaked", "Dralnu, Lich Lord", "Phyrexian Totem"])("%s: counted", (name) => {
+    const e = removals(name);
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) expect(x.subject.selection).toBe("counted");
+  });
+  test.each(["Journey to the Lost City", "Legions to Ashes", "Deep Space 9"])("%s: chosen", (name) => {
     const e = removals(name);
     expect(e.length).toBeGreaterThan(0);
     for (const x of e) expect(x.subject.selection).toBe("chosen");

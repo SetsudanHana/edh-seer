@@ -12,7 +12,7 @@ const OTHER_THAN_CHOSEN = /\bchooses?\b[^.]*\.[^.]*\ball other permanents\b/i;
 
 /** A NUMBER OR A SET THE CARD DEFINED EARLIER IS NOT EVERY PERMANENT (#1577). "Sacrifice any number of permanents" (Renounce, Bontu, Shimatsu), "sacrifice that many permanents" (Lich, Phyrexian Negator, Dralnu), "sacrifice X permanents", "put all permanent
  *  cards exiled with this enchantment" (Journey to the Lost City), "exiled this way" (Deep Space 9) and "all tokens that player controls with the same name" (Legions to Ashes) are chosen subsets: the grammar drops the quantifier from the object, and the bare `permanent` left behind read
- *  as a sweep that proves every subtype. Marked `chosen`, the marker a player's pick already has (`parseSubject`).
+ *  as a sweep that proves every subtype. A count is `counted` (the player's pick can be anything of the class, so it still reaches an Aura: matcher aura-reach.ts), a set the card defined earlier is `chosen`, the marker a card's own earlier pick already has (`parseSubject`).
  *  CEILING: the clause is the unit, so a clause that also sweeps ("Exile all permanents. Sacrifice two permanents.") marks its sweep too; and a quantifier word other than these (a spelled-out number above ten, "each of two") is not read. */
 const COUNTED_PERMANENTS = /\b(?:any number of|that many|x|\d+|one|two|three|four|five|six|seven|eight|nine|ten) (?:other )?(?:nontoken )?permanents\b/i;
 const SET_OF_THE_CARD = /\bpermanent cards? (?:exiled with|exiled this way|revealed this way)\b|\ball tokens\b[^.]*\bsame name\b/i;
@@ -28,7 +28,7 @@ export function selectionFromText(abilities: Ability[], clauseTexts: Record<numb
     if (!a.emits?.some((e) => bare(e.subject))) return a;
     const text = a.clause === undefined ? cardText : clauseTexts?.[Math.trunc(Number(a.clause))] ?? cardText;
     const selection = UNLESS.test(text) || OTHER_THAN_CHOSEN.test(text) ? "all-but" as const : PILES.test(text) ? "pile" as const
-      : COUNTED_PERMANENTS.test(text) || SET_OF_THE_CARD.test(text) ? "chosen" as const : undefined;
+      : COUNTED_PERMANENTS.test(text) ? "counted" as const : SET_OF_THE_CARD.test(text) ? "chosen" as const : undefined;
     if (!selection) return a;
     return { ...a, emits: a.emits.map((e) => (bare(e.subject) ? { ...e, subject: { ...e.subject, selection } } : e)) };
   });

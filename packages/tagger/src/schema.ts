@@ -200,9 +200,9 @@ export interface SubjectFilter {
    *  no field of their own, and the bare `permanent` they left behind was indistinguishable from a real "destroy all permanents" (Apocalypse), so a rule keyed on the class could not tell them apart.
    *  `all-but`: everything EXCEPT a number the players keep ("sacrifices the rest": Razia's Purification, "creatures other than up to two chosen creatures": Mount Doom). `votes`: the permanent(s) with
    *  the most votes (Council's Judgment). `pile`: the pile a player picks (Liliana of the Veil, "all permanents in the pile of their choice"). `attached-to`: only those attached to something ("all
-   *  permanents attached to creatures": End Hostilities). `named-set`: only the cards whose NAME is in a printed set (Apocalypse Chime: \"a name originally printed in the Homelands expansion\"). `chosen`: the things the card picked earlier, one per chooser ("for each opponent, choose an artifact or land ... destroy the chosen
+   *  permanents attached to creatures": End Hostilities). `counted`: a number of them the player picks from the whole class ("sacrifice any number of permanents": Renounce; "that many": Lich), which can be anything of the class but is not every one of it (#1577). `named-set`: only the cards whose NAME is in a printed set (Apocalypse Chime: \"a name originally printed in the Homelands expansion\"). `chosen`: the things the card picked earlier, one per chooser ("for each opponent, choose an artifact or land ... destroy the chosen
    *  permanents": Ultimate Magic: Meteor; Sadistic Shell Game, Tunnel of Love, Teferi's "the chosen permanents"), which carries NO mass `scope`. A marker only: no matcher reads it as a filter, and a consumer with it matches as it did. Set by `parseSubject`; never by the LLM. */
-  selection?: "all-but" | "votes" | "pile" | "attached-to" | "chosen" | "named-set";
+  selection?: "all-but" | "votes" | "pile" | "attached-to" | "chosen" | "named-set" | "counted";
   /** "A spell that SHARES A CREATURE TYPE WITH this creature" (issue #559). `self`: the card's own
    *  creature types, pinned to `subtype` by `deriveCardTags` and never stored. `commander`: the
    *  ability is granted to commander creatures (Folk Hero), so the class is the COMMANDER'S types --

@@ -2110,7 +2110,7 @@ function auraOwnLeaves(chars: CardTags["characteristics"], a: CardTags["abilitie
   // THE EVENT NAMES A CLASS, AND THE WHOLE OF IT. An untyped removal (a bare "it": Bomb Squad's destroy, Cut the Tethers' return of a Spirit) states no class that could be an Aura, and a `selection` (a named set, "all but the chosen",
   // a vote, a pile) is a part of the class the engine cannot test: neither reaches an Aura.
   const s = e.subject;
-  if (s.selection !== undefined || !namesAClass(s)) return false;
+  if ((s.selection !== undefined && s.selection !== "counted") || !namesAClass(s)) return false;
   const aura = characteristicsSubject({ characteristics: chars } as CardTags);
   if (!eventReachesAura(e, auraReachContext(producer, producerText, aura), aura, h)) return false;
   const { subtype: _aura, ...rest } = t.subject;
