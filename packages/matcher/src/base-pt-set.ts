@@ -37,18 +37,31 @@ export function pairsAsUpgrade(p: CardTags, a: Ability): { power: number; toughn
   return v;
 }
 
-/** The creature token a maker's emit creates that the set raises: its stored base power is below the set power, or its base toughness below the set toughness. Undefined when it raises none. */
-export function raisedToken(c: CardTags, v: { power: number; toughness: number }, inClass: (shape: SubjectFilter) => boolean): SubjectFilter | undefined {
+/** The floor of a base-P/T pair's strength (owner ruling 2026-11-09, #1572). */
+export const BASE_SET_FLOOR = 0.15;
+
+/** HOW MUCH A SET OF `setPower` UPGRADES A BODY OF `power` (owner ruling 2026-11-09): max(0.15, (setPower - power) / setPower). Under a 6/6 set a 1/1 is 0.83, a 3/3 0.50, a 5/5 0.17. Rounded to 3 places so the stored figure is stable. */
+export function baseSetStrength(setPower: number, power: number): number {
+  return Math.round(Math.max(BASE_SET_FLOOR, (setPower - power) / setPower) * 1000) / 1000;
+}
+
+/** The creature token a maker's emit creates that the set raises: its stored base power is below the set power, or its base toughness below the set toughness, with the strength of the pair: the curve at the token's base power,
+ *  the floor for a token whose only shortfall is toughness, and the best of a maker's several shapes. Undefined when it raises none. */
+export function raisedToken(c: CardTags, v: { power: number; toughness: number }, inClass: (shape: SubjectFilter) => boolean): { shape: SubjectFilter; strength: number } | undefined {
+  let best: { shape: SubjectFilter; strength: number } | undefined;
   for (const a of c.abilities) {
     for (const e of a.emits ?? []) {
       const s = e.subject;
       if (e.verb !== "create-token" || s.control === "opp" || !(Array.isArray(s.type) ? s.type : [s.type]).includes("creature")) continue;
       const power = s.stats?.find((x) => x.metric === "power" && x.op === "eq")?.value;
       const toughness = s.stats?.find((x) => x.metric === "toughness" && x.op === "eq")?.value;
-      if (((power !== undefined && power < v.power) || (toughness !== undefined && toughness < v.toughness)) && inClass(s)) return s;
+      if (((power !== undefined && power < v.power) || (toughness !== undefined && toughness < v.toughness)) && inClass(s)) {
+        const strength = power !== undefined && power < v.power ? baseSetStrength(v.power, power) : BASE_SET_FLOOR;
+        if (best === undefined || strength > best.strength) best = { shape: s, strength };
+      }
     }
   }
-  return undefined;
+  return best;
 }
 
 /** What a card's POWER READING needs of the board: `0` reads power without a threshold ("the greatest power among creatures you control", "total power"), N a "power N or greater" a set power must reach. */

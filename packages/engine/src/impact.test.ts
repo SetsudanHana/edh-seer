@@ -153,3 +153,13 @@ test('edgeModel "strategy" makes every reason weigh 1 — the axis boost is the 
   expect(impactWeightOf(r({ effectKind: "pump", repeatability: "static" }), { ...SEED_IMPACT_WEIGHTS, edgeModel: "priors" }))
     .toBeCloseTo(0.5 * 0.6);
 });
+
+test("a reason's optional strength scales its weight in both edge models; absent is exactly 1 (#1572)", () => {
+  const w = loadImpactWeights();
+  const priors = { ...SEED_IMPACT_WEIGHTS, edgeModel: "priors" as const };
+  expect(impactWeightOf(r({ effectKind: "draw-card" }), { ...w, edgeModel: "strategy" })).toBe(1);
+  expect(impactWeightOf(r({ effectKind: "draw-card", strength: 0.5 }), { ...w, edgeModel: "strategy" })).toBe(0.5);
+  expect(impactWeightOf(r({ effectKind: "draw-card", strength: 0.5 }), priors)).toBeCloseTo(0.5 * impactWeightOf(r({ effectKind: "draw-card" }), priors));
+  // the best reason per tag still wins
+  expect(impactEdgeWeight([r({ strength: 0.2 }), r({ strength: 0.9 }), r({})], { ...w, edgeModel: "strategy" })).toBe(1);
+});

@@ -189,12 +189,14 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
  * "fixed" multiplier (1.0).
  */
 export function impactWeightOf(reason: Reason, w: ImpactWeights): number {
-  if (w.edgeModel === "strategy") return 1;
+  // A reason that carries a `strength` (the base-P/T pairs, #1572) is weighed by it in either model; every other reason has none and stays exactly as before.
+  const strength = reason.strength ?? 1;
+  if (w.edgeModel === "strategy") return strength;
   const k = reason.effectKind !== undefined ? (w.kinds[reason.effectKind] ?? UNKNOWN_KIND_WEIGHT) : UNKNOWN_KIND_WEIGHT;
   const r = reason.repeatability !== undefined ? (w.repeatability[reason.repeatability] ?? 1.0) : 1.0;
   const fixedMult = w.scaling?.fixed ?? 1.0;
   const s = reason.scaling !== undefined ? (w.scaling?.[reason.scaling] ?? fixedMult) : fixedMult;
-  return k * r * s;
+  return k * r * s * strength;
 }
 
 /** The committed impact-weights.json -- THIS is what scores production, not `SEED_IMPACT_WEIGHTS`,

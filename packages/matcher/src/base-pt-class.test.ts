@@ -85,3 +85,68 @@ test("a reading without a threshold needs a set power of 4: Kudo's 2/2 and Harmo
   expect(base("Kudo, King Among Bears", "Molten Monstrosity")).toEqual([]);
   expect(base("Harmonious Archon", "Molten Monstrosity")).toEqual([]);
 });
+
+// ---- #1572, owner ruling 2026-11-09: the pair's STRENGTH falls as the creature's own power rises ----
+import { analyzeDecklist } from "./orchestrate.js";
+import { normalizeName } from "@edh-seer/data/names";
+import { baseSetStrength } from "./base-pt-set.js";
+import { SEED_IMPACT_WEIGHTS, impactEdgeWeight, impactWeightOf, loadImpactWeights } from "@edh-seer/engine";
+import type { CardLookup } from "@edh-seer/data/resolve";
+
+const strengthOf = (p: string, c: string): number | undefined => base(p, c)[0]?.strength;
+/** A token maker that is `dc("Master of the Hunt")` with its token's stats rewritten to `p`/`t`. */
+const makerOf = (name: string, p: number, t: number): DeckCard => {
+  const m = dc("Master of the Hunt");
+  const tags = JSON.parse(JSON.stringify(m.tags)) as CardTags;
+  // not a creature itself, so only the token side of the pair is read
+  tags.characteristics.power = null; tags.characteristics.toughness = null; tags.characteristics.types = ["enchantment"];
+  for (const a of tags.abilities) for (const e of a.emits ?? []) for (const s of e.subject.stats ?? []) {
+    if (s.metric === "power") s.value = p;
+    if (s.metric === "toughness") s.value = t;
+  }
+  return { card: { ...(m.card as object), name } as DeckCard["card"], tags };
+};
+
+test("the curve: max(0.15, (set power - power) / set power), 6/6: 1/1 0.83, 3/3 0.5, 5/5 0.17", () => {
+  expect([1, 3, 5, 6, 9].map((p) => baseSetStrength(6, p))).toEqual([0.833, 0.5, 0.167, 0.15, 0.15]);
+});
+
+test("March x a 1/1 creature has a higher strength and edge weight than March x a 5/5", () => {
+  const small = strengthOf("March of the World Ooze", "Llanowar Elves"), big = strengthOf("March of the World Ooze", "Spearbreaker Behemoth");
+  expect(small).toBe(0.833);
+  expect(big).toBe(0.167);
+  expect(strengthOf("March of the World Ooze", "Grizzly Bears")).toBe(0.667);
+  const w = loadImpactWeights();
+  const weight = (c: string) => impactEdgeWeight(base("March of the World Ooze", c), w);
+  expect(weight("Llanowar Elves")).toBeGreaterThan(weight("Spearbreaker Behemoth"));
+  expect(weight("Llanowar Elves")).toBeCloseTo(0.833, 3);
+  const priors = { ...SEED_IMPACT_WEIGHTS, edgeModel: "priors" as const };
+  expect(impactWeightOf(base("March of the World Ooze", "Llanowar Elves")[0]!, priors)).toBeGreaterThan(impactWeightOf(base("March of the World Ooze", "Spearbreaker Behemoth")[0]!, priors));
+});
+
+test("token makers use the curve at the token's power: Master of the Hunt (1/1) beats a 4/4 maker; toughness-only shortfall takes the floor; a power reader stays at 1", () => {
+  const march = dc("March of the World Ooze");
+  const of = (c: DeckCard) => pairReasons(march, c, loadHierarchy()).filter((r) => r.tag === "static:base-pt-set")[0]?.strength;
+  expect(of(dc("Master of the Hunt"))).toBe(0.833);
+  expect(of(makerOf("Four-Four Maker", 4, 4))).toBe(0.333);
+  expect(of(makerOf("Six-Two Maker", 6, 2))).toBe(0.15);
+  expect(of(dc("Master of the Hunt"))!).toBeGreaterThan(of(makerOf("Four-Four Maker", 4, 4))!);
+  // a power reader carries no strength at all
+  const reader = base("March of the World Ooze", "Molten Monstrosity");
+  expect(reader).not.toEqual([]);
+  expect(reader[0]!.strength).toBeUndefined();
+});
+
+test("through analyzeDecklist, March's contribution to a 1/1 is larger than to a 5/5", async () => {
+  const byName = new Map(Object.entries(F).map(([n, f]) => [normalizeName(n), { ...f.source, searchNames: [normalizeName(n)], tags: { produces: [], cares: [] } }]));
+  const tagsById = new Map(Object.keys(F).map((n) => [F[n]!.source._id, dc(n).tags]));
+  const lookup: CardLookup = { async findByName(n: string) { return (byName.get(n) ?? null) as never; }, async allCombos() { return []; } };
+  const sources = { lookup, tagsLookup: { findOne: async (id: string) => tagsById.get(id) ?? null }, tokenTags: () => null, tokenArt: async () => new Map<string, string>() } as never;
+  const { report } = await analyzeDecklist(["March of the World Ooze", "Llanowar Elves", "Spearbreaker Behemoth"].map((n) => `1 ${n}`).join("\n"), undefined, async () => sources);
+  const card = (n: string) => report.cards.find((c) => c.name === n)!;
+  const pair = (c: string) => report.edges.find((e) => (e.a === "March of the World Ooze" && e.b === c) || (e.b === "March of the World Ooze" && e.a === c));
+  expect(pair("Llanowar Elves")).toBeDefined();
+  expect(pair("Spearbreaker Behemoth")).toBeDefined();
+  // each is fed by March alone, so the payoff authority (the square root of its support) is the pair's contribution
+  expect(card("Llanowar Elves").authority!).toBeGreaterThan(card("Spearbreaker Behemoth").authority!);
+});

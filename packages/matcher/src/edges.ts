@@ -10,7 +10,7 @@ import { isZonedCardGrant, subjectMatches, graveyardFillMatches, counterAddMatch
 import { enterAsCopyAbilities, impliedEvents, preparedAbilities, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, printedAllTypes, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { normalizeZoneEvent, tagKey, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
-import { pairsAsUpgrade, powerNeeds, printedPower, raisedToken, readsPower } from "./base-pt-set.js";
+import { baseSetStrength, pairsAsUpgrade, powerNeeds, printedPower, raisedToken, readsPower } from "./base-pt-set.js";
 import { hasMediatingToken } from "./tokens.js";
 import {
   copySentence, costReductionSentence, temporaryCopySentence, counterPresenceSentence, createsSentence,
@@ -3303,18 +3303,23 @@ function baseSetReason(p: PairScope["p"], c: DeckCard, a: Ability, h: Hierarchy)
   // and the owner's ruling pairs a set with what it upgrades, which a state we cannot read does not say.
   if (s.counter !== undefined || (s.status?.length ?? 0) > 0) return undefined;
   const { counter: _stateOnly, ...cls } = s;
-  const reason = (why: string): Reason => ({
+  const reason = (why: string, strength?: number): Reason => ({
     tag: "static:base-pt-set",
     text: `${p.card.name} sets the base power and toughness of your creatures to ${v.power}/${v.toughness}, and ${why}`,
     effectKind: "base-pt-set",
     repeatability: "static",
     consumer: c.card.name,
     producer: p.card.name,
+    // Owner ruling 2026-11-09: the pair of a creature or a token maker falls as its own power rises; a power reader stays at 1 (absent).
+    ...(strength !== undefined ? { strength } : {}),
   });
   const power = printedPower(c.tags);
-  if (power !== undefined && power < v.power && subjectMatches(characteristicsSubject(c.tags, c.card.name), cls, h)) return reason(`${c.card.name} is smaller than that`);
-  if (raisedToken(c.tags, v, (shape) => subjectMatches(shape, cls, h)) !== undefined) return reason(`${c.card.name} makes tokens smaller than that`);
-  if (readsPower(powerNeeds(c.card, c.tags), v.power)) return reason(`${c.card.name} reads the power of your creatures`);
+  const token = raisedToken(c.tags, v, (shape) => subjectMatches(shape, cls, h));
+  const reads = readsPower(powerNeeds(c.card, c.tags), v.power);
+  // A card that READS power stays at strength 1 whatever else it is (a 5/5 Molten Monstrosity); a creature that also makes smaller tokens takes the better of the two.
+  if (power !== undefined && power < v.power && subjectMatches(characteristicsSubject(c.tags, c.card.name), cls, h)) return reason(`${c.card.name} is smaller than that`, reads ? undefined : Math.max(baseSetStrength(v.power, power), token?.strength ?? 0));
+  if (token !== undefined) return reason(`${c.card.name} makes tokens smaller than that`, reads ? undefined : token.strength);
+  if (reads) return reason(`${c.card.name} reads the power of your creatures`);
   return undefined;
 }
 

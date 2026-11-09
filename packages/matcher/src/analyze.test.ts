@@ -398,6 +398,19 @@ test("power≤2 trigger edges with a small creature, NOT a big one", () => {
   expect(analyzeDeckStructured([vamp, big]).edges).toEqual([]);
 });
 
+// #1572, owner ruling 2026-11-09: only the base-P/T pairs carry a per-reason `strength`; every other reason weighs exactly what it did. The numbers are the pre-strength scores of the pair above.
+test("a reason with no strength weighs exactly what it did: the power<=2 trigger pair's scores are pinned", () => {
+  const vamp = dc("Welcoming Vampire", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null, stats: [{ metric: "power", op: "lte", value: 2 }] } },
+    effect: { kind: "draw-card" }, emits: [{ verb: "draw", subject: { control: "you", token: null } }],
+  }], [], "Creature");
+  const r = analyzeDeckStructured([vamp, dcWithPT("Small", 1, 1)]);
+  expect(r.cards.find((c) => c.name === "Welcoming Vampire")!.score).toBeCloseTo(1.5811388300841898, 12);
+  expect(r.cards.find((c) => c.name === "Small")!.score).toBeCloseTo(0.7905694150420949, 12);
+  expect(r.edges.flatMap((e) => e.reasons).some((x) => x.strength !== undefined)).toBe(false);
+});
+
 test("toughness-matters static edges with a wall, NOT a beater", () => {
   const doran = dc("Doran", [{ kind: "static", effect: { kind: "damage-multiplier", subject: { type: "creature", control: "you", token: null, stats: [{ metric: "toughness", op: "gte", vs: "power" }] } } }], [], "Creature");
   const wall = dcWithPT("Wall", 0, 6);

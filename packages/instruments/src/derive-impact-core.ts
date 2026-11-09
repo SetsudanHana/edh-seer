@@ -113,7 +113,7 @@ export function grammarReport(entries: GrammarEntry[]): GrammarReport {
 // ---- pair reasons ----
 
 /** The fields of a reason besides its membership key (tag|producer|consumer) and magnitude that the report watches. Not `text`, ability indexes or `enabledBy`. */
-export const ATTR_FIELDS = ["effectKind", "repeatability", "scaling", "perTurn", "hasStatPredicate", "producerIsToken", "consumerIsToken", "producerFace", "consumerFace"] as const;
+export const ATTR_FIELDS = ["effectKind", "repeatability", "scaling", "perTurn", "hasStatPredicate", "producerIsToken", "consumerIsToken", "producerFace", "consumerFace", "strength"] as const;
 export type ReasonLike = { tag: string; producer?: string; consumer?: string; magnitude?: unknown } & { [K in (typeof ATTR_FIELDS)[number]]?: unknown };
 
 export const memberKey = (r: ReasonLike): string => `${r.tag}|${r.producer ?? ""}|${r.consumer ?? ""}`;
