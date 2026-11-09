@@ -188,7 +188,7 @@ export function antecedentIsSelf(actions: readonly Action[], idx: number, cardNa
 
 /** "FOR EACH <CLASS>, RETURN IT" (#1577): the pronoun of a clause that opens "For each Spirit," is that class, one at a time (Cut the Tethers: "For each Spirit, return it to its owner's hand unless that player pays {3}"). Returns "each Spirit", or undefined when the head
  *  is not a plain class (a player or opponent, a card in a zone, a count).
- *  CEILING: a one-to-four-word head with none of the words below; "for each Spirit you control" keeps its control tail as written. */
+ *  CEILING: a one-to-four-word head with none of the words below; "for each Spirit you control" keeps its control tail as written; a Spirit that stopped being one (Eye of Nidhogg makes its creature a black Dragon) is still read as a Spirit, so Cut the Tethers x Eye of Nidhogg is a false pair. */
 export function forEachClass(clauseText: string | undefined): string | undefined {
   const text = (clauseText ?? "").trim();
   if (!text.toLowerCase().startsWith("for each ")) return undefined;
