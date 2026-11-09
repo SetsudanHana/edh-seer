@@ -300,3 +300,11 @@ test("a class grant pairs with the cards that USE the granted kind of type, and 
 test("a chosen type handed to a BOUNDED class claims no pair (Lifecraft Engine's Vehicles, Rukarumel's Slivers and nontoken creatures)", () => {
   for (const n of ["Lifecraft Engine", "Rukarumel, Biologist"]) for (const c of ["Elvish Archdruid", "Grizzly Bears", "Sol Ring", "Conspiracy"]) expect(grantPairs(n, c), `${n} x ${c}`).toEqual([]);
 });
+
+test("an opponent-chosen type is no type the card uses or cares about: Callous Oppressor is paired by neither a creature-type grant nor a chosen-type lord with no deck; Kindred Dominance is (#1570)", () => {
+  expect(grantPairs("Conspiracy", "Callous Oppressor")).toEqual([]);
+  expect(grantPairs("Conspiracy", "Kindred Dominance")).not.toEqual([]);
+  expect(caresAboutCreatureType(tagsOf("Callous Oppressor"), F["Callous Oppressor"]!.source as never)).toBe(false);
+  expect(caresAboutCreatureType(tagsOf("Kindred Dominance"), F["Kindred Dominance"]!.source as never)).toBe(true);
+  expect(mimicStatic("Callous Oppressor")).toEqual([]);
+});

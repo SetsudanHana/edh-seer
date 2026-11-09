@@ -3272,7 +3272,7 @@ export function usesCreatureType(tags: CardTags, card: { name: string; oracleTex
       if ((Array.isArray(s.type) ? s.type : [s.type]).includes("spell")) return false;
       if ((s.zone !== undefined && s.zone !== "battlefield") || (s.fromZone !== undefined && s.fromZone !== "battlefield")) return false;
     }
-    if (s.chosenType === true && (s.chosenKind === undefined || s.chosenKind === "creature-type")) return true;
+    if (s.chosenType === true && s.chosenBy !== "opponent" && (s.chosenKind === undefined || s.chosenKind === "creature-type")) return true;
     const subs = [...(Array.isArray(s.subtype) ? s.subtype : s.subtype ? [s.subtype] : []), ...(s.anyOf ?? []).flatMap((b) => Array.isArray(b.subtype) ? b.subtype : b.subtype ? [b.subtype] : [])].filter(isType);
     if (subs.length === 0) return false;
     printed ??= printedCreatureTypes(card.name, card.oracleText, true);

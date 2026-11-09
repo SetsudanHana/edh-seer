@@ -292,7 +292,8 @@ function caresFromTags(tags: CardTags): boolean {
   const names = (s: SubjectFilter | undefined): boolean => {
     if (!s || s.self === true) return false;
     // A chosen CREATURE type (or one derive could not name the kind of); a card type, odd or even, a land type or a planeswalker type (Cloud Key, Extinction Event, Shimmer, Leori) names no creature type (#1568).
-    if (s.chosenType === true && (s.chosenKind === undefined || s.chosenKind === "creature-type")) return true;
+    // ...and one the card's controller makes: an opponent's choice (Callous Oppressor) is no type this card cares about (#1570).
+    if (s.chosenType === true && s.chosenBy !== "opponent" && (s.chosenKind === undefined || s.chosenKind === "creature-type")) return true;
     return [...arr(s.subtype), ...(s.anyOf ?? []).flatMap((b) => arr(b.subtype))].some(isCreatureType);
   };
   // A CHANGELING IS EVERY CREATURE TYPE, so it is in whatever type is chosen (deck mode pairs it with the deck's lord for the same reason: `extractCharacteristics` gives it every subtype).
