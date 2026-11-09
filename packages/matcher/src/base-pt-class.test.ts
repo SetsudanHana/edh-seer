@@ -169,6 +169,11 @@ test("a power reader reads the BATTLEFIELD: a cast trigger on creature spells (M
   expect(base("March of the World Ooze", "Spellbreaker Behemoth")[0]?.strength).toBe(0.167);
 });
 
+test("a reader that only mentions a spell or a blocker in another clause stays a reader: Bolt Bend, Stubborn Denial, Challenger Troll, Flopsie; Raised by Giants keeps Elemental Bond", () => {
+  for (const c of ["Bolt Bend", "Stubborn Denial", "Challenger Troll", "Flopsie, Bumi's Buddy"]) expect(base("March of the World Ooze", c), c).not.toEqual([]);
+  expect(base("Raised by Giants", "Elemental Bond")).not.toEqual([]);
+});
+
 test("a reader is intersected with the set's class: Dreadhorde Invasion's Zombie token pairs with March (your creatures) and not with Raised by Giants (your commander)", () => {
   expect(base("March of the World Ooze", "Dreadhorde Invasion")).not.toEqual([]);
   expect(base("Raised by Giants", "Dreadhorde Invasion")).toEqual([]);
@@ -182,6 +187,10 @@ test("a set that turns your own creature tokens into vanilla tokens is an upgrad
 test("a creature whose power is printed on a face pairs: March x Delver of Secrets (a transform card), at the curve for its front face", () => {
   const rs = faced("March of the World Ooze", "Delver of Secrets // Insectile Aberration");
   expect(rs.some((r) => r.strength === 0.833 || r.strength === 0.5), JSON.stringify(rs)).toBe(true);
+});
+
+test("a back face with no power does not borrow the front's: Graaz still pairs with Extus // Awaken the Blood Avatar through its 3/6 token", () => {
+  expect(faced("Graaz, Unstoppable Juggernaut", "Extus, Oriq Overlord // Awaken the Blood Avatar")).not.toEqual([]);
 });
 
 test("a toughness-only shortfall counts only when the token's power is not above the set power: Graaz x Elemental Appeal (7/1) and Kudo x Rebellion of the Flamekin (3/1) lose power; Harmonious Archon x Feral Lightning still pairs", () => {

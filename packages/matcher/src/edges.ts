@@ -3293,6 +3293,16 @@ const OTHER_GRANTER_OR_MAKER: ReadonlySet<string> = new Set(["type-grant", "anim
 const usesCreatureTypeCache = new WeakMap<CardTags, [boolean | undefined, boolean | undefined]>();
 const GRANT_REACHES_OFF_BATTLEFIELD = /creature cards you own that aren't on the battlefield/i;
 
+/** Can a creature of the set's class be one the reader looks at? The identity fields only (type, subtype, control, token), either way round: Raised by Giants' commander creature is among "creatures you control with power 4 or greater",
+ *  and March's creatures include a "Zombie token you control", but a commander is no Zombie token (Dreadhorde Invasion). */
+function classesOverlap(read: SubjectFilter, cls: SubjectFilter, h: Hierarchy): boolean {
+  const ids = (x: SubjectFilter): SubjectFilter => ({ ...(x.type !== undefined ? { type: x.type } : {}), ...(x.subtype !== undefined ? { subtype: x.subtype } : {}), ...(x.control !== undefined ? { control: x.control } : {}), ...(x.token !== undefined ? { token: x.token } : {}) }) as SubjectFilter;
+  // A commander is never a token (Raised by Giants' class): a reader of tokens only cannot be reading it.
+  if (cls.commander === true) return read.token !== true;
+  const r = ids(read), k = ids(cls);
+  return subjectMatches(r, k, h) || subjectMatches(k, r, h);
+}
+
 /** A base-P/T set over a class (see base-pt-set.ts) claims C when it upgrades C (a maker of smaller tokens, a creature of smaller power) or when C reads power (`powerNeeds`). The class is the set's own subject. */
 function baseSetReason(p: PairScope["p"], c: DeckCard, a: Ability, h: Hierarchy): Reason | undefined {
   const s = a.effect.subject;
@@ -3315,7 +3325,7 @@ function baseSetReason(p: PairScope["p"], c: DeckCard, a: Ability, h: Hierarchy)
   });
   const power = nodePower(c);
   const token = raisedToken(c.tags, v, (shape) => subjectMatches(shape, cls, h));
-  const reads = readsPower(powerNeeds(c.card, c.tags, (read) => subjectMatches(read, cls, h)), v.power);
+  const reads = readsPower(powerNeeds(c.card, c.tags, (read) => classesOverlap(read, cls, h)), v.power);
   // A card that READS power stays at strength 1 whatever else it is (a 5/5 Molten Monstrosity); a creature that also makes smaller tokens takes the better of the two.
   if (power !== undefined && power < v.power && subjectMatches(characteristicsSubject(c.tags, c.card.name), cls, h)) return reason(`${c.card.name} is smaller than that`, reads ? undefined : Math.max(baseSetStrength(v.power, power), token?.strength ?? 0));
   if (token !== undefined) return reason(`${c.card.name} makes tokens smaller than that`, reads ? undefined : token.strength);

@@ -30,10 +30,8 @@ export const printedPower = (tags: CardTags): number | undefined => num(tags.cha
 
 /** The printed power of one node of a deck: a FACE of a transform or modal card reads its own face's printed power (`characteristics.power` is null on those rows), any other node the card's characteristics. */
 export function nodePower(c: DeckCard): number | undefined {
-  if (c.face !== undefined) {
-    const own = num(printedFaces(c.card)[c.face]?.power);
-    if (own !== undefined) return own;
-  }
+  // A face has its own power or none: the combined card's power belongs to another face (Awaken the Blood Avatar's sorcery back is no 5/... creature).
+  if (c.face !== undefined) return num(printedFaces(c.card)[c.face]?.power);
   return c.tags ? printedPower(c.tags) : undefined;
 }
 
@@ -115,8 +113,8 @@ export function powerNeeds(card: { oracleText?: string }, tags: CardTags, inClas
     const yours = raw.includes("you control");
     if (!yours) continue;
     if (raw.includes("greatest power among") || raw.includes("total power")) out.push(0);
-    // A creature spell's power (Spellbreaker Behemoth) and a blocker's (Delney) are not on your battlefield; a threshold the derived data already read, with its subject, is not read again from the words (Dreadhorde Invasion's Zombie token).
-    if (derived || raw.includes("spell") || raw.includes("blocked by")) continue;
+    // A creature SPELL's power (Spellbreaker Behemoth; not "this spell costs less", Bolt Bend) and a blocker's (Delney; not "can't be blocked by more than one creature", Challenger Troll) are not on your battlefield; a threshold the derived data already read, with its subject, is not read again from the words (Dreadhorde Invasion's Zombie token).
+    if (derived || raw.includes("creature spell") || raw.includes("blocked by creatures with")) continue;
     for (let at = raw.indexOf("power "); at >= 0; at = raw.indexOf("power ", at + 6)) {
       let end = at + 6;
       while (end < raw.length && raw.charCodeAt(end) >= 48 && raw.charCodeAt(end) <= 57) end++;

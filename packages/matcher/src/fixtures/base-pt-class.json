@@ -2154,5 +2154,410 @@
     ]
    }
   ]
+ },
+ "Bolt Bend": {
+  "source": {
+   "name": "Bolt Bend",
+   "typeLine": "Instant",
+   "oracleText": "This spell costs {3} less to cast if you control a creature with power 4 or greater.\nChange the target of target spell or ability with a single target.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{R}",
+   "layout": "normal",
+   "_id": "c20a96f7-aa5a-4c15-b8b1-806685c99b27"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "this spell costs {3} less to cast",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "change the target of target spell or ability with a single target",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Stubborn Denial": {
+  "source": {
+   "name": "Stubborn Denial",
+   "typeLine": "Instant",
+   "oracleText": "Counter target noncreature spell unless its controller pays {1}.\nFerocious — If you control a creature with power 4 or greater, counter that spell instead.",
+   "keywords": [
+    "Ferocious"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{U}",
+   "layout": "normal",
+   "_id": "3adc3af3-5086-4d61-b38c-c1dddeaeebe6"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "counter-spell",
+      "object": "target noncreature spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false,
+      "unless": {
+       "cost": "{1}",
+       "payer": "controller"
+      }
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "counter-spell",
+      "object": "that spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Challenger Troll": {
+  "source": {
+   "name": "Challenger Troll",
+   "typeLine": "Creature — Troll",
+   "oracleText": "Each creature you control with power 4 or greater can't be blocked by more than one creature.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "6",
+   "toughness": "5",
+   "manaCost": "{4}{G}",
+   "layout": "normal",
+   "_id": "78cb1f05-edad-4430-9095-f3eabd80bf41"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "be blocked by more than one creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Flopsie, Bumi's Buddy": {
+  "source": {
+   "name": "Flopsie, Bumi's Buddy",
+   "typeLine": "Legendary Creature — Ape Goat",
+   "oracleText": "When Flopsie enters, put a +1/+1 counter on each creature you control.\nEach creature you control with power 4 or greater can't be blocked by more than one creature.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{4}{G}{G}",
+   "layout": "normal",
+   "_id": "a8966245-501c-47e4-8ce0-849dcb532eb2"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "be blocked by more than one creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Elemental Bond": {
+  "source": {
+   "name": "Elemental Bond",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever a creature you control with power 3 or greater enters, draw a card.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "_id": "d9a7e5a6-3e41-4fc6-987a-18fe1b9d67dd"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a creature you control with power 3 or greater",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Extus, Oriq Overlord // Awaken the Blood Avatar": {
+  "source": {
+   "name": "Extus, Oriq Overlord // Awaken the Blood Avatar",
+   "typeLine": "Legendary Creature — Human Warlock // Sorcery",
+   "oracleText": "Double strike\nMagecraft — Whenever you cast or copy an instant or sorcery spell, return target nonlegendary creature card from your graveyard to your hand.\n//\nAs an additional cost to cast this spell, you may sacrifice any number of creatures. This spell costs {2} less to cast for each creature sacrificed this way.\nEach opponent sacrifices a creature of their choice. Create a 3/6 black and red Avatar creature token with haste and \"Whenever this token attacks, it deals 3 damage to each opponent.\"",
+   "keywords": [
+    "Magecraft",
+    "Double strike"
+   ],
+   "colors": [
+    "B",
+    "W",
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "R",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "modal_dfc",
+   "faces": [
+    {
+     "name": "Extus, Oriq Overlord",
+     "typeLine": "Legendary Creature — Human Warlock",
+     "oracleText": "Double strike\nMagecraft — Whenever you cast or copy an instant or sorcery spell, return target nonlegendary creature card from your graveyard to your hand.",
+     "colors": [
+      "B",
+      "W"
+     ],
+     "manaCost": "{1}{W}{B}{B}",
+     "power": "2",
+     "toughness": "4",
+     "artCrop": "https://cards.scryfall.io/art_crop/front/b/a/ba09360a-067e-48a5-bdc5-a19fd066a785.jpg?1783927337"
+    },
+    {
+     "name": "Awaken the Blood Avatar",
+     "typeLine": "Sorcery",
+     "oracleText": "As an additional cost to cast this spell, you may sacrifice any number of creatures. This spell costs {2} less to cast for each creature sacrificed this way.\nEach opponent sacrifices a creature of their choice. Create a 3/6 black and red Avatar creature token with haste and \"Whenever this token attacks, it deals 3 damage to each opponent.\"",
+     "colors": [
+      "B",
+      "R"
+     ],
+     "manaCost": "{6}{B}{R}",
+     "artCrop": "https://cards.scryfall.io/art_crop/back/b/a/ba09360a-067e-48a5-bdc5-a19fd066a785.jpg?1783927337"
+    }
+   ],
+   "_id": "0b299983-9f0f-404a-acd1-8f142572b1f1"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Double strike",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant or sorcery spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target nonlegendary creature card",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "copy",
+     "subject": "an instant or sorcery spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target nonlegendary creature card",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "any number of creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cost-modify",
+      "object": "this spell costs {2} less for each creature sacrificed this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a 3/6 black and red Avatar creature token with haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this token",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   }
+  ]
  }
 }
