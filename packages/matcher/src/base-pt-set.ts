@@ -40,7 +40,7 @@ export function nodePower(c: DeckCard): number | undefined {
 export function pairsAsUpgrade(p: CardTags, a: Ability): { power: number; toughness: number } | undefined {
   const v = baseSetValue(a.amount);
   if (v === undefined || v.power < 2) return undefined;
-  // CEILING: a set beside "lose all abilities" is removal when the class is not only yours; over your own creatures (Poppet Factory's tokens become vanilla 3/3s) it is an upgrade.
+  // CEILING: a set beside "lose all abilities" over only YOUR creatures is read as an upgrade (Poppet Factory's tokens become vanilla 3/3s), though a token with abilities of its own loses them; over any wider class it is read as removal.
   if (a.effect.subject?.control !== "you" && p.abilities.some((x) => x.clause === a.clause && x.effect.kind === "ability-loss")) return undefined;
   // An Aura's class set is aimed at the player it enchants ("creatures enchanted player controls": Curse of Conformity, Overwhelming Splendor), derive keeps only `control: any`.
   if (p.characteristics.subtypes?.includes("aura") === true) return undefined;
