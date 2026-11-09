@@ -128,7 +128,7 @@ export type RuleClause =
        *  attached to that creature", Awaken the Sleeper). Derive keeps no attached-to link, so the subject alone cannot tell that from "Destroy all Auras" (Serene Heart, Pure // Simple), which is a mass removal and stays. CEILING: an attachment sweep with no
        *  other ability in its clause (Strip Bare, Corrosive Ooze) is not told apart and counts. */
       notAttachedTo?: true;
-      /** Refuse a `dies` / `exiled` / `leaves` emit by an OPPONENT whose ability carries a plain NUMBER as its amount ("each opponent sacrifices three creatures": Portal to Phyrexia; "... the creature with the greatest power": Crackling Doom; "exiles two permanents they control":
+      /** Refuse a `dies` / `exiled` / `leaves` emit by an OPPONENT whose ability carries a plain NUMBER as its amount, or whose subject is a COUNTED pick (`selection: "counted"`, #1581: "that source's controller sacrifices that many permanents": Phyrexian Obliterator) ("each opponent sacrifices three creatures": Portal to Phyrexia; "... the creature with the greatest power": Crackling Doom; "exiles two permanents they control":
        *  Bane of Bala Ged; "each opponent returns a nonland permanent": Discovery // Dispersal). Derive scopes a plural, superlative or chosen object `all` or `each` all the same, and those are edicts of a fixed size. A sacrifice with no number ("sacrifices the rest":
        *  Cataclysm, Slaughter the Strong; "thirteen creatures": Blasphemous Edict), X (Death Cloud), or one by EVERY player (Barter in Blood, "two creatures each") keeps its number and stays. CEILING: Tectonic Hellion ("each player who controls the most lands
        *  sacrifices two") rides with the every-player case; being land-only, it lands in `stax.landDenial`, not `boardWipe.text` (#1551). */
@@ -675,7 +675,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.notTokenOnly !== true || e.subject.token !== true)
           && (clause.notAttachedTo !== true || [e.subject.type].flat().includes("permanent") || !subtypesOf(e.subject).some((t) => t === "aura" || t === "equipment")
             || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause && (f.emits ?? []).some((g) => g.subject.scope === "target")))
-          && (clause.notCountedOppKill !== true || e.subject.control !== "opp" || !KILL_VERBS.includes(e.verb) || a.amount === undefined || !/^\d+$/.test(a.amount))
+          && (clause.notCountedOppKill !== true || e.subject.control !== "opp" || !KILL_VERBS.includes(e.verb) || ((a.amount === undefined || !/^\d+$/.test(a.amount)) && e.subject.selection !== "counted"))
           && (clause.notBesideTargetedKill !== true || !KILL_VERBS.includes(e.verb) || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause
             && (f.emits ?? []).some((g) => g.subject.scope === "target" && KILL_VERBS.includes(g.verb))))
           && (clause.notVictimMay !== true || e.victimMay !== true)

@@ -23573,5 +23573,344 @@
     "clause": 2
    }
   ]
+ },
+ "Phyrexian Obliterator": {
+  "oracleText": "Trample\nWhenever a source deals damage to this creature, that source's controller sacrifices that many permanents of their choice.",
+  "typeLine": "Creature — Phyrexian Horror",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "damaged"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "selection": "counted",
+       "type": "permanent",
+       "scope": "all"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "selection": "counted",
+       "type": "permanent",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "opp",
+      "token": null,
+      "selection": "counted",
+      "type": "permanent",
+      "scope": "all"
+     }
+    }
+   }
+  ]
+ },
+ "Ravenous Rotbelly": {
+  "oracleText": "When this creature enters, you may sacrifice up to three Zombies. When you sacrifice one or more Zombies this way, each opponent sacrifices that many creatures of their choice.",
+  "typeLine": "Creature — Zombie Horror",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "selection": "counted",
+       "subtype": "zombie",
+       "scope": "all"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "selection": "counted",
+       "subtype": "zombie",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "selection": "counted",
+       "type": "creature",
+       "scope": "all",
+       "edictAll": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "selection": "counted",
+       "type": "creature",
+       "scope": "all",
+       "edictAll": true
+      }
+     }
+    ],
+    "clause": 2,
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "opp",
+      "token": null,
+      "selection": "counted",
+      "type": "creature",
+      "scope": "all",
+      "edictAll": true
+     }
+    }
+   }
+  ]
+ },
+ "Archfiend of Spite": {
+  "oracleText": "Flying\nWhenever a source an opponent controls deals damage to this creature, that source's controller loses that much life unless they sacrifice that many permanents of their choice.\nMadness {3}{B}{B} (If you discard this card, discard it into exile. When you do, cast it for its madness cost or put it into your graveyard.)",
+  "typeLine": "Creature — Demon",
+  "manaValue": 7,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "player-life-loss",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "amount": "that much",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "opp",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "that many",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "selection": "counted",
+       "type": "permanent",
+       "scope": "all"
+      },
+      "victimMay": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "selection": "counted",
+       "type": "permanent",
+       "scope": "all"
+      },
+      "victimMay": true
+     }
+    ],
+    "clause": 2
+   }
+  ]
+ },
+ "Pox": {
+  "oracleText": "Each player loses a third of their life, then discards a third of the cards in their hand, then sacrifices a third of the creatures they control of their choice, then sacrifices a third of the lands they control of their choice. Round up each time.",
+  "typeLine": "Sorcery",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "player-life-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "discard",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "selection": "counted",
+       "type": "creature",
+       "scope": "all",
+       "edictAll": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "selection": "counted",
+       "type": "creature",
+       "scope": "all",
+       "edictAll": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "selection": "counted",
+       "type": "land",
+       "scope": "all",
+       "edictAll": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "selection": "counted",
+       "type": "land",
+       "scope": "all",
+       "edictAll": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
  }
 }
