@@ -34,10 +34,17 @@ describe("subjectMatches: allTypes against a class producer", () => {
 });
 
 describe("pairs", () => {
-  test.each([["Mutant Chain Reaction", "Dross Scorpion"], ["Airship Crash", "Szarekh, the Silent King"], ["Murder", "Dross Scorpion"], ["Shatter", "Dross Scorpion"]])("%s -> %s pairs", (p, c) => {
+  test.each([["Mutant Chain Reaction", "Dross Scorpion"], ["Murder", "Dross Scorpion"], ["Shatter", "Dross Scorpion"]])("%s -> %s pairs", (p, c) => {
     expect(tags(p, c).length).toBeGreaterThan(0);
   });
   test("CONTROL: Nissa's Defeat (Forest, green enchantment or planeswalker) -> Dross Scorpion: none", () => {
     expect(tags("Nissa's Defeat", "Dross Scorpion")).toEqual([]);
+  });
+});
+
+// Szarekh takes "an artifact creature card or Vehicle card from among the cards milled this way": only its own mill supplies it, no removal does.
+describe("a recursion bound to the cards milled this way is supplied by nothing else", () => {
+  test.each(["Airship Crash", "Murder", "Beast Within", "Mutant Chain Reaction"])("%s -> Szarekh, the Silent King: no recursion reason", (p) => {
+    expect(tags(p, "Szarekh, the Silent King").filter((t) => t.startsWith("graveyard-recursion"))).toEqual([]);
   });
 });

@@ -401,5 +401,68 @@
    }
   ],
   "segmentHash": "5d95e3ae185bae669f32e0a451611ce090a3bfcb774e1144d0c4db3046534db2"
+ },
+ "Beast Within": {
+  "source": {
+   "_id": "7735eeba-693b-47e2-bd51-414379cf1016",
+   "name": "Beast Within",
+   "typeLine": "Instant",
+   "oracleText": "Destroy target permanent. Its controller creates a 3/3 green Beast creature token.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "tags": {
+    "produces": [
+     "removal",
+     "cast:instant"
+    ],
+    "cares": []
+   },
+   "manaCost": "{2}{G}",
+   "layout": "normal",
+   "releasedAt": "2026-06-26",
+   "gameChanger": false,
+   "reserved": false,
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Beast",
+     "typeLine": "Token Creature — Beast",
+     "printingId": "62facbb8-1a83-4731-b515-0f7759ee8c3b"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target permanent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a 3/3 green Beast creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "8543d8918ed9fc497faf03440e0a181efb7e918df6ff36251d3e7f9e3599afc6"
  }
 }
