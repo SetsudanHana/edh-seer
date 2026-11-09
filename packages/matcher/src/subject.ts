@@ -72,20 +72,28 @@ function classCanBeAll(producer: SubjectFilter, all: readonly string[], has: Rea
   return !all.some((t) => out.includes(t.toLowerCase()));
 }
 
+/** AN EDICT ON EVERYONE (#1579, owner ruling 2026-11-09): "each player sacrifices a creature" (Innocent Blood, Fleshbag Marauder) is stored with no scope, "each player sacrifices two / X creatures" (Barter in Blood, Pox, Meathook Massacre II) as `counted`, "each opponent" as control opp. A
+ *  "target player / opponent" edict carries `edict: true` (it can be aimed at one player) and is not one; nor is a sacrifice of your own (control you). Read on a sacrifice or dies producer only (edges.ts eventMatches). */
+export function isEveryoneEdict(s: SubjectFilter): boolean {
+  if (s.edict === true || s.control === "you" || s.self === true || s.type === undefined) return false;
+  return s.scope === undefined || ((s.scope === "all" || s.scope === "each") && s.selection === "counted");
+}
+
 /** A MASS PRODUCER NOT RESTRICTED TO NONTOKENS CAN BE A TOKEN (#1579 part 3, owner ruling 2026-11-09). Only scope all / each qualifies (a wipe, "for each Spirit, return it", an edict on everyone); a single target does not. Refused: a nontoken class, a class read
  *  outside the battlefield, a land-only class (Ravages of War, Gush), every `selection` but all-but (a pile: Expose the Culprit; a numbered pick: counted; a vote: Vault 11; the Auras attached to a creature: Treefolk Mystic) and a named class (Sheltered Valley). */
-function massCouldBeToken(p: SubjectFilter, h: Hierarchy): boolean {
+function massCouldBeToken(p: SubjectFilter, h: Hierarchy, edict = false): boolean {
   if (p.token !== null && p.token !== undefined) return false;
-  if (p.scope !== "all" && p.scope !== "each") return false;
+  if (p.edict === true) return false;
+  if (edict ? !isEveryoneEdict(p) : p.scope !== "all" && p.scope !== "each") return false;
   if (p.zone !== undefined && p.zone !== "battlefield") return false;
   if (p.fromZone !== undefined && p.fromZone !== "battlefield") return false;
-  if ((p.selection !== undefined && p.selection !== "all-but") || p.named !== undefined) return false;
+  if ((p.selection !== undefined && p.selection !== "all-but" && !(edict && p.selection === "counted")) || p.named !== undefined) return false;
   const types = expandTypes(arr(p.type), arr(p.subtype), h);
   return !(types.size > 0 && [...types].every((x) => x === "land"));
 }
 
 /** `massRemoval`: the caller compares a REMOVAL event (the consumer hears a creature die / leave / be exiled / sacrificed). Only then does a mass class that does not say nontoken meet a token demand (#1579 part 3); an "enters" event never does, since a mass "put all permanent cards onto the battlefield" puts cards, not tokens. */
-export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy, massRemoval = false): boolean {
+export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy, massRemoval: boolean | "edict" = false): boolean {
   // A DISJUNCTION: satisfied by any branch, with the shared fields outside still binding. Checked
   // first so the outer subject is tested without its branches, then each branch on its own.
   if (consumer.anyOf !== undefined && consumer.anyOf.length > 0) {
@@ -206,7 +214,7 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // A MASS PRODUCER (scope all / each) that does not say nontoken can be a token (#1579 part 3, owner 2026-11-09): "For each Spirit, return it" (Cut the Tethers) feeds Nadier's Nightblade's "a token you control leaves", "destroy all creatures" feeds Grismold.
   // A single target does not, nor a nontoken, a land-only, a pile or a counted class, nor an ENTERS event (`massRemoval`).
   // CEILING: derive stores a sacrifice COST or a chosen number ("Sacrifice two artifacts": Breya, Kuldotha Forgemaster; "sacrifice any number of creatures": Plunge into Darkness, Torgaar; "sacrifice five Illusions": Preston) as scope all with no `selection`, so it passes as mass. Measured over the 76 cards with a token trigger x the whole corpus: +4,530 pair keys, 24 of 40 read at an even stride true; the cost shape is about 1,160 of the 4,530 (161 producers); the NUMBERED rule at derive/subject.ts (`selection: counted`) covers only `permanent`, and widening it to every type is a DERIVE change not made here.
-  if (consumer.token === true && producer.token !== true && !(massRemoval && massCouldBeToken(producer, h))) return false;
+  if (consumer.token === true && producer.token !== true && !(massRemoval && massCouldBeToken(producer, h, massRemoval === "edict"))) return false;
   if (consumer.token !== null && producer.token !== null && consumer.token !== producer.token) {
     return false;
   }

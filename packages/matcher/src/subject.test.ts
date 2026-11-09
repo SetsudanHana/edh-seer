@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { counterAddMatches, graveyardFillMatches, subjectMatches } from "./subject.js";
+import { counterAddMatches, graveyardFillMatches, isEveryoneEdict, subjectMatches } from "./subject.js";
 import { isOutlaw } from "./implied.js";
 import { parseSubject } from "@edh-seer/tagger";
 import type { SubjectFilter } from "@edh-seer/tagger";
@@ -683,5 +683,33 @@ describe("a mass producer meets a token demand", () => {
   });
   test("a single sacrificed object with no scope (Imskir Iron-Eater) still does not", () => {
     expect(subjectMatches({ control: "you", token: null, type: "artifact" }, nadier, HE, true)).toBe(false);
+  });
+});
+
+/** #1579 (owner ruling 2026-11-09): "edicts on everyone" are mass removal. "Each player sacrifices a creature" (Innocent Blood, Fleshbag Marauder) is stored with no scope; "each player sacrifices two / X" (Barter in Blood, Pox, Meathook Massacre II) is `counted`; "each opponent" is control opp. A "target player / opponent" edict
+ *  is marked `edict: true` and can be aimed at one player, so it is no edict on everyone. */
+describe("an edict on everyone meets a token demand", () => {
+  const drover: SubjectFilter = { control: "any", token: true, type: "creature" };
+  const innocentBlood: SubjectFilter = { control: "any", token: null, type: "creature" };
+  const barter: SubjectFilter = { control: "any", token: null, selection: "counted", type: "creature", scope: "all" };
+  const liliana: SubjectFilter = { control: "opp", token: null, type: "creature" };
+  const diabolic: SubjectFilter = { control: "any", token: null, type: "creature", edict: true };
+  test("Innocent Blood, Barter in Blood and an each-opponent edict feed Twilight Drover", () => {
+    expect(subjectMatches(innocentBlood, drover, HE, "edict")).toBe(true);
+    expect(subjectMatches(barter, drover, HE, "edict")).toBe(true);
+    expect(subjectMatches(liliana, { ...drover, control: "opp" }, HE, "edict")).toBe(true);
+  });
+  test("Fleshbag Marauder (each player sacrifices a creature) feeds Grismold", () => {
+    expect(subjectMatches(innocentBlood, { control: "any", token: true, type: "creature" }, HE, "edict")).toBe(true);
+  });
+  test("Diabolic Edict (target player) and a sacrifice cost of your own do not", () => {
+    expect(isEveryoneEdict(diabolic)).toBe(false);
+    expect(subjectMatches(diabolic, drover, HE, "edict")).toBe(false);
+    expect(isEveryoneEdict({ ...innocentBlood, control: "you" })).toBe(false);
+    expect(isEveryoneEdict(innocentBlood)).toBe(true);
+    expect(isEveryoneEdict(barter)).toBe(true);
+  });
+  test("CONTROL: without the edict mode an unscoped class still meets no token demand", () => {
+    expect(subjectMatches(innocentBlood, drover, HE, true)).toBe(false);
   });
 });

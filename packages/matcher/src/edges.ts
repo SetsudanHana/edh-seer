@@ -6,7 +6,7 @@ import crKeywords from "@edh-seer/tagger/cr-keywords" with { type: "json" };
 /** The closed six, per CR 205.4a plus the un-set `host`/`elite`. A supertype is not a card type and
  *  must never be keyed as one -- see `impliedEntryThemeTags`. */
 import type { DeckCard, Hierarchy } from "./types.js";
-import { isZonedCardGrant, subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
+import { isEveryoneEdict, isZonedCardGrant, subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
 import { enterAsCopyAbilities, impliedEvents, preparedAbilities, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, printedAllTypes, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { normalizeZoneEvent, tagKey, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
@@ -1375,7 +1375,10 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
     return subjectMatches(side, consumer.subject, h);
   }
   // A MASS REMOVAL MEETS A TOKEN DEMAND (#1579 part 3, owner 2026-11-09): only when the consumer hears something LEAVE (a death, a leave, an exile, a sacrifice).
-  return subjectMatches(producer.subject, consumer.subject, h, REMOVAL_VERBS.has(consumer.verb));
+  // ...and an edict on everyone ("each player / each opponent sacrifices ...") is mass too (owner ruling 2026-11-09): read on a sacrifice or dies emit that the card authored.
+  const removal = REMOVAL_VERBS.has(consumer.verb);
+  const edict = removal && producer.implied !== true && (producer.verb === "sacrifice" || producer.verb === "dies") && isEveryoneEdict(producer.subject);
+  return subjectMatches(producer.subject, consumer.subject, h, edict ? "edict" : removal);
 }
 
 /** The producer's stated size against the consumer's required one. Numbers only: "X" and anything

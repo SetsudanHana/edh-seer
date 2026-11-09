@@ -1858,39 +1858,39 @@
     },
     "anyOf,fromZone,selection": {
       "distinct": 1,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "anyOf,scope,selection": {
       "distinct": 1,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "anyOf,scope,selection,stats": {
       "distinct": 1,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "anyOf,scope,selection,type": {
       "distinct": 1,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "control,owner,scope,selection": {
       "distinct": 3,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "control,selection,status,subtype": {
       "distinct": 1,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "except,selection,token": {
       "distinct": 2,
@@ -1900,75 +1900,75 @@
     },
     "fromZone,scope,selection": {
       "distinct": 1,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "hasCounter,selection": {
       "distinct": 2,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "history,selection": {
       "distinct": 3,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "nameRelation,scope,selection,stats": {
       "distinct": 2,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "notStatus,selection": {
       "distinct": 1,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "other,selection": {
       "distinct": 17,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "other,selection,stats": {
       "distinct": 2,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "other,selection,subtype": {
       "distinct": 1,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "scope,selection,stats": {
       "distinct": 1,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "scope,selection,zone": {
       "distinct": 1,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "selection,stats": {
       "distinct": 2,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "selection,status": {
       "distinct": 4,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read. A number-led or any-number pick ('one or more other creatures you control', 'two cards your opponents own', 'any number of creatures') is derive's `selection: counted` marker (#1579 part 3: a number picked from a class, not every one of it) beside the field the group names; parseSubject is right and the grammar carries no such marker. Marker only: the matcher reads it on a removal producer."
+      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     }
   }
 }

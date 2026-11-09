@@ -20,7 +20,7 @@ describe("CONTROL: a real sweep stays unmarked", () => {
   });
 });
 
-/** An "except for ... tokens" sweep spares the tokens (Elspeth Tirel, Elesh Norn // The Argent Etchings), so it is a nontoken class and meets no token payoff. */
+/** An "except for ... tokens" sweep spares the tokens (Elspeth Tirel), so it is a nontoken class and meets no token payoff. */
 describe("a sweep that spares tokens is nontoken", () => {
   test.each(["all other permanents except for lands and tokens", "all other creatures except for tokens"])("%s", (t) => {
     expect(parseSubject(t).token).toBe(false);

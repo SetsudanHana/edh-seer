@@ -926,7 +926,7 @@ export function parseSubject(text: string): SubjectFilter {
   // Control reads the WHOLE text: `parseControl` makes the same cut and keeps its own empty-head
   // fallback ("equal to the number of creatures your opponents control" still names them).
   const out: SubjectFilter = { control: parseControl(whole), token: parseToken(t) };
-  // A SWEEP THAT SPARES TOKENS IS NONTOKEN (#1579 part 3): "destroy all other permanents except for lands and tokens" (Elspeth Tirel), the same words in Elesh Norn // The Argent Etchings. The list is cut off the class above; only its token word is kept.
+  // A SWEEP THAT SPARES TOKENS IS NONTOKEN (#1579 part 3): "destroy all other permanents except for lands and tokens" (Elspeth Tirel). The list is cut off the class above; only its token word is kept.
   // CEILING: the spared TYPES stay dropped ("except for artifacts and lands": Scourglass), so that sweep still reads as every permanent.
   if (out.token === null && /\btokens?\b/.test(lowered.split(EXCEPT_FOR).slice(1).join(" "))) out.token = false;
   const ownership = parseOwnership(whole.split(COUNT_PHRASE)[0]!.trim() || whole);
