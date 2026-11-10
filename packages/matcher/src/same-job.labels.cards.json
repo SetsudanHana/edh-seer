@@ -3203,9 +3203,6 @@
       "scalesWith": {
        "control": "any",
        "fromZone": "graveyard",
-       "history": [
-        "put-into-graveyard-from-battlefield"
-       ],
        "scope": "all",
        "token": null,
        "type": "creature"
@@ -3229,9 +3226,6 @@
        "subject": {
         "control": "any",
         "fromZone": "graveyard",
-        "history": [
-         "put-into-graveyard-from-battlefield"
-        ],
         "scope": "all",
         "token": null,
         "type": "creature"
@@ -3242,9 +3236,6 @@
        "subject": {
         "control": "any",
         "fromZone": "graveyard",
-        "history": [
-         "put-into-graveyard-from-battlefield"
-        ],
         "scope": "all",
         "token": null,
         "type": "creature",
@@ -3271,9 +3262,6 @@
        "subject": {
         "control": "any",
         "fromZone": "battlefield",
-        "history": [
-         "put-into-graveyard-from-battlefield"
-        ],
         "scope": "all",
         "token": null,
         "type": "creature"
@@ -6800,12 +6788,6 @@
        "chosenNegated": true,
        "chosenType": true,
        "control": "any",
-       "except": [
-        {
-         "chosenKind": "creature-type",
-         "chosenType": true
-        }
-       ],
        "scope": "all",
        "token": null,
        "type": "creature"
@@ -6821,12 +6803,6 @@
         "chosenNegated": true,
         "chosenType": true,
         "control": "any",
-        "except": [
-         {
-          "chosenKind": "creature-type",
-          "chosenType": true
-         }
-        ],
         "scope": "all",
         "token": null,
         "type": "creature"
@@ -8993,12 +8969,6 @@
        "chosenNegated": true,
        "chosenType": true,
        "control": "any",
-       "except": [
-        {
-         "chosenKind": "creature-type",
-         "chosenType": true
-        }
-       ],
        "fromZone": "battlefield",
        "scope": "all",
        "token": null,
@@ -9028,12 +8998,6 @@
         "chosenNegated": true,
         "chosenType": true,
         "control": "any",
-        "except": [
-         {
-          "chosenKind": "creature-type",
-          "chosenType": true
-         }
-        ],
         "fromZone": "battlefield",
         "scope": "all",
         "token": null,
