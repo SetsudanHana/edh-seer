@@ -8538,3 +8538,20 @@ test("a paid search over 'library and/or graveyard' is one search ability, as th
   expect(searches(`you may ${tail}`)).toBe(1);
   expect(searches(`you may pay {2}. If you do, ${tail}`)).toBe(1);
 });
+
+// #1589: a temporary or delayed trigger the grammar does not read (another duration, one in the middle of a clause, a stored reading without it) leaves its effect claimed outright.
+// That is surfaced as `temporary` in unknownTriggers, never silent; a trigger that IS read, or a clause that has another trigger, adds nothing.
+test("an unread temporary trigger is surfaced in unknownTriggers (Vraska the Unseen, Benefactor's Draught); a read one is not (Lyra)", () => {
+  const unknown = (name: string, oracleText: string, typeLine: string): string[] => {
+    const g = grammarClauseRecords({ name, oracleText, typeLine, keywords: [] } as never);
+    expect(g.complete).toBe(true);
+    const texts = Object.fromEntries(g.records.map((r, i) => [r.id, oracleText.split("\n")[i]!.replace(/^[^:]*: /, "")]));
+    return deriveCardTags({ oracleId: "t", name, clauses: g.records as never, characteristics: MINIMAL_CHARACTERISTICS, clauseTexts: texts }).unknownTriggers ?? [];
+  };
+  // Another duration: the destroy is claimed as a plain activated destroy.
+  expect(unknown("Vraska the Unseen", "+1: Until your next turn, whenever a creature deals combat damage to Vraska the Unseen, destroy that creature.", "Legendary Planeswalker — Vraska")).toEqual(["temporary"]);
+  // In the middle of a clause: the draw is claimed as the spell's own.
+  expect(unknown("Benefactor's Draught", "Untap all creatures. Until end of turn, whenever a creature an opponent controls blocks, draw a card.", "Instant")).toEqual(["temporary"]);
+  // Read: the leading "Until end of turn, whenever" is the clause's trigger.
+  expect(unknown("Lyra, Tolarian Archangel", "{3}{U}{U}: Until end of turn, whenever Lyra, Tolarian Archangel deals combat damage to a player, draw two cards.", "Legendary Creature — Angel")).toEqual([]);
+});
