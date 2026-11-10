@@ -718,3 +718,18 @@ describe("an edict on everyone meets a token demand", () => {
     expect(subjectMatches(innocentBlood, drover, HE, true)).toBe(false);
   });
 });
+
+/** #1582 part 1 -- A SWEEP THAT SPARES ARTIFACTS AND LANDS MEETS NO ARTIFACT OR LAND PAYOFF. Scourglass / Elesh Norn's back face derive the spared types as `notType`; Munitions ("when this token leaves the battlefield", an artifact token)
+ *  and a land payoff are not fed, a creature payoff still is, and an unrestricted sweep (Apocalypse) still feeds the artifact token. */
+describe("a sweep that spares artifacts and lands", () => {
+  const scourglass = parseSubject("all permanents except for artifacts and lands");
+  const apocalypse = parseSubject("all permanents");
+  const artifactToken: SubjectFilter = { control: "any", token: true, type: "artifact" };
+  test.each([[scourglass, false], [apocalypse, true]])("feeds an artifact token leave payoff: %#", (p, fed) => {
+    expect(subjectMatches(p, artifactToken, H, true)).toBe(fed);
+  });
+  test("feeds no land payoff, still a creature payoff", () => {
+    expect(subjectMatches(scourglass, { control: "any", token: null, type: "land" }, H, true)).toBe(false);
+    expect(subjectMatches(scourglass, { control: "any", token: null, type: "creature" }, H, true)).toBe(true);
+  });
+});

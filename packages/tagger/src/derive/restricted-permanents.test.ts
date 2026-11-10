@@ -85,9 +85,13 @@ describe("a number picked by a player, and an exception list, are marked too (th
   const sel = (name: string, verb: string) => emits(name, verb).filter((e) => [e.subject.type].flat().includes("permanent")).map((e) => e.subject.selection);
   test.each([
     ["Pox Plague", "dies", "counted"], ["Earth-Cult Elemental", "dies", "counted"], ["Greater Harvester", "dies", "counted"], ["Nicol Bolas, Planeswalker", "dies", "counted"], ["Archfiend of Spite", "dies", "counted"], ["Curse of the Cabal", "dies", "counted"], ["Balancing Act", "dies", "counted"],
-    ["Bane of Bala Ged", "exiled", "counted"], ["Selective Obliteration", "exiled", "all-but"], ["Whims of the Fates", "dies", "pile"], ["Apocalypse Chime", "dies", "named-set"], ["Scourglass", "dies", "all-but"], ["Cyclone Summoner", "leaves", "all-but"], ["Liliana, Dreadhorde General", "dies", "all-but"],
+    ["Bane of Bala Ged", "exiled", "counted"], ["Selective Obliteration", "exiled", "all-but"], ["Whims of the Fates", "dies", "pile"], ["Apocalypse Chime", "dies", "named-set"], ["Liliana, Dreadhorde General", "dies", "all-but"],
   ])("%s: the %s emit is selection %s", (name, verb, want) => {
     expect(sel(name, verb)).toContain(want);
+  });
+  // #1582: the spared types are carried as `notType`, so the class is no longer the bare `permanent`; the all-but marker stays.
+  test.each([["Scourglass", "dies"], ["Cyclone Summoner", "leaves"]])("%s: the %s emit of the sparing sweep keeps selection all-but", (name, verb) => {
+    expect(emits(name, verb).filter((e) => e.subject.notType !== undefined).map((e) => e.subject.selection)).toEqual(["all-but"]);
   });
   test.each([["Apocalypse", "exiled"], ["Worldfire", "exiled"], ["Dimensional Breach", "exiled"], ["Bearer of the Heavens", "dies"], ["Thieves' Auction", "exiled"], ["Worldpurge", "leaves"]])("CONTROL: %s (%s) stays unmarked", (name, verb) => {
     expect(sel(name, verb)).toEqual(expect.arrayContaining([undefined]));
