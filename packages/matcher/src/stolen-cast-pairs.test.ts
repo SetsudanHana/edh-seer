@@ -60,7 +60,8 @@ test("Memory Plunder is your cast, so it is no 'whenever an opponent casts a spe
   expect(castTags("Memory Plunder", "Rhystic Study")).toEqual([]);
 });
 // A MIXED SOURCE PROVES NOTHING: "each player's library" and "target player's graveyard" include yours, and a pile fed by "whenever a player casts" (River Song's Diary) holds your own spells too.
-test.each(["Etali, Primal Conqueror // Etali, Primal Sickness", "Shadow of the Enemy", "Jeleva, Nephalia's Scourge", "River Song's Diary"])("%s can cast your own card: no owner is written", (mixed) => {
+// ...and so does a player the words leave open: "Target player reveals their hand" (Psychic Theft) can be you, and "that source's controller exiles a card from their hand" (Rona, Tolarian Obliterator) is you when your own source dealt the damage.
+test.each(["Etali, Primal Conqueror // Etali, Primal Sickness", "Shadow of the Enemy", "Jeleva, Nephalia's Scourge", "River Song's Diary", "Psychic Theft", "Rona, Herald of Invasion // Rona, Tolarian Obliterator"])("%s can cast your own card: no owner is written", (mixed) => {
   const emits = castEmits(mixed);
   expect(emits.length).toBeGreaterThan(0);
   for (const s of emits) expect(s.owner).toBeUndefined();
@@ -70,4 +71,7 @@ test("Etali, Primal Conqueror can cast a deck-mate off your own library: Artisan
 });
 test("Spellshift's cast is the other player's ('that player may cast that card'): not yours, no owner", () => {
   for (const s of castEmits("Spellshift")) { expect(s.control).not.toBe("you"); expect(s.owner).toBeUndefined(); }
+});
+test.each(["Psychic Theft", "Rona, Herald of Invasion // Rona, Tolarian Obliterator"])("%s is still your cast, whoever the card is taken from", (thief) => {
+  for (const s of castEmits(thief)) expect(s.control).toBe("you");
 });
