@@ -25,4 +25,8 @@ describe("a meld's enters is the result card", () => {
   test("Graf Rats is no cast producer for Vanquisher's Banner", () => {
     expect(reasons("Graf Rats", "Vanquisher's Banner").filter((t) => t.startsWith("cast:") || t.startsWith("attacks:"))).toEqual([]);
   });
+  test("Mishra's exile of the pair is no leave of Thragtusk, but a creature-exile payoff still hears it", () => {
+    expect(reasons("Mishra, Claimed by Gix", "Thragtusk")).toEqual([]);
+    expect(reasons("Graf Rats", "Syr Vondam, Sunstar Exemplar").length).toBeGreaterThan(0);
+  });
 });

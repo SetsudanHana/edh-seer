@@ -59,6 +59,12 @@ describe("a meld exiles its pair: a chosen set, no mass", () => {
     const parts = (fx[name]!.source as { allParts: { component: string; typeLine: string }[] }).allParts.find((p) => p.component === "meld_result")!;
     expect([s.subtype].flat().sort()).toEqual(parts.typeLine.split("—")[1]!.trim().toLowerCase().split(" ").sort());
   });
+  /** The pair is THIS card and a NAMED card (Mishra's "Mishra, Claimed by Gix and a creature named ..." read neither): a subject that is the card itself, or a named one, is heard by a class payoff but is no other card's own leaves trigger (Thragtusk, Skyclave Apparition). */
+  test.each(MELDERS)("%s: the exile and leave of the pair are the card itself or a named card", (name) => {
+    const meld = clausesWith(name, "meld");
+    const e = emitsOf(name, (c) => meld.includes(c)).filter((x) => x.verb === "exiled" || x.verb === "leaves");
+    for (const x of e) expect(x.subject.self === true || x.subject.named !== undefined, `${name} ${x.verb}`).toBe(true);
+  });
   test("Gisela's Brisela is no Nightmare, and the ability no longer scales by a mass of them", () => {
     const abs = rowOf("Gisela, the Broken Blade").tags.abilities.filter((a) => clausesWith("Gisela, the Broken Blade", "meld").includes(Number(a.clause)));
     expect(abs.flatMap((a) => (a.emits ?? []).map((e) => e.subject.subtype)).flat()).not.toContain("nightmare");
