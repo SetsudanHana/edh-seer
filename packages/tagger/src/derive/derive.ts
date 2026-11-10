@@ -2503,7 +2503,10 @@ type GrammarTrigger = { verbs: Verb[]; subject: SubjectFilter; blocker?: Subject
 function grammarTriggersOf(text: string, cardName: string | undefined, storedEvent: string, cardText: string, enchantText: string, siblingEvents: string[], precomputed?: TriggerReading[], curse?: boolean, creatureCard?: boolean, textlessSibling?: boolean): GrammarTrigger[] | null {
   // An Aura's "enchanted permanent" is the class its own face's Enchant line names (see subjectFrom).
   const bounded = boundedByEnchantLine(text, enchantText);
-  const preamble = printedPreamble(bounded, cardName ?? "");
+  // A TEMPORARY TRIGGER ("Until end of turn, whenever Lyra deals combat damage to a player, draw two cards", #1589): the trigger behind the duration is read by the same grammar as a printed one,
+  // which is how `grammarClauseRecords` reads it. Left to the stored path, the record's subject text "~" was no self ("anything you control deals combat damage") and the victim was lost.
+  const temporary = bounded.toLowerCase().startsWith("until end of turn, whenever ") ? "until end of turn, ".length : 0;
+  const preamble = printedPreamble(bounded.slice(temporary), cardName ?? "");
   if (!preamble) return null;
   // PRECOMPUTED READINGS (G-T3): `grammarClauseRecords` already ran `parseTrigger` on this exact
   // preamble while building the grammar's own records -- reuse it rather than parsing again. Only

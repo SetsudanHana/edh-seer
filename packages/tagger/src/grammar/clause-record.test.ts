@@ -1802,6 +1802,20 @@ test("a delayed or temporary cast trigger leading a non-triggered clause is that
   expect(grammarClauseRecords(melek).blocker).toBeUndefined();
 });
 
+// #1589: a temporary trigger behind "Until end of turn," is read by the SAME trigger grammar as a printed one. Read off the stored subject text instead, the card's own name ("~") was a class
+// ("anything you control deals combat damage", Lyra, Tolarian Archangel) and the victim was lost.
+test("a temporary trigger on the card itself is self, with its victim: Lyra, Tolarian Archangel; High Tide's tap trigger is refused under the printed trigger's name (#1589)", () => {
+  const tagsOf = (card: { name: string; typeLine: string; oracleText: string }) => { const g = grammarClauseRecords(card); expect(g.blocker).toBeUndefined(); return deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings)); };
+  const temporary = tagsOf({ name: "Lyra, Tolarian Archangel", typeLine: "Legendary Creature — Angel", oracleText: "{3}{U}{U}: Until end of turn, whenever Lyra deals combat damage to a player, draw two cards." }).abilities[0]!;
+  const printed = tagsOf({ name: "Lyra, Tolarian Archangel", typeLine: "Legendary Creature — Angel", oracleText: "Whenever Lyra deals combat damage to a player, draw two cards." }).abilities[0]!;
+  expect(printed.trigger).toMatchObject({ verbs: ["combat-damage"], subject: { self: true }, victim: "player" });
+  expect(temporary.trigger).toEqual(printed.trigger);
+  expect(temporary.kind).toBe("activated");
+  const tide = tagsOf({ name: "High Tide", typeLine: "Instant", oracleText: "Until end of turn, whenever a player taps an Island for mana, that player adds an additional {U}." });
+  expect(tide.unknownTriggers).toEqual(tagsOf({ name: "Tide Test", typeLine: "Enchantment", oracleText: "Whenever a player taps an Island for mana, that player adds an additional {U}." }).unknownTriggers);
+  expect(tide.manaLines).toMatchObject([{ untilEndOfTurn: true }]);
+});
+
 test("a delayed trigger that is read gates the effect: Vivien's -2 is no unconditional tutor, and one it cannot read refuses the card (#1589)", () => {
   const vivien = grammarClauseRecords({ name: "Vivien, Monsters' Advocate", typeLine: "Legendary Planeswalker — Vivien", oracleText: "−2: When you next cast a creature spell this turn, search your library for a creature card with lesser mana value, put it onto the battlefield, then shuffle." });
   expect(vivien.records[0]).toMatchObject({ abilityType: "activated", trigger: { event: "cast", subject: "a creature spell", control: "you" } });
