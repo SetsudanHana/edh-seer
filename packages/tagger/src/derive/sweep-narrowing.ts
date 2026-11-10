@@ -27,6 +27,19 @@ function indestructibleSpare(clauseText: string): string | undefined {
   return undefined;
 }
 
+const PERMANENT_TYPES = ["creature", "artifact", "enchantment", "planeswalker", "land", "battle"];
+/** A mass of the WHOLE permanent set that is on the battlefield: the single type `permanent`, or the six permanent types minus its `notType` (the shape the matcher's `sweepsEveryPermanent` reads, #1577, #1582). Only this shape keeps a condition: the matcher reads an emit
+ *  as a FILTER too (a card that "enters thanks to" a mass put is tested against it), and a relation on that filter is a demand nothing can check, so a mass PUT from a graveyard or hand (Faith's Reward, Second Sunrise, Cryptic Gateway, Bloodbond March) and a sweep of one type
+ *  (Death-Rattle Oni's damaged creatures, Winnowing's shared type) are left as they were: carrying the relation there lost 65,053 pair reasons on the first build.
+ *  CEILING: a sweep of one type with a condition (Death-Rattle Oni, Winnowing, Bounce Chamber) still derives without it; only the whole-set sweep, the one the matcher reads as proving every subtype, carries it. */
+export function wholePermanentMass(s: SubjectFilter): boolean {
+  if ((s.scope !== "all" && s.scope !== "each") || (s.fromZone !== undefined && s.fromZone !== "battlefield")) return false;
+  const types = [s.type].flat().filter((t): t is string => typeof t === "string").map((t) => t.toLowerCase());
+  if (types.length === 1 && types[0] === "permanent") return true;
+  const left = PERMANENT_TYPES.filter((t) => !(s.notType ?? []).map((n) => n.toLowerCase()).includes(t));
+  return left.length > 0 && types.length === left.length && left.every((t) => types.includes(t));
+}
+
 export function sweepNarrowing(
   read: SubjectFilter | null,
   subjectText: string,

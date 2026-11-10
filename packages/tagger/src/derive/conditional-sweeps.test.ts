@@ -30,8 +30,8 @@ describe("the other conditions are carried on their own field", () => {
   test("Renet: entered this turn (history)", () => {
     expect(sweeps("Renet, Temporal Apprentice", "leaves").map((e) => e.subject.history)).toEqual([["entered"]]);
   });
-  test("Deputy of Detention: the same name as the target (nameRelation)", () => {
-    expect(sweeps("Deputy of Detention", "exiled").map((e) => e.subject.nameRelation)).toEqual(["same"]);
+  test.each(["Deputy of Detention", "Banishment"])("%s: the same name as the target (nameRelation)", (name) => {
+    expect(sweeps(name, "exiled").map((e) => e.subject.nameRelation)).toEqual(["same"]);
   });
   test("Desynchronization: not historic (except)", () => {
     expect(sweeps("Desynchronization", "leaves").map((e) => e.subject.except)).toEqual([[{ historic: true }]]);
@@ -45,6 +45,16 @@ describe("CONTROL: an unconditional sweep carries none of them", () => {
   test.each([["Apocalypse", "exiled"], ["Wrath of God", "dies"], ["Scourglass", "dies"], ["Exterminatus", "dies"], ["Fated Clash", "dies"]])("%s", (name, verb) => {
     const e = rowOf(name).tags.abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === verb && x.subject.self !== true && x.subject.scope === "all");
     expect(e.length).toBeGreaterThan(0);
+    for (const x of e) for (const k of ["stats", "shares", "history", "nameRelation", "except"] as const) expect(x.subject[k], `${name} ${k}`).toBeUndefined();
+  });
+});
+
+/** The condition is carried on a sweep of the WHOLE PERMANENT SET from the battlefield only (the shape `sweepsEveryPermanent` reads). A mass that PUTS cards onto the battlefield, or a sweep of one type, keeps the emit it had: the matcher reads an emit as a filter too (a card that
+ *  "enters thanks to" Faith's Reward is tested against it), and a relation on that filter is a demand nothing can check, so carrying it there cost real pairs (measured on the first build: 65,053 reasons, Faith's Reward, Cryptic Gateway, Bloodbond March, Second Sunrise). */
+describe("CONTROL: a mass put, and a sweep of a single type, are left as they were", () => {
+  test.each([["Faith's Reward", "enters"], ["Second Sunrise", "enters"], ["Cryptic Gateway", "enters"], ["Bloodbond March", "enters"], ["Death-Rattle Oni", "dies"], ["Winnowing", "dies"]])("%s (%s)", (name, verb) => {
+    const e = rowOf(name).tags.abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === verb && x.subject.self !== true && (x.subject.scope === "all" || x.subject.scope === "each"));
+    expect(e.length, name).toBeGreaterThan(0);
     for (const x of e) for (const k of ["stats", "shares", "history", "nameRelation", "except"] as const) expect(x.subject[k], `${name} ${k}`).toBeUndefined();
   });
 });

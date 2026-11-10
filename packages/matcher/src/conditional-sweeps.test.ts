@@ -59,3 +59,10 @@ describe("Glyph of Reincarnation returns only the creatures it destroyed", () =>
     expect(tags(p, "Glyph of Reincarnation").filter((t) => t.startsWith("graveyard-recursion"))).toEqual([]);
   });
 });
+
+/** The first build carried the relation on every mass put as well and lost 65,053 reasons: a card that "enters thanks to" a mass put is tested against the put's emit as a filter, and a relation there is refused. These keep what they had. */
+describe("CONTROL: a mass put from a graveyard still feeds the self-triggers of what it returns", () => {
+  test.each([["Faith's Reward", "Aven Riftwatcher"], ["Second Sunrise", "Aven Riftwatcher"]])("%s x %s", (p, c) => {
+    expect(tags(p, c).length).toBeGreaterThan(0);
+  });
+});
