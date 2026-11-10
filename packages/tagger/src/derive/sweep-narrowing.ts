@@ -5,7 +5,8 @@ import type { SubjectFilter } from "../schema.js";
  *  Mists of Lorien), `history` ("that entered this turn", Renet), `nameRelation` ("with the same name as", Deputy of Detention) and `except` ("that's not historic", Desynchronization). A mass removal keeps them; no new field.
  *
  *  Taken from the grammar's reading of the object only when `parseSubject` has not already read the field, and `except` only when the object is not an "except for" list (Scourglass spares by `notType` / `notSubtype`, #1582).
- *  CEILING: the grammar's reading is trusted as a whole; an object it cannot parse ("that player controls with the same name as that permanent": Deputy of Detention) is covered by the two text cues below only (the same name; the indestructible spare). */
+ *  An `except` entry that restates a field the subject already holds is dropped (Oblivion Stone's "without a fate counter" is read `counter: "fate"` by parseSubject, inverted, and the grammar's `except: [{counter: "fate"}]` beside it would contradict it).
+ *  CEILING: Oblivion Stone's inverted `counter: "fate"` is the older defect and stays; the grammar's reading is otherwise trusted as a whole; an object it cannot parse ("that player controls with the same name as that permanent": Deputy of Detention) is covered by the two text cues below only (the same name; the indestructible spare). */
 const GRAMMAR_FIELDS = ["stats", "shares", "history", "nameRelation", "except"] as const;
 const SAME_NAME = " with the same name as ";
 const GAINS_INDESTRUCTIBLE = [" you control gain indestructible", " you control gains indestructible"];
@@ -46,6 +47,7 @@ export function sweepNarrowing(
   clauseText: string | undefined,
   verb: string | undefined,
   parseClass: (text: string) => SubjectFilter,
+  current: SubjectFilter,
 ): Partial<SubjectFilter> {
   const out: Record<string, unknown> = {};
   const lower = subjectText.toLowerCase();
@@ -54,6 +56,11 @@ export function sweepNarrowing(
     for (const k of GRAMMAR_FIELDS) {
       if (r[k] === undefined) continue;
       if (k === "except" && lower.includes(" except")) continue;
+      if (k === "except") {
+        const kept = (r[k] as Partial<SubjectFilter>[]).filter((x) => !Object.keys(x).some((f) => (current as unknown as Record<string, unknown>)[f] !== undefined));
+        if (kept.length > 0) out[k] = kept;
+        continue;
+      }
       out[k] = r[k];
     }
   }

@@ -30,9 +30,26 @@ describe("a sweep whose number the player opens (X, counters) keeps every subtyp
   });
 });
 
-describe("a sweep narrowed by a fact of the permanents feeds no subtype consumer", () => {
-  test.each(["Mists of Lórien", "Renet, Temporal Apprentice", "Deputy of Detention"])("%s", (p) => {
-    for (const c of SUBTYPE_CONSUMERS) expect(tags(p, c), `${p} x ${c}`).toEqual([]);
+describe("a sweep narrowed to the same name of an opponent's permanent (Deputy of Detention) feeds no subtype consumer", () => {
+  test("Deputy of Detention", () => {
+    for (const c of SUBTYPE_CONSUMERS) expect(tags("Deputy of Detention", c), `Deputy of Detention x ${c}`).toEqual([]);
+  });
+});
+
+/** Mists of Lorien ("target nonland permanent and each other nonland permanent with the same mana value") and Renet ("each other nonland permanent that entered this turn") take YOUR permanents too: a Hovership cast this turn is returned, and Mists can target an Aura or a Vehicle
+ *  directly. A card's own subtype-keyed leave trigger is heard, as the self-trigger gate hears Aven Riftwatcher; Deputy of Detention takes only an opponent's permanents ("that player controls"), so it stays refused. */
+describe("a sweep of your own permanents under a mana value or a turn still reaches a self trigger keyed by subtype", () => {
+  test.each(["Mists of Lórien", "Renet, Temporal Apprentice"])("%s x Unidentified Hovership: leaves:vehicle", (p) => {
+    expect(tags(p, "Unidentified Hovership")).toContain("leaves:vehicle");
+  });
+  test.each(["Animate Dead", "Dance of the Dead"])("Mists of Lórien x %s: leaves:aura", (c) => {
+    expect(tags("Mists of Lórien", c)).toContain("leaves:aura");
+  });
+  test.each(["Animate Dead", "Dance of the Dead", "Unidentified Hovership"])("CONTROL: Deputy of Detention x %s stays unpaired", (c) => {
+    expect(tags("Deputy of Detention", c)).toEqual([]);
+  });
+  test("CONTROL: a subtype payoff that is not the card's own is still refused (no dies, no recursion from a bounce)", () => {
+    for (const p of ["Mists of Lórien", "Renet, Temporal Apprentice"]) for (const c of ["Tiana, Ship's Caretaker", "Mazzy, Truesword Paladin", "Teysa, Opulent Oligarch", "Kirri, Talented Sprout", "Krovod Haunch", "Fire Nation Warship"]) expect(tags(p, c), `${p} x ${c}`).toEqual([]);
   });
 });
 
@@ -79,5 +96,22 @@ describe("a conditional sweep still reaches the self trigger of what it can take
 describe("a sweep with a name relation still fills the graveyard for a self-recursion", () => {
   test("Eye of Singularity x Abzan Devotee", () => {
     expect(tags("Eye of Singularity", "Abzan Devotee").some((t) => t.startsWith("graveyard-recursion"))).toBe(true);
+  });
+});
+
+/** Kaya's +1 gives a nontoken creature "When this creature dies ..." (`grantedBy` + `self`): the trigger is the HOST's, a creature, so Urza's spare of YOUR artifacts and planeswalkers is not Kaya's (a planeswalker). A granted trigger is not judged on the grantor's printed characteristics against the spare. */
+describe("a trigger granted to another creature is judged on the host, not the grantor", () => {
+  test("Urza, Planeswalker x Kaya the Inexorable: dies:creature", () => {
+    expect(tags("Urza, Planeswalker", "Kaya the Inexorable")).toContain("dies:creature");
+  });
+});
+
+/** A consumer keyed on a card TYPE sees the spare as well as one keyed on a subtype: "whenever an artifact you control is put into a graveyard" (Marionette Master, Psychomancer) is not heard by Urza's -10, which leaves your artifacts indestructible. */
+describe("the spare is read on the type path", () => {
+  test.each(["Psychomancer", "Marionette Master"])("Urza, Planeswalker x %s: no dies:artifact", (c) => {
+    expect(tags("Urza, Planeswalker", c).filter((t) => t.startsWith("dies"))).toEqual([]);
+  });
+  test("CONTROL: Urza x a creature payoff stays (Aven Riftwatcher)", () => {
+    expect(tags("Urza, Planeswalker", "Aven Riftwatcher")).toContain("leaves:creature");
   });
 });

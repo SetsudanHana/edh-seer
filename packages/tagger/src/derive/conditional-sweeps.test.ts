@@ -58,3 +58,13 @@ describe("CONTROL: a mass put, and a sweep of a single type, are left as they we
     for (const x of e) for (const k of ["stats", "shares", "history", "nameRelation", "except"] as const) expect(x.subject[k], `${name} ${k}`).toBeUndefined();
   });
 });
+
+/** Oblivion Stone ("Destroy each nonland permanent without a fate counter on it"): parseSubject reads the counter as the sweep's own (`counter: "fate"`, inverted, as before); the grammar's `except: [{counter: "fate"}]` would say the opposite beside it. An exception that restates a field the subject already holds is
+ *  not carried, so the emit never contradicts itself. */
+describe("an exception that contradicts the subject's own field is not carried", () => {
+  test("Oblivion Stone: no except beside counter fate", () => {
+    const e = rowOf("Oblivion Stone").tags.abilities.flatMap((a) => a.emits ?? []).filter((x) => x.verb === "dies" && x.subject.self !== true && x.subject.scope === "each");
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) { expect(x.subject.counter).toBe("fate"); expect(x.subject.except).toBeUndefined(); }
+  });
+});

@@ -1084,7 +1084,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   if (listed === undefined && playerOnly === undefined) subject = withAlternatives(subjectText, subject);
   // A MASS REMOVAL KEEPS THE CONDITION THE NOUNS DO NOT SAY (#1586): "with mana value X or less", "that entered this turn", "with the same name as", "that's not historic", "Artifacts ... you control gain indestructible. Destroy all nonland permanents" (sweep-narrowing.ts).
   if (exceptable && (action.fromZone === undefined || action.fromZone === null || action.fromZone === "battlefield") && wholePermanentMass(subject)) {
-    const narrowing = sweepNarrowing(parseFilter(subjectText), subjectText, clauseText, action.verb, parseSubject);
+    const narrowing = sweepNarrowing(parseFilter(subjectText), subjectText, clauseText, action.verb, parseSubject, subject);
     for (const k of Object.keys(narrowing) as (keyof SubjectFilter)[]) if (subject[k] === undefined) Object.assign(subject, { [k]: narrowing[k] });
   }
   // A TOKEN THAT IS A COPY IS CONTROLLED BY ITS CREATOR, NOT BY WHAT IT COPIES (#1295, CR 111.2: the player who creates a

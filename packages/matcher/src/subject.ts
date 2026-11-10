@@ -68,6 +68,25 @@ function narrowingReadable(p: SubjectFilter, fields: ReadonlySet<string>): boole
   return Object.entries(p).every(([k, v]) => v === undefined || fields.has(k)
     || (k === "stats" && openManaValue(p.stats)) || (k === "except" && p.except!.every((x) => spareOf(x) !== undefined)));
 }
+/** A card's OWN trigger (`self`) is tested against the sweep as the self-trigger gate in edges.ts tests it: "the same mana value as the target" (Mists of Lorien) and "that entered this turn" (Renet) are relations of the board, not of the card, and both take YOUR permanents, so a Hovership cast this turn
+ *  or an Aura Mists is aimed at is reached. The name relation stays (Deputy of Detention takes only "that player controls", an opponent's). */
+const ownTrigger = (p: SubjectFilter): SubjectFilter => {
+  const { shares: _shares, history: _history, ...rest } = p;
+  return rest;
+};
+/** Does the sweep's spare leave NOTHING of what the consumer asks for? "Whenever an artifact you control is put into a graveyard" (Marionette Master) against "Artifacts and planeswalkers you control gain indestructible. Destroy all nonland permanents": every type asked is spared and the control is yours.
+ *  A conjunction ("artifact creature") is spared when any member is. "Not historic" spares an artifact whoever controls it. */
+function sparedWhole(except: readonly Partial<SubjectFilter>[], consumer: SubjectFilter): boolean {
+  const spared = (t: string): boolean => except.some((x) => {
+    const spare = spareOf(x);
+    if (spare === undefined) return false;
+    return "historic" in spare ? t === "artifact" : consumer.control === "you" && [spare.type].flat().map((y) => y.toLowerCase()).includes(t);
+  });
+  const all = arr(consumer.allTypes).map((t) => t.toLowerCase());
+  if (all.some(spared)) return true;
+  const types = arr(consumer.type).map((t) => t.toLowerCase());
+  return types.length > 0 && types.every(spared);
+}
 function sweepsEveryPermanent(p: SubjectFilter): boolean {
   if (p.scope !== "all" && p.scope !== "each") return false;
   // A SET TAKEN FROM A ZONE THE CARD DID NOT SWEEP (the graveyard "all permanent cards in your graveyard that were put there this turn", a library dig, "exiled with this") is a set the engine cannot read.
@@ -292,6 +311,7 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // type: expand both sides' type tokens (concrete, pseudo, or subtype-implied) to concrete
   // card-type sets and require they intersect. Reduces to exact/subtype-implied matching for
   // concrete types; lets pseudo-types (permanent/spell/noncreature/nonland) match their members.
+  if (producer.except !== undefined && producer.except.length > 0 && sparedWhole(producer.except, consumer)) return false;
   const consumerTypes = arr(consumer.type);
   if (consumerTypes.length > 0) {
     const consumerSet = expandTypes(consumerTypes, [], h);
@@ -372,7 +392,7 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   if (consumerSubtypes.length > 0) {
     const ok = consumerSubtypes.some((cs) =>
       arr(producer.subtype).some((ps) => ps.toLowerCase() === cs.toLowerCase())
-      || (sweepsEveryPermanent(producer) && permanentSubtypeSurvives(cs, producer.notType, producer.notSubtype, producer.except, consumer.control)),
+      || (sweepsEveryPermanent(consumer.self === true ? ownTrigger(producer) : producer) && permanentSubtypeSurvives(cs, producer.notType, producer.notSubtype, producer.except, consumer.control)),
     );
     if (!ok) return false;
   }
