@@ -292,6 +292,14 @@
     "amount,count,effect.kind,effect.subject(+subtype),effect.subject(-subtype),emits,toHand": {
       "label": "grammar right",
       "why": "A TYPED ONE-CARD LOOK (#1302): \"look at the top card of your library. If it's a Zombie card, you may reveal it and put it into your hand. If you don't, you may put it into your graveyard\". Both readings now derive the typed dig (`search` + `toHand`, derive 385); they differ on the graveyard half, where the stored model answer types the MILL emit by the revealed card's class (\"mills a creature\", from the condition) and the grammar reads it as the untyped card it is (Territory Culler, Sarinth Steelseeker, Traveling Botanist, Archghoul of Thraben, Bison Whistle, whose grammar also keeps the Bison subtype on its `enters`). These cards were on the grammar reading before the dig was typed (group abilities:1->2); the new keys keep them there. #1401 part 2: Archghoul of Thraben moved to this key when its mill emit's control became `you` on both readings (the old key's `~control` is gone); same judgement, same card. CEILING: these keys pair the two readings' abilities by SORT ORDER, so they are fragile."
+    },
+    "effect.subject(~control),emits.subject(~control),trigger": {
+      "label": "grammar right",
+      "why": "#1589: a delayed cast trigger the stored answer dropped. Vivien, Monsters' Advocate's \"-2: When you next cast a creature spell this turn, search your library for a creature card with lesser mana value, put it onto the battlefield\" is the cast's trigger (CR 603.7a: the loyalty ability creates a delayed trigger and the search happens when it fires); the stored answer made it an unconditional tutor. The grammar reads the cast trigger on the activated clause, as the store does for Chandra, the Firebrand. The `~control` half is the +1's counters on the Beast token YOU create (the existing effect.subject(~control) judgement)."
+    },
+    "abilities:0->1,cost,effect.kind,effect.subject(+type),effect.subject(-anyOf ~control -scope),emits,emits.verb,kind,payment,repeats,trigger": {
+      "label": "grammar right",
+      "why": "#1589: Ral, Storm Conduit. The stored answer numbers its clauses wrongly: the +2 scry carries the cost -2 and the -2 delayed copy (\"When you next cast an instant or sorcery spell this turn, copy that spell\") is absent. The grammar has all four abilities: the cast-or-copy damage trigger (both events), the +2 scry, and the -2 copy under its cast trigger. Nothing the stored answer claims is lost (lostClaims empty)."
     }
   }
 }

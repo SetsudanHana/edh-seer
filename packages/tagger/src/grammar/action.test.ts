@@ -778,6 +778,15 @@ test("choosing new targets for the copy just made claims nothing", () => {
   expect(unreadPhrases("Draw a card. You may choose new targets for the copy.", "spell")).toEqual(["you may choose new targets for the copy"]);
 });
 
+// #1589: the same choice joined by "and" ("copy it and you may choose new targets for the copy", Adaptive Training Post; "that player copies it and may choose ...", Bonus Round).
+test("'... and (you) may choose new targets for the copy' after a copy records no action", () => {
+  expect(unreadPhrases("Copy it and you may choose new targets for the copy.", "activated")).toEqual([]);
+  expect(parseActions("Copy it and you may choose new targets for the copy.", "activated")).toMatchObject([{ verb: "copy" }]);
+  expect(parseActions("That player copies it and may choose new targets for the copy.", "spell")).toMatchObject([{ verb: "copy", actor: { text: "that player" } }]);
+  expect(parseActions("That player copies it and may choose new targets for the copy.", "spell")).toHaveLength(1);
+  expect(unreadPhrases("Draw a card and you may choose new targets for the copy.", "spell")).not.toEqual([]);
+});
+
 // #1349 review: after a hand pick, "that player" is the hand's owner (the target opponent), not an unnamed player: Nightsnare's "that player discards two cards" and Salt Vampire's draw were `control: any`.
 test("'that player' after a card chosen from a hand is the hand's owner", () => {
   const night = parseActions("Target opponent reveals their hand. You may choose a nonland card from it. If you do, that player discards that card. If you don't, that player discards two cards.", "spell");

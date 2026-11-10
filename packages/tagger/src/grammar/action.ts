@@ -1945,6 +1945,12 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     if (isRestrictionSentence(s)) continue;
     // "Once during each of your turns, you may cast ...": the permission is the action, the prefix is dropped as the store does.
     s = withoutOncePrefix(s);
+    // "Copy it and you may choose new targets for the copy" (Adaptive Training Post, Jeong Jeong; #1589), "that player copies it and may choose new targets for the copy" (Bonus Round): the same optional choice as the
+    // next-sentence form below (CR 707.10c), joined by "and". Index checks, no regex over card text.
+    for (const tail of [" and you may choose new targets for the copy", " and you may choose new targets for the copies", " and may choose new targets for the copy", " and may choose new targets for the copies"]) {
+      const lc = s.toLowerCase();
+      if (s.length > tail.length + 5 && (lc.startsWith("copy ") || lc.startsWith("that player copies ")) && lc.endsWith(tail)) s = s.slice(0, s.length - tail.length);
+    }
     if (/^you may reveal this card from your opening hand$/i.test(s)) { gameStart = true; continue; }
     // A MODAL INTRO ("When this creature enters, choose one —", "{2}, {T}: Choose one —"): the parent of a
     // triggered or activated modal ability. The modes are their own clauses (the segmenter), and the store
@@ -2074,7 +2080,7 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // result, which no verb expresses; it records no action.
     if (/^increase or decrease the result by \d+$/i.test(s)) continue;
     // "You may choose new targets for the copy" (CR 707.10c) after a copy: the bought readings of Twincast and Dualcaster Mage record no action for it. Only straight after a copy this clause made;
-    // anywhere else it is unread (a delayed copy is refused by the clause record). CEILING: the optional choice is not recorded, so a copy whose new targets matter (a redirected removal) reads as the copy alone.
+    // anywhere else it is unread. CEILING: the optional choice is not recorded, so a copy whose new targets matter (a redirected removal) reads as the copy alone.
     if (/^you may choose new targets for (?:the copy|the copies|it|them)$/i.test(s) && out[out.length - 1]?.verb === "copy") { mayBefore = false; continue; }
     // "Each opponent who doesn't loses 1 life" (Wernog): the opponents who declined the "may" before it;
     // the actor is each opponent, and the decline is the condition. The object keeps the store's wording,

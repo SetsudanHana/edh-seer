@@ -67,6 +67,13 @@ function causedEventParts(rest: string): [string, string, string | undefined, st
   return [rest, object, be, event];
 }
 
+/** The subject of a DELAYED trigger's preamble (#1589): "When you next cast an instant or sorcery spell this turn" names the spell it waits for ("an instant or sorcery spell"), as the store's records have it, not "you next". "Next" and "this turn" say when, not what. */
+export function delayedSubjectText(preamble: string): string {
+  const next = /^(when) you next (cast|activate) /i.exec(preamble);
+  const bare = next ? `${next[1]} you ${next[2]} ${preamble.slice(next[0].length)}` : preamble;
+  return triggerSubjectText(bare.replace(/ this turn$/i, ""));
+}
+
 export function triggerSubjectText(preamble: string): string {
   // A PHASE TRIGGER names whose phase: "your upkeep" is yours, "each upkeep" / "the end step" anyone's.
   const phase = /^at the beginning of (your|each|the|each player's|each opponent's|that player's)\b/i.exec(preamble);
@@ -440,7 +447,7 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       readings[c.id] = { trigger: reads };
       const first = reads[0]!;
       const phaseTrigger = /^at the beginning of\b/i.test(preamble!);
-      record.trigger = { event: first.event, subject: triggerSubjectText(preamble!), control: phaseTrigger ? phaseControl(preamble!) : first.control ?? "any" };
+      record.trigger = { event: first.event, subject: /^when you next /i.test(preamble!) ? delayedSubjectText(preamble!) : triggerSubjectText(preamble!), control: phaseTrigger ? phaseControl(preamble!) : first.control ?? "any" };
       // "When Brinelin enters AND WHENEVER you cast a spell with mana value 6 or greater": the second
       // event has its own subject; "enters or attacks" shares the first's.
       const second = /\b(?:and|or) whenever (.+)$/i.exec(preamble!)?.[1];
@@ -470,6 +477,27 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       const read = [parseTrigger(delayed[1]!, null) ?? []].flat()[0];
       if (read) record.trigger = { event: read.event, subject: triggerSubjectText(delayed[1]!), control: read.control ?? "any" };
     }
+    // A DELAYED OR TEMPORARY TRIGGER THAT OPENS A CLAUSE WHICH IS NOT ITSELF TRIGGERED (#1589): "{T}: When you next cast an instant or sorcery spell this turn, copy that spell" (Rimefire Torque), "-2: When you next cast ..."
+    // (Chandra, the Firebrand), "-6: Until end of turn, whenever you cast a spell, copy it" (Jace Reawakened), "Until end of turn, whenever a player casts ..." (Bonus Round). The ability creates the trigger and the trigger
+    // does the effect (CR 603.7a), so the effect is NOT done now: the store records the cast as the clause's trigger on the activated or spell clause, and so does this. A clause that is itself triggered
+    // ("Doublecast", a chapter) already reads its printed trigger above. When the leading trigger cannot be read the clause is refused: dropping it would claim the effect unconditionally (Vivien's tutor).
+    // CEILING: only a leading trigger is read; one that follows a first sentence ("Add {U}. When you next cast ...", segmented apart into a triggered clause) reads as a triggered clause, and one behind an "If you do,"
+    // (Najal, Mercurial Spelldancer) stays in a triggered clause's effect, unread.
+    let delayedCast = false;
+    const untilLead = type !== "triggered" ? /^until end of turn, (?=whenever )/i.exec(c.text) : null;
+    const delayedLead = type !== "triggered" && !record.trigger ? printedPreamble(untilLead ? c.text.slice(untilLead[0].length) : c.text, card.name) : null;
+    if (delayedLead && (untilLead ? /^whenever /i.test(delayedLead) : /^when you next (?:cast|activate) /i.test(delayedLead))) {
+      const read = parseTrigger(delayedLead, null);
+      // A trigger reading that carries an unread NARROWING (Dynaheir's "by spending four or more mana to activate it", Magus Lucea Kane's "with {X} in its mana cost") would fire on more than the card says: refused like the
+      // trigger it cannot read. The words "next" and "this turn" are the delay itself, not a narrowing.
+      const unreadNarrowing = (r: TriggerReading): boolean => (r.narrowing ?? "").split(" ").some((w) => w !== "" && w !== "next" && w !== "this" && w !== "turn");
+      if (!read || [read].flat().some(unreadNarrowing)) return { records, complete: false, blocker: { clause: c.id, kind: "trigger", phrase: delayedLead } };
+      const first = [read].flat()[0]!;
+      readings[c.id] = { trigger: [read].flat() };
+      record.trigger = { event: first.event, subject: delayedSubjectText(delayedLead), control: first.control ?? "any" };
+      if (untilLead) effect = effectText(c.text.slice(untilLead[0].length), card.name);
+      delayedCast = first.event === "cast";
+    }
     // The card's own name in its cost ("{2}, Sacrifice Kirk:") is the card: "~", as in the effect.
     const rawCost = labelled ? labelled.cost : c.cost;
     const cost = rawCost ? selfAsTilde(rawCost, card.name) : rawCost;
@@ -493,13 +521,6 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       records.push(record);
       continue;
     }
-    // A DELAYED COPY ("When you next cast an instant or sorcery spell this turn, copy that spell. ...", Chandra, the Firebrand; "Until end of turn, whenever you cast a spell, copy it. ...", Jace Reawakened): `effectText` cuts the delayed
-    // trigger off the front and the clause's record has none, where the bought reading keeps the cast. The new-targets sentence is what this card family stopped on (#1349), so it stays the blocker:
-    // reading it would switch Chandra and Pigment Wrangler from a stored cast trigger to none.
-    // CEILING: the same delayed trigger is dropped from the next-cast cards that never stopped on it (Ral, Storm Conduit, Doublecast, Galvanic Iteration), as the stored answer drops it for most of them.
-    // Not inside a quoted ability a card GRANTS (Way of the Cryomancer): that card is read, and switched, as it was.
-    const unquotedText = c.text.replace(/"[^"]*"/g, " ");
-    if (/\bwhen you next (?:cast|activate)\b|\b(?:until end of turn|this turn), (?:whenever|when)\b/i.test(unquotedText) && /\bchoose new targets for the cop(?:y|ies)\b/i.test(unquotedText)) return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: "you may choose new targets for the copy" } };
     const unread = unreadPhrases(effect, type, cost);
     if (unread.length) return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: unread[0]! } };
     const readingsHere = parseActions(effect, type, cost);
@@ -541,6 +562,12 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     // with no trigger noun takes the clause's own "this creature".
     const selfWord = selfNoun && selfNoun !== "~" ? selfNoun : /\bthis (?:creature|artifact|enchantment|land|planeswalker|permanent|vehicle|card|spell|aura|equipment|battle)\b/i.exec(c.text)?.[0] ?? "this";
     record.actions = actionsOf(readingsHere, selfNoun === "~" ? "this" : selfNoun, type, selfWord, record.trigger?.subject, record.trigger?.event);
+    // The "it" of "copy it" under a delayed or temporary CAST trigger is the spell that was cast: "that instant or sorcery spell", the trigger's own class (Rimefire Torque, Adaptive Training Post, Jeong Jeong). Left as "it",
+    // derive's pronoun walk takes the first noun in the clause (the charge counters the cost removes, Rimefire Torque). A trigger class that is not a plain "a <types> spell" says "that spell".
+    if (delayedCast) {
+      const kind = /^an? ([a-z]+(?: or [a-z]+)* spell)$/i.exec(record.trigger?.subject ?? "")?.[1];
+      record.actions = record.actions.map((a) => (a.verb === "copy" && /^it$/i.test(a.object ?? "") ? { ...a, object: `that ${kind ?? "spell"}` } : a));
+    }
     if (STATION_BAR.test(c.text)) record.actions = mergeKeywordGrants(record.actions);
     if (record.actions.length === 0 && type !== "static") record.actions = [{ verb: "none", object: "" } as Action];
     records.push(record);
