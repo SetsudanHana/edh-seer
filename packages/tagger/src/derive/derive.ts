@@ -678,6 +678,40 @@ const ANOTHER_PLAYERS_CARD = /\b(?:opponents?|defending player|that player)(?:'s
 const CAST_IF_ITS_A = /\bif (?:it's|it is|that card is) (an? [a-z]+(?: or [a-z]+)?) card, you may (?:cast|play) (?:it|that card)\b/i;
 /** "You may cast that card for as long as it remains exiled" (#1592): you are the caster of a card the sentence refers back to. */
 const YOU_MAY_CAST_IT = /\byou may (?:cast|play) (?:it|them|that card|those cards|that spell)\b/i;
+/** WHOSE CARD "YOU MAY CAST / PLAY ..." TAKES, READ OFF THE WORDS (#1594). True when every "you may cast / play" sentence of the ability can only reach a card ANOTHER player owns (CR 108.3), proven one of three ways:
+ *  the cast names the other player's zone or ownership itself ("target instant or sorcery card from an opponent's graveyard", Memory Plunder; "cards in exile your opponents own", Draugr Necromancer; "from that
+ *  player's graveyard" where that player is an opponent, Wrexial); it points back at cards this ability took from another player ("from among them", Villainous Wealth; "the exiled card", Hama); or it points at
+ *  cards the CARD took in another ability ("cards exiled with this enchantment", Hedonist's Trove; "the exiled card", Null Summoner) and every ability of the card that exiles or reveals takes from an opponent.
+ *  A source that can hold your own card proves nothing: "each player's library" (Etali, Primal Conqueror), "target player's graveyard" (Shadow of the Enemy), a pile fed by "whenever a player casts" (River Song's Diary).
+ *  CEILING: word lists over the printed permission and the takings; a sentence where another player is the one who may cast (Spellshift), a copy, or a pile named any other way proves nothing and writes no owner. */
+function castsOnlyAnothersCards(clauseText: string, taken: string, takingTexts: string[], triggerIsSelf: boolean, cardName?: string): boolean {
+  if (ANOTHER_MAY_CAST.test(clauseText)) return false;
+  let tails = 0;
+  for (const m of clauseText.matchAll(YOU_MAY_CAST)) {
+    tails++;
+    const end = clauseText.indexOf(".", m.index);
+    const tail = clauseText.slice(m.index, end < 0 ? undefined : end);
+    if (/\bcop(?:y|ies)\b/i.test(tail)) return false;
+    if (CAST_NAMES_THEIRS.test(tail) || (CAST_FROM_THAT_PLAYERS.test(tail) && thatPlayerIsOpponent(clauseText.slice(0, m.index + tail.length), triggerIsSelf, cardName))) continue;
+    const before = clauseText.slice(0, m.index);
+    const here = !/\byour (?:library|hand|graveyard)\b/i.test(taken) && [taken, before].some((t) => ANOTHER_PLAYERS_CARD.test(t)) && !/\beach player\b/i.test(`${taken} ${before}`);
+    const shortName = cardName?.split(",")[0]!.toLowerCase();
+    // The pile can be named earlier in the permission's own sentence: "You may look at cards exiled with this creature, and you may play lands and cast spells from among those cards" (Kheru Mind-Eater).
+    const sentence = clauseText.slice(clauseText.lastIndexOf(".", m.index) + 1, end < 0 ? undefined : end);
+    const withThis = /\bexiled with this [a-z]+\b/i.test(sentence) || (shortName !== undefined && sentence.toLowerCase().includes(`exiled with ${shortName}`));
+    if (!withThis && here && (CAST_TAKEN_HERE.test(tail) || CAST_TAKEN_ELSEWHERE.test(tail))) continue;
+    if ((withThis || CAST_TAKEN_ELSEWHERE.test(tail)) && takingTexts.length > 0 && takingTexts.every((t) => ANOTHER_PLAYERS_CARD.test(t) && !/\b(?:each|target) player\b|\byour (?:library|hand|graveyard)\b/i.test(t)
+      && (/\bopponents?\b|\bdefending player\b/i.test(t) || damagedPlayerIsOpponent(t, false, cardName)))) continue;
+    return false;
+  }
+  return tails > 0;
+}
+const YOU_MAY_CAST = /\byou may (?:look at and )?(?:cast|play)\b/gi;
+const ANOTHER_MAY_CAST = /\b(?:that player|that opponent|they|its owner|its controller|each player|the player|players|controller) may (?:cast|play)\b/i;
+const CAST_NAMES_THEIRS = /\bfrom (?:an|each|target) opponent's (?:graveyard|hand|library)\b|\bfrom (?:defending player's|other players') (?:graveyards?|hand|library)\b|\b(?:your opponents|an opponent) owns?\b|\byou don't own\b/i;
+const CAST_FROM_THAT_PLAYERS = /\bfrom that player's (?:graveyard|hand|library)\b/i;
+const CAST_TAKEN_HERE = /^you may (?:look at and )?(?:cast|play) (?:it|them|that card|those cards|that spell)\b|\bfrom among (?:them|those (?:exiled |nonland )?cards|(?:the )?(?:nonland )?cards exiled this way)\b|\b(?:cast|play) (?:nonland )?cards exiled this way\b/i;
+const CAST_TAKEN_ELSEWHERE = /\b(?:the|that) (?:exiled|revealed) (?:nonland )?cards?\b/i;
 /** A trigger an effect SETS UP for a while (CR 603.7): "Until end of turn, whenever ...", "Until your next turn, whenever ...", "This turn, when ...", "When you next cast / activate ...". */
 const UNREAD_TEMPORARY_TRIGGER = /\b(?:until end of turn|until your next turn|until the end of your next turn|this turn), (?:whenever|when) |\bwhen you next (?:cast|activate) /i;
 
@@ -4113,17 +4147,22 @@ export function deriveAbilities(
       // Every class trigger still hears it: you do cast it. A card off YOUR library (Hidetsugu and Kairi, Lady Loki) has no owner written.
       // A PLAYER ANOTHER ACTION NAMES IS NOT THE CAST'S SCOPE: "target opponent" / "each opponent" reached the emit through the back-reference (Lady Loki's damage "to each opponent"), so a `target`
       // scope goes with the corrected caster, and an `each` unless the exile itself takes a card from each of several ("each opponent's library").
-      // CEILING: only a single cast / play whose printed sentence says "you may cast / play" a back-reference; whose card it is comes from a word list over the nearest earlier exile and the words before the permission.
-      if ((action.verb === "cast" || action.verb === "play") && YOU_MAY_CAST_IT.test(clauseText) && (clause.actions ?? []).filter((a) => a.verb === action.verb).length === 1) {
+      // CEILING: this first reading takes only a single cast / play whose printed sentence says "you may cast / play" a back-reference; whose card it is comes from a word list over the nearest earlier exile and the words before the permission.
+      // EVERY OTHER WAY THE WORDS SAY IT (#1594, `castsOnlyAnothersCards`): the cast that names the other player's zone itself, the one that points at a pile ("from among them", "the exiled card") and the one that
+      // points at cards another ability of the card took ("cards exiled with this enchantment") carry the same owner, and are YOUR cast: a card's owner read into `control` ("cards your opponents own", "from an
+      // opponent's graveyard") made Memory Plunder and Draugr Necromancer an opponent's cast, which met "whenever an opponent casts a spell".
+      if ((action.verb === "cast" || action.verb === "play") && clauseText !== "") {
+        const pronoun = YOU_MAY_CAST_IT.test(clauseText) && (clause.actions ?? []).filter((a) => a.verb === action.verb).length === 1;
         const taken = (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).reverse().find((a) => a.verb === "exile");
         // ...or, where that exile's object is a pronoun or a paraphrase ("exile it face down", Blightwing Bandit; Dazzling Sphinx's stored dig), the words printed before the permission name the other player's zone.
         const printedBefore = clauseText.slice(0, YOU_MAY_CAST_IT.exec(clauseText)?.index ?? 0);
-        const theirs = [taken?.object ?? "", printedBefore].some((t) => ANOTHER_PLAYERS_CARD.test(t)) && !/\beach player\b/i.test(`${taken?.object ?? ""} ${printedBefore}`);
-        const fromEach = /\beach\b/i.test(taken?.object ?? "");
+        const theirs = (pronoun && [taken?.object ?? "", printedBefore].some((t) => ANOTHER_PLAYERS_CARD.test(t)) && !/\beach player\b/i.test(`${taken?.object ?? ""} ${printedBefore}`))
+          || castsOnlyAnothersCards(clauseText, taken?.object ?? "", Object.values(clauseTexts ?? {}).filter((t) => /\b(?:exiles?|reveals?)\b/i.test(t)), trigger?.subject.self === true, cardName);
+        const fromEach = /\beach\b/i.test(taken?.object ?? "") || /\bfrom each opponent's\b/i.test(clauseText);
         for (const e of emits) {
           if ((e.verb !== "cast" && e.verb !== "land-play") || e.subject.self === true) continue;
           // `any` too: a sentence that names another player ("that player exiles the top card of their library. If it's a nonland card, you may cast it", Mind's Dilation) left the caster unfilled; the words say you.
-          if (e.subject.control === "opp" || e.subject.control === "any") { e.subject.control = "you"; if (e.subject.scope === "target" || (e.subject.scope === "each" && !fromEach)) delete e.subject.scope; }
+          if ((pronoun || theirs) && (e.subject.control === "opp" || e.subject.control === "any")) { e.subject.control = "you"; if (e.subject.scope === "target" || (e.subject.scope === "each" && !fromEach)) delete e.subject.scope; }
           if (theirs && e.subject.control === "you" && e.subject.owner === undefined) e.subject.owner = "opp";
         }
       }

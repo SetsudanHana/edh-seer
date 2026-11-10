@@ -33,3 +33,41 @@ test.each(["Drownyard Lurker", "Warped Tusker"])("Hidetsugu and Kairi casts only
 test("Hidetsugu and Kairi can cast a deck-mate instant: Contractual Safeguard's own cast trigger hears it", () => {
   expect(castTags("Hidetsugu and Kairi", "Contractual Safeguard")).not.toEqual([]);
 });
+
+// #1594: the rest of the steal-and-cast population. Whose card a cast takes is read off the words, four ways: the cast's own object names another player's zone or ownership ("from an opponent's graveyard",
+// "cards your opponents own"), the cast points back at cards the same ability took from another player ("from among them", "the exiled card"), or it points at cards another ability of the card took
+// ("cards exiled with this enchantment"). Added fixtures dumped from Mongo 2026-11-10.
+const castEmits = (name: string) => dc(name).tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => (e.verb === "cast" || e.verb === "land-play") && e.subject.self !== true).map((e) => e.subject);
+const THIEVES = [
+  "Villainous Wealth", "Mnemonic Betrayal", "Kefka, Dancing Mad", "Mindclaw Shaman", "Black Widow, Super Spy", "Outrageous Robbery", // points back at what this ability took
+  "Memory Plunder", "Wrexial, the Risen Deep", "Flotsam // Jetsam", "Draugr Necromancer", "Sen Triplets", "Shaman's Trance", // the cast names the other player's zone / ownership
+  "Hedonist's Trove", "Nightveil Specter", "Kheru Mind-Eater", "Null Summoner", "Talent of the Telepath", "Court of Locthwain", // points at what another ability of the card took
+];
+describe.each(THIEVES)("%s casts only cards another player owns", (thief) => {
+  test("every cast / land-play emit is YOUR cast of a card an opponent owns", () => {
+    const emits = castEmits(thief);
+    expect(emits.length).toBeGreaterThan(0);
+    for (const s of emits) expect({ control: s.control, owner: s.owner }).toEqual({ control: "you", owner: "opp" });
+  });
+  test.each(["Artisan of Kozilek", "Echo Storm"])("no self reason with %s's own 'when you cast this spell'", (self) => {
+    expect(castTags(thief, self)).toEqual([]);
+  });
+});
+test.each(["Villainous Wealth", "Mnemonic Betrayal", "Memory Plunder", "Wrexial, the Risen Deep", "Hedonist's Trove"])("%s still feeds the class triggers: Talrand, prowess, Nita's 'a spell you don't own'", (thief) => {
+  for (const payoff of ["Talrand, Sky Summoner", "Monastery Swiftspear", "Nita, Forum Conciliator"]) expect(castTags(thief, payoff), payoff).not.toEqual([]);
+});
+test("Memory Plunder is your cast, so it is no 'whenever an opponent casts a spell' for Rhystic Study", () => {
+  expect(castTags("Memory Plunder", "Rhystic Study")).toEqual([]);
+});
+// A MIXED SOURCE PROVES NOTHING: "each player's library" and "target player's graveyard" include yours, and a pile fed by "whenever a player casts" (River Song's Diary) holds your own spells too.
+test.each(["Etali, Primal Conqueror // Etali, Primal Sickness", "Shadow of the Enemy", "Jeleva, Nephalia's Scourge", "River Song's Diary"])("%s can cast your own card: no owner is written", (mixed) => {
+  const emits = castEmits(mixed);
+  expect(emits.length).toBeGreaterThan(0);
+  for (const s of emits) expect(s.owner).toBeUndefined();
+});
+test("Etali, Primal Conqueror can cast a deck-mate off your own library: Artisan of Kozilek's cast trigger hears it", () => {
+  expect(castTags("Etali, Primal Conqueror // Etali, Primal Sickness", "Artisan of Kozilek")).not.toEqual([]);
+});
+test("Spellshift's cast is the other player's ('that player may cast that card'): not yours, no owner", () => {
+  for (const s of castEmits("Spellshift")) { expect(s.control).not.toBe("you"); expect(s.owner).toBeUndefined(); }
+});
