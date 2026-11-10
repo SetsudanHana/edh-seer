@@ -25,6 +25,11 @@ describe.each(["Covetous Urge", "Psychic Intrusion", "Stolen Goods"])("%s casts 
     expect(castTags(thief, payoff)).not.toEqual([]);
   });
 });
-test("a cast off your own library can be a deck-mate: Hidetsugu and Kairi still meets Drownyard Lurker's cast trigger", () => {
-  expect(castTags("Hidetsugu and Kairi", "Drownyard Lurker")).not.toEqual([]);
+// Hidetsugu and Kairi casts off YOUR library, so a deck-mate is possible, but only "if it's an instant or sorcery card": the cast emit carries that type. A creature's own "when you cast or cycle this"
+// (Drownyard Lurker, Warped Tusker) is never what it casts; an instant's own cast trigger is (Contractual Safeguard's addendum).
+test.each(["Drownyard Lurker", "Warped Tusker"])("Hidetsugu and Kairi casts only an instant or sorcery: no self reason with the creature %s", (creature) => {
+  expect(castTags("Hidetsugu and Kairi", creature)).toEqual([]);
+});
+test("Hidetsugu and Kairi can cast a deck-mate instant: Contractual Safeguard's own cast trigger hears it", () => {
+  expect(castTags("Hidetsugu and Kairi", "Contractual Safeguard")).not.toEqual([]);
 });

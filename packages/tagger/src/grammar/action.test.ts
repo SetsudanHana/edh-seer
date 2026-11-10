@@ -887,3 +887,10 @@ test("a bare 'it' that can only be the picked card is the picked card (Binding N
   expect(unreadPhrases("Look at target player's hand. You may choose a nonland card from it. If you do, that player exiles the chosen card, then puts it on the bottom of their library.", "triggered").length).toBeGreaterThan(0);
   expect(unreadPhrases("Look at target player's hand. You may choose a nonland card from it. If you do, that player reveals the chosen card and loses life equal to its mana value.", "triggered").length).toBeGreaterThan(0);
 });
+
+// #1592 review: a sacrifice counted by what an earlier action of the same effect did is not one sacrifice.
+test("a sacrifice 'for each card discarded this way' is unread (Malfegor)", () => {
+  expect(unreadPhrases("Discard your hand. Each opponent sacrifices a creature of their choice for each card discarded this way.", "triggered").length).toBeGreaterThan(0);
+  // A count the board states is read as before (Thoughts of Ruin).
+  expect(unreadPhrases("Each player sacrifices a land of their choice for each card in your hand.", "spell")).toEqual([]);
+});

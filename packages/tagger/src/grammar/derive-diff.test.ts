@@ -215,7 +215,8 @@ test("refusedForAmount: not when the stored reading loses its own grants to the 
 
 // #1592 fix round: Hidetsugu and Kairi's dies clause derives two abilities of the blank kind, an exile off your library and a cast. The stored cast names no zone and the grammar's says `fromZone: exile`,
 // and the abilities were ordered by their whole serialisation, where the subject's fields come before the emit's verb: "exile" sorts before "library" and "library" before "token", so the two sides
-// ordered the pair differently and the cast was compared with the exile (key `emits.verb`, unlabelled). Abilities are ordered by effect kind and emit verbs first.
+// ordered the pair differently and the cast was compared with the exile (key `emits.verb`, unlabelled). Only the BLANK-KIND abilities of a clause are re-ordered, among themselves and by their emit verbs;
+// every other ability keeps the whole-serialisation order (a CEILING in derive-diff.ts).
 test("two blank-kind abilities of one clause pair by their emit verbs, whatever a subject field adds (Hidetsugu and Kairi)", () => {
   const exiled = ab({ kind: "triggered", emits: [{ verb: "exiled", subject: { control: "you", token: null, fromZone: "library" } }] } as never);
   const cast = (zone: object) => ab({ kind: "triggered", emits: [{ verb: "cast", subject: { control: "you", token: null, ...zone } }] } as never);

@@ -564,7 +564,13 @@ function moveList(text: string, onField = false): Args | Args[] | null {
 
 const ZONE: Record<string, [string, Handler]> = {
   destroy: ["destroy", (rest) => moveList(rest)],
-  sacrifice: ["sacrifice", (rest) => moveList(rest)],
+  // "sacrifices a creature of their choice FOR EACH CARD DISCARDED THIS WAY" (Malfegor, #1592 review): the count is what an earlier action of the effect did, which no amount here carries. Read as one
+  // sacrifice it switched the card to a flat 1 where the stored answer says "one for each card discarded this way", so it is left unread.
+  // By index, no regex over the phrase (CodeQL polynomial-redos).
+  sacrifice: ["sacrifice", (rest) => {
+    const lc = rest.toLowerCase(), each = lc.lastIndexOf(" for each ");
+    return each >= 0 && lc.endsWith(" this way") && !lc.includes(",", each) ? null : moveList(rest);
+  }],
   exile: ["exile", (rest) => withCounters(rest.replace(/ face down$/, ""), (rest) => {
     rest = rest.replace(/ instead of putting (?:it|that card|that spell) (?:anywhere else|into (?:its owner's|a|your) graveyard)(?: as it resolves)?$/, "");
     const until = rest.search(/ until /);

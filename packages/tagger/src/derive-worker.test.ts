@@ -373,3 +373,14 @@ test("Cursed Recording: the grammar reads all three actions of its first clause,
   expect(copy.claimsNothing).toBeUndefined();
   expect(row.tags.unknownTriggers ?? []).toEqual([]);
 });
+
+// #1592 review: Malfegor's "Each opponent sacrifices a creature of their choice for each card discarded this way" scales with the discard before it. The grammar read the sacrifice with no amount, derive made
+// it "1", and under the `amount,count` label the card served a flat 1 where the stored answer says "one for each card discarded this way". The grammar leaves the scaling unread, so the card keeps its stored reading.
+const MALFEGOR = {"name":"Malfegor","typeLine":"Legendary Creature \u2014 Demon Dragon","keywords":["Flying"],"oracleText":"Flying\nWhen Malfegor enters, discard your hand. Each opponent sacrifices a creature of their choice for each card discarded this way.","manaCost":"{2}{B}{B}{R}{R}","colors":["B","R"],"colorIdentity":["B","R"],"manaValue":6,"power":"6","toughness":"6","layout":"normal"};
+const MALFEGOR_STORED = [{"id":1,"abilityType":"none","actions":[{"verb":"none","object":"Flying","fromZone":null,"toZone":null}]},{"id":2,"abilityType":"triggered","trigger":{"event":"enters","subject":"Malfegor","control":"you"},"actions":[{"verb":"discard","object":"your hand","fromZone":null,"toZone":null,"amount":null,"optional":false},{"verb":"sacrifice","object":"a creature of their choice","fromZone":null,"toZone":null,"amount":"one for each card discarded this way","optional":false}]}];
+test("Malfegor keeps its stored reading: a sacrifice 'for each card discarded this way' is not read as one (#1592)", () => {
+  expect(grammarClauseRecords(MALFEGOR as never).complete).toBe(false);
+  const row = deriveRow({ doc: { oracleId: "x", name: MALFEGOR.name, canonical: MALFEGOR_STORED } as never, source: MALFEGOR, isToken: false });
+  expect(row.fromGrammar).toBe(false);
+  expect(row.tags.abilities.find((a) => (a.emits ?? []).some((e) => e.verb === "sacrifice"))!.amount).toBe("one for each card discarded this way");
+});
