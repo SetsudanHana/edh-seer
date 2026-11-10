@@ -1936,7 +1936,7 @@ function readActions(effect: string, type: string | null, cost: string | undefin
   const sentences = unquoted.split(/(?<=\.)\s+/);
   let chosen: Chosen | undefined, refusedAny = false;
   // The hand a sentence just revealed or looked at ("Target opponent reveals their hand", "Look at target opponent's hand"), and the card chosen from it (#1349).
-  let handOf: string | undefined, handPick: { sentence: string; text: string; used: boolean } | undefined;
+  let handOf: string | undefined, handOwner = "", handPick: { sentence: string; text: string; used: boolean } | undefined;
   for (const [sentenceAt, raw] of sentences.entries()) {
     let s = raw.trim().replace(/\.$/, "");
     if (s === "") continue;
@@ -1955,7 +1955,7 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // CEILING: only the plain "choose <a card class> from it" straight after a reveal or look of a TARGET player's hand, and only "that card" / "the chosen card" refer back to it (a bare "it", a trailing
     // "with mana value 3 or less", "or a card from their graveyard" stay unread, so the card blocks); one reference only, and the pick is read as optional by `mayBefore` like any "you may".
     const handShown = /^(?:look at (target opponent's|target player's) hand|(target opponent|target player) reveals their hand)$/i.exec(s);
-    if (handShown) handOf = `${(handShown[1] ?? `${handShown[2]!}'s`).toLowerCase()} hand`;
+    if (handShown) { handOf = `${(handShown[1] ?? `${handShown[2]!}'s`).toLowerCase()} hand`; handOwner = handOf.slice(0, handOf.indexOf("'s ")); }
     const pick = handOf !== undefined ? /^you (may )?choose ((?:an?|one) [a-z][a-z ,-]*? card) from it$/i.exec(s) : null;
     if (pick) {
       if (handPick && !handPick.used) { unread?.push(handPick.sentence); }
@@ -1969,6 +1969,8 @@ function readActions(effect: string, type: string | null, cost: string | undefin
       const bare = /\b(?:it|them|its)\b/i.test(s.replace(/\b(?:that card|the chosen card)\b/gi, ""));
       if (refs === 1 && !handPick.used && !bare) { s = s.replace(/\b(?:that card|the chosen card)\b(?!['\u2019])/i, handPick.text); handPick.used = true; }
       else if (refs > 0 || bare) { handPick.used = false; unread?.push(handPick.sentence); handPick = undefined; }
+      // "That player" after the pick is the hand's owner ("target opponent"); left as printed it read as an unnamed player, `control: any` (Nightsnare's discard of two paired with every discard payoff).
+      if (handPick) s = s.replace(/\bthat player\b/gi, handOwner);
     }
     // "Choose target creature. Exile it." (#1452): the choose records no action, as the store has it; the target it names stands where each later reference to it is (`carriedSentence`),
     // the way the bought reading writes the effect that uses it. A choose nothing refers back to, or whose references this cannot carry, stays unread (see the end of the loop).

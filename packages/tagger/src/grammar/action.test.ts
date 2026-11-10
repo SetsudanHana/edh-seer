@@ -777,3 +777,14 @@ test("choosing new targets for the copy just made claims nothing", () => {
   // With no copy before it the sentence says nothing this reads: unread.
   expect(unreadPhrases("Draw a card. You may choose new targets for the copy.", "spell")).toEqual(["you may choose new targets for the copy"]);
 });
+
+// #1349 review: after a hand pick, "that player" is the hand's owner (the target opponent), not an unnamed player: Nightsnare's "that player discards two cards" and Salt Vampire's draw were `control: any`.
+test("'that player' after a card chosen from a hand is the hand's owner", () => {
+  const night = parseActions("Target opponent reveals their hand. You may choose a nonland card from it. If you do, that player discards that card. If you don't, that player discards two cards.", "spell");
+  const discards = night.filter((a) => a.verb === "discard");
+  expect(discards).toHaveLength(2);
+  for (const d of discards) expect(d.actor).toMatchObject({ control: "opp", scope: "target" });
+  const salt = parseActions("Look at target opponent's hand. You may choose a nonland card from it. If you do, that player exiles that card, then draws a card.", "triggered");
+  expect(salt.find((a) => a.verb === "draw")!.actor).toMatchObject({ control: "opp", scope: "target" });
+  expect(salt.find((a) => a.verb === "exile")!.actor).toMatchObject({ control: "opp", scope: "target" });
+});
