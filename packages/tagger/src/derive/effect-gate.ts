@@ -253,6 +253,48 @@ function locate(body: string, verbs: readonly string[]) {
   return { sentences, parsed, doing, where };
 }
 
+/** A sentence that opens a trigger or an activation rule of its own: where the effect of a temporary trigger printed before it ends. */
+const OPENS_ANOTHER = /^\s*(?:at the beginning of|at end of|when|whenever|activate)\b/i;
+/** A back-reference to what the trigger watched: "destroy THAT CREATURE", "copy THAT ABILITY", "IT gets -5/-0", "THOSE CREATURES get +2/+2", "ITS owner draws a card", "THAT PLAYER adds an additional {U}". */
+const NAMES_TRIGGER_OBJECT = /\b(?:it|them|its|that (?:creature|spell|ability|card|permanent|land|artifact|token|player)|those (?:creatures|spells|cards|permanents|tokens)|that spell or ability)\b/i;
+/** Where an amount begins: "gain life EQUAL TO its power" sizes the effect by the trigger's object, it does not act on it. */
+const AMOUNT_TAIL = /\b(?:equal to|for each)\b/i;
+/** WHICH ACTIONS ARE PRINTED BEHIND A TEMPORARY OR DELAYED TRIGGER AND NAME ITS OBJECT (#1592). "+1: Until your next turn, whenever a creature deals combat damage to Vraska, destroy that creature": the destroy
+ *  happens only when the trigger the ability sets up fires (CR 603.7a), and to the creature that trigger watched. With the trigger unread or refused, "that creature" is every creature, the wide claim #1253
+ *  stops for a printed trigger; the rule here is the same one. Per action of `verbs` (the clause's action verbs, in order): true when its printed word stands after the first match of `opener`, before the
+ *  next sentence that opens a trigger of its own ("At the beginning of the next end step, return the exiled cards", Apple of Eden), and its sentence (past the trigger's own words) points back at the
+ *  trigger's object. An effect that names no such object claims what it always did: "draw a card" (Benefactor's Draught, Kang Dynasty), "you draw a card and gain half X life" (Brass Infiniscope), and
+ *  "gain life equal to its power" (Delif's Cone: an amount is cut before the test). `names` says whether the trigger's own sentence points back, for what a clause derives outside its action list.
+ *  Null when `opener` is not printed. An action whose word is found nowhere (a model paraphrase) follows the action before it; a cost's action, listed first, has none before it.
+ *  CEILING: the action is found by its verb's printed word, as the gates are (`locate`), and the test is per SENTENCE with a word list: two effects of one sentence are marked alike, the trigger's words end
+ *  at the first ", " after `opener` (a comma list inside the condition leaves its tail in the tested text), and an "it" in a later sentence may be something the effect itself made (Waltz of Rage's
+ *  "You may play it" is the exiled card; that action derives no ability). Read against the 19 rows of DERIVE 489 that print the shape: 14 marked, 5 not. */
+export function actionsOnTriggerObject(body: string, verbs: readonly string[], opener: RegExp): { marked: boolean[]; names: boolean } | null {
+  const { sentences, where } = locate(body, verbs);
+  let from: { sentence: number; offset: number; end: number } | undefined;
+  for (let i = 0; i < sentences.length && !from; i++) {
+    const m = opener.exec(sentences[i]!);
+    if (m) from = { sentence: i, offset: m.index, end: m.index + m[0].length };
+  }
+  if (!from) return null;
+  const start = from;
+  let end = sentences.length;
+  for (let i = start.sentence + 1; i < sentences.length; i++) if (OPENS_ANOTHER.test(sentences[i]!)) { end = i; break; }
+  const pointsBack = (at: number): boolean => {
+    let text = sentences[at]!;
+    if (at === start.sentence) { const comma = text.indexOf(", ", start.end); text = comma < 0 ? "" : text.slice(comma + 2); }
+    const amount = AMOUNT_TAIL.exec(text);
+    return NAMES_TRIGGER_OBJECT.test(amount ? text.slice(0, amount.index) : text);
+  };
+  const marked: boolean[] = [];
+  for (let i = 0; i < verbs.length; i++) {
+    const w = where[i];
+    const behind = w ? (w.sentence === start.sentence ? w.offset > start.offset : w.sentence > start.sentence && w.sentence < end) : undefined;
+    marked.push(behind === undefined ? i > 0 && marked[i - 1]! : behind && pointsBack(w!.sentence));
+  }
+  return { marked, names: pointsBack(start.sentence) };
+}
+
 /** THE OTHER BRANCH THE STORED READING LOST (#1357 review): per action, true when the sentence after its own is an "Otherwise" that prints the same verb more often than any action took it. Jace, the Perfected Mind's stored
  *  clause has one draw ("if a graveyard has twenty or more cards, you draw three cards. Otherwise, you draw a card"); the printed Otherwise says the effect happens in both branches, so the role is not a chance.
  *  CEILING: the verb's printed word and the first noun after it ("draw three CARDS" / "draw a CARD"), nothing of who does it; life gain and loss are never alike (directional). */

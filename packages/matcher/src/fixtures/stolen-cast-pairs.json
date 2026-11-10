@@ -1,0 +1,799 @@
+{
+ "Covetous Urge": {
+  "source": {
+   "name": "Covetous Urge",
+   "typeLine": "Sorcery",
+   "oracleText": "Target opponent reveals their hand. You choose a nonland card from that player's graveyard or hand and exile it. You may cast that card for as long as it remains exiled, and you may spend mana as though it were mana of any color to cast that spell.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{U/B}{U/B}{U/B}{U/B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a nonland card from target opponent's graveyard or hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Psychic Intrusion": {
+  "source": {
+   "name": "Psychic Intrusion",
+   "typeLine": "Sorcery",
+   "oracleText": "Target opponent reveals their hand. You choose a nonland card from that player's graveyard or hand and exile it. You may cast that card for as long as it remains exiled, and you may spend mana as though it were mana of any color to cast that spell.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{U}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a nonland card from that player's graveyard or hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Stolen Goods": {
+  "source": {
+   "name": "Stolen Goods",
+   "typeLine": "Sorcery",
+   "oracleText": "Target opponent exiles cards from the top of their library until they exile a nonland card. Until end of turn, you may cast that card without paying its mana cost.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "cards from the top of target opponent's library until they exile a nonland card",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Artisan of Kozilek": {
+  "source": {
+   "name": "Artisan of Kozilek",
+   "typeLine": "Creature — Eldrazi",
+   "oracleText": "When you cast this spell, you may return target creature card from your graveyard to the battlefield.\nAnnihilator 2 (Whenever this creature attacks, defending player sacrifices two permanents of their choice.)",
+   "keywords": [
+    "Annihilator"
+   ],
+   "colors": [],
+   "manaValue": 9,
+   "colorIdentity": [],
+   "power": "10",
+   "toughness": "9",
+   "manaCost": "{9}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target creature card",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Annihilator 2",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Echo Storm": {
+  "source": {
+   "name": "Echo Storm",
+   "typeLine": "Sorcery",
+   "oracleText": "When you cast this spell, copy it for each time you've cast your commander from the command zone this game. You may choose new targets for the copies.\nCreate a token that's a copy of target artifact.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{U}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "this spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each time you've cast your commander from the command zone this game",
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a token that's a copy of target artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Talrand, Sky Summoner": {
+  "source": {
+   "name": "Talrand, Sky Summoner",
+   "typeLine": "Legendary Creature — Merfolk Wizard",
+   "oracleText": "Whenever you cast an instant or sorcery spell, create a 2/2 blue Drake creature token with flying.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{2}{U}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant or sorcery spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 2/2 blue Drake creature token with flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Nita, Forum Conciliator": {
+  "source": {
+   "name": "Nita, Forum Conciliator",
+   "typeLine": "Legendary Creature — Human Advisor",
+   "oracleText": "Whenever you cast a spell you don't own, put a +1/+1 counter on each creature you control.\n{2}, Sacrifice another creature: Exile target instant or sorcery card from an opponent's graveyard. You may cast it this turn, and mana of any type can be spent to cast that spell. If that spell would be put into a graveyard, exile it instead. Activate only as a sorcery.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "W"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "manaCost": "{1}{W}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell you don't own",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "each creature you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "another creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "target instant or sorcery card from an opponent's graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "exile",
+      "object": "that spell",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Hidetsugu and Kairi": {
+  "source": {
+   "name": "Hidetsugu and Kairi",
+   "typeLine": "Legendary Creature — Ogre Demon Dragon",
+   "oracleText": "Flying\nWhen Hidetsugu and Kairi enters, draw three cards, then put two cards from your hand on top of your library in any order.\nWhen Hidetsugu and Kairi dies, exile the top card of your library. Target opponent loses life equal to its mana value. If it's an instant or sorcery card, you may cast it without paying its mana cost.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": "5",
+   "toughness": "4",
+   "manaCost": "{2}{U}{U}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Hidetsugu and Kairi",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "card",
+      "amount": "3",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "put",
+      "object": "two cards from your hand",
+      "toZone": "library",
+      "optional": false,
+      "fromZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "Hidetsugu and Kairi",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top card of your library",
+      "fromZone": "library",
+      "optional": false,
+      "toZone": null
+     },
+     {
+      "verb": "lose-life",
+      "object": "target opponent",
+      "amount": "equal to its mana value",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "cast",
+      "object": "it",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Lady Loki, Agent of Chaos": {
+  "source": {
+   "name": "Lady Loki, Agent of Chaos",
+   "typeLine": "Legendary Creature — God Sorcerer Villain",
+   "oracleText": "Whenever you cast your first instant, sorcery, or Villain spell each turn, exile it, then exile cards from the top of your library until you exile a nonland card. Lady Loki deals damage to each opponent equal to the difference between that spell's mana value and that nonland card's mana value. You may cast that card without paying its mana cost.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{5}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "your first instant, sorcery, or Villain spell each turn",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": "stack",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "mill",
+      "object": "cards from the top of your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "a nonland card",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the difference between that spell's mana value and that nonland card's mana value",
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Monastery Swiftspear": {
+  "source": {
+   "name": "Monastery Swiftspear",
+   "typeLine": "Creature — Human Monk",
+   "oracleText": "Haste\nProwess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.)",
+   "keywords": [
+    "Prowess",
+    "Haste"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "1",
+   "toughness": "2",
+   "manaCost": "{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Haste",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Prowess",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Drownyard Lurker": {
+  "source": {
+   "name": "Drownyard Lurker",
+   "typeLine": "Creature — Eldrazi Trilobite",
+   "oracleText": "Vigilance\nWhen you cast or cycle Drownyard Lurker, create a 0/1 colorless Eldrazi Spawn creature token with \"Sacrifice this token: Add {C}.\"\nCycling {2}{U} ({2}{U}, Discard this card: Draw a card.)",
+   "keywords": [
+    "Vigilance",
+    "Cycling"
+   ],
+   "colors": [],
+   "manaValue": 7,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "7",
+   "toughness": "7",
+   "manaCost": "{7}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "Drownyard Lurker",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 0/1 colorless Eldrazi Spawn creature token with \"Sacrifice this token: Add {C}.\"",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cycled",
+     "subject": "Drownyard Lurker",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 0/1 colorless Eldrazi Spawn creature token with \"Sacrifice this token: Add {C}.\"",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Cycling {2}{U}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Warped Tusker": {
+  "source": {
+   "name": "Warped Tusker",
+   "typeLine": "Creature — Eldrazi Boar Beast",
+   "oracleText": "Reach\nWhen you cast or cycle Warped Tusker, create a 0/1 colorless Eldrazi Spawn creature token with \"Sacrifice this token: Add {C}.\"\nCycling {2}{G} ({2}{G}, Discard this card: Draw a card.)",
+   "keywords": [
+    "Reach",
+    "Cycling"
+   ],
+   "colors": [],
+   "manaValue": 7,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "6",
+   "toughness": "8",
+   "manaCost": "{7}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Reach",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "Warped Tusker",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 0/1 colorless Eldrazi Spawn creature token with \"Sacrifice this token: Add {C}.\"",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cycled",
+     "subject": "Warped Tusker",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 0/1 colorless Eldrazi Spawn creature token with \"Sacrifice this token: Add {C}.\"",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Cycling {2}{G}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Contractual Safeguard": {
+  "source": {
+   "name": "Contractual Safeguard",
+   "typeLine": "Instant",
+   "oracleText": "Addendum — If you cast this spell during your main phase, put a shield counter on a creature you control. (If it would be dealt damage or destroyed, remove a shield counter from it instead.)\nChoose a kind of counter on a creature you control. Put a counter of that kind on each other creature you control.",
+   "keywords": [
+    "Addendum"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "trigger": {
+     "event": "cast",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "shield counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "a counter of that kind",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ }
+}

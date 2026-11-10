@@ -357,3 +357,30 @@ test("deriveAsCorpus: a stale-hash clause doc on a grammar-complete card takes t
   expect(stale.fromGrammar).toBe(true);
   expect(stale.tags.abilities).toEqual(grammarOnly.abilities);
 });
+
+// #1592: Cursed Recording takes the grammar's reading. The grammar dropped "remove those counters" from "remove those counters and it deals 20 damage to you" with no unread phrase, so the card read
+// `abilities:3->2,trigger` and kept the stored answer, whose "{T}: When you next cast ..." copy has no trigger. Read whole, the difference is the delayed cast trigger and the time counter's kind
+// (`effect.subject(+counter),trigger`, labelled grammar right). The card document's fields and the stored `cardClauses.canonical` are dumped from Mongo.
+const RECORDING = {"name":"Cursed Recording","typeLine":"Artifact","keywords":[],"oracleText":"Whenever you cast an instant or sorcery spell, put a time counter on this artifact. Then if there are seven or more time counters on it, remove those counters and it deals 20 damage to you.\n{T}: When you next cast an instant or sorcery spell this turn, copy that spell. You may choose new targets for the copy.","manaCost":"{4}","colors":[],"colorIdentity":[],"manaValue":4,"layout":"normal"};
+const RECORDING_STORED = [{"id":1,"abilityType":"triggered","trigger":{"event":"cast","subject":"an instant or sorcery spell","control":"you"},"actions":[{"verb":"add-counter","object":"time","fromZone":null,"toZone":null,"amount":null,"optional":false},{"verb":"remove-counter","object":"time","fromZone":null,"toZone":null,"amount":"seven","optional":false},{"verb":"deal-damage","object":"you","fromZone":null,"toZone":null,"amount":"20","optional":false}]},{"id":2,"abilityType":"activated","actions":[{"verb":"copy","object":"that spell","fromZone":null,"toZone":null,"amount":null,"optional":false}]}];
+test("Cursed Recording: the grammar reads all three actions of its first clause, and the card takes the grammar reading with its delayed cast trigger (#1592)", () => {
+  const row = deriveRow({ doc: { oracleId: "x", name: RECORDING.name, canonical: RECORDING_STORED } as never, source: RECORDING, isToken: false });
+  expect(row.fromGrammar).toBe(true);
+  expect(row.tags.abilities.filter((a) => a.clause === 1).map((a) => (a.emits ?? []).map((e) => e.verb)).flat()).toEqual(["counter-added", "counter-removed", "non-combat-damage"]);
+  const copy = row.tags.abilities.find((a) => a.effect.kind === "copy-spell")!;
+  expect(copy.kind).toBe("activated");
+  expect(copy.trigger).toMatchObject({ verbs: ["cast"], subject: { control: "you", type: ["instant", "sorcery"] } });
+  expect(copy.claimsNothing).toBeUndefined();
+  expect(row.tags.unknownTriggers ?? []).toEqual([]);
+});
+
+// #1592 review: Malfegor's "Each opponent sacrifices a creature of their choice for each card discarded this way" scales with the discard before it. The grammar read the sacrifice with no amount, derive made
+// it "1", and under the `amount,count` label the card served a flat 1 where the stored answer says "one for each card discarded this way". The grammar leaves the scaling unread, so the card keeps its stored reading.
+const MALFEGOR = {"name":"Malfegor","typeLine":"Legendary Creature \u2014 Demon Dragon","keywords":["Flying"],"oracleText":"Flying\nWhen Malfegor enters, discard your hand. Each opponent sacrifices a creature of their choice for each card discarded this way.","manaCost":"{2}{B}{B}{R}{R}","colors":["B","R"],"colorIdentity":["B","R"],"manaValue":6,"power":"6","toughness":"6","layout":"normal"};
+const MALFEGOR_STORED = [{"id":1,"abilityType":"none","actions":[{"verb":"none","object":"Flying","fromZone":null,"toZone":null}]},{"id":2,"abilityType":"triggered","trigger":{"event":"enters","subject":"Malfegor","control":"you"},"actions":[{"verb":"discard","object":"your hand","fromZone":null,"toZone":null,"amount":null,"optional":false},{"verb":"sacrifice","object":"a creature of their choice","fromZone":null,"toZone":null,"amount":"one for each card discarded this way","optional":false}]}];
+test("Malfegor keeps its stored reading: a sacrifice 'for each card discarded this way' is not read as one (#1592)", () => {
+  expect(grammarClauseRecords(MALFEGOR as never).complete).toBe(false);
+  const row = deriveRow({ doc: { oracleId: "x", name: MALFEGOR.name, canonical: MALFEGOR_STORED } as never, source: MALFEGOR, isToken: false });
+  expect(row.fromGrammar).toBe(false);
+  expect(row.tags.abilities.find((a) => (a.emits ?? []).some((e) => e.verb === "sacrifice"))!.amount).toBe("one for each card discarded this way");
+});

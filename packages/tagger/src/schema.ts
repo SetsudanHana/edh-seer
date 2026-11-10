@@ -1479,7 +1479,11 @@ export interface Ability {
    *  is a creature you control and is NOT flagged. A refused trigger whose ability never names the trigger
    *  object claims what it always did (a saga chapter's token is still a token).
    *  ONE THING STILL SEES IT: a flagged ability is a triggered ability (CR 603.1), so it still counts
-   *  as one for the `copies|-|triggered|-` key a copier is offered. */
+   *  as one for the `copies|-|triggered|-` key a copier is offered.
+   *  ALSO SET (#1592), by the same rule, on an ability of ANY kind whose action is printed behind a temporary or delayed trigger that was refused or not read AND names that trigger's object
+   *  ("+1: Until your next turn, whenever a creature deals combat damage to Vraska, destroy THAT CREATURE"; Dynaheir's "copy THAT ABILITY"; Gaze of Pain's "have IT deal damage"): the spell or ability only
+   *  sets the trigger up (CR 603.7a), and with the trigger gone the object it points back at has no class. An effect behind the trigger that names no such object keeps its claim (Benefactor's Draught's
+   *  "draw a card", Brass Infiniscope's draw and life), as does everything printed before the trigger. */
   claimsNothing?: "refused-trigger" | "self-loss" | "mana-rider";
   /** A numeric condition on WHEN the ability is on — The Millennium Calendar's "when there are
    *  1,000 or more time counters", Chrome Steed's "as long as you control three or more artifacts",

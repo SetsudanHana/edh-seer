@@ -564,7 +564,13 @@ function moveList(text: string, onField = false): Args | Args[] | null {
 
 const ZONE: Record<string, [string, Handler]> = {
   destroy: ["destroy", (rest) => moveList(rest)],
-  sacrifice: ["sacrifice", (rest) => moveList(rest)],
+  // "sacrifices a creature of their choice FOR EACH CARD DISCARDED THIS WAY" (Malfegor, #1592 review): the count is what an earlier action of the effect did, which no amount here carries. Read as one
+  // sacrifice it switched the card to a flat 1 where the stored answer says "one for each card discarded this way", so it is left unread.
+  // By index, no regex over the phrase (CodeQL polynomial-redos).
+  sacrifice: ["sacrifice", (rest) => {
+    const lc = rest.toLowerCase(), each = lc.lastIndexOf(" for each ");
+    return each >= 0 && lc.endsWith(" this way") && !lc.includes(",", each) ? null : moveList(rest);
+  }],
   exile: ["exile", (rest) => withCounters(rest.replace(/ face down$/, ""), (rest) => {
     rest = rest.replace(/ instead of putting (?:it|that card|that spell) (?:anywhere else|into (?:its owner's|a|your) graveyard)(?: as it resolves)?$/, "");
     const until = rest.search(/ until /);
@@ -1093,8 +1099,10 @@ const HANDLERS: Record<string, [string, Handler]> = { ...ZONE, ...MANA_TAP, ...T
 const VERB_FORMS: [RegExp, string][] = Object.keys(HANDLERS).map((v) => [new RegExp(`^(?:${v}|${v}s|${v.replace(/y$/, "ies")}|${v}es)\\b`, "i"), v]);
 
 /** Every verb word a phrase can open with, for splitting -- wider than the handled ones, so a joint
- *  before an unhandled verb ("..., then shuffle") still splits. */
-const ANY_VERB = /^(?:(?:all|each|target) [a-z -]{1,50}? phases? (?:in|out)$|(?:it|that creature|those creatures|they) (?:doesn't|don't|can't|gains?|gets?) |(?:up to one )?(?:other |another )?target [a-z]+(?: [a-z]+)? gets?(?= )|(?:you |each player |each opponent |target player |target opponent |that player |its controller |they )?(?:may )?(?:draws?|discards?|mills?|scry|scries|surveils?|search(?:es)?|reveals?|puts?|shuffles?|returns?|exiles?|destroys?|sacrifices?|creates?|gains?|loses?|deals?|taps?|untaps?|adds?|counters?|copies|copy|casts?|plays?|attach(?:es)?|transforms?|investigates?|proliferate|populate|exchanges?|chooses?|decides?(?= whether)|look|looks|pays?|gets?|has|have|regenerates?|fights?|goads?|explores?|connives?|amass(?:es)?|manifest|venture|removes? (?=it|them|that|all)|double (?=the|its|that|target|each)|blight|convert|repeat this process|(?:~|this [a-z]+) (?:gets?|gains?|can't|deals?|endures|explores|connives)(?= )|defending player (?=loses|gains|sacrifices|discards)))\b/i;
+ *  before an unhandled verb ("..., then shuffle") still splits.
+ *  "it deals" opens a phrase as "~ deals" does (#1592): "remove those counters and it deals 20 damage to you" (Cursed Recording) is two actions, and unsplit the damage reading took everything before
+ *  "deals" as its dealer and dropped the removal with no unread phrase (Vivi Ornitier's counter, Yawgmoth Demon's tap). */
+const ANY_VERB = /^(?:(?:all|each|target) [a-z -]{1,50}? phases? (?:in|out)$|(?:it|that creature|those creatures|they) (?:doesn't|don't|can't|gains?|gets?) |it deals (?=\S)|(?:up to one )?(?:other |another )?target [a-z]+(?: [a-z]+)? gets?(?= )|(?:you |each player |each opponent |target player |target opponent |that player |its controller |they )?(?:may )?(?:draws?|discards?|mills?|scry|scries|surveils?|search(?:es)?|reveals?|puts?|shuffles?|returns?|exiles?|destroys?|sacrifices?|creates?|gains?|loses?|deals?|taps?|untaps?|adds?|counters?|copies|copy|casts?|plays?|attach(?:es)?|transforms?|investigates?|proliferate|populate|exchanges?|chooses?|decides?(?= whether)|look|looks|pays?|gets?|has|have|regenerates?|fights?|goads?|explores?|connives?|amass(?:es)?|manifest|venture|removes? (?=it|them|that|all)|double (?=the|its|that|target|each)|blight|convert|repeat this process|(?:~|this [a-z]+) (?:gets?|gains?|can't|deals?|endures|explores|connives)(?= )|defending player (?=loses|gains|sacrifices|discards)))\b/i;
 
 /** "gain control of all creatures the other controls", the body of "you and X each ...". */
 const EXCHANGE = /^gain control of ((?:all|each) [a-z -]{1,40}?) the other controls\b/i;
@@ -2002,7 +2010,7 @@ function readActions(effect: string, type: string | null, cost: string | undefin
   const sentences = unquoted.split(/(?<=\.)\s+/).flatMap((sentence, i, all) => handPickSentences(sentence, i === all.length - 1));
   let chosen: Chosen | undefined, refusedAny = false;
   // The hand a sentence just revealed or looked at ("Target opponent reveals their hand", "Look at target opponent's hand"), and the card chosen from it (#1349).
-  let handOf: string | undefined, handOwner = "", handPick: { sentence: string; text: string; used: boolean } | undefined;
+  let handOf: string | undefined, handOwner = "", handPick: { sentence: string; text: string; used: boolean; fresh: boolean } | undefined;
   for (const [sentenceAt, raw] of sentences.entries()) {
     let s = raw.trim().replace(/\.$/, "");
     if (s === "") continue;
@@ -2025,22 +2033,39 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // A HAND LOOKED AT OR REVEALED, AND A CARD CHOSEN FROM IT (#1349: Duress, Tidehollow Sculler, Salt Vampire; ~50 stored cards print it). The choose records no action, as the store has it; the card it
     // names is stated outright where the next sentence says "that card" ("a nonland card from target opponent's hand"), the way the bought reading writes the discard or exile.
     // #1589: the class may be an untyped "a card" (Coercion), carry a mana-value filter, or reach into the same player's graveyard (`handPickCard`); a pick joined to its reveal or to its exile is cut apart first (`handPickSentences`).
-    // CEILING: only "choose <a card class> from it" straight after a reveal or look of a TARGET player's hand, and only "that card" / "the chosen card" refer back to it (a bare "it" in a later
-    // sentence, several cards, "a card of that color", "that player reveals their hand" stay unread, so the card blocks); one reference only, and the pick is read as optional by `mayBefore` like any "you may".
+    // CEILING: only "choose <a card class> from it" straight after a reveal or look of a TARGET player's hand, and only "that card" / "the chosen card" refer back to it (a bare "it" that is not one of the two shapes #1592 reads below,
+    // several cards, "a card of that color", "that player reveals their hand" stay unread, so the card blocks); one reference only, and the pick is read as optional by `mayBefore` like any "you may".
     const handShown = /^(?:look at (target opponent's|target player's) hand|(target opponent|target player) reveals their hand)$/i.exec(s);
     if (handShown) { handOf = `${(handShown[1] ?? `${handShown[2]!}'s`).toLowerCase()} hand`; handOwner = handOf.slice(0, handOf.indexOf("'s ")); }
     const pick = handOf !== undefined ? handPickCard(s, handOwner) : null;
     if (pick) {
       if (handPick && !handPick.used) { unread?.push(handPick.sentence); }
-      handPick = { sentence: s.replace(/^([A-Z])/, (ch) => ch.toLowerCase()), text: pick.text, used: false };
+      handPick = { sentence: s.replace(/^([A-Z])/, (ch) => ch.toLowerCase()), text: pick.text, used: false, fresh: true };
       mayBefore = pick.may; mayAt = out.length;
       continue;
     }
     let pickedHere = false;
     if (handPick) {
-      const refs = s.match(/\b(?:that card|the chosen card)\b(?!['\u2019])/gi)?.length ?? 0;
+      // A BARE "IT" THAT CAN ONLY BE THE PICKED CARD (#1592) is written as "that card" before the references are counted.
+      // (1) "If you do, they discard it" (Binding Negotiation), in the sentence straight after the pick: only a card in a hand is discarded (CR 701.9a), so the pronoun is neither the hand ("from it") nor the
+      //     permanent whose ability this is.
+      // (2) "that player reveals the chosen card, puts it on the bottom of their library" (Vendilion Clique): the pronoun follows its antecedent in one sentence, and a reveal moves nothing, so the card is
+      //     still in the hand when the second verb moves it. Both references are then the picked card (`both` below).
+      // CEILING: one lone "it" only (no "them" / "its", no second pronoun), a discard's object or behind "reveals <the card>"; a pronoun after a verb that moves the card (exile, put) names it in another zone and stays unread.
+      const fresh = handPick.fresh;
+      handPick.fresh = false;
+      const pronouns = s.replace(/\b(?:that card|the chosen card)\b/gi, "").match(/\b(?:it|them|its)\b/gi) ?? [];
+      const named = /\b(?:that card|the chosen card)\b(?!['\u2019])/i.exec(s);
+      const loneIt = pronouns.length === 1 && pronouns[0]!.toLowerCase() === "it" && !handPick.used;
+      let both = false;
+      if (loneIt && !named && fresh && /\bdiscards? it\b/i.test(s)) s = s.replace(/\b(discards?) it\b/i, "$1 that card");
+      else if (loneIt && named && /\breveals? $/i.test(s.slice(0, named.index)) && /\bit\b/i.test(s.slice(named.index + named[0].length)) && (s.match(/\b(?:that card|the chosen card)\b/gi)?.length ?? 0) === 1) {
+        const behind = s.slice(named.index + named[0].length).replace(/\bit\b/i, handPick.text);
+        s = `${s.slice(0, named.index)}${handPick.text}${behind}`; handPick.used = true; pickedHere = both = true;
+      }
+      const refs = both ? 0 : s.match(/\b(?:that card|the chosen card)\b(?!['\u2019])/gi)?.length ?? 0;
       // A bare "it" / "them" / "its" in a sentence after the choice may be the chosen card or something else (Vendilion Clique's "puts it on the bottom of their library" read as the Clique itself).
-      const bare = /\b(?:it|them|its)\b/i.test(s.replace(/\b(?:that card|the chosen card)\b/gi, ""));
+      const bare = !both && /\b(?:it|them|its)\b/i.test(s.replace(/\b(?:that card|the chosen card)\b/gi, ""));
       if (refs === 1 && !handPick.used && !bare) { s = s.replace(/\b(?:that card|the chosen card)\b(?!['\u2019])/i, handPick.text); handPick.used = true; pickedHere = true; }
       else if (refs > 0 || bare) { handPick.used = false; unread?.push(handPick.sentence); handPick = undefined; }
       // "That player" after the pick is the hand's owner ("target opponent"); left as printed it read as an unnamed player, `control: any` (Nightsnare's discard of two paired with every discard payoff).
@@ -2291,7 +2316,8 @@ function readActions(effect: string, type: string | null, cost: string | undefin
       // A card picked from the hand OR the same player's graveyard (Never Happened, Memory Leak, Agonizing Remorse) is in neither case on the battlefield: left with no zone its exile paired with
       // "exiled from the battlefield" and blink payoffs (Soulherder, Ashnod's Intervention, Shard of the Void Dragon).
       // CEILING: the action has ONE source zone, so a graveyard-or-hand pick is written as the hand's; that it can also take a card out of a graveyard (no `leaves` from the graveyard is emitted) is not carried.
-      for (let i = at; i < out.length; i++) if (out[i]!.text === handPick.text && out[i]!.verb !== "discard" && !out[i]!.fromZone) out[i] = { ...out[i]!, fromZone: "hand" };
+      // ...and a reveal moves nothing (#1592: Vendilion Clique's "reveals the chosen card, puts it on the bottom of their library" leaves the hand at the put).
+      for (let i = at; i < out.length; i++) if (out[i]!.text === handPick.text && out[i]!.verb !== "discard" && out[i]!.verb !== "reveal" && !out[i]!.fromZone) out[i] = { ...out[i]!, fromZone: "hand" };
     }
     if (ifYouDoAfterMay && at < out.length) {
       const first = out[at]!, zones = new Set([first.fromZone ?? ""]);

@@ -92,6 +92,7 @@ const TESTED: Record<string, string> = {
   "602.1a": "payment.test.ts — an activation cost is read part by part into payment, an unread part kept verbatim",
   "602.2b": "derive/mana-lines.test.ts — an activated ability that targets (Deathrite Shaman, Red Death, Shipwrecker) holds only while a legal target exists, so its mana line is gated on it (#1188)",
   "605.1a": "derive.test.ts — a mana ability's amount is the mana its object adds (Sol Ring 2, Talisman 1, Gilded Lotus 3)",
+  "701.9a": "grammar/action.test.ts — only a card in a hand is discarded, so 'they discard it' straight after a hand pick is the picked card (Binding Negotiation, #1592)",
   "701.21a": "payment.test.ts — a sacrifice in a cost is of your own permanents, so its class is control you",
   "702.14": "derive.test.ts — a landwalk grant names its [type]walk (Lord of Atlantis islandwalk, Vectis Gloves landwalk)",
   "702.4": "effect-kind.test.ts — Double Strike is a keyword, not the verb double (Akim, the Soaring Wind) (#1141)",

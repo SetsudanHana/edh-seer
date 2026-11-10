@@ -763,8 +763,8 @@ test("a card chosen from a revealed or looked-at hand stands where the next sent
   // A choose nothing later names stays unread, and so does a hand that was never looked at.
   expect(unreadPhrases("Target opponent reveals their hand. You choose a nonland card from it. Draw a card.", "spell")).toEqual(["you choose a nonland card from it"]);
   expect(unreadPhrases("You choose a nonland card from it. That player discards that card.", "spell").length).toBeGreaterThan(0);
-  // A bare "it" beside the reference may mean the card or something else (Vendilion Clique: "puts it on the bottom of their library" read as the Clique itself): the card blocks.
-  expect(unreadPhrases("Look at target player's hand. You may choose a nonland card from it. If you do, that player reveals the chosen card, puts it on the bottom of their library, then draws a card.", "triggered").length).toBeGreaterThan(0);
+  // A bare "it" beside the reference may mean the card or something else: the card blocks (the two shapes #1592 reads are in their own test below).
+  expect(unreadPhrases("Look at target player's hand. You may choose a nonland card from it. If you do, that player exiles the chosen card, then returns it to their hand.", "triggered").length).toBeGreaterThan(0);
   // Two references in one sentence do not say which the choice is.
   expect(unreadPhrases("Target opponent reveals their hand. You choose a card from it. Exile that card and return that card to its owner's hand.", "spell").length).toBeGreaterThan(0);
 });
@@ -826,11 +826,12 @@ test("a hand pick carries its mana-value filter, reads an untyped card, and is r
   const urge = "Target opponent reveals their hand. You choose a nonland card from that player's graveyard or hand and exile it. You may cast that card for as long as it remains exiled, and you may spend mana as though it were mana of any color to cast that spell.";
   expect(unreadPhrases(urge, "spell").length).toBeGreaterThan(0);
   expect(parseActions(urge, "spell").some((a) => a.text === "a nonland card from target opponent's graveyard or hand")).toBe(false);
-  // Still refused: several cards (Reap Intellect), a bracketed variable (Dread Fugue), a bare "it" in a LATER sentence (Binding Negotiation, Vendilion Clique), a second reference (Psychic Theft).
+  // Still refused: several cards (Reap Intellect), a bracketed variable (Dread Fugue), a second reference (Psychic Theft), a bare "it" that is not a discard's object or behind a reveal of the card (#1592 reads those two).
   for (const refused of [
     "Target opponent reveals their hand. You choose up to X nonland cards from it and exile them.",
     "Target player reveals their hand. You choose a nonland card from it [with mana value 2 or less]. That player discards that card.",
-    "Target opponent reveals their hand. You may choose a nonland card from it. If you do, they discard it.",
+    "Target opponent reveals their hand. You may choose a nonland card from it. If you do, they exile it.",
+    "Target opponent reveals their hand. You may choose a nonland card from it. Draw a card. If you do, they discard it.",
     "Target player reveals their hand. You choose an instant or sorcery card from it and exile that card. You may cast that card for as long as it remains exiled.",
     "Target opponent reveals their hand. You choose a card from it for each card discarded this way. That player discards those cards.",
   ]) expect(unreadPhrases(refused, "spell").length, refused).toBeGreaterThan(0);
@@ -849,4 +850,47 @@ test("'that player' after a card chosen from a hand is the hand's owner", () => 
   expect(salt.find((a) => a.verb === "exile")).toMatchObject({ text: "a nonland card from target opponent's hand" });
   const unmask = parseActions("Target player reveals their hand. You choose a nonland card from it. That player discards that card.", "spell");
   expect(unmask.find((a) => a.verb === "discard")).toMatchObject({ text: "a nonland card from target player's hand", object: { notType: ["land"] } });
+});
+
+// #1592: "X and it deals N damage" is two actions. The words before "it deals" were taken whole as the damage's dealer, so "remove those counters" (Cursed Recording), "put a +1/+1 counter on ~"
+// (Vivi Ornitier, Brallin) and "tap ~" (Yawgmoth Demon) were dropped with no unread phrase, the way "... and ~ deals" never was.
+test("'<action> and it deals N damage' reads the action before the damage (Cursed Recording, Vivi Ornitier, Yawgmoth Demon)", () => {
+  const recording = "Put a time counter on ~. Then if there are seven or more time counters on it, remove those counters and it deals 20 damage to you.";
+  expect(unreadPhrases(recording, "triggered")).toEqual([]);
+  expect(parseActions(recording, "triggered")).toMatchObject([
+    { verb: "add-counter", counter: "time" },
+    { verb: "remove-counter", counter: "time", amount: "all", object: { self: true }, condition: "if there are seven or more time counters on it" },
+    { verb: "deal-damage", amount: "20", object: { control: "you" }, condition: "if there are seven or more time counters on it" },
+  ]);
+  expect(parseActions("Put a +1/+1 counter on ~ and it deals 1 damage to each opponent.", "triggered").map((a) => a.verb)).toEqual(["add-counter", "deal-damage"]);
+  expect(parseActions("Tap ~ and it deals 2 damage to you.", "triggered").map((a) => a.verb)).toEqual(["tap", "deal-damage"]);
+  // A dealer that is no pronoun still stands before its "deals": nothing is cut out of it.
+  expect(parseActions("Target creature you control deals damage equal to its power to target creature you don't control.", "spell").map((a) => a.verb)).toEqual(["deal-damage"]);
+});
+
+// #1592: a bare "it" that can only be the picked card. (1) "they discard it" in the sentence straight after the pick: only a card in a hand is discarded (CR 701.9a), so "it" is neither the hand ("from it")
+// nor the permanent whose ability this is (Binding Negotiation). (2) "it" behind "reveals the chosen card" in the same sentence: the pronoun follows its antecedent, and a reveal moves nothing, so the card
+// is still in the hand when it is put away (Vendilion Clique). Both are written as the picked card, the way the store writes them.
+test("a bare 'it' that can only be the picked card is the picked card (Binding Negotiation, Vendilion Clique)", () => {
+  const binding = "Target opponent reveals their hand. You may choose a nonland card from it. If you do, they discard it.";
+  expect(unreadPhrases(binding, "spell")).toEqual([]);
+  expect(parseActions(binding, "spell")).toMatchObject([{ verb: "reveal" }, { verb: "discard", text: "a nonland card from target opponent's hand", optional: true, object: { control: "opp", notType: ["land"], fromZone: "hand" } }]);
+  const clique = "Look at target player's hand. You may choose a nonland card from it. If you do, that player reveals the chosen card, puts it on the bottom of their library, then draws a card.";
+  expect(unreadPhrases(clique, "triggered")).toEqual([]);
+  const read = parseActions(clique, "triggered");
+  expect(read.map((a) => a.verb)).toEqual(["reveal", "put", "draw"]);
+  expect(read[1]).toMatchObject({ verb: "put", text: "a nonland card from target player's hand", fromZone: "hand", toZone: "library" });
+  // The reveal moves nothing: it names the card and no zone it leaves.
+  expect(read[0]!.fromZone).toBeUndefined();
+  expect(read[2]!.actor).toMatchObject({ control: "any", scope: "target" });
+  // A pronoun BEFORE the reference, a possessive, or a verb that moves the card before the pronoun: still unread.
+  expect(unreadPhrases("Look at target player's hand. You may choose a nonland card from it. If you do, that player exiles the chosen card, then puts it on the bottom of their library.", "triggered").length).toBeGreaterThan(0);
+  expect(unreadPhrases("Look at target player's hand. You may choose a nonland card from it. If you do, that player reveals the chosen card and loses life equal to its mana value.", "triggered").length).toBeGreaterThan(0);
+});
+
+// #1592 review: a sacrifice counted by what an earlier action of the same effect did is not one sacrifice.
+test("a sacrifice 'for each card discarded this way' is unread (Malfegor)", () => {
+  expect(unreadPhrases("Discard your hand. Each opponent sacrifices a creature of their choice for each card discarded this way.", "triggered").length).toBeGreaterThan(0);
+  // A count the board states is read as before (Thoughts of Ruin).
+  expect(unreadPhrases("Each player sacrifices a land of their choice for each card in your hand.", "spell")).toEqual([]);
 });
