@@ -74,3 +74,10 @@ describe("a conditional sweep still reaches the self trigger of what it can take
     expect(tags(p, "Aven Riftwatcher")).toContain("leaves:creature");
   });
 });
+
+/** The same strip on the graveyard-fill gate: Eye of Singularity ("destroy each permanent with the same name as another permanent") still fills the graveyard for a card that returns itself from it (the first build lost 263 such pairs). */
+describe("a sweep with a name relation still fills the graveyard for a self-recursion", () => {
+  test("Eye of Singularity x Abzan Devotee", () => {
+    expect(tags("Eye of Singularity", "Abzan Devotee").some((t) => t.startsWith("graveyard-recursion"))).toBe(true);
+  });
+});

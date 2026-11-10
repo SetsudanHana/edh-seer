@@ -2857,7 +2857,8 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
         // exists to demand proof: Necromancy sacrificing itself "enabled" Eye of Nidhogg returning
         // itself.
         if (e.subject.self === true) continue;
-        const { zone: _fillZone, entersTapped: _fillArrival, ...fillIdentity } = e.subject;
+        // ...and a sweep's relation to the board ("the same name as another permanent": Eye of Singularity) is no printed characteristic of the card either (#1586; the self-trigger gate strips it too).
+        const { zone: _fillZone, entersTapped: _fillArrival, shares: _fillShares, history: _fillHistory, nameRelation: _fillName, ...fillIdentity } = e.subject;
         if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), fillIdentity, h)) continue;
       }
       const repeatability =
