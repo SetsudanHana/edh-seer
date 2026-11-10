@@ -809,10 +809,11 @@ test("a hand pick carries its mana-value filter, reads an untyped card, and is r
   // Castigate: the exile is joined to the pick, and the card leaves the HAND (the store's hand > exile). Transgress the Mind: with a filter between them.
   expect(picked("Target opponent reveals their hand. You choose a nonland card from it and exile that card.")).toMatchObject([{ verb: "exile", text: "a nonland card from target opponent's hand", fromZone: "hand" }]);
   // Never Happened: the card may come from the same player's graveyard, and the "it" joined to the choose is the chosen card. Agonizing Remorse: a nonland hand card or any graveyard card.
-  expect(picked("Target opponent reveals their hand. You choose a nonland card from that player's graveyard or hand and exile it.")).toMatchObject([{ verb: "exile", text: "a nonland card from target opponent's graveyard or hand", object: { control: "opp", notType: ["land"], anyOf: [{ fromZone: "graveyard" }, { fromZone: "hand" }] } }]);
+  expect(picked("Target opponent reveals their hand. You choose a nonland card from that player's graveyard or hand and exile it.")).toMatchObject([{ verb: "exile", text: "a nonland card from target opponent's graveyard or hand", fromZone: "hand", object: { control: "opp", notType: ["land"], anyOf: [{ fromZone: "graveyard" }, { fromZone: "hand" }] } }]);
   const remorse = picked("Target opponent reveals their hand. You choose a nonland card from it or a card from their graveyard. Exile that card. You lose 1 life.");
   expect(remorse).toMatchObject([{ verb: "exile", object: { control: "opp", anyOf: [{ notType: ["land"], fromZone: "hand" }, { fromZone: "graveyard" }] } }]);
-  expect(remorse[0]!.fromZone).toBeUndefined();
+  // Neither zone is the battlefield: the exile carries the hand it is picked from (the graveyard half is a CEILING), so it is no "exiled from the battlefield" (Soulherder) and no blink.
+  expect(remorse[0]!.fromZone).toBe("hand");
   expect(picked("Target player reveals their hand. You choose a card from it with mana value 3 or greater and exile that card.")).toMatchObject([{ verb: "exile", text: "a card with mana value 3 or greater from target player's hand", object: { stats: [{ metric: "mana-value", op: "gte", value: 3 }] } }]);
   // Tidehollow Sculler: the pick is joined to the reveal. Lobotomy's ", then you choose" is the same join (its "card other than a basic land card" class stays unread).
   expect(picked("Target opponent reveals their hand and you choose a nonland card from it. Exile that card.", "triggered")).toMatchObject([{ verb: "exile", text: "a nonland card from target opponent's hand" }]);

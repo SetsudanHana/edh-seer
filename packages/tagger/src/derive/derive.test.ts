@@ -8512,3 +8512,15 @@ test("a temporary trigger with a refused narrowing is refused, not kept from the
   expect(gaze.abilities.filter((a) => a.trigger?.verbs.includes("attacks"))).toEqual([]);
   expect(gaze.unknownTriggers).toEqual(["narrowing:attacks"]);
 });
+
+// #1589: a card picked from an opponent's hand OR graveyard and exiled (Never Happened, Memory Leak, Agonizing Remorse) never leaves the battlefield. The grammar's record says `fromZone: hand`,
+// and the exile emit keeps it, so "whenever a creature is exiled from the battlefield" (Soulherder) does not hear it.
+test("an exile picked from a graveyard or hand carries a non-battlefield zone on its emit (Never Happened)", () => {
+  const card = { name: "Never Happened", oracleText: "Target opponent reveals their hand. You choose a nonland card from that player's graveyard or hand and exile it.", typeLine: "Sorcery", keywords: [] };
+  const g = grammarClauseRecords(card as never);
+  expect(g.complete).toBe(true);
+  const r = deriveCardTags({ oracleId: "t", name: card.name, clauses: g.records as never, characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["sorcery"] }, clauseTexts: { 1: card.oracleText } });
+  const exiled = r.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "exiled");
+  expect(exiled).toHaveLength(1);
+  expect(exiled[0]!.subject.fromZone).toBe("hand");
+});
