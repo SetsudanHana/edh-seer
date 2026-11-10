@@ -1314,7 +1314,10 @@ test("'look at target opponent's hand' claims nothing (a lone none), and '..., t
   const v = grammarClauseRecords(V_GER__THE_INTRUDER);
   expect(v.blocker).toBeUndefined();
   expect(v.records.find((r) => r.id === 3)!.actions).toEqual([expect.objectContaining({ verb: "draw", object: "a card", amount: "1" })]);
-  expect(grammarClauseRecords(SALT_VAMPIRE).blocker).toEqual({ clause: 2, kind: "action", phrase: "you may choose a nonland card from it" });
+  // Salt Vampire is complete since #1349 (a card chosen from a looked-at hand is named in the next sentence): exile then draw, both optional behind "If you do".
+  const salt = grammarClauseRecords(SALT_VAMPIRE);
+  expect(salt.blocker).toBeUndefined();
+  expect(salt.records.find((r) => r.id === 2)!.actions).toEqual([expect.objectContaining({ verb: "exile", object: "a nonland card from target opponent's hand", optional: true }), expect.objectContaining({ verb: "draw", optional: true })]);
   expect(grammarClauseRecords(ZERO__INCORPOREAL_SENSATE).blocker).toEqual({ clause: 2, kind: "action", phrase: "a spell cast this way costs {2} more to cast" });
   const thief = parity(INGENIOUS_THIEF, STORED_INGENIOUS_THIEF);
   expect(thief.g.records[1]!.actions).toEqual([{ verb: "none", object: "" }]);

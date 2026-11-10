@@ -737,3 +737,21 @@ test("a base P/T set on an unfolded animate is the animate's amount (Ensoul Arti
   expect(read("target artifact you control becomes an artifact creature with base power and toughness 5/5 for as long as this creature remains on the battlefield."))
     .toMatchObject([{ verb: "animate", amount: "5/5" }, { verb: "modify-pt", amount: "5/5" }]);
 });
+
+// #1349: a card chosen from a hand just looked at or revealed ("You choose a nonland card from it. That player discards that card.") is the card the next
+// sentence moves, named as the store names it: "a nonland card from target opponent's hand". The choose itself records no action.
+test("a card chosen from a revealed or looked-at hand stands where the next sentence says 'that card'", () => {
+  const duress = read("Target opponent reveals their hand. You choose a noncreature, nonland card from it. That player discards that card.");
+  expect(unreadPhrases("Target opponent reveals their hand. You choose a noncreature, nonland card from it. That player discards that card.", "spell")).toEqual([]);
+  expect(duress).toMatchObject([{ verb: "reveal" }, { verb: "discard", text: "a noncreature, nonland card from target opponent's hand", object: { fromZone: "hand", notType: ["creature", "land"] } }]);
+  const salt = "Look at target opponent's hand. You may choose a nonland card from it. If you do, that player exiles that card, then draws a card.";
+  expect(unreadPhrases(salt, "triggered")).toEqual([]);
+  expect(parseActions(salt, "triggered")).toMatchObject([{ verb: "exile", text: "a nonland card from target opponent's hand", optional: true }, { verb: "draw", optional: true }]);
+  // A choose nothing later names stays unread, and so does a hand that was never looked at.
+  expect(unreadPhrases("Target opponent reveals their hand. You choose a nonland card from it. Draw a card.", "spell")).toEqual(["you choose a nonland card from it"]);
+  expect(unreadPhrases("You choose a nonland card from it. That player discards that card.", "spell").length).toBeGreaterThan(0);
+  // A bare "it" beside the reference may mean the card or something else (Vendilion Clique: "puts it on the bottom of their library" read as the Clique itself): the card blocks.
+  expect(unreadPhrases("Look at target player's hand. You may choose a nonland card from it. If you do, that player reveals the chosen card, puts it on the bottom of their library, then draws a card.", "triggered").length).toBeGreaterThan(0);
+  // Two references in one sentence do not say which the choice is.
+  expect(unreadPhrases("Target opponent reveals their hand. You choose a card from it. Exile that card and return that card to its owner's hand.", "spell").length).toBeGreaterThan(0);
+});

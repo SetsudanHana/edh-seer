@@ -1935,6 +1935,8 @@ function readActions(effect: string, type: string | null, cost: string | undefin
   let pendingLook: string | null = null;
   const sentences = unquoted.split(/(?<=\.)\s+/);
   let chosen: Chosen | undefined, refusedAny = false;
+  // The hand a sentence just revealed or looked at ("Target opponent reveals their hand", "Look at target opponent's hand"), and the card chosen from it (#1349).
+  let handOf: string | undefined, handPick: { sentence: string; text: string; used: boolean } | undefined;
   for (const [sentenceAt, raw] of sentences.entries()) {
     let s = raw.trim().replace(/\.$/, "");
     if (s === "") continue;
@@ -1948,6 +1950,26 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // triggered or activated modal ability. The modes are their own clauses (the segmenter), and the store
     // records the parent with no action of its own, so this sentence reads as nothing.
     if (MODAL_INTRO.test(s)) continue;
+    // A HAND LOOKED AT OR REVEALED, AND A CARD CHOSEN FROM IT (#1349: Duress, Tidehollow Sculler, Salt Vampire; ~50 stored cards print it). The choose records no action, as the store has it; the card it
+    // names is stated outright where the next sentence says "that card" ("a nonland card from target opponent's hand"), the way the bought reading writes the discard or exile.
+    // CEILING: only the plain "choose <a card class> from it" straight after a reveal or look of a TARGET player's hand, and only "that card" / "the chosen card" refer back to it (a bare "it", a trailing
+    // "with mana value 3 or less", "or a card from their graveyard" stay unread, so the card blocks); one reference only, and the pick is read as optional by `mayBefore` like any "you may".
+    const handShown = /^(?:look at (target opponent's|target player's) hand|(target opponent|target player) reveals their hand)$/i.exec(s);
+    if (handShown) handOf = `${(handShown[1] ?? `${handShown[2]!}'s`).toLowerCase()} hand`;
+    const pick = handOf !== undefined ? /^you (may )?choose ((?:an?|one) [a-z][a-z ,-]*? card) from it$/i.exec(s) : null;
+    if (pick) {
+      if (handPick && !handPick.used) { unread?.push(handPick.sentence); }
+      handPick = { sentence: s.replace(/^([A-Z])/, (ch) => ch.toLowerCase()), text: `${pick[2]!.toLowerCase()} from ${handOf!}`, used: false };
+      mayBefore = pick[1] !== undefined;
+      continue;
+    }
+    if (handPick) {
+      const refs = s.match(/\b(?:that card|the chosen card)\b(?!['\u2019])/gi)?.length ?? 0;
+      // A bare "it" / "them" / "its" in a sentence after the choice may be the chosen card or something else (Vendilion Clique's "puts it on the bottom of their library" read as the Clique itself).
+      const bare = /\b(?:it|them|its)\b/i.test(s.replace(/\b(?:that card|the chosen card)\b/gi, ""));
+      if (refs === 1 && !handPick.used && !bare) { s = s.replace(/\b(?:that card|the chosen card)\b(?!['\u2019])/i, handPick.text); handPick.used = true; }
+      else if (refs > 0 || bare) { handPick.used = false; unread?.push(handPick.sentence); handPick = undefined; }
+    }
     // "Choose target creature. Exile it." (#1452): the choose records no action, as the store has it; the target it names stands where each later reference to it is (`carriedSentence`),
     // the way the bought reading writes the effect that uses it. A choose nothing refers back to, or whose references this cannot carry, stays unread (see the end of the loop).
     // CEILING: only ONE target in the sentence; a reference in a later CLAUSE (Heroic Sacrifice's "When that creature dies this turn") is the trigger grammar's, not carried here.
@@ -2176,6 +2198,7 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     if (ifYouDoAfterMay) for (let i = at; i < out.length; i++) out[i] = { ...out[i]!, optional: true };
   }
   if (pendingLook !== null) unread?.push(pendingLook);
+  if (handPick && !handPick.used) unread?.push(handPick.sentence);
   if (chosen && (!chosen.used || chosen.refused)) { unread?.push(chosen.sentence); refusedAny = true; }
   // Set at the very end, after any nested `parseActions` (a granted ability's quoted text) has set and cleared it.
   carryRefused = refusedAny;
