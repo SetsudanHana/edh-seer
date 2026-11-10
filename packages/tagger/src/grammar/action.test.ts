@@ -63,10 +63,18 @@ test("'that opponent' is an actor, and an 'unless that opponent pays N life' sta
   expect(read("If you lose the flip, you lose 1 life and that opponent gains 1 life, and that player decides whether to flip again.").map((r) => [r.verb, r.actor?.control])).toEqual([["lose-life", "you"], ["gain-life", "opp"]]);
 });
 
-test("conditions are KEPT on the action (owner, 2026-10-01); 'you may' is optional, and so is its 'if you do'", () => {
+test("conditions are KEPT on the action (owner, 2026-10-01); 'you may' is optional; behind it, 'if you do' is a condition, and optional only on the first action when the may recorded none (#1589)", () => {
   expect(read("you may pay {2}. If you do, draw a card.")).toMatchObject([{ verb: "draw", condition: "if you do", optional: true }]);
   expect(read("Draw a card at the beginning of the next turn's upkeep.")).toMatchObject([{ verb: "draw", condition: "at the beginning of the next turn's upkeep" }]);
-  expect(read("you may discard a card. If you do, draw a card.")).toMatchObject([{ verb: "discard", optional: true }, { verb: "draw", optional: true }]);
+  const opt = (effect: string) => read(effect).map((r) => [r.verb, r.optional === true, r.condition]);
+  // The discard is recorded and carries the choice; the draw FOLLOWS from it (it is not a second choice), so it keeps the condition and no `optional`. Keldon Raider's stored answer: discard optional, draw not.
+  expect(opt("you may discard a card. If you do, draw a card.")).toEqual([["discard", true, undefined], ["draw", false, "if you do"]]);
+  // A payment records no action, so the FIRST action behind "If you do" stands for the choice; the ones after it follow from it. Voracious Tome-Skimmer's stored shape (lose-life optional, draw not).
+  expect(opt("you may pay {1}. If you do, you lose 1 life and draw a card.")).toEqual([["lose-life", true, "if you do"], ["draw", false, "if you do"]]);
+  // A hand pick records no action either: the exile of the picked card stands for the choice, the draw follows. Revealing Eye's stored shape (discard optional, draw not).
+  expect(opt("Look at target opponent's hand. You may choose a nonland card from it. If you do, that player exiles that card, then draws a card.")).toEqual([["exile", true, "if you do"], ["draw", false, "if you do"]]);
+  // "You may A and B" is one choice over both (owner 2026-10-15, #1214): unchanged.
+  expect(opt("you may discard a card and draw a card.")).toEqual([["discard", true, undefined], ["draw", true, undefined]]);
 });
 
 test("discard and search: a whole hand, a class, one search per zone named", () => {
@@ -746,7 +754,8 @@ test("a card chosen from a revealed or looked-at hand stands where the next sent
   expect(duress).toMatchObject([{ verb: "reveal" }, { verb: "discard", text: "a noncreature, nonland card from target opponent's hand", object: { fromZone: "hand", notType: ["creature", "land"] } }]);
   const salt = "Look at target opponent's hand. You may choose a nonland card from it. If you do, that player exiles that card, then draws a card.";
   expect(unreadPhrases(salt, "triggered")).toEqual([]);
-  expect(parseActions(salt, "triggered")).toMatchObject([{ verb: "exile", text: "a nonland card from target opponent's hand", optional: true }, { verb: "draw", optional: true }]);
+  expect(parseActions(salt, "triggered")).toMatchObject([{ verb: "exile", text: "a nonland card from target opponent's hand", optional: true }, { verb: "draw", condition: "if you do" }]);
+  expect(parseActions(salt, "triggered")[1]!.optional).not.toBe(true);
   // A choose nothing later names stays unread, and so does a hand that was never looked at.
   expect(unreadPhrases("Target opponent reveals their hand. You choose a nonland card from it. Draw a card.", "spell")).toEqual(["you choose a nonland card from it"]);
   expect(unreadPhrases("You choose a nonland card from it. That player discards that card.", "spell").length).toBeGreaterThan(0);

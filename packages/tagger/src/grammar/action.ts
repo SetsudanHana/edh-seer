@@ -1918,7 +1918,8 @@ function readActions(effect: string, type: string | null, cost: string | undefin
   // Activate only as a sorcery' is two sentences, the second not the token's.
   const unquoted = effect.replace(/"[^"]*"/g, (q) => `\uE000${quotes.push(q) - 1}\uE001`)
     .replace(/\uE000(\d+)\uE001 (?=[A-Z])/g, (m, i: string) => (quotes[Number(i)]!.endsWith('."') ? `${m.trimEnd()}. ` : m));
-  let mayBefore = false;
+  // `mayAt`: how many actions were recorded when the sentence carrying that "you may" began, so the sentence behind it can tell whether the may recorded an action of its own.
+  let mayBefore = false, mayAt = 0;
   // A GAME-START DELAYED EFFECT (Chancellor of the Dross): "You may reveal this card from your opening
   // hand. If you do, <timing>, <effect>". The reveal records no action, and the timing is no trigger
   // (a game-start event is not in TRIGGERS): the actions are the effect's alone.
@@ -1966,7 +1967,7 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     if (pick) {
       if (handPick && !handPick.used) { unread?.push(handPick.sentence); }
       handPick = { sentence: s.replace(/^([A-Z])/, (ch) => ch.toLowerCase()), text: `${pick[2]!.toLowerCase()} from ${handOf!}`, used: false };
-      mayBefore = pick[1] !== undefined;
+      mayBefore = pick[1] !== undefined; mayAt = out.length;
       continue;
     }
     let pickedHere = false;
@@ -2013,10 +2014,15 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // CEILING: X's definition is dropped with the look, as the stored answer drops it; the cards looked at are still "the top X cards of your library" for the sentences after.
     const look = /^look at (the top (?:card|(?:\w+|\d+) cards) of your library)(?:, where x is [^,]+)?$/i.exec(s);
     if (look) { if (pendingLook !== null) unread?.push(pendingLook); pendingLook = s; lookedAtLibrary = look[1]!.toLowerCase(); continue; }
-    // "You may pay {2}. If you do, draw a card": the draw is as optional as the payment (the store's
-    // reading, and the rules': nothing happens unless you choose to pay).
-    const ifYouDoAfterMay = mayBefore && /^if you do, /i.test(s);
-    mayBefore = /\byou may\b/i.test(s);
+    // WHAT "YOU MAY X. IF YOU DO, Y" MAKES OPTIONAL (#1589). `optional` marks the action a player CHOOSES to take; Y is not a second choice, it follows from X (its `condition` is "if you do").
+    // "You may discard a card. If you do, draw a card" (Keldon Raider): the discard is recorded and carries the choice, the draw only the condition. The stored answers agree: of 633 clauses whose recorded
+    // optional action has an "If you do" behind it, 552 leave everything after it non-optional, 56 mark all of it and 25 some.
+    // "You may pay {2}. If you do, draw a card" (Wooden Sphere), "You may choose a nonland card from it. If you do, that player exiles that card, then draws a card" (Salt Vampire): the payment and the pick
+    // record no action, so the FIRST action behind "If you do" stands for the choice, and the actions after it follow from it (Revealing Eye's stored discard is optional, its draw is not; of the stored
+    // mana-payment clauses with two or more actions, 56 mark the first alone and 19 all).
+    // CEILING: with no action recorded for the payment or the pick, the first action of Y is marked optional in its place; the choice is really X's, which the record cannot name.
+    const ifYouDoAfterMay = mayBefore && out.length === mayAt && /^if you do, /i.test(s);
+    mayBefore = /\byou may\b/i.test(s); mayAt = out.length;
     let condition: string | undefined;
     // "Until end of turn, target creature becomes ...": a duration at the front, not a condition.
     // "Simultaneously, all phased-out creatures phase in and ..." (CR 702.26a): a timing word, no action.
@@ -2045,8 +2051,8 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // CEILING: the per-object repetition is not carried (the stored object has none); only a copy of "that creature/permanent" is read, no other token created per object.
     const eachCopy = /^(?:instead )?for each [^,]+? controls?, (create a token that's a copy of that (?:creature|permanent)\b.*)$/i.exec(s);
     if (eachCopy) s = eachCopy[1]!;
-    // "You may pay {1}. If you do, <effect>" (Wooden Sphere, Marooned): the payment records no action, as the store has it, and the effect after "If you do" is as
-    // optional as the payment (`ifYouDoAfterMay`). Only a mana payment, and only with that reflexive sentence behind it: a payment nothing follows claims nothing here.
+    // "You may pay {1}. If you do, <effect>" (Wooden Sphere, Marooned): the payment records no action, as the store has it, and the first action after "If you do" carries
+    // the payment's optionality (`ifYouDoAfterMay`). Only a mana payment, and only with that reflexive sentence behind it: a payment nothing follows claims nothing here.
     // CEILING: the payment itself (its mana, its energy) is not recorded, as the store drops it too; the effect reads as optional but not as costing anything.
     if (condition === undefined && /^you may pay /i.test(s) && paysMana(s.slice("you may pay ".length)) && /^if you do, /i.test(sentences[sentenceAt + 1]?.trim() ?? "")) continue;
     // "You may reveal an artifact card from among them and put it into your hand" (Harald, Courageous Outrider): the dig's pick, read as the put it is
@@ -2214,7 +2220,7 @@ function readActions(effect: string, type: string | null, cost: string | undefin
       const owner = ACTORS.find(([w]) => w === handOwner)?.[1];
       for (let i = at; i < out.length; i++) if (owner && out[i]!.text !== handPick.text && out[i]!.actor?.scope === "that") out[i] = { ...out[i]!, actor: { ...owner, text: handOwner } };
     }
-    if (ifYouDoAfterMay) for (let i = at; i < out.length; i++) out[i] = { ...out[i]!, optional: true };
+    if (ifYouDoAfterMay && at < out.length) out[at] = { ...out[at]!, optional: true };
   }
   if (pendingLook !== null) unread?.push(pendingLook);
   if (handPick && !handPick.used) unread?.push(handPick.sentence);
