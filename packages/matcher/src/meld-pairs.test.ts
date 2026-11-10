@@ -29,4 +29,9 @@ describe("a meld's enters is the result card", () => {
     expect(reasons("Mishra, Claimed by Gix", "Thragtusk")).toEqual([]);
     expect(reasons("Graf Rats", "Syr Vondam, Sunstar Exemplar").length).toBeGreaterThan(0);
   });
+  /** The pair is the melder AND its partner: "another artifact you control leaves the battlefield" (Sludge Strider) hears the Phyrexian Dragon Engine, and an Aura on the melder falls off (Rancor). A `self` mark on the pair refused both. */
+  test("Mishra's pair still reaches a class leave payoff and an Aura on it", () => {
+    expect(reasons("Mishra, Claimed by Gix", "Sludge Strider")).toContain("leaves:artifact");
+    expect(reasons("Mishra, Claimed by Gix", "Rancor")).toContain("dies:aura");
+  });
 });
