@@ -10,6 +10,7 @@ import { connect, loadConfig } from "@edh-seer/data";
 import { createPool } from "@edh-seer/data/parallel";
 import { deriveGrammarOnly, grammarOnlyReading, type DeriveItem, type DeriveResult } from "../derive-worker.js";
 import { DERIVE_VERSION } from "../derive/derive.js";
+import { attachMeldResult, meldResultName } from "../derive-input.js";
 import { unpricedLoyaltyLines } from "../derive/mana-lines.js";
 import {
   CLAUSES_COLLECTION, DERIVED_COLLECTION, derivedRow, ensureClauseIndexes, needsDerive, segmentHash,
@@ -41,6 +42,11 @@ let written = 0, skipped = 0, empty = 0, tokenWritten = 0, grammarSwitched = 0;
 // SCOPE (owner 2026-10-25): `deriveScopeFilter` also takes UPCOMING spoiler cards, which Scryfall marks not_legal until release. Only this bin widens; see derive-scope.ts for why normalize-corpus and the ratchet bins do not.
 const answeredHash = new Map(clauseDocs.filter((d) => !(d as { isToken?: boolean }).isToken).map((d) => [d.oracleId, d.segmentHash] as const));
 const grammarOnly = new Set<string>();
+/** A meld card's derive reads the card it melds INTO (its printed stats and colours, #1582): one lookup by name in `cards`, beside the source document. */
+async function attachMeldResultOf(source: object): Promise<void> {
+  const name = meldResultName(source as never);
+  if (name !== undefined) attachMeldResult(source, await store.cards.findOne({ name } as never));
+}
 let grammarOnlyWritten = 0;
 // A loyalty-cost mana line whose card document gave no starting loyalty is a source silently dropped downstream (owner 2026-10-13: loyalty comes from ingest): counted and named.
 const unpricedLoyalty: string[] = [];
@@ -50,6 +56,7 @@ for await (const card of store.cards.find(deriveScopeFilter() as never).project(
   if (answeredHash.get(c._id) === hash) continue;
   const source = await store.cards.findOne({ _id: c._id } as never) as unknown as { _id: string; name: string } | null;
   if (!source) continue;
+  await attachMeldResultOf(source);
   const g = grammarOnlyReading(source as never, answeredHash.get(c._id))?.g;
   if (!g) continue;
   grammarOnly.add(c._id);
@@ -91,7 +98,7 @@ try {
     const isToken = (doc: CardClausesDoc) => (doc as CardClausesDoc & { isToken?: boolean }).isToken === true;
     const ids = (tokens: boolean) => batch.filter((d) => isToken(d) === tokens).map((d) => d.oracleId);
     const sources = new Map<string, Record<string, unknown>>();
-    for (const d of await store.cards.find({ _id: { $in: ids(false) } } as never).toArray()) sources.set(d._id as string, d as never);
+    for (const d of await store.cards.find({ _id: { $in: ids(false) } } as never).toArray()) { await attachMeldResultOf(d); sources.set(d._id as string, d as never); }
     for (const d of await store.db.collection(TOKENS_COLLECTION).find({ _id: { $in: ids(true) } } as never).toArray()) sources.set(d._id as unknown as string, d as never);
     const items: DeriveItem[] = [];
     for (const doc of batch) {

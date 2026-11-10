@@ -46,7 +46,8 @@ export const isZonedCardGrant = (a: { effect: { kind: string; subject?: SubjectF
  *  a keyword, a stat, a count, a pile / chosen / all-but selection or a negated subtype narrows the class by something the subtype list cannot read, so it proves nothing here. */
 const WHOLE_CLASS_FIELDS: ReadonlySet<string> = new Set(["control", "token", "type", "scope", "other", "notType", "fromZone", "zone"]);
 /** THE SAME SWEEP WRITTEN AS A TYPE LIST (#1582): "all permanents except for artifacts and lands" (Scourglass), "all nonland permanents" derive `type` as every permanent type the sweep leaves, with the spared ones in `notType`. The list must be EXACTLY the six permanent types minus
- *  `notType`, and a spared subtype (`notSubtype`: Norn spares Phyrexians) and the all-but marker (`selection`) are the only narrowings added to the whole-class fields above. */
+ *  `notType`, and a spared subtype (`notSubtype`: Norn spares Phyrexians) and the all-but marker (`selection`) are the only narrowings added to the whole-class fields above. 
+ *  CEILING: a narrowing derive does not store passes the rule: Desynchronization's "that's not historic" (the schema has no `historic: false`) and Urza, Planeswalker's "artifacts and planeswalkers you control gain indestructible" before "destroy all nonland permanents" read as every nonland permanent (#1586). A sweep "with mana value X" counts too: X is open. */
 const PERMANENT_TYPE_SET: readonly string[] = ["creature", "artifact", "enchantment", "planeswalker", "land", "battle"];
 const LIST_SWEEP_FIELDS: ReadonlySet<string> = new Set([...WHOLE_CLASS_FIELDS, "notSubtype", "selection"]);
 function sweepsEveryPermanent(p: SubjectFilter): boolean {

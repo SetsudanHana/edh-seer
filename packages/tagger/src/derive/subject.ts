@@ -903,7 +903,7 @@ const EXCEPT_FOR = / except for /;
 /** WHAT AN "except for" LIST SPARES (#1582): "all permanents except for artifacts and lands" (Scourglass), "all other permanents except for artifacts, lands, and Phyrexians" (Elesh Norn // The Argent Etchings), "except for Giants, Wizards, and lands" (Cyclone Summoner),
  *  "all creatures except for Merfolk". An item is carried only when it is ONE word that is a card type (`types`, which become `notType`) or a creature/other subtype (`subtypes`, `notSubtype`); "tokens" is read separately (the class is nontoken). An item with a qualifier ("a basic land",
  *  "creatures you control", "artifact creatures") spares less than its type word, so it is not carried and the sweep stays as wide as before. Split on the separators by string tests, never a regex over card text.
- *  CEILING: a producer's `notSubtype` is stored but no matcher rule reads it on the producer side (a consumer demanding the spared subtype is still fed by a typed class, as before). */
+ *  CEILING: a producer's `notSubtype` is read by ONE matcher rule, the subtype reach of a whole-permanent sweep (`sweepsEveryPermanent`: Norn x a Phyrexian demand is refused); a typed class producer ("all creatures except for Merfolk") is not narrowed by it, so a consumer demanding the spared subtype is still fed by that class, as before. */
 export function sparedClasses(tail: string): { types: string[]; subtypes: string[] } {
   const types: string[] = [];
   const subtypes: string[] = [];

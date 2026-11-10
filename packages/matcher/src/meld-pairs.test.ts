@@ -34,4 +34,15 @@ describe("a meld's enters is the result card", () => {
     expect(reasons("Mishra, Claimed by Gix", "Sludge Strider")).toContain("leaves:artifact");
     expect(reasons("Mishra, Claimed by Gix", "Rancor")).toContain("dies:aura");
   });
+  /** The result's PRINTED stats and colours stand on the entering permanent, so a stat or colour condition on a payoff reads the card that really enters: a missing stat was 0 and a missing colour passed "nonblack" and "colorless". */
+  test.each([
+    ["Vanille, Cheerful l'Cie", "Mentor of the Meek"], ["Hanweir Battlements", "Ezuri, Claw of Progress"], ["Mishra, Claimed by Gix", "Welcoming Vampire"], ["Graf Rats", "Symmetry Matrix"],
+    ["Mishra, Claimed by Gix", "Grave Peril"], ["Mishra, Claimed by Gix", "Eldrazi Mimic"], ["Vanille, Cheerful l'Cie", "Flayer Drone"], ["Titania, Voice of Gaea", "Glaring Fleshraker"],
+  ])("%s does not feed %s (a power, toughness, mana value or colour condition the result fails)", (melder, payoff) => {
+    expect(reasons(melder, payoff).filter((t) => t.startsWith("enters:"))).toEqual([]);
+  });
+  /** The pair is named for its partner, not the card itself, so an Aura on the melder (Rancor) goes to the graveyard for all seven. */
+  test.each(["Graf Rats", "Hanweir Battlements", "Mishra, Claimed by Gix", "Titania, Voice of Gaea", "Vanille, Cheerful l'Cie", "Urza, Lord Protector", "Gisela, the Broken Blade"])("%s x Rancor: an Aura on the melding pair dies", (melder) => {
+    expect(reasons(melder, "Rancor")).toContain("dies:aura");
+  });
 });

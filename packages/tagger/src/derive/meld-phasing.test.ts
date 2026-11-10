@@ -59,11 +59,41 @@ describe("a meld exiles its pair: a chosen set, no mass", () => {
     const parts = (fx[name]!.source as { allParts: { component: string; typeLine: string }[] }).allParts.find((p) => p.component === "meld_result")!;
     expect([s.subtype].flat().sort()).toEqual(parts.typeLine.split("—")[1]!.trim().toLowerCase().split(" ").sort());
   });
-  /** The pair is THIS card and a NAMED card (Mishra's "Mishra, Claimed by Gix and a creature named ..." read neither): a subject that is the card itself, or a named one, is heard by a class payoff but is no other card's own leaves trigger (Thragtusk, Skyclave Apparition). */
-  test.each(MELDERS)("%s: the exile and leave of the pair are the card itself or a named card", (name) => {
+  /** The result's PRINTED power, toughness, colours and mana value (the `meld_result` card, `source.meldResult`) stand on the entering permanent: a missing stat is read as 0 and a missing colour passes "nonblack" and "colorless" (Ragnarok 7/6 is no "power 2 or less", Chittering Host no
+   *  "colorless"-excluded). A star is 0, a planeswalker has none. */
+  test.each(MELDERS)("%s: the melded permanent carries the result's printed stats and colours", (name) => {
+    const meld = clausesWith(name, "meld");
+    const s = emitsOf(name, (c) => meld.includes(c)).filter((x) => x.verb === "enters")[0]!.subject;
+    const r = (fx[name]!.source as { meldResult: { power: string | null; toughness: string | null; colors: string[]; manaValue: number } }).meldResult;
+    const num = (v: string | null) => (v === null ? undefined : Number.isFinite(Number(v)) ? Number(v) : 0);
+    expect(s.power, `${name} power`).toBe(num(r.power));
+    expect(s.toughness, `${name} toughness`).toBe(num(r.toughness));
+    expect(s.colors, `${name} colors`).toEqual(r.colors);
+    expect(s.manaValue, `${name} manaValue`).toBe(r.manaValue);
+  });
+  /** The count an ability scaled by is the MASS OBJECT's, but only the ability that exiles or enters the pair has one to drop: Mishra's drain and life gain share clause 1 and keep "X is the number of attacking creatures". */
+  test("Mishra's drain and life gain keep what they scale by", () => {
+    const meld = clausesWith("Mishra, Claimed by Gix", "meld");
+    const abs = rowOf("Mishra, Claimed by Gix").tags.abilities.filter((a) => meld.includes(Number(a.clause)) && (a.effect.kind === "player-life-loss" || a.effect.kind === "lifegain"));
+    expect(abs.length).toBe(2);
+    for (const a of abs) expect(a.count?.scalesWith, a.effect.kind).toBeDefined();
+  });
+  /** The pair is NAMED FOR ITS PARTNER (the other `meld_part`), never `self`: a subject that is the card itself is refused by an `other` class payoff (Sludge Strider hears the Dragon Engine) and by the Aura route (Rancor on the melder), and a bare class would be heard by another card's own leaves trigger (Thragtusk). */
+  test.each(MELDERS)("%s: the exile and leave of the pair are named for the partner, with no self", (name) => {
     const meld = clausesWith(name, "meld");
     const e = emitsOf(name, (c) => meld.includes(c)).filter((x) => x.verb === "exiled" || x.verb === "leaves");
-    for (const x of e) expect(x.subject.self === true || x.subject.named !== undefined, `${name} ${x.verb}`).toBe(true);
+    const partner = (fx[name]!.source as { allParts: { component: string; name: string }[] }).allParts.find((p) => p.component === "meld_part" && p.name !== name)!.name.toLowerCase();
+    expect(e.length).toBeGreaterThan(0);
+    for (const x of e) {
+      expect(x.subject.named, `${name} ${x.verb}`).toBe(partner);
+      expect(x.subject.self, `${name} ${x.verb}`).toBeUndefined();
+    }
+  });
+  test.each(MELDERS)("%s: the pair that is exiled also leaves", (name) => {
+    const meld = clausesWith(name, "meld");
+    const verbs = emitsOf(name, (c) => meld.includes(c)).map((x) => x.verb);
+    expect(verbs).toContain("exiled");
+    expect(verbs).toContain("leaves");
   });
   test("Gisela's Brisela is no Nightmare, and the ability no longer scales by a mass of them", () => {
     const abs = rowOf("Gisela, the Broken Blade").tags.abilities.filter((a) => clausesWith("Gisela, the Broken Blade", "meld").includes(Number(a.clause)));

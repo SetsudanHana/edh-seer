@@ -3,7 +3,7 @@ import { CARD_TYPES } from "./subject.js";
 
 /** The card types and subtypes of what a meld pair melds INTO and of its partner(s), read off Scryfall's `allParts` type lines (`meld_result`, `meld_part`). */
 export interface MeldParts {
-  result: { name?: string; types: string[]; subtypes: string[] };
+  result: { name?: string; types: string[]; subtypes: string[]; power?: number; toughness?: number; colors?: string[]; manaValue?: number };
   partners: { name?: string; types: string[]; subtypes: string[] }[];
 }
 
@@ -28,13 +28,15 @@ export function meldPair(abilities: Ability[], clauseTexts: Record<number, strin
     if (a.clause === undefined || !a.emits?.length) return a;
     const text = clauseTexts?.[Math.trunc(Number(a.clause))];
     if (text === undefined || !text.toLowerCase().includes(MELD_THEM)) return a;
+    // Only the ability that exiles, leaves or enters as the pair is the meld's (Mishra's drain and life gain share its clause and keep their own count).
+    if (!a.emits.some((e) => e.verb === "exiled" || e.verb === "leaves" || e.verb === "enters")) return a;
     const pair = [...new Set([...ownTypes, ...(parts?.partners.flatMap((p) => p.types) ?? [])].map((t) => t.toLowerCase()).filter((t) => TYPE_WORDS.has(t)))];
     const pairType = one(pair);
     const partner = parts?.partners[0]?.name?.toLowerCase();
     const emits = a.emits.map((e): GameEvent => {
       if (e.verb === "exiled" || e.verb === "leaves") {
-        const { scope: _scope, subtype: _subtype, ...rest } = e.subject;
-        const subject: SubjectFilter = { ...rest, control: "you", token: false, selection: "chosen", ...(rest.self !== true && rest.named === undefined ? (partner !== undefined ? { named: partner } : { self: true }) : {}), ...(pairType !== undefined ? { type: pairType } : {}) };
+        const { scope: _scope, subtype: _subtype, self: _self, ...rest } = e.subject;
+        const subject: SubjectFilter = { ...rest, control: "you", token: false, selection: "chosen", ...(partner !== undefined ? { named: partner } : rest.named === undefined ? { self: true } : {}), ...(pairType !== undefined ? { type: pairType } : {}) };
         return { ...e, subject };
       }
       if (e.verb === "enters") {
@@ -42,11 +44,14 @@ export function meldPair(abilities: Ability[], clauseTexts: Record<number, strin
         const subtypes = parts?.result.subtypes.map((t) => t.toLowerCase()) ?? [];
         const type = one(types);
         const subtype = one(subtypes);
-        const subject: SubjectFilter = { control: "you", token: false, ...(type !== undefined ? { type } : {}), ...(types.length > 1 ? { allTypes: [...types].sort() } : {}), ...(subtype !== undefined ? { subtype } : {}), ...(parts?.result.name ? { named: parts.result.name.toLowerCase() } : {}), ...(e.subject.entersTapped !== undefined ? { entersTapped: e.subject.entersTapped } : {}) };
+        const subject: SubjectFilter = { control: "you", token: false, ...(type !== undefined ? { type } : {}), ...(types.length > 1 ? { allTypes: [...types].sort() } : {}), ...(subtype !== undefined ? { subtype } : {}), ...(parts?.result.name ? { named: parts.result.name.toLowerCase() } : {}), ...(parts?.result.power !== undefined ? { power: parts.result.power } : {}), ...(parts?.result.toughness !== undefined ? { toughness: parts.result.toughness } : {}), ...(parts?.result.colors !== undefined ? { colors: parts.result.colors } : {}), ...(parts?.result.manaValue !== undefined ? { manaValue: parts.result.manaValue } : {}), ...(e.subject.entersTapped !== undefined ? { entersTapped: e.subject.entersTapped } : {}) };
         return { ...e, subject };
       }
       return e;
     });
+    // An exile of the pair from the battlefield is also its leaving it (Titania's stored clause emitted the exile alone, so an Aura on the pair and a leaves payoff missed it).
+    const exile = emits.find((e) => e.verb === "exiled");
+    if (exile !== undefined && !emits.some((e) => e.verb === "leaves")) emits.push({ ...exile, verb: "leaves" });
     // The scaling the mass object gave the ability ("a mass of creatures") is no count of the meld.
     const { count, ...rest } = a;
     return { ...rest, ...(count !== undefined && count.scalesWith === undefined ? { count } : {}), emits };
