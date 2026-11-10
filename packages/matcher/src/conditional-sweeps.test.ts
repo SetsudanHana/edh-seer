@@ -66,3 +66,11 @@ describe("CONTROL: a mass put from a graveyard still feeds the self-triggers of 
     expect(tags(p, c).length).toBeGreaterThan(0);
   });
 });
+
+/** A sweep's relation (the same mana value as the target, entered this turn, the same name) is no printed characteristic: the card's OWN "when this leaves the battlefield" is still heard by a sweep that can take it. The self-trigger gate strips it from the emit it
+ *  uses as a filter, as it strips `zone`, `counter` and `entersTapped`. The first build lost 150+ such pairs per sweep (Mists of Lorien, Renet, Deputy of Detention). */
+describe("a conditional sweep still reaches the self trigger of what it can take", () => {
+  test.each(["Mists of Lórien", "Renet, Temporal Apprentice", "Deputy of Detention", "Desynchronization", "Urza, Planeswalker"])("%s x Aven Riftwatcher (when this creature leaves)", (p) => {
+    expect(tags(p, "Aven Riftwatcher")).toContain("leaves:creature");
+  });
+});

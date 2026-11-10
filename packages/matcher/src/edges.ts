@@ -2520,7 +2520,9 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
           // so the set can never hold a card of yours. Card-scoped printed cue, the same shape and
           // the same ceiling as `reducesItself`.
           if (exilesOnlyOpponents(p.card.oracleText)) continue;
-          const { zone: _eventZone, ...identity } = e.subject;
+          // A SWEEP'S CONDITION IS NOT A PRINTED CHARACTERISTIC EITHER (#1586): "the same mana value as that permanent" (Mists of Lorien), "that entered this turn" (Renet), "with the same name" (Deputy of Detention) are relations of the swept permanents to the board, which no type
+          // line carries, and the consumer-side refusal of `subjectMatches` ("a demand nothing can check claims nothing") would drop every self trigger the sweep can reach. Stripped as `zone`, `counter` and `entersTapped` are, for the same reason.
+          const { zone: _eventZone, shares: _shares, history: _history, nameRelation: _nameRelation, ...identity } = e.subject;
           // The producer re-entering ITSELF (Reassembling Skeleton, Drownyard Temple) is a real
           // entry for anything watching creatures, but it is never the CONSUMER entering, which is
           // the only event a self trigger watches.
