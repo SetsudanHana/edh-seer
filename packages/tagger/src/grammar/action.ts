@@ -2068,6 +2068,9 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // CEILING: "If you do, increase or decrease the result by 1" (Xenosquirrels, CR 706.2) modifies a die
     // result, which no verb expresses; it records no action.
     if (/^increase or decrease the result by \d+$/i.test(s)) continue;
+    // "You may choose new targets for the copy" (CR 707.10c) after a copy: the bought readings of Twincast and Dualcaster Mage record no action for it. Only straight after a copy this clause made;
+    // anywhere else it is unread (a delayed copy is refused by the clause record). CEILING: the optional choice is not recorded, so a copy whose new targets matter (a redirected removal) reads as the copy alone.
+    if (/^you may choose new targets for (?:the copy|the copies|it|them)$/i.test(s) && out[out.length - 1]?.verb === "copy") { mayBefore = false; continue; }
     // "Each opponent who doesn't loses 1 life" (Wernog): the opponents who declined the "may" before it;
     // the actor is each opponent, and the decline is the condition. The object keeps the store's wording,
     // "each opponent who doesn't sacrifice", which derive's subject reading turns into a negated did.

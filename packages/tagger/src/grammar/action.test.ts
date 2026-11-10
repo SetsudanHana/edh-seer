@@ -767,3 +767,13 @@ test("a replacement's choice of a creature type, card name or land type is an `o
   expect(unreadPhrases("Choose a creature type.", "spell")).toEqual(["choose a creature type"]);
   expect(unreadPhrases("As this artifact enters, choose a creature type other than Wizard.", "static").length).toBeGreaterThan(0);
 });
+
+// #1349: "You may choose new targets for the copy" (CR 707.10c) after a copy records no action, as Twincast's and Dualcaster Mage's bought readings have it.
+test("choosing new targets for the copy just made claims nothing", () => {
+  expect(unreadPhrases("Copy target instant or sorcery spell. You may choose new targets for the copy.", "spell")).toEqual([]);
+  expect(parseActions("Copy target instant or sorcery spell. You may choose new targets for the copy.", "spell")).toMatchObject([{ verb: "copy" }]);
+  expect(parseActions("Copy target instant or sorcery spell. You may choose new targets for the copy.", "spell")).toHaveLength(1);
+  expect(unreadPhrases("Copy target instant or sorcery spell you control. If this spell was cast from a graveyard, copy that spell twice instead. You may choose new targets for the copies.", "spell")).toEqual([]);
+  // With no copy before it the sentence says nothing this reads: unread.
+  expect(unreadPhrases("Draw a card. You may choose new targets for the copy.", "spell")).toEqual(["you may choose new targets for the copy"]);
+});

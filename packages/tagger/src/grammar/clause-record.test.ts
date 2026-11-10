@@ -1771,3 +1771,13 @@ test("Daretti, Rocketeer Engineer derives one ability per limb from the stored r
 test("In the Pale Moonlight reads once 'Romulan' is a known creature type", () => {
   expect(grammarClauseRecords(IN_THE_PALE_MOONLIGHT).blocker).toBeUndefined();
 });
+
+test("a delayed copy ('When you next cast ..., copy that spell. You may choose new targets for the copy.') stays blocked: its cast trigger is not in the record (#1349)", () => {
+  const chandra = { name: "Chandra, the Firebrand", typeLine: "Legendary Planeswalker — Chandra", oracleText: "−2: When you next cast an instant or sorcery spell this turn, copy that spell. You may choose new targets for the copy." };
+  expect(grammarClauseRecords(chandra).blocker).toMatchObject({ kind: "action", phrase: "you may choose new targets for the copy" });
+  const twincast = { name: "Twincast", typeLine: "Instant", oracleText: "Copy target instant or sorcery spell. You may choose new targets for the copy." };
+  expect(grammarClauseRecords(twincast).blocker).toBeUndefined();
+  // A granted quoted ability is not the clause's own (Way of the Cryomancer reads as it did before this shape).
+  const way = { name: "Way", typeLine: "Enchantment", oracleText: 'Planeswalkers you control have "[−3]: When you next cast an instant or sorcery spell this turn, copy that spell. You may choose new targets for the copy."' };
+  expect(grammarClauseRecords(way).blocker).toBeUndefined();
+});
