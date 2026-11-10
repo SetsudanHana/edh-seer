@@ -493,13 +493,13 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       records.push(record);
       continue;
     }
-    // A DELAYED COPY ("When you next cast an instant or sorcery spell this turn, copy that spell. You may choose new targets for the copy.", Chandra, the Firebrand): `effectText` cuts the delayed
+    // A DELAYED COPY ("When you next cast an instant or sorcery spell this turn, copy that spell. ...", Chandra, the Firebrand; "Until end of turn, whenever you cast a spell, copy it. ...", Jace Reawakened): `effectText` cuts the delayed
     // trigger off the front and the clause's record has none, where the bought reading keeps the cast. The new-targets sentence is what this card family stopped on (#1349), so it stays the blocker:
     // reading it would switch Chandra and Pigment Wrangler from a stored cast trigger to none.
     // CEILING: the same delayed trigger is dropped from the next-cast cards that never stopped on it (Ral, Storm Conduit, Doublecast, Galvanic Iteration), as the stored answer drops it for most of them.
     // Not inside a quoted ability a card GRANTS (Way of the Cryomancer): that card is read, and switched, as it was.
     const unquotedText = c.text.replace(/"[^"]*"/g, " ");
-    if (/\bwhen you next cast\b/i.test(unquotedText) && /\bchoose new targets for the cop(?:y|ies)\b/i.test(unquotedText)) return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: "you may choose new targets for the copy" } };
+    if (/\bwhen you next (?:cast|activate)\b|\b(?:until end of turn|this turn), (?:whenever|when)\b/i.test(unquotedText) && /\bchoose new targets for the cop(?:y|ies)\b/i.test(unquotedText)) return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: "you may choose new targets for the copy" } };
     const unread = unreadPhrases(effect, type, cost);
     if (unread.length) return { records, complete: false, blocker: { clause: c.id, kind: "action", phrase: unread[0]! } };
     const readingsHere = parseActions(effect, type, cost);

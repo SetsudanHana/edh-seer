@@ -1780,4 +1780,10 @@ test("a delayed copy ('When you next cast ..., copy that spell. You may choose n
   // A granted quoted ability is not the clause's own (Way of the Cryomancer reads as it did before this shape).
   const way = { name: "Way", typeLine: "Enchantment", oracleText: 'Planeswalkers you control have "[−3]: When you next cast an instant or sorcery spell this turn, copy that spell. You may choose new targets for the copy."' };
   expect(grammarClauseRecords(way).blocker).toBeUndefined();
+  // A temporary cast trigger ("Until end of turn, whenever you cast a spell, copy it", Jace Reawakened) is as delayed: its trigger is cut off the same way.
+  const jace = { name: "Jace Reawakened", typeLine: "Legendary Planeswalker — Jace", oracleText: "−6: Until end of turn, whenever you cast a spell, copy it. You may choose new targets for the copy." };
+  expect(grammarClauseRecords(jace).blocker).toMatchObject({ kind: "action", phrase: "you may choose new targets for the copy" });
+  // ...while a printed triggered ability keeps its trigger and reads.
+  const melek = { name: "Swarm", typeLine: "Enchantment", oracleText: "Whenever you cast an instant or sorcery spell, you may copy that spell. You may choose new targets for the copy." };
+  expect(grammarClauseRecords(melek).blocker).toBeUndefined();
 });
