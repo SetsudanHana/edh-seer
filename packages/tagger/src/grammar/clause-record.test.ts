@@ -1314,10 +1314,10 @@ test("'look at target opponent's hand' claims nothing (a lone none), and '..., t
   const v = grammarClauseRecords(V_GER__THE_INTRUDER);
   expect(v.blocker).toBeUndefined();
   expect(v.records.find((r) => r.id === 3)!.actions).toEqual([expect.objectContaining({ verb: "draw", object: "a card", amount: "1" })]);
-  // Salt Vampire is complete since #1349 (a card chosen from a looked-at hand is named in the next sentence): exile then draw, both optional behind "If you do".
+  // Salt Vampire is complete since #1349 (a card chosen from a looked-at hand is named in the next sentence): the exile stands for the optional pick, and the draw follows from it (#1589: not a second choice).
   const salt = grammarClauseRecords(SALT_VAMPIRE);
   expect(salt.blocker).toBeUndefined();
-  expect(salt.records.find((r) => r.id === 2)!.actions).toEqual([expect.objectContaining({ verb: "exile", object: "a nonland card from target opponent's hand", optional: true }), expect.objectContaining({ verb: "draw", optional: true })]);
+  expect(salt.records.find((r) => r.id === 2)!.actions).toEqual([expect.objectContaining({ verb: "exile", object: "a nonland card from target opponent's hand", optional: true }), expect.objectContaining({ verb: "draw", optional: false })]);
   expect(grammarClauseRecords(ZERO__INCORPOREAL_SENSATE).blocker).toEqual({ clause: 2, kind: "action", phrase: "a spell cast this way costs {2} more to cast" });
   const thief = parity(INGENIOUS_THIEF, STORED_INGENIOUS_THIEF);
   expect(thief.g.records[1]!.actions).toEqual([{ verb: "none", object: "" }]);
@@ -1772,18 +1772,60 @@ test("In the Pale Moonlight reads once 'Romulan' is a known creature type", () =
   expect(grammarClauseRecords(IN_THE_PALE_MOONLIGHT).blocker).toBeUndefined();
 });
 
-test("a delayed copy ('When you next cast ..., copy that spell. You may choose new targets for the copy.') stays blocked: its cast trigger is not in the record (#1349)", () => {
+test("a delayed or temporary cast trigger leading a non-triggered clause is that clause's trigger (#1589)", () => {
   const chandra = { name: "Chandra, the Firebrand", typeLine: "Legendary Planeswalker — Chandra", oracleText: "−2: When you next cast an instant or sorcery spell this turn, copy that spell. You may choose new targets for the copy." };
-  expect(grammarClauseRecords(chandra).blocker).toMatchObject({ kind: "action", phrase: "you may choose new targets for the copy" });
+  const c = grammarClauseRecords(chandra);
+  expect(c.blocker).toBeUndefined();
+  expect(c.records[0]).toMatchObject({ abilityType: "activated", trigger: { event: "cast", subject: "an instant or sorcery spell", control: "you" }, actions: [{ verb: "copy", object: "that spell" }] });
+  expect(c.records[0]!.actions).toHaveLength(1);
   const twincast = { name: "Twincast", typeLine: "Instant", oracleText: "Copy target instant or sorcery spell. You may choose new targets for the copy." };
   expect(grammarClauseRecords(twincast).blocker).toBeUndefined();
+  // A temporary cast trigger ("Until end of turn, whenever you cast a spell, copy it", Jace Reawakened) keeps its cast; "Until end of turn" is its duration, not part of the effect.
+  const jace = { name: "Jace Reawakened", typeLine: "Legendary Planeswalker — Jace", oracleText: "−6: Until end of turn, whenever you cast a spell, copy it. You may choose new targets for the copy." };
+  const j = grammarClauseRecords(jace);
+  expect(j.blocker).toBeUndefined();
+  expect(j.records[0]).toMatchObject({ abilityType: "activated", trigger: { event: "cast", subject: "a spell", control: "you" }, actions: [{ verb: "copy", object: "that spell" }] });
+  // "Copy it" under a typed cast trigger is that class of spell (not the first noun of the clause: Rimefire Torque's charge counters).
+  const torque = grammarClauseRecords({ name: "Rimefire Torque", typeLine: "Artifact", oracleText: "{T}, Remove three charge counters from this artifact: When you next cast an instant or sorcery spell this turn, copy it. You may choose new targets for the copy." });
+  expect(torque.records[0]!.actions).toMatchObject([{ verb: "remove-counter" }, { verb: "copy", object: "that instant or sorcery spell" }]);
+  // ...on a spell and on a cost-bearing activated ability, with the player who casts it.
+  const bonus = grammarClauseRecords({ name: "Bonus Round", typeLine: "Sorcery", oracleText: "Until end of turn, whenever a player casts an instant or sorcery spell, that player copies it and may choose new targets for the copy." });
+  expect(bonus.blocker).toBeUndefined();
+  expect(bonus.records[0]).toMatchObject({ abilityType: "spell", trigger: { event: "cast", subject: "an instant or sorcery spell", control: "any" } });
+  const titan = grammarClauseRecords({ name: "Mountain Titan", typeLine: "Creature — Giant", oracleText: "{1}{R}{R}: Until end of turn, whenever you cast a black spell, put a +1/+1 counter on this creature." });
+  expect(titan.records[0]).toMatchObject({ trigger: { event: "cast", subject: "a black spell", control: "you" }, actions: [{ verb: "add-counter" }] });
   // A granted quoted ability is not the clause's own (Way of the Cryomancer reads as it did before this shape).
   const way = { name: "Way", typeLine: "Enchantment", oracleText: 'Planeswalkers you control have "[−3]: When you next cast an instant or sorcery spell this turn, copy that spell. You may choose new targets for the copy."' };
   expect(grammarClauseRecords(way).blocker).toBeUndefined();
-  // A temporary cast trigger ("Until end of turn, whenever you cast a spell, copy it", Jace Reawakened) is as delayed: its trigger is cut off the same way.
-  const jace = { name: "Jace Reawakened", typeLine: "Legendary Planeswalker — Jace", oracleText: "−6: Until end of turn, whenever you cast a spell, copy it. You may choose new targets for the copy." };
-  expect(grammarClauseRecords(jace).blocker).toMatchObject({ kind: "action", phrase: "you may choose new targets for the copy" });
   // ...while a printed triggered ability keeps its trigger and reads.
   const melek = { name: "Swarm", typeLine: "Enchantment", oracleText: "Whenever you cast an instant or sorcery spell, you may copy that spell. You may choose new targets for the copy." };
   expect(grammarClauseRecords(melek).blocker).toBeUndefined();
+});
+
+// #1589: a temporary trigger behind "Until end of turn," is read by the SAME trigger grammar as a printed one. Read off the stored subject text instead, the card's own name ("~") was a class
+// ("anything you control deals combat damage", Lyra, Tolarian Archangel) and the victim was lost.
+test("a temporary trigger on the card itself is self, with its victim: Lyra, Tolarian Archangel; High Tide's tap trigger is refused under the printed trigger's name (#1589)", () => {
+  const tagsOf = (card: { name: string; typeLine: string; oracleText: string }) => { const g = grammarClauseRecords(card); expect(g.blocker).toBeUndefined(); return deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings)); };
+  const temporary = tagsOf({ name: "Lyra, Tolarian Archangel", typeLine: "Legendary Creature — Angel", oracleText: "{3}{U}{U}: Until end of turn, whenever Lyra deals combat damage to a player, draw two cards." }).abilities[0]!;
+  const printed = tagsOf({ name: "Lyra, Tolarian Archangel", typeLine: "Legendary Creature — Angel", oracleText: "Whenever Lyra deals combat damage to a player, draw two cards." }).abilities[0]!;
+  expect(printed.trigger).toMatchObject({ verbs: ["combat-damage"], subject: { self: true }, victim: "player" });
+  expect(temporary.trigger).toEqual(printed.trigger);
+  expect(temporary.kind).toBe("activated");
+  const tide = tagsOf({ name: "High Tide", typeLine: "Instant", oracleText: "Until end of turn, whenever a player taps an Island for mana, that player adds an additional {U}." });
+  expect(tide.unknownTriggers).toEqual(tagsOf({ name: "Tide Test", typeLine: "Enchantment", oracleText: "Whenever a player taps an Island for mana, that player adds an additional {U}." }).unknownTriggers);
+  expect(tide.manaLines).toMatchObject([{ untilEndOfTurn: true }]);
+});
+
+test("a delayed trigger that is read gates the effect: Vivien's -2 is no unconditional tutor, and one it cannot read refuses the card (#1589)", () => {
+  const vivien = grammarClauseRecords({ name: "Vivien, Monsters' Advocate", typeLine: "Legendary Planeswalker — Vivien", oracleText: "−2: When you next cast a creature spell this turn, search your library for a creature card with lesser mana value, put it onto the battlefield, then shuffle." });
+  expect(vivien.records[0]).toMatchObject({ abilityType: "activated", trigger: { event: "cast", subject: "a creature spell", control: "you" } });
+  // A delayed trigger on a printed triggered clause keeps naming the spell it waits for, not "you next".
+  const doublecast = grammarClauseRecords({ name: "Doublecast", typeLine: "Instant", oracleText: "When you next cast an instant or sorcery spell this turn, copy that spell. You may choose new targets for the copy." });
+  expect(doublecast.records[0]!.trigger).toEqual({ event: "cast", subject: "an instant or sorcery spell", control: "you" });
+  // A leading delayed trigger the grammar does not read refuses the clause: dropping it would claim the effect now.
+  const dynaheir = grammarClauseRecords({ name: "Dynaheir", typeLine: "Creature — Human", oracleText: "{T}: When you next activate an ability that isn't a mana ability this turn by spending four or more mana to activate it, copy that ability. You may choose new targets for the copy." });
+  expect(dynaheir.complete).toBe(false);
+  // "If you do, when you next cast ..." is not a leading trigger: still refused (Najal, the Storm Runner).
+  const najal = grammarClauseRecords({ name: "Najal, the Storm Runner", typeLine: "Legendary Creature — Human Shaman", oracleText: "Whenever Najal attacks, you may pay {2}. If you do, when you next cast an instant or sorcery spell this turn, copy it. You may choose new targets for the copy." });
+  expect(najal.complete).toBe(false);
 });

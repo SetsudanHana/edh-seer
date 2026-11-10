@@ -8486,3 +8486,72 @@ describe("a library-to-graveyard move the printed clause never makes (#1562)", (
     expect(verbsOf(r)).toContain("mill");
   });
 });
+
+// #1589: a temporary trigger behind "Until end of turn," is read by the trigger grammar. The clause is the STORED shape (cardClauses, The Mirari Conjecture, clause 4): the chapter is the
+// stored trigger, and the cast is only in the printed text. Before #1589 the chapter was the clause's one (unknown) trigger and the copy had no cast trigger at all.
+test("a stored chapter whose text is a temporary trigger takes the grammar's cast trigger (The Mirari Conjecture)", () => {
+  const mirari = deriveCardTags({
+    oracleId: "t", name: "The Mirari Conjecture",
+    clauses: [{ id: 4, abilityType: "triggered", trigger: { event: "chapter", subject: "chapter III", control: "you" }, actions: [{ verb: "copy", object: "an instant or sorcery spell", fromZone: null, toZone: null, amount: null, optional: true }] }] as never,
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["enchantment"], subtypes: ["saga"] },
+    clauseTexts: { 4: "Until end of turn, whenever you cast an instant or sorcery spell, copy it. You may choose new targets for the copy." },
+  });
+  expect(mirari.abilities.map((a) => a.trigger)).toEqual([expect.objectContaining({ verbs: ["cast"], subject: expect.objectContaining({ control: "you", type: ["instant", "sorcery"] }) })]);
+  expect(mirari.unknownTriggers ?? []).toEqual([]);
+});
+
+// #1589: "narrowings refuse" (owner ruling, #896 task 5) binds a temporary trigger as it binds a printed one. "Attacks and isn't blocked" is a narrowing the grammar refuses (Master of Cruelties and
+// the other "attacks and isn't blocked" cards), so Gaze of Pain is no "a creature attacks" payoff: the stored reading (which also said any creature where the card says "a creature you control") is not kept.
+test("a temporary trigger with a refused narrowing is refused, not kept from the store (Gaze of Pain)", () => {
+  const gaze = deriveCardTags({
+    oracleId: "t", name: "Gaze of Pain",
+    clauses: [{ id: 1, abilityType: "spell", trigger: { event: "attacks", subject: "a creature you control", control: "you" }, actions: [{ verb: "deal-damage", object: "target creature", amount: "its power", optional: true }] }] as never,
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["sorcery"] },
+    clauseTexts: { 1: "Until end of turn, whenever a creature you control attacks and isn't blocked, you may choose to have it deal damage equal to its power to a target creature. If you do, it assigns no combat damage this turn." },
+  });
+  expect(gaze.abilities.filter((a) => a.trigger?.verbs.includes("attacks"))).toEqual([]);
+  expect(gaze.unknownTriggers).toEqual(["narrowing:attacks"]);
+});
+
+// #1589: a card picked from an opponent's hand OR graveyard and exiled (Never Happened, Memory Leak, Agonizing Remorse) never leaves the battlefield. The grammar's record says `fromZone: hand`,
+// and the exile emit keeps it, so "whenever a creature is exiled from the battlefield" (Soulherder) does not hear it.
+test("an exile picked from a graveyard or hand carries a non-battlefield zone on its emit (Never Happened)", () => {
+  const card = { name: "Never Happened", oracleText: "Target opponent reveals their hand. You choose a nonland card from that player's graveyard or hand and exile it.", typeLine: "Sorcery", keywords: [] };
+  const g = grammarClauseRecords(card as never);
+  expect(g.complete).toBe(true);
+  const r = deriveCardTags({ oracleId: "t", name: card.name, clauses: g.records as never, characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["sorcery"] }, clauseTexts: { 1: card.oracleText } });
+  const exiled = r.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "exiled");
+  expect(exiled).toHaveLength(1);
+  expect(exiled[0]!.subject.fromZone).toBe("hand");
+});
+
+// #1589 part 3: behind "You may pay {2}. If you do," the first action stands for the choice; a search printed once over two zones is that ONE action, so both zone records are optional alike and still fold into one search.
+test("a paid search over 'library and/or graveyard' is one search ability, as the unpaid one is", () => {
+  const searches = (effect: string): number => {
+    const card = { name: "Test Seeker", oracleText: `When this creature enters, ${effect}`, typeLine: "Creature — Human", keywords: [] };
+    const g = grammarClauseRecords(card as never);
+    expect(g.complete).toBe(true);
+    const r = deriveCardTags({ oracleId: "t", name: card.name, clauses: g.records as never, characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["creature"] }, clauseTexts: { 1: card.oracleText } });
+    return r.abilities.filter((a) => a.effect.kind === "search").length;
+  };
+  const tail = "search your library and/or graveyard for a card named Jace, Arcane Strategist, reveal it, and put it into your hand. If you search your library this way, shuffle.";
+  expect(searches(`you may ${tail}`)).toBe(1);
+  expect(searches(`you may pay {2}. If you do, ${tail}`)).toBe(1);
+});
+
+// #1589: a temporary or delayed trigger the grammar does not read (another duration, one in the middle of a clause, a stored reading without it) leaves its effect claimed outright.
+// That is surfaced as `temporary` in unknownTriggers, never silent; a trigger that IS read, or a clause that has another trigger, adds nothing.
+test("an unread temporary trigger is surfaced in unknownTriggers (Vraska the Unseen, Benefactor's Draught); a read one is not (Lyra)", () => {
+  const unknown = (name: string, oracleText: string, typeLine: string): string[] => {
+    const g = grammarClauseRecords({ name, oracleText, typeLine, keywords: [] } as never);
+    expect(g.complete).toBe(true);
+    const texts = Object.fromEntries(g.records.map((r, i) => [r.id, oracleText.split("\n")[i]!.replace(/^[^:]*: /, "")]));
+    return deriveCardTags({ oracleId: "t", name, clauses: g.records as never, characteristics: MINIMAL_CHARACTERISTICS, clauseTexts: texts }).unknownTriggers ?? [];
+  };
+  // Another duration: the destroy is claimed as a plain activated destroy.
+  expect(unknown("Vraska the Unseen", "+1: Until your next turn, whenever a creature deals combat damage to Vraska the Unseen, destroy that creature.", "Legendary Planeswalker — Vraska")).toEqual(["temporary"]);
+  // In the middle of a clause: the draw is claimed as the spell's own.
+  expect(unknown("Benefactor's Draught", "Untap all creatures. Until end of turn, whenever a creature an opponent controls blocks, draw a card.", "Instant")).toEqual(["temporary"]);
+  // Read: the leading "Until end of turn, whenever" is the clause's trigger.
+  expect(unknown("Lyra, Tolarian Archangel", "{3}{U}{U}: Until end of turn, whenever Lyra, Tolarian Archangel deals combat damage to a player, draw two cards.", "Legendary Creature — Angel")).toEqual([]);
+});

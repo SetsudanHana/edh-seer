@@ -148,6 +148,7 @@ const TESTED: Record<string, string> = {
   "402.2": "grammar/clause-record.test.ts — 'you have no maximum hand size [until your next turn]' states a player's maximum hand size (CR 402 Hand); read as the store's unclaimed `other`: Graceful Adept, Deep Space Scan (#1349)",
   "731.1": "grammar/clause-record.test.ts — 'it becomes day' / 'it becomes night' is the game gaining the day or night designation, never an animate of the card: Sunstreak Phoenix (#1349)",
   "702.148": "derive.test.ts — the words in a cleave spell's square brackets are removed: Alchemist's Retrieval bounces ANY nonland permanent (#1295)",
+  "118.12": "grammar/action.test.ts — in 'You may X. If you do, Y' X is a cost and the choice is X's: X carries `optional`, Y only its condition; where X records no action the first action of Y stands for it, in every zone it is recorded in (Keldon Raider, Wooden Sphere, Salt Vampire; #1589)",
 };
 /** A reading in a comment, no fixture. Each carries where the reading lives. */
 const PROSE: Record<string, string> = {

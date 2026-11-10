@@ -63,10 +63,22 @@ test("'that opponent' is an actor, and an 'unless that opponent pays N life' sta
   expect(read("If you lose the flip, you lose 1 life and that opponent gains 1 life, and that player decides whether to flip again.").map((r) => [r.verb, r.actor?.control])).toEqual([["lose-life", "you"], ["gain-life", "opp"]]);
 });
 
-test("conditions are KEPT on the action (owner, 2026-10-01); 'you may' is optional, and so is its 'if you do'", () => {
+test("conditions are KEPT on the action (owner, 2026-10-01); 'you may' is optional; behind it, 'if you do' is a condition, and optional only on the first action when the may recorded none (#1589)", () => {
   expect(read("you may pay {2}. If you do, draw a card.")).toMatchObject([{ verb: "draw", condition: "if you do", optional: true }]);
   expect(read("Draw a card at the beginning of the next turn's upkeep.")).toMatchObject([{ verb: "draw", condition: "at the beginning of the next turn's upkeep" }]);
-  expect(read("you may discard a card. If you do, draw a card.")).toMatchObject([{ verb: "discard", optional: true }, { verb: "draw", optional: true }]);
+  const opt = (effect: string) => read(effect).map((r) => [r.verb, r.optional === true, r.condition]);
+  // The discard is recorded and carries the choice; the draw FOLLOWS from it (it is not a second choice), so it keeps the condition and no `optional`. Keldon Raider's stored answer: discard optional, draw not.
+  expect(opt("you may discard a card. If you do, draw a card.")).toEqual([["discard", true, undefined], ["draw", false, "if you do"]]);
+  // A payment records no action, so the FIRST action behind "If you do" stands for the choice; the ones after it follow from it. Voracious Tome-Skimmer's stored shape (lose-life optional, draw not).
+  expect(opt("you may pay {1}. If you do, you lose 1 life and draw a card.")).toEqual([["lose-life", true, "if you do"], ["draw", false, "if you do"]]);
+  // A hand pick records no action either: the exile of the picked card stands for the choice, the draw follows. Revealing Eye's stored shape (discard optional, draw not).
+  expect(opt("Look at target opponent's hand. You may choose a nonland card from it. If you do, that player exiles that card, then draws a card.")).toEqual([["exile", true, "if you do"], ["draw", false, "if you do"]]);
+  // The stand-in is ONE printed action even when it is recorded once per zone ("search your library and/or graveyard" is two `search` records): every zone twin carries the choice, or derive's zone fold
+  // (`collapseZoneSearches`, which asks for equal optionality) would refuse and read two searches.
+  expect(read("you may pay {2}. If you do, search your library and/or graveyard for a card named Jace, Arcane Strategist, reveal it, and put it into your hand. If you search your library this way, shuffle.").map((r) => [r.verb, r.fromZone, r.optional === true]))
+    .toEqual([["search", "library", true], ["search", "graveyard", true], ["reveal", undefined, false], ["put", undefined, false], ["shuffle", undefined, false]]);
+  // "You may A and B" is one choice over both (owner 2026-10-15, #1214): unchanged.
+  expect(opt("you may discard a card and draw a card.")).toEqual([["discard", true, undefined], ["draw", true, undefined]]);
 });
 
 test("discard and search: a whole hand, a class, one search per zone named", () => {
@@ -746,7 +758,8 @@ test("a card chosen from a revealed or looked-at hand stands where the next sent
   expect(duress).toMatchObject([{ verb: "reveal" }, { verb: "discard", text: "a noncreature, nonland card from target opponent's hand", object: { fromZone: "hand", notType: ["creature", "land"] } }]);
   const salt = "Look at target opponent's hand. You may choose a nonland card from it. If you do, that player exiles that card, then draws a card.";
   expect(unreadPhrases(salt, "triggered")).toEqual([]);
-  expect(parseActions(salt, "triggered")).toMatchObject([{ verb: "exile", text: "a nonland card from target opponent's hand", optional: true }, { verb: "draw", optional: true }]);
+  expect(parseActions(salt, "triggered")).toMatchObject([{ verb: "exile", text: "a nonland card from target opponent's hand", optional: true }, { verb: "draw", condition: "if you do" }]);
+  expect(parseActions(salt, "triggered")[1]!.optional).not.toBe(true);
   // A choose nothing later names stays unread, and so does a hand that was never looked at.
   expect(unreadPhrases("Target opponent reveals their hand. You choose a nonland card from it. Draw a card.", "spell")).toEqual(["you choose a nonland card from it"]);
   expect(unreadPhrases("You choose a nonland card from it. That player discards that card.", "spell").length).toBeGreaterThan(0);
@@ -776,6 +789,51 @@ test("choosing new targets for the copy just made claims nothing", () => {
   expect(unreadPhrases("Copy target instant or sorcery spell you control. If this spell was cast from a graveyard, copy that spell twice instead. You may choose new targets for the copies.", "spell")).toEqual([]);
   // With no copy before it the sentence says nothing this reads: unread.
   expect(unreadPhrases("Draw a card. You may choose new targets for the copy.", "spell")).toEqual(["you may choose new targets for the copy"]);
+});
+
+// #1589: the same choice joined by "and" ("copy it and you may choose new targets for the copy", Adaptive Training Post; "that player copies it and may choose ...", Bonus Round).
+test("'... and (you) may choose new targets for the copy' after a copy records no action", () => {
+  expect(unreadPhrases("Copy it and you may choose new targets for the copy.", "activated")).toEqual([]);
+  expect(parseActions("Copy it and you may choose new targets for the copy.", "activated")).toMatchObject([{ verb: "copy" }]);
+  expect(parseActions("That player copies it and may choose new targets for the copy.", "spell")).toMatchObject([{ verb: "copy", actor: { text: "that player" } }]);
+  expect(parseActions("That player copies it and may choose new targets for the copy.", "spell")).toHaveLength(1);
+  expect(unreadPhrases("Draw a card and you may choose new targets for the copy.", "spell")).not.toEqual([]);
+});
+
+// #1589 part 4: the hand pick's follow-ups. An untyped "a card", a mana-value filter printed before or after "from it", and the pick joined to the reveal before it or to the exile after it.
+test("a hand pick carries its mana-value filter, reads an untyped card, and is read when joined to the reveal or to the exile", () => {
+  const picked = (effect: string, type: "spell" | "triggered" = "spell") => { expect(unreadPhrases(effect, type)).toEqual([]); return parseActions(effect, type).filter((a) => a.verb === "discard" || a.verb === "exile"); };
+  // Coercion: no type word at all.
+  expect(picked("Target opponent reveals their hand. You choose a card from it. That player discards that card.")).toMatchObject([{ verb: "discard", text: "a card from target opponent's hand", object: { fromZone: "hand" } }]);
+  // Inquisition of Kozilek: the filter is printed after "from it" and belongs to the picked card.
+  const iok = picked("Target player reveals their hand. You choose a nonland card from it with mana value 3 or less. That player discards that card.");
+  expect(iok).toMatchObject([{ verb: "discard", text: "a nonland card with mana value 3 or less from target player's hand", object: { fromZone: "hand", notType: ["land"], stats: [{ metric: "mana-value", op: "lte", value: 3 }] } }]);
+  // Venarian Glimmer: the same filter printed before "from it", with X.
+  expect(picked("Target player reveals their hand. You choose a nonland card with mana value X or less from it. That player discards that card.")).toMatchObject([{ verb: "discard", text: "a nonland card with mana value X or less from target player's hand", object: { notType: ["land"], stats: [{ metric: "mana-value", op: "lte", variable: true }] } }]);
+  // Castigate: the exile is joined to the pick, and the card leaves the HAND (the store's hand > exile). Transgress the Mind: with a filter between them.
+  expect(picked("Target opponent reveals their hand. You choose a nonland card from it and exile that card.")).toMatchObject([{ verb: "exile", text: "a nonland card from target opponent's hand", fromZone: "hand" }]);
+  // Never Happened: the card may come from the same player's graveyard, and the "it" joined to the choose is the chosen card. Agonizing Remorse: a nonland hand card or any graveyard card.
+  expect(picked("Target opponent reveals their hand. You choose a nonland card from that player's graveyard or hand and exile it.")).toMatchObject([{ verb: "exile", text: "a nonland card from target opponent's graveyard or hand", fromZone: "hand", object: { control: "opp", notType: ["land"], anyOf: [{ fromZone: "graveyard" }, { fromZone: "hand" }] } }]);
+  const remorse = picked("Target opponent reveals their hand. You choose a nonland card from it or a card from their graveyard. Exile that card. You lose 1 life.");
+  expect(remorse).toMatchObject([{ verb: "exile", object: { control: "opp", anyOf: [{ notType: ["land"], fromZone: "hand" }, { fromZone: "graveyard" }] } }]);
+  // Neither zone is the battlefield: the exile carries the hand it is picked from (the graveyard half is a CEILING), so it is no "exiled from the battlefield" (Soulherder) and no blink.
+  expect(remorse[0]!.fromZone).toBe("hand");
+  expect(picked("Target player reveals their hand. You choose a card from it with mana value 3 or greater and exile that card.")).toMatchObject([{ verb: "exile", text: "a card with mana value 3 or greater from target player's hand", object: { stats: [{ metric: "mana-value", op: "gte", value: 3 }] } }]);
+  // Tidehollow Sculler: the pick is joined to the reveal. Lobotomy's ", then you choose" is the same join (its "card other than a basic land card" class stays unread).
+  expect(picked("Target opponent reveals their hand and you choose a nonland card from it. Exile that card.", "triggered")).toMatchObject([{ verb: "exile", text: "a nonland card from target opponent's hand" }]);
+  // Covetous Urge, Psychic Intrusion: a sentence after the joined exile names the card again, which the carry refuses; the pick is then not cut out at all, so no half reading of it reaches the stored answer
+  // (carried, the cast of "that card" became an opponent's cast and Psychic Intrusion lost its "whenever you cast" pairs).
+  const urge = "Target opponent reveals their hand. You choose a nonland card from that player's graveyard or hand and exile it. You may cast that card for as long as it remains exiled, and you may spend mana as though it were mana of any color to cast that spell.";
+  expect(unreadPhrases(urge, "spell").length).toBeGreaterThan(0);
+  expect(parseActions(urge, "spell").some((a) => a.text === "a nonland card from target opponent's graveyard or hand")).toBe(false);
+  // Still refused: several cards (Reap Intellect), a bracketed variable (Dread Fugue), a bare "it" in a LATER sentence (Binding Negotiation, Vendilion Clique), a second reference (Psychic Theft).
+  for (const refused of [
+    "Target opponent reveals their hand. You choose up to X nonland cards from it and exile them.",
+    "Target player reveals their hand. You choose a nonland card from it [with mana value 2 or less]. That player discards that card.",
+    "Target opponent reveals their hand. You may choose a nonland card from it. If you do, they discard it.",
+    "Target player reveals their hand. You choose an instant or sorcery card from it and exile that card. You may cast that card for as long as it remains exiled.",
+    "Target opponent reveals their hand. You choose a card from it for each card discarded this way. That player discards those cards.",
+  ]) expect(unreadPhrases(refused, "spell").length, refused).toBeGreaterThan(0);
 });
 
 // #1349 review: after a hand pick, "that player" is the hand's owner (the target opponent), not an unnamed player: Nightsnare's "that player discards two cards" and Salt Vampire's draw were `control: any`.
