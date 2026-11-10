@@ -290,7 +290,8 @@ function caresFromTags(tags: CardTags): boolean {
   // THE CREATURE-SUBTYPE LIST, not the hierarchy: the hierarchy lists every card type a subtype appears under, so Forest, Equipment, Food, Shrine, Treasure and Spacecraft read as creature subtypes too.
   const isCreatureType = (sub: string): boolean => CREATURE_SUBTYPE_SET.has(sub.toLowerCase());
   const names = (s: SubjectFilter | undefined): boolean => {
-    if (!s || s.self === true) return false;
+    // A NAMED CARD is no type the card cares about (#1582): the result a meld enters ("meld them into Chittering Host") is one card, as `usesCreatureType` already reads it.
+    if (!s || s.self === true || s.named !== undefined) return false;
     // A chosen CREATURE type (or one derive could not name the kind of); a card type, odd or even, a land type or a planeswalker type (Cloud Key, Extinction Event, Shimmer, Leori) names no creature type (#1568).
     // ...and one the card's controller makes: an opponent's choice (Callous Oppressor) is no type this card cares about (#1570).
     if (s.chosenType === true && s.chosenBy !== "opponent" && (s.chosenKind === undefined || s.chosenKind === "creature-type")) return true;

@@ -30,6 +30,7 @@ import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
 import { connect, loadConfig } from "@edh-seer/data";
 import { createPool, defaultWorkers } from "@edh-seer/data/parallel";
+import { attachMeldResult, meldResultName } from "@edh-seer/tagger";
 import {
   baseRowsKey, toolDigestOf, chooseMatcher, classifyRows, clauseKey, docDigest, impactJson, formatReport, ratchetReport, grammarReport, nodeModulesHash, pairsReport, sampleIds, snapOf, splitMatcherCode, treeVerdict,
   type CardPairs, type GrammarEntry, type GrammarSnap, type RatchetInputs, type ImpactReport, type PairSection, type RowSnap,
@@ -184,6 +185,11 @@ const scopeOf = async (s: Side): Promise<Set<string>> => new Set((await store.ca
 const [scopeB, scopeH] = [await scopeOf(B), await scopeOf(H)];
 const allCards = await store.cards.find({}).toArray() as any[];
 const cardById = new Map(allCards.map((c) => [c._id as string, c]));
+// A meld card's derive reads the card it melds INTO (#1582), as derive-corpus attaches it. BASE's own derive ignores the extra field.
+{
+  const byName = new Map(allCards.map((c) => [c.name as string, c]));
+  for (const c of allCards) { const n = meldResultName(c); if (n !== undefined) attachMeldResult(c, byName.get(n)); }
+}
 log(`read ${clauseDocs.length} clause docs (${tokenIds.length} tokens), ${allCards.length} cards (derive scope BASE ${scopeB.size}, HEAD ${scopeH.size})`);
 
 // ---- BASE rows cache (#1486): what BASE's own code made of THIS corpus, stored under its tree ----

@@ -257,7 +257,7 @@ function umbrellaIntersection(found: readonly string[]): string[] | undefined {
 }
 
 function parseTypes(
-  t: string,
+  t: string, spared: readonly string[] = [],
 ): { type?: string | string[]; notType?: string[]; umbrella?: string; plural: boolean } {
   const found: string[] = [];
   let plural = false;
@@ -283,7 +283,9 @@ function parseTypes(
   sweep(quoteCut.replace(EXILED_WITH_SELF, " "));
   if (found.length === 0) sweep(quoteCut);
 
-  const { negated, plural: negPlural } = negatedTypes(t);
+  const { negated: written, plural: negPlural } = negatedTypes(t);
+  // The types an "except for" list spares (#1582) are negated the same way "nonartifact, nonland" would be.
+  const negated = spared.length ? [...written, ...spared.filter((x) => !written.includes(x))] : written;
   const { negationApplied, ...r } = resolveTypes(found, negated);
   if (negationApplied) return { ...r, plural: plural || negPlural };
   if (r.type === undefined) return { plural: /\bopponents\b|\bplayers\b/.test(t) };
@@ -898,6 +900,24 @@ export function namesAClass(s: Partial<SubjectFilter>): boolean {
 
 const EXCEPT_FOR = / except for /;
 
+/** WHAT AN "except for" LIST SPARES (#1582): "all permanents except for artifacts and lands" (Scourglass), "all other permanents except for artifacts, lands, and Phyrexians" (Elesh Norn // The Argent Etchings), "except for Giants, Wizards, and lands" (Cyclone Summoner),
+ *  "all creatures except for Merfolk". An item is carried only when it is ONE word that is a card type (`types`, which become `notType`) or a creature/other subtype (`subtypes`, `notSubtype`); "tokens" is read separately (the class is nontoken). An item with a qualifier ("a basic land",
+ *  "creatures you control", "artifact creatures") spares less than its type word, so it is not carried and the sweep stays as wide as before. Split on the separators by string tests, never a regex over card text.
+ *  CEILING: a producer's `notSubtype` is read by ONE matcher rule, the subtype reach of a whole-permanent sweep (`sweepsEveryPermanent`: Norn x a Phyrexian demand is refused); a typed class producer ("all creatures except for Merfolk") is not narrowed by it, so a consumer demanding the spared subtype is still fed by that class, as before. */
+export function sparedClasses(tail: string): { types: string[]; subtypes: string[] } {
+  const types: string[] = [];
+  const subtypes: string[] = [];
+  for (const piece of tail.split(",").flatMap((x) => x.split(" and ")).flatMap((x) => x.split(" or "))) {
+    const word = piece.trim();
+    if (word === "" || word.includes(" ")) continue;
+    for (const s of singulars(word)) {
+      if ((CARD_TYPES as readonly string[]).includes(s)) { if (!types.includes(s)) types.push(s); break; }
+      if (SUBTYPES.has(s)) { if (!subtypes.includes(s)) subtypes.push(s); break; }
+    }
+  }
+  return { types, subtypes };
+}
+
 export function parseSubject(text: string): SubjectFilter {
   // EVERY FIELD IS READ FROM THE TOKEN, NOT FROM THE ABILITY IT IS GRANTED (#1387; #1385 cut the types alone). Cut first, so the counter in Zabu's
   // landfall ability, the "creatures with flying" a Drone can block, the "each opponent" an Imp damages and the Mounts a Pilot crews are not the
@@ -905,7 +925,7 @@ export function parseSubject(text: string): SubjectFilter {
   // The tail after "and attach it to ..." is the Aura's host, not the token; and "a copy of the card Armadillo Cloak" names a card, whose
   // words are not subtypes (The Dogronmaster).
   // WHAT AN "except for" LIST SPARES IS NOT THE CLASS (#1549): Elspeth Tirel's "all other permanents except for lands and tokens" read `token: true`, type `land`, and Scourglass's "all permanents except for a ..." the spared types. Cut at the list, as the damage path does (`cutExceptTail`).
-  // CEILING: the exclusion is dropped, not carried as `except`; only the "except for" form (a bare "except creatures chosen this way" or "except it's" keeps its words).
+  // The spared card types and subtypes are carried as `notType` / `notSubtype` (#1582, `sparedClasses`); only the "except for" form (a bare "except creatures chosen this way" or "except it's" keeps its words).
   const lowered = stripTokenAbility(text.toLowerCase().trim());
   const whole = lowered.split(ATTACHED_TO)[0].split(AND_ATTACH)[0].split(EXCEPT_FOR)[0]
     .replace(COPY_OF_NAMED_CARD, "$1").trim();
@@ -916,7 +936,8 @@ export function parseSubject(text: string): SubjectFilter {
   // of creatures you control", "X, where X is the number of Elves") names NO class: the head is
   // what is left, empty or a bare variable, and the count stays a magnitude for `scaling.ts` to read.
   const t = whole.split(COUNT_PHRASE)[0].trim();
-  const { type, notType, umbrella, plural } = parseTypes(t);
+  const spared = sparedClasses(lowered.split(EXCEPT_FOR).slice(1).join(" "));
+  const { type, notType, umbrella, plural } = parseTypes(t, spared.types);
   const { subtype, plural: subtypePlural } = parseSubtypes(t);
   // "creature TOKENS you control": the plural sits on the word `tokens`, which is neither a type nor
   // a subtype, so neither parser saw it and the phrase read as a bare singular (AC13, 2026-09-09).
@@ -927,7 +948,6 @@ export function parseSubject(text: string): SubjectFilter {
   // fallback ("equal to the number of creatures your opponents control" still names them).
   const out: SubjectFilter = { control: parseControl(whole), token: parseToken(t) };
   // A SWEEP THAT SPARES TOKENS IS NONTOKEN (#1579 part 3): "destroy all other permanents except for lands and tokens" (Elspeth Tirel). The list is cut off the class above; only its token word is kept.
-  // CEILING: the spared TYPES stay dropped ("except for artifacts and lands": Scourglass), so that sweep still reads as every permanent.
   if (out.token === null && /\btokens?\b/.test(lowered.split(EXCEPT_FOR).slice(1).join(" "))) out.token = false;
   const ownership = parseOwnership(whole.split(COUNT_PHRASE)[0]!.trim() || whole);
   if (ownership) {
@@ -1037,7 +1057,8 @@ export function parseSubject(text: string): SubjectFilter {
   if (selection) out.selection = selection;
   if (type) out.type = type;
   if (notType?.length) out.notType = notType;
-  const notSubtype = parseNotSubtypes(t);
+  const writtenNotSubtype = parseNotSubtypes(t);
+  const notSubtype = spared.subtypes.length ? [...(writtenNotSubtype ?? []), ...spared.subtypes.filter((x) => !(writtenNotSubtype ?? []).includes(x))] : writtenNotSubtype;
   if (notSubtype) out.notSubtype = notSubtype;
   if (umbrella) out.umbrella = umbrella;
   const lost = lostOtherTypes(t, out);

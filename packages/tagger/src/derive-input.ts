@@ -13,6 +13,7 @@ import type { DerivedTagsDoc } from "./clause-store.js";
 import type { ClauseRecord } from "./canonicalize.js";
 import type { Clause } from "./segment.js";
 import type { DeriveInput } from "./derive/derive.js";
+import type { MeldParts } from "./derive/meld-pair.js";
 import { missedCost } from "./grammar/preamble.js";
 
 /** Clause id -> clause text, recomputed rather than stored. `segment()` is deterministic over the
@@ -198,7 +199,7 @@ export function faceLoyalties(doc: { loyalty?: string; faces?: { loyalty?: strin
   return per.some((s) => s !== undefined) ? per.map(one) : undefined;
 }
 
-type CardDocLike = Parameters<typeof charsFrom>[0] & { oracleText?: string; keywords?: string[]; typeLine?: string; allParts?: { component?: string; typeLine?: string }[]; manaCost?: string; loyalty?: string; faces?: { manaCost?: string; loyalty?: string }[] };
+type CardDocLike = Parameters<typeof charsFrom>[0] & { oracleText?: string; keywords?: string[]; typeLine?: string; allParts?: { component?: string; typeLine?: string; name?: string }[]; meldResult?: MeldResultDoc; manaCost?: string; loyalty?: string; faces?: { manaCost?: string; loyalty?: string }[] };
 
 /** EVERYTHING DERIVE READS BESIDE THE CLAUSES, from the card document: the one construction
  *  `derive-corpus` and the grammar-only measurement (#896 task 7) share, so the two derive the same
@@ -228,5 +229,33 @@ export function deriveInputOf(card: CardDocLike, oracleId: string, name: string,
     oracleText: card.oracleText,
     grantedToken: grantedTokenClauses(card),
     ...(readings ? { readings } : {}),
+    ...(meldPartsOf(card, name) ? { meld: meldPartsOf(card, name)! } : {}),
+  };
+}
+
+/** The `meld_result` card's own document fields a meld needs (#1582): its printed stats and colours, which `allParts` does not carry. The loaders (derive-corpus, derive-impact) attach it to the source document as `meldResult` with `attachMeldResult`. */
+export interface MeldResultDoc { name?: string; power?: string | number | null; toughness?: string | number | null; colors?: string[]; manaValue?: number }
+/** The name of the card a meld card melds into, from `allParts`; the loaders look it up in `cards`. */
+export const meldResultName = (card: { allParts?: { component?: string; name?: string }[] }): string | undefined => card.allParts?.find((p) => p.component === "meld_result")?.name;
+/** Put the result card's stats beside the melder's document. Mutates `source`; a document with no result name or a missing result is left as it was. */
+export function attachMeldResult(source: object, result: { name?: string; power?: unknown; toughness?: unknown; colors?: unknown; manaValue?: unknown } | undefined | null): void {
+  if (!result) return;
+  (source as { meldResult?: MeldResultDoc }).meldResult = { name: result.name, power: result.power as never, toughness: result.toughness as never, colors: result.colors as never, manaValue: result.manaValue as never };
+}
+/** A printed stat as the matcher holds it: a number, a star or X as 0 (the SubjectFilter convention), nothing for a card with none (a planeswalker). */
+const statOf = (v: string | number | null | undefined): number | undefined => (v === null || v === undefined ? undefined : Number.isFinite(Number(v)) ? Number(v) : 0);
+
+/** The type lines of a meld card's result and partner, from `allParts`, and the result's printed stats and colours, from `meldResult` (#1582). Undefined for a card with no `meld_result`. */
+export function meldPartsOf(card: { allParts?: { component?: string; typeLine?: string; name?: string }[]; meldResult?: MeldResultDoc }, name: string): MeldParts | undefined {
+  const parts = card.allParts ?? [];
+  const result = parts.find((p) => p.component === "meld_result" && p.typeLine !== undefined);
+  if (result === undefined) return undefined;
+  const typesOf = (typeLine: string) => { const c = charsFrom({ typeLine }); return { types: c.types, subtypes: c.subtypes }; };
+  const partners = parts.filter((p) => p.component === "meld_part" && p.typeLine !== undefined && p.name !== name);
+  const r = card.meldResult;
+  const power = statOf(r?.power), toughness = statOf(r?.toughness);
+  return {
+    result: { ...typesOf(result.typeLine!), ...(result.name ? { name: result.name } : {}), ...(power !== undefined ? { power } : {}), ...(toughness !== undefined ? { toughness } : {}), ...(r?.colors ? { colors: r.colors } : {}), ...(r?.manaValue !== undefined ? { manaValue: r.manaValue } : {}) },
+    partners: partners.map((p) => ({ ...typesOf(p.typeLine!), ...(p.name ? { name: p.name } : {}) })),
   };
 }

@@ -45,16 +45,26 @@ export const isZonedCardGrant = (a: { effect: { kind: string; subject?: SubjectF
  *  than the control, the token flag, "other than this" (`other`), the zone it is read in (the battlefield, or the graveyard it arrives in), a battlefield origin and a negated TYPE (the subtype's own types must not all be negated: "nonland permanents" take no Forest). A target, a single object, a colour,
  *  a keyword, a stat, a count, a pile / chosen / all-but selection or a negated subtype narrows the class by something the subtype list cannot read, so it proves nothing here. */
 const WHOLE_CLASS_FIELDS: ReadonlySet<string> = new Set(["control", "token", "type", "scope", "other", "notType", "fromZone", "zone"]);
+/** THE SAME SWEEP WRITTEN AS A TYPE LIST (#1582): "all permanents except for artifacts and lands" (Scourglass), "all nonland permanents" derive `type` as every permanent type the sweep leaves, with the spared ones in `notType`. The list must be EXACTLY the six permanent types minus
+ *  `notType`, and a spared subtype (`notSubtype`: Norn spares Phyrexians) and the all-but marker (`selection`) are the only narrowings added to the whole-class fields above. 
+ *  CEILING: a narrowing derive does not store passes the rule: Desynchronization's "that's not historic" (the schema has no `historic: false`) and Urza, Planeswalker's "artifacts and planeswalkers you control gain indestructible" before "destroy all nonland permanents" read as every nonland permanent (#1586). A sweep "with mana value X" counts too: X is open. */
+const PERMANENT_TYPE_SET: readonly string[] = ["creature", "artifact", "enchantment", "planeswalker", "land", "battle"];
+const LIST_SWEEP_FIELDS: ReadonlySet<string> = new Set([...WHOLE_CLASS_FIELDS, "notSubtype", "selection"]);
 function sweepsEveryPermanent(p: SubjectFilter): boolean {
   if (p.scope !== "all" && p.scope !== "each") return false;
-  const types = arr(p.type);
-  if (types.length !== 1 || types[0]!.toLowerCase() !== "permanent") return false;
   // A SET TAKEN FROM A ZONE THE CARD DID NOT SWEEP (the graveyard "all permanent cards in your graveyard that were put there this turn", a library dig, "exiled with this") is a set the engine cannot read.
   if (p.fromZone !== undefined && p.fromZone !== "battlefield") return false;
-  return Object.entries(p).every(([k, v]) => v === undefined || WHOLE_CLASS_FIELDS.has(k));
+  const types = arr(p.type).map((t) => t.toLowerCase());
+  if (types.length === 1 && types[0] === "permanent") return Object.entries(p).every(([k, v]) => v === undefined || WHOLE_CLASS_FIELDS.has(k));
+  const out = (p.notType ?? []).map((t) => t.toLowerCase());
+  const left = PERMANENT_TYPE_SET.filter((t) => !out.includes(t));
+  if (left.length === 0 || types.length !== left.length || !left.every((t) => types.includes(t))) return false;
+  if (p.selection !== undefined && p.selection !== "all-but") return false;
+  return Object.entries(p).every(([k, v]) => v === undefined || LIST_SWEEP_FIELDS.has(k));
 }
 /** Is this subtype one a permanent can carry that the sweep's negated types leave? (Instant and sorcery subtypes: no.) */
-function permanentSubtypeSurvives(subtype: string, notType: readonly string[] | undefined): boolean {
+function permanentSubtypeSurvives(subtype: string, notType: readonly string[] | undefined, notSubtype?: readonly string[]): boolean {
+  if ((notSubtype ?? []).some((x) => x.toLowerCase() === subtype.toLowerCase())) return false;
   const types = SUBTYPE_TYPES[subtype.toLowerCase()];
   if (types === undefined) return false;
   const out = (notType ?? []).map((t) => t.toLowerCase());
@@ -337,7 +347,7 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   if (consumerSubtypes.length > 0) {
     const ok = consumerSubtypes.some((cs) =>
       arr(producer.subtype).some((ps) => ps.toLowerCase() === cs.toLowerCase())
-      || (sweepsEveryPermanent(producer) && permanentSubtypeSurvives(cs, producer.notType)),
+      || (sweepsEveryPermanent(producer) && permanentSubtypeSurvives(cs, producer.notType, producer.notSubtype)),
     );
     if (!ok) return false;
   }

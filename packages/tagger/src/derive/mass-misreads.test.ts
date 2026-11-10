@@ -74,12 +74,15 @@ describe("a comparison with a target's stat does not make the mass one target", 
 });
 
 describe('"except for" lists the spared, not the class', () => {
-  test("Elspeth Tirel: the -5 destroys permanents, not token lands, and it spares tokens (nontoken, #1579 part 3)", () => {
+  test("Elspeth Tirel: the -5 destroys nonland permanents, and it spares tokens (nontoken, #1579 part 3; lands spared, #1582)", () => {
     const d = emits("Elspeth Tirel", "dies");
-    expect(d.map((e) => [e.subject.type, e.subject.token, e.subject.scope])).toEqual([["permanent", false, "all"]]);
+    expect(d.map((e) => [e.subject.notType, e.subject.token, e.subject.scope])).toEqual([[["land"], false, "all"]]);
+    expect([d[0]!.subject.type].flat()).not.toContain("land");
   });
-  test("Scourglass: destroys permanents", () => {
-    expect(emits("Scourglass", "dies").filter((e) => e.subject.self !== true).map((e) => [e.subject.type, e.subject.scope])).toEqual([["permanent", "all"]]);
+  test("Scourglass: destroys the permanents that are neither artifacts nor lands (#1582)", () => {
+    const d = emits("Scourglass", "dies").filter((e) => e.subject.self !== true);
+    expect(d.map((e) => [e.subject.notType, e.subject.scope])).toEqual([[["artifact", "land"], "all"]]);
+    expect([d[0]!.subject.type].flat().sort()).toEqual(["battle", "creature", "enchantment", "planeswalker"]);
   });
   test("CONTROL: Wrath of God stays a mass of creatures", () => {
     expect(shape("Wrath of God", "dies")).toEqual([["any", "all", "creature"]]);
@@ -91,8 +94,10 @@ describe("a `cast` stored with a mass object is the condition, not a cast", () =
     expect(emits(name, "cast")).toEqual([]);
     expect(emits(name, "leaves").length).toBeGreaterThan(0);
   });
-  test("Cyclone Summoner: the bounce is every permanent, the exception list does not narrow it", () => {
-    expect(shape("Cyclone Summoner", "leaves")).toEqual([["any", "all", "permanent"]]);
+  test("Cyclone Summoner: the bounce spares lands (notType) and Giants and Wizards (notSubtype), #1582", () => {
+    const b = emits("Cyclone Summoner", "leaves");
+    expect(b.map((e) => [e.subject.notType, e.subject.notSubtype])).toEqual([[["land"], ["giant", "wizard"]]]);
+    expect([b[0]!.subject.type].flat()).not.toContain("land");
   });
 });
 

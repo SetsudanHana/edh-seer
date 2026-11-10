@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { parseSubject } from "./subject.js";
 
 test("control comes from the possessive phrase, defaulting to any", () => {
@@ -1032,7 +1032,41 @@ test('"one of those Dragons" and "each of the chosen creatures" are not the clas
 });
 
 test('"except for" spares, it does not name the class', () => {
-  expect(parseSubject("all other permanents except for lands and tokens")).toMatchObject({ type: "permanent", scope: "all" });
+  expect(parseSubject("all other permanents except for lands and tokens")).toMatchObject({ scope: "all", notType: ["land"] });
+  expect([parseSubject("all other permanents except for lands and tokens").type].flat()).not.toContain("land");
   // ...and it spares tokens, so it is a nontoken class (#1579 part 3); it is not the class "tokens".
   expect(parseSubject("all other permanents except for lands and tokens").token).toBe(false);
+});
+
+/** #1582 part 1 -- WHAT AN "except for" LIST SPARES IS CARRIED, NOT DROPPED. Scourglass ("destroy all permanents except for artifacts and lands") and Elesh Norn's back face
+ *  ("all other permanents except for artifacts, lands, and Phyrexians") read as every permanent, which fed an artifact token's leave payoff (Munitions). The spared card types are `notType`
+ *  (the class keeps the types it can still take), the spared subtypes `notSubtype`. */
+describe('"except for" carries the spared types', () => {
+  test("Scourglass: artifacts and lands are spared", () => {
+    const s = parseSubject("all permanents except for artifacts and lands");
+    expect(s.notType).toEqual(["artifact", "land"]);
+    expect([s.type].flat()).not.toContain("artifact");
+    expect([s.type].flat()).not.toContain("land");
+    expect(s.scope).toBe("all");
+  });
+  test("Elesh Norn // The Argent Etchings: artifacts, lands and Phyrexians", () => {
+    const s = parseSubject("all other permanents except for artifacts, lands, and Phyrexians");
+    expect(s.notType).toEqual(["artifact", "land"]);
+    expect(s.notSubtype).toEqual(["phyrexian"]);
+    expect(s.other).toBe(true);
+  });
+  test("a spared subtype on a typed class (Cyclone Summoner's Giants and Wizards, Merfolk)", () => {
+    expect(parseSubject("all permanents except for Giants, Wizards, and lands")).toMatchObject({ notType: ["land"], notSubtype: ["giant", "wizard"] });
+    expect(parseSubject("all creatures except for Merfolk")).toMatchObject({ type: "creature", notSubtype: ["merfolk"] });
+  });
+  test("Elspeth Tirel: lands spared and tokens spared (nontoken)", () => {
+    const s = parseSubject("all other permanents except for lands and tokens");
+    expect(s.notType).toEqual(["land"]);
+    expect(s.token).toBe(false);
+  });
+  test("CONTROL: a spared class the filter cannot say as a bare type is not carried (basic land, a controller)", () => {
+    expect(parseSubject("all permanents except for a basic land").notType).toBeUndefined();
+    expect(parseSubject("all creatures except for creatures you control").notType).toBeUndefined();
+    expect(parseSubject("all permanents").notType).toBeUndefined();
+  });
 });
