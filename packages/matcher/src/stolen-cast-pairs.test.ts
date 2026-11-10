@@ -49,7 +49,8 @@ describe.each(THIEVES)("%s casts only cards another player owns", (thief) => {
     expect(emits.length).toBeGreaterThan(0);
     for (const s of emits) expect({ control: s.control, owner: s.owner }).toEqual({ control: "you", owner: "opp" });
   });
-  test.each(["Artisan of Kozilek", "Echo Storm"])("no self reason with %s's own 'when you cast this spell'", (self) => {
+  // Sen Triplets derives a land-play only: it has no cast reason to lose, so the self cases would pass whatever the owner says.
+  test.skipIf(thief === "Sen Triplets").each(["Artisan of Kozilek", "Echo Storm"])("no self reason with %s's own 'when you cast this spell'", (self) => {
     expect(castTags(thief, self)).toEqual([]);
   });
 });
@@ -74,4 +75,18 @@ test("Spellshift's cast is the other player's ('that player may cast that card')
 });
 test.each(["Psychic Theft", "Rona, Herald of Invasion // Rona, Tolarian Obliterator"])("%s is still your cast, whoever the card is taken from", (thief) => {
   for (const s of castEmits(thief)) expect(s.control).toBe("you");
+});
+
+// "YOU MAY CAST" IS YOUR CAST WHETHER OR NOT THE OWNER IS PROVEN (#1594 review): the caster is read off the permission alone. A spell an opponent only CONTROLS (Smirking Spelljacker), a copy (CR 112.2: the
+// copy's owner is whoever put it on the stack, you) and a pile that can hold your own card (Etali, Primal Storm; The Ur-Sphinx) write no owner, and none of them is an opponent's cast.
+test.each(["Smirking Spelljacker", "Flawless Forgery", "Blue Mage's Cane", "Saruman of Many Colors", "Reversal of Fortune", "Etali, Primal Storm", "The Ur-Sphinx"])("%s: 'you may cast' is your cast, with no owner written", (caster) => {
+  const emits = castEmits(caster).filter((s) => s.token !== true);
+  expect(emits.length).toBeGreaterThan(0);
+  for (const s of emits) { expect(s.control).toBe("you"); expect(s.owner).toBeUndefined(); expect(s.scope).not.toBe("target"); }
+});
+test.each(["Smirking Spelljacker", "Flawless Forgery"])("%s is no 'whenever an opponent casts a spell' for Rhystic Study", (caster) => {
+  expect(castTags(caster, "Rhystic Study")).toEqual([]);
+});
+test("Smirking Spelljacker still feeds Talrand: you cast the exiled instant or sorcery", () => {
+  expect(castTags("Smirking Spelljacker", "Talrand, Sky Summoner")).not.toEqual([]);
 });
