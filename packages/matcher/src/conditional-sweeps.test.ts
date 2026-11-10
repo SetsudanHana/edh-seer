@@ -54,7 +54,7 @@ describe("Urza, Planeswalker -10 spares the artifacts you control", () => {
   });
 });
 
-describe("Glyph of Reincarnation returns only the creatures it destroyed", () => {
+describe("Glyph of Reincarnation: its \"target Wall\" is the blocker, not a Wall it returns", () => {
   test.each(["Apocalypse", "Karn's Sylex", "Urza, Planeswalker", "Ratchet Bomb"])("%s x Glyph of Reincarnation: no graveyard-recursion", (p) => {
     expect(tags(p, "Glyph of Reincarnation").filter((t) => t.startsWith("graveyard-recursion"))).toEqual([]);
   });

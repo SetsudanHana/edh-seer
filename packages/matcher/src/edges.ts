@@ -1047,7 +1047,8 @@ function exilesOnlyBlockCounterparts(oracleText: string | undefined): boolean {
 }
 
 /** A recursion restricted to cards the consumer's OWN earlier action put in the graveyard. "From among the cards milled this way" (Szarekh, the Silent King: it takes an artifact creature card of ITS mill; 10 corpus cards print that shape, #1577) is the same set.
- *  So is "For each creature that died this way, put a creature card from the graveyard of the player who controlled that creature ... onto the battlefield" (Glyph of Reincarnation, #1586): it returns the cards of the creatures IT destroyed, and its "target Wall" is the blocker that names them, not a subtype it recurs. */
+ *  So is "For each creature that died this way, put a creature card from the graveyard of the player who controlled that creature ... onto the battlefield" (Glyph of Reincarnation, #1586): its "target Wall" is the BLOCKER that names the creatures it destroys, never a Wall it recurs, so derive's `graveyard-recursion:wall` was a demand no fill can meet (2,628 producers paired with it, census at 486).
+ *  CEILING: the oracle returns "a creature card" from that graveyard, which any fill of it could supply, not only the destroyed creature; the cue refuses every fill, as for the other "this way" shapes, and the missing `graveyard-recursion:creature` demand is the derive defect behind it (not fixed here). */
 const recursionIsSelfSupplied = (oracleText: string | undefined): boolean =>
   /\bfrom among (?:those|them)\b|\bfrom among the cards [a-z ]{0,20}this way\b|\bamong (?:the )?cards? (?:milled|discarded|revealed|exiled) this way\b|\bput into (?:a|your|their|its owner's) graveyard this way\b|\bput there [^.]{0,30}this turn\b|\bfrom the battlefield this turn\b|\bfor each creatures? (?:that )?(?:died|was destroyed) this way\b/i
     .test(oracleText ?? "");
