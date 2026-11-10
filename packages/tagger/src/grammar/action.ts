@@ -1963,14 +1963,17 @@ function readActions(effect: string, type: string | null, cost: string | undefin
       mayBefore = pick[1] !== undefined;
       continue;
     }
+    let pickedHere = false;
     if (handPick) {
       const refs = s.match(/\b(?:that card|the chosen card)\b(?!['\u2019])/gi)?.length ?? 0;
       // A bare "it" / "them" / "its" in a sentence after the choice may be the chosen card or something else (Vendilion Clique's "puts it on the bottom of their library" read as the Clique itself).
       const bare = /\b(?:it|them|its)\b/i.test(s.replace(/\b(?:that card|the chosen card)\b/gi, ""));
-      if (refs === 1 && !handPick.used && !bare) { s = s.replace(/\b(?:that card|the chosen card)\b(?!['\u2019])/i, handPick.text); handPick.used = true; }
+      if (refs === 1 && !handPick.used && !bare) { s = s.replace(/\b(?:that card|the chosen card)\b(?!['\u2019])/i, handPick.text); handPick.used = true; pickedHere = true; }
       else if (refs > 0 || bare) { handPick.used = false; unread?.push(handPick.sentence); handPick = undefined; }
       // "That player" after the pick is the hand's owner ("target opponent"); left as printed it read as an unnamed player, `control: any` (Nightsnare's discard of two paired with every discard payoff).
-      if (handPick) s = s.replace(/\bthat player\b/gi, handOwner);
+      // The sentence that names the picked card keeps "that player" in front of it (the object then reads "a nonland card from target opponent's hand" with its types, which "target player discards <that>" lost, Unmask),
+      // and the actions after it in that sentence ("then draws a card", Salt Vampire) are given the owner below.
+      if (handPick && !pickedHere) s = s.replace(/\bthat player\b/gi, handOwner);
     }
     // "Choose target creature. Exile it." (#1452): the choose records no action, as the store has it; the target it names stands where each later reference to it is (`carriedSentence`),
     // the way the bought reading writes the effect that uses it. A choose nothing refers back to, or whose references this cannot carry, stays unread (see the end of the loop).
@@ -2200,6 +2203,10 @@ function readActions(effect: string, type: string | null, cost: string | undefin
         if (o.verb === "put" || o.verb === "exile") { out[i] = { ...o, fromZone: "library", lookedAt: lookedAtLibrary }; pendingLook = null; }
         else if (o.verb === "reveal") { out[i] = { ...o, lookedAt: lookedAtLibrary }; pendingLook = null; }
       }
+    }
+    if (pickedHere && handPick) {
+      const owner = ACTORS.find(([w]) => w === handOwner)?.[1];
+      for (let i = at; i < out.length; i++) if (owner && out[i]!.text !== handPick.text && out[i]!.actor?.scope === "that") out[i] = { ...out[i]!, actor: { ...owner, text: handOwner } };
     }
     if (ifYouDoAfterMay) for (let i = at; i < out.length; i++) out[i] = { ...out[i]!, optional: true };
   }
