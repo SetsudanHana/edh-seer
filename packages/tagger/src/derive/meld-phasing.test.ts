@@ -27,6 +27,19 @@ describe("a meld exiles its pair: a chosen set, no mass", () => {
       expect(x.subject.scope, `${name} ${x.verb}`).toBeUndefined();
     }
   });
+  /** The exile keeps what is true of the pair: its types (the card's own and the partner's "a creature named"), nontoken, no subtype read off a name; a creature exile stays a creature exile (own-name.test.ts: Syr Vondam, Soulherder, Hero of Bretagard hear Graf Rats). */
+  test.each([
+    ["Graf Rats", "creature"], ["Mishra, Claimed by Gix", "creature"], ["Vanille, Cheerful l'Cie", "creature"], ["Gisela, the Broken Blade", "creature"],
+    ["Titania, Voice of Gaea", ["creature", "land"]], ["Hanweir Battlements", ["land", "creature"]], ["Urza, Lord Protector", ["creature", "artifact"]],
+  ])("%s: the pair is exiled as %j, nontoken, with no subtype", (name, type) => {
+    const meld = clausesWith(name, "meld");
+    const e = emitsOf(name, (c) => meld.includes(c)).filter((x) => x.verb === "exiled" || x.verb === "leaves");
+    for (const x of e) {
+      expect([x.subject.type].flat().sort(), `${name} ${x.verb}`).toEqual([type].flat().sort());
+      expect(x.subject.token, `${name} ${x.verb}`).toBe(false);
+      expect(x.subject.subtype, `${name} ${x.verb}`).toBeUndefined();
+    }
+  });
   test.each(MELDERS)("%s: the melded permanent enters with no mass and no class read off its name", (name) => {
     const meld = clausesWith(name, "meld");
     const e = emitsOf(name, (c) => meld.includes(c)).filter((x) => x.verb === "enters");

@@ -71,6 +71,7 @@ const TESTED: Record<string, string> = {
   "108.3": "grammar/filter.test.ts — ownership beside control: 'you control but don't own' (#896)",
   "715": "grammar/filter.test.ts — an Adventure is a card's layout, read as a status (#896)",
   "702.22b": "grammar/filter.test.ts — 'bands with other' is a keyword a token can have (Master of the Hunt) (#896)",
+  "702.26d": "derive/meld-phasing.test.ts — a phase-out emits `phases-out` and no leave, exile or death; the real removal beside it stays (Divine Smite, Teferi's Protection, The Phasing of Zhalfir; #1582)",
   "702.26a": "grammar/action.test.ts — 'Simultaneously, all phased-out creatures phase in and all creatures with phasing phase out' (Time and Tide): a timing word, then two phasing actions (#1210)",
   "701.42a": "derive/meld-phasing.test.ts — 'exile them, then meld them' exiles the pair (a chosen set, no mass) and the melded permanent enters with no class read off its name (#1582)",
   "702.26c": "grammar/action.test.ts — 'target creature phases in' is the `phase-in` action, the twin of `phase-out` (#1210)",
