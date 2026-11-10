@@ -1877,7 +1877,7 @@ let carryRefused = false;
  *  "Target opponent reveals their hand and you choose a nonland card from it. Exile that card." (Tidehollow Sculler), "..., then you choose ..." (Lobotomy);
  *  "You choose a nonland card from it and exile that card." (Castigate, Thought-Knot Seer). By index, no regex over card text. */
 const GRAVEYARD_OR_HAND = " from that player's graveyard or hand";
-function handPickSentences(sentence: string): string[] {
+function handPickSentences(sentence: string, last: boolean): string[] {
   const out: string[] = [];
   let rest = sentence;
   for (const join of [" reveals their hand and you choose ", " reveals their hand, then you choose "]) {
@@ -1889,7 +1889,10 @@ function handPickSentences(sentence: string): string[] {
   }
   const lc = rest.toLowerCase();
   // "... from that player's graveyard or hand and exile it" (Never Happened): the "it" joined to the choose by "and" is the chosen card, so it is written as the plain shape's "that card".
+  // Only as the effect's LAST sentence: a sentence behind it that names the card again (Covetous Urge's "You may cast that card ...") is refused by the carry, and a pick cut out and then refused
+  // still reaches the stored answer through the aligned readings (Psychic Intrusion's cast became an opponent's cast).
   const either = lc.includes(GRAVEYARD_OR_HAND);
+  if (either && !last) return [...out, rest];
   if ((lc.startsWith("you choose ") || lc.startsWith("you may choose ")) && (either || lc.includes(" from it"))) {
     for (const tail of either ? [" and exile it.", " and exile it"] : [" and exile that card.", " and exile that card"]) {
       if (!lc.endsWith(tail)) continue;
@@ -1996,7 +1999,7 @@ function readActions(effect: string, type: string | null, cost: string | undefin
   // reveal it and put it into your hand", Domri Rade) is never resolved to the looked-at card, so the clause would read complete with the claim
   // silently missing: an unconsumed look stays an unread phrase and the card blocks.
   let pendingLook: string | null = null;
-  const sentences = unquoted.split(/(?<=\.)\s+/).flatMap(handPickSentences);
+  const sentences = unquoted.split(/(?<=\.)\s+/).flatMap((sentence, i, all) => handPickSentences(sentence, i === all.length - 1));
   let chosen: Chosen | undefined, refusedAny = false;
   // The hand a sentence just revealed or looked at ("Target opponent reveals their hand", "Look at target opponent's hand"), and the card chosen from it (#1349).
   let handOf: string | undefined, handOwner = "", handPick: { sentence: string; text: string; onlyHand: boolean; used: boolean } | undefined;

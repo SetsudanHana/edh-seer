@@ -816,6 +816,11 @@ test("a hand pick carries its mana-value filter, reads an untyped card, and is r
   expect(picked("Target player reveals their hand. You choose a card from it with mana value 3 or greater and exile that card.")).toMatchObject([{ verb: "exile", text: "a card with mana value 3 or greater from target player's hand", object: { stats: [{ metric: "mana-value", op: "gte", value: 3 }] } }]);
   // Tidehollow Sculler: the pick is joined to the reveal. Lobotomy's ", then you choose" is the same join (its "card other than a basic land card" class stays unread).
   expect(picked("Target opponent reveals their hand and you choose a nonland card from it. Exile that card.", "triggered")).toMatchObject([{ verb: "exile", text: "a nonland card from target opponent's hand" }]);
+  // Covetous Urge, Psychic Intrusion: a sentence after the joined exile names the card again, which the carry refuses; the pick is then not cut out at all, so no half reading of it reaches the stored answer
+  // (carried, the cast of "that card" became an opponent's cast and Psychic Intrusion lost its "whenever you cast" pairs).
+  const urge = "Target opponent reveals their hand. You choose a nonland card from that player's graveyard or hand and exile it. You may cast that card for as long as it remains exiled, and you may spend mana as though it were mana of any color to cast that spell.";
+  expect(unreadPhrases(urge, "spell").length).toBeGreaterThan(0);
+  expect(parseActions(urge, "spell").some((a) => a.text === "a nonland card from target opponent's graveyard or hand")).toBe(false);
   // Still refused: several cards (Reap Intellect), a bracketed variable (Dread Fugue), a bare "it" in a LATER sentence (Binding Negotiation, Vendilion Clique), a second reference (Psychic Theft).
   for (const refused of [
     "Target opponent reveals their hand. You choose up to X nonland cards from it and exile them.",
