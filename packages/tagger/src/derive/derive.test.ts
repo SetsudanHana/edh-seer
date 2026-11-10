@@ -8513,6 +8513,110 @@ test("a temporary trigger with a refused narrowing is refused, not kept from the
   expect(gaze.unknownTriggers).toEqual(["narrowing:attacks"]);
 });
 
+// #1592: the effect a refused or unread temporary / delayed trigger would do is not done when the spell or ability resolves (CR 603.7a), so the abilities derived from the actions printed BEHIND that trigger
+// claim nothing (`claimsNothing: "refused-trigger"`). Only those: what the clause does before the trigger, and its cost, claim as before.
+describe("#1592: the effect behind a refused or unread temporary trigger claims nothing", () => {
+  const fromGrammar = (name: string, oracleText: string, typeLine: string) => {
+    const g = grammarClauseRecords({ name, oracleText, typeLine, keywords: [] } as never);
+    expect(g.complete).toBe(true);
+    const texts = Object.fromEntries(g.records.map((r, i) => [r.id, oracleText.split("\n")[i]!.replace(/^[^:]*: /, "")]));
+    return deriveCardTags({ oracleId: "t", name, clauses: g.records as never, characteristics: MINIMAL_CHARACTERISTICS, clauseTexts: texts });
+  };
+  test("a refused temporary trigger that opens a spell (Gaze of Pain): its damage claims nothing", () => {
+    const gaze = deriveCardTags({
+      oracleId: "t", name: "Gaze of Pain",
+      clauses: [{ id: 1, abilityType: "spell", trigger: { event: "attacks", subject: "a creature you control", control: "you" }, actions: [{ verb: "deal-damage", object: "target creature", amount: "its power", optional: true }] }] as never,
+      characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["sorcery"] },
+      clauseTexts: { 1: "Until end of turn, whenever a creature you control attacks and isn't blocked, you may choose to have it deal damage equal to its power to a target creature. If you do, it assigns no combat damage this turn." },
+    });
+    expect(gaze.unknownTriggers).toEqual(["narrowing:attacks"]);
+    expect(gaze.abilities.map((a) => [a.effect.kind, a.claimsNothing])).toEqual([["damage", "refused-trigger"]]);
+  });
+  test("another duration (Vraska the Unseen): the +1's destroy claims nothing, the -3's destroy claims as before", () => {
+    const vraska = fromGrammar("Vraska the Unseen", "+1: Until your next turn, whenever a creature deals combat damage to Vraska the Unseen, destroy that creature.\n\u22123: Destroy target nonland permanent.", "Legendary Planeswalker — Vraska");
+    expect(vraska.unknownTriggers).toEqual(["temporary"]);
+    expect(vraska.abilities.map((a) => [a.clause, a.claimsNothing])).toEqual([[1, "refused-trigger"], [2, undefined]]);
+    // The ability keeps its kind and its loyalty cost: only the claim goes.
+    expect(vraska.abilities[0]!.kind).toBe("activated");
+    expect(vraska.abilities[0]!.emits?.map((e) => e.verb)).toEqual(["dies"]);
+  });
+  test("a trigger in the middle of a clause (Benefactor's Draught): the untap before it claims, the draw behind it does not", () => {
+    const draught = fromGrammar("Benefactor's Draught", "Untap all creatures. Until end of turn, whenever a creature an opponent controls blocks, draw a card.", "Instant");
+    expect(draught.abilities.map((a) => [a.effect.kind, a.claimsNothing])).toEqual([["untap", undefined], ["draw-card", "refused-trigger"]]);
+  });
+  test("a stored reading with cost actions and a later delayed trigger (Apple of Eden): only the owner's draw is behind the trigger", () => {
+    const apple = deriveCardTags({
+      oracleId: "t", name: "Apple of Eden, Isu Relic",
+      clauses: [
+        { id: 1, abilityType: "activated", actions: [
+          { verb: "sacrifice", object: "Apple of Eden", optional: false }, { verb: "lose-life", object: "4", optional: false },
+          { verb: "exile", object: "target opponent's hand", fromZone: "hand", toZone: "exile", optional: false }, { verb: "cast", object: "those cards", fromZone: "exile", optional: true },
+          { verb: "draw", object: "its owner", amount: "1", optional: false }] },
+      ] as never,
+      characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["artifact"] },
+      clauseTexts: { 1: "Look at target opponent's hand and exile those cards face down. You may play those cards this turn, and mana of any type can be spent to cast them. Until end of turn, whenever you play a land or cast a spell this way, its owner draws a card. Activate only as a sorcery." },
+      clauseCosts: { 1: "{T}, Pay 4 life, Sacrifice Apple of Eden" },
+    });
+    expect(apple.unknownTriggers).toEqual(["temporary"]);
+    expect(apple.abilities.filter((a) => a.claimsNothing !== undefined).map((a) => a.effect.kind)).toEqual(["draw-card"]);
+    expect(apple.abilities.filter((a) => a.claimsNothing === undefined).flatMap((a) => (a.emits ?? []).map((e) => e.verb))).toEqual(expect.arrayContaining(["sacrifice", "lose-life", "exiled"]));
+  });
+  test("a sentence that opens its own trigger ends the temporary trigger's effect", () => {
+    const tags = deriveCardTags({
+      oracleId: "t", name: "Test Relic",
+      clauses: [{ id: 1, abilityType: "spell", actions: [{ verb: "draw", object: "a card", amount: "1", optional: false }, { verb: "gain-life", object: "you", amount: "3", optional: false }] }] as never,
+      characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["sorcery"] },
+      clauseTexts: { 1: "Until end of turn, whenever a creature an opponent controls blocks, draw a card. At the beginning of the next end step, you gain 3 life." },
+    });
+    expect(tags.abilities.map((a) => [a.effect.kind, a.claimsNothing])).toEqual([["draw-card", "refused-trigger"], ["lifegain", undefined]]);
+  });
+  test("a temporary trigger that IS read keeps its claim (Lyra, Tolarian Archangel)", () => {
+    const lyra = fromGrammar("Lyra, Tolarian Archangel", "{3}{U}{U}: Until end of turn, whenever Lyra, Tolarian Archangel deals combat damage to a player, draw two cards.", "Legendary Creature — Angel");
+    expect(lyra.abilities.map((a) => a.claimsNothing)).toEqual([undefined]);
+    expect(lyra.abilities[0]!.trigger).toBeDefined();
+  });
+});
+
+// #1592: the same pick on a card that keeps its STORED reading (Psychic Intrusion, Covetous Urge: the sentence after the exile names the card again, so the grammar leaves the pick unread). The stored exile
+// names "<a player>'s graveyard or hand" and no zone, so it read as any exile, the battlefield's included; and "You may cast that card" is YOUR cast (CR 112.2: a spell's controller is the player who put it
+// on the stack), which the antecedent's "target opponent's" turned into an opponent's.
+describe("#1592: a stored graveyard-or-hand pick leaves the hand, and the card you may cast is cast by you", () => {
+  const TEXT = "Target opponent reveals their hand. You choose a nonland card from that player's graveyard or hand and exile it. You may cast that card for as long as it remains exiled, and you may spend mana as though it were mana of any color to cast that spell.";
+  const stored = (exiled: string, castTo: string | null) => deriveCardTags({
+    oracleId: "t", name: "Covetous Urge",
+    clauses: [{ id: 1, abilityType: "spell", actions: [
+      { verb: "reveal", object: "target opponent's hand", fromZone: null, toZone: null, optional: false },
+      { verb: "exile", object: exiled, fromZone: null, toZone: null, optional: false },
+      { verb: "cast", object: "that card", fromZone: "exile", toZone: castTo, optional: true }] }] as never,
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["sorcery"] },
+    clauseTexts: { 1: TEXT },
+  });
+  const emit = (tags: ReturnType<typeof stored>, verb: string) => tags.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === verb)!;
+  test("Covetous Urge: the exile is from the hand, the cast is yours and untargeted", () => {
+    const urge = stored("a nonland card from target opponent's graveyard or hand", "stack");
+    expect(emit(urge, "exiled").subject).toMatchObject({ control: "opp", fromZone: "hand" });
+    expect(emit(urge, "cast").subject).toMatchObject({ control: "you", fromZone: "exile", notType: ["land"] });
+    expect(emit(urge, "cast").subject.scope).toBeUndefined();
+  });
+  test("Psychic Intrusion ('that player's graveyard or hand'): the same reading", () => {
+    const intrusion = stored("a nonland card from that player's graveyard or hand", null);
+    expect(emit(intrusion, "exiled").subject.fromZone).toBe("hand");
+    expect(emit(intrusion, "cast").subject).toMatchObject({ control: "you", fromZone: "exile" });
+    expect(emit(intrusion, "cast").subject.scope).toBeUndefined();
+  });
+  test("an opponent's own cast keeps its player ('that player may cast that card')", () => {
+    const tags = deriveCardTags({
+      oracleId: "t", name: "Test Gift",
+      clauses: [{ id: 1, abilityType: "spell", actions: [
+        { verb: "exile", object: "target card from an opponent's graveyard", fromZone: "graveyard", toZone: "exile", optional: false },
+        { verb: "cast", object: "that card", fromZone: "exile", toZone: null, optional: true }] }] as never,
+      characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["sorcery"] },
+      clauseTexts: { 1: "Exile target card from an opponent's graveyard. That player may cast that card this turn." },
+    });
+    expect(emit(tags, "cast").subject.control).not.toBe("you");
+  });
+});
+
 // #1589: a card picked from an opponent's hand OR graveyard and exiled (Never Happened, Memory Leak, Agonizing Remorse) never leaves the battlefield. The grammar's record says `fromZone: hand`,
 // and the exile emit keeps it, so "whenever a creature is exiled from the battlefield" (Soulherder) does not hear it.
 test("an exile picked from a graveyard or hand carries a non-battlefield zone on its emit (Never Happened)", () => {

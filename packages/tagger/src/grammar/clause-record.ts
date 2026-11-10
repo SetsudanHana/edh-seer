@@ -482,11 +482,11 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     // does the effect (CR 603.7a), so the effect is NOT done now: the store records the cast as the clause's trigger on the activated or spell clause, and so does this. A clause that is itself triggered
     // ("Doublecast", a chapter) already reads its printed trigger above. When the leading trigger cannot be read the clause is refused: dropping it would claim the effect unconditionally (Vivien's tutor).
     // CEILING: two shapes only are read. (1) A clause that OPENS with "Until end of turn, whenever ..." or with "When you next cast / activate ...". (2) A "When you next ..." behind a first sentence
-    // ("Add {U}. When you next cast ..."), which the segmenter cuts apart into a triggered clause of its own. Everything else claims its effect UNCONDITIONALLY, the trigger dropped (derive lists `temporary` in unknownTriggers where the clause has no other trigger):
+    // ("Add {U}. When you next cast ..."), which the segmenter cuts apart into a triggered clause of its own. Everything else is recorded with the trigger dropped; derive lists `temporary` in unknownTriggers where the clause has no other trigger, and since #1592 the abilities behind it claim nothing (`claimsNothing`):
     // another duration ("Until your next turn, whenever a creature deals combat damage to Vraska, destroy that creature": Vraska the Unseen derives a plain destroy, `dies` of any creature; "This turn, when ...");
     // a temporary trigger in the MIDDLE of a clause ("Untap all creatures. Until end of turn, whenever a creature an opponent controls blocks, draw a card", Benefactor's Draught; Waltz of Rage's exile);
-    // and one behind an "If you do," (Najal, the Storm Runner; Mercurial Spelldancer), which stays in a triggered clause's effect. A card that stays on its stored reading keeps what the store wrote: Cursed Recording's
-    // "{T}: When you next cast ..." is read here, but the grammar drops "remove those counters" from its first clause, so the card keeps the stored reading, whose copy has no cast trigger.
+    // and one behind an "If you do," (Najal, the Storm Runner; Mercurial Spelldancer), which stays in a triggered clause's effect. A card that stays on its stored reading keeps what the store wrote
+    // (Cursed Recording did until #1592 read "remove those counters and it deals 20 damage to you": its "{T}: When you next cast ..." is now read here).
     let delayedCast = false;
     const untilLead = type !== "triggered" ? /^until end of turn, (?=whenever )/i.exec(c.text) : null;
     const delayedLead = type !== "triggered" && !record.trigger ? printedPreamble(untilLead ? c.text.slice(untilLead[0].length) : c.text, card.name) : null;

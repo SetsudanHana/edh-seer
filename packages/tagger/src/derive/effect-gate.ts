@@ -253,6 +253,33 @@ function locate(body: string, verbs: readonly string[]) {
   return { sentences, parsed, doing, where };
 }
 
+/** A sentence that opens a trigger or an activation rule of its own: where the effect of a temporary trigger printed before it ends. */
+const OPENS_ANOTHER = /^\s*(?:at the beginning of|at end of|when|whenever|activate)\b/i;
+/** WHICH ACTIONS ARE PRINTED BEHIND A TEMPORARY OR DELAYED TRIGGER (#1592). "Untap all creatures. Until end of turn, whenever a creature an opponent controls blocks, draw a card" (Benefactor's Draught):
+ *  the untap happens as the spell resolves and the draw only when the trigger it sets up fires (CR 603.7a). Per action of `verbs` (the clause's action verbs, in order), true when its printed word stands
+ *  after the first match of `opener` and before the next sentence that opens a trigger of its own ("At the beginning of the next end step, return the exiled cards", Apple of Eden); null when `opener`
+ *  is not printed. An action whose word is found nowhere (a model paraphrase: Delif's Cone's "it assigns no combat damage" stored as `prevent`) follows the action before it; a cost's action, listed first, has none before it.
+ *  CEILING: the action is found by its verb's printed word, as the gates are (`locate`), and every sentence after the trigger's own counts as its effect until one opens a trigger: a second plain sentence that
+ *  the card does at once would be read as behind it (none among the 13 rows this reads at DERIVE 489). */
+export function actionsBehind(body: string, verbs: readonly string[], opener: RegExp): boolean[] | null {
+  const { sentences, where } = locate(body, verbs);
+  let from: { sentence: number; offset: number } | undefined;
+  for (let i = 0; i < sentences.length && !from; i++) {
+    const m = opener.exec(sentences[i]!);
+    if (m) from = { sentence: i, offset: m.index };
+  }
+  if (!from) return null;
+  const start = from;
+  let end = sentences.length;
+  for (let i = start.sentence + 1; i < sentences.length; i++) if (OPENS_ANOTHER.test(sentences[i]!)) { end = i; break; }
+  const out: boolean[] = [];
+  for (let i = 0; i < verbs.length; i++) {
+    const w = where[i];
+    out.push(w ? (w.sentence === start.sentence ? w.offset > start.offset : w.sentence > start.sentence && w.sentence < end) : i > 0 && out[i - 1]!);
+  }
+  return out;
+}
+
 /** THE OTHER BRANCH THE STORED READING LOST (#1357 review): per action, true when the sentence after its own is an "Otherwise" that prints the same verb more often than any action took it. Jace, the Perfected Mind's stored
  *  clause has one draw ("if a graveyard has twenty or more cards, you draw three cards. Otherwise, you draw a card"); the printed Otherwise says the effect happens in both branches, so the role is not a chance.
  *  CEILING: the verb's printed word and the first noun after it ("draw three CARDS" / "draw a CARD"), nothing of who does it; life gain and loss are never alike (directional). */
