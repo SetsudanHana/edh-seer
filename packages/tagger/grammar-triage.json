@@ -21,10 +21,10 @@
       "why": "'a nonland card from target opponent's hand' (Thoughtseize family): the target is the opponent, not the card, and the card comes from a hand. parseSubject's ORIGIN_ZONE allows only a|an|your|their|the before the zone, so a possessive player ('target opponent's', 'each opponent's') drops the zone, and its scope reads the player's 'target'."
     },
     "other": {
-      "distinct": 38,
+      "distinct": 50,
       "label": "grammar right",
       "rule": "printed text",
-      "why": "'up to one other target creature', 'one or more other creatures', 'any number of other permanents': 'other' after a count. parseSubject's `other` regex accepts at most one word before it. Also 'target creature other than this creature', 'all creatures other than this creature': the same fact as 'another' written out."
+      "why": "'up to one other target creature', 'one or more other creatures', 'any number of other permanents': 'other' after a count. parseSubject's `other` regex accepts at most one word before it. Also 'target creature other than this creature', 'all creatures other than this creature': the same fact as 'another' written out. #1585: a batched trigger subject is read as an event (parseSubject role \"event\"), never counted; +12 members, 'one or more other <class> (you control)': 'other' after a count, grammar right ('one or more other creatures' is the case above)."
     },
     "fromZone": {
       "distinct": 126,
@@ -123,10 +123,10 @@
       "why": "'a token that's a copy of another target attacking creature': attacking is not a copiable value; the token is not attacking and not targeted."
     },
     "other,subtype": {
-      "distinct": 2,
+      "distinct": 3,
       "label": "grammar right",
       "rule": "printed text",
-      "why": "'all permanents other than this Equipment': the subtype names this card, not the class."
+      "why": "'all permanents other than this Equipment': the subtype names this card, not the class. #1585: a batched trigger subject is read as an event (parseSubject role \"event\"), never counted; +1 member, 'one or more other Rabbits, Bats, Birds, and/or Mice you control': parseSubject misses `other` after a count and the irregular plural Mice (no `mouse`), grammar right."
     },
     "other,type": {
       "distinct": 8,
@@ -171,10 +171,10 @@
       "why": "'target nonlegendary creature' (`legendary: false`); parseSubject dropped the negation."
     },
     "hasCounter": {
-      "distinct": 11,
+      "distinct": 13,
       "label": "grammar right",
       "rule": "printed text",
-      "why": "'a creature you control with a counter on it' (`hasCounter`): some counter, kind unstated; parseSubject read nothing."
+      "why": "'a creature you control with a counter on it' (`hasCounter`): some counter, kind unstated; parseSubject read nothing. #1585: a batched trigger subject is read as an event (parseSubject role \"event\"), never counted; +2 members, 'one or more creatures (you control) with counters on them': the same some-counter fact, grammar right."
     },
     "targets": {
       "distinct": 4,
@@ -243,10 +243,10 @@
       "why": "'a spell that targets only a single creature other than ~': restricted either way; the subject is a spell."
     },
     "stats": {
-      "distinct": 246,
+      "distinct": 247,
       "label": "grammar right",
       "rule": "printed text",
-      "why": "Every member read. Stat comparisons parseSubject never reads -- 'mana value 1' (eq), 'mana value 4, 5, or 6' (a run, 4..6; a gap is refused), 'power equal to its toughness' (`vs`), 'total mana value 3 or less' (each card at most 3), and a rhs the text does not fix as `variable`: 'mana value X or less' (X chosen on resolution), 'less than the result', 'lesser power', 'less than or equal to the number of lands you control'. The matcher abstains on `variable` (CEILING in StatPredicate), which is what dropping the words did, but the demand is now said. A variable rhs must start like an amount and hold no verb, so 'power less than this creature's power can't block ...' is refused, not parsed."
+      "why": "Every member read. Stat comparisons parseSubject never reads -- 'mana value 1' (eq), 'mana value 4, 5, or 6' (a run, 4..6; a gap is refused), 'power equal to its toughness' (`vs`), 'total mana value 3 or less' (each card at most 3), and a rhs the text does not fix as `variable`: 'mana value X or less' (X chosen on resolution), 'less than the result', 'lesser power', 'less than or equal to the number of lands you control'. The matcher abstains on `variable` (CEILING in StatPredicate), which is what dropping the words did, but the demand is now said. A variable rhs must start like an amount and hold no verb, so 'power less than this creature's power can't block ...' is refused, not parsed. #1585: a batched trigger subject is read as an event (parseSubject role \"event\"), never counted; +1 member, 'one or more creatures you control with base power 0' (a bare value), grammar right."
     },
     "anyOf,control": {
       "distinct": 12,
@@ -291,10 +291,10 @@
       "why": "Every member read. fromZone: the origin: 'from the top five cards of your library', 'from any graveyard', 'from its owner's graveyard', 'from all hands'; stats: stat comparisons parseSubject does not read: a bare value ('mana value 1'), a run ('mana value 4, 5, or 6' = 4..6), the subject's own other stat ('power equal to its toughness', `vs`), and a rhs the text does not fix ('mana value X or less', 'less than the result', 'lesser power') as `variable`, where the matcher abstains exactly as the dropped words did."
     },
     "scope,stats": {
-      "distinct": 12,
+      "distinct": 13,
       "label": "grammar right",
       "rule": "CR 115.1, printed text",
-      "why": "Every member read. scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; 'each of up to three targets' is targeted; a quantifier inside a token's quoted ability is not the token's; stats: stat comparisons parseSubject does not read: a bare value ('mana value 1'), a run ('mana value 4, 5, or 6' = 4..6), the subject's own other stat ('power equal to its toughness', `vs`), and a rhs the text does not fix ('mana value X or less', 'less than the result', 'lesser power') as `variable`, where the matcher abstains exactly as the dropped words did."
+      "why": "Every member read. scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; 'each of up to three targets' is targeted; a quantifier inside a token's quoted ability is not the token's; stats: stat comparisons parseSubject does not read: a bare value ('mana value 1'), a run ('mana value 4, 5, or 6' = 4..6), the subject's own other stat ('power equal to its toughness', `vs`), and a rhs the text does not fix ('mana value X or less', 'less than the result', 'lesser power') as `variable`, where the matcher abstains exactly as the dropped words did. #1585: a batched trigger subject is read as an event (parseSubject role \"event\"), never counted; +1 member, 'one or more creatures you control each with power greater than its base power' (the variable power `vs`), grammar right."
     },
     "stats,type": {
       "distinct": 4,
@@ -453,16 +453,16 @@
       "why": "Every member read. notType: the negation is the head noun's; stats: stat comparisons parseSubject does not read: a bare value ('mana value 1'), a run ('mana value 4, 5, or 6' = 4..6), the subject's own other stat ('power equal to its toughness', `vs`), and a rhs the text does not fix ('mana value X or less', 'less than the result', 'lesser power') as `variable`, where the matcher abstains exactly as the dropped words did; type: the type is the head noun's: not a word from a targets-only clause or a token's quoted ability."
     },
     "history": {
-      "distinct": 70,
+      "distinct": 72,
       "label": "grammar right",
       "rule": "printed text",
-      "why": "Every member read. history: what happened to it this turn: dealt damage (by whom), attacked, blocked, entered, died, put into a graveyard (from where), milled, crewed/saddled it."
+      "why": "Every member read. history: what happened to it this turn: dealt damage (by whom), attacked, blocked, entered, died, put into a graveyard (from where), milled, crewed/saddled it. #1585: a batched trigger subject is read as an event (parseSubject role \"event\"), never counted; +2 members, 'one or more creatures you control that entered this turn' and 'one or more lands without being played' (entered), grammar right."
     },
     "status": {
-      "distinct": 50,
+      "distinct": 53,
       "label": "grammar right",
       "rule": "CR 110.5, CR 701.15, CR 701.60, CR 702.33",
-      "why": "Every member read. status: a status or designation: face-down/up, enchanted/equipped after a determiner, blocked/unblocked, goaded, suspected, kicked, renowned, double-faced, modal, suspended, fortified, Adventure, no abilities."
+      "why": "Every member read. status: a status or designation: face-down/up, enchanted/equipped after a determiner, blocked/unblocked, goaded, suspected, kicked, renowned, double-faced, modal, suspended, fortified, Adventure, no abilities. #1585: a batched trigger subject is read as an event (parseSubject role \"event\"), never counted; +3 members, 'one or more face-down creatures you control', 'one or more goaded creatures', 'one or more suspected creatures you control', grammar right."
     },
     "anyOf,control,type": {
       "distinct": 8,
@@ -513,10 +513,10 @@
       "why": "Every member read. abilityOf: whose ability: 'a loyalty ability of a Chandra planeswalker', 'from an artifact source'; control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; type: the type is the head noun's: not from a targets-only clause, a token's quoted ability, a reference ('a copy of that creature' says no type) or a name relation's object."
     },
     "notStatus": {
-      "distinct": 6,
+      "distinct": 7,
       "label": "grammar right",
       "rule": "CR 110.5",
-      "why": "Every member read. notStatus: 'nonattacking', 'that isn't enchanted', 'that aren't blocked'."
+      "why": "Every member read. notStatus: 'nonattacking', 'that isn't enchanted', 'that aren't blocked'. #1585: a batched trigger subject is read as an event (parseSubject role \"event\"), never counted; +1 member, 'one or more creatures an opponent controls that aren't blocked' (notStatus blocked), grammar right."
     },
     "shares": {
       "distinct": 26,
@@ -801,10 +801,10 @@
       "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; zone: where the subject lives ('in your graveyard', 'an exiled card')."
     },
     "control,status,subtype": {
-      "distinct": 1,
+      "distinct": 2,
       "label": "grammar right",
       "rule": "CR 108.3, CR 110.5, CR 111.4, CR 112.2, CR 115.1, CR 701.15, CR 701.60, CR 702.33, CR 715",
-      "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; status: a status or designation: face-down/up, enchanted/equipped after a determiner, blocked/unblocked, goaded, suspected, kicked, renowned, double-faced, modal, suspended, fortified, Adventure, no abilities; subtype: a word inside a name, a counter kind, a Role's name or a token's quoted ability is not a subtype; Adventure is a card's layout (`status`), not its subtype; a planeswalker subtype counts before 'planeswalker'."
+      "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; status: a status or designation: face-down/up, enchanted/equipped after a determiner, blocked/unblocked, goaded, suspected, kicked, renowned, double-faced, modal, suspended, fortified, Adventure, no abilities; subtype: a word inside a name, a counter kind, a Role's name or a token's quoted ability is not a subtype; Adventure is a card's layout (`status`), not its subtype; a planeswalker subtype counts before 'planeswalker'. #1585: a batched trigger subject is read as an event (parseSubject role \"event\"), never counted; +1 member, 'one or more creatures that are enchanted by an Aura you control' (the grammar reads status enchanted and the creatures' control as any; parseSubject reads control you and subtype aura off the Aura), grammar right."
     },
     "control,zone": {
       "distinct": 1,
@@ -921,10 +921,10 @@
       "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; keyword: keyword lists with commas and 'protection from X', 'that has convoke', 'with a cycling ability'."
     },
     "anyOf,scope": {
-      "distinct": 3,
+      "distinct": 4,
       "label": "grammar right",
       "rule": "CR 115.1, printed text",
-      "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject."
+      "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject. #1585: a batched trigger subject is read as an event (parseSubject role \"event\"), never counted; +1 member, 'one or more creatures you control and/or creature cards in your graveyard' (the two-class batch: the grammar reads both branches, parseSubject drops the graveyard one), grammar right."
     },
     "anyOf,targets,type": {
       "distinct": 2,
@@ -1797,10 +1797,10 @@
       "why": "Every member read (1: 'a permanent other than a basic land'). The grammar reads a permanent that is not a basic land (`except`); parseSubject read the exclusion as the class (type land, basic). 'other than <X>' names what is spared, never the class."
     },
     "selection": {
-      "distinct": 249,
+      "distinct": 156,
       "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read (249, re-read in #1582: 247 distinct phrases, 91 trigger subjects, 154 objects, 2 phrases used as both). `selection` is derive's marker (#1557) for a set a rule narrows that no other field carries. (1) 154 OBJECT members are a pick or a set: 'two creatures of their choice', 'five lands of their choice', 'any number of untapped creatures you control', 'two artifacts', 'up to three Zombies', 'seven other cards from your graveyard' (counted) and 'all Auras attached to it', 'all permanents attached to creatures' (attached-to, 11): derive is right, the grammar has no such field and is wrong. (2) 91 SUBJECT members are a batched trigger ('whenever ONE OR MORE creatures you control die': 'one or more Dragons you control', 'two or more creatures', 'eight or more creatures', 'one or more opponents'): the class is the whole batch and nothing is picked, so derive's `counted` is a misread and the grammar's unmarked answer is right. (3) 4 land-drop allowances ('X additional lands', 'two additional lands', 'up to two / three additional lands') are marked counted although nothing is picked from a class; harmless, not right. Both parsers need work, so the label is both wrong: derive should not mark a trigger subject (a derive follow-up, nothing reads the marker on a consumer), and the grammar must learn `counted` / `attached-to` before a switch."
+      "why": "Every member read (156 object phrases after #1585; 249 before, when 93 trigger subjects were here too). `selection` is derive's marker (#1557) for a set a rule narrows that no other field carries. The OBJECT members are a pick or a set: 'two creatures of their choice', 'five lands of their choice', 'any number of untapped creatures you control', 'two artifacts', 'up to three Zombies', 'one or more Treasures / artifacts / creatures', 'seven other cards from your graveyard' (counted) and 'all Auras attached to it', 'all permanents attached to creatures' (attached-to, 11): derive is right, the grammar has no such field and is wrong. A few land-drop allowances ('X additional lands', 'two additional lands', 'up to two / three additional lands') are marked counted although nothing is picked from a class; harmless, not right. The 93 batched trigger subjects ('whenever ONE OR MORE creatures you control die', 'two or more creatures', 'eight or more creatures', 'one or more opponents') left the group in #1585: parseSubject reads a trigger subject as an event (`role: \"event\"`), whose class is the whole batch and nothing is picked, so they agree with the grammar on `selection` and are triaged under their remaining fields. The grammar must still learn `counted` / `attached-to` before a switch, so the label stays both wrong."
     },
     "except,selection": {
       "distinct": 3,
@@ -1862,12 +1862,6 @@
       "rule": "printed text",
       "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
-    "anyOf,scope,selection": {
-      "distinct": 1,
-      "label": "grammar right",
-      "rule": "printed text",
-      "why": "The one member read ('one or more creatures you control and/or creature cards in your graveyard'): a batched trigger subject of two classes. The grammar reads the two branches (`anyOf`); parseSubject reads one class with scope all, drops the graveyard branch and over-marks the batch `counted`. Grammar right."
-    },
     "anyOf,scope,selection,stats": {
       "distinct": 1,
       "label": "both wrong",
@@ -1885,12 +1879,6 @@
       "label": "both wrong",
       "rule": "printed text",
       "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
-    },
-    "control,selection,status,subtype": {
-      "distinct": 1,
-      "label": "grammar right",
-      "rule": "printed text",
-      "why": "The one member read ('one or more creatures that are enchanted by an Aura you control'): a batched trigger subject. The grammar reads `status: enchanted` and the creatures' control as any (the Aura is the one you control); parseSubject reads `control: you` and `subtype: aura` off the Aura (the base group `control,status,subtype` is grammar right) and over-marks the batch `counted`. Grammar right."
     },
     "except,selection,token": {
       "distinct": 1,
@@ -1928,17 +1916,11 @@
       "rule": "printed text",
       "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
-    "hasCounter,selection": {
-      "distinct": 2,
-      "label": "grammar right",
-      "rule": "printed text",
-      "why": "Both members read ('one or more creatures you control with counters on them', 'one or more creatures with counters on them'): batched trigger subjects. The grammar reads `hasCounter`; parseSubject reads none and over-marks the batch `selection: counted` (a batched 'one or more' picks nothing). Grammar right on both fields (the base group `hasCounter` is grammar right)."
-    },
     "history,selection": {
-      "distinct": 3,
+      "distinct": 1,
       "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member re-read in #1582 (both wrong because the members mix batched trigger subjects, where derive over-marks `counted` and the grammar is right, with object picks, where derive's `counted` is right and the grammar lacks it; derive also misses the base field on some). Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+      "why": "Every member re-read in #1582 (both wrong because the members mix batched trigger subjects, where derive over-marks `counted` and the grammar is right, with object picks, where derive's `counted` is right and the grammar lacks it; derive also misses the base field on some). Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer. #1585: the batched trigger subjects of this group (one or more other creatures, ...) now agree on `selection` and moved to the base group; the members left are object picks, where derive's `counted` is right and the grammar lacks it."
     },
     "nameRelation,scope,selection,stats": {
       "distinct": 2,
@@ -1946,35 +1928,17 @@
       "rule": "printed text",
       "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
-    "notStatus,selection": {
-      "distinct": 1,
-      "label": "grammar right",
-      "rule": "printed text",
-      "why": "The one member read ('one or more creatures an opponent controls that aren't blocked'): a batched trigger subject. The grammar reads `notStatus: blocked`; parseSubject reads none and over-marks the batch `counted`. Grammar right."
-    },
     "other,selection": {
-      "distinct": 17,
+      "distinct": 5,
       "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member re-read in #1582 (both wrong because the members mix batched trigger subjects, where derive over-marks `counted` and the grammar is right, with object picks, where derive's `counted` is right and the grammar lacks it; derive also misses the base field on some). Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+      "why": "Every member re-read in #1582 (both wrong because the members mix batched trigger subjects, where derive over-marks `counted` and the grammar is right, with object picks, where derive's `counted` is right and the grammar lacks it; derive also misses the base field on some). Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer. #1585: the batched trigger subjects of this group (one or more other creatures, ...) now agree on `selection` and moved to the base group; the members left are object picks, where derive's `counted` is right and the grammar lacks it."
     },
     "other,selection,stats": {
       "distinct": 2,
       "label": "both wrong",
       "rule": "printed text",
       "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
-    },
-    "other,selection,subtype": {
-      "distinct": 1,
-      "label": "grammar right",
-      "rule": "printed text",
-      "why": "The one member read ('one or more other Rabbits, Bats, Birds, and/or Mice you control'): a batched trigger subject. The grammar reads `other` and all four subtypes; parseSubject misses `other` after 'one or more' and the irregular plural Mice (no `mouse`), and over-marks the batch `counted`. Grammar right."
-    },
-    "scope,selection,stats": {
-      "distinct": 1,
-      "label": "grammar right",
-      "rule": "printed text",
-      "why": "The one member read ('one or more creatures you control each with power greater than its base power'): a batched trigger subject. The grammar reads the variable power `stats`; parseSubject reads no stats and over-marks the batch `counted`. Grammar right (the base group `scope,stats` is grammar right)."
     },
     "scope,selection,zone": {
       "distinct": 1,
@@ -1983,16 +1947,16 @@
       "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "selection,stats": {
-      "distinct": 2,
+      "distinct": 1,
       "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member re-read in #1582 (both wrong because the members mix batched trigger subjects, where derive over-marks `counted` and the grammar is right, with object picks, where derive's `counted` is right and the grammar lacks it; derive also misses the base field on some). Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+      "why": "Every member re-read in #1582 (both wrong because the members mix batched trigger subjects, where derive over-marks `counted` and the grammar is right, with object picks, where derive's `counted` is right and the grammar lacks it; derive also misses the base field on some). Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer. #1585: the batched trigger subjects of this group (one or more other creatures, ...) now agree on `selection` and moved to the base group; the members left are object picks, where derive's `counted` is right and the grammar lacks it."
     },
     "selection,status": {
-      "distinct": 4,
+      "distinct": 1,
       "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member re-read in #1582 (both wrong because the members mix batched trigger subjects, where derive over-marks `counted` and the grammar is right, with object picks, where derive's `counted` is right and the grammar lacks it; derive also misses the base field on some). Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+      "why": "Every member re-read in #1582 (both wrong because the members mix batched trigger subjects, where derive over-marks `counted` and the grammar is right, with object picks, where derive's `counted` is right and the grammar lacks it; derive also misses the base field on some). Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer. #1585: the batched trigger subjects of this group (one or more other creatures, ...) now agree on `selection` and moved to the base group; the members left are object picks, where derive's `counted` is right and the grammar lacks it."
     }
   }
 }

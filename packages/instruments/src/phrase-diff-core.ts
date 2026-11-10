@@ -17,6 +17,8 @@ import { KEYWORD_ABILITIES, SUBTYPES } from "@edh-seer/tagger/subtypes";
 
 export interface Phrase { kind: "subject" | "object"; phrase: string; cards: number }
 export type Parser = (text: string) => SubjectFilter | null;
+/** The baseline is told what the phrase IS: a census "subject" is a trigger subject (an event's batched set), an "object" an effect or cost object (#1585: only an object can be a counted pick). */
+export type Baseline = (text: string, kind: Phrase["kind"]) => SubjectFilter | null;
 export interface Example { kind: Phrase["kind"]; phrase: string; cards: number; baseline: SubjectFilter; candidate: SubjectFilter }
 export interface Group { fields: string[]; distinct: number; cards: number; examples: Example[] }
 export interface Tally { distinct: number; cards: number }
@@ -56,7 +58,7 @@ export function differingFields(a: object, b: object): string[] {
   return [...keys].filter((k) => canon((a as Record<string, unknown>)[k]) !== canon((b as Record<string, unknown>)[k])).sort();
 }
 
-export function diffParsers(phrases: Phrase[], candidate: Parser, baseline: Parser): PhraseDiff {
+export function diffParsers(phrases: Phrase[], candidate: Parser, baseline: Baseline): PhraseDiff {
   const byDomain: PhraseDiff["byDomain"] = {};
   const total = { distinct: 0, cards: 0 }, parsed = { distinct: 0, cards: 0 }, agree = { distinct: 0, cards: 0 };
   const nondeterministic: string[] = [];
@@ -70,7 +72,7 @@ export function diffParsers(phrases: Phrase[], candidate: Parser, baseline: Pars
     if (cand === null) continue;
     dom.parsed.distinct++; dom.parsed.cards += p.cards;
     parsed.distinct++; parsed.cards += p.cards;
-    const base = baseline(p.phrase) ?? {} as SubjectFilter;
+    const base = baseline(p.phrase, p.kind) ?? {} as SubjectFilter;
     const fields = differingFields(base, cand);
     if (fields.length === 0) { agree.distinct++; agree.cards += p.cards; continue; }
     const key = fields.join(",");

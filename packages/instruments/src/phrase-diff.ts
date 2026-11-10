@@ -27,7 +27,7 @@ if (!modulePath) {
   console.log(`parseSubject names no class (control/token only) for ${empty.length} phrases (${pct(empty.length, phrases.length)}), ${emptyCards} card-occurrences (${pct(emptyCards, cards)})`);
 } else {
   const parse = (await import(pathToFileURL(resolve(modulePath)).href)).parse as Parser;
-  const d = diffParsers(phrases, parse, parseSubject);
+  const d = diffParsers(phrases, parse, (t, k) => parseSubject(t, k === "subject" ? "event" : "pick"));
   writeFileSync(`${OUT}/phrase-diff.json`, JSON.stringify(d, null, 1) + "\n");
   console.log(`parsed completely: ${d.parsed.distinct}/${d.total.distinct} distinct (${pct(d.parsed.distinct, d.total.distinct)}), ${pct(d.parsed.cards, d.total.cards)} of card-occurrences`);
   for (const [dom, t] of Object.entries(d.byDomain).sort((a, b) => b[1].total.cards - a[1].total.cards)) {

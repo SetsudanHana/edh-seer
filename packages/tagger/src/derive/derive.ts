@@ -1286,13 +1286,13 @@ const namesAClassHere = (s: SubjectFilter): boolean => s.type !== undefined || s
  *  edit into the next lookup of the same text. */
 const parseFilter = memoizeCloned(parseFilterRaw, (text) => text);
 
-function subjectFrom(text: string, cardName?: string, cardText = ""): ReturnType<typeof parseSubject> {
+function subjectFrom(text: string, cardName?: string, cardText = "", role: "pick" | "event" = "pick"): ReturnType<typeof parseSubject> {
   const bounded = boundedByEnchantLine(text, cardText).replace(SELF_DISJUNCT, "");
   const read = parseFilter(cardName ? selfAsTilde(bounded.trim(), cardName) : bounded.trim());
   // A COUNT the grammar reads past leaves no class ("cards equal to the greatest power among creatures
   // you control"): the amount is scaling's (task 6), and `parseSubject`'s reading of it stays.
   const grammar = read && !namesAClass(read) && read.token !== true && /\b(?:equal to|for each)\b/i.test(bounded) ? null : read;
-  const subject = grammar ?? parseSubject(stripCardName(bounded, cardName));
+  const subject = grammar ?? parseSubject(stripCardName(bounded, cardName), role);
   if (grammar) FROM_GRAMMAR.add(subject);
   // "named ~" is the card's own name (Gary Clone's "each creature you control named Gary Clone").
   if (cardName && subject.named === "~") subject.named = cardName.split(" // ")[0]!.toLowerCase();
@@ -3245,7 +3245,7 @@ export function deriveAbilities(
         // RECEIVING damage is its own verb (`damaged`, AF7d): the opposite direction, and handing
         // it `combat-damage` would make Hornet Nest and Boros Reckoner claim they DEAL it.
         if (DAMAGE_RECEIVED.test(text)) {
-          const subject = subjectFrom(clause.trigger.subject ?? "", cardName, enchantText);
+          const subject = subjectFrom(clause.trigger.subject ?? "", cardName, enchantText, "event");
           const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
           if (control) subject.control = control;
           if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
@@ -3271,7 +3271,7 @@ export function deriveAbilities(
           if (!triggerHasCue(damageVerb, cardText)) {
             unknownTriggers.push(`phantom:${damageVerb}`);
           } else {
-            const subject = subjectFrom(clause.trigger.subject ?? "", cardName, enchantText);
+            const subject = subjectFrom(clause.trigger.subject ?? "", cardName, enchantText, "event");
             const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
             if (control) subject.control = control;
             if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
@@ -3294,7 +3294,7 @@ export function deriveAbilities(
         // The printed "by ..." names a blocker `readBlocker` cannot read exactly (the grammar's own refusal, #1381): the stored subject can be the blocker itself, so no guess.
         unknownTriggers.push("narrowing:becomes-blocked");
       } else if (verb) {
-        const subject = subjectFrom(clause.trigger.subject ?? "", cardName, enchantText);
+        const subject = subjectFrom(clause.trigger.subject ?? "", cardName, enchantText, "event");
         const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
         if (control) subject.control = control;
         // A PERMANENT-EVENT TRIGGER WHOSE PRINTED PHRASE NAMES NO CONTROLLER IS `any` (recall v6
@@ -3390,7 +3390,7 @@ export function deriveAbilities(
     // become a source of what it multiplies. Only when the clause has no authored trigger: Rankle
     // and Torbran's mode inherits the parent's combat-damage trigger and must keep it.
     if (replacement && !replacement.restricted && !trigger) {
-      const subject = subjectFrom(replacement.subjectText, cardName, enchantText);
+      const subject = subjectFrom(replacement.subjectText, cardName, enchantText, "event");
       if (replacement.counter) subject.counter = replacement.counter;
       // "If one or more +1/+1 counters would be put on MOWU" (Mowu, Loyal Companion) multiplies only
       // its own counters; without the flag every +1/+1 placer in the deck fed it (DERIVE 156).
@@ -3401,7 +3401,7 @@ export function deriveAbilities(
     }
 
     if (damageResult && replacementRead && !trigger) {
-      const subject = subjectFrom(replacementRead.subjectText, cardName, enchantText);
+      const subject = subjectFrom(replacementRead.subjectText, cardName, enchantText, "event");
       if (isSelfSubject(replacementRead.subjectText, cardName)) subject.self = true;
       // A recipient that is a creature ("to a creature an opponent controls", Soul-Scar Mage) is carried, so a pinger that only hits players is not heard.
       const toCreature = /\bdamage to (?:a|an|target) (?:\w+ )?creature\b/i.test(text);
@@ -3839,7 +3839,7 @@ export function deriveAbilities(
         // THE REFUSED TRIGGER STILL NAMES THE CLASS (#1253): "Whenever a creature you control attacks alone,
         // IT gains X" is a creature you control, as No Mercy's "destroy it" is a creature. Copy what the
         // trigger subject says onto the ref'd subject so only a truly class-less object is withdrawn.
-        const named = subjectFrom(clause.trigger.subject, cardName, enchantText) as unknown as Record<string, unknown>;
+        const named = subjectFrom(clause.trigger.subject, cardName, enchantText, "event") as unknown as Record<string, unknown>;
         for (const [k, v] of Object.entries(named)) {
           if (!CLASSLESS_KEYS.has(k) && k !== "self" && k !== "batched" && v !== undefined && (subject as unknown as Record<string, unknown>)[k] === undefined) (subject as unknown as Record<string, unknown>)[k] = v;
         }
