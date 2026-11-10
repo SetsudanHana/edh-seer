@@ -8487,8 +8487,8 @@ describe("a library-to-graveyard move the printed clause never makes (#1562)", (
   });
 });
 
-// #1589: a temporary trigger behind "Until end of turn," is read by the trigger grammar; one whose narrowing the grammar refuses keeps its stored reading until the narrowing is ruled on.
-test("a stored temporary trigger takes the grammar's reading (The Mirari Conjecture); a refused narrowing keeps the stored one (Gaze of Pain)", () => {
+// #1589: a temporary trigger behind "Until end of turn," is read by the trigger grammar.
+test("a stored temporary trigger takes the grammar's reading (The Mirari Conjecture)", () => {
   const mirari = deriveCardTags({
     oracleId: "t", name: "The Mirari Conjecture",
     clauses: [{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "an instant or sorcery spell", control: "you" }, actions: [{ verb: "copy", object: "it" }] }] as never,
@@ -8496,12 +8496,17 @@ test("a stored temporary trigger takes the grammar's reading (The Mirari Conject
     clauseTexts: { 1: "Until end of turn, whenever you cast an instant or sorcery spell, copy it. You may choose new targets for the copy." },
   });
   expect(mirari.abilities[0]!.trigger).toMatchObject({ verbs: ["cast"], subject: { control: "you", type: ["instant", "sorcery"] } });
+});
+
+// #1589: "narrowings refuse" (owner ruling, #896 task 5) binds a temporary trigger as it binds a printed one. "Attacks and isn't blocked" is a narrowing the grammar refuses (Master of Cruelties and
+// the other "attacks and isn't blocked" cards), so Gaze of Pain is no "a creature attacks" payoff: the stored reading (which also said any creature where the card says "a creature you control") is not kept.
+test("a temporary trigger with a refused narrowing is refused, not kept from the store (Gaze of Pain)", () => {
   const gaze = deriveCardTags({
     oracleId: "t", name: "Gaze of Pain",
     clauses: [{ id: 1, abilityType: "spell", trigger: { event: "attacks", subject: "a creature you control", control: "you" }, actions: [{ verb: "deal-damage", object: "target creature", amount: "its power", optional: true }] }] as never,
     characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["sorcery"] },
     clauseTexts: { 1: "Until end of turn, whenever a creature you control attacks and isn't blocked, you may choose to have it deal damage equal to its power to a target creature. If you do, it assigns no combat damage this turn." },
   });
-  expect(gaze.abilities[0]!.trigger).toMatchObject({ verbs: ["attacks"], subject: { type: "creature" } });
-  expect(gaze.unknownTriggers ?? []).toEqual([]);
+  expect(gaze.abilities.filter((a) => a.trigger?.verbs.includes("attacks"))).toEqual([]);
+  expect(gaze.unknownTriggers).toEqual(["narrowing:attacks"]);
 });
