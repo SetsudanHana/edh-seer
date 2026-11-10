@@ -1798,21 +1798,21 @@
     },
     "selection": {
       "distinct": 249,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Every member read (249). `selection` is derive's marker (#1557) for a set a rule narrows that no other field carries: 'two creatures of their choice' / 'five lands of their choice' (chosen), 'all Auras attached to it' (attached-to), and, since #1579 part 3, a number picked from a class: 'one or more creatures you control', 'any number of untapped creatures you control', 'two artifacts', 'up to three Zombies' (counted; a created token set such as 'two Treasure tokens' is not marked). parseSubject is right and the grammar has no such field; to be ported if derive ever switches to the grammar."
+      "why": "Every member read (249, re-read in #1582: 247 distinct phrases, 91 trigger subjects, 154 objects, 2 phrases used as both). `selection` is derive's marker (#1557) for a set a rule narrows that no other field carries. (1) 154 OBJECT members are a pick or a set: 'two creatures of their choice', 'five lands of their choice', 'any number of untapped creatures you control', 'two artifacts', 'up to three Zombies', 'seven other cards from your graveyard' (counted) and 'all Auras attached to it', 'all permanents attached to creatures' (attached-to, 11): derive is right, the grammar has no such field and is wrong. (2) 91 SUBJECT members are a batched trigger ('whenever ONE OR MORE creatures you control die': 'one or more Dragons you control', 'two or more creatures', 'eight or more creatures', 'one or more opponents'): the class is the whole batch and nothing is picked, so derive's `counted` is a misread and the grammar's unmarked answer is right. (3) 4 land-drop allowances ('X additional lands', 'two additional lands', 'up to two / three additional lands') are marked counted although nothing is picked from a class; harmless, not right. Both parsers need work, so the label is both wrong: derive should not mark a trigger subject (a derive follow-up, nothing reads the marker on a consumer), and the grammar must learn `counted` / `attached-to` before a switch."
     },
     "except,selection": {
-      "distinct": 8,
-      "label": "grammar wrong",
+      "distinct": 3,
+      "label": "grammar right",
       "rule": "printed text",
-      "why": "Every member read (10). 'all permanents except for artifacts and lands', 'all creatures except for Mageta': the grammar reads the `except` list; parseSubject drops the tail (#1549 CEILING) and marks the set `selection: all-but` (#1557) so it is not 'every <class>'. Marker only."
+      "why": "Every member read (3, was 8 before #1582 carried the spared types). 'all creatures and planeswalkers except for commanders' (Slash the Ranks), 'all creatures except for Mageta' (a card's name), 'each creature except for creatures you control with flying': the spared list is a commander, a name and a qualified class, which `sparedClasses` (subject.ts) does not carry as notType / notSubtype because it is not a bare type or subtype. The grammar reads the list as `except` and is right; parseSubject marks the set `selection: all-but` (#1557) as the stand-in for the list it dropped. The marker is derive's stand-in for a field the grammar has, not a field the grammar lacks."
     },
     "anyOf,control,selection,subtype,type": {
       "distinct": 2,
-      "label": "grammar wrong",
+      "label": "both wrong",
       "rule": "printed text",
-      "why": "Both members read (2: Auras attached to permanents, joined by commas): a branch of the list is `attached-to`, which the grammar has no field for."
+      "why": "Both members read (2: 'all enchantments you both own and control, all Auras you own attached to permanents you control, and all Auras you own attached to attacking creatures your opponents control', and the 'all other' twin): a three-branch list. The grammar reads the branches (`anyOf` enchantment / Aura) and has no `attached-to`; parseSubject flattens the list to ONE class (`control: you`, `type: enchantment`, `subtype: aura`, an AND of the branches) and marks the whole list `attached-to`, which is true only of the two Aura branches, not of 'all enchantments you control'. Both wrong."
     },
     "scope,selection": {
       "distinct": 3,
@@ -1822,21 +1822,21 @@
     },
     "except,history,selection": {
       "distinct": 1,
-      "label": "grammar wrong",
+      "label": "grammar right",
       "rule": "printed text",
-      "why": "The one member ('all untapped creatures that didn't attack this turn, except for creatures that couldn't attack') as under `except,history`, plus derive's `selection: all-but` marker (#1557)."
+      "why": "The one member read ('all untapped creatures that didn't attack this turn, except for creatures that couldn't attack'): the grammar reads both the `history` (not-attacked) and the `except` list; parseSubject reads neither and marks the set `selection: all-but` (#1557) as the stand-in for the dropped list. Grammar right."
     },
     "except,nameRelation,selection": {
       "distinct": 1,
-      "label": "grammar wrong",
+      "label": "grammar right",
       "rule": "printed text",
-      "why": "The one member (Eye of Singularity) as under `except,nameRelation`, plus derive's `selection: all-but` marker (#1557)."
+      "why": "The one member read (Eye of Singularity: 'each permanent with the same name as another permanent, except for basic lands'): the grammar reads the `nameRelation` and the `except` list; parseSubject reads neither and marks the set `selection: all-but` (#1557) as the stand-in for the dropped list. Grammar right."
     },
     "selection,shares": {
       "distinct": 1,
-      "label": "grammar wrong",
+      "label": "grammar right",
       "rule": "printed text",
-      "why": "The one member ('all other creatures a player controls that don't share a creature type with the chosen creature that player controls') as under `shares`; derive marks it `selection: all-but`, the complement of a choice (#1557)."
+      "why": "The one member read ('all other creatures a player controls that don't share a creature type with the chosen creature that player controls'): the grammar carries the restriction as `shares` (negated, with the chosen creature), which parseSubject does not read; its `selection: all-but` (#1557) is the stand-in for that missing relation. Grammar right."
     },
     "printedIn,selection": {
       "distinct": 2,
@@ -1864,9 +1864,9 @@
     },
     "anyOf,scope,selection": {
       "distinct": 1,
-      "label": "both wrong",
+      "label": "grammar right",
       "rule": "printed text",
-      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+      "why": "The one member read ('one or more creatures you control and/or creature cards in your graveyard'): a batched trigger subject of two classes. The grammar reads the two branches (`anyOf`); parseSubject reads one class with scope all, drops the graveyard branch and over-marks the batch `counted`. Grammar right."
     },
     "anyOf,scope,selection,stats": {
       "distinct": 1,
@@ -1888,15 +1888,39 @@
     },
     "control,selection,status,subtype": {
       "distinct": 1,
-      "label": "both wrong",
+      "label": "grammar right",
       "rule": "printed text",
-      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+      "why": "The one member read ('one or more creatures that are enchanted by an Aura you control'): a batched trigger subject. The grammar reads `status: enchanted` and the creatures' control as any (the Aura is the one you control); parseSubject reads `control: you` and `subtype: aura` off the Aura (the base group `control,status,subtype` is grammar right) and over-marks the batch `counted`. Grammar right."
     },
     "except,selection,token": {
+      "distinct": 1,
+      "label": "grammar right",
+      "rule": "printed text",
+      "why": "The one member read: 'each creature except for tokens you control'. It spares only the tokens YOU control. parseSubject reads the word `tokens` and marks the whole class nontoken (`token: false`), which also spares an opponent's tokens (a #1579 part 3 over-read, found again in #1582); the grammar's `except: [{control: you, token: true}]` is the printed meaning. Grammar right; derive's `token: false` should be gated on an unqualified `tokens` (a derive follow-up: 'except for lands and tokens' (Elspeth Tirel) is right, this one is not)."
+    },
+    "except,notType,selection,token,type": {
+      "distinct": 1,
+      "label": "grammar wrong",
+      "rule": "printed text",
+      "why": "The one member read ('all other permanents except for lands and tokens', Elspeth Tirel). parseSubject reads `notType: [land]`, a type list without land and `token: false` (the spared tokens, #1579 part 3, right for an unqualified `tokens`); the grammar keeps `type: permanent` with `except: [{type: land}, {token: true}]`. Same content; the matcher reads a producer's notType and token, never its `except`: the grammar must emit them before a switch."
+    },
+    "except,notType,selection,type": {
+      "distinct": 1,
+      "label": "grammar wrong",
+      "rule": "printed text",
+      "why": "The one member read ('all permanents except for artifacts and lands', Scourglass). Since #1582 parseSubject reads `notType: [artifact, land]` and a type list without them; the grammar keeps `type: permanent` with an `except` list. Same content, but the matcher reads a producer's notType and never its `except`: the grammar must emit it before a switch."
+    },
+    "except,notSubtype,notType,selection,type": {
       "distinct": 2,
       "label": "grammar wrong",
       "rule": "printed text",
-      "why": "Both members read: 'all other permanents except for lands and tokens' (Elspeth Tirel), 'each creature except for tokens you control'. parseSubject drops the except list (#1549 CEILING), marks the set all-but and, since #1579 part 3, reads the spared tokens as nontoken (`token: false`); the grammar reads the list as `except` and keeps token unset. parseSubject is right for the token word; the spared types stay dropped."
+      "why": "Both members read ('all other permanents except for artifacts, lands, and Phyrexians', Elesh Norn // The Argent Etchings; 'all permanents except for Giants, Wizards, and lands', Cyclone Summoner). Since #1582 parseSubject carries the spared card types as `notType` (and takes them off the permanent type list) and the spared subtypes as `notSubtype`; the grammar keeps `type: permanent` with an `except` list. Same content; the matcher reads a producer's notType (Scourglass x Munitions, a spared artifact token, depends on it), so the grammar must learn to emit it."
+    },
+    "except,notSubtype,selection": {
+      "distinct": 2,
+      "label": "grammar wrong",
+      "rule": "printed text",
+      "why": "Both members read ('all creatures except for Krakens, Leviathans, Octopuses, and Serpents', Whelming Wave; the same list with Merfolk in front, Slinn Voda, the Rising Deep). Since #1582 parseSubject carries the spared subtypes as `notSubtype` (subject.ts `sparedClasses`); the grammar reads the same list as `except` subtype entries. The content is equal, but the matcher reads a producer's `notType`/`notSubtype` and never its `except`, so the grammar must emit the spared words as notType / notSubtype (and take them off `type`) before a switch, or the matcher must read `except` on a producer. The `selection: all-but` marker is derive's stand-in."
     },
     "fromZone,scope,selection": {
       "distinct": 1,
@@ -1906,15 +1930,15 @@
     },
     "hasCounter,selection": {
       "distinct": 2,
-      "label": "both wrong",
+      "label": "grammar right",
       "rule": "printed text",
-      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+      "why": "Both members read ('one or more creatures you control with counters on them', 'one or more creatures with counters on them'): batched trigger subjects. The grammar reads `hasCounter`; parseSubject reads none and over-marks the batch `selection: counted` (a batched 'one or more' picks nothing). Grammar right on both fields (the base group `hasCounter` is grammar right)."
     },
     "history,selection": {
       "distinct": 3,
       "label": "both wrong",
       "rule": "printed text",
-      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+      "why": "Every member re-read in #1582 (both wrong because the members mix batched trigger subjects, where derive over-marks `counted` and the grammar is right, with object picks, where derive's `counted` is right and the grammar lacks it; derive also misses the base field on some). Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "nameRelation,scope,selection,stats": {
       "distinct": 2,
@@ -1924,15 +1948,15 @@
     },
     "notStatus,selection": {
       "distinct": 1,
-      "label": "both wrong",
+      "label": "grammar right",
       "rule": "printed text",
-      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+      "why": "The one member read ('one or more creatures an opponent controls that aren't blocked'): a batched trigger subject. The grammar reads `notStatus: blocked`; parseSubject reads none and over-marks the batch `counted`. Grammar right."
     },
     "other,selection": {
       "distinct": 17,
       "label": "both wrong",
       "rule": "printed text",
-      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+      "why": "Every member re-read in #1582 (both wrong because the members mix batched trigger subjects, where derive over-marks `counted` and the grammar is right, with object picks, where derive's `counted` is right and the grammar lacks it; derive also misses the base field on some). Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "other,selection,stats": {
       "distinct": 2,
@@ -1942,15 +1966,15 @@
     },
     "other,selection,subtype": {
       "distinct": 1,
-      "label": "both wrong",
+      "label": "grammar right",
       "rule": "printed text",
-      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+      "why": "The one member read ('one or more other Rabbits, Bats, Birds, and/or Mice you control'): a batched trigger subject. The grammar reads `other` and all four subtypes; parseSubject misses `other` after 'one or more' and the irregular plural Mice (no `mouse`), and over-marks the batch `counted`. Grammar right."
     },
     "scope,selection,stats": {
       "distinct": 1,
-      "label": "both wrong",
+      "label": "grammar right",
       "rule": "printed text",
-      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+      "why": "The one member read ('one or more creatures you control each with power greater than its base power'): a batched trigger subject. The grammar reads the variable power `stats`; parseSubject reads no stats and over-marks the batch `counted`. Grammar right (the base group `scope,stats` is grammar right)."
     },
     "scope,selection,zone": {
       "distinct": 1,
@@ -1962,13 +1986,13 @@
       "distinct": 2,
       "label": "both wrong",
       "rule": "printed text",
-      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+      "why": "Every member re-read in #1582 (both wrong because the members mix batched trigger subjects, where derive over-marks `counted` and the grammar is right, with object picks, where derive's `counted` is right and the grammar lacks it; derive also misses the base field on some). Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     },
     "selection,status": {
       "distinct": 4,
       "label": "both wrong",
       "rule": "printed text",
-      "why": "Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
+      "why": "Every member re-read in #1582 (both wrong because the members mix batched trigger subjects, where derive over-marks `counted` and the grammar is right, with object picks, where derive's `counted` is right and the grammar lacks it; derive also misses the base field on some). Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer."
     }
   }
 }
