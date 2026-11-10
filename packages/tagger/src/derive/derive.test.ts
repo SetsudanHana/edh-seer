@@ -8487,15 +8487,17 @@ describe("a library-to-graveyard move the printed clause never makes (#1562)", (
   });
 });
 
-// #1589: a temporary trigger behind "Until end of turn," is read by the trigger grammar.
-test("a stored temporary trigger takes the grammar's reading (The Mirari Conjecture)", () => {
+// #1589: a temporary trigger behind "Until end of turn," is read by the trigger grammar. The clause is the STORED shape (cardClauses, The Mirari Conjecture, clause 4): the chapter is the
+// stored trigger, and the cast is only in the printed text. Before #1589 the chapter was the clause's one (unknown) trigger and the copy had no cast trigger at all.
+test("a stored chapter whose text is a temporary trigger takes the grammar's cast trigger (The Mirari Conjecture)", () => {
   const mirari = deriveCardTags({
     oracleId: "t", name: "The Mirari Conjecture",
-    clauses: [{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "an instant or sorcery spell", control: "you" }, actions: [{ verb: "copy", object: "it" }] }] as never,
-    characteristics: MINIMAL_CHARACTERISTICS,
-    clauseTexts: { 1: "Until end of turn, whenever you cast an instant or sorcery spell, copy it. You may choose new targets for the copy." },
+    clauses: [{ id: 4, abilityType: "triggered", trigger: { event: "chapter", subject: "chapter III", control: "you" }, actions: [{ verb: "copy", object: "an instant or sorcery spell", fromZone: null, toZone: null, amount: null, optional: true }] }] as never,
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["enchantment"], subtypes: ["saga"] },
+    clauseTexts: { 4: "Until end of turn, whenever you cast an instant or sorcery spell, copy it. You may choose new targets for the copy." },
   });
-  expect(mirari.abilities[0]!.trigger).toMatchObject({ verbs: ["cast"], subject: { control: "you", type: ["instant", "sorcery"] } });
+  expect(mirari.abilities.map((a) => a.trigger)).toEqual([expect.objectContaining({ verbs: ["cast"], subject: expect.objectContaining({ control: "you", type: ["instant", "sorcery"] }) })]);
+  expect(mirari.unknownTriggers ?? []).toEqual([]);
 });
 
 // #1589: "narrowings refuse" (owner ruling, #896 task 5) binds a temporary trigger as it binds a printed one. "Attacks and isn't blocked" is a narrowing the grammar refuses (Master of Cruelties and
