@@ -8490,14 +8490,14 @@ describe("a library-to-graveyard move the printed clause never makes (#1562)", (
 // #1589: a temporary trigger behind "Until end of turn," is read by the trigger grammar; one whose narrowing the grammar refuses keeps its stored reading until the narrowing is ruled on.
 test("a stored temporary trigger takes the grammar's reading (The Mirari Conjecture); a refused narrowing keeps the stored one (Gaze of Pain)", () => {
   const mirari = deriveCardTags({
-    oracleId: "t", cardName: "The Mirari Conjecture",
+    oracleId: "t", name: "The Mirari Conjecture",
     clauses: [{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "an instant or sorcery spell", control: "you" }, actions: [{ verb: "copy", object: "it" }] }] as never,
     characteristics: MINIMAL_CHARACTERISTICS,
     clauseTexts: { 1: "Until end of turn, whenever you cast an instant or sorcery spell, copy it. You may choose new targets for the copy." },
   });
   expect(mirari.abilities[0]!.trigger).toMatchObject({ verbs: ["cast"], subject: { control: "you", type: ["instant", "sorcery"] } });
   const gaze = deriveCardTags({
-    oracleId: "t", cardName: "Gaze of Pain",
+    oracleId: "t", name: "Gaze of Pain",
     clauses: [{ id: 1, abilityType: "spell", trigger: { event: "attacks", subject: "a creature you control", control: "you" }, actions: [{ verb: "deal-damage", object: "target creature", amount: "its power", optional: true }] }] as never,
     characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["sorcery"] },
     clauseTexts: { 1: "Until end of turn, whenever a creature you control attacks and isn't blocked, you may choose to have it deal damage equal to its power to a target creature. If you do, it assigns no combat damage this turn." },
