@@ -114,7 +114,7 @@
   "packages/tagger/src/derive/would-enter.ts": 1,
   "packages/tagger/src/grammar/action.ts": 31,
   "packages/tagger/src/grammar/clause-record.ts": 8,
-  "packages/tagger/src/grammar/derive-diff.ts": 3,
+  "packages/tagger/src/grammar/derive-diff.ts": 4,
   "packages/tagger/src/grammar/filter.ts": 8,
   "packages/tagger/src/grammar/preamble.ts": 2,
   "packages/tagger/src/grammar/self-as-tilde.ts": 1,

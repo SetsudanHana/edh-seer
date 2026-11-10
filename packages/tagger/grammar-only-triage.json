@@ -301,6 +301,10 @@
       "label": "grammar right",
       "why": "#1592: Cursed Recording (the only member over the corpus). \"{T}: When you next cast an instant or sorcery spell this turn, copy that spell. You may choose new targets for the copy.\" is a delayed trigger the activation sets up (CR 603.7a); the stored answer has the copy with no trigger, an unconditional copy that derive now marks as claiming nothing. The grammar reads the cast trigger on the activated clause, as for Chandra, the Firebrand and Rimefire Torque. The `+counter` half is the time counter's kind on the first clause's effect subject (the existing effect.subject(+counter) judgement). Oracle text read 2026-11-10."
     },
+    "amount,effect.kind,effect.subject(+control +zone),emits": {
+      "label": "grammar right",
+      "why": "#1592 fix round: Mazzy, Truesword Paladin (the only member over the corpus). \"Whenever an Aura you control is put into your graveyard from the battlefield, exile it. Until the end of your next turn, you may cast that card.\" The grammar reads the exile as the graveyard recursion it is (the Aura leaves your graveyard and is cast again) and states its amount; the stored answer leaves the effect kind blank. The emits are the same on both sides. The card was already on its grammar reading: until the blank-kind abilities of a clause were ordered by their emit verbs, its exile was compared with its cast and the difference keyed under another label. Oracle text read 2026-11-10."
+    },
     "abilities:0->1,cost,effect.kind,effect.subject(+type),effect.subject(-anyOf ~control -scope),emits,emits.verb,kind,payment,repeats,trigger": {
       "label": "grammar right",
       "why": "#1589: Ral, Storm Conduit. The stored answer numbers its clauses wrongly: the +2 scry carries the cost -2 and the -2 delayed copy (\"When you next cast an instant or sorcery spell this turn, copy that spell\") is absent. The grammar has all four abilities: the cast-or-copy damage trigger (both events), the +2 scry, and the -2 copy under its cast trigger. Nothing the stored answer claims is lost (lostClaims empty)."

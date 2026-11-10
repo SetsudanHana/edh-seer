@@ -8604,6 +8604,39 @@ describe("#1592: a stored graveyard-or-hand pick leaves the hand, and the card y
     expect(emit(intrusion, "cast").subject).toMatchObject({ control: "you", fromZone: "exile" });
     expect(emit(intrusion, "cast").subject.scope).toBeUndefined();
   });
+  // Fix round: the card is still the OPPONENT's (CR 108.3), which the emit says with `owner`, so the matcher forms no self reason with a deck-mate's "when you cast this spell".
+  test("the stolen card's cast carries its owner; a card off your own library has none", () => {
+    expect(emit(stored("a nonland card from target opponent's graveyard or hand", "stack"), "cast").subject.owner).toBe("opp");
+    expect(emit(stored("a nonland card from that player's graveyard or hand", null), "cast").subject.owner).toBe("opp");
+    const own = deriveCardTags({
+      oracleId: "t", name: "Test Oracle",
+      clauses: [{ id: 1, abilityType: "spell", actions: [
+        { verb: "exile", object: "the top card of your library", fromZone: "library", toZone: "exile", optional: false },
+        { verb: "cast", object: "that card", fromZone: "exile", toZone: null, optional: true }] }] as never,
+      characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["sorcery"] },
+      clauseTexts: { 1: "Exile the top card of your library. You may cast that card this turn." },
+    });
+    expect(emit(own, "cast").subject).toMatchObject({ control: "you" });
+    expect(emit(own, "cast").subject.owner).toBeUndefined();
+  });
+  // Lady Loki, Agent of Chaos: the card comes off YOUR library; "each opponent" is who the damage hits, and its `each` (with its `opp`) reached the cast through the back-reference.
+  test("a player named by another action is neither the caster nor the cast's scope (Lady Loki, Agent of Chaos)", () => {
+    const loki = deriveCardTags({
+      oracleId: "t", name: "Lady Loki, Agent of Chaos",
+      clauses: [{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "your first instant, sorcery, or Villain spell each turn", control: "you" }, actions: [
+        { verb: "exile", object: "it", fromZone: "stack", toZone: "exile", optional: false },
+        { verb: "mill", object: "cards from the top of your library", optional: false },
+        { verb: "exile", object: "a nonland card", fromZone: "library", toZone: "exile", optional: false },
+        { verb: "deal-damage", object: "each opponent", amount: "the difference between that spell's mana value and that nonland card's mana value", optional: false },
+        { verb: "cast", object: "that card", fromZone: "exile", toZone: "stack", optional: true }] }] as never,
+      characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["creature"] },
+      clauseTexts: { 1: "Whenever you cast your first instant, sorcery, or Villain spell each turn, exile it, then exile cards from the top of your library until you exile a nonland card. Lady Loki deals damage to each opponent equal to the difference between that spell's mana value and that nonland card's mana value. You may cast that card without paying its mana cost." },
+    });
+    const cast = emit(loki, "cast").subject;
+    expect(cast.control).toBe("you");
+    expect(cast.scope).toBeUndefined();
+    expect(cast.owner).toBeUndefined();
+  });
   test("an opponent's own cast keeps its player ('that player may cast that card')", () => {
     const tags = deriveCardTags({
       oracleId: "t", name: "Test Gift",

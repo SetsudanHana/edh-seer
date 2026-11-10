@@ -30,7 +30,18 @@ function byClause(abilities: readonly Ability[]): Map<number, Ability[]> {
   // ...AND THE #1357 GATE: `gate` and `conditionCares` are the same on both sides when the reading agrees, but a gated and an ungated ability of one clause differ in the key first, so a side that gated one more
   // action sorted the pair the wrong way round (Imoen's two draws) and the difference read as every field.
   const order = (a: Ability): string => { const { gate: _g, conditionCares: _c, ...rest } = a; return json(rest).replace(/"edict":true,?|"victimMay":true,?|"redirect":true,?/g, ""); };
-  for (const list of out.values()) list.sort((x, y) => (order(x) < order(y) ? -1 : order(x) > order(y) ? 1 : 0));
+  // ...AND THE BLANK-KIND ABILITIES OF A CLAUSE ARE ORDERED AMONG THEMSELVES BY THEIR EMITS' VERBS (#1592). The serialisation puts a subject's fields before the emit's verb, so two blank-kind abilities traded
+  // places when one side's subject had a field the other's lacked (Hidetsugu and Kairi's exile and cast: the grammar's cast `fromZone: exile` sorts before the exile's `fromZone: library`, the stored cast's
+  // bare subject after it), and a one-field difference read as `emits.verb`. Only they are re-ordered, in the slots they already hold.
+  // CEILING: the other abilities keep the whole-serialisation order: ordering every ability by kind and verbs first moved 100 cards' group keys (measured on the corpus at DERIVE 489), each of which would need its label judged again.
+  const blank = (a: Ability): boolean => (a.effect?.kind ?? "") === "" && (a.emits ?? []).length > 0;
+  const verbs = (a: Ability): string => (a.emits ?? []).map((e) => e.verb).join(",");
+  for (const list of out.values()) {
+    list.sort((x, y) => (order(x) < order(y) ? -1 : order(x) > order(y) ? 1 : 0));
+    const slots = list.map((a, i) => (blank(a) ? i : -1)).filter((i) => i >= 0);
+    const blanks = slots.map((i) => list[i]!).sort((x, y) => (verbs(x) < verbs(y) ? -1 : verbs(x) > verbs(y) ? 1 : order(x) < order(y) ? -1 : order(x) > order(y) ? 1 : 0));
+    slots.forEach((slot, k) => { list[slot] = blanks[k]!; });
+  }
   return out;
 }
 
