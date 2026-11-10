@@ -1314,7 +1314,10 @@ test("'look at target opponent's hand' claims nothing (a lone none), and '..., t
   const v = grammarClauseRecords(V_GER__THE_INTRUDER);
   expect(v.blocker).toBeUndefined();
   expect(v.records.find((r) => r.id === 3)!.actions).toEqual([expect.objectContaining({ verb: "draw", object: "a card", amount: "1" })]);
-  expect(grammarClauseRecords(SALT_VAMPIRE).blocker).toEqual({ clause: 2, kind: "action", phrase: "you may choose a nonland card from it" });
+  // Salt Vampire is complete since #1349 (a card chosen from a looked-at hand is named in the next sentence): exile then draw, both optional behind "If you do".
+  const salt = grammarClauseRecords(SALT_VAMPIRE);
+  expect(salt.blocker).toBeUndefined();
+  expect(salt.records.find((r) => r.id === 2)!.actions).toEqual([expect.objectContaining({ verb: "exile", object: "a nonland card from target opponent's hand", optional: true }), expect.objectContaining({ verb: "draw", optional: true })]);
   expect(grammarClauseRecords(ZERO__INCORPOREAL_SENSATE).blocker).toEqual({ clause: 2, kind: "action", phrase: "a spell cast this way costs {2} more to cast" });
   const thief = parity(INGENIOUS_THIEF, STORED_INGENIOUS_THIEF);
   expect(thief.g.records[1]!.actions).toEqual([{ verb: "none", object: "" }]);
@@ -1767,4 +1770,20 @@ test("Daretti, Rocketeer Engineer derives one ability per limb from the stored r
 
 test("In the Pale Moonlight reads once 'Romulan' is a known creature type", () => {
   expect(grammarClauseRecords(IN_THE_PALE_MOONLIGHT).blocker).toBeUndefined();
+});
+
+test("a delayed copy ('When you next cast ..., copy that spell. You may choose new targets for the copy.') stays blocked: its cast trigger is not in the record (#1349)", () => {
+  const chandra = { name: "Chandra, the Firebrand", typeLine: "Legendary Planeswalker — Chandra", oracleText: "−2: When you next cast an instant or sorcery spell this turn, copy that spell. You may choose new targets for the copy." };
+  expect(grammarClauseRecords(chandra).blocker).toMatchObject({ kind: "action", phrase: "you may choose new targets for the copy" });
+  const twincast = { name: "Twincast", typeLine: "Instant", oracleText: "Copy target instant or sorcery spell. You may choose new targets for the copy." };
+  expect(grammarClauseRecords(twincast).blocker).toBeUndefined();
+  // A granted quoted ability is not the clause's own (Way of the Cryomancer reads as it did before this shape).
+  const way = { name: "Way", typeLine: "Enchantment", oracleText: 'Planeswalkers you control have "[−3]: When you next cast an instant or sorcery spell this turn, copy that spell. You may choose new targets for the copy."' };
+  expect(grammarClauseRecords(way).blocker).toBeUndefined();
+  // A temporary cast trigger ("Until end of turn, whenever you cast a spell, copy it", Jace Reawakened) is as delayed: its trigger is cut off the same way.
+  const jace = { name: "Jace Reawakened", typeLine: "Legendary Planeswalker — Jace", oracleText: "−6: Until end of turn, whenever you cast a spell, copy it. You may choose new targets for the copy." };
+  expect(grammarClauseRecords(jace).blocker).toMatchObject({ kind: "action", phrase: "you may choose new targets for the copy" });
+  // ...while a printed triggered ability keeps its trigger and reads.
+  const melek = { name: "Swarm", typeLine: "Enchantment", oracleText: "Whenever you cast an instant or sorcery spell, you may copy that spell. You may choose new targets for the copy." };
+  expect(grammarClauseRecords(melek).blocker).toBeUndefined();
 });

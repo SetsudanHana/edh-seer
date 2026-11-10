@@ -181,6 +181,7 @@ const PROSE: Record<string, string> = {
   "118.7a": "a generic reduction takes off generic mana only — reduction.ts records the printed mana; the reader applies it",
   "113.3": "schema: the ability kinds a card can name as an OBJECT (abilityKind, AC12)",
   "707.10": "schema / effect-kind: an ability is the third copyable object, kind copy-ability (AC12; derive.test asserts Gogo)",
+  "707.10c": "grammar/action.test.ts — 'You may choose new targets for the copy' after a copy claims no action (Twincast, Dualcaster Mage; #1349)",
   "707.2": "effect-kind: a clone's 'except it has this ability' is an exception to the copy, not the object copied (effect-kind.test asserts Cryptoplasm)",
   "605.3b": "schema: a mana ability does not use the stack, so 'activated' as an object excludes it (AC12)", "603.8": "state triggers — prompt rule", "603.12": "reflexive — prompt rule",
   "615.1a": "derive/prevention.test.ts — an effect that uses the word 'prevent' is `prevention` (Fog, Circle of Protection: Red, Kor Haven; #1469)",

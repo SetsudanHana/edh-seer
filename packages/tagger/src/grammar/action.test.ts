@@ -737,3 +737,58 @@ test("a base P/T set on an unfolded animate is the animate's amount (Ensoul Arti
   expect(read("target artifact you control becomes an artifact creature with base power and toughness 5/5 for as long as this creature remains on the battlefield."))
     .toMatchObject([{ verb: "animate", amount: "5/5" }, { verb: "modify-pt", amount: "5/5" }]);
 });
+
+// #1349: a card chosen from a hand just looked at or revealed ("You choose a nonland card from it. That player discards that card.") is the card the next
+// sentence moves, named as the store names it: "a nonland card from target opponent's hand". The choose itself records no action.
+test("a card chosen from a revealed or looked-at hand stands where the next sentence says 'that card'", () => {
+  const duress = read("Target opponent reveals their hand. You choose a noncreature, nonland card from it. That player discards that card.");
+  expect(unreadPhrases("Target opponent reveals their hand. You choose a noncreature, nonland card from it. That player discards that card.", "spell")).toEqual([]);
+  expect(duress).toMatchObject([{ verb: "reveal" }, { verb: "discard", text: "a noncreature, nonland card from target opponent's hand", object: { fromZone: "hand", notType: ["creature", "land"] } }]);
+  const salt = "Look at target opponent's hand. You may choose a nonland card from it. If you do, that player exiles that card, then draws a card.";
+  expect(unreadPhrases(salt, "triggered")).toEqual([]);
+  expect(parseActions(salt, "triggered")).toMatchObject([{ verb: "exile", text: "a nonland card from target opponent's hand", optional: true }, { verb: "draw", optional: true }]);
+  // A choose nothing later names stays unread, and so does a hand that was never looked at.
+  expect(unreadPhrases("Target opponent reveals their hand. You choose a nonland card from it. Draw a card.", "spell")).toEqual(["you choose a nonland card from it"]);
+  expect(unreadPhrases("You choose a nonland card from it. That player discards that card.", "spell").length).toBeGreaterThan(0);
+  // A bare "it" beside the reference may mean the card or something else (Vendilion Clique: "puts it on the bottom of their library" read as the Clique itself): the card blocks.
+  expect(unreadPhrases("Look at target player's hand. You may choose a nonland card from it. If you do, that player reveals the chosen card, puts it on the bottom of their library, then draws a card.", "triggered").length).toBeGreaterThan(0);
+  // Two references in one sentence do not say which the choice is.
+  expect(unreadPhrases("Target opponent reveals their hand. You choose a card from it. Exile that card and return that card to its owner's hand.", "spell").length).toBeGreaterThan(0);
+});
+
+// #1349: "As this enters, choose a creature type / a card name" is the store's `other` with the choice as its words, like "choose a color" (the kind is read off the printed words by derive's chosen-kind).
+test("a replacement's choice of a creature type, card name or land type is an `other`, as a color's is", () => {
+  for (const choice of ["choose a creature type", "choose a card name", "choose a nonland card name", "choose a basic land type", "choose a card type"]) {
+    const text = `As this artifact enters, ${choice}.`;
+    expect(unreadPhrases(text, "static")).toEqual([]);
+    expect(parseActions(text, "static")).toMatchObject([{ verb: "other", text: choice }]);
+  }
+  // A choice that is no replacement stays unread: its result is not what a later "the chosen type" reads.
+  expect(unreadPhrases("Choose a creature type.", "spell")).toEqual(["choose a creature type"]);
+  expect(unreadPhrases("As this artifact enters, choose a creature type other than Wizard.", "static").length).toBeGreaterThan(0);
+});
+
+// #1349: "You may choose new targets for the copy" (CR 707.10c) after a copy records no action, as Twincast's and Dualcaster Mage's bought readings have it.
+test("choosing new targets for the copy just made claims nothing", () => {
+  expect(unreadPhrases("Copy target instant or sorcery spell. You may choose new targets for the copy.", "spell")).toEqual([]);
+  expect(parseActions("Copy target instant or sorcery spell. You may choose new targets for the copy.", "spell")).toMatchObject([{ verb: "copy" }]);
+  expect(parseActions("Copy target instant or sorcery spell. You may choose new targets for the copy.", "spell")).toHaveLength(1);
+  expect(unreadPhrases("Copy target instant or sorcery spell you control. If this spell was cast from a graveyard, copy that spell twice instead. You may choose new targets for the copies.", "spell")).toEqual([]);
+  // With no copy before it the sentence says nothing this reads: unread.
+  expect(unreadPhrases("Draw a card. You may choose new targets for the copy.", "spell")).toEqual(["you may choose new targets for the copy"]);
+});
+
+// #1349 review: after a hand pick, "that player" is the hand's owner (the target opponent), not an unnamed player: Nightsnare's "that player discards two cards" and Salt Vampire's draw were `control: any`.
+test("'that player' after a card chosen from a hand is the hand's owner", () => {
+  const night = parseActions("Target opponent reveals their hand. You may choose a nonland card from it. If you do, that player discards that card. If you don't, that player discards two cards.", "spell");
+  const discards = night.filter((a) => a.verb === "discard");
+  expect(discards).toHaveLength(2);
+  expect(discards[1]!.actor).toMatchObject({ control: "opp", scope: "target" });
+  // The picked card keeps its types (Unmask: "target player discards <it>" lost them).
+  expect(discards[0]).toMatchObject({ text: "a nonland card from target opponent's hand", object: { notType: ["land"] } });
+  const salt = parseActions("Look at target opponent's hand. You may choose a nonland card from it. If you do, that player exiles that card, then draws a card.", "triggered");
+  expect(salt.find((a) => a.verb === "draw")!.actor).toMatchObject({ control: "opp", scope: "target" });
+  expect(salt.find((a) => a.verb === "exile")).toMatchObject({ text: "a nonland card from target opponent's hand" });
+  const unmask = parseActions("Target player reveals their hand. You choose a nonland card from it. That player discards that card.", "spell");
+  expect(unmask.find((a) => a.verb === "discard")).toMatchObject({ text: "a nonland card from target player's hand", object: { notType: ["land"] } });
+});
