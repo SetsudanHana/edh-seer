@@ -13,6 +13,7 @@ import type { DerivedTagsDoc } from "./clause-store.js";
 import type { ClauseRecord } from "./canonicalize.js";
 import type { Clause } from "./segment.js";
 import type { DeriveInput } from "./derive/derive.js";
+import type { MeldParts } from "./derive/meld-pair.js";
 import { missedCost } from "./grammar/preamble.js";
 
 /** Clause id -> clause text, recomputed rather than stored. `segment()` is deterministic over the
@@ -198,7 +199,7 @@ export function faceLoyalties(doc: { loyalty?: string; faces?: { loyalty?: strin
   return per.some((s) => s !== undefined) ? per.map(one) : undefined;
 }
 
-type CardDocLike = Parameters<typeof charsFrom>[0] & { oracleText?: string; keywords?: string[]; typeLine?: string; allParts?: { component?: string; typeLine?: string }[]; manaCost?: string; loyalty?: string; faces?: { manaCost?: string; loyalty?: string }[] };
+type CardDocLike = Parameters<typeof charsFrom>[0] & { oracleText?: string; keywords?: string[]; typeLine?: string; allParts?: { component?: string; typeLine?: string; name?: string }[]; manaCost?: string; loyalty?: string; faces?: { manaCost?: string; loyalty?: string }[] };
 
 /** EVERYTHING DERIVE READS BESIDE THE CLAUSES, from the card document: the one construction
  *  `derive-corpus` and the grammar-only measurement (#896 task 7) share, so the two derive the same
@@ -228,5 +229,16 @@ export function deriveInputOf(card: CardDocLike, oracleId: string, name: string,
     oracleText: card.oracleText,
     grantedToken: grantedTokenClauses(card),
     ...(readings ? { readings } : {}),
+    ...(meldPartsOf(card, name) ? { meld: meldPartsOf(card, name)! } : {}),
   };
+}
+
+/** The type lines of a meld card's result and partner, from `allParts` (#1582). Undefined for a card with no `meld_result`. */
+export function meldPartsOf(card: { allParts?: { component?: string; typeLine?: string; name?: string }[] }, name: string): MeldParts | undefined {
+  const parts = card.allParts ?? [];
+  const result = parts.find((p) => p.component === "meld_result" && p.typeLine !== undefined);
+  if (result === undefined) return undefined;
+  const typesOf = (typeLine: string) => { const c = charsFrom({ typeLine }); return { types: c.types, subtypes: c.subtypes }; };
+  const partners = parts.filter((p) => p.component === "meld_part" && p.typeLine !== undefined && p.name !== name);
+  return { result: typesOf(result.typeLine!), partners: partners.map((p) => typesOf(p.typeLine!)) };
 }

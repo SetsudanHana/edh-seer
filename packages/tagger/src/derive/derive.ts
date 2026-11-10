@@ -59,7 +59,7 @@ import { emblemRecipient } from "../emblem.js";
 import { chosenColorOf } from "./chosen-color.js";
 import { chosenKindOf, chosenKindOfText } from "./chosen-kind.js";
 import { selectionFromText } from "./selection-text.js";
-import { meldPair } from "./meld-pair.js";
+import { meldPair, type MeldParts } from "./meld-pair.js";
 
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
@@ -4770,6 +4770,8 @@ export interface DeriveInput {
   manaCosts?: string[];
   /** The printed starting loyalty of each face (index = face, null for a face with none), from the card document (`faceLoyalties`). Read by `manaLines`. */
   startLoyalty?: (number | null)[];
+  /** A MELD CARD'S RELATED CARDS, from the card document's `allParts` (Scryfall's `meld_result` and `meld_part`): the type line of what the pair melds INTO and of the partner (#1582). Read by `meldPair`. Absent on a card that melds nothing. */
+  meld?: MeldParts;
 }
 
 /** A SELF "YOU LOSE THE GAME" ABILITY CLAIMS NOTHING (#1252, #1264): emits non-empty and every one a `loses-game` of
@@ -5058,7 +5060,7 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
   // A CHOSEN COLOUR IS NOT A CHOSEN TYPE (#1360): a stored reading's `chosenType` on a colour choice becomes `chosenColor`.
   // ...AND WHAT A CHOSEN TYPE CHOSE (#1568): `chosenKind` beside `chosenType`, so the matcher resolves only a creature-type choice to the deck's creature type.
   // ...AND A MELD EXILES ITS PAIR, a chosen set and no class (#1582).
-  const spellOnce = meldPair(selectionFromText(chosenKindOf(chosenColorOf(spellOnceRaw, input.clauseTexts, input.oracleText ?? ""), input.clauseTexts, input.oracleText ?? ""), input.clauseTexts, input.oracleText ?? ""), input.clauseTexts, chars.types);
+  const spellOnce = meldPair(selectionFromText(chosenKindOf(chosenColorOf(spellOnceRaw, input.clauseTexts, input.oracleText ?? ""), input.clauseTexts, input.oracleText ?? ""), input.clauseTexts, input.oracleText ?? ""), input.clauseTexts, chars.types, input.meld);
   // A CREATURE ONLY UNDER A CONDITION (#797): the action grammar reads "As long as your devotion to red
   // is less than five, Purphoros isn't a creature" as the card itself that "can't be a creature".
   // Read off the printed text, which reaches the Theros gods the store filed as something else.

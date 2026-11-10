@@ -29,7 +29,7 @@ describe("a meld exiles its pair: a chosen set, no mass", () => {
   });
   /** The exile keeps what is true of the pair: its types (the card's own and the partner's "a creature named"), nontoken, no subtype read off a name; a creature exile stays a creature exile (own-name.test.ts: Syr Vondam, Soulherder, Hero of Bretagard hear Graf Rats). */
   test.each([
-    ["Graf Rats", "creature"], ["Mishra, Claimed by Gix", "creature"], ["Vanille, Cheerful l'Cie", "creature"], ["Gisela, the Broken Blade", "creature"],
+    ["Graf Rats", "creature"], ["Mishra, Claimed by Gix", ["creature", "artifact"]], ["Vanille, Cheerful l'Cie", "creature"], ["Gisela, the Broken Blade", "creature"],
     ["Titania, Voice of Gaea", ["creature", "land"]], ["Hanweir Battlements", ["land", "creature"]], ["Urza, Lord Protector", ["creature", "artifact"]],
   ])("%s: the pair is exiled as %j, nontoken, with no subtype", (name, type) => {
     const meld = clausesWith(name, "meld");
@@ -40,13 +40,27 @@ describe("a meld exiles its pair: a chosen set, no mass", () => {
       expect(x.subject.subtype, `${name} ${x.verb}`).toBeUndefined();
     }
   });
-  test.each(MELDERS)("%s: the melded permanent enters with no mass and no class read off its name", (name) => {
+  /** The melded permanent is the RESULT card: its type line from `allParts` (`meld_result`), never a class read off its name ("Brisela, Voice of Nightmares" is an Eldrazi Angel, not a Nightmare; "Urza, Planeswalker" is a planeswalker because the card is). */
+  test.each([
+    ["Graf Rats", ["creature"]], ["Hanweir Battlements", ["creature"]], ["Mishra, Claimed by Gix", ["artifact", "creature"]],
+    ["Titania, Voice of Gaea", ["creature"]], ["Vanille, Cheerful l'Cie", ["creature"]], ["Urza, Lord Protector", ["planeswalker"]], ["Gisela, the Broken Blade", ["creature"]],
+  ])("%s: the melded permanent enters as its result card, you control it, nontoken, no mass", (name, type) => {
     const meld = clausesWith(name, "meld");
     const e = emitsOf(name, (c) => meld.includes(c)).filter((x) => x.verb === "enters");
     expect(e.length).toBe(1);
-    expect(e[0]!.subject.scope).toBeUndefined();
-    expect(e[0]!.subject.subtype).toBeUndefined();
-    expect(e[0]!.subject.type).toBeUndefined();
+    const s = e[0]!.subject;
+    expect(s.scope).toBeUndefined();
+    expect(s.control).toBe("you");
+    expect(s.token).toBe(false);
+    expect([s.type].flat().sort()).toEqual(type);
+    expect(s.allTypes).toEqual(type.length > 1 ? type : undefined);
+    const parts = (fx[name]!.source as { allParts: { component: string; typeLine: string }[] }).allParts.find((p) => p.component === "meld_result")!;
+    expect([s.subtype].flat().sort()).toEqual(parts.typeLine.split("—")[1]!.trim().toLowerCase().split(" ").sort());
+  });
+  test("Gisela's Brisela is no Nightmare, and the ability no longer scales by a mass of them", () => {
+    const abs = rowOf("Gisela, the Broken Blade").tags.abilities.filter((a) => clausesWith("Gisela, the Broken Blade", "meld").includes(Number(a.clause)));
+    expect(abs.flatMap((a) => (a.emits ?? []).map((e) => e.subject.subtype)).flat()).not.toContain("nightmare");
+    for (const a of abs) expect(a.count?.scalesWith).toBeUndefined();
   });
   test("CONTROL: a card that only reminds 'Melds with' derives no meld pair", () => {
     for (const name of ["Midnight Scavengers", "Hanweir Garrison", "Bruna, the Fading Light"].filter((n) => fx[n])) {
