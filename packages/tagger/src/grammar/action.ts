@@ -2080,13 +2080,14 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // CEILING: X's definition is dropped with the look, as the stored answer drops it; the cards looked at are still "the top X cards of your library" for the sentences after.
     const look = /^look at (the top (?:card|(?:\w+|\d+) cards) of your library)(?:, where x is [^,]+)?$/i.exec(s);
     if (look) { if (pendingLook !== null) unread?.push(pendingLook); pendingLook = s; lookedAtLibrary = look[1]!.toLowerCase(); continue; }
-    // WHAT "YOU MAY X. IF YOU DO, Y" MAKES OPTIONAL (#1589). `optional` marks the action a player CHOOSES to take; Y is not a second choice, it follows from X (its `condition` is "if you do").
-    // "You may discard a card. If you do, draw a card" (Keldon Raider): the discard is recorded and carries the choice, the draw only the condition. The stored answers agree: of 633 clauses whose recorded
-    // optional action has an "If you do" behind it, 552 leave everything after it non-optional, 56 mark all of it and 25 some.
+    // WHAT "YOU MAY X. IF YOU DO, Y" MAKES OPTIONAL (#1589). CR 118.12 (Costs): in "[A player] may [do something]. If [that player] does, [effect]" the action X "is a cost, paid when the spell or ability
+    // resolves", and the "if" clause "checks whether the player chose to pay an optional cost". So there is ONE choice, and it is X's: Y is the effect, which follows from it and is not a second choice.
+    // `optional` marks the action a player CHOOSES to take, so X carries it and Y only its `condition` ("if you do"). The rules' reading decides this, not what the stored answers happen to write (owner ruling, #1214).
+    // "You may discard a card. If you do, draw a card" (Keldon Raider): the discard is recorded and carries the choice, the draw only the condition.
     // "You may pay {2}. If you do, draw a card" (Wooden Sphere), "You may choose a nonland card from it. If you do, that player exiles that card, then draws a card" (Salt Vampire): the payment and the pick
-    // record no action, so the FIRST action behind "If you do" stands for the choice, and the actions after it follow from it (Revealing Eye's stored discard is optional, its draw is not; of the stored
-    // mana-payment clauses with two or more actions, 56 mark the first alone and 19 all).
-    // CEILING: with no action recorded for the payment or the pick, the first action of Y is marked optional in its place; the choice is really X's, which the record cannot name.
+    // record no action, so the FIRST action behind "If you do" stands for the choice and the actions after it follow from it. One printed action recorded once per zone ("search your library and/or
+    // graveyard" is two `search` records) is that first action in every zone: its twins are marked alike, so derive's zone fold (`collapseZoneSearches`, which asks for equal optionality) still makes one search.
+    // CEILING: with no action recorded for the payment or the pick, the first action of Y is marked optional in its place; the choice is really X's (the cost of CR 118.12), which the record cannot name.
     const ifYouDoAfterMay = mayBefore && out.length === mayAt && /^if you do, /i.test(s);
     mayBefore = /\byou may\b/i.test(s); mayAt = out.length;
     let condition: string | undefined;
@@ -2292,7 +2293,15 @@ function readActions(effect: string, type: string | null, cost: string | undefin
       // CEILING: the action has ONE source zone, so a graveyard-or-hand pick is written as the hand's; that it can also take a card out of a graveyard (no `leaves` from the graveyard is emitted) is not carried.
       for (let i = at; i < out.length; i++) if (out[i]!.text === handPick.text && out[i]!.verb !== "discard" && !out[i]!.fromZone) out[i] = { ...out[i]!, fromZone: "hand" };
     }
-    if (ifYouDoAfterMay && at < out.length) out[at] = { ...out[at]!, optional: true };
+    if (ifYouDoAfterMay && at < out.length) {
+      const first = out[at]!, zones = new Set([first.fromZone ?? ""]);
+      out[at] = { ...first, optional: true };
+      // The per-zone twins of that one printed action: the same verb and words, each from another zone, straight behind it.
+      for (let i = at + 1; i < out.length && first.verb === "search" && out[i]!.verb === "search" && out[i]!.text === first.text && !zones.has(out[i]!.fromZone ?? ""); i++) {
+        zones.add(out[i]!.fromZone ?? "");
+        out[i] = { ...out[i]!, optional: true };
+      }
+    }
   }
   if (pendingLook !== null) unread?.push(pendingLook);
   if (handPick && !handPick.used) unread?.push(handPick.sentence);

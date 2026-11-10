@@ -8524,3 +8524,17 @@ test("an exile picked from a graveyard or hand carries a non-battlefield zone on
   expect(exiled).toHaveLength(1);
   expect(exiled[0]!.subject.fromZone).toBe("hand");
 });
+
+// #1589 part 3: behind "You may pay {2}. If you do," the first action stands for the choice; a search printed once over two zones is that ONE action, so both zone records are optional alike and still fold into one search.
+test("a paid search over 'library and/or graveyard' is one search ability, as the unpaid one is", () => {
+  const searches = (effect: string): number => {
+    const card = { name: "Test Seeker", oracleText: `When this creature enters, ${effect}`, typeLine: "Creature — Human", keywords: [] };
+    const g = grammarClauseRecords(card as never);
+    expect(g.complete).toBe(true);
+    const r = deriveCardTags({ oracleId: "t", name: card.name, clauses: g.records as never, characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["creature"] }, clauseTexts: { 1: card.oracleText } });
+    return r.abilities.filter((a) => a.effect.kind === "search").length;
+  };
+  const tail = "search your library and/or graveyard for a card named Jace, Arcane Strategist, reveal it, and put it into your hand. If you search your library this way, shuffle.";
+  expect(searches(`you may ${tail}`)).toBe(1);
+  expect(searches(`you may pay {2}. If you do, ${tail}`)).toBe(1);
+});

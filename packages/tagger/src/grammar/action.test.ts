@@ -73,6 +73,10 @@ test("conditions are KEPT on the action (owner, 2026-10-01); 'you may' is option
   expect(opt("you may pay {1}. If you do, you lose 1 life and draw a card.")).toEqual([["lose-life", true, "if you do"], ["draw", false, "if you do"]]);
   // A hand pick records no action either: the exile of the picked card stands for the choice, the draw follows. Revealing Eye's stored shape (discard optional, draw not).
   expect(opt("Look at target opponent's hand. You may choose a nonland card from it. If you do, that player exiles that card, then draws a card.")).toEqual([["exile", true, "if you do"], ["draw", false, "if you do"]]);
+  // The stand-in is ONE printed action even when it is recorded once per zone ("search your library and/or graveyard" is two `search` records): every zone twin carries the choice, or derive's zone fold
+  // (`collapseZoneSearches`, which asks for equal optionality) would refuse and read two searches.
+  expect(read("you may pay {2}. If you do, search your library and/or graveyard for a card named Jace, Arcane Strategist, reveal it, and put it into your hand. If you search your library this way, shuffle.").map((r) => [r.verb, r.fromZone, r.optional === true]))
+    .toEqual([["search", "library", true], ["search", "graveyard", true], ["reveal", undefined, false], ["put", undefined, false], ["shuffle", undefined, false]]);
   // "You may A and B" is one choice over both (owner 2026-10-15, #1214): unchanged.
   expect(opt("you may discard a card and draw a card.")).toEqual([["discard", true, undefined], ["draw", true, undefined]]);
 });
