@@ -1987,7 +1987,8 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // the same choice inside an effect it drops.
     // CEILING: the choice is never carried: a later "of that color" / "the chosen number" is read (or left unread) by its own words, and "of the chosen color" is the filter's `chosenColor` (#1360), as for a bought card.
     if (/^(?:you may look at the top card of your library any time|play with the top card of your library revealed|choose a color|choose a number between \d+ and \d+)$/i.test(s)) { mayBefore = false; continue; }
-    const asEnters = /^as (?:~|this [a-z]+) enters, (choose a color|choose a number between \d+ and \d+)$/i.exec(s);
+    // CEILING (#1349): the type / name choices are read only as a replacement ("As this enters, ..."), where the store writes the same `other`; the reference behind them ("of the chosen type") is read, or left unread, by its own words.
+    const asEnters = /^as (?:~|this [a-z]+) enters, (choose a color|choose a number between \d+ and \d+|choose a creature type|choose a card name|choose a nonland card name|choose a basic land type|choose a land type|choose a card type)$/i.exec(s);
     if (asEnters) { mayBefore = false; out.push({ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: asEnters[1]! }); continue; }
     // "Look at target opponent's hand" (Telepathy, Gitaxian Probe): nothing leaves the hand, so no action; "..., then draw a card" (V'Ger) is the rest of the sentence.
     const handLook = /^look at (?:target player's|target opponent's|that player's) hand(?:, then (.+))?$/i.exec(s);

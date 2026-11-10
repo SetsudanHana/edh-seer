@@ -755,3 +755,15 @@ test("a card chosen from a revealed or looked-at hand stands where the next sent
   // Two references in one sentence do not say which the choice is.
   expect(unreadPhrases("Target opponent reveals their hand. You choose a card from it. Exile that card and return that card to its owner's hand.", "spell").length).toBeGreaterThan(0);
 });
+
+// #1349: "As this enters, choose a creature type / a card name" is the store's `other` with the choice as its words, like "choose a color" (the kind is read off the printed words by derive's chosen-kind).
+test("a replacement's choice of a creature type, card name or land type is an `other`, as a color's is", () => {
+  for (const choice of ["choose a creature type", "choose a card name", "choose a nonland card name", "choose a basic land type", "choose a card type"]) {
+    const text = `As this artifact enters, ${choice}.`;
+    expect(unreadPhrases(text, "static")).toEqual([]);
+    expect(parseActions(text, "static")).toMatchObject([{ verb: "other", text: choice }]);
+  }
+  // A choice that is no replacement stays unread: its result is not what a later "the chosen type" reads.
+  expect(unreadPhrases("Choose a creature type.", "spell")).toEqual(["choose a creature type"]);
+  expect(unreadPhrases("As this artifact enters, choose a creature type other than Wizard.", "static").length).toBeGreaterThan(0);
+});
