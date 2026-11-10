@@ -796,6 +796,36 @@ test("'... and (you) may choose new targets for the copy' after a copy records n
   expect(unreadPhrases("Draw a card and you may choose new targets for the copy.", "spell")).not.toEqual([]);
 });
 
+// #1589 part 4: the hand pick's follow-ups. An untyped "a card", a mana-value filter printed before or after "from it", and the pick joined to the reveal before it or to the exile after it.
+test("a hand pick carries its mana-value filter, reads an untyped card, and is read when joined to the reveal or to the exile", () => {
+  const picked = (effect: string, type: "spell" | "triggered" = "spell") => { expect(unreadPhrases(effect, type)).toEqual([]); return parseActions(effect, type).filter((a) => a.verb === "discard" || a.verb === "exile"); };
+  // Coercion: no type word at all.
+  expect(picked("Target opponent reveals their hand. You choose a card from it. That player discards that card.")).toMatchObject([{ verb: "discard", text: "a card from target opponent's hand", object: { fromZone: "hand" } }]);
+  // Inquisition of Kozilek: the filter is printed after "from it" and belongs to the picked card.
+  const iok = picked("Target player reveals their hand. You choose a nonland card from it with mana value 3 or less. That player discards that card.");
+  expect(iok).toMatchObject([{ verb: "discard", text: "a nonland card with mana value 3 or less from target player's hand", object: { fromZone: "hand", notType: ["land"], stats: [{ metric: "mana-value", op: "lte", value: 3 }] } }]);
+  // Venarian Glimmer: the same filter printed before "from it", with X.
+  expect(picked("Target player reveals their hand. You choose a nonland card with mana value X or less from it. That player discards that card.")).toMatchObject([{ verb: "discard", text: "a nonland card with mana value X or less from target player's hand", object: { notType: ["land"], stats: [{ metric: "mana-value", op: "lte", variable: true }] } }]);
+  // Castigate: the exile is joined to the pick, and the card leaves the HAND (the store's hand > exile). Transgress the Mind: with a filter between them.
+  expect(picked("Target opponent reveals their hand. You choose a nonland card from it and exile that card.")).toMatchObject([{ verb: "exile", text: "a nonland card from target opponent's hand", fromZone: "hand" }]);
+  // Never Happened: the card may come from the same player's graveyard, and the "it" joined to the choose is the chosen card. Agonizing Remorse: a nonland hand card or any graveyard card.
+  expect(picked("Target opponent reveals their hand. You choose a nonland card from that player's graveyard or hand and exile it.")).toMatchObject([{ verb: "exile", text: "a nonland card from target opponent's graveyard or hand", object: { control: "opp", notType: ["land"], anyOf: [{ fromZone: "graveyard" }, { fromZone: "hand" }] } }]);
+  const remorse = picked("Target opponent reveals their hand. You choose a nonland card from it or a card from their graveyard. Exile that card. You lose 1 life.");
+  expect(remorse).toMatchObject([{ verb: "exile", object: { control: "opp", anyOf: [{ notType: ["land"], fromZone: "hand" }, { fromZone: "graveyard" }] } }]);
+  expect(remorse[0]!.fromZone).toBeUndefined();
+  expect(picked("Target player reveals their hand. You choose a card from it with mana value 3 or greater and exile that card.")).toMatchObject([{ verb: "exile", text: "a card with mana value 3 or greater from target player's hand", object: { stats: [{ metric: "mana-value", op: "gte", value: 3 }] } }]);
+  // Tidehollow Sculler: the pick is joined to the reveal. Lobotomy's ", then you choose" is the same join (its "card other than a basic land card" class stays unread).
+  expect(picked("Target opponent reveals their hand and you choose a nonland card from it. Exile that card.", "triggered")).toMatchObject([{ verb: "exile", text: "a nonland card from target opponent's hand" }]);
+  // Still refused: several cards (Reap Intellect), a bracketed variable (Dread Fugue), a bare "it" in a LATER sentence (Binding Negotiation, Vendilion Clique), a second reference (Psychic Theft).
+  for (const refused of [
+    "Target opponent reveals their hand. You choose up to X nonland cards from it and exile them.",
+    "Target player reveals their hand. You choose a nonland card from it [with mana value 2 or less]. That player discards that card.",
+    "Target opponent reveals their hand. You may choose a nonland card from it. If you do, they discard it.",
+    "Target player reveals their hand. You choose an instant or sorcery card from it and exile that card. You may cast that card for as long as it remains exiled.",
+    "Target opponent reveals their hand. You choose a card from it for each card discarded this way. That player discards those cards.",
+  ]) expect(unreadPhrases(refused, "spell").length, refused).toBeGreaterThan(0);
+});
+
 // #1349 review: after a hand pick, "that player" is the hand's owner (the target opponent), not an unnamed player: Nightsnare's "that player discards two cards" and Salt Vampire's draw were `control: any`.
 test("'that player' after a card chosen from a hand is the hand's owner", () => {
   const night = parseActions("Target opponent reveals their hand. You may choose a nonland card from it. If you do, that player discards that card. If you don't, that player discards two cards.", "spell");

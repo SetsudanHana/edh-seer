@@ -1873,6 +1873,68 @@ export function unreadPhrases(effect: string, type: string | null, cost?: string
 /** Whether the last `readActions` call (with `carry`) met a "Choose target X." it could not carry: `parseActions` then reads the text again without the carry. */
 let carryRefused = false;
 
+/** THE HAND PICK'S JOINS (#1589): a pick printed in one sentence with the reveal before it or with the exile after it is cut into the sentences the plain shape has, so one reading serves both.
+ *  "Target opponent reveals their hand and you choose a nonland card from it. Exile that card." (Tidehollow Sculler), "..., then you choose ..." (Lobotomy);
+ *  "You choose a nonland card from it and exile that card." (Castigate, Thought-Knot Seer). By index, no regex over card text. */
+const GRAVEYARD_OR_HAND = " from that player's graveyard or hand";
+function handPickSentences(sentence: string): string[] {
+  const out: string[] = [];
+  let rest = sentence;
+  for (const join of [" reveals their hand and you choose ", " reveals their hand, then you choose "]) {
+    const at = rest.toLowerCase().indexOf(join);
+    if (at <= 0) continue;
+    out.push(`${rest.slice(0, at + " reveals their hand".length)}.`);
+    rest = `You choose ${rest.slice(at + join.length)}`;
+    break;
+  }
+  const lc = rest.toLowerCase();
+  // "... from that player's graveyard or hand and exile it" (Never Happened): the "it" joined to the choose by "and" is the chosen card, so it is written as the plain shape's "that card".
+  const either = lc.includes(GRAVEYARD_OR_HAND);
+  if ((lc.startsWith("you choose ") || lc.startsWith("you may choose ")) && (either || lc.includes(" from it"))) {
+    for (const tail of either ? [" and exile it.", " and exile it"] : [" and exile that card.", " and exile that card"]) {
+      if (!lc.endsWith(tail)) continue;
+      out.push(`${rest.slice(0, rest.length - tail.length)}.`, "Exile that card.");
+      return out;
+    }
+  }
+  out.push(rest);
+  return out;
+}
+
+/** The card a hand pick names (#1349, #1589): "you [may] choose <a card class> from it", with a mana-value filter printed before or after "from it" ("a nonland card with mana value X or less from it",
+ *  Venarian Glimmer; "a card from it with mana value 3 or greater", Transgress the Mind). The filter is the picked card's, so it is written beside the class.
+ *  The card may also come from the same player's graveyard: "from that player's graveyard or hand" (Never Happened), "from it or a card from their graveyard" (Agonizing Remorse); `onlyHand` is false then.
+ *  Anything else behind "from it" is unread. */
+function handPickCard(sentence: string, owner: string): { may: boolean; text: string; onlyHand: boolean } | null {
+  const lc = sentence.toLowerCase();
+  const may = lc.startsWith("you may choose ");
+  if (!may && !lc.startsWith("you choose ")) return null;
+  const body = lc.slice(may ? "you may choose ".length : "you choose ".length);
+  const either = body.endsWith(GRAVEYARD_OR_HAND);
+  const at = either ? body.length - GRAVEYARD_OR_HAND.length : body.indexOf(" from it");
+  if (at < 0) return null;
+  const isFilter = (t: string): boolean => /^ with mana value (?:\d+|x) or (?:less|greater)$/.test(t);
+  let cls = body.slice(0, at), filter = either ? "" : body.slice(at + " from it".length);
+  const orGraveyard = filter === " or a card from their graveyard";
+  if (orGraveyard) filter = "";
+  if (filter !== "" && !isFilter(filter)) return null;
+  const within = cls.indexOf(" with mana value ");
+  if (within >= 0) {
+    if (filter !== "" || !isFilter(cls.slice(within))) return null;
+    filter = cls.slice(within); cls = cls.slice(0, within);
+  }
+  const article = ["a ", "an ", "one "].find((a) => cls.startsWith(a));
+  if (article === undefined) return null;
+  const noun = cls.slice(article.length);
+  if (noun !== "card" && !(noun.endsWith(" card") && /^[a-z][a-z ,-]*$/.test(noun.slice(0, noun.length - " card".length)))) return null;
+  // The variable keeps its capital, as printed: the object grammar reads "mana value X or less".
+  const card = `${cls}${filter.replace(" value x or ", " value X or ")}`;
+  if (either) return { may, text: `${card} from ${owner}'s graveyard or hand`, onlyHand: false };
+  if (orGraveyard) return { may, text: `${card} from ${owner}'s hand or a card from ${owner}'s graveyard`, onlyHand: false };
+  return { may, text: `${card} from ${owner}'s hand`, onlyHand: true };
+}
+
+
 export function parseActions(effect: string, type: string | null, cost?: string): ActionReading[] {
   const unreadBefore = unread?.length ?? 0;
   const read = readActions(effect, type, cost, true);
@@ -1934,10 +1996,10 @@ function readActions(effect: string, type: string | null, cost: string | undefin
   // reveal it and put it into your hand", Domri Rade) is never resolved to the looked-at card, so the clause would read complete with the claim
   // silently missing: an unconsumed look stays an unread phrase and the card blocks.
   let pendingLook: string | null = null;
-  const sentences = unquoted.split(/(?<=\.)\s+/);
+  const sentences = unquoted.split(/(?<=\.)\s+/).flatMap(handPickSentences);
   let chosen: Chosen | undefined, refusedAny = false;
   // The hand a sentence just revealed or looked at ("Target opponent reveals their hand", "Look at target opponent's hand"), and the card chosen from it (#1349).
-  let handOf: string | undefined, handOwner = "", handPick: { sentence: string; text: string; used: boolean } | undefined;
+  let handOf: string | undefined, handOwner = "", handPick: { sentence: string; text: string; onlyHand: boolean; used: boolean } | undefined;
   for (const [sentenceAt, raw] of sentences.entries()) {
     let s = raw.trim().replace(/\.$/, "");
     if (s === "") continue;
@@ -1959,15 +2021,16 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     if (MODAL_INTRO.test(s)) continue;
     // A HAND LOOKED AT OR REVEALED, AND A CARD CHOSEN FROM IT (#1349: Duress, Tidehollow Sculler, Salt Vampire; ~50 stored cards print it). The choose records no action, as the store has it; the card it
     // names is stated outright where the next sentence says "that card" ("a nonland card from target opponent's hand"), the way the bought reading writes the discard or exile.
-    // CEILING: only the plain "choose <a card class> from it" straight after a reveal or look of a TARGET player's hand, and only "that card" / "the chosen card" refer back to it (a bare "it", a trailing
-    // "with mana value 3 or less", "or a card from their graveyard" stay unread, so the card blocks); one reference only, and the pick is read as optional by `mayBefore` like any "you may".
+    // #1589: the class may be an untyped "a card" (Coercion), carry a mana-value filter, or reach into the same player's graveyard (`handPickCard`); a pick joined to its reveal or to its exile is cut apart first (`handPickSentences`).
+    // CEILING: only "choose <a card class> from it" straight after a reveal or look of a TARGET player's hand, and only "that card" / "the chosen card" refer back to it (a bare "it" in a later
+    // sentence, several cards, "a card of that color", "that player reveals their hand" stay unread, so the card blocks); one reference only, and the pick is read as optional by `mayBefore` like any "you may".
     const handShown = /^(?:look at (target opponent's|target player's) hand|(target opponent|target player) reveals their hand)$/i.exec(s);
     if (handShown) { handOf = `${(handShown[1] ?? `${handShown[2]!}'s`).toLowerCase()} hand`; handOwner = handOf.slice(0, handOf.indexOf("'s ")); }
-    const pick = handOf !== undefined ? /^you (may )?choose ((?:an?|one) [a-z][a-z ,-]*? card) from it$/i.exec(s) : null;
+    const pick = handOf !== undefined ? handPickCard(s, handOwner) : null;
     if (pick) {
       if (handPick && !handPick.used) { unread?.push(handPick.sentence); }
-      handPick = { sentence: s.replace(/^([A-Z])/, (ch) => ch.toLowerCase()), text: `${pick[2]!.toLowerCase()} from ${handOf!}`, used: false };
-      mayBefore = pick[1] !== undefined; mayAt = out.length;
+      handPick = { sentence: s.replace(/^([A-Z])/, (ch) => ch.toLowerCase()), text: pick.text, onlyHand: pick.onlyHand, used: false };
+      mayBefore = pick.may; mayAt = out.length;
       continue;
     }
     let pickedHere = false;
@@ -2219,6 +2282,9 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     if (pickedHere && handPick) {
       const owner = ACTORS.find(([w]) => w === handOwner)?.[1];
       for (let i = at; i < out.length; i++) if (owner && out[i]!.text !== handPick.text && out[i]!.actor?.scope === "that") out[i] = { ...out[i]!, actor: { ...owner, text: handOwner } };
+      // The picked card LEAVES THE HAND when it is exiled, shuffled away or put somewhere (#1589; the store's Castigate is hand > exile): without the zone the exile read as any exile, the battlefield's included.
+      // A discard names no source zone, as the store writes it (a discard is from the hand by definition).
+      for (let i = at; i < out.length; i++) if (handPick.onlyHand && out[i]!.text === handPick.text && out[i]!.verb !== "discard" && !out[i]!.fromZone) out[i] = { ...out[i]!, fromZone: "hand" };
     }
     if (ifYouDoAfterMay && at < out.length) out[at] = { ...out[at]!, optional: true };
   }
