@@ -46,28 +46,72 @@ export const isZonedCardGrant = (a: { effect: { kind: string; subject?: SubjectF
  *  a keyword, a stat, a count, a pile / chosen / all-but selection or a negated subtype narrows the class by something the subtype list cannot read, so it proves nothing here. */
 const WHOLE_CLASS_FIELDS: ReadonlySet<string> = new Set(["control", "token", "type", "scope", "other", "notType", "fromZone", "zone"]);
 /** THE SAME SWEEP WRITTEN AS A TYPE LIST (#1582): "all permanents except for artifacts and lands" (Scourglass), "all nonland permanents" derive `type` as every permanent type the sweep leaves, with the spared ones in `notType`. The list must be EXACTLY the six permanent types minus
- *  `notType`, and a spared subtype (`notSubtype`: Norn spares Phyrexians) and the all-but marker (`selection`) are the only narrowings added to the whole-class fields above. 
- *  CEILING: a narrowing derive does not store passes the rule: Desynchronization's "that's not historic" (the schema has no `historic: false`) and Urza, Planeswalker's "artifacts and planeswalkers you control gain indestructible" before "destroy all nonland permanents" read as every nonland permanent (#1586). A sweep "with mana value X" counts too: X is open. */
+ *  `notType`, and a spared subtype (`notSubtype`: Norn spares Phyrexians) and the all-but marker (`selection`) are the only narrowings added to the whole-class fields above.
+ *  A CONDITION DERIVE CARRIES REFUSES THE REACH (#1586): the sweep's `shares` ("each other nonland permanent with the same mana value as that permanent": Mists of Lorien), `history` ("that entered this turn": Renet), `nameRelation` ("with the same name": Deputy of Detention),
+ *  a constant mana value and an `except` this file cannot read narrow the class by a fact of the permanents themselves, so the sweep proves no subtype. Two are read and keep the reach, because they leave a subtype's own reading intact:
+ *  - an OPEN NUMBER (`openManaValue`): "mana value X or less" (Karn's Sylex, Gaze of Granite), "equal to the number of charge / time / oil counters" (Ratchet Bomb, Engineered Explosives, Blast Zone, The Moment, The Filigree Sylex). The player picks the number, so a Plant of any mana value is reachable; the pairs stay. Decided in #1586 from the oracle text.
+ *  - a SPARE (`spareOf`): "that's not historic" (Desynchronization) spares artifacts and Sagas; "Artifacts and planeswalkers you control gain indestructible. Destroy all nonland permanents" (Urza, Planeswalker) spares your own artifacts and planeswalkers, so a consumer of YOUR artifacts is not fed and an opponent's is.
+ *  CEILING: a legendary Plant is spared by "not historic" and the spare is not consulted per card (a subtype that has a nonlegendary member is reached); the "equal to the number of counters" sweeps reach only the mana value the counters name, which the matcher cannot read (the number is the player's to grow). */
 const PERMANENT_TYPE_SET: readonly string[] = ["creature", "artifact", "enchantment", "planeswalker", "land", "battle"];
 const LIST_SWEEP_FIELDS: ReadonlySet<string> = new Set([...WHOLE_CLASS_FIELDS, "notSubtype", "selection"]);
+/** A mana value the player opens (`variable`: X, or a counter count): the only stat that leaves the reach whole. */
+const openManaValue = (stats: SubjectFilter["stats"]): boolean => (stats?.length ?? 0) > 0 && stats!.every((x) => x.metric === "mana-value" && x.variable === true);
+/** An `except` entry this file reads: "not historic" alone, or a type (list) of YOURS alone. Anything else is a narrowing it cannot apply. */
+type Spare = { historic: true } | { type: string | string[]; control: "you" };
+function spareOf(x: Partial<SubjectFilter>): Spare | undefined {
+  const keys = Object.keys(x).filter((k) => (x as Record<string, unknown>)[k] !== undefined);
+  if (keys.length === 1 && x.historic === true) return { historic: true };
+  if (keys.length === 2 && x.type !== undefined && x.control === "you") return { type: x.type, control: "you" };
+  return undefined;
+}
+function narrowingReadable(p: SubjectFilter, fields: ReadonlySet<string>): boolean {
+  return Object.entries(p).every(([k, v]) => v === undefined || fields.has(k)
+    || (k === "stats" && openManaValue(p.stats)) || (k === "except" && p.except!.every((x) => spareOf(x) !== undefined)));
+}
+/** A card's OWN trigger (`self`) is tested against the sweep as the self-trigger gate in edges.ts tests it: "the same mana value as the target" (Mists of Lorien) and "that entered this turn" (Renet) are relations of the board, not of the card, and both take YOUR permanents, so a Hovership cast this turn
+ *  or an Aura Mists is aimed at is reached. The name relation stays (Deputy of Detention takes only "that player controls", an opponent's). */
+const ownTrigger = (p: SubjectFilter): SubjectFilter => {
+  const { shares: _shares, history: _history, ...rest } = p;
+  return rest;
+};
+/** Does the sweep's spare leave NOTHING of what the consumer asks for? "Whenever an artifact you control is put into a graveyard" (Marionette Master) against "Artifacts and planeswalkers you control gain indestructible. Destroy all nonland permanents": every type asked is spared and the control is yours.
+ *  A conjunction ("artifact creature") is spared when any member is. "Not historic" spares an artifact whoever controls it. */
+function sparedWhole(except: readonly Partial<SubjectFilter>[], consumer: SubjectFilter): boolean {
+  const spared = (t: string): boolean => except.some((x) => {
+    const spare = spareOf(x);
+    if (spare === undefined) return false;
+    return "historic" in spare ? t === "artifact" : consumer.control === "you" && [spare.type].flat().map((y) => y.toLowerCase()).includes(t);
+  });
+  const all = arr(consumer.allTypes).map((t) => t.toLowerCase());
+  if (all.some(spared)) return true;
+  const types = arr(consumer.type).map((t) => t.toLowerCase());
+  return types.length > 0 && types.every(spared);
+}
 function sweepsEveryPermanent(p: SubjectFilter): boolean {
   if (p.scope !== "all" && p.scope !== "each") return false;
   // A SET TAKEN FROM A ZONE THE CARD DID NOT SWEEP (the graveyard "all permanent cards in your graveyard that were put there this turn", a library dig, "exiled with this") is a set the engine cannot read.
   if (p.fromZone !== undefined && p.fromZone !== "battlefield") return false;
   const types = arr(p.type).map((t) => t.toLowerCase());
-  if (types.length === 1 && types[0] === "permanent") return Object.entries(p).every(([k, v]) => v === undefined || WHOLE_CLASS_FIELDS.has(k));
+  if (types.length === 1 && types[0] === "permanent") return narrowingReadable(p, WHOLE_CLASS_FIELDS);
   const out = (p.notType ?? []).map((t) => t.toLowerCase());
   const left = PERMANENT_TYPE_SET.filter((t) => !out.includes(t));
   if (left.length === 0 || types.length !== left.length || !left.every((t) => types.includes(t))) return false;
   if (p.selection !== undefined && p.selection !== "all-but") return false;
-  return Object.entries(p).every(([k, v]) => v === undefined || LIST_SWEEP_FIELDS.has(k));
+  return narrowingReadable(p, LIST_SWEEP_FIELDS);
 }
-/** Is this subtype one a permanent can carry that the sweep's negated types leave? (Instant and sorcery subtypes: no.) */
-function permanentSubtypeSurvives(subtype: string, notType: readonly string[] | undefined, notSubtype?: readonly string[]): boolean {
+/** Is this subtype one a permanent can carry that the sweep's negated types leave? (Instant and sorcery subtypes: no.) A consumer of `consumerControl` loses the types an `except` spares of that control. */
+function permanentSubtypeSurvives(subtype: string, notType: readonly string[] | undefined, notSubtype?: readonly string[], except?: readonly Partial<SubjectFilter>[], consumerControl?: SubjectFilter["control"]): boolean {
   if ((notSubtype ?? []).some((x) => x.toLowerCase() === subtype.toLowerCase())) return false;
   const types = SUBTYPE_TYPES[subtype.toLowerCase()];
   if (types === undefined) return false;
   const out = (notType ?? []).map((t) => t.toLowerCase());
+  for (const x of except ?? []) {
+    const spare = spareOf(x);
+    if (spare === undefined) return false;
+    // Historic is artifact, legendary or Saga (CR 700.6): a subtype of artifacts or the Saga subtype is spared whole; a legendary member of another subtype is not the subtype.
+    if ("historic" in spare) { out.push("artifact"); if (subtype.toLowerCase() === "saga") return false; }
+    else if (consumerControl === "you") out.push(...[spare.type].flat().map((t) => t.toLowerCase()));
+  }
   return types.some((t) => t !== "instant" && t !== "sorcery" && !out.includes(t));
 }
 
@@ -267,6 +311,7 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // type: expand both sides' type tokens (concrete, pseudo, or subtype-implied) to concrete
   // card-type sets and require they intersect. Reduces to exact/subtype-implied matching for
   // concrete types; lets pseudo-types (permanent/spell/noncreature/nonland) match their members.
+  if (producer.except !== undefined && producer.except.length > 0 && sparedWhole(producer.except, consumer)) return false;
   const consumerTypes = arr(consumer.type);
   if (consumerTypes.length > 0) {
     const consumerSet = expandTypes(consumerTypes, [], h);
@@ -347,7 +392,7 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   if (consumerSubtypes.length > 0) {
     const ok = consumerSubtypes.some((cs) =>
       arr(producer.subtype).some((ps) => ps.toLowerCase() === cs.toLowerCase())
-      || (sweepsEveryPermanent(producer) && permanentSubtypeSurvives(cs, producer.notType, producer.notSubtype)),
+      || (sweepsEveryPermanent(consumer.self === true ? ownTrigger(producer) : producer) && permanentSubtypeSurvives(cs, producer.notType, producer.notSubtype, producer.except, consumer.control)),
     );
     if (!ok) return false;
   }

@@ -14,7 +14,7 @@ interface Triage { parsed: number; groups: Record<string, { distinct: number; la
 
 const LABELS = new Set(["grammar right", "grammar wrong", "both wrong"]);
 const triage = JSON.parse(readFileSync(new URL("../../tagger/grammar-triage.json", import.meta.url), "utf8")) as Triage;
-const d = diffParsers(readPhrases(readFileSync(new URL("../../tagger/phrases.jsonl", import.meta.url), "utf8")), parse, parseSubject);
+const d = diffParsers(readPhrases(readFileSync(new URL("../../tagger/phrases.jsonl", import.meta.url), "utf8")), parse, (t, k) => parseSubject(t, k === "subject" ? "event" : "pick"));
 
 test("the grammar is deterministic over the whole census (H2)", () => {
   expect(d.nondeterministic).toEqual([]);

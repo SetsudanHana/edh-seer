@@ -164,7 +164,7 @@ const PROSE: Record<string, string> = {
   "606": "loyalty abilities", "606.3": "loyalty cost is a counter change", "608": "resolves, a word", "609.7": "damage from a source",
   "611": "continuous effects: NOT AN EVENT verbs", "613": "layers: OPEN", "613.1f": "P/T layer", "614.17": "cant: NOT AN EVENT",
   "615": "prevent: PARTIAL (prevention and damage-change kinds, #1469)", "615.13": "prevented, a word", "700.11": "descended", "700.12": "outlaw", "700.13": "crime", "700.14": "expend",
-  "700.16": "worthy", "700.4": "dies (matcher asserts it)", "700.8": "party", "700.9": "modified",
+  "700.16": "worthy", "700.4": "dies (matcher asserts it)", "700.6": "historic is artifact, legendary or Saga (matcher subject.ts spareOf reads it for Desynchronization; conditional-sweeps.test.ts asserts it)", "700.8": "party", "700.9": "modified",
   "701.10": "double: OPEN", "701.11": "triple: OPEN", "701.12": "exchange: OPEN", "701.14": "fight emits non-combat-damage", "701.17": "mill",
   "701.19": "regenerate is a shield, emits nothing", "701.20": "reveal: OPEN", "701.24": "shuffle: OPEN", "701.22": "scry", "701.22a": "scry never touches a graveyard",
   "701.23": "search", "701.23a": "search means a search HAPPENED", "701.25": "surveil", "701.25a": "surveil's graveyard half is any number",

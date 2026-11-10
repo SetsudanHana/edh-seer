@@ -1046,9 +1046,11 @@ function exilesOnlyBlockCounterparts(oracleText: string | undefined): boolean {
   return exiles.length > 0 && exiles.every((x) => x.includes("blocking or blocked by") || x.includes("blocked by"));
 }
 
-/** A recursion restricted to cards the consumer's OWN earlier action put in the graveyard. "From among the cards milled this way" (Szarekh, the Silent King: it takes an artifact creature card of ITS mill; 10 corpus cards print that shape, #1577) is the same set. */
+/** A recursion restricted to cards the consumer's OWN earlier action put in the graveyard. "From among the cards milled this way" (Szarekh, the Silent King: it takes an artifact creature card of ITS mill; 10 corpus cards print that shape, #1577) is the same set.
+ *  So is "For each creature that died this way, put a creature card from the graveyard of the player who controlled that creature ... onto the battlefield" (Glyph of Reincarnation, #1586): its "target Wall" is the BLOCKER that names the creatures it destroys, never a Wall it recurs, so derive's `graveyard-recursion:wall` was a demand no fill can meet (2,628 producers paired with it, census at 486).
+ *  CEILING: the oracle returns "a creature card" from that graveyard, which any fill of it could supply, not only the destroyed creature; the cue refuses every fill, as for the other "this way" shapes, and the missing `graveyard-recursion:creature` demand is the derive defect behind it (not fixed here). */
 const recursionIsSelfSupplied = (oracleText: string | undefined): boolean =>
-  /\bfrom among (?:those|them)\b|\bfrom among the cards [a-z ]{0,20}this way\b|\bamong (?:the )?cards? (?:milled|discarded|revealed|exiled) this way\b|\bput into (?:a|your|their|its owner's) graveyard this way\b|\bput there [^.]{0,30}this turn\b|\bfrom the battlefield this turn\b/i
+  /\bfrom among (?:those|them)\b|\bfrom among the cards [a-z ]{0,20}this way\b|\bamong (?:the )?cards? (?:milled|discarded|revealed|exiled) this way\b|\bput into (?:a|your|their|its owner's) graveyard this way\b|\bput there [^.]{0,30}this turn\b|\bfrom the battlefield this turn\b|\bfor each creatures? (?:that )?(?:died|was destroyed) this way\b/i
     .test(oracleText ?? "");
 
 /** An UNTYPED recursion on an ability that carries its own graveyard-entry trigger: it returns the
@@ -2519,7 +2521,12 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
           // so the set can never hold a card of yours. Card-scoped printed cue, the same shape and
           // the same ceiling as `reducesItself`.
           if (exilesOnlyOpponents(p.card.oracleText)) continue;
-          const { zone: _eventZone, ...identity } = e.subject;
+          // A SWEEP'S CONDITION IS NOT A PRINTED CHARACTERISTIC EITHER (#1586): "the same mana value as that permanent" (Mists of Lorien), "that entered this turn" (Renet), "with the same name" (Deputy of Detention) are relations of the swept permanents to the board, which no type
+          // line carries, and the consumer-side refusal of `subjectMatches` ("a demand nothing can check claims nothing") would drop every self trigger the sweep can reach. Stripped as `zone`, `counter` and `entersTapped` are, for the same reason.
+          // A trigger GRANTED to another creature (Kaya the Inexorable's +1: "It gains 'When this creature dies ...'") is the HOST's: the sweep's spare ("Artifacts and planeswalkers you control", Urza, Planeswalker) is read against the grantor's printed type, a planeswalker of yours, and refused a real pair (#1586 review).
+          const { zone: _eventZone, shares: _shares, history: _history, nameRelation: _nameRelation, ...unspared } = e.subject;
+          const { except: _spared, ...identity } = unspared;
+          if (!grantedToHost && _spared !== undefined) (identity as SubjectFilter).except = _spared;
           // The producer re-entering ITSELF (Reassembling Skeleton, Drownyard Temple) is a real
           // entry for anything watching creatures, but it is never the CONSUMER entering, which is
           // the only event a self trigger watches.
@@ -2854,7 +2861,8 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
         // exists to demand proof: Necromancy sacrificing itself "enabled" Eye of Nidhogg returning
         // itself.
         if (e.subject.self === true) continue;
-        const { zone: _fillZone, entersTapped: _fillArrival, ...fillIdentity } = e.subject;
+        // ...and a sweep's relation to the board ("the same name as another permanent": Eye of Singularity) is no printed characteristic of the card either (#1586; the self-trigger gate strips it too).
+        const { zone: _fillZone, entersTapped: _fillArrival, shares: _fillShares, history: _fillHistory, nameRelation: _fillName, ...fillIdentity } = e.subject;
         if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), fillIdentity, h)) continue;
       }
       const repeatability =

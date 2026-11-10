@@ -46,7 +46,7 @@ test("a parser that answers differently on a second call is caught (H2)", () => 
 test("parseSubject against itself over the checked-in census agrees on every phrase", () => {
   const phrases = readPhrases(readFileSync(new URL("../../tagger/phrases.jsonl", import.meta.url), "utf8"));
   expect(phrases.length).toBeGreaterThan(10_000);
-  const d = diffParsers(phrases, parseSubject, parseSubject);
+  const d = diffParsers(phrases, parseSubject, (t) => parseSubject(t));
   expect(d.agree).toEqual(d.total);
   expect(d.nondeterministic).toEqual([]);
 }, 30000);

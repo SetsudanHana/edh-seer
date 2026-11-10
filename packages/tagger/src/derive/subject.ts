@@ -918,7 +918,8 @@ export function sparedClasses(tail: string): { types: string[]; subtypes: string
   return { types, subtypes };
 }
 
-export function parseSubject(text: string): SubjectFilter {
+/** `role` says what the phrase IS. A "pick" (the default) is an effect or cost object, where a number led class is a count a player picks; an "event" is a trigger or replacement subject ("one or more creatures you control", "two or more creatures"), the set the event batches, never a pick (#1585). */
+export function parseSubject(text: string, role: "pick" | "event" = "pick"): SubjectFilter {
   // EVERY FIELD IS READ FROM THE TOKEN, NOT FROM THE ABILITY IT IS GRANTED (#1387; #1385 cut the types alone). Cut first, so the counter in Zabu's
   // landfall ability, the "creatures with flying" a Drone can block, the "each opponent" an Imp damages and the Mounts a Pilot crews are not the
   // token's counter, scope, control or subtype. A quoted NAME stays; an emblem's quoted text IS its subject and stays (see `stripTokenAbility`).
@@ -1050,7 +1051,7 @@ export function parseSubject(text: string): SubjectFilter {
     : NAME_SET.test(t) ? "named-set" as const
     : A_PILE.test(t) && type !== undefined ? "pile" as const
     : scope === undefined && CHOSEN_SET.test(t) && !/\bof the chosen\b/.test(t) ? "chosen" as const
-    : (scope === "all" || scope === "each") && ((NUMBERED.test(t) && out.token !== true) || (type !== undefined && (PLAYER_PICKS.test(t) || (COUNTED.test(lowered) && !COUNT_OF_STAT.test(lowered))))) ? "counted" as const
+    : (scope === "all" || scope === "each") && ((role === "pick" && NUMBERED.test(t) && out.token !== true) || (type !== undefined && (PLAYER_PICKS.test(t) || (COUNTED.test(lowered) && !COUNT_OF_STAT.test(lowered))))) ? "counted" as const
     : (scope === "all" || scope === "each") && (PLAYER_PICKS.test(t) || (COUNTED.test(lowered) && !COUNT_OF_STAT.test(lowered))) ? "chosen" as const
     : (scope === "all" || scope === "each") && out.token !== true && ATTACHED_TO.test(text.toLowerCase()) && !/\btokens?\b/.test(text.toLowerCase()) ? "attached-to" as const
     : undefined;
