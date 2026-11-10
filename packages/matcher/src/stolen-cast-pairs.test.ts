@@ -37,7 +37,7 @@ test("Hidetsugu and Kairi can cast a deck-mate instant: Contractual Safeguard's 
 // #1594: the rest of the steal-and-cast population. Whose card a cast takes is read off the words, four ways: the cast's own object names another player's zone or ownership ("from an opponent's graveyard",
 // "cards your opponents own"), the cast points back at cards the same ability took from another player ("from among them", "the exiled card"), or it points at cards another ability of the card took
 // ("cards exiled with this enchantment"). Added fixtures dumped from Mongo 2026-11-10.
-const castEmits = (name: string) => dc(name).tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => (e.verb === "cast" || e.verb === "land-play") && e.subject.self !== true).map((e) => e.subject);
+const castEmits = (name: string) => (dc(name).tags?.abilities ?? []).flatMap((a) => a.emits ?? []).filter((e) => (e.verb === "cast" || e.verb === "land-play") && e.subject.self !== true).map((e) => e.subject);
 const THIEVES = [
   "Villainous Wealth", "Mnemonic Betrayal", "Kefka, Dancing Mad", "Mindclaw Shaman", "Black Widow, Super Spy", "Outrageous Robbery", // points back at what this ability took
   "Memory Plunder", "Wrexial, the Risen Deep", "Flotsam // Jetsam", "Draugr Necromancer", "Sen Triplets", "Shaman's Trance", // the cast names the other player's zone / ownership
