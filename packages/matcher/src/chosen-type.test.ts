@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { deckLandTypes, deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
+import { caresAboutCreatureType, deckLandTypes, deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import type { CardTags } from "@edh-seer/tagger";
 import type { Hierarchy } from "./types.js";
 
@@ -267,4 +267,11 @@ test("a type ADDED to ONE thing (a copy, an equipped or reanimated creature) is 
   // Enkira's Walker tokens are made, and her Zombies are a real care
   expect(names("Enkira, Hostile Scavenger", TEXT.enkira)).toBe(true);
   expect(names("Elvish Archdruid", TEXT.archdruid)).toBe(true);
+});
+
+// #1582: THE RESULT OF A MELD IS A NAMED CARD, NOT A TYPE THE MELDER CARES ABOUT. Graf Rats' "meld them into Chittering Host" enters an Eldrazi Horror; that made Graf Rats read as caring about Horrors and pair with every chosen-type payoff (Vanquisher's Banner, Kindred Discovery).
+test("an emit of a named card is no creature type the card cares about", () => {
+  const enters = (extra: object) => tagsWith(["rat"], [{ kind: "triggered", effect: { kind: "" }, emits: [{ verb: "enters", subject: { control: "you", token: false, type: "creature", subtype: ["eldrazi", "horror"], ...extra } }], clause: 1 } as never]);
+  expect(caresAboutCreatureType(enters({}), { name: "Graf Rats" })).toBe(true);
+  expect(caresAboutCreatureType(enters({ named: "chittering host" }), { name: "Graf Rats" })).toBe(false);
 });

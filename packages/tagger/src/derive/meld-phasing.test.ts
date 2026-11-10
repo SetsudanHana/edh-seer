@@ -52,6 +52,8 @@ describe("a meld exiles its pair: a chosen set, no mass", () => {
     expect(s.scope).toBeUndefined();
     expect(s.control).toBe("you");
     expect(s.token).toBe(false);
+    // The entering permanent is ONE named card (the meld_result), which no other card's own enters trigger and no cast or attack consumer can claim (#1582).
+    expect(s.named, `${name} result name`).toBe((fx[name]!.source as { allParts: { component: string; name: string }[] }).allParts.find((p) => p.component === "meld_result")!.name.toLowerCase());
     expect([s.type].flat().sort()).toEqual(type);
     expect(s.allTypes).toEqual(type.length > 1 ? type : undefined);
     const parts = (fx[name]!.source as { allParts: { component: string; typeLine: string }[] }).allParts.find((p) => p.component === "meld_result")!;

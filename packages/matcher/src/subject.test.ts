@@ -733,3 +733,23 @@ describe("a sweep that spares artifacts and lands", () => {
     expect(subjectMatches(scourglass, { control: "any", token: null, type: "creature" }, H, true)).toBe(true);
   });
 });
+
+/** #1582 KIRRI -- A SWEEP WRITTEN AS A TYPE LIST PROVES THE SUBTYPES IT LEAVES. "Destroy all permanents except for artifacts and lands" (Scourglass) derives the list [creature, enchantment, planeswalker, battle] with notType [artifact, land]: the whole permanent set minus what it spares, the
+ *  same sweep #1577 reads from a bare `permanent`. A Plant creature dies to it, so Kirri's "return target Plant, Treefolk or land card" is fed; a spared subtype (Norn spares Phyrexians) is not. "All nonland permanents" is the same shape. */
+describe("a type-list sweep proves the subtypes it does not spare", () => {
+  const HK: Hierarchy = { ...H, plant: ["creature"], phyrexian: ["creature"], forest: ["land"], equipment: ["artifact"], aura: ["enchantment"] };
+  const kirri = (st: string): SubjectFilter => ({ control: "you", token: null, subtype: [st], scope: "target", fromZone: "graveyard", zone: "graveyard" });
+  const fill = (text: string): SubjectFilter => ({ ...parseSubject(text), zone: "graveyard", fromZone: "battlefield" });
+  const scourglass = fill("all permanents except for artifacts and lands");
+  const norn = fill("all other permanents except for artifacts, lands, and Phyrexians");
+  const nonland = fill("all nonland permanents");
+  test.each([
+    ["Scourglass x Plant", scourglass, "plant", true], ["Scourglass x Equipment (an artifact)", scourglass, "equipment", false], ["Scourglass x Forest (a land)", scourglass, "forest", false], ["Scourglass x Aura", scourglass, "aura", true],
+    ["Norn x Plant", norn, "plant", true], ["Norn x Phyrexian (spared)", norn, "phyrexian", false], ["nonland x Equipment", nonland, "equipment", true], ["nonland x Forest", nonland, "forest", false],
+  ])("fills the graveyard for a demand: %s", (_n, p, st, fed) => {
+    expect(graveyardFillMatches(p, kirri(st as string), HK)).toBe(fed);
+  });
+  test("an untouched narrowing still proves nothing: a colour, a keyword", () => {
+    expect(graveyardFillMatches({ ...nonland, colors: ["B"] }, kirri("plant"), HK)).toBe(false);
+  });
+});

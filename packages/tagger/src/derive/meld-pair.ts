@@ -3,7 +3,7 @@ import { CARD_TYPES } from "./subject.js";
 
 /** The card types and subtypes of what a meld pair melds INTO and of its partner(s), read off Scryfall's `allParts` type lines (`meld_result`, `meld_part`). */
 export interface MeldParts {
-  result: { types: string[]; subtypes: string[] };
+  result: { name?: string; types: string[]; subtypes: string[] };
   partners: { types: string[]; subtypes: string[] }[];
 }
 
@@ -14,6 +14,7 @@ export interface MeldParts {
  *  (own-name.test.ts: Syr Vondam, Soulherder, Hero of Bretagard) -- and lose what is not: the mass `scope` and a subtype read off a name; they are marked `selection: chosen` (a set the card defined; `massCouldBeToken` and the Aura reach refuse it).
  *  The melded permanent's `enters` is the RESULT card: its types and subtypes from the `meld_result` type line (Chittering Host a creature Eldrazi Horror, Urza, Planeswalker a planeswalker), never the words of its name ("Brisela, Voice of Nightmares" is no Nightmare),
  *  under your control, nontoken, an artifact creature being BOTH (`allTypes`), with what the clause says of its entry (Mishra's "enters tapped and attacking"). The count the object text scaled the ability by (a mass of "creatures") goes: a meld happens once.
+ *  The entering permanent carries `named` (the result's name, as `Gisela`'s partner already does): ONE card enters, so no other card's own enters trigger hears it (Birthing Hulk, a Horror) and `caresAboutCreatureType` does not read the result's creature types as ones the melder cares about, which made Graf Rats a cast and attack producer for every chosen-type payoff.
  *  The meld pair itself is the `meld` relation (edges.ts `meldReason`), which reads Scryfall's meld parts, not these events.
  *  CEILING: the pair's types are one OR list (a creature and a land, "Titania and Argoth"), not two subjects, so a land payoff hears the creature half and a creature payoff the land half. The result's types and subtypes come from `allParts`; a card document without them
  *  (a fixture, an old ingest) gets the card's own types for the pair and an untyped entry. Detected by the printed clause text "meld them" (a string test); a clause without it is untouched. */
@@ -39,7 +40,7 @@ export function meldPair(abilities: Ability[], clauseTexts: Record<number, strin
         const subtypes = parts?.result.subtypes.map((t) => t.toLowerCase()) ?? [];
         const type = one(types);
         const subtype = one(subtypes);
-        const subject: SubjectFilter = { control: "you", token: false, ...(type !== undefined ? { type } : {}), ...(types.length > 1 ? { allTypes: [...types].sort() } : {}), ...(subtype !== undefined ? { subtype } : {}), ...(e.subject.entersTapped !== undefined ? { entersTapped: e.subject.entersTapped } : {}) };
+        const subject: SubjectFilter = { control: "you", token: false, ...(type !== undefined ? { type } : {}), ...(types.length > 1 ? { allTypes: [...types].sort() } : {}), ...(subtype !== undefined ? { subtype } : {}), ...(parts?.result.name ? { named: parts.result.name.toLowerCase() } : {}), ...(e.subject.entersTapped !== undefined ? { entersTapped: e.subject.entersTapped } : {}) };
         return { ...e, subject };
       }
       return e;

@@ -240,5 +240,5 @@ export function meldPartsOf(card: { allParts?: { component?: string; typeLine?: 
   if (result === undefined) return undefined;
   const typesOf = (typeLine: string) => { const c = charsFrom({ typeLine }); return { types: c.types, subtypes: c.subtypes }; };
   const partners = parts.filter((p) => p.component === "meld_part" && p.typeLine !== undefined && p.name !== name);
-  return { result: typesOf(result.typeLine!), partners: partners.map((p) => typesOf(p.typeLine!)) };
+  return { result: { ...typesOf(result.typeLine!), ...(result.name ? { name: result.name } : {}) }, partners: partners.map((p) => typesOf(p.typeLine!)) };
 }
