@@ -753,3 +753,44 @@ describe("a type-list sweep proves the subtypes it does not spare", () => {
     expect(graveyardFillMatches({ ...nonland, colors: ["B"] }, kirri("plant"), HK)).toBe(false);
   });
 });
+
+/** #1586 -- A CONDITIONAL SWEEP DOES NOT PROVE EVERY SUBTYPE. Karn's Sylex and kin ("each nonland permanent with mana value X or less"; "... equal to the number of charge counters"): the number is the player's to open, so any subtype is reachable and the sweep still proves them (decided
+ *  in #1586: X chosen by you is a real reach). Mists of Lorien (the same mana value as the target), Renet (entered this turn), Deputy of Detention (the same name) narrow the class by a fact of the permanents themselves: no subtype is proved. Desynchronization ("not historic") spares artifacts and
+ *  Sagas; Urza, Planeswalker spares YOUR artifacts and planeswalkers (indestructible), so only a consumer that can see an opponent's is fed. */
+describe("a conditional type-list sweep proves the subtypes it still reaches", () => {
+  const HC: Hierarchy = { ...H, plant: ["creature"], equipment: ["artifact"], vehicle: ["artifact"], aura: ["enchantment"], saga: ["enchantment"], forest: ["land"] };
+  const nonland = parseSubject("all nonland permanents");
+  const dies = (p: Partial<SubjectFilter>, subtype: string, control: SubjectFilter["control"] = "you"): boolean =>
+    subjectMatches({ ...nonland, ...p }, { control, token: null, subtype: [subtype] }, HC, true);
+  const openX: Partial<SubjectFilter> = { stats: [{ metric: "mana-value", op: "lte", variable: true }] };
+  test("CONTROL: the unconditional sweep proves a Plant, an Equipment, an Aura", () => {
+    for (const st of ["plant", "equipment", "aura"]) expect(dies({}, st)).toBe(true);
+    expect(dies({}, "forest")).toBe(false);
+  });
+  test.each(["plant", "equipment", "aura"])("an open mana value (X chosen by you) still proves %s", (st) => {
+    expect(dies(openX, st)).toBe(true);
+    expect(dies({ stats: [{ metric: "mana-value", op: "eq", variable: true }] }, st)).toBe(true);
+  });
+  test.each([
+    ["a constant mana value", { stats: [{ metric: "mana-value", op: "lte", value: 3 }] }],
+    ["the same mana value as the target (Mists of Lorien)", { shares: { what: "mana-value", with: "ref" } }],
+    ["entered this turn (Renet)", { history: ["entered"] }],
+    ["the same name (Deputy of Detention)", { nameRelation: "same" }],
+  ] as [string, Partial<SubjectFilter>][])("%s proves no subtype", (_n, p) => {
+    for (const st of ["plant", "equipment", "aura"]) expect(dies(p, st)).toBe(false);
+  });
+  test("not historic (Desynchronization) spares an artifact or a Saga, not a Plant or an Aura", () => {
+    const p: Partial<SubjectFilter> = { except: [{ historic: true }] };
+    expect(dies(p, "plant")).toBe(true);
+    expect(dies(p, "aura")).toBe(true);
+    for (const st of ["equipment", "vehicle", "saga"]) expect(dies(p, st)).toBe(false);
+  });
+  test("your artifacts and planeswalkers spared (Urza, Planeswalker): an artifact of yours survives, an opponent's does not", () => {
+    const p: Partial<SubjectFilter> = { except: [{ type: ["artifact", "planeswalker"], control: "you" }] };
+    for (const st of ["equipment", "vehicle"]) { expect(dies(p, st, "you")).toBe(false); expect(dies(p, st, "any")).toBe(true); expect(dies(p, st, "opp")).toBe(true); }
+    for (const st of ["plant", "aura"]) expect(dies(p, st, "you")).toBe(true);
+  });
+  test("an exception the matcher cannot read proves nothing", () => {
+    expect(dies({ except: [{ colors: ["B"] }] }, "plant")).toBe(false);
+  });
+});

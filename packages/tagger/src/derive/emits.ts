@@ -13,6 +13,7 @@ import { parse as parseFilter } from "../grammar/filter.js";
 import { isSelfSubject, SELF_REFERENCE } from "./self-reference.js";
 import { selfAsTilde } from "../grammar/self-as-tilde.js";
 import { cutCondition, cutSelfException } from "./self-exception.js";
+import { sweepNarrowing } from "./sweep-narrowing.js";
 
 const SELF_EXCEPTION_VERBS: ReadonlySet<string> = new Set(["destroy", "exile", "sacrifice", "return", "put"]);
 
@@ -1081,6 +1082,10 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   }
   // ...and alternatives are read AFTER the counter kinds left the subtype (#1575): "gold counters" is no Gold subtype for the grammar's alternatives to be offered instead.
   if (listed === undefined && playerOnly === undefined) subject = withAlternatives(subjectText, subject);
+  // A MASS REMOVAL KEEPS THE CONDITION THE NOUNS DO NOT SAY (#1586): "with mana value X or less", "that entered this turn", "with the same name as", "that's not historic", "Artifacts ... you control gain indestructible. Destroy all nonland permanents" (sweep-narrowing.ts).
+  if (exceptable && (subject.scope === "all" || subject.scope === "each")) {
+    for (const [k, v] of Object.entries(sweepNarrowing(parseFilter(subjectText), subjectText, clauseText, action.verb, parseSubject))) if ((subject as Record<string, unknown>)[k] === undefined) (subject as Record<string, unknown>)[k] = v;
+  }
   // A TOKEN THAT IS A COPY IS CONTROLLED BY ITS CREATOR, NOT BY WHAT IT COPIES (#1295, CR 111.2: the player who creates a
   // token is its owner and it enters under that player's control unless the effect says otherwise). "Create two tokens
   // that are copies of target permanent an opponent controls" (Venser, Fervent Forger) parsed the original's control and

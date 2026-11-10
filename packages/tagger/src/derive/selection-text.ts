@@ -17,9 +17,10 @@ const OTHER_THAN_CHOSEN = /\bchooses?\b[^.]*\.[^.]*\ball other permanents\b/i;
 const COUNTED_PERMANENTS = /\b(?:any number of|that many|x|\d+|one|two|three|four|five|six|seven|eight|nine|ten) (?:other )?(?:nontoken )?permanents\b/i;
 const SET_OF_THE_CARD = /\bpermanent cards? (?:exiled with|exiled this way|revealed this way)\b|\ball tokens\b[^.]*\bsame name\b/i;
 
+// `nameRelation` is a condition the set already is ("all tokens ... with the same name": Legions to Ashes is `chosen`, #1586 carries the relation beside it).
 const bare = (s: SubjectFilter): boolean => {
   const types = [s.type].flat();
-  const { control: _c, token: _t, type: _ty, scope, other: _o, edictAll: _e, ...rest } = s as SubjectFilter & Record<string, unknown>;
+  const { control: _c, token: _t, type: _ty, scope, other: _o, edictAll: _e, nameRelation: _n, ...rest } = s as SubjectFilter & Record<string, unknown>;
   return types.length === 1 && types[0] === "permanent" && (scope === "all" || scope === "each") && Object.keys(rest).length === 0;
 };
 

@@ -1046,9 +1046,10 @@ function exilesOnlyBlockCounterparts(oracleText: string | undefined): boolean {
   return exiles.length > 0 && exiles.every((x) => x.includes("blocking or blocked by") || x.includes("blocked by"));
 }
 
-/** A recursion restricted to cards the consumer's OWN earlier action put in the graveyard. "From among the cards milled this way" (Szarekh, the Silent King: it takes an artifact creature card of ITS mill; 10 corpus cards print that shape, #1577) is the same set. */
+/** A recursion restricted to cards the consumer's OWN earlier action put in the graveyard. "From among the cards milled this way" (Szarekh, the Silent King: it takes an artifact creature card of ITS mill; 10 corpus cards print that shape, #1577) is the same set.
+ *  So is "For each creature that died this way, put a creature card from the graveyard of the player who controlled that creature ... onto the battlefield" (Glyph of Reincarnation, #1586): it returns the cards of the creatures IT destroyed, and its "target Wall" is the blocker that names them, not a subtype it recurs. */
 const recursionIsSelfSupplied = (oracleText: string | undefined): boolean =>
-  /\bfrom among (?:those|them)\b|\bfrom among the cards [a-z ]{0,20}this way\b|\bamong (?:the )?cards? (?:milled|discarded|revealed|exiled) this way\b|\bput into (?:a|your|their|its owner's) graveyard this way\b|\bput there [^.]{0,30}this turn\b|\bfrom the battlefield this turn\b/i
+  /\bfrom among (?:those|them)\b|\bfrom among the cards [a-z ]{0,20}this way\b|\bamong (?:the )?cards? (?:milled|discarded|revealed|exiled) this way\b|\bput into (?:a|your|their|its owner's) graveyard this way\b|\bput there [^.]{0,30}this turn\b|\bfrom the battlefield this turn\b|\bfor each creatures? (?:that )?(?:died|was destroyed) this way\b/i
     .test(oracleText ?? "");
 
 /** An UNTYPED recursion on an ability that carries its own graveyard-entry trigger: it returns the
