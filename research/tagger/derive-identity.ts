@@ -11,12 +11,16 @@ import { connect, loadConfig } from "@edh-seer/data";
 // had moved to its grammar reading. A proof that re-derives by a different path proves nothing.
 import { deriveAsCorpus, deriveGrammarOnly, grammarOnlyReading } from "../../packages/tagger/src/derive-worker.js";
 import { deriveScopeFilter } from "../../packages/tagger/src/derive-scope.js";
+// 2026-11-10 (#1589): derive-corpus attaches the card a meld card melds INTO (#1582) before deriving; without it the 7 meld cards read "different" on every clean run.
+import { attachMeldResult, meldResultName } from "../../packages/tagger/src/derive-input.js";
 const store = await connect(loadConfig());
 const stored = new Map((await store.db.collection("cardTagsDerived").find({ isToken: { $ne: true } }).toArray()).map((d: any) => [d.oracleId, d]));
 let same = 0, diff = 0;
+const withMeld = async (source: any) => { const name = meldResultName(source); if (name !== undefined) attachMeldResult(source, await store.cards.findOne({ name } as never)); return source; };
 for (const doc of await store.db.collection("cardClauses").find({ isToken: { $ne: true } }).toArray() as any[]) {
   const src = await store.cards.findOne({ _id: doc.oracleId } as never) as any;
   if (!src) continue;
+  await withMeld(src);
   const tags = deriveAsCorpus({ doc, source: src, isToken: false }).tags as any;
   const old = stored.get(doc.oracleId) ?? {};
   const pick = (t: any) => JSON.stringify({ abilities: t.abilities, unclaimed: t.unclaimed, characteristics: t.characteristics, manaLines: t.manaLines, staticFixer: t.staticFixer, landFetch: t.landFetch, isOneShot: t.isOneShot, suspendOnly: t.suspendOnly, unknownTriggers: t.unknownTriggers });
@@ -39,6 +43,7 @@ let grammarOnly = 0;
 for (const d of await store.db.collection("cardClauses").find({ isToken: { $ne: true } }, { projection: { oracleId: 1 } }).toArray() as any[]) answered.add(d.oracleId);
 for (const src of await store.cards.find(deriveScopeFilter() as never).toArray() as any[]) {
   if (answered.has(src._id)) continue;
+  await withMeld(src);
   const r = grammarOnlyReading(src, undefined);
   if (!r) continue;
   grammarOnly++;
