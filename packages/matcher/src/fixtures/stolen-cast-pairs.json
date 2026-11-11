@@ -795,5 +795,2322 @@
     ]
    }
   ]
+ },
+ "Villainous Wealth": {
+  "source": {
+   "name": "Villainous Wealth",
+   "typeLine": "Sorcery",
+   "oracleText": "Target opponent exiles the top X cards of their library. You may cast any number of spells with mana value X or less from among them without paying their mana costs.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G",
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "G",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{X}{B}{G}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top X cards of target opponent's library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "any number of spells with mana value X or less from among them",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Mnemonic Betrayal": {
+  "source": {
+   "name": "Mnemonic Betrayal",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile all opponents' graveyards. You may cast spells from among those cards this turn, and mana of any type can be spent to cast them. At the beginning of the next end step, if any of those cards remain exiled, return them to their owners' graveyards.\nExile Mnemonic Betrayal.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{U}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all opponents' graveyards",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "spells from among those cards",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "the beginning of the next end step",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "those cards that remain exiled",
+      "fromZone": "exile",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "Mnemonic Betrayal",
+      "fromZone": "stack",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Hedonist's Trove": {
+  "source": {
+   "name": "Hedonist's Trove",
+   "typeLine": "Enchantment",
+   "oracleText": "When this enchantment enters, exile target opponent's graveyard.\nYou may play lands from among cards exiled with this enchantment.\nYou may cast spells from among cards exiled with this enchantment. You can't cast more than one spell this way each turn.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target opponent's graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "play",
+      "object": "lands from among cards exiled with this enchantment",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "spells from among cards exiled with this enchantment",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cant",
+      "object": "cast more than one spell this way each turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Memory Plunder": {
+  "source": {
+   "name": "Memory Plunder",
+   "typeLine": "Instant",
+   "oracleText": "You may cast target instant or sorcery card from an opponent's graveyard without paying its mana cost.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{U/B}{U/B}{U/B}{U/B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "target instant or sorcery card from an opponent's graveyard",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Wrexial, the Risen Deep": {
+  "source": {
+   "name": "Wrexial, the Risen Deep",
+   "typeLine": "Legendary Creature — Kraken",
+   "oracleText": "Islandwalk, swampwalk (This creature can't be blocked as long as defending player controls an Island or a Swamp.)\nWhenever Wrexial deals combat damage to a player, you may cast target instant or sorcery card from that player's graveyard without paying its mana cost. If that spell would be put into a graveyard, exile it instead.",
+   "keywords": [
+    "Landwalk",
+    "Swampwalk",
+    "Islandwalk"
+   ],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": "5",
+   "toughness": "8",
+   "manaCost": "{3}{U}{U}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Islandwalk, swampwalk",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "Wrexial",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target instant or sorcery card from that player's graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cast",
+      "object": "target instant or sorcery card from that player's graveyard",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "that spell",
+      "fromZone": "stack",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Kefka, Dancing Mad": {
+  "source": {
+   "name": "Kefka, Dancing Mad",
+   "typeLine": "Legendary Creature — Human Wizard",
+   "oracleText": "During your turn, Kefka has indestructible.\nAt the beginning of your end step, exile a card at random from each opponent's graveyard. You may cast any number of spells from among cards exiled this way without paying their mana costs. Then each player who owns a spell you cast this way loses life equal to its mana value.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "R"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "B",
+    "R"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "manaCost": "{5}{B}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "indestructible",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "your turn",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a card at random from each opponent's graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "any number of spells from among cards exiled this way",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "lose-life",
+      "object": "each player who owns a spell you cast this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "equal to its mana value",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Draugr Necromancer": {
+  "source": {
+   "name": "Draugr Necromancer",
+   "typeLine": "Snow Creature — Zombie Cleric",
+   "oracleText": "If a nontoken creature an opponent controls would die, exile that card with an ice counter on it instead.\nYou may cast spells from among cards in exile your opponents own with ice counters on them, and you may spend mana from snow sources as though it were mana of any color to cast those spells.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{3}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "that card",
+      "fromZone": "battlefield",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "ice",
+      "amount": null,
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "spells from among cards in exile your opponents own with ice counters on them",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cost-modify",
+      "object": "you may spend mana from snow sources as though it were mana of any color to cast those spells",
+      "amount": null,
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Nightveil Specter": {
+  "source": {
+   "name": "Nightveil Specter",
+   "typeLine": "Creature — Specter",
+   "oracleText": "Flying\nWhenever this creature deals combat damage to a player, that player exiles the top card of their library.\nYou may play lands and cast spells from among cards exiled with this creature.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "manaCost": "{U/B}{U/B}{U/B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top card of that player's library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "play",
+      "object": "lands and cast spells from among cards exiled with this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Null Summoner": {
+  "source": {
+   "name": "Null Summoner",
+   "typeLine": "Creature — Human Warlock",
+   "oracleText": "When this creature enters, if you cast it, target opponent reveals their hand. You choose a nonland card from it. Exile that card.\nThreshold — As long as there are seven or more cards in your graveyard, you may cast the exiled card, and mana of any type can be spent to cast that spell.",
+   "keywords": [
+    "Threshold"
+   ],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": "4",
+   "toughness": "2",
+   "manaCost": "{2}{U}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a nonland card from it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "the exiled card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Outrageous Robbery": {
+  "source": {
+   "name": "Outrageous Robbery",
+   "typeLine": "Instant",
+   "oracleText": "Target opponent exiles the top X cards of their library face down. You may look at and play those cards for as long as they remain exiled. If you cast a spell this way, you may spend mana as though it were mana of any type to cast it.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{X}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top X cards of target opponent's library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "those cards",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Talent of the Telepath": {
+  "source": {
+   "name": "Talent of the Telepath",
+   "typeLine": "Sorcery",
+   "oracleText": "Target opponent reveals the top seven cards of their library. You may cast an instant or sorcery spell from among them without paying its mana cost. Then that player puts the rest into their graveyard.\nSpell mastery — If there are two or more instant and/or sorcery cards in your graveyard, you may cast up to two instant and/or sorcery spells from among the revealed cards instead of one.",
+   "keywords": [
+    "Spell mastery"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{U}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "an instant or sorcery spell from among them",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": null,
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "up to two instant and/or sorcery spells from among the revealed cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Flotsam // Jetsam": {
+  "source": {
+   "name": "Flotsam // Jetsam",
+   "typeLine": "Instant // Sorcery",
+   "oracleText": "Mill three cards. Investigate. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")\n//\nEach opponent mills three cards, then you may cast a spell from each opponent's graveyard without paying its mana cost. If a spell cast this way would be put into a graveyard, exile it instead.",
+   "keywords": [
+    "Investigate",
+    "Mill"
+   ],
+   "colors": [
+    "B",
+    "G",
+    "U"
+   ],
+   "manaValue": 8,
+   "colorIdentity": [
+    "B",
+    "G",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{G/U} // {4}{U/B}{U/B}",
+   "layout": "split"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "investigate",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "a spell from each opponent's graveyard",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "exile",
+      "object": "a spell cast this way",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Etali, Primal Conqueror // Etali, Primal Sickness": {
+  "source": {
+   "name": "Etali, Primal Conqueror // Etali, Primal Sickness",
+   "typeLine": "Legendary Creature — Elder Dinosaur // Legendary Creature — Phyrexian Elder Dinosaur",
+   "oracleText": "Trample\nWhen Etali enters, each player exiles cards from the top of their library until they exile a nonland card. You may cast any number of spells from among the nonland cards exiled this way without paying their mana costs.\n{9}{G/P}: Transform Etali. Activate only as a sorcery.\n//\nTrample, indestructible\nWhenever Etali deals combat damage to a player, they get that many poison counters. (A player with ten or more poison counters loses the game.)",
+   "keywords": [
+    "Indestructible",
+    "Transform",
+    "Trample"
+   ],
+   "colors": [
+    "R",
+    "G"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "G",
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "transform"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Etali",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "cards from the top of each player's library until they exile a nonland card",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "any number of nonland cards exiled this way",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "Etali",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample, indestructible",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "Etali",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "poison",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that many",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Shadow of the Enemy": {
+  "source": {
+   "name": "Shadow of the Enemy",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile all creature cards from target player's graveyard. You may cast spells from among those cards for as long as they remain exiled, and mana of any type can be spent to cast them.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{B}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "all creature cards from target player's graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "spells from among those cards",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Jeleva, Nephalia's Scourge": {
+  "source": {
+   "name": "Jeleva, Nephalia's Scourge",
+   "typeLine": "Legendary Creature — Vampire Wizard",
+   "oracleText": "Flying\nWhen Jeleva enters, each player exiles the top X cards of their library, where X is the amount of mana spent to cast Jeleva.\nWhenever Jeleva attacks, you may cast an instant or sorcery spell from among cards exiled with Jeleva without paying its mana cost.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B",
+    "R",
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "R",
+    "U"
+   ],
+   "power": "1",
+   "toughness": "3",
+   "manaCost": "{1}{U}{B}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Jeleva, Nephalia's Scourge",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top X cards of their library, where X is the amount of mana spent to cast Jeleva",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "Jeleva, Nephalia's Scourge",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "an instant or sorcery spell from among cards exiled with Jeleva",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "River Song's Diary": {
+  "source": {
+   "name": "River Song's Diary",
+   "typeLine": "Artifact — Book",
+   "oracleText": "Imprint — Whenever a player casts an instant or sorcery spell from their hand, exile it instead of putting it into a graveyard as it resolves.\nAt the beginning of your upkeep, if there are four or more cards exiled with this artifact, choose one of them at random. You may cast it without paying its mana cost.",
+   "keywords": [
+    "Imprint"
+   ],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant or sorcery spell from their hand",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Spellshift": {
+  "source": {
+   "name": "Spellshift",
+   "typeLine": "Instant",
+   "oracleText": "Counter target instant or sorcery spell. Its controller reveals cards from the top of their library until they reveal an instant or sorcery card. That player may cast that card without paying its mana cost. Then the player shuffles.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "counter-spell",
+      "object": "target instant or sorcery spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "shuffle",
+      "object": "their library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Rhystic Study": {
+  "source": {
+   "name": "Rhystic Study",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever an opponent casts a spell, you may draw a card unless that player pays {1}.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": true,
+      "unless": {
+       "cost": "{1}",
+       "payer": "opponent"
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "Mindclaw Shaman": {
+  "source": {
+   "name": "Mindclaw Shaman",
+   "typeLine": "Creature — Lizard Shaman",
+   "oracleText": "When this creature enters, target opponent reveals their hand. You may cast an instant or sorcery spell from among those cards without paying its mana cost.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{4}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "an instant or sorcery spell from among those cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Black Widow, Super Spy": {
+  "source": {
+   "name": "Black Widow, Super Spy",
+   "typeLine": "Legendary Creature — Human Spy Hero",
+   "oracleText": "Menace\nWhenever Black Widow deals combat damage to a player, that player exiles cards from the top of their library until they exile a nonland card. You may put a +1/+1 counter on Black Widow. If you don't, you may cast the exiled nonland card until end of turn and mana of any type can be spent to cast that spell.",
+   "keywords": [
+    "Menace"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "2",
+   "toughness": "1",
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Menace",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "Black Widow",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "that player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cast",
+      "object": "the exiled nonland card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Sen Triplets": {
+  "source": {
+   "name": "Sen Triplets",
+   "typeLine": "Legendary Artifact Creature — Human Wizard",
+   "oracleText": "At the beginning of your upkeep, choose target opponent. This turn, that player can't cast spells or activate abilities and plays with their hand revealed. You may play lands and cast spells from that player's hand this turn.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "U",
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "U",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{2}{W}{U}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "cast spells or activate abilities",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "play",
+      "object": "lands and cast spells from that player's hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Court of Locthwain": {
+  "source": {
+   "name": "Court of Locthwain",
+   "typeLine": "Enchantment",
+   "oracleText": "When this enchantment enters, you become the monarch.\nAt the beginning of your upkeep, exile the top card of target opponent's library. You may play that card for as long as it remains exiled, and mana of any type can be spent to cast it. If you're the monarch, until end of turn, you may cast a spell from among cards exiled with this enchantment without paying its mana cost.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this enchantment",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "monarch",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top card of target opponent's library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cast",
+      "object": "a spell from among cards exiled with this enchantment",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Shaman's Trance": {
+  "source": {
+   "name": "Shaman's Trance",
+   "typeLine": "Instant",
+   "oracleText": "Other players can't play lands or cast spells from their graveyards this turn. You may play lands and cast spells from other players' graveyards this turn as though those cards were in your graveyard.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "play lands or cast spells from their graveyards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "play",
+      "object": "lands from other players' graveyards",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cast",
+      "object": "spells from other players' graveyards",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Kheru Mind-Eater": {
+  "source": {
+   "name": "Kheru Mind-Eater",
+   "typeLine": "Creature — Vampire",
+   "oracleText": "Menace\nWhenever this creature deals combat damage to a player, that player exiles a card from their hand face down.\nYou may look at cards exiled with this creature, and you may play lands and cast spells from among those cards.",
+   "keywords": [
+    "Menace"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "1",
+   "toughness": "3",
+   "manaCost": "{2}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Menace",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a card from that player's hand",
+      "fromZone": "hand",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "you may look at cards exiled with this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "play",
+      "object": "lands from among those cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cast",
+      "object": "spells from among those cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Psychic Theft": {
+  "source": {
+   "name": "Psychic Theft",
+   "typeLine": "Sorcery",
+   "oracleText": "Target player reveals their hand. You choose an instant or sorcery card from it and exile that card. You may cast that card for as long as it remains exiled. At the beginning of the next end step, if you haven't cast the card, return it to its owner's hand.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "an instant or sorcery card from that hand",
+      "fromZone": "hand",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "the next end step",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Rona, Herald of Invasion // Rona, Tolarian Obliterator": {
+  "source": {
+   "name": "Rona, Herald of Invasion // Rona, Tolarian Obliterator",
+   "typeLine": "Legendary Creature — Human Wizard // Legendary Creature — Phyrexian Wizard",
+   "oracleText": "Whenever you cast a legendary spell, untap Rona.\n{T}: Draw a card, then discard a card.\n{5}{B/P}: Transform Rona. Activate only as a sorcery. ({B/P} can be paid with either {B} or 2 life.)\n//\nTrample\nWhenever a source deals damage to Rona, that source's controller exiles a card from their hand at random. If it's a land card, you may put it onto the battlefield under your control. Otherwise, you may cast it without paying its mana cost.",
+   "keywords": [
+    "Transform",
+    "Trample"
+   ],
+   "colors": [
+    "U",
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "transform"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a legendary spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "untap",
+      "object": "Rona",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "Rona",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "a source",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a card from that source's controller's hand at random",
+      "fromZone": "hand",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cast",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Smirking Spelljacker": {
+  "source": {
+   "name": "Smirking Spelljacker",
+   "typeLine": "Creature — Djinn Wizard Rogue",
+   "oracleText": "Flash\nFlying\nWhen this creature enters, exile target spell an opponent controls.\nWhenever this creature attacks, if a card is exiled with it, you may cast the exiled card without paying its mana cost.",
+   "keywords": [
+    "Flying",
+    "Flash"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{4}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target spell an opponent controls",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "the exiled card",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Flawless Forgery": {
+  "source": {
+   "name": "Flawless Forgery",
+   "typeLine": "Sorcery",
+   "oracleText": "Casualty 3 (As you cast this spell, you may sacrifice a creature with power 3 or greater. When you do, copy this spell and you may choose a new target for the copy.)\nExile target instant or sorcery card from an opponent's graveyard. Copy that card. You may cast the copy without paying its mana cost.",
+   "keywords": [
+    "Casualty"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{U}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Casualty 3",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target instant or sorcery card from an opponent's graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "copy",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "the copy",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "The Ur-Sphinx": {
+  "source": {
+   "name": "The Ur-Sphinx",
+   "typeLine": "Legendary Creature — Sphinx Avatar",
+   "oracleText": "Eminence — As long as The Ur-Sphinx is in the command zone or on the battlefield, other Sphinx spells you cast cost {1} less to cast.\nFlying\nWhenever one or more Sphinxes you control attack, each player mills that many cards. For each player, you may cast a card that player milled this way without paying its mana cost.",
+   "keywords": [
+    "Flying",
+    "Eminence",
+    "Mill"
+   ],
+   "colors": [
+    "B",
+    "U",
+    "W"
+   ],
+   "manaValue": 9,
+   "colorIdentity": [
+    "B",
+    "U",
+    "W"
+   ],
+   "power": "10",
+   "toughness": "10",
+   "manaCost": "{6}{W}{U}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "other Sphinx spells you cast",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "one or more Sphinxes you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "each player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that many",
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "a card that player milled this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Etali, Primal Storm": {
+  "source": {
+   "name": "Etali, Primal Storm",
+   "typeLine": "Legendary Creature — Elder Dinosaur",
+   "oracleText": "Whenever Etali attacks, exile the top card of each player's library, then you may cast any number of spells from among those cards without paying their mana costs.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "manaCost": "{4}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "Etali, Primal Storm",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top card of each player's library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "any number of spells from among those cards",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Blue Mage's Cane": {
+  "source": {
+   "name": "Blue Mage's Cane",
+   "typeLine": "Artifact — Equipment",
+   "oracleText": "Job select\nEquipped creature gets +0/+2, is a Wizard in addition to its other types, and has \"Whenever this creature attacks, exile up to one target instant or sorcery card from defending player's graveyard. If you do, copy it. You may cast the copy by paying {3} rather than paying its mana cost.\"\nSpirit of the Whalaqee — Equip {2}",
+   "keywords": [
+    "Job select",
+    "Spirit of the Whalaqee",
+    "Equip"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Job select",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "equipped creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+0/+2",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "equipped creature is a Wizard in addition to its other types",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "up to one target instant or sorcery card from defending player's graveyard",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "copy",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "the copy",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Equip {2}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Saruman of Many Colors": {
+  "source": {
+   "name": "Saruman of Many Colors",
+   "typeLine": "Legendary Creature — Avatar Wizard",
+   "oracleText": "Ward—Discard an enchantment, instant, or sorcery card.\nWhenever you cast your second spell each turn, each opponent mills two cards. When one or more cards are milled this way, exile target enchantment, instant, or sorcery card with equal or lesser mana value than that spell from an opponent's graveyard. Copy the exiled card. You may cast the copy without paying its mana cost.",
+   "keywords": [
+    "Ward",
+    "Mill"
+   ],
+   "colors": [
+    "B",
+    "U",
+    "W"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B",
+    "U",
+    "W"
+   ],
+   "power": "5",
+   "toughness": "4",
+   "manaCost": "{3}{W}{U}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Ward—Discard an enchantment, instant, or sorcery card.",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "your second spell each turn",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "milled",
+     "subject": "one or more cards",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target enchantment, instant, or sorcery card with equal or lesser mana value than that spell from an opponent's graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "copy",
+      "object": "the exiled card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "the copy",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Reversal of Fortune": {
+  "source": {
+   "name": "Reversal of Fortune",
+   "typeLine": "Sorcery",
+   "oracleText": "Target opponent reveals their hand. You may copy an instant or sorcery card in it. If you do, you may cast the copy without paying its mana cost.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "an instant or sorcery card in target opponent's hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cast",
+      "object": "the copy",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Wildfire Devils": {
+  "source": {
+   "name": "Wildfire Devils",
+   "typeLine": "Creature — Devil",
+   "oracleText": "When this creature enters and at the beginning of your upkeep, choose a player at random. That player exiles an instant or sorcery card from their graveyard. Copy that card. You may cast the copy without paying its mana cost.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "4",
+   "toughness": "2",
+   "manaCost": "{3}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "an instant or sorcery card from a chosen player's graveyard",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "copy",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "the copy",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "an instant or sorcery card from a chosen player's graveyard",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "copy",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "the copy",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
  }
 }
