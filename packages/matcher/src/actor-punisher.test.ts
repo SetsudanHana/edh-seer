@@ -6,7 +6,7 @@ import fixtures from "./actor-punisher.fixtures.json" with { type: "json" };
 /** A SYMMETRIC PUNISHER IS NOT A PAYOFF FOR YOUR OWN ACTION (#1591). "Whenever a player gains life, that player loses 2 life for
  *  each 1 life they gained" (False Cure) fires on your lifegain too, and then it is you who loses the life: the pair is formed only
  *  with a producer that makes an opponent, or any player, do the thing. Fixtures are STORED rows (`cardTagsDerived` by `oracleId`
- *  = `cards._id`, DERIVE 494). */
+ *  = `cards._id`, DERIVE 495). */
 const F = fixtures as unknown as Record<string, DeckCard>;
 const H: Hierarchy = {};
 /** The reasons the producer forms INTO the punisher's trigger. */
@@ -45,9 +45,10 @@ describe("a player PUTTING a permanent onto the battlefield is that player's act
   test("your own Forest -> Tourach's Chant: none", () => {
     expect(into("Forest", "Tourach's Chant")).toEqual([]);
   });
-  test("a permanent another player puts still pairs: Haunted Angel's black Angel for each other player, Yavimaya Dryad's Forest under target player's control", () => {
+  // Not Yavimaya Dryad: "you may search your library for a Forest card, put it onto the battlefield tapped under target player's control" is YOUR put (CR 110.2a); see the CEILING on `punishesItsActor`.
+  test("a permanent another player puts still pairs: Haunted Angel's black Angel for each other player, Phantasmal Sphere's blue Orb for target opponent", () => {
     expect(into("Haunted Angel", "Nature's Wrath").map((r) => r.tag)).toContain("enters:swamp");
-    expect(into("Yavimaya Dryad", "Tourach's Chant").map((r) => r.tag)).toContain("enters:forest");
+    expect(into("Phantasmal Sphere", "Nature's Wrath").length).toBeGreaterThan(0);
   });
   test("the predicate reads the printed 'a player puts ... that player'", () => {
     expect(punishes("Nature's Wrath", "enters", 1)).toBe(true);
@@ -71,6 +72,10 @@ describe("kept: a producer that makes an opponent, or any player, do it", () => 
   });
   test("Knowledge Pool (every player casts from it) -> Eidolon of the Great Revel", () => {
     expect(into("Knowledge Pool", "Eidolon of the Great Revel").length).toBeGreaterThan(0);
+  });
+  // "{1}: Draw a card. ... Only your opponents may activate this ability": the draw is an opponent's (derive 495), stored `opp`.
+  test.each(["Phyrexian Tyranny", "Spiteful Visions"])("Oft-Nabbed Goat (only your opponents may activate its draw) -> %s", (c) => {
+    expect(into("Oft-Nabbed Goat", c).map((r) => r.tag)).toContain("draw:any");
   });
   test.each(["Prosperity", "Howling Mine"])("%s (each player draws) -> Phyrexian Tyranny", (p) => {
     expect(into(p, "Phyrexian Tyranny").length).toBeGreaterThan(0);

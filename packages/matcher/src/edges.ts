@@ -2381,6 +2381,9 @@ interface PairScope {
  *  A player PUTTING a permanent onto the battlefield is that player's action as well ("Whenever a player puts an Island or blue permanent onto the battlefield, that player sacrifices ...": Nature's Wrath; Tourach's Chant,
  *  Thelon's Chant): an `enters` trigger is admitted, and only the printed "a player ... that player" tells it from "whenever a land enters" (Zo-Zu). The Chants' "unless they put a -1/-1 counter on a creature they control" is
  *  stored as an ability of its own and counts as the same price.
+ *  CEILING: for `enters` the gate reads the permanent's CONTROLLER as the player who put it. The putter is the player the effect instructs (CR 110.2a), and the two part where the effect names another controller: "you may search
+ *  your library for a Forest card, put it onto the battlefield tapped under target player's control" (Yavimaya Dryad) is YOUR put of a Forest someone else may control, stored `enters` `any`, so Dryad -> Tourach's Chant is kept
+ *  though the Chant would hit you; and a permanent another player puts under your control is stored `you` and refused. The stored emit carries who controls the permanent, not who put it.
  *  Measured on the commander-legal corpus at DERIVE 494: 28 ability-verb rows on 25 cards (cast 19, enters 6, draw 2, gain-life 1).
  *  CEILING: only the pair is refused; `census.ts` and `lines.ts` build their demand from the trigger alone and still count your own producers as supply for it. The cue is read on the whole card, not the ability's clause.
  *  CEILING: a PERMANENT's event with "that land's controller" / "its controller" and no "a player" trigger (Zo-Zu the Punisher, Ankh of Mishra, Rampaging Ferocidon, Poisonbelly Ogre; Liability's "put into a player's graveyard") is the same drawback and is not read: there the `any`

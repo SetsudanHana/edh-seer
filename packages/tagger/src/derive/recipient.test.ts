@@ -237,4 +237,6 @@ test("another player named by a pronoun acts: 'they may cast', 'then they draw'"
   expect(pronounActs("Choose target player. They may discard up to X cards. Then they draw a card for each card discarded this way.", "draw")).toBe(true);
   expect(pronounActs("Draw a card for each creature they control.", "draw")).toBe(false);
   expect(pronounActs("You may cast that card. If you do, they draw a card.", "cast")).toBe(false);
+  // "you <verb>" printed beside the pronoun's: the controller default is right for yours, so the pronoun does not stop it.
+  expect(pronounActs("They draw two cards and you draw one.", "draw")).toBe(false);
 });
