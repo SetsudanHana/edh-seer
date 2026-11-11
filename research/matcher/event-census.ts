@@ -1,5 +1,5 @@
 import { connect, loadConfig } from "@edh-seer/data";
-import type { CardTags } from "@edh-seer/tagger";
+import { DERIVED_COLLECTION, type CardTags } from "@edh-seer/tagger";
 import { buildCensus, type CensusRow } from "../../packages/matcher/src/census.js";
 import { loadHierarchy } from "../../packages/matcher/src/hierarchy.js";
 
@@ -10,6 +10,11 @@ import { loadHierarchy } from "../../packages/matcher/src/hierarchy.js";
  *  card-to-card graph. That graph is ~10^7 edges (one key, `enters:any`, is 6.3M of them on its
  *  own); the card <-> event-key incidence this reads is ~7*10^4 rows, and card-to-card edges are
  *  a join through it. Deck analysis is that join restricted to 100 cards.
+ *
+ *  Reads `cardTagsDerived`, the rows the engine ships (32,803 at DERIVE 495), not the retired flat `cardTags` (20,390), which it
+ *  read until #1602. On the flat rows it also ran out of heap at Node's default limit; on the derived rows it does not (measured
+ *  2026-11-11, Node 24.22, limit 2,240 MB: exit 0; it still fails at 768 MB). The rows themselves are 78 MB of heap, so the
+ *  memory is `buildCensus`'s counterpart sets, and streaming or projecting the read would not lower it.
  *
  *  Usage: npx tsx research/matcher/event-census.ts [--top N] */
 const TOP = Number(process.argv[process.argv.indexOf("--top") + 1]) || 15;
@@ -28,9 +33,8 @@ const table = (title: string, rows: CensusRow[], selfLabel: string, otherLabel: 
 
 async function main(): Promise<void> {
   const store = await connect(loadConfig());
-  const tags = store.db.collection("cardTags");
   const cards: CardTags[] = [];
-  for await (const doc of tags.find({}) as AsyncIterable<CardTags>) cards.push(doc);
+  for await (const doc of store.db.collection<CardTags>(DERIVED_COLLECTION).find({}, { projection: { _id: 0 } })) cards.push(doc as CardTags);
 
   // The printed text, so a symmetric punisher's listeners are their own row and count only another player's action (#1598).
   const printed = new Map<string, string | undefined>();

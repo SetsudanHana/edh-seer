@@ -4,7 +4,7 @@ import { isAbsolute, join } from "node:path";
 import {
   connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
 } from "@edh-seer/data";
-import type { CardTags } from "@edh-seer/tagger";
+import { createTagsLookup } from "@edh-seer/tagger";
 import { deckAvailability, type AvailabilityRow } from "../../packages/matcher/src/availability.js";
 import { loadHierarchy } from "../../packages/matcher/src/hierarchy.js";
 import type { DeckCard } from "../../packages/matcher/src/types.js";
@@ -31,7 +31,8 @@ async function main(): Promise<void> {
 
   const store = await connect(loadConfig());
   const lookup = mongoLookup(store);
-  const cardTags = store.db.collection("cardTags");
+  // The rows the engine ships (`cardTagsDerived`), never the retired flat `cardTags`, whatever TAGS_SOURCE says (#1602).
+  const cardTags = createTagsLookup(store.db, "derived");
 
   const sections = parseDecklistSections(readFileSync(path, "utf8"));
   const inputs: DeckCard[] = [];
@@ -39,7 +40,7 @@ async function main(): Promise<void> {
   for (const name of [...sections.commanders, ...sections.deck]) {
     const doc = await lookup.findByName(normalizeName(name));
     if (!doc) continue;
-    const tags = (await cardTags.findOne({ oracleId: doc._id })) as CardTags | null;
+    const tags = await cardTags.findOne(doc._id);
     if (!tags) untagged++;
     inputs.push({ card: docToCard(doc), tags });
   }
