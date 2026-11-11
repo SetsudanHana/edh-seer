@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { actionRecipients, sacrificeFallsOnEveryone, sentenceNamesAPlayer } from "./recipient.js";
+import { actionRecipients, pronounActs, sacrificeFallsOnEveryone, sentenceNamesAPlayer } from "./recipient.js";
 
 test("a permanent's controller getting the payout is an opponent", () => {
   // Pongify, Beast Within, Crib Swap, Generous Gift. Rules-wise you MAY point removal at your own
@@ -212,4 +212,31 @@ test("the controller of an outside source who is GIVEN something is any; one who
 });
 test("'that creature's controller' is a different referent and stays unread (Burning Sands: a creature of yours dying)", () => {
   expect(actionRecipients("Whenever a creature dies, that creature's controller sacrifices a land of their choice.")).toEqual({});
+});
+/** WHO IS GIVEN LIFE OR CARDS, IN THE OTHER WORDS FOR "its controller" (#1591): "that creature's controller", "its owner", "that artifact's controller". Unread, the gain fell to the controller default and Solitude's
+ *  exiled creature handed YOU the life. Anyone, unless the words before prove an opponent or "target ... you control" proves you. Gain-life and draw only. */
+test("'that creature's controller' / 'its owner' given life or cards is anyone, an opponent or you only where the words say so", () => {
+  expect(actionRecipients("When this creature enters, exile up to one other target creature. That creature's controller gains life equal to its power.")).toEqual({ "gain-life": "any" });
+  expect(actionRecipients("Destroy target creature. Its owner gains 4 life.")).toEqual({ "gain-life": "any" });
+  expect(actionRecipients("Destroy target artifact. It can't be regenerated. That artifact's controller gains life equal to its mana value.")).toEqual({ "gain-life": "any" });
+  expect(actionRecipients("Nin deals X damage to target creature. That creature's controller draws X cards.")).toEqual({ draw: "any" });
+  expect(actionRecipients("Whenever a creature dies, that creature's controller may draw a card.")).toEqual({ draw: "any" });
+  expect(actionRecipients("Exile target creature an opponent controls. That creature's controller gains life equal to its power.")).toEqual({ "gain-life": "opp" });
+  expect(actionRecipients("Look at target opponent's hand and exile those cards face down. Until end of turn, whenever you play a land or cast a spell this way, its owner draws a card.")).toEqual({ draw: "opp" });
+  expect(actionRecipients("Exile target creature you control. That creature's controller gains life equal to its power.")).toEqual({ "gain-life": "you" });
+  // THE CARD'S OWN OWNER IS YOU: "When this creature dies, ... its owner draws that many cards" (Oft-Nabbed Goat, a card of your deck whoever controls it; pinned by #1395 in derive.test.ts).
+  expect(actionRecipients("When this creature dies, if it had one or more -1/-1 counters on it, its owner draws that many cards and each other player loses that much life.", { triggerIsSelf: true })["draw"]).toBe("you");
+  // "its controller" itself keeps the older removal reading.
+  expect(actionRecipients("Exile target creature. Its controller gains life equal to its power.")).toEqual({ "gain-life": "opp" });
+});
+test("the controller of each of a MASS is anyone (Seeds of Innocence)", () => {
+  expect(actionRecipients("Destroy all artifacts. They can't be regenerated. The controller of each of those artifacts gains life equal to its mana value.")).toEqual({ "gain-life": "any" });
+});
+test("another player named by a pronoun acts: 'they may cast', 'then they draw'", () => {
+  expect(pronounActs("Its controller mills that many cards. They may cast that card without paying its mana cost.", "cast")).toBe(true);
+  expect(pronounActs("Choose target player. They may discard up to X cards. Then they draw a card for each card discarded this way.", "draw")).toBe(true);
+  expect(pronounActs("Draw a card for each creature they control.", "draw")).toBe(false);
+  expect(pronounActs("You may cast that card. If you do, they draw a card.", "cast")).toBe(false);
+  // "you <verb>" printed beside the pronoun's: the controller default is right for yours, so the pronoun does not stop it.
+  expect(pronounActs("They draw two cards and you draw one.", "draw")).toBe(false);
 });

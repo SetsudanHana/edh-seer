@@ -7461,6 +7461,35 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
         trig("dies", "this creature", "you", [rec("draw", "its owner", { amount: "the number of -1/-1 counters on it" }), rec("lose-life", "each other player", { amount: "the number of -1/-1 counters on it" })], 2)]),
       (path, abs) => { if (path === "model") expect(abs.filter((a) => a.clause === 2).flatMap((a) => a.emits ?? []).filter((e) => e.verb === "draw").map((e) => e.subject.control), `Goat ${path}`).toEqual(["you"]); });
   });
+  test("#1591: an ability only another player may activate is that player's action: 'Only your opponents may activate' -> opp, 'Any player may activate' -> any", () => {
+    const goat = "{1}: Draw a card. Gain control of this creature and put a -1/-1 counter on it. Only your opponents may activate this ability and only as a sorcery.\nWhen this creature dies, if it had one or more -1/-1 counters on it, its owner draws that many cards and each other player loses that much life.";
+    all(both("Oft-Nabbed Goat", "Creature — Goat", goat,
+      [{ id: 1, abilityType: "activated", actions: [rec("draw", "you", { amount: "1" }), rec("gain-control", "this creature"), rec("add-counter", "-1/-1", { amount: "1" })] },
+        trig("dies", "this creature", "you", [rec("draw", "its owner", { amount: "the number of -1/-1 counters on it" }), rec("lose-life", "each other player", { amount: "the number of -1/-1 counters on it" })], 2)]),
+      (path, abs) => {
+        const draw = abs.filter((a) => a.clause === 1 && a.effect.kind === "draw-card");
+        expect(draw.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "draw").map((e) => e.subject.control), `Goat ${path}`).toEqual(["opp"]);
+        expect(draw.map((a) => a.effect.subject?.control), `Goat effect ${path}`).toEqual(["opp"]);
+      });
+    // These three are stored from the model's records (`clauseSource: model`): the grammar does not read them complete.
+    all(both("Well of Knowledge", "Artifact", "{2}: Draw a card. Any player may activate this ability but only during their draw step.",
+      [{ id: 1, abilityType: "activated", actions: [rec("draw", "a card")] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "draw"), `Well ${path}`).toEqual(["any"]); });
+    all(both("Excavation", "Enchantment", "{1}, Sacrifice a land: Draw a card. Any player may activate this ability.",
+      [{ id: 1, abilityType: "activated", actions: [rec("sacrifice", "a land"), rec("draw", "you", { amount: "1" })] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "draw"), `Excavation ${path}`).toEqual(["any"]); });
+    all(both("Xantcha, Sleeper Agent", "Legendary Creature — Phyrexian Minion", "Xantcha enters under the control of an opponent of your choice.\nXantcha attacks each combat if able and can't attack its owner or planeswalkers its owner controls.\n{3}: Xantcha's controller loses 2 life and you draw a card. Any player may activate this ability.",
+      [{ id: 1, abilityType: "static", actions: [rec("gain-control", "this")] }, { id: 2, abilityType: "static", actions: [rec("cant", "attack its owner or planeswalkers its owner controls"), rec("other", "attacks each combat if able")] },
+        { id: 3, abilityType: "activated", actions: [rec("lose-life", "Xantcha's controller", { amount: "2" }), rec("draw", "you", { amount: "1" })] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "draw"), `Xantcha ${path}`).toEqual(["any"]); });
+    // The COST's own life payment stays yours (you can pay it too, and it feeds your life-lost payoffs).
+    all(both("Aether Storm", "Enchantment", "Creature spells can't be cast.\nPay 4 life: Destroy this enchantment. It can't be regenerated. Any player may activate this ability.",
+      [{ id: 1, abilityType: "static", actions: [rec("cant", "Creature spells can't be cast")] }, { id: 2, abilityType: "activated", actions: [rec("lose-life", "you", { amount: "4" }), rec("destroy", "this enchantment"), rec("cant", "It can't be regenerated")] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "lose-life"), `Aether Storm ${path}`).toEqual(["you"]); });
+    // An ordinary activated draw stays yours.
+    all(both("Arcane Encyclopedia", "Artifact", "{3}, {T}: Draw a card.", [{ id: 1, abilityType: "activated", actions: [rec("draw", "a card")] }]),
+      (path, abs) => expect(players(abs, "draw"), `Encyclopedia ${path}`).toEqual(["you"]));
+  });
   test("#1395: a textless record borrows the reading of the sibling whose sentence names ITS event, not the first identical one (Tome of Legends)", () => {
     const text = "This artifact enters with a page counter on it.\nWhenever your commander enters or attacks, put a page counter on this artifact.\n{1}, {T}, Remove a page counter from this artifact: Draw a card.";
     const card = { name: "Tome of Legends", typeLine: "Artifact — Book", oracleText: text, keywords: [] as string[] };

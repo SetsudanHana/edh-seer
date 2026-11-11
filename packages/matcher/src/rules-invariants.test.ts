@@ -95,6 +95,7 @@ const PROSE: Record<string, string> = {
   "704.5s": "Saga sacrifice", "708.2": "face-down 2/2", "709.5i": "a Room fully unlocked", "702.124k": "Choose a Background",
   "903": "Commander", "903.10a": "commander damage", "903.2": "a Commander deck", "903.4": "colour identity", "903.6": "singleton",
   "903.8": "commander tax is a caveat, not a number",
+  "110.2a": "edges punishesItsActor: the player an effect instructs to put a permanent is its putter; the CEILING there reads the permanent's controller instead (Yavimaya Dryad, #1591)",
   "113.3": "edges: the copy-ability pass reads the other card's ability kinds (AC12; edges.test asserts Strionic, Gogo, Tawnos)",
   "605.3b": "edges: 'activated' excludes mana abilities in the copy-ability pass (AC12)",
   "605.1a": "tagger derive.test.ts — Llanowar Wastes' damage rider is stamped mana-rider, which abilityIsKind counts as no ability to copy (#1426)",
