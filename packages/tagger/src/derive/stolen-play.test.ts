@@ -37,7 +37,8 @@ describe.each(THIEVES)("%s: 'you may play' a card another player owns", (thief) 
 test("Azula, Cunning Usurper: 'you may cast cards exiled with Azula' is a cast though the sentence also grants flash; 'cast' is no land play", () => {
   const cast = emits("Azula, Cunning Usurper", "cast");
   expect(cast.length).toBeGreaterThan(0);
-  for (const s of cast) expect({ control: s.control, owner: s.owner }).toEqual({ control: "you", owner: "opp" });
+  // `type: spell` (#1596 review): a cast emit that names no class joins no cast payoff. The real pair is pinned in the matcher, stolen-cast-pairs.test.ts (Azula -> Nita, Forum Conciliator's "a spell you don't own").
+  for (const s of cast) expect({ control: s.control, owner: s.owner, type: s.type }).toEqual({ control: "you", owner: "opp", type: "spell" });
   expect(emits("Azula, Cunning Usurper", "land-play")).toEqual([]);
 });
 // A MIXED SOURCE: each player's library, a target player's cards. You may play your own card too, so no owner is written.
@@ -113,4 +114,25 @@ test.each(["Grenzo, Havoc Raiser", "Elder Brain"])("%s: 'that player' is an oppo
   const s = [...emits(name, "cast"), ...emits(name, "land-play")];
   expect(s.length).toBeGreaterThan(0);
   for (const x of s) expect({ control: x.control, owner: x.owner }).toEqual({ control: "you", owner: "opp" });
+});
+
+// #1596 review, fix 4: ONE STORED `play` THAT HOLDS BOTH HALVES. "You may play lands and cast spells from among cards exiled this way" stored as a single play ("lands and spells from among ...") derived the land play and no cast.
+test.each([["Gix, Yawgmoth Praetor", "opp"], ["Sen Triplets", "opp"], ["Magus of the Mind", undefined], ["Jacob Hauken, Inspector // Hauken's Insight", undefined]] as const)("%s: 'play lands and cast spells' is a cast too (owner %s)", (name, owner) => {
+  const cast = emits(name, "cast"), land = emits(name, "land-play");
+  expect(land.length).toBeGreaterThan(0);
+  expect(cast.length).toBeGreaterThan(0);
+  for (const x of cast) expect({ control: x.control, owner: x.owner, type: x.type }).toEqual({ control: "you", owner, type: "spell" });
+});
+// ...and the origin is read off each permission's own sentence: "You may play those cards this turn. You may play an additional land this turn" (Sword of Forge and Frontier): the additional land is no exiled card.
+test("Sword of Forge and Frontier: the additional land play is not 'from exile'", () => {
+  const land = emits("Sword of Forge and Frontier", "land-play");
+  expect(land.length).toBeGreaterThan(0);
+  for (const x of land) expect(x.fromZone).toBeUndefined();
+});
+
+// #1596 review, block 1: the cast of a played card names the class its take names. Of the 39 play permissions read at 497, Thada Adel's is the only take that names one ("an artifact card").
+const MIXED = ["Mezzio Mugger", "Lidless Gaze", "Evelyn, the Covetous", "Extract Power", "Nashi, Moon Sage's Scion", "Rakdos, the Muscle", "Muse Vessel", "Triple Triad"];
+test("Thada Adel, Acquisitor casts an artifact; every other play permission names no class and casts any spell", () => {
+  expect(emits("Thada Adel, Acquisitor", "cast").map((x) => x.type)).toEqual(["artifact"]);
+  for (const name of [...THIEVES, ...MIXED].filter((n) => n !== "Thada Adel, Acquisitor")) expect(emits(name, "cast").map((x) => x.type), name).toEqual(["spell"]);
 });

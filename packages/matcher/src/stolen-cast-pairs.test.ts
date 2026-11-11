@@ -124,3 +124,36 @@ describe("Osgood, Operation Double's Paradox hears a stolen cast", () => {
   });
   // The refusal that stays (a cast with no origin and no other owner is from your hand) is pinned on the filter itself, subject.test.ts.
 });
+
+// #1596 review, block 1: THE PLAYED CARD KEEPS THE CLASS IT WAS TAKEN AS. "Search that player's library for an artifact card and exile it ... you may play that card" (Thada Adel, Acquisitor) casts an artifact, never an instant.
+describe("a play of a taken card casts only the class the take names", () => {
+  test("Thada Adel takes an artifact card: no instant-or-sorcery payoff hears it (Talrand)", () => {
+    expect(castEmits("Thada Adel, Acquisitor").filter((s) => s.type !== "land").map((s) => s.type)).toEqual(["artifact"]);
+    expect(castTags("Thada Adel, Acquisitor", "Talrand, Sky Summoner")).toEqual([]);
+  });
+  test("a take that names no class still casts any spell: Brainstealer Dragon feeds Talrand", () => {
+    expect(castTags("Brainstealer Dragon", "Talrand, Sky Summoner")).not.toEqual([]);
+  });
+});
+// #1596 review, block 2: "FROM YOUR LIBRARY / HAND / GRAVEYARD" IS NEVER A CARD AN OPPONENT OWNS (CR 400.3): each of those zones holds only its owner's cards, so a cast with `owner: "opp"` is from the opponent's.
+describe("a 'whenever you cast a spell from YOUR <zone>' trigger does not hear a cast of an opponent's card", () => {
+  test("Xanathar plays the top of an OPPONENT's library: not Melek's 'from your library'", () => {
+    expect(castTags("Xanathar, Guild Kingpin", "Melek, Izzet Paragon")).toEqual([]);
+  });
+  test("Mindleech Mass casts out of an OPPONENT's hand: not Harness the Storm's 'from your hand'", () => {
+    expect(castTags("Mindleech Mass", "Harness the Storm")).toEqual([]);
+  });
+  test("Memory Plunder casts from an OPPONENT's graveyard: not Secrets of the Dead's 'from your graveyard'", () => {
+    expect(castTags("Memory Plunder", "Secrets of the Dead")).toEqual([]);
+  });
+  test("'whenever A PLAYER casts a spell from a graveyard' still hears it: Memory Plunder -> River Kelpie", () => {
+    expect(castTags("Memory Plunder", "River Kelpie")).not.toEqual([]);
+  });
+  test("your own cast from your graveyard still feeds Secrets of the Dead: Harness the Storm", () => {
+    expect(castTags("Harness the Storm", "Secrets of the Dead")).not.toEqual([]);
+  });
+});
+// #1596 review, fix 3: Azula's cast named no class, and a cast emit with no class joins nothing.
+test("Azula, Cunning Usurper's cast of the exiled cards is a spell cast: Nita's 'a spell you don't own' and Talrand hear it", () => {
+  expect(castTags("Azula, Cunning Usurper", "Nita, Forum Conciliator")).not.toEqual([]);
+});
