@@ -106,3 +106,11 @@ test.each(["Audacious Swap", "Tibalt's Trickery"])("%s: 'they may cast' reads th
   expect(s.length).toBeGreaterThan(0);
   for (const x of s) expect({ control: x.control, owner: x.owner }).toEqual({ control: "any", owner: undefined });
 });
+
+// #1596 item 7 (CEILING pinned, see ANOTHER_PLAYERS_CARD in derive.ts): "that player's" / "their" is read as another player's with no antecedent check. The two corpus rows a naive check would strip of their owner are right as
+// they stand: Grenzo's "that player" is the damaged player its modal header names (another clause), Elder Brain's the player it attacked. A future antecedent check must keep both.
+test.each(["Grenzo, Havoc Raiser", "Elder Brain"])("%s: 'that player' is an opponent though this clause does not say so; the cast keeps owner opp", (name) => {
+  const s = [...emits(name, "cast"), ...emits(name, "land-play")];
+  expect(s.length).toBeGreaterThan(0);
+  for (const x of s) expect({ control: x.control, owner: x.owner }).toEqual({ control: "you", owner: "opp" });
+});

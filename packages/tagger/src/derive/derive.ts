@@ -683,7 +683,13 @@ export const DERIVE_VERSION = 500;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
-/** The object of an exile that takes ANOTHER player's card (#1592): "a nonland card from target opponent's graveyard or hand", "the top card of defending player's library", "cards from the top of their library". */
+/** The object of an exile that takes ANOTHER player's card (#1592): "a nonland card from target opponent's graveyard or hand", "the top card of defending player's library", "cards from the top of their library".
+ *  CEILING: "that player's" and "their <zone>" are taken as another player's with NO check of who that player is (#1596 item 7); `SOURCE_CAN_BE_YOURS` refuses only the players the words leave open by name ("each player",
+ *  "target player", "a player at random", a controller). "Whenever a player casts a spell, that player exiles the top card of their library. You may play that card" would write owner opp on a card that can be yours.
+ *  MEASURED at DERIVE 500: no corpus card has that shape. An antecedent check (an opponent or the defending player named earlier in the clause, or `damagedPlayerIsOpponent`) was run over the 10,098 commander-legal cards whose
+ *  text says cast or play: it moved 2 rows, both WRONGLY (Grenzo, Havoc Raiser: the damaged player is named in the modal header, another clause; Elder Brain: "attacks a player", whom no damage rule reads), and refused no
+ *  card whose "that player" can be you. So the check is not added: it would cost two true owners and buy nothing. Upgrade path: resolve "that player" through the trigger (a modal header's included, and an attacked
+ *  player is an opponent) before refusing, and add it when a card with an open antecedent is printed. Both rows are pinned in stolen-play.test.ts. */
 const ANOTHER_PLAYERS_CARD = /\b(?:opponents?|defending player|that player)(?:'s|')(?= )|\btheir (?:hand|library|graveyard)\b/i;
 /** "If it's an instant or sorcery card, you may cast it" (#1592): the class a cast is gated on. */
 const CAST_IF_ITS_A = /\bif (?:it's|it is|that card is) (an? [a-z]+(?: or [a-z]+)?) card, you may (?:cast|play) (?:it|that card)\b/i;
