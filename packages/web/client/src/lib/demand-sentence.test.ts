@@ -470,5 +470,12 @@ test("a punisher's demand names whose action it wants", () => {
   expect(demandSentence("gain-life:* (another player's)")).toBe("life being gained (by another player)");
   expect(demandSentence("draw:* (another player's)")).toBe("a card being drawn (by another player)");
   expect(demandSentence("cast:type:spell (another player's)")).toBe("a spell being cast (by another player)");
-  expect(demandSentence("enters:subtype:island (another player's)")).toBe("an Island entering the battlefield (by another player)");
+});
+
+/** "ENTERING ... (BY ANOTHER PLAYER)" IS NOT ENGLISH: a permanent enters under a player's control, it is not entered by one. */
+test("an enters row says whose control, not by whom", () => {
+  expect(demandSentence("enters:subtype:island (another player's)")).toBe("an Island entering the battlefield (under another player's control)");
+  expect(demandSentence("enters:* (another player's)")).toBe("anything entering the battlefield (under another player's control)");
+  expect(demandSentence("enters:subtype:forest (another player's)")).toBe("a Forest entering the battlefield (under another player's control)");
+  expect(demandSentence("land-play:* (another player's)")).toBe(demandSentence("land-play:*") + " (by another player)");
 });

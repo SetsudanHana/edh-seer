@@ -1,7 +1,9 @@
 import { describe, expect, test } from "vitest";
 import { deckAvailability } from "./availability.js";
 import { buildCensus } from "./census.js";
+import { computeDeckMath } from "./deck-math.js";
 import { pairReasonsAcrossFaces } from "./edges.js";
+import { loadHierarchy } from "./hierarchy.js";
 import { eventKeysForDemand } from "./suggest-keys.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 import fixtures from "./actor-punisher.fixtures.json" with { type: "json" };
@@ -11,7 +13,8 @@ import fixtures from "./actor-punisher.fixtures.json" with { type: "json" };
  *  page read "1 want · 3 supply" over a deck with no edge between them, and the unmet-demand finding stayed silent.
  *  Fixtures are STORED rows (`cardTagsDerived` by `oracleId` = `cards._id`, DERIVE 495), the ones actor-punisher.test.ts reads. */
 const F = fixtures as unknown as Record<string, DeckCard>;
-const H: Hierarchy = {};
+// The shipped hierarchy: with an empty one an instant is not a "spell", and "your spells are not Eidolon's supply" would pass on main too.
+const H: Hierarchy = loadHierarchy();
 const deck = (...names: string[]): DeckCard[] => names.map((n) => F[n]!);
 const row = (names: string[], key: string) => deckAvailability(deck(...names), H).find((r) => r.key === key);
 
@@ -95,4 +98,70 @@ describe("a caller with no printed text keeps the old count", () => {
 
 test("the marked key still resolves to event keys for the suggestions", () => {
   expect(eventKeysForDemand("gain-life:* (another player's)", ["gain-life|-|-|-", "draw|-|-|-"])).toEqual(["gain-life|-|-|-"]);
+});
+
+/** ANOTHER PLAYER'S ROUTINE ACTION HAPPENS ON ITS OWN (owner ruling 2026-11-11, #1598). After the you-refusal a punisher's row read
+ *  1 want / 0 supply in every deck, and so did a trigger that watches only opponents (Kaervek the Merciless): the page then said
+ *  "a spell being cast (by another player) -- and nothing in the deck does it" and offered your own spells. Opponents cast, draw
+ *  and put permanents onto the battlefield unaided, so such a row is self-supplied; what they do not do unaided (gain life,
+ *  discard) is still a demand. Supplier counts are untouched. */
+describe("a demand only another player's routine action satisfies is self-supplied", () => {
+  const routine = { suppliers: 0, selfSupplied: true, available: null };
+  test("a punisher on cast (Eidolon of the Great Revel), draw (Phyrexian Tyranny) and enters (Nature's Wrath)", () => {
+    expect(row(["Eidolon of the Great Revel", "Lightning Bolt", "Llanowar Elves"], "cast:type:spell (another player's)")).toMatchObject({ consumers: 1, ...routine });
+    expect(row(["Phyrexian Tyranny", "Divination"], "draw:* (another player's)")).toMatchObject({ consumers: 1, ...routine });
+    const wrath = deckAvailability(deck("Nature's Wrath", "Island", "Merfolk Looter"), H).filter((r) => r.key.startsWith("enters:"));
+    expect(wrath.map((r) => r.key)).toEqual(["enters:* (another player's)"]);
+    expect(wrath[0]).toMatchObject({ consumers: 1, ...routine });
+  });
+  test("a trigger that watches only opponents: Kaervek the Merciless (cast), Underworld Dreams (draw)", () => {
+    expect(row(["Kaervek the Merciless", "Lightning Bolt", "Llanowar Elves"], "cast:type:spell")).toMatchObject({ consumers: 1, ...routine });
+    expect(row(["Underworld Dreams", "Divination"], "draw:*")).toMatchObject({ consumers: 1, ...routine });
+  });
+  test("a supplier is still counted: each player draws (Howling Mine) beside Phyrexian Tyranny", () => {
+    expect(row(["Phyrexian Tyranny", "Divination", "Howling Mine"], "draw:* (another player's)")).toMatchObject({ suppliers: 1, selfSupplied: true, available: null });
+  });
+});
+
+describe("kept as a demand: what another player does not do unaided, and what you do", () => {
+  test("False Cure with no opponent lifegain is unmet; with Swords to Plowshares it is priced", () => {
+    expect(row(["False Cure", "Vampire Nighthawk"], "gain-life:* (another player's)")).toMatchObject({ suppliers: 0, selfSupplied: false, available: 0 });
+    const met = row(["False Cure", "Vampire Nighthawk", "Swords to Plowshares"], "gain-life:* (another player's)")!;
+    expect(met).toMatchObject({ suppliers: 1, selfSupplied: false });
+    expect(met.available).toBeGreaterThan(0);
+  });
+  test("an opponent's discard (Megrim) is unmet with no discard source", () => {
+    expect(row(["Megrim", "Lightning Bolt"], "discard:*")).toMatchObject({ consumers: 1, suppliers: 0, selfSupplied: false, available: 0 });
+  });
+  // The row is read as it was on 7e495047: the ruling is about another player's action, so neither `you` nor `any` moves. (That an
+  // unnarrowed cast trigger counts no implied cast as supply is `castSelfSupplied`'s, older than this file.)
+  test("'whenever you cast a spell' (Manaplasm) is unchanged: still a priced demand", () => {
+    const names = ["Manaplasm", "Lightning Bolt", "Llanowar Elves"];
+    expect(row(names, "cast:type:spell")).toMatchObject({ consumers: 1, suppliers: 0, selfSupplied: false, available: 0 });
+    expect(deckAvailability(deck(...names), H).some((r) => r.key.endsWith("(another player's)"))).toBe(false);
+  });
+  test("'whenever a player casts a spell' with no 'that player' price (Standstill) is unchanged: the deck can supply it", () => {
+    expect(row(["Standstill", "Lightning Bolt", "Llanowar Elves"], "cast:type:spell")).toMatchObject({ consumers: 1, selfSupplied: false, available: 0 });
+  });
+  test("a row shared with your own trigger stays a demand: Kaervek beside Manaplasm, nothing to cast", () => {
+    expect(row(["Kaervek the Merciless", "Manaplasm", "Island"], "cast:type:spell")).toMatchObject({ consumers: 2, selfSupplied: false });
+  });
+});
+
+/** THE ROW THE PAGE READS. `computeDeckMath` hands `deckMath.demand` to findings.ts and suggest-static.ts, whose unmet-demand test
+ *  is `available !== null && suppliers === 0 && consumers > 0`. On 7e495047 Eidolon's row passed it: "1 card is waiting for
+ *  something the deck never does ... a spell being cast (by another player)", and the suggestions offered your own spells. */
+describe("through computeDeckMath: what the unmet-demand finding is given", () => {
+  const unmet = (...names: string[]) =>
+    computeDeckMath(deck(...names), H).demand.filter((d) => d.available !== null && d.suppliers === 0 && d.consumers > 0).map((d) => d.key);
+  test("Eidolon, Phyrexian Tyranny, Nature's Wrath and Kaervek leave nothing unmet", () => {
+    const names = ["Eidolon of the Great Revel", "Phyrexian Tyranny", "Nature's Wrath", "Kaervek the Merciless", "Lightning Bolt", "Llanowar Elves", "Divination", "Island"];
+    const demand = computeDeckMath(deck(...names), H).demand;
+    expect(demand.map((d) => d.key).sort()).toEqual(["cast:type:spell", "cast:type:spell (another player's)", "draw:* (another player's)", "enters:* (another player's)", "upkeep:*"]);
+    expect(demand.map((d) => d.available)).toEqual([null, null, null, null, null]);
+    expect(unmet(...names)).toEqual([]);
+  });
+  test("False Cure with no opponent lifegain is still handed over as unmet", () => {
+    expect(unmet("False Cure", "Vampire Nighthawk", "Ray of Dissolution", "Alms of the Vein")).toEqual(["gain-life:* (another player's)"]);
+  });
 });

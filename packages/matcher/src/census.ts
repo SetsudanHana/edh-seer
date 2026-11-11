@@ -191,6 +191,32 @@ for (const [consumer, producers] of Object.entries(ALSO_SUPPLIED_BY)) {
  *  supplies it, aligned with `cards` by ordinal.
  *  CEILING: a caller that passes no `oracleTexts` gets the count from the trigger alone: no row is marked and your own producers
  *  still count as supply for a punisher. Both callers pass it today (`deckAvailability`, `research/matcher/event-census.ts`). */
+/** ANOTHER PLAYER'S ROUTINE ACTION HAPPENS ON ITS OWN (owner ruling 2026-11-11, #1598). A demand only another player can satisfy
+ *  by casting a spell, drawing a card, or a land or other permanent entering the battlefield (playing a land included) needs no
+ *  card of yours: opponents do those every turn. Such a row is `selfSupplied` (`available: null` in `deckAvailability`, never the
+ *  unmet-demand finding). Two shapes are only another player's: a symmetric punisher's after the you-refusal above (Eidolon of
+ *  the Great Revel, Phyrexian Tyranny, Nature's Wrath), and a trigger that watches only opponents, `control: "opp"` (Kaervek the
+ *  Merciless, Underworld Dreams). An `any` trigger that is no punisher is unchanged: the deck can supply it. The supplier counts
+ *  are untouched; a card that makes an opponent draw is still counted (Howling Mine beside Phyrexian Tyranny).
+ *  What opponents do NOT do unaided keeps its demand and can be unmet: gaining life (False Cure), discarding, sacrificing, losing
+ *  life, being dealt damage. `enters` is the battlefield only: a card entering an opponent's graveyard is not on the list.
+ *  Measured on the 12 decks in packages/cli/decks (stored rows, DERIVE 495): Eidolon swapped in read `cast:type:spell (another
+ *  player's)` 1/0 in all 12 and raised "a spell being cast (by another player) -- and nothing in the deck does it" in the 5 where
+ *  the row is inside `DEMAND_ROWS`, now 0; unmodified, Mystic Remora's opponent-only row raised it in 2 (gogo, hidetsugu), now 0.
+ *  `rollUp` keeps a row a demand unless EVERY shape on its key is self-supplied, so an opponent-only trigger sharing a key with
+ *  your own stays priced: Kaervek beside Sunbird's Invocation ("whenever you cast a spell") is still `cast:type:spell` 2/0.
+ *  CEILING: every subject on these verbs counts as routine, however narrow: "whenever an opponent casts a spell from
+ *  anywhere other than their hand" (Ghostly Pilferer), "a player puts a Swamp onto the battlefield" (Thelon's Chant) or "lands enter under an opponent's
+ *  control without being played" (Deep Gnome Terramancer) is read as something opponents do unaided, like "casts a spell". The
+ *  ruling names the action, not how often a table meets it. */
+const ROUTINE_FOR_ANOTHER_PLAYER: ReadonlySet<string> = new Set(["cast", "draw", "enters", "land-play"]);
+function anotherPlayersRoutine(c: Shape): boolean {
+  if (!c.punisher && c.event.subject.control !== "opp") return false;
+  if (!ROUTINE_FOR_ANOTHER_PLAYER.has(c.event.verb)) return false;
+  // `normalizeZoneEvent` has put the zone on every `enters`: "enters a graveyard" is `enters` too.
+  return c.event.verb !== "enters" || c.event.subject.zone === "battlefield";
+}
+
 export function buildCensus(
   cards: Iterable<CardTags>,
   h: Hierarchy,
@@ -247,7 +273,8 @@ export function buildCensus(
     // A CONSUMER-ONLY ENGINE VERB has no producer by owner ruling (`becomes-blocked`, CR 509.1h, #1375): the game or an opponent's blockers supply it, so a payoff is never an unmet demand.
     const selfSupplied = c.event.subject.self === true
       || CONSUMER_ONLY.includes(c.event.verb)
-      || combatSelfSupplied(impliedCombatProducer(c.event.verb), c.event);
+      || combatSelfSupplied(impliedCombatProducer(c.event.verb), c.event)
+      || anotherPlayersRoutine(c);
     return { key: consumerKey(c.event, selfSupplied, c.punisher), cards: c.cards, counterpart, selfSupplied, authored: true };
   });
 

@@ -278,6 +278,19 @@ test("a punisher only your own cards would trigger is a finding, said in words",
   expect(f.detail).toBe("One trigger in this deck waits on life being gained (by another player) — and nothing in the deck does it.");
 });
 
+/** ANOTHER PLAYER'S ROUTINE ACTION HAPPENS ON ITS OWN (owner ruling 2026-11-11, #1598): the census hands Eidolon of the Great
+ *  Revel's and Kaervek's cast rows over with `available: null`, the rows census-punisher.test.ts pins through `computeDeckMath`.
+ *  On 7e495047 the first read `available: 0` and raised "a spell being cast (by another player) — and nothing in the deck does it". */
+test("a punisher's or an opponent-only trigger's routine row is not a finding", () => {
+  expect(findings(report({
+    cards: Array.from({ length: 100 }, (_, i) => ({ name: `c${i}` })) as DeckReport["cards"],
+    deckMath: demand([
+      { key: "cast:type:spell (another player's)", consumers: 1, suppliers: 0, available: null },
+      { key: "cast:type:spell", consumers: 1, suppliers: 0, available: null },
+    ]),
+  }))).toEqual([]);
+});
+
 /** A SELF TRIGGER NEEDS NO SUPPLIER, and reading it as an unmet demand is how the panel printed
  *  "a creature entering the battlefield — 4 want · 0 supply" over a 51-creature deck.
  *  `available === null` is the engine's own refusal and must not become a finding. */

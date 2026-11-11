@@ -384,8 +384,11 @@ export function demandSentence(key: string): string {
   // A symmetric punisher's row (#1598, `census.ts`): the card wants ANOTHER player to do it. Never on a combat key, so one mark at most.
   const others = key.endsWith(OTHER_PLAYER_SUFFIX);
   const bare = narrowed ? key.slice(0, -" (narrowed)".length) : others ? key.slice(0, -OTHER_PLAYER_SUFFIX.length) : key;
-  const mark = narrowed ? " (a real one, not the game's own)" : others ? " (by another player)" : "";
   const [verb, ...rest] = bare.split(":");
+  // A permanent is not entered BY a player: "an Island entering the battlefield (by another player)" read as a broken passive.
+  const mark = narrowed ? " (a real one, not the game's own)"
+    : !others ? ""
+    : verb === "enters" ? " (under another player's control)" : " (by another player)";
   const subjectKey = rest.join(":");
 
   const phase = DEMAND_PHASE[verb];
