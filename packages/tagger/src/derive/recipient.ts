@@ -33,6 +33,13 @@ const OUTSIDE_SOURCE = "(?:that|the) (?:source|spell|ability|spell or ability)['
 /** Verbs that GIVE the outside source's controller something: the draw and the lifegain cues. */
 const OUTSIDE_BENEFITS: ReadonlySet<string> = new Set(["draw", "gain-life"]);
 const OUTSIDE_SOURCE_RE = new RegExp(`^${OUTSIDE_SOURCE}$`);
+// THE SAME PLAYER IN OTHER WORDS, FOR WHAT A CARD GIVES (#1591): "That creature's controller gains life equal to its power" (Solitude, Captain Marvel), "Its owner gains 4 life" (Path of Peace, Misfortune's Gain), "That artifact's
+// controller gains life" (Crumble), "that creature's controller draws X cards" (Nin, the Pain Artist; Nessian Boar; Fecundity), "The controller of each of those artifacts gains life" (Seeds of Innocence). Unread, the gain fell to
+// the controller default: your removal gained YOU the life. Read as anyone (`controlOf`), an opponent only where the words before the phrase say one. "Its controller" itself keeps its older `opp` reading (Swords to Plowshares).
+// CEILING: the gain-life and draw cues only. The same words before "creates" (Rapid Hybridization, Genesis Chamber), "sacrifices" (Burning Sands, Animate Dead), "searches" (Verdant Succession) or "mills" (Mesmeric Orb) are
+// still unread and default to you; "that creature's controller sacrifices" is pinned unread in recipient.test.ts.
+const GIVEN_TO = "(?:its|their) owners?|that [a-z]+['’]s (?:controller|owner)|the controllers? of each of those [a-z]+";
+const GIVEN_TO_RE = new RegExp(`^(?:${GIVEN_TO})$`, "i");
 const WHO = `its controller|their controller|${OUTSIDE_SOURCE}|target opponent|each opponent|each other player|defending player|attacking player|that player|target player|each player|those players`;
 
 /** The actor must sit immediately against its OWN verb. "each opponent loses 1 life and you gain 1
@@ -45,7 +52,7 @@ const WHO = `its controller|their controller|${OUTSIDE_SOURCE}|target opponent|e
 const ADVERB = "(?:(?:may|also|then|instead)\\s+)*";
 const CUES: [string, RegExp][] = [
   ["create", new RegExp(`\\b(${WHO})\\s+${ADVERB}creates?\\b`, "i")],
-  ["draw", new RegExp(`\\b(${WHO})\\s+${ADVERB}draws?\\b`, "i")],
+  ["draw", new RegExp(`\\b(${WHO}|${GIVEN_TO})\\s+${ADVERB}draws?\\b`, "i")],
   ["search", new RegExp(`\\b(${WHO})\\s+${ADVERB}searc(?:h|hes)\\b`, "i")],
   ["mill", new RegExp(`\\b(${WHO})\\s+${ADVERB}mills?\\b`, "i")],
   // The amount is OPTIONAL between the verb and "life": "its controller gains life equal to its
@@ -53,7 +60,7 @@ const CUES: [string, RegExp][] = [
   // YOU for the whole life of this table -- a lifegain payoff fed by your own removal spell
   // (owner-reported off the Arcane Denial card page, 2026-09-05).
   ["lose-life", new RegExp(`\\b(${WHO})\\s+${ADVERB}loses?\\s+(?:\\S+\\s+){0,2}?life\\b`, "i")],
-  ["gain-life", new RegExp(`\\b(${WHO})\\s+${ADVERB}gains?\\s+(?:\\S+\\s+)?life\\b`, "i")],
+  ["gain-life", new RegExp(`\\b(${WHO}|${GIVEN_TO})\\s+${ADVERB}gains?\\s+(?:\\S+\\s+)?life\\b`, "i")],
   // "that player GETS two poison counters" (Fynn, Marsh Viper, Vexing Radgull's rad): the recipient of a counter the
   // card gives, written as a get rather than a put (#1263). One entry, so the verb has one cue.
   ["add-counter", new RegExp(`\\b(${WHO})\\s+${ADVERB}(?:puts?\\b[^.]{0,40}?counters?\\s+on|gets?\\b[^.]{0,40}?counters?)\\b`, "i")],
@@ -132,6 +139,18 @@ function controlOf(phrase: string, text: string, at: number, ctx: ActorContext, 
   // AFTER AN UNTARGETED TRIGGER SUBJECT IT IS ANYONE (#650): "Whenever a creature enters, its
   // controller sacrifices ..." (Tainted Aether) points at the creature that entered, which can be
   // yours. A target or an opponent named first keeps the removal reading, as does a bare fragment.
+  // GIVEN LIFE OR CARDS (#1591, `GIVEN_TO`): anyone, as a benefit to an outside source's controller is below -- Nin, the Pain Artist is aimed at your own creature to draw, and Solitude's life goes to whoever controlled the
+  // exiled creature. An opponent only where the words before say one ("target creature an opponent controls"), you where the last target is one "you control".
+  if (GIVEN_TO_RE.test(p) && !OUTSIDE_SOURCE_RE.test(p)) {
+    const before = text.slice(0, at);
+    const lastTarget = before.toLowerCase().lastIndexOf("target ");
+    const since = lastTarget < 0 ? "" : before.slice(lastTarget).split(/\b(?:with|equal to|for each|where|the number of)\b/i)[0]!;
+    if (/\byou control\b/i.test(since) && !/\byou don'?t control\b|\bopponents?\b/i.test(since)) return "you";
+    // THE CARD'S OWN OWNER IS YOU: "When this creature dies, ... its owner draws that many cards" (Oft-Nabbed Goat) is a card of your deck, whoever controls it when it dies (#1395).
+    const ownTrigger = ctx.triggerIsSelf === true || /^\s*when(?:ever)? this [a-z]+ /i.test(text) || (ctx.cardName !== undefined && text.trimStart().toLowerCase().startsWith(`when ${ctx.cardName.toLowerCase()} `));
+    if (p === "its owner" && ownTrigger && lastTarget < 0) return "you";
+    return /\bopponents?\b|\byou don'?t control\b/i.test(before) ? "opp" : "any";
+  }
   if (p === "its controller" || p === "their controller") {
     const before = text.slice(0, at);
     // The opponent in other words: a creature that "attacks you" (MacCready), "if you don't control it"
@@ -194,6 +213,15 @@ export function sentenceNamesAPlayer(clauseText: string, verb: string): boolean 
   const sentences = clauseText.split(/(?<=[.!?])\s+/);
   const holding = sentences.filter((s) => stemRe.test(s));
   return (holding.length ? holding : sentences).some((s) => PLAYER_WORD.test(s));
+}
+
+/** ANOTHER PLAYER, NAMED BY A PRONOUN, DOES IT (#1591): "Its controller mills that many cards ... THEY MAY CAST that card" (Tibalt's Trickery), "they may cast it" (Audacious Swap), "Choose target player ... Then THEY DRAW a card"
+ *  (Mishra's Command), "they discard" (Stinging Vitriol). "They" is never the controller, and the sentence holds no player word, so the controller default (`ACTOR_DEFAULTS_TO_YOU`, derive.ts) made it yours. Derive leaves the
+ *  control as parsed (`any`) instead. Not when "you <verb>" is printed too: the default is then right for that one. */
+export function pronounActs(clauseText: string, verb: string): boolean {
+  const stem = STEMS[verb];
+  if (!stem) return false;
+  return new RegExp(`\\b(?:they|he or she)\\s+${ADVERB}${stem}`, "i").test(clauseText) && !new RegExp(`\\byou\\s+${ADVERB}${stem}`, "i").test(clauseText);
 }
 
 /** What the caller knows about the clause's trigger, for "that player" after damage (#1263). */

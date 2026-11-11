@@ -2378,12 +2378,15 @@ interface PairScope {
  *  Read off stored fields plus one printed cue, no new field: the trigger's subject is `any` on a verb a PLAYER performs (there the subject's control is the actor), the ability emits a loss -- life, damage to a player, a
  *  discard, a sacrifice -- whose subject is `any` with no scope and is not the card itself, and the card prints "that player" / "they" / "them" after its "a player" trigger. The cue is needed because an unscoped `any` is also
  *  what derive leaves when it could not tell who acts: "Whenever a player casts a spell, sacrifice a creature" (Desecration Elemental) is YOUR sacrifice whoever cast, stored `any`.
- *  Measured on the commander-legal corpus at DERIVE 493: 22 abilities on 22 cards (cast 19, draw 2, gain-life 1).
+ *  A player PUTTING a permanent onto the battlefield is that player's action as well ("Whenever a player puts an Island or blue permanent onto the battlefield, that player sacrifices ...": Nature's Wrath; Tourach's Chant,
+ *  Thelon's Chant): an `enters` trigger is admitted, and only the printed "a player ... that player" tells it from "whenever a land enters" (Zo-Zu). The Chants' "unless they put a -1/-1 counter on a creature they control" is
+ *  stored as an ability of its own and counts as the same price.
+ *  Measured on the commander-legal corpus at DERIVE 494: 28 ability-verb rows on 25 cards (cast 19, enters 6, draw 2, gain-life 1).
  *  CEILING: only the pair is refused; `census.ts` and `lines.ts` build their demand from the trigger alone and still count your own producers as supply for it. The cue is read on the whole card, not the ability's clause.
- *  CEILING: a PERMANENT's event with "that land's controller" / "its controller" (Zo-Zu the Punisher, Ankh of Mishra, Rampaging Ferocidon, Poisonbelly Ogre, Liability) is the same drawback and is not read: there the `any`
+ *  CEILING: a PERMANENT's event with "that land's controller" / "its controller" and no "a player" trigger (Zo-Zu the Punisher, Ankh of Mishra, Rampaging Ferocidon, Poisonbelly Ogre; Liability's "put into a player's graveyard") is the same drawback and is not read: there the `any`
  *  subject is also how an Aura's "enchanted creature" is stored (Insolence, Psychic Venom), where you pick whose permanent it is. A loss that comes with a gift (none on these verbs today) would be refused whole.
  *  CEILING: a mill of "that player" (The Master of Lake-town) is not counted as a loss -- a deck may want its own mill -- and a spell countered "unless that player pays" (Nether Void) is not either. */
-const PLAYER_ACTION_VERBS: ReadonlySet<string> = new Set(["cast", "draw", "gain-life", "lose-life", "discard", "sacrifice", "land-play", "mill"]);
+const PLAYER_ACTION_VERBS: ReadonlySet<string> = new Set(["cast", "draw", "gain-life", "lose-life", "discard", "sacrifice", "land-play", "mill", "enters"]);
 const ACTOR_LOSS_VERBS: ReadonlySet<string> = new Set(["lose-life", "non-combat-damage", "discard", "sacrifice"]);
 /** "Whenever a player <does it>, ... that player / they / them ...": scanned a sentence at a time with string search, so no pattern backtracks over the text. */
 function printsItsActor(oracleText: string | undefined): boolean {
@@ -2398,9 +2401,12 @@ export function punishesItsActor(a: Pick<CardTags["abilities"][number], "trigger
   if (a.trigger?.subject?.control !== "any" || !PLAYER_ACTION_VERBS.has(verb)) return false;
   const loses = (a.emits ?? []).some((e) => {
     const s = e.subject;
-    if (!ACTOR_LOSS_VERBS.has(e.verb) || s.control !== "any" || s.scope !== undefined || s.self === true || s.anyOf !== undefined) return false;
-    // Damage to a PLAYER: an emit typed by a permanent ("deals 2 damage to that creature") is not the actor's loss.
-    return e.verb !== "non-combat-damage" || (list(s.type).length === 0 && list(s.subtype).length === 0);
+    if (s.control !== "any" || s.scope !== undefined || s.self === true) return false;
+    // "...unless they put a -1/-1 counter on a creature they control" (Tourach's Chant, Thelon's Chant): the other half of the same price, stored as an ability of its own.
+    if (e.verb === "counter-added") return s.counter === "-1/-1";
+    if (!ACTOR_LOSS_VERBS.has(e.verb)) return false;
+    // Damage to a PLAYER: an emit typed by a permanent ("deals 2 damage to that creature"), or split over several recipients, is not the actor's loss.
+    return e.verb !== "non-combat-damage" || (s.anyOf === undefined && list(s.type).length === 0 && list(s.subtype).length === 0);
   });
   return loses && printsItsActor(oracleText);
 }
