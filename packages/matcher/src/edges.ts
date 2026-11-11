@@ -1220,6 +1220,10 @@ function originMatches(producer: SubjectFilter, consumer: SubjectFilter, verb: s
     const fromAnywhere = verb === "exiled" && consumer.type === undefined && consumer.self !== true;
     if (!fromAnywhere) return false;
   }
+  // "WHENEVER YOU CAST A SPELL YOU DON'T OWN" NEVER HEARS A CARD THE WORDS MAKE YOURS (#1608): a discover digs your own library (CR 701.57a), "Exile the top card of your library. You may cast that card" (Chandra, Torch of
+  // Defiance) casts a card you own; such a cast says `owner: you`. The demand's `owner: opp` (Nita, Forum Conciliator; Vaan, Street Thief; Don Andres, the Renegade; Tasha, the Witch Queen) was read by nothing here.
+  // CEILING: only a producer that STATES `owner: you`. A cast that states no owner (Future Sight, Galvanoth, a pile every player feeds: Etali, Primal Storm) still meets "a spell you don't own", as before.
+  if ((verb === "cast" || verb === "land-play") && consumer.owner === "opp" && producer.owner === "you") return false;
   if (consumer.fromZone === undefined) return true;
   // "WHENEVER YOU CAST A SPELL FROM YOUR LIBRARY / HAND / GRAVEYARD" NEVER HEARS A CARD AN OPPONENT OWNS (#1596 review; CR 400.3: an object that would go to a library, graveyard or hand other than its owner's goes to its
   // owner's, so each of those zones holds only its owner's cards). A stolen cast states the zone it left (`fromZone: library, owner: opp`, Xanathar, Guild Kingpin) and that zone is the OPPONENT's: it met Melek, Izzet Paragon's

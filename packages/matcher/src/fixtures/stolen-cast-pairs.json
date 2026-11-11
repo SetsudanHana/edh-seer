@@ -4016,5 +4016,825 @@
     ]
    }
   ]
+ },
+ "Gonti, Lord of Luxury": {
+  "source": {
+   "name": "Gonti, Lord of Luxury",
+   "typeLine": "Legendary Creature — Aetherborn Rogue",
+   "oracleText": "Deathtouch\nWhen Gonti enters, look at the top four cards of target opponent's library, exile one of them face down, then put the rest on the bottom of that library in a random order. You may cast that card for as long as it remains exiled, and mana of any type can be spent to cast that spell.",
+   "keywords": [
+    "Deathtouch"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "manaCost": "{2}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Deathtouch",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Gonti, Lord of Luxury",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "one card from the top four cards of target opponent's library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest on the bottom of that library in a random order",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Thief of Sanity": {
+  "source": {
+   "name": "Thief of Sanity",
+   "typeLine": "Creature — Specter",
+   "oracleText": "Flying\nWhenever this creature deals combat damage to a player, look at the top three cards of that player's library, exile one of them face down, then put the rest into their graveyard. You may cast that card for as long as it remains exiled, and mana of any type can be spent to cast that spell.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{1}{U}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "one card from the top three cards of that player's library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest into their graveyard",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Ragavan, Nimble Pilferer": {
+  "source": {
+   "name": "Ragavan, Nimble Pilferer",
+   "typeLine": "Legendary Creature — Monkey Pirate",
+   "oracleText": "Whenever Ragavan deals combat damage to a player, create a Treasure token and exile the top card of that player's library. Until end of turn, you may cast that card.\nDash {1}{R} (You may cast this spell for its dash cost. If you do, it gains haste, and it's returned from the battlefield to its owner's hand at the beginning of the next end step.)",
+   "keywords": [
+    "Treasure",
+    "Dash"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "2",
+   "toughness": "1",
+   "manaCost": "{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "Ragavan",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "the top card of that player's library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Dash {1}{R}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Planeswalker's Mischief": {
+  "source": {
+   "name": "Planeswalker's Mischief",
+   "typeLine": "Enchantment",
+   "oracleText": "{3}{U}: Target opponent reveals a card at random from their hand. If it's an instant or sorcery card, exile it. You may cast it without paying its mana cost for as long as it remains exiled. At the beginning of the next end step, if you haven't cast it, return it to its owner's hand. Activate only as a sorcery.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "the next end step",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Rashmi and Ragavan": {
+  "source": {
+   "name": "Rashmi and Ragavan",
+   "typeLine": "Legendary Creature — Elf Monkey",
+   "oracleText": "Whenever you cast your first spell during each of your turns, exile the top card of target opponent's library and create a Treasure token. Then you may cast the exiled card without paying its mana cost if it's a spell with mana value less than the number of artifacts you control. If you don't cast it this way, you may cast it this turn.",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "G",
+    "R",
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G",
+    "R",
+    "U"
+   ],
+   "power": "2",
+   "toughness": "4",
+   "manaCost": "{1}{G}{U}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "your first spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top card of target opponent's library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "the exiled card",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cast",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Beast Whisperer": {
+  "source": {
+   "name": "Beast Whisperer",
+   "typeLine": "Creature — Elf Druid",
+   "oracleText": "Whenever you cast a creature spell, draw a card.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "manaCost": "{2}{G}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a creature spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Trumpeting Carnosaur": {
+  "source": {
+   "name": "Trumpeting Carnosaur",
+   "typeLine": "Creature — Dinosaur",
+   "oracleText": "Trample\nWhen this creature enters, discover 5.\n{2}{R}, Discard this card: It deals 3 damage to target creature or planeswalker.",
+   "keywords": [
+    "Discover",
+    "Trample"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "7",
+   "toughness": "6",
+   "manaCost": "{4}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "discover",
+      "object": "5",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "this card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "target creature or planeswalker",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Quintorius Kand": {
+  "source": {
+   "name": "Quintorius Kand",
+   "typeLine": "Legendary Planeswalker — Quintorius",
+   "oracleText": "Whenever you cast a spell from exile, Quintorius Kand deals 2 damage to each opponent and you gain 2 life.\n+1: Create a 3/2 red and white Spirit creature token.\n−3: Discover 4.\n−6: Exile any number of target cards from your graveyard. Add {R} for each card exiled this way. You may play those cards this turn.",
+   "keywords": [
+    "Discover"
+   ],
+   "colors": [
+    "R",
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{R}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell from exile",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 3/2 red and white Spirit creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "discover",
+      "object": "4",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "any number of target cards from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{R}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each card exiled this way",
+      "optional": false
+     },
+     {
+      "verb": "play",
+      "object": "those cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Mnemonic Deluge": {
+  "source": {
+   "name": "Mnemonic Deluge",
+   "typeLine": "Sorcery",
+   "oracleText": "Exile target instant or sorcery card from a graveyard. Copy that card three times. You may cast the copies without paying their mana costs. Exile Mnemonic Deluge.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 9,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{6}{U}{U}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target instant or sorcery card from a graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "copy",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "the copies",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "exile",
+      "object": "Mnemonic Deluge",
+      "fromZone": null,
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Chandra, Torch of Defiance": {
+  "source": {
+   "name": "Chandra, Torch of Defiance",
+   "typeLine": "Legendary Planeswalker — Chandra",
+   "oracleText": "+1: Exile the top card of your library. You may cast that card. If you don't, Chandra deals 2 damage to each opponent.\n+1: Add {R}{R}.\n−3: Chandra deals 4 damage to target creature.\n−7: You get an emblem with \"Whenever you cast a spell, this emblem deals 5 damage to any target.\"",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top card of your library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "deal-damage",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{R}{R}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "4",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "emblem",
+      "object": "an emblem",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "any target",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "5",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Vaan, Street Thief": {
+  "source": {
+   "name": "Vaan, Street Thief",
+   "typeLine": "Legendary Creature — Human Scout",
+   "oracleText": "Whenever one or more Scouts, Pirates, and/or Rogues you control deal combat damage to a player, exile the top card of that player's library. You may cast it. If you don't, create a Treasure token.\nWhenever you cast a spell you don't own, put a +1/+1 counter on each Scout, Pirate, and Rogue you control.",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{2}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "one or more Scouts, Pirates, and/or Rogues you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top card of that player's library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell you don't own",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
  }
 }

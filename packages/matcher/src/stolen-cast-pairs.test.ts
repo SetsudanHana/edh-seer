@@ -157,3 +157,41 @@ describe("a 'whenever you cast a spell from YOUR <zone>' trigger does not hear a
 test("Azula, Cunning Usurper's cast of the exiled cards is a spell cast: Nita's 'a spell you don't own' and Talrand hear it", () => {
   expect(castTags("Azula, Cunning Usurper", "Nita, Forum Conciliator")).not.toEqual([]);
 });
+
+// #1608 item 1: A STOLEN CAST THAT NAMES NO CLASS IS A SPELL. "You may cast that card" of "the top card of that player's library" carried no type at all, and an unclassed cast emit meets no typed cast payoff: Gonti,
+// Thief of Sanity and Ragavan formed no pair with Talrand, prowess or Nita's "a spell you don't own". The card can be of any class, so the emit reads `spell`. Still never a deck-mate's own cast.
+describe.each(["Gonti, Lord of Luxury", "Thief of Sanity", "Ragavan, Nimble Pilferer", "Rashmi and Ragavan"])("%s casts a stolen card of no named class", (thief) => {
+  test.each(["Talrand, Sky Summoner", "Monastery Swiftspear", "Nita, Forum Conciliator"])("feeds %s", (payoff) => {
+    expect(castTags(thief, payoff)).not.toEqual([]);
+  });
+  test.each(["Artisan of Kozilek", "Echo Storm"])("no self reason with %s's own 'when you cast this spell'", (self) => {
+    expect(castTags(thief, self)).toEqual([]);
+  });
+  test("is your cast: no 'whenever an opponent casts a spell' for Rhystic Study", () => {
+    expect(castTags(thief, "Rhystic Study")).toEqual([]);
+  });
+});
+// ...and A CLASS-LIMITED TAKE MEETS ONLY ITS CLASS: "If it's an instant or sorcery card, exile it. You may cast it" (Planeswalker's Mischief), "Exile target instant or sorcery card from a graveyard ... cast the copies"
+// (Mnemonic Deluge) never cast a creature spell.
+test.each(["Planeswalker's Mischief", "Mnemonic Deluge"])("%s casts an instant or sorcery: Talrand hears it, Beast Whisperer's 'a creature spell' does not", (source) => {
+  expect(castTags(source, "Talrand, Sky Summoner")).not.toEqual([]);
+  expect(castTags(source, "Beast Whisperer")).toEqual([]);
+});
+// DISCOVER (CR 701.57a) exiles cards until a nonland card and lets YOU cast it: any spell, from exile. Its cast named no class, no origin and no caster.
+test("Trumpeting Carnosaur's discover is your cast of a spell from exile: Talrand and Quintorius Kand's 'a spell from exile' hear it, Rhystic Study's 'an opponent casts' does not", () => {
+  expect(castTags("Trumpeting Carnosaur", "Talrand, Sky Summoner")).not.toEqual([]);
+  expect(castTags("Trumpeting Carnosaur", "Quintorius Kand")).not.toEqual([]);
+  expect(castTags("Trumpeting Carnosaur", "Rhystic Study")).toEqual([]);
+});
+// ...AND "A SPELL YOU DON'T OWN" NEVER HEARS A CARD THAT IS CERTAINLY YOURS (#1608): discover digs YOUR library, Chandra exiles "the top card of your library". Typed `spell`, both would have met Nita and
+// Vaan, Street Thief's "whenever you cast a spell you don't own"; the emit says `owner: you` and the matcher refuses it. A stolen card (Gonti) and a pile that can hold either (Etali, Primal Storm) still feed them.
+// (Pinned on the discover: Chandra's own emblem hears the spells Vaan steals, a real pair the other way round. Her emit's `owner: you` is pinned in the tagger, cast-class.test.ts.)
+test("Trumpeting Carnosaur's discover casts your own card: Talrand hears it, 'a spell you don't own' (Nita, Vaan) does not", () => {
+  expect(castTags("Trumpeting Carnosaur", "Talrand, Sky Summoner")).not.toEqual([]);
+  expect(castTags("Trumpeting Carnosaur", "Nita, Forum Conciliator")).toEqual([]);
+  expect(castTags("Trumpeting Carnosaur", "Vaan, Street Thief")).toEqual([]);
+});
+test.each(["Gonti, Lord of Luxury", "Etali, Primal Storm"])("%s can cast a card you don't own: Nita and Vaan hear it", (source) => {
+  expect(castTags(source, "Nita, Forum Conciliator")).not.toEqual([]);
+  expect(castTags(source, "Vaan, Street Thief")).not.toEqual([]);
+});

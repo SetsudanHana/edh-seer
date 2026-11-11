@@ -8680,7 +8680,7 @@ describe("#1592: a stored graveyard-or-hand pick leaves the hand, and the card y
     expect(emit(intrusion, "cast").subject.scope).toBeUndefined();
   });
   // Fix round: the card is still the OPPONENT's (CR 108.3), which the emit says with `owner`, so the matcher forms no self reason with a deck-mate's "when you cast this spell".
-  test("the stolen card's cast carries its owner; a card off your own library has none", () => {
+  test("the stolen card's cast carries its owner; a card off your own library is yours", () => {
     expect(emit(stored("a nonland card from target opponent's graveyard or hand", "stack"), "cast").subject.owner).toBe("opp");
     expect(emit(stored("a nonland card from that player's graveyard or hand", null), "cast").subject.owner).toBe("opp");
     const own = deriveCardTags({
@@ -8692,7 +8692,8 @@ describe("#1592: a stored graveyard-or-hand pick leaves the hand, and the card y
       clauseTexts: { 1: "Exile the top card of your library. You may cast that card this turn." },
     });
     expect(emit(own, "cast").subject).toMatchObject({ control: "you" });
-    expect(emit(own, "cast").subject.owner).toBeUndefined();
+    // #1608: never an opponent's. The words take it from YOUR library, so the emit now says `owner: you` (a deck-mate still; "a spell you don't own" refuses it).
+    expect(emit(own, "cast").subject.owner).toBe("you");
   });
   // Review round: "If it's an instant or sorcery card, you may cast it" (Hidetsugu and Kairi) casts only that class, and the cast emit says so.
   test("a cast gated on the card's type carries that type (Hidetsugu and Kairi)", () => {
@@ -8736,7 +8737,7 @@ describe("#1592: a stored graveyard-or-hand pick leaves the hand, and the card y
     const cast = emit(loki, "cast").subject;
     expect(cast.control).toBe("you");
     expect(cast.scope).toBeUndefined();
-    expect(cast.owner).toBeUndefined();
+    expect(cast.owner).toBe("you"); // #1608: "the top of your library", never an opponent's card
   });
   test("an opponent's own cast keeps its player ('that player may cast that card')", () => {
     const tags = deriveCardTags({
