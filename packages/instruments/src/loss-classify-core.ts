@@ -11,7 +11,8 @@
  *  missing); a counterpart absent from both is counted as `noRow`, never guessed.
  *
  *  The rows come from the `derive-impact --json` file itself (`rows`, compact), never from Mongo, whose stored rows can be stale. */
-import { eventTagKeys } from "@edh-seer/matcher/edges";
+import { loadHierarchy } from "@edh-seer/matcher";
+import { eventMatches, eventTagKeys } from "@edh-seer/matcher/edges";
 import { tagFamily } from "./derive-impact-core.js";
 
 /** A filter reduced to what prints: nulls and `false` dropped. */
@@ -98,7 +99,9 @@ export function triggerTagKeys(t: NonNullable<CompactAbility["trigger"]>): strin
  *  WHICH TRIGGER IS READ: the one that HEARS the tag, the consumer's. If the counterpart is the consumer (the changed card produces), that is the counterpart's;
  *  if the CHANGED card is the consumer, it is the changed card's own (`consumer-side`, its BASE row for a lost pair, HEAD for a gained one). A `[via token]` hop is
  *  read the same way with the suffix stripped, and labelled. A pair naming neither side as the changed card (a token subject's relays) is `ambiguous`, listed; `other` is no longer produced by this reader and stays in the counts so a future producer-side path has a bucket.
- *  `self` / `class`: a trigger carries exactly the tag; `class` wins when one tag is heard by both kinds (a person reads it).
+ *  `self` / `class`: a trigger carries exactly the tag. When one tag is heard by BOTH kinds (Osgood, Operation Double: "when you cast this spell" beside "whenever you cast a spell from anywhere other than your hand"),
+ *  the PRODUCER's own events decide (#1596): `class` only if the pairs code's `eventMatches` lets one of its authored events of a verb the class trigger watches meet that trigger, else `self` (8 stolen-cast pairs held only by
+ *  Osgood's self trigger were filed LOST->CLASS at #1594). A producer with no row, or no authored event of such a verb (its own implied cast), proves nothing and `class` wins as before (a person reads it).
  *  `ambiguous`: no trigger carries the tag's class key but one carries the family; or a name maps to several ids whose classes differ. Never read as class or self.
  *  `unmatched`: the consumer has no trigger of the family at all (a static, a granted or implied path this does not model): warned, never `other`. */
 export function classifyPair(dir: "lost" | "gained", changed: string, key: string, rows: CompactRows): { klass: Klass; counterpart: string; family: string; tag: string; via: boolean; consumerSide: boolean; filter?: string } {
@@ -118,18 +121,35 @@ export function classifyPair(dir: "lost" | "gained", changed: string, key: strin
   const entry = rows[reader];
   const variants = dir === "lost" ? entry?.base ?? entry?.head : entry?.head ?? entry?.base;
   if (!variants?.length) return { klass: "noRow", ...base };
-  const each = variants.map((v) => classifyOn(v.abilities, tag, family));
+  // The producer's authored events on the same side: the counterpart's when the changed card hears, the changed card's own when it produces.
+  const supplier = rows[consumerSide ? producer : changed] ?? rows[producer];
+  const supplied = (dir === "lost" ? supplier?.base ?? supplier?.head : supplier?.head ?? supplier?.base)?.flatMap((v) => v.abilities.flatMap((a) => a.emits ?? []));
+  const each = variants.map((v) => classifyOn(v.abilities, tag, family, supplied));
   const first = each[0]!;
   if (each.every((x) => x.klass === first.klass)) return { ...first, ...base };
   return { klass: "ambiguous", ...base };
 }
 
-function classifyOn(abilities: CompactAbility[], tag: string, family: string): { klass: Klass; filter?: string } {
+const H = loadHierarchy();
+/** Can one of the producer's authored events meet this trigger, by the pairs code's own test? Undefined when it authors no event of a verb the trigger watches (nothing to judge). */
+function suppliedMeets(supplied: CompactEmit[] | undefined, t: NonNullable<CompactAbility["trigger"]>): boolean | undefined {
+  const sub = (x: Subj | undefined) => ({ control: "any", token: null, ...x });
+  const candidates = (supplied ?? []).filter((e) => t.verbs.includes(e.verb));
+  if (candidates.length === 0) return undefined;
+  return candidates.some((e) => t.verbs.some((verb) => eventMatches({ verb: e.verb, subject: sub(e.subject), ...(e.dealer ? { dealer: sub(e.dealer) } : {}) } as never, { verb, subject: sub(t.subject) } as never, H)));
+}
+
+function classifyOn(abilities: CompactAbility[], tag: string, family: string, supplied?: CompactEmit[]): { klass: Klass; filter?: string } {
   const triggers = abilities.filter((a) => a.trigger) as (CompactAbility & { trigger: NonNullable<CompactAbility["trigger"]> })[];
   const exact = triggers.filter((a) => triggerTagKeys(a.trigger).includes(tag));
   if (exact.length) {
-    const cls = exact.find((a) => !a.trigger.subject?.self);
-    return cls ? { klass: "class", filter: filterText(cls.trigger.subject) } : { klass: "self" };
+    const classes = exact.filter((a) => !a.trigger.subject?.self);
+    if (classes.length === 0) return { klass: "self" };
+    // Both kinds hear the tag: the class trigger takes the pair only if the producer's events can meet it (or none can be judged).
+    const judged = classes.map((a) => ({ a, meets: suppliedMeets(supplied, a.trigger) }));
+    const cls = judged.find((x) => x.meets !== false);
+    if (!cls && classes.length < exact.length) return { klass: "self" };
+    return { klass: "class", filter: filterText((cls?.a ?? classes[0]!).trigger.subject) };
   }
   const sameFamily = triggers.filter((a) => a.trigger.verbs.some((v) => v === family) || triggerTagKeys(a.trigger).some((k) => tagFamily(k) === family));
   return { klass: sameFamily.length ? "ambiguous" : "unmatched" };
