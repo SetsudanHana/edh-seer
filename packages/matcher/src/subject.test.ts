@@ -537,6 +537,13 @@ test("from anywhere other than your hand: an opponent's card is never in YOUR ha
   expect(subjectMatches(s({ type: "creature", fromZone: "battlefield", owner: "opp" }), s({ type: "creature", notFromZone: "battlefield" }), H)).toBe(false);
 });
 
+test("from anywhere other than your hand: a copy of an opponent's card is made where that card is (CR 707.12), never in YOUR hand (#1608)", () => {
+  const want = s({ type: "spell", notFromZone: "hand" });
+  expect(subjectMatches(s({ type: "instant", copyOf: { owner: "opp" } }), want, H)).toBe(true);
+  // A copy of your own card with no origin stated is made in your hand (God-Eternal Kefnet's revealed draw).
+  expect(subjectMatches(s({ type: "instant", copyOf: { type: "instant" } }), want, H)).toBe(false);
+});
+
 test("a player branch is met by a player-shaped producer only", () => {
   const want = s({ control: "any", anyOf: [{ player: true }, { type: "planeswalker" }] });
   expect(subjectMatches(s({ control: "opp" }), want, H)).toBe(true);

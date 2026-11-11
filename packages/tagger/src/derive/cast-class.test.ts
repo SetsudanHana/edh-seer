@@ -94,6 +94,21 @@ test("Wizard's Spellbook: 'Copy that card' names no card here (unread); 'Copy ea
   expect(casts("Wizard's Spellbook").map((x) => x.type)).toEqual([undefined, undefined, ["instant", "sorcery"]]);
 });
 
+// #1608 item 2: A CAST COPY IS CAST FROM THE ZONE THE COPIED CARD IS IN (CR 707.12). Where the clause exiles the card it copies, or copies an exiled card, that zone is exile, whatever zone the card was exiled from
+// (the stored origin of the exile, "graveyard" or "hand", had been inherited by the cast).
+test.each(["Flawless Forgery", "Blue Mage's Cane", "Saruman of Many Colors", "Soundwave, Sonic Spy // Soundwave, Superior Captain", "Isochron Scepter", "Mizzix's Mastery", "Mnemonic Deluge", "Spelltwine", "Wildfire Devils",
+  "Capricious Hellraiser", "Eye of the Storm", "Arcane Bombardment"])("%s casts a copy of a card in exile: fromZone exile", (name) => {
+  const s = casts(name);
+  expect(s.length).toBeGreaterThan(0);
+  for (const x of s) expect(x.fromZone).toBe("exile");
+});
+// A copy of a card that is NOT exiled is made where that card is: your hand (God-Eternal Kefnet's revealed draw: no origin stated is the hand), an opponent's hand (Reversal of Fortune: `copyOf` says whose, read by the matcher).
+test.each(["God-Eternal Kefnet", "Reversal of Fortune"])("%s copies a card in a hand: no exile origin", (name) => {
+  const s = casts(name);
+  expect(s.length).toBeGreaterThan(0);
+  for (const x of s) expect(x.fromZone).toBeUndefined();
+});
+
 describe("castClassFromPrint", () => {
   const cls = (text: string, piles: string[] = []) => castClassFromPrint(text, piles, parseSubject);
   test("a card of no class is any spell", () => {

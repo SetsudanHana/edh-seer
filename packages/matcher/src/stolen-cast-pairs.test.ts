@@ -195,3 +195,19 @@ test.each(["Gonti, Lord of Luxury", "Etali, Primal Storm"])("%s can cast a card 
   expect(castTags(source, "Nita, Forum Conciliator")).not.toEqual([]);
   expect(castTags(source, "Vaan, Street Thief")).not.toEqual([]);
 });
+
+// #1608 item 2: A CAST COPY IS CAST FROM WHERE THE COPIED CARD IS (CR 707.12: "the copy is created in the same zone the object is in and then cast"). "Exile target instant or sorcery card from an opponent's graveyard.
+// Copy that card. You may cast the copy" (Flawless Forgery) creates the copy in exile; the emit stated no origin, and an unstated origin reads as your hand. So Osgood's Paradox ("from anywhere other than your hand")
+// did not hear it. A copy of a card in an OPPONENT's hand (Reversal of Fortune) is made in that hand, never in yours (CR 400.3).
+test.each(COPY_CASTERS)("%s casts a copy of an opponent's card from somewhere other than your hand: Osgood, Operation Double hears it", (caster) => {
+  expect(castTags(caster, "Osgood, Operation Double")).not.toEqual([]);
+});
+// ...and so is a copy of your own exiled card: Isochron Scepter's imprint left your hand long ago, Mizzix's Mastery's card left your graveyard before it was copied.
+test("Isochron Scepter casts the copy from exile: Osgood hears it, Harness the Storm's 'from your hand' does not", () => {
+  expect(castTags("Isochron Scepter", "Osgood, Operation Double")).not.toEqual([]);
+  expect(castTags("Isochron Scepter", "Harness the Storm")).toEqual([]);
+});
+test("Mizzix's Mastery casts the copies from exile: Osgood hears it, Secrets of the Dead's 'from your graveyard' does not", () => {
+  expect(castTags("Mizzix's Mastery", "Osgood, Operation Double")).not.toEqual([]);
+  expect(castTags("Mizzix's Mastery", "Secrets of the Dead")).toEqual([]);
+});

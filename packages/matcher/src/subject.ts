@@ -175,7 +175,8 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // "from anywhere other than your hand": an unstated origin is the hand (a card's own cast).
   // ...YOUR hand: a card another player owns is never in it (CR 400.3: an object that would go to a hand other than its owner's goes to its owner's), so a cast of an opponent's card (`owner: "opp"`), out of that
   // opponent's hand (Extract Brain, Mindleech Mass) or with no origin stated, is from somewhere other than your hand (#1596: Osgood, Operation Double's Paradox).
-  const theirCard = consumer.notFromZone === "hand" && producer.owner === "opp";
+  // ...and so is a cast COPY of an opponent's card (`copyOf.owner: "opp"`, #1608): the copy is created in the zone the copied card is in (CR 707.12), an opponent's hand or graveyard, or exile (Reversal of Fortune).
+  const theirCard = consumer.notFromZone === "hand" && (producer.owner === "opp" || producer.copyOf?.owner === "opp");
   if (consumer.notFromZone !== undefined && !theirCard && (producer.fromZone ?? "hand") === consumer.notFromZone) return false;
   // A PLAYER BRANCH ("target player or planeswalker"): met by a player-shaped producer, one that
   // names no type and no subtype.
