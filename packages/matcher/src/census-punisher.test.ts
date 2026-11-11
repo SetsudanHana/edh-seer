@@ -197,4 +197,7 @@ describe("kept as a demand: a cast trigger that names which spell", () => {
     expect(row(["Quintorius Kand", "Lightning Bolt"], "cast:type:spell")).toMatchObject({ consumers: 1, selfSupplied: false, available: 0 });
     expect(row(["Vine Gecko", "Lightning Bolt"], "cast:type:spell")).toMatchObject({ consumers: 1, selfSupplied: false, available: 0 });
   });
+  test("and the key they share with 'whenever you cast a spell' stays a demand for both (the roll-up's ceiling)", () => {
+    expect(row(["Quintorius Kand", "Manaplasm", "Lightning Bolt"], "cast:type:spell")).toMatchObject({ consumers: 2, selfSupplied: false, available: 0 });
+  });
 });

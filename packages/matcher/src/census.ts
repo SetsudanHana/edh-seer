@@ -231,7 +231,12 @@ function anotherPlayersRoutine(c: Shape): boolean {
  *  deck, which those are not. So a row is deck-level only when its subject carries nothing but the fields below: casting from
  *  your hand (Sunbird's Invocation) and "other than your first spell each turn" / "during your turn" (Arcbound Tracker, Chakram
  *  Retriever) are what a deck does anyway. Any field not listed keeps the demand, so a new subject field starts as a demand.
- */
+ *  CEILING: `rollUp` keeps a row a demand unless EVERY shape on its key is self-supplied, and the key carries type and subtype
+ *  only. So a self-supplied shape (deck-level here, or another player's routine action above) sharing a key with a real demand
+ *  is counted in that demand's `cards`: Manaplasm beside Quintorius Kand is one `cast:type:spell` row, 2 want, priced from
+ *  the union of both shapes' suppliers; so is Kaervek the Merciless beside Kand. Measured at #1602 on stored rows: 14 such rows in 14 of the 197
+ *  precons (11 on `cast:type:spell`, 4 with no supplier, each a real demand of the other card) and 1 in the 12 cli decks.
+ *  Splitting them needs a marked key, as combat's " (narrowed)" is, or a per-shape merge that changes the counts. */
 const DECK_LEVEL_CAST_FIELDS: ReadonlySet<string> = new Set(["control", "token", "type", "self", "fromZone", "history"]);
 const DECK_LEVEL_CAST_HISTORY: ReadonlySet<string> = new Set(["not-first-spell-this-turn", "cast-during-your-turn"]);
 function castIsDeckLevel(e: GameEvent): boolean {
