@@ -68,3 +68,18 @@ test.each(["Extract Brain", "Mindleech Mass", "Silent-Blade Oni"])("%s casts fro
   expect(s.length).toBeGreaterThan(0);
   for (const x of s) expect({ fromZone: x.fromZone, owner: x.owner }).toEqual({ fromZone: "hand", owner: "opp" });
 });
+
+// #1596 item 3: A PILE NAMED BY ITS COUNTER. "You may cast a spell from among cards in exile with page counters on them" (Tasha, the Witch Queen) names no player, but the only ability that puts a page counter on a card exiles it
+// "from that player's graveyard" "for each opponent": the pile holds opponents' cards only.
+test("Tasha, the Witch Queen: the page-counter pile is fed from opponents' graveyards only, so the cast is of a card an opponent owns", () => {
+  const s = emits("Tasha, the Witch Queen", "cast");
+  expect(s.length).toBeGreaterThan(0);
+  for (const x of s) expect({ control: x.control, owner: x.owner, counter: x.counter, fromZone: x.fromZone }).toEqual({ control: "you", owner: "opp", counter: "page", fromZone: "exile" });
+});
+test("a counter pile fed from each player's library (Evelyn's collection counters), or by another card (Haldan's fetch counters, put by Pako), proves no owner", () => {
+  for (const name of ["Evelyn, the Covetous", "Haldan, Avid Arcanist"]) {
+    const s = [...emits(name, "cast"), ...emits(name, "land-play")];
+    expect(s.length, name).toBeGreaterThan(0);
+    for (const x of s) expect(x.owner, name).toBeUndefined();
+  }
+});
