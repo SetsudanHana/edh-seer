@@ -113,6 +113,18 @@ export function antecedentSource(actions: readonly Action[], idx: number, trigge
     }
     if (verb === "copy") return { to: "none" };
   }
+  // A CAST PRONOUN AFTER AN EARLIER CAST OF A REFERENCE IS THE SAME CARD (#1596 item 4): "you may cast the exiled card without paying its mana cost ... If you don't cast it this way, you may cast IT this turn" (Rashmi and Ragavan).
+  // The walk below skips a reference object, so the second cast went past "the exiled card" to the nearest named thing, the Treasure token the ability also creates, and the engine cast a Treasure. The second cast resolves
+  // through the first. Only cast / play after cast / play: another verb's pronoun keeps the nearest-thing walk.
+  const castVerb = (v: string | undefined): boolean => v === "cast" || v === "play";
+  if (castVerb(actions[idx]?.verb) && PRONOUN_OBJECT.test(own)) {
+    for (let i = idx - 1; i >= 0; i--) {
+      if (!castVerb(actions[i]?.verb)) continue;
+      const o = (actions[i]?.object ?? "").trim();
+      if (PRONOUN_OBJECT.test(o) || EXILED_REF.test(o)) return antecedentSource(actions, i, triggerSubject, cardName, clauseText);
+      break;
+    }
+  }
   for (let i = idx - 1; i >= 0; i--) {
     const o = (actions[i]?.object ?? "").trim();
     // A ZONE IS NO THING A PRONOUN MEANS (owner's edge-magnitude sheet, 2026-09-29): The Five

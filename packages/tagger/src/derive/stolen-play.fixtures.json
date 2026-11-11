@@ -3922,5 +3922,76 @@
    }
   ],
   "segmentHash": "944cf9f81d21a11d490eff75c578eca31b34ed0997e9a1180a90d067af876d5b"
+ },
+ "Rashmi and Ragavan": {
+  "source": {
+   "name": "Rashmi and Ragavan",
+   "typeLine": "Legendary Creature — Elf Monkey",
+   "oracleText": "Whenever you cast your first spell during each of your turns, exile the top card of target opponent's library and create a Treasure token. Then you may cast the exiled card without paying its mana cost if it's a spell with mana value less than the number of artifacts you control. If you don't cast it this way, you may cast it this turn.",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "G",
+    "R",
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G",
+    "R",
+    "U"
+   ],
+   "power": "2",
+   "toughness": "4",
+   "manaCost": "{1}{G}{U}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "your first spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top card of target opponent's library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "the exiled card",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cast",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "50cc9e56933bacc18f9e473cca1427ad0ac1208b4e0cffd87d4fb95b06a1a3d6"
  }
 }

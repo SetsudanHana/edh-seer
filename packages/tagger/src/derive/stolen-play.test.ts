@@ -83,3 +83,17 @@ test("a counter pile fed from each player's library (Evelyn's collection counter
     for (const x of s) expect(x.owner, name).toBeUndefined();
   }
 });
+
+// #1596 item 4: A REPEATED CAST PRONOUN IS THE SAME CARD. "Exile the top card of target opponent's library and create a Treasure token. Then you may cast the exiled card ... If you don't cast it this way, you may cast it this turn"
+// (Rashmi and Ragavan): the second cast's "it" walked back past "the exiled card" (a reference) to the nearest named thing, the Treasure token, so the engine cast a Treasure.
+test("Rashmi and Ragavan: both casts are of the exiled card an opponent owns, never of the Treasure token", () => {
+  const s = emits("Rashmi and Ragavan", "cast");
+  expect(s.length).toBeGreaterThan(0);
+  for (const x of s) {
+    expect({ control: x.control, owner: x.owner, fromZone: x.fromZone }).toEqual({ control: "you", owner: "opp", fromZone: "exile" });
+    expect(x.token).not.toBe(true);
+    expect(x.subtype).toBeUndefined();
+  }
+  // The Treasure is still created.
+  expect(emits("Rashmi and Ragavan", "create-token").some((x) => x.subtype === "treasure")).toBe(true);
+});
