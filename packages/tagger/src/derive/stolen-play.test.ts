@@ -136,3 +136,16 @@ test("Thada Adel, Acquisitor casts an artifact; every other play permission name
   expect(emits("Thada Adel, Acquisitor", "cast").map((x) => x.type)).toEqual(["artifact"]);
   for (const name of [...THIEVES, ...MIXED].filter((n) => n !== "Thada Adel, Acquisitor")) expect(emits(name, "cast").map((x) => x.type), name).toEqual(["spell"]);
 });
+
+// #1608 item 3: THE BOTH-HALVES PERMISSION STATES ITS ORIGIN. "You may play lands and cast spells from that player's hand" (Sen Triplets) is cast out of the opponent's hand; "from among cards you own in exile with croak
+// counters on them" (Grolnok, the Omnivore) out of exile. Both emits carried no origin, which reads as your own hand.
+test("Sen Triplets plays and casts from that player's hand: fromZone hand beside owner opp", () => {
+  const s = [...emits("Sen Triplets", "cast"), ...emits("Sen Triplets", "land-play")];
+  expect(s.length).toBe(2);
+  for (const x of s) expect({ fromZone: x.fromZone, owner: x.owner, control: x.control }).toEqual({ fromZone: "hand", owner: "opp", control: "you" });
+});
+test("Grolnok, the Omnivore plays and casts cards you own in exile: fromZone exile, owner you", () => {
+  const s = [...emits("Grolnok, the Omnivore", "cast"), ...emits("Grolnok, the Omnivore", "land-play")];
+  expect(s.length).toBe(2);
+  for (const x of s) expect({ fromZone: x.fromZone, owner: x.owner, control: x.control }).toEqual({ fromZone: "exile", owner: "you", control: "you" });
+});

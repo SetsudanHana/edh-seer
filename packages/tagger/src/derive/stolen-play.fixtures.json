@@ -4657,5 +4657,91 @@
    }
   ],
   "segmentHash": "4493d860b724bebd9f7c4bab5edb83a05fa56a0451309f567328ee4911334df7"
+ },
+ "Grolnok, the Omnivore": {
+  "source": {
+   "name": "Grolnok, the Omnivore",
+   "typeLine": "Legendary Creature — Frog",
+   "oracleText": "Whenever a Frog you control attacks, mill three cards.\nWhenever a permanent card is put into your graveyard from your library, exile it with a croak counter on it.\nYou may play lands and cast spells from among cards you own in exile with croak counters on them.",
+   "keywords": [
+    "Mill"
+   ],
+   "colors": [
+    "G",
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G",
+    "U"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{2}{G}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "a Frog you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": null,
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "a permanent card",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "croak counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "play",
+      "object": "lands and cast spells from among cards you own in exile with croak counters on them",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "291a2b2f36e1024d8ed4aac25cefdfdf861bdc5e3af1001ec159304f1abe4528"
  }
 }
