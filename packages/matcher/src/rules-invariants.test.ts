@@ -36,6 +36,7 @@ const TESTED: Record<string, string> = {
   "701.11": "edges.test.ts — a tripler of other creatures' counters is read like a doubler (Triple, by analogy with 701.10e; #1438)",
   "701.17a": "partners-core.test.ts — a mill also supplies the general graveyard put, one way only",
   "400.3": "end-step-exile-pairs.test.ts — a card in an opponent's graveyard is owned by that opponent, so Gruesome Encore's put fires no deck-mate's own enters trigger (#1502)",
+  "112.2": "stolen-cast-pairs.test.ts — a copy you cast of an opponent's card is a spell you own, yet it copies their card, so Flawless Forgery fires no deck-mate's own cast trigger (#1594)",
   "400.1": "partners-core.test.ts — a graveyard leave keys apart from a battlefield leave (AK6)",
   "205.3i": "rules.test.ts — tutor.text refuses a search whose subject is only a land type (land types are the CR 205.3i list: Gate, Desert, Cave, Town ...), #1266",
   "700.12": "implied.test.ts — isOutlaw is the five CR 700.12 creature types",
