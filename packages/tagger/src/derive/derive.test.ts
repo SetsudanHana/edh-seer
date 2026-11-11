@@ -7383,11 +7383,29 @@ describe("'you and <player> each' derives yours and theirs (#1391 F2)", () => {
       (path, abs) => expect(players(abs, "search"), `Surveyor ${path}`).toEqual(["you"]));
   });
 
-  test("#1395: Soul Ransom's cost discard is the opponent's, so it stays any (only your opponents may activate)", () => {
+  test("#1395: Soul Ransom's cost discard is the opponent's, never yours (only your opponents may activate; `opp` since #1601, below)", () => {
     all(both("Soul Ransom", "Enchantment — Aura", "Enchant creature\nYou control enchanted creature.\nDiscard two cards: This Aura's controller sacrifices it, then draws two cards. Only your opponents may activate this ability.",
       [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant creature" }] }, { id: 2, abilityType: "static", actions: [rec("gain-control", "enchanted creature")] },
         { id: 3, abilityType: "activated", actions: [rec("discard", "two cards"), rec("draw", "cards", { amount: "2" }), rec("sacrifice", "this Aura")] }]),
       (path, abs) => expect(players(abs, "discard"), `Soul Ransom ${path}`).not.toContain("you"));
+  });
+  test("#1601: the cost of an ability only your opponents may activate is the opponent's discard, and its 'gain control of this creature' the opponent's gain", () => {
+    all(both("Soul Ransom", "Enchantment — Aura", "Enchant creature\nYou control enchanted creature.\nDiscard two cards: This Aura's controller sacrifices it, then draws two cards. Only your opponents may activate this ability.",
+      [{ id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant creature" }] }, { id: 2, abilityType: "static", actions: [rec("gain-control", "enchanted creature")] },
+        { id: 3, abilityType: "activated", actions: [rec("discard", "two cards"), rec("draw", "cards", { amount: "2" }), rec("sacrifice", "this Aura")] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "discard"), `Soul Ransom ${path}`).toEqual(["opp"]); });
+    all(both("Oft-Nabbed Goat", "Creature — Goat", "{1}: Draw a card. Gain control of this creature and put a -1/-1 counter on it. Only your opponents may activate this ability and only as a sorcery.\nWhen this creature dies, if it had one or more -1/-1 counters on it, its owner draws that many cards and each other player loses that much life.",
+      [{ id: 1, abilityType: "activated", actions: [rec("draw", "you", { amount: "1" }), rec("gain-control", "this creature"), rec("add-counter", "-1/-1", { amount: "1" })] },
+        trig("dies", "this creature", "you", [rec("draw", "its owner", { amount: "the number of -1/-1 counters on it" }), rec("lose-life", "each other player", { amount: "the number of -1/-1 counters on it" })], 2)]),
+      (path, abs) => expect(players(abs, "gains-control"), `Goat ${path}`).toEqual(["opp"]));
+    // "Any player may activate" leaves the payer of a cost discard `any`, as before...
+    all(both("Saproling Cluster", "Enchantment", "{1}, Discard a card: Create a 1/1 green Saproling creature token. Any player may activate this ability.",
+      [{ id: 1, abilityType: "activated", actions: [rec("discard", "a card"), rec("create", "a 1/1 green Saproling creature token", { amount: "1" })] }]),
+      (path, abs) => { if (path === "model") expect(players(abs, "discard"), `Cluster ${path}`).toEqual(["any"]); });
+    // ...and an ordinary cost discard and an ordinary "gain control of target creature" stay yours.
+    all(both("Urborg Syphon-Mage", "Creature — Human Spellshaper", "{2}{B}, {T}, Discard a card: Each other player loses 2 life. You gain life equal to the life lost this way.",
+      [{ id: 1, abilityType: "activated", actions: [rec("discard", "a card"), rec("lose-life", "each other player", { amount: "2" }), rec("gain-life", "you", { amount: "equal to the life lost this way" })] }]),
+      (path, abs) => expect(players(abs, "discard"), `Syphon-Mage ${path}`).toEqual(["you"]));
   });
   test("#1395: 'that player' is never the controller: Angel of Destiny and Benevolent Offering gain life for you and for them", () => {
     all(both("Angel of Destiny", "Creature — Angel Cleric", "Flying, double strike\nWhenever a creature you control deals combat damage to a player, you and that player each gain that much life.\nAt the beginning of your end step, if you have at least 15 life more than your starting life total, each player this creature attacked this turn loses the game.",
