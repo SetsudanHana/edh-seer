@@ -225,3 +225,35 @@ describe("compactRow", () => {
     ]);
   });
 });
+
+describe("a consumer that hears one tag with BOTH a self and a class trigger (#1596, Osgood, Operation Double)", () => {
+  // "When you cast this spell" (self) beside "Whenever you cast a spell from anywhere other than your hand" (class): the pair is filed under the trigger the producer's event can actually meet.
+  const OSGOOD = [trig(["cast"], { control: "you", type: "spell", self: true }), trig(["cast"], { control: "you", type: "spell", notFromZone: "hand" })];
+  const casts = (subject: Record<string, unknown>) => [{ kind: "on-cast", emits: [{ verb: "cast", subject }] }];
+  const data = (thiefBase: unknown[]): ImpactJson => ({
+    pairDetail: [{ id: "t", name: "Thief", lost: [key("cast:spell", "Thief", "Osgood")], gained: [] }],
+    pairRows: { Thief: { base: v(thiefBase), head: v(casts({ control: "you", type: "spell", owner: "opp" })) }, Osgood: both(OSGOOD) },
+  });
+  it("a cast the class trigger refuses (no origin: from hand) was held by the SELF trigger: lost self, not LOST->CLASS", () => {
+    const c = classifyReport(data(casts({ control: "you", type: "spell" }))).cards[0]!;
+    expect(c.lost).toEqual({ self: 1, class: 0, other: 0, ambiguous: 0, unmatched: 0, noRow: 0 });
+    expect(c.lostToClass).toEqual([]);
+  });
+  it("a cast the class trigger accepts (from a graveyard) is a class pair", () => {
+    const c = classifyReport(data(casts({ control: "you", type: "spell", fromZone: "graveyard" }))).cards[0]!;
+    expect(c.lost).toEqual({ self: 0, class: 1, other: 0, ambiguous: 0, unmatched: 0, noRow: 0 });
+    expect(c.lostToClass).toEqual(["Osgood"]);
+  });
+  it("a producer with no authored event of the family (its own implied cast) stays class: a person reads it", () => {
+    const c = classifyReport(data([{ kind: "static" }])).cards[0]!;
+    expect(c.lost.class).toBe(1);
+  });
+  it("the changed card as the CONSUMER reads the counterpart's events the same way", () => {
+    const d: ImpactJson = {
+      pairDetail: [{ id: "o", name: "Osgood", lost: [], gained: [key("cast:spell", "Thief", "Osgood")] }],
+      pairRows: { Thief: both(casts({ control: "you", type: "spell" })), Osgood: both(OSGOOD) },
+    };
+    const c = classifyReport(d).cards[0]!;
+    expect(c.gained).toEqual({ self: 1, class: 0, other: 0, ambiguous: 0, unmatched: 0, noRow: 0 });
+  });
+});

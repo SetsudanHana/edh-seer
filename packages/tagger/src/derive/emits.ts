@@ -1030,7 +1030,8 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // spells as though they had flash" changes WHEN you may cast and causes no cast. As an authored cast
   // emit it made High Fae Trickster -- a creature -- feed noncreature-only prowess, and Najal read as
   // casting sorceries. 10 corpus clauses.
-  if (action.verb === "cast" && /\bas though (?:it|they) had flash\b/i.test(clauseText ?? "")) return [];
+  // ...UNLESS THE SENTENCE ALSO GRANTS THE CAST ITSELF, of a pile the card filled (#1596): "you may cast cards exiled with Azula and you may cast them as though they had flash" (Azula, Cunning Usurper) is a permission to cast beside the timing.
+  if (action.verb === "cast" && /\bas though (?:it|they) had flash\b/i.test(clauseText ?? "") && !/\bexiled with\b/i.test(action.object ?? "")) return [];
   // A CAST OF "ALL PERMANENTS / CREATURES" IS THE CONDITION MISFILED AS AN ACTION (#1549): Cyclone Summoner's "if you cast it from your hand, return all permanents ... to their owners' hands" and Sunderflock's "if you've cast ..., return all non-Elemental creatures"
   // were stored as a second action `cast` with the RETURN's object. No card casts all its permanents or creatures (the corpus holds exactly these two such objects); read as an emit it fed every cast payoff once the class was no longer narrowed by an exception list.
   // Narrow on purpose: "each instant or sorcery card exiled with this enchantment" (Eye of the Storm, a copy resolved to its antecedent) is a real cast.
