@@ -173,6 +173,10 @@ describe("a cast trigger that names no spell is self-supplied", () => {
     expect(row(["Kaervek the Merciless", "Sunbird's Invocation", "Lightning Bolt"], "cast:type:spell")).toMatchObject({ consumers: 2, ...deckLevel });
     expect(row(["Kaervek the Merciless", "Manaplasm", "Island"], "cast:type:spell")).toMatchObject({ consumers: 2, ...deckLevel });
   });
+  // The allowlist, pinned in the deck-level direction: "during your turn" is when a deck casts anyway.
+  test("'whenever you cast a spell during your turn' (Chakram Retriever)", () => {
+    expect(row(["Chakram Retriever", "Lightning Bolt", "Llanowar Elves"], "cast:type:spell")).toMatchObject({ consumers: 1, ...deckLevel });
+  });
   test("through computeDeckMath: Manaplasm leaves nothing unmet", () => {
     const demand = computeDeckMath(deck("Manaplasm", "Lightning Bolt", "Llanowar Elves"), H).demand;
     expect(demand.filter((d) => d.available !== null && d.suppliers === 0 && d.consumers > 0)).toEqual([]);
@@ -196,6 +200,17 @@ describe("kept as a demand: a cast trigger that names which spell", () => {
   test("'from exile' (Quintorius Kand) and 'a kicked spell' (Vine Gecko) are not what every card does", () => {
     expect(row(["Quintorius Kand", "Lightning Bolt"], "cast:type:spell")).toMatchObject({ consumers: 1, selfSupplied: false, available: 0 });
     expect(row(["Vine Gecko", "Lightning Bolt"], "cast:type:spell")).toMatchObject({ consumers: 1, selfSupplied: false, available: 0 });
+  });
+  // The allowlist, pinned in the demand direction: a history word not on it names how the spell was cast.
+  test("'a spell using teamwork' (Virtual Assistant) is not what every card does", () => {
+    expect(row(["Virtual Assistant", "Lightning Bolt", "Llanowar Elves"], "cast:type:spell")).toMatchObject({ consumers: 1, selfSupplied: false, available: 0 });
+  });
+  // The narrowing is on the ABILITY, beside a bare `{control: you, type: spell}` subject: `threshold: {atLeast: 7}`.
+  test("'if at least seven mana was spent to cast it' (Raggadragga, Goreguts Boss): the intervening if keeps the demand", () => {
+    expect(row(["Raggadragga, Goreguts Boss", "Lightning Bolt", "Llanowar Elves"], "cast:type:spell")).toMatchObject({ consumers: 1, selfSupplied: false, available: 0 });
+  });
+  test("and Raggadragga beside Manaplasm is one demand row, as any shared key is (the roll-up's ceiling)", () => {
+    expect(row(["Raggadragga, Goreguts Boss", "Manaplasm", "Lightning Bolt"], "cast:type:spell")).toMatchObject({ consumers: 2, selfSupplied: false, available: 0 });
   });
   test("and the key they share with 'whenever you cast a spell' stays a demand for both (the roll-up's ceiling)", () => {
     expect(row(["Quintorius Kand", "Manaplasm", "Lightning Bolt"], "cast:type:spell")).toMatchObject({ consumers: 2, selfSupplied: false, available: 0 });

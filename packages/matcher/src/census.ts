@@ -127,11 +127,13 @@ interface Shape {
   authored: boolean;
   /** Consumer shapes only: the trigger is a symmetric punisher's (`punishesItsActor`), so a `control: you` producer is not its supply. */
   punisher: boolean;
+  /** Consumer shapes only: a cast trigger that would be deck-level, on an ability whose intervening if (`Ability.threshold`) keeps it a demand. See `castIsDeckLevel`. */
+  conditioned: boolean;
 }
 
-function collect(shapes: Map<string, Shape>, event: GameEvent, cardIndex: number, authored = false, punisher = false): void {
-  const k = JSON.stringify(event) + (punisher ? OTHER_PLAYER_SUFFIX : "");
-  const s = shapes.get(k) ?? { event, cards: new Set<number>(), authored: false, punisher };
+function collect(shapes: Map<string, Shape>, event: GameEvent, cardIndex: number, authored = false, punisher = false, conditioned = false): void {
+  const k = JSON.stringify(event) + (punisher ? OTHER_PLAYER_SUFFIX : "") + (conditioned ? " (conditioned)" : "");
+  const s = shapes.get(k) ?? { event, cards: new Set<number>(), authored: false, punisher, conditioned };
   s.cards.add(cardIndex);
   s.authored ||= authored;
   shapes.set(k, s);
@@ -236,7 +238,21 @@ function anotherPlayersRoutine(c: Shape): boolean {
  *  is counted in that demand's `cards`: Manaplasm beside Quintorius Kand is one `cast:type:spell` row, 2 want, priced from
  *  the union of both shapes' suppliers; so is Kaervek the Merciless beside Kand. Measured at #1602 on stored rows: 14 such rows in 14 of the 197
  *  precons (11 on `cast:type:spell`, 4 with no supplier, each a real demand of the other card) and 1 in the 12 cli decks.
- *  Splitting them needs a marked key, as combat's " (narrowed)" is, or a per-shape merge that changes the counts. */
+ *  Splitting them needs a marked key, as combat's " (narrowed)" is, or a per-shape merge that changes the counts.
+ *  THE SUBJECT IS NOT THE WHOLE TRIGGER. An intervening if (CR 603.4) is stored on the ABILITY, as `threshold`, beside a bare
+ *  subject: Raggadragga, Goreguts Boss ("whenever you cast a spell, if at least seven mana was spent to cast it") is
+ *  `{control: you, type: spell}` with `threshold: {atLeast: 7}`, and a deck has to supply the seven-mana spell. So the caller
+ *  refuses deck-level for an ability that carries `threshold` (`Shape.conditioned`); its shape is kept apart from the bare one,
+ *  and beside Manaplasm the two are one demand row, as above. Of the 81 cards this function alone made self-supplied (stored
+ *  rows, DERIVE 495), Raggadragga is the only one with `threshold` on its cast trigger. The other ability fields on those
+ *  triggers do not say which cast fires them and are not read: `gate` conditions the EFFECT of a trigger that fired (Flubs, the
+ *  Fool; Bazaar of Wonders), `unless` is a tax on it (Nether Void), `delayedBy` / `cost` say what set the trigger up (Codie,
+ *  Vociferous Codex; Jace Reawakened).
+ *  CEILING: an intervening if that derive stores nowhere on the ability is not seen, and the row reads deck-level. Two of the
+ *  81: Cemetery Protector ("whenever you play a land or cast a spell, if it shares a card type with the exiled card": the cast
+ *  ability has a bare subject and no `threshold`; only the card-level `unknownTriggers: ["if:play", "if:cast"]` records it) and
+ *  Vexing Bauble ("whenever a player casts a spell, if no mana was spent to cast it": nothing stored at all). Reading them
+ *  needs derive to mark the ability. */
 const DECK_LEVEL_CAST_FIELDS: ReadonlySet<string> = new Set(["control", "token", "type", "self", "fromZone", "history"]);
 const DECK_LEVEL_CAST_HISTORY: ReadonlySet<string> = new Set(["not-first-spell-this-turn", "cast-during-your-turn"]);
 function castIsDeckLevel(e: GameEvent): boolean {
@@ -268,7 +284,8 @@ export function buildCensus(
       if (!a.trigger) continue;
       for (const v of a.trigger.verbs) {
         const punisher = opts.oracleTexts !== undefined && punishesItsActor(a, v, opts.oracleTexts[i]);
-        collect(consShapes, normalizeZoneEvent({ verb: v, subject: a.trigger.subject }), i, false, punisher);
+        const event = normalizeZoneEvent({ verb: v, subject: a.trigger.subject });
+        collect(consShapes, event, i, false, punisher, a.threshold !== undefined && castIsDeckLevel(event));
       }
     }
   }
@@ -304,7 +321,7 @@ export function buildCensus(
     const selfSupplied = c.event.subject.self === true
       || CONSUMER_ONLY.includes(c.event.verb)
       || combatSelfSupplied(impliedProducer(c.event.verb), c.event)
-      || castIsDeckLevel(c.event)
+      || (!c.conditioned && castIsDeckLevel(c.event))
       || anotherPlayersRoutine(c);
     return { key: consumerKey(c.event, selfSupplied, c.punisher), cards: c.cards, counterpart, selfSupplied, authored: true };
   });
