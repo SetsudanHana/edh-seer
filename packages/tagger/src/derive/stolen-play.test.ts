@@ -97,3 +97,12 @@ test("Rashmi and Ragavan: both casts are of the exiled card an opponent owns, ne
   // The Treasure is still created.
   expect(emits("Rashmi and Ragavan", "create-token").some((x) => x.subtype === "treasure")).toBe(true);
 });
+
+// #1596 item 5 (pin, no engine change): "THEY MAY CAST IT" IS NOT YOUR CAST. Audacious Swap ("The owner of target nonenchantment permanent ... they may cast it without paying its mana cost") and Tibalt's Trickery ("Its controller
+// ... They may cast that card") let ANOTHER player cast. Since DERIVE 494 (#1591) a pronoun actor no longer takes the controller default, so the caster stays `any` (the target's owner or the spell's controller can be you or an
+// opponent); nothing writes `you`, and no owner is claimed. Stored rows at 497 read the same (queried 2026-11-11).
+test.each(["Audacious Swap", "Tibalt's Trickery"])("%s: 'they may cast' reads the caster as any player, never as you, and names no owner", (name) => {
+  const s = emits(name, "cast");
+  expect(s.length).toBeGreaterThan(0);
+  for (const x of s) expect({ control: x.control, owner: x.owner }).toEqual({ control: "any", owner: undefined });
+});

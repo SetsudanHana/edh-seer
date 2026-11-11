@@ -3993,5 +3993,149 @@
    }
   ],
   "segmentHash": "50cc9e56933bacc18f9e473cca1427ad0ac1208b4e0cffd87d4fb95b06a1a3d6"
+ },
+ "Audacious Swap": {
+  "source": {
+   "name": "Audacious Swap",
+   "typeLine": "Instant",
+   "oracleText": "Casualty 2 (As you cast this spell, you may sacrifice a creature with power 2 or greater. When you do, copy this spell and you may choose a new target for the copy.)\nThe owner of target nonenchantment permanent shuffles it into their library, then exiles the top card of their library. If it's a land card, they put it onto the battlefield. Otherwise, they may cast it without paying its mana cost.",
+   "keywords": [
+    "Casualty"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Casualty 2",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "shuffle",
+      "object": "target nonenchantment permanent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "the top card of target nonenchantment permanent's owner's library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "it",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "9e24eb7ff993a66ddba3a599db1cc0024ab4e7013094cac84442302e8d9d2aa6"
+ },
+ "Tibalt's Trickery": {
+  "source": {
+   "name": "Tibalt's Trickery",
+   "typeLine": "Instant",
+   "oracleText": "Counter target spell. Choose 1, 2, or 3 at random. Its controller mills that many cards, then exiles cards from the top of their library until they exile a nonland card with a different name than that spell. They may cast that card without paying its mana cost. Then they put the exiled cards on the bottom of their library in a random order.",
+   "keywords": [
+    "Mill"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "counter-spell",
+      "object": "target spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "mill",
+      "object": "target spell's controller",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1, 2, or 3 at random",
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "cards from the top of target spell's controller's library until they exile a nonland card with a different name than that spell",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "the exiled nonland card with a different name than that spell",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "the exiled cards",
+      "fromZone": "exile",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "bd9be71dee47220b5ebcae0b5d8d9e3e95a612089e47e73bea86098633a1ed38"
  }
 }
