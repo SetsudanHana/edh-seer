@@ -1,8 +1,8 @@
 import type { CardTags, GameEvent, SubjectFilter, Verb } from "@edh-seer/tagger";
 import { CONSUMER_ONLY } from "@edh-seer/tagger/verb-accounting";
 import type { Hierarchy } from "./types.js";
-import { COMBAT_VERBS, combatNarrowsByType, combatSelfSupplied, eventMatches, producerEvents } from "./edges.js";
-import { WILDCARD_SUBJECT, normalizeZoneEvent, zoneEventKeyRaw } from "./zones.js";
+import { COMBAT_VERBS, combatNarrowsByType, combatSelfSupplied, eventMatches, producerEvents, punishesItsActor } from "./edges.js";
+import { OTHER_PLAYER_SUFFIX, WILDCARD_SUBJECT, normalizeZoneEvent, zoneEventKeyRaw } from "./zones.js";
 import { ALSO_SUPPLIED_BY } from "./suggest-keys.js";
 
 const list = (v: string | string[] | undefined): string[] =>
@@ -47,11 +47,14 @@ const censusKey = (e: GameEvent): string => zoneEventKeyRaw(e.verb, e.subject.zo
  *  it) and `combat-damage:any (narrowed)` (payoffs that need real creatures). `attacks` no longer
  *  splits: since #561 every creature supplies it, so nothing on that verb is self-supplied. Applied to
  *  consumer rows only: producers are never self-supplied, so their keys never split. */
-function consumerKey(e: GameEvent, selfSupplied: boolean): string {
+function consumerKey(e: GameEvent, selfSupplied: boolean, punisher = false): string {
   // `attacks` never self-supplies since #561 (owner ruling 2026-09-27), so it has no split to mark.
   const marked =
     COMBAT_VERBS.has(e.verb) && e.verb !== "attacks" && !selfSupplied && !combatNarrowsByType(e.subject);
-  return censusKey(e) + (marked ? " (narrowed)" : "");
+  // A PUNISHER'S ROW IS ITS OWN (#1598): `rollUp` unions the supplier sets of every shape on a key, so False Cure rolled into
+  // "whenever you gain life" would be handed back the lifegain its own shape refused. No combat verb is a player's action
+  // (`PLAYER_ACTION_VERBS`), so a key carries one mark at most.
+  return censusKey(e) + (marked ? " (narrowed)" : "") + (punisher ? OTHER_PLAYER_SUFFIX : "");
 }
 
 /** A stand-in for the implied combat event `impliedEvents` would synthesize for this verb, so the
@@ -122,11 +125,13 @@ interface Shape {
   event: GameEvent;
   cards: Set<number>;
   authored: boolean;
+  /** Consumer shapes only: the trigger is a symmetric punisher's (`punishesItsActor`), so a `control: you` producer is not its supply. */
+  punisher: boolean;
 }
 
-function collect(shapes: Map<string, Shape>, event: GameEvent, cardIndex: number, authored = false): void {
-  const k = JSON.stringify(event);
-  const s = shapes.get(k) ?? { event, cards: new Set<number>(), authored: false };
+function collect(shapes: Map<string, Shape>, event: GameEvent, cardIndex: number, authored = false, punisher = false): void {
+  const k = JSON.stringify(event) + (punisher ? OTHER_PLAYER_SUFFIX : "");
+  const s = shapes.get(k) ?? { event, cards: new Set<number>(), authored: false, punisher };
   s.cards.add(cardIndex);
   s.authored ||= authored;
   shapes.set(k, s);
@@ -178,10 +183,44 @@ for (const [consumer, producers] of Object.entries(ALSO_SUPPLIED_BY)) {
   for (const p of producers) (SUPPLIES[p] ??= []).push(consumer);
 }
 
+/** YOUR OWN PRODUCER IS NOT SUPPLY FOR A SYMMETRIC PUNISHER (#1598, after #1591). The matcher refuses the edge from a
+ *  `control: you` producer into "whenever a player gains life, that player loses ..." (False Cure); the census asks the same
+ *  predicate, `punishesItsActor`, so its supplier set for such a trigger is the cards the graph draws an edge from. Measured on
+ *  the issue's decks: False Cure + three cards that gain you life read `gain-life:*` 1 want / 3 supply over 0 edges, now 1 / 0.
+ *  The predicate needs the card's PRINTED text ("that player" / "they"), which `CardTags` does not carry: `opts.oracleTexts`
+ *  supplies it, aligned with `cards` by ordinal.
+ *  CEILING: a caller that passes no `oracleTexts` gets the count from the trigger alone: no row is marked and your own producers
+ *  still count as supply for a punisher. Both callers pass it today (`deckAvailability`, `research/matcher/event-census.ts`). */
+/** ANOTHER PLAYER'S ROUTINE ACTION HAPPENS ON ITS OWN (owner ruling 2026-11-11, #1598). A demand only another player can satisfy
+ *  by casting a spell, drawing a card, or a land or other permanent entering the battlefield (playing a land included) needs no
+ *  card of yours: opponents do those every turn. Such a row is `selfSupplied` (`available: null` in `deckAvailability`, never the
+ *  unmet-demand finding). Two shapes are only another player's: a symmetric punisher's after the you-refusal above (Eidolon of
+ *  the Great Revel, Phyrexian Tyranny, Nature's Wrath), and a trigger that watches only opponents, `control: "opp"` (Kaervek the
+ *  Merciless, Underworld Dreams). An `any` trigger that is no punisher is unchanged: the deck can supply it. The supplier counts
+ *  are untouched; a card that makes an opponent draw is still counted (Howling Mine beside Phyrexian Tyranny).
+ *  What opponents do NOT do unaided keeps its demand and can be unmet: gaining life (False Cure), discarding, sacrificing, losing
+ *  life, being dealt damage. `enters` is the battlefield only: a card entering an opponent's graveyard is not on the list.
+ *  Measured on the 12 decks in packages/cli/decks (stored rows, DERIVE 495): Eidolon swapped in read `cast:type:spell (another
+ *  player's)` 1/0 in all 12 and raised "a spell being cast (by another player) -- and nothing in the deck does it" in the 5 where
+ *  the row is inside `DEMAND_ROWS`, now 0; unmodified, Mystic Remora's opponent-only row raised it in 2 (gogo, hidetsugu), now 0.
+ *  `rollUp` keeps a row a demand unless EVERY shape on its key is self-supplied, so an opponent-only trigger sharing a key with
+ *  your own stays priced: Kaervek beside Sunbird's Invocation ("whenever you cast a spell") is still `cast:type:spell` 2/0.
+ *  CEILING: every subject on these verbs counts as routine, however narrow: "whenever an opponent casts a spell from
+ *  anywhere other than their hand" (Ghostly Pilferer), "a player puts a Swamp onto the battlefield" (Thelon's Chant) or "lands enter under an opponent's
+ *  control without being played" (Deep Gnome Terramancer) is read as something opponents do unaided, like "casts a spell". The
+ *  ruling names the action, not how often a table meets it. */
+const ROUTINE_FOR_ANOTHER_PLAYER: ReadonlySet<string> = new Set(["cast", "draw", "enters", "land-play"]);
+function anotherPlayersRoutine(c: Shape): boolean {
+  if (!c.punisher && c.event.subject.control !== "opp") return false;
+  if (!ROUTINE_FOR_ANOTHER_PLAYER.has(c.event.verb)) return false;
+  // `normalizeZoneEvent` has put the zone on every `enters`: "enters a graveyard" is `enters` too.
+  return c.event.verb !== "enters" || c.event.subject.zone === "battlefield";
+}
+
 export function buildCensus(
   cards: Iterable<CardTags>,
   h: Hierarchy,
-  opts: { members?: boolean } = {},
+  opts: { members?: boolean; oracleTexts?: readonly (string | undefined)[] } = {},
 ): Census {
   const prodShapes = new Map<string, Shape>();
   const consShapes = new Map<string, Shape>();
@@ -197,7 +236,10 @@ export function buildCensus(
     for (const e of producerEvents(tags)) collect(prodShapes, e, i, authored.has(JSON.stringify(e)));
     for (const a of tags.abilities ?? []) {
       if (!a.trigger) continue;
-      for (const v of a.trigger.verbs) collect(consShapes, normalizeZoneEvent({ verb: v, subject: a.trigger.subject }), i);
+      for (const v of a.trigger.verbs) {
+        const punisher = opts.oracleTexts !== undefined && punishesItsActor(a, v, opts.oracleTexts[i]);
+        collect(consShapes, normalizeZoneEvent({ verb: v, subject: a.trigger.subject }), i, false, punisher);
+      }
     }
   }
 
@@ -210,6 +252,8 @@ export function buildCensus(
     // dealt damage" and for life loss, and a death for a leave, but only if it is ever asked. Same-verb
     // lookup alone read Brash Taunter's fight as "0 cause it" beside the edge the engine drew from it.
     for (const p of [c.event.verb, ...(ALSO_SUPPLIED_BY[c.event.verb] ?? [])].flatMap((v) => prodByVerb.get(v) ?? [])) {
+      // The matcher's own gate (`eventEdges`): a punisher hears an opponent's or any player's action, never one that is only yours.
+      if (c.punisher && p.event.subject.control === "you") continue;
       if (eventMatches(p.event, c.event, h)) for (const card of p.cards) counterpart.add(card);
     }
     // A SELF TRIGGER IS SELF-SUPPLIED, for the same reason combat and phases are: there is no card
@@ -229,13 +273,15 @@ export function buildCensus(
     // A CONSUMER-ONLY ENGINE VERB has no producer by owner ruling (`becomes-blocked`, CR 509.1h, #1375): the game or an opponent's blockers supply it, so a payoff is never an unmet demand.
     const selfSupplied = c.event.subject.self === true
       || CONSUMER_ONLY.includes(c.event.verb)
-      || combatSelfSupplied(impliedCombatProducer(c.event.verb), c.event);
-    return { key: consumerKey(c.event, selfSupplied), cards: c.cards, counterpart, selfSupplied, authored: true };
+      || combatSelfSupplied(impliedCombatProducer(c.event.verb), c.event)
+      || anotherPlayersRoutine(c);
+    return { key: consumerKey(c.event, selfSupplied, c.punisher), cards: c.cards, counterpart, selfSupplied, authored: true };
   });
 
   const producerRows = [...prodShapes.values()].map((p) => {
     const counterpart = new Set<number>();
     for (const c of [p.event.verb, ...(SUPPLIES[p.event.verb] ?? [])].flatMap((v) => consByVerb.get(v) ?? [])) {
+      if (c.punisher && p.event.subject.control === "you") continue;
       if (eventMatches(p.event, c.event, h)) for (const card of c.cards) counterpart.add(card);
     }
     return { key: censusKey(p.event), cards: p.cards, counterpart, selfSupplied: false, authored: p.authored };

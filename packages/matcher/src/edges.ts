@@ -2385,7 +2385,7 @@ interface PairScope {
  *  your library for a Forest card, put it onto the battlefield tapped under target player's control" (Yavimaya Dryad) is YOUR put of a Forest someone else may control, stored `enters` `any`, so Dryad -> Tourach's Chant is kept
  *  though the Chant would hit you; and a permanent another player puts under your control is stored `you` and refused. The stored emit carries who controls the permanent, not who put it.
  *  Measured on the commander-legal corpus at DERIVE 494: 28 ability-verb rows on 25 cards (cast 19, enters 6, draw 2, gain-life 1).
- *  CEILING: only the pair is refused; `census.ts` and `lines.ts` build their demand from the trigger alone and still count your own producers as supply for it. The cue is read on the whole card, not the ability's clause.
+ *  CEILING: the pair is refused, and the deck census with it (`buildCensus` given `oracleTexts`, #1598); `lines.ts` builds its demand from the trigger alone and still counts your own producers as supply for it. The cue is read on the whole card, not the ability's clause.
  *  CEILING: a PERMANENT's event with "that land's controller" / "its controller" and no "a player" trigger (Zo-Zu the Punisher, Ankh of Mishra, Rampaging Ferocidon, Poisonbelly Ogre; Liability's "put into a player's graveyard") is the same drawback and is not read: there the `any`
  *  subject is also how an Aura's "enchanted creature" is stored (Insolence, Psychic Venom), where you pick whose permanent it is. A loss that comes with a gift (none on these verbs today) would be refused whole.
  *  CEILING: a mill of "that player" (The Master of Lake-town) is not counted as a loss -- a deck may want its own mill -- and a spell countered "unless that player pays" (Nether Void) is not either. */

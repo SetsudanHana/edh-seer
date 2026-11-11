@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { eventLabel, tagLabel, STATIC_KIND, MECHANISM, DEMAND_VERB, DEMAND_SUBJECTLESS, DEMAND_PHASE, eventKeySentence, eventKeyAction, eventKeyClause, eventMatches, eventMatchRank, matchSpans } from "./demand-sentence.js";
+import { eventLabel, tagLabel, STATIC_KIND, MECHANISM, DEMAND_VERB, DEMAND_SUBJECTLESS, DEMAND_PHASE, eventKeySentence, eventKeyAction, eventKeyClause, eventMatches, eventMatchRank, matchSpans, demandSentence } from "./demand-sentence.js";
 
 /** The graph's trace-event chips label a census key's VERB half. It reuses `DEMAND_VERB` rather
  *  than adding a second vocabulary — this repo has twice shipped an internal identifier rendered as
@@ -462,4 +462,20 @@ test("a token replacement's demand never claims it doubles", () => {
   const s = eventKeySentence("applies:token-doubling|-|treasure|-");
   expect(s).toBe("a Treasure whose tokens it adds to or replaces");
   expect(s).not.toMatch(/doubles/);
+});
+
+/** A SYMMETRIC PUNISHER'S ROW (#1598): `census.ts` marks "whenever a player gains life, that player loses ..." (False Cure) with
+ *  `OTHER_PLAYER_SUFFIX`, because only another player doing it is what the card wants. The mark is said, not printed as a key. */
+test("a punisher's demand names whose action it wants", () => {
+  expect(demandSentence("gain-life:* (another player's)")).toBe("life being gained (by another player)");
+  expect(demandSentence("draw:* (another player's)")).toBe("a card being drawn (by another player)");
+  expect(demandSentence("cast:type:spell (another player's)")).toBe("a spell being cast (by another player)");
+});
+
+/** "ENTERING ... (BY ANOTHER PLAYER)" IS NOT ENGLISH: a permanent enters under a player's control, it is not entered by one. */
+test("an enters row says whose control, not by whom", () => {
+  expect(demandSentence("enters:subtype:island (another player's)")).toBe("an Island entering the battlefield (under another player's control)");
+  expect(demandSentence("enters:* (another player's)")).toBe("anything entering the battlefield (under another player's control)");
+  expect(demandSentence("enters:subtype:forest (another player's)")).toBe("a Forest entering the battlefield (under another player's control)");
+  expect(demandSentence("land-play:* (another player's)")).toBe(demandSentence("land-play:*") + " (by another player)");
 });

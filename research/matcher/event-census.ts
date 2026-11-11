@@ -32,7 +32,10 @@ async function main(): Promise<void> {
   const cards: CardTags[] = [];
   for await (const doc of tags.find({}) as AsyncIterable<CardTags>) cards.push(doc);
 
-  const census = buildCensus(cards, loadHierarchy());
+  // The printed text, so a symmetric punisher's listeners are their own row and count only another player's action (#1598).
+  const printed = new Map<string, string | undefined>();
+  for await (const c of store.db.collection<{ _id: string; oracleText?: string }>("cards").find({}, { projection: { oracleText: 1 } })) printed.set(c._id, c.oracleText);
+  const census = buildCensus(cards, loadHierarchy(), { oracleTexts: cards.map((c) => printed.get(c.oracleId)) });
   const keys = new Set([...census.consumers, ...census.producers].map((r) => r.key));
   const holes = census.consumers.filter((r) => r.counterpart === 0 && !r.selfSupplied);
   const selfSupplied = census.consumers.filter((r) => r.selfSupplied);
