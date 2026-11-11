@@ -2372,6 +2372,39 @@ interface PairScope {
   cAbilitiesRaw?: CardTags["abilities"];
 }
 
+/** A SYMMETRIC PUNISHER IS NOT A PAYOFF FOR YOUR OWN ACTION (#1591). "Whenever a player gains life, that player loses 2 life for each 1 life they gained" (False Cure), "whenever a player casts a spell with mana value 3 or
+ *  less, this creature deals 2 damage to that player" (Eidolon of the Great Revel), "that player discards a card" (Oppression), "that player sacrifices a permanent" (Aether Barrier): the trigger hears ANY player do the thing
+ *  and the effect lands on whoever did it. When that is you, the card costs you, so a producer whose event is only YOURS forms no edge into it; one that makes an opponent or any player act still does.
+ *  Read off stored fields plus one printed cue, no new field: the trigger's subject is `any` on a verb a PLAYER performs (there the subject's control is the actor), the ability emits a loss -- life, damage to a player, a
+ *  discard, a sacrifice -- whose subject is `any` with no scope and is not the card itself, and the card prints "that player" / "they" / "them" after its "a player" trigger. The cue is needed because an unscoped `any` is also
+ *  what derive leaves when it could not tell who acts: "Whenever a player casts a spell, sacrifice a creature" (Desecration Elemental) is YOUR sacrifice whoever cast, stored `any`.
+ *  Measured on the commander-legal corpus at DERIVE 493: 22 abilities on 22 cards (cast 19, draw 2, gain-life 1).
+ *  CEILING: only the pair is refused; `census.ts` and `lines.ts` build their demand from the trigger alone and still count your own producers as supply for it. The cue is read on the whole card, not the ability's clause.
+ *  CEILING: a PERMANENT's event with "that land's controller" / "its controller" (Zo-Zu the Punisher, Ankh of Mishra, Rampaging Ferocidon, Poisonbelly Ogre, Liability) is the same drawback and is not read: there the `any`
+ *  subject is also how an Aura's "enchanted creature" is stored (Insolence, Psychic Venom), where you pick whose permanent it is. A loss that comes with a gift (none on these verbs today) would be refused whole.
+ *  CEILING: a mill of "that player" (The Master of Lake-town) is not counted as a loss -- a deck may want its own mill -- and a spell countered "unless that player pays" (Nether Void) is not either. */
+const PLAYER_ACTION_VERBS: ReadonlySet<string> = new Set(["cast", "draw", "gain-life", "lose-life", "discard", "sacrifice", "land-play", "mill"]);
+const ACTOR_LOSS_VERBS: ReadonlySet<string> = new Set(["lose-life", "non-combat-damage", "discard", "sacrifice"]);
+/** "Whenever a player <does it>, ... that player / they / them ...": scanned a sentence at a time with string search, so no pattern backtracks over the text. */
+function printsItsActor(oracleText: string | undefined): boolean {
+  for (const sentence of (oracleText ?? "").toLowerCase().split(/[.\n]/)) {
+    const at = sentence.search(/\bwhen(?:ever)? a player\b/);
+    const comma = at < 0 ? -1 : sentence.indexOf(",", at);
+    if (comma >= 0 && /\b(?:that player|they|them)\b/.test(sentence.slice(comma))) return true;
+  }
+  return false;
+}
+export function punishesItsActor(a: Pick<CardTags["abilities"][number], "trigger" | "emits">, verb: string, oracleText: string | undefined): boolean {
+  if (a.trigger?.subject?.control !== "any" || !PLAYER_ACTION_VERBS.has(verb)) return false;
+  const loses = (a.emits ?? []).some((e) => {
+    const s = e.subject;
+    if (!ACTOR_LOSS_VERBS.has(e.verb) || s.control !== "any" || s.scope !== undefined || s.self === true || s.anyOf !== undefined) return false;
+    // Damage to a PLAYER: an emit typed by a permanent ("deals 2 damage to that creature") is not the actor's loss.
+    return e.verb !== "non-combat-damage" || (list(s.type).length === 0 && list(s.subtype).length === 0);
+  });
+  return loses && printsItsActor(oracleText);
+}
+
 // EVENT EDGES: a producer event against a consumer trigger. The main channel; every other
 // channel below is a relation this one cannot express.
 function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbilitiesRaw }: PairScope): void {
@@ -2432,6 +2465,8 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
       if (isReflexiveTrigger(a)) continue;
       if (a.effect.kind === "proliferate" && notAnOrigin.has(JSON.stringify(e0))) continue;
       for (const rawVerb of a.trigger.verbs) {
+        // YOUR OWN ACTION INTO A PUNISHER OF "THAT PLAYER" IS A COST, NOT A PAYOFF (#1591): see `punishesItsActor`.
+        if (e0.subject.control === "you" && punishesItsActor(a, rawVerb, c.card.oracleText)) continue;
         const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject, ...(a.trigger.amount ? { amountIs: a.trigger.amount } : {}), ...(a.trigger.victim ? { victimIs: a.trigger.victim } : {}) });
         // `e` is `e0` when it matches as authored, or an untyped land put resolved against the
         // deck's lands to the subtype this trigger names (`landPutFor`); null is no match.
