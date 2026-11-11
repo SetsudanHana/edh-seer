@@ -54,3 +54,17 @@ test.each(["Professional Face-Breaker", "Jeska's Will", "Light Up the Stage", "A
   expect(emits(own, "cast")).toEqual([]);
   expect(emits(own, "land-play")).toEqual([]);
 });
+
+// #1596 item 2: A CAST OF AN EXILED CARD SAYS SO. "The exiled card", "cards exiled with this creature", "from among those cards" after the ability's own exile: the cast is from exile, which "whenever you cast a spell from anywhere
+// other than your hand" (Osgood, Operation Double) and "from exile" payoffs read. These five carried no origin, and an unstated origin is the hand.
+test.each(["Black Widow, Super Spy", "Null Summoner", "Kheru Mind-Eater", "Maralen, Fae Ascendant", "Laughing Jasper Flint"])("%s casts the card it exiled: fromZone exile", (thief) => {
+  const s = [...emits(thief, "cast"), ...emits(thief, "land-play")];
+  expect(s.length).toBeGreaterThan(0);
+  for (const x of s) expect({ fromZone: x.fromZone, owner: x.owner }).toEqual({ fromZone: "exile", owner: "opp" });
+});
+// A cast out of an OPPONENT's hand keeps `fromZone: hand` beside `owner: opp`: that is where the card is (CR 400.3: only its owner's hand can hold it). The matcher reads the two together.
+test.each(["Extract Brain", "Mindleech Mass", "Silent-Blade Oni"])("%s casts from an opponent's hand: fromZone hand, owner opp", (thief) => {
+  const s = emits(thief, "cast");
+  expect(s.length).toBeGreaterThan(0);
+  for (const x of s) expect({ fromZone: x.fromZone, owner: x.owner }).toEqual({ fromZone: "hand", owner: "opp" });
+});

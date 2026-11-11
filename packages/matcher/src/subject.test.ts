@@ -527,6 +527,16 @@ test("from anywhere other than your hand: an unstated origin is the hand", () =>
   expect(subjectMatches(s({ type: "instant", fromZone: "graveyard" }), want, H)).toBe(true);
 });
 
+test("from anywhere other than your hand: an opponent's card is never in YOUR hand (CR 400.3), whatever origin its cast states (#1596)", () => {
+  const want = s({ type: "spell", notFromZone: "hand" });
+  expect(subjectMatches(s({ type: "instant", fromZone: "hand", owner: "opp" }), want, H)).toBe(true);
+  expect(subjectMatches(s({ type: "instant", owner: "opp" }), want, H)).toBe(true);
+  expect(subjectMatches(s({ type: "instant", fromZone: "hand" }), want, H)).toBe(false);
+  expect(subjectMatches(s({ type: "instant", fromZone: "hand", owner: "you" }), want, H)).toBe(false);
+  // Only the hand is a per-player zone here: "from anywhere other than the battlefield" does not read the owner.
+  expect(subjectMatches(s({ type: "creature", fromZone: "battlefield", owner: "opp" }), s({ type: "creature", notFromZone: "battlefield" }), H)).toBe(false);
+});
+
 test("a player branch is met by a player-shaped producer only", () => {
   const want = s({ control: "any", anyOf: [{ player: true }, { type: "planeswalker" }] });
   expect(subjectMatches(s({ control: "opp" }), want, H)).toBe(true);

@@ -3250,5 +3250,507 @@
    }
   ],
   "segmentHash": "aa77563c94e673808b8d1067084a3100a7aa038584e89a09f7bfe8338ee1f179"
+ },
+ "Black Widow, Super Spy": {
+  "source": {
+   "name": "Black Widow, Super Spy",
+   "typeLine": "Legendary Creature — Human Spy Hero",
+   "oracleText": "Menace\nWhenever Black Widow deals combat damage to a player, that player exiles cards from the top of their library until they exile a nonland card. You may put a +1/+1 counter on Black Widow. If you don't, you may cast the exiled nonland card until end of turn and mana of any type can be spent to cast that spell.",
+   "keywords": [
+    "Menace"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "2",
+   "toughness": "1",
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Menace",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "Black Widow",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "that player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cast",
+      "object": "the exiled nonland card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "a43c2e6118bdfb2eef820661c496eaaa5efd252a0c5b326f339d53903ea6abf4"
+ },
+ "Null Summoner": {
+  "source": {
+   "name": "Null Summoner",
+   "typeLine": "Creature — Human Warlock",
+   "oracleText": "When this creature enters, if you cast it, target opponent reveals their hand. You choose a nonland card from it. Exile that card.\nThreshold — As long as there are seven or more cards in your graveyard, you may cast the exiled card, and mana of any type can be spent to cast that spell.",
+   "keywords": [
+    "Threshold"
+   ],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": "4",
+   "toughness": "2",
+   "manaCost": "{2}{U}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a nonland card from it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "the exiled card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6f862ba32955f076d7f99c6b2afa8fb4f7e2cd34bbdd403f3ea2ec7c3e75f674"
+ },
+ "Kheru Mind-Eater": {
+  "source": {
+   "name": "Kheru Mind-Eater",
+   "typeLine": "Creature — Vampire",
+   "oracleText": "Menace\nWhenever this creature deals combat damage to a player, that player exiles a card from their hand face down.\nYou may look at cards exiled with this creature, and you may play lands and cast spells from among those cards.",
+   "keywords": [
+    "Menace"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "1",
+   "toughness": "3",
+   "manaCost": "{2}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Menace",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a card from that player's hand",
+      "fromZone": "hand",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "you may look at cards exiled with this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "play",
+      "object": "lands from among those cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cast",
+      "object": "spells from among those cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "48d22c748e7ffdd03a40e081819f047a1236a7daab81489b886485427eb90530"
+ },
+ "Maralen, Fae Ascendant": {
+  "source": {
+   "name": "Maralen, Fae Ascendant",
+   "typeLine": "Legendary Creature — Elf Faerie Noble",
+   "oracleText": "Flying\nWhenever Maralen or another Elf or Faerie you control enters, exile the top two cards of target opponent's library.\nOnce each turn, you may cast a spell with mana value less than or equal to the number of Elves and Faeries you control from among cards exiled with Maralen this turn without paying its mana cost.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B",
+    "G",
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "G",
+    "U"
+   ],
+   "power": "4",
+   "toughness": "5",
+   "manaCost": "{2}{B}{G}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Maralen or another Elf or Faerie you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top two cards of target opponent's library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "a spell with mana value less than or equal to the number of Elves and Faeries you control from among cards exiled with Maralen this turn without paying its mana cost",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "925d853b9ceb6b9b1dca904287bbb51aaa3935ad8d81c735ffa0d2060f0da770"
+ },
+ "Laughing Jasper Flint": {
+  "source": {
+   "name": "Laughing Jasper Flint",
+   "typeLine": "Legendary Creature — Lizard Rogue",
+   "oracleText": "Creatures you control but don't own are Mercenaries in addition to their other types.\nAt the beginning of your upkeep, exile the top X cards of target opponent's library, where X is the number of outlaws you control. Until end of turn, you may cast spells from among those cards, and mana of any type can be spent to cast those spells.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "R"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "R"
+   ],
+   "power": "4",
+   "toughness": "3",
+   "manaCost": "{1}{B}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "Creatures you control but don't own gain Mercenary type in addition to their other types",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top X cards of target opponent's library, where X is the number of outlaws you control",
+      "fromZone": "library",
+      "toZone": "exile",
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "spells from among those cards until end of turn, and mana of any type can be spent to cast those spells",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f460789236b3ba71530329484987ee9131083c70e320d1697be6fabc5fc9f589"
+ },
+ "Extract Brain": {
+  "source": {
+   "name": "Extract Brain",
+   "typeLine": "Sorcery",
+   "oracleText": "Target opponent chooses X cards from their hand. Look at those cards. You may cast a spell from among them without paying its mana cost.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{X}{U}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "spell from among cards chosen by target opponent",
+      "fromZone": "hand",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "fb2e6573a0adb1e6a7577379a8799e5a181686280f6f84cbadeb4f8b14daa8f6"
+ },
+ "Mindleech Mass": {
+  "source": {
+   "name": "Mindleech Mass",
+   "typeLine": "Creature — Horror",
+   "oracleText": "Trample\nWhenever this creature deals combat damage to a player, you may look at that player's hand. If you do, you may cast a spell from among those cards without paying its mana cost.",
+   "keywords": [
+    "Trample"
+   ],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 8,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "manaCost": "{5}{U}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "a spell from among those cards",
+      "fromZone": "hand",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "8ccb4d6799b3c44f5c0237ed0fffb39936a651bd46d802d6d7da8a53f5a64d8f"
+ },
+ "Silent-Blade Oni": {
+  "source": {
+   "name": "Silent-Blade Oni",
+   "typeLine": "Creature — Demon Ninja",
+   "oracleText": "Ninjutsu {4}{U}{B} ({4}{U}{B}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhenever this creature deals combat damage to a player, look at that player's hand. You may cast a spell from among those cards without paying its mana cost.",
+   "keywords": [
+    "Ninjutsu"
+   ],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": "6",
+   "toughness": "5",
+   "manaCost": "{3}{U}{U}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Ninjutsu {4}{U}{B}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "a spell from among those cards",
+      "fromZone": "hand",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f1323376e6535c5b250c924d6e8e9bc5735e73a376a3cbb07ce2d842951daca4"
  }
 }

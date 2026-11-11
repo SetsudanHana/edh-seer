@@ -108,3 +108,19 @@ describe.each(COPY_CASTERS)("%s casts a copy of a card an opponent owns", (caste
 test("Wildfire Devils copies a card of a player chosen at random, who can be you: nothing says whose card the copy is of", () => {
   for (const s of castEmits("Wildfire Devils")) expect(s.copyOf).toBeUndefined();
 });
+
+// #1596 item 2: "WHENEVER YOU CAST A SPELL FROM ANYWHERE OTHER THAN YOUR HAND" (Osgood, Operation Double's Paradox) hears a stolen cast. A card an opponent owns is never in YOUR hand (CR 400.3: an object that would go to
+// a hand other than its owner's goes to its owner's), so a cast out of an opponent's hand (`fromZone: hand, owner: opp`: Extract Brain, Mindleech Mass, Silent-Blade Oni) is from somewhere other than your hand, and so is a cast
+// of a card the ability exiled (Black Widow, Null Summoner, Kheru Mind-Eater, Maralen, Laughing Jasper Flint). #1594 lost these 8 pairs: their only join had been Osgood's false self trigger.
+describe("Osgood, Operation Double's Paradox hears a stolen cast", () => {
+  test.each(["Extract Brain", "Mindleech Mass", "Silent-Blade Oni"])("%s casts out of an opponent's hand, which is not your hand", (thief) => {
+    expect(castTags(thief, "Osgood, Operation Double")).not.toEqual([]);
+  });
+  test.each(["Black Widow, Super Spy", "Null Summoner", "Kheru Mind-Eater", "Maralen, Fae Ascendant", "Laughing Jasper Flint"])("%s casts the card it exiled", (thief) => {
+    expect(castTags(thief, "Osgood, Operation Double")).not.toEqual([]);
+  });
+  test("your OWN card cast out of exile is Paradox too: Hidetsugu and Kairi exiles the top card of your library and casts it", () => {
+    expect(castTags("Hidetsugu and Kairi", "Osgood, Operation Double")).not.toEqual([]);
+  });
+  // The refusal that stays (a cast with no origin and no other owner is from your hand) is pinned on the filter itself, subject.test.ts.
+});
