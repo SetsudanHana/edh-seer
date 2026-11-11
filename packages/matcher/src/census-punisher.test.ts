@@ -133,19 +133,6 @@ describe("kept as a demand: what another player does not do unaided, and what yo
   test("an opponent's discard (Megrim) is unmet with no discard source", () => {
     expect(row(["Megrim", "Lightning Bolt"], "discard:*")).toMatchObject({ consumers: 1, suppliers: 0, selfSupplied: false, available: 0 });
   });
-  // The row is read as it was on 7e495047: the ruling is about another player's action, so neither `you` nor `any` moves. (That an
-  // unnarrowed cast trigger counts no implied cast as supply is `castSelfSupplied`'s, older than this file.)
-  test("'whenever you cast a spell' (Manaplasm) is unchanged: still a priced demand", () => {
-    const names = ["Manaplasm", "Lightning Bolt", "Llanowar Elves"];
-    expect(row(names, "cast:type:spell")).toMatchObject({ consumers: 1, suppliers: 0, selfSupplied: false, available: 0 });
-    expect(deckAvailability(deck(...names), H).some((r) => r.key.endsWith("(another player's)"))).toBe(false);
-  });
-  test("'whenever a player casts a spell' with no 'that player' price (Standstill) is unchanged: the deck can supply it", () => {
-    expect(row(["Standstill", "Lightning Bolt", "Llanowar Elves"], "cast:type:spell")).toMatchObject({ consumers: 1, selfSupplied: false, available: 0 });
-  });
-  test("a row shared with your own trigger stays a demand: Kaervek beside Manaplasm, nothing to cast", () => {
-    expect(row(["Kaervek the Merciless", "Manaplasm", "Island"], "cast:type:spell")).toMatchObject({ consumers: 2, selfSupplied: false });
-  });
 });
 
 /** THE ROW THE PAGE READS. `computeDeckMath` hands `deckMath.demand` to findings.ts and suggest-static.ts, whose unmet-demand test
@@ -163,5 +150,51 @@ describe("through computeDeckMath: what the unmet-demand finding is given", () =
   });
   test("False Cure with no opponent lifegain is still handed over as unmet", () => {
     expect(unmet("False Cure", "Vampire Nighthawk", "Ray of Dissolution", "Alms of the Vein")).toEqual(["gain-life:* (another player's)"]);
+  });
+});
+
+/** "WHENEVER YOU CAST A SPELL" IS NOT A DEMAND (#1602). The graph refuses every implied cast into a cast trigger that names no
+ *  spell (`castSelfSupplied`: every nonland card answers it, so it is a deck-level condition), and the census went on pricing the
+ *  row: Manaplasm beside Lightning Bolt and Llanowar Elves read `cast:type:spell` 1 want / 0 supply, available 0, and raised
+ *  "nothing in the deck does it". Stored rows, DERIVE 495. */
+describe("a cast trigger that names no spell is self-supplied", () => {
+  const deckLevel = { suppliers: 0, selfSupplied: true, available: null };
+  test("'whenever you cast a spell' (Manaplasm)", () => {
+    expect(row(["Manaplasm", "Lightning Bolt", "Llanowar Elves"], "cast:type:spell")).toMatchObject({ consumers: 1, ...deckLevel });
+  });
+  test("'when a player casts a spell' (Standstill): any player's cast, yours included", () => {
+    expect(row(["Standstill", "Lightning Bolt", "Llanowar Elves"], "cast:type:spell")).toMatchObject({ consumers: 1, ...deckLevel });
+  });
+  test("'from your hand' (Sunbird's Invocation) and 'other than your first spell each turn' (Arcbound Tracker) name no spell either", () => {
+    expect(row(["Sunbird's Invocation", "Lightning Bolt"], "cast:type:spell")).toMatchObject({ consumers: 1, ...deckLevel });
+    expect(row(["Arcbound Tracker", "Lightning Bolt"], "cast:type:spell")).toMatchObject({ consumers: 1, ...deckLevel });
+  });
+  test("the row shared with an opponent-only trigger is no longer held a demand: Kaervek beside Sunbird's Invocation (Chaos Incarnate)", () => {
+    expect(row(["Kaervek the Merciless", "Sunbird's Invocation", "Lightning Bolt"], "cast:type:spell")).toMatchObject({ consumers: 2, ...deckLevel });
+    expect(row(["Kaervek the Merciless", "Manaplasm", "Island"], "cast:type:spell")).toMatchObject({ consumers: 2, ...deckLevel });
+  });
+  test("through computeDeckMath: Manaplasm leaves nothing unmet", () => {
+    const demand = computeDeckMath(deck("Manaplasm", "Lightning Bolt", "Llanowar Elves"), H).demand;
+    expect(demand.filter((d) => d.available !== null && d.suppliers === 0 && d.consumers > 0)).toEqual([]);
+  });
+});
+
+describe("kept as a demand: a cast trigger that names which spell", () => {
+  test("'a noncreature spell' (Monastery Mentor) is priced from the deck's noncreature spells", () => {
+    const met = row(["Monastery Mentor", "Lightning Bolt", "Llanowar Elves"], "cast:type:artifact+battle+enchantment+instant+planeswalker+sorcery")!;
+    expect(met).toMatchObject({ consumers: 1, suppliers: 1, selfSupplied: false });
+    expect(met.available).toBeGreaterThan(0);
+    expect(row(["Monastery Mentor", "Llanowar Elves"], met.key)).toMatchObject({ suppliers: 0, selfSupplied: false, available: 0 });
+  });
+  test("'a creature spell' (Beast Whisperer) is priced from the deck's creature spells", () => {
+    const r = row(["Beast Whisperer", "Llanowar Elves", "Lightning Bolt"], "cast:type:creature")!;
+    expect(r).toMatchObject({ consumers: 1, selfSupplied: false });
+    expect(r.suppliers).toBeGreaterThan(0);
+    expect(r.available).toBeGreaterThan(0);
+  });
+  // `castConsumerNarrows` reads these as the bare umbrella (it has no origin or status test), but no ordinary card answers them.
+  test("'from exile' (Quintorius Kand) and 'a kicked spell' (Vine Gecko) are not what every card does", () => {
+    expect(row(["Quintorius Kand", "Lightning Bolt"], "cast:type:spell")).toMatchObject({ consumers: 1, selfSupplied: false, available: 0 });
+    expect(row(["Vine Gecko", "Lightning Bolt"], "cast:type:spell")).toMatchObject({ consumers: 1, selfSupplied: false, available: 0 });
   });
 });

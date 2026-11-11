@@ -1,7 +1,7 @@
 import type { CardTags, GameEvent, SubjectFilter, Verb } from "@edh-seer/tagger";
 import { CONSUMER_ONLY } from "@edh-seer/tagger/verb-accounting";
 import type { Hierarchy } from "./types.js";
-import { COMBAT_VERBS, combatNarrowsByType, combatSelfSupplied, eventMatches, producerEvents, punishesItsActor } from "./edges.js";
+import { COMBAT_VERBS, castSelfSupplied, combatNarrowsByType, combatSelfSupplied, eventMatches, producerEvents, punishesItsActor } from "./edges.js";
 import { OTHER_PLAYER_SUFFIX, WILDCARD_SUBJECT, normalizeZoneEvent, zoneEventKeyRaw } from "./zones.js";
 import { ALSO_SUPPLIED_BY } from "./suggest-keys.js";
 
@@ -57,11 +57,11 @@ function consumerKey(e: GameEvent, selfSupplied: boolean, punisher = false): str
   return censusKey(e) + (marked ? " (narrowed)" : "") + (punisher ? OTHER_PLAYER_SUFFIX : "");
 }
 
-/** A stand-in for the implied combat event `impliedEvents` would synthesize for this verb, so the
- *  census can ask `combatSelfSupplied` the same question the matcher asks: "would a synthetic
+/** A stand-in for the implied event `impliedEvents` would synthesize for this verb (an attack, a cast), so the
+ *  census can ask `combatSelfSupplied` and `castSelfSupplied` the same question the matcher asks: "would a synthetic
  *  implied producer be this consumer's only possible supplier?" The subject content doesn't matter
  *  to that answer -- only `implied: true` and the verb do. */
-function impliedCombatProducer(verb: Verb): GameEvent {
+function impliedProducer(verb: Verb): GameEvent {
   return { verb, subject: { control: "any", token: null }, implied: true };
 }
 
@@ -88,9 +88,9 @@ export interface CensusRow {
    *  differ in control/token/zone/stats, so a high count is a hint to look at the shapes before
    *  trusting the row. */
   shapes: number;
-  /** Consumer rows only: an implied combat event (every creature can attack) would be this
+  /** Consumer rows only: an implied event (every creature can attack, every spell is cast) would be this
    *  trigger's only possible supplier, so zero suppliers is by design, not a gap. See
-   *  `combatSelfSupplied`. */
+   *  `combatSelfSupplied` and `castIsDeckLevel`. */
   selfSupplied: boolean;
   /** Producer rows only: at least one card reaches this key through an emit the tagger actually
    *  authored, rather than only through an event `producerEvents` derives (implied cast/enters/
@@ -204,7 +204,8 @@ for (const [consumer, producers] of Object.entries(ALSO_SUPPLIED_BY)) {
  *  player's)` 1/0 in all 12 and raised "a spell being cast (by another player) -- and nothing in the deck does it" in the 5 where
  *  the row is inside `DEMAND_ROWS`, now 0; unmodified, Mystic Remora's opponent-only row raised it in 2 (gogo, hidetsugu), now 0.
  *  `rollUp` keeps a row a demand unless EVERY shape on its key is self-supplied, so an opponent-only trigger sharing a key with
- *  your own stays priced: Kaervek beside Sunbird's Invocation ("whenever you cast a spell") is still `cast:type:spell` 2/0.
+ *  a demand of your own stays priced. (Kaervek beside Sunbird's Invocation, "whenever you cast a spell from your hand", was the
+ *  measured case; since #1602 that trigger is self-supplied too, see `castIsDeckLevel`.)
  *  CEILING: every subject on these verbs counts as routine, however narrow: "whenever an opponent casts a spell from
  *  anywhere other than their hand" (Ghostly Pilferer), "a player puts a Swamp onto the battlefield" (Thelon's Chant) or "lands enter under an opponent's
  *  control without being played" (Deep Gnome Terramancer) is read as something opponents do unaided, like "casts a spell". The
@@ -215,6 +216,30 @@ function anotherPlayersRoutine(c: Shape): boolean {
   if (!ROUTINE_FOR_ANOTHER_PLAYER.has(c.event.verb)) return false;
   // `normalizeZoneEvent` has put the zone on every `enters`: "enters a graveyard" is `enters` too.
   return c.event.verb !== "enters" || c.event.subject.zone === "battlefield";
+}
+
+/** "WHENEVER YOU CAST A SPELL" IS A DECK-LEVEL CONDITION, NOT A DEMAND (#1602). The graph refuses every implied cast into a cast
+ *  trigger that names no spell (`castSelfSupplied`): every nonland card answers it, so no card supplies it. The census priced
+ *  the row all the same: Manaplasm beside Lightning Bolt and Llanowar Elves read `cast:type:spell` 1 want / 0 supply, available
+ *  0, and raised the unmet-demand finding. Such a row is `selfSupplied`, as an unnarrowed combat row is. A trigger that names
+ *  which spell keeps its demand and its suppliers (Monastery Mentor's noncreature spell, Beast Whisperer's creature spell).
+ *  The supplier counts are untouched: an authored cast emit is still counted on a self-supplied row.
+ *  STRICTER THAN THE GRAPH'S TEST, on purpose. `castConsumerNarrows` reads type, subtype, colour, stats and a few flags; it
+ *  has no test for where the spell is cast from or what was paid, so "whenever you cast a spell from exile" (Quintorius Kand),
+ *  "from your graveyard" (Burning Vengeance), "a kicked spell" (Vine Gecko) or "a multicolored spell" (General Ferrous Rokiric)
+ *  are the bare umbrella to it. For the graph that only refuses the implied cast. Here it would declare the demand met by any
+ *  deck, which those are not. So a row is deck-level only when its subject carries nothing but the fields below: casting from
+ *  your hand (Sunbird's Invocation) and "other than your first spell each turn" / "during your turn" (Arcbound Tracker, Chakram
+ *  Retriever) are what a deck does anyway. Any field not listed keeps the demand, so a new subject field starts as a demand.
+ */
+const DECK_LEVEL_CAST_FIELDS: ReadonlySet<string> = new Set(["control", "token", "type", "self", "fromZone", "history"]);
+const DECK_LEVEL_CAST_HISTORY: ReadonlySet<string> = new Set(["not-first-spell-this-turn", "cast-during-your-turn"]);
+function castIsDeckLevel(e: GameEvent): boolean {
+  if (!castSelfSupplied(impliedProducer(e.verb), e)) return false;
+  const s = e.subject;
+  if (Object.entries(s).some(([k, v]) => v !== undefined && !DECK_LEVEL_CAST_FIELDS.has(k))) return false;
+  if (s.fromZone !== undefined && s.fromZone !== "hand") return false;
+  return (s.history ?? []).every((x) => DECK_LEVEL_CAST_HISTORY.has(x));
 }
 
 export function buildCensus(
@@ -273,7 +298,8 @@ export function buildCensus(
     // A CONSUMER-ONLY ENGINE VERB has no producer by owner ruling (`becomes-blocked`, CR 509.1h, #1375): the game or an opponent's blockers supply it, so a payoff is never an unmet demand.
     const selfSupplied = c.event.subject.self === true
       || CONSUMER_ONLY.includes(c.event.verb)
-      || combatSelfSupplied(impliedCombatProducer(c.event.verb), c.event)
+      || combatSelfSupplied(impliedProducer(c.event.verb), c.event)
+      || castIsDeckLevel(c.event)
       || anotherPlayersRoutine(c);
     return { key: consumerKey(c.event, selfSupplied, c.punisher), cards: c.cards, counterpart, selfSupplied, authored: true };
   });
