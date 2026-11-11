@@ -33,7 +33,7 @@
  *    not the counter's own kind — the field this reads is the consumer's demand, and a demand
  *    names a permanent, never a +1/+1. */
 import { isPutIntoGraveyardClass } from "@edh-seer/engine";
-import { WILDCARD_SUBJECT } from "@edh-seer/matcher/zones";
+import { OTHER_PLAYER_SUFFIX, WILDCARD_SUBJECT } from "@edh-seer/matcher/zones";
 
 export const DEMAND_VERB: Record<string, string> = {
   enters: "entering the battlefield",
@@ -381,7 +381,10 @@ const deslugify = (key: string): string => key.replace(/[:-]/g, " ");
  *  who wants to match a report against `bin/deck-availability.ts`, which prints keys. */
 export function demandSentence(key: string): string {
   const narrowed = key.endsWith(" (narrowed)");
-  const bare = narrowed ? key.slice(0, -" (narrowed)".length) : key;
+  // A symmetric punisher's row (#1598, `census.ts`): the card wants ANOTHER player to do it. Never on a combat key, so one mark at most.
+  const others = key.endsWith(OTHER_PLAYER_SUFFIX);
+  const bare = narrowed ? key.slice(0, -" (narrowed)".length) : others ? key.slice(0, -OTHER_PLAYER_SUFFIX.length) : key;
+  const mark = narrowed ? " (a real one, not the game's own)" : others ? " (by another player)" : "";
   const [verb, ...rest] = bare.split(":");
   const subjectKey = rest.join(":");
 
@@ -393,7 +396,7 @@ export function demandSentence(key: string): string {
   // nothing narrows WHO draws or gains life to a card type).
   const subjectless = DEMAND_SUBJECTLESS[verb];
   if (subjectless && subjectKey === WILDCARD_SUBJECT) {
-    return `${subjectless}${narrowed ? " (a real one, not the game's own)" : ""}`;
+    return `${subjectless}${mark}`;
   }
 
   const event = DEMAND_VERB[verb];
@@ -423,7 +426,7 @@ export function demandSentence(key: string): string {
     return deslugify(key);
   }
 
-  return `${subject} ${event}${narrowed ? " (a real one, not the game's own)" : ""}`;
+  return `${subject} ${event}${mark}`;
 }
 
 /** A census key's VERB half as a chip label — "dies" -> "Dying", "combat-damage" -> "Dealing combat

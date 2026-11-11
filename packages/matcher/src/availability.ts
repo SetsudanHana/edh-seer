@@ -93,7 +93,8 @@ export function deckAvailability(
   const withTags = deck.filter((dc): dc is DeckCard & { tags: NonNullable<DeckCard["tags"]> } => dc.tags != null);
   if (withTags.length === 0) return [];
 
-  const census = buildCensus(withTags.map((dc) => dc.tags), hierarchy, { members: true });
+  // The printed text rides along so a symmetric punisher's demand counts only another player's action (#1598).
+  const census = buildCensus(withTags.map((dc) => dc.tags), hierarchy, { members: true, oracleTexts: withTags.map((dc) => dc.card.oracleText) });
   const isCommander = withTags.map((dc) => commanders.has(dc.card.name));
 
   // One entry per physical card, so a 3-of basic is three entries -- the same convention

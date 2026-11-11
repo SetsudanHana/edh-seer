@@ -6,6 +6,11 @@ import { impliedSubjectKey } from "@edh-seer/tagger/schema";
  *  (#1166; before it both were `:any`). */
 export const WILDCARD_SUBJECT = "*";
 
+/** A CENSUS CONSUMER KEY'S MARK FOR A SYMMETRIC PUNISHER (#1598): "whenever a player gains life, that player loses ..." (False
+ *  Cure) wants ANOTHER player to do it, so only a producer that is not `control: you` is its supply. Marked the way
+ *  `" (narrowed)"` marks a combat row, so the punisher and a payoff on the same event ("whenever you gain life") are two rows. */
+export const OTHER_PLAYER_SUFFIX = " (another player's)";
+
 /** Canonicalize a zone-transition event. The `enters` verb ALWAYS means "enters the battlefield",
  *  so its zone is forced to battlefield (some tags erroneously put a source zone on an enters
  *  emit, e.g. Muldrotha). `enters-graveyard` is the legacy spelling of `enters@graveyard`.

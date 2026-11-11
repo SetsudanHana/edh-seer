@@ -1,5 +1,5 @@
 import { VERB_IMPLIED_CLASS } from "@edh-seer/tagger/schema";
-import { tagKey, WILDCARD_SUBJECT } from "./zones.js";
+import { OTHER_PLAYER_SUFFIX, tagKey, WILDCARD_SUBJECT } from "./zones.js";
 
 /** A DEMAND ROW'S KEY, AS CANDIDATE EVENT KEYS (spec 2026-09-24 deck suggestions, §3, "The demand
  *  key is not an `events/` key").
@@ -25,7 +25,9 @@ export const ALSO_SUPPLIED_BY: Record<string, readonly string[]> = {
 };
 
 export function eventKeysForDemand(censusKey: string, eventKeys: readonly string[]): string[] {
-  const key = censusKey.endsWith(" (narrowed)") ? censusKey.slice(0, -" (narrowed)".length) : censusKey;
+  // A row's mark names no event key: a combat row is narrowed or a punisher's (#1598), never both. The engine decides the pair.
+  const mark = [" (narrowed)", OTHER_PLAYER_SUFFIX].find((m) => censusKey.endsWith(m));
+  const key = mark ? censusKey.slice(0, -mark.length) : censusKey;
   const colon = key.indexOf(":");
   if (colon <= 0) return [];
   const verb = key.slice(0, colon);

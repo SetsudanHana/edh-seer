@@ -267,6 +267,17 @@ test("a demand nothing supplies becomes a finding, ranked by how much of the dec
   expect(f.shortfall).toBeCloseTo(0.04);
 });
 
+/** A PUNISHER WITH NO ONE TO PUNISH IS AN UNMET DEMAND (#1598). False Cure beside three cards that gain YOU life read
+ *  `gain-life:*` 1 want / 3 supply and no finding; the census now gives the row `deckAvailability` returns for that deck. */
+test("a punisher only your own cards would trigger is a finding, said in words", () => {
+  const [f] = findings(report({
+    cards: Array.from({ length: 100 }, (_, i) => ({ name: `c${i}` })) as DeckReport["cards"],
+    deckMath: demand([{ key: "gain-life:* (another player's)", consumers: 1, suppliers: 0, available: 0 }]),
+  }));
+  expect(f.kind).toBe("synergy");
+  expect(f.detail).toBe("One trigger in this deck waits on life being gained (by another player) — and nothing in the deck does it.");
+});
+
 /** A SELF TRIGGER NEEDS NO SUPPLIER, and reading it as an unmet demand is how the panel printed
  *  "a creature entering the battlefield — 4 want · 0 supply" over a 51-creature deck.
  *  `available === null` is the engine's own refusal and must not become a finding. */
