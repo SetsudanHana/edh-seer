@@ -2538,6 +2538,9 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
           // A CARD AN OPPONENT OWNS IS NEVER A CARD OF THIS DECK (#1502, owner ruling #729): Gruesome Encore's put from "an opponent's graveyard" (CR 400.3: the card is its owner's) emits `owner: opp`, and a
           // deck-mate's own "when this creature enters" is never fired by it. The class triggers ("a creature you control enters") still hear it.
           if (identity.owner === "opp") continue;
+          // ...NOR IS A COPY OF ONE (#1594): "Copy that card. You may cast the copy" of a card from an opponent's graveyard or hand (Flawless Forgery, Reversal of Fortune) is a spell you own (CR 112.2) that
+          // copies a card of theirs, `copyOf.owner: opp` on the cast emit. The copy's own "when you cast this spell" fires; a deck-mate's never does. The class triggers still hear the cast.
+          if (identity.copyOf?.owner === "opp") continue;
           // A CARD RETURNED FROM A GRAVEYARD IS A CARD, AND ITS FRONT FACE (#1497). A token that left the battlefield
           // ceases to exist (CR 111.7), so it is never in a graveyard to be returned (Outlaws' Merriment's Human Rogue); and
           // a card in a graveyard has only its front face's characteristics (CR 712.8a; a daybound card is the exception, 702.145b), so a back face's own "when this

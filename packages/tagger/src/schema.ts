@@ -489,7 +489,9 @@ export interface SubjectFilter {
    *  you control, except it has haste" CREATES a creature with haste and COPIES any creature you
    *  control: the subject says the first, `copyOf` the second, and the matcher's copy pass reads
    *  `copyOf` -- a Baleful Strix has no haste, and Kiki-Jiki still copies it. Set by the filter
-   *  grammar on copies whose original names a class. */
+   *  grammar on copies whose original names a class.
+   *  ON A `cast` EMIT (#1594): `{ owner: "opp" }` says the spell cast is a COPY of a card another player owns ("Exile target instant or sorcery card from an opponent's graveyard. Copy that card. You may cast the
+   *  copy", Flawless Forgery). You own the copy (CR 112.2), so `owner` stays absent; the matcher's self-cast join refuses it, since a copy of an opponent's card is never a card of this deck. Set by derive. */
   copyOf?: Partial<SubjectFilter>;
   /** Which phase or step an `extra-phase` effect grants, over a closed CR vocabulary: `untap`,
    *  `upkeep`, `draw`, `main`, `combat`, `beginning`, `end`. Same shape as `counter` above, and for

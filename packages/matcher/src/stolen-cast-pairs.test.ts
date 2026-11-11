@@ -90,3 +90,21 @@ test.each(["Smirking Spelljacker", "Flawless Forgery"])("%s is no 'whenever an o
 test("Smirking Spelljacker still feeds Talrand: you cast the exiled instant or sorcery", () => {
   expect(castTags("Smirking Spelljacker", "Talrand, Sky Summoner")).not.toEqual([]);
 });
+
+// A COPY OF A CARD ANOTHER PLAYER OWNS IS NEVER A DECK-MATE (#1594 review). You own the copy you cast (CR 112.2), so `owner: "opp"` would be untrue; the emit says what it is a copy OF (`copyOf: { owner: "opp" }`),
+// and the self join refuses it as it refuses a stolen card. Every class trigger still hears the cast.
+const COPY_CASTERS = ["Flawless Forgery", "Blue Mage's Cane", "Reversal of Fortune", "Saruman of Many Colors"];
+describe.each(COPY_CASTERS)("%s casts a copy of a card an opponent owns", (caster) => {
+  test("the cast emit is yours, owns nothing of theirs, and says what it copies", () => {
+    for (const s of castEmits(caster)) expect({ control: s.control, owner: s.owner, copyOf: s.copyOf }).toEqual({ control: "you", owner: undefined, copyOf: { owner: "opp" } });
+  });
+  test("no self reason with Echo Storm's own 'when you cast this spell'", () => {
+    expect(castTags(caster, "Echo Storm")).toEqual([]);
+  });
+  test.each(["Talrand, Sky Summoner", "Monastery Swiftspear"])("still feeds %s", (payoff) => {
+    expect(castTags(caster, payoff)).not.toEqual([]);
+  });
+});
+test("Wildfire Devils copies a card of a player chosen at random, who can be you: nothing says whose card the copy is of", () => {
+  for (const s of castEmits("Wildfire Devils")) expect(s.copyOf).toBeUndefined();
+});
