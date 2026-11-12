@@ -785,6 +785,26 @@ describe("phasing out another player's permanent is an answer, not removal (#126
     expect(removal(["Divine Smite", "Teferi, Timeless Voyager"])).toEqual(["Divine Smite", "Teferi, Timeless Voyager"]);
   });
 
+  // owner 2026-11-12: a TARGETLESS mass phase-out of creatures is an answer (answer:creature), not a board wipe. Out of Time, Time and Tide and Disciple of Caelus Nin phase out every creature (of any controller).
+  test("a mass phase-out that reaches opponents' creatures answers creature, and is no board wipe", () => {
+    for (const name of ["Out of Time", "Time and Tide", "Disciple of Caelus Nin"]) expect(classes(name), name).toEqual(["creature"]);
+    // "All artifacts and creatures phase out" covers two classes.
+    expect(classes("The City on the Edge of Forever")).toEqual(["artifact", "creature"]);
+    const wipes = detectBuildCategories(["Out of Time", "Time and Tide", "Disciple of Caelus Nin"].map((n) => realCard(n))).get("boardWipe") ?? [];
+    expect([...wipes]).toEqual([]);
+  });
+
+  // owner 2026-11-12 (confirmed, no change): Slip Out the Back and Galadriel's Dismissal are Protection AND keep their answer tag.
+  test("Slip Out the Back and Galadriel's Dismissal keep their answer class", () => {
+    expect(classes("Galadriel's Dismissal")).toEqual(["creature"]);
+    expect(classes("Slip Out the Back")).toEqual(["creature"]);
+  });
+
+  // A mass phase-out of only YOUR permanents (control you) answers nothing; neither does a chosen-type one that no class is read from (Teferi's Realm, NEEDS RULING).
+  test("a mass phase-out of only your own permanents answers nothing", () => {
+    for (const name of ["Teferi's Protection", "Perch Protection", "Ripples of Potential", "Taniwha", "Temporal Firestorm"]) expect(classes(name), name).toEqual([]);
+  });
+
   test("a phase-out of your own permanent, of the card itself, or only a block triggers answers nothing", () => {
     for (const name of ["Teferi's Protection", "Clever Concealment", "Blink Dog", "Mist Dragon", "Dream Fighter"]) expect(classes(name), name).toEqual([]);
   });
