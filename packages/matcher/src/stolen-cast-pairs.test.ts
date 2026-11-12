@@ -275,3 +275,13 @@ test.each([["Gonti, Lord of Luxury", "Nita, Forum Conciliator"], ["Thief of Sani
 test("Knowledge Pool can hand you another player's card: Nita still hears it", () => {
   expect(castTags("Knowledge Pool", "Nita, Forum Conciliator")).not.toEqual([]);
 });
+
+// #1613 review: three more casts of certainly-own cards that stated no owner. Chandra Ablaze casts from your graveyard, Sunforger out of your library, Cemetery Illuminator off the top of your library; Hurl into
+// History's discover was read as any player's cast with no origin.
+test.each(["Chandra Ablaze", "Sunforger", "Cemetery Illuminator", "Hurl into History"])("%s casts only your own cards: no 'a spell you don't own' reason with Nita", (source) => {
+  expect(castTags(source, "Nita, Forum Conciliator")).toEqual([]);
+});
+test("Hurl into History's discover is your cast from exile: Quintorius Kand hears it, Rhystic Study's 'an opponent casts' does not", () => {
+  expect(castTags("Hurl into History", "Quintorius Kand")).not.toEqual([]);
+  expect(castTags("Hurl into History", "Rhystic Study")).toEqual([]);
+});
