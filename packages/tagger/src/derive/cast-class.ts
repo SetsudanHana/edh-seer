@@ -131,7 +131,10 @@ export function castsYourOwnCard(clauseText: string, casterIsAnyPlayer = false):
   const m = PERMISSION.exec(clauseText);
   if (!m) return false;
   const end = clauseText.indexOf(".", m.index);
-  const region = clauseText.slice(0, end < 0 ? undefined : end);
+  // A ZONE THE TRIGGER NAMES IS NOT WHERE THE CARD CAST COMES FROM (#1609): "Whenever a player casts a spell from their hand, that player exiles it. If the player does, they may cast a spell from among other cards
+  // exiled with this artifact" (Knowledge Pool) casts out of a pile every player's library filled. The trigger's own condition is cut before the zones are read, and a pile another ability fills proves no owner.
+  const region = clauseText.slice(0, end < 0 ? undefined : end).replace(/\b(?:whenever|when|at the beginning of)\b[^,.]*,/gi, "");
+  if (PILE.test(region)) return false;
   // ANOTHER PLAYER WHO CASTS OFF "THEIR" LIBRARY OR HAND CASTS THEIR OWN CARD: "that player exiles the top card of their library ... the player casts it" (Omen Machine), "reveals a card at random from their hand"
   // (Wild Evocation). The owner is the caster's, which is what `owner: you` says beside `control: any`.
   if (casterIsAnyPlayer) return /\btheir (?:library|hand|graveyard)\b/i.test(region) && !/\b(?:your|opponent's|opponents'|player's|players'|a|an|each|that|single) (?:library|hand|graveyard)s?\b/i.test(region);

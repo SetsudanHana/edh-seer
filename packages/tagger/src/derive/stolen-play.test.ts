@@ -103,8 +103,9 @@ test("Rashmi and Ragavan: both casts are of the exiled card an opponent owns, ne
 // ... They may cast that card") let ANOTHER player cast. Since DERIVE 494 (#1591) a pronoun actor no longer takes the controller default, so the caster stays `any` (the target's owner or the spell's controller can be you or an
 // opponent); nothing writes `you`, and no owner is claimed. Stored rows at 497 read the same (queried 2026-11-11).
 // #1608 review: Audacious Swap's caster exiles the top card of THEIR OWN library, so the card cast is the caster's (`owner: you` beside `control: any`: the caster's own card, never "a spell you don't own").
-// Tibalt's Trickery reveals cards from "its controller"'s library, the same; nothing wrote an owner for it and none is claimed.
-test.each([["Audacious Swap", "you"], ["Tibalt's Trickery", undefined]] as const)("%s: 'they may cast' reads the caster as any player, never as you; owner %s", (name, owner) => {
+// Tibalt's Trickery reveals cards from "its controller"'s library, the same; nothing wrote an owner for it until #1609.
+// #1609: Tibalt's Trickery's caster also exiles from "the top of their library": the caster's own card, the same reading.
+test.each([["Audacious Swap", "you"], ["Tibalt's Trickery", "you"]] as const)("%s: 'they may cast' reads the caster as any player, never as you; owner %s", (name, owner) => {
   const s = emits(name, "cast");
   expect(s.length).toBeGreaterThan(0);
   for (const x of s) expect({ control: x.control, owner: x.owner }).toEqual({ control: "any", owner });
@@ -119,7 +120,8 @@ test.each(["Grenzo, Havoc Raiser", "Elder Brain"])("%s: 'that player' is an oppo
 });
 
 // #1596 review, fix 4: ONE STORED `play` THAT HOLDS BOTH HALVES. "You may play lands and cast spells from among cards exiled this way" stored as a single play ("lands and spells from among ...") derived the land play and no cast.
-test.each([["Gix, Yawgmoth Praetor", "opp"], ["Sen Triplets", "opp"], ["Magus of the Mind", undefined], ["Jacob Hauken, Inspector // Hauken's Insight", undefined]] as const)("%s: 'play lands and cast spells' is a cast too (owner %s)", (name, owner) => {
+// #1609: Magus of the Mind exiles the top of YOUR library, so its cast says `owner: you`; Jacob Hauken's pile ("cards exiled with this permanent") proves no owner from this sentence.
+test.each([["Gix, Yawgmoth Praetor", "opp"], ["Sen Triplets", "opp"], ["Magus of the Mind", "you"], ["Jacob Hauken, Inspector // Hauken's Insight", undefined]] as const)("%s: 'play lands and cast spells' is a cast too (owner %s)", (name, owner) => {
   const cast = emits(name, "cast"), land = emits(name, "land-play");
   expect(land.length).toBeGreaterThan(0);
   expect(cast.length).toBeGreaterThan(0);

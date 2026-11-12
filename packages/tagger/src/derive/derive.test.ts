@@ -8707,7 +8707,8 @@ describe("#1592: a stored graveyard-or-hand pick leaves the hand, and the card y
       clauseTexts: { 1: "When Hidetsugu and Kairi dies, exile the top card of your library. Target opponent loses life equal to its mana value. If it's an instant or sorcery card, you may cast it without paying its mana cost." },
     });
     expect(emit(kairi, "cast").subject).toMatchObject({ control: "you", type: ["instant", "sorcery"] });
-    expect(emit(kairi, "cast").subject.owner).toBeUndefined();
+    // #1609: "the top card of your library" is your own card; the emit says so whether or not its class was already stated (never an opponent's, which is what this line guarded).
+    expect(emit(kairi, "cast").subject.owner).toBe("you");
   });
   // Mind's Dilation: "that player exiles the top card of THEIR library. If it's a nonland card, YOU may cast it". The sentence names a player, so the caster was left `any`; the words say you, and the card is theirs.
   test("'you may cast it' names you as the caster even where another player is named, and the card stays theirs (Mind's Dilation)", () => {

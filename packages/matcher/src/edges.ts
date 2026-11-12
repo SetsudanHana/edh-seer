@@ -1326,8 +1326,13 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // them. `subjectMatches` already reads an unstated origin as the hand for "from anywhere other
   // than your hand"; this is the same reading for the positive demand. An AUTHORED cast states its
   // own zone (Bolas's Citadel's library, an impulse draw's exile) and keeps it.
-  const castFrom = producer.implied === true && producer.verb === "cast" && producer.subject.fromZone === undefined
+  const fromHand = producer.implied === true && producer.verb === "cast" && producer.subject.fromZone === undefined
     ? { ...producer.subject, fromZone: "hand" as const } : producer.subject;
+  // ...AND A CARD OF YOUR DECK IS A SPELL YOU OWN (#1609; CR 108.3: a card's owner is the player who started the game with it in their deck). The implied cast of the card, and an authored cast of the card ITSELF
+  // ("You may cast this card from your graveyard", Demilich: `self`), state no owner because the text has no reason to; "whenever you cast a spell you don't own" (Don Andres, the Renegade; Nita; Vaan; Tasha) heard
+  // Lightning Bolt. This is a fact about the deck, not about the words, so it is read here and not in derive; a cast of ANOTHER card says whose it is in its emit (`owner: you / opp`, derive).
+  const castFrom = (producer.verb === "cast" || producer.verb === "land-play") && (producer.implied === true || producer.subject.self === true) && fromHand.owner === undefined
+    ? { ...fromHand, owner: "you" as const } : fromHand;
   if (!originMatches(castFrom, consumer.subject, consumer.verb)) return false;
   if (combatSelfSupplied(producer, consumer)) return false;
   if (castSelfSupplied(producer, asked)) return false;

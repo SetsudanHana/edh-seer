@@ -8474,5 +8474,401 @@
    }
   ],
   "segmentHash": "8579c66872446bfabb6d5685a167592637f3b3c09bca374a8b28070bf545df30"
+ },
+ "Future Sight": {
+  "source": {
+   "name": "Future Sight",
+   "typeLine": "Enchantment",
+   "oracleText": "Play with the top card of your library revealed.\nYou may play lands and cast spells from the top of your library.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{U}{U}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "play",
+      "object": "lands and spells from the top of your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "3e17cdbfc7df43e20d4363aa705f3d9e6fc193d6aa2e4488ca2d199ce0aaa242"
+ },
+ "Galvanoth": {
+  "source": {
+   "name": "Galvanoth",
+   "typeLine": "Creature — Beast",
+   "oracleText": "At the beginning of your upkeep, you may look at the top card of your library. You may cast it without paying its mana cost if it's an instant or sorcery spell.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{3}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "5a6cff9c6360ac3f37846db1499ce47eaaa2f756c7bb403b4d1bccb7b9d97a03"
+ },
+ "Founding the Third Path": {
+  "source": {
+   "name": "Founding the Third Path",
+   "typeLine": "Enchantment — Saga",
+   "oracleText": "Read ahead (Choose a chapter and start with that many lore counters. Add one after your draw step. Skipped chapters don't trigger. Sacrifice after III.)\nI — You may cast an instant or sorcery spell with mana value 1 or 2 from your hand without paying its mana cost.\nII — Target player mills four cards.\nIII — Exile target instant or sorcery card from your graveyard. Copy it. You may cast the copy.",
+   "keywords": [
+    "Read Ahead",
+    "Mill"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{U}",
+   "layout": "saga"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Read ahead",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "chapter I",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "an instant or sorcery spell with mana value 1 or 2 from your hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "chapter II",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "target player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "4",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "chapter III",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target instant or sorcery card from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "copy",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "the copy",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "d75ab903627e6298d185df54ede953849dcd2fbf764c6ec2f6b7cd7aa12be07f"
+ },
+ "Etali, Primal Storm": {
+  "source": {
+   "name": "Etali, Primal Storm",
+   "typeLine": "Legendary Creature — Elder Dinosaur",
+   "oracleText": "Whenever Etali attacks, exile the top card of each player's library, then you may cast any number of spells from among those cards without paying their mana costs.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "manaCost": "{4}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "Etali, Primal Storm",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top card of each player's library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "any number of spells from among those cards",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "cdac20997858e55893c088f534a68f28de4129e597b3ed26678edbab19e29126"
+ },
+ "Demilich": {
+  "source": {
+   "name": "Demilich",
+   "typeLine": "Creature — Skeleton Wizard",
+   "oracleText": "This spell costs {U} less to cast for each instant and sorcery spell you've cast this turn.\nWhenever this creature attacks, exile up to one target instant or sorcery card from your graveyard. Copy it. You may cast the copy.\nYou may cast this card from your graveyard by exiling four instant and/or sorcery cards from your graveyard in addition to paying its other costs.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "4",
+   "toughness": "3",
+   "manaCost": "{U}{U}{U}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "this spell costs {U} less to cast for each instant and sorcery spell you've cast this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "up to one target instant or sorcery card from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "copy",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "the copy",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "this card from your graveyard by exiling four instant and/or sorcery cards from your graveyard in addition to paying its other costs",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "64a0d0363cca503ccb6f6821e23544383d22b45fa5b8355065d49f692cd62d79"
+ },
+ "Knowledge Pool": {
+  "source": {
+   "name": "Knowledge Pool",
+   "typeLine": "Artifact",
+   "oracleText": "Imprint — When this artifact enters, each player exiles the top three cards of their library.\nWhenever a player casts a spell from their hand, that player exiles it. If the player does, they may cast a spell from among other cards exiled with this artifact without paying its mana cost.",
+   "keywords": [
+    "Imprint"
+   ],
+   "colors": [],
+   "manaValue": 6,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{6}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this artifact",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top three cards of each player's library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell from their hand",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "that spell",
+      "fromZone": "stack",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "a spell from among other cards exiled with this artifact",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "942aba18bdd934515da9261ea143576922865561735a6cf30dcca91d2a4bc72a"
  }
 }
