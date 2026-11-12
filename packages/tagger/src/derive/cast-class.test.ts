@@ -71,6 +71,18 @@ test.each(["Trumpeting Carnosaur", "Hit the Mother Lode", "Quintorius Kand", "Ch
   expect(s.length).toBeGreaterThan(0);
   for (const x of s) expect({ type: x.type, control: x.control, fromZone: x.fromZone, owner: x.owner }).toEqual({ type: "spell", control: "you", fromZone: "exile", owner: "you" });
 });
+// ...OF A CARD "WITH MANA VALUE N OR LESS" (#1608 review). Discover 5 never casts a ten-drop: the bound rides the emit as a mana-value stat, which the matcher reads against a card's own cast trigger.
+test.each([["Trumpeting Carnosaur", 5], ["Hit the Mother Lode", 10], ["Quintorius Kand", 4], ["Swashbuckler's Whip", 10], ["Geological Appraiser", 3], ["Daring Discovery", 4], ["Long-Range Sensor", 4]] as const)("%s discovers %i: mana value %i or less", (name, n) => {
+  const s = casts(name);
+  expect(s.length).toBeGreaterThan(0);
+  for (const x of s) expect(x.stats).toEqual([{ metric: "mana-value", op: "lte", value: n }]);
+});
+// CEILING pinned: "discover X" states no number the emit can carry; the cast is unbounded.
+test.each(["Pantlaza, Sun-Favored", "Aloy, Savior of Meridian", "Monstrous Vortex", "Brass's Tunnel-Grinder // Tecutlan, the Searing Rift", "Curator of Sun's Creation", "Zoyowa's Justice"])("%s discovers X: no bound is read", (name) => {
+  const s = casts(name);
+  expect(s.length).toBeGreaterThan(0);
+  for (const x of s) expect(x.stats).toBeUndefined();
+});
 test("Zoyowa's Justice: 'that player discovers' is that player's cast, whoever they are", () => {
   expect(casts("Zoyowa's Justice").map((x) => ({ type: x.type, control: x.control, fromZone: x.fromZone, owner: x.owner }))).toEqual([{ type: "spell", control: "any", fromZone: "exile", owner: "you" }]);
 });

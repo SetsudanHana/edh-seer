@@ -211,3 +211,11 @@ test("Mizzix's Mastery casts the copies from exile: Osgood hears it, Secrets of 
   expect(castTags("Mizzix's Mastery", "Osgood, Operation Double")).not.toEqual([]);
   expect(castTags("Mizzix's Mastery", "Secrets of the Dead")).toEqual([]);
 });
+
+// #1608 review: DISCOVER N CASTS A CARD WITH MANA VALUE N OR LESS (CR 701.57a). Unbounded, Trumpeting Carnosaur's discover 5 met the own "when you cast this spell" of a ten-drop.
+test("discover 5 never casts Ulamog, the Ceaseless Hunger (mana value 10) or Artisan of Kozilek (9); discover 10 can", () => {
+  expect(castTags("Trumpeting Carnosaur", "Ulamog, the Ceaseless Hunger")).toEqual([]);
+  expect(castTags("Trumpeting Carnosaur", "Artisan of Kozilek")).toEqual([]);
+  expect(castTags("Hit the Mother Lode", "Ulamog, the Ceaseless Hunger")).not.toEqual([]);
+  expect(castTags("Trumpeting Carnosaur", "Talrand, Sky Summoner")).not.toEqual([]);
+});

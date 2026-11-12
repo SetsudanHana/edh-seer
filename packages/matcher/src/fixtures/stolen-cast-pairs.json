@@ -4969,5 +4969,120 @@
     ]
    }
   ]
+ },
+ "Ulamog, the Ceaseless Hunger": {
+  "source": {
+   "name": "Ulamog, the Ceaseless Hunger",
+   "typeLine": "Legendary Creature — Eldrazi",
+   "oracleText": "When you cast this spell, exile two target permanents.\nIndestructible\nWhenever Ulamog attacks, defending player exiles the top twenty cards of their library.",
+   "keywords": [
+    "Indestructible"
+   ],
+   "colors": [],
+   "manaValue": 10,
+   "colorIdentity": [],
+   "power": "10",
+   "toughness": "10",
+   "manaCost": "{10}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "this spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "two target permanents",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Indestructible",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "Ulamog",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "defending player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "twenty",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Hit the Mother Lode": {
+  "source": {
+   "name": "Hit the Mother Lode",
+   "typeLine": "Sorcery",
+   "oracleText": "Discover 10. If the discovered card's mana value is less than 10, create a number of tapped Treasure tokens equal to the difference. (To discover 10, exile cards from the top of your library until you exile a nonland card with mana value 10 or less. Cast it without paying its mana cost or put it into your hand. Put the rest on the bottom in a random order.)",
+   "keywords": [
+    "Treasure",
+    "Discover"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{R}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "discover",
+      "object": "a card",
+      "amount": "10",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "create",
+      "object": "tapped Treasure tokens",
+      "amount": "the difference between 10 and the discovered card's mana value",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
  }
 }
