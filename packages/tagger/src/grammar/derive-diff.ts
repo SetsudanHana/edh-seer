@@ -19,7 +19,9 @@ function byClause(abilities: readonly Ability[]): Map<number, Ability[]> {
     // one and silently un-switched 13 cards. The comparison reads the abilities without it.
     // `toZone` (#1301) is the same: the grammar reads it off the put that follows a search, the stored model answer often folds that put into the
     // search action and leaves the ability without it. Counted, 49 cards read from their printed text would have un-switched.
-    const { claimsNothing: _claims, toZone: _to, ...a } = a0;
+    // `grantsSelf` (#1266) is stamped only beside `grants`, from the clause text both readings share: it differs exactly when `grants` does, which the key already says. Counted, the labelled `grants` group
+    // (the grammar names the keyword the stored answer left out) became `grants,grantsSelf`, and 17 cards un-switched and lost their keywords (Deep Spawn, Naya Hushblade, Arctic Aven).
+    const { claimsNothing: _claims, toZone: _to, grantsSelf: _self, ...a } = a0;
     const k = a.clause ?? -1;
     (out.get(k) ?? out.set(k, []).get(k)!).push(a);
   }
