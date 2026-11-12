@@ -195,6 +195,12 @@ test.each([
 ])("%s: the 'cast' in its clause is a condition or a reference, the row emits no cast", (name) => {
   expect(allCasts(name)).toEqual([]);
 });
+// The Prima Vista's misfiled cast is the clause's ONLY action, and it holds the card's real effect ("becomes an artifact creature until end of turn"): nothing is derived beside it, so the action stays unclaimed and the
+// dropped-clauses ratchet still sees the unread effect (#1614 review).
+test("The Prima Vista: a condition-only cast that is the clause's only action stays unclaimed", () => {
+  expect((rowOf("The Prima Vista").tags.unclaimed ?? []).map((a) => a.verb)).toContain("cast");
+  expect((rowOf("Lutri, the Spellchaser").tags.unclaimed ?? []).map((a) => a.verb)).not.toContain("cast");
+});
 test("the rest of the clause is untouched: Lutri still copies, The Sibsig Ceremony still destroys and makes its Zombie Druid, Lavinia still counters", () => {
   const verbs = (name: string) => rowOf(name).tags.abilities.flatMap((a) => a.emits ?? []).map((e) => e.verb);
   expect(verbs("Lutri, the Spellchaser")).toContain("copy");
