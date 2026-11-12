@@ -22,6 +22,8 @@ const SELF: [string, string, string[]][] = [
   ["Luke Cage, Power Man", "Unbreakable Skin \u2014 Whenever Luke Cage attacks alone, he gets +2/+0 and gains indestructible until end of turn. (Damage and effects that say \"destroy\" don't destroy him.)", ["indestructible"]],
   ["Miles Morales // Ultimate Spider-Man", "Camouflage \u2014 {2}: Put a +1/+1 counter on Ultimate Spider-Man. He gains hexproof and becomes colorless until end of turn.", ["hexproof"]],
   ["Zurgo Helmsmasher", "During your turn, Zurgo has indestructible.", ["indestructible"]],
+  // A cost that returns another object is not the sentence before "It": the sentence after the cost names the card.
+  ["Trench Behemoth", "Return a land you control to its owner's hand: Untap this creature. It gains hexproof until end of turn.", ["hexproof"]],
   // A condition before the recipient is not the recipient.
   ["Erebos's Titan", "As long as your opponents control no creatures, this creature has indestructible. (Damage and effects that say \"destroy\" don't destroy it.)", ["indestructible"]],
 ];
@@ -52,6 +54,14 @@ const NOT_SELF: [string, string, string[]][] = [
 
 test("a grant whose recipient is the card itself is read as a self grant", () => {
   for (const [name, text, grants] of SELF) expect(grantsSelfOf(text, grants, name), name).toBe(true);
+});
+
+// The grammar's clause text has no cost: the ability carries it (`Ability.cost`), and a pronoun after it is the card the cost names (Darwin).
+test("the cost of the ability names the card a pronoun means", () => {
+  const text = "He gains indestructible until end of turn.";
+  expect(grantsSelfOf(text, ["indestructible"], "Darwin, Adaptive Mutant", "Remove two +1/+1 counters from Darwin")).toBe(true);
+  expect(grantsSelfOf(text, ["indestructible"], "Darwin, Adaptive Mutant", "Sacrifice a creature")).toBe(false);
+  expect(grantsSelfOf(text, ["indestructible"], "Darwin, Adaptive Mutant")).toBe(false);
 });
 
 test("a grant to anything else is not a self grant", () => {
