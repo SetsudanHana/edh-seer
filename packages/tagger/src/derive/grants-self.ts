@@ -6,7 +6,7 @@
  *  A SINGULAR verb is the cue the recipient is one object ("this creature and other creatures you control gain" is plural: a grant to others too). True only when the clause has at least one
  *  sentence that hands over a keyword of `grants` and EVERY such sentence is the card's own.
  *  CEILING: a sentence inside a quoted ability is never the card's own (the quote's "this creature" is the grantee), so a quoted grant to the card itself ("this creature gains '...'") is not
- *  marked; a pronoun is resolved only by "the words before it name the card and no target", so "Whenever this creature blocks a creature, it gains ..." is the card and "Target creature ...
+ *  marked; a pronoun is resolved only by "the words before it name the card and no target, and the sentence before it made no other object" (create, copy, return, exile, put onto the battlefield), so "Whenever this creature blocks a creature, it gains ..." is the card and "Target creature ...
  *  This creature fights it. It gains ..." is not read; the antecedent is the sentence before the pronoun and its own sentence's head only. */
 const THIS_CARD = "this (?:creature|artifact|permanent|vehicle|enchantment|land|planeswalker)";
 /** A condition, a duration or a trigger before the recipient: "As long as your opponents control no creatures, this creature has ..." (Erebos's Titan), "Whenever this creature attacks, it gains ...". */
@@ -19,6 +19,10 @@ export function grantsSelfOf(clauseText: string, grants: readonly string[], card
   const subject = `(?:${[THIS_CARD, ...names].join("|")})`;
   const direct = new RegExp(`^${subject}\\b(?:[^.]{0,60}?\\band)?\\s+(?:gains|gets|has)\\b`, "i");
   const named = new RegExp(`\\b${subject}\\b`, "i");
+  // A sentence that created, copied, returned, exiled or put onto the battlefield something that is not the card: its "It" is that object, though the sentence names the card and no target
+  // (Mimic Vat "Create a token that's a copy ... It gains haste", Hellkite Courser "put a commander ... onto the battlefield. It gains haste", The Eleventh Doctor "exile a card ... it gains suspend").
+  const notSelfObject = `(?!(?:it|them|${subject})\\b)`;
+  const makesAnother = new RegExp(`\\b(?:creates?|cop(?:y|ies))\\b|\\b(?:returns?|exiles?)\\s+${notSelfObject}|\\bputs?\\s+${notSelfObject}[^.]*\\bonto the battlefield`, "i");
   const keywords = grants.map((g) => g.toLowerCase());
   let seen = 0;
   for (const line of clauseText.split("\n")) {
@@ -35,6 +39,7 @@ export function grantsSelfOf(clauseText: string, grants: readonly string[], card
       const antecedent = `${before} ${afterCost.slice(0, afterCost.length - body.length)}`;
       // The antecedent of "It" is the sentence just before it and this sentence's own head, no further back: Strefan's "... you may put a Vampire card from your hand onto the battlefield tapped and
       // attacking. It gains indestructible" is the Vampire, though the clause opens "Whenever Strefan attacks".
+      const earlier = before;
       before = sentence;
       // The sentence hands over one of THIS ability's keywords: a grant verb, then the keyword.
       const verbAt = body.search(/\b(?:gains?|has|have)\b/i);
@@ -45,7 +50,7 @@ export function grantsSelfOf(clauseText: string, grants: readonly string[], card
       seen++;
       const pronoun = /^it\s+(?:gains|gets|has)\b/i.test(body);
       const self = !quoted
-        && (direct.test(body) || (pronoun && named.test(antecedent) && !/\btarget\b/i.test(antecedent)))
+        && (direct.test(body) || (pronoun && named.test(antecedent) && !/\btarget\b/i.test(antecedent) && !makesAnother.test(earlier)))
         && !/\b(?:gain|get|have)\b/i.test(body)
         && !/\b(?:gains|gets|has)\b[^.]*?\band\s+(?:target|each|all|other|another|creatures?|permanents?|equipped|enchanted|up to)\b/i.test(body);
       if (!self) return false;
