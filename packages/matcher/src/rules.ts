@@ -48,9 +48,11 @@ export type RuleClause =
       notSelf?: true;
       /** The ABILITY's own kind (`Ability.kind`: `activated`, `triggered`, `static`, `on-cast` ...) is in this list. An activated flicker is at instant speed on any permanent (owner 2026-11-12, `protection.flicker`). */
       ofKind?: string[];
-      /** The SOURCE a `targeting-ban` is against (`Ability.targetingBan.source.control`) is in this list: `opp` is "spells or abilities your opponents control" (Vines of Vastwood, Canopy Cover). A ban from any source, or one
-       *  with no source, never matches. */
-      banFrom?: string[];
+      /** A `targeting-ban` that PROTECTS SOMETHING OF YOURS, whoever bans (#1266, owner 2026-11-12). Any one of: the ban is against opponents' spells and abilities (`targetingBan.source.control: opp`: Vines of Vastwood,
+       *  Canopy Cover, Tomik, Display of Dominance); its subject is yours (Autumn's Veil, Spellbane Centaur: "creatures you control"); the card is an AURA (the enchanted creature is one you can choose: Anti-Magic Aura,
+       *  Spectral Shield, Artifact Ward); or it is global over every graveyard (Ground Seal, Silent Gravestone) or every creature (Dense Foliage). Refused whatever the source: a ban on the card itself (Thrun, Gaea's Revenge,
+       *  Bartel Runeaxe) and one whose subject is only opponents' things. CEILING: the global reading covers `creature` and `graveyard` subjects only; Peace Talks' "players and permanents" is not read (NEEDS RULING). */
+      banProtects?: true;
       /** A FLICKER THAT IS ONE (derive types "put a card exiled with this onto the battlefield" `flicker` too: Karn Liberated, Ashiok, Sisters of Stone Death, Ghost Vacuum, Profane Procession,
        *  and a loyalty or "activate only as a sorcery" exile): the card has an instant-speed `exiled` emit of a permanent from the battlefield (or from no stated zone: a model-read clause leaves it off, Angel of Condemnation) that is not the card itself, AND the flicker either
        *  returns it to its OWNER (the flicker's own enters emit is `control: any`: Eldrazi Displacer, Mistmeadow Witch) or the exile is of YOUR permanent (an exiled emit `control: you`: Cold Storage,
@@ -455,6 +457,18 @@ function abilityReachesPermanent(a: { effect: { subject?: SubjectFilter }; emits
   return (a.emits ?? []).some((e) => e.verb === "non-combat-damage" && e.subject.scope === "target" && subjectReachesPermanent(e.subject));
 }
 
+/** A `targeting-ban` ability that protects something of YOURS whoever bans (`banProtects`, #1266, owner 2026-11-12). Never the card itself (`subject.self`) and never a subject that is only opponents'. */
+function banProtectsYours(a: { targetingBan?: { source: { control?: string } }; effect: { subject?: SubjectFilter } }, typeLine: string): boolean {
+  if (a.targetingBan === undefined) return false;
+  const subject: SubjectFilter = a.effect.subject ?? { control: "any", token: null };
+  if (subject.self === true || subject.control === "opp") return false;
+  return a.targetingBan.source.control === "opp"
+    || subject.control === "you"
+    || /\baura\b/i.test(typeLine)
+    || subject.zone === "graveyard"
+    || (subject.scope === "all" && subjectTypes(subject).includes("creature"));
+}
+
 /** A search SUBJECT that can only be a land (#1266): typed `land` ("a basic land card"), a LAND TYPE ("a Mountain card", "a basic Plains, Swamp, or Forest card", "a Gate card": Alpine Guide, Abzan Monument,
  *  District Guide), or an `anyOf` whose every branch is one of those ("a basic land card or Gate card"). Derive sometimes files a land type under `type` (The Cave of Two Lovers: ["mountain", "cave"]), so both
  *  fields take the same words. Nothing typed at all is NOT land-only ("a card named X", "a card"); a Shrine is no land. */
@@ -568,7 +582,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.notOwnedByYou !== true || a.effect.subject?.owner !== "you")
         && (clause.notSelf !== true || a.effect.subject?.self !== true)
         && (clause.ofKind === undefined || clause.ofKind.includes(a.kind))
-        && (clause.banFrom === undefined || (a.targetingBan?.source.control !== undefined && clause.banFrom.includes(a.targetingBan.source.control)))
+        && (clause.banProtects !== true || banProtectsYours(a, dc.card.typeLine ?? ""))
         && (clause.pairedInstantExile !== true || pairedInstantExile(dc.tags?.abilities ?? [], a))
         && (clause.notVictimMay !== true || !(a.emits ?? []).some((e) => e.victimMay === true))
         && (clause.librarySearch === undefined || (a.librarySearch !== undefined && clause.librarySearch.includes(a.librarySearch)))
