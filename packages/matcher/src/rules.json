@@ -1,5 +1,5 @@
 {
-  "version": 43,
+  "version": 44,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -555,6 +555,36 @@
         { "op": "oracle", "pattern": "exileReturnsToBattlefield" }
       ],
       "why": "`typedRemoval` is `(?:destroy|exile)` -- one alternation, so nothing downstream can tell a recursion-proof answer from one a reanimator undoes. This rule ADDS to `answers.typed` rather than replacing it: every exile removal matches both, once for the class and once for the mode, so no card changes class. The first `not` is the same veto `answers.typed` carries, and it is load-bearing here: 'Exile target creature card from a graveyard' names a creature and answers nothing on the battlefield. The second `not` is only on THIS rule, never on `answers.typed`: a blink (Long Road Home, Flicker, Venser's +2) exiles and then RETURNS the permanent, which is the least recursion-proof answer there is -- worse than a destroy, since the threat is back on a timer the opponent doesn't even have to work for. Measured on the corpus: 114 cards match `exileRemoval` and a return-to-battlefield clause; they stay in `count` (`answers.typed` has no such veto, by design) and simply carry no `exile` mark."
+    },
+    {
+      "id": "answers.phaseOut.creature",
+      "answerClass": "creature",
+      "match": [{ "op": "emits", "verbs": ["phases-out"], "control": ["opp", "any"], "scope": ["target"], "notSelf": true, "notBlockCombat": true, "typeAny": ["creature", "permanent"] }],
+      "why": "OWNER 2026-11-12: PHASING OUT ANOTHER PLAYER'S PERMANENT IS INTERACTION, BUT NOT REMOVAL. It answers the board for a turn, as a bounce does, so it carries an ANSWER class by what the phase-out can hit and is deliberately in no build category (`removal.targeted` reads kills, exiles, shuffles, -1/-1 counters, toughness debuffs, forced sacrifices and damage, never `phases-out`, so the role does not move). DERIVED: a `phases-out` emit whose subject is an opponent's or any player's permanent that the card TARGETS (Teferi's Reproach 'all nonland permanents they control' is a target opponent's: creature, artifact, enchantment, planeswalker; Sapphire Charm, Teferi, Master of Time and Teferi, Timeless Voyager: creature; Divine Smite: creature and planeswalker, and its 'If that permanent is black, exile it instead' is the exile emit that keeps its targetedRemoval). `permanent` expands to every class. Refused: the card itself (Blink Dog), a permanent you control (Teferi's Protection, Clever Concealment), and a phase-out only a BLOCK triggers (Dream Fighter, `notBlockCombat`). A phase-out of a target of ANY controller counts, because it can hit an opponent's (Galadriel's Dismissal, Slip Out the Back, Brokers Confluence): NEEDS RULING whether a card that is mainly protection should also carry an answer class. CEILING: a mass phase-out with no target (`scope: all`, Out of Time, Time and Tide, Disciple of Caelus Nin) is not read; only a TARGETED phase-out is."
+    },
+    {
+      "id": "answers.phaseOut.artifact",
+      "answerClass": "artifact",
+      "match": [{ "op": "emits", "verbs": ["phases-out"], "control": ["opp", "any"], "scope": ["target"], "notSelf": true, "notBlockCombat": true, "typeAny": ["artifact", "permanent"] }],
+      "why": "As answers.phaseOut.creature, for the artifact class (a `permanent` subject reaches every class)."
+    },
+    {
+      "id": "answers.phaseOut.enchantment",
+      "answerClass": "enchantment",
+      "match": [{ "op": "emits", "verbs": ["phases-out"], "control": ["opp", "any"], "scope": ["target"], "notSelf": true, "notBlockCombat": true, "typeAny": ["enchantment", "permanent"] }],
+      "why": "As answers.phaseOut.creature, for the enchantment class (a `permanent` subject reaches every class)."
+    },
+    {
+      "id": "answers.phaseOut.planeswalker",
+      "answerClass": "planeswalker",
+      "match": [{ "op": "emits", "verbs": ["phases-out"], "control": ["opp", "any"], "scope": ["target"], "notSelf": true, "notBlockCombat": true, "typeAny": ["planeswalker", "permanent"] }],
+      "why": "As answers.phaseOut.creature, for the planeswalker class (a `permanent` subject reaches every class)."
+    },
+    {
+      "id": "answers.phaseOut.land",
+      "answerClass": "land",
+      "match": [{ "op": "emits", "verbs": ["phases-out"], "control": ["opp", "any"], "scope": ["target"], "notSelf": true, "notBlockCombat": true, "typeAny": ["land", "permanent"] }],
+      "why": "As answers.phaseOut.creature, for the land class (a `permanent` subject reaches every class)."
     },
     {
       "id": "answers.graveyard.recurring",
