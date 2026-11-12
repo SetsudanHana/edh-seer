@@ -723,8 +723,28 @@ test("a targeting ban against opponents, on something other than the card, is pr
   for (const name of ["Vines of Vastwood", "Canopy Cover", "Shielding Plax", "Veilstone Amulet", "Tomik, Distinguished Advokist", "Display of Dominance"]) expect(protectsDerived(name), name).toBe(true);
   // The card's own ban is hexproof on itself (a stat), and a ban from ANY source or from lands/graveyards is not against opponents.
   for (const name of ["Thrun, Breaker of Silence", "Shanna, Sisay's Legacy", "Karplusan Strider"]) expect(protectsDerived(name), name).toBe(false);
-  // A ban whose source is any player is not aimed at opponents (the ruling names opponents): Anti-Magic Aura, Ground Seal, Autumn's Veil (blue and black spells, any source).
-  for (const name of ["Anti-Magic Aura", "Ground Seal", "Autumn's Veil"]) expect(protectsDerived(name), name).toBe(false);
+  // Owner 2026-11-12 (Display of Dominance and Tomik confirmed): the rest of the opponent-aimed set stays.
+  // A ban from ANY source that protects YOUR things counts too (owner 2026-11-12, second ruling): Autumn's Veil and Spellbane Centaur ("creatures you control can't be the targets of blue ... spells"), an Aura's
+  // enchanted creature (Anti-Magic Aura, Spectral Shield, Artifact Ward: an Aura you can put on your own creature), and a global ban on every graveyard (Ground Seal, Silent Gravestone, Dennick, Underworld Cerberus)
+  // or every creature (Dense Foliage).
+  for (const name of ["Autumn's Veil", "Spellbane Centaur", "Anti-Magic Aura", "Spectral Shield", "Artifact Ward", "Ground Seal", "Silent Gravestone", "Dennick, Pious Apprentice // Dennick, Pious Apparition", "Underworld Cerberus", "Dense Foliage"]) expect(protectsDerived(name), name).toBe(true);
+  // Still refused: a ban on the card itself, from any source (hexproof on itself, a stat).
+  for (const name of ["Gaea's Revenge", "Raiding Party", "Bartel Runeaxe"]) expect(protectsDerived(name), name).toBe(false);
+});
+
+// owner 2026-11-12: a ban whose subject is only OPPONENTS' things protects nobody of yours, whatever the source. Written row: no real card has the shape.
+test("a targeting ban on only the opponents' things is not protection", () => {
+  const ban = (subject: object, source: object): DeckCard => derivedCard("Written", [{ kind: "static", effect: { kind: "targeting-ban", subject }, targetingBan: { by: ["spell", "ability"], source } }], "Enchantment");
+  expect(ruleMatches(protectionText(), ban({ control: "opp", token: null, type: "creature", scope: "all" }, { control: "any", token: null }))).toBe(false);
+  expect(ruleMatches(protectionText(), ban({ control: "opp", token: null, type: "creature", scope: "all" }, { control: "opp", token: null }))).toBe(false);
+  expect(ruleMatches(protectionText(), ban({ control: "you", token: null, type: "creature", scope: "all" }, { control: "any", token: null }))).toBe(true);
+});
+
+// owner 2026-11-12: Livio, Oathsworn Sentinel is Protection (confirmed), as are Display of Dominance and Tomik, Distinguished Advokist.
+test("Livio, Oathsworn Sentinel, Display of Dominance and Tomik are protection (owner confirmed)", () => {
+  // Livio joins protection.flicker (its aegis-counter exile and return of the card to its owner); the other two are protection.text's opponent-aimed ban.
+  const anyProtection = (name: string): boolean => loadRules().rules.filter((r) => r.category === "protection").some((r) => ruleMatches(r, realCard(name, { oracleText: "" })));
+  for (const name of ["Livio, Oathsworn Sentinel", "Display of Dominance", "Tomik, Distinguished Advokist"]) expect(anyProtection(name), name).toBe(true);
 });
 
 // owner 2026-11-12: a land can carry Protection. The `countsAsLand` exclusion is gone from protection.text; these are the 11 cards it had hidden, each read against its Mongo text.
