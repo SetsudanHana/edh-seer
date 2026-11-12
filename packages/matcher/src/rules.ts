@@ -48,6 +48,9 @@ export type RuleClause =
       notSelf?: true;
       /** The ABILITY's own kind (`Ability.kind`: `activated`, `triggered`, `static`, `on-cast` ...) is in this list. An activated flicker is at instant speed on any permanent (owner 2026-11-12, `protection.flicker`). */
       ofKind?: string[];
+      /** The SOURCE a `targeting-ban` is against (`Ability.targetingBan.source.control`) is in this list: `opp` is "spells or abilities your opponents control" (Vines of Vastwood, Canopy Cover). A ban from any source, or one
+       *  with no source, never matches. */
+      banFrom?: string[];
       /** A FLICKER THAT IS ONE (derive types "put a card exiled with this onto the battlefield" `flicker` too: Karn Liberated, Ashiok, Sisters of Stone Death, Ghost Vacuum, Profane Procession,
        *  and a loyalty or "activate only as a sorcery" exile): the card has an instant-speed `exiled` emit of a permanent from the battlefield (or from no stated zone: a model-read clause leaves it off, Angel of Condemnation) that is not the card itself, AND the flicker either
        *  returns it to its OWNER (the flicker's own enters emit is `control: any`: Eldrazi Displacer, Mistmeadow Witch) or the exile is of YOUR permanent (an exiled emit `control: you`: Cold Storage,
@@ -565,6 +568,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.notOwnedByYou !== true || a.effect.subject?.owner !== "you")
         && (clause.notSelf !== true || a.effect.subject?.self !== true)
         && (clause.ofKind === undefined || clause.ofKind.includes(a.kind))
+        && (clause.banFrom === undefined || (a.targetingBan?.source.control !== undefined && clause.banFrom.includes(a.targetingBan.source.control)))
         && (clause.pairedInstantExile !== true || pairedInstantExile(dc.tags?.abilities ?? [], a))
         && (clause.notVictimMay !== true || !(a.emits ?? []).some((e) => e.victimMay === true))
         && (clause.librarySearch === undefined || (a.librarySearch !== undefined && clause.librarySearch.includes(a.librarySearch)))
