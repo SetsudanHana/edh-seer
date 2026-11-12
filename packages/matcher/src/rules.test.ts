@@ -702,9 +702,19 @@ test("a printed protection word that hands nothing to your permanents is not pro
 
 test("phasing out is protection, read off the derived `phases-out` emit", () => {
   for (const name of ["Teferi's Protection", "Slip Out the Back"]) expect(protectsDerived(name), name).toBe(true);
-  // MAIN'S BEHAVIOUR, UNRULED (#1266): a card that phases only ITSELF out (Blink Dog) and one that phases an OPPONENT's permanents out (Divine Smite, Teferi's Reproach) counted under the printed
-  // pattern and still do. Whether they should is the owner's call; this pins that the migration did not decide it.
-  for (const name of ["Blink Dog", "Divine Smite", "Teferi's Reproach"]) expect(protectsDerived(name), name).toBe(true);
+  // A card that phases out ANY permanent, yours or theirs, can be both protection and interaction: it stays.
+  for (const name of ["Galadriel's Dismissal", "Dream Fighter"]) expect(protectsDerived(name), name).toBe(true);
+});
+
+// owner 2026-11-12: a card that protects only itself is not Protection, phasing included. The derived `phases-out` emit carries `subject.self`.
+test("a card that phases only ITSELF out is not protection", () => {
+  const selfOnly = ["Blink Dog", "Crystal Golem", "Mist Dragon", "Rainbow Efreet", "Frenetic Efreet", "Teferi's Honor Guard", "Vaporous Djinn", "Warping Wurm", "Vision, Synthezoid Avenger", "Kaito Shizuki", "Renegade Silent"];
+  for (const name of selfOnly) expect(protectsDerived(name), name).toBe(false);
+});
+
+// owner 2026-11-12: phasing aimed only at an opponent's permanent is interaction, not Protection. The emit's subject carries `control: "opp"`.
+test("phasing aimed only at an opponent's permanent is not protection", () => {
+  for (const name of ["Teferi's Reproach", "Divine Smite", "Sapphire Charm", "Teferi, Master of Time", "Teferi, Timeless Voyager"]) expect(protectsDerived(name), name).toBe(false);
 });
 
 test("the one printed residue: spells that can't be countered and protection for the player", () => {

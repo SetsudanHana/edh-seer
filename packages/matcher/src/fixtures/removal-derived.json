@@ -30097,5 +30097,1206 @@
     }
    }
   ]
+ },
+ "Dream Fighter": {
+  "oracleText": "Whenever this creature blocks or becomes blocked by a creature, this creature and that creature phase out. (While they're phased out, they're treated as though they don't exist. Each one phases in before its controller untaps during their next untap step.)",
+  "typeLine": "Creature — Human Soldier",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "blocks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-turn",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "becomes-blocked"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     },
+     "blocker": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "blocks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-turn"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "becomes-blocked"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     },
+     "blocker": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "repeatable"
+   }
+  ]
+ },
+ "Sapphire Charm": {
+  "oracleText": "Choose one —\n• Target player draws a card at the beginning of the next turn's upkeep.\n• Target creature gains flying until end of turn.\n• Target creature an opponent controls phases out. (While it's phased out, it's treated as though it doesn't exist. It phases in before its controller untaps during their next untap step.)",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "clause": 3,
+    "repeats": "once",
+    "grants": [
+     "flying"
+    ]
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Teferi, Master of Time": {
+  "oracleText": "You may activate loyalty abilities of Teferi on any player's turn any time you could cast an instant.\n+1: Draw a card, then discard a card.\n−3: Target creature you don't control phases out. (Treat it and anything attached to it as though they don't exist until its controller's next turn.)\n−10: Take two extra turns after this one.",
+  "typeLine": "Legendary Planeswalker — Teferi",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "extra-loyalty",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true
+     }
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "+1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "+1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "discard",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "−3",
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "-3"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "extra-turn",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "−10",
+    "amount": "2",
+    "clause": 4,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "payment": {
+     "loyalty": "-10"
+    }
+   }
+  ]
+ },
+ "Teferi, Timeless Voyager": {
+  "oracleText": "+1: Draw a card.\n−3: Put target creature on top of its owner's library.\n−8: Each creature target opponent controls phases out. Until the end of your next turn, they can't phase in. (Treat them and anything attached to them as though they don't exist.)",
+  "typeLine": "Legendary Planeswalker — Teferi",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "+1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "−3",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "tuck": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "-3"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "−8",
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "-8"
+    }
+   }
+  ]
+ },
+ "Crystal Golem": {
+  "oracleText": "At the beginning of your end step, this creature phases out. (While it's phased out, it's treated as though it doesn't exist. It phases in before you untap during your next untap step.)",
+  "typeLine": "Artifact Creature — Golem",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "end-step"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Mist Dragon": {
+  "oracleText": "{0}: This creature gains flying. (This effect lasts indefinitely.)\n{0}: This creature loses flying. (This effect lasts indefinitely.)\n{3}{U}{U}: This creature phases out. (While it's phased out, it's treated as though it doesn't exist. It phases in before you untap during your next untap step.)",
+  "typeLine": "Creature — Dragon",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{0}",
+    "clause": 1,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{0}"
+    },
+    "grants": [
+     "flying"
+    ],
+    "grantsSelf": true
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{3}{U}{U}",
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{3}{U}{U}"
+    }
+   }
+  ]
+ },
+ "Rainbow Efreet": {
+  "oracleText": "Flying\n{U}{U}: This creature phases out. (While it's phased out, it's treated as though it doesn't exist. It phases in before you untap during your next untap step.)",
+  "typeLine": "Creature — Efreet",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{U}{U}",
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{U}{U}"
+    }
+   }
+  ]
+ },
+ "Frenetic Efreet": {
+  "oracleText": "Flying\n{0}: Flip a coin. If you win the flip, this creature phases out. If you lose the flip, sacrifice this creature. (While it's phased out, it's treated as though it doesn't exist. It phases in before you untap during your next untap step.)",
+  "typeLine": "Creature — Efreet",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{0}",
+    "emits": [
+     {
+      "verb": "flip-coin",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{0}"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{0}",
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "onFlip": "win",
+    "gate": {
+     "kind": "unknown",
+     "text": "you win the flip"
+    },
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{0}"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{0}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "onFlip": "lose",
+    "gate": {
+     "kind": "unknown",
+     "text": "you lose the flip"
+    },
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{0}"
+    }
+   }
+  ]
+ },
+ "Vaporous Djinn": {
+  "oracleText": "Flying\nAt the beginning of your upkeep, this creature phases out unless you pay {U}{U}. (While it's phased out, it's treated as though it doesn't exist. It phases in before you untap during your next untap step.)",
+  "typeLine": "Creature — Djinn",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "unless": {
+     "cost": "{U}{U}",
+     "payer": "you"
+    },
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Warping Wurm": {
+  "oracleText": "Phasing (This phases in or out before you untap during each of your untap steps. While it's phased out, it's treated as though it doesn't exist.)\nAt the beginning of your upkeep, this creature phases out unless you pay {2}{G}{U}.\nWhenever this creature phases in, put a +1/+1 counter on it.",
+  "typeLine": "Creature — Wurm",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "unless": {
+     "cost": "{2}{G}{U}",
+     "payer": "you"
+    },
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "counter": "+1/+1"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "+1/+1",
+       "self": true
+      }
+     }
+    ],
+    "clause": 3,
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Kaito Shizuki": {
+  "oracleText": "At the beginning of your end step, if Kaito entered this turn, he phases out.\n+1: Draw a card. Then discard a card unless you attacked this turn.\n−2: Create a 1/1 blue Ninja creature token with \"This token can't be blocked.\"\n−7: You get an emblem with \"Whenever a creature you control deals combat damage to a player, search your library for a blue or black creature card, put it onto the battlefield, then shuffle.\"",
+  "typeLine": "Legendary Planeswalker — Kaito",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "+1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "+1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "discard",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "type": "creature",
+      "subtype": "ninja",
+      "colors": [
+       "U"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 1
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 1
+       }
+      ]
+     }
+    },
+    "cost": "−2",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "U"
+       ],
+       "type": "creature",
+       "subtype": "ninja",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "U"
+       ],
+       "type": "creature",
+       "subtype": "ninja",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "-2"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "emblem",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "−7",
+    "clause": 4,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "-7"
+    }
+   }
+  ]
+ },
+ "Renegade Silent": {
+  "oracleText": "At the beginning of your end step, goad up to one target creature you don't control and put a +1/+1 counter on this creature. This creature phases out. (Treat it and anything attached to it as though they don't exist until your next turn.)",
+  "typeLine": "Creature — Alien Horror",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "end-step"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "emits": [
+     {
+      "verb": "goad",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "end-step"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "+1/+1",
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "end-step"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Vision, Synthezoid Avenger": {
+  "oracleText": "Flying\nWhenever a player casts a spell, if it isn't that player's turn, choose one —\n• Put a +1/+1 counter on Vision.\n• Vision phases out. (Treat him and anything attached to him as though they don't exist until your next turn.)",
+  "typeLine": "Legendary Artifact Creature — Robot Hero",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "+1/+1",
+       "self": true
+      }
+     }
+    ],
+    "clause": 3,
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 4,
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Galadriel's Dismissal": {
+  "oracleText": "Kicker {2}{W} (You may pay an additional {2}{W} as you cast this spell.)\nTarget creature phases out. If this spell was kicked, each creature target player controls phases out instead. (Treat phased-out creatures and anything attached to them as though they don't exist until their controller's next turn.)",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Teferi's Honor Guard": {
+  "oracleText": "Flanking (Whenever a creature without flanking blocks this creature, the blocking creature gets -1/-1 until end of turn.)\n{U}{U}: This creature phases out. (While it's phased out, it's treated as though it doesn't exist. It phases in before you untap during your next untap step.)",
+  "typeLine": "Creature — Human Knight",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{U}{U}",
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{U}{U}"
+    }
+   }
+  ]
  }
 }
