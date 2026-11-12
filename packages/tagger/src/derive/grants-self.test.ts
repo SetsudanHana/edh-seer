@@ -24,6 +24,8 @@ const SELF: [string, string, string[]][] = [
   ["Zurgo Helmsmasher", "During your turn, Zurgo has indestructible.", ["indestructible"]],
   // A cost that returns another object is not the sentence before "It": the sentence after the cost names the card.
   ["Trench Behemoth", "Return a land you control to its owner's hand: Untap this creature. It gains hexproof until end of turn.", ["hexproof"]],
+  // The card enters AS a copy: the copy is the card, so "it" is the card (1266 review).
+  ["The Fourteenth Doctor", "You may have The Fourteenth Doctor enter as a copy of a Doctor card in your graveyard that was put there from your library this turn. If you do, it gains haste until end of turn.", ["haste"]],
   // A condition before the recipient is not the recipient.
   ["Erebos's Titan", "As long as your opponents control no creatures, this creature has indestructible. (Damage and effects that say \"destroy\" don't destroy it.)", ["indestructible"]],
 ];
@@ -62,6 +64,12 @@ test("the cost of the ability names the card a pronoun means", () => {
   expect(grantsSelfOf(text, ["indestructible"], "Darwin, Adaptive Mutant", "Remove two +1/+1 counters from Darwin")).toBe(true);
   expect(grantsSelfOf(text, ["indestructible"], "Darwin, Adaptive Mutant", "Sacrifice a creature")).toBe(false);
   expect(grantsSelfOf(text, ["indestructible"], "Darwin, Adaptive Mutant")).toBe(false);
+});
+
+// An earlier sentence of the clause that is about another object blocks the cost as the antecedent (Smelt-Ward Ignus: "that creature" is the target).
+test("a cost naming the card is no antecedent once an earlier sentence introduced another object", () => {
+  const text = "Gain control of target creature with power 3 or less until end of turn. Untap that creature. It gains haste until end of turn. Activate only as a sorcery.";
+  expect(grantsSelfOf(text, ["haste"], "Smelt-Ward Ignus", "{2}{R}, Sacrifice this creature")).toBe(false);
 });
 
 test("a grant to anything else is not a self grant", () => {
