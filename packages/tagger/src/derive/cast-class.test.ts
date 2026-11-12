@@ -54,7 +54,7 @@ test("a pile's class is read off the ability that fills it", () => {
 // YOUR OWN CARD OF NO NAMED CLASS is any spell too (the Etali, Primal Storm convention): it can be a deck-mate. Where the words take it from YOUR library, hand or graveyard the emit says `owner: you`, so "a spell you
 // don't own" does not hear it; where they do not say whose ("discard a card", "each player mills", "that source's controller exiles a card from their hand") no owner is written.
 test.each([
-  ["Chandra, Torch of Defiance", "you"], ["Creative Technique", "you"], ["Yennett, Cryptic Sovereign", "you"], ["Conspiracy Theorist", "you"], ["Master of Predicaments", "you"],
+  ["Chandra, Torch of Defiance", "you"], ["Creative Technique", "you"], ["Conspiracy Theorist", "you"], ["Master of Predicaments", "you"],
   ["Malcolm, Alluring Scoundrel", undefined], ["The Ur-Sphinx", undefined], ["Rona, Herald of Invasion // Rona, Tolarian Obliterator", undefined],
 ] as const)("%s casts a card of no named class that can be yours: type spell, owner %s", (name, owner) => {
   const s = casts(name);
@@ -119,6 +119,26 @@ test.each(["God-Eternal Kefnet", "Reversal of Fortune"])("%s copies a card in a 
   const s = casts(name);
   expect(s.length).toBeGreaterThan(0);
   for (const x of s) expect(x.fromZone).toBeUndefined();
+});
+
+// #1608 review: A GATE THAT IS NOT A CARD TYPE IS PART OF THE CLASS. The colour and the mana-value bound the words print ride the emit (`colors`, `stats`), as "nonlegendary" and "monocolored" do (`legendary: false`,
+// `colorCount: mono`); typed bare `spell` these casts met every deck-mate's own cast trigger, whatever its colour or cost.
+test.each([
+  ["Chandra, Dressed to Kill", { colors: ["R"] }], // "If it's red, you may cast it"
+  ["Plargg, Dean of Chaos // Augusta, Dean of Order", { legendary: false, stats: [{ metric: "mana-value", op: "lte", value: 3 }] }], // "a nonlegendary, nonland card with mana value 3 or less"
+  ["Invasion of Alara // Awaken the Maelstrom", { stats: [{ metric: "mana-value", op: "lte", value: 4 }] }], // "two nonland cards with mana value 4 or less"
+  ["Beseech the Mirror", { stats: [{ metric: "mana-value", op: "lte", value: 4 }] }], // "if that spell's mana value is 4 or less"
+  ["Bloodthirsty Adversary", { stats: [{ metric: "mana-value", op: "lte", value: 3 }] }], // "instant and/or sorcery cards with mana value 3 or less"
+  ["Discover the Impossible", { stats: [{ metric: "mana-value", op: "lte", value: 2 }] }], // "if it's an instant spell with mana value 2 or less"
+  ["Emergent Ultimatum", { colorCount: "mono" }], // "up to three monocolored cards"
+] as const)("%s: the printed gate rides the cast", (name, gate) => {
+  const s = casts(name).filter((x) => x.scope !== "all" || name !== "Chandra, Dressed to Kill");
+  expect(s.length).toBeGreaterThan(0);
+  for (const x of s) expect(x).toMatchObject(gate);
+});
+// CEILING pinned: a gate no field can hold leaves the cast unclassed and silent, as at 501. "You may cast it without paying its mana cost if its mana value is odd" (Yennett) is the card's whole point.
+test("Yennett, Cryptic Sovereign: an odd mana value is no class the emit can carry; the cast stays unclassed", () => {
+  expect(casts("Yennett, Cryptic Sovereign").map((x) => x.type)).toEqual([undefined]);
 });
 
 describe("castClassFromPrint", () => {

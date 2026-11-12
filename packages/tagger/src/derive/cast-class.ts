@@ -15,12 +15,21 @@ import type { SubjectFilter } from "../schema.js";
  *  chosen name", Magar of the Magic Strings, Garth One-Eye); (c) a back-reference whose card no words of this clause name (a delayed trigger: Power Pack; "Copy those exiled cards", Baron Helmut Zemo; "the exiled card",
  *  Gale's Redirection; "each exiled card you own with a kick counter on it", Zethi; "this card", Alaundo the Seer, Uvilda; "your commander", Geode Golem); (d) a pile whose filling ability names no card ("exile it instead
  *  of putting it into a graveyard", River Song's Diary) and (e) a "permanent card" (no cast row of the census names one). */
-export type CastClass = Pick<SubjectFilter, "type" | "notType" | "subtype">;
+export type CastClass = Pick<SubjectFilter, "type" | "notType" | "subtype" | "colors" | "stats" | "legendary" | "colorCount">;
 
 const PERMISSION = /\b(?:may|can) (?:look at and )?(?:cast|play)\b|\b(?:player|opponent|they) casts (?:it|them|that card|those cards)\b|\bcast the cop(?:y|ies)\b/i;
 const CLASS_DEPENDS = /\bshares? a card type\b|\bof the other type\b|\bwith the (?:noted|chosen) name\b/i;
 const GATE_BEFORE = /\bif (?:it's|it is|that card is) (an? (?:[a-z-]+,? )*?(?:(?:and\/or|or) [a-z-]+ )?)card, (?:exile it\. )?you may (?:cast|play)\b/i;
-const GATE_AFTER = /\bif (?:it's|it is|that card is|that spell is) (an? (?:[a-z-]+,? )*?(?:(?:and\/or|or) [a-z-]+ )?)spell\b/i;
+const GATE_AFTER = /\bif (?:it's|it is|that card is|that spell is) (an? (?:[a-z-]+,? )*?(?:(?:and\/or|or) [a-z-]+ )?)spell\b( with mana value \d+ or (?:less|greater))?/i;
+/** A GATE THAT IS NOT A CARD TYPE (#1608 review). The colour ("If it's red, you may cast it", Chandra, Dressed to Kill) and the mana-value bound ("with mana value 3 or less", "if that spell's mana value is 4 or less")
+ *  the words print are part of the class and ride the emit as `colors` and `stats`; "nonlegendary" and "monocolored" ride as the subject grammar reads them (`legendary: false`, `colorCount: mono`).
+ *  CEILING: a gate no field holds leaves the cast UNREAD (unclassed and silent, as at DERIVE 501): an odd or even mana value (Yennett, Cryptic Sovereign). A bound that is a relation to another object stays out of
+ *  the class and the cast stays classed: "a spell with lesser mana value" (Rashmi, Eternities Crafter), "less than the number of artifacts you control" (Rashmi and Ragavan), "the two spells have the same mana value"
+ *  (Powerbalance), "a card of that color" (Sanar), "total mana value 5 or greater" over a pile (Dream Harvest). */
+const COLOUR_GATE = /\bif (?:it's|it is|that card is) (white|blue|black|red|green), you may (?:cast|play)\b/i;
+const MV_TAIL = /^ with mana value \d+ or (?:less|greater)\b/i;
+const MV_GATE = /\bmana value is (\d+) or (less|greater)\b/i;
+const UNHOLDABLE_GATE = /\bmana value is (?:odd|even)\b|\b(?:an )?(?:odd|even) mana value\b/i;
 const CLASS_WORD = /^(?:non-?)?(?:instant|sorcery|creature|artifact|enchantment|planeswalker|battle|land|permanent|legendary|token|basic|historic|monocolored|multicolored|colorless|white|blue|black|red|green|kindred)$/i;
 const CONNECTOR = /^(?:or|and|and\/or)$/i;
 const NUMBER_WORD = /^(?:x|one|two|three|four|five|six|seven|eight|nine|ten|\d+)$/i;
@@ -34,16 +43,21 @@ function toClass(s: SubjectFilter): CastClass | undefined {
   const notTypes = [s.notType ?? []].flat().filter((t) => t !== "land");
   const subtypes = [s.subtype ?? []].flat();
   const one = <T>(xs: T[]): T | T[] => (xs.length === 1 ? xs[0]! : xs);
-  if (types.length === 0 && notTypes.length === 0) return { type: "spell" };
   return {
     type: types.length === 0 ? "spell" : (one(types) as CastClass["type"]),
     ...(notTypes.length > 0 ? { notType: notTypes } : {}),
-    // A subtype beside a LIST of types ("instant, sorcery, and/or Tamiyo planeswalker cards") belongs to one member of it: the list alone is kept.
+    // CEILING: a subtype beside a LIST of types ("instant, sorcery, and/or Tamiyo planeswalker cards", The Tale of Tamiyo) belongs to one member of it, and no field ties a subtype to one type of a list: the list alone
+    // is kept, so the cast reads as any planeswalker's and meets a planeswalker-spell payoff no Tamiyo deck needs (Interplanar Beacon).
     ...(subtypes.length > 0 && types.length === 1 ? { subtype: one(subtypes) as CastClass["subtype"] } : {}),
+    ...(s.colors !== undefined ? { colors: s.colors } : {}),
+    ...(s.stats !== undefined ? { stats: s.stats } : {}),
+    ...(s.legendary === false ? { legendary: false } : {}),
+    ...(s.colorCount !== undefined ? { colorCount: s.colorCount } : {}),
   };
 }
 
-/** The nearest card phrase of `region` that names a card of its own: its class words ("instant or sorcery", "nonlegendary, nonland", "Goblin creature"), "" for a card of no class, undefined when the region names none. */
+/** The nearest card phrase of `region` that names a card of its own, as "<class words>|<mana-value tail>": the class words ("instant or sorcery", "nonlegendary", "Goblin creature"; none for a card of no class) and the
+ *  bound printed straight after the card (" with mana value 4 or less"). Undefined when the region names no card. */
 function nearestCard(region: string, permissionAt = 0): string | undefined {
   const cards = [...region.matchAll(/\bcards?\b(?!'s| types?\b| names?\b)/gi)];
   for (let i = cards.length - 1; i >= 0; i--) {
@@ -69,8 +83,9 @@ function nearestCard(region: string, permissionAt = 0): string | undefined {
     if (BACK_REFERENCE.test(boundary) && !(boundary.toLowerCase() === "the" && cls.length > 0)) continue;
     // "If it's a land card, ... Otherwise, you may cast it": the condition's class is not the card taken.
     if (/\bif (?:it's|it is|that card is) an?$/i.test(words.slice(0, words.length - cls.length).join(" "))) continue;
-    // A land is never cast: "nonland" narrows nothing.
-    return cls.filter((w) => !/^non-?land,?$/i.test(w)).join(" ").replace(/^(?:or|and|and\/or) /i, "");
+    // A land is never cast: "nonland" narrows nothing. The mana-value bound printed straight after the card ("cards with mana value 4 or less") is kept with it; a TOTAL over a pile is not one card's bound.
+    const tail = MV_TAIL.exec(region.slice(at + cards[i]![0].length))?.[0] ?? "";
+    return `${cls.filter((w) => !/^non-?land,?$/i.test(w)).join(" ").replace(/^(?:or|and|and\/or) /i, "")}|${tail}`;
   }
   return undefined;
 }
@@ -80,20 +95,29 @@ export function castClassFromPrint(clauseText: string, pileTexts: readonly strin
   if (!m) return undefined;
   const end = clauseText.indexOf(".", m.index);
   const region = clauseText.slice(0, end < 0 ? undefined : end);
-  if (CLASS_DEPENDS.test(region)) return undefined;
+  if (CLASS_DEPENDS.test(region) || UNHOLDABLE_GATE.test(region)) return undefined;
+  // The gates the permission's own words add to whatever card is taken: a colour, a mana-value bound.
+  const colour = COLOUR_GATE.exec(region)?.[1]?.toLowerCase();
+  const bound = MV_GATE.exec(region.slice(m.index));
+  const boundTail = bound ? ` with mana value ${bound[1]} or ${bound[2]!.toLowerCase()}` : "";
+  const read = (near: string): CastClass | undefined => {
+    const [words = "", tail = ""] = near.split("|");
+    const phrase = [colour, words].filter(Boolean).join(" ");
+    return toClass(parse(`a ${phrase} card${tail || boundTail}`.replace(/\s+/g, " ")));
+  };
   const gate = GATE_BEFORE.exec(region) ?? GATE_AFTER.exec(region.slice(m.index));
   if (gate) {
     const words = gate[1]!.replace(/^an? /i, "").replace(/\bnon-?land,? ?/gi, "").trim();
-    if (words !== "") return toClass(parse(`a ${words} card`));
+    if (words !== "" || gate[2]) return read(`${words}|${gate[2] ?? ""}`);
   }
   const near = nearestCard(region, m.index);
-  if (near !== undefined) return near === "" ? { type: "spell" } : toClass(parse(`a ${near} card`));
+  if (near !== undefined) return read(near);
   if (PILE.test(region)) {
-    const fills = pileTexts.map((t) => { const c = nearestCard(t); return c === undefined ? undefined : c === "" ? ({ type: "spell" } as CastClass) : toClass(parse(`a ${c} card`)); });
+    const fills = pileTexts.map((t) => { const c = nearestCard(t); return c === undefined ? undefined : read(c); });
     if (fills.length > 0 && fills.every((c) => c !== undefined && JSON.stringify(c) === JSON.stringify(fills[0]))) return fills[0];
     return undefined;
   }
-  return SOMEONES_HAND.test(region.slice(0, m.index)) ? { type: "spell" } : undefined;
+  return SOMEONES_HAND.test(region.slice(0, m.index)) ? read("|") : undefined;
 }
 
 /** THE CARD CAST IS CERTAINLY YOURS (#1608): the words up to the permission take it from YOUR library, hand or graveyard and name no other zone ("Exile the top card of your library. You may cast that card", Chandra, Torch
