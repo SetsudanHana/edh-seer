@@ -5281,5 +5281,136 @@
     ]
    }
   ]
+ },
+ "Forsaken Monument": {
+  "source": {
+   "name": "Forsaken Monument",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "Colorless creatures you control get +2/+2.\nWhenever you tap a permanent for {C}, add an additional {C}.\nWhenever you cast a colorless spell, you gain 2 life.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 5,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{5}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Colorless creatures you control",
+      "amount": "+2/+2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "tapped-for-mana",
+     "subject": "a permanent",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a colorless spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Emergent Ultimatum": {
+  "source": {
+   "name": "Emergent Ultimatum",
+   "typeLine": "Sorcery",
+   "oracleText": "Search your library for up to three monocolored cards with different names and exile them. An opponent chooses one of those cards. Shuffle that card into your library. You may cast the other cards without paying their mana costs. Exile Emergent Ultimatum.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G",
+    "U"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "B",
+    "G",
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{B}{B}{G}{G}{G}{U}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "up to three monocolored cards with different names",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "one of those cards chosen by an opponent",
+      "fromZone": "exile",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "the other cards",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "exile",
+      "object": "Emergent Ultimatum",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
  }
 }

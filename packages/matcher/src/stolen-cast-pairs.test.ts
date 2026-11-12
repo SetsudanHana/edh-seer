@@ -245,3 +245,8 @@ test("Sanar casts cards 'of that color': no self reason with colourless Ulamog, 
   expect(castTags("Sanar, Innovative First-Year", "Artisan of Kozilek")).toEqual([]);
   expect(castTags("Sanar, Innovative First-Year", "Echo Storm")).not.toEqual([]);
 });
+
+// #1612: a cast of "a card of that color" (Sanar) or of "monocolored cards" (Emergent Ultimatum) is never a colourless spell: Forsaken Monument's "whenever you cast a colorless spell" does not hear it.
+test.each(["Sanar, Innovative First-Year", "Emergent Ultimatum"])("%s casts a coloured card: no 'colorless spell' reason with Forsaken Monument", (source) => {
+  expect(castTags(source, "Forsaken Monument")).toEqual([]);
+});

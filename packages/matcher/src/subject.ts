@@ -294,7 +294,11 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
     // matched nothing at all. C is satisfied by having NO colour, and by nothing else. 83 corpus
     // subjects demand it. A producer parsed from a filter ("target colorless creature", Ruins of
     // Oran-Rief) spells it ["C"] as well, and that is colourless too.
-    const satisfied = (wanted.includes("C") && (has.size === 0 || has.has("C")))
+    // ...UNLESS THE PRODUCER SAYS IT HAS A COLOUR WITHOUT NAMING IT (#1612): a cast of "a card of that color" (`colorCount: colored`, Sanar, Innovative First-Year) or of "monocolored cards" (`mono`, Emergent Ultimatum)
+    // records no colour list, and an empty list read as colourless: both met Forsaken Monument's "whenever you cast a colorless spell". Every `colorCount` value counts at least one colour.
+    // CEILING: the mirror (a producer known to be colourless against a coloured demand) needs no line: `colorCount` has no colourless value, and a producer with no colour already fails a coloured demand below.
+    const statesAColour = producer.colorCount !== undefined && !has.has("C");
+    const satisfied = (wanted.includes("C") && !statesAColour && (has.size === 0 || has.has("C")))
       || wanted.some((c) => c !== "C" && has.has(c));
     if (!satisfied) return false;
   }

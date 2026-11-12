@@ -553,6 +553,16 @@ test("an artifact cast does not meet 'a creature spell' (Thada Adel: the artifac
   expect(subjectMatches(s({ type: ["artifact", "creature"], fromZone: "exile", owner: "opp" }), s({ type: "creature" }), H)).toBe(true);
 });
 
+// #1612: A PRODUCER THAT SAYS IT IS COLOURED IS NOT COLOURLESS. "Whenever you cast a colorless spell" (`colors: ["C"]`) is met by a producer with no colour, and a cast that records no colour list but states a colour
+// count ("a card of that color": `colorCount: colored`, Sanar; "monocolored cards": `mono`, Emergent Ultimatum) passed as one.
+test("a colourless demand is not met by a producer whose colorCount says it has a colour", () => {
+  const colourless = s({ type: "spell", colors: ["C"] });
+  expect(subjectMatches(s({ type: "spell" }), colourless, H)).toBe(true);
+  for (const colorCount of ["colored", "mono", "multi", "exactly-two", "all"] as const) expect(subjectMatches(s({ type: "spell", colorCount }), colourless, H), colorCount).toBe(false);
+  // A coloured demand is untouched: a producer that names no colour still fails it, as before.
+  expect(subjectMatches(s({ type: "spell", colorCount: "colored" }), s({ type: "spell", colors: ["U"] }), H)).toBe(false);
+});
+
 test("a player branch is met by a player-shaped producer only", () => {
   const want = s({ control: "any", anyOf: [{ player: true }, { type: "planeswalker" }] });
   expect(subjectMatches(s({ control: "opp" }), want, H)).toBe(true);
