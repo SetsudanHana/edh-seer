@@ -9172,5 +9172,1051 @@
    }
   ],
   "segmentHash": "ccb459ff3c7f3a907daff56563f38d06aa640225ea27163ffc2ac6cd915920fa"
+ },
+ "Ancient Cellarspawn": {
+  "source": {
+   "name": "Ancient Cellarspawn",
+   "typeLine": "Enchantment Creature — Horror",
+   "oracleText": "Each spell you cast that's a Demon, Horror, or Nightmare costs {1} less to cast.\nWhenever you cast a spell, if the amount of mana spent to cast it was less than its mana value, target opponent loses life equal to the difference.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{1}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "Demon, Horror, or Nightmare spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "a spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "target opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the difference between mana value and mana spent",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "2e8f88425a0dee2d51fe1004193b88050e980dc3098e8007ac4caf77288ec818"
+ },
+ "Crackling Spellslinger": {
+  "source": {
+   "name": "Crackling Spellslinger",
+   "typeLine": "Creature — Human Wizard",
+   "oracleText": "Flash\nWhen this creature enters, if you cast it, the next instant or sorcery spell you cast this turn has storm. (When you cast that spell, copy it for each spell cast before it this turn. You may choose new targets for the copies.)",
+   "keywords": [
+    "Flash"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{3}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "the next instant or sorcery spell you cast this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "storm",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "8f389377040caba9d61ff5b3767305957b53cbe1acce96f9d049923ed78f7fb4"
+ },
+ "Flamehold Grappler": {
+  "source": {
+   "name": "Flamehold Grappler",
+   "typeLine": "Creature — Human Monk",
+   "oracleText": "First strike\nWhen this creature enters, copy the next spell you cast this turn when you cast it. You may choose new targets for the copy. (A copy of a permanent spell becomes a token.)",
+   "keywords": [
+    "First strike"
+   ],
+   "colors": [
+    "R",
+    "U",
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R",
+    "U",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{U}{R}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "First strike",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "the next spell you cast this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "copy",
+      "object": "the next spell you cast this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "dad1ae7a2e671d53bb820a3d5903eb5c994fb490c93615e32d4d4bd1dfca4727"
+ },
+ "Gruul Scrapper": {
+  "source": {
+   "name": "Gruul Scrapper",
+   "typeLine": "Creature — Human Berserker",
+   "oracleText": "When this creature enters, if {R} was spent to cast it, it gains haste until end of turn.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G",
+    "R"
+   ],
+   "power": "3",
+   "toughness": "2",
+   "manaCost": "{3}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "haste until end of turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "d55b631edc8d7ee5dcbac95d6eb4c584dd1e8d1d0447bac43c7f42fc4f080515"
+ },
+ "Jaded Sell-Sword": {
+  "source": {
+   "name": "Jaded Sell-Sword",
+   "typeLine": "Creature — Dragon Warrior",
+   "oracleText": "When this creature enters, if mana from a Treasure was spent to cast it, it gains first strike and haste until end of turn.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "4",
+   "toughness": "3",
+   "manaCost": "{3}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "first strike",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "haste",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f790a65286b5d49e983e0fdc5437322dd7b994aff9532255467db1461a41ff46"
+ },
+ "Lavinia, Azorius Renegade": {
+  "source": {
+   "name": "Lavinia, Azorius Renegade",
+   "typeLine": "Legendary Creature — Human Soldier",
+   "oracleText": "Each opponent can't cast noncreature spells with mana value greater than the number of lands that player controls.\nWhenever an opponent casts a spell, if no mana was spent to cast it, counter that spell.",
+   "keywords": [],
+   "colors": [
+    "U",
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{W}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "cast noncreature spells with mana value greater than the number of lands that player controls",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "counter-spell",
+      "object": "that spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "71a7704e4bfc92962e2bb8e22086fa8ae26bbbaacaa2a19283e21a8f9854c316"
+ },
+ "Lutri, the Spellchaser": {
+  "source": {
+   "name": "Lutri, the Spellchaser",
+   "typeLine": "Legendary Creature — Elemental Otter",
+   "oracleText": "Companion — Each nonland card in your starting deck has a different name. (If this card is your chosen companion, you may put it into your hand from outside the game for {3} as a sorcery.)\nFlash\nWhen Lutri enters, if you cast it, copy target instant or sorcery spell you control. You may choose new targets for the copy.",
+   "keywords": [
+    "Companion",
+    "Flash"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "power": "3",
+   "toughness": "2",
+   "manaCost": "{1}{U/R}{U/R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "each nonland card in your starting deck has a different name",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "target instant or sorcery spell you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "copy",
+      "object": "target instant or sorcery spell you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "4532db62e216cebfad513586ab301ddddf8d66700a7aee1c874c55b6d5b41d33"
+ },
+ "Marut": {
+  "source": {
+   "name": "Marut",
+   "typeLine": "Artifact Creature — Construct",
+   "oracleText": "Trample\nWhen this creature enters, if mana from a Treasure was spent to cast it, create a Treasure token for each mana from a Treasure spent to cast it. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+   "keywords": [
+    "Treasure",
+    "Trample"
+   ],
+   "colors": [],
+   "manaValue": 8,
+   "colorIdentity": [],
+   "power": "7",
+   "toughness": "7",
+   "manaCost": "{8}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each mana from a Treasure spent to cast it",
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "37d10c81aa19b1aa2cea91d7ca7120666be5810ea6455c1c418fd6dfabb769be"
+ },
+ "Radiant Performer": {
+  "source": {
+   "name": "Radiant Performer",
+   "typeLine": "Creature — Human Wizard",
+   "oracleText": "Flash\nWhen this creature enters, if you cast it from your hand, choose target spell or ability that targets only a single permanent or player. Copy that spell or ability for each other permanent or player the spell or ability could target. Each copy targets a different one of those permanents and players.",
+   "keywords": [
+    "Flash"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{3}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "this creature from your hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "copy",
+      "object": "target spell or ability that targets only a single permanent or player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each other permanent or player the spell or ability could target",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "c26e7d7921128a3d6a9df72bb34a403ae8d75acb3c145139705b4310e3941486"
+ },
+ "Ran and Shaw": {
+  "source": {
+   "name": "Ran and Shaw",
+   "typeLine": "Legendary Creature — Dragon",
+   "oracleText": "Flying, firebending 2\nWhen Ran and Shaw enter, if you cast them and there are three or more Dragon and/or Lesson cards in your graveyard, create a token that's a copy of Ran and Shaw, except it's not legendary.\n{3}{R}: Dragons you control get +2/+0 until end of turn.",
+   "keywords": [
+    "Flying",
+    "Firebending"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{3}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, firebending 2",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Ran and Shaw",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a token that's a copy of Ran and Shaw, except it's not legendary",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "Ran and Shaw",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Dragons you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+2/+0",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "8591244b49bd1a9c6c2f2e2de56bd6403767eed9c58ac5661a909586be7523e4"
+ },
+ "Territory Forge": {
+  "source": {
+   "name": "Territory Forge",
+   "typeLine": "Artifact",
+   "oracleText": "When this artifact enters, if you cast it, exile target artifact or land.\nThis artifact has all activated abilities of the exiled card.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target artifact or land",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "all activated abilities of the exiled card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f2fd1436064064cb13d49ee807256ec933cf87a03d69dfb64b6ce861552060c7"
+ },
+ "The One Ring": {
+  "source": {
+   "name": "The One Ring",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "Indestructible\nWhen The One Ring enters, if you cast it, you gain protection from everything until your next turn.\nAt the beginning of your upkeep, you lose 1 life for each burden counter on The One Ring.\n{T}: Put a burden counter on The One Ring, then draw a card for each burden counter on The One Ring.",
+   "keywords": [
+    "Indestructible"
+   ],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Indestructible",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "The One Ring",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "protection from everything until your next turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": null,
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1 for each burden counter on The One Ring",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "burden",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": null,
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each burden counter on The One Ring",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "34a6bcdc05906410f46deec2ea83041730dd3c0ad14f63a3d675ffcd70ea9873"
+ },
+ "The Prima Vista": {
+  "source": {
+   "name": "The Prima Vista",
+   "typeLine": "Legendary Artifact — Vehicle",
+   "oracleText": "Flying\nWhenever you cast a noncreature spell, if at least four mana was spent to cast it, The Prima Vista becomes an artifact creature until end of turn.\nCrew 2 (Tap any number of creatures you control with total power 2 or more: This Vehicle becomes an artifact creature until end of turn.)",
+   "keywords": [
+    "Flying",
+    "Crew"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "5",
+   "toughness": "3",
+   "manaCost": "{4}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a noncreature spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "The Prima Vista becomes an artifact creature until end of turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Crew 2",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "c37e8af8565a9f7311b98f1b747634ccb65df8b83c55286763a0088a846905ea"
+ },
+ "The Sibsig Ceremony": {
+  "source": {
+   "name": "The Sibsig Ceremony",
+   "typeLine": "Legendary Enchantment",
+   "oracleText": "Creature spells you cast cost {2} less to cast.\nWhenever a creature you control enters, if you cast it, destroy that creature, then create a 2/2 black Zombie Druid creature token.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{B}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "Creature spells you cast cost {2} less to cast",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a 2/2 black Zombie Druid creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f804d84ff14f38bac48b04b5a7d883c18b48f3b49c5a13e775ac481dd63f80af"
+ },
+ "Mosswood Dreadknight // Dread Whispers": {
+  "source": {
+   "name": "Mosswood Dreadknight // Dread Whispers",
+   "typeLine": "Creature — Human Knight // Sorcery — Adventure",
+   "oracleText": "Trample\nWhen this creature dies, you may cast it from your graveyard as an Adventure until the end of your next turn.\n//\nYou draw a card and you lose 1 life. (Then exile this card. You may cast the creature later from exile.)",
+   "keywords": [
+    "Trample"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "power": "3",
+   "toughness": "2",
+   "manaCost": "{1}{G} // {1}{B}",
+   "layout": "adventure"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "it",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ed37ff1d4f1147689bb05964de759a7796a701876467541d202dd4342433e429"
+ },
+ "Adversary by Algorithm": {
+  "source": {
+   "name": "Adversary by Algorithm",
+   "typeLine": "Sorcery",
+   "oracleText": "Create a 3/3 colorless Illusion artifact creature token.\nBeam me up {3}{G} (You may cast this card from your graveyard for {3}{G} if you also return a creature you control to its owner's hand. Then exile this spell.)",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{G}",
+   "layout": "normal"
+  },
+  "canonical": []
  }
 }
