@@ -957,8 +957,8 @@ test("the flicker shield reads the derived `flicker` ability, not the printed se
   // The printed pattern needed "exile target" and "return it / that card": "each creature you control", "any number of target creatures ... Return those cards", "up to two target creatures ... those
   // cards", a replacement ("would be put into a graveyard ..., exile it instead. Return it ...") and a flash creature's "any number of other target permanents" were all missed.
   for (const name of ["Ghostway", "Eerie Interlude", "Displace", "Cosmic Intervention", "Silver Surfer, Cosmic Voyager", "Ephemerate", "Restoration Angel", "Otherworldly Journey", "Parting Gust"]) expect(shields(name), name).toBe(true);
-  // Not at instant speed, by the ruling's own words ("an instant, or a card with flash"): a sorcery, and an ACTIVATED flicker on a creature without flash (Eldrazi Displacer: main's behaviour, unruled).
-  for (const name of ["Flicker", "Flickerwisp", "Brago, King Eternal", "Eldrazi Displacer"]) expect(shields(name), name).toBe(false);
+  // Not at instant speed: a sorcery, and a TRIGGERED flicker on a permanent without flash. (An ACTIVATED flicker is at instant speed: owner 2026-11-12, tested below.)
+  for (const name of ["Flicker", "Flickerwisp", "Brago, King Eternal"]) expect(shields(name), name).toBe(false);
   // Restoration Angel without its Flash keyword is a sorcery-speed blink.
   expect(ruleMatches(rule, realCard("Restoration Angel"))).toBe(false);
   // A card that exiles and returns only ITSELF shields nothing else, and removal that never returns is no flicker.
@@ -970,6 +970,21 @@ test("the flicker shield reads the derived `flicker` ability, not the printed se
   expect(ruleMatches(rule, flashCard({ control: "any", token: null, self: true }))).toBe(false);
   // CEILING over-reads, named in the rule's why: Phelia has flash but flickers on ATTACK; derive reads Audacious Swap's "If it's a land card, they put it onto the battlefield" as a one-branch return.
   for (const name of ["Phelia, Exuberant Shepherd", "Audacious Swap"]) expect(shields(name), name).toBe(true);
+});
+
+// owner 2026-11-12: an ACTIVATED flicker on a permanent without flash is Protection (it is at instant speed too), on any card type. It still refuses a flicker of only the card itself and of only opponents' permanents.
+test("an activated flicker is protection on any card type", () => {
+  const rule = loadRules().rules.find((r) => r.id === "protection.flicker")!;
+  const shields = (name: string): boolean => ruleMatches(rule, { ...flick(name), card: { ...flick(name).card, oracleText: "" } });
+  // Creatures, and artifacts that exile your permanent and later return it ("Return each creature card exiled with this artifact").
+  for (const name of ["Eldrazi Displacer", "Mistmeadow Witch", "Roon of the Hidden Realm", "Emiel the Blessed", "Abuelo, Ancestral Echo", "Nephalia Smuggler", "Cold Storage", "Synod Sanctum"]) expect(shields(name), name).toBe(true);
+  // Written rows: an activated flicker of only the card itself, or of only an opponent's permanent, shields nothing.
+  const activated = (subject: object): DeckCard => derivedCard("Written", [{ kind: "activated", effect: { kind: "flicker", subject } }], "Artifact");
+  expect(ruleMatches(rule, activated({ control: "any", token: null, type: "creature", scope: "target", other: true }))).toBe(true);
+  expect(ruleMatches(rule, activated({ control: "opp", token: null, type: "creature", scope: "target" }))).toBe(false);
+  expect(ruleMatches(rule, activated({ control: "any", token: null, self: true }))).toBe(false);
+  // A triggered flicker on a card without flash is still no shield.
+  expect(ruleMatches(rule, derivedCard("Written", [{ kind: "triggered", effect: { kind: "flicker", subject: { control: "you", token: null, type: "creature", scope: "target" } } }], "Creature"))).toBe(false);
 });
 
 /** A card that carries only derived abilities, as derive writes them (#1266: stackInteraction reads emits and effect kinds, no longer the printed text). */
