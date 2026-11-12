@@ -15,6 +15,13 @@ const SELF: [string, string, string[]][] = [
   // A trigger head that names the card: its "it" is the card.
   ["Primaris Chaplain", "Rosarius — Whenever this creature attacks, it gains indestructible until end of turn.", ["indestructible"]],
   ["Temur Sabertooth", "{1}{G}: You may return another creature you control to its owner's hand. If you do, this creature gains indestructible until end of turn.", ["indestructible"]],
+  // A pronoun that is the card (he, she) after a sentence or a cost that names it, and the first word of a name as a short name (1266 review).
+  ["Darwin, Adaptive Mutant", "Remove two +1/+1 counters from Darwin: He gains indestructible until end of turn. (Damage and effects that say \"destroy\" don't destroy him.)", ["indestructible"]],
+  ["Hercules, Olympian Hero", "Whenever Hercules attacks, put a +1/+1 counter on him. He gains indestructible until end of turn.", ["indestructible"]],
+  ["Hercules, Prince of Power", "Power-up \u2014 {4}{G}: Put a +1/+1 counter on Hercules. He gains vigilance, indestructible, and haste until end of turn. (Activate each power-up ability only once. Reduce the cost by his mana cost if he entered this turn.)", ["indestructible"]],
+  ["Luke Cage, Power Man", "Unbreakable Skin \u2014 Whenever Luke Cage attacks alone, he gets +2/+0 and gains indestructible until end of turn. (Damage and effects that say \"destroy\" don't destroy him.)", ["indestructible"]],
+  ["Miles Morales // Ultimate Spider-Man", "Camouflage \u2014 {2}: Put a +1/+1 counter on Ultimate Spider-Man. He gains hexproof and becomes colorless until end of turn.", ["hexproof"]],
+  ["Zurgo Helmsmasher", "During your turn, Zurgo has indestructible.", ["indestructible"]],
   // A condition before the recipient is not the recipient.
   ["Erebos's Titan", "As long as your opponents control no creatures, this creature has indestructible. (Damage and effects that say \"destroy\" don't destroy it.)", ["indestructible"]],
 ];
