@@ -149,3 +149,11 @@ test("Grolnok, the Omnivore plays and casts cards you own in exile: fromZone exi
   expect(s.length).toBe(2);
   for (const x of s) expect({ fromZone: x.fromZone, owner: x.owner, control: x.control }).toEqual({ fromZone: "exile", owner: "you", control: "you" });
 });
+
+// #1608 item 4: THE CARD CAST IS THE ONE EXILED, NOT THE PERMANENT TARGETED. "The owner of target nonenchantment permanent shuffles it into their library, then exiles the top card of their library. If it's a land card, they
+// put it onto the battlefield. Otherwise, they may cast it" (Audacious Swap): the cast's "it" is the exiled top card, of any class. The emit carried the target's class (`notType: enchantment`, `scope: target`).
+test("Audacious Swap: the cast is of the exiled top card, any spell, not of the targeted nonenchantment permanent", () => {
+  const s = emits("Audacious Swap", "cast");
+  expect(s.length).toBe(1);
+  expect({ type: s[0]!.type, notType: s[0]!.notType, scope: s[0]!.scope, fromZone: s[0]!.fromZone, control: s[0]!.control }).toEqual({ type: "spell", notType: undefined, scope: undefined, fromZone: "exile", control: "any" });
+});
