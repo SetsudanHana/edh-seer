@@ -717,6 +717,16 @@ test("phasing aimed only at an opponent's permanent is not protection", () => {
   for (const name of ["Teferi's Reproach", "Divine Smite", "Sapphire Charm", "Teferi, Master of Time", "Teferi, Timeless Voyager"]) expect(protectsDerived(name), name).toBe(false);
 });
 
+// owner 2026-11-12: a targeting ban against opponents handed to something that is not the card is Protection. The derived `targeting-ban` kind carries who is protected (`effect.subject`) and from whom (`targetingBan.source.control`).
+test("a targeting ban against opponents, on something other than the card, is protection", () => {
+  // "Target creature can't be the target of spells or abilities your opponents control this turn", the Aura form, the board form, and the lands-and-graveyard form.
+  for (const name of ["Vines of Vastwood", "Canopy Cover", "Shielding Plax", "Veilstone Amulet", "Tomik, Distinguished Advokist", "Display of Dominance"]) expect(protectsDerived(name), name).toBe(true);
+  // The card's own ban is hexproof on itself (a stat), and a ban from ANY source or from lands/graveyards is not against opponents.
+  for (const name of ["Thrun, Breaker of Silence", "Shanna, Sisay's Legacy", "Karplusan Strider"]) expect(protectsDerived(name), name).toBe(false);
+  // A ban whose source is any player is not aimed at opponents (the ruling names opponents): Anti-Magic Aura, Ground Seal, Autumn's Veil (blue and black spells, any source).
+  for (const name of ["Anti-Magic Aura", "Ground Seal", "Autumn's Veil"]) expect(protectsDerived(name), name).toBe(false);
+});
+
 test("the one printed residue: spells that can't be countered and protection for the player", () => {
   // CEILING (see the rule's why): derive reads neither, so these stand on printed text; with the text blanked nothing derived says so.
   for (const name of ["Delighted Halfling", "Vexing Shusher", "The One Ring", "Seht's Tiger", "Solitary Confinement"]) {

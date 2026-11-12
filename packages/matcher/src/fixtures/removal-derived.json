@@ -33268,5 +33268,584 @@
     }
    }
   ]
+ },
+ "Vines of Vastwood": {
+  "oracleText": "Kicker {G} (You may pay an additional {G} as you cast this spell.)\nTarget creature can't be the target of spells or abilities your opponents control this turn. If this spell was kicked, that creature gets +4/+4 until end of turn.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "targeting-ban",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "targetingBan": {
+     "by": [
+      "spell",
+      "ability"
+     ],
+     "source": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "pump",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "amount": "+4/+4",
+    "gate": {
+     "kind": "unknown",
+     "text": "this spell was kicked"
+    },
+    "clause": 2,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Canopy Cover": {
+  "oracleText": "Enchant creature\nEnchanted creature can't be blocked except by creatures with flying or reach.\nEnchanted creature can't be the target of spells or abilities your opponents control.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "evasion"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "targeting-ban",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "targetingBan": {
+     "by": [
+      "spell",
+      "ability"
+     ],
+     "source": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Tomik, Distinguished Advokist": {
+  "oracleText": "Flying\nLands on the battlefield and land cards in graveyards can't be the targets of spells or abilities your opponents control.\nYour opponents can't play land cards from graveyards.",
+  "typeLine": "Legendary Creature — Human Advisor",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "targeting-ban",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "targetingBan": {
+     "by": [
+      "spell",
+      "ability"
+     ],
+     "source": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Shielding Plax": {
+  "oracleText": "({G/U} can be paid with either {G} or {U}.)\nEnchant creature\nWhen this Aura enters, draw a card.\nEnchanted creature can't be the target of spells or abilities your opponents control.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "targeting-ban",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "targetingBan": {
+     "by": [
+      "spell",
+      "ability"
+     ],
+     "source": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "clause": 4,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Veilstone Amulet": {
+  "oracleText": "Whenever you cast a spell, creatures you control can't be the targets of spells or abilities your opponents control this turn.",
+  "typeLine": "Artifact",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "targeting-ban",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "cast"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell"
+     }
+    },
+    "targetingBan": {
+     "by": [
+      "spell",
+      "ability"
+     ],
+     "source": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "clause": 1,
+    "repeats": "repeatable"
+   }
+  ]
+ },
+ "Display of Dominance": {
+  "oracleText": "Choose one —\n• Destroy target blue or black noncreature permanent.\n• Permanents you control can't be the targets of blue or black spells your opponents control this turn.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "colors": [
+        "U",
+        "B"
+       ],
+       "type": [
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "land",
+        "battle"
+       ],
+       "notType": [
+        "creature"
+       ],
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "targeting-ban",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "permanent",
+      "scope": "all"
+     }
+    },
+    "targetingBan": {
+     "by": [
+      "spell"
+     ],
+     "source": {
+      "control": "opp",
+      "token": null,
+      "colors": [
+       "U",
+       "B"
+      ]
+     }
+    },
+    "clause": 3,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Thrun, Breaker of Silence": {
+  "oracleText": "This spell can't be countered.\nTrample\nThrun can't be the target of nongreen spells your opponents control or abilities from nongreen sources your opponents control.\nDuring your turn, Thrun has indestructible.",
+  "typeLine": "Legendary Creature — Troll Shaman",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "targeting-ban",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "self": true
+     }
+    },
+    "targetingBan": {
+     "by": [
+      "spell",
+      "ability"
+     ],
+     "source": {
+      "control": "opp",
+      "token": null,
+      "notColors": [
+       "G"
+      ]
+     }
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "clause": 4,
+    "repeats": "continuous",
+    "grants": [
+     "indestructible"
+    ],
+    "grantsSelf": true
+   }
+  ]
+ },
+ "Shanna, Sisay's Legacy": {
+  "oracleText": "Shanna can't be the target of abilities your opponents control.\nShanna gets +1/+1 for each creature you control.",
+  "typeLine": "Legendary Creature — Human Warrior",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "targeting-ban",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "self": true
+     }
+    },
+    "targetingBan": {
+     "by": [
+      "ability"
+     ],
+     "source": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump",
+     "scaling": "per-creature",
+     "scalingSubject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "zone": "battlefield"
+     }
+    },
+    "amount": "+1/+1 for each creature you control",
+    "clause": 2,
+    "repeats": "continuous",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "you",
+      "token": null,
+      "type": "creature"
+     }
+    }
+   }
+  ]
+ },
+ "Anti-Magic Aura": {
+  "oracleText": "Enchant creature\nEnchanted creature can't be the target of spells and can't be enchanted by other Auras.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "targeting-ban",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "targetingBan": {
+     "by": [
+      "spell"
+     ],
+     "source": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Ground Seal": {
+  "oracleText": "When this enchantment enters, draw a card.\nCards in graveyards can't be the targets of spells or abilities.",
+  "typeLine": "Enchantment",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "targeting-ban",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "zone": "graveyard"
+     }
+    },
+    "targetingBan": {
+     "by": [
+      "spell",
+      "ability"
+     ],
+     "source": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Autumn's Veil": {
+  "oracleText": "Spells you control can't be countered by blue or black spells this turn, and creatures you control can't be the targets of blue or black spells this turn.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "targeting-ban",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    },
+    "targetingBan": {
+     "by": [
+      "spell"
+     ],
+     "source": {
+      "control": "any",
+      "token": null,
+      "colors": [
+       "U",
+       "B"
+      ]
+     }
+    },
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Karplusan Strider": {
+  "oracleText": "This creature can't be the target of blue or black spells.",
+  "typeLine": "Creature — Yeti",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "targeting-ban",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "targetingBan": {
+     "by": [
+      "spell"
+     ],
+     "source": {
+      "control": "any",
+      "token": null,
+      "colors": [
+       "U",
+       "B"
+      ]
+     }
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   }
+  ]
  }
 }
