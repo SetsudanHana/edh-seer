@@ -4273,7 +4273,6 @@
 "Dream Cache": ["role:draw"],
 "Dream Chisel": ["role:ramp"],
 "Dream Eater": ["answer:artifact","answer:creature","answer:enchantment","answer:planeswalker","role:cardSelection","role:targetedRemoval"],
-"Dream Fighter": ["role:protection"],
 "Dream Fracture": ["role:draw","role:stackInteraction"],
 "Dream Salvage": ["role:draw"],
 "Dream Spoilers": ["answer:creature","role:targetedRemoval"],
