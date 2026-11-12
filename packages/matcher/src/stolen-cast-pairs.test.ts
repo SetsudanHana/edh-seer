@@ -227,3 +227,14 @@ test.each(["Mnemonic Deluge", "Flawless Forgery", "Isochron Scepter", "Mizzix's 
   expect(castTags(source, "Nita, Forum Conciliator")).toEqual([]);
   expect(castTags(source, "Vaan, Street Thief")).toEqual([]);
 });
+
+// #1608 review: "WHENEVER A PLAYER CASTS A SPELL FROM THEIR HAND" IS THE CASTER'S OWN HAND, and a card an opponent owns is never in it (CR 400.3). Your cast out of an OPPONENT's hand (`control: you, owner: opp,
+// fromZone: hand`: Sen Triplets, Extract Brain, Mindleech Mass, Silent-Blade Oni) is from a hand, but not from yours, so Possibility Storm, Knowledge Pool and River Song's Diary do not hear it.
+test.each([["Sen Triplets", "Possibility Storm"], ["Sen Triplets", "Knowledge Pool"], ["Sen Triplets", "River Song's Diary"], ["Extract Brain", "Possibility Storm"], ["Mindleech Mass", "Knowledge Pool"],
+  ["Silent-Blade Oni", "Knowledge Pool"]])("%s casts out of an opponent's hand: %s's 'from their hand' does not hear it", (thief, payoff) => {
+  expect(castTags(thief, payoff)).toEqual([]);
+});
+// Hand only. "Whenever a player casts a spell from A graveyard" (River Kelpie) names no one's graveyard: Memory Plunder's cast out of an opponent's still triggers it (pinned above, #1596 review).
+test("a graveyard is anyone's: Memory Plunder -> River Kelpie stays", () => {
+  expect(castTags("Memory Plunder", "River Kelpie")).not.toEqual([]);
+});

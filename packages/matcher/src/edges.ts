@@ -1228,9 +1228,13 @@ function originMatches(producer: SubjectFilter, consumer: SubjectFilter, verb: s
   // "WHENEVER YOU CAST A SPELL FROM YOUR LIBRARY / HAND / GRAVEYARD" NEVER HEARS A CARD AN OPPONENT OWNS (#1596 review; CR 400.3: an object that would go to a library, graveyard or hand other than its owner's goes to its
   // owner's, so each of those zones holds only its owner's cards). A stolen cast states the zone it left (`fromZone: library, owner: opp`, Xanathar, Guild Kingpin) and that zone is the OPPONENT's: it met Melek, Izzet Paragon's
   // "from your library", Mindleech Mass met Harness the Storm's "from your hand", Memory Plunder met Secrets of the Dead's "from your graveyard". The twin of the `notFromZone: hand` reading in subject.ts.
-  // Only a `control: you` demand: "whenever A PLAYER casts a spell from a graveyard" (River Kelpie, Ash Zealot) or "from their hand" (Possibility Storm) is met by any player's zone.
+  // Only a `control: you` demand: "whenever A PLAYER casts a spell from a graveyard" (River Kelpie, Ash Zealot) is met by any player's graveyard. ("From their hand", Possibility Storm, is the next line.)
   // CEILING: the cast and land-play verbs only. An `enters` demand's `control` is who the permanent enters under, and its graveyard can be anyone's ("under your control from a graveyard"), so the owner is not read there.
   if ((verb === "cast" || verb === "land-play") && consumer.control === "you" && producer.owner === "opp" && (consumer.fromZone === "hand" || consumer.fromZone === "library" || consumer.fromZone === "graveyard")) return false;
+  // ...AND "WHENEVER A PLAYER CASTS A SPELL FROM THEIR HAND" IS THE CASTER'S OWN HAND (#1608 review; CR 400.3 again: a hand holds only its owner's cards). YOUR cast of a card an opponent owns, out of that opponent's hand
+  // (`control: you, owner: opp`: Sen Triplets, Extract Brain, Mindleech Mass, Silent-Blade Oni), is from a hand that is not the caster's, so Possibility Storm, Knowledge Pool and River Song's Diary do not hear it.
+  // Hand only: "from a graveyard" (River Kelpie) and "from a library" name no one's zone and stay met by any player's. A producer whose caster is not you (`control: any / opp`) casts from its own hand and is not refused.
+  if ((verb === "cast" || verb === "land-play") && consumer.control === "any" && consumer.fromZone === "hand" && producer.control === "you" && producer.owner === "opp") return false;
   // "Is put into exile FROM THE BATTLEFIELD" (God-Eternal Bontu, Urza's Sylex; #1495) is refused only by an exile that STATES another zone (Necropotence's "from your graveyard"). An exile stating none
   // is the common authored shape ("exile target creature you control") and stays allowed.
   // CEILING: an exile whose clause recorded no zone but is really from a graveyard or library is still admitted (Sauron, Teachings of the Kirin, Koh, Azula's second emit, #1495).

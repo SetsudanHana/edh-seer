@@ -5084,5 +5084,142 @@
     ]
    }
   ]
+ },
+ "Possibility Storm": {
+  "source": {
+   "name": "Possibility Storm",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever a player casts a spell from their hand, that player exiles it, then exiles cards from the top of their library until they exile a card that shares a card type with it. That player may cast that card without paying its mana cost. Then they put all cards exiled with this enchantment on the bottom of their library in a random order.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell from their hand",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "that spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "mill",
+      "object": "cards from the top of their library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "exile",
+      "object": "a card that shares a card type with it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "all cards exiled with this enchantment",
+      "fromZone": "exile",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Knowledge Pool": {
+  "source": {
+   "name": "Knowledge Pool",
+   "typeLine": "Artifact",
+   "oracleText": "Imprint — When this artifact enters, each player exiles the top three cards of their library.\nWhenever a player casts a spell from their hand, that player exiles it. If the player does, they may cast a spell from among other cards exiled with this artifact without paying its mana cost.",
+   "keywords": [
+    "Imprint"
+   ],
+   "colors": [],
+   "manaValue": 6,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{6}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this artifact",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top three cards of each player's library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell from their hand",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "that spell",
+      "fromZone": "stack",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "a spell from among other cards exiled with this artifact",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
  }
 }
