@@ -735,8 +735,8 @@ test("a land, and a spell with a land face, can be protection", () => {
   for (const name of ["Emeria's Call // Emeria, Shattered Skyclave", "Revitalizing Repast // Old-Growth Grove", "Sejiri Shelter // Sejiri Glacier"]) expect(protectsDerived(name), name).toBe(true);
   // The printed residue: mana spent on a spell "can't be countered".
   for (const name of ["Boseiju, Who Shelters All", "Cavern of Souls", "Mistrise Village"]) expect(protects(name), name).toBe(true);
-  // CEILING over-read, named in the rule's why: Detection Tower lets YOU target hexproof creatures, but derive files the sentence as a keyword-grant of hexproof (Glaring Spotlight's real grant is its sacrifice ability).
-  expect(protectsDerived("Detection Tower")).toBe(true);
+  // Detection Tower lets YOU target hexproof creatures: anti-protection. "As though they didn't have hexproof" names the keyword and grants none (derive 519; Kaya, Bane of the Dead and Nowhere to Run store `cant`, which is not a grant).
+  for (const name of ["Detection Tower", "Kaya, Bane of the Dead", "Nowhere to Run"]) expect(protectsDerived(name), name).toBe(false);
 });
 
 // owner 2026-11-12: Talon Gates of Madara ("When this land enters, up to one target creature phases out.") carries Protection. Its stored clause files the phase-out as `put`; derive reads the printed text (phase-out-put.test.ts).

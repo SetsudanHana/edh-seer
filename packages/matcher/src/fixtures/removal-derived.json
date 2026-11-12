@@ -33955,54 +33955,6 @@
    }
   ]
  },
- "Detection Tower": {
-  "oracleText": "{T}: Add {C}.\n{1}, {T}: Until end of turn, your opponents and creatures your opponents control with hexproof can be the targets of spells and abilities you control as though they didn't have hexproof.",
-  "typeLine": "Land",
-  "manaValue": 0,
-  "abilities": [
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "mana-generation",
-     "subject": {
-      "control": "any",
-      "token": null
-     }
-    },
-    "cost": "{T}",
-    "amount": "1",
-    "clause": 1,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    },
-    "payment": {
-     "tap": true
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "keyword-grant",
-     "subject": {
-      "control": "any",
-      "token": null
-     }
-    },
-    "cost": "{1}, {T}",
-    "clause": 2,
-    "repeats": "per-cycle",
-    "payment": {
-     "mana": "{1}",
-     "tap": true
-    },
-    "grants": [
-     "hexproof"
-    ]
-   }
-  ]
- },
  "Emeria's Call // Emeria, Shattered Skyclave": {
   "oracleText": "Create two 4/4 white Angel Warrior creature tokens with flying. Non-Angel creatures you control gain indestructible until your next turn.\n//\nAs this land enters, you may pay 3 life. If you don't, it enters tapped.\n{T}: Add {W}.",
   "typeLine": "Sorcery // Land",
@@ -35023,6 +34975,95 @@
     ],
     "clause": 4,
     "repeats": "once"
+   }
+  ]
+ },
+ "Detection Tower": {
+  "oracleText": "{T}: Add {C}.\n{1}, {T}: Until end of turn, your opponents and creatures your opponents control with hexproof can be the targets of spells and abilities you control as though they didn't have hexproof.",
+  "typeLine": "Land",
+  "manaValue": 0,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{1}, {T}",
+    "clause": 2,
+    "repeats": "per-cycle",
+    "payment": {
+     "mana": "{1}",
+     "tap": true
+    }
+   }
+  ]
+ },
+ "Kaya, Bane of the Dead": {
+  "oracleText": "Your opponents and permanents your opponents control with hexproof can be the targets of spells and abilities you control as though they didn't have hexproof.\n−3: Exile target creature.",
+  "typeLine": "Legendary Planeswalker — Kaya",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "−3",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "-3"
+    }
    }
   ]
  }

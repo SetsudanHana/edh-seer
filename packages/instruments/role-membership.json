@@ -3830,7 +3830,7 @@
 "Destructor Dragon": ["answer:artifact","answer:creature","answer:enchantment","answer:land","answer:planeswalker","role:targetedRemoval"],
 "Desynchronization": ["role:boardWipe"],
 "Desynchronize": ["role:cardSelection","role:targetedRemoval"],
-"Detection Tower": ["role:lands","role:protection"],
+"Detection Tower": ["role:lands"],
 "Detective of the Month": ["wincon:go-wide"],
 "Detective's Phoenix": ["wincon:voltron"],
 "Detective's Satchel": ["wincon:go-wide"],
