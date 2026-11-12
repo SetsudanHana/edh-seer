@@ -25,7 +25,9 @@ const GATE_AFTER = /\bif (?:it's|it is|that card is|that spell is) (an? (?:[a-z-
  *  the words print are part of the class and ride the emit as `colors` and `stats`; "nonlegendary" and "monocolored" ride as the subject grammar reads them (`legendary: false`, `colorCount: mono`).
  *  CEILING: a gate no field holds leaves the cast UNREAD (unclassed and silent, as at DERIVE 501): an odd or even mana value (Yennett, Cryptic Sovereign). A bound that is a relation to another object stays out of
  *  the class and the cast stays classed: "a spell with lesser mana value" (Rashmi, Eternities Crafter), "less than the number of artifacts you control" (Rashmi and Ragavan), "the two spells have the same mana value"
- *  (Powerbalance), "a card of that color" (Sanar), "total mana value 5 or greater" over a pile (Dream Harvest). */
+ *  (Powerbalance), "total mana value 5 or greater" over a pile (Dream Harvest).
+ *  "A card OF THAT COLOR" (Sanar, Innovative First-Year; #1608 re-review) names no colour the emit can hold, but it is never a colourless card: `colorCount: colored`. */
+const OF_THAT_COLOUR = /\bcards? of that colou?r\b/i;
 const COLOUR_GATE = /\bif (?:it's|it is|that card is) (white|blue|black|red|green), you may (?:cast|play)\b/i;
 const MV_TAIL = /^ with mana value \d+ or (?:less|greater)\b/i;
 const MV_GATE = /\bmana value is (\d+) or (less|greater)\b/i;
@@ -103,7 +105,8 @@ export function castClassFromPrint(clauseText: string, pileTexts: readonly strin
   const read = (near: string): CastClass | undefined => {
     const [words = "", tail = ""] = near.split("|");
     const phrase = [colour, words].filter(Boolean).join(" ");
-    return toClass(parse(`a ${phrase} card${tail || boundTail}`.replace(/\s+/g, " ")));
+    const cls = toClass(parse(`a ${phrase} card${tail || boundTail}`.replace(/\s+/g, " ")));
+    return cls !== undefined && cls.colors === undefined && cls.colorCount === undefined && OF_THAT_COLOUR.test(region) ? { ...cls, colorCount: "colored" } : cls;
   };
   const gate = GATE_BEFORE.exec(region) ?? GATE_AFTER.exec(region.slice(m.index));
   if (gate) {

@@ -146,6 +146,11 @@ test.each([
   expect(s.length).toBeGreaterThan(0);
   for (const x of s) expect(x).toMatchObject(gate);
 });
+// #1608 re-review: "For each of those colors, you may exile a card OF THAT COLOR ... You may cast the exiled cards" (Sanar, Innovative First-Year). Which colour is a relation to her board, but a colourless card is
+// never "a card of that color": the cast is of a coloured card (`colorCount: colored`).
+test("Sanar, Innovative First-Year casts cards 'of that color': a coloured card, never a colourless one", () => {
+  expect(casts("Sanar, Innovative First-Year").map((x) => ({ type: x.type, colorCount: x.colorCount }))).toEqual([{ type: "spell", colorCount: "colored" }]);
+});
 // CEILING pinned: a gate no field can hold leaves the cast unclassed and silent, as at 501. "You may cast it without paying its mana cost if its mana value is odd" (Yennett) is the card's whole point.
 test("Yennett, Cryptic Sovereign: an odd mana value is no class the emit can carry; the cast stays unclassed", () => {
   expect(casts("Yennett, Cryptic Sovereign").map((x) => x.type)).toEqual([undefined]);

@@ -5221,5 +5221,65 @@
     ]
    }
   ]
+ },
+ "Sanar, Innovative First-Year": {
+  "source": {
+   "name": "Sanar, Innovative First-Year",
+   "typeLine": "Legendary Creature — Goblin Sorcerer",
+   "oracleText": "Vivid — At the beginning of your first main phase, reveal cards from the top of your library until you reveal X nonland cards, where X is the number of colors among permanents you control. For each of those colors, you may exile a card of that color from among the revealed cards. Then shuffle. You may cast the exiled cards this turn.",
+   "keywords": [
+    "Vivid"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "power": "2",
+   "toughness": "4",
+   "manaCost": "{2}{U/R}{U/R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "main-phase",
+     "subject": "your first main phase",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a card of that color from among the revealed cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "the exiled cards",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
  }
 }

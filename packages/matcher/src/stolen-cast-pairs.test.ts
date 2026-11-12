@@ -238,3 +238,10 @@ test.each([["Sen Triplets", "Possibility Storm"], ["Sen Triplets", "Knowledge Po
 test("a graveyard is anyone's: Memory Plunder -> River Kelpie stays", () => {
   expect(castTags("Memory Plunder", "River Kelpie")).not.toEqual([]);
 });
+
+// #1608 re-review: "a card of that color" is never a colourless card. Sanar, Innovative First-Year's cast met the own cast trigger of Ulamog, the Ceaseless Hunger; a coloured deck-mate's (Echo Storm, blue) still hears it.
+test("Sanar casts cards 'of that color': no self reason with colourless Ulamog, the Ceaseless Hunger or Artisan of Kozilek; Echo Storm's own cast trigger still hears it", () => {
+  expect(castTags("Sanar, Innovative First-Year", "Ulamog, the Ceaseless Hunger")).toEqual([]);
+  expect(castTags("Sanar, Innovative First-Year", "Artisan of Kozilek")).toEqual([]);
+  expect(castTags("Sanar, Innovative First-Year", "Echo Storm")).not.toEqual([]);
+});
