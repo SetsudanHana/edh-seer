@@ -102,10 +102,12 @@ test("Rashmi and Ragavan: both casts are of the exiled card an opponent owns, ne
 // #1596 item 5 (pin, no engine change): "THEY MAY CAST IT" IS NOT YOUR CAST. Audacious Swap ("The owner of target nonenchantment permanent ... they may cast it without paying its mana cost") and Tibalt's Trickery ("Its controller
 // ... They may cast that card") let ANOTHER player cast. Since DERIVE 494 (#1591) a pronoun actor no longer takes the controller default, so the caster stays `any` (the target's owner or the spell's controller can be you or an
 // opponent); nothing writes `you`, and no owner is claimed. Stored rows at 497 read the same (queried 2026-11-11).
-test.each(["Audacious Swap", "Tibalt's Trickery"])("%s: 'they may cast' reads the caster as any player, never as you, and names no owner", (name) => {
+// #1608 review: Audacious Swap's caster exiles the top card of THEIR OWN library, so the card cast is the caster's (`owner: you` beside `control: any`: the caster's own card, never "a spell you don't own").
+// Tibalt's Trickery reveals cards from "its controller"'s library, the same; nothing wrote an owner for it and none is claimed.
+test.each([["Audacious Swap", "you"], ["Tibalt's Trickery", undefined]] as const)("%s: 'they may cast' reads the caster as any player, never as you; owner %s", (name, owner) => {
   const s = emits(name, "cast");
   expect(s.length).toBeGreaterThan(0);
-  for (const x of s) expect({ control: x.control, owner: x.owner }).toEqual({ control: "any", owner: undefined });
+  for (const x of s) expect({ control: x.control, owner: x.owner }).toEqual({ control: "any", owner });
 });
 
 // #1596 item 7 (CEILING pinned, see ANOTHER_PLAYERS_CARD in derive.ts): "that player's" / "their" is read as another player's with no antecedent check. The two corpus rows a naive check would strip of their owner are right as

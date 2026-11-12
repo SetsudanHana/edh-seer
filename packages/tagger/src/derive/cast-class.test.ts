@@ -61,8 +61,18 @@ test.each([
   expect(s.length).toBeGreaterThan(0);
   for (const x of s) expect({ type: x.type, control: x.control, owner: x.owner }).toEqual({ type: "spell", control: "you", owner });
 });
-test("a copy of a card from any graveyard, or from yours and an opponent's, names no owner (Mnemonic Deluge, Spelltwine)", () => {
-  for (const name of ["Mnemonic Deluge", "Spelltwine"]) expect(casts(name).map((x) => x.owner), name).toEqual([undefined]);
+// #1608 review: A CAST COPY IS A SPELL YOU OWN, whoever owns the card it copies (CR 112.2: a spell's owner is the player who put it on the stack; a copy has no card behind it). It is never "a spell you don't own".
+// The copy of an opponent's card still says what it copies (`copyOf.owner: opp`), which is what keeps it from being a deck-mate.
+test.each(["Mnemonic Deluge", "Spelltwine", "Mysterious Stranger", "Spellweaver Helix", "Flawless Forgery", "Isochron Scepter", "Mizzix's Mastery", "Reversal of Fortune", "God-Eternal Kefnet", "Wildfire Devils", "Eye of the Storm"])("%s casts a copy: a spell its caster owns", (name) => {
+  const s = casts(name);
+  expect(s.length).toBeGreaterThan(0);
+  for (const x of s) expect(x.owner).toBe("you");
+});
+test("Wizard's Spellbook: every row casts a copy, read or unread", () => {
+  expect(casts("Wizard's Spellbook").map((x) => x.owner)).toEqual(["you", "you", "you"]);
+});
+test("Flawless Forgery's copy is yours and still a copy of an opponent's card", () => {
+  expect(casts("Flawless Forgery").map((x) => ({ owner: x.owner, copyOf: x.copyOf }))).toEqual([{ owner: "you", copyOf: { owner: "opp" } }]);
 });
 
 // DISCOVER (CR 701.57a): "Exile cards from the top of your library until you exile a nonland card with mana value N or less. You may cast that card without paying its mana cost." Your cast of any spell, from exile.

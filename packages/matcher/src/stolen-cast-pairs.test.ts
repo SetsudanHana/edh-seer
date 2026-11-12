@@ -79,10 +79,12 @@ test.each(["Psychic Theft", "Rona, Herald of Invasion // Rona, Tolarian Oblitera
 
 // "YOU MAY CAST" IS YOUR CAST WHETHER OR NOT THE OWNER IS PROVEN (#1594 review): the caster is read off the permission alone. A spell an opponent only CONTROLS (Smirking Spelljacker), a copy (CR 112.2: the
 // copy's owner is whoever put it on the stack, you) and a pile that can hold your own card (Etali, Primal Storm; The Ur-Sphinx) write no owner, and none of them is an opponent's cast.
-test.each(["Smirking Spelljacker", "Flawless Forgery", "Blue Mage's Cane", "Saruman of Many Colors", "Reversal of Fortune", "Etali, Primal Storm", "The Ur-Sphinx"])("%s: 'you may cast' is your cast, with no owner written", (caster) => {
+// #1608 review: the copies now SAY they are yours (`owner: you`, CR 112.2), so "a spell you don't own" refuses them; never an opponent's (`owner: opp`) either way.
+const COPIERS = new Set(["Flawless Forgery", "Blue Mage's Cane", "Saruman of Many Colors", "Reversal of Fortune"]);
+test.each(["Smirking Spelljacker", "Flawless Forgery", "Blue Mage's Cane", "Saruman of Many Colors", "Reversal of Fortune", "Etali, Primal Storm", "The Ur-Sphinx"])("%s: 'you may cast' is your cast, never of a card written as an opponent's", (caster) => {
   const emits = castEmits(caster).filter((s) => s.token !== true);
   expect(emits.length).toBeGreaterThan(0);
-  for (const s of emits) { expect(s.control).toBe("you"); expect(s.owner).toBeUndefined(); expect(s.scope).not.toBe("target"); }
+  for (const s of emits) { expect(s.control).toBe("you"); expect(s.owner).toBe(COPIERS.has(caster) ? "you" : undefined); expect(s.scope).not.toBe("target"); }
 });
 test.each(["Smirking Spelljacker", "Flawless Forgery"])("%s is no 'whenever an opponent casts a spell' for Rhystic Study", (caster) => {
   expect(castTags(caster, "Rhystic Study")).toEqual([]);
@@ -95,8 +97,8 @@ test("Smirking Spelljacker still feeds Talrand: you cast the exiled instant or s
 // and the self join refuses it as it refuses a stolen card. Every class trigger still hears the cast.
 const COPY_CASTERS = ["Flawless Forgery", "Blue Mage's Cane", "Reversal of Fortune", "Saruman of Many Colors"];
 describe.each(COPY_CASTERS)("%s casts a copy of a card an opponent owns", (caster) => {
-  test("the cast emit is yours, owns nothing of theirs, and says what it copies", () => {
-    for (const s of castEmits(caster)) expect({ control: s.control, owner: s.owner, copyOf: s.copyOf }).toEqual({ control: "you", owner: undefined, copyOf: { owner: "opp" } });
+  test("the cast emit is yours, a spell you own (CR 112.2, #1608 review), and says what it copies", () => {
+    for (const s of castEmits(caster)) expect({ control: s.control, owner: s.owner, copyOf: s.copyOf }).toEqual({ control: "you", owner: "you", copyOf: { owner: "opp" } });
   });
   test("no self reason with Echo Storm's own 'when you cast this spell'", () => {
     expect(castTags(caster, "Echo Storm")).toEqual([]);
@@ -218,4 +220,10 @@ test("discover 5 never casts Ulamog, the Ceaseless Hunger (mana value 10) or Art
   expect(castTags("Trumpeting Carnosaur", "Artisan of Kozilek")).toEqual([]);
   expect(castTags("Hit the Mother Lode", "Ulamog, the Ceaseless Hunger")).not.toEqual([]);
   expect(castTags("Trumpeting Carnosaur", "Talrand, Sky Summoner")).not.toEqual([]);
+});
+
+// #1608 review: A CAST COPY IS A SPELL YOU OWN (CR 112.2), so "whenever you cast a spell you don't own" never hears one, whoever owns the card copied. The copy of an opponent's card met Nita before 502 too.
+test.each(["Mnemonic Deluge", "Flawless Forgery", "Isochron Scepter", "Mizzix's Mastery", "Reversal of Fortune"])("%s casts a copy: Nita's and Vaan's 'a spell you don't own' do not hear it", (source) => {
+  expect(castTags(source, "Nita, Forum Conciliator")).toEqual([]);
+  expect(castTags(source, "Vaan, Street Thief")).toEqual([]);
 });
