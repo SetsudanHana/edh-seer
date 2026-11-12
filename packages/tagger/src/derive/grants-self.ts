@@ -6,16 +6,22 @@
  *  A SINGULAR verb is the cue the recipient is one object ("this creature and other creatures you control gain" is plural: a grant to others too). True only when the clause has at least one
  *  sentence that hands over a keyword of `grants` and EVERY such sentence is the card's own.
  *  CEILING: a sentence inside a quoted ability is never the card's own (the quote's "this creature" is the grantee), so a quoted grant to the card itself ("this creature gains '...'") is not
- *  marked; a pronoun is resolved only by "the words before it name the card and no target, and the sentence before it made no other object" (create, copy, return, exile, put onto the battlefield), so "Whenever this creature blocks a creature, it gains ..." is the card and "Target creature ...
+ *  marked; a name's short form is its text before the comma, or its first word when no word of it is lowercase ("Zurgo"); "they" is not read (its verb is plural, which the reader refuses); a pronoun is resolved only by "the words before it name the card and no target, and the sentence before it made no other object" (create, copy, return, exile, put onto the battlefield), so "Whenever this creature blocks a creature, it gains ..." is the card and "Target creature ...
  *  This creature fights it. It gains ..." is not read; the antecedent is the sentence before the pronoun and its own sentence's head only. */
 const THIS_CARD = "this (?:creature|artifact|permanent|vehicle|enchantment|land|planeswalker)";
 /** A condition, a duration or a trigger before the recipient: "As long as your opponents control no creatures, this creature has ..." (Erebos's Titan), "Whenever this creature attacks, it gains ...". */
 const HEAD = /^(?:until end of turn|as long as\b[^,]*|when(?:ever)?\b[^,]*|at\b[^,]*|if\b[^,]*|during\b[^,]*),\s*/i;
 const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+/** The first word of a name with no comma ("Zurgo Helmsmasher" -> "Zurgo"), the short name the printed text uses. Only a name whose every word is capitalised ("Sword of Fire" is no person) and that does not open on "The". */
+const shortName = (face: string): string => {
+  const words = face.split(/\s+/);
+  return face.includes(",") || words.length < 2 || words[0] === "The" || words.some((w) => !/^[A-Z]/.test(w)) || !/^[A-Z][a-z']{3,}$/.test(words[0]!) ? "" : words[0]!;
+};
+
 export function grantsSelfOf(clauseText: string, grants: readonly string[], cardName: string | undefined): boolean {
   if (grants.length === 0) return false;
-  const names = (cardName ?? "").split(" // ").flatMap((face) => [face, face.split(",")[0]!]).map((n) => n.trim()).filter((n) => n.length > 0).map(escapeRe);
+  const names = (cardName ?? "").split(" // ").flatMap((face) => [face, face.split(",")[0]!, shortName(face)]).map((n) => n.trim()).filter((n) => n.length > 0).map(escapeRe);
   const subject = `(?:${[THIS_CARD, ...names].join("|")})`;
   const direct = new RegExp(`^${subject}\\b(?:[^.]{0,60}?\\band)?\\s+(?:gains|gets|has)\\b`, "i");
   const named = new RegExp(`\\b${subject}\\b`, "i");
@@ -36,7 +42,7 @@ export function grantsSelfOf(clauseText: string, grants: readonly string[], card
       const afterCost = sentence.replace(/^[^:"]*:\s*/, "").replace(/^[A-Z][A-Za-z' ]{0,30} \u2014 /, "");
       // Two heads at most ("Whenever this creature attacks, if ..., it gains").
       const body = afterCost.replace(HEAD, "").replace(HEAD, "");
-      const antecedent = `${before} ${afterCost.slice(0, afterCost.length - body.length)}`;
+      const antecedent = `${before} ${sentence.slice(0, sentence.length - afterCost.length)} ${afterCost.slice(0, afterCost.length - body.length)}`;
       // The antecedent of "It" is the sentence just before it and this sentence's own head, no further back: Strefan's "... you may put a Vampire card from your hand onto the battlefield tapped and
       // attacking. It gains indestructible" is the Vampire, though the clause opens "Whenever Strefan attacks".
       const earlier = before;
@@ -48,7 +54,7 @@ export function grantsSelfOf(clauseText: string, grants: readonly string[], card
       // A parenthesised reminder explains a keyword and hands over nothing ("(It can't be blocked ... as long as it has ...)").
       if (sentence.trimStart().startsWith("(")) continue;
       seen++;
-      const pronoun = /^it\s+(?:gains|gets|has)\b/i.test(body);
+      const pronoun = /^(?:it|he|she)\s+(?:gains|gets|has)\b/i.test(body);
       const self = !quoted
         && (direct.test(body) || (pronoun && named.test(antecedent) && !/\btarget\b/i.test(antecedent) && !makesAnother.test(earlier)))
         && !/\b(?:gain|get|have)\b/i.test(body)
