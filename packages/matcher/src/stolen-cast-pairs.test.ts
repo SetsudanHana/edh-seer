@@ -250,3 +250,10 @@ test("Sanar casts cards 'of that color': no self reason with colourless Ulamog, 
 test.each(["Sanar, Innovative First-Year", "Emergent Ultimatum"])("%s casts a coloured card: no 'colorless spell' reason with Forsaken Monument", (source) => {
   expect(castTags(source, "Forsaken Monument")).toEqual([]);
 });
+
+// #1611: Grolnok, the Omnivore casts only permanent cards (the cards its own ability exiles with a croak counter): an instant's or sorcery's own cast trigger never hears it, a creature's still does.
+test("Grolnok casts permanent spells: no self reason with Echo Storm (an instant) or Talrand's instant-or-sorcery trigger; Artisan of Kozilek's own cast trigger still hears it", () => {
+  expect(castTags("Grolnok, the Omnivore", "Echo Storm")).toEqual([]);
+  expect(castTags("Grolnok, the Omnivore", "Talrand, Sky Summoner")).toEqual([]);
+  expect(castTags("Grolnok, the Omnivore", "Artisan of Kozilek")).not.toEqual([]);
+});

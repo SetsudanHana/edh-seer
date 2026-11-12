@@ -159,3 +159,16 @@ test("Audacious Swap: the cast is of the exiled top card, any spell, not of the 
   expect(s.length).toBe(1);
   expect({ type: s[0]!.type, notType: s[0]!.notType, scope: s[0]!.scope, fromZone: s[0]!.fromZone, control: s[0]!.control }).toEqual({ type: "spell", notType: undefined, scope: undefined, fromZone: "exile", control: "any" });
 });
+
+// #1611: GROLNOK'S PILE HOLDS PERMANENT CARDS ONLY. "Whenever a permanent card is put into your graveyard from your library, exile it with a croak counter on it. You may play lands and cast spells from among cards you own
+// in exile with croak counters on them": the only ability that puts a croak counter on a card exiles a permanent card, so the cast is of a permanent spell, never of an instant or sorcery.
+test("Grolnok, the Omnivore casts permanent spells only: the class of the card its own ability exiles with a croak counter", () => {
+  const cast = emits("Grolnok, the Omnivore", "cast");
+  expect(cast.map((x) => ({ type: x.type, umbrella: x.umbrella }))).toEqual([{ type: ["creature", "artifact", "enchantment", "planeswalker", "battle"], umbrella: "permanent" }]);
+  // The land play is untouched: a land is a permanent card.
+  expect(emits("Grolnok, the Omnivore", "land-play").map((x) => x.type)).toEqual(["land"]);
+});
+// The other both-halves permissions name no counter pile and keep `spell`.
+test.each(["Gix, Yawgmoth Praetor", "Sen Triplets", "Magus of the Mind"])("%s: no counter pile, the cast stays any spell", (name) => {
+  expect(emits(name, "cast").map((x) => x.type)).toEqual(["spell"]);
+});
