@@ -80,3 +80,12 @@ export function verbPrint(verb: string, clauseText: string | undefined, cost: st
   if (cardText === undefined || cardText === "") return "none";
   return printsVerbWord(verb, stripReminderText(cardText)) ? "card" : "none";
 }
+
+/** A PHASE-OUT THE MODEL FILED AS A `put` (#1266, owner 2026-11-12: Talon Gates of Madara, "When this land enters, up to one target creature phases out." is stored `put` with no zones, so no `phases-out` emit).
+ *  A `put` with no zone, in a clause whose printed text (reminder stripped) says "phases out" and never says put / place, is the phase-out. CEILING: Oubliette's stored clause holds only the tap of its second sentence
+ *  ("Tap that creature as it phases in this way"), so there is no action to repair and it still derives no phase-out. */
+export function phaseOutFiledAsPut(action: { verb?: string; fromZone?: string | null; toZone?: string | null }, clauseText: string | undefined): boolean {
+  if (action.verb !== "put" || (action.fromZone ?? null) !== null || (action.toZone ?? null) !== null || clauseText === undefined) return false;
+  const printed = stripReminderText(clauseText);
+  return /(?<![\w'])phases? out(?![\w'])/i.test(printed) && !/(?<![\w'])(?:puts?|placed?|placing|putting)(?![\w'])/i.test(printed);
+}

@@ -33848,104 +33848,6 @@
    }
   ]
  },
- "Talon Gates of Madara": {
-  "oracleText": "When this land enters, up to one target creature phases out.\n{T}: Add {C}.\n{1}, {T}: Add one mana of any color.\n{4}: Put this card from your hand onto the battlefield.",
-  "typeLine": "Land — Gate",
-  "manaValue": 0,
-  "abilities": [
-   {
-    "kind": "triggered",
-    "effect": {
-     "kind": ""
-    },
-    "trigger": {
-     "verbs": [
-      "enters"
-     ],
-     "subject": {
-      "control": "you",
-      "token": null,
-      "type": "land",
-      "self": true
-     }
-    },
-    "clause": 1,
-    "repeats": "once"
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "mana-generation",
-     "subject": {
-      "control": "any",
-      "token": null
-     }
-    },
-    "cost": "{T}",
-    "amount": "1",
-    "clause": 2,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    },
-    "payment": {
-     "tap": true
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "mana-generation",
-     "subject": {
-      "control": "any",
-      "token": null
-     }
-    },
-    "cost": "{1}, {T}",
-    "amount": "1",
-    "clause": 3,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    },
-    "payment": {
-     "mana": "{1}",
-     "tap": true
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": ""
-    },
-    "cost": "{4}",
-    "amount": "1",
-    "emits": [
-     {
-      "verb": "enters",
-      "subject": {
-       "control": "you",
-       "token": null,
-       "fromZone": "hand",
-       "self": true
-      },
-      "instantSpeed": true
-     }
-    ],
-    "clause": 4,
-    "repeats": "repeatable",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    },
-    "payment": {
-     "mana": "{4}"
-    }
-   }
-  ]
- },
  "Boseiju, Who Shelters All": {
   "oracleText": "Boseiju enters tapped.\n{T}, Pay 2 life: Add {C}. If that mana is spent on an instant or sorcery spell, that spell can't be countered.",
   "typeLine": "Legendary Land",
@@ -34868,6 +34770,115 @@
     "count": {
      "floor": 1,
      "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Talon Gates of Madara": {
+  "oracleText": "When this land enters, up to one target creature phases out.\n{T}: Add {C}.\n{1}, {T}: Add one mana of any color.\n{4}: Put this card from your hand onto the battlefield.",
+  "typeLine": "Land — Gate",
+  "manaValue": 0,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "land",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{1}, {T}",
+    "amount": "1",
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{4}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "hand",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{4}"
     }
    }
   ]
