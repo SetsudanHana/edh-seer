@@ -727,6 +727,23 @@ test("a targeting ban against opponents, on something other than the card, is pr
   for (const name of ["Anti-Magic Aura", "Ground Seal", "Autumn's Veil"]) expect(protectsDerived(name), name).toBe(false);
 });
 
+// owner 2026-11-12: a land can carry Protection. The `countsAsLand` exclusion is gone from protection.text; these are the 11 cards it had hidden, each read against its Mongo text.
+test("a land, and a spell with a land face, can be protection", () => {
+  // Derived readings: a grant of protection / hexproof / indestructible to another permanent, and a keyword counter on another permanent.
+  for (const name of ["Sejiri Steppe", "Tower of the Magistrate", "Plaza of Heroes", "Tyrite Sanctum"]) expect(protectsDerived(name), name).toBe(true);
+  // Modal spells whose other face is a land: the spell face is the protection (indestructible to your other creatures, a counter and indestructible, protection from a colour).
+  for (const name of ["Emeria's Call // Emeria, Shattered Skyclave", "Revitalizing Repast // Old-Growth Grove", "Sejiri Shelter // Sejiri Glacier"]) expect(protectsDerived(name), name).toBe(true);
+  // The printed residue: mana spent on a spell "can't be countered".
+  for (const name of ["Boseiju, Who Shelters All", "Cavern of Souls", "Mistrise Village"]) expect(protects(name), name).toBe(true);
+  // CEILING over-read, named in the rule's why: Detection Tower lets YOU target hexproof creatures, but derive files the sentence as a keyword-grant of hexproof (Glaring Spotlight's real grant is its sacrifice ability).
+  expect(protectsDerived("Detection Tower")).toBe(true);
+});
+
+// owner 2026-11-12: Talon Gates of Madara ("When this land enters, up to one target creature phases out.") carries Protection. Its stored clause files the phase-out as `put`; derive reads the printed text (phase-out-put.test.ts).
+test("Talon Gates of Madara is protection, read off the derived phases-out emit", () => {
+  expect(protectsDerived("Talon Gates of Madara")).toBe(true);
+});
+
 test("the one printed residue: spells that can't be countered and protection for the player", () => {
   // CEILING (see the rule's why): derive reads neither, so these stand on printed text; with the text blanked nothing derived says so.
   for (const name of ["Delighted Halfling", "Vexing Shusher", "The One Ring", "Seht's Tiger", "Solitary Confinement"]) {
