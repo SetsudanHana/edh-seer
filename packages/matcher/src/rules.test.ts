@@ -703,7 +703,7 @@ test("a printed protection word that hands nothing to your permanents is not pro
 test("phasing out is protection, read off the derived `phases-out` emit", () => {
   for (const name of ["Teferi's Protection", "Slip Out the Back"]) expect(protectsDerived(name), name).toBe(true);
   // A card that phases out ANY permanent, yours or theirs, can be both protection and interaction: it stays.
-  for (const name of ["Galadriel's Dismissal", "Dream Fighter"]) expect(protectsDerived(name), name).toBe(true);
+  expect(protectsDerived("Galadriel's Dismissal")).toBe(true);
 });
 
 // owner 2026-11-12: a card that protects only itself is not Protection, phasing included. The derived `phases-out` emit carries `subject.self`.
@@ -742,6 +742,17 @@ test("a land, and a spell with a land face, can be protection", () => {
 // owner 2026-11-12: Talon Gates of Madara ("When this land enters, up to one target creature phases out.") carries Protection. Its stored clause files the phase-out as `put`; derive reads the printed text (phase-out-put.test.ts).
 test("Talon Gates of Madara is protection, read off the derived phases-out emit", () => {
   expect(protectsDerived("Talon Gates of Madara")).toBe(true);
+});
+
+// owner 2026-11-12: Dream Fighter is opponent-aimed and leaves Protection. "This creature and that creature phase out" fires when it blocks or becomes blocked by a creature, and "that creature" is the creature
+// blocking it or blocked by it, which an opponent controls (CR 509.1a: the defending player chooses which creatures THEY control block an attacker; derive reads it `control: any`). The rule refuses a phase-out only a BLOCK makes (`notBlockCombat`).
+test("a phase-out that only a block triggers is opponent-aimed, not protection", () => {
+  expect(protectsDerived("Dream Fighter")).toBe(false);
+  // Written row: a block trigger that phases out another creature of ANY controller is refused; the same emit on a spell or a non-block trigger still counts.
+  const phase = (trigger: object | undefined): DeckCard => derivedCard("Written", [{ kind: trigger ? "triggered" : "on-cast", ...(trigger ? { trigger } : {}), effect: { kind: "" }, emits: [{ verb: "phases-out", subject: { control: "any", token: null, type: "creature" } }] }], "Creature");
+  expect(ruleMatches(protectionText(), phase({ verbs: ["blocks", "becomes-blocked"] }))).toBe(false);
+  expect(ruleMatches(protectionText(), phase({ verbs: ["attacks"] }))).toBe(true);
+  expect(ruleMatches(protectionText(), phase(undefined))).toBe(true);
 });
 
 test("the one printed residue: spells that can't be countered and protection for the player", () => {
