@@ -12,6 +12,9 @@ const SELF: [string, string, string[]][] = [
   ["Falkenrath Aristocrat", "Sacrifice a creature: This creature gains indestructible until end of turn. If the sacrificed creature was a Human, put a +1/+1 counter on this creature.", ["indestructible"]],
   // "It" after a sentence that names the card and no target.
   ["Hungering Puppetbeast", "{1}, Sacrifice another artifact: Put a +1/+1 counter on this creature. It gains your choice of trample, hexproof, or haste until end of turn.", ["haste", "hexproof", "trample"]],
+  // A trigger head that names the card: its "it" is the card.
+  ["Primaris Chaplain", "Rosarius — Whenever this creature attacks, it gains indestructible until end of turn.", ["indestructible"]],
+  ["Temur Sabertooth", "{1}{G}: You may return another creature you control to its owner's hand. If you do, this creature gains indestructible until end of turn.", ["indestructible"]],
   // A condition before the recipient is not the recipient.
   ["Erebos's Titan", "As long as your opponents control no creatures, this creature has indestructible. (Damage and effects that say \"destroy\" don't destroy it.)", ["indestructible"]],
 ];
@@ -27,6 +30,8 @@ const NOT_SELF: [string, string, string[]][] = [
   ["Leyline of Sanctity", "You have hexproof. (You can't be the target of spells or abilities your opponents control.)", ["hexproof"]],
   // Inside a quoted ability handed to others, "this creature" and "It" are the grantee.
   ["Agent of the Shadow Thieves", "Commander creatures you own have \"Whenever this creature attacks a player, if no opponent has more life than that player, put a +1/+1 counter on this creature. It gains deathtouch and indestructible until end of turn.\"", ["deathtouch", "indestructible"]],
+  // "It" is what the sentence before it put onto the battlefield, not the card the clause opens on.
+  ["Strefan, Maurer Progenitor", "Whenever Strefan attacks, you may sacrifice two Blood tokens. If you do, you may put a Vampire card from your hand onto the battlefield tapped and attacking. It gains indestructible until end of turn.", ["indestructible"]],
   // No sentence of the clause hands over a keyword of `grants`: nothing is said.
   ["Grizzly Bears", "This creature gets +1/+1 until end of turn.", ["indestructible"]],
 ];

@@ -1533,6 +1533,11 @@ export interface Ability {
   /** The CR keyword abilities a `keyword-grant` hands out, lowercased: ["undying"], ["haste",
    *  "hexproof"] (#857, DERIVE 213). The effect subject says who gets them. */
   grants?: string[];
+  /** THE GRANT LANDS ON THE CARD ITSELF (#1266): "This creature gains indestructible until end of turn" (Adanto Vanguard), "Dragonlord Ojutai has hexproof as long as it's untapped", the "It gains ..." after a sentence naming
+   *  the card and no target (Hungering Puppetbeast). Set beside `grants` (`derive/grants-self.ts`), and only when EVERY sentence of the clause that hands over one of those keywords has the card as its recipient.
+   *  A MARKER AND NOT `effect.subject.self` ON PURPOSE, as `host` is: a subject on a grant forms edges, and `effect.subject` is exactly what it was. No edge code reads this; the protection ROLE does (a keyword
+   *  the card gives itself protects nothing else, the Sylvan Caryatid rule). ABSENT MEANS "NOT SAID": a grant to others, a recipient the reader does not resolve, and every ability of a QUOTED clause (`grantedBy`). */
+  grantsSelf?: true;
   /** The type a `type-grant` hands out, lowercased and singular: "food" (Gourmand's Talent, Ragost), "clue" (Senator Peacock), "equipment" (Dan Lewis) (#1568, owner ruling 2026-11-08). Present only on a type-grant whose
    *  printed text names it ("are Foods in addition to their other types"). `effect.subject` says who gets it; for a whole non-creature class the matcher pairs the GRANTED type with the cards that use it. */
   grantsType?: string;
