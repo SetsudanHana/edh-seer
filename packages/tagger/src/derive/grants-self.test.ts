@@ -32,6 +32,13 @@ const NOT_SELF: [string, string, string[]][] = [
   ["Agent of the Shadow Thieves", "Commander creatures you own have \"Whenever this creature attacks a player, if no opponent has more life than that player, put a +1/+1 counter on this creature. It gains deathtouch and indestructible until end of turn.\"", ["deathtouch", "indestructible"]],
   // "It" is what the sentence before it put onto the battlefield, not the card the clause opens on.
   ["Strefan, Maurer Progenitor", "Whenever Strefan attacks, you may sacrifice two Blood tokens. If you do, you may put a Vampire card from your hand onto the battlefield tapped and attacking. It gains indestructible until end of turn.", ["indestructible"]],
+  // "It" is the object the sentence before it created, returned, put onto the battlefield, copied or exiled, though that sentence names the card and no target (1266 review).
+  ["Mimic Vat", "{3}, {T}: Create a token that's a copy of a card exiled with this artifact. It gains haste. Exile it at the beginning of the next end step.", ["haste"]],
+  ["Yggdrasil, Rebirth Engine", "{4}, {T}: Put a creature card exiled with Yggdrasil onto the battlefield under your control. It gains haste until end of turn. Activate only as a sorcery.", ["haste"]],
+  ["Emperor of Bones", "Whenever one or more +1/+1 counters are put on this creature, put a creature card exiled with this creature onto the battlefield under your control with a finality counter on it. It gains haste. Sacrifice it at the beginning of the next end step.", ["haste"]],
+  ["Hellkite Courser", "When this creature enters, you may put a commander you own from the command zone onto the battlefield. It gains haste. Return it to the command zone at the beginning of the next end step.", ["haste"]],
+  ["Rootwire Amalgam", "{3}{G}{G}, Sacrifice this creature: Create an X/X colorless Golem artifact creature token, where X is three times this creature's power. It gains haste until end of turn. Activate only as a sorcery.", ["haste"]],
+  ["The Eleventh Doctor", "Whenever The Eleventh Doctor deals combat damage to a player, you may exile a card from your hand with a number of time counters on it equal to its mana value. If it doesn't have suspend, it gains suspend.", ["suspend"]],
   // No sentence of the clause hands over a keyword of `grants`: nothing is said.
   ["Grizzly Bears", "This creature gets +1/+1 until end of turn.", ["indestructible"]],
 ];
