@@ -6283,5 +6283,269 @@
     ]
    }
   ]
+ },
+ "Lutri, the Spellchaser": {
+  "source": {
+   "name": "Lutri, the Spellchaser",
+   "typeLine": "Legendary Creature — Elemental Otter",
+   "oracleText": "Companion — Each nonland card in your starting deck has a different name. (If this card is your chosen companion, you may put it into your hand from outside the game for {3} as a sorcery.)\nFlash\nWhen Lutri enters, if you cast it, copy target instant or sorcery spell you control. You may choose new targets for the copy.",
+   "keywords": [
+    "Companion",
+    "Flash"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "power": "3",
+   "toughness": "2",
+   "manaCost": "{1}{U/R}{U/R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "each nonland card in your starting deck has a different name",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "target instant or sorcery spell you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "copy",
+      "object": "target instant or sorcery spell you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "The Sibsig Ceremony": {
+  "source": {
+   "name": "The Sibsig Ceremony",
+   "typeLine": "Legendary Enchantment",
+   "oracleText": "Creature spells you cast cost {2} less to cast.\nWhenever a creature you control enters, if you cast it, destroy that creature, then create a 2/2 black Zombie Druid creature token.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{B}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "Creature spells you cast cost {2} less to cast",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a 2/2 black Zombie Druid creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Iridescent Tiger": {
+  "source": {
+   "name": "Iridescent Tiger",
+   "typeLine": "Creature — Cat",
+   "oracleText": "When this creature enters, if you cast it, add {W}{U}{B}{R}{G}.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "manaCost": "{4}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{W}{U}{B}{R}{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": null,
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Revenant Patriarch": {
+  "source": {
+   "name": "Revenant Patriarch",
+   "typeLine": "Creature — Spirit",
+   "oracleText": "When this creature enters, if {W} was spent to cast it, target player skips their next combat phase.\nThis creature can't block.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "W"
+   ],
+   "power": "4",
+   "toughness": "3",
+   "manaCost": "{4}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "{W} was spent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "extra-combat",
+      "object": "target player skips their next combat phase",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "block",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
  }
 }

@@ -14,6 +14,7 @@ import { isSelfSubject, SELF_REFERENCE } from "./self-reference.js";
 import { selfAsTilde } from "../grammar/self-as-tilde.js";
 import { cutCondition, cutSelfException } from "./self-exception.js";
 import { sweepNarrowing, wholePermanentMass } from "./sweep-narrowing.js";
+import { castIsOnlyACondition } from "./cast-class.js";
 
 const SELF_EXCEPTION_VERBS: ReadonlySet<string> = new Set(["destroy", "exile", "sacrifice", "return", "put"]);
 
@@ -1032,6 +1033,9 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // casting sorceries. 10 corpus clauses.
   // ...UNLESS THE SENTENCE ALSO GRANTS THE CAST ITSELF, of a pile the card filled (#1596): "you may cast cards exiled with Azula and you may cast them as though they had flash" (Azula, Cunning Usurper) is a permission to cast beside the timing.
   if (action.verb === "cast" && /\bas though (?:it|they) had flash\b/i.test(clauseText ?? "") && !/\bexiled with\b/i.test(action.object ?? "")) return [];
+  // A CONDITION FILED AS A CAST IS NO CAST (#1614, `castIsOnlyACondition`): "When this creature enters, IF YOU CAST IT, add {W}{U}{B}{R}{G}" (Iridescent Tiger), "if {W} WAS SPENT TO CAST it" (Revenant Patriarch), "copy THE
+  // NEXT SPELL YOU CAST this turn" (Flamehold Grappler). The clause grants, instructs and permits no cast; as an emit the card cast a spell it never casts. The twin of the #1549 misfile just below.
+  if (action.verb === "cast" && castIsOnlyACondition(clauseText ?? "")) return [];
   // A CAST OF "ALL PERMANENTS / CREATURES" IS THE CONDITION MISFILED AS AN ACTION (#1549): Cyclone Summoner's "if you cast it from your hand, return all permanents ... to their owners' hands" and Sunderflock's "if you've cast ..., return all non-Elemental creatures"
   // were stored as a second action `cast` with the RETURN's object. No card casts all its permanents or creatures (the corpus holds exactly these two such objects); read as an emit it fed every cast payoff once the class was no longer narrowed by an exception list.
   // Narrow on purpose: "each instant or sorcery card exiled with this enchantment" (Eye of the Storm, a copy resolved to its antecedent) is a real cast.

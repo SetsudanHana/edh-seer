@@ -10,8 +10,8 @@ import type { SubjectFilter } from "../schema.js";
  *     library", "a card in your hand", "a nonland card": no class, so any `spell`. A land is never cast, so "nonland" adds nothing);
  *   - else, for a pile the card fills in another ability ("a card exiled with Krang & Shredder"), the class every such ability names.
  *  `undefined` is "not read": the emit stays unclassed and silent, which is right where the words leave the class open.
- *  CEILING: unread, and still unclassed, are (a) a clause with no permission to cast at all, a condition the store filed as a cast ("if {C} was spent to cast it", Drowner of Truth; "if you cast it", Iridescent Tiger);
- *  (b) a class that depends on another card ("a card that shares a card type with it", Possibility Storm, Unpredictable Cyclone, Swindler's Scheme; "of the other type", Gale, Waterdeep Prodigy; "the card with the noted /
+ *  A clause with no permission to cast at all, a condition the store filed as a cast ("if {C} was spent to cast it", Drowner of Truth; "if you cast it", Iridescent Tiger), emits no cast since #1614 (`castIsOnlyACondition`).
+ *  CEILING: unread, and still unclassed, are (b) a class that depends on another card ("a card that shares a card type with it", Possibility Storm, Unpredictable Cyclone, Swindler's Scheme; "of the other type", Gale, Waterdeep Prodigy; "the card with the noted /
  *  chosen name", Magar of the Magic Strings, Garth One-Eye); (c) a back-reference whose card no words of this clause name (a delayed trigger: Power Pack; "Copy those exiled cards", Baron Helmut Zemo; "the exiled card",
  *  Gale's Redirection; "each exiled card you own with a kick counter on it", Zethi; "this card", Alaundo the Seer, Uvilda; "your commander", Geode Golem); (d) a pile whose filling ability names no card ("exile it instead
  *  of putting it into a graveyard", River Song's Diary) and (e) a "permanent card" (no cast row of the census names one). */
@@ -144,4 +144,25 @@ export function castsYourOwnCard(clauseText: string, casterIsAnyPlayer = false):
   // (Wild Evocation). The owner is the caster's, which is what `owner: you` says beside `control: any`.
   if (casterIsAnyPlayer) return /\btheir (?:library|hand|graveyard)\b/i.test(region) && !/\b(?:your|opponent's|opponents'|player's|players'|a|an|each|that|single) (?:library|hand|graveyard)s?\b/i.test(region);
   return /\byour (?:library|hand|graveyard)\b/i.test(region) && !/\b(?:opponent's|opponents'|player's|players'|their|a|an|each|that|single) (?:library|hand|graveyard)s?\b/i.test(region);
+}
+
+/** A CONDITION FILED AS A CAST IS NO CAST (#1614). The stored answer of 17 cards holds a `cast` action whose clause grants, instructs and permits no cast at all: its "cast" is the trigger's intervening if ("When this
+ *  creature enters, IF YOU CAST IT, add {W}{U}{B}{R}{G}", Iridescent Tiger; Lutri, The One Ring, The Sibsig Ceremony), a condition on the mana spent ("if {W} WAS SPENT TO CAST it", Revenant Patriarch, Drowner of Truth,
+ *  Lavinia) or a reference to a spell cast later ("copy THE NEXT SPELL YOU CAST this turn", Flamehold Grappler). Read as an emit, the card "cast" a spell it never casts and met cast payoffs and own-cast triggers.
+ *  True when the clause prints one of those three shapes and, once every way of MENTIONING a cast is taken out (a trigger's or condition's "you cast", "was cast", "to cast", "spells you cast", "cast this turn"), no
+ *  cast, play or discover word is left. A clause with no such shape is left alone ("Beam me up {3}{G}" prints no cast and is one).
+ *  The condition itself is not carried: `conditionCares` (intervening-if.ts) omits "if you cast it" on purpose, because it narrows the trigger's event and names no deck demand, and no field holds "mana of a colour was
+ *  spent". CEILING: the three printed shapes only; another condition filed as a cast keeps its emit. */
+const CONDITION_CAST = /\bif you cast (?:it|them|this [a-z]+|that [a-z]+)\b|\bspent to cast\b|\bthe next (?:[a-z]+ )*spells? you cast\b/i;
+const CAST_MENTIONS: readonly RegExp[] = [
+  /\b(?:when|whenever|if|as|after|unless|until|while|once) (?:you|they|a player|an opponent|that player|each player|any player|its controller)(?:'ve| have| has)? (?:first |next )?(?:don't |didn't |doesn't )?casts?\b/gi,
+  /\b(?:you|they|an opponent|that player|a player)(?:'ve| have| has) (?:not |already )?cast\b/gi,
+  /\b(?:was|were|been|is|are|wasn't|weren't|isn't|aren't|be|being) (?:not )?cast\b/gi,
+  /\bto cast\b/gi, /\bcast this turn\b/gi, /\bcast this way\b/gi, /\bspells? (?:you|they|an opponent|your opponents|that player) cast\b/gi, /\bcan't (?:be )?cast\b/gi,
+];
+export function castIsOnlyACondition(clauseText: string): boolean {
+  if (!CONDITION_CAST.test(clauseText)) return false;
+  let rest = clauseText;
+  for (const re of CAST_MENTIONS) rest = rest.replace(re, " ");
+  return !/\bcasts?\b|\bplays?\b|\bdiscovers?\b/i.test(rest);
 }

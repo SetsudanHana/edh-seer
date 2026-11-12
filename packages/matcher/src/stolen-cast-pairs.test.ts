@@ -285,3 +285,9 @@ test("Hurl into History's discover is your cast from exile: Quintorius Kand hear
   expect(castTags("Hurl into History", "Quintorius Kand")).not.toEqual([]);
   expect(castTags("Hurl into History", "Rhystic Study")).toEqual([]);
 });
+
+// #1614: "if you cast it" and "if {W} was spent to cast it" are conditions, not casts. Lutri, the Spellchaser and The Sibsig Ceremony carried a cast emit of an instant-or-sorcery / a creature and met "a spell you don't
+// own" (Nita) and own cast triggers; Iridescent Tiger and Revenant Patriarch an unclassed one.
+test.each([["Lutri, the Spellchaser", "Nita, Forum Conciliator"], ["The Sibsig Ceremony", "Nita, Forum Conciliator"], ["The Sibsig Ceremony", "Artisan of Kozilek"], ["The Sibsig Ceremony", "Beast Whisperer"]])("%s casts nothing: no cast reason with %s", (source, payoff) => {
+  expect(castTags(source, payoff)).toEqual([]);
+});

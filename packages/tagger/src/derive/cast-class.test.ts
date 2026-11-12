@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { deriveAsCorpus } from "../derive-worker.js";
 import type { SubjectFilter } from "../schema.js";
-import { castClassFromPrint } from "./cast-class.js";
+import { castClassFromPrint, castIsOnlyACondition } from "./cast-class.js";
 import { parseSubject } from "./subject.js";
 import fixtures from "./cast-class.fixtures.json" with { type: "json" };
 
@@ -104,7 +104,6 @@ test.each(["Omen Machine", "Wild Evocation"])("%s: each player casts their own c
 // CEILING pinned (the list in cast-class.ts): the words leave the class open, so the emit stays unclassed and silent. A condition filed as a cast, a class that depends on another card, a back-reference no word of the
 // clause resolves, a card named another way.
 test.each([
-  "Drowner of Truth // Drowned Jungle", "Revenant Patriarch", "Iridescent Tiger", // "if {C} was spent to cast it", "if you cast it": no cast is granted
   "Possibility Storm", "Unpredictable Cyclone", "Swindler's Scheme", "Gale, Waterdeep Prodigy", "Magar of the Magic Strings", "Garth One-Eye", // the class depends on another card
   "Power Pack", "Baron Helmut Zemo", "Gale's Redirection", "Zethi, Arcane Blademaster", "River Song's Diary", // no word of the clause names the card
   "Alaundo the Seer", "Hildibrand Manderville // Gentleman's Rise", "Geode Golem", "Aether Searcher", // the trigger's own card, the commander, a named card
@@ -186,6 +185,34 @@ test("Etali, Primal Storm exiles the top card of EACH player's library: no owner
   expect(casts("Etali, Primal Storm").map((x) => x.owner)).toEqual([undefined]);
 });
 
+// #1614: A CONDITION FILED AS A CAST IS NO CAST. The stored answer of 17 cards holds a `cast` action whose clause grants no cast: the trigger's intervening if ("if you cast it"), a condition on the mana spent ("if {W} was
+// spent to cast it") or a reference to a later spell ("the next spell you cast this turn"). The card casts nothing there, so the row carries no cast emit at all, self or not.
+const allCasts = (name: string) => rowOf(name).tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "cast");
+test.each([
+  "Iridescent Tiger", "Lutri, the Spellchaser", "The Sibsig Ceremony", "The One Ring", "Territory Forge", "Ran and Shaw", "Radiant Performer", "Crackling Spellslinger", // "if you cast it / them"
+  "Revenant Patriarch", "Drowner of Truth // Drowned Jungle", "Gruul Scrapper", "Jaded Sell-Sword", "Marut", "Lavinia, Azorius Renegade", "Ancient Cellarspawn", "The Prima Vista", // "... was spent to cast it"
+  "Flamehold Grappler", // "copy the next spell you cast this turn"
+])("%s: the 'cast' in its clause is a condition or a reference, the row emits no cast", (name) => {
+  expect(allCasts(name)).toEqual([]);
+});
+// The Prima Vista's misfiled cast is the clause's ONLY action, and it holds the card's real effect ("becomes an artifact creature until end of turn"): nothing is derived beside it, so the action stays unclaimed and the
+// dropped-clauses ratchet still sees the unread effect (#1614 review).
+test("The Prima Vista: a condition-only cast that is the clause's only action stays unclaimed", () => {
+  expect((rowOf("The Prima Vista").tags.unclaimed ?? []).map((a) => a.verb)).toContain("cast");
+  expect((rowOf("Lutri, the Spellchaser").tags.unclaimed ?? []).map((a) => a.verb)).not.toContain("cast");
+});
+test("the rest of the clause is untouched: Lutri still copies, The Sibsig Ceremony still destroys and makes its Zombie Druid, Lavinia still counters", () => {
+  const verbs = (name: string) => rowOf(name).tags.abilities.flatMap((a) => a.emits ?? []).map((e) => e.verb);
+  expect(verbs("Lutri, the Spellchaser")).toContain("copy");
+  expect(verbs("The Sibsig Ceremony")).toEqual(expect.arrayContaining(["dies", "create-token"]));
+  expect(verbs("Lavinia, Azorius Renegade")).toContain("counter-spell");
+});
+// A real cast beside the same condition stays: "When this creature enters, if you cast it, discover 3" (Geological Appraiser) discovers; "you may cast it from your graveyard" (Mosswood Dreadknight) and a keyword
+// line that prints no cast word ("Beam me up {3}{G}", Adversary by Algorithm) are casts.
+test.each(["Geological Appraiser", "Mosswood Dreadknight // Dread Whispers", "Adversary by Algorithm"])("%s: a real cast keeps its emit", (name) => {
+  expect(allCasts(name).length).toBeGreaterThan(0);
+});
+
 describe("castClassFromPrint", () => {
   const cls = (text: string, piles: string[] = []) => castClassFromPrint(text, piles, parseSubject);
   test("a card of no class is any spell", () => {
@@ -208,4 +235,20 @@ describe("castClassFromPrint", () => {
   test("a class that depends on another card ('shares a card type with it'): unread", () => {
     expect(cls("Whenever a player casts a spell from their hand, that player exiles it, then exiles cards from the top of their library until they exile a card that shares a card type with it. That player may cast that card without paying its mana cost.")).toBeUndefined();
   });
+});
+
+describe("castIsOnlyACondition", () => {
+  test.each([
+    "When this creature enters, if you cast it, add {W}{U}{B}{R}{G}.",
+    "When this creature enters, if {W} was spent to cast it, target player skips their next combat phase.",
+    "Whenever you cast a spell, if the amount of mana spent to cast it was less than its mana value, target opponent loses life equal to the difference.",
+    "When this creature enters, copy the next spell you cast this turn when you cast it. You may choose new targets for the copy.",
+  ])("a condition or a reference: %s", (text) => { expect(castIsOnlyACondition(text)).toBe(true); });
+  test.each([
+    "When this creature enters, if you cast it, discover 3.",
+    "When this creature dies, you may cast it from your graveyard as an Adventure until the end of your next turn.",
+    "Beam me up {3}{G}",
+    "Exile the top card of your library. You may cast that card.",
+    "When this creature enters, if you cast it, you may cast target instant card from your graveyard.",
+  ])("a real cast: %s", (text) => { expect(castIsOnlyACondition(text)).toBe(false); });
 });
