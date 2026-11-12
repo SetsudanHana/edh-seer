@@ -35,6 +35,8 @@ const TESTED: Record<string, string> = {
   "701.10e": "edges.test.ts — a doubler of other creatures' counters feeds a self counter doubler; a self doubler does not (#1438)",
   "701.11": "edges.test.ts — a tripler of other creatures' counters is read like a doubler (Triple, by analogy with 701.10e; #1438)",
   "701.17a": "partners-core.test.ts — a mill also supplies the general graveyard put, one way only",
+  "707.12": "subject.test.ts and stolen-cast-pairs.test.ts — a cast copy of an opponent's card is made where that card is, never in your hand: Osgood's Paradox hears it (Reversal of Fortune, Flawless Forgery, #1608)",
+  "701.57a": "stolen-cast-pairs.test.ts — discover digs your own library, so its cast is of a card you own: Talrand and Quintorius Kand's 'from exile' hear it, 'a spell you don't own' (Nita, Vaan) does not (Trumpeting Carnosaur, #1608)",
   "400.3": "end-step-exile-pairs.test.ts — a card in an opponent's graveyard is owned by that opponent, so Gruesome Encore's put fires no deck-mate's own enters trigger (#1502); subject.test.ts and stolen-cast-pairs.test.ts — a card an opponent owns is never in YOUR hand, so its cast is 'from anywhere other than your hand' (Osgood, Operation Double, #1596)",
   "112.2": "stolen-cast-pairs.test.ts — a copy you cast of an opponent's card is a spell you own, yet it copies their card, so Flawless Forgery fires no deck-mate's own cast trigger (#1594)",
   "400.1": "partners-core.test.ts — a graveyard leave keys apart from a battlefield leave (AK6)",

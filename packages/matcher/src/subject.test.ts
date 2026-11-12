@@ -537,6 +537,22 @@ test("from anywhere other than your hand: an opponent's card is never in YOUR ha
   expect(subjectMatches(s({ type: "creature", fromZone: "battlefield", owner: "opp" }), s({ type: "creature", notFromZone: "battlefield" }), H)).toBe(false);
 });
 
+test("from anywhere other than your hand: a copy of an opponent's card is made where that card is (CR 707.12), never in YOUR hand (#1608)", () => {
+  const want = s({ type: "spell", notFromZone: "hand" });
+  expect(subjectMatches(s({ type: "instant", copyOf: { owner: "opp" } }), want, H)).toBe(true);
+  // A copy of your own card with no origin stated is made in your hand (God-Eternal Kefnet's revealed draw).
+  expect(subjectMatches(s({ type: "instant", copyOf: { type: "instant" } }), want, H)).toBe(false);
+});
+
+// #1608 item 5, a known gap pinned (not fixed): a producer's `type` is what it IS, a list is OR, and nothing says "may also be". Thada Adel, Acquisitor's take ("an artifact card ... you may play that card") is cast as
+// `type: artifact`; an artifact creature is a creature spell too, but no field carries a type the producer does not state (the same limit `targetReachesSubtype` records for "target creature" and "artifacts you control").
+// Writing `["artifact", "creature"]` would claim she casts any creature. When the representation exists, the first expectation flips.
+test("an artifact cast does not meet 'a creature spell' (Thada Adel: the artifact may be a creature, unstated); a list would claim every creature", () => {
+  expect(subjectMatches(s({ type: "artifact", fromZone: "exile", owner: "opp" }), s({ type: "creature" }), H)).toBe(false);
+  expect(subjectMatches(s({ type: "artifact", fromZone: "exile", owner: "opp" }), s({ type: "artifact" }), H)).toBe(true);
+  expect(subjectMatches(s({ type: ["artifact", "creature"], fromZone: "exile", owner: "opp" }), s({ type: "creature" }), H)).toBe(true);
+});
+
 test("a player branch is met by a player-shaped producer only", () => {
   const want = s({ control: "any", anyOf: [{ player: true }, { type: "planeswalker" }] });
   expect(subjectMatches(s({ control: "opp" }), want, H)).toBe(true);

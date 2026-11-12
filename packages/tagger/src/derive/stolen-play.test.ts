@@ -102,10 +102,12 @@ test("Rashmi and Ragavan: both casts are of the exiled card an opponent owns, ne
 // #1596 item 5 (pin, no engine change): "THEY MAY CAST IT" IS NOT YOUR CAST. Audacious Swap ("The owner of target nonenchantment permanent ... they may cast it without paying its mana cost") and Tibalt's Trickery ("Its controller
 // ... They may cast that card") let ANOTHER player cast. Since DERIVE 494 (#1591) a pronoun actor no longer takes the controller default, so the caster stays `any` (the target's owner or the spell's controller can be you or an
 // opponent); nothing writes `you`, and no owner is claimed. Stored rows at 497 read the same (queried 2026-11-11).
-test.each(["Audacious Swap", "Tibalt's Trickery"])("%s: 'they may cast' reads the caster as any player, never as you, and names no owner", (name) => {
+// #1608 review: Audacious Swap's caster exiles the top card of THEIR OWN library, so the card cast is the caster's (`owner: you` beside `control: any`: the caster's own card, never "a spell you don't own").
+// Tibalt's Trickery reveals cards from "its controller"'s library, the same; nothing wrote an owner for it and none is claimed.
+test.each([["Audacious Swap", "you"], ["Tibalt's Trickery", undefined]] as const)("%s: 'they may cast' reads the caster as any player, never as you; owner %s", (name, owner) => {
   const s = emits(name, "cast");
   expect(s.length).toBeGreaterThan(0);
-  for (const x of s) expect({ control: x.control, owner: x.owner }).toEqual({ control: "any", owner: undefined });
+  for (const x of s) expect({ control: x.control, owner: x.owner }).toEqual({ control: "any", owner });
 });
 
 // #1596 item 7 (CEILING pinned, see ANOTHER_PLAYERS_CARD in derive.ts): "that player's" / "their" is read as another player's with no antecedent check. The two corpus rows a naive check would strip of their owner are right as
@@ -135,4 +137,25 @@ const MIXED = ["Mezzio Mugger", "Lidless Gaze", "Evelyn, the Covetous", "Extract
 test("Thada Adel, Acquisitor casts an artifact; every other play permission names no class and casts any spell", () => {
   expect(emits("Thada Adel, Acquisitor", "cast").map((x) => x.type)).toEqual(["artifact"]);
   for (const name of [...THIEVES, ...MIXED].filter((n) => n !== "Thada Adel, Acquisitor")) expect(emits(name, "cast").map((x) => x.type), name).toEqual(["spell"]);
+});
+
+// #1608 item 3: THE BOTH-HALVES PERMISSION STATES ITS ORIGIN. "You may play lands and cast spells from that player's hand" (Sen Triplets) is cast out of the opponent's hand; "from among cards you own in exile with croak
+// counters on them" (Grolnok, the Omnivore) out of exile. Both emits carried no origin, which reads as your own hand.
+test("Sen Triplets plays and casts from that player's hand: fromZone hand beside owner opp", () => {
+  const s = [...emits("Sen Triplets", "cast"), ...emits("Sen Triplets", "land-play")];
+  expect(s.length).toBe(2);
+  for (const x of s) expect({ fromZone: x.fromZone, owner: x.owner, control: x.control }).toEqual({ fromZone: "hand", owner: "opp", control: "you" });
+});
+test("Grolnok, the Omnivore plays and casts cards you own in exile: fromZone exile, owner you", () => {
+  const s = [...emits("Grolnok, the Omnivore", "cast"), ...emits("Grolnok, the Omnivore", "land-play")];
+  expect(s.length).toBe(2);
+  for (const x of s) expect({ fromZone: x.fromZone, owner: x.owner, control: x.control }).toEqual({ fromZone: "exile", owner: "you", control: "you" });
+});
+
+// #1608 item 4: THE CARD CAST IS THE ONE EXILED, NOT THE PERMANENT TARGETED. "The owner of target nonenchantment permanent shuffles it into their library, then exiles the top card of their library. If it's a land card, they
+// put it onto the battlefield. Otherwise, they may cast it" (Audacious Swap): the cast's "it" is the exiled top card, of any class. The emit carried the target's class (`notType: enchantment`, `scope: target`).
+test("Audacious Swap: the cast is of the exiled top card, any spell, not of the targeted nonenchantment permanent", () => {
+  const s = emits("Audacious Swap", "cast");
+  expect(s.length).toBe(1);
+  expect({ type: s[0]!.type, notType: s[0]!.notType, scope: s[0]!.scope, fromZone: s[0]!.fromZone, control: s[0]!.control }).toEqual({ type: "spell", notType: undefined, scope: undefined, fromZone: "exile", control: "any" });
 });
