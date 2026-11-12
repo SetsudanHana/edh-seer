@@ -979,10 +979,14 @@ test("an activated flicker is protection on any card type", () => {
   // Creatures, and artifacts that exile your permanent and later return it ("Return each creature card exiled with this artifact").
   for (const name of ["Eldrazi Displacer", "Mistmeadow Witch", "Roon of the Hidden Realm", "Emiel the Blessed", "Abuelo, Ancestral Echo", "Nephalia Smuggler", "Cold Storage", "Synod Sanctum"]) expect(shields(name), name).toBe(true);
   // Written rows: an activated flicker of only the card itself, or of only an opponent's permanent, shields nothing.
-  const activated = (subject: object): DeckCard => derivedCard("Written", [{ kind: "activated", effect: { kind: "flicker", subject } }], "Artifact");
+  // The flicker needs the instant-speed exile it pairs with (`pairedInstantExile`), as derive writes it for Eldrazi Displacer.
+  const exile = { kind: "activated", effect: { kind: "" }, emits: [{ verb: "exiled", subject: { control: "opp", token: null, type: "creature", scope: "target", fromZone: "battlefield" }, instantSpeed: true }] };
+  const activated = (subject: object, emits: object[] = [{ verb: "enters", subject: { control: "any", token: null, fromZone: "exile" } }]): DeckCard => derivedCard("Written", [exile, { kind: "activated", effect: { kind: "flicker", subject }, emits }], "Artifact");
   expect(ruleMatches(rule, activated({ control: "any", token: null, type: "creature", scope: "target", other: true }))).toBe(true);
   expect(ruleMatches(rule, activated({ control: "opp", token: null, type: "creature", scope: "target" }))).toBe(false);
   expect(ruleMatches(rule, activated({ control: "any", token: null, self: true }))).toBe(false);
+  // "Put a card exiled with this onto the battlefield under YOUR control" is a steal, and a loyalty or sorcery-speed exile (no instant-speed `exiled` emit) is no shield: Sisters of Stone Death, Karn Liberated, Aminatou, Ghost Vacuum.
+  for (const name of ["Sisters of Stone Death", "Karn Liberated", "Aminatou, the Fateshifter", "Ghost Vacuum", "Profane Procession // Tomb of the Dusk Rose", "Lilysplash Mentor", "Aetherling", "Kaya, Ghost Assassin"]) expect(shields(name), name).toBe(false);
   // A triggered flicker on a card without flash is still no shield.
   expect(ruleMatches(rule, derivedCard("Written", [{ kind: "triggered", effect: { kind: "flicker", subject: { control: "you", token: null, type: "creature", scope: "target" } } }], "Creature"))).toBe(false);
 });
