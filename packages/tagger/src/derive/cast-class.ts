@@ -127,11 +127,19 @@ export function castClassFromPrint(clauseText: string, pileTexts: readonly strin
  *  of Defiance). The emit then says `owner: you`, which "whenever you cast a spell you don't own" (Nita, Forum Conciliator; Vaan, Street Thief) refuses. Typed `spell` with no owner it would have met them.
  *  CEILING: only a zone the words call yours. "Draw a card, then discard a card ... cast the discarded card" (Malcolm), a pile another ability fills (Quintorius, Loremaster) and a card every player's zone can
  *  supply ("a graveyard", "each player mills") write no owner, and still meet those payoffs. */
+/** AN IMPERATIVE CAST (#1613 review): "Cast any number of red instant and/or sorcery cards from your graveyard" (Chandra Ablaze), "Search your library for a red or white instant card ... and cast that card" (Sunforger).
+ *  The instruction opens a sentence or follows "and" / "then"; "whenever you cast", "if you cast it" and "to cast it" are not one. Read for the OWNER only: the class reading keeps its "may cast" permission. */
+const IMPERATIVE_CAST = /(?:^|[.:—] |\band |\bthen )cast\b/i;
+/** "... if it shares a card type with a card exiled with this creature" (Cemetery Illuminator): a pile named in the permission's CONDITION is not where the card cast comes from. */
+const PILE_CONDITION = /\bif (?:it|that card|that spell) shares? [^.]*$/i;
 export function castsYourOwnCard(clauseText: string, casterIsAnyPlayer = false): boolean {
-  const m = PERMISSION.exec(clauseText);
+  const m = PERMISSION.exec(clauseText) ?? IMPERATIVE_CAST.exec(clauseText);
   if (!m) return false;
   const end = clauseText.indexOf(".", m.index);
-  const region = clauseText.slice(0, end < 0 ? undefined : end);
+  // A ZONE THE TRIGGER NAMES IS NOT WHERE THE CARD CAST COMES FROM (#1609): "Whenever a player casts a spell from their hand, that player exiles it. If the player does, they may cast a spell from among other cards
+  // exiled with this artifact" (Knowledge Pool) casts out of a pile every player's library filled. The trigger's own condition is cut before the zones are read, and a pile another ability fills proves no owner.
+  const region = clauseText.slice(0, end < 0 ? undefined : end).replace(/\b(?:whenever|when|at the beginning of)\b[^,.]*,/gi, "").replace(PILE_CONDITION, "");
+  if (PILE.test(region)) return false;
   // ANOTHER PLAYER WHO CASTS OFF "THEIR" LIBRARY OR HAND CASTS THEIR OWN CARD: "that player exiles the top card of their library ... the player casts it" (Omen Machine), "reveals a card at random from their hand"
   // (Wild Evocation). The owner is the caster's, which is what `owner: you` says beside `control: any`.
   if (casterIsAnyPlayer) return /\btheir (?:library|hand|graveyard)\b/i.test(region) && !/\b(?:your|opponent's|opponents'|player's|players'|a|an|each|that|single) (?:library|hand|graveyard)s?\b/i.test(region);

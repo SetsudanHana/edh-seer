@@ -156,6 +156,36 @@ test("Yennett, Cryptic Sovereign: an odd mana value is no class the emit can car
   expect(casts("Yennett, Cryptic Sovereign").map((x) => x.type)).toEqual([undefined]);
 });
 
+// #1609: A CAST THE WORDS TAKE FROM YOUR OWN ZONE IS OF A CARD YOU OWN, whether or not 502 had to type it. "You may play lands and cast spells from the top of your library" (Future Sight), "look at the top card of your
+// library. You may cast it" (Galvanoth), "cast an instant or sorcery spell ... from your hand" (Founding the Third Path, chapter I) stated a class and so were never given an owner.
+test.each(["Future Sight", "Galvanoth", "Founding the Third Path"])("%s casts from your own library or hand: owner you on every cast", (name) => {
+  const s = casts(name);
+  expect(s.length).toBeGreaterThan(0);
+  for (const x of s) expect(x.owner).toBe("you");
+});
+// #1613 review: AN IMPERATIVE CAST IS A CAST TOO. "Cast any number of red instant and/or sorcery cards from your graveyard" (Chandra Ablaze) and "Search your library for a red or white instant card ... and cast that card"
+// (Sunforger) print no "you may", so the owner reading found no permission. And a pile named only in a CONDITION is not the source: "you may cast a spell from the top of your library if it shares a card type with a
+// card exiled with this creature" (Cemetery Illuminator) casts off your library.
+test.each(["Chandra Ablaze", "Sunforger", "Cemetery Illuminator"])("%s casts a card from your own graveyard or library: owner you", (name) => {
+  const s = casts(name);
+  expect(s.length).toBeGreaterThan(0);
+  for (const x of s) expect({ control: x.control, owner: x.owner }).toEqual({ control: "you", owner: "you" });
+});
+// ...and A DISCOVER WHOSE STORED CAST ALREADY SAID `spell` is still a discover (CR 701.57a): your cast, of a card you own, from exile. "Discover X, where X is that spell's mana value" (Hurl into History) is unbounded.
+test("Hurl into History discovers X: your cast of a spell you own from exile, no bound", () => {
+  expect(casts("Hurl into History").map((x) => ({ type: x.type, control: x.control, owner: x.owner, fromZone: x.fromZone, stats: x.stats }))).toEqual([{ type: "spell", control: "you", owner: "you", fromZone: "exile", stats: undefined }]);
+});
+// A zone named only by the TRIGGER is not where the card cast comes from: "Whenever a player casts a spell from their hand, that player exiles it. If the player does, they may cast a spell from among other cards exiled
+// with this artifact" (Knowledge Pool) casts out of a pile every player's library filled, so the caster can cast another player's card and no owner is written.
+test("Knowledge Pool: 'from their hand' is the trigger's spell, the cast is from the shared pile: no owner", () => {
+  const s = casts("Knowledge Pool");
+  expect(s.length).toBeGreaterThan(0);
+  for (const x of s) expect(x.owner).toBeUndefined();
+});
+test("Etali, Primal Storm exiles the top card of EACH player's library: no owner is written", () => {
+  expect(casts("Etali, Primal Storm").map((x) => x.owner)).toEqual([undefined]);
+});
+
 describe("castClassFromPrint", () => {
   const cls = (text: string, piles: string[] = []) => castClassFromPrint(text, piles, parseSubject);
   test("a card of no class is any spell", () => {

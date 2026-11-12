@@ -70,8 +70,9 @@ test.each(["Etali, Primal Conqueror // Etali, Primal Sickness", "Shadow of the E
 test("Etali, Primal Conqueror can cast a deck-mate off your own library: Artisan of Kozilek's cast trigger hears it", () => {
   expect(castTags("Etali, Primal Conqueror // Etali, Primal Sickness", "Artisan of Kozilek")).not.toEqual([]);
 });
-test("Spellshift's cast is the other player's ('that player may cast that card'): not yours, no owner", () => {
-  for (const s of castEmits("Spellshift")) { expect(s.control).not.toBe("you"); expect(s.owner).toBeUndefined(); }
+// #1609: the caster reveals cards from the top of THEIR library, so the card is the caster's own (`owner: you` beside a caster that is not you, the Omen Machine reading of #1608); never an opponent's (`owner: opp`).
+test("Spellshift's cast is the other player's ('that player may cast that card'): not yours, and of the caster's own card", () => {
+  for (const s of castEmits("Spellshift")) { expect(s.control).toBe("any"); expect(s.owner).toBe("you"); }
 });
 test.each(["Psychic Theft", "Rona, Herald of Invasion // Rona, Tolarian Obliterator"])("%s is still your cast, whoever the card is taken from", (thief) => {
   for (const s of castEmits(thief)) expect(s.control).toBe("you");
@@ -244,4 +245,43 @@ test("Sanar casts cards 'of that color': no self reason with colourless Ulamog, 
   expect(castTags("Sanar, Innovative First-Year", "Ulamog, the Ceaseless Hunger")).toEqual([]);
   expect(castTags("Sanar, Innovative First-Year", "Artisan of Kozilek")).toEqual([]);
   expect(castTags("Sanar, Innovative First-Year", "Echo Storm")).not.toEqual([]);
+});
+
+// #1612: a cast of "a card of that color" (Sanar) or of "monocolored cards" (Emergent Ultimatum) is never a colourless spell: Forsaken Monument's "whenever you cast a colorless spell" does not hear it.
+test.each(["Sanar, Innovative First-Year", "Emergent Ultimatum"])("%s casts a coloured card: no 'colorless spell' reason with Forsaken Monument", (source) => {
+  expect(castTags(source, "Forsaken Monument")).toEqual([]);
+});
+
+// #1611: Grolnok, the Omnivore casts only permanent cards (the cards its own ability exiles with a croak counter): an instant's or sorcery's own cast trigger never hears it, a creature's still does.
+test("Grolnok casts permanent spells: no self reason with Echo Storm (an instant) or Talrand's instant-or-sorcery trigger; Artisan of Kozilek's own cast trigger still hears it", () => {
+  expect(castTags("Grolnok, the Omnivore", "Echo Storm")).toEqual([]);
+  expect(castTags("Grolnok, the Omnivore", "Talrand, Sky Summoner")).toEqual([]);
+  expect(castTags("Grolnok, the Omnivore", "Artisan of Kozilek")).not.toEqual([]);
+});
+
+// #1609: A CARD OF YOUR DECK IS A SPELL YOU OWN. Every card's own implied cast, and its own cast from your graveyard (Demilich), is of a card you own (CR 108.3: its owner is the player who started the game with it in
+// their deck; CR 400.3: your hand, library and graveyard hold only your cards), so "whenever you cast a spell you don't own" never hears it. Lightning Bolt met Don Andres's "a noncreature spell you don't own".
+test.each([["Lightning Bolt", "Don Andres, the Renegade"], ["Mnemonic Deluge", "Don Andres, the Renegade"], ["Demilich", "Nita, Forum Conciliator"], ["Demilich", "Don Andres, the Renegade"],
+  ["Founding the Third Path", "Nita, Forum Conciliator"], ["Founding the Third Path", "Don Andres, the Renegade"], ["Future Sight", "Nita, Forum Conciliator"], ["Future Sight", "Don Andres, the Renegade"],
+  ["Galvanoth", "Nita, Forum Conciliator"], ["Galvanoth", "Tasha, the Witch Queen"]])("%s casts only your own cards: no 'a spell you don't own' reason with %s", (source, payoff) => {
+  expect(castTags(source, payoff)).toEqual([]);
+});
+// ...and a cast of a card an opponent owns, or of a pile either player feeds, still meets it: nothing true is dropped.
+test.each([["Gonti, Lord of Luxury", "Nita, Forum Conciliator"], ["Thief of Sanity", "Nita, Forum Conciliator"], ["Sen Triplets", "Nita, Forum Conciliator"], ["Etali, Primal Storm", "Nita, Forum Conciliator"],
+  ["Gonti, Lord of Luxury", "Don Andres, the Renegade"], ["Thief of Sanity", "Tasha, the Witch Queen"], ["The Ur-Sphinx", "Nita, Forum Conciliator"]])("%s can cast a card you don't own: %s still hears it", (source, payoff) => {
+  expect(castTags(source, payoff)).not.toEqual([]);
+});
+// Knowledge Pool lets each player cast a card another player's library put in the pile: "a spell you don't own" still hears it (#1609: a zone the TRIGGER names is not the cast's source).
+test("Knowledge Pool can hand you another player's card: Nita still hears it", () => {
+  expect(castTags("Knowledge Pool", "Nita, Forum Conciliator")).not.toEqual([]);
+});
+
+// #1613 review: three more casts of certainly-own cards that stated no owner. Chandra Ablaze casts from your graveyard, Sunforger out of your library, Cemetery Illuminator off the top of your library; Hurl into
+// History's discover was read as any player's cast with no origin.
+test.each(["Chandra Ablaze", "Sunforger", "Cemetery Illuminator", "Hurl into History"])("%s casts only your own cards: no 'a spell you don't own' reason with Nita", (source) => {
+  expect(castTags(source, "Nita, Forum Conciliator")).toEqual([]);
+});
+test("Hurl into History's discover is your cast from exile: Quintorius Kand hears it, Rhystic Study's 'an opponent casts' does not", () => {
+  expect(castTags("Hurl into History", "Quintorius Kand")).not.toEqual([]);
+  expect(castTags("Hurl into History", "Rhystic Study")).toEqual([]);
 });
