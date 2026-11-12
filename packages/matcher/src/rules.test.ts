@@ -646,50 +646,93 @@ describe("the Ramp role, second round (#1190)", () => {
   });
 });
 
-// --- self-protection in words that are not a printed keyword (roadmap I1) ---
+// --- THE PROTECTION ROLE READS DERIVED DATA (#1266; it was the printed `protection` pattern and the `protectionIsOwnKeyword` text reader) ---
+// Every card below is REAL: oracle text and derived abilities from `fixtures/removal-derived.json` (Mongo, derive 515). A must-hold case BLANKS the oracle text, so only derived data can say yes.
 
-const protectionRule = () => loadRules().rules.find((r) => r.id.startsWith("protection"))!;
-const asCard = (name: string, oracleText: string, keywords: string[] = []): DeckCard => ({
-  card: { name, typeLine: "Creature", oracleText, keywords, colors: [], manaValue: 3 } as never,
-  tags: { oracleId: name, schemaVersion: 1, promptVersion: 1, model: "t",
-    characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 3, power: "3", toughness: "3", token: false, keywords } as never,
-    abilities: [] } as never,
-});
+const protectionText = () => loadRules().rules.find((r) => r.id === "protection.text")!;
+const protectsDerived = (name: string): boolean => ruleMatches(protectionText(), realCard(name, { oracleText: "" }));
+const protects = (name: string): boolean => ruleMatches(protectionText(), realCard(name));
 
-test("a spell that cannot be countered protects nothing but itself", () => {
-  // 10 of the 113 cards the protection rule fires on say only this — Nezahal, Niv-Mizzet Parun,
-  // Toski. A creature that cannot be countered is not one of a deck's ten Interaction cards.
-  const c = asCard("Nezahal", "This spell can't be countered.\nYou have no maximum hand size.");
-  expect(ruleMatches(protectionRule(), c)).toBe(false);
-});
-
-test("entering with an indestructible counter ON ITSELF is the same fact", () => {
-  const c = asCard("Myojin of Grim Betrayal", "Myojin of Grim Betrayal enters with an indestructible counter on it if you cast it from your hand.");
-  expect(ruleMatches(protectionRule(), c)).toBe(false);
-});
-
-test("a card that says both keeps its other half", () => {
-  // Stripped, not matched: the remaining word still has to clear the printed-keyword test, and here
-  // it does not — the hexproof is handed to something else.
-  const c = asCard("Both", "This spell can't be countered.\nCreatures you control gain hexproof until end of turn.");
-  expect(ruleMatches(protectionRule(), c)).toBe(true);
-});
-
-const SHURI_REMINDER = "(They're artifacts with indestructible and \"{T}: Add {C}. This mana can't be spent to cast a nonartifact spell.\")";
-const VIBRANIUM_REMINDER = "(It's an artifact with indestructible and \"{T}: Add {C}. This mana can't be spent to cast a nonartifact spell.\")";
-
-test("a token's reminder text is the TOKEN'S, not the card's (#1289)", () => {
-  const cases: [string, string][] = [
-    ["Shuri's Fabricator", `When this artifact enters, create two tapped Vibranium tokens. ${SHURI_REMINDER}\n{6}, {T}: Return target artifact card from your graveyard to the battlefield with a finality counter on it. Activate only as a sorcery. (If a permanent with a finality counter on it would be put into a graveyard, exile it instead.)`],
-    ["Vibranium Mining Mech", `Trample\nWhenever this Vehicle enters or attacks, create a tapped Vibranium token. ${VIBRANIUM_REMINDER}\n{2}: This Vehicle gets +1/+0 until end of turn.\nCrew 2`],
-    ["T'Challa, the Black Panther", `Whenever T'Challa enters or attacks, create a tapped Vibranium token. ${VIBRANIUM_REMINDER}\nWhenever you cast an artifact spell with mana value 4 or greater, put two +1/+1 counters on T'Challa.`],
-    ["Dora Milaje Elite", `First strike\nWhen this creature enters, if an opponent controls more lands than you, create a tapped Vibranium token. ${VIBRANIUM_REMINDER}\nSacrifice this creature: Legendary permanents you control gain indestructible until end of turn.`],
+test("a keyword handed to something else is protection, read off the derived grant", () => {
+  const grants = [
+    "Heroic Intervention", "Lightning Greaves", "Swiftfoot Boots", "Mother of Runes", "Boros Charm", "Avacyn, Angel of Hope", "Archetype of Endurance", "Dora Milaje Elite",
+    // "It gains ..." after a sentence with a target, or after one that puts another card onto the battlefield, is that permanent.
+    "Feat of Resistance", "Gaea's Gift", "Fated Return", "Airtight Alibi", "Strefan, Maurer Progenitor",
+    // "You have hexproof" is a grant to the player.
+    "Leyline of Sanctity",
+    // Inside a quoted ability handed to others, "this creature" and "It" are the GRANTEE, not the card.
+    "Agent of the Shadow Thieves",
   ];
-  for (const [name, text] of cases) {
-    const c = asCard(name, text);
-    expect(ruleMatches(protectionRule(), c), name).toBe(name === "Dora Milaje Elite");
+  for (const name of grants) expect(protectsDerived(name), name).toBe(true);
+});
+
+test("a keyword the card gives ITSELF protects nothing else (the Sylvan Caryatid rule, `Ability.grantsSelf`)", () => {
+  // Printed keyword only: derive writes no grant at all.
+  expect(protects("Sylvan Caryatid")).toBe(false);
+  // The sentence forms main's text reader already refused (#1289).
+  for (const name of ["Adanto Vanguard", "Falkenrath Aristocrat", "Dragonlord Ojutai", "Kogla, the Titan Ape", "Hungering Puppetbeast", "Crew Captain"]) expect(protects(name), name).toBe(false);
+  // The same fact behind a condition or a trigger, which the anchored text reader let through: "As long as you control four or more artifacts, this creature has hexproof", "As long as your opponents
+  // control no creatures, this creature has indestructible", "Landfall — ... this creature gains indestructible", "If you do, this creature gains indestructible".
+  for (const name of ["Shimmer Dragon", "Erebos's Titan", "Dreadwurm", "Temur Sabertooth"]) expect(protects(name), name).toBe(false);
+  // A grant inside the card's own animate carries `subject.self` and no `grantsSelf` ("Chromium becomes a Human ..., loses all abilities, and gains hexproof"): `notSelf` refuses it.
+  for (const name of ["Chromium, the Mutable", "Gideon, Champion of Justice"]) expect(protects(name), name).toBe(false);
+  // Shadowspear hands lifelink and trample to its host: a grant, of no protection keyword (`grantsAny`).
+  expect(realCard("Shadowspear").tags!.abilities.some((a) => (a.grants ?? []).includes("lifelink"))).toBe(true);
+});
+
+test("a keyword counter put on another permanent is protection; one the card puts on itself is not", () => {
+  for (const name of ["Claim the Kingdom", "Slippery Bogbonder", "Summon: Knights of Round"]) expect(protectsDerived(name), name).toBe(true);
+  // "enters with an indestructible counter on it" and "Put an indestructible counter on Drivnod" are the same fact about the card itself.
+  for (const name of ["Myojin of Grim Betrayal", "Drivnod, Carnage Dominus"]) expect(protects(name), name).toBe(false);
+});
+
+test("a printed protection word that hands nothing to your permanents is not protection", () => {
+  const not = [
+    // A token "with hexproof", and a token's reminder text, are the TOKEN'S (owner ruling 2026-09-27, #533; #1289).
+    "Deeproot Waters", "Shuri's Fabricator", "Vibranium Mining Mech", "T'Challa, the Black Panther",
+    // Taking protection AWAY is a removal enabler.
+    "Shadowspear", "Nowhere to Run", "Hour of Devastation",
+    // A list of keywords the card counts or looks for, and a card NAME that holds the word.
+    "Akroma, Vision of Ixidor", "Skyshroud Sentinel",
+    // "This spell can't be countered" protects the card itself.
+    "Nezahal, Primal Tide", "Niv-Mizzet, Parun",
+  ];
+  for (const name of not) expect(protects(name), name).toBe(false);
+});
+
+test("phasing out is protection, read off the derived `phases-out` emit", () => {
+  for (const name of ["Teferi's Protection", "Slip Out the Back"]) expect(protectsDerived(name), name).toBe(true);
+  // A card that phases out ANY permanent, yours or theirs, can be both protection and interaction: it stays.
+  for (const name of ["Galadriel's Dismissal", "Dream Fighter"]) expect(protectsDerived(name), name).toBe(true);
+});
+
+// owner 2026-11-12: a card that protects only itself is not Protection, phasing included. The derived `phases-out` emit carries `subject.self`.
+test("a card that phases only ITSELF out is not protection", () => {
+  const selfOnly = ["Blink Dog", "Crystal Golem", "Mist Dragon", "Rainbow Efreet", "Frenetic Efreet", "Teferi's Honor Guard", "Vaporous Djinn", "Warping Wurm", "Vision, Synthezoid Avenger", "Kaito Shizuki", "Renegade Silent"];
+  for (const name of selfOnly) expect(protectsDerived(name), name).toBe(false);
+});
+
+// owner 2026-11-12: phasing aimed only at an opponent's permanent is interaction, not Protection. The emit's subject carries `control: "opp"`.
+test("phasing aimed only at an opponent's permanent is not protection", () => {
+  for (const name of ["Teferi's Reproach", "Divine Smite", "Sapphire Charm", "Teferi, Master of Time", "Teferi, Timeless Voyager"]) expect(protectsDerived(name), name).toBe(false);
+});
+
+test("the one printed residue: spells that can't be countered and protection for the player", () => {
+  // CEILING (see the rule's why): derive reads neither, so these stand on printed text; with the text blanked nothing derived says so.
+  for (const name of ["Delighted Halfling", "Vexing Shusher", "The One Ring", "Seht's Tiger", "Solitary Confinement"]) {
+    expect(protects(name), name).toBe(true);
+    expect(protectsDerived(name), name).toBe(false);
   }
 });
+
+test("named CEILINGs of the derived protection read (#1266)", () => {
+  // MISSES. "Choose hexproof or indestructible. Creatures you control gain that ability" names no keyword in `grants`; a per-colour keyword list derives no grant; an emblem's grant lives on the emblem's node.
+  for (const name of ["Linvala, Shield of Sea Gate", "Scion of Draco", "Elspeth, Knight-Errant"]) expect(protects(name), name).toBe(false);
+  // OVER-READ. Celebr-8000's "it gains the indicated ability" sits a sentence away from the bullet that names indestructible, so `grantsSelf` is not set.
+  expect(protects("Celebr-8000")).toBe(true);
+});
+
+const VIBRANIUM_REMINDER = "(It's an artifact with indestructible and \"{T}: Add {C}. This mana can't be spent to cast a nonartifact spell.\")";
 
 test("ownText blanks a reminder after a create-token sentence and no other parenthesis (#1289)", () => {
   const out = ownText({ oracleText: `When this enters, create a tapped Vibranium token. ${VIBRANIUM_REMINDER}\nActivate only as a sorcery. (If a permanent with a finality counter on it would be put into a graveyard, exile it instead.)` });
@@ -741,72 +784,6 @@ test("a pronoun sentence late in a kept reminder is the card's unless it follows
   const out2 = ownText({ oracleText: stage });
   expect(out2).toContain("You perform a magic trick");
   expect(out2).not.toContain("Rabbit");
-});
-
-test("a sentence whose subject is the card itself protects only the card (#1289)", () => {
-  const selfOnly: [string, string][] = [
-    ["Falkenrath Aristocrat", "Flying, haste\nSacrifice a creature: This creature gains indestructible until end of turn. If the sacrificed creature was a Human, put a +1/+1 counter on this creature."],
-    ["Dragonlord Ojutai", "Flying\nDragonlord Ojutai has hexproof as long as it's untapped.\nWhenever Dragonlord Ojutai deals combat damage to a player, look at the top three cards of your library. Put one of them into your hand and the rest on the bottom of your library in any order."],
-    ["Crew Captain", "Haste\nThis creature has indestructible as long as it entered this turn."],
-    ["Kogla, the Titan Ape", "When Kogla enters, it fights up to one target creature you don't control.\nWhenever Kogla attacks, destroy target artifact or enchantment defending player controls.\n{1}{G}: Return target Human you control to its owner's hand. Kogla gains indestructible until end of turn."],
-    ["Hungering Puppetbeast", `When this creature enters, create a Heartwood token. (It's a red and green artifact with "{T}: Add {R} or {G}.")\n{1}, Sacrifice another artifact: Put a +1/+1 counter on this creature. It gains your choice of trample, hexproof, or haste until end of turn.`],
-    ["Ellie", "Ellie deals 2 damage to target player and gains indestructible until end of turn."],
-    ["Until Card", "{1}: Until end of turn, this creature gains hexproof."],
-  ];
-  for (const [name, text] of selfOnly) expect(ruleMatches(protectionRule(), asCard(name, text)), name).toBe(false);
-});
-
-test("a grant to something else keeps the role even beside a self sentence (#1289)", () => {
-  const keeps: [string, string][] = [
-    ["Feat of Resistance", "Put a +1/+1 counter on target creature you control. It gains protection from the color of your choice until end of turn. (It can't be blocked, targeted, dealt damage, enchanted, or equipped by anything of that color.)"],
-    ["Gaea's Gift", "Put a +1/+1 counter on target creature you control. It gains reach, trample, hexproof, and indestructible until end of turn. (It can't be the target of spells or abilities your opponents control. Damage and effects that say \"destroy\" don't destroy it.)"],
-    ["Fated Return", "Put target creature card from a graveyard onto the battlefield under your control. It gains indestructible. If it's your turn, scry 2."],
-    ["Airtight Alibi", "Flash\nEnchant creature\nWhen this Aura enters, untap enchanted creature. It gains hexproof until end of turn. If it's suspected, it's no longer suspected.\nEnchanted creature gets +2/+2 and can't become suspected."],
-    ["Lightning Greaves", "Equipped creature has haste and shroud. (It can't be the target of spells or abilities.)\nEquip {0}"],
-    ["Heroic Intervention", "Permanents you control gain hexproof and indestructible until end of turn."],
-    // Inside a quoted ability granted to others, "this creature" and "It" are the GRANTEE, not the card.
-    ["Agent of the Shadow Thieves", "Commander creatures you own have \"Whenever this creature attacks a player, if no opponent has more life than that player, put a +1/+1 counter on this creature. It gains deathtouch and indestructible until end of turn.\""],
-    ["Both Sentences", "This creature gains indestructible until end of turn.\nSacrifice this creature: Other creatures you control gain hexproof until end of turn."],
-    ["Plural Subject", "This creature and other creatures you control gain indestructible until end of turn."],
-  ];
-  for (const [name, text] of keeps) expect(ruleMatches(protectionRule(), asCard(name, text)), name).toBe(true);
-});
-
-test("a card with no protection at all does not match the rule at all", () => {
-  // NOT A TEST OF THE EMPTY GUARD, and saying so is the point: `protectionIsOwnKeyword` only runs
-  // once the protection pattern has matched, so its `found(txt).size === 0` branch is UNREACHABLE
-  // through the shipped rule and mutating it away changes no test. It is kept because a caller that
-  // did reach it would otherwise be told a silent card protects itself, and the rule reads the op
-  // under `not:` — so the wrong answer there would SUPPRESS the rule, which is the under-claiming
-  // direction. Recorded rather than shipped as a guard that fires.
-  expect(ruleMatches(protectionRule(), asCard("Bear", "Vanilla."))).toBe(false);
-});
-
-test("stripping hexproof from an opponent is removal, not protection", () => {
-  // Shadowspear and Nowhere to Run exist so your REMOVAL connects. Counted as Interaction of the
-  // protection kind, they reached a true category through a false sentence.
-  const shadowspear = asCard("Shadowspear",
-    "Equipped creature gets +1/+1 and has trample and lifelink.\n{1}: Permanents your opponents control lose hexproof and indestructible until end of turn.\nEquip {2}");
-  expect(ruleMatches(protectionRule(), shadowspear)).toBe(false);
-  const nowhere = asCard("Nowhere to Run",
-    "Creatures your opponents control can be the targets of spells and abilities as though they didn't have hexproof.");
-  expect(ruleMatches(protectionRule(), nowhere)).toBe(false);
-});
-
-test("a card that grants AND strips keeps its own half", () => {
-  // Archetype of Endurance, verbatim in shape: one sentence gives your creatures hexproof, the next
-  // takes it from theirs. Only the second goes — which is why this is a strip and not a refusal.
-  const c = asCard("Archetype of Endurance",
-    "Creatures you control have hexproof.\nCreatures your opponents control lose hexproof and can't have hexproof.");
-  expect(ruleMatches(protectionRule(), c)).toBe(true);
-});
-
-test("the strip takes the SENTENCE, because one clause can name two words", () => {
-  // A phrase-level cut on Shadowspear leaves "indestructible" standing, and the card reads as
-  // protection again through the half that was never about protecting anything of yours.
-  const c = asCard("Two Words",
-    "{1}: Permanents your opponents control lose hexproof and indestructible until end of turn.");
-  expect(ruleMatches(protectionRule(), c)).toBe(false);
 });
 
 // THE WIPE RULE READS DERIVED DATA (#1266; it was the printed `boardWipe` pattern). The cards below are REAL: their oracle text and derived abilities are in `fixtures/removal-derived.json`, and the list
@@ -947,7 +924,9 @@ test("emits is tested per ability like effectKind: a removal ability is what emi
  *  (CR 400.7) and the removal aimed at it loses its target (CR 608.2b): protection. Oracle text from
  *  Scryfall, 2026-09-25. */
 const FLICKERS = ["Eldrazi Confluence", "Flicker", "Ephemerate", "Cloudshift", "Restoration Angel", "Otherworldly Journey", "Flickerwisp", "Brago, King Eternal", "Swords to Plowshares"];
-const flick = (name: string) => realCard(name);
+/** Flash is a printed KEYWORD (Scryfall `keywords`), which the fixture does not carry: the test sets it, as `overloaded` does. */
+const FLASH: ReadonlySet<string> = new Set(["Restoration Angel", "Silver Surfer, Cosmic Voyager", "Phelia, Exuberant Shepherd"]);
+const flick = (name: string): DeckCard => { const dc = realCard(name); return FLASH.has(name) ? { ...dc, card: { ...dc.card, keywords: ["Flash"] } } : dc; };
 
 test("an immediate-return flicker is not an answer; a delayed one still is", () => {
   expect([...answerClassesOf(flick("Eldrazi Confluence")).keys()]).toEqual([]);
@@ -970,6 +949,27 @@ test("a flicker you can cast at instant speed on your own permanent is protectio
   const m = detectBuildCategories(FLICKERS.map(flick));
   const protection = [...(m.get("protection") ?? new Set<string>())].sort();
   expect(protection).toEqual(["Cloudshift", "Eldrazi Confluence", "Ephemerate", "Otherworldly Journey", "Restoration Angel"]);
+});
+
+test("the flicker shield reads the derived `flicker` ability, not the printed sentence (#1266)", () => {
+  const rule = loadRules().rules.find((r) => r.id === "protection.flicker")!;
+  const shields = (name: string): boolean => ruleMatches(rule, { ...flick(name), card: { ...flick(name).card, oracleText: "" } });
+  // The printed pattern needed "exile target" and "return it / that card": "each creature you control", "any number of target creatures ... Return those cards", "up to two target creatures ... those
+  // cards", a replacement ("would be put into a graveyard ..., exile it instead. Return it ...") and a flash creature's "any number of other target permanents" were all missed.
+  for (const name of ["Ghostway", "Eerie Interlude", "Displace", "Cosmic Intervention", "Silver Surfer, Cosmic Voyager", "Ephemerate", "Restoration Angel", "Otherworldly Journey", "Parting Gust"]) expect(shields(name), name).toBe(true);
+  // Not at instant speed, by the ruling's own words ("an instant, or a card with flash"): a sorcery, and an ACTIVATED flicker on a creature without flash (Eldrazi Displacer: main's behaviour, unruled).
+  for (const name of ["Flicker", "Flickerwisp", "Brago, King Eternal", "Eldrazi Displacer"]) expect(shields(name), name).toBe(false);
+  // Restoration Angel without its Flash keyword is a sorcery-speed blink.
+  expect(ruleMatches(rule, realCard("Restoration Angel"))).toBe(false);
+  // A card that exiles and returns only ITSELF shields nothing else, and removal that never returns is no flicker.
+  expect(shields("Swords to Plowshares")).toBe(false);
+  // Written rows (no instant or flash card in the corpus derives these shapes): a flicker of an OPPONENT's permanent is a blink, and one of the card itself shields nothing else.
+  const flashCard = (subject: object): DeckCard => ({ ...derivedCard("Written", [{ kind: "triggered", effect: { kind: "flicker", subject } }], "Creature"), card: { ...derivedCard("Written", [], "Creature").card, keywords: ["Flash"] } });
+  expect(ruleMatches(rule, flashCard({ control: "you", token: null, type: "creature", scope: "target" }))).toBe(true);
+  expect(ruleMatches(rule, flashCard({ control: "opp", token: null, type: "creature", scope: "target" }))).toBe(false);
+  expect(ruleMatches(rule, flashCard({ control: "any", token: null, self: true }))).toBe(false);
+  // CEILING over-reads, named in the rule's why: Phelia has flash but flickers on ATTACK; derive reads Audacious Swap's "If it's a land card, they put it onto the battlefield" as a one-branch return.
+  for (const name of ["Phelia, Exuberant Shepherd", "Audacious Swap"]) expect(shields(name), name).toBe(true);
 });
 
 /** A card that carries only derived abilities, as derive writes them (#1266: stackInteraction reads emits and effect kinds, no longer the printed text). */

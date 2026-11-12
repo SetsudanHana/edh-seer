@@ -114,7 +114,7 @@ test("board wipe is distinguished from targeted removal (wipe wins, not double-c
 
 test("protection is detected; a land-fetch is ramp not a tutor", () => {
   const m = detectBuildCategories([
-    mk("Heroic Intervention", "Permanents you control gain hexproof and indestructible until end of turn.", "Instant"),
+    realCard("Heroic Intervention"),
     mk("Rampant Growth", "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.", "Sorcery", searchOf({ control: "you", token: null, type: "land", basic: true })),
     mk("Demonic Tutor", "Search your library for a card, put that card into your hand, then shuffle.", "Sorcery", searchOf()),
   ]);

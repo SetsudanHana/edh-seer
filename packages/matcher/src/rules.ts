@@ -67,7 +67,12 @@ export type RuleClause =
       /** The ability REVEALS UNTIL A NAMED CARD (`Ability.named`, #1302): a tutor in effect with no printed search (Demonic Consultation, Spoils of the Vault). */
       named?: true;
       /** The ability NETS ZERO CARDS (`Ability.netZero`, #1302): it replaces a draw (Abundance, Underrealm Lich) or swaps with the top of the library (Scroll Rack). */
-      netZero?: true }
+      netZero?: true;
+      /** The ability HANDS OVER one of these keywords (`Ability.grants`, lowercased: "hexproof", "indestructible", "shroud", "protection"), tested on the SAME ability (#1266, `protection.text`). */
+      grantsAny?: string[];
+      /** Refuse a grant whose recipient is THE CARD ITSELF (`Ability.grantsSelf`, derive 515: "This creature gains indestructible", "Dragonlord Ojutai has hexproof as long as it's untapped"): a keyword the card
+       *  gives itself protects nothing else (the Sylvan Caryatid rule, roadmap I1; #1289). */
+      notGrantsSelf?: true }
   /** WHAT AN ABILITY EMITS, for the one family that has no effect kind by design: removal.
    *  `destroy`/`exile`/`bounce` derive as kindless abilities whose EMIT is `dies` or `leaves`
    *  (emits.ts: "`destroy` has no payoff kind in the engine's vocabulary, but without its `dies`
@@ -186,20 +191,6 @@ export type RuleClause =
    *  mana source repeats, so Llanowar Elves nets 0 on the turn it lands and is ramp regardless —
    *  testing it would delete every mana dork in the format. */
   | { op: "oneShotNetsMana"; atLeast: number }
-  /** A CREATURE WITH HEXPROOF PROTECTS ITSELF, NOT THE BOARD (roadmap I1). The `protection` pattern
-   *  is matched anywhere in the oracle text, so Sylvan Caryatid — a mana dork whose printed keyword
-   *  is hexproof — counted toward Interaction beside Lightning Greaves. True when EVERY protection
-   *  word on the card is one of its own PRINTED KEYWORDS and nothing is granted away.
-   *
-   *  NARROW ON PURPOSE, and the measurement is why. Over the 71 decks the family splits 79 granted /
-   *  20 self-keyword / 41 UNSPLITTABLE by any regex — "this spell can't be countered" and "phases
-   *  out" are not keywords at all, and a card can grant with no cue this side of a parser
-   *  (Delighted Halfling's "Legendary creature spells you cast can't be countered"). The honest fix
-   *  for the residue is a derive-side read of the grant's SUBJECT, which is its own item; this
-   *  clause takes only the cases the printed keyword list settles outright. SENTENCE-FORM SELF GRANTS ARE NOW READ (#1289): a sentence whose subject is the
-   *  card ("This creature gains indestructible", "Kogla gains ...", an "It gains" after a card-naming sentence with no target) is stripped like
-   *  an anti-protection sentence, so a card that also grants to something else keeps its role. */
-  | { op: "protectionIsOwnKeyword" }
   /** The card is a land FOR THE DECK COUNT (`countsAsLand`, #1167): a modal DFC with a land face, else
    *  the front face. Replaces `typeLine contains land`, which read the whole "A // B" line and made
    *  a transform card with a land back (Treasure Map) a land to every `not` guard, so it earned no
@@ -289,94 +280,11 @@ function pattern(set: RuleSet, name: string): RegExp {
   return re;
 }
 
-/** The `protection` pattern's own alternatives, as a global matcher, so `protectionIsOwnKeyword`
- *  can ask which of them a card actually says. Kept beside the op rather than read out of
- *  `rules.json` because the op's whole question is about THESE words against a printed keyword
- *  list, and a pattern edit that silently changed the question would be invisible. */
-const PROTECTION_WORDS = /hexproof|indestructible|protection from|can't be countered|shroud|phases? out/gi;
-
-/** Protection handed to something else. The templating is fixed enough to read — "creatures you
- *  control GAIN hexproof", "equipped creature HAS indestructible" — and this is the half that IS
- *  Interaction. */
-/** Protection the card states about ITSELF in words that are not a printed keyword.
- *
- *  `protectionIsOwnKeyword` asks whether every protection word on a card is one of its OWN, and it
- *  answered that against the printed keyword list — so it could see "hexproof" on a Sylvan Caryatid
- *  and could not see **"This spell can't be countered"**, which is the same fact in a sentence.
- *  Measured over the 71 decks: **13 of the 113 cards the protection rule fires on say only this** —
- *  10 "this spell can't be countered" (Nezahal, Niv-Mizzet Parun, Hullbreaker Horror, Toski, Chandra
- *  Awakened Inferno, Rise of the Eldrazi, Glen Elendra's Answer, Commence the Endgame, Hexing
- *  Squelcher, Inferno of the Star Mounts) and 3 Myojin entering with an indestructible counter ON
- *  THEMSELVES. A creature that cannot be countered protects nothing but itself, and counting it as
- *  one of a deck's ten Interaction cards is the Sylvan Caryatid defect in a different sentence.
- *
- *  IT IS STRIPPED, NOT MATCHED, so a card that says both keeps its other half: the remaining words
- *  still have to clear the printed-keyword test, and a GRANT still wins before any of this runs. */
-const SELF_PROTECTION =
-  /\bthis spell can'?t be countered\b|\benters with an indestructible counter on it\b/gi;
-
-/** Protection TAKEN AWAY FROM OPPONENTS, which is the opposite of protecting anything of yours.
- *
- *  Shadowspear's *"Permanents your opponents control lose hexproof and indestructible"* and Nowhere
- *  to Run's *"as though they didn't have hexproof"* are removal ENABLERS — they exist so your removal
- *  connects — and both were counted as Interaction of the PROTECTION kind, which is a true category
- *  reached by a false sentence. **12 corpus cards, 3 in the 71 decks** (those two plus The Fire
- *  Nation Drill).
- *
- *  STRIPPED BY SENTENCE, not by phrase, and the difference is load-bearing: Shadowspear names TWO
- *  protection words in one clause and a phrase-level cut would leave "indestructible" standing.
- *
- *  A CARD THAT DOES BOTH KEEPS ITS OWN HALF, which is why this is a strip and not a refusal —
- *  **Archetype of Endurance** grants hexproof to your creatures in one sentence and strips it from
- *  theirs in the next, and only the second sentence goes. */
-const ANTI_PROTECTION =
-  /\byour opponents control\b[^.]{0,90}?\b(?:lose|don'?t have|can'?t have|didn'?t have)\b[^.]{0,40}?\b(?:hexproof|shroud|indestructible|ward|protection from)\b/i;
-
 /** The card prints "sacrifices half": a half-of-the-board sacrifice, which the owner counts as a wipe (#1581). Linear: two lowercase substring tests, no regex. */
 function sacrificesHalf(oracleText: string | undefined): boolean {
   const t = (oracleText ?? "").toLowerCase();
   return t.includes("sacrifices half ") || t.includes("sacrifice half ");
 }
-
-/** Drop every sentence that takes protection away from an opponent. */
-function withoutAntiProtection(text: string): string {
-  return text.split(/(?<=[.!?])\s+|\n/).filter((line) => !ANTI_PROTECTION.test(line)).join(" ");
-}
-
-/** SENTENCES WHOSE SUBJECT IS THE CARD ITSELF (#1289): "This creature gains indestructible until end of turn" (Falkenrath Aristocrat), "Dragonlord Ojutai has
- *  hexproof as long as it's untapped", "Kogla gains indestructible ...", and the "It gains ..." that follows a sentence naming the card and no target (Hungering
- *  Puppetbeast). Protection the card gives itself is the Sylvan Caryatid defect in sentence form. A SINGULAR verb is the cue the subject is one object ("this
- *  creature and other creatures you control gain" is plural and stays a grant). Stripped by sentence, so a card with a real grant too keeps its role. */
-function withoutSelfGrants(text: string, cardName: string): string {
-  const names = cardName.split(" // ").flatMap((face) => [face, face.split(",")[0]!])
-    .map((n) => n.trim()).filter((n) => n.length > 0)
-    .map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-  const thisCard = "this (?:creature|artifact|permanent|vehicle|enchantment|land|planeswalker)";
-  const subject = `(?:${[thisCard, ...names].join("|")})`;
-  const direct = new RegExp(`^(?:until end of turn, )?${subject}\\b(?:[^.]{0,60}?\\band)?\\s+(?:gains|gets|has)\\b`, "i");
-  const named = new RegExp(`\\b${subject}\\b`, "i");
-  const out: string[] = [];
-  for (const line of text.split("\n")) {
-    let previous = "";
-    let quotes = 0;
-    for (const sentence of line.split(/(?<=[.!?])\s+/)) {
-      // INSIDE A QUOTED ABILITY "this creature" and "It" are the GRANTEE (Agent of the Shadow Thieves), never the card: such a sentence starts, or lies, inside an open quote.
-      const quoted = quotes % 2 === 1 || sentence.includes('"');
-      quotes += (sentence.match(/"/g) ?? []).length;
-      const body = sentence.replace(/^[^:"]*:\s*/, "");
-      const lead = /^(?:until end of turn, )?it\s+(?:gains|gets|has)\b/i.test(body);
-      const self = (direct.test(body) || (lead && named.test(previous) && !/\btarget\b/i.test(previous)))
-        && !/\b(?:gain|get|have)\b/i.test(body)
-        && !/\b(?:gains|gets|has)\b[^.]*?\band\s+(?:target|each|all|other|another|creatures?|permanents?|equipped|enchanted|up to)\b/i.test(body);
-      previous = sentence;
-      if (!self || quoted) out.push(sentence);
-    }
-  }
-  return out.join(" ");
-}
-
-const GRANTS_PROTECTION =
-  /\b(?:gains?|have|has|get|grants?)\b[^.]{0,70}?(?:hexproof|indestructible|shroud|protection from|phases? out)/i;
 
 /** A mana line's cost is exactly `{T}`: it taps the card itself and pays nothing else (`manaLine.bareTap`). Every payment field of `ManaLine.cost` is read. */
 function isBareTap(c: ManaLine["cost"]): boolean {
@@ -654,7 +562,9 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.pickOne !== true || (a.chooses === true && (a.effect.kind === "to-hand" ? a.amount : a.toHand) === "1"))
         && (clause.toHand !== true || a.toHand !== undefined)
         && (clause.named !== true || a.named === true)
-        && (clause.netZero !== true || a.netZero === true));
+        && (clause.netZero !== true || a.netZero === true)
+        && (clause.grantsAny === undefined || (a.grants ?? []).some((g) => clause.grantsAny!.includes(g.toLowerCase())))
+        && (clause.notGrantsSelf !== true || a.grantsSelf !== true));
     // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive mislabels some cards, so the role is wrong on them by name.
     //   LOST (real removal, no usable emit): Polymorph, Transmogrify, Chaos Mutation, Divergent Transformations (derive reads the polymorph family as played on YOUR creature, `control: you`: owner ruling 2026-10-02 / #962,
     //   "primary use", so the opponent use is dropped on purpose; the role pays for it);
@@ -724,31 +634,6 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
       // explosive rituals in the format, so a missing answer must keep the card rather than cut it.
       if (net === undefined) return true;
       return net >= clause.atLeast;
-    }
-    case "protectionIsOwnKeyword": {
-      const txt = ownText(dc.card);
-      // A GRANT WINS, always: a card can print a keyword AND hand it out, and handing it out is the
-      // Interaction fact. Checked first so the keyword list can never overrule it.
-      // THE GRANT TEST READS THE SAME TEXT THE WORD COUNT DOES. Shadowspear's "Permanents your
-      // opponents control LOSE hexproof" has no grant verb, but a sentence like "creatures your
-      // opponents control don't HAVE hexproof" does — and `GRANTS_PROTECTION` matches on "have".
-      // Asking both questions of the same stripped text is what keeps them from disagreeing.
-      const granting = withoutAntiProtection(withoutSelfGrants(txt, dc.card.name));
-      if (GRANTS_PROTECTION.test(granting)) return false;
-      const found = (t: string): Set<string> =>
-        new Set([...t.matchAll(PROTECTION_WORDS)].map((m) => m[0].toLowerCase()));
-      // NO PROTECTION AT ALL IS NOT SELF-PROTECTION. UNREACHABLE through the shipped rule — the op
-      // only runs once the protection pattern has matched — and mutating it away changes no test,
-      // which is stated rather than left for someone to discover. Kept because the op reads under
-      // `not:`, so a wrong answer here SUPPRESSES the rule, and under-claiming is the direction.
-      if (found(txt).size === 0) return false;
-      // WHAT IS LEFT AFTER THE CARD'S CLAIMS ABOUT ITSELF. If nothing is, every cue was about the
-      // card itself and it protects nothing else.
-      const rest = found(granting.replace(SELF_PROTECTION, " "));
-      if (rest.size === 0) return true;
-      // "protection from Humans" is the printed keyword `protection`; the rest are their own word.
-      const keywords = new Set((dc.tags?.characteristics?.keywords ?? []).map((k) => k.toLowerCase()));
-      return [...rest].every((w) => keywords.has(w === "protection from" ? "protection" : w));
     }
     case "anyOf":
       return clause.clauses.some((c) => clauseHolds(c, dc, set));

@@ -12,13 +12,10 @@ import type { DeckCard } from "./types.js";
 /** Cards as the corpus derives them (tags read 2026-10-02). */
 const card = (name: keyof typeof fixtures) => fixtures[name] as unknown as DeckCard;
 
-test("one shared role label is not the same job: taking an opponent out is not giving yourself hexproof", () => {
-  const reproach = card("Teferi's Reproach");
-  const calm = card("Blossoming Calm");
-  expect(rolesOfCard(reproach)).toContain("protection");
-  expect(rolesOfCard(calm)).toContain("protection");
-  expect([...effectsOf(reproach, "protection")]).not.toEqual([...effectsOf(calm, "protection")]);
-  expect(sameJob(reproach, calm, "protection")).toBe(false);
+// owner 2026-11-12: phasing aimed only at an opponent's permanent is interaction, not Protection, so Teferi's Reproach no longer shares the label with a hexproof spell.
+test("taking an opponent's permanents out of the game is not the protection role", () => {
+  expect(rolesOfCard(card("Teferi's Reproach"))).not.toContain("protection");
+  expect(rolesOfCard(card("Blossoming Calm"))).toContain("protection");
 });
 
 test("protecting you is not protecting your permanents, though both read as a bare keyword grant", () => {
@@ -56,8 +53,8 @@ test("a Game Changer is in a rock's group though not its job: Mana Vault does no
   expect(sameGroup(card("Painful Truths"), card("Rhystic Study"), "draw")).toBe(true);
 });
 
-test("the group still keeps the kind of job: taking an opponent out is not giving yourself hexproof, and removal is not ramp", () => {
-  expect(sameGroup(card("Teferi's Reproach"), card("Blossoming Calm"), "protection")).toBe(false);
+test("the group still keeps the kind of job: protecting you is not protecting your permanents, and removal is not ramp", () => {
+  expect(sameGroup(card("Heroic Intervention"), card("Blossoming Calm"), "protection")).toBe(false);
   expect(sameGroup(card("Stroke of Midnight"), card("Mana Vault"), "ramp")).toBe(false);
 });
 

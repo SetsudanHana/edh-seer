@@ -37,6 +37,15 @@ test("claimsNothing is no difference: it must not move a labelled group key (#12
 });
 
 // Jade Statue: "{2}: This artifact becomes a 3/6 Golem artifact creature until end of combat. Activate only during combat."
+test("grantsSelf is no difference of its own: it follows `grants` and must not move a labelled group key (#1266)", () => {
+  // Deep Spawn's "{U}: This creature gains shroud ...": the stored answer names no keyword, the grammar reads `grants: ["shroud"]`, a labelled "grammar right" group keyed `grants`. `grantsSelf` is stamped
+  // only where `grants` is, so counted it made the key `grants,grantsSelf`, unlabelled, and 17 cards un-switched to the stored answer and lost their keywords (derive-impact vs fc6ac7ce).
+  const stored = ab({ kind: "activated", effect: { kind: "keyword-grant" } });
+  const grammar = ab({ kind: "activated", effect: { kind: "keyword-grant" }, grants: ["shroud"], grantsSelf: true });
+  expect(deriveDiff([stored], [grammar])).toBe("grants");
+  expect(deriveDiff([ab({ grants: ["shroud"] })], [ab({ grants: ["shroud"], grantsSelf: true })])).toBeNull();
+});
+
 test("a grammar animate that drops the stored animate's type, subtype or stats is refused (#1349)", () => {
   const animate = (subject: Record<string, unknown>) => ab({ effect: { kind: "animate", subject } as never, cost: "{2}" });
   const stored = animate({ control: "any", token: null, type: ["creature", "artifact"], allTypes: ["artifact", "creature"], subtype: "golem", stats: [{ metric: "power", op: "eq", value: 3 }, { metric: "toughness", op: "eq", value: 6 }], self: true });
