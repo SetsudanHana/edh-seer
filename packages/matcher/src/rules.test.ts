@@ -744,6 +744,32 @@ test("Talon Gates of Madara is protection, read off the derived phases-out emit"
   expect(protectsDerived("Talon Gates of Madara")).toBe(true);
 });
 
+// owner 2026-11-12: phasing out an opponent's permanent is interaction, but not removal. It carries an ANSWER class by what it can hit and no `targetedRemoval` for the phasing alone.
+describe("phasing out another player's permanent is an answer, not removal (#1266)", () => {
+  const classes = (name: string): string[] => [...answerClassesOf(realCard(name)).keys()].sort();
+  const removal = (names: string[]): string[] => [...(detectBuildCategories(names.map((n) => realCard(n))).get("targetedRemoval") ?? [])].sort();
+
+  test("the class is the type the phase-out can hit", () => {
+    expect(classes("Sapphire Charm")).toEqual(["creature"]);
+    expect(classes("Teferi, Master of Time")).toEqual(["creature"]);
+    expect(classes("Teferi, Timeless Voyager")).toEqual(["creature"]);
+    expect(classes("Divine Smite")).toEqual(["creature", "planeswalker"]);
+    // "All nonland permanents they control": creatures, artifacts, enchantments and planeswalkers, not lands.
+    expect(classes("Teferi's Reproach")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+    // A phase-out of a target of ANY controller can be an answer too (it is protection as well).
+    expect(classes("Galadriel's Dismissal")).toEqual(["creature"]);
+  });
+
+  test("phasing alone is not targeted removal; Divine Smite's exile branch and Timeless Voyager's tuck are", () => {
+    expect(removal(["Teferi's Reproach", "Sapphire Charm", "Teferi, Master of Time", "Galadriel's Dismissal"])).toEqual([]);
+    expect(removal(["Divine Smite", "Teferi, Timeless Voyager"])).toEqual(["Divine Smite", "Teferi, Timeless Voyager"]);
+  });
+
+  test("a phase-out of your own permanent, of the card itself, or only a block triggers answers nothing", () => {
+    for (const name of ["Teferi's Protection", "Clever Concealment", "Blink Dog", "Mist Dragon", "Dream Fighter"]) expect(classes(name), name).toEqual([]);
+  });
+});
+
 // owner 2026-11-12: Dream Fighter is opponent-aimed and leaves Protection. "This creature and that creature phase out" fires when it blocks or becomes blocked by a creature, and "that creature" is the creature
 // blocking it or blocked by it, which an opponent controls (CR 509.1a: the defending player chooses which creatures THEY control block an attacker; derive reads it `control: any`). The rule refuses a phase-out only a BLOCK makes (`notBlockCombat`).
 test("a phase-out that only a block triggers is opponent-aimed, not protection", () => {

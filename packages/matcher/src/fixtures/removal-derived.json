@@ -34882,5 +34882,148 @@
     }
    }
   ]
+ },
+ "Clever Concealment": {
+  "oracleText": "Convoke (Your creatures can help cast this spell. Each creature you tap while casting this spell pays for {1} or one mana of that creature's color.)\nAny number of target nonland permanents you control phase out. (Treat them and anything attached to them as though they don't exist until your next turn.)",
+  "typeLine": "Instant",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "",
+     "scaling": "per-permanent",
+     "scalingSubject": {
+      "control": "you",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "enchantment",
+       "planeswalker",
+       "battle"
+      ],
+      "notType": [
+       "land"
+      ],
+      "scope": "target",
+      "zone": "battlefield"
+     }
+    },
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Brokers Confluence": {
+  "oracleText": "Choose three. You may choose the same mode more than once.\n• Proliferate. (Choose any number of permanents and/or players, then give each another counter of each kind already there.)\n• Target creature phases out. (Treat it and anything attached to it as though they don't exist until its controller's next turn.)\n• Counter target activated or triggered ability.",
+  "typeLine": "Instant",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "proliferate",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "emits": [
+     {
+      "verb": "proliferate",
+      "subject": {
+       "control": "any",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "phases-out",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "counter-spell",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "abilityKind": [
+        "activated",
+        "triggered"
+       ],
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "once"
+   }
+  ]
  }
 }
