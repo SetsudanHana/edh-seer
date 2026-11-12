@@ -674,6 +674,10 @@ test("a keyword the card gives ITSELF protects nothing else (the Sylvan Caryatid
   // The same fact behind a condition or a trigger, which the anchored text reader let through: "As long as you control four or more artifacts, this creature has hexproof", "As long as your opponents
   // control no creatures, this creature has indestructible", "Landfall — ... this creature gains indestructible", "If you do, this creature gains indestructible".
   for (const name of ["Shimmer Dragon", "Erebos's Titan", "Dreadwurm", "Temur Sabertooth"]) expect(protects(name), name).toBe(false);
+  // A grant inside the card's own animate carries `subject.self` and no `grantsSelf` ("Chromium becomes a Human ..., loses all abilities, and gains hexproof"): `notSelf` refuses it.
+  for (const name of ["Chromium, the Mutable", "Gideon, Champion of Justice"]) expect(protects(name), name).toBe(false);
+  // Shadowspear hands lifelink and trample to its host: a grant, of no protection keyword (`grantsAny`).
+  expect(realCard("Shadowspear").tags!.abilities.some((a) => (a.grants ?? []).includes("lifelink"))).toBe(true);
 });
 
 test("a keyword counter put on another permanent is protection; one the card puts on itself is not", () => {
@@ -949,6 +953,11 @@ test("the flicker shield reads the derived `flicker` ability, not the printed se
   expect(ruleMatches(rule, realCard("Restoration Angel"))).toBe(false);
   // A card that exiles and returns only ITSELF shields nothing else, and removal that never returns is no flicker.
   expect(shields("Swords to Plowshares")).toBe(false);
+  // Written rows (no instant or flash card in the corpus derives these shapes): a flicker of an OPPONENT's permanent is a blink, and one of the card itself shields nothing else.
+  const flashCard = (subject: object): DeckCard => ({ ...derivedCard("Written", [{ kind: "triggered", effect: { kind: "flicker", subject } }], "Creature"), card: { ...derivedCard("Written", [], "Creature").card, keywords: ["Flash"] } });
+  expect(ruleMatches(rule, flashCard({ control: "you", token: null, type: "creature", scope: "target" }))).toBe(true);
+  expect(ruleMatches(rule, flashCard({ control: "opp", token: null, type: "creature", scope: "target" }))).toBe(false);
+  expect(ruleMatches(rule, flashCard({ control: "any", token: null, self: true }))).toBe(false);
   // CEILING over-reads, named in the rule's why: Phelia has flash but flickers on ATTACK; derive reads Audacious Swap's "If it's a land card, they put it onto the battlefield" as a one-branch return.
   for (const name of ["Phelia, Exuberant Shepherd", "Audacious Swap"]) expect(shields(name), name).toBe(true);
 });

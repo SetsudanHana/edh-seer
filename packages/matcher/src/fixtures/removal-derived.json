@@ -29960,5 +29960,142 @@
     }
    }
   ]
+ },
+ "Chromium, the Mutable": {
+  "oracleText": "Flash\nThis spell can't be countered.\nFlying\nDiscard a card: Until end of turn, Chromium becomes a Human with base power and toughness 1/1, loses all abilities, and gains hexproof. It can't be blocked this turn.",
+  "typeLine": "Legendary Creature — Elder Dragon",
+  "manaValue": 7,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "Discard a card",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "discard",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "discard": [
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "animate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "self": true
+     },
+     "becomes": {
+      "control": "any",
+      "token": null,
+      "subtype": "human",
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 1
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 1
+       }
+      ]
+     }
+    },
+    "cost": "Discard a card",
+    "clause": 4,
+    "repeats": "repeatable",
+    "payment": {
+     "discard": [
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "self": true
+     }
+    },
+    "cost": "Discard a card",
+    "clause": 4,
+    "repeats": "repeatable",
+    "payment": {
+     "discard": [
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ]
+    },
+    "grants": [
+     "hexproof"
+    ]
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "evasion",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "Discard a card",
+    "clause": 4,
+    "repeats": "repeatable",
+    "payment": {
+     "discard": [
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ]
+    }
+   }
+  ]
  }
 }

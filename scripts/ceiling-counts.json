@@ -88,6 +88,7 @@
   "packages/tagger/src/derive/emits.ts": 26,
   "packages/tagger/src/derive/event-count.ts": 1,
   "packages/tagger/src/derive/gate.ts": 2,
+  "packages/tagger/src/derive/grants-self.ts": 1,
   "packages/tagger/src/derive/graveyard-owner.ts": 2,
   "packages/tagger/src/derive/graveyard-replacement.ts": 1,
   "packages/tagger/src/derive/host.ts": 1,

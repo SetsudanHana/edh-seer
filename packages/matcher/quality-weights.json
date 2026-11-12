@@ -1,6 +1,6 @@
 {
   "deriveVersion": 515,
-  "rulesVersion": 41,
+  "rulesVersion": 42,
   "roles": {
     "ramp": {
       "weights": {
@@ -129,7 +129,7 @@
         "manaValue": -1,
         "timing": 0.5
       },
-      "pairs": 26,
+      "pairs": 21,
       "heldOutAccuracy": 1,
       "baselineAccuracy": 0.5,
       "fallbackAccuracy": 1,
