@@ -1,6 +1,6 @@
 {
   "deriveVersion": 519,
-  "rulesVersion": 50,
+  "rulesVersion": 51,
   "roles": {
     "ramp": {
       "weights": {

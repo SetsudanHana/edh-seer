@@ -7,7 +7,7 @@ import { computeBuild } from "./build.js";
 import type { LandRecommendation } from "./land-count.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { manaTags, tapFor } from "./mana-test-support.js";
-import { realCard } from "./removal-test-support.js";
+import { realCard, renamed } from "./removal-test-support.js";
 
 const H: Hierarchy = {};
 
@@ -137,14 +137,9 @@ test("required is the same for every class -- the doctrine sets confidence, not 
 
 test("a class answered from the command zone needs nothing drawn", () => {
   // It is available in every game, so a shortfall against a draw-probability target is meaningless.
-  const commander: DeckCard = {
-    card: {
-      name: "Vindicator", typeLine: "Legendary Creature — Human", manaValue: 4, keywords: [], colors: [],
-      oracleText: "Destroy target artifact.",
-    } as Card,
-    tags: null,
-  };
-  const math = computeDeckMath(fillTo(100, [commander]), H, ["Vindicator"], 9);
+  // Disenchant is the commander here: a real derived row (#1266), so the artifact answer is read from derive.
+  const commander = realCard("Disenchant");
+  const math = computeDeckMath(fillTo(100, [commander]), H, ["Disenchant"], 9);
   const artifact = math.answers.find((a) => a.class === "artifact")!;
   expect(artifact.fromCommandZone).toBe(true);
   expect(artifact.available).toBe(1);
@@ -155,13 +150,7 @@ test("a class answered from the command zone needs nothing drawn", () => {
  *  point -- and the reason the turn has to be visible next to the numbers it moves. */
 test("pricing later raises availability for the same cards", () => {
   const deck = fillTo(100, [
-    ...Array.from({ length: 4 }, (_, i) => ({
-      card: {
-        name: `Naturalize-${i}`, typeLine: "Instant", manaValue: 2, keywords: [], colors: [],
-        oracleText: "Destroy target artifact or enchantment.",
-      } as Card,
-      tags: null,
-    })),
+    ...Array.from({ length: 4 }, (_, i) => renamed("Disenchant", `Naturalize-${i}`)),
   ]);
   const early = computeDeckMath(deck, H, [], 3);
   const late = computeDeckMath(deck, H, [], 9);
@@ -172,8 +161,8 @@ test("pricing later raises availability for the same cards", () => {
 
 test("an answer row says how many of its answers exile, and how many recur", () => {
   const deck = fillTo(100, [
-    answer("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power."),
-    answer("Murder", "Destroy target creature."),
+    realCard("Swords to Plowshares"),
+    realCard("Murder"),
     // graveyard hate is read from derive (#1266), so these two carry their real derived abilities
     realCard("Bojuka Bog"),
     realCard("Rest in Peace"),
@@ -248,13 +237,13 @@ test("answer rows carry their colour pool -- says how many answers of the class 
 
 test("a commander that exiles what dies makes every creature answer an exile (#647)", () => {
   const mari = answer("Mari, the Killing Quill", "Whenever a creature an opponent controls dies, exile it with a hit counter on it.", "Legendary Creature — Human Assassin");
-  const deck = fillTo(100, [mari, answer("Murder", "Destroy target creature."), answer("Go for the Throat", "Destroy target nonartifact creature.")]);
+  const deck = fillTo(100, [mari, realCard("Murder"), realCard("Go for the Throat")]);
   const creature = (commanders: string[]) => computeDeckMath(deck, H, commanders).answers.find((a) => a.class === "creature")!;
   expect(creature(["Mari, the Killing Quill"]).exiling).toBe(2);
   // The same card in the 99 is not always there, so it vouches for nothing.
   expect(creature([]).exiling).toBe(0);
   // A one-turn rider is not a standing replacement.
-  const eclipse = fillTo(100, [answer("Malicious Eclipse", "All creatures get -2/-2 until end of turn. If a creature an opponent controls would die this turn, exile it instead.", "Sorcery"), answer("Murder", "Destroy target creature.")]);
+  const eclipse = fillTo(100, [realCard("Malicious Eclipse"), realCard("Murder")]);
   expect(computeDeckMath(eclipse, H, ["Malicious Eclipse"]).answers.find((a) => a.class === "creature")!.exiling).toBe(0);
 });
 

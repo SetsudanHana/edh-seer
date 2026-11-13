@@ -63,7 +63,7 @@ test("`not` vetoes, `match` conjoins, `anyOf` disjoins", () => {
   expect(ruleMatches({
     id: "c",
     match: [{ op: "anyOf", clauses: [
-      { op: "oracle", pattern: "graveyardHate" },
+      { op: "oracle", pattern: "selection" },
       { op: "rule", id: "boardWipe.text" },
     ] }],
   }, card, set)).toBe(true);
@@ -140,9 +140,9 @@ test("an own-graveyard graveyard-hate effect cannot match, and a self exile cann
 
 test("answer classes come from the type the removal actually names", () => {
   const classes = detectAnswerClasses([
-    mk("Murder", "Destroy target creature."),
-    mk("Disenchant", "Destroy target artifact or enchantment."),
-    mk("Vindicate", "Destroy target permanent.", "Sorcery"),
+    realCard("Murder"),
+    realCard("Disenchant"),
+    realCard("Vindicate"),
   ]);
   expect([...(classes.get("creature")?.cards ?? [])].sort()).toEqual(["Murder", "Vindicate"]);
   expect([...(classes.get("enchantment")?.cards ?? [])].sort()).toEqual(["Disenchant", "Vindicate"]);
@@ -154,8 +154,8 @@ test("answer classes come from the type the removal actually names", () => {
 
 test("a card covering two classes in two sentences gets both", () => {
   // One `test()` keeps only the first match; the sweep is global for exactly this shape.
-  expect([...answerClassesOf(mk("Charm", "Choose one — Destroy target artifact. Or destroy target creature.")).keys()].sort())
-    .toEqual(["artifact", "creature"]);
+  expect([...answerClassesOf(realCard("Return to Nature")).keys()].sort()).toEqual(["artifact", "enchantment", "graveyard"]);
+  expect([...answerClassesOf(realCard("Hearth Charm")).keys()].sort()).toEqual(["creature"]);
 });
 
 /** Counting only destroy/exile made a real deck read as 14 removal spells with 3 creature answers.
@@ -186,8 +186,8 @@ test("tucks, shrinks and plural objects answer; colour hosers answer marked colo
     realCard("Condemn"),
     realCard("Nowhere to Run"),
     realCard("Yawgmoth, Thran Physician"),
-    mk("Curtains' Call", "Destroy two target creatures."),
-    mk("Pyroblast", "Choose one —\n• Counter target spell if it's blue.\n• Destroy target permanent if it's blue."),
+    realCard("Curtains' Call"),
+    realCard("Pyroblast"),
     mk("Plaza of Heroes", "{3}, {T}, Exile Plaza of Heroes: Target legendary creature gains hexproof and indestructible until end of turn."),
     realCard("Befuddle"),
     realCard("Prodigal Pyromancer"),
@@ -308,10 +308,80 @@ describe("the damage, tuck, shrink, counter and bounce answers read derived data
   });
 });
 
+/** #1266, Rules 51: the destroy and exile answers (`answers.typed.<class>`, `answers.typed.exile.<class>`) are DERIVED. `oracleText: ""` blanks the printed text, so a pass is the derived rows alone. */
+describe("the destroy and exile answers read derived data (#1266)", () => {
+  const classes = (name: string): string[] => [...answerClassesOf(realCard(name, { oracleText: "" })).keys()].sort();
+  const marks = (name: string, cls: string) => answerClassesOf(realCard(name, { oracleText: "" })).get(cls);
+  const ALL = ["artifact", "creature", "enchantment", "land", "planeswalker"];
+
+  test("the printed patterns are gone, and no typed answer rule reads the printed text", () => {
+    const set = loadRules();
+    for (const p of ["typedRemoval", "exileRemoval", "graveyardHate", "exileReturnsToBattlefield", "exileThenReturns"]) expect(set.patterns[p], p).toBeUndefined();
+    const typed = set.rules.filter((x) => x.id.startsWith("answers.typed"));
+    expect(typed.map((r) => r.id).sort()).toEqual(["creature", "artifact", "enchantment", "planeswalker", "land"].flatMap((c) => [`answers.typed.${c}`, `answers.typed.exile.${c}`]).sort());
+    for (const r of typed) {
+      expect(JSON.stringify(r.match), r.id).not.toContain('"oracle"');
+      expect(r.answerClassFrom, r.id).toBeUndefined();
+    }
+  });
+
+  test("the class is the type the target names", () => {
+    expect(classes("Murder")).toEqual(["creature"]);
+    expect(classes("Vindicate")).toEqual(ALL);
+    expect(classes("Disenchant")).toEqual(["artifact", "enchantment"]);
+    // "noncreature permanent" is not a creature (the printed pattern read the word inside it): Bramblecrush, Woodfall Primus.
+    expect(classes("Bramblecrush")).toEqual(["artifact", "enchantment", "land", "planeswalker"]);
+    // A basic land type names the land class (owner 2026-11-13): "Destroy target Scarecrow or Plains", "Forest, green enchantment, or green planeswalker".
+    expect(classes("Boggart Arsonists")).toEqual(["land"]);
+    expect(classes("Nissa's Defeat")).toEqual(["enchantment", "land", "planeswalker"]);
+  });
+
+  test("a card that prints an exile from a graveyard elsewhere still answers what its other mode destroys", () => {
+    // The printed `graveyardHate` guard vetoed the WHOLE card: a delve line (Murderous Cut) and a graveyard mode (Cleanup Crew) answered nothing.
+    expect(classes("Murderous Cut")).toEqual(["creature"]);
+    expect(classes("Cleanup Crew")).toEqual(["artifact", "enchantment", "graveyard"]);
+    // ...and the graveyard exile itself is no battlefield answer (Shamble Back, Deathrite Shaman keep their tests above).
+  });
+
+  test("the card itself and its own card type are no class: haunt, \"until this enchantment leaves the battlefield\"", () => {
+    expect(classes("Absolver Thrull")).toEqual(["enchantment"]);
+    expect(classes("Orzhov Euthanist")).toEqual(["creature"]);
+    expect(marks("Orzhov Euthanist", "creature")?.exile).toBe(false);
+    expect(classes("Stasis Snare")).toEqual(["creature"]);
+    expect(classes("Oblivion Ring")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+  });
+
+  test("the exile mark: an exile that stays, not a blink, and an \"until\" exile counts", () => {
+    for (const n of ["Swords to Plowshares", "Stasis Snare", "Oblivion Ring", "Banisher Priest", "Constable of the Realm", "Parallax Wave", "Lava Coil"]) {
+      expect(marks(n, "creature")?.exile ?? marks(n, "artifact")?.exile, n).toBe(true);
+    }
+    // Blinks: back at the next end step (Flickerwisp, Astral Slide, Long Road Home), a card-wide reading; the class stays (a delayed return keeps its place in the count).
+    for (const n of ["Flickerwisp", "Astral Slide", "Long Road Home", "Morningtide's Light"]) {
+      const m = answerClassesOf(realCard(n, { oracleText: "" }));
+      expect(m.size, n).toBeGreaterThan(0);
+      for (const [cls, v] of m) expect(v.exile, `${n} ${cls}`).toBe(false);
+    }
+    // A destroy never marks.
+    expect(marks("Murder", "creature")?.exile).toBe(false);
+  });
+
+  test("a compound noun is a creature (NEEDS RULING: Hearth Charm, Chandler, Molten Frame answer no plain artifact)", () => {
+    expect(classes("Hearth Charm")).toEqual(["creature"]);
+    expect(classes("Chandler")).toEqual(["creature"]);
+  });
+
+  test("CEILING: real misses the derived rows cannot see", () => {
+    // Polymorph / Transmogrify: derive reads the creature as yours (owner ruling #962); Venser's and Teferi's exile is on an emblem node; The Eternal Wanderer's \"that player's next end step\" return is unread, so its blink looks immediate; Bumi Bash's
+    // \"land creature or nonbasic land\" derives as ONE compound subject.
+    for (const n of ["Polymorph", "Transmogrify", "Venser, the Sojourner", "The Eternal Wanderer"]) expect(classes(n), n).toEqual([]);
+    expect(classes("Bumi Bash")).toEqual(["creature"]);
+  });
+});
+
 test("a blink is not an answer, however much it reads like removal", () => {
   const classes = detectAnswerClasses([
-    mk("Essence Flux", "Exile target creature you control, then return it to the battlefield under its owner's control."),
-    mk("Beast Within", "Destroy target permanent you don't control. Its controller creates a 3/3 token.", "Instant"),
+    realCard("Essence Flux"),
+    realCard("Beast Within"),
   ]);
   expect(classes.get("creature")?.cards.has("Essence Flux")).toBe(false);
   // ...and the negation still reads as an answer, since "you don't control" is not "you control".
@@ -328,8 +398,8 @@ test("graveyard is an answer class too, and it comes from the hate rule", () => 
  *  card alone passes with a pattern that ignores the verb entirely. */
 test("an exile marks its class, a destroy does not", () => {
   const classes = detectAnswerClasses([
-    mk("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power."),
-    mk("Vindicate", "Destroy target permanent.", "Sorcery"),
+    realCard("Swords to Plowshares"),
+    realCard("Vindicate"),
   ]);
   expect([...(classes.get("creature")?.cards ?? [])].sort()).toEqual(["Swords to Plowshares", "Vindicate"]);
   expect([...(classes.get("creature")?.exiling ?? [])]).toEqual(["Swords to Plowshares"]);
@@ -341,10 +411,7 @@ test("an exile marks its class, a destroy does not", () => {
  *  an enchantment and exiles a creature; a card-level flag would report a recursion-proof
  *  enchantment answer it does not have. */
 test("a card that exiles one type and destroys another marks only the type it exiled", () => {
-  const marks = answerClassesOf(mk(
-    "Treva's Charm",
-    "Choose one —\n• Destroy target enchantment.\n• Exile target attacking creature.\n• Draw a card, then discard a card.",
-  ));
+  const marks = answerClassesOf(realCard("Treva's Charm"));
   expect(marks.get("creature")?.exile).toBe(true);
   expect(marks.get("enchantment")?.exile).toBe(false);
 });
@@ -353,19 +420,14 @@ test("a card that exiles one type and destroys another marks only the type it ex
  *  "Exile target creature card from a graveyard" names a creature and answers no creature on the
  *  battlefield. Without the `not` this is a recursion-proof creature answer that does not exist. */
 test("exiling a creature card OUT of a graveyard is not a creature answer", () => {
-  const classes = detectAnswerClasses([
-    mk("Shamble Back", "Exile target creature card from a graveyard. Create a 2/2 black Zombie creature token. You gain 2 life."),
-  ]);
+  const classes = detectAnswerClasses([realCard("Shamble Back")]);
   expect(classes.get("creature")?.cards.has("Shamble Back") ?? false).toBe(false);
   expect(classes.get("creature")?.exiling.has("Shamble Back") ?? false).toBe(false);
 });
 
 /** A multi-type exile marks every class it names, the same global sweep the class rule uses. */
 test("one exile clause naming two types marks both", () => {
-  const marks = answerClassesOf(mk(
-    "Return to Dust",
-    "Exile target artifact or enchantment. If you cast this spell during your main phase, you may exile up to one other target artifact or enchantment.",
-  ));
+  const marks = answerClassesOf(realCard("Return to Dust"));
   expect(marks.get("artifact")?.exile).toBe(true);
   expect(marks.get("enchantment")?.exile).toBe(true);
 });
@@ -441,12 +503,12 @@ test("graveyard protection is not graveyard hate, however it phrases the prohibi
  *  it." A blink is the LEAST recursion-proof answer there is -- the threat comes straight back, on a
  *  timer the opponent doesn't even have to work for -- so an exile mark on one is worse than the
  *  count claim it rides on. It targets any creature (no "you control"), so it stays in `count` via
- *  `typedRemoval` exactly as before; only the NEW rule's `not` clause touches it, and only the mode.
+ *  `answers.typed.creature` (a delayed return keeps its place in the count, owner 2026-09-25); only `answers.typed.exile.*` (`notBlinkedBack`) refuses it, and only the mode.
  *  Paired with a real exile removal in the same test: either half alone passes with a broken guard. */
 test("a blink exiles a creature but is not a recursion-proof answer, and a real exile still is", () => {
   const classes = detectAnswerClasses([
-    mk("Long Road Home", "Exile target creature. At the beginning of the next end step, return that card to the battlefield under its owner's control with a +1/+1 counter on it.", "Instant"),
-    mk("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power."),
+    realCard("Long Road Home"),
+    realCard("Swords to Plowshares"),
   ]);
   expect(classes.get("creature")?.cards.has("Long Road Home")).toBe(true);
   expect(classes.get("creature")?.exiling.has("Long Road Home") ?? false).toBe(false);
@@ -504,9 +566,7 @@ test("a card that blinks its own and kills theirs is still removal", () => {
 /** Owner ruling 2026-09-27 (issue #531): a destroy limited to permanents YOU OWN answers nothing.
  *  Staff of Compleation sat on the "Answers lands" shelf; this test used to hold it in every class. */
 test("a destroy limited to permanents you own is in no answer class", () => {
-  const classes = detectAnswerClasses([
-    mk("Staff of Compleation", "{T}, Pay 1 life: Destroy target permanent you own.\n{T}, Pay 2 life: Add one mana of any color.\n{T}, Pay 3 life: Proliferate.\n{T}, Pay 4 life: Draw a card.\n{5}: Untap this artifact.", "Artifact"),
-  ]);
+  const classes = detectAnswerClasses([realCard("Staff of Compleation")]);
   for (const cls of ["creature", "artifact", "enchantment", "planeswalker", "land"]) {
     expect(classes.get(cls)?.cards.has("Staff of Compleation") ?? false, cls).toBe(false);
   }
@@ -516,8 +576,8 @@ test("a destroy limited to permanents you own is in no answer class", () => {
  *  than by a special case -- if this ever fails, a mode leaked out of the graveyard rule. */
 test("only graveyard carries a recurring mark", () => {
   const classes = detectAnswerClasses([
-    mk("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power."),
-    mk("Vindicate", "Destroy target permanent.", "Sorcery"),
+    realCard("Swords to Plowshares"),
+    realCard("Vindicate"),
   ]);
   for (const cls of ["creature", "artifact", "enchantment", "planeswalker", "land"]) {
     expect([...(classes.get(cls)?.recurring ?? [])], cls).toEqual([]);
