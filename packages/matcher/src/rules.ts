@@ -164,7 +164,7 @@ export type RuleClause =
       /** Refuse a MASS kill / exile / bounce emit (`scope` all or each; a damage emit is never refused) when another ability of the SAME clause carries a TARGETED dies / exiled / leaves: "Exile target nonland permanent ... and all other nonland permanents with the
        *  same name" (Banishment), "Destroy target artifact and all other artifacts with the same name", "Return target creature and all Auras attached to it" widen one target, they do not wipe a board (#1266). */
       notBesideTargetedKill?: true;
-      /** The emitting ability's amount is at least N, or is no printed number (X): `effectKind.amountAtLeast` for an `emits` clause. A target land kill of FOUR lands is land denial, one of ONE land (Stone Rain, amount "1") is not (owner 2026-11-13, Burning of Xinye). A missing amount does not match. */
+      /** The emitting ability's amount is a PRINTED NUMBER of at least N (X never matches: it may be one land): `effectKind.amountAtLeast` for an `emits` clause, but strict. A target land kill of FOUR lands is land denial (owner 2026-11-13, Burning of Xinye); one of ONE land (Stone Rain, amount "1") is not, and the in-between sizes ("two target lands", "X target lands") are NEEDS RULING. A missing amount does not match. */
       amountAtLeast?: number;
       /** Refuse an emit the victim may decline (`GameEvent.victimMay`): "its controller may sacrifice it" (Star Athlete, Livio), "unless that player sacrifices it" (Enchanter's Bane). It is the opponent's choice with an
        *  alternative, which is not removal (#1295). */
@@ -670,7 +670,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.notBesideTargetedKill !== true || !KILL_VERBS.includes(e.verb) || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause
             && (f.emits ?? []).some((g) => g.subject.scope === "target" && KILL_VERBS.includes(g.verb))))
           && (clause.notVictimMay !== true || e.victimMay !== true)
-          && (clause.amountAtLeast === undefined || amountAtLeast(a.amount, clause.amountAtLeast))
+          && (clause.amountAtLeast === undefined || (a.amount !== undefined && /^\d+$/.test(a.amount) && Number(a.amount) >= clause.amountAtLeast))
           && (clause.notOwnedByYou !== true || e.subject.owner !== "you")
           && (clause.notSelf !== true || e.subject.self !== true)
           && (clause.notPairedTarget !== true || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause
