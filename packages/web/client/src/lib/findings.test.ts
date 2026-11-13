@@ -133,6 +133,29 @@ test("a deck with an answer for every kind has no answers finding, however thin,
   expect(findings(report({ deckMath: answers({ creature: 1, artifact: 1, enchantment: 1, planeswalker: 1, land: 0 }) })).filter((f) => f.kind === "answers")).toEqual([]);
 });
 
+// A HALF-COVERED CLASS (owner 2026-11-13, magda-mother-of-dragons: enchantments held only by Pyroblast) is not "missing", but a full answer
+// lifts it and the finding's impact prices that lift, so the finding fires and names the class in its own clause.
+const half = (counts: Record<string, number>, locked: Record<string, string[]>, fractions: Record<string, number>) => ({
+  deckMath: { ...answers(counts), answers: answers(counts)!.answers.map((a) => ({ ...a, ...(locked[a.class] !== undefined ? { colourLocked: locked[a.class]! } : {}) })) },
+  answerCoverage: { coverage: 0.9, source: "weighted" as const, graveyardVulnerability: 0, rows: Object.entries(fractions).map(([c, fraction]) => ({ class: c, poolShare: 1, demand: 0.2, weight: 0.2, covered: fraction > 0, fraction })) },
+  answersImpact: 0.029,
+});
+test("a class covered only at half fires the answers finding, named as narrow and not as missing", () => {
+  const r = half({ creature: 4, artifact: 2, enchantment: 1, planeswalker: 1, land: 0 }, { enchantment: ["Pyroblast"] }, { creature: 1, artifact: 1, enchantment: 0.5, planeswalker: 1 });
+  const [f, ...rest] = findings(report(r as never)).filter((x) => x.kind === "answers");
+  expect(rest).toEqual([]);
+  expect(f.headline).toBe("Enchantments are only answered by narrow cards (Pyroblast counts half).");
+  expect(f.headline).not.toMatch(/no answer at all/);
+  expect(f.action).toBe("One unrestricted enchantment answer lifts it to full coverage.");
+  expect(f.impact).toBe(0.029);
+});
+test("absent and half-covered classes each get their own clause", () => {
+  const r = half({ creature: 4, artifact: 0, enchantment: 1, planeswalker: 1, land: 0 }, { enchantment: ["Pyroblast", "Soul Rend"] }, { creature: 1, artifact: 0, enchantment: 0.5, planeswalker: 1 });
+  const [f] = findings(report(r as never)).filter((x) => x.kind === "answers");
+  expect(f.headline).toBe("You have no answer at all for artifacts. Enchantments are only answered by narrow cards (Pyroblast and Soul Rend count half).");
+  expect(f.action).toBe("One unrestricted card that can hit any kind of permanent covers all of these at once.");
+});
+
 test("a zero the colours cannot fill is the colour pie, not a finding", () => {
   const d = answers({ creature: 4, artifact: 1, enchantment: 0 });
   d!.answers[2]!.pool = 0;
@@ -602,4 +625,19 @@ test("a count a hair under its target is a finding that says 0.1 short, never ro
   const [f] = findings(report({ buildParents: [{ name: "Card advantage", key: "consistency", count: 9.96, target: 10, leaves: ["draw"] }] }));
   expect(f.figure).toBe("9.9/10");
   expect(f.detail).toBe("You run 9.9, against a target of 10.");
+});
+
+// CARD NAMES WITH A COMMA ARE ONE NAME EACH (review): the list is built from the array, never by regex over the joined string.
+test("narrow cards are listed from the array: a comma name stays whole, three cards read A, B and C", () => {
+  const one = half({ creature: 4, artifact: 2, enchantment: 1, planeswalker: 1, land: 0 }, { enchantment: ["Kozilek, Butcher of Truth"] }, { creature: 1, artifact: 1, enchantment: 0.5, planeswalker: 1 });
+  expect(findings(report(one as never)).find((x) => x.kind === "answers")!.headline).toBe("Enchantments are only answered by narrow cards (Kozilek, Butcher of Truth counts half).");
+  const three = half({ creature: 4, artifact: 2, enchantment: 1, planeswalker: 1, land: 0 }, { enchantment: ["Pyroblast", "Soul Rend", "Kozilek, Butcher of Truth"] }, { creature: 1, artifact: 1, enchantment: 0.5, planeswalker: 1 });
+  expect(findings(report(three as never)).find((x) => x.kind === "answers")!.headline).toBe("Enchantments are only answered by narrow cards (Pyroblast, Soul Rend and Kozilek, Butcher of Truth count half).");
+});
+
+// THE SHORTFALL READS THE COVERAGE ROWS (1 - fraction), so it cannot drift from the impact if NARROW_WEIGHT moves.
+test("a half class's shortfall is 1 - its coverage fraction, not a hardcoded half", () => {
+  const at = (fraction: number) => findings(report(half({ creature: 4, artifact: 2, enchantment: 1, planeswalker: 1, land: 0 }, { enchantment: ["Pyroblast"] }, { creature: 1, artifact: 1, enchantment: fraction, planeswalker: 1 }) as never)).find((x) => x.kind === "answers")!;
+  expect(at(0.5).shortfall).toBeCloseTo(0.5 / 4, 9);
+  expect(at(0.25).shortfall).toBeCloseTo(0.75 / 4, 9);
 });

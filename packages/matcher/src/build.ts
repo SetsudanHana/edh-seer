@@ -614,14 +614,16 @@ export function landsImpactOf(base: BuildScoreInputs): number {
   return scoreBuild({ ...base, landCount: base.landsTarget }) - scoreBuild(base);
 }
 
-/** Covering every ABSENT permanent answer class, priced through the multiplier it moves.
+/** Lifting every permanent answer class that is not yet fully covered to full, priced through the
+ *  multiplier it moves (owner 2026-11-13: price lifting a half-covered class, not only filling an empty one).
  *
  *  `COVERAGE_CLASSES` already excludes `graveyard`, which is exactly the set the answers finding
  *  calls `permanent` -- so this and the finding are about the same classes without either restating
- *  the exclusion. ABSENT, not short: `answerCoverage` reads a Set, so a class held at one copy
- *  against a `required` of three is already covered and raising it moves the multiplier by nothing.
- *  The finding is about both; this is the part the score can see, which makes it a lower bound
- *  rather than a wrong number. */
+ *  the exclusion. The delta per class is `1 - fraction`: an empty class gains 1, a class held only by
+ *  narrow answers (`NARROW_WEIGHT`) gains the other half, a fully covered class gains 0. Two narrow
+ *  answers still cover 0.5 (no accumulation), so the price of a narrow card on a half class is 0.
+ *  Not about SHORT classes: a class held at one copy against a `required` of three is already covered
+ *  and raising it moves the multiplier by nothing, which makes this a lower bound, not a wrong number. */
 export function answersImpactOf(
   parents: readonly ScoreableParent[],
   landCount: number,
@@ -629,16 +631,17 @@ export function answersImpactOf(
   colorIdentity: string[] | undefined,
   answeredIn: ReadonlySet<string> | ReadonlyMap<string, number>,
   graveyardVulnerability: number,
+  /** Classes whose narrow member is the commander: no card to buy, so the finding and the suggestions skip them and so does this price. */
+  commanderHeld: ReadonlySet<string> = new Set(),
 ): number {
   const answered: ReadonlyMap<string, number> = answeredIn instanceof Map ? answeredIn : new Map([...answeredIn].map((c) => [c as string, 1] as const));
-  // ABSENT means no answer at all; a class held only by colour-locked cards is not absent, so lifting it is not priced here (a lower bound, as before).
-  const absent = COVERAGE_CLASSES.filter((c) => !answered.has(c));
-  if (absent.length === 0) return 0;
+  const lifting = COVERAGE_CLASSES.filter((c) => (answered.get(c) ?? 0) < 1 && !((answered.get(c) ?? 0) > 0 && commanderHeld.has(c)));
+  if (lifting.length === 0) return 0;
   const base: BuildScoreInputs = {
     parents, landCount, landsTarget,
     coverage: answerCoverage(colorIdentity, answered, graveyardVulnerability).coverage,
   };
-  const lifted = answerCoverage(colorIdentity, new Map([...answered, ...absent.map((c) => [c, 1] as const)]), graveyardVulnerability);
+  const lifted = answerCoverage(colorIdentity, new Map([...answered, ...lifting.map((c) => [c, 1] as const)]), graveyardVulnerability);
   return scoreBuild({ ...base, coverage: lifted.coverage }) - scoreBuild(base);
 }
 
@@ -893,6 +896,8 @@ export function computeBuild(
   strategies?: readonly ArchetypeRanking[],
   /** HOW LIKELY EACH GATED EFFECT IS TO HAPPEN IN THIS DECK (#1357 task 2). Absent: every effect counts in full, as before it existed. */
   gates?: GateWeigher,
+  /** The commanders' names, so a half class held by one is not priced (see `answersImpactOf`). */
+  commanderNames: ReadonlySet<string> = new Set(),
 ): BuildResult {
   const members = detectBuildCategories(cards);
   const gateWeights: RoleWeights = gates ? detectBuildWeights(cards, gates) : new Map();
@@ -935,6 +940,7 @@ export function computeBuild(
     [...detectAnswerClasses(cards)].filter(([, m]) => m.cards.size > 0).map(([cls, m]) => [cls, answerCoverFraction(m)] as const),
   );
   const coverage = answerCoverage(colorIdentity, answered, graveyardVulnerability);
+  const commanderHeld = new Set([...detectAnswerClasses(cards)].filter(([, m]) => [...m.cards].some((n) => commanderNames.has(n))).map(([cls]) => cls));
 
   const parentTargets = adjustedParentTargets(template);
   // A PARENT'S COUNT IS A UNION, NEVER A SUM -- a card can carry two of a parent's leaves (Grave
@@ -965,7 +971,7 @@ export function computeBuild(
   const buildScore = scoreBuild(scoreInputs);
   const landsImpact = landsImpactOf(scoreInputs);
   const answersImpact = answersImpactOf(
-    parentsWithCount, landCount, targets.lands, colorIdentity, answered, graveyardVulnerability,
+    parentsWithCount, landCount, targets.lands, colorIdentity, answered, graveyardVulnerability, commanderHeld,
   );
 
   // `coverageWeighted` rides along ONLY when true (whole-branch review IMPORTANT 4) -- the client

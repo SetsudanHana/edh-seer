@@ -10,6 +10,7 @@
  *  only a stale artifact produces one, and a card with no reason under it is a claim with nothing
  *  behind it. Unmet-demand candidates, which come from an over-collecting key filter, are shown only
  *  when the engine finds a reason from them to a deck card. */
+import { halfCoveredClasses } from "./half-covered.js";
 import { loadImpactWeights, type DeckReport, type ImpactWeights, type Reason } from "@edh-seer/engine";
 import { cardStrength, type CardLink, type Strength } from "./card-strength.js";
 import { rolesOfCard } from "./quality.js";
@@ -185,6 +186,7 @@ export async function decodeIndex(lookup: StaticLookup): Promise<IndexCard[]> {
     roles: (row.r ?? []).map((i) => BUILD_CATEGORIES[i]!).filter(Boolean),
     ...(row.q ? { quality: Object.fromEntries((row.r ?? []).map((i, j) => [BUILD_CATEGORIES[i]!, row.q![j]!] as const).filter(([role, v]) => role && v >= 0)) } : {}),
     answers: (row.a ?? []).map((i) => POOL_CLASSES[i]!).filter(Boolean),
+    ...(row.n ? { narrowAnswers: row.n.map((i) => POOL_CLASSES[i]!).filter(Boolean) } : {}),
     ...(row.g ? { grade: row.g } : {}),
   }));
 }
@@ -518,11 +520,13 @@ export async function suggestForDeck(input: {
       const n = Math.ceil(g.target - g.count) + SPARES;
       return [g.key, g.name, shortlist(gapList(pool, g.leaves, g.costBand, Infinity), n * SHORTLIST, g.costBand), n, g.costBand, stapleList(index, g.leaves, g.costBand, n, admissible)] as const;
     });
+  // A CLASS WITH NO ANSWER AT ALL (the page's finding, owner 2026-09-26: the five-per-kind target asked every
+  // deck for answers) lists every answer; a HALF-COVERED one (owner 2026-11-13: only narrow answers held)
+  // lists full answers only, since another narrow card adds 0. One card fills it; the spares give a choice.
+  const halfCovered = new Set(halfCoveredClasses(report));
   const answersRanked = (report.deckMath?.answers ?? [])
-    // ONLY A CLASS WITH NO ANSWER AT ALL, the one the page's finding names (owner, 2026-09-26: the
-    // five-per-kind target asked every deck for answers). One card fills it; the spares give a choice.
-    .filter((a) => a.class !== "graveyard" && a.class !== "land" && a.count === 0 && !a.fromCommandZone)
-    .map((a) => [a.class, shortlist(answerList(pool, a.class, interactionBand, Infinity), (ANSWER_ADDS + SPARES) * SHORTLIST, interactionBand), ANSWER_ADDS + SPARES, interactionBand] as const);
+    .filter((a) => a.class !== "graveyard" && a.class !== "land" && ((a.count === 0 && !a.fromCommandZone) || halfCovered.has(a.class)))
+    .map((a) => [a.class, shortlist(answerList(pool, a.class, interactionBand, Infinity, new Set(), halfCovered.has(a.class)), (ANSWER_ADDS + SPARES) * SHORTLIST, interactionBand), ANSWER_ADDS + SPARES, interactionBand] as const);
   const unmet = (report.deckMath?.demand ?? [])
     .filter((d) => d.available !== null && d.suppliers === 0 && d.consumers > 0);
   const synergyRanked: (readonly [string, Candidate[]])[] = [];

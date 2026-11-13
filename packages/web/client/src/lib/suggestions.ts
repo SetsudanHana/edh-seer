@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { DeckSuggestions, SuggestedCard } from "@edh-seer/matcher/suggest-static";
 import type { AnalyzeResponse, DeckReport } from "../types.js";
+import { halfCoveredClasses } from "@edh-seer/matcher/half-covered";
 import type { Finding, FindingKind } from "./findings.js";
 
 /** THE FINDINGS A CARD CAN FIX (spec §3). The mana kinds keep their sentence and get no cards: land
@@ -24,8 +25,9 @@ export function suggestionsFor(f: Finding, s: DeckSuggestions | null, report: De
   if (!s || !takesCards(f.kind)) return undefined;
   if (f.kind === "build") return s.build[f.id.replace(/^build:/, "")] ?? [];
   if (f.kind === "answers") {
-    // THE CLASSES THE FINDING NAMES: the ones with no answer at all (see `answerFinding`).
-    const short = (report.deckMath?.answers ?? []).filter((a) => a.class !== "graveyard" && a.class !== "land" && a.count === 0 && !a.fromCommandZone);
+    // THE CLASSES THE FINDING NAMES: the ones with no answer at all, and the ones only narrow answers hold (see `answerFinding`).
+    const half = new Set(halfCoveredClasses(report));
+    const short = (report.deckMath?.answers ?? []).filter((a) => a.class !== "graveyard" && a.class !== "land" && ((a.count === 0 && !a.fromCommandZone) || half.has(a.class)));
     // ONE ROW PER CARD, NAMING EVERY CLASS IT ANSWERS: a card on the enchantment and the artifact
     // list says both, not only the first list it was found on (final review, AO4).
     const merged = new Map<string, SuggestedCard>();
