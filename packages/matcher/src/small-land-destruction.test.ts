@@ -38,8 +38,8 @@ describe("small land destruction is removal, never stax", () => {
     }
   });
 
-  test("a wipe with a non-land targeted half is not widened by this: Blight Grenade stays a wipe without targeted removal (not ruled)", () => {
+  test("a wipe with a non-land targeted half is both (owner 2026-11-13, Rules 52): Blight Grenade", () => {
     expect(role("Blight Grenade", "boardWipe")).toBe(true);
-    expect(role("Blight Grenade", "targetedRemoval")).toBe(false);
+    expect(role("Blight Grenade", "targetedRemoval")).toBe(true);
   });
 });
