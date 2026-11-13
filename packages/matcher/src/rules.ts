@@ -50,8 +50,8 @@ export type RuleClause =
       ofKind?: string[];
       /** A `targeting-ban` that PROTECTS SOMETHING OF YOURS, whoever bans (#1266, owner 2026-11-12). Any one of: the ban is against opponents' spells and abilities (`targetingBan.source.control: opp`: Vines of Vastwood,
        *  Canopy Cover, Tomik, Display of Dominance); its subject is yours (Autumn's Veil, Spellbane Centaur: "creatures you control"); the card is an AURA (the enchanted creature is one you can choose: Anti-Magic Aura,
-       *  Spectral Shield, Artifact Ward); or it is global over every graveyard (Ground Seal, Silent Gravestone) or every creature (Dense Foliage). Refused whatever the source: a ban on the card itself (Thrun, Gaea's Revenge,
-       *  Bartel Runeaxe) and one whose subject is only opponents' things. CEILING: the global reading covers `creature` and `graveyard` subjects only; Peace Talks' "players and permanents" is not read (NEEDS RULING). */
+       *  Spectral Shield, Artifact Ward); or it is global over every graveyard (Ground Seal, Silent Gravestone), every creature (Dense Foliage) or every permanent (Peace Talks). Refused whatever the source: a ban on the card itself (Thrun, Gaea's Revenge,
+       *  Bartel Runeaxe) and one whose subject is only opponents' things. A global ban on every permanent counts too (owner 2026-11-13: Peace Talks protects everyone, opponents included). */
       banProtects?: true;
       /** A FLICKER THAT IS ONE (derive types "put a card exiled with this onto the battlefield" `flicker` too: Karn Liberated, Ashiok, Sisters of Stone Death, Ghost Vacuum, Profane Procession,
        *  and a loyalty or "activate only as a sorcery" exile): the card has an instant-speed `exiled` emit of a permanent from the battlefield (or from no stated zone: a model-read clause leaves it off, Angel of Condemnation) that is not the card itself, AND the flicker either
@@ -164,6 +164,8 @@ export type RuleClause =
       /** Refuse a MASS kill / exile / bounce emit (`scope` all or each; a damage emit is never refused) when another ability of the SAME clause carries a TARGETED dies / exiled / leaves: "Exile target nonland permanent ... and all other nonland permanents with the
        *  same name" (Banishment), "Destroy target artifact and all other artifacts with the same name", "Return target creature and all Auras attached to it" widen one target, they do not wipe a board (#1266). */
       notBesideTargetedKill?: true;
+      /** The emitting ability's amount is a PRINTED NUMBER of at least N (X never matches: it may be one land): `effectKind.amountAtLeast` for an `emits` clause, but strict. A target land kill of FOUR lands is land denial (owner 2026-11-13, Burning of Xinye); one of ONE land (Stone Rain, amount "1") is not, and the in-between sizes ("two target lands", "X target lands") are NEEDS RULING. A missing amount does not match. */
+      amountAtLeast?: number;
       /** Refuse an emit the victim may decline (`GameEvent.victimMay`): "its controller may sacrifice it" (Star Athlete, Livio), "unless that player sacrifices it" (Enchanter's Bane). It is the opponent's choice with an
        *  alternative, which is not removal (#1295). */
       notVictimMay?: true;
@@ -477,7 +479,7 @@ function banProtectsYours(a: { targetingBan?: { source: { control?: string } }; 
     || subject.control === "you"
     || /\baura\b/i.test(typeLine)
     || subject.zone === "graveyard"
-    || (subject.scope === "all" && subjectTypes(subject).includes("creature"));
+    || (subject.scope === "all" && subjectTypes(subject).some((t) => t === "creature" || t === "permanent"));
 }
 
 /** A search SUBJECT that can only be a land (#1266): typed `land` ("a basic land card"), a LAND TYPE ("a Mountain card", "a basic Plains, Swamp, or Forest card", "a Gate card": Alpine Guide, Abzan Monument,
@@ -668,6 +670,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.notBesideTargetedKill !== true || !KILL_VERBS.includes(e.verb) || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause
             && (f.emits ?? []).some((g) => g.subject.scope === "target" && KILL_VERBS.includes(g.verb))))
           && (clause.notVictimMay !== true || e.victimMay !== true)
+          && (clause.amountAtLeast === undefined || (a.amount !== undefined && /^\d+$/.test(a.amount) && Number(a.amount) >= clause.amountAtLeast))
           && (clause.notOwnedByYou !== true || e.subject.owner !== "you")
           && (clause.notSelf !== true || e.subject.self !== true)
           && (clause.notPairedTarget !== true || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause

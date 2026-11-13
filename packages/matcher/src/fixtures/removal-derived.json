@@ -39493,5 +39493,96 @@
     }
    }
   ]
+ },
+ "Burning of Xinye": {
+  "oracleText": "You destroy four lands you control, then target opponent destroys four lands they control. Then Burning of Xinye deals 4 damage to each creature.",
+  "typeLine": "Sorcery",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "4",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "selection": "counted",
+       "type": "land",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 4,
+     "ceiling": 4
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "4",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 4,
+     "ceiling": 4
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "each"
+     }
+    },
+    "amount": "4",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "each"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 4,
+     "ceiling": 4
+    }
+   }
+  ]
  }
 }

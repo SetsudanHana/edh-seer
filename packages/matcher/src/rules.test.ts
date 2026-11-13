@@ -835,6 +835,8 @@ test("a targeting ban against opponents, on something other than the card, is pr
   // enchanted creature (Anti-Magic Aura, Spectral Shield, Artifact Ward: an Aura you can put on your own creature), and a global ban on every graveyard (Ground Seal, Silent Gravestone, Dennick, Underworld Cerberus)
   // or every creature (Dense Foliage).
   for (const name of ["Autumn's Veil", "Spellbane Centaur", "Anti-Magic Aura", "Spectral Shield", "Artifact Ward", "Ground Seal", "Silent Gravestone", "Dennick, Pious Apprentice // Dennick, Pious Apparition", "Underworld Cerberus", "Dense Foliage"]) expect(protectsDerived(name), name).toBe(true);
+  // Owner 2026-11-13: Peace Talks ("players and permanents can't be the targets of spells or activated abilities", this turn and next) protects everyone, opponents included: a global ban on all permanents.
+  expect(protectsDerived("Peace Talks")).toBe(true);
   // Still refused: a ban on the card itself, from any source (hexproof on itself, a stat).
   for (const name of ["Gaea's Revenge", "Raiding Party", "Bartel Runeaxe"]) expect(protectsDerived(name), name).toBe(false);
 });
@@ -907,9 +909,9 @@ describe("phasing out another player's permanent is an answer, not removal (#126
     expect(classes("Slip Out the Back")).toEqual(["creature"]);
   });
 
-  // A mass phase-out of only YOUR permanents (control you) answers nothing; neither does a chosen-type one that no class is read from (Teferi's Realm, NEEDS RULING).
+  // A mass phase-out of only YOUR permanents (control you) answers nothing; neither does a chosen-type one that no class is read from. Teferi's Realm stays with no answer tag (owner 2026-11-13: each player chooses on their own upkeep).
   test("a mass phase-out of only your own permanents answers nothing", () => {
-    for (const name of ["Teferi's Protection", "Perch Protection", "Ripples of Potential", "Taniwha", "Temporal Firestorm"]) expect(classes(name), name).toEqual([]);
+    for (const name of ["Teferi's Protection", "Perch Protection", "Ripples of Potential", "Taniwha", "Temporal Firestorm", "Teferi's Realm"]) expect(classes(name), name).toEqual([]);
   });
 
   test("a phase-out of your own permanent, of the card itself, or only a block triggers answers nothing", () => {
@@ -1082,6 +1084,34 @@ test("a land-only mass by overload or at a target player is stax and no wipe; a 
   expect(has("boardWipe", "Mogg Infestation")).toBe(true);
 });
 
+// OWNER 2026-11-13: EACH HALF OF A CARD IS ITS OWN EFFECT (#1266, Rules 48). Burning of Xinye ("You destroy four lands you control, then target opponent destroys four lands they control. Then Burning of Xinye
+// deals 4 damage to each creature.") is a board wipe for the damage AND stax for the land destruction. Catastrophe ("Destroy all lands or all creatures.") stays both; Stone Rain (one land) stays neither.
+test("each half of a card is its own effect: Xinye is a wipe and stax, Catastrophe both, Stone Rain neither", () => {
+  const m = detectBuildCategories([realCard("Burning of Xinye"), realCard("Catastrophe"), realCard("Stone Rain")]);
+  const has = (cat: "stax" | "boardWipe", n: string): boolean => m.get(cat)?.has(n) === true;
+  for (const n of ["Burning of Xinye", "Catastrophe"]) { expect(has("boardWipe", n), `${n} boardWipe`).toBe(true); expect(has("stax", n), `${n} stax`).toBe(true); }
+  expect(has("boardWipe", "Stone Rain")).toBe(false);
+  expect(has("stax", "Stone Rain")).toBe(false);
+});
+
+// OWNER 2026-11-13: URZA'S SYLEX IS WEAK STAX (#1266, Rules 48). "Each player chooses six lands they control. Destroy all other permanents." It stays a board wipe and gains role:stax. The engine has no weak-stax level.
+test("Urza's Sylex is a board wipe and stax; the other choose-and-destroy-the-rest wipes are not stax", () => {
+  const m = detectBuildCategories(["Urza's Sylex", "Razia's Purification", "End Hostilities", "Wash Out"].map((n) => realCard(n)));
+  const has = (cat: "stax" | "boardWipe", n: string): boolean => m.get(cat)?.has(n) === true;
+  expect(has("boardWipe", "Urza's Sylex")).toBe(true);
+  expect(has("stax", "Urza's Sylex")).toBe(true);
+  for (const n of ["Razia's Purification", "End Hostilities", "Wash Out"]) expect(has("stax", n), `${n} stax`).toBe(false);
+});
+
+// OWNER 2026-11-13: DESTROYING ALL LANDS OF ONE TARGET PLAYER IS STAX (#1266, Rules 48). Ajani Vengeant's -7 ("Destroy all lands target player controls") derives scope `target`, the same as Stone Rain, so the printed words carry it.
+// The text is blanked to the -7 alone: Ajani's +1 ("doesn't untap") would make the card stax whatever the -7 reads as.
+test("destroying all lands target player controls is stax on its own; Stone Rain is not", () => {
+  const staxRules = loadRules().rules.filter((r) => r.category === "stax");
+  const isStax = (dc: DeckCard): boolean => staxRules.some((r) => ruleMatches(r, dc));
+  expect(isStax(realCard("Ajani Vengeant", { oracleText: "\u22127: Destroy all lands target player controls." }))).toBe(true);
+  expect(isStax(realCard("Stone Rain"))).toBe(false);
+});
+
 // ALL PERMANENTS NAMES LANDS; A RESTRICTED PERMANENT SUBJECT DOES NOT (#1557, Rules 41). Derive 468 keeps the restriction on the subject (chosenColor, colorCount, selection), so only a genuinely unrestricted `permanent` is land-including.
 test("an unrestricted permanent wipe is stax too; a restricted one, and a per-opponent choice, are not", () => {
   const m = detectBuildCategories([
@@ -1089,7 +1119,7 @@ test("an unrestricted permanent wipe is stax too; a restricted one, and a per-op
   ].map((n) => realCard(n)));
   const has = (cat: "stax" | "boardWipe", n: string): boolean => m.get(cat)?.has(n) === true;
   for (const n of ["Apocalypse", "Worldfire", "Dimensional Breach", "Gideon, Champion of Justice"]) { expect(has("stax", n), `${n} stax`).toBe(true); expect(has("boardWipe", n), `${n} boardWipe`).toBe(true); }
-  for (const n of ["Urza's Sylex", "Wash Out", "Razia's Purification", "Council's Judgment", "End Hostilities", "All Is Dust", "Liliana of the Veil", "Ultimate Magic: Meteor", "Wrath of God"]) expect(has("stax", n), `${n} stax`).toBe(false);
+  for (const n of ["Wash Out", "Razia's Purification", "Council's Judgment", "End Hostilities", "All Is Dust", "Liliana of the Veil", "Ultimate Magic: Meteor", "Wrath of God"]) expect(has("stax", n), `${n} stax`).toBe(false);
   // Meteor's destroy is one chosen permanent per opponent, but its 7 damage to each creature is still a wipe.
   expect(has("boardWipe", "Ultimate Magic: Meteor")).toBe(true);
   // The restricted ones stay the wipes they were.
