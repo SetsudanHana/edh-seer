@@ -240,8 +240,9 @@ describe("the damage, tuck, shrink, counter and bounce answers read derived data
     expect(classes("Combust")).toEqual(["creature"]);
   });
 
-  test("damage: \"target player or planeswalker\" answers no planeswalker", () => {
-    expect(classes("Lava Spike")).toEqual([]);
+  // Owner 2026-11-13: damage to "target player or planeswalker" answers planeswalkers (about 170 cards).
+  test("damage: \"target player or planeswalker\" answers a planeswalker (Lava Spike, owner 2026-11-13)", () => {
+    expect(classes("Lava Spike")).toEqual(["planeswalker"]);
   });
 
   // Owner 2026-11-13, reversing the colour-hoser part of the 2026-10-27 ruling (#1357): every answer kind counts a colour-locked subject. Real derived rows.
