@@ -50,8 +50,8 @@ export type RuleClause =
       ofKind?: string[];
       /** A `targeting-ban` that PROTECTS SOMETHING OF YOURS, whoever bans (#1266, owner 2026-11-12). Any one of: the ban is against opponents' spells and abilities (`targetingBan.source.control: opp`: Vines of Vastwood,
        *  Canopy Cover, Tomik, Display of Dominance); its subject is yours (Autumn's Veil, Spellbane Centaur: "creatures you control"); the card is an AURA (the enchanted creature is one you can choose: Anti-Magic Aura,
-       *  Spectral Shield, Artifact Ward); or it is global over every graveyard (Ground Seal, Silent Gravestone) or every creature (Dense Foliage). Refused whatever the source: a ban on the card itself (Thrun, Gaea's Revenge,
-       *  Bartel Runeaxe) and one whose subject is only opponents' things. CEILING: the global reading covers `creature` and `graveyard` subjects only; Peace Talks' "players and permanents" is not read (NEEDS RULING). */
+       *  Spectral Shield, Artifact Ward); or it is global over every graveyard (Ground Seal, Silent Gravestone), every creature (Dense Foliage) or every permanent (Peace Talks). Refused whatever the source: a ban on the card itself (Thrun, Gaea's Revenge,
+       *  Bartel Runeaxe) and one whose subject is only opponents' things. A global ban on every permanent counts too (owner 2026-11-13: Peace Talks protects everyone, opponents included). */
       banProtects?: true;
       /** A FLICKER THAT IS ONE (derive types "put a card exiled with this onto the battlefield" `flicker` too: Karn Liberated, Ashiok, Sisters of Stone Death, Ghost Vacuum, Profane Procession,
        *  and a loyalty or "activate only as a sorcery" exile): the card has an instant-speed `exiled` emit of a permanent from the battlefield (or from no stated zone: a model-read clause leaves it off, Angel of Condemnation) that is not the card itself, AND the flicker either
@@ -479,7 +479,7 @@ function banProtectsYours(a: { targetingBan?: { source: { control?: string } }; 
     || subject.control === "you"
     || /\baura\b/i.test(typeLine)
     || subject.zone === "graveyard"
-    || (subject.scope === "all" && subjectTypes(subject).includes("creature"));
+    || (subject.scope === "all" && subjectTypes(subject).some((t) => t === "creature" || t === "permanent"));
 }
 
 /** A search SUBJECT that can only be a land (#1266): typed `land` ("a basic land card"), a LAND TYPE ("a Mountain card", "a basic Plains, Swamp, or Forest card", "a Gate card": Alpine Guide, Abzan Monument,
