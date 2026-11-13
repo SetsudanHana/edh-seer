@@ -4200,10 +4200,7 @@
        "control": "opp",
        "token": null,
        "combat": "attacking",
-       "type": [
-        "creature",
-        "planeswalker"
-       ],
+       "type": "creature",
        "scope": "target",
        "fromZone": "battlefield"
       },
@@ -4215,10 +4212,7 @@
        "control": "opp",
        "token": null,
        "combat": "attacking",
-       "type": [
-        "creature",
-        "planeswalker"
-       ],
+       "type": "creature",
        "scope": "target",
        "fromZone": "battlefield"
       },
@@ -46746,7 +46740,8 @@
         "wall"
        ],
        "scope": "target"
-      }
+      },
+      "victimMay": true
      }
     ],
     "gate": {
@@ -46787,6 +46782,7 @@
        "type": "creature",
        "scope": "target"
       },
+      "victimMay": true,
       "instantSpeed": true
      }
     ],
@@ -49200,6 +49196,128 @@
     "count": {
      "floor": 1,
      "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Nettling Imp": {
+  "oracleText": "{T}: Choose target non-Wall creature the active player has controlled continuously since the beginning of the turn. That creature attacks this turn if able. Destroy it at the beginning of the next end step if it didn't attack this turn. Activate only during an opponent's turn, before attackers are declared.",
+  "typeLine": "Creature — Imp",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it didn't attack this turn"
+    },
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    }
+   }
+  ]
+ },
+ "Norritt": {
+  "oracleText": "{T}: Untap target blue creature.\n{T}: Choose target non-Wall creature the active player has controlled continuously since the beginning of the turn. That creature attacks this turn if able. Destroy it at the beginning of the next end step if it didn't attack this turn. Activate only before attackers are declared.",
+  "typeLine": "Creature — Imp",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "untap",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target",
+      "colors": [
+       "U"
+      ]
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "untaps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "colors": [
+        "U"
+       ],
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "notSubtype": [
+        "wall"
+       ],
+       "scope": "target"
+      }
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it didn't attack this turn"
+    },
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
     }
    }
   ]

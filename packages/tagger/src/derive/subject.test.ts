@@ -1070,3 +1070,12 @@ describe('"except for" carries the spared types', () => {
     expect(parseSubject("all permanents").notType).toBeUndefined();
   });
 });
+
+// #1629: Soul Snare's "target creature that's attacking you or a planeswalker you control": the planeswalker is what the creature attacks, not a target type.
+test("#1629: 'attacking you or a planeswalker you control' names the defender, not a type", () => {
+  const s = parseSubject("target creature that's attacking you or a planeswalker you control");
+  expect(s.type).toBe("creature");
+  expect(s.combat).toBe("attacking");
+  // a planeswalker named as a target type stays
+  expect(parseSubject("target creature or planeswalker that's attacking you").type).toEqual(["creature", "planeswalker"]);
+});

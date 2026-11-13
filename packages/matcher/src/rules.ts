@@ -183,8 +183,7 @@ export type RuleClause =
       amountAtLeast?: number;
       /** Refuse an emit the victim may decline (`GameEvent.victimMay`): "its controller may sacrifice it" (Star Athlete, Livio), "unless that player sacrifices it" (Enchanter's Bane). It is the opponent's choice with an
        *  alternative, which is not removal (#1295).
-       *  CEILING: derive misses the victim-may cue on a PAY-OR-DIE destroy, so Arcum's Whistle ("That player may pay {X} ... destroy it if it didn't attack this turn") and Winter's Chill ("its controller may pay {1} or {2}. If that player doesn't, destroy that creature") carry no `victimMay`
-       *  and count as `removal.targeted` and as a creature answer alike, against the owner's 2026-10-22 ruling that a victim-may effect (Requiem Monolith) is not removal. Both rules read the same emit, so they stay consistent; the fix is in derive. */
+       *  Pay-or-die is read too (#1628): Arcum's Whistle ("That player may pay {X} ... If they don't pay") and Winter's Chill ("its controller may pay {1} or {2}. If that player doesn't, destroy that creature"). */
       notVictimMay?: true;
       /** Refuse an emit about THE CARD ITSELF (`subject.self`): "Exile this card from your graveyard" (renew, channel-like costs) moves the card and is no exile of anything else (#1266, graveyardHate). */
       notSelf?: true;
