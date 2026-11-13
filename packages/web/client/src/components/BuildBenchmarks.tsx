@@ -514,7 +514,7 @@ function DeckMathRows({
             Docked for coverage: this deck's{coverageWeightedName ? ` ${coverageWeightedName}` : ""}{" "}
             score counts at {pct(answerCoverage!.coverage)} of full credit — {coverageCovered} of{" "}
             {coverageClasses} answer classes are covered
-            {coverageHalf > 0 ? `, ${coverageHalf} only by colour-locked answers` : ""}
+            {coverageHalf > 0 ? `, ${coverageHalf} only by color-locked answers` : ""}
             {coverageCovered + coverageHalf < coverageClasses ? ", not every one these colors could reach" : ""}.
           </p>
         ) : null}
@@ -551,7 +551,7 @@ function DeckMathRows({
                 ? "your commander, so every game"
                 : `in hand by turn ${turn} in ${pct(a.available)} of games`;
             // `available` is P(holding a USABLE answer): a colour-locked card is live half the time it is drawn, so the row names those cards.
-            const lockedNote = a.colourLocked?.length ? `colour-locked, counts half: ${a.colourLocked.join(", ")}` : "";
+            const lockedNote = a.colourLocked?.length ? `color-locked, counts half: ${a.colourLocked.join(", ")}` : "";
             // The screen reader hears the mode on every row, even when the screen says it once below.
             const said = none
               ? ""

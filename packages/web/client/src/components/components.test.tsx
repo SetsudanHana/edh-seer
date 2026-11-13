@@ -1511,21 +1511,21 @@ test("the coverage dock counts a half-covered class as half-covered, and does no
       answerCoverage={{ coverage: 0.97, source: "weighted", graveyardVulnerability: 0, rows: rows([1, 1, 1, 0.5, 1]) }} />,
   );
   const note = screen.getByText(/docked for coverage/i);
-  expect(note.textContent).toMatch(/counts at 97% of full credit — 4 of 5 answer classes are covered, 1 only by colour-locked answers\./);
+  expect(note.textContent).toMatch(/counts at 97% of full credit — 4 of 5 answer classes are covered, 1 only by color-locked answers\./);
   expect(note.textContent).not.toMatch(/5 of 5|not every one/);
   unmount();
   render(
     <BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH}
       answerCoverage={{ coverage: 0.7, source: "weighted", graveyardVulnerability: 0, rows: rows([1, 0, 1, 0.5, 1]) }} />,
   );
-  expect(screen.getByText(/docked for coverage/i).textContent).toMatch(/3 of 5 answer classes are covered, 1 only by colour-locked answers, not every one these colors could reach\./);
+  expect(screen.getByText(/docked for coverage/i).textContent).toMatch(/3 of 5 answer classes are covered, 1 only by color-locked answers, not every one these colors could reach\./);
 });
 
 test("an answer row with colour-locked cards says which count half", () => {
   const dm = { ...DECK_MATH, answers: DECK_MATH.answers.map((a) => (a.class === "creature" ? { ...a, colourLocked: ["Pyroblast"] } : a)) };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={dm} />);
-  expect(screen.getByLabelText(/creature, 4 cards, in hand by turn 5 in 41% of games; colour-locked, counts half: Pyroblast/i)).toBeInTheDocument();
-  expect(screen.getByTestId("answer-row-locked-creature").textContent).toMatch(/colour-locked, counts half: Pyroblast/);
+  expect(screen.getByLabelText(/creature, 4 cards, in hand by turn 5 in 41% of games; color-locked, counts half: Pyroblast/i)).toBeInTheDocument();
+  expect(screen.getByTestId("answer-row-locked-creature").textContent).toMatch(/color-locked, counts half: Pyroblast/);
 });
 
 /** I2 (whole-branch review, 2026-09-01). The dock note used to spell "Interaction" into its prose,
