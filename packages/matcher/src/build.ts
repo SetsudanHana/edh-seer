@@ -614,14 +614,16 @@ export function landsImpactOf(base: BuildScoreInputs): number {
   return scoreBuild({ ...base, landCount: base.landsTarget }) - scoreBuild(base);
 }
 
-/** Covering every ABSENT permanent answer class, priced through the multiplier it moves.
+/** Lifting every permanent answer class that is not yet fully covered to full, priced through the
+ *  multiplier it moves (owner 2026-11-13: price lifting a half-covered class, not only filling an empty one).
  *
  *  `COVERAGE_CLASSES` already excludes `graveyard`, which is exactly the set the answers finding
  *  calls `permanent` -- so this and the finding are about the same classes without either restating
- *  the exclusion. ABSENT, not short: `answerCoverage` reads a Set, so a class held at one copy
- *  against a `required` of three is already covered and raising it moves the multiplier by nothing.
- *  The finding is about both; this is the part the score can see, which makes it a lower bound
- *  rather than a wrong number. */
+ *  the exclusion. The delta per class is `1 - fraction`: an empty class gains 1, a class held only by
+ *  narrow answers (`NARROW_WEIGHT`) gains the other half, a fully covered class gains 0. Two narrow
+ *  answers still cover 0.5 (no accumulation), so the price of a narrow card on a half class is 0.
+ *  Not about SHORT classes: a class held at one copy against a `required` of three is already covered
+ *  and raising it moves the multiplier by nothing, which makes this a lower bound, not a wrong number. */
 export function answersImpactOf(
   parents: readonly ScoreableParent[],
   landCount: number,
@@ -631,14 +633,13 @@ export function answersImpactOf(
   graveyardVulnerability: number,
 ): number {
   const answered: ReadonlyMap<string, number> = answeredIn instanceof Map ? answeredIn : new Map([...answeredIn].map((c) => [c as string, 1] as const));
-  // ABSENT means no answer at all; a class held only by colour-locked cards is not absent, so lifting it is not priced here (a lower bound, as before).
-  const absent = COVERAGE_CLASSES.filter((c) => !answered.has(c));
-  if (absent.length === 0) return 0;
+  const lifting = COVERAGE_CLASSES.filter((c) => (answered.get(c) ?? 0) < 1);
+  if (lifting.length === 0) return 0;
   const base: BuildScoreInputs = {
     parents, landCount, landsTarget,
     coverage: answerCoverage(colorIdentity, answered, graveyardVulnerability).coverage,
   };
-  const lifted = answerCoverage(colorIdentity, new Map([...answered, ...absent.map((c) => [c, 1] as const)]), graveyardVulnerability);
+  const lifted = answerCoverage(colorIdentity, new Map([...answered, ...lifting.map((c) => [c, 1] as const)]), graveyardVulnerability);
   return scoreBuild({ ...base, coverage: lifted.coverage }) - scoreBuild(base);
 }
 

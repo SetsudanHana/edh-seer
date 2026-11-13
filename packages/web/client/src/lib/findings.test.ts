@@ -133,6 +133,13 @@ test("a deck with an answer for every kind has no answers finding, however thin,
   expect(findings(report({ deckMath: answers({ creature: 1, artifact: 1, enchantment: 1, planeswalker: 1, land: 0 }) })).filter((f) => f.kind === "answers")).toEqual([]);
 });
 
+// A HALF-COVERED CLASS IS NOT MISSING (owner 2026-11-13): enchantments held only by a colour-locked card (Pyroblast, magda-mother-of-dragons)
+// have count 1 and cover at 0.5; the finding says "no answer at all" only of count 0, so it stays silent and prints no "missing" copy.
+test("a class covered only at half has an answer, so the answers finding does not call it missing", () => {
+  const d = answers({ creature: 4, artifact: 2, enchantment: 1, planeswalker: 1, land: 0 });
+  expect(findings(report({ deckMath: d, answersImpact: 0.029 })).filter((f) => f.kind === "answers")).toEqual([]);
+});
+
 test("a zero the colours cannot fill is the colour pie, not a finding", () => {
   const d = answers({ creature: 4, artifact: 1, enchantment: 0 });
   d!.answers[2]!.pool = 0;
