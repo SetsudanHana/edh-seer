@@ -1,5 +1,5 @@
 {
-  "version": 45,
+  "version": 46,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -19,11 +19,6 @@
     "massOfTargetPlayer": "(?:destroy|exile|return) (?:all|each) (?!(?:(?:non)?(?:basic|snow) )?(?:lands?|forests?|islands?|mountains?|plains|swamps?) (?:target|that) )(?:[\\w'/-]+ ){0,8}?(?:target|that) (?:player|opponent) (?:controls|owns)|damage to each (?:[\\w'/-]+ ){0,4}?(?:creature|planeswalker|permanent) (?:target|that) (?:player|opponent) controls|-1/-1 counter on each (?:[\\w'/-]+ ){0,3}?creature target (?:player|opponent) controls",
     "costNotReduced": "would cost less than|spells your opponents cast that target this",
     "costNotADiscount": "^(?=[\\s\\S]*(?:this spell costs [^.]*less|without paying (?:its|their|your) mana costs?|rather than pay (?:its|their|the) mana costs?))(?![\\s\\S]*(?<!this spell )costs? (?:up to )?(?:(?:\\{[^}]+\\})+(?: \\(or \\{[^}]+\\}\\))?|x|\\w+) less)",
-    "damageRemoval": "deals? \\d+ damage to target[^.]{0,25}?(?<class>creature(?: or planeswalker)?)",
-    "damageRemovalAny": "deals? (?:[2-9]|\\d{2,}|x) damage to (?<class>any (?:other )?target)",
-    "tuckRemoval": "(?:the owner of |put )target\\s+(?<class>[^.;:]{0,60}?)\\s+(?:shuffles it into|on (?:the )?(?:top|bottom) of|into) (?:its owner's|their) library",
-    "shrinkRemoval": "target\\s+(?<class>creature[^.;:]{0,40}?)\\s+gets?\\s+[-−](?:\\d+|x)/[-−](?:[1-9]\\d*|x)",
-    "counterShrinkRemoval": "-1/-1 counters? on (?:up to one |another )?target\\s+(?<class>creature)",
     "graveyardHate": "\\bexile[^.]*graveyard",
     "graveyardHateRecurring": "if a card[^.]{0,60}?would be put into (?:a|an opponent's|their) graveyard from anywhere[^.]{0,40}?exile it instead|cards? in [^.]{0,40}graveyards?[^.]{0,30}can'?t (?:enter|be cast|be played)|players can'?t cast[^.]{0,40}from[^.]{0,30}graveyards?|\\{[^}]{1,12}\\}[^.:]{0,40}:[^.]{0,80}?exile[^.]{0,60}?from (?:a|an opponent's|that|their)\\s+graveyard",
     "deathsExiledCreature": "(?:whenever a (?:nontoken )?creature an opponent controls dies, exile it|if a (?:nontoken )?creature an opponent (?:controls|owns) would die(?! this turn)[^.]*?,? (?:instead )?exile)",
@@ -45,7 +40,6 @@
     "exileReturnsToBattlefield": "return (?:it|that card) to the battlefield|returns to the battlefield",
     "exileThenReturns": "then return (?:it|that card|them|those cards) to the battlefield",
     "controllerGetsCopies": "its controller creates [^.]{0,40}tokens? that (?:are|is a) cop(?:y|ies) of",
-    "bounceRemoval": "return target\\s+(?<class>[^.;:]{0,60}?)\\s+to (?:its owner's|their|the owner's|owner's) hand",
     "enchantCreature": "enchant creature",
     "commanderDamage": "commander damage|deals combat damage to a player[^.]{0,60}?(?:that player loses the game|wins the game)"
   },
@@ -507,40 +501,100 @@
       "why": "A STATED WIN OR LOSS CONDITION, DERIVED since #1266 (it was the printed `altWin` pattern): the `win-game` effect kind (CR 104.2b: Epic Struggle, Thassa's Oracle, Laboratory Maniac, Simic Ascendancy, Hellkite Tyrant, Revel in Riches; derive 368 reads the clause verb, 1 card derived it before) or a `loses-game` emit of an opponent or any player (Phage, Atemsis, Vorpal Sword, Triskaidekaphobia). YOUR OWN LOSS IS NEVER A PAYOFF (owner ruling 2026-10-16, #1252): a self 'you lose the game' (Phyrexian Pacts' upkeep, Lich's Mastery leaving, Phage's cast clause, Immortal Coil) emits `loses-game` of `control: you` and does not count; a card that prints both keeps the opponent's. Every derived `win-game` is `you`, unstated, or `any` (Celestial Convergence's symmetric win, Twenty-Toed Toad, Biovisionary); never an opponent's, so the rule keeps no control filter on it. No longer matched, the printed pattern's false positives: the poison reminder text '(A player with ten or more poison counters loses the game.)' (15 cards: Crypt Cobra, Marsh Viper, Pit Scorpion, Virulent Sliver, Snake Cult Initiation ...), and a REACTION to someone's loss ('Whenever a player loses the game': Blood Tyrant, Elbrus, Sengir, Share the Spoils, Curse of Vengeance). Not a win condition: 'can't lose the game' / 'can't win the game' (Platinum Angel, Everybody Lives!) and a replacement of your own loss (The Golden Throne) derive none. CEILING: Vraska, Golgari Queen (the -9 emblem's 'that player loses the game' lives on the emblem's own node, as Jace, Vryn's Prodigy's mill does); the loss of a player a trigger or 'the chosen player' names (Zenos yae Galvus // Shinryu) keeps whatever control derive read; a win printed inside a clause the model files under another verb is not read (the census over the commander-legal cards: 40 print a win sentence, 39 derive win-game, the residue is Everybody Lives!'s prohibition)."
     },
     {
-      "id": "answers.damage",
-      "answerClassFrom": "damageRemoval",
-      "match": [{ "op": "oracle", "pattern": "damageRemoval" }],
-      "why": "Lightning Bolt answers a creature. Counting only destroy/exile made a deck with 14 removal spells read as having 3 creature answers, which is the kind of gap that makes a reader stop believing the panel."
+      "id": "answers.damage.creature",
+      "answerClass": "creature",
+      "match": [{"op": "effectKind", "in": ["damage"], "reachesPermanent": true, "control": ["opp", "any"], "notRedirect": true, "notVictimMay": true, "notSelf": true, "reachesClass": "creature"}],
+      "why": "DERIVED (#1266; it was the printed `damageRemoval` pattern). Burn answers what it can hit: Flame Slash answers a creature, Broadside Barrage a creature and a planeswalker. The card has a `damage` effect that TARGETS (`reachesPermanent`: a typed non-player subject, the targeted emit where an energy cost left the effect subject-less: Aethertorch Renegade, Dynavolt Tower) a creature or planeswalker of an opponent or any player, at ANY amount (owner 2026-10-22, as `removal.targeted`): a 1-damage ping at a named creature (Elite Javelineer) counts, a 1-damage ping at \"any target\" does not (`answers.damage.any`). Not a damage REDIRECT or one the victim may decline. The class is the type the subject names (`reachesClass`): a type list, an `anyOf` branch, or an unrestricted `permanent`; a subtype alone names none, and a compound noun (`allTypes`: \"artifact creature\", Electrostatic Bolt, Gremlin Mine) is a creature. The PLANESWALKER class additionally refuses a subject that can be a player (`notReachesPlayer`): main read only \"target creature or planeswalker\" and never \"target player or planeswalker\" (Lava Spike) or \"opponent, creature or planeswalker\". Measured over the commander-legal corpus against the printed pattern (rule alone, creature class): 490 to 866 cards, +383 -7; planeswalker 65 to 150, +85 -0. GAINED, a genuine fix: damage that is not a digit (X, \"equal to its power\", \"the number of lands you control\": Heat Ray, Earth Tremor), a bite (\"target creature you control deals damage equal to its power to another target creature\": Contest of Claws), \"divided among\" and \"each of two target creatures\" (Forked Lightning, Swelter), \"up to one target\", \"another target\" and \"attacking or blocking\" between the verb and the type (Ben-Ben, Harpoon Sniper), and \"target creature, planeswalker, or battle\" (Volcanic Spite). LOST, a genuine fix: damage to a creature YOU control (Rile, Spiteful Bully, Whiptail Moloch: the printed class could not see \"you control\"), \"target player ... and each creature that player controls\" (Chandra's Flame Wave, Urabrask // The Great Work), \"target opponent for each creature card\" (Lotleth Giant). NEEDS RULING: a COLOUR HOSER is a creature answer here, as on main (Combust \"5 damage to target white or blue creature\", Rending Volley, Fry, Essence Burn): the printed class captured only the word \"creature\", so `COLOUR_HOSER` never saw the colour. The other answer rules drop a colour (`notColourLocked`); damage keeps main's reading until the owner rules. \"Target player or planeswalker\" (Lava Spike, 3 damage) answers no planeswalker, as on main; reading it would add about 170 cards to answer:planeswalker. CEILING: real misses. Coward // Killer (a subject whose scope sits in `anyOf` branches), the two damage emblems and a token's quoted \"deals 3 damage to any target\" (Chandra, Spark Hunter, Koth, Dragonbroods' Relic: an emblem and a token are their own nodes). CEILING: over-read. a damage clause beside a stored condition (\"if that land is a Mountain, this creature deals 2 damage instead\": Akoum Hellkite) reads the instead-amount."
     },
     {
-      "id": "answers.damage.any",
-      "answerClassFrom": "damageRemovalAny",
-      "match": [{ "op": "oracle", "pattern": "damageRemovalAny" }],
-      "why": "Lightning Bolt says 'any target', which is a creature or a planeswalker (or a player). `damageRemoval` read only 'target creature', so the one-mana answer every red deck plays answered nothing (issue #581). Two damage or more (or X): a 1-damage ping from Goblin Bombardment or Niv-Mizzet kills an x/1 and is not what a player means by an answer. A separate pattern rather than a wider `damageRemoval`, which also feeds the build categories."
+      "id": "answers.damage.planeswalker",
+      "answerClass": "planeswalker",
+      "match": [{"op": "effectKind", "in": ["damage"], "reachesPermanent": true, "control": ["opp", "any"], "notRedirect": true, "notVictimMay": true, "notSelf": true, "reachesClass": "planeswalker", "notReachesPlayer": true}],
+      "why": "As answers.damage.creature, for the planeswalker class: `notReachesPlayer` keeps main's reading (\"creature or planeswalker\", \"planeswalker\"; never \"player or planeswalker\")."
     },
     {
-      "id": "answers.tuck",
-      "answerClassFrom": "tuckRemoval",
-      "match": [{ "op": "oracle", "pattern": "tuckRemoval" }],
-      "why": "Chaos Warp shuffles any permanent into its owner's library and Condemn puts a creature on the bottom. `targetedRemoval` counted them as removal while no answer class did, so Chaos Warp, in 19 of the first 43 decks measured, answered nothing (issue #581)."
+      "id": "answers.damage.any.creature",
+      "answerClass": "creature",
+      "match": [{"op": "effectKind", "in": ["damage"], "reachesPermanent": true, "control": ["opp", "any"], "notRedirect": true, "notVictimMay": true, "notSelf": true, "untyped": true, "amountAtLeast": 2}],
+      "why": "DERIVED (#1266; it was the printed `damageRemovalAny` pattern). Lightning Bolt says \"any target\", which is a creature or a planeswalker (or a player) (issue #581, owner 2026-09-26): a `damage` effect that TARGETS an UNTYPED non-player subject (`untyped`) of an opponent or any player. Two damage or more, or a damage that is no printed number (X, \"its power\", \"that much\"): a 1-damage ping from Goblin Bombardment or Prodigal Pyromancer is not what a player means by an answer (`amountAtLeast`). A separate rule rather than a wider `answers.damage`, which names its type. Measured against the printed pattern (rule alone): 425 to 605 cards, +187 -7. GAINED, a genuine fix: damage with no printed digit (\"damage equal to its power to any target\", X) and \"deals 2 damage to any OTHER target\" (Bond of Passion: `any other target` was no key of the class table, so the card matched the pattern and gave no class), \"each of two targets\" (Furious Reprisal, Pinnacle of Rage). LOST, a genuine fix: an EMBLEM's or a token's quoted damage (Chandra, Spark Hunter; Koth, Fire of Resistance; Dragonbroods' Relic) and \"target player or planeswalker\" at 1 (Chandra, Dressed to Kill). CEILING: none known."
+    },
+    {
+      "id": "answers.damage.any.planeswalker",
+      "answerClass": "planeswalker",
+      "match": [{"op": "effectKind", "in": ["damage"], "reachesPermanent": true, "control": ["opp", "any"], "notRedirect": true, "notVictimMay": true, "notSelf": true, "untyped": true, "amountAtLeast": 2}],
+      "why": "As answers.damage.any.creature, for the planeswalker class (\"any target\" reaches both)."
+    },
+    {
+      "id": "answers.tuck.creature",
+      "answerClass": "creature",
+      "match": [{"op": "anyOf", "clauses": [{"op": "emits", "verbs": ["shuffle"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "reachesClass": "creature", "notColourLocked": true, "notOwnedByYou": true, "notVictimMay": true}, {"op": "emits", "verbs": ["leaves"], "tuck": true, "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "reachesClass": "creature", "notColourLocked": true, "notOwnedByYou": true, "notVictimMay": true}]}],
+      "why": "DERIVED (#1266; it was the printed `tuckRemoval` pattern). Chaos Warp shuffles any permanent into its owner's library and Condemn puts a creature on the bottom (issue #581). A `shuffle` emit, or a `leaves` emit marked `tuck` (a put into a library from the battlefield), of an opponent's or any player's permanent the card TARGETS (battlefield or no stated zone), whose subject can be the class (`reachesClass`: \"nonenchantment permanent\" and \"noncreature permanent\" name their classes by what they are not, and a card from a graveyard is no permanent on the battlefield). Refused: a colour hoser (`notColourLocked`), your own permanent (`notOwnedByYou`) and one the victim may decline. Measured against the printed pattern (rule alone): creature 59 to 94 (+39 -4), artifact 31 to 51 (+22 -2), enchantment 28 to 43 (+17 -2), planeswalker 21 to 38 (+18 -1), land 11 to 13 (+2 -0). GAINED, a genuine fix: the \"owner puts it on their choice of the top or bottom of their library\" template (Dire Downdraft, Misleading Motes, Vanish from Sight), \"its owner shuffles it\" (Deglamer, Blink), \"two target lands on top of their owners' libraries\" (Plow Under), and shuffles of the card itself plus a target (Void Stalker, Floodpits Drowner). A tuck that is one branch of an else (Consign to Dream, Rona's Vortex: \"if kicked, put it on the bottom instead\") counts. LOST, a genuine fix: a card in a graveyard (Keeper of the Cadence: \"target artifact, instant, or sorcery card from a graveyard\"), and the class a card names by what it is not (Audacious Swap's enchantment, Brutalizer Exarch's and Primal Command's creature). CEILING: real misses. Lashweed Lurker (derive reads \"its owner's library\" as control `you`), Proteus Staff (the polymorph family is read as played on your own creature, owner ruling 2026-10-02, #962)."
+    },
+    {
+      "id": "answers.tuck.artifact",
+      "answerClass": "artifact",
+      "match": [{"op": "anyOf", "clauses": [{"op": "emits", "verbs": ["shuffle"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "reachesClass": "artifact", "notColourLocked": true, "notOwnedByYou": true, "notVictimMay": true}, {"op": "emits", "verbs": ["leaves"], "tuck": true, "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "reachesClass": "artifact", "notColourLocked": true, "notOwnedByYou": true, "notVictimMay": true}]}],
+      "why": "As answers.tuck.creature, for the artifact class."
+    },
+    {
+      "id": "answers.tuck.enchantment",
+      "answerClass": "enchantment",
+      "match": [{"op": "anyOf", "clauses": [{"op": "emits", "verbs": ["shuffle"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "reachesClass": "enchantment", "notColourLocked": true, "notOwnedByYou": true, "notVictimMay": true}, {"op": "emits", "verbs": ["leaves"], "tuck": true, "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "reachesClass": "enchantment", "notColourLocked": true, "notOwnedByYou": true, "notVictimMay": true}]}],
+      "why": "As answers.tuck.creature, for the enchantment class."
+    },
+    {
+      "id": "answers.tuck.planeswalker",
+      "answerClass": "planeswalker",
+      "match": [{"op": "anyOf", "clauses": [{"op": "emits", "verbs": ["shuffle"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "reachesClass": "planeswalker", "notColourLocked": true, "notOwnedByYou": true, "notVictimMay": true}, {"op": "emits", "verbs": ["leaves"], "tuck": true, "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "reachesClass": "planeswalker", "notColourLocked": true, "notOwnedByYou": true, "notVictimMay": true}]}],
+      "why": "As answers.tuck.creature, for the planeswalker class."
+    },
+    {
+      "id": "answers.tuck.land",
+      "answerClass": "land",
+      "match": [{"op": "anyOf", "clauses": [{"op": "emits", "verbs": ["shuffle"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "reachesClass": "land", "notColourLocked": true, "notOwnedByYou": true, "notVictimMay": true}, {"op": "emits", "verbs": ["leaves"], "tuck": true, "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "reachesClass": "land", "notColourLocked": true, "notOwnedByYou": true, "notVictimMay": true}]}],
+      "why": "As answers.tuck.creature, for the land class."
     },
     {
       "id": "answers.shrink",
-      "answerClassFrom": "shrinkRemoval",
-      "match": [{ "op": "oracle", "pattern": "shrinkRemoval" }],
-      "why": "'Target creature gets -3/-3' kills most creatures and is removal to `targetedRemoval`; Nowhere to Run, Tragic Slip and Vilis answered nothing (issue #581). The toughness half must be non-zero: -2/-0 shrinks an attacker and kills nothing."
+      "answerClass": "creature",
+      "match": [{"op": "effectKind", "in": ["debuff"], "scope": ["target"], "control": ["opp", "any"], "toughnessDown": true, "notOnFlip": true, "notBlockCombat": true, "notColourLocked": true, "reachesClass": "creature"}],
+      "why": "DERIVED (#1266; it was the printed `shrinkRemoval` pattern). 'Target creature gets -3/-3' kills most creatures and is removal to `targeted removal`; Nowhere to Run, Tragic Slip and Vilis answered nothing (issue #581). A `debuff` effect that TARGETS a creature of an opponent or any player and lowers toughness (`toughnessDown`: -2/-0 shrinks an attacker and kills nothing), not the losing side of a coin flip (Orcish Captain) and not a colour hoser. Measured against the printed pattern (rule alone): 262 to 266 cards, +5 -1. GAINED, a genuine fix: a qualified type between `target` and `creature` (Toxic Stench \"target nonblack creature\") and a shrink per energy or per land (Die Young, Drown in Filth). LOST, a genuine fix: a token's quoted \"target creature gets -1/-1\" (Skirk Ridge Exhumer, #533). CEILING: marks. the NARROW mark (a stat or state condition on the target) is read only on the printed-text path, so a derived rule carries none: Skulking Killer (\"if that opponent controls no other creatures\") now counts whole. The same holds for Barrin's Unmaking, Nimbus Champion and Sage-Eye Avengers in `answers.bounce`."
     },
     {
       "id": "answers.counterShrink",
-      "answerClassFrom": "counterShrinkRemoval",
-      "match": [{ "op": "oracle", "pattern": "counterShrinkRemoval" }],
-      "why": "A -1/-1 counter on a target creature, repeated (Yawgmoth), is creature removal to `targetedRemoval` and was none here (issue #581)."
+      "answerClass": "creature",
+      "match": [{"op": "emits", "verbs": ["counter-added"], "counter": ["-1/-1"], "control": ["opp", "any"], "scope": ["target"], "reachesClass": "creature", "notColourLocked": true}],
+      "why": "DERIVED (#1266; it was the printed `counterShrinkRemoval` pattern). A -1/-1 counter on a target creature, repeated (Yawgmoth), is creature removal to `targeted removal` and was none here (issue #581): a `counter-added` emit of a -1/-1 counter on an opponent's or any player's creature the card TARGETS, not a colour hoser. Measured against the printed pattern (rule alone): 57 to 56 cards, +7 -8. LOST, a genuine fix: a -1/-1 counter on a creature YOU control, the cost of a creature with an enters-with-counters drawback (Baleful Ammit, Channeler Initiate, Crocodile of the Crossing, Plague Belcher: the printed class could not see \"you control\"). GAINED, a genuine fix: \"each of up to two target creatures\" and \"distribute\" (Grind // Dust, Splendid Agony, The Reaper, King No More), \"roll X dice\" (Attempted Murder) and the counter after a damage clause (Puncture Bolt). Contagion Engine (\"each creature target player controls\", which derive scopes as one target) is a mass -1/-1 and counts. CEILING: none known."
     },
     {
-      "id": "answers.bounce",
-      "answerClassFrom": "bounceRemoval",
-      "match": [{ "op": "oracle", "pattern": "bounceRemoval" }],
-      "why": "A bounce is a weaker answer than a kill -- it answers the board, not the card -- but it is an answer, and `targetedRemoval` has always counted it. The two axes disagreeing on the same card is worse than either reading."
+      "id": "answers.bounce.creature",
+      "answerClass": "creature",
+      "match": [{"op": "effectKind", "in": ["bounce"], "scope": ["target"], "control": ["opp", "any"], "notOwnedByYou": true, "notColourLocked": true, "reachesClass": "creature"}],
+      "why": "DERIVED (#1266; it was the printed `bounceRemoval` pattern). A bounce is a weaker answer than a kill -- it answers the board, not the card -- but it is an answer, and `targetedRemoval` has always counted it. A `bounce` effect that TARGETS a permanent of an opponent or any player whose subject can be the class (`reachesClass`: \"nonland permanent\" is not a land; a card in a graveyard, a spell, and a bare subtype such as \"Aura\" name no class), not a permanent you own and not a colour hoser. Measured against the printed pattern (rule alone): creature 230 to 321 (+100 -9), artifact 102 to 140 (+40 -2), enchantment 101 to 137 (+38 -2), planeswalker 98 to 134 (+37 -1), land 43 to 42 (+4 -5). GAINED, a genuine fix: a counted or optional object that is not `return target` (\"return up to two target creatures\", \"return X target creatures\", \"return another target nonland permanent\", \"return six target nonland permanents\": Aether Tide, Captivating Gyre, Aether Gale, Disruptor of Currents). LOST, a genuine fix: RECURSION from a graveyard (\"return target creature card from a graveyard to its owner's hand\": Disturbing Plot, Revive the Fallen, Pulse of Murasa, Vampire Charmseeker: the printed class read \"creature card from a graveyard\" as creature), and a token-only or Aura-only subject. CEILING: real misses. Crystal Shard (\"unless its controller pays {1}\" derives a bounce with no subject), Seedling Charm and a bare subtype (\"target Aura\" names no class), and \"target spell or permanent\", which derive reads as the permanent SPELL intersection and so without land (Venser, Shaper Savant; Divide by Zero; Jeskai Revelation lose their land class). CEILING: over-reads. Getaway Car (\"target creature that crewed it\" is yours), Alchemist's Retrieval (\"nonland permanent [you control]\"). CEILING: marks. see `answers.shrink`."
+    },
+    {
+      "id": "answers.bounce.artifact",
+      "answerClass": "artifact",
+      "match": [{"op": "effectKind", "in": ["bounce"], "scope": ["target"], "control": ["opp", "any"], "notOwnedByYou": true, "notColourLocked": true, "reachesClass": "artifact"}],
+      "why": "As answers.bounce.creature, for the artifact class."
+    },
+    {
+      "id": "answers.bounce.enchantment",
+      "answerClass": "enchantment",
+      "match": [{"op": "effectKind", "in": ["bounce"], "scope": ["target"], "control": ["opp", "any"], "notOwnedByYou": true, "notColourLocked": true, "reachesClass": "enchantment"}],
+      "why": "As answers.bounce.creature, for the enchantment class."
+    },
+    {
+      "id": "answers.bounce.planeswalker",
+      "answerClass": "planeswalker",
+      "match": [{"op": "effectKind", "in": ["bounce"], "scope": ["target"], "control": ["opp", "any"], "notOwnedByYou": true, "notColourLocked": true, "reachesClass": "planeswalker"}],
+      "why": "As answers.bounce.creature, for the planeswalker class."
+    },
+    {
+      "id": "answers.bounce.land",
+      "answerClass": "land",
+      "match": [{"op": "effectKind", "in": ["bounce"], "scope": ["target"], "control": ["opp", "any"], "notOwnedByYou": true, "notColourLocked": true, "reachesClass": "land"}],
+      "why": "As answers.bounce.creature, for the land class."
     },
     {
       "id": "answers.typed",

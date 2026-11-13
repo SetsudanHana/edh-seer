@@ -85,7 +85,18 @@ export type RuleClause =
       grantsAny?: string[];
       /** Refuse a grant whose recipient is THE CARD ITSELF (`Ability.grantsSelf`, derive 515: "This creature gains indestructible", "Dragonlord Ojutai has hexproof as long as it's untapped"): a keyword the card
        *  gives itself protects nothing else (the Sylvan Caryatid rule, roadmap I1; #1289). */
-      notGrantsSelf?: true }
+      notGrantsSelf?: true;
+      /** The effect SUBJECT can be a permanent of this ANSWER CLASS (`creature`, `artifact`, `enchantment`, `planeswalker`, `land`; #1266, the `answers.*` rules): a named type, a branch of an `anyOf`, or an unrestricted `permanent` (every class, but not `land` when
+       *  the subject is "nonland": `notType`). A SUBTYPE alone names no class ("target Aura", "target Vehicle"), as the printed pattern's class table did not. */
+      reachesClass?: string;
+      /** The effect subject names NO type and is not a player: "any target" (Lightning Bolt). It reaches creatures and planeswalkers, which `reachesClass` cannot say of an untyped subject. */
+      untyped?: true;
+      /** Refuse a subject that can be a PLAYER (`subjectReachesPlayer`: "any target", "target player or planeswalker"): the class reads "target creature or planeswalker" and nothing wider. */
+      notReachesPlayer?: true;
+      /** The ability's amount is at least N, or is not a printed number at all (X, "its power", "that much": no number says it is a ping). A missing amount does not match. */
+      amountAtLeast?: number;
+      /** Refuse a subject restricted to a COLOUR (`colors`: "target red creature", "target blue permanent"): a colour hoser answers one colour, not a class (`COLOUR_HOSER`, issue #581). "Nonblack" is `notColors` and stays. */
+      notColourLocked?: true }
   /** WHAT AN ABILITY EMITS, for the one family that has no effect kind by design: removal.
    *  `destroy`/`exile`/`bounce` derive as kindless abilities whose EMIT is `dies` or `leaves`
    *  (emits.ts: "`destroy` has no payoff kind in the engine's vocabulary, but without its `dies`
@@ -164,7 +175,13 @@ export type RuleClause =
       notSelf?: true;
       /** The ABILITY's effect kind is in this list, tested on the SAME ability as the emit. Manifest dread and "manifests the top card of that player's library" derive a `mill` EMIT under a kind-less
        *  ability (the card goes to the graveyard as a side effect), while a real mill carries the `mill` kind: `abilityKind: ["mill"]` is how `wincon.mill` tells the two apart (#1266). */
-      abilityKind?: string[] }
+      abilityKind?: string[];
+      /** The emit's subject can be a permanent of this ANSWER CLASS, as `effectKind.reachesClass`. */
+      reachesClass?: string;
+      /** Refuse a subject restricted to a COLOUR, as `effectKind.notColourLocked`. */
+      notColourLocked?: true;
+      /** The emit is a TUCK (`GameEvent.tuck`: a put into a library from the battlefield; Condemn, Oust). A shuffle is its own verb. */
+      tuck?: true }
   /** The card's `characteristics.enchants` (the Enchant line, #1315) can be a creature: the filter, or an `anyOf` branch of it ("creature or Vehicle", "artifact or creature"), names
    *  `creature` or `permanent`, and that branch's control is not `opp` (an Aura only an opponent's creature can wear is a curse). `control` narrows to the listed controls ("you":
    *  "Enchant creature you control"). */
@@ -503,6 +520,26 @@ function lowersToughness(amount: string | undefined): boolean {
   return m !== null && (m[1] === "-" || m[1] === "−") && m[2] !== "0";
 }
 
+/** The TYPES a subject names for ANSWER-CLASS purposes: its `type` and each `anyOf` branch's, never a subtype (unlike `subjectTypes`, which files a bare subtype under `permanent`). */
+function classTypes(s: { type?: string | string[]; allTypes?: string[]; anyOf?: { type?: string | string[] }[] }): string[] {
+  // A COMPOUND noun ("artifact creature": `allTypes`) is a creature first: Electrostatic Bolt's "4 damage to it instead" and Gremlin Mine's "target artifact creature" answer creatures, and say nothing of a plain artifact.
+  if (s.allTypes?.includes("creature") === true) return ["creature"];
+  return [...[s.type ?? []].flat(), ...(s.anyOf ?? []).flatMap((b) => [b.type ?? []].flat())];
+}
+/** Can this subject be a permanent of answer class `cls`? A named type, or an unrestricted `permanent` (every class; "nonland permanent" is not a land). */
+function subjectReachesClass(s: { type?: string | string[]; allTypes?: string[]; notType?: string[]; anyOf?: { type?: string | string[] }[] }, cls: string): boolean {
+  const types = classTypes(s);
+  return types.includes(cls) || (types.includes("permanent") && (cls !== "land" || !(s.notType ?? []).includes("land")));
+}
+/** The subject the answer-class options read: the effect's, else -- where derive kept none (Aethertorch Renegade, Dynavolt Tower: the "Pay {E}{E}" cost leaves the effect subject-less) -- the subject of the ability's first TARGETED damage emit, as `abilityReachesPermanent` does. */
+function answerSubject(a: { effect: { subject?: SubjectFilter }; emits?: { verb: string; subject: SubjectFilter }[] }): SubjectFilter | undefined {
+  return a.effect.subject ?? (a.emits ?? []).find((e) => e.verb === "non-combat-damage" && e.subject.scope === "target")?.subject;
+}
+/** Is this ability's amount at least `n`, or no printed number (X, "its power")? See `effectKind.amountAtLeast`. */
+function amountAtLeast(amount: string | undefined, n: number): boolean {
+  return amount !== undefined && (!/^\d+$/.test(amount) || Number(amount) >= n);
+}
+
 const subtypesOf = (s: { subtype?: unknown }): string[] => (s.subtype === undefined ? [] : [s.subtype].flat().map((t) => String(t).toLowerCase()));
 /** An ability that only a BLOCK makes: it triggers on "blocks" / "becomes blocked", or `subject` is a creature blocking (`combat`) or blocking WITH another (`combatWith`). See `notBlockCombat`. */
 function blockCombat(a: { trigger?: { verbs?: string[] } }, subject: { combat?: string; combatWith?: { role?: string } }): boolean {
@@ -599,7 +636,12 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.named !== true || a.named === true)
         && (clause.netZero !== true || a.netZero === true)
         && (clause.grantsAny === undefined || (a.grants ?? []).some((g) => clause.grantsAny!.includes(g.toLowerCase())))
-        && (clause.notGrantsSelf !== true || a.grantsSelf !== true));
+        && (clause.notGrantsSelf !== true || a.grantsSelf !== true)
+        && (clause.reachesClass === undefined || (answerSubject(a) !== undefined && subjectReachesClass(answerSubject(a)!, clause.reachesClass)))
+        && (clause.untyped !== true || (answerSubject(a) !== undefined && classTypes(answerSubject(a)!).length === 0 && subjectReachesPermanent(answerSubject(a)!)))
+        && (clause.notReachesPlayer !== true || (answerSubject(a) !== undefined && !subjectReachesPlayer(answerSubject(a)!)))
+        && (clause.amountAtLeast === undefined || amountAtLeast(a.amount, clause.amountAtLeast))
+        && (clause.notColourLocked !== true || (a.effect.subject?.colors ?? []).length === 0));
     // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive mislabels some cards, so the role is wrong on them by name.
     //   LOST (real removal, no usable emit): Polymorph, Transmogrify, Chaos Mutation, Divergent Transformations (derive reads the polymorph family as played on YOUR creature, `control: you`: owner ruling 2026-10-02 / #962,
     //   "primary use", so the opponent use is dropped on purpose; the role pays for it);
@@ -644,7 +686,10 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.typeAny === undefined || subjectTypes(e.subject).some((t) => clause.typeAny!.includes(t)))
           && (clause.scope === undefined || clause.scope.includes(e.subject.scope ?? null))
           && (clause.fromZone === undefined || clause.fromZone.includes(e.subject.fromZone ?? null))
-          && (clause.counter === undefined || (e.subject.counter !== undefined && clause.counter.includes(e.subject.counter))))
+          && (clause.counter === undefined || (e.subject.counter !== undefined && clause.counter.includes(e.subject.counter)))
+          && (clause.reachesClass === undefined || subjectReachesClass(e.subject, clause.reachesClass))
+          && (clause.notColourLocked !== true || (e.subject.colors ?? []).length === 0)
+          && (clause.tuck !== true || e.tuck === true))
         && (clause.repeats === undefined || clause.repeats.includes(a.repeats ?? null)));
     case "subtype":
       return (dc.tags?.characteristics?.subtypes ?? []).some((s) => clause.in.includes(s.toLowerCase()));
