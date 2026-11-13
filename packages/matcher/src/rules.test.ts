@@ -835,6 +835,8 @@ test("a targeting ban against opponents, on something other than the card, is pr
   // enchanted creature (Anti-Magic Aura, Spectral Shield, Artifact Ward: an Aura you can put on your own creature), and a global ban on every graveyard (Ground Seal, Silent Gravestone, Dennick, Underworld Cerberus)
   // or every creature (Dense Foliage).
   for (const name of ["Autumn's Veil", "Spellbane Centaur", "Anti-Magic Aura", "Spectral Shield", "Artifact Ward", "Ground Seal", "Silent Gravestone", "Dennick, Pious Apprentice // Dennick, Pious Apparition", "Underworld Cerberus", "Dense Foliage"]) expect(protectsDerived(name), name).toBe(true);
+  // Owner 2026-11-13: Peace Talks ("players and permanents can't be the targets of spells or activated abilities", this turn and next) protects everyone, opponents included: a global ban on all permanents.
+  expect(protectsDerived("Peace Talks")).toBe(true);
   // Still refused: a ban on the card itself, from any source (hexproof on itself, a stat).
   for (const name of ["Gaea's Revenge", "Raiding Party", "Bartel Runeaxe"]) expect(protectsDerived(name), name).toBe(false);
 });
