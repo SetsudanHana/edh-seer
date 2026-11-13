@@ -94,6 +94,8 @@ export type RuleClause =
       /** The effect SUBJECT can be a permanent of this ANSWER CLASS (`creature`, `artifact`, `enchantment`, `planeswalker`, `land`; #1266, the `answers.*` rules): a named type, a branch of an `anyOf`, or an unrestricted `permanent` (every class, but not `land` when
        *  the subject is "nonland": `notType`). A SUBTYPE alone names no class ("target Aura", "target Vehicle"), as the printed pattern's class table did not. */
       reachesClass?: string;
+      /** With `reachesClass`: a BARE SUBTYPE ("Aura", "Equipment", "Saga") names its class, as on `emits` (`BARE_SUBTYPE_CLASS`). Opt-in; the bounce answers for the artifact and enchantment classes carry it (owner 2026-11-13: Seedling Charm). */
+      bareSubtype?: true;
       /** The effect subject names NO type and is not a player: "any target" (Lightning Bolt). It reaches creatures and planeswalkers, which `reachesClass` cannot say of an untyped subject. */
       untyped?: true;
       /** The ability's amount is at least N, or is not a printed number at all (X, "its power", "that much": no number says it is a ping). A missing amount does not match. */
@@ -191,7 +193,7 @@ export type RuleClause =
       abilityKind?: string[];
       /** The emit's subject can be a permanent of this ANSWER CLASS, as `effectKind.reachesClass`. */
       reachesClass?: string;
-      /** With `reachesClass`: a BARE SUBTYPE ("Aura", "Equipment", "Saga") names its class (`BARE_SUBTYPE_CLASS`). Opt-in, on the destroy and exile answers only; the tuck, bounce and damage answers still read a bare subtype as no class (Seedling Charm, NEEDS RULING). */
+      /** With `reachesClass`: a BARE SUBTYPE ("Aura", "Equipment", "Saga") names its class (`BARE_SUBTYPE_CLASS`). Opt-in, on the artifact and enchantment rules of the destroy, exile, tuck and bounce answers (owner 2026-11-13: Seedling Charm). The damage answers have no artifact or enchantment rule, so there is nothing to turn on. */
       bareSubtype?: true;
       /** The emit is a TUCK (`GameEvent.tuck`: a put into a library from the battlefield; Condemn, Oust). A shuffle is its own verb. */
       tuck?: true }
@@ -673,7 +675,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.netZero !== true || a.netZero === true)
         && (clause.grantsAny === undefined || (a.grants ?? []).some((g) => clause.grantsAny!.includes(g.toLowerCase())))
         && (clause.notGrantsSelf !== true || a.grantsSelf !== true)
-        && (clause.reachesClass === undefined || (answerSubject(a) !== undefined && subjectReachesClass(false, answerSubject(a)!, clause.reachesClass)))
+        && (clause.reachesClass === undefined || (answerSubject(a) !== undefined && subjectReachesClass(clause.bareSubtype === true, answerSubject(a)!, clause.reachesClass)))
         && (clause.untyped !== true || (answerSubject(a) !== undefined && classTypes(answerSubject(a)!).length === 0 && subjectReachesPermanent(answerSubject(a)!)))
         && (clause.amountAtLeast === undefined || amountAtLeast(a.amount, clause.amountAtLeast)));
     // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive mislabels some cards, so the role is wrong on them by name.

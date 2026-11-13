@@ -291,8 +291,7 @@ describe("the damage, tuck, shrink, counter and bounce answers read derived data
     // "Return X target creatures": the printed pattern wanted `return target`.
     expect(classes("Aether Tide")).toEqual(["creature"]);
     expect(classes("Revive the Fallen")).toEqual([]);
-    // CEILING: a subtype alone names no class (Seedling Charm), derive files an unless-tax bounce with no subject (Crystal Shard).
-    expect(classes("Seedling Charm")).toEqual([]);
+    // CEILING: derive files an unless-tax bounce with no subject (Crystal Shard). (Seedling Charm's bare Aura is read as an enchantment since Rules 53: see its own test.)
     expect(classes("Crystal Shard")).toEqual([]);
   });
 

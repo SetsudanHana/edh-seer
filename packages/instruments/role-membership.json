@@ -13558,7 +13558,7 @@
 "Seed Spark": ["answer:artifact","answer:enchantment","role:targetedRemoval","wincon:go-wide"],
 "Seed the Land": ["wincon:go-wide"],
 "Seedguide Ash": ["role:ramp"],
-"Seedling Charm": ["role:targetedRemoval"],
+"Seedling Charm": ["answer:enchantment","role:targetedRemoval"],
 "Seeds of Innocence": ["role:boardWipe"],
 "Seedship Agrarian": ["role:ramp"],
 "Seedship Impact": ["answer:artifact","answer:enchantment","role:ramp","role:targetedRemoval"],
