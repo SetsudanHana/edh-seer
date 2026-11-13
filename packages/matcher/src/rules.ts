@@ -181,6 +181,8 @@ export type RuleClause =
       abilityKind?: string[];
       /** The emit's subject can be a permanent of this ANSWER CLASS, as `effectKind.reachesClass`. */
       reachesClass?: string;
+      /** With `reachesClass`: a BARE SUBTYPE ("Aura", "Equipment", "Saga") names its class (`BARE_SUBTYPE_CLASS`). Opt-in, on the destroy and exile answers only; the tuck, bounce and damage answers still read a bare subtype as no class (Seedling Charm, NEEDS RULING). */
+      bareSubtype?: true;
       /** The emit is a TUCK (`GameEvent.tuck`: a put into a library from the battlefield; Condemn, Oust). A shuffle is its own verb. */
       tuck?: true }
   /** The card's `characteristics.enchants` (the Enchant line, #1315) can be a creature: the filter, or an `anyOf` branch of it ("creature or Vehicle", "artifact or creature"), names
@@ -529,13 +531,23 @@ function classTypes(s: { type?: string | string[]; allTypes?: string[]; anyOf?: 
   if (s.allTypes?.includes("creature") === true) return ["creature"];
   return [...[s.type ?? []].flat(), ...(s.anyOf ?? []).flatMap((b) => [b.type ?? []].flat())];
 }
+/** A BARE SUBTYPE NAMES ITS CLASS, NARROWLY (owner 2026-11-13, #1266): "Destroy target Aura attached to a creature" (Devout Harpist, Piety Charm) answers enchantments, and only the ones that are Auras. Included: Aura and Saga (enchantment), Equipment (artifact). A subject
+ *  that names a type beside the subtype ("target artifact creature") is not bare. The class is the TARGET's: "attached to a creature" names the host and is no creature class. A bare subtype is marked like a colour lock, so it counts at NARROW_WEIGHT (`bareSubtypeSubject`). */
+const BARE_SUBTYPE_CLASS: Record<string, string> = { aura: "enchantment", saga: "enchantment", equipment: "artifact" };
+function bareSubtypeClasses(b: { type?: string | readonly string[]; subtype?: unknown; allTypes?: readonly string[] }, outerType?: string | readonly string[]): string[] {
+  if ([b.type ?? outerType ?? []].flat().length > 0 || (b.allTypes ?? []).length > 0) return [];
+  return [b.subtype ?? []].flat().flatMap((t) => BARE_SUBTYPE_CLASS[String(t).toLowerCase()] ?? []);
+}
+const bareSubtypeSubject = (b: { type?: string | readonly string[]; subtype?: unknown; allTypes?: readonly string[] }, outerType?: string | readonly string[]): boolean => bareSubtypeClasses(b, outerType).length > 0;
+
 /** Can this subject be a permanent of answer class `cls`? A named type, or an unrestricted `permanent` (every class; "nonland permanent" is not a land).
  *  A subject with `umbrella: "permanent"` ("target spell or permanent": Venser, Shaper Savant, Jeskai Revelation) lists the types derive expands the umbrella to, and that list has no land; the umbrella itself is every permanent, so on the battlefield it reaches a land
  *  too (#1266). Not when something narrows it (`NARROWS_PERMANENT`: Aether Gust's colours, Divide by Zero's mana value 1 or greater, which a land has neither of), and "nonland permanent" is `notType: [land]`, no umbrella. */
-function subjectReachesClass(s: { type?: string | string[]; subtype?: unknown; allTypes?: string[]; notType?: string[]; umbrella?: string; zone?: string; fromZone?: string; anyOf?: { type?: string | string[]; subtype?: unknown }[] }, cls: string): boolean {
+function subjectReachesClass(bare: boolean, s: { type?: string | string[]; subtype?: unknown; allTypes?: string[]; notType?: string[]; umbrella?: string; zone?: string; fromZone?: string; anyOf?: { type?: string | string[]; subtype?: unknown }[] }, cls: string): boolean {
   const types = classTypes(s);
   // A BASIC LAND TYPE NAMES A LAND (owner 2026-11-13, #1266): "Destroy target Forest, green enchantment, or green planeswalker" (Nissa's Defeat), "Destroy target Scarecrow or Plains" (Boggart Arsonists). Whole subtype words; "forestwalk" is no subtype.
   if (cls === "land" && [s, ...(s.anyOf ?? [])].some((b) => [b.subtype ?? []].flat().some((t) => BASIC_LAND_TYPE_SET.has(String(t).toLowerCase())))) return true;
+  if (bare && [s, ...(s.anyOf ?? [])].some((b) => bareSubtypeClasses(b, s.type).includes(cls))) return true;
   if (types.includes(cls) || (types.includes("permanent") && (cls !== "land" || !(s.notType ?? []).includes("land")))) return true;
   return cls === "land" && s.umbrella === "permanent" && (s.zone ?? s.fromZone ?? "battlefield") === "battlefield"
     && !NARROWS_PERMANENT.some((k) => (s as Record<string, unknown>)[k] !== undefined);
@@ -646,7 +658,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.netZero !== true || a.netZero === true)
         && (clause.grantsAny === undefined || (a.grants ?? []).some((g) => clause.grantsAny!.includes(g.toLowerCase())))
         && (clause.notGrantsSelf !== true || a.grantsSelf !== true)
-        && (clause.reachesClass === undefined || (answerSubject(a) !== undefined && subjectReachesClass(answerSubject(a)!, clause.reachesClass)))
+        && (clause.reachesClass === undefined || (answerSubject(a) !== undefined && subjectReachesClass(false, answerSubject(a)!, clause.reachesClass)))
         && (clause.untyped !== true || (answerSubject(a) !== undefined && classTypes(answerSubject(a)!).length === 0 && subjectReachesPermanent(answerSubject(a)!)))
         && (clause.amountAtLeast === undefined || amountAtLeast(a.amount, clause.amountAtLeast)));
     // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive mislabels some cards, so the role is wrong on them by name.
@@ -697,7 +709,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.scope === undefined || clause.scope.includes(e.subject.scope ?? null))
           && (clause.fromZone === undefined || clause.fromZone.includes(e.subject.fromZone ?? null))
           && (clause.counter === undefined || (e.subject.counter !== undefined && clause.counter.includes(e.subject.counter)))
-          && (clause.reachesClass === undefined || subjectReachesClass(e.subject, clause.reachesClass))
+          && (clause.reachesClass === undefined || subjectReachesClass(clause.bareSubtype === true, e.subject, clause.reachesClass))
           && (clause.tuck !== true || e.tuck === true))
         && (clause.repeats === undefined || clause.repeats.includes(a.repeats ?? null)));
     case "subtype":
@@ -786,11 +798,12 @@ export interface AnswerMarks {
 /** Does this subject name a colour the target must have? `colors` on the subject, or on EVERY branch of its `anyOf` (derive writes "white or blue creature" as `colors: [W, U]`). With `cls`, only the branches that can be a permanent of that answer class are judged: Nissa's Defeat
  *  ("target Forest, green enchantment, or green planeswalker") is locked for enchantment and planeswalker and not for land. "Colorless" is stored as colour C and LOCKS too (owner 2026-11-13: Infernal Reckoning, Goblin Cratermaker).
  *  CEILING: a CHOSEN colour (`chosenColor`) is not read as a lock. */
-function colourLockedSubject(s: { colors?: readonly string[]; anyOf?: { type?: string | readonly string[]; subtype?: unknown; colors?: readonly string[] }[]; type?: string | readonly string[] } | undefined, cls?: string): boolean {
+function colourLockedSubject(s: { colors?: readonly string[]; anyOf?: { type?: string | readonly string[]; subtype?: unknown; colors?: readonly string[] }[]; type?: string | readonly string[]; subtype?: unknown; allTypes?: readonly string[] } | undefined, cls?: string): boolean {
   if (s === undefined) return false;
-  const coloured = (b: { colors?: readonly string[] }): boolean => (b.colors ?? []).length > 0;
+  // A BARE SUBTYPE ("Aura") is locked the same way, to weigh NARROW_WEIGHT (owner 2026-11-13).
+  const coloured = (b: { type?: string | readonly string[]; subtype?: unknown; colors?: readonly string[] }): boolean => (b.colors ?? []).length > 0 || bareSubtypeSubject(b, s.type);
   if (coloured(s)) return true;
-  const branches = (s.anyOf ?? []).filter((b) => cls === undefined || subjectReachesClass({ ...b, type: (b.type ?? s.type) as string | string[] | undefined }, cls));
+  const branches = (s.anyOf ?? []).filter((b) => cls === undefined || subjectReachesClass(true, { ...b, type: (b.type ?? s.type) as string | string[] | undefined }, cls));
   return branches.length > 0 && branches.every(coloured);
 }
 

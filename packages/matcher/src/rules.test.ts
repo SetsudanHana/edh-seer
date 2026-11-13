@@ -343,6 +343,8 @@ describe("the destroy and exile answers read derived data (#1266)", () => {
       expect(classes(n), n).toEqual(["enchantment"]);
       expect(marks(n, "enchantment")?.colourLocked, n).toBe(true);
     }
+    // Equipment reads as an artifact, narrowly; the bounce rules keep a bare subtype as no class (NEEDS RULING: Seedling Charm).
+    expect(marks("Devout Harpist", "enchantment")?.exile).toBe(false);
     const pool = detectAnswerClasses([realCard("Devout Harpist"), realCard("Disenchant")]).get("enchantment")!;
     expect(answerWeightOf(pool, "Devout Harpist")).toBe(NARROW_WEIGHT);
     expect(answerWeightOf(pool, "Disenchant")).toBe(1);
