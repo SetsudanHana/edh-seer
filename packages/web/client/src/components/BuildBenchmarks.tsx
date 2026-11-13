@@ -550,8 +550,8 @@ function DeckMathRows({
               : a.fromCommandZone
                 ? "your commander, so every game"
                 : `in hand by turn ${turn} in ${pct(a.available)} of games`;
-            // `available` is P(holding a USABLE answer): a colour-locked card is live half the time it is drawn, so the row names those cards.
-            const lockedNote = a.colourLocked?.length ? `narrow (color or subtype), counts half: ${a.colourLocked.join(", ")}` : "";
+            // `available` is P(holding a USABLE answer): a colour-locked card is live half the time it is drawn, so the row names those cards (a colour lock, a bare subtype or a compound noun: all "narrow").
+            const lockedNote = a.colourLocked?.length ? `narrow, counts half: ${a.colourLocked.join(", ")}` : "";
             // The screen reader hears the mode on every row, even when the screen says it once below.
             const said = none
               ? ""

@@ -542,10 +542,15 @@ function lowersToughness(amount: string | undefined): boolean {
 
 /** The TYPES a subject names for ANSWER-CLASS purposes: its `type` and each `anyOf` branch's, never a subtype (unlike `subjectTypes`, which files a bare subtype under `permanent`). */
 function classTypes(s: { type?: string | string[]; allTypes?: string[]; anyOf?: { type?: string | string[] }[] }): string[] {
-  // A COMPOUND noun ("artifact creature": `allTypes`) is a creature first: Electrostatic Bolt's "4 damage to it instead" and Gremlin Mine's "target artifact creature" answer creatures, and say nothing of a plain artifact.
-  if (s.allTypes?.includes("creature") === true) return ["creature"];
+  // A COMPOUND noun ("artifact creature": `allTypes`) names EVERY type it lists (owner 2026-11-13): Hearth Charm's "target artifact creature" reaches the creature class and the artifact class, both at NARROW_WEIGHT (`compoundSubject`, read by `colourLockedSubject`).
+  if (s.allTypes?.includes("creature") === true) return [...s.allTypes];
   return [...[s.type ?? []].flat(), ...(s.anyOf ?? []).flatMap((b) => [b.type ?? []].flat())];
 }
+/** A COMPOUND NOUN: a subject that names two or more types at once ("artifact creature", "enchantment creature", "land creature"), which derive stores as `allTypes`. It is narrower than either class, and counts like a bare subtype or a colour lock (owner 2026-11-13).
+ *  An "or" ("artifact or creature") is a type LIST, not a compound, and stays whole in both classes.
+ *  CEILING: derive stores "land creature or nonbasic land" (Bumi Bash) and "enchanted creature or enchantment creature" (Feast of Dreams) as ONE compound subject, so the land row of the first and the "enchanted creature" half of the second are read as the compound. */
+const compoundSubject = (b: { allTypes?: readonly string[] }): boolean => (b.allTypes ?? []).length > 1;
+
 /** A BARE SUBTYPE NAMES ITS CLASS, NARROWLY (owner 2026-11-13, #1266): "Destroy target Aura attached to a creature" (Devout Harpist, Piety Charm) answers enchantments, and only the ones that are Auras. Included: Aura and Saga (enchantment), Equipment (artifact). A subject
  *  that names a type beside the subtype ("target artifact creature") is not bare. The class is the TARGET's: "attached to a creature" names the host and is no creature class. A bare subtype is marked like a colour lock, so it counts at NARROW_WEIGHT (`bareSubtypeSubject`). */
 const BARE_SUBTYPE_CLASS: Record<string, string> = { aura: "enchantment", saga: "enchantment", equipment: "artifact" };
@@ -816,10 +821,11 @@ export interface AnswerMarks {
 /** Does this subject name a colour the target must have? `colors` on the subject, or on EVERY branch of its `anyOf` (derive writes "white or blue creature" as `colors: [W, U]`). With `cls`, only the branches that can be a permanent of that answer class are judged: Nissa's Defeat
  *  ("target Forest, green enchantment, or green planeswalker") is locked for enchantment and planeswalker and not for land. "Colorless" is stored as colour C and LOCKS too (owner 2026-11-13: Infernal Reckoning, Goblin Cratermaker).
  *  CEILING: a CHOSEN colour (`chosenColor`) is not read as a lock. */
-function colourLockedSubject(s: { colors?: readonly string[]; anyOf?: { type?: string | readonly string[]; subtype?: unknown; colors?: readonly string[] }[]; type?: string | readonly string[]; subtype?: unknown; allTypes?: readonly string[] } | undefined, cls?: string): boolean {
+function colourLockedSubject(s: { colors?: readonly string[]; anyOf?: { type?: string | readonly string[]; subtype?: unknown; colors?: readonly string[]; allTypes?: readonly string[] }[]; type?: string | readonly string[]; subtype?: unknown; allTypes?: readonly string[] } | undefined, cls?: string): boolean {
   if (s === undefined) return false;
   // A BARE SUBTYPE ("Aura") is locked the same way, to weigh NARROW_WEIGHT (owner 2026-11-13).
-  const coloured = (b: { type?: string | readonly string[]; subtype?: unknown; colors?: readonly string[] }): boolean => (b.colors ?? []).length > 0 || bareSubtypeSubject(b, s.type);
+  // A COMPOUND NOUN ("artifact creature") is narrower than either class and weighs the same (owner 2026-11-13).
+  const coloured = (b: { type?: string | readonly string[]; subtype?: unknown; colors?: readonly string[]; allTypes?: readonly string[] }): boolean => (b.colors ?? []).length > 0 || bareSubtypeSubject(b, s.type) || compoundSubject(b);
   if (coloured(s)) return true;
   const branches = (s.anyOf ?? []).filter((b) => cls === undefined || subjectReachesClass(true, { ...b, type: (b.type ?? s.type) as string | string[] | undefined }, cls));
   return branches.length > 0 && branches.every(coloured);

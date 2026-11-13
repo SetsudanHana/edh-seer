@@ -156,7 +156,7 @@ test("answer classes come from the type the removal actually names", () => {
 test("a card covering two classes in two sentences gets both", () => {
   // One `test()` keeps only the first match; the sweep is global for exactly this shape.
   expect([...answerClassesOf(realCard("Return to Nature")).keys()].sort()).toEqual(["artifact", "enchantment", "graveyard"]);
-  expect([...answerClassesOf(realCard("Hearth Charm")).keys()].sort()).toEqual(["creature"]);
+  expect([...answerClassesOf(realCard("Hearth Charm")).keys()].sort()).toEqual(["artifact", "creature"]);
 });
 
 /** Counting only destroy/exile made a real deck read as 14 removal spells with 3 creature answers.
