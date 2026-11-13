@@ -633,8 +633,8 @@
     {
       "id": "answers.typed.land",
       "answerClass": "land",
-      "match": [{"op": "anyOf", "clauses": [{"op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "scope": ["target"], "notPairedTarget": true, "notFromHandCost": true, "notOwnedByYou": true, "notVictimMay": true, "reachesClass": "land"}, {"op": "emits", "verbs": ["exiled"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "notFlickered": true, "notFromHandCost": true, "notOwnedByYou": true, "notVictimMay": true, "reachesClass": "land"}]}],
-      "why": "As answers.typed.creature, for the land class."
+      "match": [{"op": "anyOf", "clauses": [{"op": "emits", "verbs": ["dies"], "control": ["opp", "any"], "zone": [null], "scope": ["target"], "notPairedTarget": true, "notFromHandCost": true, "notOwnedByYou": true, "notVictimMay": true, "reachesClass": "land", "notMassLand": true}, {"op": "emits", "verbs": ["exiled"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "notFlickered": true, "notFromHandCost": true, "notOwnedByYou": true, "notVictimMay": true, "reachesClass": "land", "notMassLand": true}]}],
+      "why": "A LAND ANSWER IS A TARGETED LAND KILL (owner 2026-11-13; `notMassLand`): Boom // Bust is one, Ajani Vengeant's -7 (\"Destroy all lands target player controls\") and Burning of Xinye (\"target opponent destroys four lands they control\") are stax and gain no land class. As answers.typed.creature, for the land class."
     },
     {
       "id": "answers.typed.exile.creature",
@@ -668,7 +668,7 @@
       "id": "answers.typed.exile.land",
       "answerClass": "land",
       "mode": "exile",
-      "match": [{"op": "emits", "verbs": ["exiled"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "notFlickered": true, "notFromHandCost": true, "notOwnedByYou": true, "notVictimMay": true, "notBlinkedBack": true, "reachesClass": "land"}],
+      "match": [{"op": "emits", "verbs": ["exiled"], "control": ["opp", "any"], "scope": ["target"], "fromZone": ["battlefield", null], "notFlickered": true, "notFromHandCost": true, "notOwnedByYou": true, "notVictimMay": true, "notBlinkedBack": true, "reachesClass": "land", "notMassLand": true}],
       "why": "As answers.typed.exile.creature, for the land class."
     },
     {

@@ -141,6 +141,9 @@ export type RuleClause =
       notViaCraft?: true;
       /** Refuse an EDICT emit (`SubjectFilter.edict`): "Target player sacrifices two creatures" forces a choice on one named player and is not a wipe (#1266, `boardWipe.text`). */
       notEdict?: true;
+      /** Refuse an emit that is aimed at a PLAYER'S LANDS, not at a land (owner 2026-11-13): a land-only subject whose ability states no count ("Destroy all lands target player controls": Ajani Vengeant -7) or a count of three or more (`stax.landDenial`'s threshold: Burning of Xinye's "target opponent destroys four lands"). A land answer is a TARGETED land kill; these are stax.
+       *  CEILING: derive scopes "target player controls" as a target of the lands and gives no other cue, so the missing count is the signal; a mass kill that states a count below three, or a targeted land kill whose count derive drops, reads the other way. */
+      notMassLand?: true;
       /** Refuse an emit whose subject is LANDS ONLY (`landOnlySubject`: "Destroy all lands", "each player sacrifices a land", "nonbasic lands"): mass land denial is stax, not a board wipe (owner 2026-11-06, `boardWipe.text`). A subject that also names another type ("artifacts, creatures, and lands": Jokulhaups) is not land-only. */
       notLandOnly?: true;
       /** Require an emit whose subject is LANDS ONLY (see `notLandOnly`): the shape `stax.landDenial` reads. */
@@ -703,6 +706,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.zone === undefined || clause.zone.includes(e.subject.zone ?? null))
           && (clause.type === undefined || (subjectTypes(e.subject).length > 0 && subjectTypes(e.subject).every((t) => clause.type!.includes(t))))
           && (clause.notLandOnly !== true || !landOnlySubject(e.subject))
+          && (clause.notMassLand !== true || !landOnlySubject(e.subject) || (a.amount !== undefined && !(/^\d+$/.test(a.amount) && Number(a.amount) >= 3)))
           && (clause.landOnly !== true || landOnlySubject(e.subject))
           && (clause.includesLand !== true || includesLandSubject(e.subject))
           && (clause.typeAny === undefined || subjectTypes(e.subject).some((t) => clause.typeAny!.includes(t)))
