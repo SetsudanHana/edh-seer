@@ -91,8 +91,6 @@ export type RuleClause =
       reachesClass?: string;
       /** The effect subject names NO type and is not a player: "any target" (Lightning Bolt). It reaches creatures and planeswalkers, which `reachesClass` cannot say of an untyped subject. */
       untyped?: true;
-      /** Refuse a subject that can be a PLAYER (`subjectReachesPlayer`: "any target", "target player or planeswalker"): the class reads "target creature or planeswalker" and nothing wider. */
-      notReachesPlayer?: true;
       /** The ability's amount is at least N, or is not a printed number at all (X, "its power", "that much": no number says it is a ping). A missing amount does not match. */
       amountAtLeast?: number }
   /** WHAT AN ABILITY EMITS, for the one family that has no effect kind by design: removal.
@@ -635,7 +633,6 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.notGrantsSelf !== true || a.grantsSelf !== true)
         && (clause.reachesClass === undefined || (answerSubject(a) !== undefined && subjectReachesClass(answerSubject(a)!, clause.reachesClass)))
         && (clause.untyped !== true || (answerSubject(a) !== undefined && classTypes(answerSubject(a)!).length === 0 && subjectReachesPermanent(answerSubject(a)!)))
-        && (clause.notReachesPlayer !== true || (answerSubject(a) !== undefined && !subjectReachesPlayer(answerSubject(a)!)))
         && (clause.amountAtLeast === undefined || amountAtLeast(a.amount, clause.amountAtLeast)));
     // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive mislabels some cards, so the role is wrong on them by name.
     //   LOST (real removal, no usable emit): Polymorph, Transmogrify, Chaos Mutation, Divergent Transformations (derive reads the polymorph family as played on YOUR creature, `control: you`: owner ruling 2026-10-02 / #962,
