@@ -288,11 +288,21 @@ describe("the damage, tuck, shrink, counter and bounce answers read derived data
     // "Return X target creatures": the printed pattern wanted `return target`.
     expect(classes("Aether Tide")).toEqual(["creature"]);
     expect(classes("Revive the Fallen")).toEqual([]);
-    // CEILING: a subtype alone names no class (Seedling Charm), derive files an unless-tax bounce with no subject (Crystal Shard),
-    // and "spell or permanent" derives without land (Venser, Shaper Savant).
+    // CEILING: a subtype alone names no class (Seedling Charm), derive files an unless-tax bounce with no subject (Crystal Shard).
     expect(classes("Seedling Charm")).toEqual([]);
     expect(classes("Crystal Shard")).toEqual([]);
-    expect(classes("Venser, Shaper Savant")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+  });
+
+  // "Spell or permanent" derives a type list with no land and `umbrella: "permanent"`: the umbrella is every permanent, a land included (#1266).
+  test("bounce: \"target spell or permanent\" answers a land, \"nonland permanent\" does not, and a narrowed permanent does not", () => {
+    expect(classes("Venser, Shaper Savant")).toEqual(ALL);
+    expect(classes("Jeskai Revelation")).toEqual(expect.arrayContaining(ALL));
+    // "nonland permanent" is `notType: [land]`, no umbrella.
+    expect(classes("Into the Roil")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+    expect(classes("Cyclonic Rift")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+    // A land has no colour and no mana value: "red or green" and "mana value 1 or greater" cannot name one.
+    expect(classes("Aether Gust")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+    expect(classes("Divide by Zero")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
   });
 });
 
