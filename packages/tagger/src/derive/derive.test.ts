@@ -5286,6 +5286,30 @@ describe("#1295 removal-shaped emits", () => {
     expect(victimDeclines("Whenever a creature enters, that creature's controller may have it deal damage equal to its power to any target.", "deal-damage")).toBe(false);
   });
 
+  test("a PAY-OR-DIE destroy is the victim's option (#1628: Arcum's Whistle, Winter's Chill); an upkeep cost and a plain destroy are not", () => {
+    const whistle = "{3}, {T}: Choose target non-Wall creature the active player has controlled continuously since the beginning of the turn. That player may pay {X}, where X is that creature's mana value. If they don't pay, the creature attacks this turn if able, and at the beginning of the next end step, destroy it if it didn't attack this turn. Activate only before attackers are declared.";
+    const chill = "Cast this spell only during combat before blockers are declared.\nX can't be greater than the number of snow lands you control.\nChoose X target attacking creatures. For each of those creatures, its controller may pay {1} or {2}. If that player doesn't, destroy that creature at end of combat. If that player pays only {1}, prevent all combat damage that would be dealt to and dealt by that creature this combat.";
+    expect(victimDeclines(whistle, "destroy")).toBe(true);
+    expect(victimDeclines(chill, "destroy")).toBe(true);
+    // Nettling Imp / Norritt have no pay choice: the victim cannot decline, so no cue (NEEDS RULING, not marked).
+    expect(victimDeclines("{T}: Choose target non-Wall creature the active player has controlled continuously since the beginning of the turn. That creature attacks this turn if able. Destroy it at the beginning of the next end step if it didn't attack this turn.", "destroy")).toBe(false);
+    expect(victimDeclines("Destroy target creature. Its controller may pay {2}.", "destroy")).toBe(false);
+    expect(victimDeclines("At the beginning of your upkeep, you may pay {1}. If you don't, destroy this creature.", "destroy")).toBe(false);
+    const real = (n: string, text: string, ty: string, records: object[]) => emitsOf(n, text, ty, records as never).filter((x) => x.verb === "dies");
+    const w = real("Arcum's Whistle", whistle, "Artifact", [{ id: 1, abilityType: "activated", actions: [{ verb: "destroy", object: "target non-Wall creature the active player has controlled continuously since the beginning of the turn", fromZone: null, toZone: null, amount: null, optional: false }] }]);
+    expect(w.map((x) => x.victimMay), "Arcum's Whistle").toEqual([true]);
+    const c = real("Winter's Chill", chill, "Instant", [{ id: 3, abilityType: "spell", actions: [{ verb: "destroy", object: "X target attacking creatures", fromZone: null, toZone: null, amount: null, optional: true }] }]);
+    expect(c.map((x) => x.victimMay), "Winter's Chill").toEqual([true]);
+  });
+
+  test("the target of 'attacking you or a planeswalker you control' is the creature alone (#1629, Soul Snare); a planeswalker named elsewhere stays", () => {
+    const snare = emitsOf("Soul Snare", "{W}, Sacrifice this enchantment: Exile target creature that's attacking you or a planeswalker you control.", "Enchantment").filter((x) => x.verb === "exiled");
+    expect(snare.map((x) => x.subject.type)).toEqual(["creature"]);
+    expect(snare.map((x) => x.subject.combat)).toEqual(["attacking"]);
+    const both = emitsOf("Some Removal", "Exile target creature or planeswalker.", "Instant").filter((x) => x.verb === "exiled");
+    expect(both.map((x) => x.subject.type)).toEqual([["creature", "planeswalker"]]);
+  });
+
   test("another word on the card does not set the target's control (Premature Burial, Blazing Hope, Soul Snare)", () => {
     const burial = emitsOf("Premature Burial", "Destroy target nonblack creature that entered since your last turn ended.").filter((x) => x.verb === "dies");
     expect(burial.map((x) => x.subject.control)).toEqual(["opp"]);
