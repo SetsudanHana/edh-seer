@@ -693,7 +693,7 @@ test("the withheld line agrees with its number", () => {
 
 /** THE PRERENDERED BLOCK SAYS WHAT THE APP SAYS: an upcoming card is not yet released (owner 2026-10-25). */
 test("the static block names the release date of an upcoming card and only then", () => {
-  expect(cardPageHtml({ ...KRENKO, upcoming: "2026-11-13" }, "krenko-mob-boss", "card")).toContain("Not yet released \u2014 13 Nov 2026");
+  expect(cardPageHtml({ ...KRENKO, upcoming: "2026-11-13" }, "krenko-mob-boss", "card", "2026-11-01")).toContain("Not yet released \u2014 13 Nov 2026");
   expect(cardPageHtml(KRENKO, "krenko-mob-boss", "card")).not.toContain("Not yet released");
 });
 
