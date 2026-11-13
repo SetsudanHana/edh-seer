@@ -8,6 +8,8 @@ import type { DeckCard } from "./types.js";
 import type { CardTags, ManaLine } from "@edh-seer/tagger";
 import { FREE_TAP, filterLine, mkLine, ritualLine, tapFor, triggerLine } from "./mana-test-support.js";
 import { COVERAGE_CLASSES } from "./answer-coverage.js";
+import { NARROW_WEIGHT } from "./narrow-weight.js";
+const FIVE = ["W", "U", "B", "R", "G"];
 import rocks from "./ramp-colour.fixtures.json" with { type: "json" };
 import { realCard, renamed } from "./removal-test-support.js";
 
@@ -833,6 +835,27 @@ test("the answers impact is what covering the absent classes is worth", () => {
   const covered = answersImpactOf(parents, 36, 36, undefined, new Set(COVERAGE_CLASSES), 0);
   expect(withGap).toBeGreaterThan(0);
   expect(covered).toBe(0);
+});
+
+/** HALF-COVERED CLASSES ARE PRICED TOO (owner 2026-11-13): a class held only by narrow answers
+ *  covers at NARROW_WEIGHT, and a full answer lifts it to 1. */
+describe("the answers impact prices a half-covered class", () => {
+  const parents = [{ count: 10, target: 10, weight: 1, coverageWeighted: true as const }];
+  const mapOf = (f: (c: string) => number) => new Map(COVERAGE_CLASSES.map((c) => [c, f(c)] as const));
+  test("a deck whose only gap is a half-covered class has a positive price", () => {
+    const m = mapOf((c) => (c === "enchantment" ? NARROW_WEIGHT : 1));
+    expect(answersImpactOf(parents, 36, 36, FIVE, m, 0)).toBeGreaterThan(0);
+  });
+  test("lifting a half class to full prices less than filling an empty class", () => {
+    const half = answersImpactOf(parents, 36, 36, FIVE, mapOf((c) => (c === "enchantment" ? NARROW_WEIGHT : 1)), 0);
+    const empty = answersImpactOf(parents, 36, 36, FIVE, new Map(COVERAGE_CLASSES.filter((c) => c !== "enchantment").map((c) => [c, 1] as const)), 0);
+    expect(half).toBeGreaterThan(0);
+    expect(half).toBeLessThan(empty);
+    expect(half).toBeCloseTo(empty / 2, 9);
+  });
+  test("every class at full prices 0", () => {
+    expect(answersImpactOf(parents, 36, 36, FIVE, mapOf(() => 1), 0)).toBe(0);
+  });
 });
 
 // A DRAW THAT COMES BACK (owner, 2026-09-05): the draw count said Rhystic Study and Divination were
