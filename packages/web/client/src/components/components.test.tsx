@@ -1521,13 +1521,13 @@ test("the coverage dock counts a half-covered class as half-covered, and does no
   expect(screen.getByText(/docked for coverage/i).textContent).toMatch(/3 of 5 answer classes are covered, 1 only by narrow answers, not every one these colors could reach\./);
 });
 
-// #1266 whole-branch review: `colourLocked` also carries the Aura / Saga / Equipment-only answers (a bare subtype, owner 2026-11-13), so Turn to Dust is no "color-locked" card. One neutral phrase covers both.
-test("an answer row with narrow cards says which count half: a colour-locked one (Pyroblast) and a subtype-only one (Turn to Dust)", () => {
-  const dm = { ...DECK_MATH, answers: DECK_MATH.answers.map((a) => (a.class === "creature" ? { ...a, colourLocked: ["Pyroblast"] } : a.class === "artifact" ? { ...a, count: 1, available: 0.5, colourLocked: ["Turn to Dust"] } : a)) };
+// #1266 whole-branch review: `colourLocked` also carries the Aura / Saga / Equipment-only answers (a bare subtype, owner 2026-11-13), so Turn to Dust is no "color-locked" card. Since Rules 53 it carries a compound noun ("artifact creature": Hearth Charm) too, which is neither a color nor a subtype. One neutral phrase covers all three.
+test("an answer row with narrow cards says which count half: a colour-locked one (Pyroblast), a compound-noun one (Hearth Charm) and a subtype-only one (Turn to Dust)", () => {
+  const dm = { ...DECK_MATH, answers: DECK_MATH.answers.map((a) => (a.class === "creature" ? { ...a, colourLocked: ["Pyroblast", "Hearth Charm"] } : a.class === "artifact" ? { ...a, count: 1, available: 0.5, colourLocked: ["Turn to Dust"] } : a)) };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={dm} />);
-  expect(screen.getByLabelText(/creature, 4 cards, in hand by turn 5 in 41% of games; narrow \(color or subtype\), counts half: Pyroblast/i)).toBeInTheDocument();
-  expect(screen.getByTestId("answer-row-locked-creature").textContent).toMatch(/narrow \(color or subtype\), counts half: Pyroblast/);
-  expect(screen.getByTestId("answer-row-locked-artifact").textContent).toMatch(/narrow \(color or subtype\), counts half: Turn to Dust/);
+  expect(screen.getByLabelText(/creature, 4 cards, in hand by turn 5 in 41% of games; narrow, counts half: Pyroblast, Hearth Charm/i)).toBeInTheDocument();
+  expect(screen.getByTestId("answer-row-locked-creature").textContent).toMatch(/narrow, counts half: Pyroblast, Hearth Charm/);
+  expect(screen.getByTestId("answer-row-locked-artifact").textContent).toMatch(/narrow, counts half: Turn to Dust/);
   expect(screen.queryByText(/color-locked/i)).toBeNull();
 });
 

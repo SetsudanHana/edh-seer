@@ -156,7 +156,7 @@ test("answer classes come from the type the removal actually names", () => {
 test("a card covering two classes in two sentences gets both", () => {
   // One `test()` keeps only the first match; the sweep is global for exactly this shape.
   expect([...answerClassesOf(realCard("Return to Nature")).keys()].sort()).toEqual(["artifact", "enchantment", "graveyard"]);
-  expect([...answerClassesOf(realCard("Hearth Charm")).keys()].sort()).toEqual(["creature"]);
+  expect([...answerClassesOf(realCard("Hearth Charm")).keys()].sort()).toEqual(["artifact", "creature"]);
 });
 
 /** Counting only destroy/exile made a real deck read as 14 removal spells with 3 creature answers.
@@ -291,8 +291,7 @@ describe("the damage, tuck, shrink, counter and bounce answers read derived data
     // "Return X target creatures": the printed pattern wanted `return target`.
     expect(classes("Aether Tide")).toEqual(["creature"]);
     expect(classes("Revive the Fallen")).toEqual([]);
-    // CEILING: a subtype alone names no class (Seedling Charm), derive files an unless-tax bounce with no subject (Crystal Shard).
-    expect(classes("Seedling Charm")).toEqual([]);
+    // CEILING: derive files an unless-tax bounce with no subject (Crystal Shard). (Seedling Charm's bare Aura is read as an enchantment since Rules 53: see its own test.)
     expect(classes("Crystal Shard")).toEqual([]);
   });
 
@@ -365,11 +364,25 @@ describe("the destroy and exile answers read derived data (#1266)", () => {
       expect(classes(n), n).toEqual(["enchantment"]);
       expect(marks(n, "enchantment")?.colourLocked, n).toBe(true);
     }
-    // Equipment reads as an artifact, narrowly; the bounce rules keep a bare subtype as no class (NEEDS RULING: Seedling Charm).
     expect(marks("Devout Harpist", "enchantment")?.exile).toBe(false);
     const pool = detectAnswerClasses([realCard("Devout Harpist"), realCard("Disenchant")]).get("enchantment")!;
     expect(answerWeightOf(pool, "Devout Harpist")).toBe(NARROW_WEIGHT);
     expect(answerWeightOf(pool, "Disenchant")).toBe(1);
+  });
+
+  test("an Aura-only bounce counts the same, and names no creature (owner 2026-11-13: Seedling Charm)", () => {
+    // "Return target Aura attached to a creature to its owner's hand": the Aura is the target, the creature is the host.
+    expect(classes("Seedling Charm")).toEqual(["enchantment"]);
+    expect(marks("Seedling Charm", "enchantment")?.colourLocked).toBe(true);
+    const pool = detectAnswerClasses([realCard("Seedling Charm"), realCard("Disenchant")]).get("enchantment")!;
+    expect(answerWeightOf(pool, "Seedling Charm")).toBe(NARROW_WEIGHT);
+  });
+
+  test("Miracle Worker stays an Aura answer at half weight (owner 2026-11-13)", () => {
+    expect(classes("Miracle Worker")).toEqual(["enchantment"]);
+    expect(marks("Miracle Worker", "enchantment")?.colourLocked).toBe(true);
+    const pool = detectAnswerClasses([realCard("Miracle Worker"), realCard("Disenchant")]).get("enchantment")!;
+    expect(answerWeightOf(pool, "Miracle Worker")).toBe(NARROW_WEIGHT);
   });
 
   test("a card that prints an exile from a graveyard elsewhere still answers what its other mode destroys", () => {
@@ -401,16 +414,48 @@ describe("the destroy and exile answers read derived data (#1266)", () => {
     expect(marks("Murder", "creature")?.exile).toBe(false);
   });
 
-  test("a compound noun is a creature (NEEDS RULING: Hearth Charm, Chandler, Molten Frame answer no plain artifact)", () => {
-    expect(classes("Hearth Charm")).toEqual(["creature"]);
-    expect(classes("Chandler")).toEqual(["creature"]);
+  // Owner 2026-11-13: a compound noun is narrower than either class. It counts at NARROW_WEIGHT in BOTH classes, the creature and the type it names beside it.
+  test("a compound noun answers BOTH classes at NARROW_WEIGHT (Hearth Charm, Chandler, Molten Frame: artifact creature)", () => {
+    for (const n of ["Hearth Charm", "Chandler", "Molten Frame"]) {
+      expect(classes(n), n).toEqual(["artifact", "creature"]);
+      for (const cls of ["artifact", "creature"]) expect(marks(n, cls)?.colourLocked, `${n} ${cls}`).toBe(true);
+    }
+    const pool = detectAnswerClasses([realCard("Hearth Charm"), realCard("Murder"), realCard("Disenchant")]);
+    expect(answerWeightOf(pool.get("creature")!, "Hearth Charm")).toBe(NARROW_WEIGHT);
+    expect(answerWeightOf(pool.get("artifact")!, "Hearth Charm")).toBe(NARROW_WEIGHT);
+    expect(answerWeightOf(pool.get("creature")!, "Murder")).toBe(1);
+  });
+
+  test("an enchantment creature and a land creature are narrow in both classes (Leonin Iconoclast, Feast of Dreams, Consuming Sinkhole)", () => {
+    for (const n of ["Leonin Iconoclast", "Feast of Dreams"]) {
+      expect(classes(n), n).toEqual(["creature", "enchantment"]);
+      for (const cls of ["creature", "enchantment"]) expect(marks(n, cls)?.colourLocked, `${n} ${cls}`).toBe(true);
+    }
+    expect(classes("Consuming Sinkhole")).toEqual(["creature", "land", "planeswalker"]);
+    expect(marks("Consuming Sinkhole", "creature")).toMatchObject({ colourLocked: true, exile: true });
+    expect(marks("Consuming Sinkhole", "land")).toMatchObject({ colourLocked: true, exile: true });
+    // The damage mode at a player or planeswalker is a plain clause.
+    expect(marks("Consuming Sinkhole", "planeswalker")?.colourLocked).toBe(false);
+  });
+
+  test("a compound beside an unrestricted clause for the class is not narrow there (Electrostatic Bolt, Bumi Bash), and a disjunction is not a compound (Vronos)", () => {
+    // "2 damage to target creature. If it's an artifact creature, 4 damage instead": the plain target is a full creature answer.
+    expect(marks("Electrostatic Bolt", "creature")?.colourLocked).toBe(false);
+    // Bumi Bash's bite is unrestricted; "land creature or nonbasic land" derives as one compound subject (CEILING below), so its land row is narrow.
+    expect(marks("Bumi Bash", "creature")?.colourLocked).toBe(false);
+    expect(marks("Bumi Bash", "land")?.colourLocked).toBe(true);
+    // "target nonland permanent" reaches every class whole; the "artifact creature" Vronos makes is a becomes, no target of a kill.
+    for (const cls of ["artifact", "creature", "enchantment", "planeswalker"]) expect(marks("Vronos, Masked Inquisitor", cls)?.colourLocked, cls).toBe(false);
+    // Gremlin Mine's damage rule has no artifact class: creature only, narrow.
+    expect(classes("Gremlin Mine")).toEqual(["creature"]);
+    expect(marks("Gremlin Mine", "creature")?.colourLocked).toBe(true);
   });
 
   test("CEILING: real misses the derived rows cannot see", () => {
     // Polymorph / Transmogrify: derive reads the creature as yours (owner ruling #962); Venser's and Teferi's exile is on an emblem node; The Eternal Wanderer's \"that player's next end step\" return is unread, so its blink looks immediate; Bumi Bash's
     // \"land creature or nonbasic land\" derives as ONE compound subject.
     for (const n of ["Polymorph", "Transmogrify", "Venser, the Sojourner", "The Eternal Wanderer"]) expect(classes(n), n).toEqual([]);
-    expect(classes("Bumi Bash")).toEqual(["creature"]);
+    expect(classes("Bumi Bash")).toEqual(["creature", "land"]);
   });
 });
 
