@@ -1,6 +1,6 @@
 /** A CONDITION ON THE TARGET IS A TARGETING RESTRICTION, NOT A CHANCE (#1357 task 2, owner ruling 2026-10-27 C): Pyroblast's "Counter target spell if it's blue", Fatal Push's "Destroy target creature if it has mana
  *  value 2 or less". The card still answers, whole, in the role where it applies; it just answers a NARROW set of things. So no weight: the effect always happens when it is aimed at something it can hit.
- *  (Answer coverage: only a COLOUR condition drops the card from a class, `COLOUR_HOSER` in rules.ts; a stat or state condition keeps the class, marked narrow. Owner refinement, same day.)
+ *  (Answer coverage: only a COLOUR condition drops the card from a class, `colourGated` and `colourLockedSubject` in rules.ts; a stat or state condition keeps the class, marked narrow. Owner refinement, same day.)
  *
  *  HOW TO TELL: the gate's condition opens with a pronoun for the target ("it", "it's", "its power", "that creature", "their") AND the clause holding it (the sentence from its last ", then ") names a "target" before
  *  it. "Draw a card if it has flying" (Miles "Tails" Prower, a Vehicle that entered) and "draw a card if it was attacking" (Garna) have no target in the clause and stay effect conditions. Two kinds of "it" are

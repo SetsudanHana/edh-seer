@@ -40993,5 +40993,5920 @@
     "repeats": "once"
    }
   ]
+ },
+ "Disenchant": {
+  "oracleText": "Destroy target artifact or enchantment.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "artifact",
+        "enchantment"
+       ],
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Vindicate": {
+  "oracleText": "Destroy target permanent.",
+  "typeLine": "Sorcery",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "permanent",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Treva's Charm": {
+  "oracleText": "Choose one —\n• Destroy target enchantment.\n• Exile target attacking creature.\n• Draw a card, then discard a card.",
+  "typeLine": "Instant",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "enchantment",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "combat": "attacking",
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "combat": "attacking",
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "discard",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Return to Dust": {
+  "oracleText": "Exile target artifact or enchantment. If you cast this spell during your main phase, you may exile up to one other target artifact or enchantment.",
+  "typeLine": "Instant",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "artifact",
+        "enchantment"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "artifact",
+        "enchantment"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "artifact",
+        "enchantment"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "artifact",
+        "enchantment"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "you cast this spell during your main phase"
+    },
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Essence Flux": {
+  "oracleText": "Exile target creature you control, then return that card to the battlefield under its owner's control. If it's a Spirit, put a +1/+1 counter on it.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "exile"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "+1/+1"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it's a spirit"
+    },
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Curtains' Call": {
+  "oracleText": "Undaunted (This spell costs {1} less to cast for each opponent.)\nDestroy two target creatures.",
+  "typeLine": "Instant",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   }
+  ]
+ },
+ "Pyroblast": {
+  "oracleText": "Choose one —\n• Counter target spell if it's blue.\n• Destroy target permanent if it's blue.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "counter-spell",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "spell",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it's blue"
+    },
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "permanent",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it's blue"
+    },
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Soul Rend": {
+  "oracleText": "Destroy target creature if it's white. A creature destroyed this way can't be regenerated.\nDraw a card at the beginning of the next turn's upkeep.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it's white"
+    },
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Shamble Back": {
+  "oracleText": "Exile target creature card from a graveyard. Create a 2/2 black Zombie creature token. You gain 2 life.",
+  "typeLine": "Sorcery",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": "creature",
+       "scope": "target"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": "creature",
+       "scope": "target",
+       "zone": "graveyard"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "type": "creature",
+      "subtype": "zombie",
+      "colors": [
+       "B"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 2
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 2
+       }
+      ]
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "B"
+       ],
+       "type": "creature",
+       "subtype": "zombie",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 2
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 2
+        }
+       ]
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "B"
+       ],
+       "type": "creature",
+       "subtype": "zombie",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 2
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 2
+        }
+       ]
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   }
+  ]
+ },
+ "Long Road Home": {
+  "oracleText": "Exile target creature. At the beginning of the next end step, return that card to the battlefield under its owner's control with a +1/+1 counter on it.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "end-step"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "fromZone": "exile"
+      }
+     }
+    ],
+    "delayedUntil": "next-end-step",
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "end-step"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "+1/+1"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Staff of Compleation": {
+  "oracleText": "{T}, Pay 1 life: Destroy target permanent you own.\n{T}, Pay 2 life: Add one mana of any color.\n{T}, Pay 3 life: Proliferate.\n{T}, Pay 4 life: Draw a card.\n{5}: Untap this artifact.",
+  "typeLine": "Artifact",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}, Pay 1 life",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "life": "1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}, Pay 1 life",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "owner": "you",
+       "type": "permanent",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "life": "1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}, Pay 2 life",
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "payment": {
+     "tap": true,
+     "life": "2"
+    },
+    "claimsNothing": "mana-rider"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}, Pay 2 life",
+    "amount": "1",
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "life": "2"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}, Pay 3 life",
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    },
+    "payment": {
+     "tap": true,
+     "life": "3"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "proliferate",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}, Pay 3 life",
+    "emits": [
+     {
+      "verb": "proliferate",
+      "subject": {
+       "control": "any",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "payment": {
+     "tap": true,
+     "life": "3"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}, Pay 4 life",
+    "amount": "4",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 4,
+     "ceiling": 4
+    },
+    "payment": {
+     "tap": true,
+     "life": "4"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "{T}, Pay 4 life",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "life": "4"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "untap",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "artifact",
+      "self": true
+     }
+    },
+    "cost": "{5}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "untaps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "artifact",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 5,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{5}"
+    }
+   }
+  ]
+ },
+ "Fatal Push": {
+  "oracleText": "Destroy target creature if it has mana value 2 or less.\nRevolt — Destroy that creature if it has mana value 4 or less instead if a permanent left the battlefield under your control this turn.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it has mana value 2 or less"
+    },
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "stats": [
+        {
+         "metric": "mana-value",
+         "op": "lte",
+         "value": 4
+        }
+       ]
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Return to Nature": {
+  "oracleText": "Choose one —\n• Destroy target artifact.\n• Destroy target enchantment.\n• Exile target card from a graveyard.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "artifact",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "enchantment",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "scope": "target",
+       "zone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Ghostly Flicker": {
+  "oracleText": "Exile two target artifacts, creatures, and/or lands you control, then return those cards to the battlefield under your control.",
+  "typeLine": "Instant",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "land"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "land"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "land"
+      ],
+      "scope": "target"
+     }
+    },
+    "amount": "two",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "land"
+       ],
+       "scope": "target",
+       "fromZone": "exile"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   }
+  ]
+ },
+ "Terminate": {
+  "oracleText": "Destroy target creature. It can't be regenerated.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Banisher Priest": {
+  "oracleText": "When this creature enters, exile target creature an opponent controls until this creature leaves the battlefield.",
+  "typeLine": "Creature — Human Cleric",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Oblivion Ring": {
+  "oracleText": "When this enchantment enters, exile another target nonland permanent.\nWhen this enchantment leaves the battlefield, return the exiled card to the battlefield under its owner's control.",
+  "typeLine": "Enchantment",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "other": true,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "other": true,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "enchantment",
+       "planeswalker",
+       "battle"
+      ],
+      "notType": [
+       "land"
+      ],
+      "scope": "target",
+      "other": true
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "leaves"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "other": true,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target",
+       "fromZone": "exile"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Hearth Charm": {
+  "oracleText": "Choose one —\n• Destroy target artifact creature.\n• Attacking creatures get +1/+0 until end of turn.\n• Target creature with power 2 or less can't be blocked this turn.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact"
+       ],
+       "allTypes": [
+        "artifact",
+        "creature"
+       ],
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "pump",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "all",
+      "combat": "attacking"
+     }
+    },
+    "amount": "+1/+0",
+    "clause": 3,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "evasion",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target",
+      "stats": [
+       {
+        "metric": "power",
+        "op": "lte",
+        "value": 2
+       }
+      ]
+     }
+    },
+    "clause": 4,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Boggart Arsonists": {
+  "oracleText": "Plainswalk (This creature can't be blocked as long as defending player controls a Plains.)\n{2}{R}, Sacrifice this creature: Destroy target Scarecrow or Plains.",
+  "typeLine": "Creature — Goblin Rogue",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}{R}, Sacrifice this creature",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}{R}",
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}{R}, Sacrifice this creature",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "subtype": [
+        "scarecrow",
+        "plains"
+       ],
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}{R}",
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Hydroblast": {
+  "oracleText": "Choose one —\n• Counter target spell if it's red.\n• Destroy target permanent if it's red.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "counter-spell",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "spell",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it's red"
+    },
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "permanent",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it's red"
+    },
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Imperial Edict": {
+  "oracleText": "Target opponent chooses a creature they control. Destroy that creature.",
+  "typeLine": "Sorcery",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Murderous Cut": {
+  "oracleText": "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)\nDestroy target creature.",
+  "typeLine": "Instant",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Go for the Throat": {
+  "oracleText": "Destroy target nonartifact creature.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "notType": [
+        "artifact"
+       ],
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Malicious Eclipse": {
+  "oracleText": "All creatures get -2/-2 until end of turn. If a creature an opponent controls would die this turn, exile it instead.",
+  "typeLine": "Sorcery",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "debuff",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    },
+    "amount": "-2/-2",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "all"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Mari, the Killing Quill": {
+  "oracleText": "Whenever a creature an opponent controls dies, exile it with a hit counter on it.\nAssassins, Mercenaries, and Rogues you control have deathtouch and \"Whenever this creature deals combat damage to a player, you may remove a hit counter from a card that player owns in exile. If you do, draw a card and create two Treasure tokens.\"",
+  "typeLine": "Legendary Creature — Vampire Assassin",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "fromZone": "graveyard",
+       "ref": "trigger"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "zone": "graveyard",
+       "fromZone": "graveyard",
+       "ref": "trigger"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "zone": "exile",
+       "counter": "hit"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": [
+       "assassin",
+       "mercenary",
+       "rogue"
+      ],
+      "scope": "all"
+     }
+    },
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "deathtouch"
+    ]
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "combat-damage"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     },
+     "victim": "player"
+    },
+    "emits": [
+     {
+      "verb": "counter-removed",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "hit"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "grantedBy": 2
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "combat-damage"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     },
+     "victim": "player"
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "grantedBy": 2
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "subtype": "treasure",
+      "scope": "all"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "combat-damage"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     },
+     "victim": "player"
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "any",
+       "token": true,
+       "subtype": "treasure",
+       "scope": "all",
+       "type": "artifact"
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": true,
+       "subtype": "treasure",
+       "scope": "all",
+       "type": "artifact"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "grantedBy": 2
+   }
+  ]
+ },
+ "Lava Coil": {
+  "oracleText": "Lava Coil deals 4 damage to target creature. If that creature would die this turn, exile it instead.",
+  "typeLine": "Sorcery",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "amount": "4",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 4,
+     "ceiling": 4
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Savaen Elves": {
+  "oracleText": "{G}{G}, {T}: Destroy target Aura attached to a land.",
+  "typeLine": "Creature — Elf",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{G}{G}, {T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "subtype": "aura",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{G}{G}",
+     "tap": true
+    }
+   }
+  ]
+ },
+ "Chandler": {
+  "oracleText": "{R}{R}{R}, {T}: Destroy target artifact creature.",
+  "typeLine": "Legendary Creature — Human Rogue",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{R}{R}{R}, {T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact"
+       ],
+       "allTypes": [
+        "artifact",
+        "creature"
+       ],
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{R}{R}{R}",
+     "tap": true
+    }
+   }
+  ]
+ },
+ "Bounty Agent": {
+  "oracleText": "Vigilance\n{T}, Sacrifice this creature: Destroy target legendary permanent that's an artifact, creature, or enchantment.",
+  "typeLine": "Creature — Human Soldier",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}, Sacrifice this creature",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}, Sacrifice this creature",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "legendary": true,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment"
+       ],
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Bumi Bash": {
+  "oracleText": "Choose one —\n• Bumi Bash deals damage equal to the number of lands you control to target creature.\n• Destroy target land creature or nonbasic land.",
+  "typeLine": "Sorcery",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     },
+     "scaling": "per-permanent",
+     "scalingSubject": {
+      "control": "you",
+      "token": null,
+      "type": "land",
+      "scope": "all",
+      "zone": "battlefield"
+     }
+    },
+    "amount": "the number of lands you control",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "you",
+      "token": null,
+      "type": "land",
+      "scope": "all"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "basic": false,
+       "type": [
+        "creature",
+        "land"
+       ],
+       "allTypes": [
+        "land",
+        "creature"
+       ],
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Consuming Sinkhole": {
+  "oracleText": "Devoid (This card has no color.)\nChoose one —\n• Exile target land creature.\n• Consuming Sinkhole deals 4 damage to target player or planeswalker.",
+  "typeLine": "Instant",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "land"
+       ],
+       "allTypes": [
+        "land",
+        "creature"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "land"
+       ],
+       "allTypes": [
+        "land",
+        "creature"
+       ],
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target",
+      "anyOf": [
+       {
+        "player": true
+       },
+       {
+        "type": "planeswalker"
+       }
+      ]
+     }
+    },
+    "amount": "4",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "player": true,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "planeswalker",
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 4,
+     "ceiling": 4
+    }
+   }
+  ]
+ },
+ "Topple the Statue": {
+  "oracleText": "Tap target permanent. If it's an artifact, destroy it.\nDraw a card.",
+  "typeLine": "Instant",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "taps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "permanent",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "permanent",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it's an artifact"
+    },
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Orzhov Euthanist": {
+  "oracleText": "Haunt (When this creature dies, exile it haunting target creature.)\nWhen this creature enters or the creature it haunts dies, destroy target creature that was dealt damage this turn.",
+  "typeLine": "Creature — Human Assassin",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "ref": "sentence"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Absolver Thrull": {
+  "oracleText": "Haunt (When this creature dies, exile it haunting target creature.)\nWhen this creature enters or the creature it haunts dies, destroy target enchantment.",
+  "typeLine": "Creature — Thrull Cleric",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "enchantment",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "ref": "sentence"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "enchantment",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Stasis Snare": {
+  "oracleText": "Flash (You may cast this spell any time you could cast an instant.)\nWhen this enchantment enters, exile target creature an opponent controls until this enchantment leaves the battlefield.",
+  "typeLine": "Enchantment",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Angel of Condemnation": {
+  "oracleText": "Flying, vigilance\n{2}{W}, {T}: Exile another target creature. Return that card to the battlefield under its owner's control at the beginning of the next end step.\n{2}{W}, {T}, Exert this creature: Exile another target creature until this creature leaves the battlefield. (An exerted creature won't untap during your next untap step.)",
+  "typeLine": "Creature — Angel",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}{W}, {T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "other": true,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "other": true,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}{W}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target",
+      "other": true
+     }
+    },
+    "cost": "{2}{W}, {T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "other": true,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "exile"
+      }
+     }
+    ],
+    "delayedUntil": "next-end-step",
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}{W}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}{W}, {T}, Exert this creature",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "other": true,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "other": true,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}{W}",
+     "tap": true,
+     "other": [
+      "Exert this creature"
+     ]
+    }
+   }
+  ]
+ },
+ "Bramblecrush": {
+  "oracleText": "Destroy target noncreature permanent.",
+  "typeLine": "Sorcery",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "land",
+        "battle"
+       ],
+       "notType": [
+        "creature"
+       ],
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Angel of Serenity": {
+  "oracleText": "Flying\nWhen this creature enters, you may exile up to three other target creatures from the battlefield and/or creature cards from graveyards.\nWhen this creature leaves the battlefield, return the exiled cards to their owners' hands.",
+  "typeLine": "Creature — Angel",
+  "manaValue": 7,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "other": true,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "leaves"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "clause": 3,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Cleanup Crew": {
+  "oracleText": "When this creature enters, choose one —\n• Destroy target artifact.\n• Destroy target enchantment.\n• Exile target card from a graveyard.\n• You gain 4 life.",
+  "typeLine": "Creature — Human Citizen",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "artifact",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "enchantment",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "scope": "target"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "scope": "target",
+       "zone": "graveyard"
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "4",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 5,
+    "repeats": "once",
+    "count": {
+     "floor": 4,
+     "ceiling": 4
+    }
+   }
+  ]
+ },
+ "The Eternal Wanderer": {
+  "oracleText": "No more than one creature can attack The Eternal Wanderer each combat.\n+1: Exile up to one target artifact or creature. Return that card to the battlefield under its owner's control at the beginning of that player's next end step.\n0: Create a 2/2 white Samurai creature token with double strike.\n−4: For each player, choose a creature that player controls. Each player sacrifices all creatures they control not chosen this way.",
+  "typeLine": "Legendary Planeswalker",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "+1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact"
+       ],
+       "scope": "target"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact"
+       ],
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact"
+      ],
+      "scope": "target"
+     }
+    },
+    "cost": "+1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact"
+       ],
+       "scope": "target",
+       "fromZone": "exile"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "type": "creature",
+      "subtype": "samurai",
+      "colors": [
+       "W"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 2
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 2
+       }
+      ],
+      "keyword": [
+       "double strike"
+      ]
+     }
+    },
+    "cost": "0",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "keyword": [
+        "double strike"
+       ],
+       "colors": [
+        "W"
+       ],
+       "type": "creature",
+       "subtype": "samurai",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 2
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 2
+        }
+       ]
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "keyword": [
+        "double strike"
+       ],
+       "colors": [
+        "W"
+       ],
+       "type": "creature",
+       "subtype": "samurai",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 2
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 2
+        }
+       ]
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "0"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "−4",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "selection": "all-but",
+       "type": "creature",
+       "scope": "each",
+       "edictAll": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "selection": "all-but",
+       "type": "creature",
+       "scope": "each",
+       "edictAll": true
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "selection": "all-but",
+      "type": "creature",
+      "scope": "each",
+      "edictAll": true
+     }
+    },
+    "payment": {
+     "loyalty": "-4"
+    }
+   }
+  ]
+ },
+ "Mold Shambler": {
+  "oracleText": "Kicker {1}{G} (You may pay an additional {1}{G} as you cast this spell.)\nWhen this creature enters, if it was kicked, destroy target noncreature permanent.",
+  "typeLine": "Creature — Fungus Beast",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "land",
+        "battle"
+       ],
+       "notType": [
+        "creature"
+       ],
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Thief of Existence": {
+  "oracleText": "Devoid (This card has no color.)\nWhen you cast this spell, exile up to one target noncreature, nonland permanent an opponent controls with mana value 4 or less. If you do, Thief of Existence gains \"When this creature leaves the battlefield, target opponent draws a card.\"",
+  "typeLine": "Creature — Eldrazi",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "cast"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "creature",
+        "land"
+       ],
+       "scope": "target",
+       "stats": [
+        {
+         "metric": "mana-value",
+         "op": "lte",
+         "value": 4
+        }
+       ],
+       "fromZone": "battlefield"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "creature",
+        "land"
+       ],
+       "scope": "target",
+       "stats": [
+        {
+         "metric": "mana-value",
+         "op": "lte",
+         "value": 4
+        }
+       ],
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "cast"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "self": true
+     }
+    },
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "leaves"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "grantedBy": 2,
+    "castOnly": true
+   }
+  ]
+ },
+ "Goblin Archaeologist": {
+  "oracleText": "{R}, {T}: Flip a coin. If you win the flip, destroy target artifact and untap this creature. If you lose the flip, sacrifice this creature.",
+  "typeLine": "Creature — Goblin Artificer",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{R}, {T}",
+    "emits": [
+     {
+      "verb": "flip-coin",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "payment": {
+     "mana": "{R}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{R}, {T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "artifact",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "onFlip": "win",
+    "gate": {
+     "kind": "unknown",
+     "text": "you win the flip"
+    },
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{R}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "untap",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "cost": "{R}, {T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "untaps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "onFlip": "win",
+    "gate": {
+     "kind": "unknown",
+     "text": "you win the flip"
+    },
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{R}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{R}, {T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "onFlip": "lose",
+    "gate": {
+     "kind": "unknown",
+     "text": "you lose the flip"
+    },
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{R}",
+     "tap": true
+    }
+   }
+  ]
+ },
+ "Piety Charm": {
+  "oracleText": "Choose one —\n• Destroy target Aura attached to a creature.\n• Target Soldier creature gets +2/+2 until end of turn.\n• Creatures you control gain vigilance until end of turn.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "subtype": "aura",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "pump",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "subtype": "soldier",
+      "scope": "target"
+     }
+    },
+    "amount": "+2/+2",
+    "clause": 3,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "clause": 4,
+    "repeats": "once",
+    "grants": [
+     "vigilance"
+    ]
+   }
+  ]
+ },
+ "Rise of Extus": {
+  "oracleText": "Exile target creature. Exile up to one target instant or sorcery card from a graveyard.\nLearn. (You may reveal a Lesson card you own from outside the game and put it into your hand, or discard a card to draw a card.)",
+  "typeLine": "Sorcery",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "instant",
+       "sorcery"
+      ],
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": [
+        "instant",
+        "sorcery"
+       ],
+       "scope": "target"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": [
+        "instant",
+        "sorcery"
+       ],
+       "scope": "target",
+       "zone": "graveyard"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "learn",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Kozilek's Command": {
+  "oracleText": "Choose two —\n• Target player creates X 0/1 colorless Eldrazi Spawn creature tokens with \"Sacrifice this token: Add {C}.\"\n• Target player scries X, then draws a card.\n• Exile target creature with mana value X or less.\n• Exile up to X target cards from graveyards.",
+  "typeLine": "Kindred Instant — Eldrazi",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "type": "creature",
+      "subtype": [
+       "eldrazi",
+       "spawn"
+      ],
+      "scope": "all",
+      "colors": [
+       "C"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 0
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 1
+       }
+      ]
+     },
+     "scaling": "x-cost"
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "any",
+       "token": true,
+       "colors": [
+        "C"
+       ],
+       "type": "creature",
+       "subtype": [
+        "eldrazi",
+        "spawn"
+       ],
+       "scope": "all",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 0
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": true,
+       "colors": [
+        "C"
+       ],
+       "type": "creature",
+       "subtype": [
+        "eldrazi",
+        "spawn"
+       ],
+       "scope": "all",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 0
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "scry",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     },
+     "scaling": "x-cost"
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "scry",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "target",
+       "fromZone": "graveyard"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "target",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 5,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   }
+  ]
+ },
+ "Astral Slide": {
+  "oracleText": "Whenever a player cycles a card, you may exile target creature. If you do, return that card to the battlefield under its owner's control at the beginning of the next end step.",
+  "typeLine": "Enchantment",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 1,
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "exile"
+      }
+     }
+    ],
+    "delayedUntil": "next-end-step",
+    "clause": 1,
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Morningtide's Light": {
+  "oracleText": "Exile any number of target creatures. At the beginning of the next end step, return those cards to the battlefield tapped under their owners' control.\nUntil your next turn, prevent all damage that would be dealt to you.\nExile Morningtide's Light.",
+  "typeLine": "Sorcery",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "end-step"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "entersTapped": true,
+       "fromZone": "exile"
+      }
+     }
+    ],
+    "delayedUntil": "next-end-step",
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "prevention",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "player": true
+     }
+    },
+    "prevention": {
+     "damage": "any",
+     "amount": "all"
+    },
+    "emits": [
+     {
+      "verb": "prevented",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "scope": "all"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "self": true,
+       "fromZone": "stack"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "self": true,
+       "fromZone": "stack"
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Parallax Wave": {
+  "oracleText": "Fading 5 (This enchantment enters with five fade counters on it. At the beginning of your upkeep, remove a fade counter from it. If you can't, sacrifice it.)\nRemove a fade counter from this enchantment: Exile target creature.\nWhen this enchantment leaves the battlefield, each player returns to the battlefield all cards they own exiled with it.",
+  "typeLine": "Enchantment",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "Remove a fade counter from this enchantment",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-removed",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "fade",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "removeCounter": [
+      {
+       "amount": "1",
+       "counter": "fade",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "Remove a fade counter from this enchantment",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "removeCounter": [
+      {
+       "amount": "1",
+       "counter": "fade",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "all"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "leaves"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all",
+       "fromZone": "exile"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "scope": "all",
+      "fromZone": "exile"
+     }
+    }
+   }
+  ]
+ },
+ "Fiery Annihilation": {
+  "oracleText": "Fiery Annihilation deals 5 damage to target creature. Exile up to one target Equipment attached to that creature. If that creature would die this turn, exile it instead.",
+  "typeLine": "Instant",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "amount": "5",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 5,
+     "ceiling": 5
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "subtype": "equipment",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "subtype": "equipment",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Boom // Bust": {
+  "oracleText": "Destroy target land you control and target land you don't control.\n//\nDestroy all lands.",
+  "typeLine": "Sorcery // Sorcery",
+  "manaValue": 8,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "land",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "all"
+      }
+     }
+    ],
+    "face": 1,
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "land",
+      "scope": "all"
+     }
+    }
+   }
+  ]
+ },
+ "Infernal Reckoning": {
+  "oracleText": "Exile target colorless creature. You gain life equal to its power.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "colors": [
+        "C"
+       ],
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "colors": [
+        "C"
+       ],
+       "type": "creature",
+       "scope": "target",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "its power",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Goblin Cratermaker": {
+  "oracleText": "{1}, Sacrifice this creature: Choose one —\n• This creature deals 2 damage to target creature.\n• Destroy target colorless nonland permanent.",
+  "typeLine": "Creature — Goblin Warrior",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{1}, Sacrifice this creature",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}",
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "cost": "{1}, Sacrifice this creature",
+    "clause": 1,
+    "repeats": "once",
+    "payment": {
+     "mana": "{1}",
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "cost": "",
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "colors": [
+        "C"
+       ],
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Overload": {
+  "oracleText": "Kicker {2} (You may pay an additional {2} as you cast this spell.)\nDestroy target artifact if its mana value is 2 or less. If this spell was kicked, destroy that artifact if its mana value is 5 or less instead.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "artifact",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "its mana value is 2 or less"
+    },
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Rending Vines": {
+  "oracleText": "Destroy target artifact or enchantment if its mana value is less than or equal to the number of cards in your hand.\nDraw a card.",
+  "typeLine": "Instant — Arcane",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "artifact",
+        "enchantment"
+       ],
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "its mana value is less than or equal to the number of cards in your hand"
+    },
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Glissa Sunseeker": {
+  "oracleText": "First strike\n{T}: Destroy target artifact if its mana value is equal to the amount of unspent mana you have.",
+  "typeLine": "Legendary Creature — Elf Warrior",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "artifact",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "its mana value is equal to the amount of unspent mana you have"
+    },
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    }
+   }
+  ]
+ },
+ "Deathbringer Liege": {
+  "oracleText": "Other white creatures you control get +1/+1.\nOther black creatures you control get +1/+1.\nWhenever you cast a white spell, you may tap target creature.\nWhenever you cast a black spell, you may destroy target creature if it's tapped.",
+  "typeLine": "Creature — Horror",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "scope": "all",
+      "other": true,
+      "colors": [
+       "W"
+      ]
+     }
+    },
+    "amount": "+1/+1",
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "scope": "all",
+      "other": true,
+      "colors": [
+       "B"
+      ]
+     }
+    },
+    "amount": "+1/+1",
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "cast"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "colors": [
+       "W"
+      ]
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "taps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "cast"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "colors": [
+       "B"
+      ]
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it's tapped"
+    },
+    "clause": 4,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Tsabo's Assassin": {
+  "oracleText": "{T}: Destroy target creature if it shares a color with the most common color among all permanents or a color tied for most common. A creature destroyed this way can't be regenerated.",
+  "typeLine": "Creature — Phyrexian Zombie Assassin",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it shares a color with the most common color among all permanents or a color tied for most common"
+    },
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    }
+   }
+  ]
+ },
+ "Arcane Denial": {
+  "oracleText": "Counter target spell. Its controller may draw up to two cards at the beginning of the next turn's upkeep.\nYou draw a card at the beginning of the next turn's upkeep.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "counter-spell",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "spell",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Devout Harpist": {
+  "oracleText": "{T}: Destroy target Aura attached to a creature.",
+  "typeLine": "Creature — Human",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "subtype": "aura",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    }
+   }
+  ]
+ },
+ "Arcum's Whistle": {
+  "oracleText": "{3}, {T}: Choose target non-Wall creature the active player has controlled continuously since the beginning of the turn. That player may pay {X}, where X is that creature's mana value. If they don't pay, the creature attacks this turn if able, and at the beginning of the next end step, destroy it if it didn't attack this turn. Activate only before attackers are declared.",
+  "typeLine": "Artifact",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{3}, {T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "notSubtype": [
+        "wall"
+       ],
+       "scope": "target"
+      }
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it didn't attack this turn"
+    },
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{3}",
+     "tap": true
+    }
+   }
+  ]
+ },
+ "Winter's Chill": {
+  "oracleText": "Cast this spell only during combat before blockers are declared.\nX can't be greater than the number of snow lands you control.\nChoose X target attacking creatures. For each of those creatures, its controller may pay {1} or {2}. If that player doesn't, destroy that creature at end of combat. If that player pays only {1}, prevent all combat damage that would be dealt to and dealt by that creature this combat.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "combat": "attacking",
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "prevention",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "prevention": {
+     "damage": "combat",
+     "amount": "all",
+     "duration": "this-turn"
+    },
+    "emits": [
+     {
+      "verb": "prevented",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "all"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "that player pays only {1}"
+    },
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    }
+   }
+  ]
+ },
+ "Inquisitor's Snare": {
+  "oracleText": "Prevent all damage target attacking or blocking creature would deal this turn. If that creature is black or red, destroy it.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "prevention",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "prevention": {
+     "damage": "any",
+     "amount": "all",
+     "duration": "this-turn"
+    },
+    "emits": [
+     {
+      "verb": "prevented",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "combat": "attacking",
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "that creature is black or red"
+    },
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
  }
 }

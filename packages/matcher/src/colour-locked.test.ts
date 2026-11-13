@@ -9,7 +9,6 @@ import { realCard } from "./removal-test-support.js";
 import { answerClassesOf } from "./rules.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 
-const mk = (name: string, oracleText: string, typeLine = "Instant"): DeckCard => ({ card: { name, oracleText, typeLine } as Card, tags: null });
 
 /** Owner 2026-11-13: a colour-locked answer counts, at a weaker weight (#1266 follow-up). */
 describe("colour-locked answers are marked (owner 2026-11-13)", () => {
@@ -21,7 +20,8 @@ describe("colour-locked answers are marked (owner 2026-11-13)", () => {
     for (const n of ["Combust", "King Crab", "Aether Gust"]) {
       const marks = answerClassesOf(realCard(n, { oracleText: "" }));
       expect(marks.size, n).toBeGreaterThan(0);
-      for (const [cls, m] of marks) expect(m.colourLocked, `${n} ${cls}`).toBe(true);
+      // Goblin Cratermaker's creature row is its 2-damage mode, which is uncoloured: only the colorless-permanent mode locks (artifact, enchantment, planeswalker).
+      for (const [cls, m] of marks) expect(m.colourLocked, `${n} ${cls}`).toBe(!(n === "Goblin Cratermaker" && cls === "creature"));
     }
   });
 
@@ -31,27 +31,49 @@ describe("colour-locked answers are marked (owner 2026-11-13)", () => {
     }
   });
 
-  test("printed path: a colour hoser is no longer dropped, it is marked (Pyroblast, Soul Rend)", () => {
-    const pyro = answerClassesOf(mk("Pyroblast", "Choose one —\n• Counter target spell if it's blue.\n• Destroy target permanent if it's blue."));
+  test("a colour hoser is no longer dropped, it is marked, read off the gate (Pyroblast, Soul Rend)", () => {
+    const pyro = answerClassesOf(realCard("Pyroblast"));
     expect([...pyro.keys()].sort()).toEqual(["artifact", "creature", "enchantment", "land", "planeswalker"]);
     for (const m of pyro.values()) expect(m.colourLocked).toBe(true);
-    const rend = answerClassesOf(mk("Soul Rend", "Destroy target creature if it's white. A creature destroyed this way can't be regenerated."));
+    const rend = answerClassesOf(realCard("Soul Rend"));
     expect(rend.get("creature")?.colourLocked).toBe(true);
+    // The same words in a Hydroblast: the colour is named in the gate, not on the subject.
+    for (const m of answerClassesOf(realCard("Hydroblast")).values()) expect(m.colourLocked).toBe(true);
   });
 
-  test("printed path: a plain destroy and a stat condition are not locked (Murder, Fatal Push)", () => {
-    expect(answerClassesOf(mk("Murder", "Destroy target creature.")).get("creature")!.colourLocked).toBe(false);
+  test("a gate that names the colour of \"that creature\" locks too (Inquisitor's Snare)", () => {
+    expect(answerClassesOf(realCard("Inquisitor's Snare")).get("creature")?.colourLocked).toBe(true);
+  });
+
+  test("a plain destroy and a stat condition are not locked; the stat condition is narrow (Murder, Fatal Push, Rending Vines)", () => {
+    expect(answerClassesOf(realCard("Murder")).get("creature")).toMatchObject({ colourLocked: false, narrow: false });
+    expect(answerClassesOf(realCard("Rending Vines")).get("artifact")).toMatchObject({ colourLocked: false, narrow: true });
+    expect(answerClassesOf(realCard("Glissa Sunseeker")).get("artifact")).toMatchObject({ colourLocked: false, narrow: true });
+    // CEILING: Fatal Push's revolt clause has no gate (its stat is on the subject), so the creature row is not narrow.
+    expect(answerClassesOf(realCard("Fatal Push")).get("creature")).toMatchObject({ colourLocked: false });
+  });
+
+  test("a target restricted to COLORLESS is colour-locked (owner 2026-11-13: Infernal Reckoning, Goblin Cratermaker)", () => {
+    for (const n of ["Infernal Reckoning", "Goblin Cratermaker"]) {
+      const marks = answerClassesOf(realCard(n));
+      expect(marks.size, n).toBeGreaterThan(0);
+      // Goblin Cratermaker's creature row is its 2-damage mode, which is uncoloured: only the colorless-permanent mode locks (artifact, enchantment, planeswalker).
+      for (const [cls, m] of marks) expect(m.colourLocked, `${n} ${cls}`).toBe(!(n === "Goblin Cratermaker" && cls === "creature"));
+    }
   });
 
   test("a card with a locked clause AND a plain clause for the class is not locked", () => {
-    const m = answerClassesOf(mk("Charm", "Choose one —\n• Destroy target creature.\n• Destroy target permanent if it's blue."));
+    // Pyroblast beside a plain Murder clause: Murder's destroy is in the same card.
+    const pyro = realCard("Pyroblast");
+    const murder = realCard("Murder");
+    const m = answerClassesOf({ ...pyro, tags: { ...pyro.tags!, abilities: [...pyro.tags!.abilities, ...murder.tags!.abilities.map((a) => ({ ...a, clause: 9 }))] } as never });
     expect(m.get("creature")!.colourLocked).toBe(false);
     expect(m.get("artifact")!.colourLocked).toBe(true);
   });
 });
 
 describe("colour-locked answers weigh NARROW_WEIGHT in the class counts", () => {
-  const cards = [mk("Murder", "Destroy target creature."), realCard("Combust", { oracleText: "" })];
+  const cards = [realCard("Murder"), realCard("Combust", { oracleText: "" })];
   test("detectAnswerClasses names the locked card and the weights add up", () => {
     const creature = detectAnswerClasses(cards).get("creature")!;
     expect([...creature.colourLocked]).toEqual(["Combust"]);
@@ -99,7 +121,7 @@ describe("deck-math: the answer row carries the weight", () => {
   const filler = (i: number): DeckCard => ({ card: { name: `f${i}`, typeLine: "Instant", oracleText: "", keywords: [], colors: [], manaValue: 3 } as Card, tags: null });
   const deckWith = (a: DeckCard[]): DeckCard[] => [...a, ...Array.from({ length: 100 - a.length }, (_, i) => filler(i))];
   test("a locked answer counts as a card, weighs half, and is less available than a plain one", () => {
-    const plain = computeDeckMath(deckWith([mk("Murder", "Destroy target creature.")]), H, [], 9).answers.find((a) => a.class === "creature")!;
+    const plain = computeDeckMath(deckWith([realCard("Murder")]), H, [], 9).answers.find((a) => a.class === "creature")!;
     const locked = computeDeckMath(deckWith([realCard("Combust", { oracleText: "" })]), H, [], 9).answers.find((a) => a.class === "creature")!;
     expect(plain).toMatchObject({ count: 1, weighted: 1 });
     expect(locked).toMatchObject({ count: 1, weighted: NARROW_WEIGHT, colourLocked: ["Combust"] });
@@ -107,7 +129,7 @@ describe("deck-math: the answer row carries the weight", () => {
   });
 });
 
-describe("printed path: a colour named inside the target phrase locks the class, read from the derived target (owner 2026-11-13)", () => {
+describe("a colour named on a derived target locks the class it reaches, and no other (owner 2026-11-13)", () => {
   const classes = (n: string) => answerClassesOf(realCard(n));
   test("\"target creature or planeswalker that's green or white\" locks both rows, as Fry's derived path does (Noxious Grasp, Flourishing Grapple)", () => {
     for (const n of ["Noxious Grasp", "Flourishing Grapple"]) {

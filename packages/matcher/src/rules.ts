@@ -4,7 +4,7 @@ import type { SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 import { classifyLand } from "./land-conditions.js";
 import { cardLines, isLoyaltyAbility, usableLoyalty } from "./mana-lines.js";
-import { BASIC_LAND_TYPES, countsAsLand, transformsIntoLand as transformsIntoLandCard } from "./typeline.js";
+import { BASIC_LAND_TYPE_SET, countsAsLand, transformsIntoLand as transformsIntoLandCard } from "./typeline.js";
 import { isTargetCondition } from "./target-condition.js";
 
 /** A single test against one card. The operator set is CLOSED on purpose: `oracle`, `effectKind`,
@@ -118,6 +118,11 @@ export type RuleClause =
        *  flicker with `returnIf` is not refused either: the return is on one "If ..." branch and the other keeps the exile (Unyielding Gatekeeper, Vindictive Triumph). A flicker of an OPPONENT's permanent is the "until this leaves the battlefield" shape (Banisher Priest, Glass Casket, Portable Hole), which derive also
        *  reads as a `flicker` and which is the commonest removal there is, so it stays. */
       notFlickered?: true;
+      /** Refuse an exile that COMES BACK, for the `exile` MARK (a blink is the least recursion-proof answer there is: Flickerwisp, Astral Slide, Long Road Home, Vizier of Deferment). `notFlickered` keeps a DELAYED return in the class count (owner 2026-09-25); the mark is stricter, and reads a `flicker` ability that
+       *  returns the permanent and is not an opponent's, not a one-branch return (`returnIf`: Unyielding Gatekeeper, Vindictive Triumph keep the exile on the other branch) and not the "until this leaves the battlefield" return (`delayedUntil: "source-leaves"`: Banisher Priest, Constable of the Realm): an IMMEDIATE one in the
+       *  SAME `clause` (the card's other mode keeps its exile: Settle Beyond Reality, Triad of Fates), or a return at the next end step or upkeep ANYWHERE on the card, because "At the beginning of the next end step, return ..." is a clause of its own (Long Road Home, Phelia). CEILING: the end-step return is read card-wide, so a card with a blink mode beside an
+       *  until-leaves mode (Angel of Condemnation) carries no mark; the printed pattern vetoed the whole card too. */
+      notBlinkedBack?: true;
       /** Refuse an ability that is PAID by exiling or discarding THIS card from your hand ("{3}, Exile this card from your hand: Target land gains ...": Emrakul the Exigent Doom, Shattered Seraph, Spara's
        *  Adjudicators). Derive reads the exile in the cost as an exile of the target. */
       notFromHandCost?: true;
@@ -136,6 +141,9 @@ export type RuleClause =
       notViaCraft?: true;
       /** Refuse an EDICT emit (`SubjectFilter.edict`): "Target player sacrifices two creatures" forces a choice on one named player and is not a wipe (#1266, `boardWipe.text`). */
       notEdict?: true;
+      /** Refuse an emit that is aimed at a PLAYER'S LANDS, not at a land (owner 2026-11-13): a land-only subject whose ability states no count ("Destroy all lands target player controls": Ajani Vengeant -7) or a count of three or more (`stax.landDenial`'s threshold: Burning of Xinye's "target opponent destroys four lands"). A land answer is a TARGETED land kill; these are stax.
+       *  CEILING: derive scopes "target player controls" as a target of the lands and gives no other cue, so the missing count is the signal; a mass kill that states a count below three, or a targeted land kill whose count derive drops, reads the other way. */
+      notMassLand?: true;
       /** Refuse an emit whose subject is LANDS ONLY (`landOnlySubject`: "Destroy all lands", "each player sacrifices a land", "nonbasic lands"): mass land denial is stax, not a board wipe (owner 2026-11-06, `boardWipe.text`). A subject that also names another type ("artifacts, creatures, and lands": Jokulhaups) is not land-only. */
       notLandOnly?: true;
       /** Require an emit whose subject is LANDS ONLY (see `notLandOnly`): the shape `stax.landDenial` reads. */
@@ -167,7 +175,9 @@ export type RuleClause =
       /** The emitting ability's amount is a PRINTED NUMBER of at least N (X never matches: it may be one land): `effectKind.amountAtLeast` for an `emits` clause, but strict. A target land kill of FOUR lands is land denial (owner 2026-11-13, Burning of Xinye); one of ONE land (Stone Rain, amount "1") is not, and the in-between sizes ("two target lands", "X target lands") are NEEDS RULING. A missing amount does not match. */
       amountAtLeast?: number;
       /** Refuse an emit the victim may decline (`GameEvent.victimMay`): "its controller may sacrifice it" (Star Athlete, Livio), "unless that player sacrifices it" (Enchanter's Bane). It is the opponent's choice with an
-       *  alternative, which is not removal (#1295). */
+       *  alternative, which is not removal (#1295).
+       *  CEILING: derive misses the victim-may cue on a PAY-OR-DIE destroy, so Arcum's Whistle ("That player may pay {X} ... destroy it if it didn't attack this turn") and Winter's Chill ("its controller may pay {1} or {2}. If that player doesn't, destroy that creature") carry no `victimMay`
+       *  and count as `removal.targeted` and as a creature answer alike, against the owner's 2026-10-22 ruling that a victim-may effect (Requiem Monolith) is not removal. Both rules read the same emit, so they stay consistent; the fix is in derive. */
       notVictimMay?: true;
       /** Refuse an emit about THE CARD ITSELF (`subject.self`): "Exile this card from your graveyard" (renew, channel-like costs) moves the card and is no exile of anything else (#1266, graveyardHate). */
       notSelf?: true;
@@ -176,6 +186,8 @@ export type RuleClause =
       abilityKind?: string[];
       /** The emit's subject can be a permanent of this ANSWER CLASS, as `effectKind.reachesClass`. */
       reachesClass?: string;
+      /** With `reachesClass`: a BARE SUBTYPE ("Aura", "Equipment", "Saga") names its class (`BARE_SUBTYPE_CLASS`). Opt-in, on the destroy and exile answers only; the tuck, bounce and damage answers still read a bare subtype as no class (Seedling Charm, NEEDS RULING). */
+      bareSubtype?: true;
       /** The emit is a TUCK (`GameEvent.tuck`: a put into a library from the battlefield; Condemn, Oust). A shuffle is its own verb. */
       tuck?: true }
   /** The card's `characteristics.enchants` (the Enchant line, #1315) can be a creature: the filter, or an `anyOf` branch of it ("creature or Vehicle", "artifact or creature"), names
@@ -524,11 +536,23 @@ function classTypes(s: { type?: string | string[]; allTypes?: string[]; anyOf?: 
   if (s.allTypes?.includes("creature") === true) return ["creature"];
   return [...[s.type ?? []].flat(), ...(s.anyOf ?? []).flatMap((b) => [b.type ?? []].flat())];
 }
+/** A BARE SUBTYPE NAMES ITS CLASS, NARROWLY (owner 2026-11-13, #1266): "Destroy target Aura attached to a creature" (Devout Harpist, Piety Charm) answers enchantments, and only the ones that are Auras. Included: Aura and Saga (enchantment), Equipment (artifact). A subject
+ *  that names a type beside the subtype ("target artifact creature") is not bare. The class is the TARGET's: "attached to a creature" names the host and is no creature class. A bare subtype is marked like a colour lock, so it counts at NARROW_WEIGHT (`bareSubtypeSubject`). */
+const BARE_SUBTYPE_CLASS: Record<string, string> = { aura: "enchantment", saga: "enchantment", equipment: "artifact" };
+function bareSubtypeClasses(b: { type?: string | readonly string[]; subtype?: unknown; allTypes?: readonly string[] }, outerType?: string | readonly string[]): string[] {
+  if ([b.type ?? outerType ?? []].flat().length > 0 || (b.allTypes ?? []).length > 0) return [];
+  return [b.subtype ?? []].flat().flatMap((t) => BARE_SUBTYPE_CLASS[String(t).toLowerCase()] ?? []);
+}
+const bareSubtypeSubject = (b: { type?: string | readonly string[]; subtype?: unknown; allTypes?: readonly string[] }, outerType?: string | readonly string[]): boolean => bareSubtypeClasses(b, outerType).length > 0;
+
 /** Can this subject be a permanent of answer class `cls`? A named type, or an unrestricted `permanent` (every class; "nonland permanent" is not a land).
  *  A subject with `umbrella: "permanent"` ("target spell or permanent": Venser, Shaper Savant, Jeskai Revelation) lists the types derive expands the umbrella to, and that list has no land; the umbrella itself is every permanent, so on the battlefield it reaches a land
  *  too (#1266). Not when something narrows it (`NARROWS_PERMANENT`: Aether Gust's colours, Divide by Zero's mana value 1 or greater, which a land has neither of), and "nonland permanent" is `notType: [land]`, no umbrella. */
-function subjectReachesClass(s: { type?: string | string[]; allTypes?: string[]; notType?: string[]; umbrella?: string; zone?: string; fromZone?: string; anyOf?: { type?: string | string[] }[] }, cls: string): boolean {
+function subjectReachesClass(bare: boolean, s: { type?: string | string[]; subtype?: unknown; allTypes?: string[]; notType?: string[]; umbrella?: string; zone?: string; fromZone?: string; anyOf?: { type?: string | string[]; subtype?: unknown }[] }, cls: string): boolean {
   const types = classTypes(s);
+  // A BASIC LAND TYPE NAMES A LAND (owner 2026-11-13, #1266): "Destroy target Forest, green enchantment, or green planeswalker" (Nissa's Defeat), "Destroy target Scarecrow or Plains" (Boggart Arsonists). Whole subtype words; "forestwalk" is no subtype.
+  if (cls === "land" && [s, ...(s.anyOf ?? [])].some((b) => [b.subtype ?? []].flat().some((t) => BASIC_LAND_TYPE_SET.has(String(t).toLowerCase())))) return true;
+  if (bare && [s, ...(s.anyOf ?? [])].some((b) => bareSubtypeClasses(b, s.type).includes(cls))) return true;
   if (types.includes(cls) || (types.includes("permanent") && (cls !== "land" || !(s.notType ?? []).includes("land")))) return true;
   return cls === "land" && s.umbrella === "permanent" && (s.zone ?? s.fromZone ?? "battlefield") === "battlefield"
     && !NARROWS_PERMANENT.some((k) => (s as Record<string, unknown>)[k] !== undefined);
@@ -639,7 +663,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.netZero !== true || a.netZero === true)
         && (clause.grantsAny === undefined || (a.grants ?? []).some((g) => clause.grantsAny!.includes(g.toLowerCase())))
         && (clause.notGrantsSelf !== true || a.grantsSelf !== true)
-        && (clause.reachesClass === undefined || (answerSubject(a) !== undefined && subjectReachesClass(answerSubject(a)!, clause.reachesClass)))
+        && (clause.reachesClass === undefined || (answerSubject(a) !== undefined && subjectReachesClass(false, answerSubject(a)!, clause.reachesClass)))
         && (clause.untyped !== true || (answerSubject(a) !== undefined && classTypes(answerSubject(a)!).length === 0 && subjectReachesPermanent(answerSubject(a)!)))
         && (clause.amountAtLeast === undefined || amountAtLeast(a.amount, clause.amountAtLeast)));
     // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive mislabels some cards, so the role is wrong on them by name.
@@ -671,6 +695,8 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.notCountedOppKill !== true || e.subject.control !== "opp" || !KILL_VERBS.includes(e.verb) || ((a.amount === undefined || !/^\d+$/.test(a.amount)) && (e.subject.selection !== "counted" || sacrificesHalf(dc.card.oracleText))))
           && (clause.notBesideTargetedKill !== true || !KILL_VERBS.includes(e.verb) || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause
             && (f.emits ?? []).some((g) => g.subject.scope === "target" && KILL_VERBS.includes(g.verb))))
+          && (clause.notBlinkedBack !== true || !(dc.tags?.abilities ?? []).some((f) => f.effect.kind === "flicker" && f.returnIf !== true && f.effect.subject?.control !== "opp"
+            && (f.delayedUntil === undefined ? f.clause === a.clause : f.delayedUntil === "next-end-step" || f.delayedUntil === "next-upkeep")))
           && (clause.notVictimMay !== true || e.victimMay !== true)
           && (clause.amountAtLeast === undefined || (a.amount !== undefined && /^\d+$/.test(a.amount) && Number(a.amount) >= clause.amountAtLeast))
           && (clause.notOwnedByYou !== true || e.subject.owner !== "you")
@@ -682,13 +708,14 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.zone === undefined || clause.zone.includes(e.subject.zone ?? null))
           && (clause.type === undefined || (subjectTypes(e.subject).length > 0 && subjectTypes(e.subject).every((t) => clause.type!.includes(t))))
           && (clause.notLandOnly !== true || !landOnlySubject(e.subject))
+          && (clause.notMassLand !== true || !landOnlySubject(e.subject) || (a.amount !== undefined && !(/^\d+$/.test(a.amount) && Number(a.amount) >= 3)))
           && (clause.landOnly !== true || landOnlySubject(e.subject))
           && (clause.includesLand !== true || includesLandSubject(e.subject))
           && (clause.typeAny === undefined || subjectTypes(e.subject).some((t) => clause.typeAny!.includes(t)))
           && (clause.scope === undefined || clause.scope.includes(e.subject.scope ?? null))
           && (clause.fromZone === undefined || clause.fromZone.includes(e.subject.fromZone ?? null))
           && (clause.counter === undefined || (e.subject.counter !== undefined && clause.counter.includes(e.subject.counter)))
-          && (clause.reachesClass === undefined || subjectReachesClass(e.subject, clause.reachesClass))
+          && (clause.reachesClass === undefined || subjectReachesClass(clause.bareSubtype === true, e.subject, clause.reachesClass))
           && (clause.tuck !== true || e.tuck === true))
         && (clause.repeats === undefined || clause.repeats.includes(a.repeats ?? null)));
     case "subtype":
@@ -755,14 +782,6 @@ const KNOWN_CLASSES: Record<string, true> = {
   "any target": true,
 };
 
-/** A COLOUR HOSER ANSWERS ONE COLOUR, NOT A KIND OF PERMANENT (issue #581). Pyroblast's "destroy
- *  target permanent if it's blue" answers only blue permanents. OWNER 2026-11-13, reversing the colour part of the 2026-10-27 ruling (#1357): it still COUNTS as an answer of every class it names, marked `colourLocked`, and
- *  weighs `NARROW_WEIGHT` (0.5) in every consumer (class counts, P(answer by turn T), answer coverage). It used to be dropped here. "Nonblack" is not caught: Doom Blade answers nearly every creature. */
-const COLOUR_HOSER = /\bif it'?s (?:white|blue|black|red|green)\b|^(?:white|blue|black|red|green)\b/;
-
-/** A basic land type as a whole word, in a removal phrase. */
-const BASIC_LAND_TYPE_WORD = new RegExp(`\\b(?:${BASIC_LAND_TYPES.join("|")})s?\\b`);
-
 /** What a matched rule says about the KIND of answer it contributes, per class.
  *
  *  Both default to false, which is the ordinary case: a destroy is an answer that is not
@@ -782,53 +801,49 @@ export interface AnswerMarks {
   colourLocked: boolean;
 }
 
-/** Does this subject name a colour the target must have? `colors` on the subject, or on EVERY branch of its `anyOf` (derive writes "white or blue creature" as `colors: [W, U]`). CEILING: a CHOSEN colour (`chosenColor`) is not read as a lock. */
-function colourLockedSubject(s: { colors?: readonly string[]; anyOf?: { colors?: readonly string[] }[] } | undefined): boolean {
+/** Does this subject name a colour the target must have? `colors` on the subject, or on EVERY branch of its `anyOf` (derive writes "white or blue creature" as `colors: [W, U]`). With `cls`, only the branches that can be a permanent of that answer class are judged: Nissa's Defeat
+ *  ("target Forest, green enchantment, or green planeswalker") is locked for enchantment and planeswalker and not for land. "Colorless" is stored as colour C and LOCKS too (owner 2026-11-13: Infernal Reckoning, Goblin Cratermaker).
+ *  CEILING: a CHOSEN colour (`chosenColor`) is not read as a lock. */
+function colourLockedSubject(s: { colors?: readonly string[]; anyOf?: { type?: string | readonly string[]; subtype?: unknown; colors?: readonly string[] }[]; type?: string | readonly string[]; subtype?: unknown; allTypes?: readonly string[] } | undefined, cls?: string): boolean {
   if (s === undefined) return false;
-  if ((s.colors ?? []).length > 0) return true;
-  return (s.anyOf ?? []).length > 0 && s.anyOf!.every((b) => (b.colors ?? []).length > 0);
+  // A BARE SUBTYPE ("Aura") is locked the same way, to weigh NARROW_WEIGHT (owner 2026-11-13).
+  const coloured = (b: { type?: string | readonly string[]; subtype?: unknown; colors?: readonly string[] }): boolean => (b.colors ?? []).length > 0 || bareSubtypeSubject(b, s.type);
+  if (coloured(s)) return true;
+  const branches = (s.anyOf ?? []).filter((b) => cls === undefined || subjectReachesClass(true, { ...b, type: (b.type ?? s.type) as string | string[] | undefined }, cls));
+  return branches.length > 0 && branches.every(coloured);
 }
+
+/** A COLOUR CONDITION ON THE TARGET, read off the gate (Pyroblast "Destroy target permanent if it's blue", Soul Rend "if it's white"): derive keeps it as the ability's `gate` and puts no colour on the subject. */
+const COLOUR_GATE = /^(?:it'?s|that (?:creature|permanent) is) (?:white|blue|black|red|green|colou?rless)\b/;
+const colourGated = (dc: DeckCard, a: { gate?: { text: string } }): boolean => {
+  if (a.gate === undefined) return false;
+  const gate = a.gate.text.toLowerCase().replace(/\u2019/g, "'");
+  if (!COLOUR_GATE.test(gate)) return false;
+  if (isTargetCondition(ownText(dc.card), a.gate.text)) return true;
+  // "that creature is black or red" (Inquisitor's Snare) points BACK at a target named in an earlier sentence ("Prevent all damage target attacking or blocking creature would deal this turn."). CEILING: any "target" before the gate in the card's own text counts as that antecedent.
+  if (!gate.startsWith("that ")) return false;
+  const text = ownText(dc.card).toLowerCase().replace(/\u2019/g, "'");
+  const at = text.indexOf(gate);
+  return at > 0 && /\btarget\b/.test(text.slice(0, at));
+};
 
 type TargetSubject = { type?: string | readonly string[]; colors?: readonly string[]; control?: string; anyOf?: TargetSubject[] };
-const typesOf = (t: TargetSubject["type"]): readonly string[] => (t === undefined ? [] : typeof t === "string" ? [t] : t);
 
-/** Is the card's DERIVED target for `word` (a class word: creature, planeswalker...) colour-restricted? For "target creature or planeswalker that's green or white" (Noxious Grasp), "target Forest, green enchantment, or green planeswalker" (Nissa's Defeat), "target Plains and target white creature" (Reign of Chaos): the printed phrase does not start with the colour, but derive stores the colours on the target emit. Every clause whose target (not yours) can reach `word` must have it restricted, and at least one such clause must exist: a Forest branch of Nissa's Defeat does not reach "enchantment", so it does not unlock that row. CEILING: any non-yours target naming the type counts, whatever its verb, and one coloured target in a clause covers its uncoloured repeats, so "Destroy target creature. Target white creature gets +1/+1." in ONE clause reads the creature row as locked. */
-function derivedTargetLocked(dc: DeckCard, word: string): boolean {
-  // Per CLAUSE: "...that's red or white loses all abilities. Target creature you control deals damage to that permanent" derives the colours on the first ability and an uncoloured copy of the same target on the second (Flourishing Grapple).
-  const clauses = new Map<number, boolean>();
-  for (const a of dc.tags?.abilities ?? []) {
-    const subjects = [a.effect.subject, ...(a.emits ?? []).map((e) => e.subject)] as (TargetSubject & { scope?: string })[];
-    for (const s of subjects) {
-      if (s === undefined || s.scope !== "target" || s.control === "you") continue;
-      const branches = s.anyOf !== undefined && s.anyOf.length > 0 ? s.anyOf.map((b) => ({ ...b, type: b.type ?? s.type, colors: b.colors ?? s.colors })) : [s];
-      for (const b of branches) {
-        if (!typesOf(b.type).includes(word)) continue;
-        const key = a.clause ?? 0;
-        // "colorless" is stored as colour C and is not a colour: Infernal Reckoning, Goblin Cratermaker stay unlocked until the owner rules on it.
-        const coloured = (b.colors ?? []).some((c) => c !== "C");
-        // a branch with no colour unlocks the clause, unless the same clause already coloured THAT branch; an anyOf branch is judged alone
-        if (s.anyOf !== undefined && s.anyOf.length > 0) clauses.set(key, (clauses.get(key) ?? true) && coloured);
-        else clauses.set(key, (clauses.get(key) ?? false) || coloured);
-      }
-    }
-  }
-  return clauses.size > 0 && [...clauses.values()].every(Boolean);
-}
-
-/** The card with every ability whose answer subject (the effect's, the emits') is colour-restricted taken out. A DERIVED answer rule that still matches this card is not colour-locked (owner 2026-11-13). Same card when nothing is
- *  restricted, so the usual case pays no second match. CEILING: the ability is taken out whole, so a card whose ONE ability carries a colour-restricted emit beside an unrestricted answer emit reads as locked, and an uncoloured target of the same types in the same clause is taken out with it. */
-function withoutColourLockedAbilities(dc: DeckCard): { dc: DeckCard; any: boolean } {
+/** The card with every ability taken out that `restricted` names. A DERIVED answer rule that still matches this card is not restricted (colour-locked, or narrow) for that class (owner 2026-11-13). Same card when nothing is restricted, so the usual case pays no second
+ *  match. CEILING: the ability is taken out whole, so a card whose ONE ability carries a restricted emit beside an unrestricted answer emit reads as restricted, and an uncoloured target of the same types in the same clause is taken out with it. */
+function withoutAbilities(dc: DeckCard, restricted: (a: NonNullable<DeckCard["tags"]>["abilities"][number]) => boolean, sameTarget: (s: TargetSubject) => boolean): { dc: DeckCard; any: boolean } {
   const abilities = dc.tags?.abilities ?? [];
-  const locked = (a: (typeof abilities)[number]): boolean =>
-    colourLockedSubject(a.effect.subject as never) || (a.emits ?? []).some((e) => e.subject.scope === "target" && colourLockedSubject(e.subject as never));
-  if (!abilities.some(locked)) return { dc, any: false };
+  if (!abilities.some(restricted)) return { dc, any: false };
+  const targets = (a: (typeof abilities)[number]): (TargetSubject & { scope?: string })[] =>
+    ([a.effect.subject, ...(a.emits ?? []).map((e) => e.subject)] as (TargetSubject & { scope?: string } | undefined)[]).filter((s): s is TargetSubject & { scope?: string } => s?.scope === "target");
   // An ability in the SAME CLAUSE aimed at the same types is the same target again, by back-reference ("...that's red or white loses all abilities. Target creature you control deals damage to that permanent": Flourishing Grapple).
-  const lockedKeys = new Set(abilities.filter(locked).map((a) => `${a.clause ?? 0}|${[a.effect.subject, ...(a.emits ?? []).map((e) => e.subject)].filter((s) => s?.scope === "target" && colourLockedSubject(s as never)).map((s) => JSON.stringify(s!.type ?? null)).join()}`));
+  const key = (a: (typeof abilities)[number], s: TargetSubject): string => `${a.clause ?? 0}|${JSON.stringify(s.type ?? null)}`;
+  const restrictedKeys = new Set(abilities.filter(restricted).flatMap((a) => targets(a).filter(sameTarget).map((s) => key(a, s))));
   const sameTargetAgain = (a: (typeof abilities)[number]): boolean => {
-    const ts = [a.effect.subject, ...(a.emits ?? []).map((e) => e.subject)].filter((s) => s?.scope === "target" && s.control !== "you" && !colourLockedSubject(s as never));
-    return ts.length > 0 && ts.every((s) => lockedKeys.has(`${a.clause ?? 0}|${JSON.stringify(s!.type ?? null)}`));
+    const ts = targets(a).filter((s) => s.control !== "you" && !sameTarget(s));
+    return ts.length > 0 && ts.every((s) => restrictedKeys.has(key(a, s)));
   };
-  return { dc: { ...dc, tags: { ...dc.tags!, abilities: abilities.filter((a) => !locked(a) && !sameTargetAgain(a)) } }, any: true };
+  return { dc: { ...dc, tags: { ...dc.tags!, abilities: abilities.filter((a) => !restricted(a) && !sameTargetAgain(a)) } }, any: true };
 }
 
 /** Which answer classes a card covers, per `answerClass` / `answerClassFrom`.
@@ -849,65 +864,34 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
     if (mode === "recurring") m.recurring = true;
     out.set(cls, m);
   };
-  const targetConditions = (dc.tags?.abilities ?? []).flatMap((a) => (a.gate !== undefined && isTargetCondition(ownText(dc.card), a.gate.text) ? [a.gate.text.toLowerCase()] : []));
   for (const rule of set.rules) {
     if (!ruleMatches(rule, dc, set)) continue;
     if (rule.answerClass) {
-      // DERIVED RULES: locked when the rule no longer matches once the colour-restricted abilities are taken out (owner 2026-11-13).
-      const plain = withoutColourLockedAbilities(dc);
-      mark(rule.answerClass, rule.mode, false, plain.any && !ruleMatches(rule, plain.dc, set));
+      // DERIVED RULES: locked when the rule no longer matches once the colour-restricted abilities are taken out, narrow when it no longer matches once the abilities with a condition on their target are (owner 2026-11-13; refinement 2026-10-27).
+      const cls = rule.answerClass;
+      const colour = withoutAbilities(dc, (a) => colourGated(dc, a) || colourLockedSubject(a.effect.subject as never, cls)
+        || (a.emits ?? []).some((e) => e.subject.scope === "target" && colourLockedSubject(e.subject as never, cls)), (t) => colourLockedSubject(t as never, cls));
+      const conditioned = withoutAbilities(dc, (a) => a.gate !== undefined && isTargetCondition(ownText(dc.card), a.gate.text), () => true);
+      mark(cls, rule.mode, conditioned.any && !ruleMatches(rule, conditioned.dc, set), colour.any && !ruleMatches(rule, colour.dc, set));
     }
     if (rule.answerClassFrom) {
-      // Global sweep, not a single test: "destroy target artifact or enchantment" and cards with
-      // two removal sentences each cover several classes, and one match would keep only the first.
+      // THE ONE PRINTED CLASS READER LEFT: `answers.neutralise`, whose classes are the Aura's Enchant line (Imprisoned in the Moon: creature, land or planeswalker). Derive cannot tell "loses all abilities" from "its activated abilities can't be
+      // activated" (both are `ability-loss`: Arrest would join, 33 creature gains) and reads "loses all abilities" as a keyword grant on 7 Auras (Mystic Subdual, Sugar Coat, Honest Work), so the Aura stays on its printed words (#1266).
+      // The typed destroy / exile answers moved to derived rules (`answers.typed.*`, Rules 51).
       const re = new RegExp(set.patterns[rule.answerClassFrom], "gi");
       for (const m of ownText(dc.card).matchAll(re)) {
-        // The capture is the whole OBJECT PHRASE after "target", not one type word: "destroy
-        // target artifact or enchantment" answers two classes, and a single-word capture keeps
-        // whichever came first. Every class named anywhere in the phrase counts.
+        // The capture is the whole OBJECT PHRASE: "Enchant creature, land, or planeswalker" answers three classes. Every class named anywhere in the phrase counts.
         const phrase = m.groups?.class?.toLowerCase();
         if (!phrase) continue;
-        // An answer aims at something you do NOT control. "Exile target creature you control, then
-        // return it" is a blink (Essence Flux, Ghostly Flicker) and reads as removal to every
-        // pattern here; measured on the calibration decks it was inflating Inalla's creature
-        // answers from 3 to 4. "you don't control" does not contain "you control", so the negation
-        // survives this check without needing its own clause.
-        if (/\byou control\b/.test(phrase)) continue;
-        // "You own" is the same claim in different words -- a permanent can be controlled by
-        // someone else while still owned by you, and a planeswalker's own-permanent blink says it
-        // that way (Venser, the Sojourner's +2; Slip On the Ring). EVERY mode, not only exile (owner
-        // ruling 2026-09-27, issue #531): Staff of Compleation's "destroy target permanent you own"
-        // answers nothing an opponent has -- it is played to recur your own permanents. It used to be
-        // kept as a "real self-destroy" in every class, which put it on the "Answers lands" shelf.
-        if (/\byou own\b/.test(phrase)) continue;
-        // AN IMMEDIATE FLICKER ANSWERS NOTHING (owner ruling 2026-09-25): "exile target X, then
-        // return it to the battlefield" puts it straight back, so the clause is skipped -- per
-        // CLAUSE, not per card, so a modal card's real removal mode still counts. A DELAYED return
-        // ("At the beginning of the next end step, return ...") is its own sentence and keeps its
-        // place in `count`, as the answer-modes spec rules: it answers the board for a turn.
-        const sentence = ownText(dc.card).slice(m.index ?? 0).split(/[.\n]/)[0] ?? "";
-        if (new RegExp(set.patterns.exileThenReturns, "i").test(sentence)) continue;
-        // ...and a destroy whose CONTROLLER gets copies back answers nothing either (owner ruling
-        // 2026-09-27, #513): Saw in Half is played on your own creature. The copies are the next
-        // sentence, so the card's text is asked, not the clause. Fractured Identity hands the copies
-        // to everyone ELSE and stays an answer.
+        // An Aura only YOU can wear ("Enchant creature you control", "you own") answers nothing an opponent has.
+        if (/\byou control\b/.test(phrase) || /\byou own\b/.test(phrase)) continue;
+        // ...and one whose CONTROLLER gets copies back answers nothing either (owner ruling 2026-09-27, #513).
         if (new RegExp(set.patterns.controllerGetsCopies, "i").test(dc.card.oracleText ?? "")) continue;
-        // OWNER 2026-11-13: a colour hoser counts, marked, at NARROW_WEIGHT (it was dropped here: Pyroblast, Soul Rend).
-        const phraseLocked = COLOUR_HOSER.test(phrase.replace(/\u2019/g, "'"));
-        // A STAT OR STATE CONDITION ON THE TARGET STILL COVERS ITS CLASS, MARKED NARROW (owner refinement 2026-10-27 of ruling C): Fatal Push's "if it has mana value 2 or less", Deathbringer Liege's "if it's tapped",
-        // Prohibit's mana value. A COLOUR condition (`COLOUR_HOSER` above: Pyroblast, Soul Rend) counts too, as `colourLocked` (owner 2026-11-13).
-        const narrow = targetConditions.some((c) => sentence.toLowerCase().includes(c));
-        // A BASIC LAND TYPE NAMES A LAND (owner 2026-11-13, #1266): "Destroy X target Mountains" (Volcanic Eruption) answers lands, as "target lands" does. Whole words: "forestwalk" is not a Forest.
-        if (BASIC_LAND_TYPE_WORD.test(phrase) && !/\bnonland\b/.test(phrase)) for (const cls of set.answerClassAliases.land ?? ["land"]) mark(cls, rule.mode, narrow, phraseLocked || derivedTargetLocked(dc, cls));
         for (const word of Object.keys(KNOWN_CLASSES)) {
-          // Plural too: "destroy two target creatures" (Curtains' Call) and "exile two target
-          // permanents" (Ulamog) read as no answer at all when only the singular matched (issue #581).
           if (!new RegExp(`\\b${word}s?\\b`).test(phrase)) continue;
           for (const cls of set.answerClassAliases[word] ?? [word]) {
-            // "nonland permanent" answers everything except a land, and `permanent` alone expands
-            // to all five. Without this a Pongify reads as land interaction.
             if (cls === "land" && /\bnonland\b/.test(phrase)) continue;
-            mark(cls, rule.mode, narrow, phraseLocked || derivedTargetLocked(dc, cls));
+            mark(cls, rule.mode);
           }
         }
       }
