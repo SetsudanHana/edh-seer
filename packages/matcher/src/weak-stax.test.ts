@@ -27,6 +27,11 @@ describe("weak stax (owner 2026-11-13)", () => {
     expect(detectWeakRoles([both]).get("stax")?.has("Urza's Sylex") ?? false).toBe(false);
   });
 
+  test("the printed stax pattern is its strong words plus its weak ones, so one oracle op reads both", () => {
+    const p = (rules as { patterns: Record<string, string> }).patterns;
+    expect(p.stax).toBe(`${p.staxStrong}|${p.staxWeak}`);
+  });
+
   test("the rule text no longer carries a CEILING for it", () => {
     const stax = (rules as { rules: { id: string; why?: string }[] }).rules.filter((r) => r.id.startsWith("stax"));
     expect(stax.map((r) => r.why ?? "").join(" ")).not.toMatch(/no weak-stax level/);

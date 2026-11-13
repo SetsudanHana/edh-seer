@@ -259,8 +259,8 @@ export interface Rule {
   /** What KIND of answer this rule contributes, where the kind changes whether it answers at all
    *  (design §3.1). Absent = an ordinary one-shot answer, which is most of them. */
   mode?: "exile" | "recurring";
-  /** A WEAK RULE (owner 2026-11-13, `NARROW_WEIGHT`): a card that fills `category` ONLY through weak rules is a plain member that counts `NARROW_WEIGHT` where the role is summed (`detectWeakRoles`). Only `stax.weak` today. */
-  weak?: true;
+  /** WEAK PRINTED WORDS (owner 2026-11-13, `NARROW_WEIGHT`): the rule's `oracle` pattern is `strong` plus `weak` (two named patterns), and a card that matches `weak` and NOT `strong` fills `category` weakly (`weakByOracle`). Only `stax.text` today. */
+  weakOracle?: { weak: string; strong: string };
   /** ALL must hold. */
   match: RuleClause[];
   /** NONE may hold. */
@@ -725,6 +725,14 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
 }
 
 const transformsIntoLand = (dc: DeckCard): boolean => transformsIntoLandCard(dc.card);
+
+/** Does this card fill the rule's category only through the rule's WEAK printed words (`Rule.weakOracle`)? Urza's Sylex for `stax.text`. False for a rule without one, and for a card that also reads a strong alternative. */
+export function weakByOracle(rule: Rule, dc: DeckCard, set: RuleSet = loadRules()): boolean {
+  const w = rule.weakOracle;
+  if (w === undefined) return false;
+  const text = ownText(dc.card);
+  return pattern(set, w.weak).test(text) && !pattern(set, w.strong).test(text);
+}
 
 export function ruleMatches(rule: Rule, dc: DeckCard, set: RuleSet = loadRules()): boolean {
   // A CARD THAT TRANSFORMS INTO A LAND IS NEVER RAMP (owner 2026-10-10, #1174): "things that do

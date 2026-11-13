@@ -34,7 +34,8 @@
     "impulseDraw": "exile the top (?:\\w+ )?cards? of your library[\\s\\S]*?you may play",
     "neutraliseAura": "(?:^|\\n)enchant (?<class>[^\\n]+)(?=[\\s\\S]*?enchanted (?:creature|permanent)[^.]*?(?:loses all (?:other card types and )?abilities|is a colou?rless land))",
     "ownSpellsCostMore": "\\bspells you cast cost (?:\\{[^}]+\\})+ more\\b",
-    "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't|(?:destroy|exile|return) all (?:(?:non)?(?:basic|snow) )?(?:lands?|forests?|islands?|mountains?|plains|swamps?) (?:target|that) (?:player|opponent) (?:controls|owns)",
+    "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't|(?:destroy|exile|return) all (?:(?:non)?(?:basic|snow) )?(?:lands?|forests?|islands?|mountains?|plains|swamps?) (?:target|that) (?:player|opponent) (?:controls|owns)|each player chooses \\w+ lands they control\\. destroy all other permanents",
+    "staxStrong": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't|(?:destroy|exile|return) all (?:(?:non)?(?:basic|snow) )?(?:lands?|forests?|islands?|mountains?|plains|swamps?) (?:target|that) (?:player|opponent) (?:controls|owns)",
     "staxWeak": "each player chooses \\w+ lands they control\\. destroy all other permanents",
     "typedRemoval": "(?:destroy|exile)[^.:]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
     "exileRemoval": "exile[^.:]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
@@ -416,17 +417,10 @@
     {
       "id": "stax.text",
       "category": "stax",
+      "weakOracle": { "weak": "staxWeak", "strong": "staxStrong" },
       "match": [{ "op": "oracle", "pattern": "stax" }],
       "not": [{ "op": "countsAsLand" }],
-      "why": "PRINTED STAX: a permanent that does not untap, a tax on spells, a ban on what players can do. DESTROYING ALL LANDS OF ONE TARGET PLAYER IS STAX (owner 2026-11-13, Rules 48): Ajani Vengeant's -7, \"Destroy all lands target player controls\", is read here from the printed words (`destroy|exile|return all [basic|snow] lands target|that player|opponent controls|owns`), because derive scopes it `target` like Stone Rain (a single-land kill, which is NOT stax) and stores no quantifier to tell them apart. Only Ajani Vengeant matches in the corpus (Mongo regex scan, 2026-11-13)."
-    },
-    {
-      "id": "stax.weak",
-      "category": "stax",
-      "weak": true,
-      "match": [{ "op": "oracle", "pattern": "staxWeak" }],
-      "not": [{ "op": "countsAsLand" }],
-      "why": "WEAK STAX (owner 2026-11-13, Rules 50): a card whose only stax is this rule is a stax member that COUNTS `NARROW_WEIGHT` (0.5, the colour-locked answers' weight) in the stax count, never 1 (`detectWeakRoles`; membership stays plain). Urza's Sylex, \"Each player chooses six lands they control. Destroy all other permanents.\", is the case. It stays a board wipe and gains role:stax; the printed words are the cue, because derive stores its destroy as an `all-but` selection of permanents, the same shape as Razia's Purification and End Hostilities, which are not stax. A card that is stax through another rule too (a full `stax.effect`) counts whole. Only Urza's Sylex matches the printed words in the corpus (Mongo regex scan, 2026-11-13)."
+      "why": "PRINTED STAX: a permanent that does not untap, a tax on spells, a ban on what players can do. WEAK STAX (owner 2026-11-13, Rules 50): a card whose only stax is the `staxWeak` words of this rule (`weakOracle`; `stax` is `staxStrong` plus `staxWeak`, pinned by a test) is a stax member that COUNTS `NARROW_WEIGHT` (0.5, the colour-locked answers' weight) in the stax count, never 1 (`detectWeakRoles`; membership stays plain). Urza's Sylex, \"Each player chooses six lands they control. Destroy all other permanents.\", is the case. It stays a board wipe and gains role:stax; the printed words are the cue, because derive stores its destroy as an `all-but` selection of permanents, the same shape as Razia's Purification and End Hostilities, which are not stax. A card that is stax through another rule too (a full `stax.effect`) counts whole. Only Urza's Sylex matches the printed words in the corpus (Mongo regex scan, 2026-11-13). DESTROYING ALL LANDS OF ONE TARGET PLAYER IS STAX (owner 2026-11-13, Rules 48): Ajani Vengeant's -7, \"Destroy all lands target player controls\", is read here from the printed words (`destroy|exile|return all [basic|snow] lands target|that player|opponent controls|owns`), because derive scopes it `target` like Stone Rain (a single-land kill, which is NOT stax) and stores no quantifier to tell them apart. Only Ajani Vengeant matches in the corpus (Mongo regex scan, 2026-11-13)."
     },
 
     {

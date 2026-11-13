@@ -1,7 +1,7 @@
 import type { DeckCard } from "./types.js";
 import { ARCHETYPE_FLOOR, ARCHETYPE_LABELS, ARCHETYPE_LEAD_FLOOR, type Archetype, type ArchetypeRanking } from "./archetypes.js";
 import TEMPLATE from "./template-targets.json" with { type: "json" };
-import { answerClassesOf, loadRules, ruleMatches, type Rule, type RuleClause } from "./rules.js";
+import { answerClassesOf, loadRules, ruleMatches, weakByOracle, type Rule, type RuleClause } from "./rules.js";
 import { answerCoverage, COVERAGE_CLASSES, type CoverageResult } from "./answer-coverage.js";
 import { countsAsLand } from "./typeline.js";
 import { cardLines } from "./mana-lines.js";
@@ -111,23 +111,26 @@ export function detectBuildRules(cards: DeckCard[]): Map<string, Set<string>> {
   return m;
 }
 
-/** THE MEMBERS THAT ARE ONLY WEAKLY IN A ROLE (owner 2026-11-13, `Rule.weak`): every rule that puts the card in the category is a weak one. Weak stax is Urza's Sylex. Membership is `detectBuildCategories`' and does not move; a card that is in
- *  the role through any non-weak rule too counts whole. */
+/** THE MEMBERS THAT ARE ONLY WEAKLY IN A ROLE (owner 2026-11-13, `Rule.weakOracle`): every rule that puts the card in the category reads only its weak printed words for this card. Weak stax is Urza's Sylex. Membership is
+ *  `detectBuildCategories`' and does not move; a card that is in the role through any other rule too counts whole. */
 export function detectWeakRoles(cards: DeckCard[]): Map<BuildCategory, Set<string>> {
-  const weakIds = new Set(loadRules().rules.filter((r) => r.weak === true).map((r) => r.id));
-  const full = new Map<BuildCategory, Set<string>>();
-  const weak = new Map<BuildCategory, Set<string>>();
-  for (const [id, names] of detectBuildRules(cards)) {
-    const cat = RULE_CATEGORY.get(id) as BuildCategory;
-    const into = weakIds.has(id) ? weak : full;
-    let s = into.get(cat);
-    if (!s) { s = new Set(); into.set(cat, s); }
-    for (const n of names) s.add(n);
-  }
+  const set = loadRules();
   const out = new Map<BuildCategory, Set<string>>();
-  for (const [cat, names] of weak) {
-    const only = new Set([...names].filter((n) => !full.get(cat)?.has(n)));
-    if (only.size > 0) out.set(cat, only);
+  for (const dc of cards) {
+    const hits = new Map<BuildCategory, { weak: boolean }>();
+    for (const rule of set.rules) {
+      if (!rule.category || !ruleMatches(rule, dc, set)) continue;
+      const cat = rule.category as BuildCategory;
+      const weak = weakByOracle(rule, dc, set);
+      const have = hits.get(cat);
+      hits.set(cat, { weak: (have?.weak ?? true) && weak });
+    }
+    for (const [cat, h] of hits) {
+      if (!h.weak) continue;
+      let s = out.get(cat);
+      if (!s) { s = new Set(); out.set(cat, s); }
+      s.add(dc.card.name);
+    }
   }
   return out;
 }
