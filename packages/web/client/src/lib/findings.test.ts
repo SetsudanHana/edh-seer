@@ -136,7 +136,7 @@ test("a deck with an answer for every kind has no answers finding, however thin,
 // A HALF-COVERED CLASS (owner 2026-11-13, magda-mother-of-dragons: enchantments held only by Pyroblast) is not "missing", but a full answer
 // lifts it and the finding's impact prices that lift, so the finding fires and names the class in its own clause.
 const half = (counts: Record<string, number>, locked: Record<string, string[]>, fractions: Record<string, number>) => ({
-  deckMath: { ...answers(counts), answers: answers(counts).answers.map((a) => ({ ...a, ...(locked[a.class] ? { colourLocked: locked[a.class] } : {}) })) },
+  deckMath: { ...answers(counts), answers: answers(counts)!.answers.map((a) => ({ ...a, ...(locked[a.class] !== undefined ? { colourLocked: locked[a.class]! } : {}) })) },
   answerCoverage: { coverage: 0.9, source: "weighted" as const, graveyardVulnerability: 0, rows: Object.entries(fractions).map(([c, fraction]) => ({ class: c, poolShare: 1, demand: 0.2, weight: 0.2, covered: fraction > 0, fraction })) },
   answersImpact: 0.029,
 });

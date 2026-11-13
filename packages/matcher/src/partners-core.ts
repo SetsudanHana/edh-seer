@@ -1853,6 +1853,10 @@ export interface NameIndexEntry {
   /** ANSWER CLASSES, as indices into `POOL_CLASSES`: what `detectAnswerClasses` says this card
    *  answers. Absent when none. Same wire-format rule for `POOL_CLASSES`' order. */
   a?: number[];
+  /** The subset of `a` this card answers only NARROWLY (`colourLocked`: a colour hoser, an Aura-only or
+   *  compound-noun answer), same indices. Absent when none. A narrow card adds nothing to a class that
+   *  narrow answers already half-cover, so the suggester lists only full answers for such a class. */
+  n?: number[];
   /** THE CARD'S OWN COLOURS AS A WUBRG BITMASK, absent when colourless. NOT `identity` above: that
    *  says what deck the card is legal in, this says what it IS, and 1,751 of 32,334 cards answer
    *  the two differently. A mask rather than an array of letters because this file is downloaded
@@ -2154,7 +2158,11 @@ export function partnerBuilder(all: DeckCard[], h: Hierarchy) {
   BUILD_CATEGORIES.forEach((c, i) => { for (const n of cats.get(c) ?? []) listOf(rolesOf, n).push(i); });
   const classes = detectAnswerClasses(substantive);
   const answersOf = new Map<string, number[]>();
-  POOL_CLASSES.forEach((c, i) => { for (const n of classes.get(c)?.cards ?? []) listOf(answersOf, n).push(i); });
+  const narrowOf = new Map<string, number[]>();
+  POOL_CLASSES.forEach((c, i) => {
+    for (const n of classes.get(c)?.cards ?? []) listOf(answersOf, n).push(i);
+    for (const n of classes.get(c)?.colourLocked ?? []) listOf(narrowOf, n).push(i);
+  });
   // QUALITY PER ROLE (spec 2026-09-27): a percentile within each role, aligned with `r`.
   const quality = qualityTable(substantive);
   // THE TABLES THE ROWS POINT INTO. Collected from the corpus rather than from a written-down list,
@@ -2469,6 +2477,7 @@ export function partnerBuilder(all: DeckCard[], h: Hierarchy) {
           ...(rolesOf.has(d.card.name) ? { r: rolesOf.get(d.card.name)! } : {}),
           ...(rolesOf.has(d.card.name) ? { q: rolesOf.get(d.card.name)!.map((code) => quality.get(d.card.name)?.get(BUILD_CATEGORIES[code] as Role) ?? -1) } : {}),
           ...(answersOf.has(d.card.name) ? { a: answersOf.get(d.card.name)! } : {}),
+          ...(narrowOf.has(d.card.name) ? { n: narrowOf.get(d.card.name)! } : {}),
           ...(grade > 0 ? { g: grade } : {}),
           ...(mv > 0 ? { mv } : {}),
           ...(pow !== undefined ? { pow } : {}),

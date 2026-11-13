@@ -1,4 +1,5 @@
 import { LAND_BAND } from "@edh-seer/matcher/build";
+import { halfCoveredClasses } from "@edh-seer/matcher/half-covered";
 import type { DeckReport } from "../types.js";
 import { demandSentence } from "./demand-sentence.js";
 import { buildFindingId } from "./role-group.js";
@@ -196,16 +197,28 @@ function answerFinding(report: DeckReport): Finding | null {
   // under five was a convention's opinion. A zero the deck's colours cannot fill is the colour pie,
   // not a gap (`pool` 0), and says nothing.
   const absent = permanent.filter((a) => a.count === 0 && !a.fromCommandZone && a.pool !== 0);
-  if (absent.length === 0) return null;
+  // A CLASS ONLY NARROW ANSWERS HOLD (owner 2026-11-13) has an answer, so it is not "missing", but a full answer
+  // lifts it and `answersImpact` prices that lift, so the finding names it too, in its own clause.
+  const halfSet = new Set(halfCoveredClasses(report));
+  const half = permanent.filter((a) => halfSet.has(a.class));
+  if (absent.length === 0 && half.length === 0) return null;
   const answered = permanent.filter((a) => a.count > 0 || a.fromCommandZone);
   const names = (rows: readonly typeof permanent[number][]) =>
     rows.map((a) => `${a.class}s`).join(", ").replace(/, ([^,]*)$/, " and $1");
   // "ONLY" IS A CLAIM ABOUT ZERO, and here every absent class is one.
   // Lands count here: "only creatures" is false of a deck that also answers lands.
   const onlyCreatures = answers.filter((a) => a.class !== "graveyard" && (a.count > 0 || a.fromCommandZone)).every((a) => a.class === "creature");
-  const headline = answered.length === 1 && answered[0]!.class === "creature" && onlyCreatures
+  const absentHeadline = answered.length === 1 && answered[0]!.class === "creature" && onlyCreatures
     ? "Your removal only answers creatures."
     : `You have no answer at all for ${names(absent)}.`;
+  // THE NARROW CARDS ARE NAMED, so the reader sees what counts half (the panel's word is "narrow").
+  const narrowCards = [...new Set(half.flatMap((a) => a.colourLocked ?? []))];
+  const halfHeadline = half.length === 0 ? "" : (() => {
+    const lead = names(half).replace(/^./, (c) => c.toUpperCase());
+    const who = narrowCards.length ? ` (${narrowCards.join(" and ").replace(/, ([^,]*)$/, " and $1")} ${narrowCards.length === 1 ? "counts" : "count"} half)` : " (they count half)";
+    return `${lead} are only answered by narrow cards${who}.`;
+  })();
+  const headline = [absent.length ? absentHeadline : "", halfHeadline].filter(Boolean).join(" ");
   const turn = report.deckMath?.turn;
   const pools = absent.filter((a) => a.pool !== undefined);
   return {
@@ -218,13 +231,20 @@ function answerFinding(report: DeckReport): Finding | null {
       : "")
       + (pools.length ? `Your colors have ${pools.map((a) => `${a.pool} for ${a.class}s`).join(", ")}. ` : "")
       + "Lands and graveyards are left out: most decks run no land removal, and graveyard hate is hate rather than removal.",
-    action: absent.length > 1
-      ? "One card that can hit any kind of permanent covers all of these at once."
-      : `One ${absent[0]!.class} answer is enough to stop a single one from beating you.`,
+    action: absent.length > 0 && half.length > 0
+      ? "One unrestricted card that can hit any kind of permanent covers all of these at once."
+      : half.length > 1
+        ? "One unrestricted card that can hit any kind of permanent lifts all of these to full coverage."
+        : half.length === 1
+          ? `One unrestricted ${half[0]!.class} answer lifts it to full coverage.`
+          : absent.length > 1
+            ? "One card that can hit any kind of permanent covers all of these at once."
+            : `One ${absent[0]!.class} answer is enough to stop a single one from beating you.`,
     figure: `${answered.length}/${permanent.length}`,
     figureLabel: "kinds of permanent you can answer",
-    filled: answered.length / permanent.length,
-    shortfall: absent.length / permanent.length,
+    // A half-covered class counts half a gap (`NARROW_WEIGHT`, the same half the coverage multiplier takes).
+    filled: (answered.length - half.length / 2) / permanent.length,
+    shortfall: (absent.length + half.length / 2) / permanent.length,
     impact: report.answersImpact,
   };
 }

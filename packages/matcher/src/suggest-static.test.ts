@@ -389,10 +389,12 @@ test("a build finding's cards say which group they count toward, and carry their
  *  answer at all still lists both. `n` on the index row is the classes the card answers only narrowly. */
 test("a half-covered class lists full answers only, an absent class still lists narrow ones too", async () => {
   const specs: Spec[] = [...SPECS,
-    { name: "Full Disenchant", identity: ["R"], types: ["instant"], abilities: [], a: ["enchantment"] },
-    { name: "Narrow Enchantment Hoser", identity: ["R"], types: ["instant"], abilities: [], a: ["enchantment"], n: ["enchantment"] },
-    { name: "Narrow Artifact Hoser", identity: ["R"], types: ["instant"], abilities: [], a: ["artifact"], n: ["artifact"] },
+    { name: "Full Disenchant", identity: ["R"], types: ["enchantment"], abilities: tremorsAbilities, a: ["enchantment"] },
+    { name: "Narrow Enchantment Hoser", identity: ["R"], types: ["enchantment"], abilities: tremorsAbilities, a: ["enchantment"], n: ["enchantment"] },
+    { name: "Narrow Artifact Hoser", identity: ["R"], types: ["enchantment"], abilities: tremorsAbilities, a: ["artifact"], n: ["artifact"] },
   ];
+  // The candidates join the deck the way Impact Tremors does (their ability shape, a pair from Krenko), so each is in the pool and verifies live.
+  const pis = { ...PI, "Krenko, Mob Boss": [...PI["Krenko, Mob Boss"]!, [7, 0.3], [8, 0.3], [9, 0.3]] as [number, number][] };
   const deck = {
     ...report,
     deckMath: { answers: [
@@ -404,7 +406,7 @@ test("a half-covered class lists full answers only, an absent class still lists 
       { class: "creature", fraction: 1 }, { class: "artifact", fraction: 0 }, { class: "enchantment", fraction: 0.5 },
     ] },
   } as unknown as DeckReport;
-  const s = await quietly(() => suggestForDeck({ report: deck, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(files(specs)) }));
+  const s = await quietly(() => suggestForDeck({ report: deck, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(files(specs, pis)) }));
   expect((s.answers["enchantment"] ?? []).map((c) => c.name)).toEqual(["Full Disenchant"]);
   expect((s.answers["artifact"] ?? []).map((c) => c.name)).toEqual(["Narrow Artifact Hoser"]);
 });

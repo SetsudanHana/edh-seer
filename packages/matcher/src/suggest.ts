@@ -19,6 +19,8 @@ export interface IndexCard {
   mv: number;
   roles: string[];
   answers: string[];
+  /** The classes in `answers` the card covers only narrowly (name index `n`); absent on an index built before it. */
+  narrowAnswers?: string[];
   /** `rampGrade`; absent or 0 when the card is not staple-grade ramp. */
   grade?: number;
   /** Quality percentile per role (name index `q`); only roles that scored. */
@@ -137,10 +139,11 @@ export function stapleList(
 /** A MISSING ANSWER CLASS'S CARDS: those that answer it, ranked as a gap. */
 export function answerList(
   pool: ReadonlyMap<number, Candidate>, cls: string, costBand: readonly [number, number],
-  limit: number, exclude: ReadonlySet<number> = new Set(),
+  limit: number, exclude: ReadonlySet<number> = new Set(), fullOnly = false,
 ): Candidate[] {
+  // FULL ONLY: a half-covered class gains nothing from another narrow card (owner 2026-11-13).
   return [...pool.values()]
-    .filter((c) => !exclude.has(c.card.pos) && c.card.answers.includes(cls))
+    .filter((c) => !exclude.has(c.card.pos) && c.card.answers.includes(cls) && !(fullOnly && c.card.narrowAnswers?.includes(cls)))
     .sort(bandFirst(costBand)).slice(0, limit);
 }
 
