@@ -106,3 +106,25 @@ describe("deck-math: the answer row carries the weight", () => {
     expect(locked.available).toBeCloseTo(NARROW_WEIGHT * plain.available, 9);
   });
 });
+
+describe("printed path: a colour named inside the target phrase locks the class, read from the derived target (owner 2026-11-13)", () => {
+  const classes = (n: string) => answerClassesOf(realCard(n));
+  test("\"target creature or planeswalker that's green or white\" locks both rows, as Fry's derived path does (Noxious Grasp, Flourishing Grapple)", () => {
+    for (const n of ["Noxious Grasp", "Flourishing Grapple"]) {
+      const m = classes(n);
+      expect([...m.keys()].sort(), n).toEqual(["creature", "planeswalker"]);
+      for (const [cls, v] of m) expect(v.colourLocked, `${n} ${cls}`).toBe(true);
+    }
+  });
+  test("a branch with no colour (Forest) does not stop the coloured branches of the class locking (Nissa's Defeat)", () => {
+    const m = classes("Nissa's Defeat");
+    expect([...m.keys()].sort()).toEqual(["enchantment", "planeswalker"]);
+    for (const v of m.values()) expect(v.colourLocked).toBe(true);
+  });
+  test("\"target Plains and target white creature\" locks the creature row (Reign of Chaos)", () => {
+    expect(classes("Reign of Chaos").get("creature")?.colourLocked).toBe(true);
+  });
+  test("\"nonblack\" is still not a lock (Doom Blade)", () => {
+    expect(classes("Doom Blade").get("creature")?.colourLocked).toBe(false);
+  });
+});
