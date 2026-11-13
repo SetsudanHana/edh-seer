@@ -1,7 +1,8 @@
 import { parseGate } from "@edh-seer/tagger/gate";
 import { describe, expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
-import { BUILD_PARENTS, detectAnswerClasses, detectBuildCategories } from "./build.js";
+import { answerWeightOf, BUILD_PARENTS, detectAnswerClasses, detectBuildCategories } from "./build.js";
+import { NARROW_WEIGHT } from "./narrow-weight.js";
 import { detectWincons } from "./wincon.js";
 import { answerClassesOf, loadRules, ownText, ruleMatches, RULES_VERSION, tokenQuotes, type Rule } from "./rules.js";
 import type { DeckCard } from "./types.js";
@@ -334,6 +335,17 @@ describe("the destroy and exile answers read derived data (#1266)", () => {
     // A basic land type names the land class (owner 2026-11-13): "Destroy target Scarecrow or Plains", "Forest, green enchantment, or green planeswalker".
     expect(classes("Boggart Arsonists")).toEqual(["land"]);
     expect(classes("Nissa's Defeat")).toEqual(["enchantment", "land", "planeswalker"]);
+  });
+
+  test("an Aura-only kill answers enchantments at NARROW_WEIGHT, and names no creature (owner 2026-11-13: Devout Harpist, Piety Charm)", () => {
+    for (const n of ["Devout Harpist", "Piety Charm"]) {
+      // "attached to a creature" names the host, not the target: no creature class.
+      expect(classes(n), n).toEqual(["enchantment"]);
+      expect(marks(n, "enchantment")?.colourLocked, n).toBe(true);
+    }
+    const pool = detectAnswerClasses([realCard("Devout Harpist"), realCard("Disenchant")]).get("enchantment")!;
+    expect(answerWeightOf(pool, "Devout Harpist")).toBe(NARROW_WEIGHT);
+    expect(answerWeightOf(pool, "Disenchant")).toBe(1);
   });
 
   test("a card that prints an exile from a graveyard elsewhere still answers what its other mode destroys", () => {
