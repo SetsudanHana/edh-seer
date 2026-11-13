@@ -1,7 +1,7 @@
 import type { DeckCard } from "./types.js";
 import { ARCHETYPE_FLOOR, ARCHETYPE_LABELS, ARCHETYPE_LEAD_FLOOR, type Archetype, type ArchetypeRanking } from "./archetypes.js";
 import TEMPLATE from "./template-targets.json" with { type: "json" };
-import { answerClassesOf, loadRules, ruleMatches, type Rule, type RuleClause } from "./rules.js";
+import { answerClassesOf, loadRules, ruleMatches, weakByOracle, type Rule, type RuleClause } from "./rules.js";
 import { answerCoverage, COVERAGE_CLASSES, type CoverageResult } from "./answer-coverage.js";
 import { countsAsLand } from "./typeline.js";
 import { cardLines } from "./mana-lines.js";
@@ -111,6 +111,45 @@ export function detectBuildRules(cards: DeckCard[]): Map<string, Set<string>> {
   return m;
 }
 
+/** THE MEMBERS THAT ARE ONLY WEAKLY IN A ROLE (owner 2026-11-13, `Rule.weakOracle`): every rule that puts the card in the category reads only its weak printed words for this card. Weak stax is Urza's Sylex. Membership is
+ *  `detectBuildCategories`' and does not move; a card that is in the role through any other rule too counts whole. */
+export function detectWeakRoles(cards: DeckCard[]): Map<BuildCategory, Set<string>> {
+  const set = loadRules();
+  const out = new Map<BuildCategory, Set<string>>();
+  for (const dc of cards) {
+    const hits = new Map<BuildCategory, { weak: boolean }>();
+    for (const rule of set.rules) {
+      if (!rule.category || !ruleMatches(rule, dc, set)) continue;
+      const cat = rule.category as BuildCategory;
+      const weak = weakByOracle(rule, dc, set);
+      const have = hits.get(cat);
+      hits.set(cat, { weak: (have?.weak ?? true) && weak });
+    }
+    for (const [cat, h] of hits) {
+      if (!h.weak) continue;
+      let s = out.get(cat);
+      if (!s) { s = new Set(); out.set(cat, s); }
+      s.add(dc.card.name);
+    }
+  }
+  return out;
+}
+
+/** The weak members at their weight, as `RoleWeights` rows (basis `target`: a restriction the card carries, not a gate; `conditionalRolesOf` leaves them out). A gated weight on the same card keeps the lower of the two. */
+function withWeakWeights(base: RoleWeights, weak: Map<BuildCategory, Set<string>>): RoleWeights {
+  if (weak.size === 0) return base;
+  const out: RoleWeights = new Map([...base].map(([c, m]) => [c, new Map(m)]));
+  for (const [cat, names] of weak) {
+    let m = out.get(cat);
+    if (!m) { m = new Map(); out.set(cat, m); }
+    for (const n of names) {
+      const have = m.get(n);
+      if (have === undefined || have.weight > NARROW_WEIGHT) m.set(n, { weight: NARROW_WEIGHT, conditional: false, basis: "target" });
+    }
+  }
+  return out;
+}
+
 /** Rule id -> the category it rolls up to. Read from the same `loadRules()` table, so it cannot
  *  drift from the rules themselves. */
 const RULE_CATEGORY = new Map<string, string>(
@@ -119,6 +158,8 @@ const RULE_CATEGORY = new Map<string, string>(
 
 /** A ROLE MEMBER THAT COUNTS FOR LESS THAN ONE (#1357 task 2): its role is carried by an effect behind a condition, and the deck decides how likely the condition is. */
 export interface ConditionalRole { card: string; category: BuildCategory; weight: number; basis: Exclude<EffectBasis, "ungated">; needs: string }
+/** A member that counts `NARROW_WEIGHT` because every rule that files it in the role is weak (`Rule.weak`). */
+export interface WeakRole { card: string; category: BuildCategory; weight: number }
 /** Category -> card -> the weight that member counts for, ONLY for members below 1. Membership is `detectBuildCategories`' and does not move: a gated draw card is still a draw card. */
 export type RoleWeights = Map<BuildCategory, Map<string, EffectWeight>>;
 
@@ -828,6 +869,8 @@ export interface BuildResult {
   /** THE ROLE MEMBERS THAT COUNT FOR LESS THAN ONE (#1357 task 2): a gated effect still counts, weighted by how likely its condition is to hold in this deck, and the report says so ("counts as 0.4 draw: needs
    *  ..."). Absent when none does. The counts above already include these weights; membership does not change. */
   conditionalRoles?: ConditionalRole[];
+  /** THE MEMBERS THAT ARE ONLY WEAKLY IN A ROLE (owner 2026-11-13: weak stax, Urza's Sylex): each counts `weight` (`NARROW_WEIGHT`) in the counts above, which already include it. Absent when none is. */
+  weakRoles?: WeakRole[];
 }
 
 /** `landsTarget` is `land-count.ts`'s `recommendedLands(...).target` -- `landTarget`'s answer for
@@ -852,7 +895,10 @@ export function computeBuild(
   gates?: GateWeigher,
 ): BuildResult {
   const members = detectBuildCategories(cards);
-  const roleWeights: RoleWeights = gates ? detectBuildWeights(cards, gates) : new Map();
+  const gateWeights: RoleWeights = gates ? detectBuildWeights(cards, gates) : new Map();
+  // WEAK STAX AND THE GATED EFFECTS WEIGH IN THE COUNTS; only the gated ones are reported as conditional (owner 2026-11-13: a weak member is named by `weakRoles`).
+  const weakRoles = detectWeakRoles(cards);
+  const roleWeights = withWeakWeights(gateWeights, weakRoles);
   const template = templateBlend(
     strategies ?? (primary ? [{ name: primary, label: ARCHETYPE_LABELS[primary], confidence: 1 }] : []),
   );
@@ -939,8 +985,17 @@ export function computeBuild(
     ...suggestionsOf(buildSuggestions(parentsWithCount, countOf, targets)),
     answerCoverage: coverage,
     rampResilience: rampResilience(cards),
-    ...conditionalRolesOf(roleWeights),
+    ...conditionalRolesOf(gateWeights),
+    ...weakRolesOf(weakRoles),
   };
+}
+
+/** The report's list of weak members (they count `NARROW_WEIGHT`), `{}` when there are none. */
+function weakRolesOf(weak: Map<BuildCategory, Set<string>>): { weakRoles?: WeakRole[] } {
+  const rows: WeakRole[] = [];
+  for (const [category, names] of weak) for (const card of names) rows.push({ card, category, weight: NARROW_WEIGHT });
+  rows.sort((a, b) => a.category.localeCompare(b.category) || a.card.localeCompare(b.card));
+  return rows.length > 0 ? { weakRoles: rows } : {};
 }
 
 /** The report's list of members that count for less than one, `{}` when there are none. */

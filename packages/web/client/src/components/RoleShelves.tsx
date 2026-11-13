@@ -63,7 +63,7 @@ export function RoleShelves({ report, graph }: { report: DeckReport; graph?: Car
                 <b className="block">{label}</b>
                 {target
                   ? <Against count={(p && !group ? p.count : report.buildCategories?.find((c) => c.category === category)?.count) ?? cards.length} target={target} oneShots={p?.key === "ramp" ? oneShots : 0} />
-                  : <span className="text-(--muted) tabular-nums">{cards.length} card{cards.length === 1 ? "" : "s"}</span>}
+                  : <span className="text-(--muted) tabular-nums">{unrounded(report, category, cards.length)} card{unrounded(report, category, cards.length) === "1" ? "" : "s"}{halfNote(report, category)}</span>}
               </span>
               {/* CHIPS, NOT CARD IMAGES (owner, 2026-09-27: "less is more"). Full cards ran the shelves to
                 *  2,400px; a chip carries the art and the name, and opens the card. */}
@@ -87,6 +87,23 @@ export function RoleShelves({ report, graph }: { report: DeckReport; graph?: Car
       })}
     </ul>
   );
+}
+
+/** A shelf with no target says how many cards sit on it. When the engine files a member as WEAK in this role (weak stax,
+ *  owner 2026-11-13) it says the engine's own sum as a decimal, never rounded up ("1.5 cards" for Armageddon beside
+ *  Urza's Sylex), next to the note naming the weak card. Every other shelf says the chips: gate weights also make sums
+ *  fractional (burn, draw, handFill) and a decimal there would name no card (weak-stax review, 2026-11-13). */
+function unrounded(report: DeckReport, category: string, chips: number): string {
+  if (!(report.weakRoles ?? []).some((w) => w.category === category)) return String(chips);
+  const n = report.buildCategories?.find((c) => c.category === category)?.count;
+  return n !== undefined && !Number.isInteger(n) ? fmtCount(n) : String(chips);
+}
+
+/** "Urza's Sylex counts half: weak stax." for the members the engine files as weak in this role. */
+function halfNote(report: DeckReport, category: string): string {
+  const weak = (report.weakRoles ?? []).filter((w) => w.category === category);
+  if (weak.length === 0) return "";
+  return ` · ${weak.slice(0, 3).map((w) => `${w.card} counts half`).join(", ")}${weak.length > 3 ? ` and ${weak.length - 3} more` : ""}`;
 }
 
 /** "7 cards · aim for 10 (3 short)": the shortfall in the warning colour, as the dials paint it. */

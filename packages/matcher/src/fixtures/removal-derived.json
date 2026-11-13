@@ -39921,5 +39921,1077 @@
     "repeats": "once"
    }
   ]
+ },
+ "Volcanic Eruption": {
+  "oracleText": "Destroy X target Mountains. Volcanic Eruption deals damage to each creature and each player equal to the number of Mountains put into a graveyard this way.",
+  "typeLine": "Sorcery",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "subtype": "mountain",
+       "scope": "target",
+       "type": "land"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "each",
+      "anyOf": [
+       {
+        "type": "creature"
+       },
+       {
+        "player": true
+       }
+      ]
+     }
+    },
+    "amount": "the number of Mountains put into a graveyard this way",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "each"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     },
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "player": true,
+       "scope": "each"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "subtype": "mountain",
+      "scope": "all"
+     }
+    }
+   }
+  ]
+ },
+ "Lavaball Trap": {
+  "oracleText": "If an opponent had two or more lands enter the battlefield under their control this turn, you may pay {3}{R}{R} rather than pay this spell's mana cost.\nDestroy two target lands. Lavaball Trap deals 4 damage to each creature.",
+  "typeLine": "Instant — Trap",
+  "manaValue": 8,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "each"
+     }
+    },
+    "amount": "4",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "each"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 4,
+     "ceiling": 4
+    }
+   }
+  ]
+ },
+ "Rain of Salt": {
+  "oracleText": "Destroy two target lands.",
+  "typeLine": "Sorcery",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   }
+  ]
+ },
+ "Scorched Earth": {
+  "oracleText": "As an additional cost to cast this spell, discard X land cards.\nDestroy X target lands.",
+  "typeLine": "Sorcery",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "",
+     "scaling": "x-cost"
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "discard",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "land"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   }
+  ]
+ },
+ "Avalanche": {
+  "oracleText": "Destroy X target snow lands.",
+  "typeLine": "Sorcery",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "snow": true,
+       "type": "land",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   }
+  ]
+ },
+ "Numot, the Devastator": {
+  "oracleText": "Flying\nWhenever Numot deals combat damage to a player, you may pay {2}{R}. If you do, destroy up to two target lands.",
+  "typeLine": "Legendary Creature — Dragon",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "combat-damage"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true
+     },
+     "victim": "player"
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   }
+  ]
+ },
+ "Petradon": {
+  "oracleText": "When this creature enters, exile two target lands.\nWhen this creature leaves the battlefield, return the exiled cards to the battlefield under their owners' control.\n{R}: This creature gets +1/+0 until end of turn.",
+  "typeLine": "Creature — Nightmare Beast",
+  "manaValue": 8,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "scope": "target",
+       "fromZone": "battlefield"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "scope": "target",
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "land",
+      "scope": "target"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "leaves"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "target",
+       "fromZone": "exile"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "pump",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "cost": "{R}",
+    "amount": "+1/+0",
+    "clause": 3,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{R}"
+    }
+   }
+  ]
+ },
+ "Orcish Settlers": {
+  "oracleText": "{X}{X}{R}, {T}, Sacrifice this creature: Destroy X target lands.",
+  "typeLine": "Creature — Orc",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{X}{X}{R}, {T}, Sacrifice this creature",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{X}{X}{R}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "",
+     "scaling": "x-cost"
+    },
+    "cost": "{X}{X}{R}, {T}, Sacrifice this creature",
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    },
+    "payment": {
+     "mana": "{X}{X}{R}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Rumbling Crescendo": {
+  "oracleText": "At the beginning of your upkeep, you may put a verse counter on this enchantment.\n{R}, Sacrifice this enchantment: Destroy up to X target lands, where X is the number of verse counters on this enchantment.",
+  "typeLine": "Enchantment",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "counter": "verse"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "verse",
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{R}, Sacrifice this enchantment",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "enchantment",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "enchantment",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{R}",
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{R}, Sacrifice this enchantment",
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    },
+    "payment": {
+     "mana": "{R}",
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Devastate": {
+  "oracleText": "Destroy target land. Devastate deals 1 damage to each creature and each player.",
+  "typeLine": "Sorcery",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "each"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "each"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "each",
+      "player": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "each",
+       "player": true
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Rancid Earth": {
+  "oracleText": "Destroy target land.\nThreshold — If there are seven or more cards in your graveyard, instead destroy that land and Rancid Earth deals 1 damage to each creature and each player.",
+  "typeLine": "Sorcery",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "threshold": {
+     "atLeast": 7
+    },
+    "thresholdSubject": {
+     "control": "you",
+     "token": null,
+     "zone": "graveyard"
+    },
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "each"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "each"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "threshold": {
+     "atLeast": 7
+    },
+    "thresholdSubject": {
+     "control": "you",
+     "token": null,
+     "zone": "graveyard"
+    },
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "each",
+      "player": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "each",
+       "player": true
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "threshold": {
+     "atLeast": 7
+    },
+    "thresholdSubject": {
+     "control": "you",
+     "token": null,
+     "zone": "graveyard"
+    },
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Star of Extinction": {
+  "oracleText": "Destroy target land. Star of Extinction deals 20 damage to each creature and each planeswalker.",
+  "typeLine": "Sorcery",
+  "manaValue": 7,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "each"
+     }
+    },
+    "amount": "20",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "each"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 20,
+     "ceiling": 20
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "planeswalker",
+      "scope": "each"
+     }
+    },
+    "amount": "20",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "planeswalker",
+       "scope": "each"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 20,
+     "ceiling": 20
+    }
+   }
+  ]
+ },
+ "Blight Grenade": {
+  "oracleText": "Destroy target creature.\nAll creatures get -3/-3 until end of turn.",
+  "typeLine": "Sorcery",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "debuff",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    },
+    "amount": "-3/-3",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once"
+   }
+  ]
  }
 }

@@ -4,7 +4,7 @@ import type { SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 import { classifyLand } from "./land-conditions.js";
 import { cardLines, isLoyaltyAbility, usableLoyalty } from "./mana-lines.js";
-import { countsAsLand, transformsIntoLand as transformsIntoLandCard } from "./typeline.js";
+import { BASIC_LAND_TYPES, countsAsLand, transformsIntoLand as transformsIntoLandCard } from "./typeline.js";
 import { isTargetCondition } from "./target-condition.js";
 
 /** A single test against one card. The operator set is CLOSED on purpose: `oracle`, `effectKind`,
@@ -259,6 +259,8 @@ export interface Rule {
   /** What KIND of answer this rule contributes, where the kind changes whether it answers at all
    *  (design §3.1). Absent = an ordinary one-shot answer, which is most of them. */
   mode?: "exile" | "recurring";
+  /** WEAK PRINTED WORDS (owner 2026-11-13, `NARROW_WEIGHT`): the rule's `oracle` pattern is `strong` plus `weak` (two named patterns), and a card that matches `weak` and NOT `strong` fills `category` weakly (`weakByOracle`). Only `stax.text` today. */
+  weakOracle?: { weak: string; strong: string };
   /** ALL must hold. */
   match: RuleClause[];
   /** NONE may hold. */
@@ -724,6 +726,14 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
 
 const transformsIntoLand = (dc: DeckCard): boolean => transformsIntoLandCard(dc.card);
 
+/** Does this card fill the rule's category only through the rule's WEAK printed words (`Rule.weakOracle`)? Urza's Sylex for `stax.text`. False for a rule without one, and for a card that also reads a strong alternative. */
+export function weakByOracle(rule: Rule, dc: DeckCard, set: RuleSet = loadRules()): boolean {
+  const w = rule.weakOracle;
+  if (w === undefined) return false;
+  const text = ownText(dc.card);
+  return pattern(set, w.weak).test(text) && !pattern(set, w.strong).test(text);
+}
+
 export function ruleMatches(rule: Rule, dc: DeckCard, set: RuleSet = loadRules()): boolean {
   // A CARD THAT TRANSFORMS INTO A LAND IS NEVER RAMP (owner 2026-10-10, #1174): "things that do
   // transform are not ramp" -- not even through its front, so Treasure Map's three Treasures on
@@ -749,6 +759,9 @@ const KNOWN_CLASSES: Record<string, true> = {
  *  target permanent if it's blue" answers only blue permanents. OWNER 2026-11-13, reversing the colour part of the 2026-10-27 ruling (#1357): it still COUNTS as an answer of every class it names, marked `colourLocked`, and
  *  weighs `NARROW_WEIGHT` (0.5) in every consumer (class counts, P(answer by turn T), answer coverage). It used to be dropped here. "Nonblack" is not caught: Doom Blade answers nearly every creature. */
 const COLOUR_HOSER = /\bif it'?s (?:white|blue|black|red|green)\b|^(?:white|blue|black|red|green)\b/;
+
+/** A basic land type as a whole word, in a removal phrase. */
+const BASIC_LAND_TYPE_WORD = new RegExp(`\\b(?:${BASIC_LAND_TYPES.join("|")})s?\\b`);
 
 /** What a matched rule says about the KIND of answer it contributes, per class.
  *
@@ -884,6 +897,8 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
         // A STAT OR STATE CONDITION ON THE TARGET STILL COVERS ITS CLASS, MARKED NARROW (owner refinement 2026-10-27 of ruling C): Fatal Push's "if it has mana value 2 or less", Deathbringer Liege's "if it's tapped",
         // Prohibit's mana value. A COLOUR condition (`COLOUR_HOSER` above: Pyroblast, Soul Rend) counts too, as `colourLocked` (owner 2026-11-13).
         const narrow = targetConditions.some((c) => sentence.toLowerCase().includes(c));
+        // A BASIC LAND TYPE NAMES A LAND (owner 2026-11-13, #1266): "Destroy X target Mountains" (Volcanic Eruption) answers lands, as "target lands" does. Whole words: "forestwalk" is not a Forest.
+        if (BASIC_LAND_TYPE_WORD.test(phrase) && !/\bnonland\b/.test(phrase)) for (const cls of set.answerClassAliases.land ?? ["land"]) mark(cls, rule.mode, narrow, phraseLocked || derivedTargetLocked(dc, cls));
         for (const word of Object.keys(KNOWN_CLASSES)) {
           // Plural too: "destroy two target creatures" (Curtains' Call) and "exile two target
           // permanents" (Ulamog) read as no answer at all when only the singular matched (issue #581).

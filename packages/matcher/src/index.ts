@@ -24,7 +24,7 @@ export {
   deckAvailability, PHASE_VERBS, type AvailabilityRow, type AvailabilityOptions,
 } from "./availability.js";
 export {
-  detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES, type BuildCategory,
+  detectAnswerClasses, detectBuildCategories, detectWeakRoles, BUILD_CATEGORIES, type BuildCategory,
   type AnswerClassMembers, LAND_BAND, LAND_FALLOFF, templateBlend, SECONDARY_SHARE,
   type TemplateBlend, type TemplateTheme, type TemplateKey, type TemplateRow,
 } from "./build.js";
