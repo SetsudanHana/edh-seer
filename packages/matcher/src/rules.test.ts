@@ -160,20 +160,20 @@ test("a card covering two classes in two sentences gets both", () => {
 
 /** Counting only destroy/exile made a real deck read as 14 removal spells with 3 creature answers.
  *  A burn spell and a bounce spell both answer a creature, and `targetedRemoval` has always counted
- *  them -- the two axes disagreeing about the same card is worse than either reading alone. */
+ *  them -- the two axes disagreeing about the same card is worse than either reading alone.
+ *  Real derived rows (#1266): the answers.damage / bounce rules read what derive wrote, not the printed text. */
 test("damage and bounce answer what they aim at", () => {
   const classes = detectAnswerClasses([
-    mk("Lightning Bolt", "Lightning Bolt deals 3 damage to any target."),
-    mk("Fire Bolt", "Fire Bolt deals 2 damage to target creature."),
-    mk("Bedevil", "Bedevil deals 3 damage to target creature or planeswalker."),
-    mk("Boomerang", "Return target permanent to its owner's hand."),
+    realCard("Lightning Bolt"),
+    realCard("Flame Slash"),
+    realCard("Broadside Barrage"),
+    realCard("Boomerang"),
   ]);
-  expect([...(classes.get("creature")?.cards ?? [])].sort()).toEqual(["Bedevil", "Boomerang", "Fire Bolt", "Lightning Bolt"]);
-  expect(classes.get("planeswalker")?.cards.has("Bedevil")).toBe(true);
+  expect([...(classes.get("creature")?.cards ?? [])].sort()).toEqual(["Boomerang", "Broadside Barrage", "Flame Slash", "Lightning Bolt"]);
+  expect([...(classes.get("planeswalker")?.cards ?? [])].sort()).toEqual(["Boomerang", "Broadside Barrage", "Lightning Bolt"]);
   // "Any target" is a creature or a planeswalker as much as a player (owner, 2026-09-26, issue #581:
   // the Krenko deck's creature answers left out its Lightning Bolt). It was ruled burn-only before,
   // which made every red deck's cheapest answer answer nothing. Not an artifact or a land.
-  expect(classes.get("planeswalker")?.cards.has("Lightning Bolt")).toBe(true);
   expect(classes.get("artifact")?.cards.has("Lightning Bolt") ?? false).toBe(false);
   expect([...(classes.get("enchantment")?.cards ?? [])]).toEqual(["Boomerang"]);
 });
@@ -182,21 +182,128 @@ test("damage and bounce answer what they aim at", () => {
  *  over-counted. Each case is one a real deck carried. */
 test("tucks, shrinks and plural objects answer; colour hosers and exile costs do not", () => {
   const classes = detectAnswerClasses([
-    mk("Chaos Warp", "The owner of target permanent shuffles it into their library, then reveals the top card of their library."),
-    mk("Condemn", "Put target attacking creature on the bottom of its owner's library. Its controller gains life equal to its toughness."),
-    mk("Nowhere to Run", "When Nowhere to Run enters, target creature an opponent controls gets -3/-3 until end of turn."),
-    mk("Yawgmoth", "Pay 1 life, Sacrifice another creature: Put a -1/-1 counter on up to one target creature and draw a card."),
+    realCard("Chaos Warp"),
+    realCard("Condemn"),
+    realCard("Nowhere to Run"),
+    realCard("Yawgmoth, Thran Physician"),
     mk("Curtains' Call", "Destroy two target creatures."),
     mk("Pyroblast", "Choose one —\n• Counter target spell if it's blue.\n• Destroy target permanent if it's blue."),
     mk("Plaza of Heroes", "{3}, {T}, Exile Plaza of Heroes: Target legendary creature gains hexproof and indestructible until end of turn."),
-    mk("Shrinker", "Target creature gets -2/-0 until end of turn."),
-    mk("Pinger", "{T}: Pinger deals 1 damage to any target."),
+    realCard("Befuddle"),
+    realCard("Prodigal Pyromancer"),
   ]);
   const creature = classes.get("creature")?.cards ?? new Set();
-  for (const n of ["Chaos Warp", "Condemn", "Nowhere to Run", "Yawgmoth", "Curtains' Call"]) expect(creature.has(n), n).toBe(true);
+  for (const n of ["Chaos Warp", "Condemn", "Nowhere to Run", "Yawgmoth, Thran Physician", "Curtains' Call"]) expect(creature.has(n), n).toBe(true);
   expect(classes.get("land")?.cards.has("Chaos Warp")).toBe(true);
-  for (const n of ["Pyroblast", "Plaza of Heroes", "Shrinker", "Pinger"]) expect(creature.has(n), n).toBe(false);
+  // Befuddle is "-4/-0": a power-only shrink kills nothing. Prodigal Pyromancer is a 1-damage ping.
+  for (const n of ["Pyroblast", "Plaza of Heroes", "Befuddle", "Prodigal Pyromancer"]) expect(creature.has(n), n).toBe(false);
   expect(classes.get("enchantment")?.cards.has("Pyroblast") ?? false).toBe(false);
+});
+
+/** #1266: damage, tuck, shrink, -1/-1 counter and bounce answers are DERIVED. `oracleText: ""` blanks the printed text, so a pass here is the derived rows alone. */
+describe("the damage, tuck, shrink, counter and bounce answers read derived data (#1266)", () => {
+  const classes = (name: string): string[] => [...answerClassesOf(realCard(name, { oracleText: "" })).keys()].sort();
+  const ALL = ["artifact", "creature", "enchantment", "land", "planeswalker"];
+
+  test("the printed patterns are gone, and no answer rule reads the printed text of these six kinds", () => {
+    const set = loadRules();
+    for (const p of ["damageRemoval", "damageRemovalAny", "tuckRemoval", "shrinkRemoval", "counterShrinkRemoval", "bounceRemoval"]) expect(set.patterns[p], p).toBeUndefined();
+    for (const r of set.rules.filter((x) => /^answers\.(damage|tuck|shrink|counterShrink|bounce)/.test(x.id))) {
+      expect(JSON.stringify(r.match), r.id).not.toContain('"oracle"');
+      expect(r.answerClassFrom, r.id).toBeUndefined();
+    }
+  });
+
+  test("damage: a named creature or planeswalker at any amount, \"any target\" at 2 or more or X", () => {
+    expect(classes("Lightning Bolt")).toEqual(["creature", "planeswalker"]);
+    expect(classes("Searing Spear")).toEqual(["creature", "planeswalker"]);
+    expect(classes("Shock")).toEqual(["creature", "planeswalker"]);
+    expect(classes("Flame Slash")).toEqual(["creature"]);
+    expect(classes("Broadside Barrage")).toEqual(["creature", "planeswalker"]);
+    // The printed pattern wanted a digit: "X damage to target creature" answered nothing.
+    expect(classes("Heat Ray")).toEqual(["creature"]);
+    // "any other target" was no key of the class table.
+    expect(classes("Bond of Passion")).toEqual(["creature", "planeswalker"]);
+    // A 1-damage ping at any target is no answer.
+    expect(classes("Prodigal Pyromancer")).toEqual([]);
+    // Damage to YOUR creature, and to a target player with a creature sweep beside it, answer nothing.
+    for (const n of ["Rile", "Chandra's Flame Wave"]) expect(classes(n), n).toEqual([]);
+    // Energy-cost damage derives no effect subject; the targeted damage emit decides.
+    expect(classes("Aethertorch Renegade")).toEqual(["creature"]);
+    expect(classes("Dynavolt Tower")).toEqual(["creature", "planeswalker"]);
+    // A block trigger's ping at the attacker is still a creature answer.
+    expect(classes("Elite Javelineer")).toEqual(["creature"]);
+  });
+
+  // Owner 2026-11-13: a colour hoser IS a creature answer (Combust), at a weaker weight the follow-up PR gives it.
+  test("damage: a colour hoser answers creature on purpose (owner 2026-11-13)", () => {
+    expect(classes("Combust")).toEqual(["creature"]);
+  });
+
+  // Owner 2026-11-13: damage to "target player or planeswalker" answers planeswalkers (about 170 cards).
+  test("damage: \"target player or planeswalker\" answers a planeswalker (Lava Spike, owner 2026-11-13)", () => {
+    expect(classes("Lava Spike")).toEqual(["planeswalker"]);
+  });
+
+  // Owner 2026-11-13, reversing the colour-hoser part of the 2026-10-27 ruling (#1357): every answer kind counts a colour-locked subject. Real derived rows.
+  test("tuck: a colour-locked tuck counts (King Crab, Hunting Drake, Aether Gust)", () => {
+    expect(classes("King Crab")).toEqual(["creature"]);
+    expect(classes("Hunting Drake")).toEqual(["creature"]);
+    expect(classes("Aether Gust")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+  });
+
+  test("no answer rule refuses a colour (notColourLocked is not used by any rule)", () => {
+    for (const r of loadRules().rules.filter((x) => x.answerClass !== undefined)) expect(JSON.stringify(r.match), r.id).not.toContain("notColourLocked");
+  });
+
+  test("tuck: shuffle and put-into-library of a permanent of the class, never a graveyard card", () => {
+    expect(classes("Chaos Warp")).toEqual(ALL);
+    expect(classes("Condemn")).toEqual(["creature"]);
+    // The printed pattern wanted "its owner's library" after "put": "owner puts it on their choice of the top or bottom" answered nothing.
+    expect(classes("Dire Downdraft")).toEqual(["creature"]);
+    expect(classes("Plow Under")).toEqual(["land"]);
+    // "target artifact ... card from a graveyard" is recursion, not an answer.
+    expect(classes("Keeper of the Cadence")).toEqual([]);
+    // "nonenchantment permanent" and "noncreature permanent" name their classes by what they are not.
+    expect(classes("Audacious Swap")).toEqual(["artifact", "creature", "land", "planeswalker"]);
+    expect(classes("Brutalizer Exarch")).toEqual(["artifact", "enchantment", "land", "planeswalker"]);
+    // CEILING: derive reads Lashweed Lurker's "its owner's library" as control `you`.
+    expect(classes("Lashweed Lurker")).toEqual([]);
+  });
+
+  test("shrink and -1/-1 counters: a creature the card does not control, and a shrink that can kill", () => {
+    expect(classes("Nowhere to Run")).toEqual(["creature"]);
+    // "Target nonblack creature gets -1/-1": the printed pattern wanted `target creature`.
+    expect(classes("Toxic Stench")).toEqual(["creature"]);
+    expect(classes("Befuddle")).toEqual([]);
+    expect(classes("Yawgmoth, Thran Physician")).toEqual(["creature"]);
+    expect(classes("Baleful Ammit")).toEqual([]);
+    // The -1/-1 is the TOKEN's ability, not the Exhumer's (#533).
+    expect(classes("Skirk Ridge Exhumer")).toEqual([]);
+  });
+
+  test("bounce: a permanent on the battlefield, never a card in a graveyard", () => {
+    expect(classes("Unsummon")).toEqual(["creature"]);
+    expect(classes("Boomerang")).toEqual(ALL);
+    // "Return X target creatures": the printed pattern wanted `return target`.
+    expect(classes("Aether Tide")).toEqual(["creature"]);
+    expect(classes("Revive the Fallen")).toEqual([]);
+    // CEILING: a subtype alone names no class (Seedling Charm), derive files an unless-tax bounce with no subject (Crystal Shard).
+    expect(classes("Seedling Charm")).toEqual([]);
+    expect(classes("Crystal Shard")).toEqual([]);
+  });
+
+  // "Spell or permanent" derives a type list with no land and `umbrella: "permanent"`: the umbrella is every permanent, a land included (#1266).
+  test("bounce: \"target spell or permanent\" answers a land, \"nonland permanent\" does not, and a narrowed permanent does not", () => {
+    expect(classes("Venser, Shaper Savant")).toEqual(ALL);
+    expect(classes("Jeskai Revelation")).toEqual(expect.arrayContaining(ALL));
+    // "nonland permanent" is `notType: [land]`, no umbrella.
+    expect(classes("Into the Roil")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+    expect(classes("Cyclonic Rift")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+    // A land has no colour and no mana value: "red or green" and "mana value 1 or greater" cannot name one.
+    expect(classes("Aether Gust")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+    expect(classes("Divide by Zero")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+  });
 });
 
 test("a blink is not an answer, however much it reads like removal", () => {
