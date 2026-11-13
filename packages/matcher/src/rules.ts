@@ -68,6 +68,11 @@ export type RuleClause =
       reachesPlayer?: true;
       /** Refuse an ability one of whose emits is a damage REDIRECT (`GameEvent.redirect`, #1294): "the next 2 damage ... is dealt to any target instead" (Harm's Way, Glarecaster) deals no damage of its own. */
       notRedirect?: true;
+      /** Refuse an ability whose TARGET CREATURE only seeds a sweep (owner 2026-11-13, Rules 52): the target is a creature (typed `creature` and nothing else) and another ability of the SAME clause damages every creature (`scope` all or each) for the SAME amount,
+       *  so the target is the anchor of the mass, not a second kill. "Cleansing Beam deals 2 damage to target creature and each other creature that shares a color with it" (the Radiance cards, Homing Lightning, Izzet Staticaster), Alpha Brawl.
+       *  A different amount is two effects (Fear, Fire, Foes! X and 1, Flames of the Raze-Boar 4 and 2). A target that is a PLAYER or planeswalker is no anchor of this kind: its damage is a Lava Spike (owner 2026-10-22, removal at any amount), so "4 damage to target player or
+       *  planeswalker and 4 to each creature that player controls" (Flame Wave, Lavalanche, Bonfire of the Damned) keeps it. CEILING: the equal amount is the cue, so a spell that deals the same damage to a target creature AND to a separate mass in one clause is read as an anchor too; none is known. */
+      notAnchorsMass?: true;
       /** The effect TARGETS something (`scope: target`, so no `scope` option beside it) that can be a PERMANENT not only yours (#1294, the removal ruling of 2026-10-22: targeted damage is removal when its allowed target includes a permanent on the battlefield, at any amount):
        *  a typed subject that is not a player ("target creature", "creature or planeswalker", a battle), an UNTYPED one with no `player` flag ("any target"), or an `anyOf` with such a branch ("target player or planeswalker", Lava Spike).
        *  "Target player" and "target opponent" carry `player: true` since derive 381 and are refused; control `you` and the card itself are refused. An effect with no subject reads its targeted `non-combat-damage` emits instead (Aethertorch Renegade). */
@@ -209,8 +214,8 @@ export type RuleClause =
   /** The card prints one of these KEYWORDS (Scryfall's `card.keywords`, compared case-insensitively). For a rule whose cue lives only in keyword reminder text, which derive does not read: Transmute and
    *  Transfigure search the library, and Typecycling does too (#1266). Compose with `not` to leave a keyword out (Landcycling fetches a land). */
   | { op: "keyword"; in: string[] }
-  /** The card matches ANOTHER rule of the set, by id (match and `not` both). One definition of a role read by two rules: `removal.targeted` refuses what `boardWipe.text` takes (#1266), so a mass effect
-   *  is not counted twice. The id must name a rule; an unknown one throws, as an unknown pattern does. */
+  /** The card matches ANOTHER rule of the set, by id (match and `not` both). One definition of a role read by two rules: `boardWipe.text` reads `boardWipe.massOfTargetPlayer` (Rules 52), and `removal.targeted` refuses it, so a mass kill
+   *  aimed at one player's board is not also read as a targeted kill. The id must name a rule; an unknown one throws, as an unknown pattern does. */
   | { op: "rule"; id: string }
   /** Card subtypes, from the tagged characteristics -- "equipment", "aura", a creature type. */
   | { op: "subtype"; in: string[] }
@@ -477,6 +482,9 @@ function subjectReachesPermanent(s: SubjectFilter): boolean {
   return s.player !== true;
 }
 
+/** The subject names creatures and nothing else (a typed `creature`, never a player or a planeswalker): the target of a Radiance spell. */
+const onlyCreatures = (subject: SubjectFilter | undefined): boolean => subject !== undefined && subjectTypes(subject).length > 0 && subjectTypes(subject).every((t) => t === "creature");
+
 /** `effectKind.reachesPermanent` for one ability. The effect subject decides; where derive kept NONE (Aethertorch Renegade: the "Pay {E}{E}" cost leaves the effect subject-less) the ability's own TARGETED damage
  *  emits decide, as `abilityReachesPlayer` does. */
 function abilityReachesPermanent(a: { effect: { subject?: SubjectFilter }; emits?: { verb: string; subject: SubjectFilter }[] }): boolean {
@@ -650,6 +658,8 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.notVictimMay !== true || !(a.emits ?? []).some((e) => e.victimMay === true))
         && (clause.librarySearch === undefined || (a.librarySearch !== undefined && clause.librarySearch.includes(a.librarySearch)))
         && (clause.notRedirect !== true || !(a.emits ?? []).some((e) => e.redirect === true))
+        && (clause.notAnchorsMass !== true || a.amount === undefined || a.effect.subject?.scope !== "target" || !onlyCreatures(a.effect.subject) || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause && f.effect.kind === a.effect.kind
+          && f.amount === a.amount && (f.effect.subject?.scope === "all" || f.effect.subject?.scope === "each")))
         && (clause.reachesPlayer !== true || abilityReachesPlayer(a))
         && (clause.reachesPermanent !== true || abilityReachesPermanent(a))
         && (clause.notLandOnly !== true || !(a.effect.subject !== undefined && landOnlySubject(a.effect.subject)))
