@@ -909,9 +909,9 @@ describe("phasing out another player's permanent is an answer, not removal (#126
     expect(classes("Slip Out the Back")).toEqual(["creature"]);
   });
 
-  // A mass phase-out of only YOUR permanents (control you) answers nothing; neither does a chosen-type one that no class is read from (Teferi's Realm, NEEDS RULING).
+  // A mass phase-out of only YOUR permanents (control you) answers nothing; neither does a chosen-type one that no class is read from. Teferi's Realm stays with no answer tag (owner 2026-11-13: each player chooses on their own upkeep).
   test("a mass phase-out of only your own permanents answers nothing", () => {
-    for (const name of ["Teferi's Protection", "Perch Protection", "Ripples of Potential", "Taniwha", "Temporal Firestorm"]) expect(classes(name), name).toEqual([]);
+    for (const name of ["Teferi's Protection", "Perch Protection", "Ripples of Potential", "Taniwha", "Temporal Firestorm", "Teferi's Realm"]) expect(classes(name), name).toEqual([]);
   });
 
   test("a phase-out of your own permanent, of the card itself, or only a block triggers answers nothing", () => {
