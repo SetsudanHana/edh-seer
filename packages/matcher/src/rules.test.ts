@@ -1639,10 +1639,10 @@ describe("removal.targeted is derived", () => {
     for (const n of ["Murder", "Swords to Plowshares", "Chaos Warp", "Cyclonic Rift", "Tragic Slip", "Dismember"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
   });
   test("wording the printed pattern missed holds: a multicoloured permanent (Pure // Simple), 'creature or Vehicle' (Daring Demolition), 'target Spirit' (Rend Spirit)", () => {
-    // Pure // Simple's whole card is a wipe (its Simple half destroys all Auras and Equipment, as on main), so the multicoloured claim is read off its first half alone.
+    // Pure // Simple's Simple half destroys all Auras and Equipment, a wipe, and Pure is its own effect (owner 2026-11-13, Rules 52): the whole card holds as well as its first half.
     const pure = blank("Pure // Simple");
     const firstHalf: DeckCard = { ...pure, tags: { ...pure.tags!, abilities: pure.tags!.abilities.filter((a) => a.clause === 1) } };
-    expect(ruleMatches(rule, pure, set), "whole card").toBe(false);
+    expect(ruleMatches(rule, pure, set), "whole card").toBe(true);
     expect(ruleMatches(rule, firstHalf, set), "Pure // Simple, first half").toBe(true);
     for (const n of ["Daring Demolition", "Rend Spirit"]) expect(ruleMatches(rule, blank(n), set), n).toBe(true);
   });

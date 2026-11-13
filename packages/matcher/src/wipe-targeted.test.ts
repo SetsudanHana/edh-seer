@@ -21,12 +21,12 @@ describe("a wipe with a targeted kill beside it is both", () => {
 });
 
 describe("a target that only seeds the wipe is not a second effect", () => {
-  test.each(["Cleansing Beam", "Brightflame", "Homing Lightning", "Alpha Brawl", "Flame Wave"])("%s stays a wipe with no targeted removal", (n) => {
+  test.each(["Cleansing Beam", "Brightflame", "Homing Lightning", "Alpha Brawl"])("%s stays a wipe with no targeted removal", (n) => {
     expect(role(realCard(n), "boardWipe"), `${n} boardWipe`).toBe(true);
     expect(role(realCard(n), "targetedRemoval"), `${n} targetedRemoval`).toBe(false);
   });
-  test("different amounts are two effects: Chandra's Fury (4 to the target, 1 to each creature) keeps its targeted half", () => {
-    expect(role(realCard("Chandra's Fury"), "targetedRemoval")).toBe(true);
+  test("a target that is a PLAYER or planeswalker is a Lava Spike, not an anchor (owner 2026-10-22): Flame Wave and Chandra's Fury keep their targeted half", () => {
+    for (const n of ["Flame Wave", "Chandra's Fury"]) expect(role(realCard(n), "targetedRemoval"), n).toBe(true);
   });
 });
 
