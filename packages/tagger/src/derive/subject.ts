@@ -918,6 +918,7 @@ export function sparedClasses(tail: string): { types: string[]; subtypes: string
   return { types, subtypes };
 }
 
+const ATTACKING_YOU_OR_PLANESWALKER = /\battacking you or (?:a|another) planeswalkers? you control\b/g;
 /** `role` says what the phrase IS. A "pick" (the default) is an effect or cost object, where a number led class is a count a player picks; an "event" is a trigger or replacement subject ("one or more creatures you control", "two or more creatures"), the set the event batches, never a pick (#1585). */
 export function parseSubject(text: string, role: "pick" | "event" = "pick"): SubjectFilter {
   // EVERY FIELD IS READ FROM THE TOKEN, NOT FROM THE ABILITY IT IS GRANTED (#1387; #1385 cut the types alone). Cut first, so the counter in Zabu's
@@ -938,7 +939,8 @@ export function parseSubject(text: string, role: "pick" | "event" = "pick"): Sub
   // what is left, empty or a bare variable, and the count stays a magnitude for `scaling.ts` to read.
   const t = whole.split(COUNT_PHRASE)[0].trim();
   const spared = sparedClasses(lowered.split(EXCEPT_FOR).slice(1).join(" "));
-  const { type, notType, umbrella, plural } = parseTypes(t, spared.types);
+  // THE PLANESWALKER A CREATURE ATTACKS IS NOT THE CLASS (#1629): "target creature that's attacking you or a planeswalker you control" (Soul Snare) names the DEFENDER. The types are read with the phrase cut to "attacking you"; control and combat still read the whole text.
+  const { type, notType, umbrella, plural } = parseTypes(t.replace(ATTACKING_YOU_OR_PLANESWALKER, "attacking you"), spared.types);
   const { subtype, plural: subtypePlural } = parseSubtypes(t);
   // "creature TOKENS you control": the plural sits on the word `tokens`, which is neither a type nor
   // a subtype, so neither parser saw it and the phrase read as a bare singular (AC13, 2026-09-09).

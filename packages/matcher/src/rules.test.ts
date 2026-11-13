@@ -348,14 +348,19 @@ describe("the destroy and exile answers read derived data (#1266)", () => {
     expect(classes("Burning of Xinye")).not.toContain("land");
   });
 
-  test("CEILING: a pay-or-die destroy derives no victimMay, so the answer and removal.targeted agree (Arcum's Whistle, Winter's Chill)", () => {
+  test("a pay-or-die destroy is the victim's option, so it is no removal and no answer (#1628: Arcum's Whistle, Winter's Chill); Nettling Imp and Norritt stay counted (NEEDS RULING)", () => {
     const set = loadRules();
     const targeted = set.rules.find((r) => r.id === "removal.targeted")!;
     for (const n of ["Arcum's Whistle", "Winter's Chill"]) {
       const dc = realCard(n);
-      expect(ruleMatches(targeted, dc, set), n).toBe(true);
-      expect(classes(n), n).toEqual(["creature"]);
+      expect(ruleMatches(targeted, dc, set), n).toBe(false);
+      expect(classes(n), n).toEqual([]);
     }
+    for (const n of ["Nettling Imp", "Norritt"]) expect(ruleMatches(targeted, realCard(n), set), n).toBe(true);
+  });
+
+  test("Soul Snare answers creatures, not planeswalkers: the planeswalker is the defender (#1629)", () => {
+    expect(classes("Soul Snare")).toEqual(["creature"]);
   });
 
   test("an Aura-only kill answers enchantments at NARROW_WEIGHT, and names no creature (owner 2026-11-13: Devout Harpist, Piety Charm)", () => {

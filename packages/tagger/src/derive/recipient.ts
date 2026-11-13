@@ -285,7 +285,9 @@ export function victimDeclines(clauseText: string, verb: string): boolean {
   if (!stem) return false;
   // "ANY PLAYER MAY EXILE a card from their graveyard" (Carrion Rats, Carrion Wurm), "EACH PLAYER MAY exile any number" (Grave Consequences): the exile is every player's option (#1266, graveyardHate).
   const anyPlayer = verb === "exile" ? "|\\b(?:any|each) player may exiles?\\b" : "";
-  return new RegExp(`\\b${DECLINER}\\s+may\\s+(?:(?:also|then)\\s+)*${stem}\\b|\\bunless\\s+${DECLINER}\\s+${stem}\\b`, "i").test(clauseText) || (anyPlayer !== "" && new RegExp(anyPlayer.slice(1), "i").test(clauseText));
+  // PAY OR DIE (#1628): "That player may pay {X}. If they don't pay, ... destroy it" (Arcum's Whistle), "its controller may pay {1} or {2}. If that player doesn't, destroy that creature" (Winter's Chill). The payment is the victim's option and the kill is what it declines.
+  const payOrDie = verb === "destroy" && new RegExp(`\\b${DECLINER}\\s+may\\s+pay\\b[^.]*\\.\\s*if\\s+${DECLINER}\\s+(?:don't|doesn't|do not|does not)\\b[^.]*\\b${stem}\\b`, "i").test(clauseText);
+  return payOrDie || new RegExp(`\\b${DECLINER}\\s+may\\s+(?:(?:also|then)\\s+)*${stem}\\b|\\bunless\\s+${DECLINER}\\s+${stem}\\b`, "i").test(clauseText) || (anyPlayer !== "" && new RegExp(anyPlayer.slice(1), "i").test(clauseText));
 }
 
 /** THE SACRIFICE FALLS ON EVERY PLAYER (#1579, owner ruling 2026-11-09: "edicts on everyone" are mass removal): "Each player sacrifices a creature of their choice" (Innocent Blood, Fleshbag Marauder), "each opponent sacrifices ..." (Liliana's Triumph), "each player ... sacrifices X creatures"
