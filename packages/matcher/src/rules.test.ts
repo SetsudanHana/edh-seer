@@ -235,10 +235,24 @@ describe("the damage, tuck, shrink, counter and bounce answers read derived data
     expect(classes("Elite Javelineer")).toEqual(["creature"]);
   });
 
-  // CEILING pinned, NEEDS RULING (see answers.damage.creature): main counts both.
-  test("damage: a colour hoser still answers creature, and \"target player or planeswalker\" still answers no planeswalker", () => {
+  // Owner 2026-11-13: a colour hoser IS a creature answer (Combust), at a weaker weight the follow-up PR gives it.
+  test("damage: a colour hoser answers creature on purpose (owner 2026-11-13)", () => {
     expect(classes("Combust")).toEqual(["creature"]);
+  });
+
+  test("damage: \"target player or planeswalker\" answers no planeswalker", () => {
     expect(classes("Lava Spike")).toEqual([]);
+  });
+
+  // Owner 2026-11-13, reversing the colour-hoser part of the 2026-10-27 ruling (#1357): every answer kind counts a colour-locked subject. Real derived rows.
+  test("tuck: a colour-locked tuck counts (King Crab, Hunting Drake, Aether Gust)", () => {
+    expect(classes("King Crab")).toEqual(["creature"]);
+    expect(classes("Hunting Drake")).toEqual(["creature"]);
+    expect(classes("Aether Gust")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+  });
+
+  test("no answer rule refuses a colour (notColourLocked is not used by any rule)", () => {
+    for (const r of loadRules().rules.filter((x) => x.answerClass !== undefined)) expect(JSON.stringify(r.match), r.id).not.toContain("notColourLocked");
   });
 
   test("tuck: shuffle and put-into-library of a permanent of the class, never a graveyard card", () => {
