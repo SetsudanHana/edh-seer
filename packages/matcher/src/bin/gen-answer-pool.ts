@@ -1,9 +1,12 @@
 /** Generates `answer-pool.json`: how many answers of each class EXIST inside each colour identity.
  *
- *  FREE -- Mongo reads only, no model. The answer rules in `rules.json` read `oracle` and `typeLine`
- *  only, so this needs no derived corpus and covers all ~34k cards rather than the 2,541 the
- *  derived corpus holds. (Counting a vocabulary case against the derived corpus has understated it
- *  by two orders of magnitude twice in this project's history.)
+ *  FREE -- Mongo reads only, no model. Most answer rules now read DERIVED abilities (#1266: the
+ *  destroy, exile, damage, tuck, shrink, counter and bounce answers), so each card is read with its
+ *  `cardTagsDerived` row, loaded as `role-ratchet.ts` loads it; a card with no row reads as no answer
+ *  from those rules. Needs derive-corpus run at the current DERIVE_VERSION. (It once read `oracle`
+ *  and `typeLine` only, and so covered all ~34k cards without a derived corpus; counting a vocabulary
+ *  case against too small a corpus has understated it by two orders of magnitude twice in this
+ *  project's history.)
  *
  *  `--check` regenerates and diffs against the committed file without writing, for CI -- the same
  *  contract `gen-vocabulary.ts --check` already ships. The suite's own `answer-pool.test.ts` guards
@@ -20,6 +23,7 @@ import { writeFileSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { connect, docToCard, loadConfig } from "@edh-seer/data";
+import { createTagsLookup } from "@edh-seer/tagger";
 import { answerClassesOf, loadRules } from "../rules.js";
 import { POOL_CLASSES, identityKey, type AnswerPool } from "../answer-pool.js";
 import { ANSWER_BASELINE, GRAVEYARD_HATE_SHARE } from "../answer-coverage.js";
@@ -40,6 +44,7 @@ const CLIENT_HATE_FILE = join(
 const CHECK = process.argv.includes("--check");
 const COLORS = ["W", "U", "B", "R", "G"] as const;
 const store = await connect(loadConfig());
+const tagsLookup = createTagsLookup(store.db, "derived");
 
 // The single-type classification the two hand-transcribed tables were counted against: first match
 // wins, in this order, so an "Artifact Creature" (etc.) lands on one row and the tables stay a
@@ -60,7 +65,7 @@ let scanned = 0;
 for await (const doc of store.db.collection("cards").find({})) {
   scanned++;
   const d = doc as { colorIdentity?: string[]; typeLine?: string; oracleText?: string; gameChanger?: boolean };
-  const cls = answerClassesOf({ card: docToCard(doc as never), tags: null });
+  const cls = answerClassesOf({ card: docToCard(doc as never), tags: await tagsLookup.findOne((doc as { _id: never })._id) });
   if (cls.size > 0) {
     const ci = (d.colorIdentity ?? []).map((c) => c.toUpperCase());
     rows.push({ m: ci.reduce((m, c) => m | (1 << COLORS.indexOf(c as (typeof COLORS)[number])), 0), cls: new Set(cls.keys()) });
