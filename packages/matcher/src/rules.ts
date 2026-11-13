@@ -827,7 +827,7 @@ function colourLockedSubject(s: { colors?: readonly string[]; anyOf?: { type?: s
   // A COMPOUND NOUN ("artifact creature") is narrower than either class and weighs the same (owner 2026-11-13).
   const coloured = (b: { type?: string | readonly string[]; subtype?: unknown; colors?: readonly string[]; allTypes?: readonly string[] }): boolean => (b.colors ?? []).length > 0 || bareSubtypeSubject(b, s.type) || compoundSubject(b);
   if (coloured(s)) return true;
-  const branches = (s.anyOf ?? []).filter((b) => cls === undefined || subjectReachesClass(true, { ...b, type: (b.type ?? s.type) as string | string[] | undefined }, cls));
+  const branches = (s.anyOf ?? []).filter((b) => cls === undefined || subjectReachesClass(true, { ...b, type: (b.type ?? s.type) as string | string[] | undefined, allTypes: b.allTypes as string[] | undefined }, cls));
   return branches.length > 0 && branches.every(coloured);
 }
 
