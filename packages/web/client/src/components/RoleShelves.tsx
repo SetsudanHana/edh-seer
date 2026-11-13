@@ -89,9 +89,12 @@ export function RoleShelves({ report, graph }: { report: DeckReport; graph?: Car
   );
 }
 
-/** A shelf with no target says how many cards sit on it. When members count for less than a whole card (weak stax, owner 2026-11-13) it says the engine's own sum as a decimal, never rounded up
- *  ("1.5 cards" for Armageddon and Urza's Sylex); a whole sum, or a shelf the engine did not count, says the chips. */
+/** A shelf with no target says how many cards sit on it. When the engine files a member as WEAK in this role (weak stax,
+ *  owner 2026-11-13) it says the engine's own sum as a decimal, never rounded up ("1.5 cards" for Armageddon beside
+ *  Urza's Sylex), next to the note naming the weak card. Every other shelf says the chips: gate weights also make sums
+ *  fractional (burn, draw, handFill) and a decimal there would name no card (weak-stax review, 2026-11-13). */
 function unrounded(report: DeckReport, category: string, chips: number): string {
+  if (!(report.weakRoles ?? []).some((w) => w.category === category)) return String(chips);
   const n = report.buildCategories?.find((c) => c.category === category)?.count;
   return n !== undefined && !Number.isInteger(n) ? fmtCount(n) : String(chips);
 }

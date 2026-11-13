@@ -113,3 +113,21 @@ test("the stax shelf shows the weighted count as a decimal and names the card th
   expect(screen.getByText(/1\.5 cards/)).toBeInTheDocument();
   expect(screen.getByText(/Urza's Sylex counts half/)).toBeInTheDocument();
 });
+
+/** Weak-stax review, 2026-11-13: gate weights also make a no-target shelf's sum fractional (burn 4.4 over 5 chips). With no
+ *  weak member to name, that shelf still says the chips, as it did before weak stax. */
+test("a no-target shelf with a gated, fractional count and no weak member says its chips", () => {
+  const report = {
+    commanders: ["Rani"],
+    cards: [
+      { name: "Rani", isCommander: true, manaValue: 3, roles: [] },
+      { name: "Lightning Bolt", isCommander: false, manaValue: 1, roles: ["burn"] },
+      { name: "Shock", isCommander: false, manaValue: 1, roles: ["burn"] },
+    ],
+    buildParents: [],
+    buildCategories: [{ category: "burn", count: 1.5, target: 0 }],
+  } as unknown as DeckReport;
+  render(<RoleShelves report={report} graph={{ nodes: [], edges: [] } as unknown as CardGraph} />);
+  expect(screen.getByText(/^2 cards$/)).toBeInTheDocument();
+  expect(screen.queryByText(/1\.5 cards/)).toBeNull();
+});
