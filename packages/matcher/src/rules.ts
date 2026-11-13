@@ -784,11 +784,11 @@ export interface AnswerMarks {
 }
 
 /** Does this subject name a colour the target must have? `colors` on the subject, or on EVERY branch of its `anyOf` (derive writes "white or blue creature" as `colors: [W, U]`). With `cls`, only the branches that can be a permanent of that answer class are judged: Nissa's Defeat
- *  ("target Forest, green enchantment, or green planeswalker") is locked for enchantment and planeswalker and not for land. "Colorless" is stored as colour C and is no colour: Infernal Reckoning, Goblin Cratermaker stay unlocked until the owner rules on it.
+ *  ("target Forest, green enchantment, or green planeswalker") is locked for enchantment and planeswalker and not for land. "Colorless" is stored as colour C and LOCKS too (owner 2026-11-13: Infernal Reckoning, Goblin Cratermaker).
  *  CEILING: a CHOSEN colour (`chosenColor`) is not read as a lock. */
 function colourLockedSubject(s: { colors?: readonly string[]; anyOf?: { type?: string | readonly string[]; subtype?: unknown; colors?: readonly string[] }[]; type?: string | readonly string[] } | undefined, cls?: string): boolean {
   if (s === undefined) return false;
-  const coloured = (b: { colors?: readonly string[] }): boolean => (b.colors ?? []).some((c) => c !== "C");
+  const coloured = (b: { colors?: readonly string[] }): boolean => (b.colors ?? []).length > 0;
   if (coloured(s)) return true;
   const branches = (s.anyOf ?? []).filter((b) => cls === undefined || subjectReachesClass({ ...b, type: (b.type ?? s.type) as string | string[] | undefined }, cls));
   return branches.length > 0 && branches.every(coloured);

@@ -20,7 +20,8 @@ describe("colour-locked answers are marked (owner 2026-11-13)", () => {
     for (const n of ["Combust", "King Crab", "Aether Gust"]) {
       const marks = answerClassesOf(realCard(n, { oracleText: "" }));
       expect(marks.size, n).toBeGreaterThan(0);
-      for (const [cls, m] of marks) expect(m.colourLocked, `${n} ${cls}`).toBe(true);
+      // Goblin Cratermaker's creature row is its 2-damage mode, which is uncoloured: only the colorless-permanent mode locks (artifact, enchantment, planeswalker).
+      for (const [cls, m] of marks) expect(m.colourLocked, `${n} ${cls}`).toBe(!(n === "Goblin Cratermaker" && cls === "creature"));
     }
   });
 
@@ -52,7 +53,8 @@ describe("colour-locked answers are marked (owner 2026-11-13)", () => {
     for (const n of ["Infernal Reckoning", "Goblin Cratermaker"]) {
       const marks = answerClassesOf(realCard(n));
       expect(marks.size, n).toBeGreaterThan(0);
-      for (const [cls, m] of marks) expect(m.colourLocked, `${n} ${cls}`).toBe(true);
+      // Goblin Cratermaker's creature row is its 2-damage mode, which is uncoloured: only the colorless-permanent mode locks (artifact, enchantment, planeswalker).
+      for (const [cls, m] of marks) expect(m.colourLocked, `${n} ${cls}`).toBe(!(n === "Goblin Cratermaker" && cls === "creature"));
     }
   });
 
