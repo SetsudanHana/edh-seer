@@ -95,3 +95,21 @@ test("a renamed FRONT face (Bind // Liberate beside Bind) finds its own node and
   expect(front.typeLine).toBe("Instant");
   expect(cards.find((c) => c.id === "Bind")!.typeLine).toBe("Sorcery");
 });
+
+/** Owner 2026-11-13: weak stax (Urza's Sylex) counts half. The stax shelf has no target, so it said "2 cards"; it now says the decimal the engine summed, never rounded up, and names the half-counted card. */
+test("the stax shelf shows the weighted count as a decimal and names the card that counts half", () => {
+  const report = {
+    commanders: ["Rani"],
+    cards: [
+      { name: "Rani", isCommander: true, manaValue: 3, roles: [] },
+      { name: "Armageddon", isCommander: false, manaValue: 4, roles: ["stax"] },
+      { name: "Urza's Sylex", isCommander: false, manaValue: 4, roles: ["stax", "boardWipe"] },
+    ],
+    buildParents: [],
+    buildCategories: [{ category: "stax", count: 1.5, target: 0 }],
+    weakRoles: [{ card: "Urza's Sylex", category: "stax", weight: 0.5 }],
+  } as unknown as DeckReport;
+  render(<RoleShelves report={report} graph={{ nodes: [], edges: [] } as unknown as CardGraph} />);
+  expect(screen.getByText(/1\.5 cards/)).toBeInTheDocument();
+  expect(screen.getByText(/Urza's Sylex counts half/)).toBeInTheDocument();
+});
