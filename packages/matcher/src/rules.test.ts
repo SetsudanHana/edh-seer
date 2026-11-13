@@ -703,7 +703,7 @@ test("a printed protection word that hands nothing to your permanents is not pro
 test("phasing out is protection, read off the derived `phases-out` emit", () => {
   for (const name of ["Teferi's Protection", "Slip Out the Back"]) expect(protectsDerived(name), name).toBe(true);
   // A card that phases out ANY permanent, yours or theirs, can be both protection and interaction: it stays.
-  for (const name of ["Galadriel's Dismissal", "Dream Fighter"]) expect(protectsDerived(name), name).toBe(true);
+  expect(protectsDerived("Galadriel's Dismissal")).toBe(true);
 });
 
 // owner 2026-11-12: a card that protects only itself is not Protection, phasing included. The derived `phases-out` emit carries `subject.self`.
@@ -715,6 +715,110 @@ test("a card that phases only ITSELF out is not protection", () => {
 // owner 2026-11-12: phasing aimed only at an opponent's permanent is interaction, not Protection. The emit's subject carries `control: "opp"`.
 test("phasing aimed only at an opponent's permanent is not protection", () => {
   for (const name of ["Teferi's Reproach", "Divine Smite", "Sapphire Charm", "Teferi, Master of Time", "Teferi, Timeless Voyager"]) expect(protectsDerived(name), name).toBe(false);
+});
+
+// owner 2026-11-12: a targeting ban against opponents handed to something that is not the card is Protection. The derived `targeting-ban` kind carries who is protected (`effect.subject`) and from whom (`targetingBan.source.control`).
+test("a targeting ban against opponents, on something other than the card, is protection", () => {
+  // "Target creature can't be the target of spells or abilities your opponents control this turn", the Aura form, the board form, and the lands-and-graveyard form.
+  for (const name of ["Vines of Vastwood", "Canopy Cover", "Shielding Plax", "Veilstone Amulet", "Tomik, Distinguished Advokist", "Display of Dominance"]) expect(protectsDerived(name), name).toBe(true);
+  // The card's own ban is hexproof on itself (a stat), and a ban from ANY source or from lands/graveyards is not against opponents.
+  for (const name of ["Thrun, Breaker of Silence", "Shanna, Sisay's Legacy", "Karplusan Strider"]) expect(protectsDerived(name), name).toBe(false);
+  // Owner 2026-11-12 (Display of Dominance and Tomik confirmed): the rest of the opponent-aimed set stays.
+  // A ban from ANY source that protects YOUR things counts too (owner 2026-11-12, second ruling): Autumn's Veil and Spellbane Centaur ("creatures you control can't be the targets of blue ... spells"), an Aura's
+  // enchanted creature (Anti-Magic Aura, Spectral Shield, Artifact Ward: an Aura you can put on your own creature), and a global ban on every graveyard (Ground Seal, Silent Gravestone, Dennick, Underworld Cerberus)
+  // or every creature (Dense Foliage).
+  for (const name of ["Autumn's Veil", "Spellbane Centaur", "Anti-Magic Aura", "Spectral Shield", "Artifact Ward", "Ground Seal", "Silent Gravestone", "Dennick, Pious Apprentice // Dennick, Pious Apparition", "Underworld Cerberus", "Dense Foliage"]) expect(protectsDerived(name), name).toBe(true);
+  // Still refused: a ban on the card itself, from any source (hexproof on itself, a stat).
+  for (const name of ["Gaea's Revenge", "Raiding Party", "Bartel Runeaxe"]) expect(protectsDerived(name), name).toBe(false);
+});
+
+// owner 2026-11-12: a ban whose subject is only OPPONENTS' things protects nobody of yours, whatever the source. Written row: no real card has the shape.
+test("a targeting ban on only the opponents' things is not protection", () => {
+  const ban = (subject: object, source: object): DeckCard => derivedCard("Written", [{ kind: "static", effect: { kind: "targeting-ban", subject }, targetingBan: { by: ["spell", "ability"], source } }], "Enchantment");
+  expect(ruleMatches(protectionText(), ban({ control: "opp", token: null, type: "creature", scope: "all" }, { control: "any", token: null }))).toBe(false);
+  expect(ruleMatches(protectionText(), ban({ control: "opp", token: null, type: "creature", scope: "all" }, { control: "opp", token: null }))).toBe(false);
+  expect(ruleMatches(protectionText(), ban({ control: "you", token: null, type: "creature", scope: "all" }, { control: "any", token: null }))).toBe(true);
+});
+
+// owner 2026-11-12: Livio, Oathsworn Sentinel is Protection (confirmed), as are Display of Dominance and Tomik, Distinguished Advokist.
+test("Livio, Oathsworn Sentinel, Display of Dominance and Tomik are protection (owner confirmed)", () => {
+  // Livio joins protection.flicker (its aegis-counter exile and return of the card to its owner); the other two are protection.text's opponent-aimed ban.
+  const anyProtection = (name: string): boolean => loadRules().rules.filter((r) => r.category === "protection").some((r) => ruleMatches(r, realCard(name, { oracleText: "" })));
+  for (const name of ["Livio, Oathsworn Sentinel", "Display of Dominance", "Tomik, Distinguished Advokist"]) expect(anyProtection(name), name).toBe(true);
+});
+
+// owner 2026-11-12: a land can carry Protection. The `countsAsLand` exclusion is gone from protection.text; these are the 11 cards it had hidden, each read against its Mongo text.
+test("a land, and a spell with a land face, can be protection", () => {
+  // Derived readings: a grant of protection / hexproof / indestructible to another permanent, and a keyword counter on another permanent.
+  for (const name of ["Sejiri Steppe", "Tower of the Magistrate", "Plaza of Heroes", "Tyrite Sanctum"]) expect(protectsDerived(name), name).toBe(true);
+  // Modal spells whose other face is a land: the spell face is the protection (indestructible to your other creatures, a counter and indestructible, protection from a colour).
+  for (const name of ["Emeria's Call // Emeria, Shattered Skyclave", "Revitalizing Repast // Old-Growth Grove", "Sejiri Shelter // Sejiri Glacier"]) expect(protectsDerived(name), name).toBe(true);
+  // The printed residue: mana spent on a spell "can't be countered".
+  for (const name of ["Boseiju, Who Shelters All", "Cavern of Souls", "Mistrise Village"]) expect(protects(name), name).toBe(true);
+  // Detection Tower lets YOU target hexproof creatures: anti-protection. "As though they didn't have hexproof" names the keyword and grants none (derive 519; Kaya, Bane of the Dead and Nowhere to Run store `cant`, which is not a grant).
+  for (const name of ["Detection Tower", "Kaya, Bane of the Dead", "Nowhere to Run"]) expect(protectsDerived(name), name).toBe(false);
+});
+
+// owner 2026-11-12: Talon Gates of Madara ("When this land enters, up to one target creature phases out.") carries Protection. Its stored clause files the phase-out as `put`; derive reads the printed text (phase-out-put.test.ts).
+test("Talon Gates of Madara is protection, read off the derived phases-out emit", () => {
+  expect(protectsDerived("Talon Gates of Madara")).toBe(true);
+});
+
+// owner 2026-11-12: phasing out an opponent's permanent is interaction, but not removal. It carries an ANSWER class by what it can hit and no `targetedRemoval` for the phasing alone.
+describe("phasing out another player's permanent is an answer, not removal (#1266)", () => {
+  const classes = (name: string): string[] => [...answerClassesOf(realCard(name)).keys()].sort();
+  const removal = (names: string[]): string[] => [...(detectBuildCategories(names.map((n) => realCard(n))).get("targetedRemoval") ?? [])].sort();
+
+  test("the class is the type the phase-out can hit", () => {
+    expect(classes("Sapphire Charm")).toEqual(["creature"]);
+    expect(classes("Teferi, Master of Time")).toEqual(["creature"]);
+    expect(classes("Teferi, Timeless Voyager")).toEqual(["creature"]);
+    expect(classes("Divine Smite")).toEqual(["creature", "planeswalker"]);
+    // "All nonland permanents they control": creatures, artifacts, enchantments and planeswalkers, not lands.
+    expect(classes("Teferi's Reproach")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+    // A phase-out of a target of ANY controller can be an answer too (it is protection as well).
+    expect(classes("Galadriel's Dismissal")).toEqual(["creature"]);
+  });
+
+  test("phasing alone is not targeted removal; Divine Smite's exile branch and Timeless Voyager's tuck are", () => {
+    expect(removal(["Teferi's Reproach", "Sapphire Charm", "Teferi, Master of Time", "Galadriel's Dismissal"])).toEqual([]);
+    expect(removal(["Divine Smite", "Teferi, Timeless Voyager"])).toEqual(["Divine Smite", "Teferi, Timeless Voyager"]);
+  });
+
+  // owner 2026-11-12: a TARGETLESS mass phase-out of creatures is an answer (answer:creature), not a board wipe. Out of Time, Time and Tide and Disciple of Caelus Nin phase out every creature (of any controller).
+  test("a mass phase-out that reaches opponents' creatures answers creature, and is no board wipe", () => {
+    for (const name of ["Out of Time", "Time and Tide", "Disciple of Caelus Nin"]) expect(classes(name), name).toEqual(["creature"]);
+    // "All artifacts and creatures phase out" covers two classes.
+    expect(classes("The City on the Edge of Forever")).toEqual(["artifact", "creature"]);
+    const wipes = detectBuildCategories(["Out of Time", "Time and Tide", "Disciple of Caelus Nin"].map((n) => realCard(n))).get("boardWipe") ?? [];
+    expect([...wipes]).toEqual([]);
+  });
+
+  // owner 2026-11-12 (confirmed, no change): Slip Out the Back and Galadriel's Dismissal are Protection AND keep their answer tag.
+  test("Slip Out the Back and Galadriel's Dismissal keep their answer class", () => {
+    expect(classes("Galadriel's Dismissal")).toEqual(["creature"]);
+    expect(classes("Slip Out the Back")).toEqual(["creature"]);
+  });
+
+  // A mass phase-out of only YOUR permanents (control you) answers nothing; neither does a chosen-type one that no class is read from (Teferi's Realm, NEEDS RULING).
+  test("a mass phase-out of only your own permanents answers nothing", () => {
+    for (const name of ["Teferi's Protection", "Perch Protection", "Ripples of Potential", "Taniwha", "Temporal Firestorm"]) expect(classes(name), name).toEqual([]);
+  });
+
+  test("a phase-out of your own permanent, of the card itself, or only a block triggers answers nothing", () => {
+    for (const name of ["Teferi's Protection", "Clever Concealment", "Blink Dog", "Mist Dragon", "Dream Fighter"]) expect(classes(name), name).toEqual([]);
+  });
+});
+
+// owner 2026-11-12: Dream Fighter is opponent-aimed and leaves Protection. "This creature and that creature phase out" fires when it blocks or becomes blocked by a creature, and "that creature" is the creature
+// blocking it or blocked by it, which an opponent controls (CR 509.1a: the defending player chooses which creatures THEY control block an attacker; derive reads it `control: any`). The rule refuses a phase-out only a BLOCK makes (`notBlockCombat`).
+test("a phase-out that only a block triggers is opponent-aimed, not protection", () => {
+  expect(protectsDerived("Dream Fighter")).toBe(false);
+  // Written row: a block trigger that phases out another creature of ANY controller is refused; the same emit on a spell or a non-block trigger still counts.
+  const phase = (trigger: object | undefined): DeckCard => derivedCard("Written", [{ kind: trigger ? "triggered" : "on-cast", ...(trigger ? { trigger } : {}), effect: { kind: "" }, emits: [{ verb: "phases-out", subject: { control: "any", token: null, type: "creature" } }] }], "Creature");
+  expect(ruleMatches(protectionText(), phase({ verbs: ["blocks", "becomes-blocked"] }))).toBe(false);
+  expect(ruleMatches(protectionText(), phase({ verbs: ["attacks"] }))).toBe(true);
+  expect(ruleMatches(protectionText(), phase(undefined))).toBe(true);
 });
 
 test("the one printed residue: spells that can't be countered and protection for the player", () => {
@@ -957,8 +1061,8 @@ test("the flicker shield reads the derived `flicker` ability, not the printed se
   // The printed pattern needed "exile target" and "return it / that card": "each creature you control", "any number of target creatures ... Return those cards", "up to two target creatures ... those
   // cards", a replacement ("would be put into a graveyard ..., exile it instead. Return it ...") and a flash creature's "any number of other target permanents" were all missed.
   for (const name of ["Ghostway", "Eerie Interlude", "Displace", "Cosmic Intervention", "Silver Surfer, Cosmic Voyager", "Ephemerate", "Restoration Angel", "Otherworldly Journey", "Parting Gust"]) expect(shields(name), name).toBe(true);
-  // Not at instant speed, by the ruling's own words ("an instant, or a card with flash"): a sorcery, and an ACTIVATED flicker on a creature without flash (Eldrazi Displacer: main's behaviour, unruled).
-  for (const name of ["Flicker", "Flickerwisp", "Brago, King Eternal", "Eldrazi Displacer"]) expect(shields(name), name).toBe(false);
+  // Not at instant speed: a sorcery, and a TRIGGERED flicker on a permanent without flash. (An ACTIVATED flicker is at instant speed: owner 2026-11-12, tested below.)
+  for (const name of ["Flicker", "Flickerwisp", "Brago, King Eternal"]) expect(shields(name), name).toBe(false);
   // Restoration Angel without its Flash keyword is a sorcery-speed blink.
   expect(ruleMatches(rule, realCard("Restoration Angel"))).toBe(false);
   // A card that exiles and returns only ITSELF shields nothing else, and removal that never returns is no flicker.
@@ -970,6 +1074,25 @@ test("the flicker shield reads the derived `flicker` ability, not the printed se
   expect(ruleMatches(rule, flashCard({ control: "any", token: null, self: true }))).toBe(false);
   // CEILING over-reads, named in the rule's why: Phelia has flash but flickers on ATTACK; derive reads Audacious Swap's "If it's a land card, they put it onto the battlefield" as a one-branch return.
   for (const name of ["Phelia, Exuberant Shepherd", "Audacious Swap"]) expect(shields(name), name).toBe(true);
+});
+
+// owner 2026-11-12: an ACTIVATED flicker on a permanent without flash is Protection (it is at instant speed too), on any card type. It still refuses a flicker of only the card itself and of only opponents' permanents.
+test("an activated flicker is protection on any card type", () => {
+  const rule = loadRules().rules.find((r) => r.id === "protection.flicker")!;
+  const shields = (name: string): boolean => ruleMatches(rule, { ...flick(name), card: { ...flick(name).card, oracleText: "" } });
+  // Creatures, and artifacts that exile your permanent and later return it ("Return each creature card exiled with this artifact").
+  for (const name of ["Eldrazi Displacer", "Mistmeadow Witch", "Roon of the Hidden Realm", "Emiel the Blessed", "Abuelo, Ancestral Echo", "Nephalia Smuggler", "Cold Storage", "Synod Sanctum"]) expect(shields(name), name).toBe(true);
+  // Written rows: an activated flicker of only the card itself, or of only an opponent's permanent, shields nothing.
+  // The flicker needs the instant-speed exile it pairs with (`pairedInstantExile`), as derive writes it for Eldrazi Displacer.
+  const exile = { kind: "activated", effect: { kind: "" }, emits: [{ verb: "exiled", subject: { control: "opp", token: null, type: "creature", scope: "target", fromZone: "battlefield" }, instantSpeed: true }] };
+  const activated = (subject: object, emits: object[] = [{ verb: "enters", subject: { control: "any", token: null, fromZone: "exile" } }]): DeckCard => derivedCard("Written", [exile, { kind: "activated", effect: { kind: "flicker", subject }, emits }], "Artifact");
+  expect(ruleMatches(rule, activated({ control: "any", token: null, type: "creature", scope: "target", other: true }))).toBe(true);
+  expect(ruleMatches(rule, activated({ control: "opp", token: null, type: "creature", scope: "target" }))).toBe(false);
+  expect(ruleMatches(rule, activated({ control: "any", token: null, self: true }))).toBe(false);
+  // "Put a card exiled with this onto the battlefield under YOUR control" is a steal, and a loyalty or sorcery-speed exile (no instant-speed `exiled` emit) is no shield: Sisters of Stone Death, Karn Liberated, Aminatou, Ghost Vacuum.
+  for (const name of ["Sisters of Stone Death", "Karn Liberated", "Aminatou, the Fateshifter", "Ghost Vacuum", "Profane Procession // Tomb of the Dusk Rose", "Lilysplash Mentor", "Aetherling", "Kaya, Ghost Assassin"]) expect(shields(name), name).toBe(false);
+  // A triggered flicker on a card without flash is still no shield.
+  expect(ruleMatches(rule, derivedCard("Written", [{ kind: "triggered", effect: { kind: "flicker", subject: { control: "you", token: null, type: "creature", scope: "target" } } }], "Creature"))).toBe(false);
 });
 
 /** A card that carries only derived abilities, as derive writes them (#1266: stackInteraction reads emits and effect kinds, no longer the printed text). */

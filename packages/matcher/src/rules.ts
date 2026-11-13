@@ -1,5 +1,5 @@
 import ruleSet from "./rules.json" with { type: "json" };
-import type { ManaLine, ManaLineSource } from "@edh-seer/tagger";
+import type { Ability, ManaLine, ManaLineSource } from "@edh-seer/tagger";
 import type { SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 import { classifyLand } from "./land-conditions.js";
@@ -46,6 +46,19 @@ export type RuleClause =
       notOwnedByYou?: true;
       /** Refuse an ability whose effect SUBJECT is the card itself (`subject.self`): "Exile this card from your graveyard" derives a graveyard-hate effect over the card, which hates nothing (#1266). */
       notSelf?: true;
+      /** The ABILITY's own kind (`Ability.kind`: `activated`, `triggered`, `static`, `on-cast` ...) is in this list. An activated flicker is at instant speed on any permanent (owner 2026-11-12, `protection.flicker`). */
+      ofKind?: string[];
+      /** A `targeting-ban` that PROTECTS SOMETHING OF YOURS, whoever bans (#1266, owner 2026-11-12). Any one of: the ban is against opponents' spells and abilities (`targetingBan.source.control: opp`: Vines of Vastwood,
+       *  Canopy Cover, Tomik, Display of Dominance); its subject is yours (Autumn's Veil, Spellbane Centaur: "creatures you control"); the card is an AURA (the enchanted creature is one you can choose: Anti-Magic Aura,
+       *  Spectral Shield, Artifact Ward); or it is global over every graveyard (Ground Seal, Silent Gravestone) or every creature (Dense Foliage). Refused whatever the source: a ban on the card itself (Thrun, Gaea's Revenge,
+       *  Bartel Runeaxe) and one whose subject is only opponents' things. CEILING: the global reading covers `creature` and `graveyard` subjects only; Peace Talks' "players and permanents" is not read (NEEDS RULING). */
+      banProtects?: true;
+      /** A FLICKER THAT IS ONE (derive types "put a card exiled with this onto the battlefield" `flicker` too: Karn Liberated, Ashiok, Sisters of Stone Death, Ghost Vacuum, Profane Procession,
+       *  and a loyalty or "activate only as a sorcery" exile): the card has an instant-speed `exiled` emit of a permanent from the battlefield (or from no stated zone: a model-read clause leaves it off, Angel of Condemnation) that is not the card itself, AND the flicker either
+       *  returns it to its OWNER (the flicker's own enters emit is `control: any`: Eldrazi Displacer, Mistmeadow Witch) or the exile is of YOUR permanent (an exiled emit `control: you`: Cold Storage,
+       *  Emiel). A return "under your control" of an opponent's creature is a steal, and is refused. CEILING: the pair is read across the whole card, not the clause, because Cold Storage and Synod Sanctum
+       *  exile in one ability and return in another (#1266). */
+      pairedInstantExile?: true;
       /** Refuse an ability one of whose emits the VICTIM MAY DECLINE (`GameEvent.victimMay`): "unless that player exiles cards from their graveyard" (Axebane Ferox), "any player may exile a card from their graveyard" (Carrion Rats),
        *  "its controller may exile three cards ... to ignore this effect" (Lost in Thought) are a price the other player chooses to pay, not graveyard hate (#1266; the same refusal as the edict's `notVictimMay` on `emits`). */
       notVictimMay?: true;
@@ -407,6 +420,13 @@ const raisesStat = (amount: string | undefined): boolean => amount !== undefined
 const LAND_TYPES = new Set(["cave", "desert", "forest", "gate", "island", "lair", "locus", "mine", "mountain", "plains", "planet", "power-plant", "sphere", "swamp", "tower", "town", "urza's"]);
 /** Can this ability's damage or life loss land on a player other than you? See `effectKind.reachesPlayer`. The effect subject decides; where derive kept NONE (a model-`static` clause: Granite Shard,
  *  Herald of Hadar, but also the damage REDIRECTS Pariah and Palisade Giant) the ability's own damage / life-loss EMITS decide, and an ability with neither reads as no. */
+/** See `pairedInstantExile` on the `effectKind` clause. */
+function pairedInstantExile(abilities: readonly Ability[], flicker: Ability): boolean {
+  const exiled = abilities.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "exiled" && e.instantSpeed === true && (e.subject.fromZone === undefined || e.subject.fromZone === "battlefield") && e.subject.self !== true);
+  if (exiled.length === 0) return false;
+  return exiled.some((e) => e.subject.control === "you") || (flicker.emits ?? []).some((e) => e.verb === "enters" && e.subject.control === "any");
+}
+
 function abilityReachesPlayer(a: { effect: { subject?: SubjectFilter }; emits?: { verb: string; subject: SubjectFilter }[] }): boolean {
   if (a.effect.subject !== undefined) return subjectReachesPlayer(a.effect.subject);
   return (a.emits ?? []).some((e) => (e.verb === "non-combat-damage" || e.verb === "lose-life") && subjectReachesPlayer(e.subject));
@@ -435,6 +455,18 @@ function subjectReachesPermanent(s: SubjectFilter): boolean {
 function abilityReachesPermanent(a: { effect: { subject?: SubjectFilter }; emits?: { verb: string; subject: SubjectFilter }[] }): boolean {
   if (a.effect.subject !== undefined) return a.effect.subject.scope === "target" && subjectReachesPermanent(a.effect.subject);
   return (a.emits ?? []).some((e) => e.verb === "non-combat-damage" && e.subject.scope === "target" && subjectReachesPermanent(e.subject));
+}
+
+/** A `targeting-ban` ability that protects something of YOURS whoever bans (`banProtects`, #1266, owner 2026-11-12). Never the card itself (`subject.self`) and never a subject that is only opponents'. */
+function banProtectsYours(a: { targetingBan?: { source: { control?: string } }; effect: { subject?: SubjectFilter } }, typeLine: string): boolean {
+  if (a.targetingBan === undefined) return false;
+  const subject: SubjectFilter = a.effect.subject ?? { control: "any", token: null };
+  if (subject.self === true || subject.control === "opp") return false;
+  return a.targetingBan.source.control === "opp"
+    || subject.control === "you"
+    || /\baura\b/i.test(typeLine)
+    || subject.zone === "graveyard"
+    || (subject.scope === "all" && subjectTypes(subject).includes("creature"));
 }
 
 /** A search SUBJECT that can only be a land (#1266): typed `land` ("a basic land card"), a LAND TYPE ("a Mountain card", "a basic Plains, Swamp, or Forest card", "a Gate card": Alpine Guide, Abzan Monument,
@@ -549,6 +581,9 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.notOnFlip !== true || a.onFlip === undefined)
         && (clause.notOwnedByYou !== true || a.effect.subject?.owner !== "you")
         && (clause.notSelf !== true || a.effect.subject?.self !== true)
+        && (clause.ofKind === undefined || clause.ofKind.includes(a.kind))
+        && (clause.banProtects !== true || banProtectsYours(a, dc.card.typeLine ?? ""))
+        && (clause.pairedInstantExile !== true || pairedInstantExile(dc.tags?.abilities ?? [], a))
         && (clause.notVictimMay !== true || !(a.emits ?? []).some((e) => e.victimMay === true))
         && (clause.librarySearch === undefined || (a.librarySearch !== undefined && clause.librarySearch.includes(a.librarySearch)))
         && (clause.notRedirect !== true || !(a.emits ?? []).some((e) => e.redirect === true))
