@@ -617,6 +617,8 @@ export interface DeckReport {
    *  names; exactly 0 with none), `unread` (a condition nothing here settles, counted at one fixed partial weight) or `target` (a condition on the card's own target: weight 1, a NARROW answer, not a chance). Absent
    *  when no member is conditional. Membership never changes: a gated draw card is still a draw card. */
   conditionalRoles?: { card: string; category: string; weight: number; basis: "evaluated" | "supply" | "unread" | "target" | "choice"; needs: string }[];
+  /** THE ROLE MEMBERS THAT ARE ONLY WEAKLY IN A ROLE (owner 2026-11-13: weak stax, Urza's Sylex). Each counts `weight` (0.5, `NARROW_WEIGHT`) in `buildCategories`, whose `count` already holds the sum. Absent when none is. Matcher-only, as `conditionalRoles`. */
+  weakRoles?: { card: string; category: string; weight: number }[];
   /** WHICH THEME ROW(S) THE PARENT TARGETS CAME FROM (owner ruling 2026-09-06, spec
    *  `2026-09-06-theme-template-proposal.md`): the detected primary and, when strong enough, the
    *  secondary, each with its EDHREC-population row keyed by `buildParents[].key`, plus the

@@ -986,7 +986,7 @@ export function analyzeDeckStructured(
   );
   const {
     buildScore, buildCategories, buildParents, template, suggestions, suggestionByKey, answerCoverage: coverage, rampResilience,
-    landsImpact, answersImpact, conditionalRoles,
+    landsImpact, answersImpact, conditionalRoles, weakRoles,
   } =
     computeBuild(resolved, strategies[0]?.name, landRec.target, identity, graveyardVulnerability, strategies, gates);
 
@@ -1162,6 +1162,7 @@ export function analyzeDeckStructured(
     answerCoverage: coverage,
     rampResilience,
     ...(conditionalRoles ? { conditionalRoles } : {}),
+    ...(weakRoles ? { weakRoles } : {}),
     cutList,
     unjudged,
     slack,

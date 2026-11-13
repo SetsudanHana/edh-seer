@@ -259,6 +259,8 @@ export interface Rule {
   /** What KIND of answer this rule contributes, where the kind changes whether it answers at all
    *  (design §3.1). Absent = an ordinary one-shot answer, which is most of them. */
   mode?: "exile" | "recurring";
+  /** A WEAK RULE (owner 2026-11-13, `NARROW_WEIGHT`): a card that fills `category` ONLY through weak rules is a plain member that counts `NARROW_WEIGHT` where the role is summed (`detectWeakRoles`). Only `stax.weak` today. */
+  weak?: true;
   /** ALL must hold. */
   match: RuleClause[];
   /** NONE may hold. */
