@@ -776,14 +776,46 @@ function colourLockedSubject(s: { colors?: readonly string[]; anyOf?: { colors?:
   return (s.anyOf ?? []).length > 0 && s.anyOf!.every((b) => (b.colors ?? []).length > 0);
 }
 
+type TargetSubject = { type?: string | readonly string[]; colors?: readonly string[]; control?: string; anyOf?: TargetSubject[] };
+const typesOf = (t: TargetSubject["type"]): readonly string[] => (t === undefined ? [] : typeof t === "string" ? [t] : t);
+
+/** Is the card's DERIVED target for `word` (a class word: creature, planeswalker...) colour-restricted? For "target creature or planeswalker that's green or white" (Noxious Grasp), "target Forest, green enchantment, or green planeswalker" (Nissa's Defeat), "target Plains and target white creature" (Reign of Chaos): the printed phrase does not start with the colour, but derive stores the colours on the target emit. Every clause whose target (not yours) can reach `word` must have it restricted, and at least one such clause must exist: a Forest branch of Nissa's Defeat does not reach "enchantment", so it does not unlock that row. CEILING: any non-yours target naming the type counts, whatever its verb, and one coloured target in a clause covers its uncoloured repeats, so "Destroy target creature. Target white creature gets +1/+1." in ONE clause reads the creature row as locked. */
+function derivedTargetLocked(dc: DeckCard, word: string): boolean {
+  // Per CLAUSE: "...that's red or white loses all abilities. Target creature you control deals damage to that permanent" derives the colours on the first ability and an uncoloured copy of the same target on the second (Flourishing Grapple).
+  const clauses = new Map<number, boolean>();
+  for (const a of dc.tags?.abilities ?? []) {
+    const subjects = [a.effect.subject, ...(a.emits ?? []).map((e) => e.subject)] as (TargetSubject & { scope?: string })[];
+    for (const s of subjects) {
+      if (s === undefined || s.scope !== "target" || s.control === "you") continue;
+      const branches = s.anyOf !== undefined && s.anyOf.length > 0 ? s.anyOf.map((b) => ({ ...b, type: b.type ?? s.type, colors: b.colors ?? s.colors })) : [s];
+      for (const b of branches) {
+        if (!typesOf(b.type).includes(word)) continue;
+        const key = a.clause ?? 0;
+        // "colorless" is stored as colour C and is not a colour: Infernal Reckoning, Goblin Cratermaker stay unlocked until the owner rules on it.
+        const coloured = (b.colors ?? []).some((c) => c !== "C");
+        // a branch with no colour unlocks the clause, unless the same clause already coloured THAT branch; an anyOf branch is judged alone
+        if (s.anyOf !== undefined && s.anyOf.length > 0) clauses.set(key, (clauses.get(key) ?? true) && coloured);
+        else clauses.set(key, (clauses.get(key) ?? false) || coloured);
+      }
+    }
+  }
+  return clauses.size > 0 && [...clauses.values()].every(Boolean);
+}
+
 /** The card with every ability whose answer subject (the effect's, the emits') is colour-restricted taken out. A DERIVED answer rule that still matches this card is not colour-locked (owner 2026-11-13). Same card when nothing is
- *  restricted, so the usual case pays no second match. CEILING: the ability is taken out whole, so a card whose ONE ability carries a colour-restricted emit beside an unrestricted answer emit reads as locked. */
+ *  restricted, so the usual case pays no second match. CEILING: the ability is taken out whole, so a card whose ONE ability carries a colour-restricted emit beside an unrestricted answer emit reads as locked, and an uncoloured target of the same types in the same clause is taken out with it. */
 function withoutColourLockedAbilities(dc: DeckCard): { dc: DeckCard; any: boolean } {
   const abilities = dc.tags?.abilities ?? [];
   const locked = (a: (typeof abilities)[number]): boolean =>
     colourLockedSubject(a.effect.subject as never) || (a.emits ?? []).some((e) => e.subject.scope === "target" && colourLockedSubject(e.subject as never));
   if (!abilities.some(locked)) return { dc, any: false };
-  return { dc: { ...dc, tags: { ...dc.tags!, abilities: abilities.filter((a) => !locked(a)) } }, any: true };
+  // An ability in the SAME CLAUSE aimed at the same types is the same target again, by back-reference ("...that's red or white loses all abilities. Target creature you control deals damage to that permanent": Flourishing Grapple).
+  const lockedKeys = new Set(abilities.filter(locked).map((a) => `${a.clause ?? 0}|${[a.effect.subject, ...(a.emits ?? []).map((e) => e.subject)].filter((s) => s?.scope === "target" && colourLockedSubject(s as never)).map((s) => JSON.stringify(s!.type ?? null)).join()}`));
+  const sameTargetAgain = (a: (typeof abilities)[number]): boolean => {
+    const ts = [a.effect.subject, ...(a.emits ?? []).map((e) => e.subject)].filter((s) => s?.scope === "target" && s.control !== "you" && !colourLockedSubject(s as never));
+    return ts.length > 0 && ts.every((s) => lockedKeys.has(`${a.clause ?? 0}|${JSON.stringify(s!.type ?? null)}`));
+  };
+  return { dc: { ...dc, tags: { ...dc.tags!, abilities: abilities.filter((a) => !locked(a) && !sameTargetAgain(a)) } }, any: true };
 }
 
 /** Which answer classes a card covers, per `answerClass` / `answerClassFrom`.
@@ -848,7 +880,7 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
         // to everyone ELSE and stays an answer.
         if (new RegExp(set.patterns.controllerGetsCopies, "i").test(dc.card.oracleText ?? "")) continue;
         // OWNER 2026-11-13: a colour hoser counts, marked, at NARROW_WEIGHT (it was dropped here: Pyroblast, Soul Rend).
-        const colourLocked = COLOUR_HOSER.test(phrase.replace(/\u2019/g, "'"));
+        const phraseLocked = COLOUR_HOSER.test(phrase.replace(/\u2019/g, "'"));
         // A STAT OR STATE CONDITION ON THE TARGET STILL COVERS ITS CLASS, MARKED NARROW (owner refinement 2026-10-27 of ruling C): Fatal Push's "if it has mana value 2 or less", Deathbringer Liege's "if it's tapped",
         // Prohibit's mana value. A COLOUR condition (`COLOUR_HOSER` above: Pyroblast, Soul Rend) counts too, as `colourLocked` (owner 2026-11-13).
         const narrow = targetConditions.some((c) => sentence.toLowerCase().includes(c));
@@ -860,7 +892,7 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
             // "nonland permanent" answers everything except a land, and `permanent` alone expands
             // to all five. Without this a Pongify reads as land interaction.
             if (cls === "land" && /\bnonland\b/.test(phrase)) continue;
-            mark(cls, rule.mode, narrow, colourLocked);
+            mark(cls, rule.mode, narrow, phraseLocked || derivedTargetLocked(dc, cls));
           }
         }
       }
