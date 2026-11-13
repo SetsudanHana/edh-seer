@@ -180,7 +180,7 @@ test("target classifier negatives: an effect condition that mentions no target i
   expect(isTargetCondition("Counter target spell if it\u2019s blue.", "it's blue")).toBe(true);
 });
 
-test("a stat or state condition on the target is a narrow answer, a colour one covers nothing (Fatal Push, Titan's Presence vs Pyroblast, Soul Rend)", () => {
+test("a stat or state condition on the target is a narrow answer, a colour one covers, locked (Fatal Push, Titan's Presence vs Pyroblast, Soul Rend)", () => {
   const push = make("Fatal Push");
   expect(makeGateWeigher(deckOf([push])).of(gatedDraw(push)[0] ?? push.tags!.abilities.find((a) => a.gate !== undefined)!, push)).toMatchObject({ weight: 1, basis: "target" });
 });
@@ -260,13 +260,15 @@ test("a condition on the TARGET is a narrow answer, not a chance: Pyroblast and 
   expect(r.buildCategories.find((c) => c.category === "stackInteraction")!.count).toBe(1);
   expect(r.buildCategories.find((c) => c.category === "targetedRemoval")!.count).toBe(1);
   expect(r.conditionalRoles!.filter((c) => c.card === "Pyroblast").map((c) => `${c.category}:${c.basis}:${c.weight}`).sort()).toEqual(["stackInteraction:target:1", "targetedRemoval:target:1"]);
-  // answer coverage agrees: neither card covers a class (a colour hoser never did; Titan's Presence now covers no creature class)
-  expect(detectAnswerClasses([pyro]).size).toBe(0);
-  // a STAT condition on the target still covers its class, marked narrow (owner refinement 2026-10-27): Titan's Presence and Fatal Push answer creatures, narrowly; a COLOUR one (Pyroblast, Soul Rend) covers none
+  // answer coverage agrees: Pyroblast covers every class, colour-locked (owner 2026-11-13 reversed the colour drop)
+  expect(detectAnswerClasses([pyro]).size).toBe(5);
+  expect(detectAnswerClasses([pyro]).get("creature")!.colourLocked.has("Pyroblast")).toBe(true);
+  // a STAT condition on the target still covers its class, marked narrow (owner refinement 2026-10-27): Titan's Presence and Fatal Push answer creatures, narrowly; a COLOUR one (Pyroblast, Soul Rend) covers, marked colourLocked (owner 2026-11-13)
   const titans = make("Titan's Presence"), push = make("Fatal Push");
   expect(detectAnswerClasses([titans]).get("creature")!.narrow.has(titans.card.name)).toBe(true);
   expect(detectAnswerClasses([push]).get("creature")!.narrow.has(push.card.name)).toBe(true);
-  expect(detectAnswerClasses([make("Soul Rend")]).get("creature")).toBeUndefined();
+  expect(detectAnswerClasses([make("Soul Rend")]).get("creature")!.colourLocked.has("Soul Rend")).toBe(true);
+  expect(push.card.name && detectAnswerClasses([push]).get("creature")!.colourLocked.has(push.card.name)).toBe(false);
   // an effect condition that mentions no target is still a chance (Miles Prower's "if it has flying" is not in this fixture; Veil's is)
   const veil = make("Veil of Summer");
   expect(makeGateWeigher(deckOf([veil])).of(gatedDraw(veil)[0]!, veil).basis).toBe("unread");

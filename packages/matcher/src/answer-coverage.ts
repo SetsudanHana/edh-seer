@@ -65,7 +65,9 @@ export interface CoverageResult {
   /** `unweighted` when no colour identity was supplied -- every `poolShare` is forced to 1 and the
    *  panel says so. A deck whose identity is unknown must not be told its colours are thin. */
   source: "weighted" | "unweighted";
-  rows: { class: string; poolShare: number; demand: number; weight: number; covered: boolean }[];
+  rows: { class: string; poolShare: number; demand: number; weight: number; covered: boolean;
+    /** How much of the row the multiplier takes: 1 for a class an unrestricted answer covers, `NARROW_WEIGHT` for one only colour-locked answers cover (owner 2026-11-13), 0 for none. */
+    fraction: number }[];
 }
 
 /** `coverage` = the pool-and-demand-weighted share of the classes this deck answers at all.
@@ -82,10 +84,13 @@ export interface CoverageResult {
  *
  *  `covered` is BINARY (`count >= 1`), never `count >= required`: the caller multiplies this by a
  *  count attainment, and a count-based `covered` would make the product roughly count squared -- a
- *  magnitude claim wearing a coverage costume. Coverage says BREADTH, the count says ENOUGH. */
+ *  magnitude claim wearing a coverage costume. Coverage says BREADTH, the count says ENOUGH.
+ *
+ *  COLOUR-LOCKED ANSWERS COVER AT HALF (owner 2026-11-13: "a weaker effect because of its restriction"). The caller passes a MAP class -> fraction (1 or `NARROW_WEIGHT`; `answerCoverFraction`): the multiplier is
+ *  `sum(weight * fraction) / sum(weight)`. A plain Set means every listed class is covered in full. Still BINARY in count: two locked cards cover no more than one. */
 export function answerCoverage(
   colorIdentity: string[] | undefined,
-  coveredClasses: Set<string>,
+  coveredClasses: ReadonlySet<string> | ReadonlyMap<string, number>,
   graveyardVulnerability: number,
 ): CoverageResult {
   const v = Math.min(1, Math.max(0, graveyardVulnerability));
@@ -93,11 +98,12 @@ export function answerCoverage(
   const rows = COVERAGE_CLASSES.map((cls) => {
     const share = colorIdentity === undefined ? 1 : poolShare(colorIdentity, cls);
     const demand = (1 - v) * (ANSWER_BASELINE[cls] ?? 0) + v * (GRAVEYARD_HATE_SHARE[cls] ?? 0);
-    return { class: cls as string, poolShare: share, demand, weight: share * demand, covered: coveredClasses.has(cls) };
+    const fraction = coveredClasses instanceof Map ? coveredClasses.get(cls) ?? 0 : coveredClasses.has(cls) ? 1 : 0;
+    return { class: cls as string, poolShare: share, demand, weight: share * demand, covered: fraction > 0, fraction };
   });
   const total = rows.reduce((s, r) => s + r.weight, 0);
   // Unreachable with the shipped tables (creature's weight is positive in every identity), but a
   // zero denominator must read as "we cannot say", never as a deck that answers nothing.
-  const coverage = total > 0 ? rows.reduce((s, r) => s + (r.covered ? r.weight : 0), 0) / total : 1;
+  const coverage = total > 0 ? rows.reduce((s, r) => s + r.weight * r.fraction, 0) / total : 1;
   return { coverage, source: weighted ? "weighted" : "unweighted", graveyardVulnerability: v, rows };
 }

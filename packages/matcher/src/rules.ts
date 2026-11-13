@@ -746,9 +746,8 @@ const KNOWN_CLASSES: Record<string, true> = {
 };
 
 /** A COLOUR HOSER ANSWERS ONE COLOUR, NOT A KIND OF PERMANENT (issue #581). Pyroblast's "destroy
- *  target permanent if it's blue" read as an answer to every land, enchantment and planeswalker in
- *  the format; it answers only blue ones, which is a sideboard card's job, not a class this deck
- *  covers. "Nonblack" is not caught: Doom Blade answers nearly every creature. */
+ *  target permanent if it's blue" answers only blue permanents. OWNER 2026-11-13, reversing the colour part of the 2026-10-27 ruling (#1357): it still COUNTS as an answer of every class it names, marked `colourLocked`, and
+ *  weighs `NARROW_WEIGHT` (0.5) in every consumer (class counts, P(answer by turn T), answer coverage). It used to be dropped here. "Nonblack" is not caught: Doom Blade answers nearly every creature. */
 const COLOUR_HOSER = /\bif it'?s (?:white|blue|black|red|green)\b|^(?:white|blue|black|red|green)\b/;
 
 /** What a matched rule says about the KIND of answer it contributes, per class.
@@ -765,6 +764,26 @@ export interface AnswerMarks {
   recurring: boolean;
   /** EVERY CLAUSE THAT REACHES THE CLASS CARRIES A CONDITION ON ITS TARGET that is not a colour (Fatal Push, Prohibit): the card answers a narrow set of what the class names. Counts whole. */
   narrow: boolean;
+  /** EVERY CLAUSE THAT REACHES THE CLASS IS RESTRICTED TO A COLOUR (Combust "white or blue creature", Pyroblast, Soul Rend, King Crab, Aether Gust; owner 2026-11-13): the card counts as an answer at `NARROW_WEIGHT`. A card with one
+   *  unrestricted clause for the class (a modal Murder beside a Pyroblast mode) is not locked for it. A colour a card CHOOSES or EXCLUDES ("nonblack", `notColors`) is not a lock: Doom Blade answers nearly every creature. */
+  colourLocked: boolean;
+}
+
+/** Does this subject name a colour the target must have? `colors` on the subject, or on EVERY branch of its `anyOf` (derive writes "white or blue creature" as `colors: [W, U]`). CEILING: a CHOSEN colour (`chosenColor`) is not read as a lock. */
+function colourLockedSubject(s: { colors?: readonly string[]; anyOf?: { colors?: readonly string[] }[] } | undefined): boolean {
+  if (s === undefined) return false;
+  if ((s.colors ?? []).length > 0) return true;
+  return (s.anyOf ?? []).length > 0 && s.anyOf!.every((b) => (b.colors ?? []).length > 0);
+}
+
+/** The card with every ability whose answer subject (the effect's, the emits') is colour-restricted taken out. A DERIVED answer rule that still matches this card is not colour-locked (owner 2026-11-13). Same card when nothing is
+ *  restricted, so the usual case pays no second match. CEILING: the ability is taken out whole, so a card whose ONE ability carries a colour-restricted emit beside an unrestricted answer emit reads as locked. */
+function withoutColourLockedAbilities(dc: DeckCard): { dc: DeckCard; any: boolean } {
+  const abilities = dc.tags?.abilities ?? [];
+  const locked = (a: (typeof abilities)[number]): boolean =>
+    colourLockedSubject(a.effect.subject as never) || (a.emits ?? []).some((e) => e.subject.scope === "target" && colourLockedSubject(e.subject as never));
+  if (!abilities.some(locked)) return { dc, any: false };
+  return { dc: { ...dc, tags: { ...dc.tags!, abilities: abilities.filter((a) => !locked(a)) } }, any: true };
 }
 
 /** Which answer classes a card covers, per `answerClass` / `answerClassFrom`.
@@ -776,10 +795,11 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
   const out = new Map<string, AnswerMarks>();
   // A class can be reached by several rules -- every exile removal matches both `answers.typed` and
   // `answers.typed.exile` -- so marks are OR-ed onto the existing entry, never overwritten.
-  const mark = (cls: string, mode: Rule["mode"], narrow = false): void => {
-    // NARROW only while every clause that reaches the class is conditional on its target.
-    const m = out.get(cls) ?? { exile: false, recurring: false, narrow: true };
+  const mark = (cls: string, mode: Rule["mode"], narrow = false, colourLocked = false): void => {
+    // NARROW, and COLOUR-LOCKED, only while every clause that reaches the class is conditional on its target / restricted to a colour.
+    const m = out.get(cls) ?? { exile: false, recurring: false, narrow: true, colourLocked: true };
     m.narrow = m.narrow && narrow;
+    m.colourLocked = m.colourLocked && colourLocked;
     if (mode === "exile") m.exile = true;
     if (mode === "recurring") m.recurring = true;
     out.set(cls, m);
@@ -787,7 +807,11 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
   const targetConditions = (dc.tags?.abilities ?? []).flatMap((a) => (a.gate !== undefined && isTargetCondition(ownText(dc.card), a.gate.text) ? [a.gate.text.toLowerCase()] : []));
   for (const rule of set.rules) {
     if (!ruleMatches(rule, dc, set)) continue;
-    if (rule.answerClass) mark(rule.answerClass, rule.mode);
+    if (rule.answerClass) {
+      // DERIVED RULES: locked when the rule no longer matches once the colour-restricted abilities are taken out (owner 2026-11-13).
+      const plain = withoutColourLockedAbilities(dc);
+      mark(rule.answerClass, rule.mode, false, plain.any && !ruleMatches(rule, plain.dc, set));
+    }
     if (rule.answerClassFrom) {
       // Global sweep, not a single test: "destroy target artifact or enchantment" and cards with
       // two removal sentences each cover several classes, and one match would keep only the first.
@@ -823,9 +847,10 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
         // sentence, so the card's text is asked, not the clause. Fractured Identity hands the copies
         // to everyone ELSE and stays an answer.
         if (new RegExp(set.patterns.controllerGetsCopies, "i").test(dc.card.oracleText ?? "")) continue;
-        if (COLOUR_HOSER.test(phrase.replace(/\u2019/g, "'"))) continue;
+        // OWNER 2026-11-13: a colour hoser counts, marked, at NARROW_WEIGHT (it was dropped here: Pyroblast, Soul Rend).
+        const colourLocked = COLOUR_HOSER.test(phrase.replace(/\u2019/g, "'"));
         // A STAT OR STATE CONDITION ON THE TARGET STILL COVERS ITS CLASS, MARKED NARROW (owner refinement 2026-10-27 of ruling C): Fatal Push's "if it has mana value 2 or less", Deathbringer Liege's "if it's tapped",
-        // Prohibit's mana value. Only a COLOUR condition drops the card (`COLOUR_HOSER` above: Pyroblast, Soul Rend).
+        // Prohibit's mana value. A COLOUR condition (`COLOUR_HOSER` above: Pyroblast, Soul Rend) counts too, as `colourLocked` (owner 2026-11-13).
         const narrow = targetConditions.some((c) => sentence.toLowerCase().includes(c));
         for (const word of Object.keys(KNOWN_CLASSES)) {
           // Plural too: "destroy two target creatures" (Curtains' Call) and "exile two target
@@ -835,7 +860,7 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
             // "nonland permanent" answers everything except a land, and `permanent` alone expands
             // to all five. Without this a Pongify reads as land interaction.
             if (cls === "land" && /\bnonland\b/.test(phrase)) continue;
-            mark(cls, rule.mode, narrow);
+            mark(cls, rule.mode, narrow, colourLocked);
           }
         }
       }
