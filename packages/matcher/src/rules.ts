@@ -4,7 +4,7 @@ import type { SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
 import { classifyLand } from "./land-conditions.js";
 import { cardLines, isLoyaltyAbility, usableLoyalty } from "./mana-lines.js";
-import { countsAsLand, transformsIntoLand as transformsIntoLandCard } from "./typeline.js";
+import { BASIC_LAND_TYPES, countsAsLand, transformsIntoLand as transformsIntoLandCard } from "./typeline.js";
 import { isTargetCondition } from "./target-condition.js";
 
 /** A single test against one card. The operator set is CLOSED on purpose: `oracle`, `effectKind`,
@@ -752,6 +752,9 @@ const KNOWN_CLASSES: Record<string, true> = {
  *  weighs `NARROW_WEIGHT` (0.5) in every consumer (class counts, P(answer by turn T), answer coverage). It used to be dropped here. "Nonblack" is not caught: Doom Blade answers nearly every creature. */
 const COLOUR_HOSER = /\bif it'?s (?:white|blue|black|red|green)\b|^(?:white|blue|black|red|green)\b/;
 
+/** A basic land type as a whole word, in a removal phrase. */
+const BASIC_LAND_TYPE_WORD = new RegExp(`\\b(?:${BASIC_LAND_TYPES.join("|")})s?\\b`);
+
 /** What a matched rule says about the KIND of answer it contributes, per class.
  *
  *  Both default to false, which is the ordinary case: a destroy is an answer that is not
@@ -886,6 +889,8 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
         // A STAT OR STATE CONDITION ON THE TARGET STILL COVERS ITS CLASS, MARKED NARROW (owner refinement 2026-10-27 of ruling C): Fatal Push's "if it has mana value 2 or less", Deathbringer Liege's "if it's tapped",
         // Prohibit's mana value. A COLOUR condition (`COLOUR_HOSER` above: Pyroblast, Soul Rend) counts too, as `colourLocked` (owner 2026-11-13).
         const narrow = targetConditions.some((c) => sentence.toLowerCase().includes(c));
+        // A BASIC LAND TYPE NAMES A LAND (owner 2026-11-13, #1266): "Destroy X target Mountains" (Volcanic Eruption) answers lands, as "target lands" does. Whole words: "forestwalk" is not a Forest.
+        if (BASIC_LAND_TYPE_WORD.test(phrase) && !/\bnonland\b/.test(phrase)) for (const cls of set.answerClassAliases.land ?? ["land"]) mark(cls, rule.mode, narrow, phraseLocked || derivedTargetLocked(dc, cls));
         for (const word of Object.keys(KNOWN_CLASSES)) {
           // Plural too: "destroy two target creatures" (Curtains' Call) and "exile two target
           // permanents" (Ulamog) read as no answer at all when only the singular matched (issue #581).

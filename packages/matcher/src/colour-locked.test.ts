@@ -118,8 +118,9 @@ describe("printed path: a colour named inside the target phrase locks the class,
   });
   test("a branch with no colour (Forest) does not stop the coloured branches of the class locking (Nissa's Defeat)", () => {
     const m = classes("Nissa's Defeat");
-    expect([...m.keys()].sort()).toEqual(["enchantment", "planeswalker"]);
-    for (const v of m.values()) expect(v.colourLocked).toBe(true);
+    // "Forest" names a land (Rules 50): the land row exists, and is the one row the colour does not lock.
+    expect([...m.keys()].sort()).toEqual(["enchantment", "land", "planeswalker"]);
+    for (const [cls, v] of m) expect(v.colourLocked, cls).toBe(cls !== "land");
   });
   test("\"target Plains and target white creature\" locks the creature row (Reign of Chaos)", () => {
     expect(classes("Reign of Chaos").get("creature")?.colourLocked).toBe(true);
