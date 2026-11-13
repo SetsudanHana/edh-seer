@@ -349,6 +349,16 @@ describe("the destroy and exile answers read derived data (#1266)", () => {
     expect(classes("Burning of Xinye")).not.toContain("land");
   });
 
+  test("CEILING: a pay-or-die destroy derives no victimMay, so the answer and removal.targeted agree (Arcum's Whistle, Winter's Chill)", () => {
+    const set = loadRules();
+    const targeted = set.rules.find((r) => r.id === "removal.targeted")!;
+    for (const n of ["Arcum's Whistle", "Winter's Chill"]) {
+      const dc = realCard(n);
+      expect(ruleMatches(targeted, dc, set), n).toBe(true);
+      expect(classes(n), n).toEqual(["creature"]);
+    }
+  });
+
   test("an Aura-only kill answers enchantments at NARROW_WEIGHT, and names no creature (owner 2026-11-13: Devout Harpist, Piety Charm)", () => {
     for (const n of ["Devout Harpist", "Piety Charm"]) {
       // "attached to a creature" names the host, not the target: no creature class.

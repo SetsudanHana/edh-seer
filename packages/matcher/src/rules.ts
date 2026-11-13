@@ -175,7 +175,9 @@ export type RuleClause =
       /** The emitting ability's amount is a PRINTED NUMBER of at least N (X never matches: it may be one land): `effectKind.amountAtLeast` for an `emits` clause, but strict. A target land kill of FOUR lands is land denial (owner 2026-11-13, Burning of Xinye); one of ONE land (Stone Rain, amount "1") is not, and the in-between sizes ("two target lands", "X target lands") are NEEDS RULING. A missing amount does not match. */
       amountAtLeast?: number;
       /** Refuse an emit the victim may decline (`GameEvent.victimMay`): "its controller may sacrifice it" (Star Athlete, Livio), "unless that player sacrifices it" (Enchanter's Bane). It is the opponent's choice with an
-       *  alternative, which is not removal (#1295). */
+       *  alternative, which is not removal (#1295).
+       *  CEILING: derive misses the victim-may cue on a PAY-OR-DIE destroy, so Arcum's Whistle ("That player may pay {X} ... destroy it if it didn't attack this turn") and Winter's Chill ("its controller may pay {1} or {2}. If that player doesn't, destroy that creature") carry no `victimMay`
+       *  and count as `removal.targeted` and as a creature answer alike, against the owner's 2026-10-22 ruling that a victim-may effect (Requiem Monolith) is not removal. Both rules read the same emit, so they stay consistent; the fix is in derive. */
       notVictimMay?: true;
       /** Refuse an emit about THE CARD ITSELF (`subject.self`): "Exile this card from your graveyard" (renew, channel-like costs) moves the card and is no exile of anything else (#1266, graveyardHate). */
       notSelf?: true;
