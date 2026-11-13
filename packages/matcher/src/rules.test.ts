@@ -964,6 +964,17 @@ test("mass land destruction is stax and not a wipe; a wipe that also hits lands 
   expect(has("stax", "Stone Rain")).toBe(false);
 });
 
+// OWNER 2026-11-12: MASS LAND DESTRUCTION IS STAX, NOT A BOARD WIPE, on EVERY path the wipe rule has (#1266, Rules 45). The derived kill path refused a land-only subject since 2026-11-06; two other paths still let it in: OVERLOAD
+// (Break the Ice: "Destroy target land that is snow or could produce {C}", overloaded to "each") and the printed `massOfTargetPlayer` residue (Ajani Vengeant: "Destroy all lands target player controls").
+test("a land-only mass by overload or at a target player is stax and no wipe; a wipe beside it stays one", () => {
+  const m = detectBuildCategories([overloaded("Break the Ice"), realCard("Ajani Vengeant"), realCard("Catastrophe"), realCard("Mogg Infestation")]);
+  const has = (cat: "stax" | "boardWipe", n: string): boolean => m.get(cat)?.has(n) === true;
+  for (const n of ["Break the Ice", "Ajani Vengeant"]) { expect(has("boardWipe", n), `${n} boardWipe`).toBe(false); expect(has("stax", n), `${n} stax`).toBe(true); }
+  // "Destroy all lands or all creatures" names creatures too: both. A creature mass at a target player stays a wipe.
+  expect(has("boardWipe", "Catastrophe")).toBe(true);
+  expect(has("boardWipe", "Mogg Infestation")).toBe(true);
+});
+
 // ALL PERMANENTS NAMES LANDS; A RESTRICTED PERMANENT SUBJECT DOES NOT (#1557, Rules 41). Derive 468 keeps the restriction on the subject (chosenColor, colorCount, selection), so only a genuinely unrestricted `permanent` is land-including.
 test("an unrestricted permanent wipe is stax too; a restricted one, and a per-opponent choice, are not", () => {
   const m = detectBuildCategories([

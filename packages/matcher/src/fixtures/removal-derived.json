@@ -36875,5 +36875,197 @@
     }
    }
   ]
+ },
+ "Break the Ice": {
+  "oracleText": "Destroy target land that is snow or could produce {C}.\nOverload {4}{B}{B} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")",
+  "typeLine": "Sorcery",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "snow": true,
+       "type": "land",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Ajani Vengeant": {
+  "oracleText": "+1: Target permanent doesn't untap during its controller's next untap step.\n−2: Ajani deals 3 damage to any target and you gain 3 life.\n−7: Destroy all lands target player controls.",
+  "typeLine": "Legendary Planeswalker — Ajani",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "permanent",
+      "scope": "target"
+     }
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "cost": "+1",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "cost": "−2",
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    },
+    "payment": {
+     "loyalty": "-2"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "−2",
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    },
+    "payment": {
+     "loyalty": "-2"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "−7",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "-7"
+    }
+   }
+  ]
+ },
+ "Catastrophe": {
+  "oracleText": "Destroy all lands or all creatures. Creatures destroyed this way can't be regenerated.",
+  "typeLine": "Sorcery",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": [
+        "creature",
+        "land"
+       ],
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "land"
+      ],
+      "scope": "all"
+     }
+    }
+   }
+  ]
  }
 }
