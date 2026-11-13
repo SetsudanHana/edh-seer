@@ -34,7 +34,7 @@
     "impulseDraw": "exile the top (?:\\w+ )?cards? of your library[\\s\\S]*?you may play",
     "neutraliseAura": "(?:^|\\n)enchant (?<class>[^\\n]+)(?=[\\s\\S]*?enchanted (?:creature|permanent)[^.]*?(?:loses all (?:other card types and )?abilities|is a colou?rless land))",
     "ownSpellsCostMore": "\\bspells you cast cost (?:\\{[^}]+\\})+ more\\b",
-    "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't",
+    "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't|each player chooses \\w+ lands they control\\. destroy all other permanents",
     "typedRemoval": "(?:destroy|exile)[^.:]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
     "exileRemoval": "exile[^.:]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
     "exileReturnsToBattlefield": "return (?:it|that card) to the battlefield|returns to the battlefield",
@@ -406,7 +406,8 @@
       "id": "stax.text",
       "category": "stax",
       "match": [{ "op": "oracle", "pattern": "stax" }],
-      "not": [{ "op": "countsAsLand" }]
+      "not": [{ "op": "countsAsLand" }],
+      "why": "PRINTED STAX: a permanent that does not untap, a tax on spells, a ban on what players can do. URZA'S SYLEX IS WEAK STAX (owner 2026-11-13, Rules 48): \"Each player chooses six lands they control. Destroy all other permanents.\" It stays a board wipe and gains role:stax; the printed words are the cue, because derive stores its destroy as an `all-but` selection of permanents, the same shape as Razia's Purification and End Hostilities, which are not stax. CEILING: the engine has no weak-stax level, so Urza's Sylex counts as full stax."
     },
 
     {
