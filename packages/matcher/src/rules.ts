@@ -520,10 +520,14 @@ function classTypes(s: { type?: string | string[]; allTypes?: string[]; anyOf?: 
   if (s.allTypes?.includes("creature") === true) return ["creature"];
   return [...[s.type ?? []].flat(), ...(s.anyOf ?? []).flatMap((b) => [b.type ?? []].flat())];
 }
-/** Can this subject be a permanent of answer class `cls`? A named type, or an unrestricted `permanent` (every class; "nonland permanent" is not a land). */
-function subjectReachesClass(s: { type?: string | string[]; allTypes?: string[]; notType?: string[]; anyOf?: { type?: string | string[] }[] }, cls: string): boolean {
+/** Can this subject be a permanent of answer class `cls`? A named type, or an unrestricted `permanent` (every class; "nonland permanent" is not a land).
+ *  A subject with `umbrella: "permanent"` ("target spell or permanent": Venser, Shaper Savant, Jeskai Revelation) lists the types derive expands the umbrella to, and that list has no land; the umbrella itself is every permanent, so on the battlefield it reaches a land
+ *  too (#1266). Not when something narrows it (`NARROWS_PERMANENT`: Aether Gust's colours, Divide by Zero's mana value 1 or greater, which a land has neither of), and "nonland permanent" is `notType: [land]`, no umbrella. */
+function subjectReachesClass(s: { type?: string | string[]; allTypes?: string[]; notType?: string[]; umbrella?: string; zone?: string; fromZone?: string; anyOf?: { type?: string | string[] }[] }, cls: string): boolean {
   const types = classTypes(s);
-  return types.includes(cls) || (types.includes("permanent") && (cls !== "land" || !(s.notType ?? []).includes("land")));
+  if (types.includes(cls) || (types.includes("permanent") && (cls !== "land" || !(s.notType ?? []).includes("land")))) return true;
+  return cls === "land" && s.umbrella === "permanent" && (s.zone ?? s.fromZone ?? "battlefield") === "battlefield"
+    && !NARROWS_PERMANENT.some((k) => (s as Record<string, unknown>)[k] !== undefined);
 }
 /** The subject the answer-class options read: the effect's, else -- where derive kept none (Aethertorch Renegade, Dynavolt Tower: the "Pay {E}{E}" cost leaves the effect subject-less) -- the subject of the ability's first TARGETED damage emit, as `abilityReachesPermanent` does. */
 function answerSubject(a: { effect: { subject?: SubjectFilter }; emits?: { verb: string; subject: SubjectFilter }[] }): SubjectFilter | undefined {
