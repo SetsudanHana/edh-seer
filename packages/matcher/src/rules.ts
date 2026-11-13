@@ -814,9 +814,18 @@ function colourLockedSubject(s: { colors?: readonly string[]; anyOf?: { type?: s
 }
 
 /** A COLOUR CONDITION ON THE TARGET, read off the gate (Pyroblast "Destroy target permanent if it's blue", Soul Rend "if it's white"): derive keeps it as the ability's `gate` and puts no colour on the subject. */
-const COLOUR_GATE = /^it'?s (?:white|blue|black|red|green)\b/;
-const colourGated = (dc: DeckCard, a: { gate?: { text: string } }): boolean =>
-  a.gate !== undefined && COLOUR_GATE.test(a.gate.text.toLowerCase().replace(/\u2019/g, "'")) && isTargetCondition(ownText(dc.card), a.gate.text);
+const COLOUR_GATE = /^(?:it'?s|that (?:creature|permanent) is) (?:white|blue|black|red|green|colou?rless)\b/;
+const colourGated = (dc: DeckCard, a: { gate?: { text: string } }): boolean => {
+  if (a.gate === undefined) return false;
+  const gate = a.gate.text.toLowerCase().replace(/\u2019/g, "'");
+  if (!COLOUR_GATE.test(gate)) return false;
+  if (isTargetCondition(ownText(dc.card), a.gate.text)) return true;
+  // "that creature is black or red" (Inquisitor's Snare) points BACK at a target named in an earlier sentence ("Prevent all damage target attacking or blocking creature would deal this turn."). CEILING: any "target" before the gate in the card's own text counts as that antecedent.
+  if (!gate.startsWith("that ")) return false;
+  const text = ownText(dc.card).toLowerCase().replace(/\u2019/g, "'");
+  const at = text.indexOf(gate);
+  return at > 0 && /\btarget\b/.test(text.slice(0, at));
+};
 
 type TargetSubject = { type?: string | readonly string[]; colors?: readonly string[]; control?: string; anyOf?: TargetSubject[] };
 
