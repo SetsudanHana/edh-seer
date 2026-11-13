@@ -337,6 +337,18 @@ describe("the destroy and exile answers read derived data (#1266)", () => {
     expect(classes("Nissa's Defeat")).toEqual(["enchantment", "land", "planeswalker"]);
   });
 
+  // Owner 2026-11-13 rulings 1 to 3.
+  test("an edict aimed at a player is an answer, and so is a one-sided mass kill at a player (Imperial Edict, Mogg Infestation)", () => {
+    expect(classes("Imperial Edict")).toEqual(["creature"]);
+    expect(classes("Mogg Infestation")).toEqual(["creature"]);
+  });
+
+  test("a land answer is a TARGETED land kill: Boom // Bust is one, the mass kill at a player is stax (Ajani Vengeant, Burning of Xinye)", () => {
+    expect(classes("Boom // Bust")).toEqual(["land"]);
+    expect(classes("Ajani Vengeant")).not.toContain("land");
+    expect(classes("Burning of Xinye")).not.toContain("land");
+  });
+
   test("an Aura-only kill answers enchantments at NARROW_WEIGHT, and names no creature (owner 2026-11-13: Devout Harpist, Piety Charm)", () => {
     for (const n of ["Devout Harpist", "Piety Charm"]) {
       // "attached to a creature" names the host, not the target: no creature class.
