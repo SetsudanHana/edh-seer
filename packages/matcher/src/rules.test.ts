@@ -365,11 +365,25 @@ describe("the destroy and exile answers read derived data (#1266)", () => {
       expect(classes(n), n).toEqual(["enchantment"]);
       expect(marks(n, "enchantment")?.colourLocked, n).toBe(true);
     }
-    // Equipment reads as an artifact, narrowly; the bounce rules keep a bare subtype as no class (NEEDS RULING: Seedling Charm).
     expect(marks("Devout Harpist", "enchantment")?.exile).toBe(false);
     const pool = detectAnswerClasses([realCard("Devout Harpist"), realCard("Disenchant")]).get("enchantment")!;
     expect(answerWeightOf(pool, "Devout Harpist")).toBe(NARROW_WEIGHT);
     expect(answerWeightOf(pool, "Disenchant")).toBe(1);
+  });
+
+  test("an Aura-only bounce counts the same, and names no creature (owner 2026-11-13: Seedling Charm)", () => {
+    // "Return target Aura attached to a creature to its owner's hand": the Aura is the target, the creature is the host.
+    expect(classes("Seedling Charm")).toEqual(["enchantment"]);
+    expect(marks("Seedling Charm", "enchantment")?.colourLocked).toBe(true);
+    const pool = detectAnswerClasses([realCard("Seedling Charm"), realCard("Disenchant")]).get("enchantment")!;
+    expect(answerWeightOf(pool, "Seedling Charm")).toBe(NARROW_WEIGHT);
+  });
+
+  test("Miracle Worker stays an Aura answer at half weight (owner 2026-11-13)", () => {
+    expect(classes("Miracle Worker")).toEqual(["enchantment"]);
+    expect(marks("Miracle Worker", "enchantment")?.colourLocked).toBe(true);
+    const pool = detectAnswerClasses([realCard("Miracle Worker"), realCard("Disenchant")]).get("enchantment")!;
+    expect(answerWeightOf(pool, "Miracle Worker")).toBe(NARROW_WEIGHT);
   });
 
   test("a card that prints an exile from a graveyard elsewhere still answers what its other mode destroys", () => {

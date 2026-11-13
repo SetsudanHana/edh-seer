@@ -48260,5 +48260,41 @@
     }
    }
   ]
+ },
+ "Miracle Worker": {
+  "oracleText": "{T}: Destroy target Aura attached to a creature you control.",
+  "typeLine": "Creature — Human Cleric",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "subtype": "aura",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    }
+   }
+  ]
  }
 }
