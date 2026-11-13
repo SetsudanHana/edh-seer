@@ -46842,5 +46842,71 @@
     }
    }
   ]
+ },
+ "Inquisitor's Snare": {
+  "oracleText": "Prevent all damage target attacking or blocking creature would deal this turn. If that creature is black or red, destroy it.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "prevention",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "prevention": {
+     "damage": "any",
+     "amount": "all",
+     "duration": "this-turn"
+    },
+    "emits": [
+     {
+      "verb": "prevented",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "combat": "attacking",
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "that creature is black or red"
+    },
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
  }
 }

@@ -41,6 +41,10 @@ describe("colour-locked answers are marked (owner 2026-11-13)", () => {
     for (const m of answerClassesOf(realCard("Hydroblast")).values()) expect(m.colourLocked).toBe(true);
   });
 
+  test("a gate that names the colour of \"that creature\" locks too (Inquisitor's Snare)", () => {
+    expect(answerClassesOf(realCard("Inquisitor's Snare")).get("creature")?.colourLocked).toBe(true);
+  });
+
   test("a plain destroy and a stat condition are not locked; the stat condition is narrow (Murder, Fatal Push, Rending Vines)", () => {
     expect(answerClassesOf(realCard("Murder")).get("creature")).toMatchObject({ colourLocked: false, narrow: false });
     expect(answerClassesOf(realCard("Rending Vines")).get("artifact")).toMatchObject({ colourLocked: false, narrow: true });
