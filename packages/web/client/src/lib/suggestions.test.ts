@@ -31,6 +31,19 @@ test("an answers finding takes the cards of every class with no answer, each car
   expect(suggestionsFor(finding("answers"), both, report)?.[0]?.answers).toEqual(["enchantment", "artifact"]);
 });
 
+test("an answers finding also takes the cards of a half-covered class (only narrow answers held)", () => {
+  const s = { ...empty, answers: { enchantment: [card("Disenchant")], creature: [card("Lightning Bolt")] } };
+  const report = {
+    deckMath: { answers: [
+      { class: "enchantment", count: 1, fromCommandZone: false }, { class: "creature", count: 9, fromCommandZone: false },
+    ] },
+    answerCoverage: { coverage: 0.9, source: "weighted", graveyardVulnerability: 0, rows: [
+      { class: "enchantment", fraction: 0.5 }, { class: "creature", fraction: 1 },
+    ] },
+  } as unknown as DeckReport;
+  expect(suggestionsFor(finding("answers"), s, report)?.map((c) => c.name)).toEqual(["Disenchant"]);
+});
+
 test("the synergy finding takes the cards for every unmet key, each card once", () => {
   const s = { ...empty, synergy: { "enters:permanent": [card("Impact Tremors")], "dies:creature": [card("Blood Artist"), card("Impact Tremors")] } };
   expect(suggestionsFor(finding("synergy"), s, {} as DeckReport)?.map((c) => c.name)).toEqual(["Impact Tremors", "Blood Artist"]);

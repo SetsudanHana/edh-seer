@@ -28,7 +28,7 @@ const tremorsAbilities = [{
   effect: { kind: "deal-damage" },
 }];
 
-interface Spec { name: string; identity: string[]; types: string[]; abilities: unknown[] | null; tokenParts?: true; typeLine?: string; oracle?: string; r?: string[] }
+interface Spec { name: string; identity: string[]; types: string[]; abilities: unknown[] | null; tokenParts?: true; typeLine?: string; oracle?: string; r?: string[]; a?: string[]; n?: string[] }
 const entry = (s: Spec, pi?: [number, number][]) => ({
   card: {
     _id: `id-${s.name}`, name: s.name, typeLine: s.typeLine ?? s.types.join(" "), oracleText: s.oracle ?? "", keywords: [], colors: s.identity,
@@ -59,6 +59,8 @@ const indexRow = (s: Spec) => ({
   slug: s.name.toLowerCase().replace(/[^a-z]+/g, "-"), name: s.name, identity: s.identity, commander: false,
   t: s.types.map((t) => TYPES.indexOf(t)), mv: 3,
   ...(s.r ? { r: s.r.map((x) => BUILD_CATEGORIES.indexOf(x as (typeof BUILD_CATEGORIES)[number])) } : {}),
+  ...(s.a ? { a: s.a.map((c) => POOL_CLASSES.indexOf(c as (typeof POOL_CLASSES)[number])) } : {}),
+  ...(s.n ? { n: s.n.map((c) => POOL_CLASSES.indexOf(c as (typeof POOL_CLASSES)[number])) } : {}),
   ...(s.name === "Swords to Plowshares"
     ? { r: [BUILD_CATEGORIES.indexOf("targetedRemoval")], a: [POOL_CLASSES.indexOf("creature")] } : {}),
 });
@@ -380,6 +382,31 @@ test("a build finding's cards say which group they count toward, and carry their
   const tremors = s.build["interaction"]!.find((c) => c.name === "Impact Tremors")!;
   expect(tremors.fills).toBe("Interaction");
   expect(tremors.oracle).toBe("Whenever a creature you control enters, this enchantment deals 1 damage to each opponent.");
+});
+
+/** A HALF-COVERED CLASS IS OFFERED FULL ANSWERS ONLY (owner 2026-11-13): an enchantment class held only by a
+ *  narrow card (Pyroblast) lists the unrestricted answer, since a second narrow card adds 0; a class with no
+ *  answer at all still lists both. `n` on the index row is the classes the card answers only narrowly. */
+test("a half-covered class lists full answers only, an absent class still lists narrow ones too", async () => {
+  const specs: Spec[] = [...SPECS,
+    { name: "Full Disenchant", identity: ["R"], types: ["instant"], abilities: [], a: ["enchantment"] },
+    { name: "Narrow Enchantment Hoser", identity: ["R"], types: ["instant"], abilities: [], a: ["enchantment"], n: ["enchantment"] },
+    { name: "Narrow Artifact Hoser", identity: ["R"], types: ["instant"], abilities: [], a: ["artifact"], n: ["artifact"] },
+  ];
+  const deck = {
+    ...report,
+    deckMath: { answers: [
+      { class: "creature", count: 5, fromCommandZone: false },
+      { class: "artifact", count: 0, fromCommandZone: false },
+      { class: "enchantment", count: 1, fromCommandZone: false },
+    ] },
+    answerCoverage: { coverage: 0.7, source: "weighted", graveyardVulnerability: 0, rows: [
+      { class: "creature", fraction: 1 }, { class: "artifact", fraction: 0 }, { class: "enchantment", fraction: 0.5 },
+    ] },
+  } as unknown as DeckReport;
+  const s = await quietly(() => suggestForDeck({ report: deck, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(files(specs)) }));
+  expect((s.answers["enchantment"] ?? []).map((c) => c.name)).toEqual(["Full Disenchant"]);
+  expect((s.answers["artifact"] ?? []).map((c) => c.name)).toEqual(["Narrow Artifact Hoser"]);
 });
 
 /** THE COMMANDER IS MARKED HERE, as in the report (`analyze.ts` markCommander; final review of AO4):

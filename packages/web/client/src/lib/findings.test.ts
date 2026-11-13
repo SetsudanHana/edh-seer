@@ -133,11 +133,27 @@ test("a deck with an answer for every kind has no answers finding, however thin,
   expect(findings(report({ deckMath: answers({ creature: 1, artifact: 1, enchantment: 1, planeswalker: 1, land: 0 }) })).filter((f) => f.kind === "answers")).toEqual([]);
 });
 
-// A HALF-COVERED CLASS IS NOT MISSING (owner 2026-11-13): enchantments held only by a colour-locked card (Pyroblast, magda-mother-of-dragons)
-// have count 1 and cover at 0.5; the finding says "no answer at all" only of count 0, so it stays silent and prints no "missing" copy.
-test("a class covered only at half has an answer, so the answers finding does not call it missing", () => {
-  const d = answers({ creature: 4, artifact: 2, enchantment: 1, planeswalker: 1, land: 0 });
-  expect(findings(report({ deckMath: d, answersImpact: 0.029 })).filter((f) => f.kind === "answers")).toEqual([]);
+// A HALF-COVERED CLASS (owner 2026-11-13, magda-mother-of-dragons: enchantments held only by Pyroblast) is not "missing", but a full answer
+// lifts it and the finding's impact prices that lift, so the finding fires and names the class in its own clause.
+const half = (counts: Record<string, number>, locked: Record<string, string[]>, fractions: Record<string, number>) => ({
+  deckMath: { ...answers(counts), answers: answers(counts).answers.map((a) => ({ ...a, ...(locked[a.class] ? { colourLocked: locked[a.class] } : {}) })) },
+  answerCoverage: { coverage: 0.9, source: "weighted" as const, graveyardVulnerability: 0, rows: Object.entries(fractions).map(([c, fraction]) => ({ class: c, poolShare: 1, demand: 0.2, weight: 0.2, covered: fraction > 0, fraction })) },
+  answersImpact: 0.029,
+});
+test("a class covered only at half fires the answers finding, named as narrow and not as missing", () => {
+  const r = half({ creature: 4, artifact: 2, enchantment: 1, planeswalker: 1, land: 0 }, { enchantment: ["Pyroblast"] }, { creature: 1, artifact: 1, enchantment: 0.5, planeswalker: 1 });
+  const [f, ...rest] = findings(report(r as never)).filter((x) => x.kind === "answers");
+  expect(rest).toEqual([]);
+  expect(f.headline).toBe("Enchantments are only answered by narrow cards (Pyroblast counts half).");
+  expect(f.headline).not.toMatch(/no answer at all/);
+  expect(f.action).toBe("One unrestricted enchantment answer lifts it to full coverage.");
+  expect(f.impact).toBe(0.029);
+});
+test("absent and half-covered classes each get their own clause", () => {
+  const r = half({ creature: 4, artifact: 0, enchantment: 1, planeswalker: 1, land: 0 }, { enchantment: ["Pyroblast", "Soul Rend"] }, { creature: 1, artifact: 0, enchantment: 0.5, planeswalker: 1 });
+  const [f] = findings(report(r as never)).filter((x) => x.kind === "answers");
+  expect(f.headline).toBe("You have no answer at all for artifacts. Enchantments are only answered by narrow cards (Pyroblast and Soul Rend count half).");
+  expect(f.action).toBe("One unrestricted card that can hit any kind of permanent covers all of these at once.");
 });
 
 test("a zero the colours cannot fill is the colour pie, not a finding", () => {
