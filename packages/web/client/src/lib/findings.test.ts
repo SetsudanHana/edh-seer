@@ -626,3 +626,18 @@ test("a count a hair under its target is a finding that says 0.1 short, never ro
   expect(f.figure).toBe("9.9/10");
   expect(f.detail).toBe("You run 9.9, against a target of 10.");
 });
+
+// CARD NAMES WITH A COMMA ARE ONE NAME EACH (review): the list is built from the array, never by regex over the joined string.
+test("narrow cards are listed from the array: a comma name stays whole, three cards read A, B and C", () => {
+  const one = half({ creature: 4, artifact: 2, enchantment: 1, planeswalker: 1, land: 0 }, { enchantment: ["Kozilek, Butcher of Truth"] }, { creature: 1, artifact: 1, enchantment: 0.5, planeswalker: 1 });
+  expect(findings(report(one as never)).find((x) => x.kind === "answers")!.headline).toBe("Enchantments are only answered by narrow cards (Kozilek, Butcher of Truth counts half).");
+  const three = half({ creature: 4, artifact: 2, enchantment: 1, planeswalker: 1, land: 0 }, { enchantment: ["Pyroblast", "Soul Rend", "Kozilek, Butcher of Truth"] }, { creature: 1, artifact: 1, enchantment: 0.5, planeswalker: 1 });
+  expect(findings(report(three as never)).find((x) => x.kind === "answers")!.headline).toBe("Enchantments are only answered by narrow cards (Pyroblast, Soul Rend and Kozilek, Butcher of Truth count half).");
+});
+
+// THE SHORTFALL READS THE COVERAGE ROWS (1 - fraction), so it cannot drift from the impact if NARROW_WEIGHT moves.
+test("a half class's shortfall is 1 - its coverage fraction, not a hardcoded half", () => {
+  const at = (fraction: number) => findings(report(half({ creature: 4, artifact: 2, enchantment: 1, planeswalker: 1, land: 0 }, { enchantment: ["Pyroblast"] }, { creature: 1, artifact: 1, enchantment: fraction, planeswalker: 1 }) as never)).find((x) => x.kind === "answers")!;
+  expect(at(0.5).shortfall).toBeCloseTo(0.5 / 4, 9);
+  expect(at(0.25).shortfall).toBeCloseTo(0.75 / 4, 9);
+});

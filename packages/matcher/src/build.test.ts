@@ -858,6 +858,14 @@ describe("the answers impact prices a half-covered class", () => {
   });
 });
 
+/** A HALF CLASS WHOSE NARROW MEMBER IS THE COMMANDER IS NOT PRICED: the finding and the suggestions refuse it (no card to buy). */
+test("the answers impact leaves out a half class the commander holds", () => {
+  const parents = [{ count: 10, target: 10, weight: 1, coverageWeighted: true as const }];
+  const m = new Map(COVERAGE_CLASSES.map((c) => [c, c === "enchantment" ? NARROW_WEIGHT : 1] as const));
+  expect(answersImpactOf(parents, 36, 36, FIVE, m, 0)).toBeGreaterThan(0);
+  expect(answersImpactOf(parents, 36, 36, FIVE, m, 0, new Set(["enchantment"]))).toBe(0);
+});
+
 // A DRAW THAT COMES BACK (owner, 2026-09-05): the draw count said Rhystic Study and Divination were
 // the same card. The facets say beside the count how many come back and how many nobody labelled.
 test("draw facets: engines are any draw above `once`, unlabelled are refused labels with no engine beside them", () => {
