@@ -1101,6 +1101,15 @@ test("Urza's Sylex is a board wipe and stax; the other choose-and-destroy-the-re
   for (const n of ["Razia's Purification", "End Hostilities", "Wash Out"]) expect(has("stax", n), `${n} stax`).toBe(false);
 });
 
+// OWNER 2026-11-13: DESTROYING ALL LANDS OF ONE TARGET PLAYER IS STAX (#1266, Rules 48). Ajani Vengeant's -7 ("Destroy all lands target player controls") derives scope `target`, the same as Stone Rain, so the printed words carry it.
+// The text is blanked to the -7 alone: Ajani's +1 ("doesn't untap") would make the card stax whatever the -7 reads as.
+test("destroying all lands target player controls is stax on its own; Stone Rain is not", () => {
+  const staxRules = loadRules().rules.filter((r) => r.category === "stax");
+  const isStax = (dc: DeckCard): boolean => staxRules.some((r) => ruleMatches(r, dc));
+  expect(isStax(realCard("Ajani Vengeant", { oracleText: "\u22127: Destroy all lands target player controls." }))).toBe(true);
+  expect(isStax(realCard("Stone Rain"))).toBe(false);
+});
+
 // ALL PERMANENTS NAMES LANDS; A RESTRICTED PERMANENT SUBJECT DOES NOT (#1557, Rules 41). Derive 468 keeps the restriction on the subject (chosenColor, colorCount, selection), so only a genuinely unrestricted `permanent` is land-including.
 test("an unrestricted permanent wipe is stax too; a restricted one, and a per-opponent choice, are not", () => {
   const m = detectBuildCategories([
