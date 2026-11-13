@@ -35,4 +35,10 @@ describe("a mass kill aimed at one player's board is still no targeted kill", ()
     expect(role(realCard("Mogg Infestation"), "boardWipe")).toBe(true);
     expect(role(realCard("Mogg Infestation"), "targetedRemoval")).toBe(false);
   });
+  // Review 2026-11-13: each of removal.targeted's three massOfTargetPlayer guards is pinned by a card only it holds out
+  // (dies: Mogg Infestation; exiled/leaves/shuffle: Settle the Wreckage; counter-added: Contagion Engine), and the
+  // land-denial leg by Burning of Xinye, which is stax, not removal (owner 2026-11-13).
+  test.each(["Settle the Wreckage", "Contagion Engine", "Burning of Xinye"])("%s: no targeted removal", (n) => {
+    expect(role(realCard(n), "targetedRemoval"), n).toBe(false);
+  });
 });
