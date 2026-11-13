@@ -48,8 +48,12 @@ describe("colour-locked answers are marked (owner 2026-11-13)", () => {
     expect(answerClassesOf(realCard("Fatal Push")).get("creature")).toMatchObject({ colourLocked: false });
   });
 
-  test("\"colorless\" is stored as colour C and is no lock (Infernal Reckoning, Goblin Cratermaker)", () => {
-    for (const n of ["Infernal Reckoning", "Goblin Cratermaker"]) for (const [cls, m] of answerClassesOf(realCard(n))) expect(m.colourLocked, `${n} ${cls}`).toBe(false);
+  test("a target restricted to COLORLESS is colour-locked (owner 2026-11-13: Infernal Reckoning, Goblin Cratermaker)", () => {
+    for (const n of ["Infernal Reckoning", "Goblin Cratermaker"]) {
+      const marks = answerClassesOf(realCard(n));
+      expect(marks.size, n).toBeGreaterThan(0);
+      for (const [cls, m] of marks) expect(m.colourLocked, `${n} ${cls}`).toBe(true);
+    }
   });
 
   test("a card with a locked clause AND a plain clause for the class is not locked", () => {
