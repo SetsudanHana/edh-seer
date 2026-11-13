@@ -988,7 +988,7 @@ export function analyzeDeckStructured(
     buildScore, buildCategories, buildParents, template, suggestions, suggestionByKey, answerCoverage: coverage, rampResilience,
     landsImpact, answersImpact, conditionalRoles, weakRoles,
   } =
-    computeBuild(resolved, strategies[0]?.name, landRec.target, identity, graveyardVulnerability, strategies, gates);
+    computeBuild(resolved, strategies[0]?.name, landRec.target, identity, graveyardVulnerability, strategies, gates, commanderSet);
 
   // THE CUT LIST -- a join over what is already computed, never new analysis. It reads the rated
   // cards, the axis weights, the BUILD roles and the per-category surplus, and names CANDIDATES

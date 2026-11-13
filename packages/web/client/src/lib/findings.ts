@@ -215,9 +215,10 @@ function answerFinding(report: DeckReport): Finding | null {
   const narrowCards = [...new Set(half.flatMap((a) => a.colourLocked ?? []))];
   const halfHeadline = half.length === 0 ? "" : (() => {
     const lead = names(half).replace(/^./, (c) => c.toUpperCase());
-    const who = narrowCards.length ? ` (${narrowCards.join(" and ").replace(/, ([^,]*)$/, " and $1")} ${narrowCards.length === 1 ? "counts" : "count"} half)` : " (they count half)";
+    const who = narrowCards.length ? ` (${narrowCards.length > 1 ? `${narrowCards.slice(0, -1).join(", ")} and ${narrowCards.at(-1)}` : narrowCards[0]} ${narrowCards.length === 1 ? "counts" : "count"} half)` : " (they count half)";
     return `${lead} are only answered by narrow cards${who}.`;
   })();
+  const halfGap = half.reduce((sum, a) => sum + 1 - (report.answerCoverage?.rows.find((r) => r.class === a.class)?.fraction ?? 1), 0);
   const headline = [absent.length ? absentHeadline : "", halfHeadline].filter(Boolean).join(" ");
   const turn = report.deckMath?.turn;
   const pools = absent.filter((a) => a.pool !== undefined);
@@ -242,9 +243,9 @@ function answerFinding(report: DeckReport): Finding | null {
             : `One ${absent[0]!.class} answer is enough to stop a single one from beating you.`,
     figure: `${answered.length}/${permanent.length}`,
     figureLabel: "kinds of permanent you can answer",
-    // A half-covered class counts half a gap (`NARROW_WEIGHT`, the same half the coverage multiplier takes).
-    filled: (answered.length - half.length / 2) / permanent.length,
-    shortfall: (absent.length + half.length / 2) / permanent.length,
+    // A half-covered class counts the part of the gap its coverage row leaves (1 - fraction), the number `answersImpact` lifts.
+    filled: (answered.length - halfGap) / permanent.length,
+    shortfall: (absent.length + halfGap) / permanent.length,
     impact: report.answersImpact,
   };
 }

@@ -631,9 +631,11 @@ export function answersImpactOf(
   colorIdentity: string[] | undefined,
   answeredIn: ReadonlySet<string> | ReadonlyMap<string, number>,
   graveyardVulnerability: number,
+  /** Classes whose narrow member is the commander: no card to buy, so the finding and the suggestions skip them and so does this price. */
+  commanderHeld: ReadonlySet<string> = new Set(),
 ): number {
   const answered: ReadonlyMap<string, number> = answeredIn instanceof Map ? answeredIn : new Map([...answeredIn].map((c) => [c as string, 1] as const));
-  const lifting = COVERAGE_CLASSES.filter((c) => (answered.get(c) ?? 0) < 1);
+  const lifting = COVERAGE_CLASSES.filter((c) => (answered.get(c) ?? 0) < 1 && !((answered.get(c) ?? 0) > 0 && commanderHeld.has(c)));
   if (lifting.length === 0) return 0;
   const base: BuildScoreInputs = {
     parents, landCount, landsTarget,
@@ -894,6 +896,8 @@ export function computeBuild(
   strategies?: readonly ArchetypeRanking[],
   /** HOW LIKELY EACH GATED EFFECT IS TO HAPPEN IN THIS DECK (#1357 task 2). Absent: every effect counts in full, as before it existed. */
   gates?: GateWeigher,
+  /** The commanders' names, so a half class held by one is not priced (see `answersImpactOf`). */
+  commanderNames: ReadonlySet<string> = new Set(),
 ): BuildResult {
   const members = detectBuildCategories(cards);
   const gateWeights: RoleWeights = gates ? detectBuildWeights(cards, gates) : new Map();
@@ -936,6 +940,7 @@ export function computeBuild(
     [...detectAnswerClasses(cards)].filter(([, m]) => m.cards.size > 0).map(([cls, m]) => [cls, answerCoverFraction(m)] as const),
   );
   const coverage = answerCoverage(colorIdentity, answered, graveyardVulnerability);
+  const commanderHeld = new Set([...detectAnswerClasses(cards)].filter(([, m]) => [...m.cards].some((n) => commanderNames.has(n))).map(([cls]) => cls));
 
   const parentTargets = adjustedParentTargets(template);
   // A PARENT'S COUNT IS A UNION, NEVER A SUM -- a card can carry two of a parent's leaves (Grave
@@ -966,7 +971,7 @@ export function computeBuild(
   const buildScore = scoreBuild(scoreInputs);
   const landsImpact = landsImpactOf(scoreInputs);
   const answersImpact = answersImpactOf(
-    parentsWithCount, landCount, targets.lands, colorIdentity, answered, graveyardVulnerability,
+    parentsWithCount, landCount, targets.lands, colorIdentity, answered, graveyardVulnerability, commanderHeld,
   );
 
   // `coverageWeighted` rides along ONLY when true (whole-branch review IMPORTANT 4) -- the client
