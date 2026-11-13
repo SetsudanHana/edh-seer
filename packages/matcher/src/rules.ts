@@ -94,9 +94,7 @@ export type RuleClause =
       /** Refuse a subject that can be a PLAYER (`subjectReachesPlayer`: "any target", "target player or planeswalker"): the class reads "target creature or planeswalker" and nothing wider. */
       notReachesPlayer?: true;
       /** The ability's amount is at least N, or is not a printed number at all (X, "its power", "that much": no number says it is a ping). A missing amount does not match. */
-      amountAtLeast?: number;
-      /** Refuse a subject restricted to a COLOUR (`colors`: "target red creature", "target blue permanent"): a colour hoser answers one colour, not a class (`COLOUR_HOSER`, issue #581). "Nonblack" is `notColors` and stays. */
-      notColourLocked?: true }
+      amountAtLeast?: number }
   /** WHAT AN ABILITY EMITS, for the one family that has no effect kind by design: removal.
    *  `destroy`/`exile`/`bounce` derive as kindless abilities whose EMIT is `dies` or `leaves`
    *  (emits.ts: "`destroy` has no payoff kind in the engine's vocabulary, but without its `dies`
@@ -178,8 +176,6 @@ export type RuleClause =
       abilityKind?: string[];
       /** The emit's subject can be a permanent of this ANSWER CLASS, as `effectKind.reachesClass`. */
       reachesClass?: string;
-      /** Refuse a subject restricted to a COLOUR, as `effectKind.notColourLocked`. */
-      notColourLocked?: true;
       /** The emit is a TUCK (`GameEvent.tuck`: a put into a library from the battlefield; Condemn, Oust). A shuffle is its own verb. */
       tuck?: true }
   /** The card's `characteristics.enchants` (the Enchant line, #1315) can be a creature: the filter, or an `anyOf` branch of it ("creature or Vehicle", "artifact or creature"), names
@@ -640,8 +636,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.reachesClass === undefined || (answerSubject(a) !== undefined && subjectReachesClass(answerSubject(a)!, clause.reachesClass)))
         && (clause.untyped !== true || (answerSubject(a) !== undefined && classTypes(answerSubject(a)!).length === 0 && subjectReachesPermanent(answerSubject(a)!)))
         && (clause.notReachesPlayer !== true || (answerSubject(a) !== undefined && !subjectReachesPlayer(answerSubject(a)!)))
-        && (clause.amountAtLeast === undefined || amountAtLeast(a.amount, clause.amountAtLeast))
-        && (clause.notColourLocked !== true || (a.effect.subject?.colors ?? []).length === 0));
+        && (clause.amountAtLeast === undefined || amountAtLeast(a.amount, clause.amountAtLeast)));
     // CEILING: `removal.targeted` / `removal.land` read derived emits, and derive mislabels some cards, so the role is wrong on them by name.
     //   LOST (real removal, no usable emit): Polymorph, Transmogrify, Chaos Mutation, Divergent Transformations (derive reads the polymorph family as played on YOUR creature, `control: you`: owner ruling 2026-10-02 / #962,
     //   "primary use", so the opponent use is dropped on purpose; the role pays for it);
@@ -688,7 +683,6 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.fromZone === undefined || clause.fromZone.includes(e.subject.fromZone ?? null))
           && (clause.counter === undefined || (e.subject.counter !== undefined && clause.counter.includes(e.subject.counter)))
           && (clause.reachesClass === undefined || subjectReachesClass(e.subject, clause.reachesClass))
-          && (clause.notColourLocked !== true || (e.subject.colors ?? []).length === 0)
           && (clause.tuck !== true || e.tuck === true))
         && (clause.repeats === undefined || clause.repeats.includes(a.repeats ?? null)));
     case "subtype":
