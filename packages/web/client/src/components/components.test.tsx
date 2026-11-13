@@ -1523,7 +1523,7 @@ test("the coverage dock counts a half-covered class as half-covered, and does no
 
 // #1266 whole-branch review: `colourLocked` also carries the Aura / Saga / Equipment-only answers (a bare subtype, owner 2026-11-13), so Turn to Dust is no "color-locked" card. One neutral phrase covers both.
 test("an answer row with narrow cards says which count half: a colour-locked one (Pyroblast) and a subtype-only one (Turn to Dust)", () => {
-  const dm = { ...DECK_MATH, answers: DECK_MATH.answers.map((a) => (a.class === "creature" ? { ...a, colourLocked: ["Pyroblast"] } : a.class === "artifact" ? { ...a, colourLocked: ["Turn to Dust"] } : a)) };
+  const dm = { ...DECK_MATH, answers: DECK_MATH.answers.map((a) => (a.class === "creature" ? { ...a, colourLocked: ["Pyroblast"] } : a.class === "artifact" ? { ...a, count: 1, available: 0.5, colourLocked: ["Turn to Dust"] } : a)) };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={dm} />);
   expect(screen.getByLabelText(/creature, 4 cards, in hand by turn 5 in 41% of games; narrow \(color or subtype\), counts half: Pyroblast/i)).toBeInTheDocument();
   expect(screen.getByTestId("answer-row-locked-creature").textContent).toMatch(/narrow \(color or subtype\), counts half: Pyroblast/);
