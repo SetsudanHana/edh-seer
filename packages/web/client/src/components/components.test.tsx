@@ -1501,6 +1501,33 @@ test("the Answers header docks for coverage when the score is docked, naming the
   expect(screen.getByText(/3 of 5 answer classes are covered/i)).toBeInTheDocument();
 });
 
+// OWNER 2026-11-13 (answers/colour-weight review): a class covered only by colour-locked answers is covered at half. magda-mother-of-dragons printed "5 of 5 answer classes are covered, not every one these colors
+// could reach" -- true of the score, contradictory as a sentence.
+test("the coverage dock counts a half-covered class as half-covered, and does not claim a class is missing when none is (magda)", () => {
+  const rows = (fractions: number[]) =>
+    ["creature", "artifact", "enchantment", "planeswalker", "land"].map((c, i) => ({ class: c, poolShare: 1, demand: 0.2, weight: 0.2, covered: fractions[i]! > 0, fraction: fractions[i]! }));
+  const { unmount } = render(
+    <BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH}
+      answerCoverage={{ coverage: 0.97, source: "weighted", graveyardVulnerability: 0, rows: rows([1, 1, 1, 0.5, 1]) }} />,
+  );
+  const note = screen.getByText(/docked for coverage/i);
+  expect(note.textContent).toMatch(/counts at 97% of full credit — 4 of 5 answer classes are covered, 1 only by color-locked answers\./);
+  expect(note.textContent).not.toMatch(/5 of 5|not every one/);
+  unmount();
+  render(
+    <BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH}
+      answerCoverage={{ coverage: 0.7, source: "weighted", graveyardVulnerability: 0, rows: rows([1, 0, 1, 0.5, 1]) }} />,
+  );
+  expect(screen.getByText(/docked for coverage/i).textContent).toMatch(/3 of 5 answer classes are covered, 1 only by color-locked answers, not every one these colors could reach\./);
+});
+
+test("an answer row with colour-locked cards says which count half", () => {
+  const dm = { ...DECK_MATH, answers: DECK_MATH.answers.map((a) => (a.class === "creature" ? { ...a, colourLocked: ["Pyroblast"] } : a)) };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={dm} />);
+  expect(screen.getByLabelText(/creature, 4 cards, in hand by turn 5 in 41% of games; color-locked, counts half: Pyroblast/i)).toBeInTheDocument();
+  expect(screen.getByTestId("answer-row-locked-creature").textContent).toMatch(/color-locked, counts half: Pyroblast/);
+});
+
 /** I2 (whole-branch review, 2026-09-01). The dock note used to spell "Interaction" into its prose,
  *  which is worse than an unwired selector: after a rename in `build.ts` it would go on rendering
  *  and go on asserting the OLD name. The four tests pinning both directions of that guarantee were

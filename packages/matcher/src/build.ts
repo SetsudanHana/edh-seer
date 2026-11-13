@@ -8,6 +8,7 @@ import { cardLines } from "./mana-lines.js";
 import { gateMet } from "./gate.js";
 import { ROLE_PARENTS } from "./role-parents.js";
 import { formatCount } from "./format-count.js";
+import { NARROW_WEIGHT } from "./narrow-weight.js";
 import type { EffectBasis, EffectWeight, GateWeigher } from "./effect-gate-weight.js";
 
 /** Functional build categories (the "does the deck have enough ramp/draw/interaction" layer). */
@@ -236,6 +237,27 @@ export interface AnswerClassMembers {
   recurring: Set<string>;
   /** Those that answer only a narrow set of the class: every clause of theirs that reaches it carries a stat or state condition on the target (Fatal Push's mana value). They cover the class. */
   narrow: Set<string>;
+  /** Those restricted to a COLOUR on every clause that reaches the class (Combust, Pyroblast, King Crab). They cover the class at `NARROW_WEIGHT` (owner 2026-11-13). */
+  colourLocked: Set<string>;
+}
+
+/** What one card counts for in a class: `NARROW_WEIGHT` if colour-locked there, else 1. */
+export function answerWeightOf(m: AnswerClassMembers, name: string): number {
+  return m.colourLocked.has(name) ? NARROW_WEIGHT : 1;
+}
+
+/** A class's answer count with the weights applied: a locked card adds `NARROW_WEIGHT`, any other 1. Exact, never rounded (as `weightedSum`). */
+export function answerClassWeight(m: AnswerClassMembers): number {
+  let w = 0;
+  for (const n of m.cards) w += answerWeightOf(m, n);
+  return w;
+}
+
+/** How far a class is covered, in [0, 1]: 1 once any card answers it unrestricted, `NARROW_WEIGHT` when only colour-locked cards do, 0 when none does.
+ *  The coverage multiplier takes this fraction of the class's row (owner 2026-11-13). Simple on purpose: two locked cards cover no more than one. CEILING: no accumulation across locked cards. */
+export function answerCoverFraction(m: AnswerClassMembers): number {
+  if (m.cards.size === 0) return 0;
+  return m.cards.size > m.colourLocked.size ? 1 : NARROW_WEIGHT;
 }
 
 /** Answer coverage: which classes of threat this deck can actually answer, and with how many
@@ -253,11 +275,12 @@ export function detectAnswerClasses(cards: DeckCard[]): Map<string, AnswerClassM
   for (const dc of cards) {
     for (const [cls, marks] of answerClassesOf(dc)) {
       let e = m.get(cls);
-      if (!e) { e = { cards: new Set(), exiling: new Set(), recurring: new Set(), narrow: new Set() }; m.set(cls, e); }
+      if (!e) { e = { cards: new Set(), exiling: new Set(), recurring: new Set(), narrow: new Set(), colourLocked: new Set() }; m.set(cls, e); }
       e.cards.add(dc.card.name);
       if (marks.exile) e.exiling.add(dc.card.name);
       if (marks.recurring) e.recurring.add(dc.card.name);
       if (marks.narrow) e.narrow.add(dc.card.name);
+      if (marks.colourLocked) e.colourLocked.add(dc.card.name);
     }
   }
   return m;
@@ -563,16 +586,18 @@ export function answersImpactOf(
   landCount: number,
   landsTarget: number,
   colorIdentity: string[] | undefined,
-  answered: ReadonlySet<string>,
+  answeredIn: ReadonlySet<string> | ReadonlyMap<string, number>,
   graveyardVulnerability: number,
 ): number {
+  const answered: ReadonlyMap<string, number> = answeredIn instanceof Map ? answeredIn : new Map([...answeredIn].map((c) => [c as string, 1] as const));
+  // ABSENT means no answer at all; a class held only by colour-locked cards is not absent, so lifting it is not priced here (a lower bound, as before).
   const absent = COVERAGE_CLASSES.filter((c) => !answered.has(c));
   if (absent.length === 0) return 0;
   const base: BuildScoreInputs = {
     parents, landCount, landsTarget,
-    coverage: answerCoverage(colorIdentity, new Set(answered), graveyardVulnerability).coverage,
+    coverage: answerCoverage(colorIdentity, answered, graveyardVulnerability).coverage,
   };
-  const lifted = answerCoverage(colorIdentity, new Set([...answered, ...absent]), graveyardVulnerability);
+  const lifted = answerCoverage(colorIdentity, new Map([...answered, ...absent.map((c) => [c, 1] as const)]), graveyardVulnerability);
   return scoreBuild({ ...base, coverage: lifted.coverage }) - scoreBuild(base);
 }
 
@@ -860,8 +885,8 @@ export function computeBuild(
   // invariant `detectAnswerClasses` owns, and removing it is a bet that invariant can never change
   // underneath this call. Upgrade path if it ever does: the design's own criterion 5 write-up is
   // the place to re-derive whether the filter is still vacuous.
-  const answered = new Set(
-    [...detectAnswerClasses(cards)].filter(([, m]) => m.cards.size > 0).map(([cls]) => cls),
+  const answered = new Map(
+    [...detectAnswerClasses(cards)].filter(([, m]) => m.cards.size > 0).map(([cls, m]) => [cls, answerCoverFraction(m)] as const),
   );
   const coverage = answerCoverage(colorIdentity, answered, graveyardVulnerability);
 

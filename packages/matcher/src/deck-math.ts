@@ -1,8 +1,9 @@
-import { minCopies, pAtLeast, seen } from "@edh-seer/engine";
+import { minCopies, pAnyWeighted, seen } from "@edh-seer/engine";
 import type { DeckMath, Reason } from "@edh-seer/engine";
 import { loadAnswerPool, identityKey, POOL_CLASSES, commanderIdentity } from "./answer-pool.js";
 import { deckAvailability } from "./availability.js";
-import { detectAnswerClasses, gatedLandsTarget, adjustedTargets } from "./build.js";
+import { answerClassWeight, detectAnswerClasses, gatedLandsTarget, adjustedTargets } from "./build.js";
+import { NARROW_WEIGHT } from "./narrow-weight.js";
 import { colourReplacements } from "./land-score.js";
 import { themedSubjects } from "./same-job.js";
 import { manaAuditFull, type Color } from "./mana-audit.js";
@@ -162,10 +163,15 @@ export function computeDeckMath(
     const found = classes.get(cls);
     const members = found?.cards ?? new Set<string>();
     const fromCommandZone = [...members].some((n) => commanders.has(n));
-    const inLibrary = [...members].filter((n) => !commanders.has(n)).length;
+    const inLibrary = [...members].filter((n) => !commanders.has(n));
+    // COLOUR-LOCKED ANSWERS WEIGH HALF (owner 2026-11-13, `NARROW_WEIGHT`): `count` stays the number of cards, `weighted` is the sum of their weights, and `available` is P(at least one LIVE answer by T) where a locked card
+    // is live with probability NARROW_WEIGHT once drawn (`pAnyWeighted`, exact; an expected count would need a fractional hypergeometric).
+    const lockedInLibrary = found ? inLibrary.filter((n) => found.colourLocked.has(n)).length : 0;
     return {
       class: cls,
       count: members.size,
+      weighted: found ? answerClassWeight(found) : 0,
+      ...(found && found.colourLocked.size > 0 ? { colourLocked: [...found.colourLocked].sort() } : {}),
       // NAMED, so a player can see which cards the count is (owner, 2026-09-26: the answers table
       // was counts against a target no deck meets). One flexible card sits under every class it hits.
       cards: [...members].sort(),
@@ -175,7 +181,7 @@ export function computeDeckMath(
       exiling: found?.exiling.size ?? 0,
       recurring: found?.recurring.size ?? 0,
       fromCommandZone,
-      available: fromCommandZone ? 1 : pAtLeast(1, inLibrary, seen(turn), library),
+      available: fromCommandZone ? 1 : pAnyWeighted(inLibrary.length - lockedInLibrary, lockedInLibrary, NARROW_WEIGHT, seen(turn), library),
       // The doctrine states a confidence and the maths derives the count -- the inversion of the
       // `available` line directly above it, against the same turn and the same library. A commander
       // owes nothing to a draw probability, so its class requires nothing.

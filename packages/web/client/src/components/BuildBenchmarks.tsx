@@ -496,7 +496,9 @@ function DeckMathRows({
   // detected (both in `build.ts`), and until this fix nothing on any screen said either. "A silent
   // wrong answer is worse than a missing one" -- this table is where both belong now: it is the
   // one place on the panel that already states, per class, what this deck answers.
-  const coverageCovered = answerCoverage?.rows.filter((r) => r.covered).length ?? 0;
+  // FULLY covered is fraction 1; a class covered only by colour-locked answers (fraction < 1, owner 2026-11-13) is "half". A row with no `fraction` is a full cover.
+  const coverageCovered = answerCoverage?.rows.filter((r) => r.covered && (r.fraction ?? 1) >= 1).length ?? 0;
+  const coverageHalf = answerCoverage?.rows.filter((r) => r.covered && (r.fraction ?? 1) < 1).length ?? 0;
   const coverageClasses = answerCoverage?.rows.length ?? 0;
   const coverageDocked = answerCoverage !== undefined && answerCoverage.coverage < 1;
   const poolUnweighted = answerCoverage?.source === "unweighted";
@@ -511,7 +513,9 @@ function DeckMathRows({
               *  confidently naming the old one. */}
             Docked for coverage: this deck's{coverageWeightedName ? ` ${coverageWeightedName}` : ""}{" "}
             score counts at {pct(answerCoverage!.coverage)} of full credit — {coverageCovered} of{" "}
-            {coverageClasses} answer classes are covered, not every one these colors could reach.
+            {coverageClasses} answer classes are covered
+            {coverageHalf > 0 ? `, ${coverageHalf} only by color-locked answers` : ""}
+            {coverageCovered + coverageHalf < coverageClasses ? ", not every one these colors could reach" : ""}.
           </p>
         ) : null}
         {poolUnweighted ? (
@@ -546,13 +550,15 @@ function DeckMathRows({
               : a.fromCommandZone
                 ? "your commander, so every game"
                 : `in hand by turn ${turn} in ${pct(a.available)} of games`;
+            // `available` is P(holding a USABLE answer): a colour-locked card is live half the time it is drawn, so the row names those cards.
+            const lockedNote = a.colourLocked?.length ? `color-locked, counts half: ${a.colourLocked.join(", ")}` : "";
             // The screen reader hears the mode on every row, even when the screen says it once below.
             const said = none
               ? ""
               : a.class === "graveyard"
                 ? a.recurring > 0 ? `${a.recurring} keep working` : "none keep working"
                 : a.exiling > 0 ? `${a.exiling} of them exile` : "none of them exile";
-            const label = `${a.class}, ${none ? "no answers" : plural(a.count, "card")}${odds ? `, ${odds}` : ""}${said ? `, ${said}` : ""}`;
+            const label = `${a.class}, ${none ? "no answers" : plural(a.count, "card")}${odds ? `, ${odds}` : ""}${lockedNote && !none ? `; ${lockedNote}` : ""}${said ? `, ${said}` : ""}`;
             return (
               <li key={a.class} className="relative flex flex-col gap-0.5" aria-label={label} data-testid="answer-row">
                 {/* THE WHOLE ROW TAPS ON A PHONE (persona round 2026-09-27: a 28px chevron on rows 33px
@@ -586,6 +592,7 @@ function DeckMathRows({
                     {mode && (none || a.fromCommandZone) && odds ? " · " : null}
                     {mode ? <span className={mode.startsWith("none") ? "text-(--warning)" : ""}>{mode}</span> : null}
                   </span>
+                  {lockedNote && !none ? <span className="text-xs text-(--muted)" data-testid={`answer-row-locked-${a.class}`}>{lockedNote}</span> : null}
                   {a.cards?.length ? (
                     <button type="button" className="sm:hidden ml-auto inline-flex size-7 items-center justify-center self-center rounded-(--radius) text-(--accent) after:absolute after:inset-x-0 after:top-0 after:h-11 after:content-['']"
                       aria-expanded={shownOn.has(a.class)} aria-controls={`answer-cards-${a.class}`} onClick={() => toggleShown(a.class)}

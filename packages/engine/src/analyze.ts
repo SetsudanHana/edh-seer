@@ -191,6 +191,10 @@ export interface DeckMath {
     count: number;
     /** The cards counted; a card that hits several classes is under each. */
     cards?: string[];
+    /** The class's answers with the weights applied: a colour-locked answer counts `NARROW_WEIGHT` (0.5), any other 1 (owner 2026-11-13). `count` stays the number of cards. Absent on a report built before the weight. */
+    weighted?: number;
+    /** The counted cards restricted to a colour for this class (Combust, Pyroblast, King Crab); absent when none is. `available` prices each at `NARROW_WEIGHT`. */
+    colourLocked?: string[];
     /** How many of them EXILE -- the only answers a recursive commander or a reanimator cannot
      *  undo (design §2.1). A sub-count of `count`, never a separate class. */
     exiling: number;
@@ -644,7 +648,7 @@ export interface DeckReport {
     coverage: number;
     source: "weighted" | "unweighted";
     graveyardVulnerability: number;
-    rows: { class: string; poolShare: number; demand: number; weight: number; covered: boolean }[];
+    rows: { class: string; poolShare: number; demand: number; weight: number; covered: boolean; fraction?: number }[];
   };
   /** How the Ramp parent's cards would survive being attacked, split by what answers each one:
    *  a fetched land (306 cards in the format answer a land), a rock (755 answer an artifact), a

@@ -180,7 +180,7 @@ test("damage and bounce answer what they aim at", () => {
 
 /** Issue #581: naming each answer row's cards showed what the classes missed and what they
  *  over-counted. Each case is one a real deck carried. */
-test("tucks, shrinks and plural objects answer; colour hosers and exile costs do not", () => {
+test("tucks, shrinks and plural objects answer; colour hosers answer marked colour-locked; exile costs do not", () => {
   const classes = detectAnswerClasses([
     realCard("Chaos Warp"),
     realCard("Condemn"),
@@ -196,8 +196,10 @@ test("tucks, shrinks and plural objects answer; colour hosers and exile costs do
   for (const n of ["Chaos Warp", "Condemn", "Nowhere to Run", "Yawgmoth, Thran Physician", "Curtains' Call"]) expect(creature.has(n), n).toBe(true);
   expect(classes.get("land")?.cards.has("Chaos Warp")).toBe(true);
   // Befuddle is "-4/-0": a power-only shrink kills nothing. Prodigal Pyromancer is a 1-damage ping.
-  for (const n of ["Pyroblast", "Plaza of Heroes", "Befuddle", "Prodigal Pyromancer"]) expect(creature.has(n), n).toBe(false);
-  expect(classes.get("enchantment")?.cards.has("Pyroblast") ?? false).toBe(false);
+  for (const n of ["Plaza of Heroes", "Befuddle", "Prodigal Pyromancer"]) expect(creature.has(n), n).toBe(false);
+  // Owner 2026-11-13: a colour hoser counts, marked colour-locked (weighed at NARROW_WEIGHT); it used to be dropped.
+  expect(creature.has("Pyroblast")).toBe(true);
+  expect(classes.get("enchantment")?.colourLocked.has("Pyroblast")).toBe(true);
 });
 
 /** #1266: damage, tuck, shrink, -1/-1 counter and bounce answers are DERIVED. `oracleText: ""` blanks the printed text, so a pass here is the derived rows alone. */
@@ -252,7 +254,7 @@ describe("the damage, tuck, shrink, counter and bounce answers read derived data
     expect(classes("Aether Gust")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
   });
 
-  test("no answer rule refuses a colour (notColourLocked is not used by any rule)", () => {
+  test("no answer rule refuses a colour (notColourLocked is not used by any rule; the colour is read as a lock, not refused)", () => {
     for (const r of loadRules().rules.filter((x) => x.answerClass !== undefined)) expect(JSON.stringify(r.match), r.id).not.toContain("notColourLocked");
   });
 

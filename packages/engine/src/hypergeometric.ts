@@ -94,6 +94,23 @@ export function pAtLeast(k: number, S: number, n: number, N: number = LIBRARY): 
   return Math.min(total, 1);
 }
 
+/** P(at least one LIVE answer) when `full` cards always answer and `partial` cards answer only with probability `w` once drawn (a colour-locked answer: owner 2026-11-13, `NARROW_WEIGHT`).
+ *
+ *  Exact under that model: no live answer means none of the `full` cards were drawn AND each of the `l` drawn partial cards was dead, `(1-w)^l`. Summed over `l`:
+ *  `P(none) = sum_l C(partial, l) * C(N - full - partial, n - l) / C(N, n) * (1-w)^l`. With `partial = 0` it is `pAtLeast(1, full, n, N)`, and with `w = 1` it is `pAtLeast(1, full + partial, n, N)`.
+ *  An expected count (`full + w * partial`) cannot be fed to `pAtLeast`, which takes whole cards; this keeps the integer maths and puts the weight in the draw. */
+export function pAnyWeighted(full: number, partial: number, w: number, n: number, N: number = LIBRARY): number {
+  if (full < 0 || partial < 0 || n < 0 || N <= 0 || full + partial > N) return 0;
+  n = Math.min(n, N);
+  const rest = N - full - partial;
+  let none = 0;
+  for (let l = 0; l <= Math.min(partial, n); l++) {
+    if (n - l > rest) continue;
+    none += (comb(partial, l) * comb(rest, n - l) / comb(N, n)) * Math.pow(1 - w, l);
+  }
+  return Math.max(0, Math.min(1, 1 - none));
+}
+
 /** The fewest copies of a card so that `P(>= k of them by turn) >= conf`.
  *
  *  THROWS when no copy count reaches the confidence -- e.g. 8 copies by turn 0, which a 7-card
