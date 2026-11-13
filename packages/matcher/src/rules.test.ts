@@ -1082,6 +1082,16 @@ test("a land-only mass by overload or at a target player is stax and no wipe; a 
   expect(has("boardWipe", "Mogg Infestation")).toBe(true);
 });
 
+// OWNER 2026-11-13: EACH HALF OF A CARD IS ITS OWN EFFECT (#1266, Rules 48). Burning of Xinye ("You destroy four lands you control, then target opponent destroys four lands they control. Then Burning of Xinye
+// deals 4 damage to each creature.") is a board wipe for the damage AND stax for the land destruction. Catastrophe ("Destroy all lands or all creatures.") stays both; Stone Rain (one land) stays neither.
+test("each half of a card is its own effect: Xinye is a wipe and stax, Catastrophe both, Stone Rain neither", () => {
+  const m = detectBuildCategories([realCard("Burning of Xinye"), realCard("Catastrophe"), realCard("Stone Rain")]);
+  const has = (cat: "stax" | "boardWipe", n: string): boolean => m.get(cat)?.has(n) === true;
+  for (const n of ["Burning of Xinye", "Catastrophe"]) { expect(has("boardWipe", n), `${n} boardWipe`).toBe(true); expect(has("stax", n), `${n} stax`).toBe(true); }
+  expect(has("boardWipe", "Stone Rain")).toBe(false);
+  expect(has("stax", "Stone Rain")).toBe(false);
+});
+
 // ALL PERMANENTS NAMES LANDS; A RESTRICTED PERMANENT SUBJECT DOES NOT (#1557, Rules 41). Derive 468 keeps the restriction on the subject (chosenColor, colorCount, selection), so only a genuinely unrestricted `permanent` is land-including.
 test("an unrestricted permanent wipe is stax too; a restricted one, and a per-opponent choice, are not", () => {
   const m = detectBuildCategories([
