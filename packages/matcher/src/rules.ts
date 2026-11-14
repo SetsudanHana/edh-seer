@@ -133,6 +133,8 @@ export type RuleClause =
       orTargetPlayerMass?: true;
       /** Let `scope` also accept a ONE-SIDED MASS KILL or an EACH-OPPONENT EDICT (owner 2026-11-14): an emit whose subject is `control: opp` with scope all / each, or no scope and `edictAll`. A mass shrink (the ability's effect is a `debuff`: Make Obsolete) is refused, and so is a pay-or-sacrifice (`unless`: Rishadan Cutpurse, Tariff, Killing Wave: a tax, the victim's option). The land class refuses a land-only mass through `notMassLand`. */
       orOppMass?: true;
+      /** Let `scope` also accept a TARGET-PLAYER EDICT (#1642, owner 2026-11-13: "Target player sacrifices a creature of their choice", Diabolic Edict, Storm Fleet Arsonist): an emit marked `SubjectFilter.edict`, whose control is `any` or `opp` and which carries no scope. A pay-or-sacrifice (`unless`) is refused, as for `orOppMass`. A "target player" can be you; like `orTargetPlayerMass`, the default use is at an opponent. Only the non-land answer rules carry it (a land answer is a targeted land kill). */
+      orEdict?: true;
       /** Refuse an ability whose exile COMES BACK AT ONCE: another ability of the card, of the SAME `clause`, is a `flicker` with no `delayedUntil` whose subject is NOT an opponent's permanent ("Exile target creature, then
        *  return it to the battlefield": Flicker, Eldrazi Displacer). Owner ruling 2026-09-25: an IMMEDIATE flicker is no removal, a DELAYED return (Otherworldly Journey, Flickerwisp: back at the next end step) keeps
        *  its place, so a flicker with `delayedUntil` is not refused (that includes `source-leaves`, the "until this leaves the battlefield" return of Constable of the Realm and Mysterious Limousine, #1295 item 3). A
@@ -759,7 +761,9 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.scope === undefined || clause.scope.includes(e.subject.scope ?? null) || (clause.orTargetPlayerMass === true && e.subject.targetPlayer === true)
             // ONE-SIDED MASS KILL AND EACH-OPPONENT EDICT (owner 2026-11-14): "destroy all creatures you don't control" is `scope: all, control: opp`; "each opponent sacrifices a creature" is `scope: all` or no scope with `edictAll`. A mass SHRINK is no kill: Make Obsolete, Massacre Wurm carry a `dies` emit under a `debuff`.
             || (clause.orOppMass === true && e.subject.control === "opp" && a.effect.kind !== "debuff" && a.unless === undefined
-              && (e.subject.scope === "all" || e.subject.scope === "each" || (e.subject.scope == null && e.subject.edictAll === true))))
+              && (e.subject.scope === "all" || e.subject.scope === "each" || (e.subject.scope == null && e.subject.edictAll === true)))
+            // TARGET-PLAYER EDICT (#1642, owner 2026-11-13): "target player sacrifices a creature" is marked `edict` and carries no scope; a pay-or-sacrifice is the victim's option.
+            || (clause.orEdict === true && e.subject.edict === true && a.unless === undefined))
           && (clause.fromZone === undefined || clause.fromZone.includes(e.subject.fromZone ?? null))
           && (clause.counter === undefined || (e.subject.counter !== undefined && clause.counter.includes(e.subject.counter)))
           && (clause.reachesClass === undefined || subjectReachesClass(clause.bareSubtype === true, e.subject, clause.reachesClass))
