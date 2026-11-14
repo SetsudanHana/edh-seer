@@ -23227,269 +23227,6 @@
    }
   ]
  },
- "Mount Doom": {
-  "oracleText": "{T}, Pay 1 life: Add {B} or {R}.\n{1}{B}{R}, {T}: Mount Doom deals 1 damage to each opponent.\n{5}{B}{R}, {T}, Sacrifice Mount Doom and a legendary artifact: Choose up to two creatures, then destroy the rest. Activate only as a sorcery.",
-  "typeLine": "Legendary Land",
-  "manaValue": 0,
-  "abilities": [
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": ""
-    },
-    "cost": "{T}, Pay 1 life",
-    "amount": "1",
-    "emits": [
-     {
-      "verb": "lose-life",
-      "subject": {
-       "control": "you",
-       "token": null
-      },
-      "instantSpeed": true
-     }
-    ],
-    "clause": 1,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    },
-    "payment": {
-     "tap": true,
-     "life": "1"
-    },
-    "claimsNothing": "mana-rider"
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "mana-generation",
-     "subject": {
-      "control": "any",
-      "token": null
-     }
-    },
-    "cost": "{T}, Pay 1 life",
-    "amount": "1",
-    "clause": 1,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    },
-    "payment": {
-     "tap": true,
-     "life": "1"
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "damage",
-     "subject": {
-      "control": "opp",
-      "token": null,
-      "scope": "each",
-      "player": true
-     }
-    },
-    "cost": "{1}{B}{R}, {T}",
-    "amount": "1",
-    "emits": [
-     {
-      "verb": "non-combat-damage",
-      "subject": {
-       "control": "opp",
-       "token": null,
-       "scope": "each",
-       "player": true
-      },
-      "dealer": {
-       "control": "you",
-       "token": null,
-       "self": true
-      },
-      "instantSpeed": true
-     }
-    ],
-    "clause": 2,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    },
-    "payment": {
-     "mana": "{1}{B}{R}",
-     "tap": true
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": ""
-    },
-    "cost": "{5}{B}{R}, {T}, Sacrifice Mount Doom and a legendary artifact",
-    "emits": [
-     {
-      "verb": "sacrifice",
-      "subject": {
-       "control": "you",
-       "token": null,
-       "self": true,
-       "type": "land"
-      }
-     },
-     {
-      "verb": "dies",
-      "subject": {
-       "control": "you",
-       "token": null,
-       "self": true,
-       "type": "land"
-      }
-     }
-    ],
-    "clause": 3,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    },
-    "payment": {
-     "mana": "{5}{B}{R}",
-     "tap": true,
-     "sacrifice": [
-      {
-       "amount": "1",
-       "subject": {
-        "self": true
-       }
-      },
-      {
-       "amount": "1",
-       "subject": {
-        "control": "you",
-        "token": null,
-        "legendary": true,
-        "type": "artifact"
-       }
-      }
-     ]
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": ""
-    },
-    "cost": "{5}{B}{R}, {T}, Sacrifice Mount Doom and a legendary artifact",
-    "amount": "1",
-    "emits": [
-     {
-      "verb": "sacrifice",
-      "subject": {
-       "control": "you",
-       "token": null,
-       "legendary": true,
-       "type": "artifact"
-      }
-     },
-     {
-      "verb": "dies",
-      "subject": {
-       "control": "you",
-       "token": null,
-       "legendary": true,
-       "type": "artifact"
-      }
-     }
-    ],
-    "clause": 3,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    },
-    "payment": {
-     "mana": "{5}{B}{R}",
-     "tap": true,
-     "sacrifice": [
-      {
-       "amount": "1",
-       "subject": {
-        "self": true
-       }
-      },
-      {
-       "amount": "1",
-       "subject": {
-        "control": "you",
-        "token": null,
-        "legendary": true,
-        "type": "artifact"
-       }
-      }
-     ]
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": ""
-    },
-    "cost": "{5}{B}{R}, {T}, Sacrifice Mount Doom and a legendary artifact",
-    "emits": [
-     {
-      "verb": "dies",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "other": true,
-       "selection": "all-but",
-       "type": "creature",
-       "scope": "all"
-      }
-     }
-    ],
-    "clause": 3,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 0,
-     "ceiling": null,
-     "scalesWith": {
-      "control": "any",
-      "token": null,
-      "other": true,
-      "selection": "all-but",
-      "type": "creature",
-      "scope": "all"
-     }
-    },
-    "payment": {
-     "mana": "{5}{B}{R}",
-     "tap": true,
-     "sacrifice": [
-      {
-       "amount": "1",
-       "subject": {
-        "self": true
-       }
-      },
-      {
-       "amount": "1",
-       "subject": {
-        "control": "you",
-        "token": null,
-        "legendary": true,
-        "type": "artifact"
-       }
-      }
-     ]
-    }
-   }
-  ]
- },
  "Teferi, Who Slows the Sunset": {
   "oracleText": "+1: Choose up to one target artifact, up to one target creature, and up to one target land. Untap the chosen permanents you control. Tap the chosen permanents you don't control. You gain 2 life.\n−2: Look at the top three cards of your library. Put one of them into your hand and the rest on the bottom of your library in any order.\n−7: You get an emblem with \"Untap all permanents you control during each opponent's untap step\" and \"You draw a card during each opponent's draw step.\"",
   "typeLine": "Legendary Planeswalker — Teferi",
@@ -23795,171 +23532,6 @@
     "payment": {
      "loyalty": "-15"
     }
-   }
-  ]
- },
- "Urza's Sylex": {
-  "oracleText": "{2}{W}{W}, {T}, Exile Urza's Sylex: Each player chooses six lands they control. Destroy all other permanents. Activate only as a sorcery.\nWhen Urza's Sylex is put into exile from the battlefield, you may pay {2}. If you do, search your library for a planeswalker card, reveal it, put it into your hand, then shuffle.",
-  "typeLine": "Legendary Artifact",
-  "manaValue": 3,
-  "abilities": [
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": ""
-    },
-    "cost": "{2}{W}{W}, {T}, Exile Urza's Sylex",
-    "emits": [
-     {
-      "verb": "exiled",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "self": true,
-       "type": "artifact"
-      }
-     },
-     {
-      "verb": "leaves",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "self": true,
-       "type": "artifact"
-      }
-     }
-    ],
-    "clause": 1,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    },
-    "payment": {
-     "mana": "{2}{W}{W}",
-     "tap": true,
-     "exile": [
-      {
-       "amount": "1",
-       "subject": {
-        "self": true
-       }
-      }
-     ]
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": ""
-    },
-    "cost": "{2}{W}{W}, {T}, Exile Urza's Sylex",
-    "emits": [
-     {
-      "verb": "dies",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "other": true,
-       "type": "permanent",
-       "scope": "all",
-       "selection": "all-but"
-      }
-     }
-    ],
-    "clause": 1,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 0,
-     "ceiling": null,
-     "scalesWith": {
-      "control": "any",
-      "token": null,
-      "other": true,
-      "type": "permanent",
-      "scope": "all"
-     }
-    },
-    "payment": {
-     "mana": "{2}{W}{W}",
-     "tap": true,
-     "exile": [
-      {
-       "amount": "1",
-       "subject": {
-        "self": true
-       }
-      }
-     ]
-    }
-   },
-   {
-    "kind": "triggered",
-    "effect": {
-     "kind": "search",
-     "subject": {
-      "control": "you",
-      "token": null,
-      "type": "planeswalker"
-     }
-    },
-    "trigger": {
-     "verbs": [
-      "exiled"
-     ],
-     "subject": {
-      "control": "you",
-      "token": null,
-      "self": true,
-      "fromZone": "battlefield"
-     }
-    },
-    "amount": "1",
-    "emits": [
-     {
-      "verb": "search",
-      "subject": {
-       "control": "you",
-       "token": null,
-       "type": "planeswalker",
-       "fromZone": "library"
-      }
-     }
-    ],
-    "librarySearch": "yours",
-    "toZone": "hand",
-    "clause": 2,
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    }
-   },
-   {
-    "kind": "triggered",
-    "effect": {
-     "kind": ""
-    },
-    "trigger": {
-     "verbs": [
-      "exiled"
-     ],
-     "subject": {
-      "control": "you",
-      "token": null,
-      "self": true,
-      "fromZone": "battlefield"
-     }
-    },
-    "emits": [
-     {
-      "verb": "shuffle",
-      "subject": {
-       "control": "you",
-       "token": null
-      }
-     }
-    ],
-    "clause": 2
    }
   ]
  },
@@ -33744,35 +33316,6 @@
      }
     },
     "clause": 3,
-    "repeats": "continuous"
-   }
-  ]
- },
- "Tomik, Distinguished Advokist": {
-  "oracleText": "Flying\nLands on the battlefield and land cards in graveyards can't be the targets of spells or abilities your opponents control.\nYour opponents can't play land cards from graveyards.",
-  "typeLine": "Legendary Creature — Human Advisor",
-  "manaValue": 2,
-  "abilities": [
-   {
-    "kind": "static",
-    "effect": {
-     "kind": "targeting-ban",
-     "subject": {
-      "control": "any",
-      "token": null
-     }
-    },
-    "targetingBan": {
-     "by": [
-      "spell",
-      "ability"
-     ],
-     "source": {
-      "control": "opp",
-      "token": null
-     }
-    },
-    "clause": 2,
     "repeats": "continuous"
    }
   ]
@@ -58748,490 +58291,6 @@
    }
   ]
  },
- "Kaya, Geist Hunter": {
-  "oracleText": "+1: Creatures you control gain deathtouch until end of turn. Put a +1/+1 counter on up to one target creature token you control.\n−2: Until end of turn, if one or more tokens would be created under your control, twice that many of those tokens are created instead.\n−6: Exile all cards from all graveyards, then create a 1/1 white Spirit creature token with flying for each card exiled this way.",
-  "typeLine": "Legendary Planeswalker — Kaya",
-  "manaValue": 3,
-  "abilities": [
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "keyword-grant",
-     "subject": {
-      "control": "any",
-      "token": null
-     }
-    },
-    "cost": "+1",
-    "clause": 1,
-    "repeats": "per-cycle",
-    "payment": {
-     "loyalty": "+1"
-    },
-    "grants": [
-     "deathtouch"
-    ]
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "counter-placement",
-     "subject": {
-      "control": "you",
-      "token": true,
-      "type": "creature",
-      "scope": "target"
-     }
-    },
-    "cost": "+1",
-    "amount": "1",
-    "emits": [
-     {
-      "verb": "counter-added",
-      "subject": {
-       "control": "you",
-       "token": true,
-       "type": "creature",
-       "scope": "target",
-       "counter": "+1/+1"
-      }
-     }
-    ],
-    "clause": 1,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    },
-    "payment": {
-     "loyalty": "+1"
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "token-doubling",
-     "subject": {
-      "control": "any",
-      "token": true,
-      "scope": "all"
-     },
-     "tokenMultiplier": "twice"
-    },
-    "trigger": {
-     "verbs": [
-      "create-token"
-     ],
-     "subject": {
-      "control": "any",
-      "token": true,
-      "scope": "all"
-     }
-    },
-    "cost": "−2",
-    "clause": 2,
-    "repeats": "per-cycle",
-    "replacement": true,
-    "change": {
-     "op": "times",
-     "value": 2
-    },
-    "count": {
-     "floor": 1,
-     "ceiling": 1,
-     "sameAsImproved": true
-    },
-    "payment": {
-     "loyalty": "-2"
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "graveyard-hate",
-     "subject": {
-      "control": "any",
-      "token": null,
-      "scope": "all",
-      "fromZone": "graveyard",
-      "zone": "graveyard"
-     }
-    },
-    "cost": "−6",
-    "emits": [
-     {
-      "verb": "exiled",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "scope": "all",
-       "fromZone": "graveyard"
-      }
-     },
-     {
-      "verb": "leaves",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "scope": "all",
-       "zone": "graveyard",
-       "fromZone": "graveyard"
-      }
-     }
-    ],
-    "clause": 3,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 0,
-     "ceiling": null,
-     "scalesWith": {
-      "control": "any",
-      "token": null,
-      "scope": "all",
-      "fromZone": "graveyard"
-     }
-    },
-    "payment": {
-     "loyalty": "-6"
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "token-generation",
-     "subject": {
-      "control": "you",
-      "token": true,
-      "type": "creature",
-      "subtype": "spirit",
-      "colors": [
-       "W"
-      ],
-      "stats": [
-       {
-        "metric": "power",
-        "op": "eq",
-        "value": 1
-       },
-       {
-        "metric": "toughness",
-        "op": "eq",
-        "value": 1
-       }
-      ],
-      "keyword": [
-       "flying"
-      ]
-     }
-    },
-    "cost": "−6",
-    "amount": "1 for each card exiled this way",
-    "emits": [
-     {
-      "verb": "create-token",
-      "subject": {
-       "control": "you",
-       "token": true,
-       "keyword": [
-        "flying"
-       ],
-       "colors": [
-        "W"
-       ],
-       "type": "creature",
-       "subtype": "spirit",
-       "stats": [
-        {
-         "metric": "power",
-         "op": "eq",
-         "value": 1
-        },
-        {
-         "metric": "toughness",
-         "op": "eq",
-         "value": 1
-        }
-       ]
-      }
-     },
-     {
-      "verb": "enters",
-      "subject": {
-       "control": "you",
-       "token": true,
-       "keyword": [
-        "flying"
-       ],
-       "colors": [
-        "W"
-       ],
-       "type": "creature",
-       "subtype": "spirit",
-       "stats": [
-        {
-         "metric": "power",
-         "op": "eq",
-         "value": 1
-        },
-        {
-         "metric": "toughness",
-         "op": "eq",
-         "value": 1
-        }
-       ]
-      }
-     }
-    ],
-    "clause": 3,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 0,
-     "ceiling": null,
-     "scalesWith": {
-      "control": "any",
-      "token": null
-     }
-    },
-    "payment": {
-     "loyalty": "-6"
-    }
-   }
-  ]
- },
- "Kaya, Orzhov Usurper": {
-  "oracleText": "+1: Exile up to two target cards from a single graveyard. You gain 2 life if at least one creature card was exiled this way.\n−1: Exile target nonland permanent with mana value 1 or less.\n−5: Kaya deals damage to target player equal to the number of cards that player owns in exile and you gain that much life.",
-  "typeLine": "Legendary Planeswalker — Kaya",
-  "manaValue": 3,
-  "abilities": [
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "graveyard-hate",
-     "subject": {
-      "control": "any",
-      "token": null,
-      "scope": "target",
-      "fromZone": "graveyard",
-      "zone": "graveyard"
-     }
-    },
-    "cost": "+1",
-    "amount": "2",
-    "emits": [
-     {
-      "verb": "exiled",
-      "subject": {
-       "control": "opp",
-       "token": null,
-       "scope": "target",
-       "fromZone": "graveyard"
-      }
-     },
-     {
-      "verb": "leaves",
-      "subject": {
-       "control": "opp",
-       "token": null,
-       "scope": "target",
-       "zone": "graveyard",
-       "fromZone": "graveyard"
-      }
-     }
-    ],
-    "clause": 1,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 2,
-     "ceiling": 2
-    },
-    "payment": {
-     "loyalty": "+1"
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "lifegain",
-     "subject": {
-      "control": "you",
-      "token": null
-     }
-    },
-    "cost": "+1",
-    "amount": "2",
-    "emits": [
-     {
-      "verb": "gain-life",
-      "subject": {
-       "control": "you",
-       "token": null
-      }
-     }
-    ],
-    "gate": {
-     "kind": "unknown",
-     "text": "at least one creature card was exiled this way"
-    },
-    "clause": 1,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 2,
-     "ceiling": 2
-    },
-    "payment": {
-     "loyalty": "+1"
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": ""
-    },
-    "cost": "−1",
-    "amount": "1",
-    "emits": [
-     {
-      "verb": "exiled",
-      "subject": {
-       "control": "opp",
-       "token": null,
-       "type": [
-        "creature",
-        "artifact",
-        "enchantment",
-        "planeswalker",
-        "battle"
-       ],
-       "notType": [
-        "land"
-       ],
-       "scope": "target",
-       "stats": [
-        {
-         "metric": "mana-value",
-         "op": "lte",
-         "value": 1
-        }
-       ],
-       "fromZone": "battlefield"
-      }
-     },
-     {
-      "verb": "leaves",
-      "subject": {
-       "control": "opp",
-       "token": null,
-       "type": [
-        "creature",
-        "artifact",
-        "enchantment",
-        "planeswalker",
-        "battle"
-       ],
-       "notType": [
-        "land"
-       ],
-       "scope": "target",
-       "stats": [
-        {
-         "metric": "mana-value",
-         "op": "lte",
-         "value": 1
-        }
-       ],
-       "fromZone": "battlefield"
-      }
-     }
-    ],
-    "clause": 2,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    },
-    "payment": {
-     "loyalty": "-1"
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "damage",
-     "subject": {
-      "control": "any",
-      "token": null,
-      "scope": "target",
-      "player": true
-     }
-    },
-    "cost": "−5",
-    "amount": "the number of cards that player owns in exile",
-    "emits": [
-     {
-      "verb": "non-combat-damage",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "scope": "target",
-       "player": true
-      },
-      "dealer": {
-       "control": "you",
-       "token": null,
-       "self": true
-      }
-     }
-    ],
-    "clause": 3,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 0,
-     "ceiling": null,
-     "scalesWith": {
-      "control": "any",
-      "token": null
-     }
-    },
-    "payment": {
-     "loyalty": "-5"
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "lifegain",
-     "subject": {
-      "control": "you",
-      "token": null
-     }
-    },
-    "cost": "−5",
-    "amount": "the number of cards that player owns in exile",
-    "emits": [
-     {
-      "verb": "gain-life",
-      "subject": {
-       "control": "you",
-       "token": null
-      }
-     }
-    ],
-    "clause": 3,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 0,
-     "ceiling": null,
-     "scalesWith": {
-      "control": "any",
-      "token": null
-     }
-    },
-    "payment": {
-     "loyalty": "-5"
-    }
-   }
-  ]
- },
  "The Mimeoplasm": {
   "oracleText": "As The Mimeoplasm enters, you may exile two creature cards from graveyards. If you do, it enters as a copy of one of those cards with a number of additional +1/+1 counters on it equal to the power of the other card.",
   "typeLine": "Legendary Creature — Ooze",
@@ -61384,6 +60443,1292 @@
     "payment": {
      "mana": "{4}",
      "tap": true
+    }
+   }
+  ]
+ },
+ "Kaya, Geist Hunter": {
+  "oracleText": "+1: Creatures you control gain deathtouch until end of turn. Put a +1/+1 counter on up to one target creature token you control.\n−2: Until end of turn, if one or more tokens would be created under your control, twice that many of those tokens are created instead.\n−6: Exile all cards from all graveyards, then create a 1/1 white Spirit creature token with flying for each card exiled this way.",
+  "typeLine": "Legendary Planeswalker — Kaya",
+  "manaValue": 3,
+  "loyalty": "3",
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "+1",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "+1"
+    },
+    "grants": [
+     "deathtouch"
+    ]
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "cost": "+1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "creature",
+       "scope": "target",
+       "counter": "+1/+1"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "token-doubling",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "scope": "all"
+     },
+     "tokenMultiplier": "twice"
+    },
+    "trigger": {
+     "verbs": [
+      "create-token"
+     ],
+     "subject": {
+      "control": "any",
+      "token": true,
+      "scope": "all"
+     }
+    },
+    "cost": "−2",
+    "clause": 2,
+    "repeats": "per-cycle",
+    "replacement": true,
+    "change": {
+     "op": "times",
+     "value": 2
+    },
+    "count": {
+     "floor": 1,
+     "ceiling": 1,
+     "sameAsImproved": true
+    },
+    "payment": {
+     "loyalty": "-2"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "all",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "−6",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all",
+       "fromZone": "graveyard"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "scope": "all",
+      "fromZone": "graveyard"
+     }
+    },
+    "payment": {
+     "loyalty": "-6"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "type": "creature",
+      "subtype": "spirit",
+      "colors": [
+       "W"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 1
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 1
+       }
+      ],
+      "keyword": [
+       "flying"
+      ]
+     }
+    },
+    "cost": "−6",
+    "amount": "1 for each card exiled this way",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "keyword": [
+        "flying"
+       ],
+       "colors": [
+        "W"
+       ],
+       "type": "creature",
+       "subtype": "spirit",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "keyword": [
+        "flying"
+       ],
+       "colors": [
+        "W"
+       ],
+       "type": "creature",
+       "subtype": "spirit",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "payment": {
+     "loyalty": "-6"
+    }
+   }
+  ]
+ },
+ "Kaya, Orzhov Usurper": {
+  "oracleText": "+1: Exile up to two target cards from a single graveyard. You gain 2 life if at least one creature card was exiled this way.\n−1: Exile target nonland permanent with mana value 1 or less.\n−5: Kaya deals damage to target player equal to the number of cards that player owns in exile and you gain that much life.",
+  "typeLine": "Legendary Planeswalker — Kaya",
+  "manaValue": 3,
+  "loyalty": "3",
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "+1",
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "target",
+       "fromZone": "graveyard"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "target",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "+1",
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "at least one creature card was exiled this way"
+    },
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "−1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target",
+       "stats": [
+        {
+         "metric": "mana-value",
+         "op": "lte",
+         "value": 1
+        }
+       ],
+       "fromZone": "battlefield"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target",
+       "stats": [
+        {
+         "metric": "mana-value",
+         "op": "lte",
+         "value": 1
+        }
+       ],
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "-1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target",
+      "player": true
+     }
+    },
+    "cost": "−5",
+    "amount": "the number of cards that player owns in exile",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target",
+       "player": true
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "payment": {
+     "loyalty": "-5"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "−5",
+    "amount": "the number of cards that player owns in exile",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "payment": {
+     "loyalty": "-5"
+    }
+   }
+  ]
+ },
+ "Tomik, Distinguished Advokist": {
+  "oracleText": "Flying\nLands on the battlefield and land cards in graveyards can't be the targets of spells or abilities your opponents control.\nYour opponents can't play land cards from graveyards.",
+  "typeLine": "Legendary Creature — Human Advisor",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "targeting-ban",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "targetingBan": {
+     "by": [
+      "spell",
+      "ability"
+     ],
+     "source": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "graveyard-lock"
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Mount Doom": {
+  "oracleText": "{T}, Pay 1 life: Add {B} or {R}.\n{1}{B}{R}, {T}: Mount Doom deals 1 damage to each opponent.\n{5}{B}{R}, {T}, Sacrifice Mount Doom and a legendary artifact: Choose up to two creatures, then destroy the rest. Activate only as a sorcery.",
+  "typeLine": "Legendary Land",
+  "manaValue": 0,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}, Pay 1 life",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "life": "1"
+    },
+    "claimsNothing": "mana-rider"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}, Pay 1 life",
+    "amount": "1",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "life": "1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "scope": "each",
+      "player": true
+     }
+    },
+    "cost": "{1}{B}{R}, {T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each",
+       "player": true
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}{B}{R}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{5}{B}{R}, {T}, Sacrifice Mount Doom and a legendary artifact",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "self": true,
+       "type": "land"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "self": true,
+       "type": "land"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{5}{B}{R}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      },
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "legendary": true,
+        "type": "artifact"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{5}{B}{R}, {T}, Sacrifice Mount Doom and a legendary artifact",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "legendary": true,
+       "type": "artifact"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "legendary": true,
+       "type": "artifact"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{5}{B}{R}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      },
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "legendary": true,
+        "type": "artifact"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{5}{B}{R}, {T}, Sacrifice Mount Doom and a legendary artifact",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "other": true,
+       "selection": "all-but",
+       "type": "creature",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "other": true,
+      "selection": "all-but",
+      "type": "creature",
+      "scope": "all"
+     }
+    },
+    "payment": {
+     "mana": "{5}{B}{R}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      },
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "legendary": true,
+        "type": "artifact"
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Urza's Sylex": {
+  "oracleText": "{2}{W}{W}, {T}, Exile Urza's Sylex: Each player chooses six lands they control. Destroy all other permanents. Activate only as a sorcery.\nWhen Urza's Sylex is put into exile from the battlefield, you may pay {2}. If you do, search your library for a planeswalker card, reveal it, put it into your hand, then shuffle.",
+  "typeLine": "Legendary Artifact",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}{W}{W}, {T}, Exile Urza's Sylex",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "self": true,
+       "type": "artifact"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "self": true,
+       "type": "artifact"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}{W}{W}",
+     "tap": true,
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}{W}{W}, {T}, Exile Urza's Sylex",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "other": true,
+       "type": "permanent",
+       "scope": "all",
+       "selection": "all-but"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "other": true,
+      "type": "permanent",
+      "scope": "all"
+     }
+    },
+    "payment": {
+     "mana": "{2}{W}{W}",
+     "tap": true,
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "planeswalker"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "exiled"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true,
+      "fromZone": "battlefield"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "planeswalker",
+       "fromZone": "library"
+      }
+     }
+    ],
+    "librarySearch": "yours",
+    "toZone": "hand",
+    "clause": 2,
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "exiled"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true,
+      "fromZone": "battlefield"
+     }
+    },
+    "emits": [
+     {
+      "verb": "shuffle",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2
+   }
+  ]
+ },
+ "Tasha, the Witch Queen": {
+  "oracleText": "Whenever you cast a spell you don't own, create a 3/3 black Demon creature token.\n+1: Draw a card. For each opponent, exile up to one target instant or sorcery card from that player's graveyard and put a page counter on it.\n−3: You may cast a spell from among cards in exile with page counters on them without paying its mana cost.\nTasha, the Witch Queen can be your commander.",
+  "typeLine": "Legendary Planeswalker — Tasha",
+  "manaValue": 5,
+  "loyalty": "4",
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "type": "creature",
+      "subtype": "demon",
+      "colors": [
+       "B"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 3
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 3
+       }
+      ]
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "cast"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "owner": "opp",
+      "type": "spell"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "B"
+       ],
+       "type": "creature",
+       "subtype": "demon",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 3
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 3
+        }
+       ]
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "B"
+       ],
+       "type": "creature",
+       "subtype": "demon",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 3
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 3
+        }
+       ]
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "+1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "instant",
+       "sorcery"
+      ],
+      "scope": "target",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "+1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "instant",
+        "sorcery"
+       ],
+       "scope": "target",
+       "fromZone": "graveyard"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "instant",
+        "sorcery"
+       ],
+       "scope": "target",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "+1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "zone": "exile",
+       "counter": "page"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "−3",
+    "emits": [
+     {
+      "verb": "cast",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "counter": "page",
+       "type": "spell",
+       "fromZone": "exile",
+       "owner": "opp"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "-3"
+    }
+   }
+  ]
+ },
+ "Ashiok, Dream Render": {
+  "oracleText": "Spells and abilities your opponents control can't cause their controller to search their library.\n−1: Target player mills four cards. Then exile each opponent's graveyard.",
+  "typeLine": "Legendary Planeswalker — Ashiok",
+  "manaValue": 3,
+  "loyalty": "5",
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mill",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "cost": "−1",
+    "amount": "4",
+    "emits": [
+     {
+      "verb": "mill",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 4,
+     "ceiling": 4
+    },
+    "payment": {
+     "loyalty": "-1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "scope": "each",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "−1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each",
+       "fromZone": "graveyard"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "opp",
+      "token": null,
+      "scope": "each",
+      "fromZone": "graveyard"
+     }
+    },
+    "payment": {
+     "loyalty": "-1"
     }
    }
   ]

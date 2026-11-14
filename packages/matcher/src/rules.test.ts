@@ -613,7 +613,7 @@ test("a one-shot graveyard exile is not recurring hate", () => {
   const classes = detectAnswerClasses([
     realCard("Bojuka Bog"), realCard("Jack-o'-Lantern"), realCard("Tormod's Crypt"), realCard("Gravestone Strider"), realCard("Kaya, Geist Hunter"),
     realCard("Silent Gravestone"), realCard("Stone of Erech"), realCard("Abstergo Entertainment"), realCard("The Stone Brain"), realCard("The Mimeoplasm"), realCard("Dermotaxi"),
-    realCard("Wreck Remover"),
+    realCard("Wreck Remover"), realCard("Ashiok, Dream Render"),
   ]);
   const recurring = classes.get("graveyard")?.recurring ?? new Set<string>();
   for (const name of ["Bojuka Bog", "Jack-o'-Lantern", "Tormod's Crypt", "Gravestone Strider", "Kaya, Geist Hunter", "Silent Gravestone", "Abstergo Entertainment", "The Stone Brain", "The Mimeoplasm", "Dermotaxi"]) {
@@ -623,8 +623,13 @@ test("a one-shot graveyard exile is not recurring hate", () => {
   expect(recurring.has("Stone of Erech")).toBe(false);
   // Wreck Remover exiles "whenever this creature enters or attacks": the attack half repeats (owner 2026-11-14).
   expect(recurring.has("Wreck Remover")).toBe(true);
-  // A loyalty +1 that exiles from a graveyard repeats each turn; a minus one does not (Kaya, Orzhov Usurper has the +1).
+  // A loyalty +1 that exiles from a graveyard repeats each turn (Kaya, Orzhov Usurper, Tasha).
   expect(detectAnswerClasses([realCard("Kaya, Orzhov Usurper")]).get("graveyard")?.recurring.has("Kaya, Orzhov Usurper")).toBe(true);
+  // A minus SMALLER than the starting loyalty can be paid again: Ashiok, Dream Render's -1 (loyalty 5) is recurring; an ultimate is not (Kaya, Geist Hunter's -6 on loyalty 3, above).
+  expect(recurring.has("Ashiok, Dream Render")).toBe(true);
+  const ultimate = realCard("Ashiok, Dream Render", { oracleText: "x" });
+  ultimate.card = { ...ultimate.card, loyalty: "1" } as never;
+  expect(detectAnswerClasses([ultimate]).get("graveyard")?.recurring.has("Ashiok, Dream Render") ?? false).toBe(false);
 });
 
 /** Exiling from YOUR OWN graveyard is a cost, not hate: delve (Murderous Cut, Treasure Cruise), a self-recursion (Lazotep Quarry), Stitcher Geralf's own mill ("put into graveyards this way"). */

@@ -388,7 +388,7 @@ export function BuildBenchmarks({
 
 /** The corpus count of RECURRING graveyard hate by type -- the pieces that shut an engine off
  *  rather than eating one card. Measured from the `answers.graveyard.recurring` rule, `answer-coverage.ts`'s
- *  `GRAVEYARD_HATE_SHARE` (creature 95 · artifact 25 · enchantment 14, n = 134 typed, 6 other; re-measured 2026-11-14, #1266).
+ *  `GRAVEYARD_HATE_SHARE` (creature 95 · artifact 25 · enchantment 14, n = 134 typed, 7 other; re-measured 2026-11-14, #1266).
  *  Stated as a literal because it is a fact about the FORMAT, not about this deck, and a reader can
  *  check it. A HAND-COPY, and it has to stay one -- `GRAVEYARD_HATE_SHARE` carries the SHARE (a
  *  fraction of 134), this the raw COUNT the sentence below reads aloud, and the two do not round-trip

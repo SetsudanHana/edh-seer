@@ -28,7 +28,7 @@ export const ANSWER_BASELINE: Record<string, number> = {
 };
 
 /** Where recurring graveyard hate actually lives, measured over the corpus cards matching
- *  `answers.graveyard.recurring`: creature 95 · artifact 25 · enchantment 14, n = 134 typed (6 other).
+ *  `answers.graveyard.recurring`: creature 95 · artifact 25 · enchantment 14, n = 134 typed (7 other).
  *  RE-MEASURED 2026-11-14 (#1266): the rule reads derived data now, no longer the printed `graveyardHateRecurring` pattern, which counted creature 39 · artifact 19 · enchantment 8 (n = 66, 1 other) and
  *  missed every repeating trigger (Graven Abomination, Cemetery Prowler, Klothys), the replacements that do not open with "a card" (Dryad Militant, Dauthi Voidwalker) and the "from a single graveyard" exiles.
  *
