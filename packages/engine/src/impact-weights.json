@@ -41,6 +41,7 @@
     "evasion": 0.2,
     "restriction": 0.2,
     "targeting-ban": 0.2,
+    "graveyard-lock": 0.2,
     "trigger-suppression": 0.2,
     "untap-denial": 0.2,
     "life-total-set": 0.2,

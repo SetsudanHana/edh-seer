@@ -49,6 +49,7 @@ const TESTED: Record<string, string> = {
   "110.5": "grammar/filter.test.ts — tapped/untapped is a status (`tapped`, #896)",
   "723.1": "derive/gains-control-printed.test.ts — controlling a player (Opposition Agent) is a printed control change and keeps its gains-control emit (#1318)",
   "723.3": "derive/either-or-players.test.ts — only control of the player changes, so Cruel Entertainment's two player-controls-player actions are unclaimed, not two 'you gain control' emits (#1401 G)",
+  "101.2": "derive.test.ts — a \"can't\" effect on cards in graveyards (Grafdigger's Cage: cards can't enter, spells can't be cast from them) is the static `graveyard-lock` (#1266)",
   "502.3": "derive.test.ts — \"doesn't untap during its controller's untap step\" is `untap-denial` with its duration: continuous (Hold for Questioning, Choke), the next untap step (Frost Trickster), for as long as (Icefall Regent) (#1423)",
   "702.11": "derive.test.ts — hexproof's scoped printed form is `targeting-ban` by spells or abilities your opponents control (Shielding Plax, Canopy Cover, #1423)",
   "702.167a": "derive/craft.test.ts — a craft ability is an activated ability whose cost exiles its materials (#1500)",

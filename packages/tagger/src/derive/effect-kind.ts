@@ -11,7 +11,7 @@ import type { EffectKind } from "../schema.js";
 import { parseSubject, spellMove } from "./subject.js";
 import { readToHand, type ToHandRead } from "./to-hand.js";
 import { damageReplacementOf, preventionOf } from "./prevention.js";
-import { targetingBanOf, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
+import { graveyardLockOf, targetingBanOf, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
 
 /** Zone-sensitive rules, checked before the plain lookup. Order matters within this list.
  *  `from`/`to` omitted means "don't care"; `from: null` means the clause STATED NO ORIGIN.
@@ -781,6 +781,8 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
   // nothing, so Dress Down derived its draw and its end-step sacrifice and never the static that
   // turns the board off -- and the engine claimed Grim Guardian drains when Dress Down enters
   // (owner, 2026-09-05). Layer 6 of CR 613: an ability-removing effect. 73 corpus cards print it.
+  // A PROHIBITION ON THE CARDS IN GRAVEYARDS (#1266), before the ability-loss reading: "or activate abilities of cards in graveyards" (Ashes of the Abhorrent) stops no ability of the card's.
+  if (verb === "cant" && graveyardLockOf(action.object ?? "", clauseText)) return "graveyard-lock";
   if (verb === "cant" && (namesOwnAbilitiesStopped(action.object ?? "") || activationBanned(action.object ?? "", clauseText))) return "ability-loss";
   // CEILING: "can't be blocked unless defending player pays {3}" (Awesome Presence) is an evasion by CR 509.1b and stays a `tax` -- the payable
   // reading is checked first, as it always was; one corpus card. Reading it as evasion would need a payable-evasion kind of its own.

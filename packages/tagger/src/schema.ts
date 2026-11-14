@@ -1090,6 +1090,12 @@ export const EFFECT_KINDS = [
   // from artifact sources"), Bartel Runeaxe ("Aura spells"), Ground Seal, Peace Talks. `effect.subject` is who is protected, `Ability.targetingBan` is by what and from whom. A fact kind like `restriction`: the
   // pair channels read it blank. NOT the keyword (hexproof / shroud is `keyword-grant`), NOT a narrowed or conditional ban (Wall of Shadows, Lurker), NOT Kaya's permission to target through hexproof.
   "targeting-ban",
+  // GRAVEYARD-LOCK (CR 101.2: a continuous effect that says an event "can't" happen; #1266, owner ruling 2026-11-14): a STATIC prohibition on the cards in graveyards -- "Creature cards in graveyards
+  // and libraries can't enter the battlefield" (Grafdigger's Cage, Soulless Jailer, Weathered Runestone, Kunoros), "Players can't cast spells from graveyards" (the same cards), "... or activate abilities of
+  // cards in graveyards" (Ashes of the Abhorrent), "Your opponents can't play land cards from graveyards" (Tomik). The recurring graveyard hate that exiles nothing. A fact kind like `targeting-ban`: the
+  // pair channels read it blank and no graveyardHate build category reads it (`answers.graveyard.recurring` does). NOT "Cards in graveyards can't be the targets of ..." (Ground Seal: protection,
+  // `targeting-ban`), NOT a ban on casting from YOUR graveyard or a graveyard-count condition on attacking (Deep-Sea Terror).
+  "graveyard-lock",
   // TRIGGER-SUPPRESSION (CR 603.2: an ability triggers when its event happens; CR 603.6a enters, CR 603.6c leaves and dies; #1423, owner ruling 2026-10-30): "Creatures entering don't cause abilities to
   // trigger" -- Torpor Orb, Hushwing Gryff, Tocatli Honor Guard; "Creatures entering or dying" (Hushbringer); "Artifacts and creatures entering the battlefield" (Karn, Argent Defender, Doorkeeper Thrull);
   // "Permanents entering don't cause abilities of permanents your opponents control to trigger" (Elesh Norn, Mother of Machines; her other half DOUBLES your triggers and stays `trigger-doubling`).

@@ -1136,3 +1136,22 @@ test("grantedTypeOf reads the type a type-grant hands out, singular and lowercas
   expect(grantedTypeOf("Mercenaries you control are Heroes in addition to their other types")).toBe("hero");
   expect(grantedTypeOf("Each creature is every creature type")).toBeUndefined();
 });
+
+// #1266 graveyard.recurring: a static prohibition on cards in graveyards is `graveyard-lock`, a fact kind of its own.
+test("#1266 a ban on entering, casting from or activating out of graveyards is `graveyard-lock`", () => {
+  const read = (object: string, text = "") => actionEffectKind({ verb: "cant", object }, text);
+  for (const object of [
+    "Creature cards in graveyards and libraries enter the battlefield",   // Grafdigger's Cage
+    "Players cast spells from graveyards or libraries",                  // Grafdigger's Cage, Weathered Runestone
+    "Permanent cards in graveyards enter the battlefield",               // Soulless Jailer
+    "Players cast noncreature spells from graveyards or exile",          // Soulless Jailer
+    "cast spells from graveyards",                                       // Kunoros
+    "play land cards from graveyards",                                   // Tomik
+  ]) expect(read(object), object).toBe("graveyard-lock");
+  // Ashes of the Abhorrent: "activate abilities of cards in graveyards" is the lock, not an ability loss
+  expect(read("cast spells from graveyards or activate abilities of cards in graveyards")).toBe("graveyard-lock");
+  // NOT locks: protection from targeting (the sign inverted), a ban on casting from YOUR graveyard, a threshold on attacking
+  expect(read("cards in graveyards be the targets of spells or abilities")).toBe("targeting-ban");
+  expect(read("cast spells from your graveyard")).not.toBe("graveyard-lock");
+  expect(read("attack unless there are seven or more cards in your graveyard")).not.toBe("graveyard-lock");
+});

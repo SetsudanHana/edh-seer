@@ -8898,3 +8898,31 @@ describe("ability-loss: an Aura that strips the enchanted permanent (#1266, #566
     ])).filter((s) => s.endsWith(":true"))).toEqual([]);
   });
 });
+
+describe("graveyard-lock: a static prohibition on cards in graveyards (#1266)", () => {
+  // The STORED records the corpus holds for these cards (the grammar does not read a "can't enter" line): `cant` with the object as the model wrote it.
+  const derive = (name: string, typeLine: string, oracleText: string, records: unknown[]) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    return deriveCardTags(deriveInputOf(card as never, "x", name, records as never, undefined, undefined)).abilities;
+  };
+  const cant = (id: number, object: string) => ({ id, abilityType: "static", actions: [{ verb: "cant", object }] });
+  const locks = (abilities: Ability[]) => abilities.filter((a) => a.effect.kind === "graveyard-lock");
+
+  test("Grafdigger's Cage: two continuous statics, no graveyard-hate", () => {
+    const abilities = derive("Grafdigger's Cage", "Artifact", "Creature cards in graveyards and libraries can't enter the battlefield.\nPlayers can't cast spells from graveyards or libraries.",
+      [cant(1, "Creature cards in graveyards and libraries enter the battlefield"), cant(2, "Players cast spells from graveyards or libraries")]);
+    expect(locks(abilities).map((a) => [a.kind, a.repeats])).toEqual([["static", "continuous"], ["static", "continuous"]]);
+    expect(abilities.some((a) => a.effect.kind === "graveyard-hate")).toBe(false);
+  });
+
+  test("Ashes of the Abhorrent: the activation lock is a graveyard-lock, not an ability-loss", () => {
+    const abilities = derive("Ashes of the Abhorrent", "Enchantment", "Players can't cast spells from graveyards or activate abilities of cards in graveyards.\nWhenever a creature dies, you gain 1 life.",
+      [cant(1, "cast spells from graveyards or activate abilities of cards in graveyards")]);
+    expect(locks(abilities)).toHaveLength(1);
+    expect(abilities.some((a) => a.effect.kind === "ability-loss")).toBe(false);
+  });
+
+  test("a graveyard-count threshold on attacking is no lock", () => {
+    expect(locks(derive("Deep-Sea Terror", "Creature — Serpent", "This creature can't attack unless there are seven or more cards in your graveyard.", [cant(1, "attack unless there are seven or more cards in your graveyard")]))).toEqual([]);
+  });
+});
