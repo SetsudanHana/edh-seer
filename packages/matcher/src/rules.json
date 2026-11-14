@@ -1,5 +1,5 @@
 {
-  "version": 53,
+  "version": 54,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -29,8 +29,6 @@
     "activateOnlyIf": "activate only if",
     "colouredMana": "\\{[WUBRG]\\}|any colou?r|chosen colou?r|any combination of colou?rs|color identity",
     "manaToken": "create\\b[\\s\\S]*?(treasure|gold|eldrazi (?:spawn|scion))( creature)? tokens?",
-    "selection": "\\bscry\\b|\\bsurveil\\b|look at the top \\w+ cards?",
-    "impulseDraw": "exile the top (?:\\w+ )?cards? of your library[\\s\\S]*?you may play",
     "neutraliseAura": "(?:^|\\n)enchant (?<class>[^\\n]+)(?=[\\s\\S]*?enchanted (?:creature|permanent)[^.]*?(?:loses all (?:other card types and )?abilities|is a colou?rless land))",
     "ownSpellsCostMore": "\\bspells you cast cost (?:\\{[^}]+\\})+ more\\b",
     "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't|(?:destroy|exile|return) all (?:(?:non)?(?:basic|snow) )?(?:lands?|forests?|islands?|mountains?|plains|swamps?) (?:target|that) (?:player|opponent) (?:controls|owns)|each player chooses \\w+ lands they control\\. destroy all other permanents",
@@ -249,27 +247,24 @@
       "why": "A line that makes a mana TOKEN (#1190; it was a printed-text pattern): Treasure/Gold and Eldrazi Spawn/Scion are acceleration. ONE TREASURE BOUGHT BY A SACRIFICE STILL COUNTS (owner ruling 2026-09-27, #534): The Sackville-Bagginses and Ruthless Technomancer, the only two of 419 matching cards whose Treasure waits on sacrificing another permanent, stay ramp -- the Treasure is mana you did not have. Not staple-grade (`rampGrade` 0): a suggestion list offers it only through a synergy."
     },
     {
-      "id": "cardSelection.text",
-      "category": "cardSelection",
-      "match": [{ "op": "oracle", "pattern": "selection" }],
-      "not": [{ "op": "countsAsLand" }]
-    },
-    {
       "id": "cardSelection.derived",
       "category": "cardSelection",
       "match": [{ "op": "anyOf", "clauses": [
+        { "op": "emits", "verbs": ["scry", "surveil"] },
+        { "op": "abilityMark", "mark": "looksAtTop" },
+        { "op": "keyword", "in": ["Hideaway"] },
         { "op": "effectKind", "in": ["to-hand", "search"], "pickOne": true },
         { "op": "effectKind", "in": ["to-hand", "search"], "netZero": true }
       ] }],
       "not": [{ "op": "countsAsLand" }],
-      "why": "THE IMPULSE LINE AND THE NET-ZERO SWAPS, READ FROM DERIVED DATA (#1302, owner 2026-10-02 and 2026-10-22). The printed `selection` pattern misses a pick worded \"reveal a number of cards ... put one into your hand\" (Eye of Yawgmoth), so one card YOU choose from a larger look (`Ability.chooses`, count 1: to-hand, or a typed dig's `toHand`) is read here as well. And a put that nets zero cards is selection, not card advantage: a draw REPLACEMENT (Abundance, Underrealm Lich, Tomorrow, Azami's Familiar, Sages of the Anima) or a SWAP with the top of the library (Scroll Rack) reorders what you will hold (`Ability.netZero`). An opponent's pick (Karn, Scion of Urza) is not YOUR choice and is not here."
+      "why": "CARD SELECTION IS READ FROM DERIVED DATA (#1266; it was the printed `selection` pattern, \"scry\", \"surveil\" or \"look at the top N cards\" anywhere in the text). A scry or surveil the card DOES is an emit (a trigger that only HEARS one, \"whenever you scry\", is a payoff and is not selection), and a clause that looks at the top cards of a library carries `Ability.looksAtTop` (derive/top-reads.ts, CEILING there: a clause that derived no ability, Aladdin's Lamp, carries nothing), and HIDEAWAY (look at the top N, exile one face down) is read from its keyword since its clause derives no ability. THE IMPULSE LINE AND THE NET-ZERO SWAPS (#1302, owner 2026-10-02 and 2026-10-22): the printed `selection` pattern misses a pick worded \"reveal a number of cards ... put one into your hand\" (Eye of Yawgmoth), so one card YOU choose from a larger look (`Ability.chooses`, count 1: to-hand, or a typed dig's `toHand`) is read here as well. And a put that nets zero cards is selection, not card advantage: a draw REPLACEMENT (Abundance, Underrealm Lich, Tomorrow, Azami's Familiar, Sages of the Anima) or a SWAP with the top of the library (Scroll Rack) reorders what you will hold (`Ability.netZero`). An opponent's pick (Karn, Scion of Urza) is not YOUR choice and is not here."
     },
     {
-      "id": "impulseDraw.text",
+      "id": "impulseDraw.derived",
       "category": "impulseDraw",
-      "match": [{ "op": "oracle", "pattern": "impulseDraw" }],
+      "match": [{ "op": "abilityMark", "mark": "impulse" }],
       "not": [{ "op": "countsAsLand" }],
-      "why": "SELECTION REORDERS WHAT YOU WILL DRAW; IMPULSE DRAW ADDS CARDS YOU MAY CAST, usually only this turn. The `selection` pattern's third alternative was literally the impulse template, so Light Up the Stage and Jeska's Will were filed as scry. Nearer draw, and carrying a DEADLINE draw does not have, so it is its own leaf rather than folded into either -- inside Consistency, where both neighbours already sit, so the parent count cannot move."
+      "why": "SELECTION REORDERS WHAT YOU WILL DRAW; IMPULSE DRAW ADDS CARDS YOU MAY CAST, usually only this turn. DERIVED (#1266; it was the printed `impulseDraw` pattern): a clause that exiles the top cards of YOUR library and says \"you may play\" carries `Ability.impulse` on the ability with the exile (derive/top-reads.ts); \"you may cast\" is not read, as it was not before (Aminatou's Augury, Apex of Power, Amped Raptor), and whether an own-library impulse should derive a cast emit is #1608 item 7, an owner ruling. The old `selection` pattern's third alternative was literally the impulse template, so Light Up the Stage and Jeska's Will were filed as scry. Nearer draw, and carrying a DEADLINE draw does not have, so it is its own leaf rather than folded into either -- inside Consistency, where both neighbours already sit, so the parent count cannot move."
     },
     {
       "id": "stackInteraction.text",

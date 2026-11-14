@@ -177,7 +177,7 @@ const WHOLE_FLAGGED: ReadonlySet<string> = new Set(["target", "choice"]);
 
 /** The rule reads the card's derived abilities (`effectKind`, `emits`, `hostEffect`), so a view of the card without a gated ability can change its answer. A rule over the printed text, the type line or the keywords cannot. */
 function readsAbilities(clauses: readonly RuleClause[] | undefined): boolean {
-  return (clauses ?? []).some((c) => c.op === "effectKind" || c.op === "emits" || c.op === "hostEffect"
+  return (clauses ?? []).some((c) => c.op === "effectKind" || c.op === "emits" || c.op === "hostEffect" || c.op === "abilityMark"
     || ((c.op === "anyOf" || c.op === "allOf") && readsAbilities(c.clauses)) || (c.op === "not" && readsAbilities([c.clause])));
 }
 

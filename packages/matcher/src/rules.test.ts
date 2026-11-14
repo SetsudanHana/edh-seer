@@ -64,7 +64,7 @@ test("`not` vetoes, `match` conjoins, `anyOf` disjoins", () => {
   expect(ruleMatches({
     id: "c",
     match: [{ op: "anyOf", clauses: [
-      { op: "oracle", pattern: "selection" },
+      { op: "typeLine", contains: "land" },
       { op: "rule", id: "boardWipe.text" },
     ] }],
   }, card, set)).toBe(true);
@@ -712,13 +712,13 @@ test("impulse draw is its own category and no longer reads as card selection", (
 
   // Light Up the Stage's shape. Measured: 14 distinct cards across the 71 decks, none of which was
   // already counted as draw, so the leaf is not a rename of one that existed.
-  const impulse = mk("Light Up the Stage", "Exile the top two cards of your library. Until the end of your next turn, you may play those cards.", "Sorcery");
+  const impulse = realCard("Light Up the Stage");
   expect(cats(impulse)).toContain("impulseDraw");
   expect(cats(impulse)).not.toContain("cardSelection");
 
   // …and the two halves that stay selection.
-  expect(cats(mk("Preordain", "Scry 2, then draw a card.", "Sorcery"))).toContain("cardSelection");
-  expect(cats(mk("Consider", "Look at the top card of your library. Surveil 1.", "Instant"))).toContain("cardSelection");
+  expect(cats(realCard("Preordain"))).toContain("cardSelection");
+  expect(cats(realCard("Consider"))).toContain("cardSelection");
 
   // BOTH LEAVES SIT INSIDE CONSISTENCY, which is what makes this a labelling change and not a
   // scoring one: measured over the 71 decks, the Consistency union moved in 0 of them.
@@ -1499,10 +1499,33 @@ test("putting a land card onto the battlefield is ramp", () => {
   expect(cats.get("ramp")?.has("Planar Genesis")).toBe(true);
 });
 
+// #1266: CARD SELECTION AND IMPULSE DRAW READ DERIVED DATA. Real derived rows (fixtures/removal-derived.json).
+test("card selection is a scry, a surveil or a look the card DOES; a card that only hears one is a payoff (#1266)", () => {
+  const sel = (n: string) => detectBuildCategories([realCard(n)]).get("cardSelection")?.has(n) === true;
+  expect(sel("Preordain")).toBe(true);
+  expect(sel("Impulse")).toBe(true);
+  expect(sel("Chance-Met Elves")).toBe(false); // "Whenever you scry": a payoff
+  expect(sel("Eligeth, Crossroads Augur")).toBe(false); // "If you would scry ..., draw that many cards instead": a replacement
+});
+
+// Gift of the Gargantuan has no scry/surveil emit, no Hideaway and no to-hand/search effect arm: the `abilityMark looksAtTop` arm is the ONLY reason it is selection.
+test("a look at the top cards that nothing else reads is card selection through the looksAtTop mark (Gift of the Gargantuan, #1266)", () => {
+  const n = "Gift of the Gargantuan";
+  expect(realCard(n).tags?.abilities?.some((a) => a.looksAtTop === true)).toBe(true);
+  expect(detectBuildCategories([realCard(n)]).get("cardSelection")?.has(n)).toBe(true);
+});
+
+test("an exile of the top cards and a play of them in ANOTHER clause is impulse draw (Theater of Horrors, #1266)", () => {
+  const imp = (n: string) => detectBuildCategories([realCard(n)]).get("impulseDraw")?.has(n) === true;
+  expect(imp("Theater of Horrors")).toBe(true);
+  expect(imp("Light Up the Stage")).toBe(true);
+  expect(imp("Preordain")).toBe(false);
+});
+
 // ISSUE #566: "exile the top card of your library ... you may play" is impulse draw (Count on Luck);
 // the pattern demanded a count word ("top two cards").
 test("an upkeep exile-the-top-card-and-play is impulse draw", () => {
-  const luck = mk("Count on Luck", "At the beginning of your upkeep, exile the top card of your library. You may play that card this turn.", "Enchantment");
+  const luck = realCard("Count on Luck");
   expect(detectBuildCategories([luck]).get("impulseDraw")?.has("Count on Luck")).toBe(true);
 });
 

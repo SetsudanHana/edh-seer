@@ -132,7 +132,7 @@ const completeShell = (): DeckCard[] => {
   const pop = TEMPLATE.population;
   for (let i = 0; i < pop.ramp; i++) cards.push(mk(`Rock ${i}`, "Add {C}.", "Artifact", rampAbility, rockLines));
   for (let i = 0; i < pop.consistency - 4; i++) cards.push(mk(`Draw ${i}`, "Draw a card.", "Sorcery", drawAbility));
-  for (let i = 0; i < 4; i++) cards.push(mk(`Scry ${i}`, "Scry 2.", "Sorcery"));
+  for (let i = 0; i < 4; i++) cards.push(renamed("Preordain", `Scry ${i}`));
   // TASK 3: spread across all five answer classes so this shell also hits full COVERAGE, not just
   // full count -- ten creature-only kill spells would now cap Interaction below its target.
   for (let i = 0; i < pop.interaction - 4; i++) cards.push(renamed("Murder", `Kill ${i}`));
@@ -267,12 +267,12 @@ test("a grouped leaf never carries a target of its own, whatever the archetype",
 });
 
 test("a parent's count is the UNION of its leaves, not the sum -- a card carrying two leaves counts once", () => {
-  // "Scry 2, then draw a card" with a structured draw-card ability hits BOTH cardSelection.text
-  // (the oracle "scry" pattern) and draw.effect (the effectKind) -- the Grave Researcher shape the
+  // "Scry 2, then draw a card" with a structured draw-card ability hits BOTH cardSelection.derived
+  // (the derived scry emit) and draw.effect (the effectKind) -- the Grave Researcher shape the
   // brief names. Summing the two leaf sets would read Consistency as 3 (2 + 1); the deck only runs
   // 2 distinct cards.
   const cards = [
-    mk("Grave Researcher", "Scry 2, then draw a card.", "Sorcery", drawAbility),
+    renamed("Preordain", "Grave Researcher"),
     mk("Divination", "Draw two cards.", "Sorcery", drawAbility),
   ];
   const members = detectBuildCategories(cards);
@@ -433,12 +433,12 @@ test("mana-sac token makers (Eldrazi Spawn/Scion, Gold) count as ramp, like Trea
 // decks.
 test("card selection is scry/surveil/look-at-top; impulse draw is its own leaf; plain draw is neither", () => {
   const m = detectBuildCategories([
-    mk("Preordain", "Scry 2, then draw a card.", "Sorcery"),
-    mk("Sink Below", "Surveil 2. Draw a card.", "Instant"),
-    mk("Light Up the Stage", "Exile the top two cards of your library. Until the end of your next turn, you may play those cards.", "Sorcery"),
-    mk("Divination", "Draw two cards.", "Sorcery"),
+    realCard("Preordain"),
+    realCard("Consider"),
+    realCard("Light Up the Stage"),
+    realCard("Divination"),
   ]);
-  expect(m.get("cardSelection")).toEqual(new Set(["Preordain", "Sink Below"]));
+  expect(m.get("cardSelection")).toEqual(new Set(["Preordain", "Consider"]));
   expect(m.get("impulseDraw")).toEqual(new Set(["Light Up the Stage"]));
 });
 
