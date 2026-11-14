@@ -648,6 +648,8 @@ const PAYS_LIFE = /\bpays? (?:\d+|x|any amount of) life\b/i;
 const LOSES_LIFE = /\bloses? (?:\d+|x|that much|half|life)\b/i;
 /** "loses all abilities", "loses all other abilities", "loses all other card types and abilities" (Frogify, Deep Freeze, Imprisoned in the Moon): EVERY ability goes, as against the activation
  *  lock of Arrest ("its activated abilities can't be activated"). "Loses all land types and abilities" (Lithoform Blight) is not read. */
+// CEILING: "loses all land types and abilities" (Lithoform Blight, the one corpus card) strips its host too but is not read here,
+// so it carries no `stripsHost`; it is a mana-fixing Aura on your own land, not removal, and the neutralise rules need no more.
 const STRIPS_ALL = /\bloses? all (?:other )?(?:card types and )?abilities\b/i;
 const HOST_NOUN = /\b(?:enchanted|equipped)\s+(?:creature|permanent|land|artifact)\b/i;
 export function stripsAllAbilities(text: string): boolean { return STRIPS_ALL.test(text); }

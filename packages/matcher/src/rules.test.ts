@@ -1568,7 +1568,7 @@ describe("a neutralising Aura reads derived data (#1266)", () => {
     expect(classes("Minimus Containment")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
   });
 
-  test("an activation lock, a land that only loses its land types, and a plain buff strip nothing (Arrest, Pacifism, Lithoform Blight)", () => {
+  test("an activation lock, a plain buff, and a land Aura whose strip derive does not read (CEILING) are not neutralise answers (Arrest, Pacifism, Lithoform Blight)", () => {
     for (const n of ["Arrest", "Pacifism", "Lithoform Blight"]) { expect(roles(n), n).toBe(false); expect(classes(n), n).toEqual([]); }
     expect(detectBuildCategories([mk("Pump Aura", "Enchant creature\nEnchanted creature gets +2/+2.", "Enchantment — Aura")]).get("targetedRemoval")).toBeUndefined();
   });

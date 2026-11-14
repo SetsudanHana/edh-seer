@@ -1356,7 +1356,8 @@ export interface Ability {
   host?: true;
   /** THE HOST LOSES EVERY ABILITY (#1266, #566): a STATIC `ability-loss` with `host` whose clause prints "loses all abilities", "loses all other abilities" or "loses all other card types and abilities" (Frogify, Honest Work,
    *  Imprisoned in the Moon, Stop Cold). The activation lock of Arrest ("its activated abilities can't be activated") is an `ability-loss` on the host too and carries no mark. Read by `removal.neutralise` and
-   *  `answers.neutralise` (`hostEffect.stripsHost`). Only `true` is written. */
+   *  `answers.neutralise` (`hostEffect.stripsHost`). Only `true` is written.
+   *  CEILING: "loses all land types and abilities" (Lithoform Blight) strips its host but is not read, so it carries no mark. */
   stripsHost?: true;
   /** THE CLAUSE THAT GRANTS THIS ABILITY (#1315). On an ability derived from a QUOTED ability another clause hands over (Sunbond's "Enchanted creature has 'Whenever you gain
    *  life, put that many +1/+1 counters on this creature.'"), the id of the granting clause (`segment()`'s `granted` clause and its `parentId`): the granting clause's own
