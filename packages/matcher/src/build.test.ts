@@ -1107,23 +1107,27 @@ describe("stax.effect: a tax on the caster's own spells is not stax", () => {
     const strive = mk("Officious Interrogation", "This spell costs {W}{U} more to cast for each target beyond the first.", "Sorcery", taxAb({ control: "any", token: null, type: "spell", self: true }));
     expect(staxOf(strive)).toEqual(new Set());
   });
-  test("\"Red spells you cast cost {R} more\" is a drawback, not stax", () => {
-    const leech = mk("Ruby Leech", "Red spells you cast cost {R} more to cast.", "Creature", taxAb({ control: "you", token: null, type: "spell", scope: "all", colors: ["R"] }));
-    expect(staxOf(leech)).toEqual(new Set());
-    // Its subject types as `creature`, the same as Heat Wave's below, so only the printed text tells them apart.
-    const scarecrow = mk("Geist-Fueled Scarecrow", "Creature spells you cast cost {1} more to cast.", "Artifact Creature", taxAb({ control: "you", token: null, type: "creature", scope: "all" }));
-    expect(staxOf(scarecrow)).toEqual(new Set());
+  test("\"Red spells you cast cost {R} more\" is a drawback, not stax (real derived rows)", () => {
+    // Scarecrow's subject types as `creature`, the same as Heat Wave's, so the type does not tell them apart: the tax Heat Wave and Onakke Oathkeeper print names a payer (`unless`), the own-spell tax names none.
+    for (const n of ["Ruby Leech", "Derelor", "Geist-Fueled Scarecrow"]) expect(staxOf(realCard(n)), n).toEqual(new Set());
+  });
+  test("the refusal reads the derived ability, not the printed line (#1266): text blanked, and a real tax beside the own-spell tax", () => {
+    for (const n of ["Ruby Leech", "Geist-Fueled Scarecrow"]) expect(staxOf(realCard(n, { oracleText: "" })), n).toEqual(new Set());
+    for (const n of ["Onakke Oathkeeper", "Heat Wave"]) expect(staxOf(realCard(n, { oracleText: "" })), n).toEqual(new Set([n]));
+    // A card with the own-spell line AND a real tax keeps stax (it lost it while the refusal was card-level).
+    const both = realCard("Ruby Leech", { extraAbilities: realCard("Sphere of Resistance").tags!.abilities });
+    expect(staxOf(both)).toEqual(new Set(["Ruby Leech"]));
   });
   test("real stax keeps the role: Thalia, Sphere of Resistance, opponents-only, and a propaganda that names your permanents", () => {
     const thalia = mk("Thalia, Guardian of Thraben", "Noncreature spells cost {1} more to cast.", "Creature", taxAb({ control: "any", token: null }));
     const sphere = mk("Sphere of Resistance", "Spells cost {1} more to cast.", "Artifact", taxAb({ control: "any", token: null }));
     const arbiter = mk("God-Pharaoh's Statue", "Spells your opponents cast cost {2} more to cast.", "Artifact", taxAb({ control: "opp", token: null, type: "spell", scope: "all" }));
-    const oathkeeper = mk("Onakke Oathkeeper", "Creatures can't attack planeswalkers you control unless their controller pays {1} for each creature they control that's attacking a planeswalker you control.", "Creature", taxAb({ control: "you", token: null, type: "planeswalker", scope: "all" }));
+    const oathkeeper = realCard("Onakke Oathkeeper");
     expect(staxOf(thalia)).toEqual(new Set(["Thalia, Guardian of Thraben"]));
     expect(staxOf(sphere)).toEqual(new Set(["Sphere of Resistance"]));
     expect(staxOf(arbiter)).toEqual(new Set(["God-Pharaoh's Statue"]));
     expect(staxOf(oathkeeper)).toEqual(new Set(["Onakke Oathkeeper"]));
-    const heatWave = mk("Heat Wave", "Nonblue creatures can't block creatures you control unless their controller pays 1 life for each blocking creature they control.", "Enchantment", taxAb({ control: "you", token: null, type: "creature", scope: "all" }, { scaling: "per-creature" }));
+    const heatWave = realCard("Heat Wave");
     expect(staxOf(heatWave)).toEqual(new Set(["Heat Wave"]));
   });
 });
