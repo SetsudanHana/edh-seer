@@ -25,7 +25,7 @@ one of these re-buys the corpus and the rest are free.
 | `NORMALIZE_MIN_COMPATIBLE` | **3** | The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an accident. |
 | `VOCAB_VERSION` | **24** | The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed. **Bump this ONLY when one of those lists changes** — never for a prose rule. |
 | `TRIGGER_VOCAB_VERSION` | **24** | The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION. |
-| `DERIVE_VERSION` | **521** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
+| `DERIVE_VERSION` | **522** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
 
 See [`docs/RUNBOOK.md`](../RUNBOOK.md) for the procedure behind each bump.
 
@@ -187,6 +187,7 @@ Defined in [`SubjectFilter`](../../packages/tagger/src/schema.ts).
 | `zone` | `string` | optional | Zone the subject lives in; omitted means battlefield. E.g. "graveyard", "hand", "exile". |
 | `fromZone` | `string` | optional | Zone the subject came FROM, when the text names one: "casts a spell from a graveyard" (River Kelpie), "casts a legendary spell from your hand" (Jodah), "enters from a graveyard". |
 | `scope` | `"target" \| "each" \| "all"` | optional | Quantifier the text used for this subject. "target creature" is spot removal, "each creature your opponents control" is a board wipe, and "creatures you control" is an anthem rather than a pump — a distinction `SubjectFilter` could not previously express at all. Optional and additive: no consumer reads it yet (the wipe-vs-spot call still happens in matcher's `build.ts` via BOARD_WIPE_RE against raw oracle text). Derived now because the clause text is in hand, so asking the question later costs a re-derive rather than a re-grind. |
+| `targetPlayer` | `true` | optional | THE MASS REACHES THE BOARD OF A PLAYER THE ABILITY TARGETS (#1266): "Destroy all creatures target player controls" (Mogg Infestation), "each creature target opponent controls" (Contagion Engine). The subject is the CLASS (`scope` all or each, so it is a mass effect and no targeted kill), and the PLAYER is what is targeted: this marker says so, the one fact `scope: all` alone would lose (a Wrath has none). Read by the answer rules (owner 2026-11-13: a one-sided mass kill at a player is an answer), never by `removal.targeted` or `boardWipe`. |
 | `stats` | `StatPredicate[]` | optional | Authored numeric conditions; ALL must hold (ANDed with the rest of the subject). |
 | `power` | `number` | optional | Concrete stat values the MATCHER attaches to a producer subject (never authored by the LLM). Non-numeric printed stats (*, X, null) are stored as 0. |
 | `toughness` | `number` | optional |  |

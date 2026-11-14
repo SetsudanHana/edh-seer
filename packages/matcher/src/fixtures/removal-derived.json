@@ -19470,145 +19470,6 @@
    }
   ]
  },
- "Mogg Infestation": {
-  "oracleText": "Destroy all creatures target player controls. For each creature that died this way, that player creates two 1/1 red Goblin creature tokens.",
-  "typeLine": "Sorcery",
-  "manaValue": 5,
-  "abilities": [
-   {
-    "kind": "on-cast",
-    "effect": {
-     "kind": ""
-    },
-    "emits": [
-     {
-      "verb": "dies",
-      "subject": {
-       "control": "opp",
-       "token": null,
-       "type": "creature",
-       "scope": "target"
-      }
-     }
-    ],
-    "clause": 1,
-    "repeats": "once"
-   },
-   {
-    "kind": "on-cast",
-    "effect": {
-     "kind": "token-generation",
-     "subject": {
-      "control": "any",
-      "token": true,
-      "type": "creature",
-      "subtype": "goblin",
-      "scope": "all",
-      "colors": [
-       "R"
-      ],
-      "stats": [
-       {
-        "metric": "power",
-        "op": "eq",
-        "value": 1
-       },
-       {
-        "metric": "toughness",
-        "op": "eq",
-        "value": 1
-       }
-      ]
-     }
-    },
-    "amount": "2",
-    "emits": [
-     {
-      "verb": "create-token",
-      "subject": {
-       "control": "any",
-       "token": true,
-       "colors": [
-        "R"
-       ],
-       "type": "creature",
-       "subtype": "goblin",
-       "scope": "all",
-       "stats": [
-        {
-         "metric": "power",
-         "op": "eq",
-         "value": 1
-        },
-        {
-         "metric": "toughness",
-         "op": "eq",
-         "value": 1
-        }
-       ]
-      }
-     },
-     {
-      "verb": "enters",
-      "subject": {
-       "control": "any",
-       "token": true,
-       "colors": [
-        "R"
-       ],
-       "type": "creature",
-       "subtype": "goblin",
-       "scope": "all",
-       "stats": [
-        {
-         "metric": "power",
-         "op": "eq",
-         "value": 1
-        },
-        {
-         "metric": "toughness",
-         "op": "eq",
-         "value": 1
-        }
-       ]
-      }
-     }
-    ],
-    "clause": 1,
-    "repeats": "once",
-    "count": {
-     "floor": 2,
-     "ceiling": 2
-    }
-   }
-  ]
- },
- "Primeval Light": {
-  "oracleText": "Destroy all enchantments target player controls.",
-  "typeLine": "Sorcery",
-  "manaValue": 4,
-  "abilities": [
-   {
-    "kind": "on-cast",
-    "effect": {
-     "kind": ""
-    },
-    "emits": [
-     {
-      "verb": "dies",
-      "subject": {
-       "control": "opp",
-       "token": null,
-       "type": "enchantment",
-       "scope": "target"
-      }
-     }
-    ],
-    "clause": 1,
-    "repeats": "once"
-   }
-  ]
- },
  "Cower in Fear": {
   "oracleText": "Creatures your opponents control get -1/-1 until end of turn.",
   "typeLine": "Instant",
@@ -37437,124 +37298,6 @@
    }
   ]
  },
- "Ajani Vengeant": {
-  "oracleText": "+1: Target permanent doesn't untap during its controller's next untap step.\n−2: Ajani deals 3 damage to any target and you gain 3 life.\n−7: Destroy all lands target player controls.",
-  "typeLine": "Legendary Planeswalker — Ajani",
-  "manaValue": 4,
-  "abilities": [
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "untap-denial",
-     "subject": {
-      "control": "any",
-      "token": null,
-      "type": "permanent",
-      "scope": "target"
-     }
-    },
-    "untapDenial": {
-     "duration": "next-untap-step"
-    },
-    "cost": "+1",
-    "clause": 1,
-    "repeats": "per-cycle",
-    "payment": {
-     "loyalty": "+1"
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "damage",
-     "subject": {
-      "control": "any",
-      "token": null,
-      "scope": "target"
-     }
-    },
-    "cost": "−2",
-    "amount": "3",
-    "emits": [
-     {
-      "verb": "non-combat-damage",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "scope": "target"
-      },
-      "dealer": {
-       "control": "you",
-       "token": null,
-       "self": true
-      }
-     }
-    ],
-    "clause": 2,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 3,
-     "ceiling": 3
-    },
-    "payment": {
-     "loyalty": "-2"
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "lifegain",
-     "subject": {
-      "control": "you",
-      "token": null
-     }
-    },
-    "cost": "−2",
-    "amount": "3",
-    "emits": [
-     {
-      "verb": "gain-life",
-      "subject": {
-       "control": "you",
-       "token": null
-      }
-     }
-    ],
-    "clause": 2,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 3,
-     "ceiling": 3
-    },
-    "payment": {
-     "loyalty": "-2"
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": ""
-    },
-    "cost": "−7",
-    "emits": [
-     {
-      "verb": "dies",
-      "subject": {
-       "control": "opp",
-       "token": null,
-       "type": "land",
-       "scope": "target"
-      }
-     }
-    ],
-    "clause": 3,
-    "repeats": "per-cycle",
-    "payment": {
-     "loyalty": "-7"
-    }
-   }
-  ]
- },
  "Catastrophe": {
   "oracleText": "Destroy all lands or all creatures. Creatures destroyed this way can't be regenerated.",
   "typeLine": "Sorcery",
@@ -40019,97 +39762,6 @@
     "count": {
      "floor": 1,
      "ceiling": 1
-    }
-   }
-  ]
- },
- "Burning of Xinye": {
-  "oracleText": "You destroy four lands you control, then target opponent destroys four lands they control. Then Burning of Xinye deals 4 damage to each creature.",
-  "typeLine": "Sorcery",
-  "manaValue": 6,
-  "abilities": [
-   {
-    "kind": "on-cast",
-    "effect": {
-     "kind": ""
-    },
-    "amount": "4",
-    "emits": [
-     {
-      "verb": "dies",
-      "subject": {
-       "control": "you",
-       "token": null,
-       "selection": "counted",
-       "type": "land",
-       "scope": "all"
-      }
-     }
-    ],
-    "clause": 1,
-    "repeats": "once",
-    "count": {
-     "floor": 4,
-     "ceiling": 4
-    }
-   },
-   {
-    "kind": "on-cast",
-    "effect": {
-     "kind": ""
-    },
-    "amount": "4",
-    "emits": [
-     {
-      "verb": "dies",
-      "subject": {
-       "control": "opp",
-       "token": null,
-       "type": "land",
-       "scope": "target"
-      }
-     }
-    ],
-    "clause": 1,
-    "repeats": "once",
-    "count": {
-     "floor": 4,
-     "ceiling": 4
-    }
-   },
-   {
-    "kind": "on-cast",
-    "effect": {
-     "kind": "damage",
-     "subject": {
-      "control": "any",
-      "token": null,
-      "type": "creature",
-      "scope": "each"
-     }
-    },
-    "amount": "4",
-    "emits": [
-     {
-      "verb": "non-combat-damage",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "type": "creature",
-       "scope": "each"
-      },
-      "dealer": {
-       "control": "you",
-       "token": null,
-       "self": true
-      }
-     }
-    ],
-    "clause": 1,
-    "repeats": "once",
-    "count": {
-     "floor": 4,
-     "ceiling": 4
     }
    }
   ]
@@ -48622,176 +48274,6 @@
    }
   ]
  },
- "Settle the Wreckage": {
-  "oracleText": "Exile all attacking creatures target player controls. That player may search their library for that many basic land cards, put those cards onto the battlefield tapped, then shuffle.",
-  "typeLine": "Instant",
-  "manaValue": 4,
-  "abilities": [
-   {
-    "kind": "on-cast",
-    "effect": {
-     "kind": ""
-    },
-    "emits": [
-     {
-      "verb": "exiled",
-      "subject": {
-       "control": "opp",
-       "token": null,
-       "combat": "attacking",
-       "type": "creature",
-       "scope": "target",
-       "fromZone": "battlefield"
-      },
-      "instantSpeed": true
-     },
-     {
-      "verb": "leaves",
-      "subject": {
-       "control": "opp",
-       "token": null,
-       "combat": "attacking",
-       "type": "creature",
-       "scope": "target",
-       "fromZone": "battlefield"
-      },
-      "instantSpeed": true
-     }
-    ],
-    "clause": 1,
-    "repeats": "once"
-   },
-   {
-    "kind": "on-cast",
-    "effect": {
-     "kind": "search",
-     "subject": {
-      "control": "any",
-      "token": null,
-      "basic": true,
-      "type": "land"
-     }
-    },
-    "amount": "that many",
-    "emits": [
-     {
-      "verb": "search",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "basic": true,
-       "type": "land",
-       "fromZone": "library"
-      },
-      "instantSpeed": true
-     }
-    ],
-    "librarySearch": "other",
-    "toZone": "battlefield",
-    "clause": 1,
-    "repeats": "once"
-   },
-   {
-    "kind": "on-cast",
-    "effect": {
-     "kind": ""
-    },
-    "emits": [
-     {
-      "verb": "shuffle",
-      "subject": {
-       "control": "you",
-       "token": null
-      },
-      "instantSpeed": true
-     }
-    ],
-    "clause": 1,
-    "repeats": "once"
-   }
-  ]
- },
- "Contagion Engine": {
-  "oracleText": "When this artifact enters, put a -1/-1 counter on each creature target player controls.\n{4}, {T}: Proliferate twice. (Choose any number of permanents and/or players, then give each another counter of each kind already there. Then do it again.)",
-  "typeLine": "Artifact",
-  "manaValue": 6,
-  "abilities": [
-   {
-    "kind": "triggered",
-    "effect": {
-     "kind": "counter-placement",
-     "subject": {
-      "control": "any",
-      "token": null,
-      "type": "creature",
-      "scope": "each"
-     }
-    },
-    "trigger": {
-     "verbs": [
-      "enters"
-     ],
-     "subject": {
-      "control": "you",
-      "token": null,
-      "type": "artifact",
-      "self": true
-     }
-    },
-    "amount": "1",
-    "emits": [
-     {
-      "verb": "counter-added",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "type": "creature",
-       "scope": "target",
-       "counter": "-1/-1"
-      }
-     }
-    ],
-    "clause": 1,
-    "repeats": "once",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "proliferate",
-     "subject": {
-      "control": "any",
-      "token": null
-     }
-    },
-    "cost": "{4}, {T}",
-    "amount": "2",
-    "emits": [
-     {
-      "verb": "proliferate",
-      "subject": {
-       "control": "any",
-       "token": null
-      },
-      "instantSpeed": true
-     }
-    ],
-    "clause": 2,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 2,
-     "ceiling": 2
-    },
-    "payment": {
-     "mana": "{4}",
-     "tap": true
-    }
-   }
-  ]
- },
  "Miracle Worker": {
   "oracleText": "{T}: Destroy target Aura attached to a creature you control.",
   "typeLine": "Creature — Human Cleric",
@@ -50279,6 +49761,1196 @@
     },
     "payment": {
      "mana": "{3}{R}"
+    }
+   }
+  ]
+ },
+ "Mogg Infestation": {
+  "oracleText": "Destroy all creatures target player controls. For each creature that died this way, that player creates two 1/1 red Goblin creature tokens.",
+  "typeLine": "Sorcery",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "all",
+       "targetPlayer": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "scope": "all",
+      "targetPlayer": true
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "type": "creature",
+      "subtype": "goblin",
+      "scope": "all",
+      "colors": [
+       "R"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 1
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 1
+       }
+      ]
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "any",
+       "token": true,
+       "colors": [
+        "R"
+       ],
+       "type": "creature",
+       "subtype": "goblin",
+       "scope": "all",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": true,
+       "colors": [
+        "R"
+       ],
+       "type": "creature",
+       "subtype": "goblin",
+       "scope": "all",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   }
+  ]
+ },
+ "Primeval Light": {
+  "oracleText": "Destroy all enchantments target player controls.",
+  "typeLine": "Sorcery",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "enchantment",
+       "scope": "all",
+       "targetPlayer": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "opp",
+      "token": null,
+      "type": "enchantment",
+      "scope": "all",
+      "targetPlayer": true
+     }
+    }
+   }
+  ]
+ },
+ "Settle the Wreckage": {
+  "oracleText": "Exile all attacking creatures target player controls. That player may search their library for that many basic land cards, put those cards onto the battlefield tapped, then shuffle.",
+  "typeLine": "Instant",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "combat": "attacking",
+       "type": "creature",
+       "scope": "all",
+       "targetPlayer": true,
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "combat": "attacking",
+       "type": "creature",
+       "scope": "all",
+       "targetPlayer": true,
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "opp",
+      "token": null,
+      "combat": "attacking",
+      "type": "creature",
+      "scope": "all",
+      "targetPlayer": true,
+      "fromZone": "battlefield"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "basic": true,
+      "type": "land"
+     }
+    },
+    "amount": "that many",
+    "emits": [
+     {
+      "verb": "search",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "basic": true,
+       "type": "land",
+       "fromZone": "library"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "librarySearch": "other",
+    "toZone": "battlefield",
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "shuffle",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Contagion Engine": {
+  "oracleText": "When this artifact enters, put a -1/-1 counter on each creature target player controls.\n{4}, {T}: Proliferate twice. (Choose any number of permanents and/or players, then give each another counter of each kind already there. Then do it again.)",
+  "typeLine": "Artifact",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "each"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "artifact",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "each",
+       "targetPlayer": true,
+       "counter": "-1/-1"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "proliferate",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{4}, {T}",
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "proliferate",
+      "subject": {
+       "control": "any",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "payment": {
+     "mana": "{4}",
+     "tap": true
+    }
+   }
+  ]
+ },
+ "Ajani Vengeant": {
+  "oracleText": "+1: Target permanent doesn't untap during its controller's next untap step.\n−2: Ajani deals 3 damage to any target and you gain 3 life.\n−7: Destroy all lands target player controls.",
+  "typeLine": "Legendary Planeswalker — Ajani",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "permanent",
+      "scope": "target"
+     }
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "cost": "+1",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "cost": "−2",
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    },
+    "payment": {
+     "loyalty": "-2"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "−2",
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    },
+    "payment": {
+     "loyalty": "-2"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "−7",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "scope": "all",
+       "targetPlayer": true
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "opp",
+      "token": null,
+      "type": "land",
+      "scope": "all",
+      "targetPlayer": true
+     }
+    },
+    "payment": {
+     "loyalty": "-7"
+    }
+   }
+  ]
+ },
+ "Rain of Daggers": {
+  "oracleText": "Destroy all creatures target opponent controls. You lose 2 life for each creature destroyed this way.",
+  "typeLine": "Sorcery",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "all",
+       "targetPlayer": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "scope": "all",
+      "targetPlayer": true
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "",
+     "scaling": "per-creature"
+    },
+    "amount": "2 for each creature destroyed this way",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    }
+   }
+  ]
+ },
+ "Overwhelming Forces": {
+  "oracleText": "Destroy all creatures target opponent controls. Draw a card for each creature destroyed this way.",
+  "typeLine": "Sorcery",
+  "manaValue": 8,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "all",
+       "targetPlayer": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "scope": "all",
+      "targetPlayer": true
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     },
+     "scaling": "per-creature"
+    },
+    "amount": "for each creature destroyed this way",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    }
+   }
+  ]
+ },
+ "Hurkyl's Recall": {
+  "oracleText": "Return all artifacts target player owns to their hand.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "bounce",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "artifact",
+      "scope": "all",
+      "zone": "battlefield"
+     }
+    },
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "artifact",
+       "scope": "all",
+       "targetPlayer": true,
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "opp",
+      "token": null,
+      "type": "artifact",
+      "scope": "all",
+      "targetPlayer": true,
+      "fromZone": "battlefield"
+     }
+    }
+   }
+  ]
+ },
+ "Sudden Disappearance": {
+  "oracleText": "Exile all nonland permanents target player controls. Return the exiled cards to the battlefield under their owner's control at the beginning of the next end step.",
+  "typeLine": "Sorcery",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "all",
+       "targetPlayer": true,
+       "fromZone": "battlefield"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "all",
+       "targetPlayer": true,
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "opp",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "enchantment",
+       "planeswalker",
+       "battle"
+      ],
+      "notType": [
+       "land"
+      ],
+      "scope": "all",
+      "targetPlayer": true,
+      "fromZone": "battlefield"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "flicker",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "enchantment",
+       "planeswalker",
+       "battle"
+      ],
+      "notType": [
+       "land"
+      ],
+      "scope": "all"
+     }
+    },
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "all",
+       "targetPlayer": true,
+       "fromZone": "exile"
+      }
+     }
+    ],
+    "delayedUntil": "next-end-step",
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "enchantment",
+       "planeswalker",
+       "battle"
+      ],
+      "notType": [
+       "land"
+      ],
+      "scope": "all",
+      "targetPlayer": true,
+      "fromZone": "exile"
+     }
+    }
+   }
+  ]
+ },
+ "River's Rebuke": {
+  "oracleText": "Return all nonland permanents target player controls to their owner's hand.",
+  "typeLine": "Sorcery",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "bounce",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "enchantment",
+       "planeswalker",
+       "battle"
+      ],
+      "notType": [
+       "land"
+      ],
+      "scope": "all",
+      "zone": "battlefield"
+     }
+    },
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "all",
+       "targetPlayer": true,
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "opp",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "enchantment",
+       "planeswalker",
+       "battle"
+      ],
+      "notType": [
+       "land"
+      ],
+      "scope": "all",
+      "targetPlayer": true,
+      "fromZone": "battlefield"
+     }
+    }
+   }
+  ]
+ },
+ "Seismic Wave": {
+  "oracleText": "Seismic Wave deals 2 damage to any target and 1 damage to each nonartifact creature target opponent controls.",
+  "typeLine": "Instant",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "notType": [
+       "artifact"
+      ],
+      "scope": "each"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "notType": [
+        "artifact"
+       ],
+       "scope": "each",
+       "targetPlayer": true
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Burning of Xinye": {
+  "oracleText": "You destroy four lands you control, then target opponent destroys four lands they control. Then Burning of Xinye deals 4 damage to each creature.",
+  "typeLine": "Sorcery",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "4",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "selection": "counted",
+       "type": "land",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 4,
+     "ceiling": 4
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "4",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 4,
+     "ceiling": 4
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "each"
+     }
+    },
+    "amount": "4",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "each"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 4,
+     "ceiling": 4
+    }
+   }
+  ]
+ },
+ "Aggravate": {
+  "oracleText": "Aggravate deals 1 damage to each creature target player controls. Each creature dealt damage this way attacks this turn if able.",
+  "typeLine": "Instant",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "each"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "each",
+       "targetPlayer": true
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Simoon": {
+  "oracleText": "Simoon deals 1 damage to each creature target opponent controls.",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "scope": "each"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "each",
+       "targetPlayer": true
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Dwarven Catapult": {
+  "oracleText": "Dwarven Catapult deals X damage divided evenly, rounded down, among all creatures target opponent controls.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    },
+    "amount": "X divided evenly, rounded down",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "all",
+       "targetPlayer": true
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
     }
    }
   ]

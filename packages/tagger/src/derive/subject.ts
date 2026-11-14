@@ -456,10 +456,16 @@ const A_PILE = /\bpiles?\b/;
 /** "all nontoken permanents with a name originally printed in the Homelands expansion" (Apocalypse Chime): a set picked out by its names. */
 const NAME_SET = /\bwith a name originally printed\b|\bpermanents with that name\b/;
 
+/** "target player controls" / "target opponent owns": the relative clause that names whose board a mass effect reaches. */
+const TARGET_PLAYER_BOARD = /\btarget (?:player|opponent) (?:controls|owns)\b/g;
+const MASS_OF_TARGET_PLAYER = /^(?:all|each|every)\b[^,.;]*\btarget (?:player|opponent) (?:controls|owns)\b/;
+
 /** The quantifier the text used. An explicit word wins; otherwise a plural noun is a mass effect
  *  ("creatures you control" is an anthem) and a bare singular says nothing, so it stays unset. */
 function parseScope(t: string, pluralType: boolean): SubjectFilter["scope"] {
-  if (/\btarget\b/.test(t)) return "target";
+  // THE PLAYER IS THE TARGET, NOT THE CLASS (#1266): "all creatures target player controls" (Mogg Infestation), "each creature target player controls" (Contagion Engine) are a mass effect on one player's board, the same
+  // reach as "all creatures your opponents control". Only when the quantifier leads and no OTHER target is named ("destroy target creature target player controls" stays a target).
+  if (/\btarget\b/.test(t) && !(MASS_OF_TARGET_PLAYER.test(t) && !/\btarget\b/.test(t.replace(TARGET_PLAYER_BOARD, " ")))) return "target";
   // "EACH OF THE CHOSEN creatures" (Mega Flare: one chosen creature per opponent; Oracle en-Vec) is a set the card picked earlier, not every creature of the class.
   if (/\b(?:each|all) of the chosen\b/.test(t)) return undefined;
   // "THE CHOSEN CREATURES" / "CHOSEN ARTIFACTS OR LANDS" (#1557: Ultimate Magic: Meteor, "for each opponent, choose an artifact or land that player controls. Destroy the chosen permanents"; Sadistic Shell Game, Tunnel of Love) are the things the card picked
@@ -1073,6 +1079,7 @@ export function parseSubject(text: string, role: "pick" | "event" = "pick"): Sub
   if (copied !== undefined) out.type = copied;
   if (subtype) out.subtype = subtype;
   if (scope && !(scope === "target" && copiesNonCreatureTarget(t, out))) out.scope = scope;
+  if (scope !== undefined && scope !== "target" && MASS_OF_TARGET_PLAYER.test(t)) out.targetPlayer = true;
   if (stats.length) out.stats = stats;
   // A CROSS-SLOT OR IS A DISJUNCTION, NOT AN AND. "another creature or Vehicle you control" (Prowl),
   // "an artifact or Dragon card" (Magda): one half fills `type`, the other `subtype`, and the matcher

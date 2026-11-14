@@ -1474,6 +1474,16 @@ describe("a target counter producer satisfies a subtype demand of its type, neve
   test("a subtype of a type the producer cannot be is refused", () => {
     expect(feeds(consumer({ subtype: "equipment", control: "you", token: null })).length).toBe(0);
   });
+  // #1266: "put a +1/+1 counter on each creature target player controls" (Practiced Offense, Twisted Fates) was `scope: target` before derive 522 and kept this reach; derive now says `each` and marks `targetPlayer`.
+  test("a mass at a targeted player's board reaches a subtype of its type, as the target it was; a plain mass does not", () => {
+    const mass = (extra: object) => base("Mass Placer", [{
+      kind: "on-cast", effect: { kind: "counter-placement" },
+      emits: [{ verb: "counter-added", subject: { type: "creature", control: "any", token: null, scope: "each", counter: "+1/+1", ...extra } }],
+    }] as unknown as CardTags["abilities"]);
+    const fed = (p: DeckCard) => directedReasons(p, consumer({ subtype: "wizard", control: "you", token: null }), HE).filter((r) => r.tag.startsWith("counter-added")).length;
+    expect(fed(mass({ targetPlayer: true }))).toBe(1);
+    expect(fed(mass({}))).toBe(0);
+  });
 });
 
 test("reasons record whether the producer side was baseline or authored", () => {
