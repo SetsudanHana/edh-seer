@@ -378,6 +378,11 @@ describe("the destroy and exile answers read derived data (#1266)", () => {
     expect(classes("Discovery // Dispersal")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
   });
 
+  test("an untargeted edict is no land answer: a land answer is a targeted land kill (owner 2026-11-13), so Yawning Fissure, Martyr's Bond and Greater Harvester gain no land class", () => {
+    expect(classes("Yawning Fissure")).toEqual([]);
+    for (const n of ["Martyr's Bond", "Greater Harvester"]) { expect(classes(n), n).toContain("creature"); expect(classes(n), n).not.toContain("land"); }
+  });
+
   test("Devastating Mastery's victim-chosen \"up to two\" bounce saves permanents from its own symmetric wipe: no answer (owner 2026-11-14)", () => {
     expect(classes("Devastating Mastery")).toEqual([]);
   });

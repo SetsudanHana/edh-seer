@@ -56546,5 +56546,202 @@
     }
    }
   ]
+ },
+ "Martyr's Bond": {
+  "oracleText": "Whenever this enchantment or another nonland permanent you control is put into a graveyard from the battlefield, each opponent sacrifices a permanent of their choice that shares a card type with it.",
+  "typeLine": "Enchantment",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "enchantment",
+       "planeswalker",
+       "battle"
+      ],
+      "notType": [
+       "land"
+      ]
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "permanent",
+       "edictAll": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "permanent",
+       "edictAll": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "enchantment",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "permanent",
+       "edictAll": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "permanent",
+       "edictAll": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Greater Harvester": {
+  "oracleText": "At the beginning of your upkeep, sacrifice a permanent.\nWhenever this creature deals combat damage to a player, that player sacrifices two permanents of their choice.",
+  "typeLine": "Creature — Horror",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "permanent"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "permanent"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "combat-damage"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     },
+     "victim": "player"
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "selection": "counted",
+       "type": "permanent",
+       "scope": "all"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "selection": "counted",
+       "type": "permanent",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   }
+  ]
  }
 }
