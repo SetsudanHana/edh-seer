@@ -1106,8 +1106,9 @@ test("#1423 'doesn't untap' is `untap-denial` (CR 502.3: effects can keep perman
     ["untap during its controller's next untap step", "Landfall — Whenever a land you control enters, tap target creature an opponent controls. If that land is an Island, that creature doesn't untap during its controller's next untap step."],
     ["untap during the player's next untap step", "Clash with an opponent. If you win, creatures that player controls don't untap during the player's next untap step."],
     ["untap during your untap step unless you have an enduring story", "This creature doesn't untap during your untap step unless you have an enduring story."],
-    ["untap more than one artifact during their untap steps", "Players can't untap more than one artifact during their untap steps."],  // a limit (Damping Field, Winter Moon), not a denial
   ] as const) expect(read(object, text), text).toBeNull();
+  // A LIMIT on untapping (Damping Field, Winter Moon, Winter Orb) is no denial: it is a `player-lock` (#1266), read in the `playerLockOf` test.
+  expect(read("untap more than one artifact during their untap steps", "Players can't untap more than one artifact during their untap steps.")).toBe("player-lock");
   // A PERMISSION to skip the untap is not a denial (Amber Prison, Giant Oyster), and the positive "untaps" is not one either.
   expect(read("untap during your untap step", "You may choose not to untap this artifact during your untap step.")).toBeNull();
   expect(read("this creature untaps during your untap step", "This creature untaps during your untap step.")).toBeNull();
@@ -1154,4 +1155,74 @@ test("#1266 a ban on entering, casting from or activating out of graveyards is `
   expect(read("cards in graveyards be the targets of spells or abilities")).toBe("targeting-ban");
   expect(read("cast spells from your graveyard")).not.toBe("graveyard-lock");
   expect(read("attack unless there are seven or more cards in your graveyard")).not.toBe("graveyard-lock");
+});
+
+// #1266 stax.text: a static prohibition on PLAYERS is `player-lock`, read off the printed clause (the model drops the subject and the "during your turn" from the stored object).
+import { playerLockOf } from "./cant-kinds.js";
+test("#1266 a lasting ban or limit on what players can do is `player-lock`, with what and for whom", () => {
+  const lock = (object: string, text: string, occurrence = 0) => playerLockOf(object, text, occurrence);
+  const cases: [string, string, string[], string, boolean?][] = [
+    // [object as stored, printed clause, locks, control, yourTurn]
+    ["cast more than one spell each turn", "Players can't cast more than one spell each turn.", ["cast-limit"], "any"],                         // Rule of Law
+    ["cast more than one non-Phyrexian spell each turn", "Each player can't cast more than one non-Phyrexian spell each turn.", ["cast-limit"], "any"], // Phyrexian Censor
+    ["draw more than one card each turn", "Each opponent can't draw more than one card each turn.", ["draw-limit"], "opp"],                  // Narset, Parter of Veils
+    ["cast spells with the chosen name", "Your opponents can't cast spells with the chosen name.", ["cast-ban"], "opp"],                    // Alhammarret
+    ["cast spells with even mana values", "Your opponents can't cast spells with even mana values.\nYour opponents can't block with creatures with even mana values.", ["cast-ban"], "opp"], // Void Winnower
+    ["cast spells with the same name as a nontoken permanent", "Players can't cast spells with the same name as a nontoken permanent.\nPlayers can't play nonbasic lands with the same name as a nontoken permanent.", ["cast-ban"], "any"], // Cornered Market
+    ["play nonbasic lands with the same name as a nontoken permanent", "Players can't cast spells with the same name as a nontoken permanent.\nPlayers can't play nonbasic lands with the same name as a nontoken permanent.", ["play-land"], "any"],
+    ["gain life", "Your opponents can't gain life.", ["gain-life"], "opp"],                                                                    // Erebos, Tibalt
+    ["draw cards or gain life", "Players can't draw cards or gain life.", ["draw", "gain-life"], "any"],                                    // Mornsong Aria
+    ["search libraries", "Your opponents can't search libraries.", ["search"], "opp"],                                                      // Stranglehold
+    ["play lands", "Players can't play lands.", ["play-land"], "any"],                                                                       // Worms of the Earth
+    ["pay life or sacrifice creatures to cast spells or activate abilities", "Players can't pay life or sacrifice creatures to cast spells or activate abilities.", ["pay-cost"], "any"], // Angel of Jubilation
+    ["cycle cards", "Players can't cycle cards.", ["cycle"], "any"],                                                                         // Stabilizer
+    ["get counters", "Players can't get counters.", ["counters"], "any"],                                                                    // Solemnity
+    ["activate planeswalkers' loyalty abilities", "Players can't activate planeswalkers' loyalty abilities.", ["loyalty"], "any"],          // The Immortal Sun
+    ["untap more than one land during their untap steps", "As long as this artifact is untapped, players can't untap more than one land during their untap steps.", ["untap-limit"], "any"], // Winter Orb
+    ["cast spells during your turn", "Your opponents can't cast spells during your turn.", ["cast-ban"], "opp", true],                    // Kutzil, Dragonlord Dromoka
+    ["cast spells or activate abilities of artifacts, creatures, or enchantments", "During your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments.", ["cast-ban", "activate"], "opp", true], // Grand Abolisher
+    ["cast spells from anywhere other than their hands", "Your opponents can't cast spells from anywhere other than their hands.", ["cast-ban"], "opp"], // Drannith Magistrate
+    ["cast spells that share a color with the spell most recently cast this turn", "Players can't cast spells that share a color with the spell most recently cast this turn.", ["cast-ban"], "any"], // Mana Maze: "this turn" describes the last spell, not a duration
+    ["get counters", "Target opponent loses all counters. That player can't get counters for as long as this creature remains on the battlefield.", ["counters"], "any"], // Suncleanser
+    ["gain life", "Whenever this creature deals damage to a player, that player can't gain life for the rest of the game.", ["gain-life"], "any"], // Stigma Lasher
+  ];
+  for (const [object, text, locks, control, yourTurn] of cases) {
+    const read = lock(object, text);
+    expect(read, `${object} | ${text}`).toBeDefined();
+    expect({ locks: read!.locks, control: read!.control, yourTurn: read!.yourTurn === true }, `${object} | ${text}`).toEqual({ locks, control, yourTurn: yourTurn === true });
+    expect(actionEffectKind({ verb: "cant", object }, text), object).toBe("player-lock");
+  }
+  // NOT a lock (owner 2026-11-14): a one-shot or a duration ...
+  for (const [object, text] of [
+    ["cast spells", "Target player can't cast spells this turn."],                                     // Orim's Chant
+    ["cast spells", "Your opponents can't cast spells this turn."],                                    // Silence
+    ["cast spells", "Whenever this creature attacks, defending player can't cast spells this turn."], // Xantid Swarm
+    ["cast spells with the chosen name", "Opponents can't cast spells with the chosen name until your next turn."], // Academic Probation
+    ["cast instant or sorcery spells", "Each opponent can't cast instant or sorcery spells during that player's next turn."], // Sphinx's Decree
+    ["gain life", "Your opponents can't gain life this turn."],                                        // Atarka's Command
+    ["gain life", "If a player is dealt damage this way, they can't gain life for the rest of the game."], // Screaming Nemesis: "they" is no whitelisted subject
+    ["gain life", "That player can't gain life this turn."],                                          // a pronoun subject needs a printed duration
+    // ... a drawback on yourself, an if-clause, a quoted grant, and what is no player prohibition at all
+    ["cast more than one spell each turn", "You can't cast more than one spell each turn."],         // Moderation
+    ["lose the game", "Players can't lose life this turn and players can't lose the game or win the game this turn."], // Everybody Lives!
+    ["lose the game", "You can't lose the game and your opponents can't win the game."],             // Platinum Angel
+    ["gain control of this", "Other players can't gain control of this creature."],                  // Guardian Beast
+    ["cast spells", "Cast this spell only during your turn. If the player can't cast spells, they lose 2 life."], // Wasitora-style "if the player can't"
+    
+  ] as [string, string][]) {
+    expect(lock(object, text), `${object} | ${text}`).toBeUndefined();
+    expect(actionEffectKind({ verb: "cant", object }, text), text).not.toBe("player-lock");
+  }
+  // a quoted grant (Cloudsteel Kirin) and an emblem's quote are not the card's own static
+  expect(lock("cast noncreature spells", "−9: You get an emblem with \"Your opponents can't cast noncreature spells.\"")).toBeUndefined();
+  // the object decides WHICH sentence a clause with two bans is read for (Void Winnower's block ban is no lock)
+  expect(lock("block with creatures with even mana values", "Your opponents can't cast spells with even mana values.\nYour opponents can't block with creatures with even mana values.")).toBeUndefined();
+  // no printed clause, no subject to read
+  expect(lock("cast more than one spell each turn", "")).toBeUndefined();
+  // the graveyard lock keeps its own kind
+  expect(actionEffectKind({ verb: "cant", object: "cast spells from graveyards" }, "Players can't cast spells from graveyards.")).toBe("graveyard-lock");
+});
+
+test("#1266 player-lock is an effect kind", () => {
+  expect(EFFECT_KINDS).toContain("player-lock");
 });

@@ -222,6 +222,103 @@ export function triggerSuppressionOf(object: string, clauseText = "", occurrence
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// 2b. PLAYER-LOCK
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/** A LASTING PROHIBITION OR LIMIT ON PLAYERS (#1266, owner ruling 2026-11-14; CR 101.2): "Players can't cast more than one spell each turn" (Rule of Law), "Your opponents can't cast spells with the chosen name"
+ *  (Alhammarret), "Your opponents can't cast spells during your turn" (Kutzil, Grand Abolisher: `yourTurn`), "Your opponents can't gain life" (Erebos), "can't search libraries" (Stranglehold), "Players can't untap more than one
+ *  land during their untap steps" (Winter Orb). Read off the PRINTED clause, because the model keeps neither the subject nor "during your turn" in the stored `cant` object; the object only says WHICH sentence of the clause
+ *  this action is (its verb must be one the sentence's predicate holds: Void Winnower's "block with ..." is no lock). A WHITELIST: the subject is players, each player, (your) opponents, each opponent, other players or an
+ *  enchanted player (or "that player" / "target opponent" beside a printed "for as long as" or "for the rest of the game": Suncleanser, Stigma Lasher), the sentence opens with it (after a "Whenever ..., " head) (a leading "as long as ...," or "during your turn," / "during combat," is allowed), and every verb of the predicate is a known one; any other word refuses.
+ *  Refused: a duration or a condition anywhere in the sentence ("this turn", "until", "next turn", "unless", "if", "who", "except", "for the rest": Orim's Chant, Silence, Sphinx's Decree, Academic Probation, Ward of Bones),
+ *  "you" (a drawback), a quoted grant or an emblem's line, and reminder text.
+ *  CEILING: an emblem's lock ("You get an emblem with 'Your opponents can't cast noncreature spells'": Narset Transcendent, Dovin Baan) derives on the EMBLEM's own node, which no card rule reads, and a quoted grant stays unread; "during combat" is a cast-ban with no flag of its own;
+ *  a conditional subject ("Each opponent who controls more lands", "defending player" while attacking: Ward of Bones, Damping Engine, Wardscale Dragon) is left unread. */
+export type PlayerLockKind = "cast-limit" | "cast-ban" | "draw" | "draw-limit" | "search" | "gain-life" | "play-land" | "pay-cost" | "cycle" | "counters" | "loyalty" | "activate" | "untap-limit";
+export interface PlayerLock {
+  locks: PlayerLockKind[];
+  control: "opp" | "any";
+  yourTurn?: true;
+}
+
+/** [the words that open the sentence, whose players, whether a PRINTED DURATION is required]: "that player" (Suncleanser, Stigma Lasher) names a player an earlier sentence or trigger picked, so it is read only beside "for as long as" or "for the rest of the game". */
+const LOCK_SUBJECTS: readonly (readonly [string, "opp" | "any", boolean])[] = [
+  ["your opponents ", "opp", false], ["each opponent ", "opp", false], ["opponents ", "opp", false], ["each other player ", "opp", false], ["other players ", "opp", false],
+  ["each player ", "any", false], ["players ", "any", false], ["enchanted player ", "any", false], ["target opponent ", "opp", true], ["that player ", "any", true],
+];
+const LOCK_DURATION = /\bfor as long as\b|\bfor the rest of the game\b/;
+const LOCK_DURATION_ALL = /\bfor as long as\b|\bfor the rest of the game\b/g;
+const LOCK_REFUSED = /\b(?:this turn|until|next turn|unless|if|who|except|for the rest|instead|whenever|when)\b/;
+const LOCK_VERBS: ReadonlySet<string> = new Set(["cast", "draw", "gain", "play", "search", "cycle", "get", "activate", "untap", "pay"]);
+const NEGATION_AT_START = /^(?:can['\u2019]t|cannot) /;
+const PLAY_LAND_WORD = /^(?:lands?|nonbasic|basic)\b/;
+
+/** The sentences of a clause a lock can be read from, one per period or line, with quotes and reminder text cut out. */
+function lockSentences(clauseText: string): string[] {
+  const bare = clauseText.replace(/\([^)]*\)/g, " ").replace(/"[^"]*"/g, " ").replace(/\u201c[^\u201d]*\u201d/g, " ");
+  return bare.split(/\n|\u2022|\. /).map((x) => x.trim().replace(/\.$/, "").toLowerCase()).filter((x) => x !== "");
+}
+
+/** The locks one predicate ("cast more than one spell each turn", "draw cards or gain life") names, or undefined when any of its words is not on the whitelist. */
+function predicateLocks(pred: string): PlayerLockKind[] | undefined {
+  const w = words(pred.replace(/['\u2019]/g, "'"));
+  if (w.length === 0 || !LOCK_VERBS.has(w[0]!)) return undefined;
+  if (w[0] === "pay") return w[1] === "life" ? ["pay-cost"] : undefined;
+  const out: PlayerLockKind[] = [];
+  const add = (k: PlayerLockKind): void => { if (!out.includes(k)) out.push(k); };
+  for (let i = 0; i < w.length; i++) {
+    if (i > 0 && !(LOCK_VERBS.has(w[i]!) && (w[i - 1] === "or" || w[i - 1] === "and"))) continue;
+    const verb = w[i]!, next = w[i + 1] ?? "";
+    const more = next === "more" && w[i + 2] === "than";
+    const eachTurn = w.slice(i).join(" ").includes(" each turn");
+    if (verb === "cast") add(more ? (eachTurn ? "cast-limit" : "cast-ban") : "cast-ban");
+    else if (verb === "draw") { if (more && !eachTurn) return undefined; add(more ? "draw-limit" : "draw"); }
+    else if (verb === "gain") { if (next !== "life") return undefined; add("gain-life"); }
+    else if (verb === "play") { if (!PLAY_LAND_WORD.test(next)) return undefined; add("play-land"); }
+    else if (verb === "search") { if (!/^(?:libraries|librar(?:y|ies)|their|a|your)$/.test(next)) return undefined; add("search"); }
+    else if (verb === "cycle") add("cycle");
+    else if (verb === "get") { if (next !== "counters") return undefined; add("counters"); }
+    else if (verb === "activate") add(/\bloyalty abilities\b/.test(pred) && !/\bmana abilities\b/.test(pred) ? "loyalty" : /^planeswalkers'?$/.test(next) ? "loyalty" : "activate");
+    else if (verb === "untap") { if (!more || !pred.includes("untap step")) return undefined; add("untap-limit"); }
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+/** The lock a `cant` action is, read off the printed clause: `object` picks the sentence (its first known verb must open one of the lock's predicate words), `occurrence` the n-th of several alike. */
+export function playerLockOf(object: string, clauseText = "", occurrence = 0): PlayerLock | undefined {
+  if (clauseText === "") return undefined;
+  const objectVerb = words(object).find((x) => LOCK_VERBS.has(x));
+  if (objectVerb === undefined) return undefined;
+  const reads: PlayerLock[] = [];
+  for (const sentence of lockSentences(clauseText)) {
+    let s = sentence;
+    let yourTurn = / during your turn$/.test(s) || /^during your turn, /.test(s);
+    for (;;) {
+      if (s.startsWith("during your turn, ")) s = s.slice("during your turn, ".length);
+      else if (s.startsWith("during combat, ")) s = s.slice("during combat, ".length);
+      else if (s.startsWith("as long as ")) { const comma = s.indexOf(", "); if (comma < 0) break; s = s.slice(comma + 2); }
+      else break;
+    }
+    // A trigger head ("Whenever this creature deals damage to a player, that player can't gain life for the rest of the game": Stigma Lasher) is not part of the lock's own sentence.
+    if (/^(?:whenever|when) /.test(s)) { const comma = s.indexOf(", "); if (comma < 0) continue; s = s.slice(comma + 2); }
+    const who = LOCK_SUBJECTS.find(([lead]) => s.startsWith(lead));
+    if (!who) continue;
+    const rest = s.slice(who[0].length);
+    if (!NEGATION_AT_START.test(rest)) continue;
+    if (who[2] && !LOCK_DURATION.test(rest)) continue;
+    // "the spell most recently cast this turn" (Mana Maze) describes a spell, it is no duration.
+    if (LOCK_REFUSED.test(rest.replace(LOCK_DURATION_ALL, " ").replace("most recently cast this turn", " "))) continue;
+    const pred = rest.replace(NEGATION_AT_START, "");
+    const locks = predicateLocks(pred);
+    if (!locks) continue;
+    if (!words(pred).includes(objectVerb)) continue;
+    yourTurn = yourTurn || /\bduring your turn\b/.test(pred);
+    reads.push({ locks, control: who[1], ...(yourTurn ? { yourTurn: true as const } : {}) });
+  }
+  return reads[Math.min(occurrence, reads.length - 1)];
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // 3. UNTAP-DENIAL
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 

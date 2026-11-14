@@ -8926,3 +8926,39 @@ describe("graveyard-lock: a static prohibition on cards in graveyards (#1266)", 
     expect(locks(derive("Deep-Sea Terror", "Creature — Serpent", "This creature can't attack unless there are seven or more cards in your graveyard.", [cant(1, "attack unless there are seven or more cards in your graveyard")]))).toEqual([]);
   });
 });
+
+describe("player-lock: a lasting prohibition or limit on players (#1266, owner 2026-11-14)", () => {
+  // The STORED records the corpus holds for these cards: `cant` with the object as the model wrote it (no subject, no "can't", no "during your turn").
+  const derive = (name: string, typeLine: string, oracleText: string, records: unknown[]) => {
+    const card = { name, typeLine, oracleText, keywords: [] as string[] };
+    return deriveCardTags(deriveInputOf(card as never, "x", name, records as never, undefined, undefined)).abilities;
+  };
+  const cant = (id: number, object: string) => ({ id, abilityType: "static", actions: [{ verb: "cant", object }] });
+  const locks = (abilities: Ability[]) => abilities.filter((a) => a.effect.kind === "player-lock");
+  const shape = (a: Ability) => [a.kind, a.repeats, a.effect.subject?.control, a.playerLock];
+
+  test("Rule of Law: a static cast limit on every player", () => {
+    const abilities = derive("Rule of Law", "Enchantment", "Players can't cast more than one spell each turn.", [cant(1, "cast more than one spell each turn")]);
+    expect(locks(abilities).map(shape)).toEqual([["static", "continuous", "any", { locks: ["cast-limit"] }]]);
+  });
+  test("Erebos: an opponent-only ban on gaining life, beside the card's other abilities", () => {
+    const abilities = derive("Erebos, God of the Dead", "Legendary Enchantment Creature — God", "Indestructible\nAs long as your devotion to black is less than five, Erebos isn't a creature.\nYour opponents can't gain life.\n{1}{B}, Pay 2 life: Draw a card.",
+      [cant(3, "gain life")]);
+    expect(locks(abilities).map(shape)).toEqual([["static", "continuous", "opp", { locks: ["gain-life"] }]]);
+  });
+  test("Grand Abolisher: an opponents' cast ban on YOUR turn, no ability-loss", () => {
+    const abilities = derive("Grand Abolisher", "Creature — Human Cleric", "During your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments.",
+      [cant(1, "cast spells or activate abilities of artifacts, creatures, or enchantments")]);
+    expect(locks(abilities).map(shape)).toEqual([["static", "continuous", "opp", { locks: ["cast-ban", "activate"], yourTurn: true }]]);
+    expect(abilities.some((a) => a.effect.kind === "ability-loss")).toBe(false);
+  });
+  test("Winter Orb: an untap LIMIT is a player-lock, not an untap-denial", () => {
+    const abilities = derive("Winter Orb", "Artifact", "As long as this artifact is untapped, players can't untap more than one land during their untap steps.", [cant(1, "untap more than one land during their untap steps")]);
+    expect(locks(abilities).map(shape)).toEqual([["static", "continuous", "any", { locks: ["untap-limit"] }]]);
+    expect(abilities.some((a) => a.effect.kind === "untap-denial")).toBe(false);
+  });
+  test("one-shots and a drawback on yourself are no lock: Orim's Chant, Silence, Moderation", () => {
+    expect(locks(derive("Silence", "Instant", "Your opponents can't cast spells this turn.", [{ id: 1, abilityType: "spell", actions: [{ verb: "cant", object: "cast spells this turn" }] }]))).toEqual([]);
+    expect(locks(derive("Moderation", "Enchantment", "You can't cast more than one spell each turn.", [cant(1, "cast more than one spell each turn")]))).toEqual([]);
+  });
+});
