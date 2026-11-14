@@ -1165,7 +1165,7 @@ test("a board wipe is a mass effect on the battlefield, in any of its shapes", (
     // One-sided: an opponent-only mass effect is still a wipe.
     // Overload turns "target" into "each", and derive reads only the targeted half.
     overloaded("Cyclonic Rift"), overloaded("Vandalblast"),
-    // "Destroy all creatures target player controls": derive scopes it `target` (a known imprecision), so the printed `massOfTargetPlayer` pattern carries it.
+    // "Destroy all creatures target player controls": derive scopes it `all` (#1266), so the derived mass clauses carry it.
     realCard("Mogg Infestation"), realCard("Primeval Light"),
     // #1581 control: an EVERY-player counted sacrifice ("sacrifices a third of the creatures they control") keeps its role; only the opponent-side counted pick is refused.
     realCard("Pox"),
@@ -1193,7 +1193,7 @@ test("a board wipe is a mass effect on the battlefield, in any of its shapes", (
     realCard("Faerie Artisans"), realCard("Bloodline Culling"),
     // `notBlockCombat` on a debuff: "each creature blocking it gets -1/-1".
     realCard("Plague Wight"),
-    // Burn at a player, by the number of lands they control, touches no creature (`massOfTargetPlayer` needs a permanent noun).
+    // Burn at a player, by the number of lands they control, touches no creature (no mass subject, so no sweep emit).
     realCard("Typhoon"), realCard("Treacherous Terrain"),
   ];
   const m = detectBuildCategories([...wipes, ...notWipes]);
@@ -1222,7 +1222,7 @@ test("mass land destruction is stax and not a wipe; a wipe that also hits lands 
 });
 
 // OWNER 2026-11-12: MASS LAND DESTRUCTION IS STAX, NOT A BOARD WIPE, on EVERY path the wipe rule has (#1266, Rules 45). The derived kill path refused a land-only subject since 2026-11-06; two other paths still let it in: OVERLOAD
-// (Break the Ice: "Destroy target land that is snow or could produce {C}", overloaded to "each") and the printed `massOfTargetPlayer` residue (Ajani Vengeant: "Destroy all lands target player controls").
+// (Break the Ice: "Destroy target land that is snow or could produce {C}", overloaded to "each") and the derived "all lands target player controls" (Ajani Vengeant: "Destroy all lands target player controls").
 test("a land-only mass by overload or at a target player is stax and no wipe; a wipe beside it stays one", () => {
   const m = detectBuildCategories([overloaded("Break the Ice"), realCard("Ajani Vengeant"), realCard("Catastrophe"), realCard("Mogg Infestation")]);
   const has = (cat: "stax" | "boardWipe", n: string): boolean => m.get(cat)?.has(n) === true;

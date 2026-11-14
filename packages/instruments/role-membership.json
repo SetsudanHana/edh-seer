@@ -4410,6 +4410,7 @@
 "Dwarfhold Champion": ["wincon:stompy"],
 "Dwarven Blastminer": ["answer:land","role:targetedRemoval"],
 "Dwarven Castle Guard": ["wincon:go-wide"],
+"Dwarven Catapult": ["role:boardWipe"],
 "Dwarven Demolition Team": ["role:targetedRemoval"],
 "Dwarven Driller": ["answer:land","role:burn","role:targetedRemoval","wincon:burn"],
 "Dwarven Hammer": ["wincon:go-wide","wincon:voltron"],

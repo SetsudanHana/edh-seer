@@ -521,6 +521,10 @@ export interface SubjectFilter {
    *  `build.ts` via BOARD_WIPE_RE against raw oracle text). Derived now because the clause text is
    *  in hand, so asking the question later costs a re-derive rather than a re-grind. */
   scope?: "target" | "each" | "all";
+  /** THE MASS REACHES THE BOARD OF A PLAYER THE ABILITY TARGETS (#1266): "Destroy all creatures target player controls" (Mogg Infestation), "each creature target opponent controls" (Contagion Engine). The subject is the CLASS (`scope`
+   *  all or each, so it is a mass effect and no targeted kill), and the PLAYER is what is targeted: this marker says so, the one fact `scope: all` alone would lose (a Wrath has none). Read by the answer rules (owner 2026-11-13: a
+   *  one-sided mass kill at a player is an answer), never by `removal.targeted` or `boardWipe`. */
+  targetPlayer?: true;
   /** Authored numeric conditions; ALL must hold (ANDed with the rest of the subject). */
   stats?: StatPredicate[];
   /** Concrete stat values the MATCHER attaches to a producer subject (never authored by the LLM).

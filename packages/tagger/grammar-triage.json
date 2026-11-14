@@ -9,10 +9,10 @@
       "why": "Two shapes, both right. (1) 'spells you cast' (70 of 73): a spell's controller is the player who put it on the stack, so the caster is the controller -- parseSubject's control regex knows 'you control' and 'your' but not 'you cast', and answered any. (2) 'of an opponent's choice' / 'of your choice' (6): the chooser is not the controller; parseSubject read 'opponent'/'your' anywhere and answered opp/you. A Clue, Food or Treasure 'of your choice' is created under the creator's control by CONTROLLER_DEFAULT, not by this word. The 'that targets only' member names the TARGET's controller, not the spell's, and the subject is refused (restricted) either way. 'a token that's a copy of a permanent you control': 'you control' names the ORIGINAL, not the token, which CONTROLLER_DEFAULT gives its creator (CR 111.2). (3) the quote leak of #1387 is fixed: parseSubject now cuts a token's quoted ability before it reads any field, so the Prydwen's Knight (\"... under your control this turn.\") agrees with the grammar and left this group."
     },
     "scope": {
-      "distinct": 68,
+      "distinct": 48,
       "label": "grammar right",
       "rule": "CR 115.1",
-      "why": "(1) 'creatures target player controls', 'a creature target opponent controls': the player is the target, the creatures are not -- parseSubject's scope reads 'target' anywhere in the string. (2) 'any number of targets', 'one or two targets': parseSubject's \\btarget\\b misses the plural. (3) 'a creature each opponent controls': the quantifier binds the opponent. (4) Two token names ('Kobolds of Kher Keep', 'Llanowar Elves'): a plural in a NAME is not a mass subject. (5) 'a token that's a copy of target creature': the original is targeted, the token is created, not targeted. Copy tokens of a target ('a token that's a copy of target artifact') are not themselves targeted."
+      "why": "(1) 'creatures target player controls' (no leading all/each), 'a creature target opponent controls': the player is the target, the creatures are not -- parseSubject's scope reads 'target' anywhere in the string. (The 20 phrases with a leading all/each, 'all creatures target player controls', moved to the `targetPlayer` group in derive 522, #1266.) (2) 'any number of targets', 'one or two targets': parseSubject's \\btarget\\b misses the plural. (3) 'a creature each opponent controls': the quantifier binds the opponent. (4) Two token names ('Kobolds of Kher Keep', 'Llanowar Elves'): a plural in a NAME is not a mass subject. (5) 'a token that's a copy of target creature': the original is targeted, the token is created, not targeted. Copy tokens of a target ('a token that's a copy of target artifact') are not themselves targeted."
     },
     "fromZone,scope": {
       "distinct": 65,
@@ -116,11 +116,11 @@
       "rule": "printed text",
       "why": "'a spell that has convoke', 'another spell that has flash': the keyword the spell has, the same demand as 'a spell with convoke'. parseSubject reads keywords only after 'with'. (#1387: two phrases moved in from keyword,scope once parseSubject stopped reading a token's quoted scope. The GRAMMAR reads the whole keyword list and parseSubject stops at the first or misses one: The Void -- grammar [flying, indestructible], parseSubject [flying]; Toggo's Rock 'Equipment artifact token named Rock with \"...\" and equip {1}' -- grammar [equip], parseSubject none. Grammar right on both; the same keyword-list disagreement keyword,scope already labelled.)"
     },
-    "combat,scope": {
+    "combat,targetPlayer": {
       "distinct": 1,
-      "label": "grammar right",
-      "rule": "CR 707.2",
-      "why": "'a token that's a copy of another target attacking creature': attacking is not a copiable value; the token is not attacking and not targeted."
+      "label": "grammar wrong",
+      "rule": "CR 115.1",
+      "why": "'each attacking or blocking creature target player controls': parseSubject reads the creatures as the class (scope each) and sets `targetPlayer`, the marker that the PLAYER is what is targeted (#1266); the grammar reads the same scope and combat but carries no marker. The stored read keeps it (`lostSubjectFields`)."
     },
     "other,subtype": {
       "distinct": 3,
@@ -1957,6 +1957,12 @@
       "label": "both wrong",
       "rule": "printed text",
       "why": "Every member re-read in #1582 (both wrong because the members mix batched trigger subjects, where derive over-marks `counted` and the grammar is right, with object picks, where derive's `counted` is right and the grammar lacks it; derive also misses the base field on some). Triaged as a pair with the base group (the same fields without `selection`, labelled there). On these phrases the grammar lacks derive's #1579 part 3 `selection: counted` marker and also differs on the base field(s), so neither parser alone matches the printed text. Marker only: the matcher reads `selection` on a removal producer. #1585: the batched trigger subjects of this group (one or more other creatures, ...) now agree on `selection` and moved to the base group; the members left are object picks, where derive's `counted` is right and the grammar lacks it."
+    },
+    "targetPlayer": {
+      "distinct": 20,
+      "label": "grammar wrong",
+      "rule": "CR 115.1",
+      "why": "'all creatures target player controls', 'each creature target opponent controls', 'all lands target player controls': both parsers read scope all / each, control and type the same since derive 522 (#1266); parseSubject also sets `targetPlayer` (the player is the target, the creatures the class: the answer rules read it, owner 2026-11-13), which the grammar does not. The stored read keeps it (`lostSubjectFields`)."
     }
   }
 }

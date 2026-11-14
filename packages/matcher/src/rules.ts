@@ -119,6 +119,8 @@ export type RuleClause =
       counter?: string[];
       /** The subject's scope (`all`, `each`, `target`); absent on the emit never matches a list. "Destroy all lands" is `dies` + type land + scope all. */
       scope?: (string | null)[];
+      /** Let `scope` also accept a MASS at a targeted player's board (`SubjectFilter.targetPlayer`: "Destroy all creatures target player controls", Mogg Infestation; #1266): the answer rules read it as the target it was before derive scoped it `all` (owner 2026-11-13: a one-sided mass kill at a player is an answer). */
+      orTargetPlayerMass?: true;
       /** Refuse an ability whose exile COMES BACK AT ONCE: another ability of the card, of the SAME `clause`, is a `flicker` with no `delayedUntil` whose subject is NOT an opponent's permanent ("Exile target creature, then
        *  return it to the battlefield": Flicker, Eldrazi Displacer). Owner ruling 2026-09-25: an IMMEDIATE flicker is no removal, a DELAYED return (Otherworldly Journey, Flickerwisp: back at the next end step) keeps
        *  its place, so a flicker with `delayedUntil` is not refused (that includes `source-leaves`, the "until this leaves the battlefield" return of Constable of the Realm and Mysterious Limousine, #1295 item 3). A
@@ -217,8 +219,7 @@ export type RuleClause =
   /** The card prints one of these KEYWORDS (Scryfall's `card.keywords`, compared case-insensitively). For a rule whose cue lives only in keyword reminder text, which derive does not read: Transmute and
    *  Transfigure search the library, and Typecycling does too (#1266). Compose with `not` to leave a keyword out (Landcycling fetches a land). */
   | { op: "keyword"; in: string[] }
-  /** The card matches ANOTHER rule of the set, by id (match and `not` both). One definition of a role read by two rules: `boardWipe.text` reads `boardWipe.massOfTargetPlayer` (Rules 52), and `removal.targeted` refuses it, so a mass kill
-   *  aimed at one player's board is not also read as a targeted kill. The id must name a rule; an unknown one throws, as an unknown pattern does. */
+  /** The card matches ANOTHER rule of the set, by id (match and `not` both). One definition of a role read by two rules: `removal.targeted` refuses a card that is both `boardWipe.text` and `stax.landDenial`. The id must name a rule; an unknown one throws, as an unknown pattern does. */
   | { op: "rule"; id: string }
   /** Card subtypes, from the tagged characteristics -- "equipment", "aura", a creature type. */
   | { op: "subtype"; in: string[] }
@@ -732,7 +733,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.landOnly !== true || landOnlySubject(e.subject))
           && (clause.includesLand !== true || includesLandSubject(e.subject))
           && (clause.typeAny === undefined || subjectTypes(e.subject).some((t) => clause.typeAny!.includes(t)))
-          && (clause.scope === undefined || clause.scope.includes(e.subject.scope ?? null))
+          && (clause.scope === undefined || clause.scope.includes(e.subject.scope ?? null) || (clause.orTargetPlayerMass === true && e.subject.targetPlayer === true))
           && (clause.fromZone === undefined || clause.fromZone.includes(e.subject.fromZone ?? null))
           && (clause.counter === undefined || (e.subject.counter !== undefined && clause.counter.includes(e.subject.counter)))
           && (clause.reachesClass === undefined || subjectReachesClass(clause.bareSubtype === true, e.subject, clause.reachesClass))

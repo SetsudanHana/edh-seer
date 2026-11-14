@@ -703,7 +703,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 519: #1266 -- a keyword the sentence says a thing does NOT have ('as though they didn't have hexproof') is named, not granted, anywhere in that sentence: Detection Tower's 'creatures your opponents control with hexproof' no longer derives a hexproof grant (grantedKeywords in derive.ts). MEASURED (derive-impact vs 14a0e855, whole tree, --json impact.json): 2 rows changed in the branch, of them Detection Tower for this version (it loses the hexproof grant; 0 pair reasons move for it; the other row is Talon Gates of Madara, 518); role-ratchet at this version -1 (Detection Tower -role:protection); dropped-clauses unchanged by 519 (4,826 -> 4,825 over the branch is Talon Gates, 518); grammar complete 28,759 -> 28,759.
 // 520: #1628 -- MEASURED: a pay-or-die destroy ("may pay ... If they don't": Arcum's Whistle, Winter's Chill) carries victimMay, and "attacking you or a planeswalker you control" (Soul Snare) no longer adds planeswalker to the target type (#1629)
 // 521: #1266 -- Ability.impulse and Ability.looksAtTop: the card-selection and impulse-draw roles read derived marks, not the printed selection / impulseDraw patterns. MEASURED (derive-impact vs 377d9a22): 604 rows changed, 0 added or removed, 0 source flips, 0 pair reasons; role-ratchet cardSelection +2 / -30, impulseDraw 0; dropped-clauses 4,825, new 0.
-export const DERIVE_VERSION = 521;
+// 522: #1266 -- a mass effect on one player's board ("all creatures target player controls") is scope all / each, not target; boardWipe reads it from derived data
+export const DERIVE_VERSION = 522;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -4255,7 +4256,8 @@ export function deriveAbilities(
         // Home) is aimed at nothing but yours, not at an opponent's, which is what the default would say.
         const yours = own || CONTROLLER_GETS_COPIES.test(clauseText);
         for (const e of emits) {
-          if (e.subject.control === "any" && e.subject.scope === "target") e.subject.control = yours || e.subject.owner === "you" ? "you" : "opp";
+          // A MASS AT A TARGETED PLAYER'S BOARD (`targetPlayer`, #1266) is read as the target it was: Mogg Infestation, Primeval Light stay an opponent's.
+          if (e.subject.control === "any" && (e.subject.scope === "target" || e.subject.targetPlayer === true)) e.subject.control = yours || e.subject.owner === "you" ? "you" : "opp";
         }
       }
       // AN ABILITY ANOTHER PLAYER ACTIVATES IS THAT PLAYER'S ACTION (#1591; CR 109.5: for an activated ability "you" is the player who activated it). "{1}: Draw a card. ... Only your opponents may

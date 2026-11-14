@@ -452,11 +452,12 @@ export function graveyardFillMatches(producer: SubjectFilter, consumer: SubjectF
 const PLAYER_COUNTERS: ReadonlySet<string> = new Set(["energy", "experience", "poison", "rad", "ticket"]);
 
 /** A TARGET REACHES ANY PERMANENT OF ITS STATED TYPE (#1421): "put a +1/+1 counter on target creature" can land on a Goblin, so it satisfies "a Goblin you control with a counter"
- *  (The Great Goblin). Only for `scope: "target"`, and only the SUBTYPE narrowing the producer leaves unstated is dropped, and only when that subtype can be of the producer's type
+ *  (The Great Goblin). Only for `scope: "target"` (or a mass at a targeted player's board), and only the SUBTYPE narrowing the producer leaves unstated is dropped, and only when that subtype can be of the producer's type
  *  (the hierarchy says goblin is a creature). A type the producer cannot be still refuses.
  *  CEILING: a type the producer does not state ("target creature" may be an artifact creature: Iron Spider's "artifacts you control") is not reached; supertype/colour narrowings likewise. */
 function targetReachesSubtype(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
-  if (producer.scope !== "target" || arr(producer.type).length === 0 || arr(producer.subtype).length > 0) return false;
+  // ...AND SO DOES A MASS AT A TARGETED PLAYER'S BOARD (`targetPlayer`, #1266: "a +1/+1 counter on each creature target player controls" was scope `target` before derive 522 and kept this reach).
+  if ((producer.scope !== "target" && producer.targetPlayer !== true) || arr(producer.type).length === 0 || arr(producer.subtype).length > 0) return false;
   if (consumer.anyOf?.length) {
     const { anyOf, ...shared } = consumer;
     return anyOf.some((b) => counterAddMatches(producer, { ...shared, ...b }, h));

@@ -19,6 +19,11 @@ describe("removalReachesAura: an untyped event is no proof the card can take an 
     expect(removalReachesAura([ev("dies", { type: "enchantment", scope: "all" })], "Destroy all enchantments.", aura, H)).toBe(true);
     expect(removalReachesAura([ev("leaves", { type: "permanent", scope: "target" })], "Return target permanent to its owner's hand.", aura, H)).toBe(true);
   });
+  // #1266: "Destroy all enchantments target player controls" (Primeval Light) was a `target` kill before derive 522; the player can be you, so it takes your Aura as a target did.
+  test("a mass at a targeted player's board reaches as the target it was; the same mass of an opponent's does not", () => {
+    expect(removalReachesAura([ev("dies", { type: "enchantment", scope: "all", control: "opp", targetPlayer: true })], "Destroy all enchantments target player controls.", aura, H)).toBe(true);
+    expect(removalReachesAura([ev("dies", { type: "enchantment", scope: "all", control: "opp" })], "Destroy all enchantments your opponents control.", aura, H)).toBe(false);
+  });
   test("CONTROL: a subtype-only or anyOf-typed removal still reaches", () => {
     expect(removalReachesAura([ev("dies", { subtype: "aura", scope: "all" })], "Destroy all Auras.", aura, H)).toBe(true);
     expect(removalReachesAura([ev("exiled", { anyOf: [{ type: "enchantment" }, { type: "creature" }] as never, scope: "target" })], "Exile target enchantment or creature.", aura, H)).toBe(true);

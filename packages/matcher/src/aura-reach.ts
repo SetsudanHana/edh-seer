@@ -108,7 +108,8 @@ export function eventReachesAura(x: GameEvent, ctx: AuraReachContext, aura: Subj
   if (s.selection === "attached-to" && ctx.removesCreatures) return false;
   if (s.control !== "you" && (x.verb === "sacrifice" || s.edict === true || x.victimMay === true) && ctx.edictCue) return false;
   if (s.edict === true && s.scope === "target") return false;
-  if (s.scope === "target") { if (ctx.opponentOnlyTargets) return false; } else if (s.control === "opp") return false;
+  // A MASS AT A TARGETED PLAYER'S BOARD is the player's choice as a target was (`targetPlayer`, #1266: Primeval Light, "all enchantments target player controls"): it takes your Aura when you aim it at yourself.
+  if (s.scope === "target" || s.targetPlayer === true) { if (ctx.opponentOnlyTargets) return false; } else if (s.control === "opp") return false;
   const { type, subtype, anyOf, notType, notSubtype, colors, colorCount, historic } = s;
   const kinds: SubjectFilter = {
     control: "any", token: null,
