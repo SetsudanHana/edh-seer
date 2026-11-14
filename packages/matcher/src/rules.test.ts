@@ -351,6 +351,42 @@ describe("the destroy and exile answers read derived data (#1266)", () => {
     expect(classes("Aetherize")).not.toContain("creature");
   });
 
+  // Owner 2026-11-14: a one-sided mass bounce of ALL OPPONENTS' permanents is the same answer ("each opponent" / "your opponents control").
+  test("a one-sided mass bounce of the opponents' permanents answers the classes it returns (Spectral Deluge, Scourge of Fleets, Llawan, Profaner of the Dead); a symmetric one stays out", () => {
+    for (const n of ["Spectral Deluge", "Scourge of Fleets", "Profaner of the Dead", "Llawan, Cephalid Empress"]) expect(classes(n), n).toContain("creature");
+    expect(classes("Spectral Deluge")).not.toContain("land");
+    expect(classes("Evacuation")).not.toContain("creature");
+    expect(classes("Aetherize")).not.toContain("creature");
+  });
+
+  // Owner 2026-11-14 (A), (B), (C): a one-sided mass kill of everything opponents control is an answer (symmetric wipes are not), an each-opponent edict counts like a target-player edict, and a victim-chosen "up to N" bounce beside a symmetric wipe saves permanents, so it is no answer.
+  test("a one-sided mass destroy or exile of the opponents' permanents answers the classes it hits; a symmetric wipe and a mass shrink do not", () => {
+    expect(classes("Plague Wind")).toEqual(["creature"]);
+    expect(classes("Dread Cacodemon")).toEqual(["creature"]);
+    expect(classes("In Garruk's Wake")).toEqual(["creature", "planeswalker"]);
+    expect(classes("Ruinous Ultimatum")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+    expect(classes("Consulate Crackdown")).toEqual(["artifact"]);
+    expect(classes("Calming Verse")).toEqual(["enchantment"]);
+    expect(classes("Ori, Plate Stacker")).toEqual(["artifact", "enchantment"]);
+    for (const n of ["Damnation", "Wrath of God", "Make Obsolete", "Massacre Wurm", "Elesh Norn, Grand Cenobite"]) expect(classes(n), n).not.toContain("creature");
+  });
+
+  test("an each-opponent edict counts like a target-player edict, on the kill side and the bounce side (Soul Shatter, Crackling Doom, Kaya's Guile, Summon: Valefor, Discovery // Dispersal)", () => {
+    expect(classes("Soul Shatter")).toEqual(["creature", "planeswalker"]);
+    for (const n of ["Crackling Doom", "Vona's Hunger", "Make an Example", "Kaya's Guile", "Olórin's Searing Light", "Summon: Valefor"]) expect(classes(n), n).toContain("creature");
+    for (const n of ["Rishadan Cutpurse", "Killing Wave"]) expect(classes(n), n).toEqual([]);
+    expect(classes("Discovery // Dispersal")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+  });
+
+  test("an untargeted edict is no land answer: a land answer is a targeted land kill (owner 2026-11-13), so Yawning Fissure, Martyr's Bond and Greater Harvester gain no land class", () => {
+    expect(classes("Yawning Fissure")).toEqual([]);
+    for (const n of ["Martyr's Bond", "Greater Harvester"]) { expect(classes(n), n).toContain("creature"); expect(classes(n), n).not.toContain("land"); }
+  });
+
+  test("Devastating Mastery's victim-chosen \"up to two\" bounce saves permanents from its own symmetric wipe: no answer (owner 2026-11-14)", () => {
+    expect(classes("Devastating Mastery")).toEqual([]);
+  });
+
   test("a land answer is a TARGETED land kill: Boom // Bust is one, the mass kill at a player is stax (Ajani Vengeant, Burning of Xinye)", () => {
     expect(classes("Boom // Bust")).toEqual(["land"]);
     expect(classes("Ajani Vengeant")).not.toContain("land");
