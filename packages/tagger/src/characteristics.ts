@@ -120,7 +120,8 @@ function enchantsOf(oracleText: string): Characteristics["enchants"] {
   const raw = ENCHANT_LINE.exec(oracleText)?.[1]?.trim().replace(/\.$/, "");
   if (!raw || /\bcards?\b/i.test(raw)) return undefined;
   const subject = parseSubject(raw);
-  return subject.type !== undefined || subject.subtype !== undefined ? subject : undefined;
+  // "creature or Vehicle" has no top-level type: its branches are the filter (#1266).
+  return subject.type !== undefined || subject.subtype !== undefined || (subject.anyOf?.length ?? 0) > 0 ? subject : undefined;
 }
 
 /** Types and subtypes across EVERY face, deduped.

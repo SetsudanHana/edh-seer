@@ -17,7 +17,8 @@ for (const name of process.argv.slice(2)) {
   const t = await tags.findOne((doc as { _id: never })._id);
   if (!t) throw new Error(`no derived row for "${name}"`);
   const c = docToCard(doc as never);
-  rows[name] = { oracleText: c.oracleText, typeLine: c.typeLine, manaValue: c.manaValue, abilities: t.abilities };
+  // `enchants` (an Aura's Enchant line) is kept when derive wrote one: the answer classes of a neutralising Aura read it (#1266).
+  rows[name] = { oracleText: c.oracleText, typeLine: c.typeLine, manaValue: c.manaValue, abilities: t.abilities, ...(t.characteristics?.enchants ? { enchants: t.characteristics.enchants } : {}) };
   console.log(`${name}: added`);
 }
 writeFileSync(FILE, `${JSON.stringify(rows, null, 1)}\n`);

@@ -199,6 +199,14 @@ test("an Aura carries its Enchant line as a subject; a non-Aura never does", () 
   expect(extractCharacteristics({ ...inalla, oracleText: "Enchant creature" } as never).enchants).toBeUndefined();
 });
 
+// #1266: "creature or Vehicle" parses to an `anyOf` with no top-level type, and the Enchant line dropped it (13 commander-legal Auras: Flood the Engine, Sugar Coat, In Too Deep ...).
+// The matcher's `enchants` op and the answer classes of an Aura read the branches, so the line keeps them.
+test("an Aura whose Enchant line is a list of unlike things keeps its branches", () => {
+  const aura = (oracleText: string) => extractCharacteristics({ ...inalla, typeLine: "Enchantment — Aura", oracleText } as never).enchants;
+  expect(aura("Enchant creature or Vehicle\nEnchanted permanent loses all abilities.")).toMatchObject({ anyOf: [{ type: "creature" }, { subtype: "vehicle" }] });
+  expect(aura("Enchant creature, planeswalker, or Clue\nEnchanted permanent loses all other abilities.")).toMatchObject({ anyOf: [{ type: ["creature", "planeswalker"] }, { subtype: "clue" }] });
+});
+
 // #1268 F7: the one face rule, read by derive (`playableFaces`) and by the matcher's mana lines and goldfish type line.
 test("frontFaceOnly: transform and flip are front-only, every other layout plays either face", async () => {
   const { frontFaceOnly } = await import("./characteristics.js");

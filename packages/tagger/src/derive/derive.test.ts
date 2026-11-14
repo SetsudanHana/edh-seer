@@ -8843,3 +8843,58 @@ describe("a cost change is typed by what it does, so ramp.costReduction can read
     expect(alt("artifact spells you cast cost {1} less to cast", "Artifact spells you cast cost {1} less to cast.", "Foundry Inspector").altCost).toBeUndefined();
   });
 });
+
+describe("ability-loss: an Aura that strips the enchanted permanent (#1266, #566)", () => {
+  const AURA = "Enchantment — Aura";
+  const fromGrammar = (name: string, oracleText: string): Ability[] => {
+    const card = { name, typeLine: AURA, oracleText, keywords: [] as string[] };
+    const g = grammarClauseRecords(card);
+    return deriveCardTags(deriveInputOf(card as never, "x", name, g.records, undefined, g.readings)).abilities;
+  };
+  const fromStored = (name: string, oracleText: string, stored: unknown): Ability[] => {
+    const card = { name, typeLine: AURA, oracleText, keywords: [] as string[] };
+    return deriveCardTags(deriveInputOf(card as never, "x", name, stored as never)).abilities;
+  };
+  /** kind, host and the strip mark of every ability that is a loss or a grant. */
+  const sig = (abilities: Ability[]) => abilities.filter((a) => a.effect.kind === "ability-loss" || a.effect.kind === "keyword-grant")
+    .map((a) => `${a.effect.kind}:${a.host === true}:${a.stripsHost === true}`);
+
+  test("the grammar path marks 'loses all abilities' (Frogify) and not the activation lock (Arrest)", () => {
+    expect(sig(fromGrammar("Frogify", "Enchant creature\nEnchanted creature loses all abilities and is a blue Frog creature with base power and toughness 1/1. (It loses all other card types and creature types.)"))).toEqual(["ability-loss:true:true"]);
+    expect(sig(fromGrammar("Arrest", "Enchant creature\nEnchanted creature can't attack or block, and its activated abilities can't be activated."))).toEqual(["ability-loss:true:false"]);
+  });
+
+  test("the model files the strip as a grant or an `other`: it is still ability-loss on the host, never a keyword grant", () => {
+    const none = (object: string) => ({ id: 1, abilityType: "none", actions: [{ verb: "none", object }] });
+    // Mystic Subdual: "Enchanted creature gets -2/-0 and loses all abilities."
+    expect(sig(fromStored("Mystic Subdual", "Flash\nEnchant creature\nEnchanted creature gets -2/-0 and loses all abilities.", [
+      none("Flash"), none("Enchant creature"),
+      { id: 3, abilityType: "static", actions: [{ verb: "modify-pt", object: "enchanted creature", amount: "-2/-0" }, { verb: "grant-ability", object: "enchanted creature loses all abilities" }] },
+    ]))).toEqual(["ability-loss:true:true"]);
+    // Unable to Scream: the grant's object names no recipient.
+    expect(sig(fromStored("Unable to Scream", "Enchant creature\nEnchanted creature loses all abilities and is a Toy artifact creature with base power and toughness 0/2 in addition to its other types.\nAs long as enchanted creature is face down, it can't be turned face up.", [
+      none("Enchant creature"),
+      { id: 2, abilityType: "static", actions: [{ verb: "grant-ability", object: "loses all abilities" }, { verb: "animate", object: "Toy artifact creature with base power and toughness 0/2 in addition to its other types" }] },
+      { id: 3, abilityType: "static", actions: [{ verb: "cant", object: "be turned face up" }] },
+    ]))).toEqual(["ability-loss:true:true"]);
+    // Tamiyo's Compleation: an `other`.
+    expect(sig(fromStored("Tamiyo's Compleation", "Flash\nEnchant artifact, creature, or planeswalker\nWhen this Aura enters, tap enchanted permanent. If it's an Equipment, unattach it.\nEnchanted permanent loses all abilities and doesn't untap during its controller's untap step.", [
+      none("Flash"),
+      { id: 2, abilityType: "static", actions: [{ verb: "attach", object: "artifact, creature, or planeswalker" }] },
+      { id: 3, abilityType: "triggered", trigger: { event: "enters", subject: "this Aura", control: "you" }, actions: [{ verb: "tap", object: "enchanted permanent" }, { verb: "other", object: "if enchanted permanent is an Equipment, unattach it" }] },
+      { id: 4, abilityType: "static", actions: [{ verb: "other", object: "enchanted permanent loses all abilities" }, { verb: "cant", object: "doesn't untap during its controller's untap step" }] },
+    ]))).toEqual(["ability-loss:true:true"]);
+  });
+
+  test("a triggered loss on another creature is not the strip of the host (Barrow-Blade)", () => {
+    const equipment = fromGrammar("Barrow-Blade", "Equipped creature gets +1/+1.\nWhenever equipped creature blocks or becomes blocked by a creature, that creature loses all abilities until end of turn.\nEquip {1}");
+    expect(equipment.filter((a) => a.stripsHost === true)).toEqual([]);
+  });
+
+  test("a loss of one named keyword, or a grant that only mentions abilities, is not the strip (Earthbind)", () => {
+    expect(sig(fromStored("Earthbind", "Enchant creature\nWhen this Aura enters, if enchanted creature has flying, this Aura deals 2 damage to it and that creature loses flying until end of turn.\nEnchanted creature loses flying.", [
+      { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Enchant creature" }] },
+      { id: 2, abilityType: "static", actions: [{ verb: "grant-ability", object: "enchanted creature loses flying" }] },
+    ])).filter((s) => s.endsWith(":true"))).toEqual([]);
+  });
+});
