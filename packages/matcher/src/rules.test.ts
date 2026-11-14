@@ -2204,3 +2204,35 @@ describe("handFill: cards put from your library into your hand are card advantag
     expect(loadRules().rules.find((r) => r.id === "draw.dig")).toBeUndefined();
   });
 });
+
+// STAX READS DERIVED DATA (#1266, owner rulings 2026-11-14). `stax.text` was the printed `stax` pattern; it is now a lasting untap denial, a `player-lock` and a continuous `graveyard-lock`.
+describe("stax.text reads derived data (#1266, owner 2026-11-14)", () => {
+  const staxOf = (names: string[]): Set<string> => detectBuildCategories(names.map((n) => realCard(n))).get("stax") ?? new Set<string>();
+  test("player locks are stax, symmetric and opponent-only: Winter Orb, Rule of Law, Erebos, Stranglehold, Cornered Market, Narset, Leonin Arbiter, Mindlock Orb", () => {
+    const names = ["Winter Orb", "Rule of Law", "Erebos, God of the Dead", "Stranglehold", "Cornered Market", "Narset, Parter of Veils", "Leonin Arbiter", "Mindlock Orb", "Leyline of Punishment"];
+    expect(names.filter((n) => !staxOf(names).has(n))).toEqual([]);
+  });
+  test("a lasting untap denial and a continuous graveyard lock are stax: Claustrophobia, Icefall Regent, Grafdigger's Cage", () => {
+    const names = ["Claustrophobia", "Icefall Regent", "Grafdigger's Cage"];
+    expect(names.filter((n) => !staxOf(names).has(n))).toEqual([]);
+  });
+  test("a one-shot freeze, a one-shot lock, a drawback on the card or yourself, and a ban on losing are not stax: Snow Day, Orim's Chant, Mana Vault, Moderation, Platinum Angel, Everybody Lives!, Guardian Beast, Krosan Grip, Rhonas's Last Stand", () => {
+    const names = ["Snow Day", "Orim's Chant", "Mana Vault", "Moderation", "Platinum Angel", "Everybody Lives!", "Guardian Beast", "Krosan Grip", "Rhonas's Last Stand", "Frost Trickster", "Shaman's Trance"];
+    expect(names.filter((n) => staxOf(names).has(n))).toEqual([]);
+  });
+  test("an Aura prison (Arrest) stays out of stax", () => {
+    expect(staxOf(["Arrest"]).has("Arrest")).toBe(false);
+  });
+  test("Grand Abolisher, Dragonlord Dromoka and Kutzil are stax AND protection; Rule of Law is stax only", () => {
+    const names = ["Grand Abolisher", "Dragonlord Dromoka", "Kutzil, Malamet Exemplar", "Rule of Law"];
+    const m = detectBuildCategories(names.map((n) => realCard(n)));
+    for (const n of names.slice(0, 3)) { expect(m.get("stax")?.has(n), `${n} stax`).toBe(true); expect(m.get("protection")?.has(n), `${n} protection`).toBe(true); }
+    expect(m.get("stax")?.has("Rule of Law")).toBe(true);
+    expect(m.get("protection")?.has("Rule of Law") ?? false).toBe(false);
+  });
+  test("no stax rule reads printed text", () => {
+    const stax = loadRules().rules.filter((r) => r.category === "stax");
+    expect(stax.length).toBeGreaterThanOrEqual(4);
+    expect(JSON.stringify(stax.map((r) => r.match))).not.toContain('"oracle"');
+  });
+});

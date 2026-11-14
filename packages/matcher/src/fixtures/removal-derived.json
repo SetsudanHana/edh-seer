@@ -61233,171 +61233,6 @@
    }
   ]
  },
- "Urza's Sylex": {
-  "oracleText": "{2}{W}{W}, {T}, Exile Urza's Sylex: Each player chooses six lands they control. Destroy all other permanents. Activate only as a sorcery.\nWhen Urza's Sylex is put into exile from the battlefield, you may pay {2}. If you do, search your library for a planeswalker card, reveal it, put it into your hand, then shuffle.",
-  "typeLine": "Legendary Artifact",
-  "manaValue": 3,
-  "abilities": [
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": ""
-    },
-    "cost": "{2}{W}{W}, {T}, Exile Urza's Sylex",
-    "emits": [
-     {
-      "verb": "exiled",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "self": true,
-       "type": "artifact"
-      }
-     },
-     {
-      "verb": "leaves",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "self": true,
-       "type": "artifact"
-      }
-     }
-    ],
-    "clause": 1,
-    "repeats": "once",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    },
-    "payment": {
-     "mana": "{2}{W}{W}",
-     "tap": true,
-     "exile": [
-      {
-       "amount": "1",
-       "subject": {
-        "self": true
-       }
-      }
-     ]
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": ""
-    },
-    "cost": "{2}{W}{W}, {T}, Exile Urza's Sylex",
-    "emits": [
-     {
-      "verb": "dies",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "other": true,
-       "type": "permanent",
-       "scope": "all",
-       "selection": "all-but"
-      }
-     }
-    ],
-    "clause": 1,
-    "repeats": "once",
-    "count": {
-     "floor": 0,
-     "ceiling": null,
-     "scalesWith": {
-      "control": "any",
-      "token": null,
-      "other": true,
-      "type": "permanent",
-      "scope": "all"
-     }
-    },
-    "payment": {
-     "mana": "{2}{W}{W}",
-     "tap": true,
-     "exile": [
-      {
-       "amount": "1",
-       "subject": {
-        "self": true
-       }
-      }
-     ]
-    }
-   },
-   {
-    "kind": "triggered",
-    "effect": {
-     "kind": "search",
-     "subject": {
-      "control": "you",
-      "token": null,
-      "type": "planeswalker"
-     }
-    },
-    "trigger": {
-     "verbs": [
-      "exiled"
-     ],
-     "subject": {
-      "control": "you",
-      "token": null,
-      "self": true,
-      "fromZone": "battlefield"
-     }
-    },
-    "amount": "1",
-    "emits": [
-     {
-      "verb": "search",
-      "subject": {
-       "control": "you",
-       "token": null,
-       "type": "planeswalker",
-       "fromZone": "library"
-      }
-     }
-    ],
-    "librarySearch": "yours",
-    "toZone": "hand",
-    "clause": 2,
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    }
-   },
-   {
-    "kind": "triggered",
-    "effect": {
-     "kind": ""
-    },
-    "trigger": {
-     "verbs": [
-      "exiled"
-     ],
-     "subject": {
-      "control": "you",
-      "token": null,
-      "self": true,
-      "fromZone": "battlefield"
-     }
-    },
-    "emits": [
-     {
-      "verb": "shuffle",
-      "subject": {
-       "control": "you",
-       "token": null
-      }
-     }
-    ],
-    "clause": 2
-   }
-  ]
- },
  "Tasha, the Witch Queen": {
   "oracleText": "Whenever you cast a spell you don't own, create a 3/3 black Demon creature token.\n+1: Draw a card. For each opponent, exile up to one target instant or sorcery card from that player's graveyard and put a page counter on it.\n−3: You may cast a spell from among cards in exile with page counters on them without paying its mana cost.\nTasha, the Witch Queen can be your commander.",
   "typeLine": "Legendary Planeswalker — Tasha",
@@ -61729,6 +61564,1412 @@
     },
     "payment": {
      "loyalty": "-1"
+    }
+   }
+  ]
+ },
+ "Urza's Sylex": {
+  "oracleText": "{2}{W}{W}, {T}, Exile Urza's Sylex: Each player chooses six lands they control. Destroy all other permanents. Activate only as a sorcery.\nWhen Urza's Sylex is put into exile from the battlefield, you may pay {2}. If you do, search your library for a planeswalker card, reveal it, put it into your hand, then shuffle.",
+  "typeLine": "Legendary Artifact",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}{W}{W}, {T}, Exile Urza's Sylex",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "self": true,
+       "type": "artifact"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "self": true,
+       "type": "artifact"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}{W}{W}",
+     "tap": true,
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}{W}{W}, {T}, Exile Urza's Sylex",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "other": true,
+       "type": "permanent",
+       "scope": "all",
+       "selection": "all-but",
+       "keeps": "land"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "other": true,
+      "type": "permanent",
+      "scope": "all"
+     }
+    },
+    "payment": {
+     "mana": "{2}{W}{W}",
+     "tap": true,
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "planeswalker"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "exiled"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true,
+      "fromZone": "battlefield"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "planeswalker",
+       "fromZone": "library"
+      }
+     }
+    ],
+    "librarySearch": "yours",
+    "toZone": "hand",
+    "clause": 2,
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "exiled"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true,
+      "fromZone": "battlefield"
+     }
+    },
+    "emits": [
+     {
+      "verb": "shuffle",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2
+   }
+  ]
+ },
+ "Winter Orb": {
+  "oracleText": "As long as this artifact is untapped, players can't untap more than one land during their untap steps.",
+  "typeLine": "Artifact",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "untap-limit"
+     ]
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Rule of Law": {
+  "oracleText": "Each player can't cast more than one spell each turn.",
+  "typeLine": "Enchantment",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "cast-limit"
+     ]
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Erebos, God of the Dead": {
+  "oracleText": "Indestructible\nAs long as your devotion to black is less than five, Erebos isn't a creature. (Each {B} in the mana costs of permanents you control counts toward your devotion to black.)\nYour opponents can't gain life.\n{1}{B}, Pay 2 life: Draw a card.",
+  "typeLine": "Legendary Enchantment Creature — God",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "gain-life"
+     ]
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{1}{B}, Pay 2 life",
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "payment": {
+     "mana": "{1}{B}",
+     "life": "2"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "{1}{B}, Pay 2 life",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}{B}",
+     "life": "2"
+    }
+   }
+  ]
+ },
+ "Stranglehold": {
+  "oracleText": "Your opponents can't search libraries.\nIf an opponent would begin an extra turn, that player skips that turn instead.",
+  "typeLine": "Enchantment",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "search"
+     ]
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Cornered Market": {
+  "oracleText": "Players can't cast spells with the same name as a nontoken permanent.\nPlayers can't play nonbasic lands with the same name as a nontoken permanent.",
+  "typeLine": "Enchantment",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "cast-ban"
+     ]
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "play-land"
+     ]
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Narset, Parter of Veils": {
+  "oracleText": "Each opponent can't draw more than one card each turn.\n−2: Look at the top four cards of your library. You may reveal a noncreature, nonland card from among them and put it into your hand. Put the rest on the bottom of your library in a random order.",
+  "typeLine": "Legendary Planeswalker — Narset",
+  "manaValue": 3,
+  "loyalty": "5",
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "draw-limit"
+     ]
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "−2",
+    "emits": [
+     {
+      "verb": "search",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "library"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "-2"
+    },
+    "looksAtTop": true
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "artifact",
+       "enchantment",
+       "instant",
+       "sorcery",
+       "planeswalker",
+       "battle"
+      ],
+      "notType": [
+       "creature",
+       "land"
+      ]
+     }
+    },
+    "cost": "−2",
+    "amount": "1",
+    "toHand": "1",
+    "chooses": true,
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "-2"
+    },
+    "looksAtTop": true
+   }
+  ]
+ },
+ "Leonin Arbiter": {
+  "oracleText": "Players can't search libraries. Any player may pay {2} for that player to ignore this effect until end of turn.",
+  "typeLine": "Creature — Cat Cleric",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "search"
+     ]
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Mindlock Orb": {
+  "oracleText": "Players can't search libraries.",
+  "typeLine": "Artifact",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "search"
+     ]
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Leyline of Punishment": {
+  "oracleText": "If this card is in your opening hand, you may begin the game with it on the battlefield.\nPlayers can't gain life.\nDamage can't be prevented.",
+  "typeLine": "Enchantment",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "gain-life"
+     ]
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Claustrophobia": {
+  "oracleText": "Enchant creature\nWhen this Aura enters, tap enchanted creature.\nEnchanted creature doesn't untap during its controller's untap step.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous"
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Icefall Regent": {
+  "oracleText": "Flying\nWhen this creature enters, tap target creature an opponent controls. That creature doesn't untap during its controller's untap step for as long as you control this creature.\nSpells your opponents cast that target this creature cost {2} more to cast.",
+  "typeLine": "Creature — Dragon",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "taps",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "untapDenial": {
+     "duration": "as-long-as"
+    },
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "tax",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "spell",
+      "scope": "all",
+      "targets": {
+       "self": true,
+       "type": "creature"
+      }
+     }
+    },
+    "amount": "+2",
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Snow Day": {
+  "oracleText": "Tap up to two target creatures. Those creatures don't untap during their controller's next untap step.\nDraw two cards, then discard a card.",
+  "typeLine": "Instant",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "taps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "discard",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Orim's Chant": {
+  "oracleText": "Kicker {W} (You may pay an additional {W} as you cast this spell.)\nTarget player can't cast spells this turn. If this spell was kicked, creatures can't attack this turn.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": []
+ },
+ "Mana Vault": {
+  "oracleText": "This artifact doesn't untap during your untap step.\nAt the beginning of your upkeep, you may pay {4}. If you do, untap this artifact.\nAt the beginning of your draw step, if this artifact is tapped, it deals 1 damage to you.\n{T}: Add {C}{C}{C}.",
+  "typeLine": "Artifact",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "artifact",
+      "self": true
+     }
+    },
+    "untapDenial": {
+     "duration": "continuous"
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "artifact",
+      "self": true
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "untaps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "artifact",
+       "self": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}",
+    "amount": "3",
+    "clause": 4,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    },
+    "payment": {
+     "tap": true
+    }
+   }
+  ]
+ },
+ "Moderation": {
+  "oracleText": "You can't cast more than one spell each turn.\nWhenever you cast a spell, draw a card.",
+  "typeLine": "Enchantment",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "cast"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Guardian Beast": {
+  "oracleText": "As long as this creature is untapped, noncreature artifacts you control can't be enchanted, they have indestructible, and other players can't gain control of them. This effect doesn't remove Auras already attached to those artifacts.",
+  "typeLine": "Creature — Beast",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "artifact",
+      "notType": [
+       "creature"
+      ],
+      "scope": "all"
+     }
+    },
+    "clause": 1,
+    "repeats": "continuous",
+    "grants": [
+     "indestructible"
+    ]
+   }
+  ]
+ },
+ "Krosan Grip": {
+  "oracleText": "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities that aren't mana abilities.)\nDestroy target artifact or enchantment.",
+  "typeLine": "Instant",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "artifact",
+        "enchantment"
+       ],
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Rhonas's Last Stand": {
+  "oracleText": "Create a 5/4 green Snake creature token. Lands you control don't untap during your next untap step.",
+  "typeLine": "Sorcery",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "type": "creature",
+      "subtype": "snake",
+      "colors": [
+       "G"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 5
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 4
+       }
+      ]
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "G"
+       ],
+       "type": "creature",
+       "subtype": "snake",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 5
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 4
+        }
+       ]
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "G"
+       ],
+       "type": "creature",
+       "subtype": "snake",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 5
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 4
+        }
+       ]
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "land",
+      "scope": "all"
+     }
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Frost Trickster": {
+  "oracleText": "Flying\nWhen this creature enters, tap target creature an opponent controls. That creature doesn't untap during its controller's next untap step.",
+  "typeLine": "Creature — Bird Wizard",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "taps",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "clause": 2,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Shaman's Trance": {
+  "oracleText": "Other players can't play lands or cast spells from their graveyards this turn. You may play lands and cast spells from other players' graveyards this turn as though those cards were in your graveyard.",
+  "typeLine": "Instant",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "graveyard-lock",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "land",
+      "scope": "all"
+     }
+    },
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "graveyard-recursion",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "land",
+      "scope": "all",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "emits": [
+     {
+      "verb": "land-play",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "land",
+       "scope": "all",
+       "fromZone": "graveyard",
+       "owner": "opp"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "all",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "you",
+      "token": null,
+      "type": "land",
+      "scope": "all",
+      "fromZone": "graveyard",
+      "owner": "opp"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "graveyard-recursion",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "spell",
+      "scope": "all",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "emits": [
+     {
+      "verb": "cast",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "spell",
+       "scope": "all",
+       "fromZone": "graveyard",
+       "owner": "opp"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "spell",
+       "scope": "all",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "scope": "all",
+      "fromZone": "graveyard",
+      "owner": "opp"
+     }
+    }
+   }
+  ]
+ },
+ "Grand Abolisher": {
+  "oracleText": "During your turn, your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments.",
+  "typeLine": "Creature — Human Cleric",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "cast-ban",
+      "activate"
+     ],
+     "yourTurn": true
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Dragonlord Dromoka": {
+  "oracleText": "This spell can't be countered.\nFlying, lifelink\nYour opponents can't cast spells during your turn.",
+  "typeLine": "Legendary Creature — Elder Dragon",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "cast-ban"
+     ],
+     "yourTurn": true
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Kutzil, Malamet Exemplar": {
+  "oracleText": "Your opponents can't cast spells during your turn.\nWhenever one or more creatures you control each with power greater than its base power deals combat damage to a player, draw a card.",
+  "typeLine": "Legendary Creature — Cat Warrior",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "cast-ban"
+     ],
+     "yourTurn": true
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "combat-damage"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "scope": "all",
+      "stats": [
+       {
+        "metric": "power",
+        "op": "gt",
+        "variable": true
+       }
+      ]
+     },
+     "batched": true
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
     }
    }
   ]

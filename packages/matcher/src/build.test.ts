@@ -477,10 +477,13 @@ test("removal with unrelated later graveyard text is still removal (no over-supp
   expect(m.get("targetedRemoval")).toContain("Elspeth Conquers Death");
 });
 
+// What derive writes for "Lands don't untap during their controllers' untap steps": a continuous untap-denial, read by `stax.text` (#1266).
+const UNTAP_DENIAL = { kind: "static", effect: { kind: "untap-denial", subject: { control: "any", token: null, type: "land" } }, untapDenial: { duration: "continuous" }, clause: 1, repeats: "continuous" } as any;
+
 test("stax: untap denial and tax effects are detected", () => {
   const m = detectBuildCategories([
-    mk("Winter Orb", "Lands don't untap during their controllers' untap steps.", "Artifact"),
-    mk("Thalia, Guardian of Thraben", "First strike. Noncreature spells cost {1} more to cast.", "Creature"),
+    mk("Winter Orb", "Lands don't untap during their controllers' untap steps.", "Artifact", [UNTAP_DENIAL]),
+    mk("Thalia, Guardian of Thraben", "First strike. Noncreature spells cost {1} more to cast.", "Creature", [{ kind: "static", effect: { kind: "tax", subject: { control: "any", token: null, type: "spell" } }, clause: 1, repeats: "continuous" } as any]),
     mk("Divination", "Draw two cards.", "Sorcery"),
   ]);
   expect(m.get("stax")).toEqual(new Set(["Winter Orb", "Thalia, Guardian of Thraben"]));
@@ -490,7 +493,7 @@ test("edict/destroy (forced-sacrifice effect kind) is NOT stax", () => {
   const m = detectBuildCategories([
     mk("Generous Gift", "Destroy target permanent. Its controller creates a 3/3 green Elephant creature token.", "Instant",
        [{ kind: "triggered", effect: { kind: "forced-sacrifice" } } as any]),
-    mk("Winter Orb", "Lands don't untap during their controllers' untap steps.", "Artifact"),
+    mk("Winter Orb", "Lands don't untap during their controllers' untap steps.", "Artifact", [UNTAP_DENIAL]),
   ]);
   expect(m.get("stax") ?? new Set()).not.toContain("Generous Gift"); // forced-sacrifice no longer a stax signal
   expect(m.get("stax")).toContain("Winter Orb"); // real stax still detected

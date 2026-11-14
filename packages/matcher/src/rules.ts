@@ -56,6 +56,11 @@ export type RuleClause =
        *  "Creature spells you cast cost {1} more" (Geist-Fueled Scarecrow) are a drawback on the caster. The other `control: you` taxes, Onakke Oathkeeper and Heat Wave ("creatures can't attack planeswalkers you control unless their
        *  controller pays ..."), tax the opponent and name that payer in `unless`, which is what tells them apart: their subject types (`creature`, `planeswalker`) do not. Read per ability, so a card with a real tax beside the line keeps it. */
       notOwnTax?: true;
+      /** Refuse an `untap-denial` that holds for ONE untap step (`Ability.untapDenial.duration: next-untap-step`): "doesn't untap during its controller's next untap step" (Snow Day, Exhaustion, Frost Trickster, Icebreaker Kraken, Sleeper Dart)
+       *  is a one-shot freeze, not stax (owner 2026-11-14, #1266). A continuous static, an Aura on its host and "for as long as ..." (`as-long-as`) stay. */
+      notNextUntap?: true;
+      /** A `player-lock` that holds only DURING YOUR TURN (`Ability.playerLock.yourTurn`: "Your opponents can't cast spells during your turn", Grand Abolisher, Dragonlord Dromoka, Kutzil): a lock that is also protection for what you cast (owner 2026-11-14, #1266). */
+      yourTurn?: true;
       /** The ABILITY's own kind (`Ability.kind`: `activated`, `triggered`, `static`, `on-cast` ...) is in this list. An activated flicker is at instant speed on any permanent (owner 2026-11-12, `protection.flicker`). */
       ofKind?: string[];
       /** A `targeting-ban` that PROTECTS SOMETHING OF YOURS, whoever bans (#1266, owner 2026-11-12). Any one of: the ban is against opponents' spells and abilities (`targetingBan.source.control: opp`: Vines of Vastwood,
@@ -175,6 +180,8 @@ export type RuleClause =
       landOnly?: true;
       /** Require an emit whose subject INCLUDES lands (`includesLandSubject`): a type list naming land ("artifacts, creatures, and lands": Jokulhaups, Obliterate, Decree of Annihilation), a branch of an `anyOf` that does, or an UNRESTRICTED `permanent` (Apocalypse, Worldfire: "all permanents" names lands). A `permanent` narrowed by a colour, a selection, a negated type, a subtype ... (`NARROWS_PERMANENT`) is not (see `includesLandSubject`). Where `landOnly` needs lands and nothing else, this takes the combined subjects (owner 2026-11-06, #1554). */
       includesLand?: true;
+      /** Require an emit whose subject is an `all-but` mass that LEAVES LANDS standing (`SubjectFilter.keeps: land`; Urza's Sylex, "Each player chooses six lands they control. Destroy all other permanents."): weak stax (owner 2026-11-13, #1266). */
+      keepsLand?: true;
       /** At least ONE of the subject's types is in this list, where `type` needs EVERY type in its list: "each creature and each planeswalker" passes `typeAny: [creature, permanent]`, a planeswalker-only subject ("each planeswalker they control": Kumano Faces Kakkazan) does not. */
       typeAny?: string[];
       /** Refuse an ability that only a BLOCK makes (#1266, `boardWipe.text`): it triggers on "blocks" / "becomes blocked" ("When this creature blocks a creature, destroy both creatures": Alaborn Zealot, Dead-Iron Sledge), or its subject is a creature
@@ -300,8 +307,8 @@ export interface Rule {
   /** What KIND of answer this rule contributes, where the kind changes whether it answers at all
    *  (design §3.1). Absent = an ordinary one-shot answer, which is most of them. */
   mode?: "exile" | "recurring";
-  /** WEAK PRINTED WORDS (owner 2026-11-13, `NARROW_WEIGHT`): the rule's `oracle` pattern is `strong` plus `weak` (two named patterns), and a card that matches `weak` and NOT `strong` fills `category` weakly (`weakByOracle`). Only `stax.text` today. */
-  weakOracle?: { weak: string; strong: string };
+  /** A WEAK MEMBER (owner 2026-11-13, `NARROW_WEIGHT`): a card that fills `category` only through rules marked `weak` counts `NARROW_WEIGHT` in the category's count, never 1 (`detectWeakRoles`); membership stays plain. Only `stax.sylex` today. */
+  weak?: true;
   /** ALL must hold. */
   match: RuleClause[];
   /** NONE may hold. */
@@ -701,6 +708,8 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.notOwnedByYou !== true || a.effect.subject?.owner !== "you")
         && (clause.notSelf !== true || a.effect.subject?.self !== true)
         && (clause.notOwnTax !== true || a.effect.subject?.control !== "you" || a.unless?.payer === "controller")
+        && (clause.notNextUntap !== true || a.untapDenial?.duration !== "next-untap-step")
+        && (clause.yourTurn !== true || a.playerLock?.yourTurn === true)
         && (clause.ofKind === undefined || clause.ofKind.includes(a.kind))
         && (clause.banProtects !== true || banProtectsYours(a, dc.card.typeLine ?? ""))
         && (clause.pairedInstantExile !== true || pairedInstantExile(dc.tags?.abilities ?? [], a))
@@ -772,6 +781,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.notMassLand !== true || !landOnlySubject(e.subject) || (a.amount !== undefined && !(/^\d+$/.test(a.amount) && Number(a.amount) >= 3)))
           && (clause.landOnly !== true || landOnlySubject(e.subject))
           && (clause.includesLand !== true || includesLandSubject(e.subject))
+          && (clause.keepsLand !== true || e.subject.keeps === "land")
           && (clause.typeAny === undefined || subjectTypes(e.subject).some((t) => clause.typeAny!.includes(t)))
           && (clause.scope === undefined || clause.scope.includes(e.subject.scope ?? null) || (clause.orTargetPlayerMass === true && e.subject.targetPlayer === true)
             // ONE-SIDED MASS KILL AND EACH-OPPONENT EDICT (owner 2026-11-14): "destroy all creatures you don't control" is `scope: all, control: opp`; "each opponent sacrifices a creature" is `scope: all` or no scope with `edictAll`. A mass SHRINK is no kill: Make Obsolete, Massacre Wurm carry a `dies` emit under a `debuff`.
@@ -818,14 +828,6 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
 }
 
 const transformsIntoLand = (dc: DeckCard): boolean => transformsIntoLandCard(dc.card);
-
-/** Does this card fill the rule's category only through the rule's WEAK printed words (`Rule.weakOracle`)? Urza's Sylex for `stax.text`. False for a rule without one, and for a card that also reads a strong alternative. */
-export function weakByOracle(rule: Rule, dc: DeckCard, set: RuleSet = loadRules()): boolean {
-  const w = rule.weakOracle;
-  if (w === undefined) return false;
-  const text = ownText(dc.card);
-  return pattern(set, w.weak).test(text) && !pattern(set, w.strong).test(text);
-}
 
 export function ruleMatches(rule: Rule, dc: DeckCard, set: RuleSet = loadRules()): boolean {
   // A CARD THAT TRANSFORMS INTO A LAND IS NEVER RAMP (owner 2026-10-10, #1174): "things that do

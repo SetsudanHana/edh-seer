@@ -23,13 +23,18 @@ describe("weak stax (owner 2026-11-13)", () => {
 
   test("a weak mark never lowers a card that is also full stax through another rule", () => {
     const sylex = realCard("Urza's Sylex");
-    const both = { ...sylex, card: { ...sylex.card, oracleText: `${sylex.card.oracleText}\nPlayers can't cast spells.` } };
+    const lock = { kind: "static", effect: { kind: "player-lock", subject: { control: "any", token: null } }, playerLock: { locks: ["cast-ban"] }, clause: 9, repeats: "continuous" } as never;
+    const both = realCard("Urza's Sylex", { extraAbilities: [lock] });
+    expect(both.card.name).toBe(sylex.card.name);
     expect(detectWeakRoles([both]).get("stax")?.has("Urza's Sylex") ?? false).toBe(false);
   });
 
-  test("the printed stax pattern is its strong words plus its weak ones, so one oracle op reads both", () => {
+  test("weak stax is derived: no stax rule reads printed words, and the weak rule is marked `weak`", () => {
+    const stax = (rules as { rules: { id: string; category?: string; weak?: boolean; match: unknown[] }[] }).rules.filter((r) => r.category === "stax");
+    expect(JSON.stringify(stax.map((r) => r.match))).not.toContain('"oracle"');
+    expect(stax.filter((r) => r.weak === true).map((r) => r.id)).toEqual(["stax.sylex"]);
     const p = (rules as { patterns: Record<string, string> }).patterns;
-    expect(p.stax).toBe(`${p.staxStrong}|${p.staxWeak}`);
+    expect(Object.keys(p).filter((k) => k.startsWith("stax"))).toEqual([]);
   });
 
   test("the rule text no longer carries a CEILING for it", () => {
