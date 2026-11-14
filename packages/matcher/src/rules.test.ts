@@ -864,23 +864,25 @@ describe("the Ramp role, second round (#1190)", () => {
     // "This spell costs {1} less to cast ..." and a self-discount with no subject are a cheaper card, not ramp
     expect(ruleIds(withAbility("Blasphemous Act", { control: "any", type: "spell", self: true }, "on-cast"))).toEqual([]);
     expect(ruleIds(withAbility("Sunderflock", {}))).toEqual([]);
-    // Trinisphere ("each spell that would cost less than three mana costs three") is a tax the derive typed as a reduction; Accursed Witch cheapens OPPONENTS' spells
-    const texted = (name: string, oracleText: string): DeckCard => ({ ...withAbility(name, { control: "any", type: "spell", scope: "all" }), card: { name, oracleText, typeLine: "Artifact", manaValue: 3 } as Card });
-    expect(ruleIds(texted("Trinisphere", "As long as this artifact is untapped, each spell that would cost less than three mana to cast costs three mana to cast."))).toEqual([]);
-    expect(ruleIds(texted("Accursed Witch", "Spells your opponents cast that target this creature cost {1} less to cast."))).toEqual([]);
   });
 
-  // Real oracle text (Mongo, 2026-10-14). The derive typed every one of these cost-reduction with a scope-all subject; the rule decides.
-  test("a self discount, an alternative cost and a free cast are not ramp; Activated-ability reducers and a named-spell discount are (owner 2026-10-14)", () => {
+  // READ FROM DERIVED DATA (#1266, derive 523): the printed `costNotReduced` / `costNotADiscount` patterns are gone. Every card below is a REAL derived row (fixtures/removal-derived.json) with its
+  // printed text BLANKED, so only the derived abilities can say yes or no.
+  test("a self discount, a free cast, a floor and a discount for spells aimed at the card are refused by the derived ability, not the printed text", () => {
+    // Volcanic Salvo: subject self. Aluren, As Foretold, Fires of Invention: altCost. Trinisphere: a tax (its floor), no reduction at all. Spellwild Ouphe, Elderwood Scion: targets.self.
+    for (const n of ["Volcanic Salvo", "Aluren", "As Foretold", "Fires of Invention", "Trinisphere", "Spellwild Ouphe", "Elderwood Scion"])
+      expect(ruleIds(realCard(n, { oracleText: "" })), n).toEqual([]);
+    // A real discount for OTHER spells stays, Hamza's beside its own self discount, and the two aimed discounts of Killian and Strong Back.
+    for (const n of ["Sapphire Medallion", "Hamza, Guardian of Arashin", "Killian, Ink Duelist", "Strong Back", "Accursed Witch // Infectious Curse"])
+      expect(ruleIds(realCard(n, { oracleText: "" })), n).toEqual(["ramp.costReduction"]);
+  });
+  // Real oracle text (Mongo, 2026-10-14).
+  test("Activated-ability reducers and a named-spell discount are ramp (owner 2026-10-14); the self discount, alternative cost and free cast are refused by derived data above", () => {
     const text = (name: string, oracleText: string, subject: object): DeckCard => ({
       card: { name, oracleText, typeLine: "Artifact", manaValue: 3 } as Card,
       tags: manaTags([], { abilities: [{ kind: "static", effect: { kind: "cost-reduction", subject } }] as never }),
     });
     const all = { control: "any", type: "spell", scope: "all" };
-    expect(ruleIds(text("Volcanic Salvo", "This spell costs {X} less to cast, where X is the total power of creatures you control.\nVolcanic Salvo deals 6 damage to each of up to two target creatures and/or planeswalkers.", { control: "you", type: "creature", scope: "all" }))).toEqual([]);
-    expect(ruleIds(text("As Foretold", "At the beginning of your upkeep, put a time counter on this enchantment.\nOnce each turn, you may pay {0} rather than pay the mana cost for a spell you cast with mana value X or less, where X is the number of time counters on this enchantment.", all))).toEqual([]);
-    expect(ruleIds(text("Aluren", "Any player may cast creature spells with mana value 3 or less without paying their mana costs and as though they had flash.", all))).toEqual([]);
-    expect(ruleIds(text("Fires of Invention", "You can cast spells only during your turn and you can cast no more than two spells each turn.\nYou may cast spells with mana value less than or equal to the number of lands you control without paying their mana costs.", all))).toEqual([]);
     // Heartstone, Training Grounds: a reducer of activated abilities IS ramp (owner ruling); the derived subject names the ability kind.
     const act = { abilityKind: ["activated"], type: "creature", scope: "all" };
     expect(ruleIds(text("Heartstone", "Activated abilities of creatures cost {1} less to activate. This effect can't reduce the mana in that cost to less than one mana.", act))).toEqual(["ramp.costReduction"]);

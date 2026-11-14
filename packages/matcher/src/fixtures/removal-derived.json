@@ -51376,5 +51376,825 @@
     "repeats": "continuous"
    }
   ]
+ },
+ "Volcanic Salvo": {
+  "oracleText": "This spell costs {X} less to cast, where X is the total power of creatures you control.\nVolcanic Salvo deals 6 damage to each of up to two target creatures and/or planeswalkers.",
+  "typeLine": "Sorcery",
+  "manaValue": 12,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "cost-reduction",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "spell",
+      "self": true
+     }
+    },
+    "amount": "the total power of creatures you control",
+    "clause": 1,
+    "repeats": "once",
+    "reduces": {
+     "mana": "{X}",
+     "self": true
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "planeswalker"
+      ],
+      "scope": "target"
+     }
+    },
+    "amount": "6",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": [
+        "creature",
+        "planeswalker"
+       ],
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 6,
+     "ceiling": 6
+    }
+   }
+  ]
+ },
+ "Aluren": {
+  "oracleText": "Any player may cast creature spells with mana value 3 or less without paying their mana costs and as though they had flash.",
+  "typeLine": "Enchantment",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "cost-reduction",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "all",
+      "stats": [
+       {
+        "metric": "mana-value",
+        "op": "lte",
+        "value": 3
+       }
+      ]
+     }
+    },
+    "clause": 1,
+    "repeats": "continuous",
+    "altCost": true
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "all",
+      "stats": [
+       {
+        "metric": "mana-value",
+        "op": "lte",
+        "value": 3
+       }
+      ]
+     }
+    },
+    "clause": 1,
+    "repeats": "continuous",
+    "grants": [
+     "flash"
+    ]
+   }
+  ]
+ },
+ "As Foretold": {
+  "oracleText": "At the beginning of your upkeep, put a time counter on this enchantment.\nOnce each turn, you may pay {0} rather than pay the mana cost for a spell you cast with mana value X or less, where X is the number of time counters on this enchantment.",
+  "typeLine": "Enchantment",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "counter": "time"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "time",
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "cost-reduction",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "stats": [
+       {
+        "metric": "mana-value",
+        "op": "lte",
+        "variable": true
+       }
+      ],
+      "scope": "all"
+     }
+    },
+    "amount": "{0}",
+    "clause": 2,
+    "repeats": "per-turn",
+    "reduces": {
+     "mana": "{0}"
+    },
+    "altCost": true
+   }
+  ]
+ },
+ "Fires of Invention": {
+  "oracleText": "You can cast spells only during your turn and you can cast no more than two spells each turn.\nYou may cast spells with mana value less than or equal to the number of lands you control without paying their mana costs.",
+  "typeLine": "Enchantment",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "",
+     "scaling": "per-permanent",
+     "scalingSubject": {
+      "control": "you",
+      "token": null,
+      "type": "land",
+      "scope": "all",
+      "zone": "battlefield"
+     }
+    },
+    "emits": [
+     {
+      "verb": "cast",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "spell",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "continuous",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "scope": "all"
+     }
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "cost-reduction",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "spell",
+      "scope": "all"
+     },
+     "scaling": "per-permanent",
+     "scalingSubject": {
+      "control": "you",
+      "token": null,
+      "type": "land",
+      "scope": "all",
+      "zone": "battlefield"
+     }
+    },
+    "clause": 2,
+    "repeats": "continuous",
+    "altCost": true
+   }
+  ]
+ },
+ "Trinisphere": {
+  "oracleText": "As long as this artifact is untapped, each spell that would cost less than three mana to cast costs three mana to cast. (Additional mana in the cost may be paid with any color of mana or colorless mana. For example, a spell that would cost {1}{B} to cast costs {2}{B} to cast instead.)",
+  "typeLine": "Artifact",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "tax",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "spell",
+      "scope": "each",
+      "stats": [
+       {
+        "metric": "mana-value",
+        "op": "lt",
+        "variable": true
+       }
+      ]
+     }
+    },
+    "amount": "three mana",
+    "clause": 1,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Accursed Witch // Infectious Curse": {
+  "oracleText": "Spells your opponents cast that target this creature cost {1} less to cast.\nWhen this creature dies, return it to the battlefield transformed under your control attached to target opponent.\n//\nEnchant player\nSpells you cast that target enchanted player cost {1} less to cast.\nAt the beginning of enchanted player's upkeep, that player loses 1 life and you gain 1 life.",
+  "typeLine": "Creature — Human Shaman // Enchantment — Aura Curse",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "tax",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "spell",
+      "scope": "all",
+      "targets": {
+       "self": true,
+       "type": "creature"
+      }
+     }
+    },
+    "amount": "-1",
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "graveyard-recursion",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "self": true,
+      "zone": "graveyard"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "fromZone": "graveyard",
+       "ref": "trigger"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "zone": "graveyard",
+       "fromZone": "graveyard",
+       "ref": "trigger"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "transform",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "fromZone": "graveyard",
+       "ref": "trigger"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "attached",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "fromZone": "graveyard",
+       "ref": "trigger"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "cost-reduction",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "scope": "all",
+      "targets": {
+       "status": [
+        "enchanted"
+       ],
+       "player": true
+      }
+     }
+    },
+    "amount": "-1",
+    "face": 1,
+    "clause": 4,
+    "repeats": "continuous",
+    "reduces": {
+     "mana": "{1}"
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "player-life-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     }
+    ],
+    "face": 1,
+    "clause": 5,
+    "repeats": "per-turn",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "face": 1,
+    "clause": 5,
+    "repeats": "per-turn",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "drain",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "face": 1,
+    "clause": 5,
+    "repeats": "per-turn"
+   }
+  ]
+ },
+ "Hamza, Guardian of Arashin": {
+  "oracleText": "This spell costs {1} less to cast for each creature you control with a +1/+1 counter on it.\nCreature spells you cast cost {1} less to cast for each creature you control with a +1/+1 counter on it.",
+  "typeLine": "Legendary Creature — Elephant Warrior",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "cost-reduction",
+     "scaling": "per-creature",
+     "scalingSubject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "zone": "battlefield"
+     }
+    },
+    "amount": "-1 for each creature you control with a +1/+1 counter on it",
+    "clause": 1,
+    "repeats": "continuous",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "you",
+      "token": null,
+      "counter": "+1/+1",
+      "type": "creature"
+     }
+    },
+    "reduces": {
+     "mana": "{1}",
+     "self": true
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "cost-reduction",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     },
+     "scaling": "per-creature",
+     "scalingSubject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "zone": "battlefield"
+     }
+    },
+    "amount": "-1 for each creature you control with a +1/+1 counter on it",
+    "clause": 2,
+    "repeats": "continuous",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "you",
+      "token": null,
+      "counter": "+1/+1",
+      "type": "creature"
+     }
+    },
+    "reduces": {
+     "mana": "{1}"
+    }
+   }
+  ]
+ },
+ "Spellwild Ouphe": {
+  "oracleText": "Spells that target this creature cost {2} less to cast.",
+  "typeLine": "Creature — Ouphe",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "cost-reduction",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "spell",
+      "scope": "all",
+      "targets": {
+       "self": true,
+       "type": "creature"
+      }
+     }
+    },
+    "amount": "-2",
+    "clause": 1,
+    "repeats": "continuous",
+    "reduces": {
+     "mana": "{2}"
+    }
+   }
+  ]
+ },
+ "Elderwood Scion": {
+  "oracleText": "Trample, lifelink\nSpells you cast that target this creature cost {2} less to cast.\nSpells your opponents cast that target this creature cost {2} more to cast.",
+  "typeLine": "Creature — Elemental",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "cost-reduction",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "scope": "all",
+      "targets": {
+       "self": true,
+       "type": "creature"
+      }
+     }
+    },
+    "amount": "-2",
+    "clause": 2,
+    "repeats": "continuous",
+    "reduces": {
+     "mana": "{2}"
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "tax",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "spell",
+      "scope": "all",
+      "targets": {
+       "self": true,
+       "type": "creature"
+      }
+     }
+    },
+    "amount": "+2",
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Killian, Ink Duelist": {
+  "oracleText": "Lifelink\nMenace (This creature can't be blocked except by two or more creatures.)\nSpells you cast that target a creature cost {2} less to cast.",
+  "typeLine": "Legendary Creature — Human Warlock",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "cost-reduction",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "scope": "all",
+      "targets": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      }
+     }
+    },
+    "amount": "-2",
+    "clause": 3,
+    "repeats": "continuous",
+    "reduces": {
+     "mana": "{2}"
+    }
+   }
+  ]
+ },
+ "Strong Back": {
+  "oracleText": "Enchant creature\nEquip abilities you activate that target enchanted creature cost {3} less to activate.\nAura spells you cast that target enchanted creature cost {3} less to cast.\nEnchanted creature gets +2/+2 for each Aura and Equipment attached to it.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "cost-reduction"
+    },
+    "amount": "-{3}",
+    "clause": 2,
+    "repeats": "continuous",
+    "reduces": {
+     "mana": "{3}"
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "cost-reduction",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "subtype": "aura",
+      "scope": "all",
+      "targets": {
+       "type": "creature",
+       "status": [
+        "enchanted"
+       ]
+      }
+     }
+    },
+    "amount": "-3",
+    "clause": 3,
+    "repeats": "continuous",
+    "reduces": {
+     "mana": "{3}"
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+2/+2 for each Aura and Equipment attached to it",
+    "clause": 4,
+    "repeats": "continuous",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "subtype": [
+       "aura",
+       "equipment"
+      ]
+     }
+    }
+   }
+  ]
+ },
+ "Sapphire Medallion": {
+  "oracleText": "Blue spells you cast cost {1} less to cast.",
+  "typeLine": "Artifact",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "cost-reduction",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "scope": "all",
+      "colors": [
+       "U"
+      ]
+     }
+    },
+    "amount": "-1",
+    "clause": 1,
+    "repeats": "continuous",
+    "reduces": {
+     "mana": "{1}"
+    }
+   }
+  ]
  }
 }

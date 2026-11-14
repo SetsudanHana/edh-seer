@@ -29,6 +29,8 @@ export type RuleClause =
       /** Refuse an ability whose subject is a spell THAT TARGETS THIS CARD (`subject.targets.self`): Spellwild Ouphe's "Spells that target this creature cost {2} less" cheapens
        *  spells aimed at the card itself, a discount for no other spell (`discountsOtherSpells`). */
       notSelfTargeted?: boolean;
+      /** Refuse an ability that is an ALTERNATIVE OR FREE CAST derived as a cost reduction (`Ability.altCost`, #1266): Aluren, As Foretold, Fires of Invention take no mana off any spell. */
+      notAltCost?: true;
       /** A `debuff` that can KILL: the amount's TOUGHNESS part is negative ("-5/-5", "-0/-3", "-X/-X, where X is ...", "-1/-1"). "-2/-0" shrinks power and kills nothing; an amount that
        *  is not a P/T pair at all does not match. A scaling or unreadable toughness ("-X") counts: the number is not printed, and the card states it as a lethal-shaped shrink. */
       toughnessDown?: true;
@@ -669,6 +671,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
             && (clause.control === undefined || clause.control.includes(e.subject.control as string))
             && (clause.notOwnedByYou !== true || e.subject.owner !== "you"))))
         && (clause.notSelfTargeted !== true || (a.effect.subject as { targets?: { self?: boolean } } | undefined)?.targets?.self !== true)
+        && (clause.notAltCost !== true || a.altCost !== true)
         && (clause.notOnFlip !== true || a.onFlip === undefined)
         && (clause.notOwnedByYou !== true || a.effect.subject?.owner !== "you")
         && (clause.notSelf !== true || a.effect.subject?.self !== true)

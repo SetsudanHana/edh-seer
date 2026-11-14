@@ -1657,6 +1657,9 @@ export interface Ability {
   /** A cost reduction's printed mana off ("{2}", "{X}", "{U}") and whether it discounts only its own
    *  card ("this spell costs ... less"). See `derive/reduction.ts` (#804, DERIVE 204). */
   reduces?: { mana: string; self?: true };
+  /** A cost-reduction that is really an ALTERNATIVE OR FREE CAST ("without paying its mana cost", "rather than pay the mana cost": Aluren, As Foretold, Fires of Invention; CR 118.9): no mana is taken off,
+   *  so it is no discount for other spells (#1266, `ramp.costReduction`). */
+  altCost?: true;
   /** THE PAYMENT THAT STOPS THIS ABILITY'S EFFECT (CR 118.12a), verbatim from the clause: Rhystic
    *  Study draws "unless that player pays {1}", a counterspell counters "unless its controller pays
    *  {3}", an upkeep cost sacrifices "unless you pay {W}{W}". The effect is what happens when the

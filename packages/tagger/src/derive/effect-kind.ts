@@ -408,6 +408,8 @@ function costDirection(object: string, clauseText = ""): EffectKind | null {
     // "{1} less" alike, so testing it here would call every card ambiguous.
     const more = /\bmore\b/.test(t);
     const less = /\bless\b/.test(t);
+    // A FLOOR IS A TAX (#1266): Trinisphere's "each spell that would cost less than three mana costs three" raises what a cheap spell costs; the "less" is the spell's price, not a discount.
+    if (/\bwould cost less than\b/.test(t)) return "tax";
     if (more && less) return null;
     // "Opponents" in the COUNT is not who pays: Rakdos, Lord of Riots' creature spells cost less "for
     // each 1 life your opponents have lost this turn", a discount for you, not a tax on them.
