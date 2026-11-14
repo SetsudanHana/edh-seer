@@ -29,7 +29,6 @@
     "colouredMana": "\\{[WUBRG]\\}|any colou?r|chosen colou?r|any combination of colou?rs|color identity",
     "manaToken": "create\\b[\\s\\S]*?(treasure|gold|eldrazi (?:spawn|scion))( creature)? tokens?",
     "neutraliseAura": "(?:^|\\n)enchant (?<class>[^\\n]+)(?=[\\s\\S]*?enchanted (?:creature|permanent)[^.]*?(?:loses all (?:other card types and )?abilities|is a colou?rless land))",
-    "ownSpellsCostMore": "\\bspells you cast cost (?:\\{[^}]+\\})+ more\\b",
     "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't|(?:destroy|exile|return) all (?:(?:non)?(?:basic|snow) )?(?:lands?|forests?|islands?|mountains?|plains|swamps?) (?:target|that) (?:player|opponent) (?:controls|owns)|each player chooses \\w+ lands they control\\. destroy all other permanents",
     "staxStrong": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't|(?:destroy|exile|return) all (?:(?:non)?(?:basic|snow) )?(?:lands?|forests?|islands?|mountains?|plains|swamps?) (?:target|that) (?:player|opponent) (?:controls|owns)",
     "staxWeak": "each player chooses \\w+ lands they control\\. destroy all other permanents",
@@ -210,9 +209,9 @@
     {
       "id": "stax.effect",
       "category": "stax",
-      "match": [{ "op": "effectKind", "in": ["tax"], "notSelf": true }],
-      "not": [{ "op": "countsAsLand" }, { "op": "oracle", "pattern": "ownSpellsCostMore" }],
-      "why": "`forced-sacrifice` is deliberately excluded: the tagger labels edict removal with that kind too, so including it flags Generous Gift as stax. STAX TAXES OTHER PLAYERS (#1530): a tax on the card itself (Strive and \"costs more for each target beyond the first\": Launch the Fleet, Officious Interrogation; `subject.self`, read per ability) and a tax on the caster's own spells (\"Red spells you cast cost {R} more\": the Leeches, Geist-Fueled Scarecrow) are drawbacks, not stax. The own-spell tax is read from the printed text, not from the derived subject: the subject is `control: you` for it, but also for Onakke Oathkeeper and Heat Wave (\"creatures can't attack planeswalkers you control unless ...\"), which tax the opponent, and the subject types (`spell`, `creature`) do not tell them apart. CEILING: the own-spell refusal is card-level, so a card with that line AND a real tax would lose stax (0 today). CEILING: Fireball's \"This spell costs {1} more to cast for each target beyond the first\" derives a tax with `control: any` and no `self` flag, so it stays stax (a derive defect; the Strive cards derive `self`)."
+      "match": [{ "op": "effectKind", "in": ["tax"], "notSelf": true, "notOwnTax": true }],
+      "not": [{ "op": "countsAsLand" }],
+      "why": "`forced-sacrifice` is deliberately excluded: the tagger labels edict removal with that kind too, so including it flags Generous Gift as stax. STAX TAXES OTHER PLAYERS (#1530): a tax on the card itself (Strive and \"costs more for each target beyond the first\": Launch the Fleet, Officious Interrogation; `subject.self`, read per ability) and a tax on the caster's own spells (\"Red spells you cast cost {R} more\": the Leeches, Geist-Fueled Scarecrow) are drawbacks, not stax. The own-spell tax is read from the derived ability (`notOwnTax`, #1266; it was the printed pattern `ownSpellsCostMore`): its subject is `control: you`, but so is that of Onakke Oathkeeper and Heat Wave (\"creatures can't attack planeswalkers you control unless ...\"), which tax the opponent, and the subject types (`spell`, `creature`) do not tell them apart. What does is `Ability.unless`: those two name the payer (`controller`), the Leeches and Geist-Fueled Scarecrow name none. Read per ability, so a card with an own-spell line AND a real tax keeps stax. CEILING: Fireball's \"This spell costs {1} more to cast for each target beyond the first\" derives a tax with `control: any` and no `self` flag, so it stays stax (a derive defect; the Strive cards derive `self`)."
     },
     {
       "id": "ramp.costReduction",

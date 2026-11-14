@@ -51122,5 +51122,259 @@
     }
    }
   ]
+ },
+ "Geist-Fueled Scarecrow": {
+  "oracleText": "Creature spells you cast cost {1} more to cast.",
+  "typeLine": "Artifact Creature — Scarecrow",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "tax",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    },
+    "amount": "+1",
+    "clause": 1,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Ruby Leech": {
+  "oracleText": "First strike\nRed spells you cast cost {R} more to cast.",
+  "typeLine": "Creature — Leech",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "tax",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "scope": "all",
+      "colors": [
+       "R"
+      ]
+     }
+    },
+    "amount": "+{R}",
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Onakke Oathkeeper": {
+  "oracleText": "Creatures can't attack planeswalkers you control unless their controller pays {1} for each creature they control that's attacking a planeswalker you control.\n{4}{W}{W}, Exile this card from your graveyard: Return target planeswalker card from your graveyard to the battlefield.",
+  "typeLine": "Creature — Ogre Spirit",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "tax",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "planeswalker",
+      "scope": "all"
+     },
+     "scaling": "per-creature"
+    },
+    "unless": {
+     "cost": "{1} for each creature they control that's attacking a planeswalker you control",
+     "payer": "controller"
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{4}{W}{W}, Exile this card from your graveyard",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "graveyard",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "zone": "graveyard",
+       "fromZone": "graveyard",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{4}{W}{W}",
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true,
+        "zone": "graveyard"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-recursion",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "planeswalker",
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "{4}{W}{W}, Exile this card from your graveyard",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": "planeswalker",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": "planeswalker",
+       "scope": "target",
+       "zone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{4}{W}{W}",
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true,
+        "zone": "graveyard"
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Heat Wave": {
+  "oracleText": "Cumulative upkeep {R} (At the beginning of your upkeep, put an age counter on this permanent, then sacrifice it unless you pay its upkeep cost for each age counter on it.)\nBlue creatures can't block creatures you control.\nNonblue creatures can't block creatures you control unless their controller pays 1 life for each blocking creature they control.",
+  "typeLine": "Enchantment",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "tax",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     },
+     "scaling": "per-creature"
+    },
+    "unless": {
+     "cost": "1 life for each blocking creature they control",
+     "payer": "controller"
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Derelor": {
+  "oracleText": "Black spells you cast cost {B} more to cast.",
+  "typeLine": "Creature — Thrull",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "tax",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "scope": "all",
+      "colors": [
+       "B"
+      ]
+     }
+    },
+    "amount": "+{B}",
+    "clause": 1,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Sphere of Resistance": {
+  "oracleText": "Spells cost {1} more to cast.",
+  "typeLine": "Artifact",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "tax",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "spell",
+      "scope": "all"
+     }
+    },
+    "amount": "+1",
+    "clause": 1,
+    "repeats": "continuous"
+   }
+  ]
  }
 }

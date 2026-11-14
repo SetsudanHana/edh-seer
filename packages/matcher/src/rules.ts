@@ -48,6 +48,10 @@ export type RuleClause =
       notOwnedByYou?: true;
       /** Refuse an ability whose effect SUBJECT is the card itself (`subject.self`): "Exile this card from your graveyard" derives a graveyard-hate effect over the card, which hates nothing (#1266). */
       notSelf?: true;
+      /** Refuse a TAX ON THE CASTER'S OWN THINGS (#1266, `stax.effect`): the effect subject is `control: you` and the ability names no payer (`Ability.unless`). "Red spells you cast cost {R} more" (the Leeches) and
+       *  "Creature spells you cast cost {1} more" (Geist-Fueled Scarecrow) are a drawback on the caster. The other `control: you` taxes, Onakke Oathkeeper and Heat Wave ("creatures can't attack planeswalkers you control unless their
+       *  controller pays ..."), tax the opponent and name that payer in `unless`, which is what tells them apart: their subject types (`creature`, `planeswalker`) do not. Read per ability, so a card with a real tax beside the line keeps it. */
+      notOwnTax?: true;
       /** The ABILITY's own kind (`Ability.kind`: `activated`, `triggered`, `static`, `on-cast` ...) is in this list. An activated flicker is at instant speed on any permanent (owner 2026-11-12, `protection.flicker`). */
       ofKind?: string[];
       /** A `targeting-ban` that PROTECTS SOMETHING OF YOURS, whoever bans (#1266, owner 2026-11-12). Any one of: the ban is against opponents' spells and abilities (`targetingBan.source.control: opp`: Vines of Vastwood,
@@ -668,6 +672,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.notOnFlip !== true || a.onFlip === undefined)
         && (clause.notOwnedByYou !== true || a.effect.subject?.owner !== "you")
         && (clause.notSelf !== true || a.effect.subject?.self !== true)
+        && (clause.notOwnTax !== true || a.effect.subject?.control !== "you" || a.unless !== undefined)
         && (clause.ofKind === undefined || clause.ofKind.includes(a.kind))
         && (clause.banProtects !== true || banProtectsYours(a, dc.card.typeLine ?? ""))
         && (clause.pairedInstantExile !== true || pairedInstantExile(dc.tags?.abilities ?? [], a))
