@@ -60,6 +60,7 @@ import { emblemRecipient } from "../emblem.js";
 import { chosenColorOf } from "./chosen-color.js";
 import { chosenKindOf, chosenKindOfText } from "./chosen-kind.js";
 import { selectionFromText } from "./selection-text.js";
+import { topReadsFromText } from "./top-reads.js";
 import { meldPair, type MeldParts } from "./meld-pair.js";
 import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./cast-class.js";
 
@@ -701,7 +702,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 518: #1266 -- a phase-out the model filed as a zoneless put is the phase-out its printed clause states (Talon Gates of Madara, owner ruling 2026-11-12 that a land can carry Protection): phaseOutFiledAsPut in verb-words.ts. MEASURED (derive-impact vs 14a0e855, --no-pairs, working tree): 1 row changed, 0 added, 0 removed (Talon Gates of Madara: gains the phases-out emit, and its stored reading now equals the grammar's, so it flips model to grammar); role-ratchet +12 / -0 for this commit (Talon Gates and the 11 lands the `countsAsLand` removal reads); dropped-clauses 4,826 -> 4,825 (Talon Gates -1:put:partial fixed, 0 new). Oubliette's stored clause holds only the tap of its second sentence, so it still derives no phase-out (CEILING in verb-words.ts).
 // 519: #1266 -- a keyword the sentence says a thing does NOT have ('as though they didn't have hexproof') is named, not granted, anywhere in that sentence: Detection Tower's 'creatures your opponents control with hexproof' no longer derives a hexproof grant (grantedKeywords in derive.ts). MEASURED (derive-impact vs 14a0e855, whole tree, --json impact.json): 2 rows changed in the branch, of them Detection Tower for this version (it loses the hexproof grant; 0 pair reasons move for it; the other row is Talon Gates of Madara, 518); role-ratchet at this version -1 (Detection Tower -role:protection); dropped-clauses unchanged by 519 (4,826 -> 4,825 over the branch is Talon Gates, 518); grammar complete 28,759 -> 28,759.
 // 520: #1628 -- MEASURED: a pay-or-die destroy ("may pay ... If they don't": Arcum's Whistle, Winter's Chill) carries victimMay, and "attacking you or a planeswalker you control" (Soul Snare) no longer adds planeswalker to the target type (#1629)
-export const DERIVE_VERSION = 520;
+// 521: #1266 -- Ability.impulse and Ability.looksAtTop: the card-selection and impulse-draw roles read derived marks, not the printed selection / impulseDraw patterns. MEASURED (derive-impact vs 377d9a22): 604 rows changed, 0 added or removed, 0 source flips, 0 pair reasons; role-ratchet cardSelection +2 / -30, impulseDraw 0; dropped-clauses 4,825, new 0.
+export const DERIVE_VERSION = 521;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -5452,7 +5454,7 @@ export function deriveCardTags(input: DeriveInput, opts: { foldGrantTwins?: bool
   // A CHOSEN COLOUR IS NOT A CHOSEN TYPE (#1360): a stored reading's `chosenType` on a colour choice becomes `chosenColor`.
   // ...AND WHAT A CHOSEN TYPE CHOSE (#1568): `chosenKind` beside `chosenType`, so the matcher resolves only a creature-type choice to the deck's creature type.
   // ...AND A MELD EXILES ITS PAIR, a chosen set and no class (#1582).
-  const spellOnce = meldPair(selectionFromText(chosenKindOf(chosenColorOf(spellOnceRaw, input.clauseTexts, input.oracleText ?? ""), input.clauseTexts, input.oracleText ?? ""), input.clauseTexts, input.oracleText ?? ""), input.clauseTexts, chars.types, input.meld);
+  const spellOnce = meldPair(topReadsFromText(selectionFromText(chosenKindOf(chosenColorOf(spellOnceRaw, input.clauseTexts, input.oracleText ?? ""), input.clauseTexts, input.oracleText ?? ""), input.clauseTexts, input.oracleText ?? ""), input.clauseTexts, input.oracleText ?? ""), input.clauseTexts, chars.types, input.meld);
   // A CREATURE ONLY UNDER A CONDITION (#797): the action grammar reads "As long as your devotion to red
   // is less than five, Purphoros isn't a creature" as the card itself that "can't be a creature".
   // Read off the printed text, which reaches the Theros gods the store filed as something else.

@@ -200,6 +200,8 @@ export type RuleClause =
    *  `creature` or `permanent`, and that branch's control is not `opp` (an Aura only an opponent's creature can wear is a curse). `control` narrows to the listed controls ("you":
    *  "Enchant creature you control"). */
   | { op: "enchants"; control?: string[] }
+  /** The card has an ability carrying this DERIVED MARK (`Ability.impulse`, `Ability.looksAtTop`, #1266): a clause fact the clause layer has no verb for, stamped by derive from the clause's own words (`derive/top-reads.ts`). */
+  | { op: "abilityMark"; mark: "impulse" | "looksAtTop" }
   /** An ability of the card whose effect lands on the ATTACHED permanent (`Ability.host`, #1315), tested on the SAME ability. `kinds` is the effect kind. Derive carries no polarity, so the
    *  rest narrows it: `raises` (a pump whose amount has a "+" before a non-zero value on either side: Dream Coat derives a pump with no amount); `grantsAny` (some `grants` keyword is
    *  in the list); `grantsNonEmpty`; `unlessPumpInClause` (refuse when another HOST pump shares this ability's `clause`: "+3/+3 as long as it's a Zombie. Otherwise -3/-3"). */
@@ -644,6 +646,8 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.quoted === undefined || ((a.grants ?? []).length === 0 && quotedGrantIsBenign(abilities, a.clause, clause.quoted.curse)))
         && (clause.unlessPumpInClause !== true || !abilities.some((f) => f.host === true && f.effect.kind === "pump" && f.clause === a.clause)));
     }
+    case "abilityMark":
+      return (dc.tags?.abilities ?? []).some((a) => a[clause.mark] === true);
     case "typeLine":
       return (dc.card.typeLine ?? "").toLowerCase().includes(clause.contains);
     case "effectKind":

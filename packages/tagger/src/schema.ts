@@ -1407,6 +1407,14 @@ export interface Ability {
   /** A `to-hand` OR typed-dig ability that NETS ZERO CARDS (#1302, owner 2026-10-22): it replaces a draw ("If you would draw a card, you may instead ... reveal cards ...": Abundance, Underrealm Lich, Tomorrow) or swaps with the
    *  top of the library (Scroll Rack). Card selection, not hand-fill. Only `true` is written. */
   netZero?: true;
+  /** THE CLAUSE EXILES CARDS FROM THE TOP OF YOUR LIBRARY AND LETS YOU PLAY THEM (#1266, the impulse draw): "Exile the top two cards of your library. Until the end of your next turn, you may play those cards" (Light Up the Stage),
+   *  "exile the top card of your library. You may play that card this turn" (Count on Luck). Stamped on the ability of that clause whose emits include an `exiled` from YOUR library, read by the impulse-draw role (`abilityMark`).
+   *  Only `play`: "you may cast" is not read (Aminatou's Augury, Apex of Power), as the printed pattern it replaced did not. NOT a cast emit: whether an own-library impulse should derive one is #1608 item 7, an owner ruling.
+   *  Only `true` is written. */
+  impulse?: true;
+  /** THE CLAUSE LOOKS AT THE TOP CARDS OF A LIBRARY (#1266): "look at the top four cards of your library" (Impulse, Dig Through Time, Armored Skyhunter) and a manifest dread, which looks at the top two. Stamped on every ability
+   *  of that clause; read by the card-selection role (`abilityMark`). The clause layer records no "look" action, so a clause that derives no ability carries no mark (Aladdin's Lamp). Only `true` is written. */
+  looksAtTop?: true;
   /** A REPLACEMENT EFFECT WHOSE RESULT IS AN EVENT OF ITS OWN, NOT A MULTIPLIER (#1465; CR 614.1a: "instead" makes it a replacement effect, not a triggered ability, CR 603.1): Undead Alchemist, Szadek, Soul-Scar Mage.
    *  The ability keeps its trigger (the replaced damage) and its kind so the pair readers hear the damage and the mill / counter placement, but it is no TRIGGERED ABILITY to copy (`copies:triggered`) or to double
    *  (trigger-doubling). Distinct from `replacement`, which marks a multiplier. Only `true` is written. */
