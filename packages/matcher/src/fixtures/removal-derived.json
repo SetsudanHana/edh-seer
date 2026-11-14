@@ -50954,5 +50954,173 @@
     }
    }
   ]
+ },
+ "Evacuation": {
+  "oracleText": "Return all creatures to their owners' hands.",
+  "typeLine": "Instant",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "bounce",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "all",
+      "zone": "battlefield"
+     }
+    },
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "all",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "all",
+      "fromZone": "battlefield"
+     }
+    }
+   }
+  ]
+ },
+ "Aetherize": {
+  "oracleText": "Return all attacking creatures to their owner's hand.",
+  "typeLine": "Instant",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "bounce",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "all",
+      "combat": "attacking",
+      "zone": "battlefield"
+     }
+    },
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "combat": "attacking",
+       "type": "creature",
+       "scope": "all",
+       "fromZone": "battlefield"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "combat": "attacking",
+      "type": "creature",
+      "scope": "all",
+      "fromZone": "battlefield"
+     }
+    }
+   }
+  ]
+ },
+ "Whelming Wave": {
+  "oracleText": "Return all creatures to their owners' hands except for Krakens, Leviathans, Octopuses, and Serpents.",
+  "typeLine": "Sorcery",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "bounce",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "all",
+      "except": [
+       {
+        "subtype": "kraken"
+       },
+       {
+        "subtype": "leviathan"
+       },
+       {
+        "subtype": "octopus"
+       },
+       {
+        "subtype": "serpent"
+       }
+      ],
+      "zone": "battlefield"
+     }
+    },
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "selection": "all-but",
+       "type": "creature",
+       "notSubtype": [
+        "kraken",
+        "leviathan",
+        "octopus",
+        "serpent"
+       ],
+       "scope": "all",
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "selection": "all-but",
+      "type": "creature",
+      "notSubtype": [
+       "kraken",
+       "leviathan",
+       "octopus",
+       "serpent"
+      ],
+      "scope": "all",
+      "fromZone": "battlefield"
+     }
+    }
+   }
+  ]
  }
 }
