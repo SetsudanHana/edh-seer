@@ -842,6 +842,24 @@
    {
     "kind": "on-cast",
     "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
      "kind": "pump",
      "subject": {
       "control": "you",
@@ -1152,6 +1170,7 @@
        "colors": [
         "W"
        ],
+       "selection": "counted",
        "type": "creature",
        "scope": "all"
       }
@@ -1431,7 +1450,7 @@
      {
       "verb": "gain-life",
       "subject": {
-       "control": "you",
+       "control": "any",
        "token": null
       }
      }
@@ -1462,6 +1481,15 @@
       "self": true
      }
     },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
     "clause": 1,
     "repeats": "once"
    },
@@ -2268,7 +2296,9 @@
       "control": "you",
       "token": null,
       "type": "creature"
-     }
+     },
+     "host": true,
+     "victim": "player"
     },
     "amount": "1",
     "emits": [
@@ -2305,7 +2335,7 @@
     "effect": {
      "kind": "search",
      "subject": {
-      "control": "any",
+      "control": "you",
       "token": null,
       "type": "land",
       "basic": true
@@ -2319,14 +2349,16 @@
       "control": "you",
       "token": null,
       "type": "creature"
-     }
+     },
+     "host": true,
+     "victim": "player"
     },
     "amount": "1",
     "emits": [
      {
       "verb": "search",
       "subject": {
-       "control": "any",
+       "control": "you",
        "token": null,
        "basic": true,
        "type": "land",
@@ -2355,7 +2387,9 @@
       "control": "you",
       "token": null,
       "type": "creature"
-     }
+     },
+     "host": true,
+     "victim": "player"
     },
     "emits": [
      {
@@ -2382,7 +2416,9 @@
       "control": "you",
       "token": null,
       "type": "creature"
-     }
+     },
+     "host": true,
+     "victim": "player"
     },
     "emits": [
      {
@@ -2403,6 +2439,24 @@
   "typeLine": "Instant",
   "manaValue": 4,
   "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
    {
     "kind": "on-cast",
     "effect": {
@@ -2923,7 +2977,8 @@
       "control": "you",
       "token": null,
       "self": true
-     }
+     },
+     "victim": "player"
     },
     "emits": [
      {
@@ -2996,7 +3051,8 @@
       "control": "you",
       "token": null,
       "self": true
-     }
+     },
+     "victim": "player"
     },
     "emits": [
      {
@@ -3385,6 +3441,10 @@
       "instantSpeed": true
      }
     ],
+    "gate": {
+     "kind": "unknown",
+     "text": "that creature dies this way"
+    },
     "clause": 1,
     "repeats": "once",
     "count": {
@@ -3559,6 +3619,7 @@
       "subject": {
        "control": "you",
        "token": null,
+       "selection": "counted",
        "subtype": "treasure",
        "scope": "all"
       }
@@ -3568,6 +3629,7 @@
       "subject": {
        "control": "you",
        "token": null,
+       "selection": "counted",
        "subtype": "treasure",
        "scope": "all"
       }
@@ -3767,6 +3829,24 @@
     },
     "emits": [
      {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
       "verb": "counter-spell",
       "subject": {
        "control": "any",
@@ -3847,6 +3927,15 @@
       "self": true
      }
     },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
     "clause": 1,
     "repeats": "once"
    },
@@ -3950,7 +4039,8 @@
        "owner": "you",
        "other": true,
        "type": "creature",
-       "scope": "target"
+       "scope": "target",
+       "fromZone": "battlefield"
       }
      },
      {
@@ -3961,7 +4051,8 @@
        "owner": "you",
        "other": true,
        "type": "creature",
-       "scope": "target"
+       "scope": "target",
+       "fromZone": "battlefield"
       }
      }
     ],
@@ -4451,49 +4542,6 @@
    {
     "kind": "triggered",
     "effect": {
-     "kind": "damage",
-     "subject": {
-      "control": "any",
-      "token": null,
-      "player": true
-     }
-    },
-    "trigger": {
-     "verbs": [
-      "attacks"
-     ],
-     "subject": {
-      "control": "you",
-      "token": null,
-      "type": "creature",
-      "self": true
-     }
-    },
-    "amount": "5",
-    "emits": [
-     {
-      "verb": "non-combat-damage",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "player": true
-      },
-      "dealer": {
-       "control": "you",
-       "token": null
-      }
-     }
-    ],
-    "clause": 2,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 5,
-     "ceiling": 5
-    }
-   },
-   {
-    "kind": "triggered",
-    "effect": {
      "kind": ""
     },
     "trigger": {
@@ -4554,6 +4602,50 @@
      "floor": 1,
      "ceiling": 1
     }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "player": true
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "attacks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "5",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "player": true
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 5,
+     "ceiling": 5
+    }
    }
   ]
  },
@@ -4568,7 +4660,8 @@
      "kind": "damage",
      "subject": {
       "control": "any",
-      "token": null
+      "token": null,
+      "player": true
      }
     },
     "trigger": {
@@ -4586,11 +4679,13 @@
       "verb": "non-combat-damage",
       "subject": {
        "control": "any",
-       "token": null
+       "token": null,
+       "player": true
       },
       "dealer": {
-       "control": "you",
-       "token": null
+       "control": "any",
+       "token": null,
+       "type": "enchantment"
       }
      }
     ],
@@ -4758,6 +4853,10 @@
       }
      }
     ],
+    "gate": {
+     "kind": "unknown",
+     "text": "one or more of the chosen permanents are still on the battlefield"
+    },
     "clause": 1,
     "repeats": "once"
    },
@@ -4826,6 +4925,10 @@
       }
      }
     ],
+    "gate": {
+     "kind": "unknown",
+     "text": "one or more of the chosen permanents are still on the battlefield"
+    },
     "librarySearch": "yours",
     "toZone": "battlefield",
     "clause": 1,
@@ -4848,6 +4951,10 @@
       }
      }
     ],
+    "gate": {
+     "kind": "unknown",
+     "text": "one or more of the chosen permanents are still on the battlefield"
+    },
     "clause": 1,
     "repeats": "once"
    }
@@ -5141,7 +5248,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      }
     ],
@@ -5259,7 +5367,6 @@
        "control": "any",
        "token": null,
        "counter": "blood",
-       "subtype": "blood",
        "self": true
       },
       "instantSpeed": true
@@ -5439,7 +5546,8 @@
       "subject": {
        "control": "any",
        "token": null,
-       "type": "creature"
+       "type": "creature",
+       "edictAll": true
       }
      },
      {
@@ -5447,7 +5555,8 @@
       "subject": {
        "control": "any",
        "token": null,
-       "type": "creature"
+       "type": "creature",
+       "edictAll": true
       }
      }
     ],
@@ -5526,6 +5635,17 @@
       "zone": "battlefield"
      }
     },
+    "trigger": {
+     "verbs": [
+      "blocks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "vehicle",
+      "self": true
+     }
+    },
     "amount": "1",
     "emits": [
      {
@@ -5539,7 +5659,8 @@
       }
      }
     ],
-    "clause": 4,
+    "clause": 2,
+    "repeats": "per-turn",
     "count": {
      "floor": 1,
      "ceiling": 1
@@ -5672,10 +5793,7 @@
      "subject": {
       "control": "any",
       "token": null,
-      "type": [
-       "creature",
-       "land"
-      ]
+      "type": "creature"
      }
     },
     "cost": "{2}, {T}, Sacrifice this land",
@@ -5686,10 +5804,7 @@
       "subject": {
        "control": "any",
        "token": null,
-       "type": [
-        "creature",
-        "land"
-       ],
+       "type": "creature",
        "fromZone": "exile"
       },
       "instantSpeed": true
@@ -5884,8 +5999,7 @@
    {
     "kind": "on-cast",
     "effect": {
-     "kind": "",
-     "scaling": "per-creature"
+     "kind": ""
     },
     "emits": [
      {
@@ -6165,7 +6279,8 @@
        "control": "opp",
        "token": null,
        "type": "creature",
-       "scope": "target"
+       "scope": "target",
+       "fromZone": "battlefield"
       }
      },
      {
@@ -6174,7 +6289,8 @@
        "control": "opp",
        "token": null,
        "type": "creature",
-       "scope": "target"
+       "scope": "target",
+       "fromZone": "battlefield"
       }
      }
     ],
@@ -6209,7 +6325,8 @@
        "control": "opp",
        "token": null,
        "type": "creature",
-       "scope": "target"
+       "scope": "target",
+       "fromZone": "battlefield"
       }
      },
      {
@@ -6218,7 +6335,8 @@
        "control": "opp",
        "token": null,
        "type": "creature",
-       "scope": "target"
+       "scope": "target",
+       "fromZone": "battlefield"
       }
      }
     ],
@@ -6263,6 +6381,10 @@
       }
      }
     ],
+    "gate": {
+     "kind": "unknown",
+     "text": "a creature is put into exile this way"
+    },
     "delayedUntil": "source-leaves",
     "clause": 1,
     "repeats": "once",
@@ -6312,6 +6434,10 @@
       }
      }
     ],
+    "gate": {
+     "kind": "unknown",
+     "text": "a creature is put into exile this way"
+    },
     "delayedUntil": "source-leaves",
     "clause": 1,
     "repeats": "per-cycle",
@@ -6456,6 +6582,10 @@
       }
      }
     ],
+    "gate": {
+     "kind": "unknown",
+     "text": "you controlled it"
+    },
     "returnIf": true,
     "clause": 2,
     "repeats": "repeatable",
@@ -6556,6 +6686,11 @@
       }
      }
     ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it is not the case that you controlled it",
+     "otherwise": true
+    },
     "clause": 2,
     "repeats": "repeatable",
     "count": {
@@ -6645,7 +6780,52 @@
       "instantSpeed": true
      }
     ],
+    "gate": {
+     "kind": "unknown",
+     "text": "that permanent's mana value was 3 or less"
+    },
     "returnIf": true,
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "you",
+       "token": false,
+       "type": [
+        "creature",
+        "planeswalker"
+       ],
+       "fromZone": "battlefield"
+      },
+      "ofPut": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": false,
+       "type": [
+        "creature",
+        "planeswalker"
+       ],
+       "fromZone": "battlefield"
+      },
+      "ofPut": true
+     }
+    ],
     "clause": 1,
     "repeats": "once",
     "count": {
@@ -6782,6 +6962,10 @@
       "instantSpeed": true
      }
     ],
+    "gate": {
+     "kind": "unknown",
+     "text": "that creature's power is 0 or less"
+    },
     "clause": 1,
     "repeats": "once",
     "count": {
@@ -6811,6 +6995,15 @@
       "self": true
      }
     },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
     "clause": 2,
     "repeats": "once"
    },
@@ -7085,6 +7278,7 @@
       "subject": {
        "control": "any",
        "token": null,
+       "selection": "counted",
        "type": "land",
        "scope": "all"
       }
@@ -7196,6 +7390,10 @@
     "cost": "{1}",
     "amount": "+2/+0",
     "onFlip": "win",
+    "gate": {
+     "kind": "unknown",
+     "text": "you win the flip"
+    },
     "clause": 1,
     "repeats": "repeatable",
     "payment": {
@@ -7217,6 +7415,10 @@
     "cost": "{1}",
     "amount": "-0/-2",
     "onFlip": "lose",
+    "gate": {
+     "kind": "unknown",
+     "text": "you lose the flip"
+    },
     "clause": 1,
     "repeats": "repeatable",
     "payment": {
@@ -7650,7 +7852,7 @@
      "kind": "graveyard-hate",
      "subject": {
       "control": "any",
-      "token": true,
+      "token": null,
       "zone": "graveyard"
      }
     },
@@ -7660,7 +7862,7 @@
       "verb": "exiled",
       "subject": {
        "control": "any",
-       "token": true
+       "token": null
       }
      }
     ],
@@ -7810,6 +8012,36 @@
    },
    {
     "kind": "static",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "cast",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "spell",
+       "fromZone": "exile",
+       "owner": "opp"
+      }
+     },
+     {
+      "verb": "land-play",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "land",
+       "fromZone": "exile",
+       "owner": "opp"
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
     "repeats": "continuous",
     "effect": {
      "kind": "graveyard-recursion",
@@ -7868,7 +8100,8 @@
       "subject": {
        "control": "any",
        "token": null,
-       "counter": "void"
+       "counter": "void",
+       "zone": "exile"
       }
      }
     ],
@@ -7914,6 +8147,50 @@
      "floor": 1,
      "ceiling": 1
     },
+    "payment": {
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}, Sacrifice this creature",
+    "emits": [
+     {
+      "verb": "cast",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "spell",
+       "fromZone": "exile",
+       "owner": "opp"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "land-play",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "land",
+       "fromZone": "exile",
+       "owner": "opp"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
     "payment": {
      "tap": true,
      "sacrifice": [
@@ -8013,7 +8290,7 @@
      {
       "verb": "exiled",
       "subject": {
-       "control": "any",
+       "control": "you",
        "token": null,
        "fromZone": "graveyard",
        "ref": "trigger",
@@ -8023,7 +8300,7 @@
      {
       "verb": "leaves",
       "subject": {
-       "control": "any",
+       "control": "you",
        "token": null,
        "zone": "graveyard",
        "fromZone": "graveyard",
@@ -8181,12 +8458,13 @@
       "subject": {
        "control": "you",
        "token": null,
-       "fromZone": "graveyard",
+       "fromZone": "exile",
        "type": [
         "instant",
         "sorcery"
        ],
-       "scope": "target"
+       "scope": "target",
+       "owner": "you"
       }
      },
      {
@@ -8218,7 +8496,8 @@
       "subject": {
        "control": "any",
        "token": null,
-       "self": true
+       "self": true,
+       "fromZone": "stack"
       }
      },
      {
@@ -8226,7 +8505,8 @@
       "subject": {
        "control": "any",
        "token": null,
-       "self": true
+       "self": true,
+       "fromZone": "stack"
       }
      }
     ],
@@ -8269,7 +8549,8 @@
        "type": [
         "instant",
         "sorcery"
-       ]
+       ],
+       "owner": "you"
       }
      },
      {
@@ -8393,7 +8674,8 @@
        "control": "any",
        "token": null,
        "type": "creature",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      },
      {
@@ -8402,7 +8684,8 @@
        "control": "any",
        "token": null,
        "type": "creature",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      }
     ],
@@ -8415,7 +8698,8 @@
       "control": "any",
       "token": null,
       "type": "creature",
-      "scope": "all"
+      "scope": "all",
+      "edictAll": true
      }
     }
    },
@@ -8662,7 +8946,7 @@
      {
       "verb": "exiled",
       "subject": {
-       "control": "any",
+       "control": "you",
        "token": null,
        "fromZone": "graveyard",
        "self": true
@@ -8671,7 +8955,7 @@
      {
       "verb": "leaves",
       "subject": {
-       "control": "any",
+       "control": "you",
        "token": null,
        "zone": "graveyard",
        "fromZone": "graveyard",
@@ -9062,6 +9346,10 @@
       }
      }
     ],
+    "gate": {
+     "kind": "unknown",
+     "text": "the player mills at least one creature card this way"
+    },
     "clause": 2,
     "repeats": "repeatable",
     "count": {
@@ -9252,14 +9540,14 @@
      {
       "verb": "cast",
       "subject": {
-       "control": "opp",
+       "control": "you",
        "token": null,
        "type": [
         "instant",
         "sorcery"
        ],
-       "scope": "target",
-       "fromZone": "graveyard"
+       "fromZone": "graveyard",
+       "owner": "opp"
       }
      },
      {
@@ -9356,6 +9644,15 @@
       "token": null
      }
     },
+    "emits": [
+     {
+      "verb": "face-a-dilemma",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
     "clause": 1,
     "repeats": "per-cycle"
    },
@@ -9389,7 +9686,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      }
     ],
@@ -9739,38 +10037,6 @@
      "hexproof",
      "indestructible"
     ]
-   },
-   {
-    "kind": "on-cast",
-    "effect": {
-     "kind": "keyword-grant",
-     "subject": {
-      "control": "any",
-      "token": null
-     }
-    },
-    "clause": 1,
-    "repeats": "once",
-    "grants": [
-     "hexproof",
-     "indestructible"
-    ]
-   },
-   {
-    "kind": "on-cast",
-    "effect": {
-     "kind": "keyword-grant",
-     "subject": {
-      "control": "any",
-      "token": null
-     }
-    },
-    "clause": 1,
-    "repeats": "once",
-    "grants": [
-     "hexproof",
-     "indestructible"
-    ]
    }
   ]
  },
@@ -9809,7 +10075,7 @@
     "effect": {
      "kind": "mill",
      "subject": {
-      "control": "any",
+      "control": "you",
       "token": null,
       "scope": "all"
      }
@@ -9819,9 +10085,10 @@
      {
       "verb": "mill",
       "subject": {
-       "control": "any",
+       "control": "you",
        "token": null,
        "scope": "all",
+       "notMillAction": true,
        "fromZone": "library"
       },
       "instantSpeed": true
@@ -9833,9 +10100,10 @@
      "floor": 0,
      "ceiling": null,
      "scalesWith": {
-      "control": "any",
+      "control": "you",
       "token": null,
       "scope": "all",
+      "notMillAction": true,
       "fromZone": "library"
      }
     },
@@ -9987,8 +10255,9 @@
      {
       "verb": "mill",
       "subject": {
-       "control": "any",
+       "control": "you",
        "token": null,
+       "notMillAction": true,
        "self": true
       }
      }
@@ -9998,7 +10267,8 @@
     "count": {
      "floor": 1,
      "ceiling": 1
-    }
+    },
+    "looksAtTop": true
    }
   ]
  },
@@ -10026,7 +10296,8 @@
       "token": null,
       "type": "creature",
       "self": true
-     }
+     },
+     "victim": "player"
     },
     "amount": "2",
     "emits": [
@@ -10176,7 +10447,8 @@
       "control": "you",
       "token": null,
       "self": true
-     }
+     },
+     "victim": "player"
     },
     "emits": [
      {
@@ -10306,7 +10578,8 @@
     "count": {
      "floor": 1,
      "ceiling": 1
-    }
+    },
+    "looksAtTop": true
    },
    {
     "kind": "triggered",
@@ -10329,7 +10602,8 @@
      }
     },
     "clause": 1,
-    "repeats": "once"
+    "repeats": "once",
+    "looksAtTop": true
    },
    {
     "kind": "triggered",
@@ -10351,8 +10625,13 @@
       "self": true
      }
     },
+    "gate": {
+     "kind": "unknown",
+     "text": "x is greater than or equal to the number of cards in your library"
+    },
     "clause": 1,
-    "repeats": "once"
+    "repeats": "once",
+    "looksAtTop": true
    }
   ]
  },
@@ -10524,7 +10803,9 @@
       "control": "you",
       "token": null,
       "type": "creature"
-     }
+     },
+     "host": true,
+     "victim": "player"
     },
     "emits": [
      {
@@ -10567,7 +10848,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -10607,7 +10889,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -10640,7 +10923,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -10689,7 +10973,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      }
     ],
@@ -10833,7 +11118,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -10887,7 +11173,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -10932,7 +11219,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      }
     ],
@@ -10991,7 +11279,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      },
      {
@@ -11004,7 +11293,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      }
     ],
@@ -11073,7 +11363,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      },
      {
@@ -11086,7 +11377,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      }
     ],
@@ -11125,7 +11417,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -11225,7 +11518,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -11264,7 +11558,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -11321,7 +11616,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      }
     ],
@@ -11395,7 +11691,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -11441,7 +11738,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -11472,7 +11770,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -11514,7 +11813,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      }
     ],
@@ -11597,7 +11897,7 @@
     "effect": {
      "kind": "damage",
      "subject": {
-      "control": "any",
+      "control": "opp",
       "token": null,
       "type": [
        "planeswalker",
@@ -11615,14 +11915,15 @@
       "token": null,
       "type": "creature",
       "self": true
-     }
+     },
+     "victim": "opponent"
     },
     "amount": "that much",
     "emits": [
      {
       "verb": "non-combat-damage",
       "subject": {
-       "control": "any",
+       "control": "opp",
        "token": null,
        "type": [
         "planeswalker",
@@ -11632,7 +11933,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      }
     ],
@@ -11677,7 +11979,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -11739,11 +12042,13 @@
       "verb": "non-combat-damage",
       "subject": {
        "control": "any",
-       "token": null
+       "token": null,
+       "scope": "target"
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -11796,7 +12101,8 @@
      "subject": {
       "control": "opp",
       "token": null,
-      "scope": "each"
+      "scope": "each",
+      "player": true
      }
     },
     "trigger": {
@@ -11817,11 +12123,13 @@
       "subject": {
        "control": "opp",
        "token": null,
-       "scope": "each"
+       "scope": "each",
+       "player": true
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      }
     ],
@@ -11893,7 +12201,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      }
     ],
@@ -11964,7 +12273,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      }
     ],
@@ -11992,7 +12302,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      },
      {
@@ -12005,7 +12316,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      }
     ],
@@ -12176,7 +12488,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -12204,32 +12517,15 @@
    {
     "kind": "on-cast",
     "effect": {
-     "kind": ""
+     "kind": "damage-change",
+     "subject": {
+      "control": "any",
+      "token": null
+     },
+     "damageChange": "redirected"
     },
-    "emits": [
-     {
-      "verb": "prevented",
-      "subject": {
-       "control": "you",
-       "token": null,
-       "type": "permanent",
-       "scope": "all"
-      },
-      "instantSpeed": true
-     }
-    ],
     "clause": 1,
-    "repeats": "once",
-    "count": {
-     "floor": 0,
-     "ceiling": null,
-     "scalesWith": {
-      "control": "you",
-      "token": null,
-      "type": "permanent",
-      "scope": "all"
-     }
-    }
+    "repeats": "once"
    },
    {
     "kind": "on-cast",
@@ -12302,29 +12598,16 @@
    {
     "kind": "on-cast",
     "effect": {
-     "kind": "",
-     "scaling": "x-cost"
+     "kind": "damage-change",
+     "subject": {
+      "control": "any",
+      "token": null
+     },
+     "scaling": "x-cost",
+     "damageChange": "redirected"
     },
-    "amount": "X",
-    "emits": [
-     {
-      "verb": "prevented",
-      "subject": {
-       "control": "you",
-       "token": null,
-       "type": "creature",
-       "scope": "all"
-      },
-      "instantSpeed": true
-     }
-    ],
     "clause": 2,
-    "repeats": "once",
-    "count": {
-     "floor": 0,
-     "ceiling": null,
-     "scalesWith": "mana"
-    }
+    "repeats": "once"
    },
    {
     "kind": "on-cast",
@@ -12372,23 +12655,13 @@
    {
     "kind": "on-cast",
     "effect": {
-     "kind": ""
+     "kind": "damage-change",
+     "subject": {
+      "control": "any",
+      "token": null
+     },
+     "damageChange": "redirected"
     },
-    "emits": [
-     {
-      "verb": "prevented",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "type": [
-        "creature",
-        "planeswalker"
-       ],
-       "scope": "target"
-      },
-      "instantSpeed": true
-     }
-    ],
     "clause": 1,
     "repeats": "once"
    },
@@ -12483,20 +12756,14 @@
    {
     "kind": "activated",
     "effect": {
-     "kind": ""
+     "kind": "damage-change",
+     "subject": {
+      "control": "any",
+      "token": null
+     },
+     "damageChange": "redirected"
     },
     "cost": "{5}{W}",
-    "emits": [
-     {
-      "verb": "prevented",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "type": "creature"
-      },
-      "instantSpeed": true
-     }
-    ],
     "clause": 2,
     "repeats": "repeatable",
     "payment": {
@@ -12546,20 +12813,16 @@
    {
     "kind": "activated",
     "effect": {
-     "kind": ""
+     "kind": "damage-change",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "self": true
+     },
+     "damageChange": "redirected"
     },
     "cost": "{2}{R}{W}",
-    "emits": [
-     {
-      "verb": "prevented",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "type": "creature"
-      },
-      "instantSpeed": true
-     }
-    ],
     "clause": 1,
     "repeats": "repeatable",
     "payment": {
@@ -12609,20 +12872,14 @@
    {
     "kind": "activated",
     "effect": {
-     "kind": ""
+     "kind": "damage-change",
+     "subject": {
+      "control": "any",
+      "token": null
+     },
+     "damageChange": "redirected"
     },
     "cost": "{1}{W}",
-    "emits": [
-     {
-      "verb": "prevented",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "type": "creature"
-      },
-      "instantSpeed": true
-     }
-    ],
     "clause": 2,
     "repeats": "repeatable",
     "payment": {
@@ -12677,20 +12934,16 @@
    {
     "kind": "activated",
     "effect": {
-     "kind": ""
+     "kind": "damage-change",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "self": true
+     },
+     "damageChange": "redirected"
     },
     "cost": "{1}{W}",
-    "emits": [
-     {
-      "verb": "prevented",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "type": "creature"
-      },
-      "instantSpeed": true
-     }
-    ],
     "clause": 2,
     "repeats": "repeatable",
     "payment": {
@@ -12745,7 +12998,16 @@
    {
     "kind": "on-cast",
     "effect": {
-     "kind": ""
+     "kind": "prevention",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "prevention": {
+     "damage": "any",
+     "amount": 3,
+     "duration": "this-turn"
     },
     "amount": "3",
     "emits": [
@@ -12754,6 +13016,7 @@
       "subject": {
        "control": "you",
        "token": null,
+       "selection": "counted",
        "type": "permanent",
        "scope": "all"
       },
@@ -12788,7 +13051,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -12806,8 +13070,19 @@
    {
     "kind": "on-cast",
     "effect": {
-     "kind": ""
+     "kind": "prevention",
+     "subject": {
+      "control": "any",
+      "token": null
+     },
+     "scaling": "x-cost"
     },
+    "prevention": {
+     "damage": "any",
+     "amount": "x",
+     "duration": "this-turn"
+    },
+    "amount": "X",
     "emits": [
      {
       "verb": "prevented",
@@ -12825,12 +13100,7 @@
     "count": {
      "floor": 0,
      "ceiling": null,
-     "scalesWith": {
-      "control": "you",
-      "token": null,
-      "type": "permanent",
-      "scope": "all"
-     }
+     "scalesWith": "mana"
     }
    },
    {
@@ -12854,11 +13124,16 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
     ],
+    "gate": {
+     "kind": "unknown",
+     "text": "damage is prevented this way"
+    },
     "clause": 1,
     "repeats": "once"
    }
@@ -12872,9 +13147,21 @@
    {
     "kind": "activated",
     "effect": {
-     "kind": ""
+     "kind": "prevention",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "player": true
+     },
+     "scaling": "x-cost"
+    },
+    "prevention": {
+     "damage": "any",
+     "amount": "x",
+     "duration": "this-turn"
     },
     "cost": "{X}",
+    "amount": "X",
     "emits": [
      {
       "verb": "prevented",
@@ -12887,6 +13174,11 @@
     ],
     "clause": 2,
     "repeats": "repeatable",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    },
     "payment": {
      "mana": "{X}"
     }
@@ -12907,10 +13199,11 @@
         "type": "planeswalker"
        }
       ]
-     }
+     },
+     "scaling": "x-cost"
     },
     "cost": "{X}",
-    "amount": "that much",
+    "amount": "X",
     "emits": [
      {
       "verb": "non-combat-damage",
@@ -12922,7 +13215,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      },
@@ -12936,13 +13230,23 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
     ],
+    "gate": {
+     "kind": "unknown",
+     "text": "damage is prevented this way"
+    },
     "clause": 2,
     "repeats": "repeatable",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    },
     "payment": {
      "mana": "{X}"
     }
@@ -13101,7 +13405,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "type": "creature"
       },
       "instantSpeed": true
      }
@@ -13115,7 +13420,8 @@
      "kind": "damage",
      "subject": {
       "control": "any",
-      "token": null
+      "token": null,
+      "player": true
      }
     },
     "amount": "excess damage",
@@ -13124,11 +13430,13 @@
       "verb": "non-combat-damage",
       "subject": {
        "control": "any",
-       "token": null
+       "token": null,
+       "player": true
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "type": "creature"
       },
       "instantSpeed": true
      }
@@ -13215,7 +13523,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -13263,6 +13572,7 @@
       "self": true
      }
     },
+    "amount": "1",
     "emits": [
      {
       "verb": "sacrifice",
@@ -13319,7 +13629,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      }
     ],
@@ -13361,7 +13672,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       }
      }
     ],
@@ -13480,7 +13792,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -13560,7 +13873,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -13727,7 +14041,8 @@
       },
       "dealer": {
        "control": "you",
-       "token": null
+       "token": null,
+       "self": true
       },
       "instantSpeed": true
      }
@@ -14564,6 +14879,10 @@
       "instantSpeed": true
      }
     ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it was a creature card"
+    },
     "clause": 1,
     "repeats": "repeatable",
     "count": {
@@ -14595,6 +14914,10 @@
       "instantSpeed": true
      }
     ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it was a creature card"
+    },
     "clause": 1,
     "repeats": "repeatable",
     "count": {
@@ -14743,6 +15066,10 @@
       }
      }
     ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it's a land card"
+    },
     "returnIf": true,
     "clause": 1,
     "repeats": "once",
@@ -14772,6 +15099,11 @@
      }
     },
     "amount": "1",
+    "gate": {
+     "kind": "unknown",
+     "text": "the answer to \"it's a land card\" is no",
+     "otherwise": true
+    },
     "clause": 1,
     "repeats": "once",
     "count": {
@@ -14794,7 +15126,8 @@
       "control": "any",
       "token": null,
       "chosenType": true,
-      "scope": "all"
+      "scope": "all",
+      "chosenKind": "card-type"
      }
     },
     "toHand": "all",
@@ -14806,7 +15139,7 @@
     "effect": {
      "kind": "mill",
      "subject": {
-      "control": "any",
+      "control": "you",
       "token": null
      }
     },
@@ -14814,8 +15147,9 @@
      {
       "verb": "mill",
       "subject": {
-       "control": "any",
+       "control": "you",
        "token": null,
+       "notMillAction": true,
        "fromZone": "library"
       }
      }
@@ -14846,7 +15180,8 @@
     "count": {
      "floor": 1,
      "ceiling": 1
-    }
+    },
+    "looksAtTop": true
    }
   ]
  },
@@ -14904,7 +15239,8 @@
     "count": {
      "floor": 1,
      "ceiling": 1
-    }
+    },
+    "looksAtTop": true
    },
    {
     "kind": "on-cast",
@@ -14917,7 +15253,8 @@
     },
     "amount": "all",
     "clause": 1,
-    "repeats": "once"
+    "repeats": "once",
+    "looksAtTop": true
    }
   ]
  },
@@ -14942,7 +15279,8 @@
     "count": {
      "floor": 1,
      "ceiling": 1
-    }
+    },
+    "looksAtTop": true
    },
    {
     "kind": "on-cast",
@@ -14960,7 +15298,8 @@
     "count": {
      "floor": 2,
      "ceiling": 2
-    }
+    },
+    "looksAtTop": true
    }
   ]
  },
@@ -14990,7 +15329,8 @@
     "repeats": "repeatable",
     "payment": {
      "mana": "{2}{U}{U}"
-    }
+    },
+    "looksAtTop": true
    },
    {
     "kind": "activated",
@@ -15012,7 +15352,8 @@
     },
     "payment": {
      "mana": "{2}{U}{U}"
-    }
+    },
+    "looksAtTop": true
    }
   ]
  },
@@ -15039,7 +15380,7 @@
     "effect": {
      "kind": "mill",
      "subject": {
-      "control": "any",
+      "control": "you",
       "token": null,
       "other": true,
       "scope": "all"
@@ -15049,10 +15390,11 @@
      {
       "verb": "mill",
       "subject": {
-       "control": "any",
+       "control": "you",
        "token": null,
        "other": true,
        "scope": "all",
+       "notMillAction": true,
        "fromZone": "library"
       },
       "instantSpeed": true
@@ -15064,10 +15406,11 @@
      "floor": 0,
      "ceiling": null,
      "scalesWith": {
-      "control": "any",
+      "control": "you",
       "token": null,
       "other": true,
       "scope": "all",
+      "notMillAction": true,
       "fromZone": "library"
      }
     }
@@ -15095,7 +15438,8 @@
     "count": {
      "floor": 2,
      "ceiling": 2
-    }
+    },
+    "looksAtTop": true
    }
   ]
  },
@@ -15200,7 +15544,7 @@
     "effect": {
      "kind": "mill",
      "subject": {
-      "control": "any",
+      "control": "you",
       "token": null
      }
     },
@@ -15209,8 +15553,9 @@
      {
       "verb": "mill",
       "subject": {
-       "control": "any",
+       "control": "you",
        "token": null,
+       "notMillAction": true,
        "fromZone": "library"
       }
      }
@@ -15648,7 +15993,8 @@
       "subject": {
        "control": "any",
        "token": null,
-       "counter": "silver"
+       "counter": "silver",
+       "zone": "exile"
       }
      }
     ],
@@ -15990,6 +16336,10 @@
     },
     "amount": "1",
     "toHand": "1",
+    "gate": {
+     "kind": "unknown",
+     "text": "it's a zombie card"
+    },
     "returnIf": true,
     "clause": 1,
     "repeats": "repeatable",
@@ -16021,6 +16371,10 @@
     },
     "amount": "1",
     "toHand": "1",
+    "gate": {
+     "kind": "unknown",
+     "text": "it's a zombie card"
+    },
     "returnIf": true,
     "clause": 1,
     "repeats": "once",
@@ -16054,6 +16408,7 @@
       "subject": {
        "control": "you",
        "token": null,
+       "notMillAction": true,
        "fromZone": "library"
       }
      }
@@ -16088,6 +16443,7 @@
       "subject": {
        "control": "you",
        "token": null,
+       "notMillAction": true,
        "fromZone": "library"
       }
      }
@@ -16136,7 +16492,8 @@
     "count": {
      "floor": 1,
      "ceiling": 1
-    }
+    },
+    "looksAtTop": true
    }
   ]
  },
@@ -16169,6 +16526,10 @@
     "cost": "+1",
     "amount": "1",
     "toHand": "1",
+    "gate": {
+     "kind": "unknown",
+     "text": "it's a noncreature, nonland card"
+    },
     "returnIf": true,
     "clause": 1,
     "repeats": "per-cycle",
@@ -16197,7 +16558,8 @@
     },
     "grants": [
      "rebound"
-    ]
+    ],
+    "claimsNothing": "refused-trigger"
    },
    {
     "kind": "activated",
@@ -16350,7 +16712,7 @@
     "effect": {
      "kind": "mill",
      "subject": {
-      "control": "any",
+      "control": "you",
       "token": null
      }
     },
@@ -16358,8 +16720,9 @@
      {
       "verb": "mill",
       "subject": {
-       "control": "any",
+       "control": "you",
        "token": null,
+       "notMillAction": true,
        "fromZone": "library"
       }
      }
@@ -16445,7 +16808,8 @@
     "count": {
      "floor": 1,
      "ceiling": 1
-    }
+    },
+    "looksAtTop": true
    }
   ]
  },
@@ -16470,13 +16834,13 @@
      }
     ],
     "clause": 1,
-    "repeats": "once"
+    "repeats": "once",
+    "looksAtTop": true
    },
    {
     "kind": "on-cast",
     "effect": {
-     "kind": "",
-     "scaling": "per-permanent"
+     "kind": ""
     },
     "emits": [
      {
@@ -16490,7 +16854,8 @@
      }
     ],
     "clause": 1,
-    "repeats": "once"
+    "repeats": "once",
+    "looksAtTop": true
    },
    {
     "kind": "on-cast",
@@ -16503,7 +16868,8 @@
     },
     "amount": "all",
     "clause": 1,
-    "repeats": "once"
+    "repeats": "once",
+    "looksAtTop": true
    },
    {
     "kind": "on-cast",
@@ -16516,7 +16882,8 @@
       "subject": {
        "control": "any",
        "token": null,
-       "self": true
+       "self": true,
+       "fromZone": "stack"
       }
      },
      {
@@ -16524,7 +16891,8 @@
       "subject": {
        "control": "any",
        "token": null,
-       "self": true
+       "self": true,
+       "fromZone": "stack"
       }
      }
     ],
@@ -16533,7 +16901,8 @@
     "count": {
      "floor": 1,
      "ceiling": 1
-    }
+    },
+    "looksAtTop": true
    }
   ]
  },
@@ -16608,6 +16977,10 @@
     "cost": "{T}",
     "amount": "1",
     "toHand": "1",
+    "gate": {
+     "kind": "unknown",
+     "text": "it's a land card"
+    },
     "returnIf": true,
     "clause": 1,
     "repeats": "per-cycle",
@@ -16640,7 +17013,8 @@
     "count": {
      "floor": 1,
      "ceiling": 1
-    }
+    },
+    "looksAtTop": true
    },
    {
     "kind": "static",
@@ -16651,14 +17025,16 @@
      {
       "verb": "mill",
       "subject": {
-       "control": "any",
+       "control": "you",
        "token": null,
+       "notMillAction": true,
        "fromZone": "library"
       }
      }
     ],
     "clause": 1,
-    "repeats": "continuous"
+    "repeats": "continuous",
+    "looksAtTop": true
    },
    {
     "kind": "activated",
@@ -16704,7 +17080,8 @@
     },
     "grants": [
      "indestructible"
-    ]
+    ],
+    "grantsSelf": true
    }
   ]
  },
@@ -16737,10 +17114,16 @@
       "self": true
      }
     },
+    "amount": "1",
     "toHand": "1",
     "chooses": true,
     "clause": 1,
-    "repeats": "once"
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "looksAtTop": true
    }
   ]
  },
@@ -16849,7 +17232,7 @@
     "effect": {
      "kind": "mill",
      "subject": {
-      "control": "any",
+      "control": "you",
       "token": null
      }
     },
@@ -16858,8 +17241,9 @@
      {
       "verb": "mill",
       "subject": {
-       "control": "any",
+       "control": "you",
        "token": null,
+       "notMillAction": true,
        "fromZone": "library"
       }
      }
@@ -17063,10 +17447,16 @@
       "self": true
      }
     },
+    "amount": "1",
     "toHand": "1",
     "chooses": true,
     "clause": 1,
-    "repeats": "once"
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "looksAtTop": true
    },
    {
     "kind": "triggered",
@@ -17129,7 +17519,8 @@
     "toHand": "4",
     "chooses": true,
     "clause": 2,
-    "repeats": "per-cycle"
+    "repeats": "per-cycle",
+    "looksAtTop": true
    }
   ]
  },
@@ -17151,10 +17542,16 @@
       ]
      }
     },
+    "amount": "1",
     "toHand": "1",
     "chooses": true,
     "clause": 1,
-    "repeats": "once"
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "looksAtTop": true
    },
    {
     "kind": "on-cast",
@@ -17178,7 +17575,8 @@
     "count": {
      "floor": 2,
      "ceiling": 2
-    }
+    },
+    "looksAtTop": true
    }
   ]
  },
@@ -17210,9 +17608,14 @@
       }
      }
     ],
+    "gate": {
+     "kind": "unknown",
+     "text": "that card has mana value 2 or less"
+    },
     "returnIf": true,
     "clause": 1,
-    "repeats": "once"
+    "repeats": "once",
+    "looksAtTop": true
    },
    {
     "kind": "on-cast",
@@ -17223,11 +17626,16 @@
       "token": null
      }
     },
+    "gate": {
+     "kind": "unknown",
+     "text": "that card has mana value 2 or less"
+    },
     "clause": 1,
     "repeats": "once",
     "grants": [
      "haste"
-    ]
+    ],
+    "looksAtTop": true
    },
    {
     "kind": "on-cast",
@@ -17242,7 +17650,8 @@
     "toHand": "1",
     "chooses": true,
     "clause": 1,
-    "repeats": "once"
+    "repeats": "once",
+    "looksAtTop": true
    }
   ]
  },
@@ -17267,7 +17676,8 @@
     "toHand": "2",
     "chooses": true,
     "clause": 1,
-    "repeats": "once"
+    "repeats": "once",
+    "looksAtTop": true
    }
   ]
  },
@@ -17335,6 +17745,7 @@
        "colors": [
         "W"
        ],
+       "selection": "attached-to",
        "subtype": "aura",
        "scope": "all"
       },
@@ -17353,6 +17764,7 @@
       "colors": [
        "W"
       ],
+      "selection": "attached-to",
       "subtype": "aura",
       "scope": "all"
      }
@@ -17416,6 +17828,7 @@
       "subject": {
        "control": "any",
        "token": null,
+       "selection": "attached-to",
        "subtype": "aura",
        "scope": "all"
       },
@@ -17430,6 +17843,7 @@
      "scalesWith": {
       "control": "any",
       "token": null,
+      "selection": "attached-to",
       "subtype": "aura",
       "scope": "all"
      }
@@ -18383,8 +18797,10 @@
       "subject": {
        "control": "any",
        "token": null,
+       "selection": "counted",
        "type": "creature",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      },
      {
@@ -18392,8 +18808,10 @@
       "subject": {
        "control": "any",
        "token": null,
+       "selection": "counted",
        "type": "creature",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      }
     ],
@@ -18405,8 +18823,10 @@
      "scalesWith": {
       "control": "any",
       "token": null,
+      "selection": "counted",
       "type": "creature",
-      "scope": "all"
+      "scope": "all",
+      "edictAll": true
      }
     }
    }
@@ -18917,6 +19337,11 @@
         "land"
        ],
        "scope": "each",
+       "except": [
+        {
+         "historic": true
+        }
+       ],
        "fromZone": "battlefield"
       },
       "instantSpeed": true
@@ -18941,6 +19366,11 @@
        "land"
       ],
       "scope": "each",
+      "except": [
+       {
+        "historic": true
+       }
+      ],
       "fromZone": "battlefield"
      }
     }
@@ -19005,8 +19435,10 @@
       "subject": {
        "control": "any",
        "token": null,
+       "selection": "all-but",
        "type": "permanent",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      },
      {
@@ -19014,8 +19446,10 @@
       "subject": {
        "control": "any",
        "token": null,
+       "selection": "all-but",
        "type": "permanent",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      }
     ],
@@ -19027,8 +19461,10 @@
      "scalesWith": {
       "control": "any",
       "token": null,
+      "selection": "all-but",
       "type": "permanent",
-      "scope": "all"
+      "scope": "all",
+      "edictAll": true
      }
     }
    }
@@ -19235,7 +19671,8 @@
       "subject": {
        "control": "any",
        "token": null,
-       "type": "creature"
+       "type": "creature",
+       "edictAll": true
       }
      },
      {
@@ -19243,7 +19680,8 @@
       "subject": {
        "control": "any",
        "token": null,
-       "type": "creature"
+       "type": "creature",
+       "edictAll": true
       }
      }
     ],
@@ -20177,17 +20615,6 @@
      }
     },
     "amount": "-1/-0",
-    "emits": [
-     {
-      "verb": "dies",
-      "subject": {
-       "control": "opp",
-       "token": null,
-       "type": "creature",
-       "scope": "all"
-      }
-     }
-    ],
     "clause": 1,
     "repeats": "continuous"
    }
@@ -20282,7 +20709,8 @@
        "control": "opp",
        "token": null,
        "type": "creature",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       },
       "instantSpeed": true
      },
@@ -20292,7 +20720,8 @@
        "control": "opp",
        "token": null,
        "type": "creature",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       },
       "instantSpeed": true
      }
@@ -20453,7 +20882,8 @@
        "notType": [
         "land"
        ],
-       "scope": "all"
+       "scope": "all",
+       "nameRelation": "same"
       }
      },
      {
@@ -20472,7 +20902,8 @@
        "notType": [
         "land"
        ],
-       "scope": "all"
+       "scope": "all",
+       "nameRelation": "same"
       }
      }
     ],
@@ -20495,7 +20926,8 @@
       "notType": [
        "land"
       ],
-      "scope": "all"
+      "scope": "all",
+      "nameRelation": "same"
      }
     }
    }
@@ -20529,8 +20961,10 @@
       "subject": {
        "control": "opp",
        "token": null,
+       "selection": "counted",
        "type": "creature",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      },
      {
@@ -20538,8 +20972,10 @@
       "subject": {
        "control": "opp",
        "token": null,
+       "selection": "counted",
        "type": "creature",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      }
     ],
@@ -20823,6 +21259,7 @@
       "subject": {
        "control": "any",
        "token": null,
+       "selection": "counted",
        "type": "creature",
        "scope": "all",
        "edict": true
@@ -20833,6 +21270,7 @@
       "subject": {
        "control": "any",
        "token": null,
+       "selection": "counted",
        "type": "creature",
        "scope": "all",
        "edict": true
@@ -20900,6 +21338,7 @@
       "subject": {
        "control": "any",
        "token": null,
+       "selection": "attached-to",
        "subtype": "equipment",
        "scope": "all"
       },
@@ -20914,6 +21353,7 @@
      "scalesWith": {
       "control": "any",
       "token": null,
+      "selection": "attached-to",
       "subtype": "equipment",
       "scope": "all"
      }
@@ -21239,7 +21679,8 @@
        "control": "any",
        "token": null,
        "type": "land",
-       "scope": "each"
+       "scope": "each",
+       "edictAll": true
       }
      },
      {
@@ -21248,7 +21689,8 @@
        "control": "any",
        "token": null,
        "type": "land",
-       "scope": "each"
+       "scope": "each",
+       "edictAll": true
       }
      }
     ],
@@ -21261,7 +21703,8 @@
       "control": "any",
       "token": null,
       "type": "land",
-      "scope": "each"
+      "scope": "each",
+      "edictAll": true
      }
     }
    }
@@ -21374,7 +21817,8 @@
        "control": "any",
        "token": null,
        "type": "land",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      },
      {
@@ -21383,7 +21827,8 @@
        "control": "any",
        "token": null,
        "type": "land",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      }
     ],
@@ -21396,7 +21841,8 @@
       "control": "any",
       "token": null,
       "type": "land",
-      "scope": "all"
+      "scope": "all",
+      "edictAll": true
      }
     }
    },
@@ -21588,7 +22034,8 @@
         {
          "type": "permanent"
         }
-       ]
+       ],
+       "edictAll": true
       },
       "instantSpeed": true
      },
@@ -21607,7 +22054,8 @@
         {
          "type": "permanent"
         }
-       ]
+       ],
+       "edictAll": true
       },
       "instantSpeed": true
      }
@@ -21912,8 +22360,10 @@
       "subject": {
        "control": "any",
        "token": null,
+       "selection": "counted",
        "type": "land",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      },
      {
@@ -21921,8 +22371,10 @@
       "subject": {
        "control": "any",
        "token": null,
+       "selection": "counted",
        "type": "land",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      }
     ],
@@ -22080,8 +22532,10 @@
       "subject": {
        "control": "any",
        "token": null,
+       "selection": "counted",
        "type": "creature",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      },
      {
@@ -22089,8 +22543,10 @@
       "subject": {
        "control": "any",
        "token": null,
+       "selection": "counted",
        "type": "creature",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      }
     ],
@@ -22114,8 +22570,10 @@
       "subject": {
        "control": "any",
        "token": null,
+       "selection": "counted",
        "type": "land",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      },
      {
@@ -22123,8 +22581,10 @@
       "subject": {
        "control": "any",
        "token": null,
+       "selection": "counted",
        "type": "land",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      }
     ],
@@ -22440,7 +22900,8 @@
        "token": null,
        "selection": "all-but",
        "type": "permanent",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      },
      {
@@ -22450,7 +22911,8 @@
        "token": null,
        "selection": "all-but",
        "type": "permanent",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      }
     ],
@@ -22464,7 +22926,8 @@
       "token": null,
       "selection": "all-but",
       "type": "permanent",
-      "scope": "all"
+      "scope": "all",
+      "edictAll": true
      }
     }
    }
@@ -22630,7 +23093,8 @@
        "token": null,
        "colorCount": "colored",
        "type": "permanent",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      },
      {
@@ -22640,7 +23104,8 @@
        "token": null,
        "colorCount": "colored",
        "type": "permanent",
-       "scope": "all"
+       "scope": "all",
+       "edictAll": true
       }
      }
     ],
@@ -22654,7 +23119,8 @@
       "token": null,
       "colorCount": "colored",
       "type": "permanent",
-      "scope": "all"
+      "scope": "all",
+      "edictAll": true
      }
     }
    }
@@ -23009,9 +23475,63 @@
       "subject": {
        "control": "you",
        "token": null,
+       "self": true,
+       "type": "land"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "self": true,
+       "type": "land"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{5}{B}{R}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      },
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "legendary": true,
+        "type": "artifact"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{5}{B}{R}, {T}, Sacrifice Mount Doom and a legendary artifact",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
        "legendary": true,
-       "type": "artifact",
-       "subtype": "mount"
+       "type": "artifact"
       }
      },
      {
@@ -23020,13 +23540,16 @@
        "control": "you",
        "token": null,
        "legendary": true,
-       "type": "artifact",
-       "subtype": "mount"
+       "type": "artifact"
       }
      }
     ],
     "clause": 3,
     "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
     "payment": {
      "mana": "{5}{B}{R}",
      "tap": true,
@@ -23034,11 +23557,16 @@
       {
        "amount": "1",
        "subject": {
+        "self": true
+       }
+      },
+      {
+       "amount": "1",
+       "subject": {
         "control": "you",
         "token": null,
         "legendary": true,
-        "type": "artifact",
-        "subtype": "mount"
+        "type": "artifact"
        }
       }
      ]
@@ -23084,11 +23612,16 @@
       {
        "amount": "1",
        "subject": {
+        "self": true
+       }
+      },
+      {
+       "amount": "1",
+       "subject": {
         "control": "you",
         "token": null,
         "legendary": true,
-        "type": "artifact",
-        "subtype": "mount"
+        "type": "artifact"
        }
       }
      ]
@@ -23203,7 +23736,8 @@
     },
     "payment": {
      "loyalty": "-2"
-    }
+    },
+    "looksAtTop": true
    },
    {
     "kind": "activated",
@@ -25720,7 +26254,8 @@
     "count": {
      "floor": 1,
      "ceiling": 1
-    }
+    },
+    "looksAtTop": true
    }
   ]
  },

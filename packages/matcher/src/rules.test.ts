@@ -1508,6 +1508,13 @@ test("card selection is a scry, a surveil or a look the card DOES; a card that o
   expect(sel("Eligeth, Crossroads Augur")).toBe(false); // "If you would scry ..., draw that many cards instead": a replacement
 });
 
+// Gift of the Gargantuan has no scry/surveil emit, no Hideaway and no to-hand/search effect arm: the `abilityMark looksAtTop` arm is the ONLY reason it is selection.
+test("a look at the top cards that nothing else reads is card selection through the looksAtTop mark (Gift of the Gargantuan, #1266)", () => {
+  const n = "Gift of the Gargantuan";
+  expect(realCard(n).tags?.abilities?.some((a) => a.looksAtTop === true)).toBe(true);
+  expect(detectBuildCategories([realCard(n)]).get("cardSelection")?.has(n)).toBe(true);
+});
+
 test("an exile of the top cards and a play of them in ANOTHER clause is impulse draw (Theater of Horrors, #1266)", () => {
   const imp = (n: string) => detectBuildCategories([realCard(n)]).get("impulseDraw")?.has(n) === true;
   expect(imp("Theater of Horrors")).toBe(true);

@@ -2,7 +2,7 @@ import type { Ability } from "../schema.js";
 
 /** THE TWO PRINTED READS OF THE TOP OF A LIBRARY THE CLAUSE LAYER DOES NOT RECORD (#1266). The card-selection and impulse-draw roles read these two phrases off the whole oracle text; the same phrases are read here and stored on the abilities
  *  (`Ability.looksAtTop`, `Ability.impulse`), so the matcher reads derived data.
- *  CEILING: `looksAtTop` is read one CLAUSE at a time and a clause that derived no ability carries nothing (Aladdin's Lamp's replacement, Orcish Spy's look at another player's library, Hideaway's reminder: the matcher reads the Hideaway keyword for that last one).
+ *  CEILING: `looksAtTop` is read one CLAUSE at a time and a clause that derived no ability carries nothing (Aladdin's Lamp's replacement, Orcish Spy's look at another player's library, Hideaway's reminder: the matcher reads the Hideaway keyword for that last one; Gandalf, Goblins' Bane // Flameshape, whose back face "Look at the top two cards of your library..." derives no ability, so it carries no mark). A card with no derived row at all (Vivien's Invocation, the one commander-legal card without a cardClauses doc) gets nothing.
  *  CEILING: `impulse` is read off the WHOLE card, because the exile and the permission to play are often two clauses (Theater of Horrors, Colfenor's Plans, Pick Up the Pace), but only the ability that exiles from YOUR library carries it. A card with an
  *  exile of its top cards in one ability and an unrelated "you may play" in another is marked; so was the printed pattern. "You may cast" is not an impulse draw here, as it was not in that pattern (Aminatou's Augury, Apex of Power, Amped Raptor). */
 const LOOKS_AT_TOP = /\blook at the top \w+ cards?\b/i;
