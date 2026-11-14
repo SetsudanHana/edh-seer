@@ -24,6 +24,8 @@ export type RuleClause =
       /** The effect's SUBJECT scope (`all`, `each`, `target`): present on the effect and in this list. An effect that names none does not match -- `cost-reduction` with scope `all`/`each` is a discount
        *  for OTHER spells (Sapphire Medallion), and one with no scope is the card's own cost ("This spell costs {1} less", Sunderflock). */
       scope?: string[];
+      /** Let `scope` also accept a ONE-SIDED MASS at a targeted player's board (owner 2026-11-14: "Return all nonland permanents target player controls to their owner's hand" is a weaker board wipe, an answer to the classes it returns). The marker is on the ability's EMIT (`SubjectFilter.targetPlayer`, derive sets it on `leaves`); the effect subject of such a bounce is `scope: all, control: any` and carries none, so this reads the `leaves` emit (no other verb), and a symmetric mass (Evacuation, Aetherize: no marker) is not let through. A mass on LANDS ONLY is refused, as `notMassLand` refuses it for the kill rules (Ajani Vengeant: stax, not a land answer). */
+      orTargetPlayerMass?: true;
       /** Refuse an ability whose subject is a spell THAT TARGETS THIS CARD (`subject.targets.self`): Spellwild Ouphe's "Spells that target this creature cost {2} less" cheapens
        *  spells aimed at the card itself, a discount for no other spell (`discountsOtherSpells`). */
       notSelfTargeted?: boolean;
@@ -658,7 +660,10 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         // WHO IT HAPPENS TO, when the effect names one (#574): The Chain Veil's "you lose 2 life" is
         // `player-life-loss` too. An effect with no subject is not refused -- nothing says who.
         && (clause.control === undefined || a.effect.subject?.control === undefined || clause.control.includes(a.effect.subject.control))
-        && (clause.scope === undefined || (a.effect.subject?.scope !== undefined && clause.scope.includes(a.effect.subject.scope)))
+        && (clause.scope === undefined || (a.effect.subject?.scope !== undefined && clause.scope.includes(a.effect.subject.scope))
+          || (clause.orTargetPlayerMass === true && (a.emits ?? []).some((e) => e.verb === "leaves" && e.subject.targetPlayer === true && !landOnlySubject(e.subject)
+            && (clause.control === undefined || clause.control.includes(e.subject.control as string))
+            && (clause.notOwnedByYou !== true || e.subject.owner !== "you"))))
         && (clause.notSelfTargeted !== true || (a.effect.subject as { targets?: { self?: boolean } } | undefined)?.targets?.self !== true)
         && (clause.notOnFlip !== true || a.onFlip === undefined)
         && (clause.notOwnedByYou !== true || a.effect.subject?.owner !== "you")

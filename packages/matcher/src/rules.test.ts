@@ -342,6 +342,15 @@ describe("the destroy and exile answers read derived data (#1266)", () => {
     expect(classes("Mogg Infestation")).toEqual(["creature"]);
   });
 
+  // Owner 2026-11-14: a one-sided mass bounce at a target player is an answer, a weaker board wipe.
+  test("a one-sided mass bounce at a player answers the classes it returns; a symmetric one does not (River's Rebuke, Hurkyl's Recall, Evacuation, Aetherize)", () => {
+    expect(classes("River's Rebuke")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+    expect(classes("River's Rebuke")).not.toContain("land");
+    expect(classes("Hurkyl's Recall")).toEqual(["artifact"]);
+    expect(classes("Evacuation")).not.toContain("creature");
+    expect(classes("Aetherize")).not.toContain("creature");
+  });
+
   test("a land answer is a TARGETED land kill: Boom // Bust is one, the mass kill at a player is stax (Ajani Vengeant, Burning of Xinye)", () => {
     expect(classes("Boom // Bust")).toEqual(["land"]);
     expect(classes("Ajani Vengeant")).not.toContain("land");
