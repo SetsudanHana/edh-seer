@@ -550,7 +550,7 @@
     {
       "id": "answers.shrink",
       "answerClass": "creature",
-      "match": [{"op": "effectKind", "in": ["debuff"], "scope": ["target"], "orTargetPlayerMass": true, "control": ["opp", "any"], "toughnessDown": true, "notOnFlip": true, "notBlockCombat": true, "reachesClass": "creature"}],
+      "match": [{"op": "effectKind", "in": ["debuff"], "scope": ["target"], "control": ["opp", "any"], "toughnessDown": true, "notOnFlip": true, "notBlockCombat": true, "reachesClass": "creature"}],
       "why": "DERIVED (#1266; it was the printed `shrinkRemoval` pattern). 'Target creature gets -3/-3' kills most creatures and is removal to `targeted removal`; Nowhere to Run, Tragic Slip and Vilis answered nothing (issue #581). A `debuff` effect that TARGETS a creature of an opponent or any player and lowers toughness (`toughnessDown`: -2/-0 shrinks an attacker and kills nothing), not the losing side of a coin flip (Orcish Captain) and a colour hoser counts (owner 2026-11-13). Measured against the printed pattern (rule alone): 262 to 266 cards, +5 -1. GAINED, a genuine fix: a qualified type between `target` and `creature` (Toxic Stench \"target nonblack creature\") and a shrink per energy or per land (Die Young, Drown in Filth). LOST, a genuine fix: a token's quoted \"target creature gets -1/-1\" (Skirk Ridge Exhumer, #533). Marks: the NARROW mark (a stat or state condition on the target) is DERIVED on every answerClass rule, from a gate that is a condition on the target (Rules 51): Skulking Killer (\"if that opponent controls no other creatures\") is narrow, as are Barrin's Unmaking, Nimbus Champion and Sage-Eye Avengers in `answers.bounce`."
     },
     {
@@ -562,31 +562,31 @@
     {
       "id": "answers.bounce.creature",
       "answerClass": "creature",
-      "match": [{"op": "effectKind", "in": ["bounce"], "scope": ["target"], "orTargetPlayerMass": true, "control": ["opp", "any"], "notOwnedByYou": true, "reachesClass": "creature"}],
+      "match": [{"op": "effectKind", "in": ["bounce"], "scope": ["target"], "control": ["opp", "any"], "notOwnedByYou": true, "reachesClass": "creature"}],
       "why": "DERIVED (#1266; it was the printed `bounceRemoval` pattern). A bounce is a weaker answer than a kill -- it answers the board, not the card -- but it is an answer, and `targetedRemoval` has always counted it. A `bounce` effect that TARGETS a permanent of an opponent or any player whose subject can be the class (`reachesClass`: \"nonland permanent\" is not a land; a card in a graveyard and a spell name no class; a bare subtype such as \"Aura\" names its class at NARROW_WEIGHT on the artifact and enchantment rules, `bareSubtype`, owner 2026-11-13: Seedling Charm), not a permanent you own and a colour hoser counts (owner 2026-11-13). Measured against the printed pattern (rule alone): creature 230 to 321 (+100 -9), artifact 102 to 140 (+40 -2), enchantment 101 to 137 (+38 -2), planeswalker 98 to 134 (+37 -1), land 43 to 42 (+4 -5). GAINED, a genuine fix: a counted or optional object that is not `return target` (\"return up to two target creatures\", \"return X target creatures\", \"return another target nonland permanent\", \"return six target nonland permanents\": Aether Tide, Captivating Gyre, Aether Gale, Disruptor of Currents). LOST, a genuine fix: RECURSION from a graveyard (\"return target creature card from a graveyard to its owner's hand\": Disturbing Plot, Revive the Fallen, Pulse of Murasa, Vampire Charmseeker: the printed class read \"creature card from a graveyard\" as creature), and a token-only or Aura-only subject. CEILING: real misses. Crystal Shard (\"unless its controller pays {1}\" derives a bounce with no subject). \"Target spell or permanent\" derives a type list without land and `umbrella: \"permanent\"`; the umbrella is every permanent, so `reachesClass` reads it as reaching a land on the battlefield (Venser, Shaper Savant; Jeskai Revelation), unless a colour, a mana value or another restriction narrows it (Aether Gust, \"red or green\"; Divide by Zero, \"mana value 1 or greater\": a land has neither) or it is a \"nonland permanent\" (`notType: land`: Into the Roil, Cyclonic Rift). CEILING: over-reads. Getaway Car (\"target creature that crewed it\" is yours), Alchemist's Retrieval (\"nonland permanent [you control]\"). Marks: derived, see `answers.shrink`."
     },
     {
       "id": "answers.bounce.artifact",
       "answerClass": "artifact",
-      "match": [{"op": "effectKind", "in": ["bounce"], "scope": ["target"], "orTargetPlayerMass": true, "control": ["opp", "any"], "notOwnedByYou": true, "reachesClass": "artifact", "bareSubtype": true}],
+      "match": [{"op": "effectKind", "in": ["bounce"], "scope": ["target"], "control": ["opp", "any"], "notOwnedByYou": true, "reachesClass": "artifact", "bareSubtype": true}],
       "why": "As answers.bounce.creature, for the artifact class."
     },
     {
       "id": "answers.bounce.enchantment",
       "answerClass": "enchantment",
-      "match": [{"op": "effectKind", "in": ["bounce"], "scope": ["target"], "orTargetPlayerMass": true, "control": ["opp", "any"], "notOwnedByYou": true, "reachesClass": "enchantment", "bareSubtype": true}],
+      "match": [{"op": "effectKind", "in": ["bounce"], "scope": ["target"], "control": ["opp", "any"], "notOwnedByYou": true, "reachesClass": "enchantment", "bareSubtype": true}],
       "why": "As answers.bounce.creature, for the enchantment class."
     },
     {
       "id": "answers.bounce.planeswalker",
       "answerClass": "planeswalker",
-      "match": [{"op": "effectKind", "in": ["bounce"], "scope": ["target"], "orTargetPlayerMass": true, "control": ["opp", "any"], "notOwnedByYou": true, "reachesClass": "planeswalker"}],
+      "match": [{"op": "effectKind", "in": ["bounce"], "scope": ["target"], "control": ["opp", "any"], "notOwnedByYou": true, "reachesClass": "planeswalker"}],
       "why": "As answers.bounce.creature, for the planeswalker class."
     },
     {
       "id": "answers.bounce.land",
       "answerClass": "land",
-      "match": [{"op": "effectKind", "in": ["bounce"], "scope": ["target"], "orTargetPlayerMass": true, "control": ["opp", "any"], "notOwnedByYou": true, "reachesClass": "land"}],
+      "match": [{"op": "effectKind", "in": ["bounce"], "scope": ["target"], "control": ["opp", "any"], "notOwnedByYou": true, "reachesClass": "land"}],
       "why": "As answers.bounce.creature, for the land class."
     },
     {

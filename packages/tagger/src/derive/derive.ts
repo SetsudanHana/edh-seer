@@ -4257,6 +4257,8 @@ export function deriveAbilities(
         const yours = own || CONTROLLER_GETS_COPIES.test(clauseText);
         for (const e of emits) {
           // A MASS AT A TARGETED PLAYER'S BOARD (`targetPlayer`, #1266) is read as the target it was: Mogg Infestation, Primeval Light stay an opponent's.
+          // CEILING: "target player" includes you, and a removal mass aimed at your own board (Mogg Infestation for its tokens) still reads `opp`, so it feeds no "a creature you control dies" payoff.
+          // A non-removal verb at a targeted player (Contagion Engine's counters, Practiced Offense) keeps `any`. Same answer as the scope-target read before #1266.
           if (e.subject.control === "any" && (e.subject.scope === "target" || e.subject.targetPlayer === true)) e.subject.control = yours || e.subject.owner === "you" ? "you" : "opp";
         }
       }
