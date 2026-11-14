@@ -52196,5 +52196,1434 @@
     }
    }
   ]
+ },
+ "Imprisoned in the Moon": {
+  "oracleText": "Enchant creature, land, or planeswalker\nEnchanted permanent is a colorless land with \"{T}: Add {C}\" and loses all other card types and abilities.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "attached",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": [
+        "creature",
+        "land",
+        "planeswalker"
+       ]
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "animate",
+     "becomes": {
+      "control": "any",
+      "token": null,
+      "type": "land",
+      "colors": [
+       "C"
+      ]
+     },
+     "becomesLasts": true
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "stripsHost": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    },
+    "grantedBy": 2
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": [
+    "creature",
+    "land",
+    "planeswalker"
+   ]
+  }
+ },
+ "Frogify": {
+  "oracleText": "Enchant creature\nEnchanted creature loses all abilities and is a blue Frog creature with base power and toughness 1/1. (It loses all other card types and creature types.)",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "stripsHost": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "animate",
+     "becomes": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "subtype": "frog",
+      "colors": [
+       "U"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 1
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 1
+       }
+      ]
+     },
+     "becomesLasts": true
+    },
+    "host": true,
+    "amount": "1/1",
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Stop Cold": {
+  "oracleText": "Flash\nEnchant artifact or creature\nWhen this Aura enters, tap enchanted permanent.\nEnchanted permanent loses all abilities and doesn't untap during its controller's untap step.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "clause": 3,
+    "repeats": "once"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "permanent"
+     }
+    },
+    "host": true,
+    "stripsHost": true,
+    "clause": 4,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous"
+    },
+    "clause": 4,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": [
+    "creature",
+    "artifact"
+   ]
+  }
+ },
+ "Sugar Coat": {
+  "oracleText": "Flash\nEnchant creature or Food\nEnchanted permanent is a colorless Food artifact with \"{2}, {T}, Sacrifice this artifact: You gain 3 life\" and loses all other card types and abilities.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "animate",
+     "becomes": {
+      "control": "any",
+      "token": null,
+      "type": "artifact",
+      "subtype": "food",
+      "colors": [
+       "C"
+      ]
+     },
+     "becomesLasts": true
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "stripsHost": true,
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}, {T}, Sacrifice this artifact",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "artifact",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "artifact",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    },
+    "grantedBy": 3
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "{2}, {T}, Sacrifice this artifact",
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "once",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    },
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    },
+    "grantedBy": 3
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "anyOf": [
+    {
+     "type": "creature"
+    },
+    {
+     "subtype": "food"
+    }
+   ]
+  }
+ },
+ "Flood the Engine": {
+  "oracleText": "Enchant creature or Vehicle\nWhen this Aura enters, tap enchanted permanent.\nEnchanted permanent loses all abilities and doesn't untap during its controller's untap step.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "permanent"
+     }
+    },
+    "host": true,
+    "stripsHost": true,
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous"
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "anyOf": [
+    {
+     "type": "creature"
+    },
+    {
+     "subtype": "vehicle"
+    }
+   ]
+  }
+ },
+ "Mystic Subdual": {
+  "oracleText": "Flash\nEnchant creature\nEnchanted creature gets -2/-0 and loses all abilities. (Mutating onto the creature won't give it new abilities. It can gain abilities in other ways.)",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "debuff"
+    },
+    "host": true,
+    "amount": "-2/-0",
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "stripsHost": true,
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Observed Stasis": {
+  "oracleText": "Flash\nEnchant creature an opponent controls\nWhen this Aura enters, remove enchanted creature from combat. Then draw a card for each tapped creature its controller controls.\nEnchanted creature loses all abilities and can't attack or block.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     },
+     "scaling": "per-creature"
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "amount": "for each tapped creature its controller controls",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "tapped": true,
+      "type": "creature"
+     }
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "stripsHost": true,
+    "clause": 4,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "restriction"
+    },
+    "host": true,
+    "restricts": [
+     "attack",
+     "block"
+    ],
+    "clause": 4,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "opp",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Arrest": {
+  "oracleText": "Enchant creature\nEnchanted creature can't attack or block, and its activated abilities can't be activated.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "restriction"
+    },
+    "host": true,
+    "restricts": [
+     "attack",
+     "block"
+    ],
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Deep Freeze": {
+  "oracleText": "Enchant creature\nEnchanted creature has base power and toughness 0/4, has defender, loses all other abilities, and is a blue Wall in addition to its other colors and types.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "defender"
+    ]
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "stripsHost": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "animate",
+     "becomes": {
+      "control": "any",
+      "token": null,
+      "subtype": "wall",
+      "colors": [
+       "U"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 0
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 4
+       }
+      ]
+     },
+     "becomesLasts": true
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Unable to Scream": {
+  "oracleText": "Enchant creature\nEnchanted creature loses all abilities and is a Toy artifact creature with base power and toughness 0/2 in addition to its other types.\nAs long as enchanted creature is face down, it can't be turned face up.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "stripsHost": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "animate",
+     "becomes": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact"
+      ],
+      "allTypes": [
+       "artifact",
+       "creature"
+      ],
+      "subtype": "toy",
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 0
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 2
+       }
+      ]
+     },
+     "becomesLasts": true
+    },
+    "host": true,
+    "amount": "0/2",
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Tamiyo's Compleation": {
+  "oracleText": "Flash\nEnchant artifact, creature, or planeswalker\nWhen this Aura enters, tap enchanted permanent. If it's an Equipment, unattach it.\nEnchanted permanent loses all abilities and doesn't untap during its controller's untap step.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "attached",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "planeswalker"
+       ]
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "clause": 3,
+    "repeats": "once"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "permanent"
+     }
+    },
+    "host": true,
+    "stripsHost": true,
+    "clause": 4,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous"
+    },
+    "clause": 4,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": [
+    "creature",
+    "artifact",
+    "planeswalker"
+   ]
+  }
+ },
+ "Honest Work": {
+  "oracleText": "Enchant creature an opponent controls\nWhen this Aura enters, tap enchanted creature and remove all counters from it.\nEnchanted creature loses all abilities and is a Citizen with base power and toughness 1/1 and \"{T}: Add {C}\" named Humble Merchant. (It loses all other creature types and names.)",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "amount": "all",
+    "emits": [
+     {
+      "verb": "counter-removed",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "self": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "stripsHost": true,
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "animate",
+     "becomes": {
+      "control": "any",
+      "token": null,
+      "subtype": "citizen",
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 1
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 1
+       }
+      ]
+     },
+     "becomesLasts": true
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "clause": 4,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    },
+    "grantedBy": 3
+   }
+  ],
+  "enchants": {
+   "control": "opp",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Minimus Containment": {
+  "oracleText": "Enchant nonland permanent\nEnchanted permanent is a Treasure artifact with \"{T}, Sacrifice this artifact: Add one mana of any color,\" and it loses all other abilities. (If it was a creature, it's no longer a creature.)",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "animate",
+     "becomes": {
+      "control": "any",
+      "token": null,
+      "type": "artifact",
+      "subtype": "treasure"
+     },
+     "becomesLasts": true
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "stripsHost": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}, Sacrifice this artifact",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "artifact",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "artifact",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    },
+    "claimsNothing": "mana-rider",
+    "grantedBy": 2
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}, Sacrifice this artifact",
+    "amount": "1",
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    },
+    "grantedBy": 2
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": [
+    "creature",
+    "artifact",
+    "enchantment",
+    "planeswalker",
+    "battle"
+   ],
+   "notType": [
+    "land"
+   ]
+  }
+ },
+ "Heliod's Punishment": {
+  "oracleText": "Enchant creature\nThis Aura enters with four task counters on it.\nEnchanted creature can't attack or block. It loses all abilities and has \"{T}: Remove a task counter from Heliod's Punishment. Then if it has no task counters on it, destroy Heliod's Punishment.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "enters-with-counters"
+    },
+    "amount": "4",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "task"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "continuous",
+    "count": {
+     "floor": 4,
+     "ceiling": 4
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "restriction"
+    },
+    "host": true,
+    "restricts": [
+     "attack",
+     "block"
+    ],
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "stripsHost": true,
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-removed",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "task",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    },
+    "grantedBy": 3
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}",
+    "emits": [
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it has no task counters on it"
+    },
+    "clause": 4,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    },
+    "grantedBy": 3
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Retro-Mutation": {
+  "oracleText": "Flash\nEnchant creature\nEnchanted creature is a Turtle with base power and toughness 0/1. It can't attack and loses all abilities. (It also loses all other creature types.)",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "animate",
+     "becomes": {
+      "control": "any",
+      "token": null,
+      "subtype": "turtle",
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 0
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 1
+       }
+      ]
+     },
+     "becomesLasts": true
+    },
+    "host": true,
+    "amount": "0/1",
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "restriction"
+    },
+    "host": true,
+    "restricts": [
+     "attack"
+    ],
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "stripsHost": true,
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Lithoform Blight": {
+  "oracleText": "Enchant land\nWhen this Aura enters, draw a card.\nEnchanted land loses all land types and abilities and has \"{T}: Add {C}\" and \"{T}, Pay 1 life: Add one mana of any color.\"",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "clause": 4,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    },
+    "grantedBy": 3
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}, Pay 1 life",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 5,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "life": "1"
+    },
+    "claimsNothing": "mana-rider",
+    "grantedBy": 3
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}, Pay 1 life",
+    "amount": "1",
+    "clause": 5,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "life": "1"
+    },
+    "grantedBy": 3
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "land"
+  }
+ },
+ "Pacifism": {
+  "oracleText": "Enchant creature\nEnchanted creature can't attack or block.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "restriction"
+    },
+    "host": true,
+    "restricts": [
+     "attack",
+     "block"
+    ],
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Noggle the Mind": {
+  "oracleText": "Flash\nEnchant creature\nEnchanted creature loses all abilities and is a colorless Noggle with base power and toughness 1/1. (It loses all colors and all other creature types.)",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "stripsHost": true,
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
  }
 }

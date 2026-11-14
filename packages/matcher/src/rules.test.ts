@@ -33,7 +33,7 @@ test("the rule set loads, is versioned, and every pattern a rule names exists", 
       expect(set.patterns[p], `rule ${rule.id} names pattern ${p}`).toBeDefined();
     }
     expect(
-      rule.category ?? rule.facet ?? rule.answerClass ?? rule.answerClassFrom ?? rule.winconClass,
+      rule.category ?? rule.facet ?? rule.answerClass ?? rule.answerClassFromEnchants ?? rule.winconClass,
       `rule ${rule.id} does something`,
     ).toBeDefined();
   }
@@ -213,7 +213,7 @@ describe("the damage, tuck, shrink, counter and bounce answers read derived data
     for (const p of ["damageRemoval", "damageRemovalAny", "tuckRemoval", "shrinkRemoval", "counterShrinkRemoval", "bounceRemoval"]) expect(set.patterns[p], p).toBeUndefined();
     for (const r of set.rules.filter((x) => /^answers\.(damage|tuck|shrink|counterShrink|bounce)/.test(x.id))) {
       expect(JSON.stringify(r.match), r.id).not.toContain('"oracle"');
-      expect(r.answerClassFrom, r.id).toBeUndefined();
+      expect(r.answerClassFromEnchants, r.id).toBeUndefined();
     }
   });
 
@@ -321,7 +321,7 @@ describe("the destroy and exile answers read derived data (#1266)", () => {
     expect(typed.map((r) => r.id).sort()).toEqual(["creature", "artifact", "enchantment", "planeswalker", "land"].flatMap((c) => [`answers.typed.${c}`, `answers.typed.exile.${c}`]).sort());
     for (const r of typed) {
       expect(JSON.stringify(r.match), r.id).not.toContain('"oracle"');
-      expect(r.answerClassFrom, r.id).toBeUndefined();
+      expect(r.answerClassFromEnchants, r.id).toBeUndefined();
     }
   });
 
@@ -1540,16 +1540,38 @@ test("an upkeep exile-the-top-card-and-play is impulse draw", () => {
   expect(detectBuildCategories([luck]).get("impulseDraw")?.has("Count on Luck")).toBe(true);
 });
 
-// ISSUE #566: an Aura that strips a permanent is removal, answering what its Enchant line names.
-test("a neutralising Aura is targeted removal for the classes it can enchant", () => {
-  const moon = mk("Imprisoned in the Moon", "Enchant creature, land, or planeswalker\nEnchanted creature, land, or planeswalker is a colorless land with \"{T}: Add {C}\" and loses all other card types and abilities.", "Enchantment — Aura");
-  const frog = mk("Frogify", "Enchant creature\nEnchanted creature loses all abilities and is a blue Frog creature with base power and toughness 1/1.", "Enchantment — Aura");
-  const cats = detectBuildCategories([moon, frog]);
-  expect(cats.get("targetedRemoval")).toEqual(new Set(["Imprisoned in the Moon", "Frogify"]));
-  expect([...answerClassesOf(moon).keys()].sort()).toEqual(["creature", "land", "planeswalker"]);
-  expect([...answerClassesOf(frog).keys()]).toEqual(["creature"]);
-  // A plain Aura on its own creature is not removal.
-  expect(detectBuildCategories([mk("Pump Aura", "Enchant creature\nEnchanted creature gets +2/+2.", "Enchantment — Aura")]).get("targetedRemoval")).toBeUndefined();
+// ISSUE #566, #1266: an Aura that strips a permanent is removal, answering what its Enchant line names. DERIVED: the host's ability-loss that strips every ability (`Ability.stripsHost`), and the Enchant line
+// (`characteristics.enchants`); the printed `neutraliseAura` pattern is gone. Real rows (fixtures/removal-derived.json, derive 524).
+describe("a neutralising Aura reads derived data (#1266)", () => {
+  const roles = (n: string): boolean => detectBuildCategories([realCard(n)]).get("targetedRemoval")?.has(n) === true;
+  const classes = (n: string): string[] => [...answerClassesOf(realCard(n)).keys()].sort();
+
+  test("the printed pattern is gone and neither rule reads the oracle text", () => {
+    const set = loadRules();
+    expect(set.patterns.neutraliseAura).toBeUndefined();
+    for (const r of set.rules.filter((x) => x.id.endsWith(".neutralise"))) expect(JSON.stringify(r.match), r.id).not.toContain('"oracle"');
+  });
+
+  test("the strip is removal for the classes its Enchant line names", () => {
+    const want: Record<string, string[]> = {
+      "Frogify": ["creature"], "Imprisoned in the Moon": ["creature", "land", "planeswalker"], "Stop Cold": ["artifact", "creature"], "Tamiyo's Compleation": ["artifact", "creature", "planeswalker"],
+      // "Enchant creature or Vehicle" / "creature or Food": the anyOf branch that is a subtype names no class.
+      "Flood the Engine": ["creature"], "Sugar Coat": ["creature"],
+      // The model files the strip as a grant (Mystic Subdual, Observed Stasis, Unable to Scream) or an `other`; "an opponent controls" is an opponent's creature.
+      "Mystic Subdual": ["creature"], "Observed Stasis": ["creature"], "Unable to Scream": ["creature"], "Honest Work": ["creature"], "Noggle the Mind": ["creature"],
+    };
+    for (const [n, cls] of Object.entries(want)) { expect(roles(n), n).toBe(true); expect(classes(n), n).toEqual(cls); }
+  });
+
+  test("'loses all OTHER abilities' and a pronoun's strip are the same effect (Deep Freeze, Stasis Field ...)", () => {
+    for (const n of ["Deep Freeze", "Retro-Mutation", "Heliod's Punishment"]) { expect(roles(n), n).toBe(true); expect(classes(n), n).toEqual(["creature"]); }
+    expect(classes("Minimus Containment")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+  });
+
+  test("an activation lock, a land that only loses its land types, and a plain buff strip nothing (Arrest, Pacifism, Lithoform Blight)", () => {
+    for (const n of ["Arrest", "Pacifism", "Lithoform Blight"]) { expect(roles(n), n).toBe(false); expect(classes(n), n).toEqual([]); }
+    expect(detectBuildCategories([mk("Pump Aura", "Enchant creature\nEnchanted creature gets +2/+2.", "Enchantment — Aura")]).get("targetedRemoval")).toBeUndefined();
+  });
 });
 
 // #1167: the rule table reads a card as the DECK holds it. Same printed text, two layouts.

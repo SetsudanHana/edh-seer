@@ -216,6 +216,8 @@ export type RuleClause =
    *  rest narrows it: `raises` (a pump whose amount has a "+" before a non-zero value on either side: Dream Coat derives a pump with no amount); `grantsAny` (some `grants` keyword is
    *  in the list); `grantsNonEmpty`; `unlessPumpInClause` (refuse when another HOST pump shares this ability's `clause`: "+3/+3 as long as it's a Zombie. Otherwise -3/-3"). */
   | { op: "hostEffect"; kinds: string[]; raises?: true; grantsAny?: string[]; grantsNonEmpty?: true; unlessPumpInClause?: true;
+      /** The ability is the STRIP of the host (`Ability.stripsHost`, #1266): "loses all abilities", as against an activation lock (Arrest). */
+      stripsHost?: true;
       /** A `restriction` ability forbids one of these actions (`Ability.restricts`): "attack" is Pacifism, "block" alone is Mishra's Domination's "Otherwise, it can't block". */
       restricts?: string[];
       /** A QUOTED grant (owner 2026-10-22, "judge the quote"): the ability's `grants` is empty AND at least one ability of the card has `grantedBy` equal to this ability's `clause`
@@ -282,9 +284,9 @@ export interface Rule {
   winconClass?: string;
   /** A fixed answer class this rule contributes (graveyard hate). */
   answerClass?: string;
-  /** A pattern name whose `class` capture group names the answer class -- one rule covering the
-   *  six types the removal regex already enumerates, rather than six near-identical rules. */
-  answerClassFrom?: string;
+  /** The answer classes are the types of the card's own ENCHANT line (`characteristics.enchants`, #1266): Imprisoned in the Moon answers a creature, land or planeswalker, Stop Cold an artifact or creature.
+   *  An Aura only YOU can wear ("Enchant creature you control") answers nothing an opponent has. */
+  answerClassFromEnchants?: true;
   /** What KIND of answer this rule contributes, where the kind changes whether it answers at all
    *  (design §3.1). Absent = an ordinary one-shot answer, which is most of them. */
   mode?: "exile" | "recurring";
@@ -652,6 +654,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.grantsAny === undefined || (a.grants ?? []).some((g) => clause.grantsAny!.includes(g.toLowerCase())))
         && (clause.grantsNonEmpty !== true || (a.grants ?? []).length > 0)
         && (clause.restricts === undefined || (a.restricts ?? []).some((r) => clause.restricts!.includes(r)))
+        && (clause.stripsHost !== true || a.stripsHost === true)
         && (clause.quoted === undefined || ((a.grants ?? []).length === 0 && quotedGrantIsBenign(abilities, a.clause, clause.quoted.curse)))
         && (clause.unlessPumpInClause !== true || !abilities.some((f) => f.host === true && f.effect.kind === "pump" && f.clause === a.clause)));
     }
@@ -881,7 +884,7 @@ function withoutAbilities(dc: DeckCard, restricted: (a: NonNullable<DeckCard["ta
   return { dc: { ...dc, tags: { ...dc.tags!, abilities: abilities.filter((a) => !restricted(a) && !sameTargetAgain(a)) } }, any: true };
 }
 
-/** Which answer classes a card covers, per `answerClass` / `answerClassFrom`.
+/** Which answer classes a card covers, per `answerClass` / `answerClassFromEnchants`.
  *
  *  `permanent` is expanded through `answerClassAliases`: a card that destroys any permanent answers
  *  every class, and treating it as its own sixth class would report a Vindicate deck as having no
@@ -909,21 +912,16 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
       const conditioned = withoutAbilities(dc, (a) => a.gate !== undefined && isTargetCondition(ownText(dc.card), a.gate.text), () => true);
       mark(cls, rule.mode, conditioned.any && !ruleMatches(rule, conditioned.dc, set), colour.any && !ruleMatches(rule, colour.dc, set));
     }
-    if (rule.answerClassFrom) {
-      // THE ONE PRINTED CLASS READER LEFT: `answers.neutralise`, whose classes are the Aura's Enchant line (Imprisoned in the Moon: creature, land or planeswalker). Derive cannot tell "loses all abilities" from "its activated abilities can't be
-      // activated" (both are `ability-loss`: Arrest would join, 33 creature gains) and reads "loses all abilities" as a keyword grant on 7 Auras (Mystic Subdual, Sugar Coat, Honest Work), so the Aura stays on its printed words (#1266).
-      // The typed destroy / exile answers moved to derived rules (`answers.typed.*`, Rules 51).
-      const re = new RegExp(set.patterns[rule.answerClassFrom], "gi");
-      for (const m of ownText(dc.card).matchAll(re)) {
-        // The capture is the whole OBJECT PHRASE: "Enchant creature, land, or planeswalker" answers three classes. Every class named anywhere in the phrase counts.
-        const phrase = m.groups?.class?.toLowerCase();
-        if (!phrase) continue;
-        // An Aura only YOU can wear ("Enchant creature you control", "you own") answers nothing an opponent has.
-        if (/\byou control\b/.test(phrase) || /\byou own\b/.test(phrase)) continue;
-        for (const word of Object.keys(KNOWN_CLASSES)) {
-          if (!new RegExp(`\\b${word}s?\\b`).test(phrase)) continue;
+    if (rule.answerClassFromEnchants) {
+      // THE CLASSES ARE THE AURA'S ENCHANT LINE, read from the derived `characteristics.enchants` (#1266; it was the printed `neutraliseAura` pattern's `class` capture). "Enchant creature, land, or planeswalker" answers three classes;
+      // a type word that is no answer class (a battle) answers none, and "nonland" takes the land out.
+      const e = dc.tags?.characteristics?.enchants as { control?: string; type?: string | string[]; notType?: string[]; anyOf?: { control?: string; type?: string | string[]; notType?: string[] }[] } | undefined;
+      for (const b of e === undefined ? [] : e.anyOf !== undefined && e.anyOf.length > 0 ? e.anyOf : [e]) {
+        if ((b.control ?? e!.control) === "you") continue;
+        for (const word of [b.type ?? e!.type ?? []].flat()) {
+          if (KNOWN_CLASSES[word] !== true) continue;
           for (const cls of set.answerClassAliases[word] ?? [word]) {
-            if (cls === "land" && /\bnonland\b/.test(phrase)) continue;
+            if (cls === "land" && [b.notType ?? e!.notType ?? []].flat().includes("land")) continue;
             mark(cls, rule.mode);
           }
         }

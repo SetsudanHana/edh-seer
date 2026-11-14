@@ -646,6 +646,12 @@ const PROHIBITED_REDIRECT = /\bcan't be prevented or dealt instead\b/i;
 const REDIRECT_TO_A_PLAYER = /\bdealt to (?:any (?:other )?target|another target [^.]{0,60}\bplayer|that (?:source|creature)'s controller)\b|\bdamage to that source's controller\b/i;
 const PAYS_LIFE = /\bpays? (?:\d+|x|any amount of) life\b/i;
 const LOSES_LIFE = /\bloses? (?:\d+|x|that much|half|life)\b/i;
+/** "loses all abilities", "loses all other abilities", "loses all other card types and abilities" (Frogify, Deep Freeze, Imprisoned in the Moon): EVERY ability goes, as against the activation
+ *  lock of Arrest ("its activated abilities can't be activated"). "Loses all land types and abilities" (Lithoform Blight) is not read. */
+const STRIPS_ALL = /\bloses? all (?:other )?(?:card types and )?abilities\b/i;
+const HOST_NOUN = /\b(?:enchanted|equipped)\s+(?:creature|permanent|land|artifact)\b/i;
+export function stripsAllAbilities(text: string): boolean { return STRIPS_ALL.test(text); }
+
 export function actionEffectKind(action: Action, clauseText = "", occurrence = 0): EffectKind | null {
   const verb = action.verb ?? "";
   // CR 615.1a: an effect that uses the word "prevent" is a prevention effect (#1469); one whose printed clause REPLACES the damage with a reduced, capped, redirected ... amount (CR 614) is a `damage-change`, whichever verb the
@@ -691,6 +697,9 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
   }
   // THE MODEL FILES A NEGATED UNTAP UNDER THE POSITIVE VERB `untap`: the printed words decide (#1423, see `untapDenialFor`).
   if (verb === "untap" && untapDenialFor(verb, action.object ?? "", clauseText)) return "untap-denial";
+  // THE STRIP OF AN AURA'S HOST (#1266, #566): "Enchanted creature loses all abilities" is the model's `grant-ability` (Mystic Subdual, Observed Stasis, Unable to Scream) or `other` (Tamiyo's Compleation)
+  // and read as a keyword grant or as nothing; it is the ability-loss of CR 613.1f. Only a sentence about the enchanted / equipped permanent: "target creature loses all abilities" (Turn to Frog) is unchanged.
+  if ((verb === "grant-ability" || verb === "other") && stripsAllAbilities(action.object ?? "") && HOST_NOUN.test(`${action.object ?? ""} ${clauseText}`)) return "ability-loss";
   // 342 corpus cards carry a grant-ability action and the verb had no row here at all, so Lightning
   // Greaves and Swiftfoot Boots derived nothing whatsoever.
   if (verb === "grant-ability") {

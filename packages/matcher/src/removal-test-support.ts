@@ -3,7 +3,7 @@ import type { DeckCard } from "./types.js";
 import real from "./fixtures/removal-derived.json" with { type: "json" };
 import voltronReal from "./fixtures/voltron-derived.json" with { type: "json" };
 
-type Real = { oracleText: string; typeLine: string; manaValue: number; abilities: CardTags["abilities"] };
+type Real = { oracleText: string; typeLine: string; manaValue: number; abilities: CardTags["abilities"]; enchants?: NonNullable<CardTags["characteristics"]>["enchants"] };
 const REAL = real as unknown as Record<string, Real>;
 
 /** A DeckCard carrying a REAL card's Mongo oracle text and its REAL derived abilities (`cardTagsDerived`, derive 350), so a role rule that reads derived data is tested on what
@@ -15,7 +15,7 @@ export function realCard(name: string, over: { oracleText?: string; extraAbiliti
     card: { name, typeLine: r.typeLine, oracleText: over.oracleText ?? r.oracleText, keywords: [], colors: [], manaValue: r.manaValue } as never,
     tags: {
       oracleId: name, schemaVersion: 1, promptVersion: 1, model: "t",
-      characteristics: { types: [r.typeLine.toLowerCase()], subtypes: [], colors: [], identity: [], cmc: r.manaValue, power: null, toughness: null, token: false, keywords: [] },
+      characteristics: { types: [r.typeLine.toLowerCase()], subtypes: [], colors: [], identity: [], cmc: r.manaValue, power: null, toughness: null, token: false, keywords: [], ...(r.enchants ? { enchants: r.enchants } : {}) },
       abilities: [...r.abilities, ...(over.extraAbilities ?? [])],
     } as never,
   };

@@ -1354,6 +1354,10 @@ export interface Ability {
    *  ABSENT MEANS "NOT SAID", NOT "NOT A HOST EFFECT". CEILING: a trigger on "this creature or equipped creature" (Razorfield Ripper), a recipient list ("equipped creature and Zombies you
    *  control", Wand of Orcus), the inner pump of a quoted grant (Dragon Mantle), a base P/T setter (Aettir and Priwen, Belt of Giant Strength) and "doesn't untap" (Venarian Gold) carry none. */
   host?: true;
+  /** THE HOST LOSES EVERY ABILITY (#1266, #566): a STATIC `ability-loss` with `host` whose clause prints "loses all abilities", "loses all other abilities" or "loses all other card types and abilities" (Frogify, Honest Work,
+   *  Imprisoned in the Moon, Stop Cold). The activation lock of Arrest ("its activated abilities can't be activated") is an `ability-loss` on the host too and carries no mark. Read by `removal.neutralise` and
+   *  `answers.neutralise` (`hostEffect.stripsHost`). Only `true` is written. */
+  stripsHost?: true;
   /** THE CLAUSE THAT GRANTS THIS ABILITY (#1315). On an ability derived from a QUOTED ability another clause hands over (Sunbond's "Enchanted creature has 'Whenever you gain
    *  life, put that many +1/+1 counters on this creature.'"), the id of the granting clause (`segment()`'s `granted` clause and its `parentId`): the granting clause's own
    *  ability is a `keyword-grant` with empty `grants` and says nothing of what is granted, so a reader that must judge the grant (a buff or a curse) follows this to the

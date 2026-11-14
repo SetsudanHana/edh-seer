@@ -31,7 +31,7 @@ function opensOnHost(clauseText: string): boolean {
 //  - a clause that MIXES recipients is judged by its first sentence's head when an action's object names none ("Enchanted creature gets +1/+1 and creatures you control gain haste"); the census
 //    cannot count a wrong mark, and the other-class cards found (Inner Demon, Vampirism, the Magemarks) are separate clauses;
 //  - "This creature and enchanted creature each get +X/+X" (Nighthowler): half the recipients are the host and the pump is marked on purpose;
-//  - a LOSS the model files as a grant ("this Aura gains 'Enchanted creature loses flying'", Earthbind; "loses all abilities", Observed Stasis) derives keyword-grant [flying]: the mark is withheld, the kind is still wrong;
+//  - a LOSS of ONE keyword the model files as a grant ("this Aura gains 'Enchanted creature loses flying'", Earthbind) derives keyword-grant [flying]: the mark is withheld, the kind is still wrong ("loses all abilities" is read as ability-loss since derive 524, #1266);
 //  - a positive host effect the reader misses: Airtight Alibi, Maze's Mantle, Face of Divinity ("As long as another Aura is attached to enchanted creature, it has ..."), Frenzied Fugue, Entangler ("can block any number", not a buff anyway);
 //  - a recipient LIST ("equipped creature and Zombies you control", Wand of Orcus, 1 card) is a list, not the host;
 //  - a trigger on "this creature or equipped creature" (Razorfield Ripper, 1 card) has an "it" that may be either;
@@ -48,7 +48,8 @@ export function hostEffect(action: Action, effectKind: string | null | undefined
     const head = RECIPIENT_VERB.exec(clauseText.trim().replace(HEAD, "").replace(HEAD, ""))?.[1]?.trim();
     if (head !== undefined && !head.includes(".") && !HOST_PHRASE.test(head) && !PRONOUN.test(head)) return false;
     // A LOSS filed as a grant ("this Aura gains 'Enchanted creature loses flying'", Earthbind) is no grant to the host.
-    return !/\bloses?\b/i.test(object);
+    // ...except the STRIP of the host itself ("Enchanted creature loses all abilities", filed as a grant: Mystic Subdual, Observed Stasis), which is its ability-loss (#1266).
+    return effectKind === "ability-loss" || !/\bloses?\b/i.test(object);
   }
   // A buff's object IS its recipient ("enchanted creature +2/+0", "it"), so only a pronoun reaches back to the clause.
   if (action.verb === "modify-pt") return PRONOUN.test(object) && opensOnHost(clauseText);

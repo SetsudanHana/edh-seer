@@ -17,7 +17,7 @@ import { targetingBanOf, targetingBanSubjectInObject, triggerSuppressionOf, unta
 import { withBaseSetSplit } from "./base-set.js";
 import { withChosenTypeGrant } from "./chosen-grant.js";
 import { nameOnlyTypes, ownNameFacts, stripOwnNameSubtypes } from "./own-name.js";
-import { TYPE_GRANT, grantedTypeOf, ZONE_SCOPED_KINDS, actionEffectKind, activationBanClass, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
+import { TYPE_GRANT, grantedTypeOf, ZONE_SCOPED_KINDS, actionEffectKind, stripsAllAbilities, activationBanClass, handFillRead, restrictedActions, bounceOrigin, exileNamesOnlyGraveyards, exilesFromYourGraveyard, exilesOwnGraveyard, extraPhaseName, extraLoyalty, playsFromTop, retargetObject } from "./effect-kind.js";
 import { actionEmits, definesPowerToughness, casualtySacrifice, enteringClass, millsOwnLibrary, COPY_TOKEN_HEAD, LEAVES_SAME_TURN, narrowSelfExiledSpell, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, activationConditionOf, classifyCondition, conditionTestsObject, conditionCares as conditionCares_, ARRIVED_WITHOUT_CASTING, SAME_NAME, WITHOUT_DYING } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
@@ -705,7 +705,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 521: #1266 -- Ability.impulse and Ability.looksAtTop: the card-selection and impulse-draw roles read derived marks, not the printed selection / impulseDraw patterns. MEASURED (derive-impact vs 377d9a22): 604 rows changed, 0 added or removed, 0 source flips, 0 pair reasons; role-ratchet cardSelection +2 / -30, impulseDraw 0; dropped-clauses 4,825, new 0.
 // 522: #1266 -- a mass effect on one player's board ("all creatures target player controls") is scope all / each, not target; boardWipe reads it from derived data
 // 523: #1266 -- ramp.costReduction reads derived data: Volcanic Salvo's "This spell costs {X} less" has the card itself as subject, Trinisphere's floor ("would cost less than") is a tax, and an alternative or free cast (Aluren, As Foretold, Fires of Invention) is marked Ability.altCost
-export const DERIVE_VERSION = 523;
+// 524: #1266 -- an Aura's strip of its host ("loses all abilities", "loses all other abilities", "loses all other card types and abilities") is ability-loss on the host and carries Ability.stripsHost, whichever way the model filed it (grant-ability or other: Mystic Subdual, Observed Stasis, Unable to Scream, Tamiyo's Compleation, no longer a keyword grant or nothing); Arrest's activation lock carries no mark. characteristics.enchants keeps an Enchant line of unlike things (creature or Vehicle: 13 Auras). removal.neutralise and answers.neutralise read both; the neutraliseAura pattern is gone. MEASURED (derive-impact vs 5f994699, impact.json): 46 rows changed, 0 added or removed, 3 source flips model -> grammar (Mystic Subdual, Retro-Mutation, Unable to Scream), grammar complete 28,759 -> 28,759; pair reasons of the changed rows +0 gained / -62,052 lost, all `static:keyword-grant` pairs from the class-wide grant 'loses all abilities' derived on Mystic Subdual, Observed Stasis and Retro-Mutation (3 x 20,682 incl. 3 x 2,324 via token, + 6 echoes on two consumer rows); matcher sample 300 of 32,229 cards (0.93%): +0 / -546 (the same three producers); role-ratchet gained 25 / lost 0 (32,805 -> 32,830: 8 neutralising Auras gain targetedRemoval and their Enchant-line answer classes, 5 'Enchant creature or Vehicle' Auras gain wincon:voltron); dropped-clauses 4,825 -> 4,824, new 2, fixed 3.
+export const DERIVE_VERSION = 524;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -4551,6 +4552,8 @@ export function deriveAbilities(
           if (SINGULAR_HOST.test(read.recipient ?? "") || SINGULAR_HOST.test(dealerPhrase ?? "") || grantedSelf) ability.host = true;
         }
       }
+      // THE STRIP OF THE HOST (#1266): every ability of the enchanted permanent goes (Frogify, Honest Work, Imprisoned in the Moon), as against the activation lock of Arrest. Marked on the STATIC ability-loss that lands on the host (Barrow-Blade's triggered "that creature loses all abilities until end of turn" is not one).
+      if (effectKind === "ability-loss" && kind === "static" && ability.host === true && stripsAllAbilities(text)) ability.stripsHost = true;
       if (effectKind === "restriction") { const r = restrictedActions(action.object ?? "", text, sameCant); if (r) ability.restricts = r; }
       if (effectKind === "untap-denial") { const u = untapDenialFor(action.verb ?? "", action.object ?? "", text, sameCant); if (u) ability.untapDenial = u.denial; }
       if (effectKind === "trigger-suppression") { const t = triggerSuppressionOf(action.object ?? "", text, sameCant); if (t) ability.suppresses = t.suppression; }
