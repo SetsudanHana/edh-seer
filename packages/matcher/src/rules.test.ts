@@ -354,6 +354,13 @@ describe("the destroy and exile answers read derived data (#1266)", () => {
     for (const n of ["Rishadan Cutpurse", "Killing Wave", "Indulgent Tormentor"]) expect(classes(n), n).toEqual([]);
   });
 
+  test("orEdict refuses a pay-or-sacrifice: Diabolic Edict's real row with an `unless` added answers nothing (#1642; no corpus edict row carries one today, derive's victimDeclines refuses the shape first)", () => {
+    const real = realCard("Diabolic Edict");
+    const taxed = { ...real, tags: { ...real.tags!, abilities: real.tags!.abilities.map((a) => ({ ...a, unless: { cost: "{3}", payer: "controller" as const } })) } } as typeof real;
+    expect([...answerClassesOf(real, loadRules()).keys()]).toEqual(["creature"]);
+    expect([...answerClassesOf(taxed, loadRules()).keys()]).toEqual([]);
+  });
+
   // Owner 2026-11-14: a one-sided mass bounce at a target player is an answer, a weaker board wipe.
   test("a one-sided mass bounce at a player answers the classes it returns; a symmetric one does not (River's Rebuke, Hurkyl's Recall, Evacuation, Aetherize)", () => {
     expect(classes("River's Rebuke")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
