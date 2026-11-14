@@ -38,11 +38,12 @@ export const ANSWER_BASELINE: Record<string, number> = {
  *  the printed `graveyardHateRecurring`" alone. The two describe different sets; 36/16/6 was an artifact of the
  *  probe's nesting, not a deliberate choice, and never matched its own stated provenance.
  *
- *  So a deck whose plan runs through the graveyard needs creature and artifact removal
- *  specifically -- Scavenging Ooze and Grafdigger's Cage, not a Naturalize.
+ *  So a deck whose plan runs through the graveyard needs creature removal above all -- the
+ *  repeating hate is mostly creatures (Scavenging Ooze, Graven Abomination). Since the 2026-11-14
+ *  re-measure the artifact share (25/134) sits below the baseline, so artifact demand no longer rises.
  *
  *  KNOWN CEILING, and it bounds how much weight this table can ever carry: the corpus can COUNT
- *  hate pieces and cannot RANK them. Rest in Peace and Scavenging Ooze are both one row of the 66,
+ *  hate pieces and cannot RANK them. Rest in Peace and Scavenging Ooze are both one row of the 134,
  *  though the first turns a reanimator deck off completely and the second eats one card a turn.
  *  Nothing derived separates a total shutoff from incremental exile.
  *  CEILING: count-weighted, upgrade when a severity field exists.
