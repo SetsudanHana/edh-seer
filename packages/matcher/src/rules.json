@@ -33,7 +33,6 @@
     "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't|(?:destroy|exile|return) all (?:(?:non)?(?:basic|snow) )?(?:lands?|forests?|islands?|mountains?|plains|swamps?) (?:target|that) (?:player|opponent) (?:controls|owns)|each player chooses \\w+ lands they control\\. destroy all other permanents",
     "staxStrong": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't|(?:destroy|exile|return) all (?:(?:non)?(?:basic|snow) )?(?:lands?|forests?|islands?|mountains?|plains|swamps?) (?:target|that) (?:player|opponent) (?:controls|owns)",
     "staxWeak": "each player chooses \\w+ lands they control\\. destroy all other permanents",
-    "controllerGetsCopies": "its controller creates [^.]{0,40}tokens? that (?:are|is a) cop(?:y|ies) of",
     "enchantCreature": "enchant creature",
     "commanderDamage": "commander damage|deals combat damage to a player[^.]{0,60}?(?:that player loses the game|wins the game)"
   },

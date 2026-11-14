@@ -907,8 +907,6 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
         if (!phrase) continue;
         // An Aura only YOU can wear ("Enchant creature you control", "you own") answers nothing an opponent has.
         if (/\byou control\b/.test(phrase) || /\byou own\b/.test(phrase)) continue;
-        // ...and one whose CONTROLLER gets copies back answers nothing either (owner ruling 2026-09-27, #513).
-        if (new RegExp(set.patterns.controllerGetsCopies, "i").test(dc.card.oracleText ?? "")) continue;
         for (const word of Object.keys(KNOWN_CLASSES)) {
           if (!new RegExp(`\\b${word}s?\\b`).test(phrase)) continue;
           for (const cls of set.answerClassAliases[word] ?? [word]) {
