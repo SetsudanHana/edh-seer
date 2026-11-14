@@ -672,7 +672,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.notOnFlip !== true || a.onFlip === undefined)
         && (clause.notOwnedByYou !== true || a.effect.subject?.owner !== "you")
         && (clause.notSelf !== true || a.effect.subject?.self !== true)
-        && (clause.notOwnTax !== true || a.effect.subject?.control !== "you" || a.unless !== undefined)
+        && (clause.notOwnTax !== true || a.effect.subject?.control !== "you" || a.unless?.payer === "controller")
         && (clause.ofKind === undefined || clause.ofKind.includes(a.kind))
         && (clause.banProtects !== true || banProtectsYours(a, dc.card.typeLine ?? ""))
         && (clause.pairedInstantExile !== true || pairedInstantExile(dc.tags?.abilities ?? [], a))
