@@ -26,7 +26,7 @@ export type RuleClause =
       scope?: string[];
       /** Let `scope` also accept a ONE-SIDED MASS at a targeted player's board (owner 2026-11-14: "Return all nonland permanents target player controls to their owner's hand" is a weaker board wipe, an answer to the classes it returns). The marker is on the ability's EMIT (`SubjectFilter.targetPlayer`, derive sets it on `leaves`); the effect subject of such a bounce is `scope: all, control: any` and carries none, so this reads the `leaves` emit (no other verb), and a symmetric mass (Evacuation, Aetherize: no marker) is not let through. A mass on LANDS ONLY is refused, as `notMassLand` refuses it for the kill rules (Ajani Vengeant: stax, not a land answer). */
       orTargetPlayerMass?: true;
-      /** Let `scope` also accept a ONE-SIDED MASS at ALL OPPONENTS (owner 2026-11-14: Spectral Deluge, Scourge of Fleets, Llawan: "return each creature your opponents control"): the effect subject is `scope: all | each, control: opp`. Read on the effect subject, so it needs no emit marker; `control` still has to list `opp`, and a mass on LANDS ONLY is refused (`orTargetPlayerMass`'s reason). A symmetric mass is `control: any` and stays out. */
+      /** Let `scope` also accept a ONE-SIDED MASS at ALL OPPONENTS (owner 2026-11-14: Spectral Deluge, Scourge of Fleets, Llawan: "return each creature your opponents control"): the effect subject is `scope: all | each, control: opp`. Read on the effect subject, so it needs no emit marker; `control` still has to list `opp`, and a mass on LANDS ONLY is refused (`orTargetPlayerMass`'s reason). A symmetric mass is `control: any` and stays out. A COUNTED pick ("an opponent chooses up to two ... and returns them": `selection: counted` on the `leaves` emit) is refused: the victim chooses what to save (Devastating Mastery, owner 2026-11-14). */
       orOppMass?: true;
       /** Refuse an ability whose subject is a spell THAT TARGETS THIS CARD (`subject.targets.self`): Spellwild Ouphe's "Spells that target this creature cost {2} less" cheapens
        *  spells aimed at the card itself, a discount for no other spell (`discountsOtherSpells`). */
@@ -131,6 +131,8 @@ export type RuleClause =
       scope?: (string | null)[];
       /** Let `scope` also accept a MASS at a targeted player's board (`SubjectFilter.targetPlayer`: "Destroy all creatures target player controls", Mogg Infestation; #1266): the answer rules read it as the target it was before derive scoped it `all` (owner 2026-11-13: a one-sided mass kill at a player is an answer). */
       orTargetPlayerMass?: true;
+      /** Let `scope` also accept a ONE-SIDED MASS KILL or an EACH-OPPONENT EDICT (owner 2026-11-14): an emit whose subject is `control: opp` with scope all / each, or no scope and `edictAll`. A mass shrink (the ability's effect is a `debuff`: Make Obsolete) is refused, and so is a pay-or-sacrifice (`unless`: Rishadan Cutpurse, Tariff, Killing Wave: a tax, the victim's option). The land class refuses a land-only mass through `notMassLand`. */
+      orOppMass?: true;
       /** Refuse an ability whose exile COMES BACK AT ONCE: another ability of the card, of the SAME `clause`, is a `flicker` with no `delayedUntil` whose subject is NOT an opponent's permanent ("Exile target creature, then
        *  return it to the battlefield": Flicker, Eldrazi Displacer). Owner ruling 2026-09-25: an IMMEDIATE flicker is no removal, a DELAYED return (Otherworldly Journey, Flickerwisp: back at the next end step) keeps
        *  its place, so a flicker with `delayedUntil` is not refused (that includes `source-leaves`, the "until this leaves the battlefield" return of Constable of the Realm and Mysterious Limousine, #1295 item 3). A
@@ -676,6 +678,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
             && (clause.control === undefined || clause.control.includes(e.subject.control as string))
             && (clause.notOwnedByYou !== true || e.subject.owner !== "you")))
           || (clause.orOppMass === true && (a.effect.subject?.scope === "all" || a.effect.subject?.scope === "each") && a.effect.subject.control === "opp" && !landOnlySubject(a.effect.subject)
+            && !(a.emits ?? []).some((e) => e.verb === "leaves" && e.subject.selection === "counted")
             && (clause.control === undefined || clause.control.includes("opp"))))
         && (clause.notSelfTargeted !== true || (a.effect.subject as { targets?: { self?: boolean } } | undefined)?.targets?.self !== true)
         && (clause.notAltCost !== true || a.altCost !== true)
@@ -753,7 +756,10 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.landOnly !== true || landOnlySubject(e.subject))
           && (clause.includesLand !== true || includesLandSubject(e.subject))
           && (clause.typeAny === undefined || subjectTypes(e.subject).some((t) => clause.typeAny!.includes(t)))
-          && (clause.scope === undefined || clause.scope.includes(e.subject.scope ?? null) || (clause.orTargetPlayerMass === true && e.subject.targetPlayer === true))
+          && (clause.scope === undefined || clause.scope.includes(e.subject.scope ?? null) || (clause.orTargetPlayerMass === true && e.subject.targetPlayer === true)
+            // ONE-SIDED MASS KILL AND EACH-OPPONENT EDICT (owner 2026-11-14): "destroy all creatures you don't control" is `scope: all, control: opp`; "each opponent sacrifices a creature" is `scope: all` or no scope with `edictAll`. A mass SHRINK is no kill: Make Obsolete, Massacre Wurm carry a `dies` emit under a `debuff`.
+            || (clause.orOppMass === true && e.subject.control === "opp" && a.effect.kind !== "debuff" && a.unless === undefined
+              && (e.subject.scope === "all" || e.subject.scope === "each" || (e.subject.scope == null && e.subject.edictAll === true))))
           && (clause.fromZone === undefined || clause.fromZone.includes(e.subject.fromZone ?? null))
           && (clause.counter === undefined || (e.subject.counter !== undefined && clause.counter.includes(e.subject.counter)))
           && (clause.reachesClass === undefined || subjectReachesClass(clause.bareSubtype === true, e.subject, clause.reachesClass))
