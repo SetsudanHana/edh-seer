@@ -55,10 +55,12 @@ describe("answerCoverage", () => {
     }
   });
 
-  it("shifts demand toward creatures and artifacts as graveyard vulnerability rises", () => {
+  it("shifts demand toward creatures as graveyard vulnerability rises, and away from planeswalkers", () => {
     const at = (v: number, cls: string) => answerCoverage(FIVE, ALL, v).rows.find((r) => r.class === cls)!.demand;
     expect(at(1, "creature")).toBeGreaterThan(at(0, "creature"));
-    expect(at(1, "artifact")).toBeGreaterThan(at(0, "artifact"));
+    // RE-MEASURED 2026-11-14 (#1266: the recurring rule reads derived data): artifact 25/134 = 0.187 of recurring hate, BELOW the 8/33 = 0.242 baseline (the printed pattern read 19/66 = 0.288), because the repeating
+    // triggers it could not see are creatures. So rising vulnerability no longer raises artifact demand; it is a measured fact of the table, not a design intent, and `gen-answer-pool.ts --check` holds it to the corpus.
+    expect(at(1, "artifact")).toBeLessThan(at(0, "artifact"));
     expect(at(1, "planeswalker")).toBeLessThan(at(0, "planeswalker"));
   });
 

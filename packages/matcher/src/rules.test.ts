@@ -583,37 +583,59 @@ test("one exile clause naming two types marks both", () => {
 });
 
 /** §12.3's whole reason for this axis: one Bojuka Bog answers a recursion engine not at all, and
- *  Rest in Peace answers it forever. A count cannot tell them apart. */
-test("recurring graveyard hate is the replacement effect, the prohibition and the activated ability", () => {
+ *  Rest in Peace answers it forever. A count cannot tell them apart. READ FROM DERIVED DATA (#1266): a graveyard exile or
+ *  replacement the ability repeats (`repeats` per-cycle, per-turn, repeatable or continuous), or a static `graveyard-lock`. */
+test("recurring graveyard hate is the replacement effect, the prohibition, the activated ability and the repeating trigger", () => {
   const classes = detectAnswerClasses([
-    mk("Rest in Peace", "When this enchantment enters, exile all graveyards.\nIf a card or token would be put into a graveyard from anywhere, exile it instead.", "Enchantment"),
-    mk("Leyline of the Void", "If this card is in your opening hand, you may begin the game with it on the battlefield.\nIf a card would be put into an opponent's graveyard from anywhere, exile it instead.", "Enchantment"),
-    mk("Grafdigger's Cage", "Creature cards in graveyards and libraries can't enter the battlefield.\nPlayers can't cast spells from graveyards or libraries.", "Artifact"),
-    mk("Scavenging Ooze", "{G}: Exile target card from a graveyard. If it was a creature card, put a +1/+1 counter on this creature and you gain 1 life.", "Creature — Ooze"),
-    mk("Relic of Progenitus", "{T}: Target player exiles a card from their graveyard.\n{1}, Exile this artifact: Exile all graveyards. Draw a card.", "Artifact"),
+    realCard("Rest in Peace"), realCard("Leyline of the Void"), realCard("Valgavoth, Terror Eater"),
+    realCard("Grafdigger's Cage"), realCard("Soulless Jailer"), realCard("Kunoros, Hound of Athreos"), realCard("Weathered Runestone"), realCard("Ashes of the Abhorrent"),
+    realCard("Scavenging Ooze"), realCard("Relic of Progenitus"), realCard("Deathrite Shaman"),
+    realCard("Graven Abomination"), realCard("Cemetery Prowler"), realCard("Klothys, God of Destiny"),
   ]);
   expect([...(classes.get("graveyard")?.recurring ?? [])].sort()).toEqual([
-    "Grafdigger's Cage", "Leyline of the Void", "Relic of Progenitus", "Rest in Peace", "Scavenging Ooze",
-  ]);
+    "Ashes of the Abhorrent", "Cemetery Prowler", "Deathrite Shaman", "Graven Abomination", "Grafdigger's Cage", "Klothys, God of Destiny", "Kunoros, Hound of Athreos",
+    "Leyline of the Void", "Relic of Progenitus", "Rest in Peace", "Scavenging Ooze", "Soulless Jailer", "Valgavoth, Terror Eater", "Weathered Runestone",
+  ].sort());
 });
 
-/** The card the axis was written for. It IS graveyard hate and it is NOT recurring -- its trigger
- *  fires once, so it answers a card and not an engine. */
-test("Bojuka Bog is graveyard hate and is not recurring", () => {
-  const classes = detectAnswerClasses([realCard("Bojuka Bog")]);
-  expect(classes.get("graveyard")?.cards.has("Bojuka Bog")).toBe(true);
-  expect(classes.get("graveyard")?.recurring.has("Bojuka Bog") ?? false).toBe(false);
+/** The rule reads no printed text any more: the oracle op count of `answers.graveyard.recurring` is zero, and the pattern is gone. */
+test("answers.graveyard.recurring carries no oracle op, and the printed pattern is deleted (#1266)", () => {
+  const set = loadRules();
+  const rule = set.rules.find((r) => r.id === "answers.graveyard.recurring")!;
+  const ops = (clauses: { op: string; clauses?: unknown[] }[]): string[] => clauses.flatMap((c) => (c.op === "anyOf" ? ops(c.clauses as { op: string }[]) : [c.op]));
+  expect(ops(rule.match as never)).not.toContain("oracle");
+  expect(set.patterns.graveyardHateRecurring).toBeUndefined();
 });
 
-/** Deathrite Shaman is the double case: a repeatable activated hate ability that ALSO names card
- *  types inside a graveyard. It must be recurring hate and must contribute no battlefield answer. */
-test("a repeatable graveyard exile is recurring hate, not a land or creature answer", () => {
+/** A one-shot exile is not recurring: Bojuka Bog's enters trigger, a sacrifice-itself exile (Jack-o'-Lantern, Tormod's Crypt, Gravestone Strider's self-exile), an ultimate (Kaya, Geist Hunter's -6), a
+ *  card that exiles ITSELF by name or in its effect beside a {T} (Silent Gravestone, Stone of Erech, Abstergo Entertainment, The Stone Brain), an "As this enters" exile (The Mimeoplasm, Dermotaxi). */
+test("a one-shot graveyard exile is not recurring hate", () => {
   const classes = detectAnswerClasses([
-    mk("Deathrite Shaman", "{T}: Exile target land card from a graveyard. Add one mana of any color.\n{B}, {T}: Exile target instant or sorcery card from a graveyard. Each opponent loses 2 life.\n{G}, {T}: Exile target creature card from a graveyard. You gain 2 life.", "Creature — Elf Shaman"),
+    realCard("Bojuka Bog"), realCard("Jack-o'-Lantern"), realCard("Tormod's Crypt"), realCard("Gravestone Strider"), realCard("Kaya, Geist Hunter"),
+    realCard("Silent Gravestone"), realCard("Stone of Erech"), realCard("Abstergo Entertainment"), realCard("The Stone Brain"), realCard("The Mimeoplasm"), realCard("Dermotaxi"),
+    realCard("Wreck Remover"), realCard("Ashiok, Dream Render"),
   ]);
-  expect(classes.get("graveyard")?.recurring.has("Deathrite Shaman")).toBe(true);
-  expect(classes.get("land")?.cards.has("Deathrite Shaman") ?? false).toBe(false);
-  expect(classes.get("creature")?.cards.has("Deathrite Shaman") ?? false).toBe(false);
+  const recurring = classes.get("graveyard")?.recurring ?? new Set<string>();
+  for (const name of ["Bojuka Bog", "Jack-o'-Lantern", "Tormod's Crypt", "Gravestone Strider", "Kaya, Geist Hunter", "Silent Gravestone", "Abstergo Entertainment", "The Stone Brain", "The Mimeoplasm", "Dermotaxi"]) {
+    expect(recurring.has(name), name).toBe(false);
+  }
+  // Stone of Erech's activated half is a one-shot (once); its "would die, exile it instead" static exiles from the battlefield and derives no graveyard zone, so it is a CEILING, not recurring.
+  expect(recurring.has("Stone of Erech")).toBe(false);
+  // Wreck Remover exiles "whenever this creature enters or attacks": the attack half repeats (owner 2026-11-14).
+  expect(recurring.has("Wreck Remover")).toBe(true);
+  // A loyalty +1 that exiles from a graveyard repeats each turn (Kaya, Orzhov Usurper, Tasha).
+  expect(detectAnswerClasses([realCard("Kaya, Orzhov Usurper")]).get("graveyard")?.recurring.has("Kaya, Orzhov Usurper")).toBe(true);
+  // A minus SMALLER than the starting loyalty can be paid again: Ashiok, Dream Render's -1 (loyalty 5) is recurring; an ultimate is not (Kaya, Geist Hunter's -6 on loyalty 3, above).
+  expect(recurring.has("Ashiok, Dream Render")).toBe(true);
+  const ultimate = realCard("Ashiok, Dream Render", { oracleText: "x" });
+  ultimate.card = { ...ultimate.card, loyalty: "1" } as never;
+  expect(detectAnswerClasses([ultimate]).get("graveyard")?.recurring.has("Ashiok, Dream Render") ?? false).toBe(false);
+});
+
+/** Exiling from YOUR OWN graveyard is a cost, not hate: delve (Murderous Cut, Treasure Cruise), a self-recursion (Lazotep Quarry), Stitcher Geralf's own mill ("put into graveyards this way"). */
+test("an own-graveyard exile (delve, self-recursion) is not recurring hate", () => {
+  const classes = detectAnswerClasses([realCard("Murderous Cut"), realCard("Treasure Cruise"), realCard("Lazotep Quarry")]);
+  expect([...(classes.get("graveyard")?.recurring ?? [])]).toEqual([]);
 });
 
 /** Lazotep Quarry's activated ability exiles from ITS OWN graveyard to reanimate a copy -- that is
@@ -621,13 +643,7 @@ test("a repeatable graveyard exile is recurring hate, not a land or creature ans
  *  allow-list `graveyardHatePositive` already uses. Caught by the population gate on the 71
  *  calibration decks before this narrowing shipped; pinned here so it cannot silently return. */
 test("Lazotep Quarry recurs from its own graveyard, which is not hate", () => {
-  const classes = detectAnswerClasses([
-    mk(
-      "Lazotep Quarry",
-      "{T}: Add {C}.\n{T}, Sacrifice a creature: Add one mana of any color.\n{X}{2}, {T}, Sacrifice a Desert: Exile target creature card with mana value X from your graveyard. Create a token that's a copy of it, except it's a 4/4 black Zombie. Activate only as a sorcery.",
-      "Land — Desert",
-    ),
-  ]);
+  const classes = detectAnswerClasses([realCard("Lazotep Quarry")]);
   expect(classes.get("graveyard")?.cards.has("Lazotep Quarry") ?? false).toBe(false);
   expect(classes.get("graveyard")?.recurring.has("Lazotep Quarry") ?? false).toBe(false);
 });
@@ -641,9 +657,7 @@ test("Lazotep Quarry recurs from its own graveyard, which is not hate", () => {
  *  a threshold/spell-mastery/desert template). None of the 8 cards the narrowed pattern drops
  *  appears in the 71 calibration decks. */
 test("graveyard protection is not graveyard hate, however it phrases the prohibition", () => {
-  const classes = detectAnswerClasses([
-    mk("Ground Seal", "When this enchantment enters, draw a card.\nCards in graveyards can't be the targets of spells or abilities.", "Enchantment"),
-  ]);
+  const classes = detectAnswerClasses([realCard("Ground Seal")]);
   expect(classes.get("graveyard")?.cards.has("Ground Seal") ?? false).toBe(false);
   expect(classes.get("graveyard")?.recurring.has("Ground Seal") ?? false).toBe(false);
 });

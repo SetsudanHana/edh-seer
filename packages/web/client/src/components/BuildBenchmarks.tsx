@@ -387,11 +387,11 @@ export function BuildBenchmarks({
 }
 
 /** The corpus count of RECURRING graveyard hate by type -- the pieces that shut an engine off
- *  rather than eating one card. Measured from `graveyardHateRecurring`, `answer-coverage.ts`'s
- *  `GRAVEYARD_HATE_SHARE` (creature 39 · artifact 19 · enchantment 8, n = 66 typed, 1 other).
+ *  rather than eating one card. Measured from the `answers.graveyard.recurring` rule, `answer-coverage.ts`'s
+ *  `GRAVEYARD_HATE_SHARE` (creature 95 · artifact 25 · enchantment 14, n = 134 typed, 7 other; re-measured 2026-11-14, #1266).
  *  Stated as a literal because it is a fact about the FORMAT, not about this deck, and a reader can
  *  check it. A HAND-COPY, and it has to stay one -- `GRAVEYARD_HATE_SHARE` carries the SHARE (a
- *  fraction of 66), this the raw COUNT the sentence below reads aloud, and the two do not round-trip
+ *  fraction of 134), this the raw COUNT the sentence below reads aloud, and the two do not round-trip
  *  cleanly enough to derive one from the other at display time. `answer-coverage.ts`'s own doc
  *  comment names this file as the one place that has to move if that table is ever re-measured
  *  (whole-branch review IMPORTANT 2) -- there is no code link between them, only that comment on
@@ -399,7 +399,7 @@ export function BuildBenchmarks({
  *  CORRECTED 2026-08-21 (residual fix wave): was 36/16/6 (n=58), a subset the original probe
  *  produced by nesting inside the wrong branch -- see `answer-coverage.ts`'s `GRAVEYARD_HATE_SHARE`
  *  for the diagnosis. */
-const HATE_COUNTS = { creature: 39, artifact: 19, enchantment: 8 } as const;
+const HATE_COUNTS = { creature: 95, artifact: 25, enchantment: 14 } as const;
 /** THIS FILE CANNOT IMPORT `GRAVEYARD_HATE_SHARE` -- it is client code, and `answer-coverage.ts`
  *  transitively pulls in `node:fs` through `answer-pool.ts`'s module-scope `readFileSync`, which is
  *  fatal in the browser (see the top-of-file comment; this is the regression that comment documents).

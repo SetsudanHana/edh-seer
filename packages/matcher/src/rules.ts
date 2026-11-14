@@ -72,6 +72,8 @@ export type RuleClause =
       /** Refuse an ability one of whose emits the VICTIM MAY DECLINE (`GameEvent.victimMay`): "unless that player exiles cards from their graveyard" (Axebane Ferox), "any player may exile a card from their graveyard" (Carrion Rats),
        *  "its controller may exile three cards ... to ignore this effect" (Lost in Thought) are a price the other player chooses to pay, not graveyard hate (#1266; the same refusal as the edict's `notVictimMay` on `emits`). */
       notVictimMay?: true;
+      /** Refuse an ULTIMATE: a MINUS loyalty ability ("−6", "-X") whose size is not below the card's printed starting loyalty (#1266, owner 2026-11-14: Kaya, Geist Hunter's -6 on loyalty 3, Ashiok, Nightmare Weaver's -10). A minus smaller than the starting loyalty can be paid again (Ashiok, Dream Render's -1 on loyalty 5 exiles a graveyard every turn it is used); a "+1" or "0" always repeats. `Ability.repeats` labels every loyalty ability per-cycle (CR 606.3), so this reads the cost against `Card.loyalty`; a card with no loyalty on its document (a double-faced walker keeps it per face) or an X minus is refused. */
+      notLoyaltyMinus?: true;
       /** The effect's SUBJECT can be a PLAYER and is not you (#1266, burn): an untyped subject (any target, each opponent, each player), a `player` subject, or an `anyOf` with a player or an untyped
        *  branch ("target player or planeswalker", "each creature and each player"). A subject typed to permanents only ("target creature") is removal, not burn; control `you` ("deals 2 damage to you") is refused;
        *  a subject that is the card itself is refused. */
@@ -201,6 +203,8 @@ export type RuleClause =
        *  alternative, which is not removal (#1295).
        *  Pay-or-die is read too (#1628): Arcum's Whistle ("That player may pay {X} ... If they don't pay") and Winter's Chill ("its controller may pay {1} or {2}. If that player doesn't, destroy that creature"). */
       notVictimMay?: true;
+      /** As on `effectKind`: refuse a minus loyalty ability (#1266). */
+      notLoyaltyMinus?: true;
       /** Refuse an emit about THE CARD ITSELF (`subject.self`): "Exile this card from your graveyard" (renew, channel-like costs) moves the card and is no exile of anything else (#1266, graveyardHate). */
       notSelf?: true;
       /** The ABILITY's effect kind is in this list, tested on the SAME ability as the emit. Manifest dread and "manifests the top card of that player's library" derive a `mill` EMIT under a kind-less
@@ -604,6 +608,15 @@ const subtypesOf = (s: { subtype?: unknown }): string[] => (s.subtype === undefi
 function blockCombat(a: { trigger?: { verbs?: string[] } }, subject: { combat?: string; combatWith?: { role?: string } }): boolean {
   return subject.combat === "blocking" || subject.combatWith?.role === "blocking" || (a.trigger?.verbs ?? []).some((v) => v === "blocks" || v === "becomes-blocked");
 }
+/** A loyalty cost that takes loyalty away: "−6", "-1", "−X" (the store writes U+2212). */
+const LOYALTY_MINUS = /^\s*[\u2212-]\s*(\d+|X)\b/i;
+/** A loyalty cost that is an ULTIMATE or single use: a minus whose size is not below the starting loyalty (see `notLoyaltyMinus`). */
+function isUltimate(cost: string | undefined, loyalty: string | undefined): boolean {
+  const m = LOYALTY_MINUS.exec(cost ?? "");
+  if (!m) return false;
+  const size = Number(m[1]), start = Number(loyalty);
+  return !(Number.isFinite(size) && Number.isFinite(start) && size < start);
+}
 const KILL_VERBS: readonly string[] = ["dies", "exiled", "leaves"];
 
 function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
@@ -692,6 +705,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.banProtects !== true || banProtectsYours(a, dc.card.typeLine ?? ""))
         && (clause.pairedInstantExile !== true || pairedInstantExile(dc.tags?.abilities ?? [], a))
         && (clause.notVictimMay !== true || !(a.emits ?? []).some((e) => e.victimMay === true))
+        && (clause.notLoyaltyMinus !== true || !isUltimate(a.cost, dc.card.loyalty))
         && (clause.librarySearch === undefined || (a.librarySearch !== undefined && clause.librarySearch.includes(a.librarySearch)))
         && (clause.notRedirect !== true || !(a.emits ?? []).some((e) => e.redirect === true))
         && (clause.notAnchorsMass !== true || a.amount === undefined || a.effect.subject?.scope !== "target" || !onlyCreatures(a.effect.subject) || !(dc.tags?.abilities ?? []).some((f) => f !== a && f.clause === a.clause && f.effect.kind === a.effect.kind
@@ -744,6 +758,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
           && (clause.notBlinkedBack !== true || !(dc.tags?.abilities ?? []).some((f) => f.effect.kind === "flicker" && f.returnIf !== true && f.effect.subject?.control !== "opp"
             && (f.delayedUntil === undefined ? f.clause === a.clause : f.delayedUntil === "next-end-step" || f.delayedUntil === "next-upkeep")))
           && (clause.notVictimMay !== true || e.victimMay !== true)
+          && (clause.notLoyaltyMinus !== true || !isUltimate(a.cost, dc.card.loyalty))
           && (clause.amountAtLeast === undefined || (a.amount !== undefined && /^\d+$/.test(a.amount) && Number(a.amount) >= clause.amountAtLeast))
           && (clause.notOwnedByYou !== true || e.subject.owner !== "you")
           && (clause.notSelf !== true || e.subject.self !== true)

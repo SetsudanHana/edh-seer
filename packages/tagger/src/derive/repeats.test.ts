@@ -279,3 +279,28 @@ test("rule 8c (#1375, #1381): 'becomes blocked' is once a combat for ONE creatur
   // A class: once per creature that becomes blocked.
   expect(repeatsFor(blockedBy({ control: "you", type: "creature" }), "Whenever a creature you control becomes blocked, draw a card.")).toBe("repeatable");
 });
+
+// #1266 graveyard.recurring: the card's own NAME, and an effect that spends the card, are the one-shot shape too.
+test("rule 1b: a cost that sacrifices or exiles the card by its printed NAME fires once, whatever else the cost taps (Stone of Erech, The Stone Brain)", () => {
+  expect(repeatsFor(activated(), "Exile target player's graveyard. Draw a card.", "{2}, {T}, Sacrifice Stone of Erech", undefined, "Stone of Erech")).toBe("once");
+  expect(repeatsFor(activated(), "Choose a card name.", "{2}, {T}, Exile The Stone Brain", undefined, "The Stone Brain")).toBe("once");
+  expect(repeatsFor(activated(), "Return up to one target historic card from your graveyard to your hand.", "{3}, {T}, Exile Abstergo Entertainment", undefined, "Abstergo Entertainment")).toBe("once");
+  // another card's name in the cost is no self-sacrifice
+  expect(repeatsFor(activated(), "Draw a card.", "{T}, Sacrifice Treasure Token", undefined, "Stone of Erech")).toBe("per-cycle");
+});
+
+test("rule 1c: an activated ability whose EFFECT begins by exiling or sacrificing the card itself fires once (Silent Gravestone)", () => {
+  expect(repeatsFor(activated(), "Exile this artifact and all cards from all graveyards. Draw a card.", "{4}, {T}")).toBe("once");
+  expect(repeatsFor(activated(), "Exile target card from a graveyard.", "{4}, {T}")).toBe("per-cycle");
+  // ...but a BLINK exiles itself to come back, and pays again each time (Aetherling, Shorecrasher Elemental, Ghost Council of Orzhova)
+  expect(repeatsFor(activated(), "Exile this creature. Return it to the battlefield under its owner's control at the beginning of the next end step.", "{U}")).toBe("repeatable");
+  expect(repeatsFor(activated(), "Exile this creature, then return it to the battlefield under its owner's control.", "{3}{W}")).toBe("repeatable");
+  expect(repeatsFor(activated(), "Exile Ghost Council of Orzhova. Return it to the battlefield under its owner's control at the beginning of the next end step.", "{1}, Sacrifice a creature", undefined, "Ghost Council of Orzhova")).toBe("repeatable");
+});
+
+test("rule 4b: 'As this enters' is a once-only static (The Mimeoplasm, Dermotaxi), a continuous static stays continuous", () => {
+  const stat: Ability = { kind: "static", effect: { kind: "" as const } };
+  expect(repeatsFor(stat, "As The Mimeoplasm enters, you may exile two creature cards from graveyards.", "", undefined, "The Mimeoplasm")).toBe("once");
+  expect(repeatsFor(stat, "As this Vehicle enters, exile a creature card from a graveyard.", "")).toBe("once");
+  expect(repeatsFor(stat, "If a card would be put into an opponent's graveyard from anywhere, exile it instead.", "")).toBe("continuous");
+});

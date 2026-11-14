@@ -139,8 +139,19 @@ export function delayedTriggerRepeats(clauseText: string, cardText: string): { r
   return repeats === undefined ? undefined : { repeats, delayedBy: cost };
 }
 
-export function repeatsFor(ability: Ability, clauseText: string, cost = "", raw?: RawTrigger): Repeats | undefined {
+/** #1266: THE CARD SPENDING ITSELF BY ITS PRINTED NAME ("{2}, {T}, Sacrifice Stone of Erech", "Exile The Stone Brain": the cost words `SACRIFICES_ITSELF` cannot see), and an effect that opens by exiling or sacrificing the card ("{4}, {T}: Exile this artifact and all cards from all graveyards", Silent Gravestone: the self-exile is in the effect, not the cost). A one-shot even beside a {T}. */
+const SELF_SPEND_EFFECT = /^\s*(?:sacrifice|exile) (?:this|~)\b/i;
+/** "As this Vehicle enters, exile a creature card from a graveyard" (Dermotaxi), "As The Mimeoplasm enters, ..." (CR 614.1c replacement as it enters): happens once, as the card arrives. */
+const AS_THIS_ENTERS = /^\s*As (?:this [a-z]+|~) enters\b/i;
+const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+export function repeatsFor(ability: Ability, clauseText: string, cost = "", raw?: RawTrigger, cardName?: string): Repeats | undefined {
   const text = clauseText ?? "";
+  const nm = cardName !== undefined && cardName !== "" ? escapeRe(cardName) : undefined;
+  if (ability.kind === "static" && (AS_THIS_ENTERS.test(text) || (nm !== undefined && new RegExp(`^\\s*As ${nm} enters\\b`, "i").test(text)))) return "once";
+  // ...an effect that spends the card and RETURNS it is a blink, paid for again each time (Aetherling, Flickering Spirit): not read here.
+  const spendsItself = !/\breturn\b/i.test(text) && (SELF_SPEND_EFFECT.test(text) || (nm !== undefined && new RegExp(`^\\s*(?:sacrifice|exile) ${nm}\\b`, "i").test(text)));
+  if (ability.kind === "activated" && (spendsItself || (nm !== undefined && new RegExp(`\\b(?:sacrifice|discard|exile) ${nm}\\b`, "i").test(cost)))) return "once";
 
   // 1-2: the cost, most restrictive first. EXHAUST (CR 702.177a, "activate only once") is once
   // per game: Loot, the Pathfinder amortised a once-per-game draw as per-cycle (rate, 2026-09-17).

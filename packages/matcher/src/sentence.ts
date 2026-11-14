@@ -25,6 +25,8 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   restriction: [() => "restricts attacking or blocking", "restricts attacking or blocking"],
   // A scoped "can't be the target of ..." (#1423): who is protected and from whom are `effect.subject` and `Ability.targetingBan`, not on the row. No pair reason is built from it.
   "targeting-ban": [() => "restricts what can target it", "restricts what can target it"],
+  // A static prohibition on the cards in graveyards (#1266): no pair reason is built from it.
+  "graveyard-lock": [() => "keeps cards in graveyards from coming back", "keeps cards in graveyards from coming back"],
   "trigger-suppression": [() => "stops some abilities from triggering", "stops some abilities from triggering"],
   "untap-denial": [() => "keeps permanents from untapping", "keeps permanents from untapping"],
   // Damage prevented or changed (#1469): whom, how much and from what are `effect.subject` and `Ability.prevention` / `Effect.damageChange`, not on the row. No pair reason is built from either.

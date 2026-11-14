@@ -13,7 +13,7 @@
     "enchantment": 270,
     "planeswalker": 214,
     "land": 55,
-    "graveyard": 88
+    "graveyard": 89
   },
   "U": {
     "creature": 567,
@@ -29,7 +29,7 @@
     "enchantment": 431,
     "planeswalker": 372,
     "land": 99,
-    "graveyard": 103
+    "graveyard": 104
   },
   "B": {
     "creature": 970,
@@ -37,7 +37,7 @@
     "enchantment": 63,
     "planeswalker": 215,
     "land": 56,
-    "graveyard": 183
+    "graveyard": 182
   },
   "WB": {
     "creature": 1508,
@@ -45,7 +45,7 @@
     "enchantment": 315,
     "planeswalker": 363,
     "land": 84,
-    "graveyard": 236
+    "graveyard": 235
   },
   "UB": {
     "creature": 1419,
@@ -53,7 +53,7 @@
     "enchantment": 219,
     "planeswalker": 375,
     "land": 105,
-    "graveyard": 211
+    "graveyard": 209
   },
   "WUB": {
     "creature": 2003,
@@ -61,7 +61,7 @@
     "enchantment": 492,
     "planeswalker": 538,
     "land": 135,
-    "graveyard": 267
+    "graveyard": 265
   },
   "R": {
     "creature": 1063,
@@ -77,7 +77,7 @@
     "enchantment": 296,
     "planeswalker": 858,
     "land": 161,
-    "graveyard": 98
+    "graveyard": 99
   },
   "UR": {
     "creature": 1539,
@@ -93,7 +93,7 @@
     "enchantment": 462,
     "planeswalker": 1075,
     "land": 208,
-    "graveyard": 114
+    "graveyard": 115
   },
   "BR": {
     "creature": 1970,
@@ -101,7 +101,7 @@
     "enchantment": 83,
     "planeswalker": 873,
     "land": 171,
-    "graveyard": 200
+    "graveyard": 198
   },
   "WBR": {
     "creature": 2583,
@@ -109,7 +109,7 @@
     "enchantment": 348,
     "planeswalker": 1064,
     "land": 199,
-    "graveyard": 254
+    "graveyard": 252
   },
   "UBR": {
     "creature": 2509,
@@ -117,7 +117,7 @@
     "enchantment": 249,
     "planeswalker": 1098,
     "land": 225,
-    "graveyard": 231
+    "graveyard": 228
   },
   "WUBR": {
     "creature": 3179,
@@ -125,7 +125,7 @@
     "enchantment": 536,
     "planeswalker": 1312,
     "land": 257,
-    "graveyard": 289
+    "graveyard": 286
   },
   "G": {
     "creature": 332,
@@ -141,7 +141,7 @@
     "enchantment": 447,
     "planeswalker": 257,
     "land": 94,
-    "graveyard": 117
+    "graveyard": 118
   },
   "UG": {
     "creature": 751,
@@ -157,7 +157,7 @@
     "enchantment": 618,
     "planeswalker": 422,
     "land": 140,
-    "graveyard": 134
+    "graveyard": 135
   },
   "BG": {
     "creature": 1205,
@@ -165,7 +165,7 @@
     "enchantment": 257,
     "planeswalker": 281,
     "land": 101,
-    "graveyard": 222
+    "graveyard": 220
   },
   "WBG": {
     "creature": 1756,
@@ -173,7 +173,7 @@
     "enchantment": 527,
     "planeswalker": 434,
     "land": 132,
-    "graveyard": 278
+    "graveyard": 276
   },
   "UBG": {
     "creature": 1673,
@@ -181,7 +181,7 @@
     "enchantment": 423,
     "planeswalker": 447,
     "land": 152,
-    "graveyard": 253
+    "graveyard": 250
   },
   "WUBG": {
     "creature": 2282,
@@ -189,7 +189,7 @@
     "enchantment": 717,
     "planeswalker": 617,
     "land": 185,
-    "graveyard": 312
+    "graveyard": 309
   },
   "RG": {
     "creature": 1278,
@@ -205,7 +205,7 @@
     "enchantment": 487,
     "planeswalker": 936,
     "land": 210,
-    "graveyard": 129
+    "graveyard": 130
   },
   "URG": {
     "creature": 1772,
@@ -221,7 +221,7 @@
     "enchantment": 663,
     "planeswalker": 1163,
     "land": 259,
-    "graveyard": 148
+    "graveyard": 149
   },
   "BRG": {
     "creature": 2262,
@@ -229,7 +229,7 @@
     "enchantment": 294,
     "planeswalker": 977,
     "land": 226,
-    "graveyard": 244
+    "graveyard": 241
   },
   "WBRG": {
     "creature": 2899,
@@ -237,7 +237,7 @@
     "enchantment": 580,
     "planeswalker": 1180,
     "land": 259,
-    "graveyard": 301
+    "graveyard": 298
   },
   "UBRG": {
     "creature": 2824,
@@ -245,7 +245,7 @@
     "enchantment": 470,
     "planeswalker": 1211,
     "land": 282,
-    "graveyard": 279
+    "graveyard": 275
   },
   "WUBRG": {
     "creature": 3545,
@@ -253,6 +253,6 @@
     "enchantment": 787,
     "planeswalker": 1449,
     "land": 323,
-    "graveyard": 341
+    "graveyard": 337
   }
 }

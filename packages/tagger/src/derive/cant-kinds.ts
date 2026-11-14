@@ -102,6 +102,18 @@ function parseTargetingTail(tail: string): TargetingBan | undefined {
  *  "can be the targets of spells and abilities you control as though they didn't have hexproof" is the opposite permission).
  *  CEILING: only the whitelisted words of a tail are read (spells, abilities, activated, a colour or non-colour, a card type, Aura, "your opponents control", "from ... sources", "this turn");
  *  a qualifier on only one of "spells" and "abilities" that is not repeated refuses, and a ward-like cost ("unless its controller pays") is not a ban. */
+/** A STATIC PROHIBITION ON THE CARDS IN GRAVEYARDS (#1266): "creature cards in graveyards (and libraries) can't enter the battlefield", "players can't cast / play ... from graveyards", "... or activate abilities of cards in
+ *  graveyards". Read off the stored object and the printed clause together, because the grammar and the model each keep a different slice of the sentence. NOT "cards in graveyards can't be the targets of ..." (protection, `targetingBanOf`),
+ *  NOT a ban on casting from YOUR graveyard, NOT a threshold on attacking or blocking. CEILING: "from their graveyards" (Shaman's Trance, a spell: once) reads as a lock too; the `repeats` of its on-cast ability says once. */
+const GRAVEYARD_ENTER_LOCK = /\b(?:cards?|permanents?) in (?:all |a )?graveyards?\b[^.]{0,40}?\benter the battlefield\b/i;
+const GRAVEYARD_CAST_LOCK = /\b(?:cast|play)\b[^.]{0,60}?\bfrom (?:their |all |a )?graveyards?\b/i;
+const GRAVEYARD_ACTIVATE_LOCK = /\bactivate abilities of cards in (?:all |a )?graveyards?\b/i;
+export function graveyardLockOf(object: string, clauseText = ""): boolean {
+  if (clauseText !== "" && !/\b(?:can['\u2019]t|cannot)\b/i.test(clauseText)) return false;
+  const text = `${object}. ${clauseText}`;
+  return GRAVEYARD_ENTER_LOCK.test(text) || GRAVEYARD_CAST_LOCK.test(text) || GRAVEYARD_ACTIVATE_LOCK.test(text);
+}
+
 export function targetingBanOf(object: string, clauseText = "", occurrence = 0): TargetingBan | undefined {
   const at = object.search(TARGET_OF);
   if (at < 0) return undefined;
