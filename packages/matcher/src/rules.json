@@ -16,8 +16,6 @@
   ],
 
   "patterns": {
-    "costNotReduced": "would cost less than|spells your opponents cast that target this",
-    "costNotADiscount": "^(?=[\\s\\S]*(?:this spell costs [^.]*less|without paying (?:its|their|your) mana costs?|rather than pay (?:its|their|the) mana costs?))(?![\\s\\S]*(?<!this spell )costs? (?:up to )?(?:(?:\\{[^}]+\\})+(?: \\(or \\{[^}]+\\}\\))?|x|\\w+) less)",
     "graveyardHateRecurring": "if a card[^.]{0,60}?would be put into (?:a|an opponent's|their) graveyard from anywhere[^.]{0,40}?exile it instead|cards? in [^.]{0,40}graveyards?[^.]{0,30}can'?t (?:enter|be cast|be played)|players can'?t cast[^.]{0,40}from[^.]{0,30}graveyards?|\\{[^}]{1,12}\\}[^.:]{0,40}:[^.]{0,80}?exile[^.]{0,60}?from (?:a|an opponent's|that|their)\\s+graveyard",
     "deathsExiledCreature": "(?:whenever a (?:nontoken )?creature an opponent controls dies, exile it|if a (?:nontoken )?creature an opponent (?:controls|owns) would die(?! this turn)[^.]*?,? (?:instead )?exile)",
     "deathsExiledAll": "if a card(?: or token)? would be put into (?:an opponent's|a) graveyard from anywhere,? (?:instead )?exile",
@@ -216,9 +214,9 @@
     {
       "id": "ramp.costReduction",
       "category": "ramp",
-      "match": [{ "op": "effectKind", "in": ["cost-reduction"], "scope": ["all", "each"], "notSelfTargeted": true }],
-      "not": [{ "op": "countsAsLand" }, { "op": "oracle", "pattern": "costNotReduced" }, { "op": "oracle", "pattern": "costNotADiscount" }],
-      "why": "COST REDUCTION IS RAMP (owner 2026-08-06, wired into the rules 2026-10-13, #1190): a Medallion, a Goblin Electromancer, a \"second spell costs {2} less\" saves the mana a rock would make. The discount must reach OTHER spells (subject scope all/each); a card that only cheapens itself (\"This spell costs {1} less\", Sunderflock, affinity) is a cheaper card, not ramp (`costNotADiscount`, RULES 22: the derive types Volcanic Salvo's \"This spell costs {X} less\" with a scope-all subject, and an alternative or free cast -- As Foretold, Aluren, Fires of Invention -- as a reduction; a card whose ONLY such text is that is refused, one that also names a discount for other spells, Hamza, stays). A discount for spells that target the card itself (Spellwild Ouphe, `subject.targets.self`) reaches no other spell: refused (RULES 23). Cost reduction DOES form pairwise edges (it left `ROLE_NOT_SYNERGY` 2026-08-18); tax does not (`ROLE_NOT_SYNERGY` is tax, win-game, extra-turn, extra-phase)."
+      "match": [{ "op": "effectKind", "in": ["cost-reduction"], "scope": ["all", "each"], "notSelfTargeted": true, "notAltCost": true, "notSelf": true }],
+      "not": [{ "op": "countsAsLand" }],
+      "why": "COST REDUCTION IS RAMP (owner 2026-08-06, wired into the rules 2026-10-13, #1190): a Medallion, a Goblin Electromancer, a \"second spell costs {2} less\" saves the mana a rock would make. The discount must reach OTHER spells (subject scope all/each); a card that only cheapens itself (\"This spell costs {1} less\", Sunderflock, affinity) is a cheaper card, not ramp. READ FROM DERIVED DATA (#1266, derive 523; it was the printed `costNotReduced` and `costNotADiscount` patterns, RULES 22): derive gives Volcanic Salvo's \"This spell costs {X} less\" the card itself as subject (`notSelf`), marks an alternative or free cast -- As Foretold, Aluren, Fires of Invention -- `Ability.altCost` (`notAltCost`), and types Trinisphere's floor (\"would cost less than three mana\") as a tax, so none is a reduction for other spells; the refusal is per ability, so Hamza, which also names a discount for other spells, stays. A discount for spells that target the card itself (Spellwild Ouphe, `subject.targets.self`) reaches no other spell: refused (RULES 23). Cost reduction DOES form pairwise edges (it left `ROLE_NOT_SYNERGY` 2026-08-18); tax does not (`ROLE_NOT_SYNERGY` is tax, win-game, extra-turn, extra-phase)."
     },
     {
       "id": "ramp.landFetchSpell",

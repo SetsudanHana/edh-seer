@@ -8819,3 +8819,27 @@ test("an unread temporary trigger is surfaced in unknownTriggers (Vraska the Uns
   // Read: the leading "Until end of turn, whenever" is the clause's trigger.
   expect(unknown("Lyra, Tolarian Archangel", "{3}{U}{U}: Until end of turn, whenever Lyra, Tolarian Archangel deals combat damage to a player, draw two cards.", "Legendary Creature — Angel")).toEqual([]);
 });
+
+// #1266: ramp.costReduction read its three refusals off the printed text. Real clauses (cardClauses, Mongo) and real printed sentences.
+describe("a cost change is typed by what it does, so ramp.costReduction can read it", () => {
+  const derive = (clause: object, text: string, name: string) => deriveAbilities([{ id: 1, ...clause }] as never, name, { 1: text }).abilities[0]!;
+  test("Volcanic Salvo's \"This spell costs {X} less\" is the card's own cost, not a discount for creatures you control", () => {
+    const a = derive({ abilityType: "spell", actions: [{ verb: "cost-modify", object: "casting cost reduced by total power of creatures you control" }] },
+      "This spell costs {X} less to cast, where X is the total power of creatures you control.", "Volcanic Salvo");
+    expect(a.effect.kind).toBe("cost-reduction");
+    expect(a.effect.subject?.self).toBe(true);
+    expect(a.effect.subject?.scope).toBeUndefined();
+  });
+  test("Trinisphere's floor is a tax: it raises what a cheap spell costs", () => {
+    const a = derive({ abilityType: "static", actions: [{ verb: "cost-modify", object: "each spell that would cost less than three mana to cast", amount: "three mana" }] },
+      "As long as this artifact is untapped, each spell that would cost less than three mana to cast costs three mana to cast.", "Trinisphere");
+    expect(a.effect.kind).toBe("tax");
+  });
+  test("an alternative or free cast is marked altCost; a plain discount is not", () => {
+    const alt = (object: string, text: string, name: string) => derive({ abilityType: "static", actions: [{ verb: "cost-modify", object }] }, text, name);
+    expect(alt("creature spells with mana value 3 or less may be cast without paying their mana costs", "Any player may cast creature spells with mana value 3 or less without paying their mana costs and as though they had flash.", "Aluren").altCost).toBe(true);
+    expect(alt("mana cost for a spell you cast with mana value X or less, where X is the number of time counters on this enchantment, to {0}", "Once each turn, you may pay {0} rather than pay the mana cost for a spell you cast with mana value X or less, where X is the number of time counters on this enchantment.", "As Foretold").altCost).toBe(true);
+    expect(alt("casting spells with mana value less than or equal to the number of lands you control costs nothing", "You may cast spells with mana value less than or equal to the number of lands you control without paying their mana costs.", "Fires of Invention").altCost).toBe(true);
+    expect(alt("artifact spells you cast cost {1} less to cast", "Artifact spells you cast cost {1} less to cast.", "Foundry Inspector").altCost).toBeUndefined();
+  });
+});

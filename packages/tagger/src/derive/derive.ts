@@ -704,7 +704,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 520: #1628 -- MEASURED: a pay-or-die destroy ("may pay ... If they don't": Arcum's Whistle, Winter's Chill) carries victimMay, and "attacking you or a planeswalker you control" (Soul Snare) no longer adds planeswalker to the target type (#1629)
 // 521: #1266 -- Ability.impulse and Ability.looksAtTop: the card-selection and impulse-draw roles read derived marks, not the printed selection / impulseDraw patterns. MEASURED (derive-impact vs 377d9a22): 604 rows changed, 0 added or removed, 0 source flips, 0 pair reasons; role-ratchet cardSelection +2 / -30, impulseDraw 0; dropped-clauses 4,825, new 0.
 // 522: #1266 -- a mass effect on one player's board ("all creatures target player controls") is scope all / each, not target; boardWipe reads it from derived data
-export const DERIVE_VERSION = 522;
+// 523: #1266 -- ramp.costReduction reads derived data: Volcanic Salvo's "This spell costs {X} less" has the card itself as subject, Trinisphere's floor ("would cost less than") is a tax, and an alternative or free cast (Aluren, As Foretold, Fires of Invention) is marked Ability.altCost
+export const DERIVE_VERSION = 523;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -1987,6 +1988,10 @@ function effectSubject(
       return s;
     }
   }
+  // A SELF DISCOUNT WHOSE OBJECT NAMES ONLY THE COUNT (#1266): Volcanic Salvo's object is "casting cost reduced by total power of creatures you control", which parsed as a discount for
+  // creatures you control with scope all. The clause says "This spell costs {X} less", so the subject is the card itself (the shape Drag to the Underworld already has); a clause that
+  // also names "spells you cast" keeps what it read.
+  if (kind === "cost-reduction" && SELF_COST_LESS.test(clauseText) && !SPELLS_YOU_CAST.test(clauseText)) return { ...parseSubject("this spell"), self: true };
   let object = action.object ?? "";
   // A TYPE-GRANT WITH NO GRANT VERB TO CUT AT ("Creatures you control are Slivers in addition to their other creature types", Hivestone) hands the whole sentence over as the object, so the recipient was read
   // up to the end and carried the granted type (Hivestone paired with Muscle Sliver and not Grizzly Bears; Ashaya x Forest; The Flesh Is Weak x Sol Ring; #1568 review 2). The recipient is what stops at the verb; a pronoun
@@ -2206,6 +2211,9 @@ const ANTECEDENT_COUNT = /^(?:up to )?(?:a|an|one|two|three|four|five|six|seven|
 const COMBAT_IF = /\bif (?:it|that creature) was (attacking|blocking)\b(?! or)/i;
 /** "…spell(s) you cast" as a cost reducer's object (#717, Doran). */
 const SPELLS_YOU_CAST = /\bspells? you cast\b/i;
+const ALTERNATIVE_COST = /\bwithout paying (?:its|their|your) mana costs?\b|\brather than pay (?:its|their|the) mana costs?\b|\bcosts nothing\b/i;
+const PRINTED_DISCOUNT = /\bcosts? (?:up to )?(?:(?:\{[^{}]+\})+(?: \(or \{[^{}]+\}\))?|x|\w+) less\b/i;
+const SELF_COST_LESS = /\bthis spell costs\b[^.]*\bless\b/i;
 /** A reducer narrowing no field holds -- "the FIRST spell you cast each turn" (Baral), "from exile",
  *  "that targets" -- stays unread rather than widened to every such spell (review). */
 const COST_NARROWING_UNHELD = /\bfirst\b|\bfrom (?:exile|a graveyard|your graveyard|anywhere other than)\b|\bthat targets?\b|\beach turn\b/i;
@@ -4940,6 +4948,8 @@ export function deriveAbilities(
       }
       const reduces = abilities[i].effect?.kind === "cost-reduction" ? reductionOf(text ?? "", abilities[i].amount) : undefined;
       if (reduces) abilities[i] = { ...abilities[i], reduces };
+      // AN ALTERNATIVE OR FREE CAST DERIVES AS A REDUCTION (#1266; CR 118.9): Aluren, As Foretold, Fires of Invention pay nothing for the spell, which discounts no mana and is no ramp.
+      if (abilities[i].effect?.kind === "cost-reduction" && ALTERNATIVE_COST.test(text ?? "") && !PRINTED_DISCOUNT.test(text ?? "")) abilities[i] = { ...abilities[i], altCost: true };
       // A becomes-blocked trigger's stored subject can be the BLOCKER (Ogre Leadfoot: "an artifact creature"), so a trigger with a `blocker` has its `batched` read off the printed "by ...", never off the stored subject (#1381). A plain "one or more creatures you control become blocked" (Hezrou) keeps it.
       if (abilities[i].trigger && !abilities[i].trigger!.blocker && BATCHED.test(clause.trigger?.subject ?? "")) {
         abilities[i] = { ...abilities[i], trigger: { ...abilities[i].trigger!, batched: true } };

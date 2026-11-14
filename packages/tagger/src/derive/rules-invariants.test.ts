@@ -185,6 +185,7 @@ const PROSE: Record<string, string> = {
   "903": "Commander", "903.3": "the commander designation is a deck fact (matcher asserts it)",
   "118.3b": "paying life is losing life — prompt rule",
   "118.7a": "a generic reduction takes off generic mana only — reduction.ts records the printed mana; the reader applies it",
+  "118.9": "derive.test.ts — an alternative or free cast derived as a cost reduction (Aluren, As Foretold, Fires of Invention) is marked `altCost`, a plain discount is not",
   "113.3": "schema: the ability kinds a card can name as an OBJECT (abilityKind, AC12)",
   "707.10": "schema / effect-kind: an ability is the third copyable object, kind copy-ability (AC12; derive.test asserts Gogo)",
   "707.10c": "grammar/action.test.ts — 'You may choose new targets for the copy' after a copy claims no action (Twincast, Dualcaster Mage; #1349)",
