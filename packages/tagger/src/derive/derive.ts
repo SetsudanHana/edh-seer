@@ -2174,7 +2174,7 @@ function printedTriggerPhrase(text: string, subjectText: string): string {
  *  overridden. `sacrifice` is absent on purpose: a sacrifice outlet eats YOUR creatures, and that is
  *  the aristocrats edge this engine most wants to find. */
 const REMOVAL_VERBS = new Set(["destroy", "exile"]);
-/** Same words as `rules.json`'s `controllerGetsCopies` (matcher), which the tagger cannot import. */
+/** "Its controller creates ... tokens that are copies of" (Saw in Half, owner ruling 2026-09-27, #513): the matcher reads the `you` this sets, not the text. */
 const CONTROLLER_GETS_COPIES = /its controller creates [^.]{0,40}tokens? that (?:are|is a) cop(?:y|ies) of/i;
 
 /** AN ACTION WITH NO PLAYER NAMED IS THE CONTROLLER'S (CR 111.2; `subject.ts` already says this is
@@ -4249,8 +4249,8 @@ export function deriveAbilities(
         const own = action.fromZone === "graveyard" && action.fromOwner !== "opp" && exilesOwnGraveyard(action.object ?? "", clauseText);
         // ...AND A DESTROY WHOSE CONTROLLER GETS COPIES BACK (owner ruling 2026-09-27, #513/#716): Saw
         // in Half is played on your own creature, so the creature that dies is yours and Vengeful
-        // Bloodwitch drains. Read off the whole card, the copies being the next sentence -- the same
-        // test `rules.json`'s `controllerGetsCopies` makes for the removal role.
+        // Bloodwitch drains. Read off the clause, the copies being the next sentence. The removal role reads
+        // this `you` and nothing printed (#1266).
         // THE CLAUSE, not the card (review): a modal card's other destroy mode stays removal.
         // ...AND A PERMANENT YOU OWN (#1295): "exile target creature you own" (Become Anonymous, Northampton Farm, Sword of Hearth and
         // Home) is aimed at nothing but yours, not at an opponent's, which is what the default would say.
