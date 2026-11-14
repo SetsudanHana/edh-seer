@@ -26,6 +26,8 @@ export type RuleClause =
       scope?: string[];
       /** Let `scope` also accept a ONE-SIDED MASS at a targeted player's board (owner 2026-11-14: "Return all nonland permanents target player controls to their owner's hand" is a weaker board wipe, an answer to the classes it returns). The marker is on the ability's EMIT (`SubjectFilter.targetPlayer`, derive sets it on `leaves`); the effect subject of such a bounce is `scope: all, control: any` and carries none, so this reads the `leaves` emit (no other verb), and a symmetric mass (Evacuation, Aetherize: no marker) is not let through. A mass on LANDS ONLY is refused, as `notMassLand` refuses it for the kill rules (Ajani Vengeant: stax, not a land answer). */
       orTargetPlayerMass?: true;
+      /** Let `scope` also accept a ONE-SIDED MASS at ALL OPPONENTS (owner 2026-11-14: Spectral Deluge, Scourge of Fleets, Llawan: "return each creature your opponents control"): the effect subject is `scope: all | each, control: opp`. Read on the effect subject, so it needs no emit marker; `control` still has to list `opp`, and a mass on LANDS ONLY is refused (`orTargetPlayerMass`'s reason). A symmetric mass is `control: any` and stays out. */
+      orOppMass?: true;
       /** Refuse an ability whose subject is a spell THAT TARGETS THIS CARD (`subject.targets.self`): Spellwild Ouphe's "Spells that target this creature cost {2} less" cheapens
        *  spells aimed at the card itself, a discount for no other spell (`discountsOtherSpells`). */
       notSelfTargeted?: boolean;
@@ -672,7 +674,9 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.scope === undefined || (a.effect.subject?.scope !== undefined && clause.scope.includes(a.effect.subject.scope))
           || (clause.orTargetPlayerMass === true && (a.emits ?? []).some((e) => e.verb === "leaves" && e.subject.targetPlayer === true && !landOnlySubject(e.subject)
             && (clause.control === undefined || clause.control.includes(e.subject.control as string))
-            && (clause.notOwnedByYou !== true || e.subject.owner !== "you"))))
+            && (clause.notOwnedByYou !== true || e.subject.owner !== "you")))
+          || (clause.orOppMass === true && (a.effect.subject?.scope === "all" || a.effect.subject?.scope === "each") && a.effect.subject.control === "opp" && !landOnlySubject(a.effect.subject)
+            && (clause.control === undefined || clause.control.includes("opp"))))
         && (clause.notSelfTargeted !== true || (a.effect.subject as { targets?: { self?: boolean } } | undefined)?.targets?.self !== true)
         && (clause.notAltCost !== true || a.altCost !== true)
         && (clause.notOnFlip !== true || a.onFlip === undefined)

@@ -351,6 +351,14 @@ describe("the destroy and exile answers read derived data (#1266)", () => {
     expect(classes("Aetherize")).not.toContain("creature");
   });
 
+  // Owner 2026-11-14: a one-sided mass bounce of ALL OPPONENTS' permanents is the same answer ("each opponent" / "your opponents control").
+  test("a one-sided mass bounce of the opponents' permanents answers the classes it returns (Spectral Deluge, Scourge of Fleets, Llawan, Profaner of the Dead); a symmetric one stays out", () => {
+    for (const n of ["Spectral Deluge", "Scourge of Fleets", "Profaner of the Dead", "Llawan, Cephalid Empress"]) expect(classes(n), n).toContain("creature");
+    expect(classes("Spectral Deluge")).not.toContain("land");
+    expect(classes("Evacuation")).not.toContain("creature");
+    expect(classes("Aetherize")).not.toContain("creature");
+  });
+
   test("a land answer is a TARGETED land kill: Boom // Bust is one, the mass kill at a player is stax (Ajani Vengeant, Burning of Xinye)", () => {
     expect(classes("Boom // Bust")).toEqual(["land"]);
     expect(classes("Ajani Vengeant")).not.toContain("land");
