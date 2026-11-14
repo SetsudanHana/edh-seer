@@ -342,6 +342,25 @@ describe("the destroy and exile answers read derived data (#1266)", () => {
     expect(classes("Mogg Infestation")).toEqual(["creature"]);
   });
 
+  // #1642, owner 2026-11-13: a TARGET-PLAYER sacrifice (`SubjectFilter.edict`) answers the class the victim loses, like the each-opponent edict. Land is a targeted land kill only.
+  test("a target-player sacrifice answers the class the victim loses; a land edict gains no land class; a pay-or-sacrifice stays out (#1642)", () => {
+    for (const n of ["Diabolic Edict", "Chainer's Edict", "Geth's Verdict", "Cruel Edict", "Dead Drop"]) expect(classes(n), n).toEqual(["creature"]);
+    expect(classes("Storm Fleet Arsonist")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+    expect(classes("Misguided Rage")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
+    expect(classes("Angrath's Rampage")).toEqual(["artifact", "creature", "planeswalker"]);
+    expect(classes("Epicenter")).toEqual([]);
+    expect(classes("Structural Collapse")).toEqual(["artifact"]);
+    expect(classes("Din of the Fireherd")).toEqual(["creature"]);
+    for (const n of ["Rishadan Cutpurse", "Killing Wave", "Indulgent Tormentor"]) expect(classes(n), n).toEqual([]);
+  });
+
+  test("orEdict refuses a pay-or-sacrifice: Diabolic Edict's real row with an `unless` added answers nothing (#1642; no corpus edict row carries one today, derive's victimDeclines refuses the shape first)", () => {
+    const real = realCard("Diabolic Edict");
+    const taxed = { ...real, tags: { ...real.tags!, abilities: real.tags!.abilities.map((a) => ({ ...a, unless: { cost: "{3}", payer: "controller" as const } })) } } as typeof real;
+    expect([...answerClassesOf(real, loadRules()).keys()]).toEqual(["creature"]);
+    expect([...answerClassesOf(taxed, loadRules()).keys()]).toEqual([]);
+  });
+
   // Owner 2026-11-14: a one-sided mass bounce at a target player is an answer, a weaker board wipe.
   test("a one-sided mass bounce at a player answers the classes it returns; a symmetric one does not (River's Rebuke, Hurkyl's Recall, Evacuation, Aetherize)", () => {
     expect(classes("River's Rebuke")).toEqual(["artifact", "creature", "enchantment", "planeswalker"]);
