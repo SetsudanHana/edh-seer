@@ -35630,163 +35630,6 @@
    }
   ]
  },
- "Silent Gravestone": {
-  "oracleText": "Cards in graveyards can't be the targets of spells or abilities.\n{4}, {T}: Exile this artifact and all cards from all graveyards. Draw a card.",
-  "typeLine": "Artifact",
-  "manaValue": 1,
-  "abilities": [
-   {
-    "kind": "static",
-    "effect": {
-     "kind": "targeting-ban",
-     "subject": {
-      "control": "any",
-      "token": null,
-      "zone": "graveyard"
-     }
-    },
-    "targetingBan": {
-     "by": [
-      "spell",
-      "ability"
-     ],
-     "source": {
-      "control": "any",
-      "token": null
-     }
-    },
-    "clause": 1,
-    "repeats": "continuous"
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": ""
-    },
-    "cost": "{4}, {T}",
-    "amount": "1",
-    "emits": [
-     {
-      "verb": "exiled",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "type": "artifact",
-       "fromZone": "battlefield",
-       "self": true
-      },
-      "instantSpeed": true
-     },
-     {
-      "verb": "leaves",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "type": "artifact",
-       "fromZone": "battlefield",
-       "self": true
-      },
-      "instantSpeed": true
-     }
-    ],
-    "clause": 2,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    },
-    "payment": {
-     "mana": "{4}",
-     "tap": true
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "graveyard-hate",
-     "subject": {
-      "control": "any",
-      "token": null,
-      "scope": "all",
-      "fromZone": "graveyard",
-      "zone": "graveyard"
-     }
-    },
-    "cost": "{4}, {T}",
-    "emits": [
-     {
-      "verb": "exiled",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "scope": "all",
-       "fromZone": "graveyard"
-      },
-      "instantSpeed": true
-     },
-     {
-      "verb": "leaves",
-      "subject": {
-       "control": "any",
-       "token": null,
-       "scope": "all",
-       "zone": "graveyard",
-       "fromZone": "graveyard"
-      },
-      "instantSpeed": true
-     }
-    ],
-    "clause": 2,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 0,
-     "ceiling": null,
-     "scalesWith": {
-      "control": "any",
-      "token": null,
-      "scope": "all",
-      "fromZone": "graveyard"
-     }
-    },
-    "payment": {
-     "mana": "{4}",
-     "tap": true
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "draw-card",
-     "subject": {
-      "control": "you",
-      "token": null
-     }
-    },
-    "cost": "{4}, {T}",
-    "amount": "1",
-    "emits": [
-     {
-      "verb": "draw",
-      "subject": {
-       "control": "you",
-       "token": null
-      },
-      "instantSpeed": true
-     }
-    ],
-    "clause": 2,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    },
-    "payment": {
-     "mana": "{4}",
-     "tap": true
-    }
-   }
-  ]
- },
  "Dennick, Pious Apprentice // Dennick, Pious Apparition": {
   "oracleText": "Lifelink\nCards in graveyards can't be the targets of spells or abilities.\nDisturb {2}{W}{U} (You may cast this card from your graveyard transformed for its disturb cost.)\n//\nFlying\nWhenever one or more creature cards are put into graveyards from anywhere, investigate. This ability triggers only once each turn. (Create a Clue token. It's an artifact with \"{2}, Sacrifice this token: Draw a card.\")\nIf Dennick would be put into a graveyard from anywhere, exile it instead.",
   "typeLine": "Legendary Creature — Human Soldier // Legendary Creature — Spirit Soldier",
@@ -57702,6 +57545,3845 @@
     "count": {
      "floor": 2,
      "ceiling": 2
+    }
+   }
+  ]
+ },
+ "Grafdigger's Cage": {
+  "oracleText": "Creature cards in graveyards and libraries can't enter the battlefield.\nPlayers can't cast spells from graveyards or libraries.",
+  "typeLine": "Artifact",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "graveyard-lock"
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "graveyard-lock",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "spell",
+      "scope": "all"
+     }
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Deathrite Shaman": {
+  "oracleText": "{T}: Exile target land card from a graveyard. Add one mana of any color. (Activate only as an instant.)\n{B}, {T}: Exile target instant or sorcery card from a graveyard. Each opponent loses 2 life.\n{G}, {T}: Exile target creature card from a graveyard. You gain 2 life.",
+  "typeLine": "Creature — Elf Shaman",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "land",
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": "land",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": "land",
+       "scope": "target",
+       "zone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "instant",
+       "sorcery"
+      ],
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "{B}, {T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": [
+        "instant",
+        "sorcery"
+       ],
+       "scope": "target"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": [
+        "instant",
+        "sorcery"
+       ],
+       "scope": "target",
+       "zone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{B}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "player-life-loss",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "scope": "each"
+     }
+    },
+    "cost": "{B}, {T}",
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "lose-life",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "payment": {
+     "mana": "{B}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "{G}, {T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": "creature",
+       "scope": "target",
+       "zone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{G}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "{G}, {T}",
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "payment": {
+     "mana": "{G}",
+     "tap": true
+    }
+   }
+  ]
+ },
+ "Lazotep Quarry": {
+  "oracleText": "{T}: Add {C}.\n{T}, Sacrifice a creature: Add one mana of any color.\n{X}{2}, {T}, Sacrifice a Desert: Exile target creature card with mana value X from your graveyard. Create a token that's a copy of it, except it's a 4/4 black Zombie. Activate only as a sorcery.",
+  "typeLine": "Land — Desert",
+  "manaValue": 0,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{T}, Sacrifice a creature",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature"
+       }
+      }
+     ]
+    },
+    "claimsNothing": "mana-rider"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}, Sacrifice a creature",
+    "amount": "1",
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{X}{2}, {T}, Sacrifice a Desert",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "subtype": "desert",
+       "type": "land"
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "subtype": "desert",
+       "type": "land"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{X}{2}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "subtype": "desert"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-recursion",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "scope": "target",
+      "stats": [
+       {
+        "metric": "mana-value",
+        "op": "eq",
+        "variable": true
+       }
+      ],
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "{X}{2}, {T}, Sacrifice a Desert",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": "creature",
+       "scope": "target",
+       "owner": "you"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": "creature",
+       "scope": "target",
+       "zone": "graveyard"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{X}{2}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "subtype": "desert"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "subtype": "zombie",
+      "colors": [
+       "B"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 4
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 4
+       }
+      ]
+     }
+    },
+    "cost": "{X}{2}, {T}, Sacrifice a Desert",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "B"
+       ],
+       "subtype": "zombie",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 4
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 4
+        }
+       ],
+       "type": "creature"
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "B"
+       ],
+       "subtype": "zombie",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 4
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 4
+        }
+       ],
+       "type": "creature"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{X}{2}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "subtype": "desert"
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Treasure Cruise": {
+  "oracleText": "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)\nDraw three cards.",
+  "typeLine": "Sorcery",
+  "manaValue": 8,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    }
+   }
+  ]
+ },
+ "Graven Abomination": {
+  "oracleText": "Whenever this creature attacks, exile target card from defending player's graveyard.",
+  "typeLine": "Artifact Creature — Horror",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "attacks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "target",
+       "fromZone": "graveyard"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "target",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Cemetery Prowler": {
+  "oracleText": "Vigilance\nWhenever this creature enters or attacks, exile a card from a graveyard.\nSpells you cast cost {1} less to cast for each card type they share with cards exiled with this creature.",
+  "typeLine": "Creature — Wolf",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "fromZone": "graveyard"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "fromZone": "graveyard",
+       "zone": "graveyard"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "attacks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "fromZone": "graveyard"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "fromZone": "graveyard",
+       "zone": "graveyard"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "cost-reduction",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "scope": "all"
+     },
+     "scaling": "per-creature"
+    },
+    "amount": "-1 for each card type they share with cards exiled with this creature",
+    "clause": 3,
+    "repeats": "continuous",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "reduces": {
+     "mana": "{1}"
+    }
+   }
+  ]
+ },
+ "Gravestone Strider": {
+  "oracleText": "{1}: Add one mana of any color. Activate only once each turn.\n{2}, Exile this card from your graveyard: Exile target card from a graveyard.",
+  "typeLine": "Artifact Creature — Golem",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{1}",
+    "amount": "1",
+    "clause": 1,
+    "repeats": "per-turn",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "self": true,
+      "zone": "graveyard"
+     }
+    },
+    "cost": "{2}, Exile this card from your graveyard",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "graveyard",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "zone": "graveyard",
+       "fromZone": "graveyard",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}",
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true,
+        "zone": "graveyard"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "{2}, Exile this card from your graveyard",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "scope": "target",
+       "zone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}",
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true,
+        "zone": "graveyard"
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Jack-o'-Lantern": {
+  "oracleText": "{1}, {T}, Sacrifice this artifact: Exile up to one target card from a graveyard. Draw a card.\n{1}, Exile this card from your graveyard: Add one mana of any color.",
+  "typeLine": "Artifact",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{1}, {T}, Sacrifice this artifact",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "artifact",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "artifact",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "{1}, {T}, Sacrifice this artifact",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "scope": "target",
+       "zone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "{1}, {T}, Sacrifice this artifact",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{1}, Exile this card from your graveyard",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "graveyard",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "graveyard",
+       "zone": "graveyard",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}",
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true,
+        "zone": "graveyard"
+       }
+      }
+     ]
+    },
+    "claimsNothing": "mana-rider"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{1}, Exile this card from your graveyard",
+    "amount": "1",
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}",
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true,
+        "zone": "graveyard"
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Kaya, Geist Hunter": {
+  "oracleText": "+1: Creatures you control gain deathtouch until end of turn. Put a +1/+1 counter on up to one target creature token you control.\n−2: Until end of turn, if one or more tokens would be created under your control, twice that many of those tokens are created instead.\n−6: Exile all cards from all graveyards, then create a 1/1 white Spirit creature token with flying for each card exiled this way.",
+  "typeLine": "Legendary Planeswalker — Kaya",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "+1",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "+1"
+    },
+    "grants": [
+     "deathtouch"
+    ]
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "cost": "+1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "type": "creature",
+       "scope": "target",
+       "counter": "+1/+1"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "token-doubling",
+     "subject": {
+      "control": "any",
+      "token": true,
+      "scope": "all"
+     },
+     "tokenMultiplier": "twice"
+    },
+    "trigger": {
+     "verbs": [
+      "create-token"
+     ],
+     "subject": {
+      "control": "any",
+      "token": true,
+      "scope": "all"
+     }
+    },
+    "cost": "−2",
+    "clause": 2,
+    "repeats": "per-cycle",
+    "replacement": true,
+    "change": {
+     "op": "times",
+     "value": 2
+    },
+    "count": {
+     "floor": 1,
+     "ceiling": 1,
+     "sameAsImproved": true
+    },
+    "payment": {
+     "loyalty": "-2"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "all",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "−6",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all",
+       "fromZone": "graveyard"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "scope": "all",
+      "fromZone": "graveyard"
+     }
+    },
+    "payment": {
+     "loyalty": "-6"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "type": "creature",
+      "subtype": "spirit",
+      "colors": [
+       "W"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 1
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 1
+       }
+      ],
+      "keyword": [
+       "flying"
+      ]
+     }
+    },
+    "cost": "−6",
+    "amount": "1 for each card exiled this way",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "keyword": [
+        "flying"
+       ],
+       "colors": [
+        "W"
+       ],
+       "type": "creature",
+       "subtype": "spirit",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "keyword": [
+        "flying"
+       ],
+       "colors": [
+        "W"
+       ],
+       "type": "creature",
+       "subtype": "spirit",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 1
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 1
+        }
+       ]
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "payment": {
+     "loyalty": "-6"
+    }
+   }
+  ]
+ },
+ "Kaya, Orzhov Usurper": {
+  "oracleText": "+1: Exile up to two target cards from a single graveyard. You gain 2 life if at least one creature card was exiled this way.\n−1: Exile target nonland permanent with mana value 1 or less.\n−5: Kaya deals damage to target player equal to the number of cards that player owns in exile and you gain that much life.",
+  "typeLine": "Legendary Planeswalker — Kaya",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "+1",
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "target",
+       "fromZone": "graveyard"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "target",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "+1",
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "at least one creature card was exiled this way"
+    },
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "−1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target",
+       "stats": [
+        {
+         "metric": "mana-value",
+         "op": "lte",
+         "value": 1
+        }
+       ],
+       "fromZone": "battlefield"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target",
+       "stats": [
+        {
+         "metric": "mana-value",
+         "op": "lte",
+         "value": 1
+        }
+       ],
+       "fromZone": "battlefield"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "-1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target",
+      "player": true
+     }
+    },
+    "cost": "−5",
+    "amount": "the number of cards that player owns in exile",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target",
+       "player": true
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "payment": {
+     "loyalty": "-5"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "−5",
+    "amount": "the number of cards that player owns in exile",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "payment": {
+     "loyalty": "-5"
+    }
+   }
+  ]
+ },
+ "The Mimeoplasm": {
+  "oracleText": "As The Mimeoplasm enters, you may exile two creature cards from graveyards. If you do, it enters as a copy of one of those cards with a number of additional +1/+1 counters on it equal to the power of the other card.",
+  "typeLine": "Legendary Creature — Ooze",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "graveyard-hate"
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "fromZone": "graveyard"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "clone"
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "copy",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "counter-placement"
+    },
+    "amount": "the power of the other card",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "+1/+1"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Dermotaxi": {
+  "oracleText": "Imprint — As this Vehicle enters, exile a creature card from a graveyard.\nTap two untapped creatures you control: Until end of turn, this Vehicle becomes a copy of the exiled card, except it's a Vehicle artifact in addition to its other types.",
+  "typeLine": "Artifact — Vehicle",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "graveyard-hate"
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": "creature"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": "creature",
+       "zone": "graveyard"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "Tap two untapped creatures you control",
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "taps",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "tapped": false,
+       "selection": "counted",
+       "type": "creature",
+       "scope": "all"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "payment": {
+     "tapOther": [
+      {
+       "amount": "2",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "clone",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "subtype": "vehicle"
+     }
+    },
+    "cost": "Tap two untapped creatures you control",
+    "emits": [
+     {
+      "verb": "copy",
+      "subject": {
+       "control": "any",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "payment": {
+     "tapOther": [
+      {
+       "amount": "2",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "type-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "Tap two untapped creatures you control",
+    "clause": 2,
+    "repeats": "repeatable",
+    "payment": {
+     "tapOther": [
+      {
+       "amount": "2",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "creature"
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Stone of Erech": {
+  "oracleText": "If a creature an opponent controls would die, exile it instead.\n{2}, {T}, Sacrifice Stone of Erech: Exile target player's graveyard. Draw a card.",
+  "typeLine": "Legendary Artifact",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "continuous",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}, {T}, Sacrifice Stone of Erech",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "self": true,
+       "type": "artifact"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "self": true,
+       "type": "artifact"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "{2}, {T}, Sacrifice Stone of Erech",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "target",
+       "fromZone": "graveyard"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "target",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "{2}, {T}, Sacrifice Stone of Erech",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Abstergo Entertainment": {
+  "oracleText": "{T}: Add {C}.\n{1}, {T}: Add one mana of any color.\n{3}, {T}, Exile Abstergo Entertainment: Return up to one target historic card from your graveyard to your hand, then exile all graveyards. (Artifacts, legendaries, and Sagas are historic.)",
+  "typeLine": "Legendary Land",
+  "manaValue": 0,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{1}, {T}",
+    "amount": "1",
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{3}, {T}, Exile Abstergo Entertainment",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{3}",
+     "tap": true,
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-recursion",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "scope": "target",
+      "historic": true,
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "{3}, {T}, Exile Abstergo Entertainment",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "historic": true,
+       "fromZone": "graveyard",
+       "scope": "target",
+       "zone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{3}",
+     "tap": true,
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{3}, {T}, Exile Abstergo Entertainment",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all",
+       "fromZone": "graveyard"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "scope": "all",
+      "fromZone": "graveyard"
+     }
+    },
+    "payment": {
+     "mana": "{3}",
+     "tap": true,
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Ashes of the Abhorrent": {
+  "oracleText": "Players can't cast spells from graveyards or activate abilities of cards in graveyards.\nWhenever a creature dies, you gain 1 life.",
+  "typeLine": "Enchantment",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "graveyard-lock",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "spell",
+      "scope": "all"
+     }
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "dies"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Soulless Jailer": {
+  "oracleText": "Permanent cards in graveyards can't enter the battlefield.\nPlayers can't cast noncreature spells from graveyards or exile.",
+  "typeLine": "Artifact Creature — Phyrexian Golem",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "graveyard-lock"
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "graveyard-lock",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "artifact",
+       "enchantment",
+       "planeswalker",
+       "instant",
+       "sorcery",
+       "battle"
+      ],
+      "notType": [
+       "creature"
+      ],
+      "scope": "all"
+     }
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Kunoros, Hound of Athreos": {
+  "oracleText": "Vigilance, menace, lifelink\nCreature cards in graveyards can't enter the battlefield.\nPlayers can't cast spells from graveyards.",
+  "typeLine": "Legendary Creature — Dog",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "graveyard-lock"
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "graveyard-lock",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "spell",
+      "scope": "all"
+     }
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Weathered Runestone": {
+  "oracleText": "Nonland permanent cards in graveyards and libraries can't enter the battlefield.\nPlayers can't cast spells from graveyards or libraries.",
+  "typeLine": "Artifact",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "graveyard-lock"
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "graveyard-lock",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "spell",
+      "scope": "all"
+     }
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Planar Void": {
+  "oracleText": "Whenever another card is put into a graveyard from anywhere, exile that card.",
+  "typeLine": "Enchantment",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "zone": "graveyard"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters-graveyard"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null,
+      "other": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "other": true,
+       "fromZone": "graveyard",
+       "ref": "trigger"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "other": true,
+       "zone": "graveyard",
+       "fromZone": "graveyard",
+       "ref": "trigger"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Klothys, God of Destiny": {
+  "oracleText": "Indestructible\nAs long as your devotion to red and green is less than seven, Klothys isn't a creature.\nAt the beginning of your first main phase, exile target card from a graveyard. If it was a land card, add {R} or {G}. Otherwise, you gain 2 life and Klothys deals 2 damage to each opponent.",
+  "typeLine": "Legendary Enchantment Creature — God",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "scope": "target"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "scope": "target",
+       "zone": "graveyard"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "gate": {
+     "kind": "unknown",
+     "text": "it was a land card"
+    },
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "the answer to \"it was a land card\" is no",
+     "otherwise": true
+    },
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "scope": "each",
+      "player": true
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "each",
+       "player": true
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "self": true
+      }
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "the answer to \"it was a land card\" is no",
+     "otherwise": true
+    },
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   }
+  ]
+ },
+ "Stitcher Geralf": {
+  "oracleText": "{2}{U}, {T}: Each player mills three cards. Exile up to two creature cards put into graveyards this way. Create an X/X blue Zombie creature token, where X is the total power of the cards exiled this way.",
+  "typeLine": "Legendary Creature — Human Wizard",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mill",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "each"
+     }
+    },
+    "cost": "{2}{U}, {T}",
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "mill",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "each"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    },
+    "payment": {
+     "mana": "{2}{U}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "{2}{U}, {T}",
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "fromZone": "graveyard"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "payment": {
+     "mana": "{2}{U}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "colors": [
+       "U"
+      ],
+      "type": "creature",
+      "subtype": "zombie"
+     }
+    },
+    "cost": "{2}{U}, {T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "U"
+       ],
+       "type": "creature",
+       "subtype": "zombie"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "U"
+       ],
+       "type": "creature",
+       "subtype": "zombie"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}{U}",
+     "tap": true
+    }
+   }
+  ]
+ },
+ "Scavenger Grounds": {
+  "oracleText": "{T}: Add {C}.\n{2}, {T}, Sacrifice a Desert: Exile all graveyards.",
+  "typeLine": "Land — Desert",
+  "manaValue": 0,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "{T}",
+    "amount": "1",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}, {T}, Sacrifice a Desert",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "subtype": "desert",
+       "type": "land"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "subtype": "desert",
+       "type": "land"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "subtype": "desert"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "all",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "{2}, {T}, Sacrifice a Desert",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all",
+       "fromZone": "graveyard"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "scope": "all",
+      "fromZone": "graveyard"
+     }
+    },
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "sacrifice": [
+      {
+       "amount": "1",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "subtype": "desert"
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Wreck Remover": {
+  "oracleText": "Whenever this creature enters or attacks, exile up to one target card from a graveyard. You gain 1 life.\nCycling {2} ({2}, Discard this card: Draw a card.)",
+  "typeLine": "Artifact Creature — Construct",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "scope": "target"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "scope": "target",
+       "zone": "graveyard"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "attacks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "scope": "target"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "scope": "target",
+       "zone": "graveyard"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "attacks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Cling to Dust": {
+  "oracleText": "Exile target card from a graveyard. If it was a creature card, you gain 3 life. Otherwise, you draw a card.\nEscape—{3}{B}, Exile five other cards from your graveyard. (You may cast this card from your graveyard for its escape cost.)",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "scope": "target",
+       "zone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "it was a creature card"
+    },
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "the answer to \"it was a creature card\" is no",
+     "otherwise": true
+    },
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "The Stone Brain": {
+  "oracleText": "{2}, {T}, Exile The Stone Brain: Choose a card name. Search target opponent's graveyard, hand, and library for up to four cards with that name and exile them. That player shuffles, then draws a card for each card exiled from their hand this way. Activate only as a sorcery.",
+  "typeLine": "Legendary Artifact",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}, {T}, Exile The Stone Brain",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "fromZone": "battlefield",
+       "self": true,
+       "type": "artifact"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "fromZone": "battlefield",
+       "self": true,
+       "type": "artifact"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "nameRelation": "same"
+     }
+    },
+    "cost": "{2}, {T}, Exile The Stone Brain",
+    "amount": "4",
+    "emits": [
+     {
+      "verb": "search",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "fromZone": "library"
+      }
+     }
+    ],
+    "librarySearch": "other",
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 4,
+     "ceiling": 4
+    },
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "nameRelation": "chosen",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "{2}, {T}, Exile The Stone Brain",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard"
+      }
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}, {T}, Exile The Stone Brain",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "hand"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}, {T}, Exile The Stone Brain",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "library"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}, {T}, Exile The Stone Brain",
+    "emits": [
+     {
+      "verb": "shuffle",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "cost": "{2}, {T}, Exile The Stone Brain",
+    "amount": "for each card exiled from their hand this way",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "fromZone": "hand"
+     }
+    },
+    "payment": {
+     "mana": "{2}",
+     "tap": true,
+     "exile": [
+      {
+       "amount": "1",
+       "subject": {
+        "self": true
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "Deadeye Tracker": {
+  "oracleText": "{1}{B}, {T}: Exile two target cards from an opponent's graveyard. This creature explores. (Reveal the top card of your library. Put that card into your hand if it's a land. Otherwise, put a +1/+1 counter on this creature, then put the card back or put it into your graveyard.)",
+  "typeLine": "Creature — Human Pirate",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "{1}{B}, {T}",
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "target",
+       "fromZone": "graveyard"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "scope": "target",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "payment": {
+     "mana": "{1}{B}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{1}{B}, {T}",
+    "emits": [
+     {
+      "verb": "explore",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{1}{B}",
+     "tap": true
+    }
+   }
+  ]
+ },
+ "Eater of the Dead": {
+  "oracleText": "{0}: If this creature is tapped, exile target creature card from a graveyard and untap this creature.",
+  "typeLine": "Creature — Horror",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "{0}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "fromZone": "graveyard",
+       "type": "creature",
+       "scope": "target",
+       "zone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "this creature is tapped"
+    },
+    "clause": 1,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{0}"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "untap",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "cost": "{0}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "untaps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "unknown",
+     "text": "this creature is tapped"
+    },
+    "clause": 1,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{0}"
+    }
+   }
+  ]
+ },
+ "Silent Gravestone": {
+  "oracleText": "Cards in graveyards can't be the targets of spells or abilities.\n{4}, {T}: Exile this artifact and all cards from all graveyards. Draw a card.",
+  "typeLine": "Artifact",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "targeting-ban",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "zone": "graveyard"
+     }
+    },
+    "targetingBan": {
+     "by": [
+      "spell",
+      "ability"
+     ],
+     "source": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{4}, {T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "artifact",
+       "fromZone": "battlefield",
+       "self": true
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "artifact",
+       "fromZone": "battlefield",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{4}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "graveyard-hate",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "all",
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     }
+    },
+    "cost": "{4}, {T}",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all",
+       "fromZone": "graveyard"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "all",
+       "zone": "graveyard",
+       "fromZone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "scope": "all",
+      "fromZone": "graveyard"
+     }
+    },
+    "payment": {
+     "mana": "{4}",
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "{4}, {T}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{4}",
+     "tap": true
     }
    }
   ]

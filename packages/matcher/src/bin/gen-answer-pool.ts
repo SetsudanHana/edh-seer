@@ -15,7 +15,7 @@
  *
  *  SAME SWEEP ALSO GATES `ANSWER_BASELINE` AND `GRAVEYARD_HATE_SHARE` (whole-branch review, final
  *  fix wave). Both tables in `answer-coverage.ts` are hand-transcribed from a corpus count that
- *  moves -- `gameChanger: true` permanents/lands and `graveyardHateRecurring` matches, split by
+ *  moves -- `gameChanger: true` permanents/lands and `answers.graveyard.recurring` matches, split by
  *  type -- and until now nothing re-checked either one against a live corpus, the identical gap
  *  criterion 6 was written to close for `answer-pool.json` itself. `--check` now fails on drift in
  *  either table too, not only the pool. */
@@ -24,7 +24,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { connect, docToCard, loadConfig } from "@edh-seer/data";
 import { createTagsLookup, DERIVE_VERSION } from "@edh-seer/tagger";
-import { answerClassesOf, loadRules } from "../rules.js";
+import { answerClassesOf, loadRules, ruleMatches } from "../rules.js";
 import { POOL_CLASSES, identityKey, type AnswerPool } from "../answer-pool.js";
 import { ANSWER_BASELINE, GRAVEYARD_HATE_SHARE } from "../answer-coverage.js";
 
@@ -63,7 +63,10 @@ if (stale.length > 0) {
 // partition rather than an overlapping count.
 const GAME_CHANGER_CLASSES = ["creature", "artifact", "enchantment", "planeswalker", "land"] as const;
 const HATE_CLASSES = ["creature", "artifact", "enchantment"] as const;
-const hateRe = new RegExp(loadRules().patterns.graveyardHateRecurring, "i");
+// The recurring-hate rule is DERIVED data now (#1266), so a card is read with its `cardTagsDerived` row like every other answer rule.
+const rules = loadRules();
+const recurringRule = rules.rules.find((r) => r.id === "answers.graveyard.recurring");
+if (recurringRule === undefined) throw new Error("rules.json has no answers.graveyard.recurring");
 const classify = <T extends readonly string[]>(typeLine: string, classes: T): T[number] | undefined => {
   const tl = typeLine.toLowerCase();
   return classes.find((c) => tl.includes(c));
@@ -91,7 +94,7 @@ for await (const doc of store.db.collection("cards").find({})) {
     const gc = classify(typeLine, GAME_CHANGER_CLASSES);
     if (gc) gameChangerCounts[gc]++; // absent = not a permanent or land (instant/sorcery/battle), excluded
   }
-  if (hateRe.test(d.oracleText ?? "")) {
+  if (ruleMatches(recurringRule, { card: docToCard(doc as never), tags }, rules)) {
     const hc = classify(typeLine, HATE_CLASSES);
     if (hc) hateCounts[hc]++;
     else hateOther++;
@@ -115,7 +118,7 @@ console.log(`WUBRG: ${JSON.stringify(pool.WUBRG)}`);
 const gameChangerTotal = Object.values(gameChangerCounts).reduce((a, b) => a + b, 0);
 const hateTotal = Object.values(hateCounts).reduce((a, b) => a + b, 0);
 console.log(`gameChanger permanents/lands: ${JSON.stringify(gameChangerCounts)} (n=${gameChangerTotal})`);
-console.log(`graveyardHateRecurring typed: ${JSON.stringify(hateCounts)} (n=${hateTotal}, other=${hateOther})`);
+console.log(`answers.graveyard.recurring typed: ${JSON.stringify(hateCounts)} (n=${hateTotal}, other=${hateOther})`);
 
 // EITHER TABLE DRIFTING FAILS --check, on the same discipline as the pool artifact below: a share
 // baked into source at design time and never re-swept is exactly how hierarchy.json sat at 16 of

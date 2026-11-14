@@ -16577,7 +16577,7 @@
 "Tome of Legends": ["role:draw"],
 "Tome of the Guildpact": ["role:draw","role:ramp"],
 "Tomebound Lich": ["role:draw"],
-"Tomik, Distinguished Advokist": ["role:protection"],
+"Tomik, Distinguished Advokist": ["answer:graveyard","role:protection"],
 "Tomik, Wielder of Law": ["role:burn","role:draw","wincon:burn"],
 "Tomorrow, Azami's Familiar": ["role:cardSelection"],
 "Tonberry": ["wincon:stompy"],

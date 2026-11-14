@@ -28,12 +28,14 @@ export const ANSWER_BASELINE: Record<string, number> = {
 };
 
 /** Where recurring graveyard hate actually lives, measured over the corpus cards matching
- *  `graveyardHateRecurring`: creature 39 · artifact 19 · enchantment 8, n = 66 typed (1 other).
+ *  `answers.graveyard.recurring`: creature 95 · artifact 25 · enchantment 14, n = 134 typed (6 other).
+ *  RE-MEASURED 2026-11-14 (#1266): the rule reads derived data now, no longer the printed `graveyardHateRecurring` pattern, which counted creature 39 · artifact 19 · enchantment 8 (n = 66, 1 other) and
+ *  missed every repeating trigger (Graven Abomination, Cemetery Prowler, Klothys), the replacements that do not open with "a card" (Dryad Militant, Dauthi Voidwalker) and the "from a single graveyard" exiles.
  *
  *  CORRECTED 2026-08-21 (residual fix wave): the design's original probe tested this rule INSIDE a
  *  `graveyardHatePositive` branch, so it counted the INTERSECTION of the two rules -- a strict
  *  subset (36/16/6, n=58) -- while §2.4 documents the provenance as "the corpus cards matching
- *  `graveyardHateRecurring`" alone. The two describe different sets; 36/16/6 was an artifact of the
+ *  the printed `graveyardHateRecurring`" alone. The two describe different sets; 36/16/6 was an artifact of the
  *  probe's nesting, not a deliberate choice, and never matched its own stated provenance.
  *
  *  So a deck whose plan runs through the graveyard needs creature and artifact removal
@@ -53,7 +55,7 @@ export const ANSWER_BASELINE: Record<string, number> = {
  *  --check` now reads `BuildBenchmarks.tsx` as text and fails on drift between the two (2026-08-21
  *  critical-fix wave), so the two can no longer disagree silently even without a code-level link. */
 export const GRAVEYARD_HATE_SHARE: Record<string, number> = {
-  creature: 39 / 66, artifact: 19 / 66, enchantment: 8 / 66, land: 0, planeswalker: 0,
+  creature: 95 / 134, artifact: 25 / 134, enchantment: 14 / 134, land: 0, planeswalker: 0,
 };
 
 export interface CoverageResult {

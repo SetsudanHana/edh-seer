@@ -979,7 +979,7 @@ export function analyzeDeckStructured(
   // one would tell a mono-black deck it has white's enchantment removal available.
   const identity = commanderIdentity(resolved, commanderSet);
   // The graveyard axis is the one vulnerability with a corpus rule able to count its hate pieces
-  // (`graveyardHateRecurring`); see the design's §4 for why the other axes stay unbuilt.
+  // (`answers.graveyard.recurring`); see the design's §4 for why the other axes stay unbuilt.
   const graveyardVulnerability = Math.max(
     0,
     ...strategies.filter((s) => s.name === "reanimator" || s.name === "aristocrats").map((s) => s.confidence),
