@@ -1,7 +1,7 @@
 import type { DeckCard } from "./types.js";
 import { ARCHETYPE_FLOOR, ARCHETYPE_LABELS, ARCHETYPE_LEAD_FLOOR, type Archetype, type ArchetypeRanking } from "./archetypes.js";
 import TEMPLATE from "./template-targets.json" with { type: "json" };
-import { answerClassesOf, loadRules, ruleMatches, weakByOracle, type Rule, type RuleClause } from "./rules.js";
+import { answerClassesOf, loadRules, ruleMatches, type Rule, type RuleClause } from "./rules.js";
 import { answerCoverage, COVERAGE_CLASSES, type CoverageResult } from "./answer-coverage.js";
 import { countsAsLand } from "./typeline.js";
 import { cardLines } from "./mana-lines.js";
@@ -111,7 +111,7 @@ export function detectBuildRules(cards: DeckCard[]): Map<string, Set<string>> {
   return m;
 }
 
-/** THE MEMBERS THAT ARE ONLY WEAKLY IN A ROLE (owner 2026-11-13, `Rule.weakOracle`): every rule that puts the card in the category reads only its weak printed words for this card. Weak stax is Urza's Sylex. Membership is
+/** THE MEMBERS THAT ARE ONLY WEAKLY IN A ROLE (owner 2026-11-13, `Rule.weak`): every rule that puts the card in the category is a weak rule. Weak stax is Urza's Sylex. Membership is
  *  `detectBuildCategories`' and does not move; a card that is in the role through any other rule too counts whole. */
 export function detectWeakRoles(cards: DeckCard[]): Map<BuildCategory, Set<string>> {
   const set = loadRules();
@@ -121,7 +121,7 @@ export function detectWeakRoles(cards: DeckCard[]): Map<BuildCategory, Set<strin
     for (const rule of set.rules) {
       if (!rule.category || !ruleMatches(rule, dc, set)) continue;
       const cat = rule.category as BuildCategory;
-      const weak = weakByOracle(rule, dc, set);
+      const weak = rule.weak === true;
       const have = hits.get(cat);
       hits.set(cat, { weak: (have?.weak ?? true) && weak });
     }
@@ -185,7 +185,7 @@ function readsAbilities(clauses: readonly RuleClause[] | undefined): boolean {
  *  level up: the first level at which the rule still holds is the card's weight, and the gated ability that sets that level is the condition the report names. A rule that holds without any gated ability
  *  (the card draws through an ungated clause too) is worth 1. A rule that holds only through an ability whose condition is on the TARGET (`target`, owner ruling 2026-10-27 C) is worth 1 but is returned so the
  *  report can call the card a narrow answer.
- *  AN ORACLE-ONLY RULE (`boardWipe.text`, `stax.text`, the `oracle` leg of `removal.targeted` ...) reads no ability, so a view cannot weigh it: it takes the best weight among the card's abilities when EVERY ability of
+ *  AN ORACLE-ONLY RULE (`boardWipe.text`, the `oracle` leg of `removal.targeted` ...) reads no ability, so a view cannot weigh it: it takes the best weight among the card's abilities when EVERY ability of
  *  the card is gated, and is worth 1 as soon as one is not.
  *  CEILING: a clause that looks at a SIBLING ability (`notPairedTarget`, `notFlickered`) sees the filtered list, so taking a gated ability away can change its answer. CEILING: an
  *  oracle-only rule on a card with a gated and an ungated ability is worth 1 whichever of them the printed text belongs to. */

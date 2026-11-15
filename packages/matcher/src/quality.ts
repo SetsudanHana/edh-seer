@@ -24,7 +24,7 @@ export type Ingredients = Partial<Record<Ingredient, number>>;
 const NOT_A_DECK_CARD = new Set(["stickers", "attraction"]);
 
 /** Fact kinds that are no EXTRA VALUE on a card whose job is another's (`extraValue`, below): a curse or a cost (`restriction`, owner 2026-10-22, #1315), and the kinds that derived blank before they had a name (#1423). */
-const NOT_EXTRA_VALUE: ReadonlySet<string> = new Set(["restriction", "targeting-ban", "graveyard-lock", "trigger-suppression", "untap-denial", "life-total-set", "prevention", "damage-change"]);
+const NOT_EXTRA_VALUE: ReadonlySet<string> = new Set(["restriction", "targeting-ban", "graveyard-lock", "player-lock", "trigger-suppression", "untap-denial", "life-total-set", "prevention", "damage-change"]);
 
 export function rolesOfCard(d: DeckCard): Role[] {
   const types = [...(d.tags?.characteristics.types ?? []), ...(d.tags?.characteristics.subtypes ?? [])].map((t) => t.toLowerCase());
@@ -44,7 +44,7 @@ const ROLE_KINDS: Record<Role, { kinds?: readonly string[]; verbs?: readonly str
   stackInteraction: { verbs: ["counter-spell"] },
   boardWipe: { verbs: ["dies", "exiled", "leaves"] },
   burn: { kinds: ["damage"], verbs: ["non-combat-damage"] },
-  stax: { kinds: ["tax", "cant"] },
+  stax: { kinds: ["tax", "cant", "player-lock", "untap-denial", "graveyard-lock"] },
   protection: { kinds: ["keyword-grant"], verbs: ["phases-out"] },
   tutor: { kinds: ["search"] },
   graveyardHate: { verbs: ["exiled"] },

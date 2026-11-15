@@ -9,6 +9,8 @@ const UNLESS = /\bpermanents? unless\b/i;
 const PILES = /\bpiles?\b/i;
 /** "Each player chooses six lands they control. Destroy all other permanents." (Urza's Sylex): "other" is "other than the chosen", not "other than this card" (Gideon, Champion of Justice's "Exile all other permanents" is). */
 const OTHER_THAN_CHOSEN = /\bchooses?\b[^.]*\.[^.]*\ball other permanents\b/i;
+/** ...and what the players chose is LANDS ("chooses six lands they control"): the survivors a stax card leaves standing (`SubjectFilter.keeps`, #1266). */
+const CHOOSES_LANDS = /\bchooses? (?:\w+ )?(?:nonbasic |basic )?lands?\b[^.]*\.[^.]*\ball other permanents\b/i;
 
 /** A NUMBER OR A SET THE CARD DEFINED EARLIER IS NOT EVERY PERMANENT (#1577). "Sacrifice any number of permanents" (Renounce, Bontu, Shimatsu), "sacrifice that many permanents" (Lich, Phyrexian Negator, Dralnu), "sacrifice X permanents", "put all permanent
  *  cards exiled with this enchantment" (Journey to the Lost City), "exiled this way" (Deep Space 9) and "all tokens that player controls with the same name" (Legions to Ashes) are chosen subsets: the grammar drops the quantifier from the object, and the bare `permanent` left behind read
@@ -31,6 +33,7 @@ export function selectionFromText(abilities: Ability[], clauseTexts: Record<numb
     const selection = UNLESS.test(text) || OTHER_THAN_CHOSEN.test(text) ? "all-but" as const : PILES.test(text) ? "pile" as const
       : COUNTED_PERMANENTS.test(text) ? "counted" as const : SET_OF_THE_CARD.test(text) ? "chosen" as const : undefined;
     if (!selection) return a;
-    return { ...a, emits: a.emits.map((e) => (bare(e.subject) ? { ...e, subject: { ...e.subject, selection } } : e)) };
+    const keeps = selection === "all-but" && CHOOSES_LANDS.test(text) ? { keeps: "land" as const } : {};
+    return { ...a, emits: a.emits.map((e) => (bare(e.subject) ? { ...e, subject: { ...e.subject, selection, ...keeps } } : e)) };
   });
 }

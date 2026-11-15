@@ -222,6 +222,105 @@ export function triggerSuppressionOf(object: string, clauseText = "", occurrence
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// 2b. PLAYER-LOCK
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/** A LASTING PROHIBITION OR LIMIT ON PLAYERS (#1266, owner ruling 2026-11-14; CR 101.2): "Players can't cast more than one spell each turn" (Rule of Law), "Your opponents can't cast spells with the chosen name"
+ *  (Alhammarret), "Your opponents can't cast spells during your turn" (Kutzil, Grand Abolisher: `yourTurn`), "Your opponents can't gain life" (Erebos), "can't search libraries" (Stranglehold), "Players can't untap more than one
+ *  land during their untap steps" (Winter Orb). Read off the PRINTED clause, because the model keeps neither the subject nor "during your turn" in the stored `cant` object; the object only says WHICH sentence of the clause
+ *  this action is (its verb must be one the sentence's predicate holds: Void Winnower's "block with ..." is no lock). A WHITELIST: the subject is players, each player, (your) opponents, each opponent, other players or an
+ *  enchanted player (or "that player" / "target opponent" beside a printed "for as long as" or "for the rest of the game": Suncleanser, Stigma Lasher), the sentence opens with it (after a "Whenever ..., " head) (a leading "as long as ...," or "during your turn," / "during combat," is allowed), and every verb of the predicate is a known one; any other word refuses.
+ *  Refused: a duration or a condition anywhere in the sentence ("this turn", "until", "next turn", "unless", "if", "who", "except", "for the rest": Orim's Chant, Silence, Sphinx's Decree, Academic Probation, Ward of Bones),
+ *  "you" (a drawback), a quoted grant or an emblem's line, and reminder text.
+ *  An emblem's lock ("You get an emblem with 'Your opponents can't cast noncreature spells'": Narset Transcendent, Dovin Baan) derives on the EMBLEM's own node; the card's `emblem` ability carries `Ability.emblemLock` (derive 528), because no card rule reads the node.
+ *  CEILING: a quoted grant stays unread; "during combat" is a cast-ban with no flag of its own; a conditional subject is read only for the three printed shapes `LOCK_SUBJECTS` lists (Damping Engine, Ward of Bones, Wardscale Dragon), any other ("Each opponent who has cast a spell from their hand this turn": Angelic Arbiter) is left unread. */
+export type PlayerLockKind = "cast-limit" | "cast-ban" | "draw" | "draw-limit" | "search" | "gain-life" | "play-land" | "pay-cost" | "cycle" | "counters" | "loyalty" | "activate" | "untap-limit";
+export interface PlayerLock {
+  locks: PlayerLockKind[];
+  control: "opp" | "any";
+  yourTurn?: true;
+}
+
+/** [the words that open the sentence, whose players, whether a PRINTED DURATION is required]: "that player" (Suncleanser, Stigma Lasher) names a player an earlier sentence or trigger picked, so it is read only beside "for as long as" or "for the rest of the game". */
+const LOCK_SUBJECTS: readonly (readonly [string, "opp" | "any", boolean])[] = [
+  // SOME players (owner 2026-11-14): the players a condition names ("A player who controls more permanents than each other player": Damping Engine; "Each opponent who controls more creatures than you": Ward of Bones) and "defending player" beside "As long as this creature is attacking" (Wardscale Dragon).
+  ["a player who controls more permanents than each other player ", "any", false], ["each opponent who controls more creatures than you ", "opp", false], ["each opponent who controls more lands than you ", "opp", false], ["defending player ", "opp", false],
+  ["your opponents ", "opp", false], ["each opponent ", "opp", false], ["opponents ", "opp", false], ["each other player ", "opp", false], ["other players ", "opp", false],
+  ["each player ", "any", false], ["players ", "any", false], ["enchanted player ", "any", false], ["target opponent ", "opp", true], ["that player ", "any", true],
+];
+const LOCK_DURATION = /\bfor as long as\b|\bfor the rest of the game\b/;
+const LOCK_DURATION_ALL = /\bfor as long as\b|\bfor the rest of the game\b/g;
+const LOCK_REFUSED = /\b(?:this turn|until|next turn|unless|if|who|except|for the rest|instead|whenever|when)\b/;
+const LOCK_VERBS: ReadonlySet<string> = new Set(["cast", "draw", "gain", "play", "search", "cycle", "get", "activate", "untap", "pay"]);
+const NEGATION_AT_START = /^(?:can['\u2019]t|cannot) /;
+const PLAY_LAND_WORD = /^(?:lands?|nonbasic|basic)\b/;
+
+/** The sentences of a clause a lock can be read from, one per period or line, with quotes and reminder text cut out. */
+function lockSentences(clauseText: string): string[] {
+  const bare = clauseText.replace(/\([^()]*\)/g, " ").replace(/"[^"]*"/g, " ").replace(/\u201c[^\u201c\u201d]*\u201d/g, " ");
+  return bare.split(/\n|\u2022|\. /).map((x) => x.trim().replace(/\.$/, "").toLowerCase()).filter((x) => x !== "");
+}
+
+/** The locks one predicate ("cast more than one spell each turn", "draw cards or gain life") names, or undefined when any of its words is not on the whitelist. */
+function predicateLocks(pred: string): PlayerLockKind[] | undefined {
+  const w = words(pred.replace(/['\u2019]/g, "'"));
+  if (w.length === 0 || !LOCK_VERBS.has(w[0]!)) return undefined;
+  if (w[0] === "pay") return w[1] === "life" ? ["pay-cost"] : undefined;
+  const out: PlayerLockKind[] = [];
+  const add = (k: PlayerLockKind): void => { if (!out.includes(k)) out.push(k); };
+  for (let i = 0; i < w.length; i++) {
+    if (i > 0 && !(LOCK_VERBS.has(w[i]!) && (w[i - 1] === "or" || w[i - 1] === "and"))) continue;
+    const verb = w[i]!, next = w[i + 1] ?? "";
+    const more = next === "more" && w[i + 2] === "than";
+    const eachTurn = w.slice(i).join(" ").includes(" each turn");
+    if (verb === "cast") add(more ? (eachTurn ? "cast-limit" : "cast-ban") : "cast-ban");
+    else if (verb === "draw") { if (more && !eachTurn) return undefined; add(more ? "draw-limit" : "draw"); }
+    else if (verb === "gain") { if (next !== "life") return undefined; add("gain-life"); }
+    else if (verb === "play") { if (!PLAY_LAND_WORD.test(next)) return undefined; add("play-land"); }
+    else if (verb === "search") { if (!/^(?:libraries|librar(?:y|ies)|their|a|your)$/.test(next)) return undefined; add("search"); }
+    else if (verb === "cycle") add("cycle");
+    else if (verb === "get") { if (next !== "counters") return undefined; add("counters"); }
+    else if (verb === "activate") add(/\bloyalty abilities\b/.test(pred) && !/\bmana abilities\b/.test(pred) ? "loyalty" : /^planeswalkers'?$/.test(next) ? "loyalty" : "activate");
+    else if (verb === "untap") { if (!more || !pred.includes("untap step")) return undefined; add("untap-limit"); }
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+/** The lock a `cant` action is, read off the printed clause: `object` picks the sentence (its first known verb must open one of the lock's predicate words), `occurrence` the n-th of several alike. */
+export function playerLockOf(object: string, clauseText = "", occurrence = 0): PlayerLock | undefined {
+  if (clauseText === "") return undefined;
+  const objectVerb = words(object).find((x) => LOCK_VERBS.has(x));
+  if (objectVerb === undefined) return undefined;
+  const reads: PlayerLock[] = [];
+  for (const sentence of lockSentences(clauseText)) {
+    let s = sentence;
+    let yourTurn = / during your turn$/.test(s) || /^during your turn, /.test(s);
+    for (;;) {
+      if (s.startsWith("during your turn, ")) s = s.slice("during your turn, ".length);
+      else if (s.startsWith("during combat, ")) s = s.slice("during combat, ".length);
+      else if (s.startsWith("as long as ")) { const comma = s.indexOf(", "); if (comma < 0) break; s = s.slice(comma + 2); }
+      else break;
+    }
+    // A trigger head ("Whenever this creature deals damage to a player, that player can't gain life for the rest of the game": Stigma Lasher) is not part of the lock's own sentence.
+    if (/^(?:whenever|when) /.test(s)) { const comma = s.indexOf(", "); if (comma < 0) continue; s = s.slice(comma + 2); }
+    const who = LOCK_SUBJECTS.find(([lead]) => s.startsWith(lead));
+    if (!who) continue;
+    const rest = s.slice(who[0].length);
+    if (!NEGATION_AT_START.test(rest)) continue;
+    if (who[2] && !LOCK_DURATION.test(rest)) continue;
+    // "the spell most recently cast this turn" (Mana Maze) describes a spell, it is no duration.
+    if (LOCK_REFUSED.test(rest.replace(LOCK_DURATION_ALL, " ").replace("most recently cast this turn", " "))) continue;
+    const pred = rest.replace(NEGATION_AT_START, "");
+    const locks = predicateLocks(pred);
+    if (!locks) continue;
+    if (!words(pred).includes(objectVerb)) continue;
+    yourTurn = yourTurn || /\bduring your turn\b/.test(pred);
+    reads.push({ locks, control: who[1], ...(yourTurn ? { yourTurn: true as const } : {}) });
+  }
+  return reads[Math.min(occurrence, reads.length - 1)];
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // 3. UNTAP-DENIAL
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -232,18 +331,22 @@ export function triggerSuppressionOf(object: string, clauseText = "", occurrence
 export interface UntapDenial {
   duration: "continuous" | "next-untap-step" | "as-long-as";
   steps?: number;
+  conditional?: true;
 }
 
 const NEG_UNTAP = /\b(?:doesn['\u2019]t|don['\u2019]t|does not|do not|can['\u2019]t|cannot|won['\u2019]t)\s+untap\b/gi;
+const NEGATED_UNTAP_ONCE = new RegExp(NEG_UNTAP.source, "i");
+/** "If this creature would untap during your untap step, remove a +1/+1 counter from it instead" as the quoted grant of an Aura: the host stays tapped unless it pays. Bewitching Leechcraft is the one corpus card; "a permanent with a wind counter" (Freyalise's Winds) and "a creature you control" (Edge of Malacol) name no host and are not it. */
+const UNTAP_COSTS_INSTEAD = /^(?:(?:enchanted creature|that creature) (?:gains?|has|have) )?["\u201c]if (?:this creature|it) would untap during your untap step, [^"\u201d]* instead\b/i;
 const STEP_COUNT: Readonly<Record<string, number>> = { two: 2, three: 3, four: 4, five: 5 };
 const UNTAP_PRONOUN = /^(?:it|they|them|that (?:creature|permanent|land|artifact|player)|those (?:creatures|permanents|lands|artifacts)|the chosen creature)$/i;
 
 /** "doesn't untap during its controller's untap step" in all its printed shapes (CR 502.3), read off the PRINTED sentence: the model drops the subject on most cards and writes "untap during ..." as the
- *  object of a `cant`. Refused: a CONDITION anywhere in the sentence (a leading "If you win,", "As long as enchanted creature isn't legendary," or a trailing "if it has a depletion counter on it" /
- *  "unless ..."), which makes the denial partial; a PERMISSION ("You may choose not to untap", Amber Prison: no negation is printed); and any "until". A trigger head, an activation cost, a leading
+ *  object of a `cant`. A CONDITION in the sentence (a leading "If you win," / "As long as enchanted creature isn't legendary," or a trailing "if it has a depletion counter on it" / "unless ...") makes the denial
+ *  `conditional` (owner 2026-11-14, #1266: it still holds while the condition does); read, never refused. Refused: a PERMISSION ("You may choose not to untap", Amber Prison: no negation is printed); and any "until". A trigger head, an activation cost, a leading
  *  "for as long as ..." (the duration) and the activated-abilities rider of Hold for Questioning and Encrust ("... and its activated abilities can't be activated unless ...") are not conditions.
- *  CEILING: conditional printings are left unread (Veldt and Lava Tubes' depletion counter, Walking Dream, Tangle Kelp, Stunning Strike, Pollen Lullaby's "If you win", Guardian of Tazeem's
- *  "If that land is an Island"): a partial denial read as total would be a silent wrong answer. Measured 2026-10-30 over the 328 corpus cards printing a negated untap outside reminder text: 280 read,
+ *  Conditional printings (Veldt and Lava Tubes' depletion counter, Walking Dream, Tangle Kelp, Stunning Strike, Pollen Lullaby's "If you win", Guardian of Tazeem's "If that land is an Island") were
+ *  left unread until derive 528, so as not to read a partial denial as total; they carry `conditional` now. Measured 2026-10-30, before that over the 328 corpus cards printing a negated untap outside reminder text: 280 read,
  *  6 not derived at all, 42 unread = 32 conditional (a quoted grant included), 9 "can't untap MORE THAN N" limits (Static Orb, Winter Orb, Damping Field, Winter Moon, Smoke, Stoic Angel, Imi Statue,
  *  Mungha Wurm, Dovin Baan's emblem: a limit, not a denial) and Leviathan ("enters tapped and doesn't untap", the stored answer holds no usable `cant`). A list recipient ("Creatures and lands target
  *  opponent controls") is left unnamed.
@@ -269,20 +372,24 @@ export function untapDenialOf(object: string, clauseText = "", occurrence = 0): 
   // A LEADING DURATION: "For as long as this creature remains tapped, target tapped creature doesn't untap ..." (Giant Oyster).
   let longAs = false;
   if (/^for as long as\b/i.test(head)) { const comma = head.indexOf(","); if (comma < 0) return undefined; head = head.slice(comma + 1).trim(); longAs = true; }
+  // A LEADING CONDITION ("As long as you control another snow permanent, enchanted creature doesn't untap ...": Winter's Rest; "As long as enchanted creature isn't legendary, it ...": Stunning Strike) leaves the denial in force while it holds: read, and flagged `conditional` (owner 2026-11-14, #1266).
+  let conditional = false;
+  if (/^(?:if|as long as)\b/i.test(head)) { const comma = head.indexOf(","); if (comma < 0) return undefined; head = head.slice(comma + 1).trim(); conditional = true; }
   if (/\b(?:if|unless|as long as|while|during|except|only|when|whenever)\b/i.test(head)) return undefined;
   // The other limb of Hold for Questioning / Encrust belongs to ability-loss, with its own "unless they're mana abilities".
   const tail = sentenceTail.split(/,? and (?:its|their) activated abilities\b/i)[0]!.toLowerCase();
-  if (/\b(?:if|unless|except|only|while|until)\b/.test(tail)) return undefined;
+  if (/\b(?:except|only|while|until)\b/.test(tail)) return undefined;
+  if (/\b(?:if|unless)\b/.test(tail)) conditional = true;
   // "can't untap MORE THAN one artifact" (Damping Field, Winter Moon, Static Orb) limits the untap, it does not deny it.
   if (tail.trim().startsWith("more than")) return undefined;
   const lead = tail.indexOf("as long as");
-  if (lead >= 0 && !tail.slice(0, lead).endsWith("for ")) return undefined;
-  longAs = longAs || lead >= 0;
+  if (lead >= 0 && !tail.slice(0, lead).endsWith("for ")) conditional = true;
+  longAs = longAs || (lead >= 0 && tail.slice(0, lead).endsWith("for "));
   const next = /\bnext (?:(two|three|four|five) )?untap steps?\b/.exec(tail);
   const duration: UntapDenial["duration"] | undefined = longAs ? "as-long-as" : next ? "next-untap-step" : /\buntap steps?\b/.test(tail) ? "continuous" : undefined;
   if (duration === undefined) return undefined;
   const steps = next?.[1] ? STEP_COUNT[next[1]] : undefined;
-  const denial: UntapDenial = { duration, ...(steps && steps > 1 ? { steps } : {}) };
+  const denial: UntapDenial = { duration, ...(steps && steps > 1 ? { steps } : {}), ...(conditional ? { conditional: true as const } : {}) };
   // THE RECIPIENT: the words ahead of the verb, up to a "gets / has / loses / enters / deals" (Reveka's "deals 2 damage to any target and doesn't untap" is Reveka's) (Dance of the Dead: "Enchanted creature gets +1/+1 and doesn't untap ..."), without a trailing "and".
   const who = head.split(/\s(?=(?:gets?|gains?|has|have|loses?|enters|deals?)\b)/i)[0]?.trim().replace(/ and$/i, "").replace(/^(?:and|then|but|also) /i, "");
   return { denial, ...(who && !UNTAP_PRONOUN.test(who) && !/,| (?:and|or) /i.test(who) ? { who } : {}) };
@@ -301,5 +408,11 @@ export function untapDenialFor(verb: string, object: string, clauseText: string,
   if (verb === "cant") return untapDenialOf(object, clauseText, occurrence);
   if (clauseText === "") return undefined;
   if (verb === "untap") return onlyNegatedUntaps(clauseText) ? untapDenialOf("untap", clauseText, 0) : undefined;
+  // A DENIAL THE MODEL FILED AS A GRANT (owner 2026-11-14, #1266): Dread Wight's "Each of those creatures doesn't untap ... for as long as it has a paralyzation counter on it", the quoted "This creature doesn't untap during your untap step if it has a glyph counter on it" of Glyph of Delusion and Mindbender Spores.
+  if (verb === "grant-ability") {
+    if (NEGATED_UNTAP_ONCE.test(object)) return untapDenialOf(object, clauseText, 0);
+    // "Enchanted creature has 'If this creature would untap during your untap step, remove a +1/+1 counter from it instead. If you do, untap it.' (Otherwise, it doesn't untap.)" (Bewitching Leechcraft): the untap costs a counter, so it is conditional.
+    if (UNTAP_COSTS_INSTEAD.test(object)) return { denial: { duration: "continuous", conditional: true } };
+  }
   return undefined;
 }

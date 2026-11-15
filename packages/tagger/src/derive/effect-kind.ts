@@ -11,7 +11,7 @@ import type { EffectKind } from "../schema.js";
 import { parseSubject, spellMove } from "./subject.js";
 import { readToHand, type ToHandRead } from "./to-hand.js";
 import { damageReplacementOf, preventionOf } from "./prevention.js";
-import { graveyardLockOf, targetingBanOf, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
+import { graveyardLockOf, playerLockOf, targetingBanOf, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
 
 /** Zone-sensitive rules, checked before the plain lookup. Order matters within this list.
  *  `from`/`to` omitted means "don't care"; `from: null` means the clause STATED NO ORIGIN.
@@ -706,6 +706,8 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
   // Greaves and Swiftfoot Boots derived nothing whatsoever.
   if (verb === "grant-ability") {
     const o = action.object ?? "";
+    // A DENIAL FILED AS A GRANT (owner 2026-11-14, #1266): Dread Wight, Glyph of Delusion, Mindbender Spores, Bewitching Leechcraft.
+    if (untapDenialFor(verb, o, clauseText)) return "untap-denial";
     if (SPEED_KEYWORDS.test(o)) return "speed-increase";
     // Granting a TYPE is not granting a keyword. Omo, Queen of Vesuva says each nonland creature
     // with an everything counter on it "is every creature type", and Maskwood Nexus says it of your
@@ -783,6 +785,8 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
   // (owner, 2026-09-05). Layer 6 of CR 613: an ability-removing effect. 73 corpus cards print it.
   // A PROHIBITION ON THE CARDS IN GRAVEYARDS (#1266), before the ability-loss reading: "or activate abilities of cards in graveyards" (Ashes of the Abhorrent) stops no ability of the card's.
   if (verb === "cant" && graveyardLockOf(action.object ?? "", clauseText)) return "graveyard-lock";
+  // A LASTING PROHIBITION ON PLAYERS (#1266, CR 101.2), before the ability-loss reading: "your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments" (Grand Abolisher) silences no ability of a permanent.
+  if (verb === "cant" && playerLockOf(action.object ?? "", clauseText, occurrence)) return "player-lock";
   if (verb === "cant" && (namesOwnAbilitiesStopped(action.object ?? "") || activationBanned(action.object ?? "", clauseText))) return "ability-loss";
   // CEILING: "can't be blocked unless defending player pays {3}" (Awesome Presence) is an evasion by CR 509.1b and stays a `tax` -- the payable
   // reading is checked first, as it always was; one corpus card. Reading it as evasion would need a payable-evasion kind of its own.

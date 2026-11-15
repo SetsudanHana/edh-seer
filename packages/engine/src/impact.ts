@@ -124,6 +124,8 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     // TARGETING-BAN (#1423): the same reasoning -- a hexproof-like fact about what can target a permanent, blank before its kind.
     "targeting-ban": 0.2,
     "graveyard-lock": 0.2,
+    // PLAYER-LOCK (#1266): the same reasoning -- a stax fact about what players can do, blank before its kind.
+    "player-lock": 0.2,
     // TRIGGER-SUPPRESSION (#1423): the same reasoning -- a stax fact about which events cause triggers, blank before its kind.
     "trigger-suppression": 0.2,
     // UNTAP-DENIAL (#1423): the same reasoning -- a fact about a permanent that stays tapped, blank before its kind.

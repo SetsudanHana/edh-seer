@@ -131,3 +131,12 @@ describe("'all other permanents with that name' names a set (Eye of Singularity)
     expect(emits("Eye of Singularity", "dies").map((e) => e.subject.selection)).toEqual(["all-but", "named-set"]);
   });
 });
+
+describe("what an all-but mass leaves standing (#1266)", () => {
+  test("Urza's Sylex keeps lands; Razia's Purification, Mount Doom and Gideon's mass keep nothing named", () => {
+    const keeps = (name: string, verb: string) => emits(name, verb).filter((e) => [e.subject.type].flat().includes("permanent")).map((e) => e.subject.keeps);
+    expect(keeps("Urza's Sylex", "dies")).toEqual(["land"]);
+    expect(keeps("Razia's Purification", "dies")).toEqual([undefined]);
+    expect(keeps("Gideon, Champion of Justice", "exiled")).toEqual([undefined]);
+  });
+});

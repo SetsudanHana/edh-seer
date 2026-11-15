@@ -206,6 +206,9 @@ export interface SubjectFilter {
    *  permanents attached to creatures": End Hostilities). `counted`: a number of them the player picks from the whole class ("sacrifice any number of permanents": Renounce; "that many": Lich; "two permanents they control": Bane of Bala Ged; "half the permanents they control of their choice": Pox Plague), which can be anything of the class but is not every one of it (#1577, #1579). `named-set`: only the cards whose NAME is in a printed set (Apocalypse Chime: \"a name originally printed in the Homelands expansion\"). `chosen`: the things the card picked earlier, one per chooser ("for each opponent, choose an artifact or land ... destroy the chosen
    *  permanents": Ultimate Magic: Meteor; Sadistic Shell Game, Tunnel of Love, Teferi's "the chosen permanents"), which carries NO mass `scope`. A marker only: no matcher reads it as a filter, and a consumer with it matches as it did. Set by `parseSubject`; never by the LLM. */
   selection?: "all-but" | "votes" | "pile" | "attached-to" | "chosen" | "named-set" | "counted";
+  /** WHAT AN `all-but` MASS LEAVES STANDING, when the card names it (#1266, owner 2026-11-13): `land` for "Each player chooses six lands they control. Destroy all other permanents." (Urza's Sylex), whose survivors are lands, which makes it
+   *  weak stax. Written only beside `selection: "all-but"` by `selectionFromText`; a marker no other reader consults. Razia's Purification (the three chosen are permanents) and End Hostilities carry none. */
+  keeps?: "land";
   /** "A spell that SHARES A CREATURE TYPE WITH this creature" (issue #559). `self`: the card's own
    *  creature types, pinned to `subtype` by `deriveCardTags` and never stored. `commander`: the
    *  ability is granted to commander creatures (Folk Hero), so the class is the COMMANDER'S types --
@@ -1096,6 +1099,12 @@ export const EFFECT_KINDS = [
   // pair channels read it blank and no graveyardHate build category reads it (`answers.graveyard.recurring` does). NOT "Cards in graveyards can't be the targets of ..." (Ground Seal: protection,
   // `targeting-ban`), NOT a ban on casting from YOUR graveyard or a graveyard-count condition on attacking (Deep-Sea Terror).
   "graveyard-lock",
+  // PLAYER-LOCK (CR 101.2: a "can't" effect takes precedence; #1266, owner ruling 2026-11-14): a LASTING prohibition or limit on what PLAYERS can do -- "Players can't cast more than one spell each turn" (Rule of Law), "Your opponents
+  // can't cast spells with the chosen name" (Alhammarret), "... during your turn" (Grand Abolisher, Kutzil), "Your opponents can't gain life" (Erebos), "can't search libraries" (Stranglehold), "Players can't untap more than one
+  // land during their untap steps" (Winter Orb). `effect.subject.control` is whose players (`opp` or `any`), `Ability.playerLock` what is locked and whether it holds only on your turn. The stax pieces that were printed words
+  // (`stax.text`). A fact kind like `graveyard-lock`. NOT a one-shot ("this turn", "until your next turn", "during that player's next turn": Orim's Chant, Silence), NOT a drawback on yourself ("You can't cast more than one
+  // spell each turn"), NOT "can't lose the game" or "can't gain control", NOT a quoted grant or an emblem's line (CEILING).
+  "player-lock",
   // TRIGGER-SUPPRESSION (CR 603.2: an ability triggers when its event happens; CR 603.6a enters, CR 603.6c leaves and dies; #1423, owner ruling 2026-10-30): "Creatures entering don't cause abilities to
   // trigger" -- Torpor Orb, Hushwing Gryff, Tocatli Honor Guard; "Creatures entering or dying" (Hushbringer); "Artifacts and creatures entering the battlefield" (Karn, Argent Defender, Doorkeeper Thrull);
   // "Permanents entering don't cause abilities of permanents your opponents control to trigger" (Elesh Norn, Mother of Machines; her other half DOUBLES your triggers and stays `trigger-doubling`).
@@ -1397,13 +1406,25 @@ export interface Ability {
     events: ("enters" | "dies" | "attacks" | "leaves" | "any")[];
     controller: Control;
   };
+  /** WHAT A `player-lock` ABILITY LOCKS (#1266; CR 101.2): `locks` names each thing players can't do -- `cast-limit` ("cast more than one spell each turn"), `cast-ban` (spells of a name, a type, a value, a zone or a time), `draw`,
+   *  `draw-limit`, `search` (libraries), `gain-life`, `play-land`, `pay-cost` (pay life or sacrifice to cast or activate), `cycle`, `counters` (get counters), `loyalty` (activate loyalty abilities), `activate` (activate
+   *  abilities of permanents, or abilities that aren't mana abilities) and `untap-limit` ("untap more than one land during their untap steps"). `yourTurn` is written only when the ban holds "during your turn". Whose players is
+   *  `effect.subject.control`. ABSENT on every other ability. */
+  playerLock?: {
+    locks: ("cast-limit" | "cast-ban" | "draw" | "draw-limit" | "search" | "gain-life" | "play-land" | "pay-cost" | "cycle" | "counters" | "loyalty" | "activate" | "untap-limit")[];
+    yourTurn?: true;
+  };
   /** FOR HOW LONG AN `untap-denial` ABILITY KEEPS ITS SUBJECT TAPPED (#1423; CR 502.3). `continuous`: every untap step while the effect lasts ("doesn't untap during its controller's untap step": an Aura, a
    *  static); `next-untap-step`: just the next one, or the next `steps` ("next two untap steps", written only above 1); `as-long-as`: a printed duration ("for as long as you control this creature", "for as long
    *  as this artifact remains tapped"). WHAT stays tapped is `effect.subject` (an Aura's host is `host`; a pronoun or a list is unnamed). ABSENT on every other ability. */
   untapDenial?: {
     duration: "continuous" | "next-untap-step" | "as-long-as";
     steps?: number;
+    /** The denial holds only while a printed condition does ("if it has a sleep counter on it", "unless that player is the monarch", "As long as you control another snow permanent, ..."; owner 2026-11-14, #1266: a conditional denial on permanents that are not your own is stax). Written only as `true`. */
+    conditional?: true;
   };
+  /** AN EMBLEM THE CARD GETS LOCKS PLAYERS (#1266, owner 2026-11-14): the emblem's quoted line is a `player-lock` ("Your opponents can't cast noncreature spells": Narset Transcendent; "can't untap more than two permanents": Dovin Baan). Marked on the card's `emblem` ability, because the lock itself derives on the emblem's own node, which no card rule reads. Written only as `true`. */
+  emblemLock?: true;
   /** A `to-hand` ABILITY'S CARDS REACH THE HAND BY A PICK (#1302): somebody chooses which of at least two looked-at or revealed cards go to your hand -- "look at the top four
    *  cards, put one of them into your hand" (Impulse), "put two of them" (Dig Through Time), "you may reveal a historic card from among them and put it into your hand". `amount`
    *  says how many. Only `true` is written. ABSENT: the one card a reveal turned up (Dark Confidant, Coiling Oracle, Demonic Consultation), a pile (Fact or Fiction: `amount`
