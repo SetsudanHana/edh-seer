@@ -447,7 +447,7 @@ const COUNTER_TAIL_GLUE: ReadonlySet<string> = new Set(["this", "turn", "until",
 export function counterImmunityOf(object: string, clauseText = "", occurrence = 0): { who: string; immunity: CounterImmunity } | undefined {
   if (!/\bcountered\b/i.test(object)) return undefined;
   // A quoted grant ("... have 'This spell can't be countered'") is the grantee's, and reminder text states no line of its own.
-  const printed = (clauseText !== "" ? clauseText : object).replace(/"[^"]*"|“[^”]*”|\([^()]*\)/g, " ");
+  const printed = (clauseText !== "" ? clauseText : object).replace(/"[^"]*"|“[^“”]*”|\([^()]*\)/g, " ");
   const hit = nthMatch(printed, CANT_BE_COUNTERED, occurrence);
   if (!hit) return undefined;
   const { head, tail } = sentenceAround(printed, hit.index);
