@@ -7,13 +7,13 @@
  *  sat in the corpus as a vanilla bear. */
 import { graveyardOwner, selfGraveyardOwner } from "./graveyard-owner.js";
 import { lifeSetRewrite } from "./life-set.js";
-import { GUARDED_VERBS, guardExempt, phaseOutFiledAsPut, verbPrint } from "./verb-words.js";
+import { GUARDED_VERBS, guardExempt, phaseOutFiledAsPut, playerKeywordFiledAsOther, verbPrint } from "./verb-words.js";
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, UnclaimedAction, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb, EventCount } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { graveyardReplacement } from "./graveyard-replacement.js";
 import { replacesEntry } from "./would-enter.js";
-import { playerLockOf, targetingBanOf, targetingBanSubjectInObject, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
+import { counterImmunityOf, playerLockOf, targetingBanOf, targetingBanSubjectInObject, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
 import { withBaseSetSplit } from "./base-set.js";
 import { withChosenTypeGrant } from "./chosen-grant.js";
 import { nameOnlyTypes, ownNameFacts, stripOwnNameSubtypes } from "./own-name.js";
@@ -711,7 +711,8 @@ import { castClassFromPrint, castIsOnlyACondition, castsYourOwnCard } from "./ca
 // 527: #1266 -- player-lock: a lasting prohibition or limit on players (Rule of Law, Erebos, Grand Abolisher, Winter Orb) is a fact effect kind; SubjectFilter.keeps marks an all-but mass that leaves lands standing (Urza's Sylex). `player-lock` (edges FACT_KINDS, quality NOT_EXTRA_VALUE, impact weight 0.2; cant-kinds.ts `playerLockOf`, read off the printed clause by whitelist): `Ability.playerLock` is `{locks, yourTurn?}` (cast-limit, cast-ban, draw, draw-limit, search, gain-life, play-land, pay-cost, cycle, counters, loyalty, activate, untap-limit), whose players is `effect.subject.control` (opp or any). Refused: a duration or condition (this turn, until, next turn, unless, if, who), a drawback on yourself, a quoted grant. An untap LIMIT (Winter Orb) is a player-lock, not an untap-denial. Grand Abolisher and Hand to Hand were an ability-loss. `SubjectFilter.keeps: land` rides on an all-but mass whose survivors the clause names as lands (selection-text.ts: Urza's Sylex). MEASURED (derive-impact vs 67d8816f): 83 rows changed, 0 added or removed, 0 source flips (grammar complete 28,759 -> 28,759): 80 cards and the Dovin Baan and Narset Transcendent emblems gain a player-lock, Grand Abolisher and Hand to Hand lose their ability-loss, Urza's Sylex gains `keeps`; pair reasons of the changed rows +0 gained / -0 lost and matcher sample (300 of 32,198 cards, 0.93%) +0 / -0 at the 80-row first run (the 3 rows since, Mana Maze, Stigma Lasher and Suncleanser, are the same fact kind, and the branch run below re-measures all); loss-classify 0 lost, 0 gained; role-ratchet gained 0 / lost 0 (33,092); dropped-clauses 4,814 -> 4,739 (fixed 76 `cant`, new 1: Leonin Arbiter's cost-modify turns `:partial` once its cant is claimed).
 // 528: #1266 -- owner rulings 2026-11-14: (1) a CONDITIONAL untap denial is read and flagged `untapDenial.conditional` (a leading "If ..., / As long as ...," or a trailing "if / unless / as long as ..."; Winter's Rest, Tangle Kelp, Venarian Gold, Fall from Favor, Merseine, Stunning Strike, and the card's own: Goblin Rock Sled, Steel Dromedary, Walking Dream, Bombur, Alirios, Veldt), a denial the model filed as a `grant-ability` (Dread Wight; the quoted "doesn't untap" of Glyph of Delusion and Mindbender Spores; Bewitching Leechcraft's "would untap ... instead") is `untap-denial`, and a denial printed against YOUR untap step on an Aura's host (Cocoon) is `control: you`; (2) `player-lock` reads the players a condition names: Damping Engine, Ward of Bones, Wardscale Dragon ("defending player" beside "As long as this creature is attacking"); (3) `Ability.emblemLock` marks the `emblem` ability whose quoted line is a player-lock (Narset Transcendent, Dovin Baan), because the lock itself derives on the emblem node. Measured (derive-impact vs 67d8816f, the whole branch incl. 527, final tree): 120 rows changed, 0 added/removed, 1 source flip (Steel Dromedary model -> grammar: its false `untap` ability and `untaps` emit, the model's reading of the denial, are gone), pair reasons of the 120 changed rows +42/-0 (copies on Spectral Bears and Spectral Force: their attack trigger is now a real triggered ability, 21 copiers each), matcher sample (300 of 32,158, 0.93%) +0/-0, loss-classify 0 lost, 0 gained to self or class (42 unmatched copies pairs), role-ratchet gained 42 lost 209 (33,092 -> 32,925), dropped-clauses 4,814 -> 4,706 (fixed 108, new 2: Code of Constraint's tap turns :partial once its cant is claimed, Leonin Arbiter's cost-modify), panel precision 100.0% retention 98.4% (428 held, 7 lost), compass 94/94, anti-compass 35/35.
 // 529: #1266 -- owner ruling 2026-11-15: a REPEATING "doesn't untap during its controller's next untap step" denial is stax, a one-shot is not, and an own drawback never is. (1) `repeats` is now stamped on a `next-untap-step` denial whose trigger the grammar or the vocabulary refuses (`untapDenialRepeats`, repeats.ts: `tapped-for-mana` Vorinclex and Winter's Night, a narrowed `damage-dealt` Kashi-Tribe / Matsu-Tribe / Mercurial Kite, `mutates` Archipelagore): "When ..." and `enters` are once (Breaching Leviathan), "Whenever ..." repeatable; a d20 table row hung off an enters trigger is once, not the static the segmenter filed (Scion of Stygia). (2) the denial subject is `control: you` for "equipped creature" (T-45 Power Armor, Cement Shoes, Vulshok Gauntlets, Heavy Arbalest, Stitcher's Graft: equip attaches to a creature you control, CR 702.6a) and for "during your (next) untap step" (Samite Alchemist), and `self` for the trigger's own "it" (Lead Golem, Apes of Rath, Spectral Bears/Force). Measured (derive-impact vs 67d8816f, the whole branch incl. 527 and 528, final tree): 143 rows changed, 0 added/removed, 1 source flip, pair reasons of the changed rows +42/-0 (copies on Spectral Bears and Spectral Force, 21 each, as 528), loss-classify 0 lost, 0 gained to self or class, matcher sample (300 of 32,139, 0.93%) +0/-0, role-ratchet gained 42 lost 174 (33,092 -> 32,960; 528 alone was lost 209, so 39 stax memberships return and 4 equipment leave), dropped-clauses 4,706 at 529 (new 0, fixed 0 vs 528; 4,814 -> 4,706 over the branch).
-export const DERIVE_VERSION = 529;
+// 530: #1266 -- protection.text reads derived data; the last printed residue (`protectionUnread`) and the `oracle` op are gone. (1) `counter-immunity`, a fact effect kind (edges FACT_KINDS, quality NOT_EXTRA_VALUE, impact weight 0.2; cant-kinds.ts `counterImmunityOf`): "can't be countered" handed to spells other than the card (Rhythm of the Wild, Lier, Vexing Shusher, Mistrise Village, Autumn's Veil), `effect.subject` which spells and `Ability.counterImmunity` {abilities, next, by}; the card's own line ("This spell can't be countered", its name), a conditional line and a tail it does not know derive nothing. The grammar splits Cavern of Souls' and Delighted Halfling's "Spend this mana only to cast ..., and that spell can't be countered" into the spend rider and a `cant | be countered`. (2) a player's keyword the model filed as something else is the grant its printed clause states (`playerKeywordFiledAsOther`, verb-words.ts): "you gain protection from ..." / "you gain hexproof" filed `gain-life` (The One Ring, Seht's Tiger, Teferi's Protection, Perch Protection, Noble Heritage, Earthshape), "You have shroud" filed `cant | be targeted` (Solitary Confinement). MEASURED (derive-impact vs d0af560f, impact.json, final tree): 40 rows changed, 0 added, 0 removed, 4 source flips (Autumn's Veil grammar -> model: the grammar has no `by` reading; Seht's Tiger, Solitary Confinement and The One Ring model -> grammar), grammar complete 28,759 -> 28,759; pair reasons of the changed rows +44 gained / -579 lost (lost: the false lifegain of Earthshape, Noble Heritage, Perch Protection, Seht's Tiger, Teferi's Protection and The One Ring, `gain-life` payoffs only; gained: `copies` pairs of the two activated abilities Mistrise Village and Vexing Shusher, 22 each), attributes changed 926 (effectKind, Seht's Tiger's lifegain -> keyword-grant); matcher sample 300 of 32,236 cards (0.93%): +0 / -0, 11 attribute moves; role-ratchet gained 0 / lost 0 (32,960 memberships; 35 cards moved from the printed pattern to derived data and keep the role); dropped-clauses 4,706 -> 4,675, new 1, fixed 32 (the new one is Solitary Confinement's own 'Skip your draw step', which the grammar reading now files `cant` where the stored one filed `other`).
+export const DERIVE_VERSION = 530;
 
 /** "a nonland card from target opponent's graveyard or hand" (#1592): the object of a stored hand-or-graveyard pick. */
 const GRAVEYARD_OR_HAND_PICK = /\bfrom (?:target opponent|target player|that player|that opponent|an opponent)'s (?:graveyard or hand|hand or graveyard)$/i;
@@ -1902,6 +1903,15 @@ function effectSubject(
   if (kind === "trigger-suppression") {
     const who = triggerSuppressionOf(action.object ?? "", clauseText, cantOccurrence)?.who;
     return who ? parseSubject(who) : parseSubject("");
+  }
+  // WHICH SPELLS can't be countered (#1266): the printed subject of the sentence, a pronoun ("that spell": the one a mana pays for) being one spell YOU cast.
+  if (kind === "counter-immunity") {
+    const who = counterImmunityOf(action.object ?? "", clauseText, cantOccurrence)?.who;
+    if (who === undefined) return parseSubject("");
+    if (who === "") return { ...parseSubject("spell"), control: "you" };
+    const s = parseSubject(who);
+    // "The next spell you cast" and "Spells you cast" are yours; a bare "Spells" is every player's.
+    return /\byou cast\b/i.test(who) && s.control === "any" ? { ...s, control: "you" } : s;
   }
   // WHOSE PLAYERS a `player-lock` binds (#1266): opponents or everyone, read off the printed clause.
   if (kind === "player-lock") {
@@ -3604,6 +3614,10 @@ export function deriveAbilities(
     // CEILING: a mix-up is kept whole (its clause's own sentence is not searched for the right one), so a verb the card prints once can still feed two clauses.
     // A PHASE-OUT FILED AS A `put` is read as the phase-out its printed clause states (#1266, Talon Gates of Madara): see `phaseOutFiledAsPut`.
     if ((clause.actions ?? []).some((a) => phaseOutFiledAsPut(a, clauseText))) clause = { ...clause, actions: (clause.actions ?? []).map((a) => phaseOutFiledAsPut(a, clauseText) ? { ...a, verb: "phase-out" } : a) };
+    // A PLAYER'S KEYWORD FILED AS LIFE GAIN OR AS `cant | be targeted` is the grant the printed clause states (#1266): see `playerKeywordFiledAsOther`.
+    if ((clause.actions ?? []).some((a) => playerKeywordFiledAsOther(a, clauseText))) {
+      clause = { ...clause, actions: (clause.actions ?? []).map((a) => playerKeywordFiledAsOther(a, clauseText) ? { ...a, verb: "grant-ability", object: a.verb === "cant" ? (/you have (shroud|hexproof)/i.exec(clauseText ?? "")?.[1] ?? "shroud").toLowerCase() : (a.object ?? "").replace(/^you gain /i, "") } : a) };
+    }
     const misfiled = new Set<Action>();
     if (GUARDED_VERBS.size > 0) {
       for (const a of clause.actions ?? []) {
@@ -4510,6 +4524,8 @@ export function deriveAbilities(
           || effectKind === "untap-denial"
           // ...and so is whose players a `player-lock` binds (#1266; a fact kind).
           || effectKind === "player-lock"
+          // ...and so is which spells a `counter-immunity` covers (#1266; a fact kind).
+          || effectKind === "counter-immunity"
           // ...and so is whose life total a `life-total-set` sets (#1333; a fact kind, no pair channel reads it).
           || effectKind === "life-total-set"
           || staticCopyMaker
@@ -4582,6 +4598,7 @@ export function deriveAbilities(
       if (effectKind === "untap-denial") { const u = untapDenialFor(action.verb ?? "", action.object ?? "", text, sameCant); if (u) ability.untapDenial = u.denial; }
       if (effectKind === "trigger-suppression") { const t = triggerSuppressionOf(action.object ?? "", text, sameCant); if (t) ability.suppresses = t.suppression; }
       if (effectKind === "player-lock") { const l = playerLockOf(action.object ?? "", text, sameCant); if (l) ability.playerLock = { locks: l.locks, ...(l.yourTurn ? { yourTurn: true as const } : {}) }; }
+      if (effectKind === "counter-immunity") { const c = counterImmunityOf(action.object ?? "", text, sameCant); if (c && Object.keys(c.immunity).length > 0) ability.counterImmunity = c.immunity; }
       if (effectKind === "targeting-ban") { const b = targetingBanOf(action.object ?? "", text, sameCant); if (b) ability.targetingBan = b; }
       // "DRAW A CARD IF IT WAS ATTACKING. OTHERWISE, ..." (#798, Garna; Zurgo Stormrender): the
       // condition narrows the action its own sentence names to a death IN COMBAT, which is the

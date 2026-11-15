@@ -1099,6 +1099,12 @@ export const EFFECT_KINDS = [
   // pair channels read it blank and no graveyardHate build category reads it (`answers.graveyard.recurring` does). NOT "Cards in graveyards can't be the targets of ..." (Ground Seal: protection,
   // `targeting-ban`), NOT a ban on casting from YOUR graveyard or a graveyard-count condition on attacking (Deep-Sea Terror).
   "graveyard-lock",
+  // COUNTER-IMMUNITY (CR 701.6a: to counter a spell or ability is to cancel it; #1266, `protection.text`): "can't be countered" handed to spells OTHER than the card itself -- a class ("Creature spells you control can't be
+  // countered": Rhythm of the Wild, Destiny Spinner; "Spells can't be countered": Lier, Leyline of Lifeforce, Root Sliver), the next spell ("The next spell you cast this turn": Mistrise Village, Insist, Overmaster), the spell a
+  // mana pays for (Cavern of Souls, Boseiju, Delighted Halfling), a target spell (Vexing Shusher), abilities too (Spider-Punk) and only some counterspells ("by blue or black spells": Autumn's Veil). `effect.subject` is which
+  // spells; `Ability.counterImmunity` is the rest. A fact kind like `targeting-ban`: the pair channels read it blank. NOT the card's own line ("This spell can't be countered", "Kevin can't be countered": a card that protects
+  // only itself is not Protection, owner 2026-11-12) and NOT a conditional one (As long as ..., unless you pay).
+  "counter-immunity",
   // PLAYER-LOCK (CR 101.2: a "can't" effect takes precedence; #1266, owner ruling 2026-11-14): a LASTING prohibition or limit on what PLAYERS can do -- "Players can't cast more than one spell each turn" (Rule of Law), "Your opponents
   // can't cast spells with the chosen name" (Alhammarret), "... during your turn" (Grand Abolisher, Kutzil), "Your opponents can't gain life" (Erebos), "can't search libraries" (Stranglehold), "Players can't untap more than one
   // land during their untap steps" (Winter Orb). `effect.subject.control` is whose players (`opp` or `any`), `Ability.playerLock` what is locked and whether it holds only on your turn. The stax pieces that were printed words
@@ -1423,6 +1429,9 @@ export interface Ability {
     /** The denial holds only while a printed condition does ("if it has a sleep counter on it", "unless that player is the monarch", "As long as you control another snow permanent, ..."; owner 2026-11-14, #1266: a conditional denial on permanents that are not your own is stax). Written only as `true`. */
     conditional?: true;
   };
+  /** WHAT A `counter-immunity` ABILITY ADDS TO ITS SUBJECT SPELLS (#1266; CR 701.6a): `abilities` when abilities are covered too ("Spells and abilities can't be countered", Spider-Punk), `next` when it is ONE spell, the next one
+   *  cast or the one a mana pays for (Insist, Cavern of Souls), `by` when only some counterspells are stopped ("by blue or black spells", Autumn's Veil: `colors` / `notColors`, WUBRG letters). ABSENT when none applies. */
+  counterImmunity?: { abilities?: true; next?: true; by?: { colors?: string[]; notColors?: string[] } };
   /** AN EMBLEM THE CARD GETS LOCKS PLAYERS (#1266, owner 2026-11-14): the emblem's quoted line is a `player-lock` ("Your opponents can't cast noncreature spells": Narset Transcendent; "can't untap more than two permanents": Dovin Baan). Marked on the card's `emblem` ability, because the lock itself derives on the emblem's own node, which no card rule reads. Written only as `true`. */
   emblemLock?: true;
   /** A `to-hand` ABILITY'S CARDS REACH THE HAND BY A PICK (#1302): somebody chooses which of at least two looked-at or revealed cards go to your hand -- "look at the top four

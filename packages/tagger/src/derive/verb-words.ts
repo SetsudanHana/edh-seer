@@ -89,3 +89,14 @@ export function phaseOutFiledAsPut(action: { verb?: string; fromZone?: string | 
   const printed = stripReminderText(clauseText);
   return /(?<![\w'])phases? out(?![\w'])/i.test(printed) && !/(?<![\w'])(?:puts?|placed?|placing|putting)(?![\w'])/i.test(printed);
 }
+
+/** PROTECTION FOR THE PLAYER THE MODEL FILED AS SOMETHING ELSE (#1266, CR 702.18 shroud): "you gain protection from everything" (The One Ring, Teferi's Protection, Perch Protection),
+ *  "you gain protection from the color of your choice" (Seht's Tiger), "you gain protection from that player" (Noble Heritage) and "you gain hexproof until end of turn" (Earthshape) are stored `gain-life`
+ *  with the keyword as the object, and Solitary Confinement's "You have shroud" is stored `cant | be targeted`. Both are the keyword grant the grammar reads them as. Only the keyword words
+ *  (never "gain 3 life", never a `cant | be targeted` whose printed clause names no "You have shroud"). */
+export function playerKeywordFiledAsOther(action: { verb?: string; object?: string | null }, clauseText: string | undefined): boolean {
+  const object = (action.object ?? "").trim();
+  if (action.verb === "gain-life") return /^(?:you gain )?(?:protection from|shroud|hexproof)(?![\w'])/i.test(object);
+  if (action.verb === "cant" && /^be targeted$/i.test(object) && clauseText !== undefined) return /(?<![\w'])you have (?:shroud|hexproof)(?![\w'])/i.test(stripReminderText(clauseText));
+  return false;
+}

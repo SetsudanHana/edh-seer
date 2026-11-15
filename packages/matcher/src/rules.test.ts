@@ -1158,12 +1158,30 @@ test("a phase-out that only a block triggers is opponent-aimed, not protection",
   expect(ruleMatches(protectionText(), phase(undefined))).toBe(true);
 });
 
-test("the one printed residue: spells that can't be countered and protection for the player", () => {
-  // CEILING (see the rule's why): derive reads neither, so these stand on printed text; with the text blanked nothing derived says so.
-  for (const name of ["Delighted Halfling", "Vexing Shusher", "The One Ring", "Seht's Tiger", "Solitary Confinement"]) {
-    expect(protects(name), name).toBe(true);
-    expect(protectsDerived(name), name).toBe(false);
-  }
+test("spells that can't be countered, handed to other spells, are protection, read off the derived `counter-immunity` (#1266)", () => {
+  // The last printed residue (`protectionUnread`) is gone: with the text blanked, derived data alone says so.
+  for (const name of ["Rhythm of the Wild", "Delighted Halfling", "Vexing Shusher", "Cavern of Souls", "Boseiju, Who Shelters All", "Mistrise Village", "Insist", "Savage Summoning", "Domri, Anarch of Bolas",
+    "Thryx, the Sudden Storm", "Cunning Nightbonder", "Taigam, Ojutai Master", "Bound // Determined", "Hexing Squelcher", "Veil of Summer", "Autumn's Veil",
+    // symmetric, so it covers you too (owner 2026-11-13, Peace Talks)
+    "Lier, Disciple of the Drowned", "Leyline of Lifeforce", "Root Sliver", "Spider-Punk"]) expect(protectsDerived(name), name).toBe(true);
+});
+
+test("a card whose only 'can't be countered' is its own is not protection (owner 2026-11-12)", () => {
+  // Nezahal's lines are "This spell can't be countered" and "You have no maximum hand size": nothing else it prints protects anything.
+  expect(protectsDerived("Nezahal, Primal Tide")).toBe(false);
+  // Vexing Shusher and Root Sliver print the card's own line first and a line for other spells second: only the second counts, which the derived ability count shows.
+  const ci = (name: string) => realCard(name, { oracleText: "" }).tags!.abilities.filter((a) => a.effect.kind === "counter-immunity");
+  expect(ci("Root Sliver")).toHaveLength(1);
+  expect(ci("Vexing Shusher")).toHaveLength(1);
+  expect(ci("Hexing Squelcher")).toHaveLength(1);
+  expect(ci("Nezahal, Primal Tide")).toHaveLength(0);
+});
+
+test("protection for the PLAYER is a derived keyword grant, not lifegain (#1266)", () => {
+  // "You gain protection from ..." was filed as lifegain; "You have shroud" as an unread `cant`. Read off the derived grant, with the text blanked.
+  for (const name of ["The One Ring", "Seht's Tiger", "Solitary Confinement", "Teferi's Protection", "Noble Heritage", "Ivory Mask", "Gilded Light", "Absolute Virtue"]) expect(protectsDerived(name), name).toBe(true);
+  expect(realCard("The One Ring", { oracleText: "" }).tags!.abilities.some((a) => a.effect.kind === "lifegain")).toBe(false);
+  expect(realCard("Seht's Tiger", { oracleText: "" }).tags!.abilities.some((a) => a.effect.kind === "lifegain")).toBe(false);
 });
 
 test("named CEILINGs of the derived protection read (#1266)", () => {

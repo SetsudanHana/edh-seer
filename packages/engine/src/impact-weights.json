@@ -42,6 +42,7 @@
     "restriction": 0.2,
     "targeting-ban": 0.2,
     "graveyard-lock": 0.2,
+    "counter-immunity": 0.2,
     "player-lock": 0.2,
     "trigger-suppression": 0.2,
     "untap-denial": 0.2,
