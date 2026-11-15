@@ -1,0 +1,264 @@
+{
+ "Kurkesh, Onakke Ancient": {
+  "typeLine": "Legendary Creature — Ogre Spirit",
+  "oracleText": "Whenever you activate an ability of an artifact, if it isn't a mana ability, you may pay {R}. If you do, copy that ability. You may choose new targets for the copy.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 4,
+  "power": "4",
+  "toughness": "3",
+  "keywords": []
+ },
+ "Tawnos, Urza's Apprentice": {
+  "typeLine": "Legendary Creature — Human Artificer",
+  "oracleText": "Haste\n{U}{R}, {T}: Copy target activated or triggered ability you control from an artifact source. You may choose new targets for the copy. (Mana abilities can't be targeted.)",
+  "colors": [
+   "R",
+   "U"
+  ],
+  "colorIdentity": [
+   "R",
+   "U"
+  ],
+  "manaValue": 2,
+  "power": "1",
+  "toughness": "3",
+  "keywords": [
+   "Haste"
+  ]
+ },
+ "Illusionist's Bracers": {
+  "typeLine": "Artifact — Equipment",
+  "oracleText": "Whenever an ability of equipped creature is activated, if it isn't a mana ability, copy that ability. You may choose new targets for the copy.\nEquip {3}",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 2,
+  "power": null,
+  "toughness": null,
+  "keywords": [
+   "Equip"
+  ]
+ },
+ "Battlemage's Bracers": {
+  "typeLine": "Artifact — Equipment",
+  "oracleText": "Equipped creature has haste.\nWhenever an ability of equipped creature is activated, if it isn't a mana ability, you may pay {1}. If you do, copy that ability. You may choose new targets for the copy.\nEquip {2}",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 3,
+  "power": null,
+  "toughness": null,
+  "keywords": [
+   "Equip"
+  ]
+ },
+ "Chandra's Regulator": {
+  "typeLine": "Legendary Artifact",
+  "oracleText": "Whenever you activate a loyalty ability of a Chandra planeswalker, you may pay {1}. If you do, copy that ability. You may choose new targets for the copy.\n{1}, {T}, Discard a Mountain card or a red card: Draw a card.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 2,
+  "power": null,
+  "toughness": null,
+  "keywords": []
+ },
+ "Rowan's Talent": {
+  "typeLine": "Enchantment — Aura",
+  "oracleText": "Enchant planeswalker\nEnchanted planeswalker has \"[+1]: Up to one target creature gets +2/+0 and gains first strike and trample until end of turn.\"\nWhenever you activate a loyalty ability of enchanted planeswalker, copy that ability. You may choose new targets for the copy.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 4,
+  "power": null,
+  "toughness": null,
+  "keywords": [
+   "Enchant"
+  ]
+ },
+ "The Peregrine Dynamo": {
+  "typeLine": "Legendary Artifact Creature — Construct",
+  "oracleText": "Haste\n{1}, {T}: Copy target activated or triggered ability you control from another legendary source that's not a commander. You may choose new targets for the copy. (Mana abilities can't be targeted.)",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 3,
+  "power": "1",
+  "toughness": "5",
+  "keywords": [
+   "Haste"
+  ]
+ },
+ "Abstruse Archaic": {
+  "typeLine": "Creature — Avatar",
+  "oracleText": "Vigilance\n{1}, {T}: Copy target activated or triggered ability you control from a colorless source. You may choose new targets for the copy. (Mana abilities can't be targeted.)",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 4,
+  "power": "3",
+  "toughness": "4",
+  "keywords": [
+   "Vigilance"
+  ]
+ },
+ "Weaver of Harmony": {
+  "typeLine": "Enchantment Creature — Snake Druid",
+  "oracleText": "Other enchantment creatures you control get +1/+1.\n{G}, {T}: Copy target activated or triggered ability you control from an enchantment source. You may choose new targets for the copy. (Mana abilities can't be targeted.)",
+  "colors": [
+   "G"
+  ],
+  "colorIdentity": [
+   "G"
+  ],
+  "manaValue": 2,
+  "power": "2",
+  "toughness": "2",
+  "keywords": []
+ },
+ "Echo, Perceptive Prodigy": {
+  "typeLine": "Legendary Creature — Human Hero",
+  "oracleText": "Vigilance\n{1}, {T}: Copy target activated or triggered ability you control from a creature source. You may choose new targets for the copy. (Mana abilities can't be targeted.)",
+  "colors": [
+   "U"
+  ],
+  "colorIdentity": [
+   "U"
+  ],
+  "manaValue": 3,
+  "power": "1",
+  "toughness": "4",
+  "keywords": [
+   "Vigilance"
+  ]
+ },
+ "Rings of Brighthearth": {
+  "typeLine": "Artifact",
+  "oracleText": "Whenever you activate an ability, if it isn't a mana ability, you may pay {2}. If you do, copy that ability. You may choose new targets for the copy.",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 3,
+  "power": null,
+  "toughness": null,
+  "keywords": []
+ },
+ "Mistrise Village": {
+  "typeLine": "Land",
+  "oracleText": "This land enters tapped unless you control a Mountain or a Forest.\n{T}: Add {U}.\n{U}, {T}: The next spell you cast this turn can't be countered.",
+  "colors": [],
+  "colorIdentity": [
+   "U"
+  ],
+  "manaValue": 0,
+  "power": null,
+  "toughness": null,
+  "keywords": []
+ },
+ "Vexing Shusher": {
+  "typeLine": "Creature — Goblin Shaman",
+  "oracleText": "This spell can't be countered.\n{R/G}: Target spell can't be countered.",
+  "colors": [
+   "G",
+   "R"
+  ],
+  "colorIdentity": [
+   "G",
+   "R"
+  ],
+  "manaValue": 2,
+  "power": "2",
+  "toughness": "2",
+  "keywords": []
+ },
+ "Sol Ring": {
+  "typeLine": "Artifact",
+  "oracleText": "{T}: Add {C}{C}.",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 1,
+  "power": null,
+  "toughness": null,
+  "keywords": []
+ },
+ "Chandra, Torch of Defiance": {
+  "typeLine": "Legendary Planeswalker — Chandra",
+  "oracleText": "+1: Exile the top card of your library. You may cast that card. If you don't, Chandra deals 2 damage to each opponent.\n+1: Add {R}{R}.\n−3: Chandra deals 4 damage to target creature.\n−7: You get an emblem with \"Whenever you cast a spell, this emblem deals 5 damage to any target.\"",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 4,
+  "power": null,
+  "toughness": null,
+  "keywords": [],
+  "loyalty": "4"
+ },
+ "Prodigal Sorcerer": {
+  "typeLine": "Creature — Human Wizard Sorcerer",
+  "oracleText": "{T}: This creature deals 1 damage to any target.",
+  "colors": [
+   "U"
+  ],
+  "colorIdentity": [
+   "U"
+  ],
+  "manaValue": 3,
+  "power": "1",
+  "toughness": "1",
+  "keywords": []
+ },
+ "Scientist Supreme of A.I.M.": {
+  "typeLine": "Legendary Creature — Human Scientist Villain",
+  "oracleText": "Pay 2 life: Copy target activated or triggered ability you control from an artifact source. You may choose new targets for the copy. Activate only during your turn and only once each turn. (Mana abilities can't be targeted.)",
+  "colors": [
+   "B",
+   "U"
+  ],
+  "colorIdentity": [
+   "B",
+   "U"
+  ],
+  "manaValue": 2,
+  "power": "2",
+  "toughness": "2",
+  "keywords": []
+ },
+ "Ugin, the Spirit Dragon": {
+  "typeLine": "Legendary Planeswalker — Ugin",
+  "oracleText": "+2: Ugin deals 3 damage to any target.\n−X: Exile each permanent with mana value X or less that's one or more colors.\n−10: You gain 7 life, draw seven cards, then put up to seven permanent cards from your hand onto the battlefield.",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 8,
+  "power": null,
+  "toughness": null,
+  "keywords": [],
+  "loyalty": "7"
+ },
+ "Gogo, Master of Mimicry": {
+  "typeLine": "Legendary Creature — Wizard",
+  "oracleText": "{X}{X}, {T}: Copy target activated or triggered ability you control X times. You may choose new targets for the copies. This ability can't be copied and X can't be 0. (Mana abilities can't be targeted.)",
+  "colors": [
+   "U"
+  ],
+  "colorIdentity": [
+   "U"
+  ],
+  "manaValue": 3,
+  "power": "2",
+  "toughness": "4",
+  "keywords": []
+ }
+}

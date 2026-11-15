@@ -3830,6 +3830,7 @@ function copyAbilityEdges({ p, c, h, reasons }: PairScope): void {
     const kinds = a.effect.subject?.abilityKind ?? ["activated", "triggered"];
     const wanted = a.effect.subject?.type;
     if (wanted !== undefined && !typeMatchesCharacteristics(wanted, p.tags?.characteristics, h)) continue;
+    if (a.effect.subject?.abilityOf !== undefined && !copySourceAdmits(p, a.effect.subject.abilityOf, h)) continue;
     const kind = kinds.find((k) => (p.tags?.abilities ?? []).some((pa) => abilityIsKind(pa, k)));
     if (!kind) continue;
     reasons.push({
@@ -3841,6 +3842,23 @@ function copyAbilityEdges({ p, c, h, reasons }: PairScope): void {
       producer: p.card.name,
     });
   }
+}
+
+/** WHOSE ABILITY A COPIER MAY COPY (#1648): the copier's source restriction, `subject.abilityOf` -- "from an artifact source" (Tawnos, Scientist Supreme),
+ *  "an ability of an artifact" (Kurkesh), "of a Chandra planeswalker" (Chandra's Regulator), "from another legendary source that's not a commander" (The Peregrine
+ *  Dynamo), "from a colorless source" (Abstruse Archaic). The source is the producer card itself, so its own characteristics answer the filter, through the same
+ *  `subjectMatches` every other subject goes through; `characteristicsSubject` states the producer's types, supertypes, subtypes and colours (`[]` is colourless).
+ *  Dropped before asking: `control` (the copier's own control field says whose ability, handled above), `other` (the copier never copies itself: `p === c` is refused
+ *  by the caller), and the CHOICE a copier makes at resolution (Leori's "a planeswalker of the chosen type": any planeswalker can be the one chosen).
+ *  A HOST RESTRICTION is `status: ["equipped"]` / `["enchanted"]` (the Bracers, Rowan's Talent: "an ability of equipped creature", "of enchanted planeswalker"): no
+ *  producer card states that it is the host of the copier, so `subjectMatches` refuses every one and the copier claims no class-wide edge, the convention a status
+ *  demand has everywhere ("only a producer whose printed text states one supplies it"). The pair with an arbitrary creature is not false by the card's text alone
+ *  (any creature with an activated ability can be equipped), but it is a pair with a card the copier only reaches through an attach the engine does not model.
+ *  CEILING: a copier whose source is the controller's ("you control") is not checked for control against the producer; the deck holds the copier's own cards only. */
+function copySourceAdmits(p: DeckCard, abilityOf: Partial<SubjectFilter>, h: Hierarchy): boolean {
+  if (!p.tags) return false;
+  const { control: _c, other: _o, chosenType: _ct, chosenKind: _ck, chosenNegated: _cn, ...source } = abilityOf;
+  return subjectMatches(characteristicsSubject(p.tags, p.card.name), { control: "any", token: null, ...source }, h);
 }
 
 /** The tokens a card is MEANT to be sacrificed as (ARTIFACT_TOKEN_KINDS `fodder`: exactly Food, Treasure, Clue, Blood, Gold). */
