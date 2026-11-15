@@ -43,6 +43,17 @@ test("targets: a class per phrase, whose it is, and nothing for a relative claus
   expect(aims("Draw a card.")).toBeUndefined();
 });
 test("targets: an opponent's permanent said as 'that player controls' and 'defending player controls'", () => {
-  expect(aims("When this creature enters, for each opponent, exile up to one target permanent that player controls with mana value 3 or greater.")).toEqual([{ control: "opp" }]);
+  expect(aims("When this creature enters, for each opponent, exile up to one target permanent that player controls with mana value 3 or greater.")).toEqual([{ control: "opp" }, { control: "opp" }]);
   expect(aims("Whenever this creature attacks, destroy target creature defending player controls.")).toEqual([{ type: "creature", control: "opp" }]);
+});
+
+test("targets: an unread phrase keeps its head noun, a list keeps every noun, a quoted grant is not the clause's, 'for each opponent' is a target each", () => {
+  expect(aims("When this creature enters, counter target spell with mana value X or less.")).toEqual([{ type: "spell" }]);
+  expect(aims("Whenever this creature attacks, destroy target creature with power 2 or less.")).toEqual([{ type: "creature" }]);
+  expect(aims("Destroy target nonland permanent that player controls.")).toEqual([{ control: "opp" }]);
+  expect(aims("{1}, {T}: Tap target artifact, creature, or land.")).toEqual([{ type: ["artifact", "creature", "land"] }]);
+  expect(aims("Tap target artifact, creature, enchantment, or planeswalker.")).toEqual([{ type: ["artifact", "creature", "enchantment", "planeswalker"] }]);
+  expect(aims("Exile target artifacts, creatures, and/or enchantments.")).toEqual([{ type: ["artifact", "creature", "enchantment"] }]);
+  expect(aims('Create a Rock token with "Equipped creature gets +1/+1. {T}: Deal 1 damage to target creature."')).toBeUndefined();
+  expect(aims("When this creature enters, for each opponent, exile up to one target creature that player controls.")).toEqual([{ type: "creature", control: "opp" }, { type: "creature", control: "opp" }]);
 });

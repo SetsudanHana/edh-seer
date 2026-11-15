@@ -1843,7 +1843,11 @@
      "repeats": "once",
      "targets": [
       {
-       "type": "artifact"
+       "type": [
+        "artifact",
+        "creature",
+        "planeswalker"
+       ]
       }
      ]
     }
@@ -4158,16 +4162,23 @@
      "repeats": "once",
      "targets": [
       {
-       "type": "artifact"
-      },
-      {
-       "type": "creature"
-      },
-      {
-       "type": "enchantment"
-      },
-      {
-       "type": "land"
+       "anyOf": [
+        {
+         "type": "artifact"
+        },
+        {
+         "scope": "target",
+         "type": "creature"
+        },
+        {
+         "scope": "target",
+         "type": "enchantment"
+        },
+        {
+         "scope": "target",
+         "type": "land"
+        }
+       ]
       }
      ]
     },
@@ -4196,16 +4207,23 @@
      "repeats": "once",
      "targets": [
       {
-       "type": "artifact"
-      },
-      {
-       "type": "creature"
-      },
-      {
-       "type": "enchantment"
-      },
-      {
-       "type": "land"
+       "anyOf": [
+        {
+         "type": "artifact"
+        },
+        {
+         "scope": "target",
+         "type": "creature"
+        },
+        {
+         "scope": "target",
+         "type": "enchantment"
+        },
+        {
+         "scope": "target",
+         "type": "land"
+        }
+       ]
       }
      ]
     },
@@ -4234,16 +4252,23 @@
      "repeats": "once",
      "targets": [
       {
-       "type": "artifact"
-      },
-      {
-       "type": "creature"
-      },
-      {
-       "type": "enchantment"
-      },
-      {
-       "type": "land"
+       "anyOf": [
+        {
+         "type": "artifact"
+        },
+        {
+         "scope": "target",
+         "type": "creature"
+        },
+        {
+         "scope": "target",
+         "type": "enchantment"
+        },
+        {
+         "scope": "target",
+         "type": "land"
+        }
+       ]
       }
      ]
     },
@@ -4272,16 +4297,23 @@
      "repeats": "once",
      "targets": [
       {
-       "type": "artifact"
-      },
-      {
-       "type": "creature"
-      },
-      {
-       "type": "enchantment"
-      },
-      {
-       "type": "land"
+       "anyOf": [
+        {
+         "type": "artifact"
+        },
+        {
+         "scope": "target",
+         "type": "creature"
+        },
+        {
+         "scope": "target",
+         "type": "enchantment"
+        },
+        {
+         "scope": "target",
+         "type": "land"
+        }
+       ]
       }
      ]
     }
@@ -4687,7 +4719,9 @@
      "kind": "on-cast",
      "repeats": "once",
      "targets": [
-      {}
+      {
+       "type": "spell"
+      }
      ]
     }
    ],
@@ -11987,8 +12021,8 @@
       {
        "control": "opp",
        "type": [
-        "creature",
-        "artifact"
+        "artifact",
+        "creature"
        ]
       }
      ]
@@ -12029,8 +12063,8 @@
       {
        "control": "opp",
        "type": [
-        "creature",
-        "artifact"
+        "artifact",
+        "creature"
        ]
       }
      ]
@@ -12074,8 +12108,8 @@
       {
        "control": "opp",
        "type": [
-        "creature",
-        "artifact"
+        "artifact",
+        "creature"
        ]
       }
      ]

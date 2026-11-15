@@ -77,8 +77,23 @@ export function copyKeywordOf(
  *  is in the sentence and not in the action's object ("Target creature you control gains protection", Mother of Runes), so the clause text is read for "target <class>" and "any target".
  *  A phrase of a relative clause ("each creature target player controls", "that targets") is skipped: it aims at a player and says a creature. */
 const NOUN = "(?:creatures?|artifacts?|enchantments?|lands?|planeswalkers?|permanents?|players?|opponents?|spells?|abilit(?:y|ies)|cards?|battles?|tokens?)";
-const TARGET_PHRASE = new RegExp(`(?<![\\w'-])(?:any (?:other )?target|target (?!of\\b)(?:[a-z'-]+ ){0,3}?${NOUN}(?: cards?)?(?: or (?:[a-z'-]+ )?${NOUN}(?: cards?)?)*(?:(?: with [a-z]+)?(?: (?:you|an opponent|your opponents|target opponent|that player|they|you don't|an opponent doesn't|opponents|defending player|the defending player) (?:control|controls|own|owns))?))(?![\\w-])`, "gi");
+const TARGET_PHRASE = new RegExp(`(?<![\\w'-])(?:any (?:other )?target|target (?!of\\b)(?:[a-z'-]+ ){0,3}?${NOUN}(?: cards?)?(?:(?:, (?:and/or |and |or )?| (?:and/)?or )(?:[a-z'-]+ )?${NOUN}(?: cards?)?)*(?:(?: with [a-z]+)?(?: (?:you|an opponent|your opponents|target opponent|that player|they|you don't|an opponent doesn't|opponents|defending player|the defending player) (?:control|controls|own|owns))?))(?![\\w-])`, "gi");
 const PLAYER_ONLY = /^target (?:other |opposing )?(?:players?|opponents?)$/i;
+
+/** The head nouns of a matched phrase, as types: "target artifact, creature, or land" is [artifact, creature, land]. `permanent` and `token` name no type (any permanent, a token of any type) and `player` / `opponent`
+ *  are not types: they are reported apart. Read up to the first qualifier ("with ...", "you control", "that player controls"), so a noun inside the qualifier is not the class. */
+const HEAD_END = / (?:with|you|an|your|that|they|defending|the|opponents?|target) /i;
+const TYPE_NOUN = /\b(creature|artifact|enchantment|land|planeswalker|battle|spell|ability|abilities)s?\b/gi;
+function headNouns(phrase: string): { types: string[]; player: boolean } {
+  const body = phrase.replace(/^target /i, "");
+  const end = body.search(HEAD_END);
+  const head = end < 0 ? body : body.slice(0, end);
+  const types = [...new Set([...head.matchAll(TYPE_NOUN)].map((x) => (x[1]!.toLowerCase() === "abilities" ? "ability" : x[1]!.toLowerCase())))];
+  return { types, player: /\b(?:players?|opponents?)\b/i.test(head) };
+}
+
+/** A quoted span is the ability of what it is granted to ("create a Rock token with \"...\"", an emblem's text), never the clause's own. Neither pattern can run past its own closing quote. */
+const QUOTED = /"[^"]*"|\u201c[^\u201c\u201d]*\u201d/g;
 
 export function targetSlotsOf(
   texts: readonly (string | null | undefined)[],
@@ -88,7 +103,7 @@ export function targetSlotsOf(
 ): Partial<SubjectFilter>[] | undefined {
   const slots: Partial<SubjectFilter>[] = [];
   for (const raw of texts) {
-    const text = (raw ?? "").trim();
+    const text = (raw ?? "").replace(QUOTED, " ").trim();
     for (const m of text.matchAll(TARGET_PHRASE)) {
       const before = text.slice(0, m.index).trimEnd();
       if (/\b(?:that|which|who) (?:targets?|could target|can target)$|\b(?:each|all|every|those|these|the)(?: other)? [a-z-]+s?$/i.test(before)) continue;
@@ -100,6 +115,13 @@ export function targetSlotsOf(
         if (f?.subtype !== undefined) slot.subtype = f.subtype;
         if (f?.anyOf !== undefined) slot.anyOf = f.anyOf;
         if (f && f.control !== "any") slot.control = f.control;
+        // THE HEAD NOUN, when the grammar read none ("creature with power 2 or less", "spell with mana value X", "nonland permanent that player controls") or only the first of a list.
+        const { types, player } = headNouns(m[0]);
+        if (slot.subtype === undefined && slot.anyOf === undefined) {
+          if (player && types.length > 0) { delete slot.type; slot.anyOf = [{ type: types.length === 1 ? types[0]! : types }, { player: true }]; }
+          else if (types.length > 1 || (slot.type === undefined && types.length === 1)) slot.type = types.length === 1 ? types[0]! : types;
+          else if (slot.type === undefined && player) slot.player = true;
+        }
       }
       // WHOSE: "an opponent controls" / "you don't control" is an opponent's, "you control" is yours. A player slot is the opponent when it says so.
       if (/\b(?:an opponent|your opponents|target opponent|that player|they|opponents|defending player|the defending player) (?:control|controls|own|owns)\b|\byou don't (?:control|own)\b|^target (?:other |opposing )?opponents?$/i.test(m[0])) slot.control = "opp";
@@ -109,7 +131,9 @@ export function targetSlotsOf(
       // "two target lands", "three target creatures": that many targets (CR 115.1). "Up to two" can be one, and counts once.
       const count = /(?<!up to )\b(two|three|four|five)$/i.exec(text.slice(0, m.index).trimEnd())?.[1]?.toLowerCase();
       const n = count === undefined ? 1 : ({ two: 2, three: 3, four: 4, five: 5 } as Record<string, number>)[count]!;
-      for (let k = 0; k < n; k++) slots.push(slot);
+      // "For each opponent, exile up to one target creature that player controls": one target per opponent, so not a single target.
+      const each = /\bfor each (?:opponent|player|other player)\b/i.test(before);
+      for (let k = 0; k < (each ? Math.max(n, 2) : n); k++) slots.push(slot);
     }
   }
   return slots.length > 0 ? slots : undefined;

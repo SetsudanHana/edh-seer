@@ -574,7 +574,19 @@
      "repeats": "once",
      "targets": [
       {
-       "type": "artifact"
+       "anyOf": [
+        {
+         "type": "artifact"
+        },
+        {
+         "type": "enchantment"
+        },
+        {
+         "basic": false,
+         "type": "land"
+        }
+       ],
+       "control": "opp"
       }
      ]
     },
@@ -622,7 +634,19 @@
      "repeats": "once",
      "targets": [
       {
-       "type": "artifact"
+       "anyOf": [
+        {
+         "type": "artifact"
+        },
+        {
+         "type": "enchantment"
+        },
+        {
+         "basic": false,
+         "type": "land"
+        }
+       ],
+       "control": "opp"
       }
      ]
     },
@@ -671,7 +695,19 @@
      "repeats": "once",
      "targets": [
       {
-       "type": "artifact"
+       "anyOf": [
+        {
+         "type": "artifact"
+        },
+        {
+         "type": "enchantment"
+        },
+        {
+         "basic": false,
+         "type": "land"
+        }
+       ],
+       "control": "opp"
       }
      ],
      "toZone": "battlefield"
@@ -708,7 +744,19 @@
      "repeats": "once",
      "targets": [
       {
-       "type": "artifact"
+       "anyOf": [
+        {
+         "type": "artifact"
+        },
+        {
+         "type": "enchantment"
+        },
+        {
+         "basic": false,
+         "type": "land"
+        }
+       ],
+       "control": "opp"
       }
      ]
     }

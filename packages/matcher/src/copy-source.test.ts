@@ -102,3 +102,22 @@ describe("what the copied ability targets, and the keyword it is (#1648)", () =>
     expect(copies("Mirror-Shield Hoplite", "Conclave Sledge-Captain")).toEqual(["copies:triggered"]);
   });
 });
+
+describe("Ability.targets read from the head noun, outside quotes, through comma lists (#1648 review)", () => {
+  test("a target phrase the grammar leaves untyped keeps its head noun: a spell is not a creature or a permanent", () => {
+    expect(copies("Ertha Jo, Frontier Mentor", "Kozilek, the Great Distortion")).toEqual([]);
+    expect(copies("Radiant Performer", "Spellstutter Sprite")).toEqual([]);
+    expect(copies("Agrus Kos, Eternal Soldier", "Spellstutter Sprite")).toEqual([]);
+  });
+  test("an ability quoted in a grant is the grantee's, not the granter's", () => {
+    expect(copies("Agrus Kos, Eternal Soldier", "Toggo, Goblin Weaponsmith")).toEqual([]);
+    expect(copies("Ertha Jo, Frontier Mentor", "Karn, Living Legacy")).toEqual([]);
+    expect(copies("Ertha Jo, Frontier Mentor", "Koth of the Hammer")).toEqual([]);
+  });
+  test("a comma list keeps every noun: Icy Manipulator's 'target artifact, creature, or land' can target a creature", () => {
+    expect(copies("Ertha Jo, Frontier Mentor", "Icy Manipulator")).toEqual(["copies:activated"]);
+    expect(copies("Radiant Performer", "Icy Manipulator")).toEqual(["copies:activated"]);
+    expect(copies("Agrus Kos, Eternal Soldier", "Icy Manipulator")).toEqual(["copies:activated"]);
+    expect(copies("Agrus Kos, Eternal Soldier", "Teferi, Time Raveler")).toEqual(["copies:activated"]);
+  });
+});

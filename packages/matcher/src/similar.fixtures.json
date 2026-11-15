@@ -1963,7 +1963,9 @@
      "kind": "on-cast",
      "repeats": "once",
      "targets": [
-      {}
+      {
+       "type": "creature"
+      }
      ]
     }
    ],
@@ -3969,7 +3971,9 @@
      },
      "repeats": "per-cycle",
      "targets": [
-      {}
+      {
+       "type": "creature"
+      }
      ]
     }
    ],

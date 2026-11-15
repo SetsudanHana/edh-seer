@@ -502,5 +502,265 @@
    "Flying",
    "Backup"
   ]
+ },
+ "Kozilek, the Great Distortion": {
+  "typeLine": "Legendary Creature — Eldrazi",
+  "oracleText": "When you cast this spell, if you have fewer than seven cards in hand, draw cards equal to the difference.\nMenace\nDiscard a card with mana value X: Counter target spell with mana value X.",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 10,
+  "power": "12",
+  "toughness": "12",
+  "keywords": [
+   "Menace"
+  ]
+ },
+ "Spellstutter Sprite": {
+  "typeLine": "Creature — Faerie Wizard",
+  "oracleText": "Flash\nFlying\nWhen this creature enters, counter target spell with mana value X or less, where X is the number of Faeries you control.",
+  "colors": [
+   "U"
+  ],
+  "colorIdentity": [
+   "U"
+  ],
+  "manaValue": 2,
+  "power": "1",
+  "toughness": "1",
+  "keywords": [
+   "Flying",
+   "Flash"
+  ]
+ },
+ "Toggo, Goblin Weaponsmith": {
+  "typeLine": "Legendary Creature — Goblin Artificer",
+  "oracleText": "Landfall — Whenever a land you control enters, create a colorless Equipment artifact token named Rock with \"Equipped creature has '{1}, {T}, Sacrifice Rock: This creature deals 2 damage to any target'\" and equip {1}.\nPartner (You can have two commanders if both have partner.)",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 3,
+  "power": "2",
+  "toughness": "2",
+  "keywords": [
+   "Partner",
+   "Landfall"
+  ]
+ },
+ "Karn, Living Legacy": {
+  "typeLine": "Legendary Planeswalker — Karn",
+  "oracleText": "+1: Create a tapped Powerstone token. (It's an artifact with \"{T}: Add {C}. This mana can't be spent to cast a nonartifact spell.\")\n−1: Pay any amount of mana. Look at that many cards from the top of your library, then put one of those cards into your hand and the rest on the bottom of your library in a random order.\n−7: You get an emblem with \"Tap an untapped artifact you control: This emblem deals 1 damage to any target.\"",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 4,
+  "power": null,
+  "toughness": null,
+  "keywords": [],
+  "loyalty": "4",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a tapped Powerstone token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "that many cards from the top of your library",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "one of those cards",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "emblem",
+      "object": "an emblem with \"Tap an untapped artifact you control: This emblem deals 1 damage to any target.\"",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Icy Manipulator": {
+  "typeLine": "Artifact",
+  "oracleText": "{1}, {T}: Tap target artifact, creature, or land.",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 4,
+  "power": null,
+  "toughness": null,
+  "keywords": []
+ },
+ "Teferi, Time Raveler": {
+  "typeLine": "Legendary Planeswalker — Teferi",
+  "oracleText": "Each opponent can cast spells only any time they could cast a sorcery.\n+1: Until your next turn, you may cast sorcery spells as though they had flash.\n−3: Return up to one target artifact, creature, or enchantment to its owner's hand. Draw a card.",
+  "colors": [
+   "U",
+   "W"
+  ],
+  "colorIdentity": [
+   "U",
+   "W"
+  ],
+  "manaValue": 3,
+  "power": null,
+  "toughness": null,
+  "keywords": [],
+  "loyalty": "4",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "cast spells except at a time they could cast a sorcery",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "sorcery spells as though they had flash",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "up to one target artifact, creature, or enchantment",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Koth of the Hammer": {
+  "typeLine": "Legendary Planeswalker — Koth",
+  "oracleText": "+1: Untap target Mountain. It becomes a 4/4 red Elemental creature until end of turn. It's still a land.\n−2: Add {R} for each Mountain you control.\n−5: You get an emblem with \"Mountains you control have '{T}: This land deals 1 damage to any target.'\"",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 4,
+  "power": null,
+  "toughness": null,
+  "keywords": [],
+  "loyalty": "3",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "untap",
+      "object": "target Mountain",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "animate",
+      "object": "target Mountain",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{R}",
+      "amount": "each Mountain you control",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "emblem",
+      "object": "Mountains you control have '{T}: This land deals 1 damage to any target.'",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
  }
 }
