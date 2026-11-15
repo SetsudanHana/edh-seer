@@ -245,7 +245,7 @@ export function repeatsFor(ability: Ability, clauseText: string, cost = "", raw?
 /** HOW OFTEN A "NEXT UNTAP STEP" DENIAL HAPPENS (#1266, owner 2026-11-15). A repeating one is stax (Vorinclex, Winter's Night, Niblis of Frost, Kashi-Tribe Elite), a one-shot is not (Frost Trickster's
  *  enters, a d20 table row of an enters trigger). The trigger of these is refused by the grammar or the vocabulary (`tapped-for-mana`, `damage-dealt`, a narrowed `enters`), so the ability has NO trigger and
  *  `repeatsFor` reads nothing; this reads the clause's raw event and its opening word instead. Only a `next-untap-step` denial that `repeatsFor` left unlabelled (or, for a d20 row, labelled `continuous`).
- *  "When ..." (not "Whenever") and the card's own `enters` are once (CR 603.2: "when" abilities of one event; Breaching Leviathan, Shipbreaker Kraken); "Whenever ..." repeats.
+ *  "When ..." (not "Whenever") and the card's own `enters` are once (a wording heuristic, not a rule: every refused-trigger "When" denial in the corpus is an enters, saga or channel one-shot; Breaching Leviathan, Shipbreaker Kraken); "Whenever ..." repeats.
  *  CEILING: "repeatable" for every "Whenever" -- a self combat-damage trigger is once a combat in truth; the matcher only asks "is it once". */
 export function untapDenialRepeats(ability: Ability, clauseText: string, cardText: string, current: Repeats | undefined, raw?: RawTrigger): Repeats | undefined {
   if (ability.untapDenial?.duration !== "next-untap-step") return current;
