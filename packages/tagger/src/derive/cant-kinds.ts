@@ -257,7 +257,7 @@ const PLAY_LAND_WORD = /^(?:lands?|nonbasic|basic)\b/;
 
 /** The sentences of a clause a lock can be read from, one per period or line, with quotes and reminder text cut out. */
 function lockSentences(clauseText: string): string[] {
-  const bare = clauseText.replace(/\([^)]*\)/g, " ").replace(/"[^"]*"/g, " ").replace(/\u201c[^\u201d]*\u201d/g, " ");
+  const bare = clauseText.replace(/\([^()]*\)/g, " ").replace(/"[^"]*"/g, " ").replace(/\u201c[^\u201c\u201d]*\u201d/g, " ");
   return bare.split(/\n|\u2022|\. /).map((x) => x.trim().replace(/\.$/, "").toLowerCase()).filter((x) => x !== "");
 }
 

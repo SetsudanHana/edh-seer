@@ -1913,7 +1913,7 @@ function effectSubject(
     const who = untapDenialFor(action.verb ?? "", action.object ?? "", clauseText, cantOccurrence)?.who;
     const granted = /["\u201c][^"\u201c\u201d]*\b(?:doesn['\u2019]t|don['\u2019]t|can['\u2019]t|cannot) untap/i.test(clauseText);
     // "Enchanted creature doesn't untap during YOUR untap step" (Cocoon, an Aura on a creature you control) is a permanent of yours: the untap step it misses is its controller's (CR 502.3), so a denial printed against your own step is your own drawback (owner 2026-11-14, #1266: own drawbacks are not stax). A quoted grant's "your" is the grantee's.
-    const ownStep = !granted && /\b(?:doesn['\u2019]t|don['\u2019]t|can['\u2019]t|cannot) untap during your (?:next )?untap step\b/i.test(clauseText.replace(/["\u201c][^"\u201d]*["\u201d]/g, " "));
+    const ownStep = !granted && /\b(?:doesn['\u2019]t|don['\u2019]t|can['\u2019]t|cannot) untap during your (?:next )?untap step\b/i.test(clauseText.replace(/["\u201c][^"\u201c\u201d]*["\u201d]/g, " "));
     // "Equipped creature doesn't untap during its controller's untap step" (T-45 Power Armor, Cement Shoes, Vulshok Gauntlets, Heavy Arbalest) is ALSO your own drawback: equip attaches only to a creature you control (CR 702.6a), so the host is yours (owner 2026-11-15, #1266).
     const ownEquipped = !granted && !!who && /^equipped\b/i.test(who.trim());
     // "Whenever this creature attacks, it doesn't untap during its controller's next untap step" (Lead Golem, Apes of Rath): "it" is the trigger's own subject, the card's drawback. The same line on "equipped creature" (Stitcher's Graft) is the host, which is yours (CR 702.6a).
