@@ -998,6 +998,9 @@ function restrictionOf(t: string): ActionReading[] | null {
   // is derive's static-fixer reader. The "If a basic land ... is tapped for mana," opener is already the condition; the sentence itself is the whole anchor.
   if (/^it produces mana of a color of your choice instead of any other type$/i.test(t))
     return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t }];
+  // ...and the rider "..., and that spell can't be countered" (Cavern of Souls, Delighted Halfling; CR 701.6a) is the store's own `cant | be countered` beside it, which derive reads as `counter-immunity` (#1266).
+  const uncounterable = /^(spend this mana only (?:to cast|on) .+?), and that spell can't be countered$/i.exec(t);
+  if (uncounterable) return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: uncounterable[1]! }, { verb: "cant", object: parse("that spell")!, text: "be countered" }];
   if (/^spend this mana only (?:to cast|on) .+$/i.test(t)) return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t }];
   // "Skip your draw step": the store's cant on drawing then.
   if (/^skip your draw step$/i.test(t)) return [{ verb: "cant", object: parse("you")!, text: "draw during your draw step" }];

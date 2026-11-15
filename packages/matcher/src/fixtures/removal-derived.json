@@ -24169,24 +24169,17 @@
    {
     "kind": "on-cast",
     "effect": {
-     "kind": "lifegain",
+     "kind": "keyword-grant",
      "subject": {
-      "control": "you",
+      "control": "any",
       "token": null
      }
     },
-    "emits": [
-     {
-      "verb": "gain-life",
-      "subject": {
-       "control": "you",
-       "token": null
-      },
-      "instantSpeed": true
-     }
-    ],
     "clause": 1,
-    "repeats": "once"
+    "repeats": "once",
+    "grants": [
+     "protection"
+    ]
    },
    {
     "kind": "on-cast",
@@ -24689,6 +24682,27 @@
     "payment": {
      "tap": true
     }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell"
+     }
+    },
+    "counterImmunity": {
+     "next": true
+    },
+    "cost": "{T}",
+    "clause": 2,
+    "repeats": "per-cycle",
+    "payment": {
+     "tap": true
+    },
+    "claimsNothing": "mana-rider"
    }
   ]
  },
@@ -24700,22 +24714,16 @@
    {
     "kind": "triggered",
     "effect": {
-     "kind": "lifegain",
+     "kind": "keyword-grant",
      "subject": {
-      "control": "you",
+      "control": "any",
       "token": null
      }
     },
-    "emits": [
-     {
-      "verb": "gain-life",
-      "subject": {
-       "control": "you",
-       "token": null
-      }
-     }
-    ],
-    "clause": 2
+    "clause": 2,
+    "grants": [
+     "protection"
+    ]
    },
    {
     "kind": "triggered",
@@ -24759,7 +24767,8 @@
      "kind": "counter-placement",
      "subject": {
       "control": "any",
-      "token": null
+      "token": null,
+      "counter": "burden"
      }
     },
     "cost": "{T}",
@@ -29017,7 +29026,26 @@
   "oracleText": "This spell can't be countered.\n{R/G}: Target spell can't be countered.",
   "typeLine": "Creature — Goblin Shaman",
   "manaValue": 2,
-  "abilities": []
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "spell",
+      "scope": "target"
+     }
+    },
+    "cost": "{R/G}",
+    "clause": 2,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{R/G}"
+    }
+   }
+  ]
  },
  "Seht's Tiger": {
   "oracleText": "Flash (You may cast this spell any time you could cast an instant.)\nWhen this creature enters, you gain protection from the color of your choice until end of turn. (You can't be targeted, dealt damage, or enchanted by anything of the chosen color.)",
@@ -29027,9 +29055,9 @@
    {
     "kind": "triggered",
     "effect": {
-     "kind": "lifegain",
+     "kind": "keyword-grant",
      "subject": {
-      "control": "you",
+      "control": "any",
       "token": null
      }
     },
@@ -29044,17 +29072,11 @@
       "self": true
      }
     },
-    "emits": [
-     {
-      "verb": "gain-life",
-      "subject": {
-       "control": "you",
-       "token": null
-      }
-     }
-    ],
     "clause": 2,
-    "repeats": "once"
+    "repeats": "once",
+    "grants": [
+     "protection"
+    ]
    }
   ]
  },
@@ -29084,6 +29106,7 @@
       "subject": {
        "control": "you",
        "token": null,
+       "type": "enchantment",
        "self": true
       }
      },
@@ -29092,6 +29115,7 @@
       "subject": {
        "control": "you",
        "token": null,
+       "type": "enchantment",
        "self": true
       }
      }
@@ -29133,6 +29157,17 @@
      "floor": 1,
      "ceiling": 1
     }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "clause": 3,
+    "repeats": "continuous",
+    "grants": [
+     "shroud"
+    ]
    },
    {
     "kind": "static",
@@ -33627,6 +33662,28 @@
    {
     "kind": "on-cast",
     "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "scope": "all"
+     }
+    },
+    "counterImmunity": {
+     "by": {
+      "colors": [
+       "B",
+       "U"
+      ]
+     }
+    },
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
      "kind": "targeting-ban",
      "subject": {
       "control": "you",
@@ -33742,6 +33799,32 @@
      "tap": true,
      "life": "2"
     }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell"
+     }
+    },
+    "counterImmunity": {
+     "next": true
+    },
+    "cost": "{T}, Pay 2 life",
+    "gate": {
+     "kind": "unknown",
+     "text": "that mana is spent on an instant or sorcery spell"
+    },
+    "clause": 2,
+    "repeats": "per-cycle",
+    "payment": {
+     "tap": true,
+     "life": "2"
+    },
+    "claimsNothing": "mana-rider"
    }
   ]
  },
@@ -33791,6 +33874,27 @@
     "payment": {
      "tap": true
     }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell"
+     }
+    },
+    "counterImmunity": {
+     "next": true
+    },
+    "cost": "{T}",
+    "clause": 3,
+    "repeats": "per-cycle",
+    "payment": {
+     "tap": true
+    },
+    "claimsNothing": "mana-rider"
    }
   ]
  },
@@ -33966,6 +34070,27 @@
      "ceiling": 1
     },
     "payment": {
+     "tap": true
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell"
+     }
+    },
+    "counterImmunity": {
+     "next": true
+    },
+    "cost": "{U}, {T}",
+    "clause": 3,
+    "repeats": "per-cycle",
+    "payment": {
+     "mana": "{U}",
      "tap": true
     }
    }
@@ -65756,6 +65881,1087 @@
     },
     "clause": 1,
     "repeats": "once"
+   }
+  ]
+ },
+ "Rhythm of the Wild": {
+  "oracleText": "Creature spells you control can't be countered.\nNontoken creatures you control have riot. (They enter with your choice of a +1/+1 counter or haste.)",
+  "typeLine": "Enchantment",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "riot"
+    ]
+   }
+  ]
+ },
+ "Insist": {
+  "oracleText": "The next creature spell you cast this turn can't be countered.\nDraw a card.",
+  "typeLine": "Sorcery",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "counterImmunity": {
+     "next": true
+    },
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Spider-Punk": {
+  "oracleText": "Riot (This creature enters with your choice of a +1/+1 counter or haste.)\nOther Spiders you control have riot.\nSpells and abilities can't be countered.\nDamage can't be prevented.",
+  "typeLine": "Legendary Creature — Spider Human Hero",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "other": true,
+      "subtype": "spider",
+      "scope": "all"
+     }
+    },
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "riot"
+    ]
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "spell",
+      "scope": "all"
+     }
+    },
+    "counterImmunity": {
+     "abilities": true
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Savage Summoning": {
+  "oracleText": "This spell can't be countered.\nThe next creature spell you cast this turn can be cast as though it had flash. That spell can't be countered. That creature enters with an additional +1/+1 counter on it.",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "clause": 2,
+    "repeats": "once",
+    "grants": [
+     "flash"
+    ]
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell"
+     }
+    },
+    "counterImmunity": {
+     "next": true
+    },
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "enters-with-counters",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "+1/+1"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Thryx, the Sudden Storm": {
+  "oracleText": "Flash (You may cast this spell any time you could cast an instant.)\nFlying\nSpells you cast with mana value 5 or greater cost {1} less to cast and can't be countered.",
+  "typeLine": "Legendary Creature — Elemental Giant",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "cost-reduction",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "scope": "all",
+      "stats": [
+       {
+        "metric": "mana-value",
+        "op": "gte",
+        "value": 5
+       }
+      ]
+     }
+    },
+    "amount": "-1",
+    "clause": 3,
+    "repeats": "continuous",
+    "reduces": {
+     "mana": "{1}"
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "scope": "all",
+      "stats": [
+       {
+        "metric": "mana-value",
+        "op": "gte",
+        "value": 5
+       }
+      ]
+     }
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Cunning Nightbonder": {
+  "oracleText": "Flash\nSpells with flash you cast cost {1} less to cast and can't be countered.",
+  "typeLine": "Creature — Human Rogue",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "cost-reduction",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "scope": "all",
+      "keyword": [
+       "flash"
+      ]
+     }
+    },
+    "amount": "-1",
+    "clause": 2,
+    "repeats": "continuous",
+    "reduces": {
+     "mana": "{1}"
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "keyword": [
+       "flash"
+      ],
+      "type": "spell",
+      "scope": "all"
+     }
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Lier, Disciple of the Drowned": {
+  "oracleText": "Spells can't be countered.\nEach instant and sorcery card in your graveyard has flashback. The flashback cost is equal to that card's mana cost.",
+  "typeLine": "Legendary Creature — Human Wizard",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "spell",
+      "scope": "all"
+     }
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "clause": 2,
+    "repeats": "continuous",
+    "grants": [
+     "flashback"
+    ]
+   }
+  ]
+ },
+ "Root Sliver": {
+  "oracleText": "This spell can't be countered.\nSliver spells can't be countered.",
+  "typeLine": "Creature — Sliver",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "spell",
+      "subtype": "sliver",
+      "scope": "all"
+     }
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Absolute Virtue": {
+  "oracleText": "This spell can't be countered.\nFlying\nYou have protection from each of your opponents. (You can't be dealt damage, enchanted, or targeted by anything controlled by your opponents.)",
+  "typeLine": "Legendary Creature — Avatar Warrior",
+  "manaValue": 8,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "clause": 3,
+    "repeats": "continuous",
+    "grants": [
+     "protection"
+    ]
+   }
+  ]
+ },
+ "Hexing Squelcher": {
+  "oracleText": "This spell can't be countered.\nWard—Pay 2 life.\nSpells you control can't be countered.\nOther creatures you control have \"Ward—Pay 2 life.\"",
+  "typeLine": "Creature — Goblin Sorcerer",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "scope": "all"
+     }
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "other": true,
+      "type": "creature",
+      "scope": "all"
+     }
+    },
+    "clause": 4,
+    "repeats": "continuous",
+    "grants": [
+     "ward"
+    ]
+   }
+  ]
+ },
+ "Noble Heritage": {
+  "oracleText": "Commander creatures you own have \"When this creature enters and at the beginning of your upkeep, each player may put two +1/+1 counters on a creature they control. For each opponent who does, you gain protection from that player until your next turn.\" (You can't be targeted, dealt damage, or enchanted by anything controlled by that player.)",
+  "typeLine": "Legendary Enchantment — Background",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "owner": "you",
+      "commander": true,
+      "type": "creature",
+      "scope": "all"
+     }
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "commander": true
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "+1/+1"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "grantedBy": 1
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "+1/+1"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "grantedBy": 1
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "commander": true
+     }
+    },
+    "clause": 2,
+    "repeats": "once",
+    "grants": [
+     "protection"
+    ],
+    "grantedBy": 1
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "clause": 2,
+    "repeats": "per-cycle",
+    "grants": [
+     "protection"
+    ],
+    "grantedBy": 1
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "two",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "+1/+1"
+      }
+     }
+    ],
+    "clause": 2001,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "scope": "each"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "clause": 2001,
+    "repeats": "per-cycle",
+    "grants": [
+     "protection"
+    ]
+   }
+  ]
+ },
+ "Veil of Summer": {
+  "oracleText": "Draw a card if an opponent has cast a blue or black spell this turn. Spells you control can't be countered this turn. You and permanents you control gain hexproof from blue and from black until end of turn. (You and they can't be the targets of blue or black spells or abilities your opponents control.)",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "gate": {
+     "kind": "turn-event",
+     "event": "opponent-cast",
+     "text": "an opponent has cast a blue or black spell this turn"
+    },
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "spell",
+      "scope": "all"
+     }
+    },
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "clause": 1,
+    "repeats": "once",
+    "grants": [
+     "hexproof"
+    ]
+   }
+  ]
+ },
+ "Ivory Mask": {
+  "oracleText": "You have shroud. (You can't be the target of spells or abilities.)",
+  "typeLine": "Enchantment",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "clause": 1,
+    "repeats": "continuous",
+    "grants": [
+     "shroud"
+    ]
+   }
+  ]
+ },
+ "Gilded Light": {
+  "oracleText": "You gain shroud until end of turn. (You can't be the target of spells or abilities.)\nCycling {2} ({2}, Discard this card: Draw a card.)",
+  "typeLine": "Instant",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "clause": 1,
+    "repeats": "once",
+    "grants": [
+     "shroud"
+    ]
+   }
+  ]
+ },
+ "Earthshape": {
+  "oracleText": "Earthbend 3. Then each creature you control with power less than or equal to that land's power gains hexproof and indestructible until end of turn. You gain hexproof until end of turn.",
+  "typeLine": "Instant",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "counter": "+1/+1"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "clause": 1,
+    "repeats": "once",
+    "grants": [
+     "hexproof",
+     "indestructible"
+    ]
+   }
+  ]
+ },
+ "Domri, Anarch of Bolas": {
+  "oracleText": "Creatures you control get +1/+0.\n+1: Add {R} or {G}. Creature spells you cast this turn can't be countered.\n−2: Target creature you control fights target creature you don't control.",
+  "typeLine": "Legendary Planeswalker — Domri",
+  "manaValue": 3,
+  "loyalty": "3",
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    },
+    "amount": "+1/+0",
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "+1",
+    "amount": "1",
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    },
+    "cost": "+1",
+    "clause": 2,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "−2",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      }
+     },
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "opp",
+       "token": null,
+       "type": "creature"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "-2"
+    }
+   }
+  ]
+ },
+ "Taigam, Ojutai Master": {
+  "oracleText": "Instant, sorcery, and Dragon spells you control can't be countered.\nWhenever you cast an instant or sorcery spell from your hand, if Taigam attacked this turn, that spell gains rebound. (Exile the spell as it resolves. At the beginning of your next upkeep, you may cast that card from exile without paying its mana cost.)",
+  "typeLine": "Legendary Creature — Human Monk",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": [
+       "instant",
+       "sorcery"
+      ],
+      "allTypes": [
+       "instant",
+       "sorcery"
+      ],
+      "subtype": "dragon",
+      "scope": "all"
+     }
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "clause": 2,
+    "grants": [
+     "rebound"
+    ]
+   }
+  ]
+ },
+ "Bound // Determined": {
+  "oracleText": "Sacrifice a creature. Return up to X cards from your graveyard to your hand, where X is the number of colors that creature was. Exile this card.\n//\nOther spells you control can't be countered this turn.\nDraw a card.",
+  "typeLine": "Instant // Instant",
+  "manaValue": 7,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "graveyard-recursion",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "fromZone": "graveyard",
+      "zone": "graveyard"
+     },
+     "scaling": "per-creature"
+    },
+    "amount": "X, where X is the number of colors that creature was",
+    "emits": [
+     {
+      "verb": "leaves",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "fromZone": "graveyard",
+       "zone": "graveyard"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "exiled",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "self": true,
+       "fromZone": "stack"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "other": true,
+      "type": "spell",
+      "scope": "all"
+     }
+    },
+    "face": 1,
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      },
+      "instantSpeed": true
+     }
+    ],
+    "face": 1,
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Leyline of Lifeforce": {
+  "oracleText": "If this card is in your opening hand, you may begin the game with it on the battlefield.\nCreature spells can't be countered.",
+  "typeLine": "Enchantment",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "counter-immunity",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    },
+    "clause": 2,
+    "repeats": "continuous"
    }
   ]
  }

@@ -416,3 +416,77 @@ export function untapDenialFor(verb: string, object: string, clauseText: string,
   }
   return undefined;
 }
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// 4. COUNTER-IMMUNITY
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/** WHAT A `counter-immunity` ABILITY ADDS TO ITS SUBJECT (#1266; CR 701.6a, a countered spell or ability is cancelled): `abilities` when the line also covers abilities ("Spells and abilities can't be countered"),
+ *  `next` when it covers ONE spell, the next one cast or the one a mana pays for ("The next spell you cast this turn can't be countered", "that spell can't be countered"), and `by` when only some counterspells
+ *  are stopped ("can't be countered by blue or black spells": `colors` / `notColors`, WUBRG letters). */
+export interface CounterImmunity {
+  abilities?: true;
+  next?: true;
+  by?: { colors?: string[]; notColors?: string[] };
+}
+
+const CANT_BE_COUNTERED = /\b(?:can['’]t|cannot) be countered\b/gi;
+/** Words that put a CONDITION or a narrowing on the line's subject, which this kind cannot hold: the whole line is refused. "that" is the subject's own relative clause ("spells that target a creature"), not the
+ *  pronoun subject, which is read first. */
+const SUBJECT_NARROWING: ReadonlySet<string> = new Set(["if", "unless", "as", "while", "when", "whenever", "during", "until", "that", "which", "who", "only", "except"]);
+/** The words a tail after "can't be countered" may hold: a duration, and a source narrowing "by blue or black spells". */
+const COUNTER_TAIL_GLUE: ReadonlySet<string> = new Set(["this", "turn", "until", "end", "of", "or", "and", "by", "spell", "spells"]);
+
+/** "CAN'T BE COUNTERED" HANDED TO SPELLS THAT ARE NOT THE CARD ITSELF (#1266): a class ("Creature spells you control", "Spells", "Sliver spells"), the next spell ("The next spell you cast this turn"), the spell a mana
+ *  pays for ("that spell", Cavern of Souls), a target spell (Vexing Shusher), or abilities too (Spider-Punk). The subject is stated in the printed sentence, never in the stored object ("be countered"), so the
+ *  sentence holding the `occurrence`-th "can't be countered" decides, and `who` is its subject phrase for `parseSubject` ("" for a pronoun). A WHITELIST like the other readers here: a line whose subject is the
+ *  card ("This spell", its name: no spell or ability named), carries a condition (As long as ..., unless you pay), sits inside a quoted grant, or has a tail it does not know is refused. A line that also says
+ *  "cost {1} less" keeps the words before the cost (Thryx, Cunning Nightbonder).
+ *  CEILING: a type list that mixes types and a subtype ("Instant, sorcery, and Dragon spells you control", Taigam) derives as `type` [instant, sorcery] and `subtype` dragon, which the subject filter reads as both; the kind
+ *  is a fact no pair channel reads, and the role asks only that it is not the card's own. */
+export function counterImmunityOf(object: string, clauseText = "", occurrence = 0): { who: string; immunity: CounterImmunity } | undefined {
+  if (!/\bcountered\b/i.test(object)) return undefined;
+  // A quoted grant ("... have 'This spell can't be countered'") is the grantee's, and reminder text states no line of its own.
+  const printed = (clauseText !== "" ? clauseText : object).replace(/"[^"]*"|“[^“”]*”|\([^()]*\)/g, " ");
+  const hit = nthMatch(printed, CANT_BE_COUNTERED, occurrence);
+  if (!hit) return undefined;
+  const { head, tail } = sentenceAround(printed, hit.index);
+  // THE TAIL: nothing, a duration, or "by <colours> spells" (Autumn's Veil), up to the first comma; whatever follows must open another clause ("and creatures you control can't be the targets of ...").
+  const afterLine = tail.slice(hit[0].length);
+  const comma = afterLine.indexOf(",");
+  if (comma >= 0 && !/^,\s+and\b/i.test(afterLine.slice(comma))) return undefined;
+  const tailWords = words(comma >= 0 ? afterLine.slice(0, comma) : afterLine);
+  const immunity: CounterImmunity = {};
+  const by: string[] = [];
+  let sawBy = false;
+  for (const w of tailWords) {
+    if (w === "by") { sawBy = true; continue; }
+    if (COUNTER_TAIL_GLUE.has(w)) continue;
+    if (sawBy && (w in COLOUR_LETTER || (w.startsWith("non") && w.slice(3) in COLOUR_LETTER))) { by.push(w); continue; }
+    return undefined;
+  }
+  if (sawBy) {
+    const colors = by.filter((w) => w in COLOUR_LETTER).map((w) => COLOUR_LETTER[w]!);
+    const notColors = by.filter((w) => w.startsWith("non")).map((w) => COLOUR_LETTER[w.slice(3)]!);
+    if (colors.length + notColors.length === 0) return undefined;
+    immunity.by = { ...(colors.length > 0 ? { colors: [...new Set(colors)].sort() } : {}), ...(notColors.length > 0 ? { notColors: [...new Set(notColors)].sort() } : {}) };
+  }
+  // THE SUBJECT: "that spell" (the one a mana pays for, or the one the previous sentence named) is one spell.
+  // Single spaces, so every cut below is a plain string cut (no `\s+` run to backtrack over on card text).
+  let lead = words(head).join(" ");
+  if (lead.endsWith(" and")) lead = lead.slice(0, -4);
+  if (lead === "that spell" || lead.endsWith(" that spell") || lead.endsWith(" the spell")) return { who: "", immunity: { ...immunity, next: true } };
+  let subject = lead;
+  const cost = subject.search(/ costs? /);
+  if (cost >= 0) subject = subject.slice(0, cost);
+  if (subject.endsWith(" this turn")) subject = subject.slice(0, -10);
+  if (subject.startsWith("the next ")) { immunity.next = true; subject = subject.slice(9); }
+  const ws = words(subject);
+  if (ws.length === 0 || ws[0] === "this" || ws[0] === "it" || ws[0] === "~" || ws.some((w) => SUBJECT_NARROWING.has(w))) return undefined;
+  // A SPELL OR AN ABILITY MUST BE NAMED: "Kevin can't be countered" and "Nezahal, Primal Tide can't be countered" name the card, which no word of this reading can tell from a class.
+  const spells = ws.some((w) => w === "spell" || w === "spells");
+  const abilities = ws.some((w) => w === "ability" || w === "abilities");
+  if (!spells && !abilities) return undefined;
+  if (abilities) immunity.abilities = true;
+  return { who: spells ? subject.replace(/ and abilit(?:y|ies)\b/, "") : "spells", immunity };
+}

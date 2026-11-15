@@ -11,7 +11,7 @@ import type { EffectKind } from "../schema.js";
 import { parseSubject, spellMove } from "./subject.js";
 import { readToHand, type ToHandRead } from "./to-hand.js";
 import { damageReplacementOf, preventionOf } from "./prevention.js";
-import { graveyardLockOf, playerLockOf, targetingBanOf, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
+import { counterImmunityOf, graveyardLockOf, playerLockOf, targetingBanOf, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
 
 /** Zone-sensitive rules, checked before the plain lookup. Order matters within this list.
  *  `from`/`to` omitted means "don't care"; `from: null` means the clause STATED NO ORIGIN.
@@ -784,6 +784,8 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
   // turns the board off -- and the engine claimed Grim Guardian drains when Dress Down enters
   // (owner, 2026-09-05). Layer 6 of CR 613: an ability-removing effect. 73 corpus cards print it.
   // A PROHIBITION ON THE CARDS IN GRAVEYARDS (#1266), before the ability-loss reading: "or activate abilities of cards in graveyards" (Ashes of the Abhorrent) stops no ability of the card's.
+  // SPELLS THAT CAN'T BE COUNTERED, handed to other spells than the card itself (#1266; CR 701.6a): the printed sentence names who, never the stored "be countered".
+  if (verb === "cant" && counterImmunityOf(action.object ?? "", clauseText, occurrence)) return "counter-immunity";
   if (verb === "cant" && graveyardLockOf(action.object ?? "", clauseText)) return "graveyard-lock";
   // A LASTING PROHIBITION ON PLAYERS (#1266, CR 101.2), before the ability-loss reading: "your opponents can't cast spells or activate abilities of artifacts, creatures, or enchantments" (Grand Abolisher) silences no ability of a permanent.
   if (verb === "cant" && playerLockOf(action.object ?? "", clauseText, occurrence)) return "player-lock";
