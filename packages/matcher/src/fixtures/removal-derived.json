@@ -64581,5 +64581,1182 @@
     }
    }
   ]
+ },
+ "Vorinclex, Voice of Hunger": {
+  "oracleText": "Trample\nWhenever you tap a land for mana, add one mana of any type that land produced.\nWhenever an opponent taps a land for mana, that land doesn't untap during its controller's next untap step.",
+  "typeLine": "Legendary Creature — Phyrexian Praetor",
+  "manaValue": 8,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "land"
+     }
+    },
+    "amount": "1",
+    "clause": 2,
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "clause": 3,
+    "repeats": "repeatable"
+   }
+  ]
+ },
+ "Winter's Night": {
+  "oracleText": "Whenever a player taps a snow land for mana, that player adds one mana of any type that land produced. That land doesn't untap during its controller's next untap step.",
+  "typeLine": "World Enchantment",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "mana-generation",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "land"
+     }
+    },
+    "amount": "1",
+    "clause": 1,
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "clause": 1,
+    "repeats": "repeatable"
+   }
+  ]
+ },
+ "Kefnet's Monument": {
+  "oracleText": "Blue creature spells you cast cost {1} less to cast.\nWhenever you cast a creature spell, target creature an opponent controls doesn't untap during its controller's next untap step.",
+  "typeLine": "Legendary Artifact",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "cost-reduction",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "scope": "all",
+      "colors": [
+       "U"
+      ]
+     }
+    },
+    "amount": "-1",
+    "clause": 1,
+    "repeats": "continuous",
+    "reduces": {
+     "mana": "{1}"
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "cast"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "clause": 2,
+    "repeats": "repeatable"
+   }
+  ]
+ },
+ "Barl's Cage": {
+  "oracleText": "{3}: Target creature doesn't untap during its controller's next untap step.",
+  "typeLine": "Artifact",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "cost": "{3}",
+    "clause": 1,
+    "repeats": "repeatable",
+    "payment": {
+     "mana": "{3}"
+    }
+   }
+  ]
+ },
+ "Niblis of Frost": {
+  "oracleText": "Flying\nProwess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.)\nWhenever you cast an instant or sorcery spell, tap target creature an opponent controls. That creature doesn't untap during its controller's next untap step.",
+  "typeLine": "Creature — Spirit",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "cast"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": [
+       "instant",
+       "sorcery"
+      ]
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "taps",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "cast"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": [
+       "instant",
+       "sorcery"
+      ]
+     }
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "clause": 3,
+    "repeats": "repeatable"
+   }
+  ]
+ },
+ "Sharktocrab": {
+  "oracleText": "{2}{G}{U}: Adapt 1. (If this creature has no +1/+1 counters on it, put a +1/+1 counter on it.)\nWhenever one or more +1/+1 counters are put on this creature, tap target creature an opponent controls. That creature doesn't untap during its controller's next untap step.",
+  "typeLine": "Creature — Shark Octopus Crab",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{2}{G}{U}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "+1/+1",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{2}{G}{U}"
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "counter-added"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true,
+      "counter": "+1/+1"
+     },
+     "batched": true
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "taps",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "counter-added"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true,
+      "counter": "+1/+1"
+     },
+     "batched": true
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "clause": 2,
+    "repeats": "repeatable"
+   }
+  ]
+ },
+ "Ojutai, Soul of Winter": {
+  "oracleText": "Flying, vigilance\nWhenever a Dragon you control attacks, tap target nonland permanent an opponent controls. That permanent doesn't untap during its controller's next untap step.",
+  "typeLine": "Legendary Creature — Dragon",
+  "manaValue": 7,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "attacks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "dragon"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "taps",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "attacks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "dragon"
+     }
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "clause": 2,
+    "repeats": "repeatable"
+   }
+  ]
+ },
+ "Junk Winder": {
+  "oracleText": "Affinity for tokens (This spell costs {1} less to cast for each token you control.)\nWhenever a token you control enters, tap target nonland permanent an opponent controls. It doesn't untap during its controller's next untap step.",
+  "typeLine": "Creature — Serpent",
+  "manaValue": 7,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "taps",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": [
+        "creature",
+        "artifact",
+        "enchantment",
+        "planeswalker",
+        "battle"
+       ],
+       "notType": [
+        "land"
+       ],
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": true
+     }
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "clause": 2,
+    "repeats": "repeatable"
+   }
+  ]
+ },
+ "Mana Skimmer": {
+  "oracleText": "Flying\nWhenever this creature deals damage to a player, tap target land that player controls. That land doesn't untap during its controller's next untap step.",
+  "typeLine": "Creature — Leech",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "non-combat-damage"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     },
+     "victim": "player"
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "taps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "land",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "non-combat-damage"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     },
+     "victim": "player"
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "clause": 2,
+    "repeats": "repeatable"
+   }
+  ]
+ },
+ "Scion of Stygia": {
+  "oracleText": "Flash\nCone of Cold — When this creature enters, choose target creature an opponent controls, then roll a d20.\n1—9 | Tap that creature.\n10—20 | Tap that creature. It doesn't untap during its controller's next untap step.",
+  "typeLine": "Creature — Tiefling Shaman",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "dice-rolled",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "taps",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "continuous",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "clause": 4,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Cement Shoes": {
+  "oracleText": "Equipped creature gets +3/+3 and has \"At the beginning of your end step, tap this creature.\"\nEquipped creature doesn't untap during its controller's untap step.\nEquip {2} ({2}: Attach to target creature you control. Equip only as a sorcery.)",
+  "typeLine": "Artifact — Equipment",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+3/+3",
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "end-step"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "clause": 2,
+    "repeats": "per-cycle",
+    "grantedBy": 1
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous"
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "T-45 Power Armor": {
+  "oracleText": "When this Equipment enters, you get {E}{E} (two energy counters).\nEquipped creature gets +3/+3 and doesn't untap during its controller's untap step.\nAt the beginning of your upkeep, you may pay {E}. If you do, untap equipped creature, then put your choice of a menace, trample, or lifelink counter on it.\nEquip {3}",
+  "typeLine": "Artifact — Equipment",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "equipment",
+      "self": true
+     }
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "counter": "energy"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+3/+3",
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous"
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "untaps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "lifelink"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Vulshok Gauntlets": {
+  "oracleText": "Equipped creature gets +4/+2 and doesn't untap during its controller's untap step.\nEquip {3} ({3}: Attach to target creature you control. Equip only as a sorcery.)",
+  "typeLine": "Artifact — Equipment",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+4/+2",
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous"
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Heavy Arbalest": {
+  "oracleText": "Equipped creature doesn't untap during its controller's untap step.\nEquipped creature has \"{T}: This creature deals 2 damage to any target.\"\nEquip {4}",
+  "typeLine": "Artifact — Equipment",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous"
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant"
+    },
+    "host": true,
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "damage",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "scope": "target"
+     }
+    },
+    "cost": "{T}",
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "non-combat-damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      },
+      "dealer": {
+       "control": "any",
+       "token": null,
+       "type": "creature"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "payment": {
+     "tap": true
+    },
+    "grantedBy": 2
+   }
+  ]
+ },
+ "Leaden Fists": {
+  "oracleText": "Flash (You may cast this spell any time you could cast an instant.)\nEnchant creature\nEnchanted creature gets +3/+3 and doesn't untap during its controller's untap step.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "pump"
+    },
+    "host": true,
+    "amount": "+3/+3",
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous"
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Tractor Beam": {
+  "oracleText": "Enchant creature or Spacecraft\nWhen this Aura enters, tap enchanted permanent.\nYou control enchanted permanent.\nEnchanted permanent doesn't untap during its controller's untap step.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "gains-control",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "permanent"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous"
+    },
+    "clause": 4,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "anyOf": [
+    {
+     "type": "creature"
+    },
+    {
+     "subtype": "spacecraft"
+    }
+   ]
+  }
+ },
+ "Breaching Leviathan": {
+  "oracleText": "When this creature enters, if you cast it from your hand, tap all nonblue creatures. Those creatures don't untap during their controllers' next untap steps.",
+  "typeLine": "Creature — Leviathan",
+  "manaValue": 9,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "taps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "all"
+      }
+     }
+    ],
+    "clause": 1,
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
+ },
+ "Kashi-Tribe Elite": {
+  "oracleText": "Legendary Snakes you control have shroud. (They can't be the targets of spells or abilities.)\nWhenever this creature deals combat damage to a creature, tap that creature and it doesn't untap during its controller's next untap step.",
+  "typeLine": "Creature — Snake Warrior",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "legendary": true,
+      "subtype": "snake",
+      "scope": "all"
+     }
+    },
+    "clause": 1,
+    "repeats": "continuous",
+    "grants": [
+     "shroud"
+    ]
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "clause": 2,
+    "repeats": "repeatable"
+   }
+  ]
+ },
+ "Ojutai's Breath": {
+  "oracleText": "Tap target creature. It doesn't untap during its controller's next untap step.\nRebound (If you cast this spell from your hand, exile it as it resolves. At the beginning of your next upkeep, you may cast this card from exile without paying its mana cost.)",
+  "typeLine": "Instant",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "taps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "untapDenial": {
+     "duration": "next-untap-step"
+    },
+    "clause": 1,
+    "repeats": "once"
+   }
+  ]
  }
 }

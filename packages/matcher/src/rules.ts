@@ -56,8 +56,9 @@ export type RuleClause =
        *  "Creature spells you cast cost {1} more" (Geist-Fueled Scarecrow) are a drawback on the caster. The other `control: you` taxes, Onakke Oathkeeper and Heat Wave ("creatures can't attack planeswalkers you control unless their
        *  controller pays ..."), tax the opponent and name that payer in `unless`, which is what tells them apart: their subject types (`creature`, `planeswalker`) do not. Read per ability, so a card with a real tax beside the line keeps it. */
       notOwnTax?: true;
-      /** Refuse an `untap-denial` that holds for ONE untap step (`Ability.untapDenial.duration: next-untap-step`): "doesn't untap during its controller's next untap step" (Snow Day, Exhaustion, Frost Trickster, Icebreaker Kraken, Sleeper Dart)
-       *  is a one-shot freeze, not stax (owner 2026-11-14, #1266). A continuous static, an Aura on its host and "for as long as ..." (`as-long-as`) stay. */
+      /** Refuse an `untap-denial` that holds for ONE untap step AND happens once (`Ability.untapDenial.duration: next-untap-step` with `repeats: once` or an on-cast spell): "doesn't untap during its controller's next untap step" on a spell
+       *  (Snow Day, Exhaustion) or an enters trigger (Frost Trickster, Icebreaker Kraken, Sleeper Dart) is a one-shot freeze, not stax (owner 2026-11-14, #1266). A REPEATING one is stax (owner 2026-11-15: Vorinclex, Voice of Hunger,
+       *  Winter's Night, Kefnet's Monument, Barl's Cage, Niblis of Frost, Sharktocrab, Ojutai, Soul of Winter, Junk Winder, Mana Skimmer), as are a continuous static, an Aura on its host and "for as long as ..." (`as-long-as`). */
       notNextUntap?: true;
       /** A `player-lock` that holds only DURING YOUR TURN (`Ability.playerLock.yourTurn`: "Your opponents can't cast spells during your turn", Grand Abolisher, Dragonlord Dromoka, Kutzil): a lock that is also protection for what you cast (owner 2026-11-14, #1266). */
       yourTurn?: true;
@@ -708,7 +709,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
         && (clause.notOwnedByYou !== true || a.effect.subject?.owner !== "you")
         && (clause.notSelf !== true || a.effect.subject?.self !== true)
         && (clause.notOwnTax !== true || a.effect.subject?.control !== "you" || a.unless?.payer === "controller")
-        && (clause.notNextUntap !== true || a.untapDenial?.duration !== "next-untap-step")
+        && (clause.notNextUntap !== true || a.untapDenial?.duration !== "next-untap-step" || !(a.repeats === "once" || a.kind === "on-cast"))
         && (clause.yourTurn !== true || a.playerLock?.yourTurn === true)
         && (clause.ofKind === undefined || clause.ofKind.includes(a.kind))
         && (clause.banProtects !== true || banProtectsYours(a, dc.card.typeLine ?? ""))

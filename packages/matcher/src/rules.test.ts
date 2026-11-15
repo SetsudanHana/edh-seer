@@ -2220,6 +2220,21 @@ describe("stax.text reads derived data (#1266, owner 2026-11-14)", () => {
     const names = ["Snow Day", "Orim's Chant", "Mana Vault", "Moderation", "Platinum Angel", "Everybody Lives!", "Guardian Beast", "Krosan Grip", "Rhonas's Last Stand", "Frost Trickster", "Shaman's Trance"];
     expect(names.filter((n) => staxOf(names).has(n))).toEqual([]);
   });
+  // Owner ruling 2026-11-15 (#1266): a REPEATING next-untap-step denial is stax; a one-shot (spell, enters) is not; an Equipment's "equipped creature doesn't untap" is your own creature.
+  test("a repeating next-untap-step denial is stax: Vorinclex, Winter's Night, Kefnet's Monument, Barl's Cage, Niblis of Frost, Sharktocrab, Ojutai, Soul of Winter, Junk Winder, Mana Skimmer, Kashi-Tribe Elite", () => {
+    const names = ["Vorinclex, Voice of Hunger", "Winter's Night", "Kefnet's Monument", "Barl's Cage", "Niblis of Frost", "Sharktocrab", "Ojutai, Soul of Winter", "Junk Winder", "Mana Skimmer", "Kashi-Tribe Elite"];
+    expect(names.filter((n) => !staxOf(names).has(n))).toEqual([]);
+  });
+  test("a one-shot next-untap-step denial is not stax: Scion of Stygia (d20 row of an enters), Breaching Leviathan, Ojutai's Breath", () => {
+    const names = ["Scion of Stygia", "Breaching Leviathan", "Ojutai's Breath"];
+    expect(names.filter((n) => staxOf(names).has(n))).toEqual([]);
+  });
+  test("an Equipment's untap drawback is your own: Cement Shoes, T-45 Power Armor, Vulshok Gauntlets, Heavy Arbalest are not stax; the Auras Leaden Fists and Tractor Beam are", () => {
+    const eq = ["Cement Shoes", "T-45 Power Armor", "Vulshok Gauntlets", "Heavy Arbalest"];
+    expect(eq.filter((n) => staxOf(eq).has(n))).toEqual([]);
+    const aura = ["Leaden Fists", "Tractor Beam"];
+    expect(aura.filter((n) => !staxOf(aura).has(n))).toEqual([]);
+  });
   test("an Aura prison (Arrest) stays out of stax", () => {
     expect(staxOf(["Arrest"]).has("Arrest")).toBe(false);
   });
