@@ -1420,7 +1420,11 @@ export interface Ability {
   untapDenial?: {
     duration: "continuous" | "next-untap-step" | "as-long-as";
     steps?: number;
+    /** The denial holds only while a printed condition does ("if it has a sleep counter on it", "unless that player is the monarch", "As long as you control another snow permanent, ..."; owner 2026-11-14, #1266: a conditional denial on permanents that are not your own is stax). Written only as `true`. */
+    conditional?: true;
   };
+  /** AN EMBLEM THE CARD GETS LOCKS PLAYERS (#1266, owner 2026-11-14): the emblem's quoted line is a `player-lock` ("Your opponents can't cast noncreature spells": Narset Transcendent; "can't untap more than two permanents": Dovin Baan). Marked on the card's `emblem` ability, because the lock itself derives on the emblem's own node, which no card rule reads. Written only as `true`. */
+  emblemLock?: true;
   /** A `to-hand` ABILITY'S CARDS REACH THE HAND BY A PICK (#1302): somebody chooses which of at least two looked-at or revealed cards go to your hand -- "look at the top four
    *  cards, put one of them into your hand" (Impulse), "put two of them" (Dig Through Time), "you may reveal a historic card from among them and put it into your hand". `amount`
    *  says how many. Only `true` is written. ABSENT: the one card a reveal turned up (Dark Confidant, Coiling Oracle, Demonic Consultation), a pile (Fact or Fiction: `amount`

@@ -44,7 +44,7 @@ const ROLE_KINDS: Record<Role, { kinds?: readonly string[]; verbs?: readonly str
   stackInteraction: { verbs: ["counter-spell"] },
   boardWipe: { verbs: ["dies", "exiled", "leaves"] },
   burn: { kinds: ["damage"], verbs: ["non-combat-damage"] },
-  stax: { kinds: ["tax", "cant"] },
+  stax: { kinds: ["tax", "cant", "player-lock", "untap-denial", "graveyard-lock"] },
   protection: { kinds: ["keyword-grant"], verbs: ["phases-out"] },
   tutor: { kinds: ["search"] },
   graveyardHate: { verbs: ["exiled"] },

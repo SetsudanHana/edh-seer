@@ -1085,6 +1085,7 @@ test("#1423 an entering or dying that doesn't cause abilities to trigger is `tri
 
 test("#1423 'doesn't untap' is `untap-denial` (CR 502.3: effects can keep permanents from untapping); a conditional one, a permission and the positive untap are not", () => {
   const read = (object: string, text = "") => actionEffectKind({ verb: "cant", object }, text);
+  const kind = (verb: string, object: string, text: string) => actionEffectKind({ verb, object } as never, text);
   const cases: [string, string][] = [
     ["untap during its controller's untap step", "Enchanted creature doesn't untap during its controller's untap step."],                       // Waterknot, Bonds of Quicksilver
     ["untap during its controller's untap step and its activated abilities can't be activated", "Enchanted permanent doesn't untap during its controller's untap step and its activated abilities can't be activated."], // Hold for Questioning (grammar)
@@ -1097,16 +1098,37 @@ test("#1423 'doesn't untap' is `untap-denial` (CR 502.3: effects can keep perman
     ["enchanted creature can't untap during its controller's untap step", "Enchanted creature can't untap during its controller's untap step."],
   ];
   for (const [object, text] of cases) expect(read(object, text), text).toBe("untap-denial");
-  // Conditional: not total, left unread (Veldt, Tangle Kelp, Stunning Strike, Walking Dream, Guardian of Tazeem, Pollen Lullaby).
+  // CONDITIONAL (owner 2026-11-14, #1266): the denial still holds while its condition does, so it is read and flagged `conditional` (Veldt, Tangle Kelp, Stunning Strike, Winter's Rest, Fall from Favor, Walking Dream, Bombur). Whose permanent it is, is the rule's business (`notSelf`, `control`).
   for (const [object, text] of [
     ["untap during your untap step if it has a depletion counter on it", "This land doesn't untap during your untap step if it has a depletion counter on it."],
     ["untap during its controller's untap step if it attacked during its controller's last turn", "Enchanted creature doesn't untap during its controller's untap step if it attacked during its controller's last turn."],
     ["doesn't untap during its controller's untap step", "As long as enchanted creature isn't legendary, it doesn't untap during its controller's untap step."],
+    ["doesn't untap during its controller's untap step", "As long as you control another snow permanent, enchanted creature doesn't untap during its controller's untap step."],
+    ["untap during its controller's untap step unless that player is the monarch", "Enchanted creature doesn't untap during its controller's untap step unless that player is the monarch."],
     ["untap during your untap step if an opponent controls two or more creatures", "This creature doesn't untap during your untap step if an opponent controls two or more creatures."],
+    ["untap during your untap step unless you have an enduring story", "This creature doesn't untap during your untap step unless you have an enduring story."],
+  ] as const) {
+    expect(read(object, text), text).toBe("untap-denial");
+    expect(untapDenialOf(object, text)?.denial.conditional, text).toBe(true);
+  }
+  expect(untapDenialOf("untap during its controller's untap step", "Enchanted creature doesn't untap during its controller's untap step.")?.denial.conditional).toBeUndefined();
+  // ...still one-step (the rule refuses it): a conditional next-step freeze.
+  for (const [object, text] of [
     ["untap during its controller's next untap step", "Landfall — Whenever a land you control enters, tap target creature an opponent controls. If that land is an Island, that creature doesn't untap during its controller's next untap step."],
     ["untap during the player's next untap step", "Clash with an opponent. If you win, creatures that player controls don't untap during the player's next untap step."],
-    ["untap during your untap step unless you have an enduring story", "This creature doesn't untap during your untap step unless you have an enduring story."],
-  ] as const) expect(read(object, text), text).toBeNull();
+  ] as const) expect(untapDenialOf(object, text)?.denial.duration, text).toBe("next-untap-step");
+  // A DENIAL FILED AS A GRANT (Dread Wight "for as long as it has a paralyzation counter", Glyph of Delusion and Mindbender Spores' quoted grant) is the denial; Bewitching Leechcraft's "would untap ... instead" with its reminder "Otherwise, it doesn't untap" too.
+  expect(kind("grant-ability", "each of those creatures doesn't untap during its controller's untap step for as long as it has a paralyzation counter on it",
+    "At end of combat, put a paralyzation counter on each creature blocking or blocked by this creature and tap those creatures. Each of those creatures doesn't untap during its controller's untap step for as long as it has a paralyzation counter on it. Each of those creatures gains \"{4}: Remove a paralyzation counter from this creature.\"")).toBe("untap-denial");
+  expect(kind("grant-ability", "This creature doesn't untap during your untap step if it has a glyph counter on it",
+    "Put X glyph counters on target creature that target Wall blocked this turn, where X is the power of that blocked creature. The creature gains \"This creature doesn't untap during your untap step if it has a glyph counter on it\" and \"At the beginning of your upkeep, remove a glyph counter from this creature.\"")).toBe("untap-denial");
+  expect(kind("grant-ability", "that creature gains \"This creature doesn't untap during your untap step if it has a fungus counter on it\"",
+    "The creature gains \"This creature doesn't untap during your untap step if it has a fungus counter on it\".")).toBe("untap-denial");
+  expect(kind("grant-ability", "enchanted creature gains \"If this creature would untap during your untap step, remove a +1/+1 counter from it instead. If you do, untap it.\"",
+    "Enchanted creature has \"If this creature would untap during your untap step, remove a +1/+1 counter from it instead. If you do, untap it.\" (Otherwise, it doesn't untap.)")).toBe("untap-denial");
+  // ...but a grant of anything else, and an untap REPLACEMENT that is no denial (Edge of Malacol), stay what they were.
+  expect(kind("grant-ability", "creatures you control gain flying", "Creatures you control have flying.")).toBe("keyword-grant");
+  expect(kind("grant-ability", "a creature you control would untap during your untap step, put two +1/+1 counters on it instead", "If a creature you control would untap during your untap step, put two +1/+1 counters on it instead.")).toBe("keyword-grant");
   // A LIMIT on untapping (Damping Field, Winter Moon, Winter Orb) is no denial: it is a `player-lock` (#1266), read in the `playerLockOf` test.
   expect(read("untap more than one artifact during their untap steps", "Players can't untap more than one artifact during their untap steps.")).toBe("player-lock");
   // A PERMISSION to skip the untap is not a denial (Amber Prison, Giant Oyster), and the positive "untaps" is not one either.
@@ -1125,8 +1147,6 @@ test("#1423 the WORDS decide where the model filed 'doesn't untap' under the pos
   expect(kind("untap", "target land", "Untap target land. It doesn't untap during your next untap step.")).toBe("untap");
   expect(kind("untap", "all creatures you control", "Whenever a creature enters, untap all creatures.")).toBe("untap");
   // A grant of a quoted ability that denies the untap (Mindbender Spores) stays a grant.
-  expect(kind("grant-ability", "that creature gains \"This creature doesn't untap during your untap step if it has a fungus counter on it\"",
-    "The creature gains \"This creature doesn't untap during your untap step if it has a fungus counter on it\".")).toBe("keyword-grant");
 });
 
 test("grantedTypeOf reads the type a type-grant hands out, singular and lowercase (#1568)", () => {
@@ -1158,7 +1178,7 @@ test("#1266 a ban on entering, casting from or activating out of graveyards is `
 });
 
 // #1266 stax.text: a static prohibition on PLAYERS is `player-lock`, read off the printed clause (the model drops the subject and the "during your turn" from the stored object).
-import { playerLockOf } from "./cant-kinds.js";
+import { playerLockOf, untapDenialOf } from "./cant-kinds.js";
 test("#1266 a lasting ban or limit on what players can do is `player-lock`, with what and for whom", () => {
   const lock = (object: string, text: string, occurrence = 0) => playerLockOf(object, text, occurrence);
   const cases: [string, string, string[], string, boolean?][] = [
@@ -1185,6 +1205,10 @@ test("#1266 a lasting ban or limit on what players can do is `player-lock`, with
     ["cast spells that share a color with the spell most recently cast this turn", "Players can't cast spells that share a color with the spell most recently cast this turn.", ["cast-ban"], "any"], // Mana Maze: "this turn" describes the last spell, not a duration
     ["get counters", "Target opponent loses all counters. That player can't get counters for as long as this creature remains on the battlefield.", ["counters"], "any"], // Suncleanser
     ["gain life", "Whenever this creature deals damage to a player, that player can't gain life for the rest of the game.", ["gain-life"], "any"], // Stigma Lasher
+    // SOME players (owner 2026-11-14): a lock on the players a condition names still binds them for as long as the card is there.
+    ["cast spells", "As long as this creature is attacking, defending player can't cast spells.", ["cast-ban"], "opp"],                       // Wardscale Dragon
+    ["play lands or cast artifact, creature, or enchantment spells", "A player who controls more permanents than each other player can't play lands or cast artifact, creature, or enchantment spells. That player may sacrifice a permanent of their choice for that player to ignore this effect until end of turn.", ["play-land", "cast-ban"], "any"], // Damping Engine
+    ["cast creature spells", "Each opponent who controls more creatures than you can't cast creature spells. The same is true for artifacts and enchantments.\nEach opponent who controls more lands than you can't play lands.", ["cast-ban"], "opp"], // Ward of Bones
   ];
   for (const [object, text, locks, control, yourTurn] of cases) {
     const read = lock(object, text);
@@ -1213,7 +1237,7 @@ test("#1266 a lasting ban or limit on what players can do is `player-lock`, with
     expect(lock(object, text), `${object} | ${text}`).toBeUndefined();
     expect(actionEffectKind({ verb: "cant", object }, text), text).not.toBe("player-lock");
   }
-  // a quoted grant (Cloudsteel Kirin) and an emblem's quote are not the card's own static
+  // a quoted grant (Cloudsteel Kirin) and an emblem's quote are not the card's own static (the emblem's lock is marked by `emblemLockOf`, below)
   expect(lock("cast noncreature spells", "−9: You get an emblem with \"Your opponents can't cast noncreature spells.\"")).toBeUndefined();
   // the object decides WHICH sentence a clause with two bans is read for (Void Winnower's block ban is no lock)
   expect(lock("block with creatures with even mana values", "Your opponents can't cast spells with even mana values.\nYour opponents can't block with creatures with even mana values.")).toBeUndefined();

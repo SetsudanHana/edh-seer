@@ -706,6 +706,8 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
   // Greaves and Swiftfoot Boots derived nothing whatsoever.
   if (verb === "grant-ability") {
     const o = action.object ?? "";
+    // A DENIAL FILED AS A GRANT (owner 2026-11-14, #1266): Dread Wight, Glyph of Delusion, Mindbender Spores, Bewitching Leechcraft.
+    if (untapDenialFor(verb, o, clauseText)) return "untap-denial";
     if (SPEED_KEYWORDS.test(o)) return "speed-increase";
     // Granting a TYPE is not granting a keyword. Omo, Queen of Vesuva says each nonland creature
     // with an everything counter on it "is every creature type", and Maskwood Nexus says it of your

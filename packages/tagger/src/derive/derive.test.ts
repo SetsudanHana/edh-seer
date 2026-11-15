@@ -7700,9 +7700,46 @@ describe("untap-denial: what stays tapped, and for how long (#1423)", () => {
     expect(shape(dens(derive("Kill Switch", "Artifact", "{2}, {T}: Tap all other artifacts. They don't untap during their controllers' untap steps for as long as this artifact remains tapped."))[0])).toMatchObject({ duration: "as-long-as" });
   });
 
-  test("not read: Veldt's counter condition, Stunning Strike's 'as long as', Amber Prison's permission", () => {
-    expect(dens(derive("Veldt", "Land", "This land doesn't untap during your untap step if it has a depletion counter on it.\nAt the beginning of your upkeep, remove a depletion counter from this land.\n{T}: Add {G} or {W}. Put a depletion counter on this land."))).toEqual([]);
-    expect(dens(derive("Stunning Strike", AURA, "Flash\nEnchant creature\nWhen this Aura enters, tap enchanted creature and remove it from combat.\nAs long as enchanted creature isn't legendary, it doesn't untap during its controller's untap step."))).toEqual([]);
+  test("conditional denials are read and flagged (owner 2026-11-14, #1266): Stunning Strike, Winter's Rest, Tangle Kelp, Venarian Gold, Fall from Favor, Merseine; Veldt's and Bombur's are the card's own, Cocoon's is yours", () => {
+    const aura = (name: string, text: string) => dens(derive(name, AURA, `Enchant creature\n${text}`));
+    for (const [name, text] of [
+      ["Stunning Strike", "As long as enchanted creature isn't legendary, it doesn't untap during its controller's untap step."],
+      ["Winter's Rest", "As long as you control another snow permanent, enchanted creature doesn't untap during its controller's untap step."],
+      ["Tangle Kelp", "Enchanted creature doesn't untap during its controller's untap step if it attacked during its controller's last turn."],
+      ["Venarian Gold", "Enchanted creature doesn't untap during its controller's untap step if it has a sleep counter on it."],
+      ["Fall from Favor", "Enchanted creature doesn't untap during its controller's untap step unless that player is the monarch."],
+      ["Merseine", "Enchanted creature doesn't untap during its controller's untap step if this Aura has a net counter on it."],
+    ] as const) {
+      const d = aura(name, text);
+      expect(d.map((a) => [a.untapDenial?.duration, a.untapDenial?.conditional, a.host === true, a.effect.subject?.control]), name).toEqual([["continuous", true, true, "any"]]);
+    }
+    const veldt = dens(derive("Veldt", "Land", "This land doesn't untap during your untap step if it has a depletion counter on it.\nAt the beginning of your upkeep, remove a depletion counter from this land.\n{T}: Add {G} or {W}. Put a depletion counter on this land."));
+    expect(veldt.map((a) => [a.untapDenial?.conditional, a.effect.subject?.self])).toEqual([[true, true]]);
+    // Cocoon: "doesn't untap during YOUR untap step" on an Aura that enchants a creature YOU control is your own drawback.
+    const cocoon = dens(derive("Cocoon", AURA, "Enchant creature you control\nEnchanted creature doesn't untap during your untap step if this Aura has a pupa counter on it."));
+    expect(cocoon.map((a) => [a.untapDenial?.conditional, a.effect.subject?.control, a.host === true])).toEqual([[true, "you", true]]);
+    expect(dens(derive("Bombur, Gentle Dreamer", "Legendary Creature — Dwarf", "Bombur doesn't untap during your untap step unless you have an enduring story.")).map((a) => [a.untapDenial?.conditional, a.effect.subject?.self])).toEqual([[true, true]]);
+  });
+
+  test("a denial the model filed as a grant: Dread Wight, Glyph of Delusion, Mindbender Spores, Bewitching Leechcraft", () => {
+    const stored = (verb: string, object: string, abilityType: string) => [{ id: 1, abilityType, actions: [{ verb, object }] }];
+    const den = (name: string, typeLine: string, text: string, rec: unknown[]) =>
+      dens(deriveAbilities(rec as never, name, { 1: text }, undefined, text).abilities);
+    const wight = den("Dread Wight", "Creature — Zombie", "At end of combat, put a paralyzation counter on each creature blocking or blocked by this creature and tap those creatures. Each of those creatures doesn't untap during its controller's untap step for as long as it has a paralyzation counter on it. Each of those creatures gains \"{4}: Remove a paralyzation counter from this creature.\"",
+      stored("grant-ability", "each of those creatures doesn't untap during its controller's untap step for as long as it has a paralyzation counter on it", "triggered"));
+    expect(wight.map((a) => [a.untapDenial?.duration, a.effect.subject?.control, a.effect.subject?.self])).toEqual([["as-long-as", "any", undefined]]);
+    const mind = den("Mindbender Spores", "Creature — Fungus", "Defender\nFlying\nWhenever this creature blocks a creature, put four fungus counters on that creature. The creature gains \"This creature doesn't untap during your untap step if it has a fungus counter on it\" and \"At the beginning of your upkeep, remove a fungus counter from this creature.\"",
+      stored("grant-ability", "that creature gains \"This creature doesn't untap during your untap step if it has a fungus counter on it\"", "triggered"));
+    expect(mind.map((a) => [a.untapDenial?.conditional, a.effect.subject?.control, a.effect.subject?.self])).toEqual([[true, "any", undefined]]);
+    const glyph = den("Glyph of Delusion", "Instant", "Put X glyph counters on target creature that target Wall blocked this turn, where X is the power of that blocked creature. The creature gains \"This creature doesn't untap during your untap step if it has a glyph counter on it\" and \"At the beginning of your upkeep, remove a glyph counter from this creature.\"",
+      stored("grant-ability", "This creature doesn't untap during your untap step if it has a glyph counter on it", "spell"));
+    expect(glyph.map((a) => [a.untapDenial?.conditional, a.effect.subject?.control, a.effect.subject?.self])).toEqual([[true, "any", undefined]]);
+    const leech = den("Bewitching Leechcraft", AURA, "Enchant creature\nWhen this Aura enters, tap enchanted creature.\nEnchanted creature has \"If this creature would untap during your untap step, remove a +1/+1 counter from it instead. If you do, untap it.\" (Otherwise, it doesn't untap.)",
+      stored("grant-ability", "enchanted creature gains \"If this creature would untap during your untap step, remove a +1/+1 counter from it instead. If you do, untap it.\"", "static"));
+    expect(leech.map((a) => [a.untapDenial?.conditional, a.untapDenial?.duration, a.effect.subject?.control])).toEqual([[true, "continuous", "any"]]);
+  });
+
+  test("not read: Amber Prison's permission", () => {
     expect(dens(derive("Amber Prison", "Artifact", "You may choose not to untap this artifact during your untap step.\n{4}, {T}: Tap target artifact, creature, or land. That permanent doesn't untap during its controller's untap step for as long as this artifact remains tapped."))).toHaveLength(1);
   });
 });
@@ -8956,6 +8993,22 @@ describe("player-lock: a lasting prohibition or limit on players (#1266, owner 2
     const abilities = derive("Winter Orb", "Artifact", "As long as this artifact is untapped, players can't untap more than one land during their untap steps.", [cant(1, "untap more than one land during their untap steps")]);
     expect(locks(abilities).map(shape)).toEqual([["static", "continuous", "any", { locks: ["untap-limit"] }]]);
     expect(abilities.some((a) => a.effect.kind === "untap-denial")).toBe(false);
+  });
+  test("SOME players (owner 2026-11-14): Damping Engine, Wardscale Dragon are locks on the players their condition names", () => {
+    const engine = derive("Damping Engine", "Artifact", "A player who controls more permanents than each other player can't play lands or cast artifact, creature, or enchantment spells. That player may sacrifice a permanent of their choice for that player to ignore this effect until end of turn.",
+      [cant(1, "play lands or cast artifact, creature, or enchantment spells")]);
+    expect(locks(engine).map(shape)).toEqual([["static", "continuous", "any", { locks: ["play-land", "cast-ban"] }]]);
+    const dragon = derive("Wardscale Dragon", "Creature — Dragon", "Flying\nAs long as this creature is attacking, defending player can't cast spells.", [cant(2, "cast spells")]);
+    expect(locks(dragon).map(shape)).toEqual([["static", "continuous", "opp", { locks: ["cast-ban"] }]]);
+  });
+  test("an EMBLEM that locks players marks the card's emblem ability (Narset Transcendent, Dovin Baan); an emblem that does not, does not", () => {
+    const emblem = (name: string, text: string, quoted: string) =>
+      deriveAbilities([{ id: 1, abilityType: "activated", actions: [{ verb: "emblem", object: `an emblem with "${quoted}"` }] }] as never, name, { 1: text }, undefined, text).abilities.filter((a) => a.effect.kind === "emblem");
+    expect(emblem("Narset Transcendent", "\u22129: You get an emblem with \"Your opponents can't cast noncreature spells.\"", "Your opponents can't cast noncreature spells.").map((a) => a.emblemLock)).toEqual([true]);
+    expect(emblem("Dovin Baan", "\u22127: You get an emblem with \"Your opponents can't untap more than two permanents during their untap steps.\"", "Your opponents can't untap more than two permanents during their untap steps.").map((a) => a.emblemLock)).toEqual([true]);
+    expect(emblem("Elspeth, Sun's Champion", "\u22127: You get an emblem with \"Creatures you control get +2/+2 and have flying.\"", "Creatures you control get +2/+2 and have flying.").map((a) => a.emblemLock)).toEqual([undefined]);
+    // a one-shot emblem line is no lock
+    expect(emblem("Hypothetical", "You get an emblem with \"Your opponents can't cast spells this turn.\"", "Your opponents can't cast spells this turn.").map((a) => a.emblemLock)).toEqual([undefined]);
   });
   test("one-shots and a drawback on yourself are no lock: Orim's Chant, Silence, Moderation", () => {
     expect(locks(derive("Silence", "Instant", "Your opponents can't cast spells this turn.", [{ id: 1, abilityType: "spell", actions: [{ verb: "cant", object: "cast spells this turn" }] }]))).toEqual([]);

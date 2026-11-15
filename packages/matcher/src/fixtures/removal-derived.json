@@ -16497,100 +16497,6 @@
    }
   ]
  },
- "Narset Transcendent": {
-  "oracleText": "+1: Look at the top card of your library. If it's a noncreature, nonland card, you may reveal it and put it into your hand.\n−2: When you next cast an instant or sorcery spell from your hand this turn, it gains rebound. (Exile the spell as it resolves. At the beginning of your next upkeep, you may cast that card from exile without paying its mana cost.)\n−9: You get an emblem with \"Your opponents can't cast noncreature spells.\"",
-  "typeLine": "Legendary Planeswalker — Narset",
-  "manaValue": 4,
-  "abilities": [
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "search",
-     "subject": {
-      "control": "you",
-      "token": null,
-      "type": [
-       "artifact",
-       "enchantment",
-       "instant",
-       "sorcery",
-       "planeswalker",
-       "battle"
-      ],
-      "notType": [
-       "creature",
-       "land"
-      ]
-     }
-    },
-    "cost": "+1",
-    "amount": "1",
-    "toHand": "1",
-    "gate": {
-     "kind": "unknown",
-     "text": "it's a noncreature, nonland card"
-    },
-    "returnIf": true,
-    "clause": 1,
-    "repeats": "per-cycle",
-    "count": {
-     "floor": 1,
-     "ceiling": 1
-    },
-    "payment": {
-     "loyalty": "+1"
-    }
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "keyword-grant",
-     "subject": {
-      "control": "any",
-      "token": null
-     }
-    },
-    "cost": "−2",
-    "clause": 2,
-    "repeats": "per-cycle",
-    "payment": {
-     "loyalty": "-2"
-    },
-    "grants": [
-     "rebound"
-    ],
-    "claimsNothing": "refused-trigger"
-   },
-   {
-    "kind": "activated",
-    "effect": {
-     "kind": "emblem",
-     "subject": {
-      "control": "you",
-      "token": null,
-      "type": [
-       "artifact",
-       "enchantment",
-       "planeswalker",
-       "instant",
-       "sorcery",
-       "battle"
-      ],
-      "notType": [
-       "creature"
-      ],
-      "scope": "all"
-     }
-    },
-    "cost": "−9",
-    "clause": 3,
-    "repeats": "per-cycle",
-    "payment": {
-     "loyalty": "-9"
-    }
-   }
-  ]
- },
  "Yuna's Whistle": {
   "oracleText": "Reveal cards from the top of your library until you reveal a creature card. Put that card into your hand and the rest on the bottom of your library in a random order. When you reveal a creature card this way, put X +1/+1 counters on target creature you control, where X is the mana value of that card.",
   "typeLine": "Instant",
@@ -62970,6 +62876,1708 @@
     "count": {
      "floor": 1,
      "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Alirios, Enraptured": {
+  "oracleText": "Alirios enters tapped.\nAlirios doesn't untap during your untap step if you control a Reflection.\nWhen Alirios enters, create a 3/2 blue Reflection creature token.",
+  "typeLine": "Legendary Creature — Human",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "self": true
+     }
+    },
+    "untapDenial": {
+     "duration": "continuous",
+     "conditional": true
+    },
+    "gate": {
+     "kind": "control",
+     "need": 1,
+     "nouns": [
+      "reflection"
+     ],
+     "text": "you control a reflection"
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "token-generation",
+     "subject": {
+      "control": "you",
+      "token": true,
+      "type": "creature",
+      "subtype": "reflection",
+      "colors": [
+       "U"
+      ],
+      "stats": [
+       {
+        "metric": "power",
+        "op": "eq",
+        "value": 3
+       },
+       {
+        "metric": "toughness",
+        "op": "eq",
+        "value": 2
+       }
+      ]
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "self": true
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "create-token",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "U"
+       ],
+       "type": "creature",
+       "subtype": "reflection",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 3
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 2
+        }
+       ]
+      }
+     },
+     {
+      "verb": "enters",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "colors": [
+        "U"
+       ],
+       "type": "creature",
+       "subtype": "reflection",
+       "stats": [
+        {
+         "metric": "power",
+         "op": "eq",
+         "value": 3
+        },
+        {
+         "metric": "toughness",
+         "op": "eq",
+         "value": 2
+        }
+       ]
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Bombur, Gentle Dreamer": {
+  "oracleText": "Storied (If you control three or more artifacts, legendaries, and/or Sagas, you have an enduring story for the rest of the game.)\nBombur doesn't untap during your untap step unless you have an enduring story.",
+  "typeLine": "Legendary Creature — Dwarf Bard",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "self": true
+     }
+    },
+    "untapDenial": {
+     "duration": "continuous",
+     "conditional": true
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Merseine": {
+  "oracleText": "Enchant creature\nThis Aura enters with three net counters on it.\nEnchanted creature doesn't untap during its controller's untap step if this Aura has a net counter on it.\nPay enchanted creature's mana cost: Remove a net counter from this Aura. Only the controller of the enchanted creature may activate this ability.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "enters-with-counters"
+    },
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "net"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "continuous",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous",
+     "conditional": true
+    },
+    "gate": {
+     "kind": "counter",
+     "counter": "net",
+     "need": 1,
+     "text": "this aura has a net counter on it"
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "Pay enchanted creature's mana cost",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-removed",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "net"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 4,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "other": [
+      "Pay enchanted creature's mana cost"
+     ]
+    }
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Stunning Strike": {
+  "oracleText": "Flash\nEnchant creature\nWhen this Aura enters, tap enchanted creature and remove it from combat.\nAs long as enchanted creature isn't legendary, it doesn't untap during its controller's untap step.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "clause": 3,
+    "repeats": "once"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous",
+     "conditional": true
+    },
+    "clause": 4,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Glyph of Delusion": {
+  "oracleText": "Put X glyph counters on target creature that target Wall blocked this turn, where X is the power of that blocked creature. The creature gains \"This creature doesn't untap during your untap step if it has a glyph counter on it\" and \"At the beginning of your upkeep, remove a glyph counter from this creature.\"",
+  "typeLine": "Instant",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "self": true
+     },
+     "scaling": "x-cost"
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "counter": "glyph"
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   },
+   {
+    "kind": "on-cast",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "untapDenial": {
+     "duration": "continuous",
+     "conditional": true
+    },
+    "clause": 1,
+    "repeats": "once"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-removed",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "glyph",
+       "self": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "grantedBy": 1
+   }
+  ]
+ },
+ "Mindbender Spores": {
+  "oracleText": "Defender (This creature can't attack.)\nFlying\nWhenever this creature blocks a creature, put four fungus counters on that creature. The creature gains \"This creature doesn't untap during your untap step if it has a fungus counter on it\" and \"At the beginning of your upkeep, remove a fungus counter from this creature.\"",
+  "typeLine": "Creature — Fungus Wall",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "blocks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "amount": "4",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "counter": "fungus"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-turn",
+    "count": {
+     "floor": 4,
+     "ceiling": 4
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "blocks"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "untapDenial": {
+     "duration": "continuous",
+     "conditional": true
+    },
+    "clause": 3,
+    "repeats": "per-turn"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-removed",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "counter": "fungus",
+       "self": true
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "grantedBy": 3
+   }
+  ]
+ },
+ "Bewitching Leechcraft": {
+  "oracleText": "Enchant creature\nWhen this Aura enters, tap enchanted creature.\nEnchanted creature has \"If this creature would untap during your untap step, remove a +1/+1 counter from it instead. If you do, untap it.\" (Otherwise, it doesn't untap.)",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous",
+     "conditional": true
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Dread Wight": {
+  "oracleText": "At end of combat, put a paralyzation counter on each creature blocking or blocked by this creature and tap those creatures. Each of those creatures doesn't untap during its controller's untap step for as long as it has a paralyzation counter on it. Each of those creatures gains \"{4}: Remove a paralyzation counter from this creature.\"",
+  "typeLine": "Creature — Zombie",
+  "manaValue": 5,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "combat": "blocking",
+      "type": "creature",
+      "scope": "each"
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "combat": "blocking",
+       "type": "creature",
+       "scope": "each",
+       "counter": "paralyzation"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "emits": [
+     {
+      "verb": "taps",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "combat": "blocking",
+       "type": "creature",
+       "scope": "each"
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": {
+      "control": "any",
+      "token": null,
+      "combat": "blocking",
+      "type": "creature",
+      "scope": "each"
+     }
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "each"
+     }
+    },
+    "untapDenial": {
+     "duration": "as-long-as"
+    },
+    "clause": 1,
+    "repeats": "per-cycle"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": ""
+    },
+    "cost": "{4}",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-removed",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "paralyzation",
+       "self": true
+      },
+      "instantSpeed": true
+     }
+    ],
+    "clause": 2,
+    "repeats": "repeatable",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "mana": "{4}"
+    },
+    "grantedBy": 1
+   }
+  ]
+ },
+ "Goblin Rock Sled": {
+  "oracleText": "Trample\nThis creature doesn't untap during your untap step if it attacked during your last turn.\nThis creature can't attack unless defending player controls a Mountain.",
+  "typeLine": "Creature — Goblin",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "untapDenial": {
+     "duration": "continuous",
+     "conditional": true
+    },
+    "gate": {
+     "kind": "unknown",
+     "text": "it attacked during your last turn"
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Steel Dromedary": {
+  "oracleText": "This creature enters tapped with two +1/+1 counters on it.\nThis creature doesn't untap during your untap step if it has a +1/+1 counter on it.\nAt the beginning of combat on your turn, you may move a +1/+1 counter from this creature onto target creature.",
+  "typeLine": "Artifact Creature — Camel",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "counter-placement"
+    },
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "+1/+1",
+       "self": true
+      }
+     }
+    ],
+    "clause": 1,
+    "repeats": "continuous",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "untapDenial": {
+     "duration": "continuous",
+     "conditional": true
+    },
+    "gate": {
+     "kind": "counter",
+     "counter": "+1/+1",
+     "need": 1,
+     "text": "it has a +1/+1 counter on it"
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "begin-combat"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-removed",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "+1/+1",
+       "self": true
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "begin-combat"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "scope": "target",
+       "counter": "+1/+1"
+      }
+     }
+    ],
+    "clause": 3,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Walking Dream": {
+  "oracleText": "This creature can't be blocked.\nThis creature doesn't untap during your untap step if an opponent controls two or more creatures.",
+  "typeLine": "Creature — Illusion",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "evasion"
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    },
+    "untapDenial": {
+     "duration": "continuous",
+     "conditional": true
+    },
+    "gate": {
+     "kind": "unknown",
+     "text": "an opponent controls two or more creatures"
+    },
+    "clause": 2,
+    "repeats": "continuous",
+    "threshold": {
+     "atLeast": 2
+    },
+    "thresholdSubject": {
+     "control": "opp",
+     "token": null,
+     "type": "creature",
+     "scope": "all"
+    }
+   }
+  ]
+ },
+ "Dovin Baan": {
+  "oracleText": "+1: Until your next turn, up to one target creature gets -3/-0 and its activated abilities can't be activated.\n−1: You gain 2 life and draw a card.\n−7: You get an emblem with \"Your opponents can't untap more than two permanents during their untap steps.\"",
+  "typeLine": "Legendary Planeswalker — Dovin",
+  "manaValue": 4,
+  "loyalty": "3",
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "debuff",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    },
+    "cost": "+1",
+    "amount": "-3/-0",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "ability-loss",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "+1",
+    "clause": 1,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "draw-card",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "−1",
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "draw",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "-1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "lifegain",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "cost": "−1",
+    "amount": "2",
+    "emits": [
+     {
+      "verb": "gain-life",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 2,
+     "ceiling": 2
+    },
+    "payment": {
+     "loyalty": "-1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "emblem",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "emblemLock": true,
+    "cost": "−7",
+    "clause": 3,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "-7"
+    }
+   }
+  ]
+ },
+ "Damping Engine": {
+  "oracleText": "A player who controls more permanents than each other player can't play lands or cast artifact, creature, or enchantment spells. That player may sacrifice a permanent of their choice for that player to ignore this effect until end of turn.",
+  "typeLine": "Artifact",
+  "manaValue": 4,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "play-land",
+      "cast-ban"
+     ]
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": ""
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "permanent"
+      },
+      "victimMay": true
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "permanent"
+      },
+      "victimMay": true
+     }
+    ],
+    "clause": 1,
+    "repeats": "continuous",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ]
+ },
+ "Wardscale Dragon": {
+  "oracleText": "Flying\nAs long as this creature is attacking, defending player can't cast spells.",
+  "typeLine": "Creature — Dragon",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "cast-ban"
+     ]
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Ward of Bones": {
+  "oracleText": "Each opponent who controls more creatures than you can't cast creature spells. The same is true for artifacts and enchantments.\nEach opponent who controls more lands than you can't play lands.",
+  "typeLine": "Artifact",
+  "manaValue": 6,
+  "abilities": [
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "cast-ban"
+     ]
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "cast-ban"
+     ]
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "cast-ban"
+     ]
+    },
+    "clause": 1,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "player-lock",
+     "subject": {
+      "control": "opp",
+      "token": null
+     }
+    },
+    "playerLock": {
+     "locks": [
+      "play-land"
+     ]
+    },
+    "clause": 2,
+    "repeats": "continuous"
+   }
+  ]
+ },
+ "Winter's Rest": {
+  "oracleText": "Enchant creature\nWhen this Aura enters, tap enchanted creature.\nAs long as you control another snow permanent, enchanted creature doesn't untap during its controller's untap step.",
+  "typeLine": "Snow Enchantment — Aura",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous",
+     "conditional": true
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Tangle Kelp": {
+  "oracleText": "Enchant creature\nWhen this Aura enters, tap enchanted creature.\nEnchanted creature doesn't untap during its controller's untap step if it attacked during its controller's last turn.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous",
+     "conditional": true
+    },
+    "gate": {
+     "kind": "unknown",
+     "text": "it attacked during its controller's last turn"
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Venarian Gold": {
+  "oracleText": "Enchant creature\nWhen this Aura enters, tap enchanted creature and put X sleep counters on it.\nEnchanted creature doesn't untap during its controller's untap step if it has a sleep counter on it.\nAt the beginning of the upkeep of enchanted creature's controller, remove a sleep counter from that creature.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 2,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "counter": "sleep"
+     },
+     "scaling": "x-cost"
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "amount": "X",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "sleep",
+       "self": true
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 0,
+     "ceiling": null,
+     "scalesWith": "mana"
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous",
+     "conditional": true
+    },
+    "gate": {
+     "kind": "counter",
+     "counter": "sleep",
+     "need": 1,
+     "text": "it has a sleep counter on it"
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-removed",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "sleep"
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "per-turn",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Fall from Favor": {
+  "oracleText": "Enchant creature\nWhen this Aura enters, tap enchanted creature and you become the monarch.\nEnchanted creature doesn't untap during its controller's untap step unless that player is the monarch.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 3,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "emits": [
+     {
+      "verb": "monarch",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once"
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous",
+     "conditional": true
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   }
+  ],
+  "enchants": {
+   "control": "any",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Cocoon": {
+  "oracleText": "Enchant creature you control\nWhen this Aura enters, tap enchanted creature and put three pupa counters on this Aura.\nEnchanted creature doesn't untap during your untap step if this Aura has a pupa counter on it.\nAt the beginning of your upkeep, remove a pupa counter from this Aura. If you can't, sacrifice it, put a +1/+1 counter on enchanted creature, and that creature gains flying.",
+  "typeLine": "Enchantment — Aura",
+  "manaValue": 1,
+  "abilities": [
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "enters"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null,
+      "subtype": "aura",
+      "self": true
+     }
+    },
+    "amount": "3",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "pupa"
+      }
+     }
+    ],
+    "clause": 2,
+    "repeats": "once",
+    "count": {
+     "floor": 3,
+     "ceiling": 3
+    }
+   },
+   {
+    "kind": "static",
+    "effect": {
+     "kind": "untap-denial",
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "host": true,
+    "untapDenial": {
+     "duration": "continuous",
+     "conditional": true
+    },
+    "gate": {
+     "kind": "counter",
+     "counter": "pupa",
+     "need": 1,
+     "text": "this aura has a pupa counter on it"
+    },
+    "clause": 3,
+    "repeats": "continuous"
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-removed",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "counter": "pupa"
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": ""
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "sacrifice",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "subtype": "aura",
+       "self": true
+      }
+     },
+     {
+      "verb": "dies",
+      "subject": {
+       "control": "you",
+       "token": null,
+       "subtype": "aura",
+       "self": true
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "counter-placement",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "amount": "1",
+    "emits": [
+     {
+      "verb": "counter-added",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "type": "creature",
+       "counter": "+1/+1"
+      }
+     }
+    ],
+    "clause": 4,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    }
+   },
+   {
+    "kind": "triggered",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "trigger": {
+     "verbs": [
+      "upkeep"
+     ],
+     "subject": {
+      "control": "you",
+      "token": null
+     }
+    },
+    "clause": 4,
+    "repeats": "per-cycle",
+    "grants": [
+     "flying"
+    ]
+   }
+  ],
+  "enchants": {
+   "control": "you",
+   "token": null,
+   "type": "creature"
+  }
+ },
+ "Narset Transcendent": {
+  "oracleText": "+1: Look at the top card of your library. If it's a noncreature, nonland card, you may reveal it and put it into your hand.\n−2: When you next cast an instant or sorcery spell from your hand this turn, it gains rebound. (Exile the spell as it resolves. At the beginning of your next upkeep, you may cast that card from exile without paying its mana cost.)\n−9: You get an emblem with \"Your opponents can't cast noncreature spells.\"",
+  "typeLine": "Legendary Planeswalker — Narset",
+  "manaValue": 4,
+  "loyalty": "6",
+  "abilities": [
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "search",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": [
+       "artifact",
+       "enchantment",
+       "instant",
+       "sorcery",
+       "planeswalker",
+       "battle"
+      ],
+      "notType": [
+       "creature",
+       "land"
+      ]
+     }
+    },
+    "cost": "+1",
+    "amount": "1",
+    "toHand": "1",
+    "gate": {
+     "kind": "unknown",
+     "text": "it's a noncreature, nonland card"
+    },
+    "returnIf": true,
+    "clause": 1,
+    "repeats": "per-cycle",
+    "count": {
+     "floor": 1,
+     "ceiling": 1
+    },
+    "payment": {
+     "loyalty": "+1"
+    }
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "keyword-grant",
+     "subject": {
+      "control": "any",
+      "token": null
+     }
+    },
+    "cost": "−2",
+    "clause": 2,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "-2"
+    },
+    "grants": [
+     "rebound"
+    ],
+    "claimsNothing": "refused-trigger"
+   },
+   {
+    "kind": "activated",
+    "effect": {
+     "kind": "emblem",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": [
+       "artifact",
+       "enchantment",
+       "planeswalker",
+       "instant",
+       "sorcery",
+       "battle"
+      ],
+      "notType": [
+       "creature"
+      ],
+      "scope": "all"
+     }
+    },
+    "emblemLock": true,
+    "cost": "−9",
+    "clause": 3,
+    "repeats": "per-cycle",
+    "payment": {
+     "loyalty": "-9"
     }
    }
   ]

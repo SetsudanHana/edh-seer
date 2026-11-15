@@ -2230,6 +2230,23 @@ describe("stax.text reads derived data (#1266, owner 2026-11-14)", () => {
     expect(m.get("stax")?.has("Rule of Law")).toBe(true);
     expect(m.get("protection")?.has("Rule of Law") ?? false).toBe(false);
   });
+  // Owner rulings 2026-11-14 (#1266): conditional untap denial on permanents that are not your own, locks on SOME players, and an emblem that locks players.
+  test("a conditional untap denial on another's permanent is stax: Winter's Rest, Tangle Kelp, Venarian Gold, Fall from Favor, Merseine, Stunning Strike, Glyph of Delusion, Mindbender Spores, Bewitching Leechcraft, Dread Wight", () => {
+    const names = ["Winter's Rest", "Tangle Kelp", "Venarian Gold", "Fall from Favor", "Merseine", "Stunning Strike", "Glyph of Delusion", "Mindbender Spores", "Bewitching Leechcraft", "Dread Wight"];
+    expect(names.filter((n) => !staxOf(names).has(n))).toEqual([]);
+  });
+  test("the card's or your own conditional untap drawback is not stax: Goblin Rock Sled, Steel Dromedary, Walking Dream, Bombur, Alirios, Cocoon", () => {
+    const names = ["Goblin Rock Sled", "Steel Dromedary", "Walking Dream", "Bombur, Gentle Dreamer", "Alirios, Enraptured", "Cocoon"];
+    expect(names.filter((n) => staxOf(names).has(n))).toEqual([]);
+  });
+  test("a lock on SOME players is stax: Damping Engine, Wardscale Dragon, Ward of Bones", () => {
+    const names = ["Damping Engine", "Wardscale Dragon", "Ward of Bones"];
+    expect(names.filter((n) => !staxOf(names).has(n))).toEqual([]);
+  });
+  test("a planeswalker whose emblem locks players is stax: Dovin Baan, Narset Transcendent", () => {
+    const names = ["Dovin Baan", "Narset Transcendent"];
+    expect(names.filter((n) => !staxOf(names).has(n))).toEqual([]);
+  });
   test("no stax rule reads printed text", () => {
     const stax = loadRules().rules.filter((r) => r.category === "stax");
     expect(stax.length).toBeGreaterThanOrEqual(4);
