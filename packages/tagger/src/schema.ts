@@ -464,6 +464,9 @@ export interface SubjectFilter {
    *  instant or sorcery's cast states the creatures it is aimed at for its caster. Set by the filter
    *  grammar. */
   targets?: Partial<SubjectFilter>;
+  /** "THAT TARGETS ONLY ...": the ability or spell has no other target (CR 115.1), beside `targets` (#1648: Radiant Performer's "only a single permanent or player", Agrus Kos's and Bill Potts's "only it").
+   *  Set by derive on a copy-ability subject only; the matcher's copy pass counts the producer ability's targets. */
+  targetsOnly?: true;
   /** A CONDITION ON A PLAYER, or on an object's CONTROLLER (`of: "controller"`), that no producer
    *  states (#896): "each opponent who doesn't control an Elf" (`controls`, negated), "each player
    *  with exactly 13 life" (`count`), "each opponent who doesn't sacrifice a permanent" (`did`, the
@@ -1341,6 +1344,13 @@ export interface Ability {
    *  ABSENT ON AN IMPLIED ABILITY, which is read off characteristics rather than rules text and so
    *  has no printed line to attribute to (spec C4). */
   clause?: number;
+  /** WHAT THE ABILITY AIMS AT (CR 115.1; #1648): one entry per target its clause names, in the order named (two targets of one class are two entries), read from the action objects that OPEN with "target" / "any target" /
+   *  "up to two target ..." ("Target creature you control gains protection", "{T}: ... deals 1 damage to any target"). Only the class is kept (type, subtype, player, an `anyOf`): an entry with none
+   *  is an UNTYPED target ("any target", "target player", a target whose words the grammar did not read), which could be anything. Absent: the clause aims at nothing. It is the producer-side
+   *  fact a copier's "an ability that targets ..." demand (`SubjectFilter.targets` / `targetsOnly` on a copy-ability subject) is answered from. The effect's own subject cannot carry it:
+   *  a keyword grant, a pump or a recursion whose subject derive reads as the recipient has no `scope: target` at all (Mother of Runes).
+   *  CEILING: a target said inside a relative clause ("each creature target player controls") or after the first noun of the object is not read; "target creature ... and that creature" counts the first only. */
+  targets?: Partial<SubjectFilter>[];
   /** WHERE THE CARD THIS ABILITY FINDS OR COUNTERS ENDS UP (#1301). On a `search` ability: the zone of the put that follows it in the same
    *  clause and names the searched card ("it", "that card", "them", "one", "a card named X", the search's own "a basic land card"):
    *  `hand` when the found card goes to hand, `battlefield` when it goes onto the battlefield (Rampant Growth, Farseek, and the opponent's land from Path to Exile / Assassin's Trophy;

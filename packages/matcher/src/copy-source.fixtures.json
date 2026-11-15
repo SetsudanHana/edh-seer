@@ -260,5 +260,247 @@
   "power": "2",
   "toughness": "4",
   "keywords": []
+ },
+ "Ertha Jo, Frontier Mentor": {
+  "typeLine": "Legendary Creature — Kor Advisor",
+  "oracleText": "When Ertha Jo enters, create a 1/1 red Mercenary creature token with \"{T}: Target creature you control gets +1/+0 until end of turn. Activate only as a sorcery.\"\nWhenever you activate an ability that targets a creature or player, copy that ability. You may choose new targets for the copy.",
+  "colors": [
+   "R",
+   "W"
+  ],
+  "colorIdentity": [
+   "R",
+   "W"
+  ],
+  "manaValue": 4,
+  "power": "2",
+  "toughness": "4",
+  "keywords": []
+ },
+ "Radiant Performer": {
+  "typeLine": "Creature — Human Wizard",
+  "oracleText": "Flash\nWhen this creature enters, if you cast it from your hand, choose target spell or ability that targets only a single permanent or player. Copy that spell or ability for each other permanent or player the spell or ability could target. Each copy targets a different one of those permanents and players.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 5,
+  "power": "2",
+  "toughness": "2",
+  "keywords": [
+   "Flash"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "this creature from your hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "copy",
+      "object": "target spell or ability that targets only a single permanent or player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each other permanent or player the spell or ability could target",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Agrus Kos, Eternal Soldier": {
+  "typeLine": "Legendary Creature — Spirit Soldier",
+  "oracleText": "Vigilance\nWhenever Agrus Kos becomes the target of an ability that targets only it, you may pay {1}{R/W}. If you do, copy that ability for each other creature you control that ability could target. Each copy targets a different one of those creatures. ({R/W} can be paid with either {R} or {W}.)",
+  "colors": [
+   "W"
+  ],
+  "colorIdentity": [
+   "R",
+   "W"
+  ],
+  "manaValue": 4,
+  "power": "3",
+  "toughness": "4",
+  "keywords": [
+   "Vigilance"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "becomes-target",
+     "subject": "an ability that targets only Agrus Kos",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "that ability for each other creature you control that ability could target",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Bill Potts": {
+  "typeLine": "Legendary Creature — Human",
+  "oracleText": "Whenever you cast an instant or sorcery spell that targets only Bill Potts or activate an ability that targets only Bill Potts, copy that spell or ability. You may choose new targets for the copy. This ability triggers only once each turn.\nDoctor's companion (You can have two commanders if the other is the Doctor.)",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 4,
+  "power": "2",
+  "toughness": "4",
+  "keywords": [
+   "Doctor's companion"
+  ]
+ },
+ "Mirror-Shield Hoplite": {
+  "typeLine": "Creature — Human Soldier",
+  "oracleText": "Vigilance\nWhenever a creature you control becomes the target of a backup ability, copy that ability. You may choose new targets for the copy. This ability triggers only once each turn.",
+  "colors": [
+   "R",
+   "W"
+  ],
+  "colorIdentity": [
+   "R",
+   "W"
+  ],
+  "manaValue": 2,
+  "power": "2",
+  "toughness": "2",
+  "keywords": [
+   "Vigilance"
+  ]
+ },
+ "Conclave Sledge-Captain": {
+  "typeLine": "Creature — Elephant Soldier",
+  "oracleText": "Backup 1, backup 1, backup 1 (When this creature enters, put a +1/+1 counter on target creature. If that's another creature, it gains the following abilities until end of turn. Each backup ability triggers separately.)\nTrample\nWhenever this creature deals combat damage to a player, put that many +1/+1 counters on it.",
+  "colors": [
+   "G"
+  ],
+  "colorIdentity": [
+   "G"
+  ],
+  "manaValue": 6,
+  "power": "4",
+  "toughness": "4",
+  "keywords": [
+   "Backup",
+   "Trample"
+  ]
+ },
+ "Mother of Runes": {
+  "typeLine": "Creature — Human Cleric",
+  "oracleText": "{T}: Target creature you control gains protection from the color of your choice until end of turn.",
+  "colors": [
+   "W"
+  ],
+  "colorIdentity": [
+   "W"
+  ],
+  "manaValue": 1,
+  "power": "1",
+  "toughness": "1",
+  "keywords": []
+ },
+ "Goblin Welder": {
+  "typeLine": "Creature — Goblin Artificer",
+  "oracleText": "{T}: Choose target artifact a player controls and target artifact card in that player's graveyard. If both targets are still legal as this ability resolves, that player simultaneously sacrifices the artifact and returns the artifact card to the battlefield.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 1,
+  "power": "1",
+  "toughness": "1",
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "target artifact a player controls",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "target artifact card in that player's graveyard",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Guardian Scalelord": {
+  "typeLine": "Creature — Dragon",
+  "oracleText": "Backup 1 (When this creature enters, put a +1/+1 counter on target creature. If that's another creature, it gains the following abilities until end of turn.)\nFlying\nWhenever this creature attacks, return target nonland permanent card with mana value X or less from your graveyard to the battlefield, where X is this creature's power.",
+  "colors": [
+   "W"
+  ],
+  "colorIdentity": [
+   "W"
+  ],
+  "manaValue": 5,
+  "power": "3",
+  "toughness": "4",
+  "keywords": [
+   "Flying",
+   "Backup"
+  ]
  }
 }
