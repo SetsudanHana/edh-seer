@@ -81,7 +81,8 @@ const OWN_THEME = new Set(OWN_THEME_FAMILIES);
 const ZERO = new Set(ZERO_ON_PURPOSE);
 const familyOf = (tag: string): string => tag.slice(0, tag.indexOf(":") < 0 ? undefined : tag.indexOf(":"));
 /** Is this reason tag one the deck's own-theme statistic weighs? */
-export const isOwnThemeTag = (tag: string): boolean => tag.includes(":") && OWN_THEME.has(familyOf(tag));
+// A bare tag is a family too: the meld channel writes plain `"meld"` (edges.ts, `meldReason`).
+export const isOwnThemeTag = (tag: string): boolean => OWN_THEME.has(familyOf(tag));
 
 /** How often the deck's cards hold each own-theme relation, per reason tag: the number of DISTINCT
  *  cards on the smaller side of it (producers or consumers). The card that does or asks the thing is

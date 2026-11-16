@@ -473,7 +473,11 @@ export function analyzeDeckStructured(
   // the plan is detected; the same signals `detectArchetypes` reads below.
   // Relation families that carry no axis tag of their own take a weight from `axis.ts`: a parent theme
   // (`RELATION_PARENTS`, #972 step 1 and #1095), their own TF-IDF (`OWN_THEME_FAMILIES`, above), or 0 on
-  // purpose (`ZERO_ON_PURPOSE`: ramp-target, land-condition -- owner ruling 2026-11-16).
+  // purpose (`ZERO_ON_PURPOSE`: ramp-target, land-condition, prowess -- owner ruling 2026-11-16).
+  // CEILING: the three lists are closed and were drawn from the families the 71 calibration decks emit;
+  // edges.ts's generic granted-effect channel keys any non-static effect as `<kind>:<subject>`, so a
+  // family no calibration deck produced (counter-placement, untap, type-grant, ...) is in no list and
+  // weighs 0 silently, as every parentless family did before #1095.
   const earlySignals = resolved.filter((dc) => dc.tags && !isLand(dc)).map((dc) => cardSignalOf(dc.card, dc.tags!));
   if (detectPolymorph(earlySignals, resolved.filter((dc) => !isLand(dc)).length)) for (const tag of POLYMORPH_AXIS) axis.set(tag, 1);
   // AXIS_BOOST, AXIS_ON_THRESHOLD and FEEDER_SHARE live in `card-strength.ts`, which swaps read too.

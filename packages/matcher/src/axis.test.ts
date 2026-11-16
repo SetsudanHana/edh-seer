@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { buildAxis, maxAxisWeight, axisFactor, axisWeightOf, relationThemeFreq, RELATION_PARENTS, ZERO_ON_PURPOSE, OWN_THEME_FAMILIES } from "./axis.js";
+import { buildAxis, maxAxisWeight, axisFactor, axisWeightOf, relationThemeFreq, RELATION_PARENTS, ZERO_ON_PURPOSE, OWN_THEME_FAMILIES, isOwnThemeTag } from "./axis.js";
 import type { TagStats } from "@edh-seer/engine";
 
 // 'draw:any' is universal (on ~all N cards → idf≈0); 'dies:creature' is distinctive (rare).
@@ -167,4 +167,10 @@ test("relationThemeFreq counts the cards holding the relation: the smaller of it
   expect(f.has("ramp-target:basic")).toBe(false);
   expect(f.has("fodder:creature")).toBe(false);
   expect(f.has("tutor:land")).toBe(false);
+});
+
+test("meld is an own-theme family although its channel writes the bare tag (#1095 review)", () => {
+  expect(isOwnThemeTag("meld")).toBe(true);
+  const freq = relationThemeFreq([{ tag: "meld", producer: "A", consumer: "B" } as never]);
+  expect(freq.get("meld")).toBe(1);
 });
