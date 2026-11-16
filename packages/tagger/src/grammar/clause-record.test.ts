@@ -1906,7 +1906,7 @@ test("'empower Jace X, where X is ...' on a Jace card keeps the keyword's Jace a
   expect(g.records[0]!.actions).toMatchObject([{ verb: "empower-jace", amount: "the number of Islands you control" }]);
 });
 
-// #1349 last items: a card's short name used as a TYPE is a class, not the card (CR 205.3d: a planeswalker's subtype is a planeswalker type, and a creature type can be a card's name).
+// #1349 last items: a card's short name used as a TYPE is a class, not the card (CR 205.3j planeswalker types, CR 205.3m creature types: a card's name can be one of them).
 // Real oracle text (Mongo `cards`, 2026-11-16).
 const GARRUK_CURSED_HUNTSMAN = { name: "Garruk, Cursed Huntsman", typeLine: "Legendary Planeswalker — Garruk", oracleText: "0: Create two 2/2 black and green Wolf creature tokens with \"When this token dies, put a loyalty counter on each Garruk you control.\"\n−3: Destroy target creature. Draw a card.\n−6: You get an emblem with \"Creatures you control get +3/+3 and have trample.\"" };
 const AUROCHS = { name: "Aurochs", typeLine: "Creature — Aurochs", oracleText: "Trample\nWhenever this creature attacks, it gets +1/+0 until end of turn for each other attacking Aurochs." };
