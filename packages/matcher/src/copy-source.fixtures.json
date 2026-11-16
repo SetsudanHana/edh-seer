@@ -762,5 +762,680 @@
     ]
    }
   ]
+ },
+ "Ashnod the Uncaring": {
+  "typeLine": "Legendary Creature — Human Artificer",
+  "oracleText": "Deathtouch\nWhenever you activate an ability of an artifact or creature that isn't a mana ability, if one or more permanents were sacrificed to activate it, you may copy that ability. You may choose new targets for the copy. (Sacrificing an artifact for mana to activate an ability doesn't count.)",
+  "colors": [
+   "B",
+   "R",
+   "U"
+  ],
+  "colorIdentity": [
+   "B",
+   "R",
+   "U"
+  ],
+  "manaValue": 5,
+  "power": "1",
+  "toughness": "4",
+  "keywords": [
+   "Deathtouch"
+  ]
+ },
+ "Verrak, Warped Sengir": {
+  "typeLine": "Legendary Creature — Vampire",
+  "oracleText": "Flying, deathtouch, lifelink\nWhenever you activate an ability that isn't a mana ability, if life was paid to activate it, you may pay that much life again. If you do, copy that ability. You may choose new targets for the copy.",
+  "colors": [
+   "B",
+   "W"
+  ],
+  "colorIdentity": [
+   "B",
+   "W"
+  ],
+  "manaValue": 3,
+  "power": "2",
+  "toughness": "2",
+  "keywords": [
+   "Deathtouch",
+   "Flying",
+   "Lifelink"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, deathtouch, lifelink"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "activate",
+     "subject": "an ability that isn't a mana ability",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "that ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Dynaheir, Invoker Adept": {
+  "typeLine": "Legendary Creature — Human Wizard",
+  "oracleText": "Haste\nYou may activate abilities of other creatures you control as though those creatures had haste.\n{T}: When you next activate an ability that isn't a mana ability this turn by spending four or more mana to activate it, copy that ability. You may choose new targets for the copy.",
+  "colors": [
+   "R",
+   "U",
+   "W"
+  ],
+  "colorIdentity": [
+   "R",
+   "U",
+   "W"
+  ],
+  "manaValue": 4,
+  "power": "4",
+  "toughness": "4",
+  "keywords": [
+   "Haste"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Haste"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "other creatures you control may be activated as though those creatures had haste",
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "trigger": {
+     "event": "activate",
+     "subject": "an ability that isn't a mana ability activated by spending four or more mana",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "that ability",
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "other",
+      "object": "you may choose new targets for the copy",
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Magus Lucea Kane": {
+  "typeLine": "Legendary Creature — Human Tyranid Wizard",
+  "oracleText": "Spiritual Leader — At the beginning of combat on your turn, put a +1/+1 counter on target creature.\nPsychic Stimulus — {T}: Add {C}{C}. When you next cast a spell with {X} in its mana cost or activate an ability with {X} in its activation cost this turn, copy that spell or ability. You may choose new targets for the copy. (A copy of a permanent spell becomes a token.)",
+  "colors": [
+   "G",
+   "R",
+   "U"
+  ],
+  "colorIdentity": [
+   "G",
+   "R",
+   "U"
+  ],
+  "manaValue": 4,
+  "power": "1",
+  "toughness": "1",
+  "keywords": [
+   "Spiritual Leader",
+   "Psychic Stimulus"
+  ]
+ },
+ "Unbound Flourishing": {
+  "typeLine": "Enchantment",
+  "oracleText": "Whenever you cast a permanent spell with a mana cost that contains {X}, double the value of X.\nWhenever you cast an instant or sorcery spell or activate an ability, if that spell's mana cost or that ability's activation cost contains {X}, copy that spell or ability. You may choose new targets for the copy.",
+  "colors": [
+   "G"
+  ],
+  "colorIdentity": [
+   "G"
+  ],
+  "manaValue": 3,
+  "power": null,
+  "toughness": null,
+  "keywords": [
+   "Double"
+  ]
+ },
+ "Pit Automaton": {
+  "typeLine": "Artifact Creature — Construct",
+  "oracleText": "Defender\n{T}: Add {C}{C}. Spend this mana only to activate abilities.\n{2}, {T}: When you next activate an exhaust ability that isn't a mana ability this turn, copy it. You may choose new targets for the copy.",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 2,
+  "power": "0",
+  "toughness": "4",
+  "keywords": [
+   "Defender"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "an exhaust ability that isn't a mana ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Wyll's Reversal": {
+  "typeLine": "Instant",
+  "oracleText": "Choose target spell or ability with one or more targets. Roll a d20 and add the greatest power among creatures you control.\n1—14 | You may choose new targets for that spell or ability.\n15+ | You may choose new targets for that spell or ability. Then copy it. You may choose new targets for the copy.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 3,
+  "power": null,
+  "toughness": null,
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "roll-dice",
+      "object": "a d20 and add the greatest power among creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose new targets for the target spell or ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose new targets for the target spell or ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "copy",
+      "object": "that spell or ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "other",
+      "object": "choose new targets for the copy",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Sunken Palace": {
+  "typeLine": "Land — Cave",
+  "oracleText": "This land enters tapped.\n{T}: Add {U}.\n{1}{U}, {T}, Exile seven cards from your graveyard: Add {U}. When you spend this mana to cast a spell or activate an ability, copy that spell or ability. You may choose new targets for the copy. (Mana abilities can't be copied.)",
+  "colors": [],
+  "colorIdentity": [
+   "U"
+  ],
+  "manaValue": 0,
+  "power": null,
+  "toughness": null,
+  "keywords": []
+ },
+ "Repeated Reverberation": {
+  "typeLine": "Instant",
+  "oracleText": "When you next cast an instant spell, cast a sorcery spell, or activate a loyalty ability this turn, copy that spell or ability twice. You may choose new targets for the copies.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 4,
+  "power": null,
+  "toughness": null,
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant spell, a sorcery spell, or a loyalty ability activation",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "that spell or ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Pacesetter Paragon": {
+  "typeLine": "Creature — Human Pilot",
+  "oracleText": "Exhaust — {2}{R}: Put a +1/+1 counter on this creature. It gains double strike until end of turn. (Activate each exhaust ability only once.)",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 3,
+  "power": "2",
+  "toughness": "3",
+  "keywords": [
+   "Exhaust"
+  ]
+ },
+ "Forsworn Paladin": {
+  "typeLine": "Creature — Human Knight",
+  "oracleText": "Menace\n{1}{B}, {T}, Pay 1 life: Create a Treasure token.\n{2}{B}: Target creature gets +2/+0 until end of turn. If mana from a Treasure was spent to activate this ability, that creature also gains deathtouch until end of turn.",
+  "colors": [
+   "B"
+  ],
+  "colorIdentity": [
+   "B"
+  ],
+  "manaValue": 1,
+  "power": "1",
+  "toughness": "1",
+  "keywords": [
+   "Treasure",
+   "Menace"
+  ]
+ },
+ "Helix Pinnacle": {
+  "typeLine": "Enchantment",
+  "oracleText": "Shroud (This enchantment can't be the target of spells or abilities.)\n{X}: Put X tower counters on this enchantment.\nAt the beginning of your upkeep, if there are 100 or more tower counters on this enchantment, you win the game.",
+  "colors": [
+   "G"
+  ],
+  "colorIdentity": [
+   "G"
+  ],
+  "manaValue": 1,
+  "power": null,
+  "toughness": null,
+  "keywords": [
+   "Shroud"
+  ]
+ },
+ "Viscera Seer": {
+  "typeLine": "Creature — Vampire Wizard",
+  "oracleText": "Sacrifice a creature: Scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
+  "colors": [
+   "B"
+  ],
+  "colorIdentity": [
+   "B"
+  ],
+  "manaValue": 1,
+  "power": "1",
+  "toughness": "1",
+  "keywords": [
+   "Scry"
+  ]
+ },
+ "Whispering Shade": {
+  "typeLine": "Creature — Shade",
+  "oracleText": "Swampwalk (This creature can't be blocked as long as defending player controls a Swamp.)\n{B}: This creature gets +1/+1 until end of turn.",
+  "colors": [
+   "B"
+  ],
+  "colorIdentity": [
+   "B"
+  ],
+  "manaValue": 4,
+  "power": "1",
+  "toughness": "1",
+  "keywords": [
+   "Landwalk",
+   "Swampwalk"
+  ]
+ },
+ "Kalitas, Bloodchief of Ghet": {
+  "typeLine": "Legendary Creature — Vampire Warrior",
+  "oracleText": "{B}{B}{B}, {T}: Destroy target creature. If that creature dies this way, create a black Vampire creature token. Its power is equal to that creature's power and its toughness is equal to that creature's toughness.",
+  "colors": [
+   "B"
+  ],
+  "colorIdentity": [
+   "B"
+  ],
+  "manaValue": 7,
+  "power": "5",
+  "toughness": "5",
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a black Vampire creature token with power equal to that creature's power and toughness equal to that creature's toughness",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Uurg, Spawn of Turg": {
+  "typeLine": "Legendary Creature — Frog Beast",
+  "oracleText": "Uurg's power is equal to the number of land cards in your graveyard.\nAt the beginning of your upkeep, surveil 1. (Look at the top card of your library. You may put that card into your graveyard.)\n{B}{G}, Sacrifice a land: You gain 2 life.",
+  "colors": [
+   "B",
+   "G"
+  ],
+  "colorIdentity": [
+   "B",
+   "G"
+  ],
+  "manaValue": 3,
+  "power": "*",
+  "toughness": "5",
+  "keywords": [
+   "Surveil"
+  ]
+ },
+ "Lethal Vapors": {
+  "typeLine": "Enchantment",
+  "oracleText": "Whenever a creature enters, destroy it.\n{0}: Destroy this enchantment. You skip your next turn. Any player may activate this ability.",
+  "colors": [
+   "B"
+  ],
+  "colorIdentity": [
+   "B"
+  ],
+  "manaValue": 4,
+  "power": null,
+  "toughness": null,
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "this enchantment",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "extra-turn",
+      "object": "skip your next turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Birthing Pod": {
+  "typeLine": "Artifact",
+  "oracleText": "({G/P} can be paid with either {G} or 2 life.)\n{1}{G/P}, {T}, Sacrifice a creature: Search your library for a creature card with mana value equal to 1 plus the sacrificed creature's mana value, put that card onto the battlefield, then shuffle. Activate only as a sorcery.",
+  "colors": [
+   "G"
+  ],
+  "colorIdentity": [
+   "G"
+  ],
+  "manaValue": 4,
+  "power": null,
+  "toughness": null,
+  "keywords": []
+ },
+ "Exorcist": {
+  "typeLine": "Creature — Human Cleric",
+  "oracleText": "{1}{W}, {T}: Destroy target black creature.",
+  "colors": [
+   "W"
+  ],
+  "colorIdentity": [
+   "W"
+  ],
+  "manaValue": 2,
+  "power": "1",
+  "toughness": "1",
+  "keywords": []
+ },
+ "Sigardian Priest": {
+  "typeLine": "Creature — Human Cleric",
+  "oracleText": "{1}, {T}: Tap target non-Human creature.",
+  "colors": [
+   "W"
+  ],
+  "colorIdentity": [
+   "W"
+  ],
+  "manaValue": 2,
+  "power": "1",
+  "toughness": "2",
+  "keywords": []
+ },
+ "Slingshot Goblin": {
+  "typeLine": "Creature — Goblin",
+  "oracleText": "{R}, {T}: This creature deals 2 damage to target blue creature.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 3,
+  "power": "2",
+  "toughness": "2",
+  "keywords": []
+ },
+ "Akki Drillmaster": {
+  "typeLine": "Creature — Goblin Shaman",
+  "oracleText": "{T}: Target creature gains haste until end of turn.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 3,
+  "power": "2",
+  "toughness": "2",
+  "keywords": []
+ },
+ "Femeref Archers": {
+  "typeLine": "Creature — Human Archer",
+  "oracleText": "{T}: This creature deals 4 damage to target attacking creature with flying.",
+  "colors": [
+   "G"
+  ],
+  "colorIdentity": [
+   "G"
+  ],
+  "manaValue": 3,
+  "power": "2",
+  "toughness": "2",
+  "keywords": []
+ },
+ "Mech Hangar": {
+  "typeLine": "Land",
+  "oracleText": "{T}: Add {C}.\n{T}: Add one mana of any color. Spend this mana only to cast a Pilot or Vehicle spell.\n{3}, {T}: Target Vehicle becomes an artifact creature until end of turn.",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 0,
+  "power": null,
+  "toughness": null,
+  "keywords": []
+ },
+ "Dogged Hunter": {
+  "typeLine": "Creature — Human Nomad",
+  "oracleText": "{T}: Destroy target creature token.",
+  "colors": [
+   "W"
+  ],
+  "colorIdentity": [
+   "W"
+  ],
+  "manaValue": 3,
+  "power": "1",
+  "toughness": "1",
+  "keywords": []
+ },
+ "Magewright's Stone": {
+  "typeLine": "Artifact",
+  "oracleText": "{1}, {T}: Untap target creature that has an activated ability with {T} in its cost.",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 2,
+  "power": null,
+  "toughness": null,
+  "keywords": []
+ },
+ "Lightwielder Paladin": {
+  "typeLine": "Creature — Human Knight",
+  "oracleText": "First strike (This creature deals combat damage before creatures without first strike.)\nWhenever this creature deals combat damage to a player, you may exile target black or red permanent that player controls.",
+  "colors": [
+   "W"
+  ],
+  "colorIdentity": [
+   "W"
+  ],
+  "manaValue": 5,
+  "power": "4",
+  "toughness": "4",
+  "keywords": [
+   "First strike"
+  ]
  }
 }

@@ -37,6 +37,12 @@ export function copySourceOf(
  *  CEILING: "a spell ... that targets only X" is the spell half of the same sentence and is not read here; a copier whose object is a spell never meets this pass. */
 const ABILITY_TARGETS = /\babilit(?:y|ies) that targets? (only )?([^,.;]+)$/i;
 
+/** "target spell or ability WITH ONE OR MORE TARGETS" (Wyll's Reversal, #1650): the copied ability must aim at something, whatever it is, so the demand is an empty class (`targets: {}`) the matcher answers with "the producer's ability has a
+ *  target slot". The text is the clause's, else the card's: Wyll's Reversal says it in the header line and copies in a later mode bullet ("15+ | ... Then copy it"), and the pronoun object "that spell or ability" says nothing of it. */
+const WITH_TARGETS = /\b(?:spell or abilit(?:y|ies)|abilit(?:y|ies)) with (?:one or more|at least one) targets?\b/i;
+export const copyHasTargetsOf = (clauseText: string | undefined): CopyTargets | undefined =>
+  clauseText !== undefined && WITH_TARGETS.test(clauseText) ? { targets: {} } : undefined;
+
 export interface CopyTargets { targets: Partial<SubjectFilter>; targetsOnly?: true }
 
 export function copyTargetsOf(
@@ -65,7 +71,9 @@ export function copyKeywordOf(
   clauseText: string | undefined,
   parseFilter: (text: string) => SubjectFilter | null,
 ): { keyword: string[]; abilityKind: NonNullable<SubjectFilter["abilityKind"]> } | undefined {
-  const m = clauseText === undefined ? null : NAMED_KEYWORD_ABILITY.exec(clauseText.split(",")[0]!);
+  // An activated copier's COST is not the sentence ("{2}, {T}: When you next activate an exhaust ability that isn't a mana ability this turn, copy it", Pit Automaton, #1650): read from after it.
+  const body = clauseText === undefined ? undefined : clauseText.includes(": ") ? clauseText.slice(clauseText.indexOf(": ") + 2) : clauseText;
+  const m = body === undefined ? null : NAMED_KEYWORD_ABILITY.exec(body.split(",")[0]!);
   if (!m) return undefined;
   const f = parseFilter(m[1]!);
   if (!f?.keyword?.length || !f.abilityKind?.length) return undefined;
@@ -95,6 +103,33 @@ function headNouns(phrase: string): { types: string[]; player: boolean } {
 /** A quoted span is the ability of what it is granted to ("create a Rock token with \"...\"", an emblem's text), never the clause's own. Neither pattern can run past its own closing quote. */
 const QUOTED = /"[^"]*"|\u201c[^\u201c\u201d]*\u201d/g;
 
+/** THE WORDS OF A TARGET PHRASE THE SLOT DOES NOT CAPTURE (#1650 review round 4). A slot carries a head noun, subtypes, colours, negations and whose; a keyword ("with flying"), a state ("attacking", "tapped"), a number
+ *  ("with power 2 or less"), a supertype ("legendary"), a head the grammar missed ("target Vehicle becomes an artifact": the pattern took the noun after it) are none of them. The phrase is stripped of every word the
+ *  slot does say, and what is left is the qualifier it dropped: the slot is then marked `unread`, and a demand that must know the target is the copier ("targets only Bill Potts") refuses it.
+ *  CEILING: the refusal under-claims. A slot whose qualifier is harmless to the demand ("target creature you control with power 2 or less" can still be Bill Potts) is refused too, and so is a harmless tail ("that entered this turn"): a relative or qualifying word after the matched phrase (that, which, who, whose, without, named, not, other than, with, if) and a `token` head mark the slot whatever they say, and colour words count only when the slot carries the colour. The count of marked slots is in the DERIVE 534 note. */
+const KNOWN_WORDS = /\b(?:any|target|other|another|opposing|up|to|one|two|three|four|five|a|an|the|and|or|and\/or|you|control|controls|own|owns|your|opponents?|that|player|they|you|don't|doesn't|defending|cards?|battles?|creatures?|artifacts?|enchantments?|lands?|planeswalkers?|permanents?|players?|spells?|abilit(?:y|ies)|non-?)\b/gi;
+const COLOUR_LETTER: Readonly<Record<string, string>> = { white: "W", blue: "U", black: "B", red: "R", green: "G", colorless: "C", colourless: "C" };
+/** A relative or qualifying tail AFTER the matched phrase ("untap target creature that has an activated ability with {T} in its cost", Magewright's Stone): the pattern stops at the noun, so what follows it is read here (`token` too: the pattern stops at "target creature" and leaves "token"). */
+const QUALIFYING_TAIL = /^\s+(?:tokens?|that|which|who|whose|without|named|not|other than|with|if)\b/i;
+export function uncapturedWords(phrase: string, slot: Partial<SubjectFilter>, rest = ""): string[] {
+  const said = [slot.subtype, slot.notSubtype, slot.notType, slot.type].flat().filter((x): x is string => typeof x === "string").map((x) => x.toLowerCase());
+  // THE COLOURS AND THE TOKEN-NESS THE SLOT SAYS: only a word the slot carries is read ("target black or red permanent" with no colour on its slot is not; "target creature token" with no `token` is not).
+  const colours = new Set([slot.colors, slot.notColors, slot.anyOf?.flatMap((x) => x.colors ?? [])].flat().filter((x): x is string => typeof x === "string"));
+  const left = phrase.toLowerCase().replace(/and\/or/g, " and ").replace(/(?:don|doesn)['\u2019]t/g, " ").replace(/['\u2019,]/g, " ").replace(KNOWN_WORDS, " ").split(/\s+/).filter(Boolean);
+  const saysWord = (w: string): boolean => said.some((x) => w === x || w === `${x}s` || w === `${x}es`);
+  const tail = QUALIFYING_TAIL.exec(rest) ? ["(tail)"] : [];
+  return [...left.filter((w) => {
+    if (saysWord(w)) return false;
+    const colour = COLOUR_LETTER[w];
+    if (colour !== undefined) return !colours.has(colour);
+    if (/^tokens?$/.test(w)) return true; // the slot never records `token`: a token head is always unread
+    const neg = /^non-?(.+)$/.exec(w)?.[1];
+    if (neg === undefined) return true;
+    const letter = COLOUR_LETTER[neg];
+    return !(saysWord(neg) || (letter !== undefined && slot.notColors?.includes(letter)));
+  }), ...tail];
+}
+
 export function targetSlotsOf(
   texts: readonly (string | null | undefined)[],
   cardName: string | undefined,
@@ -114,6 +149,11 @@ export function targetSlotsOf(
         if (f?.type !== undefined) slot.type = f.type;
         if (f?.subtype !== undefined) slot.subtype = f.subtype;
         if (f?.anyOf !== undefined) slot.anyOf = f.anyOf;
+        // A QUALIFIER OF THE TARGET (#1650 review): "target black creature" (Exorcist), "target non-Human creature" (Sigardian Priest), "target blue creature" (Slingshot Goblin) is no target for a copier of another colour or kind.
+        if (f?.colors !== undefined) slot.colors = f.colors;
+        if (f?.notColors !== undefined) slot.notColors = f.notColors;
+        if (f?.notSubtype !== undefined) slot.notSubtype = f.notSubtype;
+        if (f?.notType !== undefined) slot.notType = f.notType;
         if (f && f.control !== "any") slot.control = f.control;
         // THE HEAD NOUN, when the grammar read none ("creature with power 2 or less", "spell with mana value X", "nonland permanent that player controls") or only the first of a list.
         const { types, player } = headNouns(m[0]);
@@ -123,6 +163,7 @@ export function targetSlotsOf(
           else if (slot.type === undefined && player) slot.player = true;
         }
       }
+      if (uncapturedWords(m[0], slot, text.slice(m.index + m[0].length)).length > 0) slot.unread = true;
       // WHOSE: "an opponent controls" / "you don't control" is an opponent's, "you control" is yours. A player slot is the opponent when it says so.
       if (/\b(?:an opponent|your opponents|target opponent|that player|they|opponents|defending player|the defending player) (?:control|controls|own|owns)\b|\byou don't (?:control|own)\b|^target (?:other |opposing )?opponents?$/i.test(m[0])) slot.control = "opp";
       else if (/\byou (?:control|own)\b/i.test(m[0])) slot.control = "you";
@@ -138,3 +179,41 @@ export function targetSlotsOf(
   }
   return slots.length > 0 ? slots : undefined;
 }
+
+/** HOW THE COPIED ABILITY MUST HAVE BEEN PAID (#1650), for a copier that copies only an ability paid a particular way; the matcher tests it against the producer's `Ability.payment`.
+ *  Verrak "if life was paid to activate it" (`life`); Ashnod "if one or more permanents were sacrificed to activate it" (`sacrifice`); Unbound Flourishing "that ability's activation cost contains {X}" and
+ *  Magus Lucea Kane "an ability with {X} in its activation cost" (`x`); Sunken Palace "when you spend this mana to cast a spell or activate an ability" and Dynaheir "by spending four or more mana to activate it" (`mana`).
+ *  CEILING: only these four conditions are read; "four or more" (Dynaheir) is a floor on the cost's mana value the subject does not carry, so `mana` is any mana in the cost. */
+const PAID_LIFE = /\bif life was paid to activate (?:it|that ability)\b/i;
+const PAID_SACRIFICE = /\bif (?:one or more )?(?:permanents? )?(?:was|were) sacrificed to activate (?:it|that ability)\b/i;
+const PAID_X = /\bactivation costs? (?:contains?|includes?) \{X\}|\{X\} in (?:its|their) activation costs?/i;
+/** "when you spend this mana to cast a spell or activate an ability" / "by spending four or more mana to activate it": the phrase up to its comma names an activation. Found with indexOf, not one regex over the span. */
+const spendsOnActivation = (text: string): boolean => {
+  const lower = text.toLowerCase();
+  for (const lead of ["spend this mana to ", "spending "]) {
+    const at = lower.indexOf(lead);
+    if (at < 0) continue;
+    const end = lower.indexOf(",", at);
+    const phrase = lower.slice(at, end < 0 ? undefined : end);
+    if (/\bmana\b/.test(phrase) && /\bactivate\b/.test(phrase)) return true;
+  }
+  return false;
+};
+export const copyPaidWithOf = (clauseText: string | undefined): NonNullable<SubjectFilter["paidWith"]> | undefined => {
+  if (clauseText === undefined) return undefined;
+  if (PAID_LIFE.test(clauseText)) return "life";
+  if (PAID_SACRIFICE.test(clauseText)) return "sacrifice";
+  if (PAID_X.test(clauseText)) return "x";
+  if (spendsOnActivation(clauseText)) return "mana";
+  return undefined;
+};
+
+/** The colours of the mana a copier names as its own ("{1}{U}, {T}, Exile seven cards from your graveyard: Add {U}. When you spend this mana to cast a spell or activate an ability, copy ...", Sunken Palace): the symbols of the
+ *  "Add" sentence just before "When you spend this mana". Read from the card's text, which holds the mana line and the trigger in one paragraph. Colours in WUBRGC order; none when no such sentence. */
+const ADD_THEN_SPEND = /\bAdd ((?:\{[WUBRGC]\})+)\.\s{0,3}When you spend this mana\b/i;
+export const copyPaidColorsOf = (cardText: string | undefined): string[] | undefined => {
+  const m = cardText === undefined ? null : ADD_THEN_SPEND.exec(cardText);
+  if (!m) return undefined;
+  const colours = new Set([...m[1]!.toUpperCase().matchAll(/[WUBRGC]/g)].map((x) => x[0]));
+  return [...colours];
+};

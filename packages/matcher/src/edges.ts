@@ -3836,7 +3836,7 @@ function copyAbilityEdges({ p, c, h, reasons }: PairScope): void {
     const keywords = demand?.keyword?.length ? new Set((p.tags?.characteristics.keywords ?? []).map((k) => k.toLowerCase())) : undefined;
     if (keywords && !demand!.keyword!.every((k) => keywords.has(k.toLowerCase()))) continue;
     const kind = keywords ? kinds[0]
-      : kinds.find((k) => (p.tags?.abilities ?? []).some((pa) => abilityIsKind(pa, k) && copyTargetsAdmit(pa, demand, c, h)));
+      : kinds.find((k) => (p.tags?.abilities ?? []).some((pa) => abilityIsKind(pa, k) && pa.uncopiable !== true && copyTargetsAdmit(pa, demand, c, h) && copyPaidAdmit(pa, demand?.paidWith, demand?.paidColors)));
     if (!kind) continue;
     reasons.push({
       tag: `copies:${kind}`,
@@ -3847,6 +3847,27 @@ function copyAbilityEdges({ p, c, h, reasons }: PairScope): void {
       producer: p.card.name,
     });
   }
+}
+
+/** HOW THE COPIED ABILITY WAS PAID (#1650): Verrak copies an ability "if life was paid to activate it", Ashnod one that sacrificed, Unbound Flourishing and Magus Lucea Kane one with {X} in its activation cost, Sunken
+ *  Palace and Dynaheir one paid with mana. Answered from the producer's own derived cost (`Ability.payment`: `life`, `sacrifice`, `mana`, whose {X} is a symbol of it), the way `copyTargetsAdmit` reads `targets`;
+ *  an ability with no `payment` pays nothing the copier asks for. No demand: any ability.
+ *  CEILING: `Payment` leaves a life payment it cannot read in `other` ("Pay half your life", "Pay 3 life for each ...", "Pay life equal to ...": 4 costs on 8 of 16,383 activated abilities; a Phyrexian mana symbol IS read as a life payment, CR 107.4f: 38 distinct abilities, Birthing Pod) and a sacrifice joined to a counter removal
+ *  ("Remove three quest counters from this enchantment and sacrifice it": 47 abilities of 4,286 that print a sacrifice); those abilities are read as not paid that way, so Verrak and Ashnod miss them (under-claim).
+ *  `mana` with `paidColors` (Sunken Palace's blue mana) admits an ability only if one symbol of its cost that mana can pay: a generic symbol ({0} takes no mana), {X}, a symbol of a named colour, a hybrid or Phyrexian symbol containing one
+ *  ({2/U} through its U part); {S}, a symbol not read, or a cost with no symbol is refused. A copier naming no colour (Dynaheir) takes any mana in the cost. */
+const manaSymbolPayable = (symbol: string, colours: readonly string[]): boolean =>
+  /^(?:[1-9]\d*|X)$/i.test(symbol) || symbol.split("/").some((part) => colours.includes(part.toUpperCase()));
+function copyPaidAdmit(pa: CardTags["abilities"][number], paidWith: SubjectFilter["paidWith"], paidColors?: SubjectFilter["paidColors"]): boolean {
+  if (paidWith === undefined) return true;
+  const pay = pa.payment;
+  if (!pay) return false;
+  if (paidWith === "life") return pay.life !== undefined || /\/P\}/.test(pay.mana ?? ""); // a Phyrexian symbol is paid with 2 life (CR 107.4f)
+  if (paidWith === "sacrifice") return (pay.sacrifice?.length ?? 0) > 0;
+  if (paidWith === "x") return /\{X\}/i.test(pay.mana ?? "");
+  const symbols = (pay.mana ?? "").match(/\{[^{}]+\}/g)?.map((x) => x.slice(1, -1));
+  if (!symbols?.length) return false;
+  return paidColors === undefined || symbols.some((x) => manaSymbolPayable(x, paidColors));
 }
 
 /** WHOSE ABILITY A COPIER MAY COPY (#1648): the copier's source restriction, `subject.abilityOf` -- "from an artifact source" (Tawnos, Scientist Supreme),
@@ -3867,8 +3888,10 @@ function copyTargetsAdmit(pa: CardTags["abilities"][number], demand: SubjectFilt
   if (want === undefined) return true;
   const slots = pa.targets ?? [];
   if (slots.length === 0 || (demand!.targetsOnly === true && slots.length !== 1)) return false;
+  if (Object.keys(want).length === 0) return true; // "with one or more targets" (Wyll's Reversal, #1650): any target at all, a spell or a card included
   const self = want.self === true && copier.tags ? characteristicsSubject(copier.tags, copier.card.name) : undefined;
   return slots.some((cls) => {
+    if (self !== undefined && cls.unread === true) return false; // a qualifier the slot dropped ("with flying", "attacking", "Vehicle"): not known to be the copier (#1650)
     if (self !== undefined && cls.control === "opp") return false; // an opponent's permanent is never the copier
     if (cls.type === undefined && cls.subtype === undefined && cls.player === undefined && cls.anyOf === undefined) return true;
     // A SPELL, ABILITY OR CARD (in a graveyard) is aimed at as such, never a permanent or a player, which `subjectMatches` would let a "spell" be ("a creature spell"). It meets only a demand that names the same word.

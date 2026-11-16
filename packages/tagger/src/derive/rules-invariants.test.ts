@@ -72,6 +72,7 @@ const TESTED: Record<string, string> = {
   "509.1c": "grammar/action.test.ts — a block requirement ('must be blocked if able', 'blocks this creature this turn if able') is the store's cant (#896 fragments 4)",
   "604.3": "grammar/action.test.ts — a characteristic-defining ability ('Titania's power and toughness are each equal to ...') is the card's own modify-pt (#896 fragments 7)",
   "707.9b": "grammar/filter.test.ts — a copy's exceptions ('except it isn't legendary', 'except it has haste') are kept (#896)",
+  "107.4f": "matcher/copy-source.test.ts — a Phyrexian mana symbol is paid with 2 life (Verrak reaches Birthing Pod, #1650); derive only cites it in the 534 note",
   "108.4": "derive.test.ts — a card off the battlefield has no controller: its owner is the `control` derive reads (Ulamog's Nullifier, #896 task 3)",
   "108.3": "grammar/filter.test.ts — ownership beside control: 'you control but don't own' (#896)",
   "715": "grammar/filter.test.ts — an Adventure is a card's layout, read as a status (#896)",

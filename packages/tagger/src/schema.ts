@@ -408,6 +408,16 @@ export interface SubjectFilter {
    *  as the cards mean it (mana abilities do not use the stack, CR 605.3b, and cannot be targeted);
    *  `mana` and `loyalty` are named only when the card names them. */
   abilityKind?: AbilityObjectKind[];
+  /** HOW THE ABILITY WAS PAID, when the copier copies only an ability paid that way (#1650): Verrak "if life was paid to activate it" (`life`), Ashnod "if one or more permanents were sacrificed to activate it"
+   *  (`sacrifice`), Unbound Flourishing and Magus Lucea Kane "an ability with {X} in its activation cost" (`x`), Sunken Palace "when you spend this mana to ... activate an ability" and Dynaheir "by spending four or more
+   *  mana" (`mana`). The matcher answers it from the producer's `Ability.payment` (`life`, `sacrifice`, `mana` holding {X}, `mana`), never from printed text. CEILING: Dynaheir's "four or more" is not
+   *  carried, `mana` is any mana in the cost; a loyalty cost "-X" is not an {X} cost. */
+  paidWith?: "life" | "sacrifice" | "x" | "mana";
+  /** With `paidWith: "mana"`: the colours of the mana the copier names, when it names its own ("Add {U}. When you spend this mana to ... activate an ability", Sunken Palace: `["U"]`; `C` is colourless). The copied
+   *  ability's cost must be one that mana can pay (a generic symbol, {X}, a symbol of one of these colours, a hybrid or Phyrexian symbol containing one). Absent: any mana (Dynaheir). */
+  paidColors?: string[];
+  /** A TARGET SLOT (`Ability.targets`) whose phrase carries a word the slot does not capture (a keyword, a state, a number, a supertype, a head the grammar missed): the slot is partial and a demand that must know the target is the copier refuses it (#1650). */
+  unread?: true;
   /** Counter kind for `counter-added` events, e.g. "+1/+1", "-1/-1", "loyalty". */
   counter?: string;
   /** "a creature you control with A COUNTER on it": some counter, of no stated kind. A producer that
@@ -1550,6 +1560,8 @@ export interface Ability {
    *  sets the trigger up (CR 603.7a), and with the trigger gone the object it points back at has no class. An effect behind the trigger that names no such object keeps its claim (Benefactor's Draught's
    *  "draw a card", Brass Infiniscope's draw and life), as does everything printed before the trigger. */
   claimsNothing?: "refused-trigger" | "self-loss" | "mana-rider";
+  /** The ability prints "This ability can't be copied" (Gogo, Master of Mimicry): no copy-ability effect reaches it (CR 707.10). Set by derive from the ability's own clause. */
+  uncopiable?: true;
   /** A numeric condition on WHEN the ability is on — The Millennium Calendar's "when there are
    *  1,000 or more time counters", Chrome Steed's "as long as you control three or more artifacts",
    *  Urza's Workshop's "activate only if you control three or more artifacts", Gadrak's "can't
