@@ -5427,7 +5427,7 @@ describe("copy-ability (AC12)", () => {
   });
 
   test("Tawnos copies only from an ARTIFACT source", () => {
-    const tawnos = base("Tawnos", [{ kind: "activated", cost: "{U}{R}, {T}", effect: { kind: "copy-ability", subject: { control: "you", token: null, type: "artifact", scope: "target", abilityKind: ["activated", "triggered"] } } }]);
+    const tawnos = base("Tawnos", [{ kind: "activated", cost: "{U}{R}, {T}", effect: { kind: "copy-ability", subject: { control: "you", token: null, scope: "target", abilityKind: ["activated", "triggered"], abilityOf: { control: "any", type: "artifact" } } } }]);
     const artifactTrigger = artifact("Myr Retriever", [{ kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "you", token: null, self: true } }, effect: { kind: "graveyard-recursion" } }]);
     expect(pairReasons(tawnos, artifactTrigger, H).map((r) => r.tag)).toContain("copies:triggered");
     expect(pairReasons(tawnos, solemn, H).map((r) => r.tag)).not.toContain("copies:triggered");

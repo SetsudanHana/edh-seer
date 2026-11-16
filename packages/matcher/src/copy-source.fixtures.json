@@ -1,0 +1,766 @@
+{
+ "Kurkesh, Onakke Ancient": {
+  "typeLine": "Legendary Creature — Ogre Spirit",
+  "oracleText": "Whenever you activate an ability of an artifact, if it isn't a mana ability, you may pay {R}. If you do, copy that ability. You may choose new targets for the copy.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 4,
+  "power": "4",
+  "toughness": "3",
+  "keywords": []
+ },
+ "Tawnos, Urza's Apprentice": {
+  "typeLine": "Legendary Creature — Human Artificer",
+  "oracleText": "Haste\n{U}{R}, {T}: Copy target activated or triggered ability you control from an artifact source. You may choose new targets for the copy. (Mana abilities can't be targeted.)",
+  "colors": [
+   "R",
+   "U"
+  ],
+  "colorIdentity": [
+   "R",
+   "U"
+  ],
+  "manaValue": 2,
+  "power": "1",
+  "toughness": "3",
+  "keywords": [
+   "Haste"
+  ]
+ },
+ "Illusionist's Bracers": {
+  "typeLine": "Artifact — Equipment",
+  "oracleText": "Whenever an ability of equipped creature is activated, if it isn't a mana ability, copy that ability. You may choose new targets for the copy.\nEquip {3}",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 2,
+  "power": null,
+  "toughness": null,
+  "keywords": [
+   "Equip"
+  ]
+ },
+ "Battlemage's Bracers": {
+  "typeLine": "Artifact — Equipment",
+  "oracleText": "Equipped creature has haste.\nWhenever an ability of equipped creature is activated, if it isn't a mana ability, you may pay {1}. If you do, copy that ability. You may choose new targets for the copy.\nEquip {2}",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 3,
+  "power": null,
+  "toughness": null,
+  "keywords": [
+   "Equip"
+  ]
+ },
+ "Chandra's Regulator": {
+  "typeLine": "Legendary Artifact",
+  "oracleText": "Whenever you activate a loyalty ability of a Chandra planeswalker, you may pay {1}. If you do, copy that ability. You may choose new targets for the copy.\n{1}, {T}, Discard a Mountain card or a red card: Draw a card.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 2,
+  "power": null,
+  "toughness": null,
+  "keywords": []
+ },
+ "Rowan's Talent": {
+  "typeLine": "Enchantment — Aura",
+  "oracleText": "Enchant planeswalker\nEnchanted planeswalker has \"[+1]: Up to one target creature gets +2/+0 and gains first strike and trample until end of turn.\"\nWhenever you activate a loyalty ability of enchanted planeswalker, copy that ability. You may choose new targets for the copy.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 4,
+  "power": null,
+  "toughness": null,
+  "keywords": [
+   "Enchant"
+  ]
+ },
+ "The Peregrine Dynamo": {
+  "typeLine": "Legendary Artifact Creature — Construct",
+  "oracleText": "Haste\n{1}, {T}: Copy target activated or triggered ability you control from another legendary source that's not a commander. You may choose new targets for the copy. (Mana abilities can't be targeted.)",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 3,
+  "power": "1",
+  "toughness": "5",
+  "keywords": [
+   "Haste"
+  ]
+ },
+ "Abstruse Archaic": {
+  "typeLine": "Creature — Avatar",
+  "oracleText": "Vigilance\n{1}, {T}: Copy target activated or triggered ability you control from a colorless source. You may choose new targets for the copy. (Mana abilities can't be targeted.)",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 4,
+  "power": "3",
+  "toughness": "4",
+  "keywords": [
+   "Vigilance"
+  ]
+ },
+ "Weaver of Harmony": {
+  "typeLine": "Enchantment Creature — Snake Druid",
+  "oracleText": "Other enchantment creatures you control get +1/+1.\n{G}, {T}: Copy target activated or triggered ability you control from an enchantment source. You may choose new targets for the copy. (Mana abilities can't be targeted.)",
+  "colors": [
+   "G"
+  ],
+  "colorIdentity": [
+   "G"
+  ],
+  "manaValue": 2,
+  "power": "2",
+  "toughness": "2",
+  "keywords": []
+ },
+ "Echo, Perceptive Prodigy": {
+  "typeLine": "Legendary Creature — Human Hero",
+  "oracleText": "Vigilance\n{1}, {T}: Copy target activated or triggered ability you control from a creature source. You may choose new targets for the copy. (Mana abilities can't be targeted.)",
+  "colors": [
+   "U"
+  ],
+  "colorIdentity": [
+   "U"
+  ],
+  "manaValue": 3,
+  "power": "1",
+  "toughness": "4",
+  "keywords": [
+   "Vigilance"
+  ]
+ },
+ "Rings of Brighthearth": {
+  "typeLine": "Artifact",
+  "oracleText": "Whenever you activate an ability, if it isn't a mana ability, you may pay {2}. If you do, copy that ability. You may choose new targets for the copy.",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 3,
+  "power": null,
+  "toughness": null,
+  "keywords": []
+ },
+ "Mistrise Village": {
+  "typeLine": "Land",
+  "oracleText": "This land enters tapped unless you control a Mountain or a Forest.\n{T}: Add {U}.\n{U}, {T}: The next spell you cast this turn can't be countered.",
+  "colors": [],
+  "colorIdentity": [
+   "U"
+  ],
+  "manaValue": 0,
+  "power": null,
+  "toughness": null,
+  "keywords": []
+ },
+ "Vexing Shusher": {
+  "typeLine": "Creature — Goblin Shaman",
+  "oracleText": "This spell can't be countered.\n{R/G}: Target spell can't be countered.",
+  "colors": [
+   "G",
+   "R"
+  ],
+  "colorIdentity": [
+   "G",
+   "R"
+  ],
+  "manaValue": 2,
+  "power": "2",
+  "toughness": "2",
+  "keywords": []
+ },
+ "Sol Ring": {
+  "typeLine": "Artifact",
+  "oracleText": "{T}: Add {C}{C}.",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 1,
+  "power": null,
+  "toughness": null,
+  "keywords": []
+ },
+ "Chandra, Torch of Defiance": {
+  "typeLine": "Legendary Planeswalker — Chandra",
+  "oracleText": "+1: Exile the top card of your library. You may cast that card. If you don't, Chandra deals 2 damage to each opponent.\n+1: Add {R}{R}.\n−3: Chandra deals 4 damage to target creature.\n−7: You get an emblem with \"Whenever you cast a spell, this emblem deals 5 damage to any target.\"",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 4,
+  "power": null,
+  "toughness": null,
+  "keywords": [],
+  "loyalty": "4"
+ },
+ "Prodigal Sorcerer": {
+  "typeLine": "Creature — Human Wizard Sorcerer",
+  "oracleText": "{T}: This creature deals 1 damage to any target.",
+  "colors": [
+   "U"
+  ],
+  "colorIdentity": [
+   "U"
+  ],
+  "manaValue": 3,
+  "power": "1",
+  "toughness": "1",
+  "keywords": []
+ },
+ "Scientist Supreme of A.I.M.": {
+  "typeLine": "Legendary Creature — Human Scientist Villain",
+  "oracleText": "Pay 2 life: Copy target activated or triggered ability you control from an artifact source. You may choose new targets for the copy. Activate only during your turn and only once each turn. (Mana abilities can't be targeted.)",
+  "colors": [
+   "B",
+   "U"
+  ],
+  "colorIdentity": [
+   "B",
+   "U"
+  ],
+  "manaValue": 2,
+  "power": "2",
+  "toughness": "2",
+  "keywords": []
+ },
+ "Ugin, the Spirit Dragon": {
+  "typeLine": "Legendary Planeswalker — Ugin",
+  "oracleText": "+2: Ugin deals 3 damage to any target.\n−X: Exile each permanent with mana value X or less that's one or more colors.\n−10: You gain 7 life, draw seven cards, then put up to seven permanent cards from your hand onto the battlefield.",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 8,
+  "power": null,
+  "toughness": null,
+  "keywords": [],
+  "loyalty": "7"
+ },
+ "Gogo, Master of Mimicry": {
+  "typeLine": "Legendary Creature — Wizard",
+  "oracleText": "{X}{X}, {T}: Copy target activated or triggered ability you control X times. You may choose new targets for the copies. This ability can't be copied and X can't be 0. (Mana abilities can't be targeted.)",
+  "colors": [
+   "U"
+  ],
+  "colorIdentity": [
+   "U"
+  ],
+  "manaValue": 3,
+  "power": "2",
+  "toughness": "4",
+  "keywords": []
+ },
+ "Ertha Jo, Frontier Mentor": {
+  "typeLine": "Legendary Creature — Kor Advisor",
+  "oracleText": "When Ertha Jo enters, create a 1/1 red Mercenary creature token with \"{T}: Target creature you control gets +1/+0 until end of turn. Activate only as a sorcery.\"\nWhenever you activate an ability that targets a creature or player, copy that ability. You may choose new targets for the copy.",
+  "colors": [
+   "R",
+   "W"
+  ],
+  "colorIdentity": [
+   "R",
+   "W"
+  ],
+  "manaValue": 4,
+  "power": "2",
+  "toughness": "4",
+  "keywords": []
+ },
+ "Radiant Performer": {
+  "typeLine": "Creature — Human Wizard",
+  "oracleText": "Flash\nWhen this creature enters, if you cast it from your hand, choose target spell or ability that targets only a single permanent or player. Copy that spell or ability for each other permanent or player the spell or ability could target. Each copy targets a different one of those permanents and players.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 5,
+  "power": "2",
+  "toughness": "2",
+  "keywords": [
+   "Flash"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "this creature from your hand",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "copy",
+      "object": "target spell or ability that targets only a single permanent or player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each other permanent or player the spell or ability could target",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Agrus Kos, Eternal Soldier": {
+  "typeLine": "Legendary Creature — Spirit Soldier",
+  "oracleText": "Vigilance\nWhenever Agrus Kos becomes the target of an ability that targets only it, you may pay {1}{R/W}. If you do, copy that ability for each other creature you control that ability could target. Each copy targets a different one of those creatures. ({R/W} can be paid with either {R} or {W}.)",
+  "colors": [
+   "W"
+  ],
+  "colorIdentity": [
+   "R",
+   "W"
+  ],
+  "manaValue": 4,
+  "power": "3",
+  "toughness": "4",
+  "keywords": [
+   "Vigilance"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "becomes-target",
+     "subject": "an ability that targets only Agrus Kos",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "that ability for each other creature you control that ability could target",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ },
+ "Bill Potts": {
+  "typeLine": "Legendary Creature — Human",
+  "oracleText": "Whenever you cast an instant or sorcery spell that targets only Bill Potts or activate an ability that targets only Bill Potts, copy that spell or ability. You may choose new targets for the copy. This ability triggers only once each turn.\nDoctor's companion (You can have two commanders if the other is the Doctor.)",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 4,
+  "power": "2",
+  "toughness": "4",
+  "keywords": [
+   "Doctor's companion"
+  ]
+ },
+ "Mirror-Shield Hoplite": {
+  "typeLine": "Creature — Human Soldier",
+  "oracleText": "Vigilance\nWhenever a creature you control becomes the target of a backup ability, copy that ability. You may choose new targets for the copy. This ability triggers only once each turn.",
+  "colors": [
+   "R",
+   "W"
+  ],
+  "colorIdentity": [
+   "R",
+   "W"
+  ],
+  "manaValue": 2,
+  "power": "2",
+  "toughness": "2",
+  "keywords": [
+   "Vigilance"
+  ]
+ },
+ "Conclave Sledge-Captain": {
+  "typeLine": "Creature — Elephant Soldier",
+  "oracleText": "Backup 1, backup 1, backup 1 (When this creature enters, put a +1/+1 counter on target creature. If that's another creature, it gains the following abilities until end of turn. Each backup ability triggers separately.)\nTrample\nWhenever this creature deals combat damage to a player, put that many +1/+1 counters on it.",
+  "colors": [
+   "G"
+  ],
+  "colorIdentity": [
+   "G"
+  ],
+  "manaValue": 6,
+  "power": "4",
+  "toughness": "4",
+  "keywords": [
+   "Backup",
+   "Trample"
+  ]
+ },
+ "Mother of Runes": {
+  "typeLine": "Creature — Human Cleric",
+  "oracleText": "{T}: Target creature you control gains protection from the color of your choice until end of turn.",
+  "colors": [
+   "W"
+  ],
+  "colorIdentity": [
+   "W"
+  ],
+  "manaValue": 1,
+  "power": "1",
+  "toughness": "1",
+  "keywords": []
+ },
+ "Goblin Welder": {
+  "typeLine": "Creature — Goblin Artificer",
+  "oracleText": "{T}: Choose target artifact a player controls and target artifact card in that player's graveyard. If both targets are still legal as this ability resolves, that player simultaneously sacrifices the artifact and returns the artifact card to the battlefield.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 1,
+  "power": "1",
+  "toughness": "1",
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "target artifact a player controls",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "target artifact card in that player's graveyard",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Guardian Scalelord": {
+  "typeLine": "Creature — Dragon",
+  "oracleText": "Backup 1 (When this creature enters, put a +1/+1 counter on target creature. If that's another creature, it gains the following abilities until end of turn.)\nFlying\nWhenever this creature attacks, return target nonland permanent card with mana value X or less from your graveyard to the battlefield, where X is this creature's power.",
+  "colors": [
+   "W"
+  ],
+  "colorIdentity": [
+   "W"
+  ],
+  "manaValue": 5,
+  "power": "3",
+  "toughness": "4",
+  "keywords": [
+   "Flying",
+   "Backup"
+  ]
+ },
+ "Kozilek, the Great Distortion": {
+  "typeLine": "Legendary Creature — Eldrazi",
+  "oracleText": "When you cast this spell, if you have fewer than seven cards in hand, draw cards equal to the difference.\nMenace\nDiscard a card with mana value X: Counter target spell with mana value X.",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 10,
+  "power": "12",
+  "toughness": "12",
+  "keywords": [
+   "Menace"
+  ]
+ },
+ "Spellstutter Sprite": {
+  "typeLine": "Creature — Faerie Wizard",
+  "oracleText": "Flash\nFlying\nWhen this creature enters, counter target spell with mana value X or less, where X is the number of Faeries you control.",
+  "colors": [
+   "U"
+  ],
+  "colorIdentity": [
+   "U"
+  ],
+  "manaValue": 2,
+  "power": "1",
+  "toughness": "1",
+  "keywords": [
+   "Flying",
+   "Flash"
+  ]
+ },
+ "Toggo, Goblin Weaponsmith": {
+  "typeLine": "Legendary Creature — Goblin Artificer",
+  "oracleText": "Landfall — Whenever a land you control enters, create a colorless Equipment artifact token named Rock with \"Equipped creature has '{1}, {T}, Sacrifice Rock: This creature deals 2 damage to any target'\" and equip {1}.\nPartner (You can have two commanders if both have partner.)",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 3,
+  "power": "2",
+  "toughness": "2",
+  "keywords": [
+   "Partner",
+   "Landfall"
+  ]
+ },
+ "Karn, Living Legacy": {
+  "typeLine": "Legendary Planeswalker — Karn",
+  "oracleText": "+1: Create a tapped Powerstone token. (It's an artifact with \"{T}: Add {C}. This mana can't be spent to cast a nonartifact spell.\")\n−1: Pay any amount of mana. Look at that many cards from the top of your library, then put one of those cards into your hand and the rest on the bottom of your library in a random order.\n−7: You get an emblem with \"Tap an untapped artifact you control: This emblem deals 1 damage to any target.\"",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 4,
+  "power": null,
+  "toughness": null,
+  "keywords": [],
+  "loyalty": "4",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a tapped Powerstone token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "search",
+      "object": "that many cards from the top of your library",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "one of those cards",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "emblem",
+      "object": "an emblem with \"Tap an untapped artifact you control: This emblem deals 1 damage to any target.\"",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Icy Manipulator": {
+  "typeLine": "Artifact",
+  "oracleText": "{1}, {T}: Tap target artifact, creature, or land.",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 4,
+  "power": null,
+  "toughness": null,
+  "keywords": []
+ },
+ "Teferi, Time Raveler": {
+  "typeLine": "Legendary Planeswalker — Teferi",
+  "oracleText": "Each opponent can cast spells only any time they could cast a sorcery.\n+1: Until your next turn, you may cast sorcery spells as though they had flash.\n−3: Return up to one target artifact, creature, or enchantment to its owner's hand. Draw a card.",
+  "colors": [
+   "U",
+   "W"
+  ],
+  "colorIdentity": [
+   "U",
+   "W"
+  ],
+  "manaValue": 3,
+  "power": null,
+  "toughness": null,
+  "keywords": [],
+  "loyalty": "4",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "cast spells except at a time they could cast a sorcery",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "sorcery spells as though they had flash",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "up to one target artifact, creature, or enchantment",
+      "fromZone": "battlefield",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Koth of the Hammer": {
+  "typeLine": "Legendary Planeswalker — Koth",
+  "oracleText": "+1: Untap target Mountain. It becomes a 4/4 red Elemental creature until end of turn. It's still a land.\n−2: Add {R} for each Mountain you control.\n−5: You get an emblem with \"Mountains you control have '{T}: This land deals 1 damage to any target.'\"",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 4,
+  "power": null,
+  "toughness": null,
+  "keywords": [],
+  "loyalty": "3",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "untap",
+      "object": "target Mountain",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "animate",
+      "object": "target Mountain",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{R}",
+      "amount": "each Mountain you control",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "emblem",
+      "object": "Mountains you control have '{T}: This land deals 1 damage to any target.'",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ]
+ }
+}

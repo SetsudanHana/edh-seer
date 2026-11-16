@@ -3830,7 +3830,13 @@ function copyAbilityEdges({ p, c, h, reasons }: PairScope): void {
     const kinds = a.effect.subject?.abilityKind ?? ["activated", "triggered"];
     const wanted = a.effect.subject?.type;
     if (wanted !== undefined && !typeMatchesCharacteristics(wanted, p.tags?.characteristics, h)) continue;
-    const kind = kinds.find((k) => (p.tags?.abilities ?? []).some((pa) => abilityIsKind(pa, k)));
+    if (a.effect.subject?.abilityOf !== undefined && !copySourceAdmits(p, a.effect.subject.abilityOf, h)) continue;
+    const demand = a.effect.subject;
+    // A KEYWORD ABILITY (#1648): "a backup ability" (Mirror-Shield Hoplite) is the producer's printed keyword; no derived ability stands for it.
+    const keywords = demand?.keyword?.length ? new Set((p.tags?.characteristics.keywords ?? []).map((k) => k.toLowerCase())) : undefined;
+    if (keywords && !demand!.keyword!.every((k) => keywords.has(k.toLowerCase()))) continue;
+    const kind = keywords ? kinds[0]
+      : kinds.find((k) => (p.tags?.abilities ?? []).some((pa) => abilityIsKind(pa, k) && copyTargetsAdmit(pa, demand, c, h)));
     if (!kind) continue;
     reasons.push({
       tag: `copies:${kind}`,
@@ -3841,6 +3847,45 @@ function copyAbilityEdges({ p, c, h, reasons }: PairScope): void {
       producer: p.card.name,
     });
   }
+}
+
+/** WHOSE ABILITY A COPIER MAY COPY (#1648): the copier's source restriction, `subject.abilityOf` -- "from an artifact source" (Tawnos, Scientist Supreme),
+ *  "an ability of an artifact" (Kurkesh), "of a Chandra planeswalker" (Chandra's Regulator), "from another legendary source that's not a commander" (The Peregrine
+ *  Dynamo), "from a colorless source" (Abstruse Archaic). The source is the producer card itself, so its own characteristics answer the filter, through the same
+ *  `subjectMatches` every other subject goes through; `characteristicsSubject` states the producer's types, supertypes, subtypes and colours (`[]` is colourless).
+ *  Dropped before asking: `control` (the copier's own control field says whose ability, handled above), `other` (the copier never copies itself: `p === c` is refused
+ *  by the caller), and the CHOICE a copier makes at resolution (Leori's "a planeswalker of the chosen type": any planeswalker can be the one chosen).
+ *  A HOST RESTRICTION (the Bracers, Rowan's Talent) is derived as `status: ["equipped" | "enchanted"]` and is not demanded of the producer (see below).
+ *  CEILING: a copier whose source is the controller's ("you control") is not checked for control against the producer; the deck holds the copier's own cards only. */
+/** WHAT THE COPIED ABILITY TARGETS (#1648): "an ability that targets a creature or player" (Ertha Jo), "that targets only a single permanent or player" (Radiant Performer), "that targets only ~" (Agrus Kos, Bill
+ *  Potts). The producer side is `Ability.targets`, the classes its clause aims at (one entry per target, `control: opp` when the clause says so); an UNTYPED entry ("any target", "target player", derive keeps neither apart) could be anything
+ *  and meets every demand. A demand on `self` (the copier is the one targeted) is met by a target class the copier belongs to. An ability that aims at nothing never meets a targets demand.
+ *  CEILING: an untyped target admits "target player" for a "targets only ~" copier; the target's controller is not read,
+ *  an opponent's target is read only when the clause says "an opponent controls"; no demand, no check. */
+function copyTargetsAdmit(pa: CardTags["abilities"][number], demand: SubjectFilter | undefined, copier: DeckCard, h: Hierarchy): boolean {
+  const want = demand?.targets;
+  if (want === undefined) return true;
+  const slots = pa.targets ?? [];
+  if (slots.length === 0 || (demand!.targetsOnly === true && slots.length !== 1)) return false;
+  const self = want.self === true && copier.tags ? characteristicsSubject(copier.tags, copier.card.name) : undefined;
+  return slots.some((cls) => {
+    if (self !== undefined && cls.control === "opp") return false; // an opponent's permanent is never the copier
+    if (cls.type === undefined && cls.subtype === undefined && cls.player === undefined && cls.anyOf === undefined) return true;
+    // A SPELL, ABILITY OR CARD (in a graveyard) is aimed at as such, never a permanent or a player, which `subjectMatches` would let a "spell" be ("a creature spell"). It meets only a demand that names the same word.
+    if (cls.type !== undefined && [cls.type].flat().every((x) => x === "spell" || x === "ability" || x === "card")) return [cls.type].flat().some((x) => JSON.stringify(want).includes(`"${x}"`));
+    if (self !== undefined) return cls.control !== "opp" && subjectMatches(self, { control: "any", token: null, ...cls, ...(cls.control ? { control: "any" as const } : {}) }, h);
+    const { control: _c, token: _t, ...wanted } = want;
+    return subjectMatches({ control: "any", token: null, ...cls }, { control: "any", token: null, ...wanted }, h);
+  });
+}
+
+function copySourceAdmits(p: DeckCard, abilityOf: Partial<SubjectFilter>, h: Hierarchy): boolean {
+  if (!p.tags) return false;
+  const { control: _c, other: _o, chosenType: _ct, chosenKind: _ck, chosenNegated: _cn, status, ...source } = abilityOf;
+  // A HOST (`status: ["equipped"]` / `["enchanted"]`: the Bracers, Rowan's Talent) is not asked of the producer (owner ruling 2026-11-15): an Equipment or an Aura is a normal deck plan, so the copier
+  // pairs with every creature or planeswalker whose ability it could copy. The status stays derived, as the fact the card prints; the TYPE beside it is still demanded.
+  const rest = (status ?? []).filter((x) => x !== "equipped" && x !== "enchanted");
+  return subjectMatches(characteristicsSubject(p.tags, p.card.name), { control: "any", token: null, ...source, ...(rest.length ? { status: rest } : {}) }, h);
 }
 
 /** The tokens a card is MEANT to be sacrificed as (ARTIFACT_TOKEN_KINDS `fodder`: exactly Food, Treasure, Clue, Blood, Gold). */
