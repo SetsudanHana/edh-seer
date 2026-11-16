@@ -1905,3 +1905,51 @@ test("'empower Jace X, where X is ...' on a Jace card keeps the keyword's Jace a
   expect(g.blocker).toBeUndefined();
   expect(g.records[0]!.actions).toMatchObject([{ verb: "empower-jace", amount: "the number of Islands you control" }]);
 });
+
+// #1349 last items: a card's short name used as a TYPE is a class, not the card (CR 205.3j planeswalker types, CR 205.3m creature types: a card's name can be one of them).
+// Real oracle text (Mongo `cards`, 2026-11-16).
+const GARRUK_CURSED_HUNTSMAN = { name: "Garruk, Cursed Huntsman", typeLine: "Legendary Planeswalker — Garruk", oracleText: "0: Create two 2/2 black and green Wolf creature tokens with \"When this token dies, put a loyalty counter on each Garruk you control.\"\n−3: Destroy target creature. Draw a card.\n−6: You get an emblem with \"Creatures you control get +3/+3 and have trample.\"" };
+const AUROCHS = { name: "Aurochs", typeLine: "Creature — Aurochs", oracleText: "Trample\nWhenever this creature attacks, it gets +1/+0 until end of turn for each other attacking Aurochs." };
+
+test("a short name used as a type stays the type: each/a/another/non- <Name> [planeswalker], <Name> planeswalkers", () => {
+  expect(selfAsTilde("put a loyalty counter on each Garruk you control", "Garruk, Cursed Huntsman")).toBe("put a loyalty counter on each Garruk you control");
+  expect(selfAsTilde("as long as you control a Lukka planeswalker", "Lukka, Coppercoat Outcast")).toBe("as long as you control a Lukka planeswalker");
+  expect(selfAsTilde("two or more non-Gideon creatures", "Gideon, the Oathsworn")).toBe("two or more non-Gideon creatures");
+  expect(selfAsTilde("for each other attacking Aurochs", "Aurochs")).toBe("for each other attacking Aurochs");
+  expect(selfAsTilde("becomes a green Lizard creature", "Lizard, Connors's Curse")).toBe("becomes a green Lizard creature");
+  expect(selfAsTilde("activate loyalty abilities of Jace planeswalkers you control", "Jace, Mirror Mage")).toBe("activate loyalty abilities of Jace planeswalkers you control");
+  // The card itself, by the same name, is still the card.
+  expect(selfAsTilde("Garruk deals 3 damage to target creature", "Garruk, Cursed Huntsman")).toBe("~ deals 3 damage to target creature");
+  expect(selfAsTilde("Sacrifice Kirk", "Kirk, Captain")).toBe("Sacrifice ~");
+  expect(selfAsTilde("Lukka's power is 3", "Lukka, Coppercoat Outcast")).toBe("~'s power is 3");
+  expect(selfAsTilde("a creature other than Ral", "Ral, Crackling Wit")).toBe("a creature other than ~");
+  expect(selfAsTilde("put a loyalty counter on Garruk", "Garruk, Cursed Huntsman")).toBe("put a loyalty counter on ~");
+  expect(selfAsTilde("create a token that's a copy of Jace, except it's not legendary", "Jace, Mirror Mage")).toBe("create a token that's a copy of ~, except it's not legendary");
+});
+
+test("'each Garruk you control' stays a class the card's grammar refuses to guess at, never the card itself (Garruk, Cursed Huntsman)", () => {
+  const g = grammarClauseRecords(GARRUK_CURSED_HUNTSMAN);
+  expect(g.complete).toBe(false);
+  expect(g.blocker).toMatchObject({ clause: 2, phrase: "put a loyalty counter on each Garruk you control" });
+});
+
+test("a creature type named like the card reads as the type (Lizard, Connors's Curse: 'a green Lizard creature'; Elemental, My Dear: 'an 0/0 Blue Elemental creature token')", () => {
+  const lizard = grammarClauseRecords({ name: "Lizard, Connors's Curse", typeLine: "Legendary Creature — Lizard Villain", oracleText: "Trample\nLizard Formula \u2014 When Lizard, Connors's Curse enters, up to one other target creature loses all abilities and becomes a green Lizard creature with base power and toughness 4/4." });
+  expect(lizard.blocker).toBeUndefined();
+  expect(lizard.complete).toBe(true);
+  expect(selfAsTilde("create an 0/0 Blue Elemental creature token", "Elemental, My Dear")).toBe("create an 0/0 Blue Elemental creature token");
+});
+
+test("'for each other attacking Aurochs' counts the type, and the pump stays on the card itself (Aurochs)", () => {
+  const g = grammarClauseRecords(AUROCHS);
+  expect(g.complete).toBe(true);
+  expect(JSON.stringify(g.records)).not.toContain("attacking ~");
+});
+
+test("'each player exiles all but the bottom six cards of their library face down' is a library exile of each player's own library (Doomsday Excruciator)", () => {
+  const g = grammarClauseRecords({ name: "Doomsday Excruciator", typeLine: "Creature \u2014 Demon", oracleText: "Flying\nWhen this creature enters, if it was cast, each player exiles all but the bottom six cards of their library face down.\nAt the beginning of your upkeep, draw a card." });
+  expect(g.blocker).toBeUndefined();
+  expect(g.complete).toBe(true);
+  const tags = deriveCardTags(deriveInputOf({ name: "Doomsday Excruciator", typeLine: "Creature \u2014 Demon", oracleText: "" } as never, "x", "Doomsday Excruciator", g.records, undefined, g.readings));
+  expect(tags.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "exiled")!.subject).toMatchObject({ scope: "each", fromZone: "library" });
+});

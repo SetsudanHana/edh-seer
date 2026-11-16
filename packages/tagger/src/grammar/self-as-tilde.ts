@@ -56,12 +56,23 @@ export function selfPronouns(effect: string): string {
  *  is another object's name, not the card's; the literal "CARDNAME" is the name too.
  *  CASE-SENSITIVE: Oracle capitalises a name, and Storm, Force of Nature's "has storm" is the keyword,
  *  not the card.
- *  NEVER AFTER "empower" (CR 701.71, Empower Jace): the word there is the planeswalker TYPE the keyword action names, not a reference to the card, so on a card named
+ *  NEVER A CLASS (#1349): the card's short name used as a TYPE is the type, not the card, whenever it follows an
+ *  article or quantifier (each/a/an/another/other/non-, with the adjectives a class takes between them) or is followed by
+ *  "planeswalker(s)": "put a loyalty counter on each Garruk you control" (Garruk, Cursed Huntsman), "a Lukka planeswalker",
+ *  "non-Gideon creatures", "for each other attacking Aurochs", "a green Lizard creature". A card never calls itself
+ *  "a Garruk" or "each Garruk"; "other than Ral" is still the card.
+ *  The same holds after "empower" (CR 701.71, Empower Jace): the word there is the planeswalker TYPE the keyword action names, so on a card named
  *  "Jace, ..." (Jace, Reality Sculptor: "Empower Jace X") it stays "Jace" and the keyword action reads. */
+// CEILING: the adjectives a class may take between its determiner and the name are a finite list (colours, combat and
+// tap states, token, legendary, P/T); a class phrase with any other adjective, or a bare "target Garruk", still reads as the card.
+const CLASS_BEFORE = /(?:\b(?:each|an?|another|other)\s+|\bnon-?|\bempower\s+)(?:(?:other|attacking|blocking|tapped|untapped|nontoken|token|legendary|nonlegendary|\d+\/\d+|white|blue|black|red|green|colorless|multicolored|monocolored)\s+)*$/i;
+const CLASS_AFTER = /^ planeswalkers?\b/;
+
 export function selfAsTilde(phrase: string, name: string): string {
   let out = phrase.replace(/\bCARDNAME\b/g, "~");
   for (const n of selfNames(name)) {
-    out = out.replace(new RegExp(`(?<![\\w'])(?<!\\b[Ee]mpower )${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?!\\w|'(?!s\\b)|'s [A-Z])`, "g"), "~");
+    out = out.replace(new RegExp(`(?<![\\w'])${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?!\\w|'(?!s\\b)|'s [A-Z])`, "g"), (m, offset: number, whole: string) =>
+      CLASS_BEFORE.test(whole.slice(0, offset)) || CLASS_AFTER.test(whole.slice(offset + m.length)) ? m : "~");
   }
   return out;
 }
