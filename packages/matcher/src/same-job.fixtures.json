@@ -4835,6 +4835,9 @@
      "repeats": "once",
      "targets": [
       {
+       "notType": [
+        "land"
+       ],
        "type": [
         "creature",
         "artifact",
@@ -4932,6 +4935,9 @@
      "repeats": "once",
      "targets": [
       {
+       "notType": [
+        "land"
+       ],
        "type": [
         "creature",
         "artifact",

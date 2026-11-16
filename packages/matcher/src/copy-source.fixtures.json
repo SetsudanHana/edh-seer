@@ -934,46 +934,6 @@
   "toughness": null,
   "keywords": [
    "Double"
-  ],
-  "clauses": [
-   {
-    "id": 1,
-    "abilityType": "triggered",
-    "trigger": {
-     "event": "cast",
-     "subject": "a permanent spell with a mana cost that contains {X}",
-     "control": "you"
-    },
-    "actions": [
-     {
-      "verb": "double",
-      "object": "the value of X",
-      "fromZone": null,
-      "toZone": null,
-      "amount": null,
-      "optional": false
-     }
-    ]
-   },
-   {
-    "id": 2,
-    "abilityType": "triggered",
-    "trigger": {
-     "event": "cast",
-     "subject": "an instant or sorcery spell or activate an ability, if that spell's mana cost or that ability's activation cost contains {X}",
-     "control": "you"
-    },
-    "actions": [
-     {
-      "verb": "copy",
-      "object": "that spell or ability",
-      "fromZone": null,
-      "toZone": null,
-      "amount": null,
-      "optional": true
-     }
-    ]
-   }
   ]
  },
  "Pit Automaton": {
@@ -1112,78 +1072,7 @@
   "manaValue": 0,
   "power": null,
   "toughness": null,
-  "keywords": [],
-  "clauses": [
-   {
-    "id": 1,
-    "abilityType": "static",
-    "actions": [
-     {
-      "verb": "tap",
-      "object": "this",
-      "fromZone": null,
-      "toZone": null,
-      "amount": null,
-      "optional": false
-     }
-    ]
-   },
-   {
-    "id": 2,
-    "abilityType": "activated",
-    "actions": [
-     {
-      "verb": "add-mana",
-      "object": "{U}",
-      "fromZone": null,
-      "toZone": null,
-      "amount": null,
-      "optional": false
-     }
-    ]
-   },
-   {
-    "id": 3,
-    "abilityType": "activated",
-    "actions": [
-     {
-      "verb": "exile",
-      "object": "seven cards from your graveyard",
-      "fromZone": "graveyard",
-      "toZone": "exile",
-      "amount": "seven",
-      "optional": false
-     },
-     {
-      "verb": "add-mana",
-      "object": "{U}",
-      "fromZone": null,
-      "toZone": null,
-      "amount": null,
-      "optional": false
-     }
-    ]
-   },
-   {
-    "id": 4,
-    "abilityType": "triggered",
-    "trigger": {
-     "event": "tapped-for-mana",
-     "subject": "this",
-     "control": "you"
-    },
-    "actions": [
-     {
-      "verb": "copy",
-      "object": "that spell or ability",
-      "fromZone": null,
-      "toZone": null,
-      "amount": null,
-      "optional": false
-     }
-    ]
-   }
-  ]
+  "keywords": []
  },
  "Repeated Reverberation": {
   "typeLine": "Instant",
@@ -1414,5 +1303,75 @@
     ]
    }
   ]
+ },
+ "Birthing Pod": {
+  "typeLine": "Artifact",
+  "oracleText": "({G/P} can be paid with either {G} or 2 life.)\n{1}{G/P}, {T}, Sacrifice a creature: Search your library for a creature card with mana value equal to 1 plus the sacrificed creature's mana value, put that card onto the battlefield, then shuffle. Activate only as a sorcery.",
+  "colors": [
+   "G"
+  ],
+  "colorIdentity": [
+   "G"
+  ],
+  "manaValue": 4,
+  "power": null,
+  "toughness": null,
+  "keywords": []
+ },
+ "Exorcist": {
+  "typeLine": "Creature — Human Cleric",
+  "oracleText": "{1}{W}, {T}: Destroy target black creature.",
+  "colors": [
+   "W"
+  ],
+  "colorIdentity": [
+   "W"
+  ],
+  "manaValue": 2,
+  "power": "1",
+  "toughness": "1",
+  "keywords": []
+ },
+ "Sigardian Priest": {
+  "typeLine": "Creature — Human Cleric",
+  "oracleText": "{1}, {T}: Tap target non-Human creature.",
+  "colors": [
+   "W"
+  ],
+  "colorIdentity": [
+   "W"
+  ],
+  "manaValue": 2,
+  "power": "1",
+  "toughness": "2",
+  "keywords": []
+ },
+ "Slingshot Goblin": {
+  "typeLine": "Creature — Goblin",
+  "oracleText": "{R}, {T}: This creature deals 2 damage to target blue creature.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 3,
+  "power": "2",
+  "toughness": "2",
+  "keywords": []
+ },
+ "Akki Drillmaster": {
+  "typeLine": "Creature — Goblin Shaman",
+  "oracleText": "{T}: Target creature gains haste until end of turn.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 3,
+  "power": "2",
+  "toughness": "2",
+  "keywords": []
  }
 }

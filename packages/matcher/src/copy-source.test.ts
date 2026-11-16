@@ -212,3 +212,23 @@ describe("a copier of 'that spell or ability' pairs with abilities (#1650)", () 
     expect(kindReach("Bill Potts")).toEqual(["Prodigal Sorcerer", "Chandra, Torch of Defiance", "Ugin, the Spirit Dragon", "Mother of Runes", "Forsworn Paladin", "Icy Manipulator", "Kalitas, Bloodchief of Ghet"]);
   });
 });
+
+describe("review round 3 (#1650)", () => {
+  test("a Phyrexian mana symbol is paid with 2 life (CR 107.4f): Verrak reaches Birthing Pod, and still not a plain-mana ability", () => {
+    expect(copies("Verrak, Warped Sengir", "Birthing Pod")).toEqual(["copies:activated"]);
+    expect(copies("Verrak, Warped Sengir", "Icy Manipulator")).toEqual([]);
+  });
+  test("a target slot keeps its colour and its negated subtype: Bill Potts (red Human) is no target of 'black creature', 'non-Human creature' or 'blue creature'", () => {
+    for (const s of ["Exorcist", "Sigardian Priest", "Slingshot Goblin"]) expect(copies("Bill Potts", s)).toEqual([]);
+    expect(copies("Bill Potts", "Akki Drillmaster")).toEqual(["copies:activated"]);
+    expect(copies("Bill Potts", "Forsworn Paladin")).toEqual(["copies:activated"]);
+  });
+  test("derive: Gogo's own ability is marked uncopiable (it prints 'This ability can't be copied'); no other card's ability here is", () => {
+    expect(card("Gogo, Master of Mimicry").tags!.abilities.find((a) => a.effect.kind === "copy-ability")!.uncopiable).toBe(true);
+    expect(card("Icy Manipulator").tags!.abilities.some((a) => a.uncopiable)).toBe(false);
+  });
+  test("an ability that can't be copied is no producer: none of Unbound Flourishing, Sunken Palace, Wyll's Reversal or Rings of Brighthearth copies Gogo's ability (Gogo copying THEIR triggers is another pair)", () => {
+    for (const c of ["Unbound Flourishing", "Sunken Palace", "Wyll's Reversal", "Rings of Brighthearth"]) expect([c, pairReasons(card(c), card("Gogo, Master of Mimicry"), H).filter((r) => r.consumer === c && r.tag.startsWith("copies:")).map((r) => r.tag)]).toEqual([c, []]);
+    expect(copies("Rings of Brighthearth", "Icy Manipulator")).toEqual(["copies:activated"]);
+  });
+});

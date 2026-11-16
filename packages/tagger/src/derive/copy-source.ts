@@ -122,6 +122,11 @@ export function targetSlotsOf(
         if (f?.type !== undefined) slot.type = f.type;
         if (f?.subtype !== undefined) slot.subtype = f.subtype;
         if (f?.anyOf !== undefined) slot.anyOf = f.anyOf;
+        // A QUALIFIER OF THE TARGET (#1650 review): "target black creature" (Exorcist), "target non-Human creature" (Sigardian Priest), "target blue creature" (Slingshot Goblin) is no target for a copier of another colour or kind.
+        if (f?.colors !== undefined) slot.colors = f.colors;
+        if (f?.notColors !== undefined) slot.notColors = f.notColors;
+        if (f?.notSubtype !== undefined) slot.notSubtype = f.notSubtype;
+        if (f?.notType !== undefined) slot.notType = f.notType;
         if (f && f.control !== "any") slot.control = f.control;
         // THE HEAD NOUN, when the grammar read none ("creature with power 2 or less", "spell with mana value X", "nonland permanent that player controls") or only the first of a list.
         const { types, player } = headNouns(m[0]);

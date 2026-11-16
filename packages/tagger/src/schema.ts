@@ -1558,6 +1558,8 @@ export interface Ability {
    *  sets the trigger up (CR 603.7a), and with the trigger gone the object it points back at has no class. An effect behind the trigger that names no such object keeps its claim (Benefactor's Draught's
    *  "draw a card", Brass Infiniscope's draw and life), as does everything printed before the trigger. */
   claimsNothing?: "refused-trigger" | "self-loss" | "mana-rider";
+  /** The ability prints "This ability can't be copied" (Gogo, Master of Mimicry): no copy-ability effect reaches it (CR 707.10). Set by derive from the ability's own clause. */
+  uncopiable?: true;
   /** A numeric condition on WHEN the ability is on — The Millennium Calendar's "when there are
    *  1,000 or more time counters", Chrome Steed's "as long as you control three or more artifacts",
    *  Urza's Workshop's "activate only if you control three or more artifacts", Gadrak's "can't

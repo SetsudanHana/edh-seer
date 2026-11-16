@@ -647,6 +647,9 @@
      "targets": [
       {
        "control": "opp",
+       "notType": [
+        "land"
+       ],
        "type": [
         "creature",
         "artifact",

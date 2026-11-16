@@ -1087,6 +1087,9 @@
      "repeats": "repeatable",
      "targets": [
       {
+       "notColors": [
+        "B"
+       ],
        "type": "creature"
       }
      ]
@@ -1131,6 +1134,9 @@
      "repeats": "repeatable",
      "targets": [
       {
+       "notColors": [
+        "B"
+       ],
        "type": "creature"
       }
      ]
@@ -3690,6 +3696,9 @@
      "repeats": "once",
      "targets": [
       {
+       "notColors": [
+        "B"
+       ],
        "type": "creature"
       }
      ]
