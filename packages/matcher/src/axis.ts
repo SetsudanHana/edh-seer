@@ -42,8 +42,8 @@ export function buildAxis(
  *  `fodder:X` feeds the deck's sacrifice/death theme on X; `scales:X` grows with the board of X;
  *  `cheat:X` puts X onto the battlefield; `creates:X` makes X. Step 1 of #972. Step 2 (#1095, owner
  *  ruling 2026-11-16 "Mixed"): `graveyard-recursion:X` and `recursion-target:X` ride the deck's
- *  death / graveyard-fill theme on X, `prowess:X` its cast theme (`prowess:-creature` is the
- *  noncreature-cast trigger, key `cast:-creature`), `threshold:X` its graveyard-fill theme. */
+ *  death / graveyard-fill theme on X, `threshold:X` its graveyard-fill theme. `prowess` is NOT here:
+ *  see `ZERO_ON_PURPOSE`. */
 export const RELATION_PARENTS: Record<string, readonly string[]> = {
   fodder: ["sacrifice", "dies"],
   // CEILING: `scales:X` is keyed by the counted class alone, so a TAG cannot say whether the count is of the
@@ -55,7 +55,6 @@ export const RELATION_PARENTS: Record<string, readonly string[]> = {
   creates: ["create-token", "enters"],
   "graveyard-recursion": ["dies", "enters-graveyard"],
   "recursion-target": ["dies", "enters-graveyard"],
-  prowess: ["cast"],
   threshold: ["enters-graveyard"],
 };
 
@@ -65,9 +64,11 @@ export const RELATION_PARENTS: Record<string, readonly string[]> = {
 export const GRAVEYARD_SCALING_PARENTS: readonly string[] = ["dies", "enters-graveyard"];
 
 /** FAMILIES LEFT AT AXIS WEIGHT 0 ON PURPOSE (owner ruling 2026-11-16, #1095): a land finder's target and a
- *  land's own condition are mana-base links, not part of the plan. They are named here so the 0 is a
+ *  land's own condition are mana-base links, not part of the plan. `prowess` joined them by the owner's
+ *  2026-11-16 amendment: a prowess-style self-pump is a helper, not a synergy (#517, owner 2026-09-27),
+ *  so it never borrows the noncreature-cast theme's weight (`cast:-creature`) even in a deck built on it. They are named here so the 0 is a
  *  decision a reader can find, and `axisWeightOf` never gives them a weight whatever the axis holds. */
-export const ZERO_ON_PURPOSE: readonly string[] = ["ramp-target", "land-condition"];
+export const ZERO_ON_PURPOSE: readonly string[] = ["ramp-target", "land-condition", "prowess"];
 
 /** FAMILIES WEIGHED AS DECK THEMES OF THEIR OWN (owner ruling 2026-11-16, #1095): no parent theme to
  *  borrow, so the weight is how many cards in the deck hold the relation (`relationThemeFreq`) times a

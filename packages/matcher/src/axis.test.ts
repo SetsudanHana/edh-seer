@@ -85,9 +85,12 @@ test("graveyard-recursion and recursion-target inherit dies / enters-graveyard o
   }
 });
 
-test("prowess inherits the noncreature-cast theme (prowess:-creature <- cast:-creature)", () => {
-  expect(axisWeightOf("prowess:-creature", new Map([["cast:-creature", 0.5]]))).toBe(0.5);
-  expect(axisWeightOf("prowess:-creature", new Map([["cast:creature", 0.9]]))).toBe(0);
+// Owner amendment 2026-11-16: a prowess-style self-pump is a helper, not a synergy (#517).
+test("prowess stays at 0 even when cast:-creature is the deck's top theme", () => {
+  const axis = new Map([["cast:-creature", 1], ["cast:spell", 0.8]]);
+  expect(axisWeightOf("prowess:-creature", axis)).toBe(0);
+  expect(maxAxisWeight([{ tag: "prowess:-creature" } as never], axis)).toBe(0);
+  expect(Object.hasOwn(RELATION_PARENTS, "prowess")).toBe(false);
 });
 
 test("threshold inherits enters-graveyard", () => {
@@ -96,8 +99,8 @@ test("threshold inherits enters-graveyard", () => {
 });
 
 // 2: left at 0 ON PURPOSE (owner 2026-11-16): mana-base links are not the plan.
-test("ramp-target and land-condition stay at 0 on purpose, whatever the axis holds", () => {
-  expect([...ZERO_ON_PURPOSE].sort()).toEqual(["land-condition", "ramp-target"]);
+test("ramp-target, land-condition and prowess stay at 0 on purpose, whatever the axis holds", () => {
+  expect([...ZERO_ON_PURPOSE].sort()).toEqual(["land-condition", "prowess", "ramp-target"]);
   const axis = new Map([["enters:basic", 1], ["enters:land", 1], ["enters:plains", 1]]);
   expect(axisWeightOf("ramp-target:basic", axis)).toBe(0);
   expect(axisWeightOf("land-condition:plains", axis)).toBe(0);
