@@ -17489,6 +17489,7 @@
 "Vivien on the Hunt": ["role:tutor","wincon:go-wide"],
 "Vivien's Arkbow": ["role:cardSelection"],
 "Vivien's Grizzly": ["role:handFill"],
+"Vivien's Invocation": ["answer:creature","role:cardSelection","role:targetedRemoval"],
 "Vivien's Stampede": ["role:draw"],
 "Vivien's Talent": ["role:cardSelection"],
 "Vivien, Arkbow Ranger": ["answer:creature","answer:planeswalker","role:targetedRemoval"],
