@@ -159,10 +159,10 @@ test("an amount behind a condition on the card's text has a floor of 0 and keeps
  *  not six for one. The rate stands, the flag lets a per-mana sort leave it out. Bloodfire Colossus's own
  *  "{R}, Sacrifice this creature" is priced instead: six damage for the {6}{R}{R} cast plus the {R}, once (#698). */
 test("an activation cost with words in it is flagged as more than mana", () => {
-  const sac = [{ kind: "activated", cost: "{R}, Sacrifice this creature", effect: { kind: "damage", subject: { control: "any", token: null } }, amount: "6", repeats: "once" }];
+  const sac = [{ kind: "activated", cost: "{R}, Sacrifice this creature", payment: { mana: "{R}", sacrifice: [{ amount: "1", subject: { self: true } }] }, effect: { kind: "damage", subject: { control: "any", token: null } }, amount: "6", repeats: "once" }];
   expect(ratesOf(card("Bloodfire Colossus", "{6}{R}{R}", sac, { types: ["creature"] }))[0]).toMatchObject({ mana: 1, cast: 8, floor: 6 });
   expect(ratesOf(card("Bloodfire Colossus", "{6}{R}{R}", sac, { types: ["creature"] }))[0]).not.toHaveProperty("extraCost");
-  const other = [{ ...sac[0]!, cost: "{R}, Sacrifice another creature" }];
+  const other = [{ ...sac[0]!, cost: "{R}, Sacrifice another creature", payment: { mana: "{R}", sacrifice: [{ amount: "1", subject: { type: "creature" } }] } }];
   expect(ratesOf(card("Bloodfire-like", "{6}{R}{R}", other, { types: ["creature"] }))[0]).toMatchObject({ mana: 1, floor: 6, extraCost: true });
   const tap = [{ kind: "activated", cost: "{4}, {T}", effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: "1", repeats: "repeatable" }];
   expect(ratesOf(card("Jayemdae Tome", "{4}", tap))[0]).not.toHaveProperty("extraCost");
@@ -172,7 +172,13 @@ test("an activation cost with words in it is flagged as more than mana", () => {
  *  Courier's Briefcase "{W}{U}{B}{R}{G}, {T}, Sacrifice this artifact: Draw three cards." {1}{G}; Rummaging Goblin
  *  "{T}, Discard a card: Draw a card." {2}{R} (derive adds a companion ability with a `discard` emit on the same cost). */
 const drawAbility = (cost: string, amount: string, repeats: string, extra: Record<string, unknown> = {}) =>
-  ({ kind: "activated", cost, effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount, repeats, emits: [{ verb: "draw", subject: { control: "you" } }], ...extra });
+  ({ kind: "activated", cost, payment: paymentOf(cost), effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount, repeats, emits: [{ verb: "draw", subject: { control: "you" } }], ...extra });
+/** The `Ability.payment` derive writes for a cost string, for the shapes these tests use (read from the corpus rows, 2026-11-16). */
+const paymentOf = (cost: string) => {
+  const self = /Sacrifice this/.test(cost), other = /Sacrifice (?:a |three )/.test(cost), discard = /Discard a card/.test(cost);
+  return { ...(/\{T\}/.test(cost) ? { tap: true } : {}), ...(self ? { sacrifice: [{ amount: "1", subject: { self: true } }] } : {}), ...(other ? { sacrifice: [{ amount: "1", subject: { type: "food" } }] } : {}),
+    ...(discard ? { discard: [{ amount: "1", subject: { control: "you", token: null } }] } : {}) };
+};
 test("a self-sacrifice activation is priced by the cast it already carries; another permanent's sacrifice is not", () => {
   const briefcase = ratesOf(card("Courier's Briefcase", "{1}{G}", [drawAbility("{W}{U}{B}{R}{G}, {T}, Sacrifice this artifact", "3", "once")], { types: ["artifact"] }));
   expect(briefcase).toEqual([{ family: "cards", kind: "activated", amount: 3, mana: 5, cast: 2, repeats: "once", floor: 3, ceiling: 3 }]);
@@ -190,11 +196,35 @@ test("a discard cost is netted against the draw by the companion's discard, as a
   expect(goblin).toEqual([{ family: "cards", kind: "activated", amount: 0, back: 1, mana: 0, cast: 3, repeats: "per-cycle", floor: 0, ceiling: 0, delayed: true }]);
   expect(ratesOf(card("Rummaging Goblin", "{2}{R}", [drawAbility("{T}, Discard a card", "1", "per-cycle")], { types: ["creature"] }))[0]).toMatchObject({ extraCost: true });
 });
+/** A QUOTED GRANT'S "this artifact" IS THE GRANTEE, NOT THE CARD (#698 review). Goldspan Dragon: "Treasures you control have '{T}, Sacrifice this artifact: Add two mana of any one color.'" (`grantedBy` 3);
+ *  In Too Deep: "Enchanted permanent is a colorless Clue artifact with '{2}, Sacrifice this artifact: Draw a card'". The sacrifice is of another permanent, so the cast is no price for it. */
+test("a self-sacrifice inside a granted ability stays more than mana", () => {
+  const goldspan = ratesOf(card("Goldspan Dragon", "{3}{R}{R}", [{ kind: "activated", cost: "{T}, Sacrifice this artifact", grantedBy: 3, payment: { tap: true, sacrifice: [{ amount: "1", subject: { self: true } }] },
+    effect: { kind: "mana-generation", subject: { control: "any", token: null } }, amount: "2", repeats: "once" }], { types: ["creature"] }));
+  expect(goldspan[0]).toMatchObject({ extraCost: true });
+  expect(bestRates(goldspan)).toEqual({});
+  const tooDeep = ratesOf(card("In Too Deep", "{U}{U}", [{ kind: "activated", cost: "{2}, Sacrifice this artifact", grantedBy: 3, payment: { mana: "{2}", sacrifice: [{ amount: "1", subject: { self: true } }] },
+    effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: "1", repeats: "once" }], { types: ["enchantment"] }));
+  expect(tooDeep[0]).toMatchObject({ extraCost: true });
+});
+/** ONLY A SCALING AMOUNT IS AN INTERVAL (#698 review): an ability with no amount at all (a board-wide emit, a CR 614 multiplier: Doubling Season's counters) carries a `count` too, and it is no rate. */
+test("a count without a scaling amount is not read as an interval", () => {
+  const counters = (over: Record<string, unknown>) => card("Doubling Season", "{4}{G}", [{ kind: "static", effect: { kind: "counter-placement", subject: { control: "you", token: null } }, repeats: "continuous", ...over }], { types: ["enchantment"] });
+  expect(ratesOf(counters({ count: { floor: 1, ceiling: 1, sameAsImproved: true } }))).toEqual([]);
+  expect(ratesOf(counters({ amount: undefined, count: { floor: 0, ceiling: null, scalesWith: { type: "creature" } } }))).toEqual([]);
+});
+/** A BOUNDED COUNT KEEPS ITS BOUND (#1265's `scaleBounds`, one reading): Artillery Blast "... where X is 1 plus the number of basic land types among lands you control." {1}{W}: 1 to 6, not open. */
+test("a scaling amount the text bounds carries the bound and the card's own contribution", () => {
+  const blast = ratesOf(card("Artillery Blast", "{1}{W}", [{ kind: "on-cast", effect: { kind: "damage", scaling: "per-permanent", subject: { control: "opp", token: null } },
+    amount: "1 plus the number of basic land types among lands you control", repeats: "once", count: { floor: 0, ceiling: null, scalesWith: { type: "land" } } }]));
+  expect(blast).toMatchObject([{ family: "damage", floor: 1, ceiling: 6 }]);
+});
+
 /** A SCALING AMOUNT CARRIES ITS DERIVED INTERVAL, whatever the family (owner 2026-10-17, #1265, for mana; #698 for the rest).
  *  Theft of Dreams "Draw a card for each tapped creature target opponent controls." {2}{U}: floor 0, no ceiling the card states. */
 test("a scaling draw reads as its derived interval, not as no rate", () => {
   const theft = ratesOf(card("Theft of Dreams", "{2}{U}", [{ kind: "on-cast", effect: { kind: "draw-card", scaling: "per-opponent", subject: { control: "you", token: null } },
-    amount: "for each tapped creature target opponent controls", repeats: "once", count: { floor: 0, ceiling: null } }]));
+    amount: "for each tapped creature target opponent controls", repeats: "once", count: { floor: 0, ceiling: null, scalesWith: { control: "opp", tapped: true, type: "creature" } } }]));
   expect(theft).toEqual([{ family: "cards", kind: "on-cast", amount: 0, mana: 3, repeats: "once", floor: 0, ceiling: null }]);
   // an amount that is neither a number nor an interval ("that many") stays no row
   expect(ratesOf(card("Windfall-like", "{2}{U}", [{ kind: "on-cast", effect: { kind: "draw-card", scaling: "per-opponent", subject: { control: "you", token: null } }, amount: "that many", repeats: "once" }]))).toEqual([]);

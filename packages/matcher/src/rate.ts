@@ -1,3 +1,5 @@
+import type { Payment } from "@edh-seer/tagger";
+import { scaleBounds } from "@edh-seer/tagger/mana-bounds";
 import type { DeckCard } from "./types.js";
 import { countsAsLand } from "./typeline.js";
 
@@ -143,22 +145,24 @@ const CONDITION = new RegExp(`\\bif\\b|${CONDITION_BESIDES_IF.source}`, "i");
 /** The card's text carries a condition OTHER than a plain "if": a gated ability's own "if" is priced by its weight (#1357 task 2), and only a condition beside it still makes the amount unreadable. */
 export const hasConditionBesidesIf = (oracleText: string | undefined): boolean => CONDITION_BESIDES_IF.test(oracleText ?? "");
 
-/** THE NON-MANA PARTS OF AN ACTIVATION COST THE RATE DOES NOT ALREADY PRICE (#698). `{T}` and the like are not words. Two kinds of word are priced, and nothing else is:
- *  - "Sacrifice this <permanent>" on a `once` ability: the permanent IS the card, whose cast is already in the first yield's price (`cast`), and it can pay the cost only once. CR 701.21a (Sacrifice):
- *    the card leaves the battlefield, so there is no second activation to amortise over.
- *  - "Discard N cards" on a draw: the companion ability's `discard` emit already took those cards off the amount (`backOf`, the loot rule), so the draw is net of them. `back` must cover the discards.
- *  Anything else (another permanent's sacrifice, life, a counter, a mill, a tap of another creature) has no stated price in mana and no exchange rate between families is allowed (see the file head), so it
- *  stays `extraCost`: a row a per-mana sort leaves out, never a guessed price. A Treasure's sacrifice is worth a mana (its own text), but one ability in the corpus pays it (Ruthless Knave), so it stays unpriced until a ruling asks.
- *  CEILING: card-wide words, read off the cost string; the upgrade path is a derived cost list on the ability. */
-const NUMBER_WORD: Record<string, number> = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4 };
-function unpricedCost(cost: string, repeats: string | undefined, back: number): boolean {
-  const parts = cost.replace(/\{[^{}]+\}/g, "").split(",").map((p) => p.trim()).filter((p) => p !== "");
+/** THE NON-MANA PARTS OF AN ACTIVATION COST THE RATE DOES NOT ALREADY PRICE (#698), read from derive's `Ability.payment` (`{T}` is no word; an ability with no payment and words in its cost is unpriced). Two kinds are priced:
+ *  - The card sacrificing ITSELF (`sacrifice[].subject.self`) on a `once` ability that no clause GRANTS (`grantedBy` unset): the permanent is the card, whose cast is already in the first yield's price (`cast`), and it
+ *    can pay the cost only once. CR 701.21a (Sacrifice): it leaves the battlefield, so there is no second activation. In a QUOTED GRANT "this artifact" is the grantee (Goldspan Dragon's Treasures, In Too Deep's
+ *    Clue), another permanent, and the cast is no price for it: unpriced.
+ *  - Discards on a draw: the companion ability's `discard` emit already took those cards off the amount (`backOf`, the loot rule), so the draw is net of them. `back` must cover the discarded count.
+ *  Anything else (another permanent's sacrifice, life, a counter, an exile, a tap of another creature) has no stated price in mana and no exchange rate between families is allowed (see the file head), so it stays
+ *  `extraCost`: a row a per-mana sort leaves out, never a guessed price. A Treasure's sacrifice is worth a mana (its own text), but one ability in the corpus pays it (Ruthless Knave), so it stays unpriced until a
+ *  ruling asks. CEILING: the `once` test reads the ability's `repeats`; a self-sacrifice with a way back (a flicker, a recursion) would be priced as a one-shot. */
+function unpricedCost(a: { cost?: string; repeats?: string; grantedBy?: number; payment?: Payment }, cost: string, back: number): boolean {
+  const p = a.payment;
+  if (p === undefined) return /[A-Za-z]/.test(cost.replace(/\{[^{}]+\}/g, ""));
+  if (p.life !== undefined || p.other?.length || p.exile?.length || p.tapOther?.length || p.returnToHand?.length || p.removeCounter?.length) return true;
+  if (p.sacrifice?.length && (a.grantedBy !== undefined || a.repeats !== "once" || !p.sacrifice.every((o) => "self" in o.subject && o.subject.self === true))) return true;
   let discards = 0;
-  for (const part of parts) {
-    if (/^sacrifice this [a-z]+$/i.test(part) && repeats === "once") continue;
-    const d = /^discard (a|an|one|two|three|four) [a-z ]*cards?(?: at random)?$/i.exec(part);
-    if (d) { discards += NUMBER_WORD[d[1]!.toLowerCase()]!; continue; }
-    return true;
+  for (const o of p.discard ?? []) {
+    const n = Number(o.amount);
+    if (!Number.isInteger(n)) return true;
+    discards += n;
   }
   return discards > back;
 }
@@ -178,6 +182,15 @@ const integer = (s: string | undefined): number | null => {
  *  468 of those print "draw a card", but the other 110 print "draw two cards" or "draw cards equal
  *  to", so a default of 1 would be a guess wrong one time in five. The fix is a refresh, not a
  *  default (`dropsUnitAmount`, not yet written). */
+/** The interval a non-mana scaling amount spans, by `scaleBounds` (see its caller). */
+function scaleBoundsOf(amount: string, d: DeckCard): { floor: number; ceiling: number | null } {
+  const name = (d.card.name ?? "").toLowerCase();
+  const selfNames = ["~", name, ...name.split(" // ").map((n) => n.split(",")[0]!.trim())].filter(Boolean);
+  const permanent = !(d.tags?.characteristics.types ?? []).some((t) => /^(?:instant|sorcery)$/i.test(t));
+  const { floor, ceiling } = scaleBounds(amount, amount, d.tags!.characteristics, selfNames, permanent, d.card.oracleText ?? "", 0, 1, (d.card as { manaCost?: string }).manaCost);
+  return { floor, ceiling };
+}
+
 export function ratesOf(d: DeckCard): Rate[] {
   const out: Rate[] = [];
   /** Interval rows that say NOTHING (floor 0, open ceiling): kept for a card that has no other mana row, dropped beside one -- see the end of this function. */
@@ -265,22 +278,25 @@ export function ratesOf(d: DeckCard): Rate[] {
     if (mana === null) {
       if (a.effect?.scaling !== "x-cost") continue;
       const fixed = manaOf(cost.replace(/\{X\}/gi, "")) ?? 0;
-      const slopeExtra = a.kind === "activated" && (imprint || unpricedCost(cost, a.repeats, 0));
+      const slopeExtra = a.kind === "activated" && (imprint || unpricedCost(a, cost, 0));
       out.push({ family, kind: a.kind, amount: 0, mana: fixed, ...castOf, slope: 1, repeats, floor: 0, ceiling: null, ...(slopeExtra ? { extraCost: true as const } : {}), ...(sick(a) ? { delayed: true as const } : {}) });
       continue;
     }
     // A SCALING MANA ADD CARRIES AN INTERVAL (owner ruling 2026-10-17, #1265): derive stamped `Ability.count` with the same {floor, ceiling} the ManaLine's `amount` carries (read here from the
     // ability, which `ratesOf` already holds; no line to match). Without it the add was skipped, and quality scored a missing rate as the worst in its family (Faeburrow Elder 50.5 -> 0.9). A colour
     // ceiling stays 5: a rate is deck-free. Only the mana family, and only where the amount is not already a number; an add with no interval ("that much", Photon) stays no row.
-    // #698: the same for every family -- a scaling draw or damage ("for each tapped creature") states its derived {floor, ceiling} the way a scaling add does, and read as floor 0 and an open ceiling it is a
-    // trigger-shaped row, not a missing one. An amount with no interval ("that many", Windfall) stays no row.
-    const interval = integer(a.amount) === null && a.count ? a.count : null;
+    // #698: a SCALING amount states its derived interval in every family, not only mana ("draw a card for each tapped creature": floor 0, open ceiling), read by the one `scaleBounds` the mana rule uses
+    // (#1265: colours and basic land types bound at 5, the table's players, the card's own contribution to its count). A count with no `scalesWith` (a CR 614 multiplier, an ability that states no amount) is no
+    // rate, and an amount with no interval ("that many", Windfall) stays no row. CEILING: `scaleBounds` is derive's reading of a MANA line's text; a count it has no shape for ("colors of mana spent") stays open.
+    const interval = integer(a.amount) !== null || !a.count ? null
+      : family === "mana" ? a.count
+        : a.count.scalesWith !== undefined && a.amount !== undefined && d.tags ? scaleBoundsOf(a.amount, d) : null;
     const gross = interval ? interval.floor : integer(a.amount);
     if (gross === null || (!interval && a.effect?.scaling !== undefined && a.effect.scaling !== "fixed")) continue;
     const back = family === "cards" ? backOf(a) : 0;
     if (back === null) continue;
     const amount = Math.max(0, gross - back);
-    const extra = a.kind === "activated" && (imprint || unpricedCost(cost, a.repeats, family === "cards" ? back : 0));
+    const extra = a.kind === "activated" && (imprint || unpricedCost(a, cost, family === "cards" ? back : 0));
     const stats = (a.effect?.subject as { stats?: { metric: string; op: string; value: number }[] } | undefined)?.stats ?? [];
     const power = stats.find((x) => x.metric === "power" && x.op === "eq")?.value, toughness = stats.find((x) => x.metric === "toughness" && x.op === "eq")?.value;
     const size = family === "tokens" && power !== undefined && toughness !== undefined ? `${power}/${toughness}` : undefined;

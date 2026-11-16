@@ -12,7 +12,7 @@
       "pairs": 474,
       "heldOutAccuracy": 0.598989431035949,
       "baselineAccuracy": 0.601776016485017,
-      "fallbackAccuracy": 0.5756917966501015,
+      "fallbackAccuracy": 0.5464104564024783,
       "fallback": true
     },
     "draw": {
@@ -93,12 +93,12 @@
     },
     "burn": {
       "weights": {
-        "manaValue": -0.9791611937764303,
+        "manaValue": -0.9805703253916019,
         "rateCeiling": 0.9,
-        "frequency": 0.9133173135435284,
-        "timing": 2.477507241156313,
-        "extraValue": 1.037809404733051,
-        "amount": 0.2805028722135769
+        "frequency": 0.9125737735737363,
+        "timing": 2.4791570836958217,
+        "extraValue": 1.0400899746162904,
+        "amount": 0.2820259799732526
       },
       "pairs": 156,
       "heldOutAccuracy": 0.7946657718295507,

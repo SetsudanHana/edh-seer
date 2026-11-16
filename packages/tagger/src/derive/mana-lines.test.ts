@@ -889,6 +889,13 @@ describe("scaleBounds guards (#1265 task 1 review)", () => {
   const scaling = (name: string) => linesOf(name).filter((l) => l.source !== "token-maker" && l.amount.scales !== null);
   const chars = (over: Partial<CardTags["characteristics"]> = {}) => ({ types: ["creature"], subtypes: [], colors: ["G"], identity: ["G"], cmc: 2, power: "1", toughness: "1", token: false, ...over }) as CardTags["characteristics"];
   const bounds = (scales: string, c: CardTags["characteristics"], oracle = "", text = "") => scaleBounds(scales, text, c, ["card"], true, oracle, 0);
+  it("a printed lead on a bounded count is part of both ends: '1 plus the number of basic land types among lands you control' spans 1 to 6 (Artillery Blast, #698)", () => {
+    expect(bounds("1 plus the number of basic land types among lands you control", chars({ types: ["instant"] }))).toMatchObject({ floor: 1, ceiling: 6, bound: "basic-land-types" });
+    expect(bounds("the number of basic land types among lands you control", chars())).toMatchObject({ floor: 0, ceiling: 5, bound: "basic-land-types" });
+  });
+  it("converge is bounded by the five colours: 'the number of colors of mana spent to cast this spell' spans 0 to 5 (Kaleidoscorch, #698)", () => {
+    expect(bounds("the number of colors of mana spent to cast this spell", chars({ types: ["instant"] }))).toMatchObject({ floor: 0, ceiling: 5, bound: "colours" });
+  });
   it("a PROTOTYPE taps for the smaller power: Cradle Clearcutter (printed 3/6, Prototype {2}{G} -- 1/3) has floor 1, not 3", () => {
     expect(scaling("Cradle Clearcutter")[0]!.amount).toMatchObject({ floor: 1, ceiling: null });
   });
