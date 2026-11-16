@@ -126,7 +126,7 @@ describe("Ability.targets read from the head noun, outside quotes, through comma
  *  claimed `copies:mana` to the mana abilities they cannot copy and missed every activated ability they can); "mana cost" is no mana ability (Magus Lucea Kane, Unbound Flourishing); and the
  *  pronoun "that spell or ability" is not a spell-typed subject (it made `typeMatchesCharacteristics("spell")` drop every ability producer: Bill Potts, Wyll's Reversal, Sunken Palace,
  *  Repeated Reverberation, Magus Lucea Kane, Unbound Flourishing). Oracle text and clauses are the corpus's own (DERIVE 532) in the fixtures file. */
-const PAID_SOURCES = ["Forsworn Paladin", "Helix Pinnacle", "Viscera Seer", "Icy Manipulator"];
+const PAID_SOURCES = ["Forsworn Paladin", "Helix Pinnacle", "Viscera Seer", "Icy Manipulator", "Whispering Shade", "Kalitas, Bloodchief of Ghet", "Uurg, Spawn of Turg", "Lethal Vapors"];
 const KIND_SOURCES = [...REACH, "Sol Ring", "Pacesetter Paragon", ...PAID_SOURCES];
 const kindReach = (copier: string): string[] => KIND_SOURCES.filter((s) => copies(copier, s).length > 0);
 
@@ -161,7 +161,7 @@ describe("a negated mana ability is the activated kind, never `mana` (#1650)", (
     expect(copies("Verrak, Warped Sengir", "Mother of Runes")).toEqual([]);
   });
   test("Ashnod: an ability that SACRIFICES something (Viscera Seer), not Prodigal Sorcerer; Phyrexian Altar's mana ability is no ability to copy", () => {
-    expect(kindReach("Ashnod the Uncaring")).toEqual(["Viscera Seer"]);
+    expect(kindReach("Ashnod the Uncaring")).toEqual(["Viscera Seer", "Uurg, Spawn of Turg"]);
     expect(copies("Ashnod the Uncaring", "Prodigal Sorcerer")).toEqual([]);
   });
   // CEILING in the test's words: "{T}: When you next activate ..." is a delayed trigger the derive does not read, and the effect behind it names the trigger's object ("that ability"),
@@ -188,9 +188,13 @@ describe("a copier of 'that spell or ability' pairs with abilities (#1650)", () 
     expect(kindReach("Unbound Flourishing")).toEqual(["Helix Pinnacle"]);
     expect(copies("Unbound Flourishing", "Prodigal Sorcerer")).toEqual([]);
   });
-  test("Sunken Palace: an ability paid with MANA (a mana cost), not a {T}-only ability or a loyalty ability", () => {
-    expect(kindReach("Sunken Palace")).toEqual(["Mistrise Village", "Vexing Shusher", "Chandra's Regulator", "Pacesetter Paragon", "Forsworn Paladin", "Helix Pinnacle", "Icy Manipulator"]);
-    for (const s of ["Prodigal Sorcerer", "Mother of Runes", "Goblin Welder", "Chandra, Torch of Defiance", "Ugin, the Spirit Dragon", "Viscera Seer"]) expect(copies("Sunken Palace", s)).toEqual([]);
+  test("derive: Sunken Palace's mana is blue (`paidColors`, read from its own 'Add {U}'); Dynaheir's is any mana", () => {
+    expect(copySubject("Sunken Palace").paidColors).toEqual(["U"]);
+    expect(copySubject("Dynaheir, Invoker Adept").paidColors).toBeUndefined();
+  });
+  test("Sunken Palace: an ability whose cost its BLUE mana can pay (generic, {X}, {U}); not {T}-only, loyalty, a {0} cost (no mana can be spent on it), or {B}{B}, {B}{G}, {R}, {R/G}", () => {
+    expect(kindReach("Sunken Palace")).toEqual(["Mistrise Village", "Chandra's Regulator", "Pacesetter Paragon", "Forsworn Paladin", "Helix Pinnacle", "Icy Manipulator"]);
+    for (const s of ["Prodigal Sorcerer", "Mother of Runes", "Goblin Welder", "Chandra, Torch of Defiance", "Ugin, the Spirit Dragon", "Viscera Seer", "Whispering Shade", "Kalitas, Bloodchief of Ghet", "Uurg, Spawn of Turg", "Vexing Shusher", "Lethal Vapors"]) expect(copies("Sunken Palace", s)).toEqual([]);
   });
   test("Repeated Reverberation: a loyalty ability only", () => {
     expect(kindReach("Repeated Reverberation")).toEqual(["Chandra, Torch of Defiance", "Ugin, the Spirit Dragon"]);
@@ -202,9 +206,9 @@ describe("a copier of 'that spell or ability' pairs with abilities (#1650)", () 
     expect(copies("Wyll's Reversal", "Mother of Runes")).toEqual(["copies:activated"]);
   });
   test("Wyll's Reversal: an ability with a target (not Mistrise Village or Sledge-Captain, whose backup derives no target slot)", () => {
-    expect(kindReach("Wyll's Reversal")).toEqual(["Vexing Shusher", "Prodigal Sorcerer", "Chandra, Torch of Defiance", "Ugin, the Spirit Dragon", "Mother of Runes", "Goblin Welder", "Forsworn Paladin", "Icy Manipulator"]);
+    expect(kindReach("Wyll's Reversal")).toEqual(["Vexing Shusher", "Prodigal Sorcerer", "Chandra, Torch of Defiance", "Ugin, the Spirit Dragon", "Mother of Runes", "Goblin Welder", "Forsworn Paladin", "Icy Manipulator", "Kalitas, Bloodchief of Ghet"]);
   });
   test("Bill Potts: an activated ability that could target only a creature (Bill Potts is one)", () => {
-    expect(kindReach("Bill Potts")).toEqual(["Prodigal Sorcerer", "Chandra, Torch of Defiance", "Ugin, the Spirit Dragon", "Mother of Runes", "Forsworn Paladin", "Icy Manipulator"]);
+    expect(kindReach("Bill Potts")).toEqual(["Prodigal Sorcerer", "Chandra, Torch of Defiance", "Ugin, the Spirit Dragon", "Mother of Runes", "Forsworn Paladin", "Icy Manipulator", "Kalitas, Bloodchief of Ghet"]);
   });
 });

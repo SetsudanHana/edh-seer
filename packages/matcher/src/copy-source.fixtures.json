@@ -1284,5 +1284,135 @@
   "keywords": [
    "Scry"
   ]
+ },
+ "Whispering Shade": {
+  "typeLine": "Creature — Shade",
+  "oracleText": "Swampwalk (This creature can't be blocked as long as defending player controls a Swamp.)\n{B}: This creature gets +1/+1 until end of turn.",
+  "colors": [
+   "B"
+  ],
+  "colorIdentity": [
+   "B"
+  ],
+  "manaValue": 4,
+  "power": "1",
+  "toughness": "1",
+  "keywords": [
+   "Landwalk",
+   "Swampwalk"
+  ]
+ },
+ "Kalitas, Bloodchief of Ghet": {
+  "typeLine": "Legendary Creature — Vampire Warrior",
+  "oracleText": "{B}{B}{B}, {T}: Destroy target creature. If that creature dies this way, create a black Vampire creature token. Its power is equal to that creature's power and its toughness is equal to that creature's toughness.",
+  "colors": [
+   "B"
+  ],
+  "colorIdentity": [
+   "B"
+  ],
+  "manaValue": 7,
+  "power": "5",
+  "toughness": "5",
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a black Vampire creature token with power equal to that creature's power and toughness equal to that creature's toughness",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Uurg, Spawn of Turg": {
+  "typeLine": "Legendary Creature — Frog Beast",
+  "oracleText": "Uurg's power is equal to the number of land cards in your graveyard.\nAt the beginning of your upkeep, surveil 1. (Look at the top card of your library. You may put that card into your graveyard.)\n{B}{G}, Sacrifice a land: You gain 2 life.",
+  "colors": [
+   "B",
+   "G"
+  ],
+  "colorIdentity": [
+   "B",
+   "G"
+  ],
+  "manaValue": 3,
+  "power": "*",
+  "toughness": "5",
+  "keywords": [
+   "Surveil"
+  ]
+ },
+ "Lethal Vapors": {
+  "typeLine": "Enchantment",
+  "oracleText": "Whenever a creature enters, destroy it.\n{0}: Destroy this enchantment. You skip your next turn. Any player may activate this ability.",
+  "colors": [
+   "B"
+  ],
+  "colorIdentity": [
+   "B"
+  ],
+  "manaValue": 4,
+  "power": null,
+  "toughness": null,
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "this enchantment",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "extra-turn",
+      "object": "skip your next turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
  }
 }

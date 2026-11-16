@@ -174,3 +174,13 @@ export const copyPaidWithOf = (clauseText: string | undefined): NonNullable<Subj
   if (spendsOnActivation(clauseText)) return "mana";
   return undefined;
 };
+
+/** The colours of the mana a copier names as its own ("{1}{U}, {T}, Exile seven cards from your graveyard: Add {U}. When you spend this mana to cast a spell or activate an ability, copy ...", Sunken Palace): the symbols of the
+ *  "Add" sentence just before "When you spend this mana". Read from the card's text, which holds the mana line and the trigger in one paragraph. Colours in WUBRGC order; none when no such sentence. */
+const ADD_THEN_SPEND = /\bAdd ((?:\{[WUBRGC]\})+)\.\s{0,3}When you spend this mana\b/i;
+export const copyPaidColorsOf = (cardText: string | undefined): string[] | undefined => {
+  const m = cardText === undefined ? null : ADD_THEN_SPEND.exec(cardText);
+  if (!m) return undefined;
+  const colours = new Set([...m[1]!.toUpperCase().matchAll(/[WUBRGC]/g)].map((x) => x[0]));
+  return [...colours];
+};

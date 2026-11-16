@@ -413,6 +413,9 @@ export interface SubjectFilter {
    *  mana" (`mana`). The matcher answers it from the producer's `Ability.payment` (`life`, `sacrifice`, `mana` holding {X}, `mana`), never from printed text. CEILING: Dynaheir's "four or more" is not
    *  carried, `mana` is any mana in the cost; a loyalty cost "-X" is not an {X} cost. */
   paidWith?: "life" | "sacrifice" | "x" | "mana";
+  /** With `paidWith: "mana"`: the colours of the mana the copier names, when it names its own ("Add {U}. When you spend this mana to ... activate an ability", Sunken Palace: `["U"]`; `C` is colourless). The copied
+   *  ability's cost must be one that mana can pay (a generic symbol, {X}, a symbol of one of these colours, a hybrid or Phyrexian symbol containing one). Absent: any mana (Dynaheir). */
+  paidColors?: string[];
   /** Counter kind for `counter-added` events, e.g. "+1/+1", "-1/-1", "loyalty". */
   counter?: string;
   /** "a creature you control with A COUNTER on it": some counter, of no stated kind. A producer that
