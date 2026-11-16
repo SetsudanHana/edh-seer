@@ -505,7 +505,8 @@ function moveObject(phrase: string, onField = false): Args | null {
   }
   // "Exile all but the bottom card of each opponent's library" (Jace, Reality Sculptor; Nicol Bolas, the Ravager's -12 names "target player's"): the library the top-N phrase above reads, less its bottom N.
   // CEILING: the count is the words ("all but the bottom card"), as for the top-N phrase's `text`; the one card that stays is not a separate claim.
-  if (/^all but the bottom (?:card|(?:\w+|\d+) cards) of (?:your|target player's|each player's|that player's|each opponent's|target opponent's) library$/.test(rest)) return { object: CARD, fromZone: "library", text: phrase };
+  // "their library" is the actor's, a back-reference, as for the top-N phrase (Doomsday Excruciator: "each player exiles all but the bottom six cards of their library face down").
+  if (/^all but the bottom (?:card|(?:\w+|\d+) cards) of (?:your|their|target player's|each player's|that player's|each opponent's|target opponent's) library$/.test(rest)) return / of their library$/.test(rest) ? { object: { ...CARD, ref: "sentence" }, fromZone: "library", text: phrase } : { object: CARD, fromZone: "library", text: phrase };
   const r = objectOf(rest);
   if (!r) return null;
   // "from their graveyard": whose is a back-reference ("target opponent mills three cards. Put a land
