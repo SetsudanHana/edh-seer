@@ -503,6 +503,9 @@ function moveObject(phrase: string, onField = false): Args | null {
     // cards of their library", Oblivion Sower), so the stored object, which names them, stays.
     return / of their library$/.test(rest) ? { object: { ...CARD, ref: "sentence" }, fromZone: "library" } : { object: CARD, fromZone: "library", text: phrase };
   }
+  // "Exile all but the bottom card of each opponent's library" (Jace, Reality Sculptor; Nicol Bolas, the Ravager's -12 names "target player's"): the library the top-N phrase above reads, less its bottom N.
+  // CEILING: the count is the words ("all but the bottom card"), as for the top-N phrase's `text`; the one card that stays is not a separate claim.
+  if (/^all but the bottom (?:card|(?:\w+|\d+) cards) of (?:your|target player's|each player's|that player's|each opponent's|target opponent's) library$/.test(rest)) return { object: CARD, fromZone: "library", text: phrase };
   const r = objectOf(rest);
   if (!r) return null;
   // "from their graveyard": whose is a back-reference ("target opponent mills three cards. Put a land
@@ -1520,6 +1523,20 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   // "You have no maximum hand size [until your next turn]" (Reliquary Tower, Enter the Infinite): the store's `other` with the sentence as its words, which
   // derive leaves unclaimed. CR 402.2 is the rule it states.
   if (/^you have no maximum hand size(?: until your next turn| for the rest of the game)?$/i.test(t)) return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t, ...(condition ? { condition } : {}) }];
+  // A STATE-BASED-ACTION EXEMPTION (CR 704.5i: a planeswalker with loyalty 0 is put into its owner's graveyard; 704.5f: a creature with toughness 0 or less): "Planeswalkers you control aren't put into their
+  // owners' graveyards for having 0 loyalty" (Sanctum Lurker). The store's `other` with the sentence as its words, which derive leaves unclaimed: it switches a rule off and moves nothing, so no zone claim.
+  // CEILING: only the two state-based actions that put a permanent into its owner's graveyard for a number, and only a subject the filter grammar reads; the state-based actions that lose the game for life
+  // ("you don't lose the game for having 0 or less life") are read by the restriction grammar, and "state-based actions don't apply" (Rules Lawyer) stays unread.
+  const sbaExempt = /^(.+?) (?:aren't|isn't) put into (?:their owners'|its owner's) graveyards? for having (?:0 loyalty|0 or less toughness|toughness 0 or less)$/i.exec(t);
+  if (sbaExempt && objectOf(sbaExempt[1]!)) return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t, ...(condition ? { condition } : {}) }];
+  // A TIMING PERMISSION FOR LOYALTY ABILITIES (CR 606.3: a loyalty ability is activated at sorcery timing, once a turn per permanent): "You may activate loyalty abilities of Teferi on any player's turn any time you
+  // could cast an instant" (Teferi, Master of Time), "... of Jace planeswalkers you control ..." (Jace's Machinations). The store's `other` with the sentence; derive reads the permission off the printed sentence
+  // (`extraLoyalty`) and claims it for the planeswalkers it names. CEILING: the duration ("Until end of turn,") and "on any player's turn" are in the sentence only; the "twice ... rather than only once" permission
+  // (Oath of Teferi, Urza, Kaito) is another sentence and stays unread.
+  const loyaltyTiming = /^you may activate (?:the )?loyalty abilities of (.+?)(?: on any player's turn)? any time you could cast an instant$/i.exec(t);
+  if (loyaltyTiming && (/^(?:~|this [a-z]+)$/i.test(loyaltyTiming[1]!) || /^(?:[\p{L}]+ )?planeswalkers you control$/iu.test(loyaltyTiming[1]!))) {
+    return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t, optional: true, ...(condition ? { condition } : {}) }];
+  }
   // "It becomes day [as this creature enters]" (Sunstreak Phoenix, CR 731.1 Day and Night): the game's day/night state, not a permanent that becomes something -- the store's `other`.
   // Read as a "becomes" it was an animate of the card itself, a claim the text never makes.
   if (/^it becomes (?:day|night)(?: as (?:~|this [a-z]+) enters)?$/i.test(t)) return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t, ...(condition ? { condition } : {}) }];
@@ -2194,7 +2211,10 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // "As this creature enters[ or is turned face up], ...": when the card arrives is no action, and the
     // clause is a static replacement (Aquamorph Entity, Crowd-Control Warden). Not before "you may": a
     // shock land's "you may pay 2 life" is a choice, and read bare it became a continuous life loss.
-    s = s.replace(/^as (?:this [a-z]+|~) enters(?: or is turned face up)?, (?!you may )/i, "");
+    // ...except the choice to BEHOLD (CR 701.4a: reveal a card or choose a permanent, nothing paid, nothing continuous): "As this land enters, you may behold a Jace. If you don't, this land enters tapped"
+    // (Theorist's Sanctum) reads like the sentences it is made of, an optional behold and the tap. CEILING: the replacement's timing ("as it enters") and the "if you don't" gating of the tap are not
+    // recorded, as for the stored shock lands (an optional payment and a plain tap); only behold is lifted out of the "you may" refusal, so a shock land's "you may pay 2 life" stays refused here.
+    s = s.replace(/^as (?:this [a-z]+|~) enters(?: or is turned face up)?, (?!you may (?!behold an? ))/i, "");
     if (gameStart && condition === "if you do") {
       condition = undefined;
       s = s.replace(GAME_START_LEAD, "").replace(GAME_START_TAIL, "");
@@ -2270,7 +2290,16 @@ function readActions(effect: string, type: string | null, cost: string | undefin
       const pay = payment && !thatPlayerPaysLife ? readPhrase(payment, "unless")?.map((a) => ({ ...a, optional: true as const })) ?? null : null;
       const mainCondition = payment && !pay ? [condition, `unless ${payment}`].filter(Boolean).join(", ") : condition;
       // "discard a card or pay {2}", "sacrifice a creature or discard a card": either is an action.
+      const altsFrom = out.length;
       for (const alt of main!.split(OR_ALTERNATIVE)) {
+        // "As an additional cost to cast this spell, behold a Jace or pay {1}" (Countersculpt; Soulbright Seeker, Caustic Exhale ...): the cost is a CHOICE (CR 118.8), so the behold is optional, and a
+        // payment of mana records no action (a mana cost does nothing a stored action records, as above). CEILING: only a behold alternative; "sacrifice a creature or pay {3}{B}" (Spark Harvest, 29 cards
+        // that print an additional cost "<reveal / sacrifice / discard / blight / forage> ... or pay <mana>") stays an unread phrase and refuses the card until its own task. The amount paid is not recorded.
+        const manaAlt = /^pay (.+)$/i.exec(alt.trim());
+        if (manaAlt && paysMana(manaAlt[1]!) && condition === "as an additional cost to cast this spell" && out.length === altsFrom + 1 && out[altsFrom]!.verb === "behold") {
+          out[altsFrom] = { ...out[altsFrom]!, optional: true };
+          continue;
+        }
         let r = readPhrase(alt, mainCondition, carried);
         const startsMay = /^(?:(?:then|also) )?(?:you )?may /i.test(alt.trim());
         if (startsMay) mayScope = true;

@@ -55,11 +55,13 @@ export function selfPronouns(effect: string): string {
  *  possessive kept ("Picard's power" is "~'s power"), unless a Capitalised word follows it: "Volo's Journal"
  *  is another object's name, not the card's; the literal "CARDNAME" is the name too.
  *  CASE-SENSITIVE: Oracle capitalises a name, and Storm, Force of Nature's "has storm" is the keyword,
- *  not the card. */
+ *  not the card.
+ *  NEVER AFTER "empower" (CR 701.71, Empower Jace): the word there is the planeswalker TYPE the keyword action names, not a reference to the card, so on a card named
+ *  "Jace, ..." (Jace, Reality Sculptor: "Empower Jace X") it stays "Jace" and the keyword action reads. */
 export function selfAsTilde(phrase: string, name: string): string {
   let out = phrase.replace(/\bCARDNAME\b/g, "~");
   for (const n of selfNames(name)) {
-    out = out.replace(new RegExp(`(?<![\\w'])${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?!\\w|'(?!s\\b)|'s [A-Z])`, "g"), "~");
+    out = out.replace(new RegExp(`(?<![\\w'])(?<!\\b[Ee]mpower )${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?!\\w|'(?!s\\b)|'s [A-Z])`, "g"), "~");
   }
   return out;
 }

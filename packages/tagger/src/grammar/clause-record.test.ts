@@ -205,9 +205,9 @@ test("energy payment, replacement lead-in, duration lead, look-at-top, 'who does
   expect(familiar.records[1]!.trigger).toMatchObject({ event: "phases-out", subject: "this creature" });
 
   const viv = readCard("Vivien's Invocation", "Sorcery", "Look at the top seven cards of your library. You may put a creature card from among them onto the battlefield. Put the rest on the bottom of your library in a random order. When a creature is put onto the battlefield this way, it deals damage equal to its power to target creature an opponent controls.");
-  // The reflexive "When a creature is put onto the battlefield this way" has no reading (only "when you do"
-  // does): the card stays incomplete, but the first clause reads.
-  expect(viv.blocker).toMatchObject({ clause: 2, kind: "trigger" });
+  // The reflexive "When a creature is put onto the battlefield this way" is an enters trigger narrowed to the card's own put (#1349 Jace batch; it had no reading before).
+  expect(viv.blocker).toBeUndefined();
+  expect(viv.records[1]!.trigger).toMatchObject({ event: "enters", subject: "a creature" });
   expect(viv.records[0]!.actions![0]).toMatchObject({ verb: "put", object: "a creature card from the top seven cards of your library", fromZone: "library", toZone: "battlefield", optional: true });
   expect(viv.records[0]!.actions![1]).toMatchObject({ verb: "put", object: "the rest of the top seven cards of your library", fromZone: "library", toZone: "library" });
 
@@ -1828,4 +1828,80 @@ test("a delayed trigger that is read gates the effect: Vivien's -2 is no uncondi
   // "If you do, when you next cast ..." is not a leading trigger: still refused (Najal, the Storm Runner).
   const najal = grammarClauseRecords({ name: "Najal, the Storm Runner", typeLine: "Legendary Creature — Human Shaman", oracleText: "Whenever Najal attacks, you may pay {2}. If you do, when you next cast an instant or sorcery spell this turn, copy it. You may choose new targets for the copy." });
   expect(najal.complete).toBe(false);
+});
+
+// #1349 (Jace / empower / behold batch): six upcoming cards the grammar did not read. Each shape is read as the general shape it is; the oracle text below is the corpus row verbatim.
+const VIVIENS_INVOCATION = { name: "Vivien's Invocation", typeLine: "Sorcery", oracleText: "Look at the top seven cards of your library. You may put a creature card from among them onto the battlefield. Put the rest on the bottom of your library in a random order. When a creature is put onto the battlefield this way, it deals damage equal to its power to target creature an opponent controls." };
+const THEORISTS_SANCTUM = { name: "Theorist's Sanctum", typeLine: "Land — Island", oracleText: "({T}: Add {U}.)\nAs this land enters, you may behold a Jace. If you don't, this land enters tapped. (To behold a Jace, choose a Jace you control or reveal a Jace card from your hand.)\n{2}{U}, {T}: Empower Jace 2." };
+const SANCTUM_LURKER = { name: "Sanctum Lurker", typeLine: "Creature — Horror", oracleText: "When this creature enters, empower Jace 1.\nPlaneswalkers you control aren't put into their owners' graveyards for having 0 loyalty.\nPlaneswalkers you control have \"[+2]: This planeswalker deals 1 damage to each opponent and you gain 1 life.\"" };
+const JACES_MACHINATIONS = { name: "Jace's Machinations", typeLine: "Instant", oracleText: "Until end of turn, you may activate loyalty abilities of Jace planeswalkers you control on any player's turn any time you could cast an instant.\nEmpower Jace 8. (Put eight loyalty counters on a Jace token you control. If you don't control one, first create a blue Jace planeswalker token with \"[−1]: Surveil 1\" and \"[−3]: Draw a card.\")" };
+const JACE_REALITY_SCULPTOR = { name: "Jace, Reality Sculptor", typeLine: "Legendary Planeswalker — Jace", oracleText: "+1: Empower Jace X, where X is the number of Islands you control.\n−3: Until your next turn, whenever a creature attacks you or a planeswalker you control, it gets -5/-0 until end of turn.\n0: Exile all but the bottom card of each opponent's library. Activate only if there are twenty-five or more loyalty counters among Jaces you control." };
+const COUNTERSCULPT = { name: "Countersculpt", typeLine: "Instant", oracleText: "As an additional cost to cast this spell, behold a Jace or pay {1}. (To behold a Jace, choose a Jace you control or reveal a Jace card from your hand.)\nCounter target spell. Empower Jace 1. (Put a loyalty counter on a Jace token you control. If you don't control one, first create a blue Jace planeswalker token with \"[−1]: Surveil 1\" and \"[−3]: Draw a card.\")" };
+
+test("a reflexive 'this way' trigger on a put onto the battlefield is an enters trigger the card narrows to its own action (Vivien's Invocation)", () => {
+  const g = grammarClauseRecords(VIVIENS_INVOCATION);
+  expect(g.blocker).toBeUndefined();
+  const reflexive = g.records.find((r) => r.trigger);
+  expect(reflexive).toMatchObject({ abilityType: "triggered", trigger: { event: "enters", subject: "a creature" } });
+  // The narrowing "this way" is kept, so the trigger claims nothing about creatures entering in general (CR 603.12).
+  expect(g.readings![reflexive!.id]!.trigger![0]).toMatchObject({ event: "enters", narrowing: "this way" });
+  // ...and a put onto the battlefield that is no "this way" reflexive is the same event, unnarrowed.
+  const anyPut = grammarClauseRecords({ name: "Test Enchantment", typeLine: "Enchantment", oracleText: "Whenever a creature is put onto the battlefield, you gain 1 life." });
+  expect(anyPut.records[0]!.trigger).toMatchObject({ event: "enters", subject: "a creature" });
+});
+
+test("'as this land enters, you may behold a Jace. If you don't, this land enters tapped' reads, optional behold then the tap (Theorist's Sanctum)", () => {
+  const g = grammarClauseRecords(THEORISTS_SANCTUM);
+  expect(g.blocker).toBeUndefined();
+  expect(g.records.find((r) => r.actions?.some((a) => a.verb === "behold"))!.actions).toMatchObject([{ verb: "behold", object: "a Jace", optional: true }, { verb: "tap" }]);
+  // A shock land's "you may pay 2 life" stays unread there: only the behold choice is read as a bare replacement.
+  expect(grammarClauseRecords({ name: "Blood Crypt", typeLine: "Land — Swamp Mountain", oracleText: "({T}: Add {B} or {R}.)\nAs Blood Crypt enters, you may pay 2 life. If you don't, it enters tapped." }).complete).toBe(false);
+});
+
+test("'behold <a quality> or pay {N}' is a choice of additional cost: the behold is optional and the mana payment records no action (Countersculpt)", () => {
+  const g = grammarClauseRecords(COUNTERSCULPT);
+  expect(g.blocker).toBeUndefined();
+  expect(g.records[0]!.actions).toMatchObject([{ verb: "behold", object: "a Jace", optional: true }]);
+  expect(g.records[0]!.actions).toHaveLength(1);
+  // Another alternative ("sacrifice a creature or pay {3}{B}", Spark Harvest) is not read by this task: refused, not guessed.
+  const harvest = grammarClauseRecords({ name: "Spark Harvest", typeLine: "Sorcery", oracleText: "As an additional cost to cast this spell, sacrifice a creature or pay {3}{B}.\nDestroy target creature or planeswalker." });
+  expect(harvest.complete).toBe(false);
+  expect(harvest.blocker).toMatchObject({ phrase: "pay {3}{B}" });
+});
+
+test("a state-based-action exemption is the store's unclaimed `other` with the sentence (Sanctum Lurker)", () => {
+  const g = grammarClauseRecords(SANCTUM_LURKER);
+  expect(g.blocker).toBeUndefined();
+  const rec = g.records.find((r) => r.actions?.some((a) => a.verb === "other"));
+  expect(rec).toMatchObject({ abilityType: "static", actions: [{ verb: "other", object: "planeswalkers you control aren't put into their owners' graveyards for having 0 loyalty" }] });
+  // It names no zone move: no put, no graveyard claim on the card (CR 704.5i is what it switches off).
+  const tags = deriveCardTags(deriveInputOf(SANCTUM_LURKER as never, "x", SANCTUM_LURKER.name, g.records, undefined, g.readings));
+  expect(tags.abilities.map((a) => a.effect.kind)).not.toContain("extra-loyalty");
+  expect(tags.abilities.flatMap((a) => a.emits ?? []).map((e) => e.verb)).not.toContain("dies");
+  // Another sentence in the same shape that the filter grammar cannot read stays refused.
+  expect(grammarClauseRecords({ name: "Test", typeLine: "Enchantment", oracleText: "Wibble aren't put into their owners' graveyards for having 0 loyalty." }).complete).toBe(false);
+});
+
+test("a timing permission for loyalty abilities is the store's `other`, and derive's extra-loyalty is narrowed to the class the sentence names (Jace's Machinations)", () => {
+  const g = grammarClauseRecords(JACES_MACHINATIONS);
+  expect(g.blocker).toBeUndefined();
+  const tags = deriveCardTags(deriveInputOf(JACES_MACHINATIONS as never, "x", JACES_MACHINATIONS.name, g.records, undefined, g.readings));
+  const extra = tags.abilities.filter((a) => a.effect.kind === "extra-loyalty");
+  expect(extra).toHaveLength(1);
+  expect(extra[0]!.effect.subject).toMatchObject({ control: "you", type: "planeswalker", subtype: "jace" });
+  // The unqualified sentence still claims every planeswalker you control, as before.
+  const source = { name: "Test Emblem Source", typeLine: "Instant", oracleText: "You may activate loyalty abilities of planeswalkers you control on any player's turn any time you could cast an instant." };
+  const teferi = grammarClauseRecords(source);
+  expect(teferi.blocker).toBeUndefined();
+  const t = deriveCardTags(deriveInputOf(source as never, "x", source.name, teferi.records, undefined, teferi.readings));
+  expect(t.abilities.find((a) => a.effect.kind === "extra-loyalty")!.effect.subject).toEqual({ control: "you", token: null, type: "planeswalker", scope: "all" });
+});
+
+test("'empower Jace X, where X is ...' on a Jace card keeps the keyword's Jace and the count (Jace, Reality Sculptor)", () => {
+  // The card's own short name must not turn the keyword action's object into the card (CR 701.71a: "Jace" there is the planeswalker type of the token).
+  expect(selfAsTilde("+1: Empower Jace X, where X is the number of Islands you control.", "Jace, Reality Sculptor")).toBe("+1: Empower Jace X, where X is the number of Islands you control.");
+  expect(selfAsTilde("Jace deals 1 damage to any target.", "Jace, Reality Sculptor")).toBe("~ deals 1 damage to any target.");
+  const g = grammarClauseRecords(JACE_REALITY_SCULPTOR);
+  expect(g.blocker).toBeUndefined();
+  expect(g.records[0]!.actions).toMatchObject([{ verb: "empower-jace", amount: "the number of Islands you control" }]);
 });

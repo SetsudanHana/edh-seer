@@ -118,7 +118,7 @@
   "packages/tagger/src/derive/top-reads.ts": 2,
   "packages/tagger/src/derive/verb-words.ts": 1,
   "packages/tagger/src/derive/would-enter.ts": 1,
-  "packages/tagger/src/grammar/action.ts": 31,
+  "packages/tagger/src/grammar/action.ts": 36,
   "packages/tagger/src/grammar/clause-record.ts": 8,
   "packages/tagger/src/grammar/derive-diff.ts": 4,
   "packages/tagger/src/grammar/filter.ts": 8,

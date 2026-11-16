@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { actionEffectKind, grantedTypeOf, bounceOrigin, extraLoyalty, extraPhaseName, playsFromTop } from "./effect-kind.js";
+import { actionEffectKind, grantedTypeOf, bounceOrigin, extraLoyalty, extraLoyaltyType, extraPhaseName, playsFromTop } from "./effect-kind.js";
 import { deriveAbilities } from "./derive.js";
 import { EFFECT_KINDS } from "../schema.js";
 
@@ -970,6 +970,10 @@ test("an extra loyalty activation is extra-loyalty, for your planeswalkers or fo
   // An emblem grant quoting the permission is the emblem's, not the card's (Teferi, Temporal Archmage).
   expect(extraLoyalty("You get an emblem with \"You may activate loyalty abilities of planeswalkers you control on any player's turn any time you could cast an instant.\"")).toBeUndefined();
   expect(extraLoyalty("You may activate loyalty abilities of planeswalkers you control on any player's turn any time you could cast an instant.")).toBe("yours");
+  // A permission limited to a planeswalker TYPE names it (Jace's Machinations); the unqualified sentence and a non-type word name none.
+  expect(extraLoyaltyType("Until end of turn, you may activate loyalty abilities of Jace planeswalkers you control on any player's turn any time you could cast an instant.")).toBe("jace");
+  expect(extraLoyaltyType("You may activate loyalty abilities of planeswalkers you control on any player's turn any time you could cast an instant.")).toBeUndefined();
+  expect(extraLoyaltyType("You may activate the loyalty abilities of the planeswalkers you control twice each turn rather than only once.")).toBeUndefined();
   // A cost INCREASE on loyalty abilities is not one (Carth the Lion).
   expect(deriveAbilities([{ id: 2, abilityType: "static", actions: [{ verb: "cost-modify" }] }], "Carth the Lion",
     { 2: "Planeswalkers' loyalty abilities you activate cost an additional [+1] to activate." }).abilities.some((a) => a.effect.kind === "extra-loyalty")).toBe(false);

@@ -209,6 +209,8 @@ const OBJECT_VERBS: [RegExp, string, VerbPatch?][] = [
   [/^enters?(?: the battlefield)? under your control$/, "enters", { control: "you" }],
   [/^enters?(?: the battlefield)? under an opponent's control$/, "enters", { control: "opp" }],
   [/^enters? (?<n>attacking|transformed|attached to a creature|from anywhere other than your hand)$/, "enters"],
+  // "a creature is put onto the battlefield [this way]" (Vivien's Invocation): a permanent put onto the battlefield enters it (CR 603.6a), the passive of "you put a creature onto the battlefield".
+  [/^(?:is|are) put onto the battlefield$/, "enters"],
   [/^(?:is|are) cast$/, "cast"],
   [/^(?:is|are) countered$/, "countered"],
   [/^(?:is|are) drawn$/, "draw"],
