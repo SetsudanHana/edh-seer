@@ -146,3 +146,31 @@ export function targetSlotsOf(
   }
   return slots.length > 0 ? slots : undefined;
 }
+
+/** HOW THE COPIED ABILITY MUST HAVE BEEN PAID (#1650), for a copier that copies only an ability paid a particular way; the matcher tests it against the producer's `Ability.payment`.
+ *  Verrak "if life was paid to activate it" (`life`); Ashnod "if one or more permanents were sacrificed to activate it" (`sacrifice`); Unbound Flourishing "that ability's activation cost contains {X}" and
+ *  Magus Lucea Kane "an ability with {X} in its activation cost" (`x`); Sunken Palace "when you spend this mana to cast a spell or activate an ability" and Dynaheir "by spending four or more mana to activate it" (`mana`).
+ *  CEILING: only these four conditions are read; "four or more" (Dynaheir) is a floor on the cost's mana value the subject does not carry, so `mana` is any mana in the cost. */
+const PAID_LIFE = /\bif life was paid to activate (?:it|that ability)\b/i;
+const PAID_SACRIFICE = /\bif (?:one or more )?(?:permanents? )?(?:was|were) sacrificed to activate (?:it|that ability)\b/i;
+const PAID_X = /\bactivation costs? (?:contains?|includes?) \{X\}|\{X\} in (?:its|their) activation costs?/i;
+/** "when you spend this mana to cast a spell or activate an ability" / "by spending four or more mana to activate it": the phrase up to its comma names an activation. Found with indexOf, not one regex over the span. */
+const spendsOnActivation = (text: string): boolean => {
+  const lower = text.toLowerCase();
+  for (const lead of ["spend this mana to ", "spending "]) {
+    const at = lower.indexOf(lead);
+    if (at < 0) continue;
+    const end = lower.indexOf(",", at);
+    const phrase = lower.slice(at, end < 0 ? undefined : end);
+    if (/\bmana\b/.test(phrase) && /\bactivate\b/.test(phrase)) return true;
+  }
+  return false;
+};
+export const copyPaidWithOf = (clauseText: string | undefined): NonNullable<SubjectFilter["paidWith"]> | undefined => {
+  if (clauseText === undefined) return undefined;
+  if (PAID_LIFE.test(clauseText)) return "life";
+  if (PAID_SACRIFICE.test(clauseText)) return "sacrifice";
+  if (PAID_X.test(clauseText)) return "x";
+  if (spendsOnActivation(clauseText)) return "mana";
+  return undefined;
+};

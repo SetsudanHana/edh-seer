@@ -856,8 +856,11 @@ const TOKEN_CREATION = /\btokens?\s+named\b/i;
  *  DEFECT this change deliberately preserves rather than quietly fixes. 60 was tried first and
  *  moved that card, which is why the bound is measured and not guessed. Same reasoning for every
  *  other `\s{1,4}` in this file. */
-/** A mana ability the phrase EXCLUDES (#1650): "that isn't a mana ability", "that aren't mana abilities", "other than mana abilities", "except (for) mana abilities", "without mana abilities", "non-mana abilities". */
-const NOT_MANA_ABILITY = /\b(?:(?:isn['\u2019]t|aren['\u2019]t|is not|are not|not)(?: an?)?|other than|except(?: for)?|without|non-?)\s*mana abilit(?:y|ies)\b/gi;
+/** A mana ability the phrase EXCLUDES (#1650): "that isn't a mana ability", "that aren't mana abilities", "other than mana abilities", "except (for) mana abilities", "without mana abilities", "non-mana abilities", AND THE TAIL OF THE NEGATION ("aren't mana abilities or loyalty abilities", Overwhelming Splendor: neither is a kind it names). */
+const NOT_MANA_ABILITY = /\b(?:(?:isn['’]t|aren['’]t|is not|are not|not)(?: an?)?|other than|except(?: for)?|without|non-?)\s*mana abilit(?:y|ies)\b/gi;
+/** What follows a cut negation, still inside it: "... mana abilities OR LOYALTY ABILITIES" (the cut leaves \uE000 where it stood). */
+const NEGATION_TAIL = /\uE000(?:,? (?:or|and|nor) (?:an? )?(?:loyalty|triggered|activated) abilit(?:y|ies))+/gi;
+const withoutNegatedAbilities = (t: string): string => t.replace(NOT_MANA_ABILITY, "\uE000").replace(NEGATION_TAIL, " ").replace(/\uE000/g, " ");
 const NAMED = /\bnamed\s{1,4}([^,.]{1,80}?)(?=\s{1,4}(?:in|on|from|under|with|that|you|an?\b|to)\s|[,.]|$)/i;
 
 /** A TARGETING RESTRICTION, WHICH NOTHING HERE MODELS. "an instant or sorcery spell that targets
@@ -1048,9 +1051,9 @@ export function parseSubject(text: string, role: "pick" | "event" = "pick"): Sub
   // THE KIND WORDS ARE READ OFF THE ABILITY NOUN (#1650). A NEGATED mana ability is no `mana` kind ("an activated ability that isn't a mana ability", "abilities other than mana abilities"):
   // it is cut before the words are read, so the kind is what is left ("activated", or none: the copier's own trigger names it). And "mana" names the kind only as "mana ability" ("a spell with {X} in
   // its mana cost or an ability with {X} in its activation cost" is no mana ability). The other three words keep the reading they had.
-  // CEILING: a negation inside a longer list ("activated abilities, but not mana abilities") is not read; no corpus card prints it (census, #1650).
+  // CEILING: a negation that does not START at the mana ability ("activated abilities, but not mana abilities"; "abilities that aren't loyalty abilities or mana abilities") is not read.
   if (/\babilit(?:y|ies)\b/.test(t)) {
-    const kinds = [...t.replace(NOT_MANA_ABILITY, " ").matchAll(/\b(activated|triggered|loyalty|mana(?= abilit))\b/g)].map((m) => m[1] as SubjectFilter["abilityKind"] extends (infer K)[] | undefined ? K : never);
+    const kinds = [...withoutNegatedAbilities(t).matchAll(/\b(activated|triggered|loyalty|mana(?= abilit))\b/g)].map((m) => m[1] as SubjectFilter["abilityKind"] extends (infer K)[] | undefined ? K : never);
     if (kinds.length) out.abilityKind = [...new Set(kinds)];
   }
   const origin = t.match(ORIGIN_ZONE);

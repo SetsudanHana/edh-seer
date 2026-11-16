@@ -724,6 +724,11 @@ test("a subject that names an ability records which kinds, in the order named", 
   expect(parseSubject("a loyalty ability of a Chandra planeswalker").abilityKind).toEqual(["loyalty"]);
   expect(parseSubject("an ability of an artifact, creature, or land on the battlefield that isn't a mana ability").abilityKind).toBeUndefined(); // a NEGATED mana ability names no kind (#1650); it read ["mana"] before
   expect(parseSubject("a mana ability").abilityKind).toEqual(["mana"]);
+  // A NEGATION'S TAIL is negated too (Overwhelming Splendor: "abilities that aren't mana abilities or loyalty abilities"): the loyalty abilities are no kind it names; it read ["loyalty"] before (#1650 review).
+  expect(parseSubject("abilities that aren't mana abilities or loyalty abilities").abilityKind).toBeUndefined();
+  expect(parseSubject("an ability that isn't a mana ability or a triggered ability").abilityKind).toBeUndefined();
+  expect(parseSubject("activated abilities that aren't mana abilities").abilityKind).toEqual(["activated"]);
+  expect(parseSubject("a loyalty ability or a mana ability").abilityKind).toEqual(["loyalty", "mana"]);
   // No "ability" in the text, no field -- "a triggered creature" is not a sentence a card prints.
   expect(parseSubject("target creature an opponent controls").abilityKind).toBeUndefined();
 });

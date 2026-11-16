@@ -126,7 +126,8 @@ describe("Ability.targets read from the head noun, outside quotes, through comma
  *  claimed `copies:mana` to the mana abilities they cannot copy and missed every activated ability they can); "mana cost" is no mana ability (Magus Lucea Kane, Unbound Flourishing); and the
  *  pronoun "that spell or ability" is not a spell-typed subject (it made `typeMatchesCharacteristics("spell")` drop every ability producer: Bill Potts, Wyll's Reversal, Sunken Palace,
  *  Repeated Reverberation, Magus Lucea Kane, Unbound Flourishing). Oracle text and clauses are the corpus's own (DERIVE 532) in the fixtures file. */
-const KIND_SOURCES = [...REACH, "Sol Ring", "Pacesetter Paragon"];
+const PAID_SOURCES = ["Forsworn Paladin", "Helix Pinnacle", "Viscera Seer", "Icy Manipulator"];
+const KIND_SOURCES = [...REACH, "Sol Ring", "Pacesetter Paragon", ...PAID_SOURCES];
 const kindReach = (copier: string): string[] => KIND_SOURCES.filter((s) => copies(copier, s).length > 0);
 
 describe("a negated mana ability is the activated kind, never `mana` (#1650)", () => {
@@ -145,11 +146,23 @@ describe("a negated mana ability is the activated kind, never `mana` (#1650)", (
       expect(copies(c, "Sol Ring")).toEqual([]);
     }
   });
-  test("Verrak: every non-mana activated ability (Sol Ring's is a mana ability and is not one)", () => {
-    expect(kindReach("Verrak, Warped Sengir")).toEqual(["Mistrise Village", "Vexing Shusher", "Prodigal Sorcerer", "Chandra's Regulator", "Chandra, Torch of Defiance", "Ugin, the Spirit Dragon", "Mother of Runes", "Goblin Welder", "Pacesetter Paragon"]);
+  // THE COPY IS CONDITIONAL (#1650 review): each of these copies only an ability PAID a particular way, read off the producer's derived cost (`Ability.payment`), never its printed text.
+  test("derive: the way the ability is paid lands on the copier's subject (`paidWith`)", () => {
+    expect(copySubject("Verrak, Warped Sengir").paidWith).toBe("life");
+    expect(copySubject("Ashnod the Uncaring").paidWith).toBe("sacrifice");
+    expect(copySubject("Unbound Flourishing").paidWith).toBe("x");
+    expect(copySubject("Magus Lucea Kane").paidWith).toBe("x");
+    expect(copySubject("Sunken Palace").paidWith).toBe("mana");
+    expect(copySubject("Dynaheir, Invoker Adept").paidWith).toBe("mana");
+    for (const c of ["Rings of Brighthearth", "Gogo, Master of Mimicry", "Pit Automaton", "Bill Potts"]) expect(copySubject(c).paidWith).toBeUndefined();
   });
-  test("Ashnod: a creature's or artifact's non-mana ability", () => {
-    expect(kindReach("Ashnod the Uncaring")).toEqual(["Vexing Shusher", "Prodigal Sorcerer", "Chandra's Regulator", "Mother of Runes", "Goblin Welder", "Pacesetter Paragon"]);
+  test("Verrak: an ability that PAYS LIFE (Forsworn Paladin), not Mother of Runes, Prodigal Sorcerer or a {X} or sacrifice cost", () => {
+    expect(kindReach("Verrak, Warped Sengir")).toEqual(["Forsworn Paladin"]);
+    expect(copies("Verrak, Warped Sengir", "Mother of Runes")).toEqual([]);
+  });
+  test("Ashnod: an ability that SACRIFICES something (Viscera Seer), not Prodigal Sorcerer; Phyrexian Altar's mana ability is no ability to copy", () => {
+    expect(kindReach("Ashnod the Uncaring")).toEqual(["Viscera Seer"]);
+    expect(copies("Ashnod the Uncaring", "Prodigal Sorcerer")).toEqual([]);
   });
   // CEILING in the test's words: "{T}: When you next activate ..." is a delayed trigger the derive does not read, and the effect behind it names the trigger's object ("that ability"),
   // so it claims nothing (#1592): Dynaheir, Pit Automaton and Magus Lucea Kane carry the right demand and meet no producer until that trigger is read.
@@ -171,9 +184,13 @@ describe("a copier of 'that spell or ability' pairs with abilities (#1650)", () 
     expect(copySubject("Repeated Reverberation").abilityKind).toEqual(["loyalty"]);
     expect(copySubject("Wyll's Reversal").abilityKind).toBeUndefined();
   });
-  test("Sunken Palace and Unbound Flourishing: a non-mana activated ability", () => {
-    expect(kindReach("Sunken Palace")).toEqual(kindReach("Verrak, Warped Sengir"));
-    expect(kindReach("Unbound Flourishing")).toEqual(kindReach("Verrak, Warped Sengir"));
+  test("Unbound Flourishing: an ability with {X} in its activation cost (Helix Pinnacle), no other", () => {
+    expect(kindReach("Unbound Flourishing")).toEqual(["Helix Pinnacle"]);
+    expect(copies("Unbound Flourishing", "Prodigal Sorcerer")).toEqual([]);
+  });
+  test("Sunken Palace: an ability paid with MANA (a mana cost), not a {T}-only ability or a loyalty ability", () => {
+    expect(kindReach("Sunken Palace")).toEqual(["Mistrise Village", "Vexing Shusher", "Chandra's Regulator", "Pacesetter Paragon", "Forsworn Paladin", "Helix Pinnacle", "Icy Manipulator"]);
+    for (const s of ["Prodigal Sorcerer", "Mother of Runes", "Goblin Welder", "Chandra, Torch of Defiance", "Ugin, the Spirit Dragon", "Viscera Seer"]) expect(copies("Sunken Palace", s)).toEqual([]);
   });
   test("Repeated Reverberation: a loyalty ability only", () => {
     expect(kindReach("Repeated Reverberation")).toEqual(["Chandra, Torch of Defiance", "Ugin, the Spirit Dragon"]);
@@ -185,9 +202,9 @@ describe("a copier of 'that spell or ability' pairs with abilities (#1650)", () 
     expect(copies("Wyll's Reversal", "Mother of Runes")).toEqual(["copies:activated"]);
   });
   test("Wyll's Reversal: an ability with a target (not Mistrise Village or Sledge-Captain, whose backup derives no target slot)", () => {
-    expect(kindReach("Wyll's Reversal")).toEqual(["Vexing Shusher", "Prodigal Sorcerer", "Chandra, Torch of Defiance", "Ugin, the Spirit Dragon", "Mother of Runes", "Goblin Welder"]);
+    expect(kindReach("Wyll's Reversal")).toEqual(["Vexing Shusher", "Prodigal Sorcerer", "Chandra, Torch of Defiance", "Ugin, the Spirit Dragon", "Mother of Runes", "Goblin Welder", "Forsworn Paladin", "Icy Manipulator"]);
   });
   test("Bill Potts: an activated ability that could target only a creature (Bill Potts is one)", () => {
-    expect(kindReach("Bill Potts")).toEqual(["Prodigal Sorcerer", "Chandra, Torch of Defiance", "Ugin, the Spirit Dragon", "Mother of Runes"]);
+    expect(kindReach("Bill Potts")).toEqual(["Prodigal Sorcerer", "Chandra, Torch of Defiance", "Ugin, the Spirit Dragon", "Mother of Runes", "Forsworn Paladin", "Icy Manipulator"]);
   });
 });

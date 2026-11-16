@@ -408,6 +408,11 @@ export interface SubjectFilter {
    *  as the cards mean it (mana abilities do not use the stack, CR 605.3b, and cannot be targeted);
    *  `mana` and `loyalty` are named only when the card names them. */
   abilityKind?: AbilityObjectKind[];
+  /** HOW THE ABILITY WAS PAID, when the copier copies only an ability paid that way (#1650): Verrak "if life was paid to activate it" (`life`), Ashnod "if one or more permanents were sacrificed to activate it"
+   *  (`sacrifice`), Unbound Flourishing and Magus Lucea Kane "an ability with {X} in its activation cost" (`x`), Sunken Palace "when you spend this mana to ... activate an ability" and Dynaheir "by spending four or more
+   *  mana" (`mana`). The matcher answers it from the producer's `Ability.payment` (`life`, `sacrifice`, `mana` holding {X}, `mana`), never from printed text. CEILING: Dynaheir's "four or more" is not
+   *  carried, `mana` is any mana in the cost; a loyalty cost "-X" is not an {X} cost. */
+  paidWith?: "life" | "sacrifice" | "x" | "mana";
   /** Counter kind for `counter-added` events, e.g. "+1/+1", "-1/-1", "loyalty". */
   counter?: string;
   /** "a creature you control with A COUNTER on it": some counter, of no stated kind. A producer that

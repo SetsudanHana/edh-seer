@@ -1235,5 +1235,54 @@
   "keywords": [
    "Exhaust"
   ]
+ },
+ "Forsworn Paladin": {
+  "typeLine": "Creature — Human Knight",
+  "oracleText": "Menace\n{1}{B}, {T}, Pay 1 life: Create a Treasure token.\n{2}{B}: Target creature gets +2/+0 until end of turn. If mana from a Treasure was spent to activate this ability, that creature also gains deathtouch until end of turn.",
+  "colors": [
+   "B"
+  ],
+  "colorIdentity": [
+   "B"
+  ],
+  "manaValue": 1,
+  "power": "1",
+  "toughness": "1",
+  "keywords": [
+   "Treasure",
+   "Menace"
+  ]
+ },
+ "Helix Pinnacle": {
+  "typeLine": "Enchantment",
+  "oracleText": "Shroud (This enchantment can't be the target of spells or abilities.)\n{X}: Put X tower counters on this enchantment.\nAt the beginning of your upkeep, if there are 100 or more tower counters on this enchantment, you win the game.",
+  "colors": [
+   "G"
+  ],
+  "colorIdentity": [
+   "G"
+  ],
+  "manaValue": 1,
+  "power": null,
+  "toughness": null,
+  "keywords": [
+   "Shroud"
+  ]
+ },
+ "Viscera Seer": {
+  "typeLine": "Creature — Vampire Wizard",
+  "oracleText": "Sacrifice a creature: Scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
+  "colors": [
+   "B"
+  ],
+  "colorIdentity": [
+   "B"
+  ],
+  "manaValue": 1,
+  "power": "1",
+  "toughness": "1",
+  "keywords": [
+   "Scry"
+  ]
  }
 }

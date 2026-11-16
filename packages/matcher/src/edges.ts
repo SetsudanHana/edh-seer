@@ -3836,7 +3836,7 @@ function copyAbilityEdges({ p, c, h, reasons }: PairScope): void {
     const keywords = demand?.keyword?.length ? new Set((p.tags?.characteristics.keywords ?? []).map((k) => k.toLowerCase())) : undefined;
     if (keywords && !demand!.keyword!.every((k) => keywords.has(k.toLowerCase()))) continue;
     const kind = keywords ? kinds[0]
-      : kinds.find((k) => (p.tags?.abilities ?? []).some((pa) => abilityIsKind(pa, k) && copyTargetsAdmit(pa, demand, c, h)));
+      : kinds.find((k) => (p.tags?.abilities ?? []).some((pa) => abilityIsKind(pa, k) && copyTargetsAdmit(pa, demand, c, h) && copyPaidAdmit(pa, demand?.paidWith)));
     if (!kind) continue;
     reasons.push({
       tag: `copies:${kind}`,
@@ -3847,6 +3847,23 @@ function copyAbilityEdges({ p, c, h, reasons }: PairScope): void {
       producer: p.card.name,
     });
   }
+}
+
+/** HOW THE COPIED ABILITY WAS PAID (#1650): Verrak copies an ability "if life was paid to activate it", Ashnod one that sacrificed, Unbound Flourishing and Magus Lucea Kane one with {X} in its activation cost, Sunken
+ *  Palace and Dynaheir one paid with mana. Answered from the producer's own derived cost (`Ability.payment`: `life`, `sacrifice`, `mana`, whose {X} is a symbol of it), the way `copyTargetsAdmit` reads `targets`;
+ *  an ability with no `payment` pays nothing the copier asks for. No demand: any ability.
+ *  CEILING: `Payment` leaves a life payment it cannot read in `other` ("Pay half your life", "Pay 3 life for each ...", "Pay life equal to ...": 4 costs on 8 of 16,383 activated abilities) and a sacrifice joined to a counter removal
+ *  ("Remove three quest counters from this enchantment and sacrifice it": 47 abilities of 4,286 that print a sacrifice); those abilities are read as not paid that way, so Verrak and Ashnod miss them (under-claim).
+ *  CEILING: `mana` is ANY mana in the cost, not mana of the copier's own colour. Sunken Palace's mana is {U}, which cannot pay {B}{B}, {R} or {R}{W}: 903 of the 5,085 producers it pairs with (17.8%, measured 2026-11-16)
+ *  have no cost a blue mana could pay (Whispering Shade, Kalitas, Uurg), a false pair; the copier's mana line is not read for its colour here. */
+function copyPaidAdmit(pa: CardTags["abilities"][number], paidWith: SubjectFilter["paidWith"]): boolean {
+  if (paidWith === undefined) return true;
+  const pay = pa.payment;
+  if (!pay) return false;
+  if (paidWith === "life") return pay.life !== undefined;
+  if (paidWith === "sacrifice") return (pay.sacrifice?.length ?? 0) > 0;
+  if (paidWith === "x") return /\{X\}/i.test(pay.mana ?? "");
+  return pay.mana !== undefined;
 }
 
 /** WHOSE ABILITY A COPIER MAY COPY (#1648): the copier's source restriction, `subject.abilityOf` -- "from an artifact source" (Tawnos, Scientist Supreme),
