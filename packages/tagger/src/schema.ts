@@ -416,6 +416,8 @@ export interface SubjectFilter {
   /** With `paidWith: "mana"`: the colours of the mana the copier names, when it names its own ("Add {U}. When you spend this mana to ... activate an ability", Sunken Palace: `["U"]`; `C` is colourless). The copied
    *  ability's cost must be one that mana can pay (a generic symbol, {X}, a symbol of one of these colours, a hybrid or Phyrexian symbol containing one). Absent: any mana (Dynaheir). */
   paidColors?: string[];
+  /** A TARGET SLOT (`Ability.targets`) whose phrase carries a word the slot does not capture (a keyword, a state, a number, a supertype, a head the grammar missed): the slot is partial and a demand that must know the target is the copier refuses it (#1650). */
+  unread?: true;
   /** Counter kind for `counter-added` events, e.g. "+1/+1", "-1/-1", "loyalty". */
   counter?: string;
   /** "a creature you control with A COUNTER on it": some counter, of no stated kind. A producer that

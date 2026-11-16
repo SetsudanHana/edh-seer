@@ -3891,6 +3891,7 @@ function copyTargetsAdmit(pa: CardTags["abilities"][number], demand: SubjectFilt
   if (Object.keys(want).length === 0) return true; // "with one or more targets" (Wyll's Reversal, #1650): any target at all, a spell or a card included
   const self = want.self === true && copier.tags ? characteristicsSubject(copier.tags, copier.card.name) : undefined;
   return slots.some((cls) => {
+    if (self !== undefined && cls.unread === true) return false; // a qualifier the slot dropped ("with flying", "attacking", "Vehicle"): not known to be the copier (#1650)
     if (self !== undefined && cls.control === "opp") return false; // an opponent's permanent is never the copier
     if (cls.type === undefined && cls.subtype === undefined && cls.player === undefined && cls.anyOf === undefined) return true;
     // A SPELL, ABILITY OR CARD (in a graveyard) is aimed at as such, never a permanent or a player, which `subjectMatches` would let a "spell" be ("a creature spell"). It meets only a demand that names the same word.

@@ -231,4 +231,17 @@ describe("review round 3 (#1650)", () => {
     for (const c of ["Unbound Flourishing", "Sunken Palace", "Wyll's Reversal", "Rings of Brighthearth"]) expect([c, pairReasons(card(c), card("Gogo, Master of Mimicry"), H).filter((r) => r.consumer === c && r.tag.startsWith("copies:")).map((r) => r.tag)]).toEqual([c, []]);
     expect(copies("Rings of Brighthearth", "Icy Manipulator")).toEqual(["copies:activated"]);
   });
+  test("a target phrase with a word the slot does not capture is refused for a SELF demand (Bill Potts): 'attacking creature with flying' (Femeref Archers), 'Vehicle becomes an artifact' (Mech Hangar)", () => {
+    for (const s of ["Femeref Archers", "Mech Hangar"]) expect(copies("Bill Potts", s)).toEqual([]);
+    for (const s of ["Akki Drillmaster", "Forsworn Paladin"]) expect(copies("Bill Potts", s)).toEqual(["copies:activated"]);
+  });
+  test("derive: the slot is marked `unread` only when its phrase carries an uncaptured word; Wyll's Reversal ('one or more targets') still admits it", () => {
+    const slots = (n: string) => card(n).tags!.abilities.flatMap((a) => a.targets ?? []);
+    expect(slots("Femeref Archers").some((x) => x.unread === true)).toBe(true);
+    expect(slots("Mech Hangar").some((x) => x.unread === true)).toBe(true);
+    expect(slots("Akki Drillmaster").some((x) => x.unread === true)).toBe(false);
+    expect(slots("Forsworn Paladin").some((x) => x.unread === true)).toBe(false);
+    expect(slots("Exorcist").some((x) => x.unread === true)).toBe(false);
+    expect(copies("Wyll's Reversal", "Femeref Archers")).toEqual(["copies:activated"]);
+  });
 });

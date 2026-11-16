@@ -1442,7 +1442,8 @@
      "repeats": "once",
      "targets": [
       {
-       "type": "creature"
+       "type": "creature",
+       "unread": true
       }
      ]
     },
@@ -1970,7 +1971,8 @@
      "repeats": "once",
      "targets": [
       {
-       "type": "creature"
+       "type": "creature",
+       "unread": true
       }
      ]
     }
@@ -3981,7 +3983,8 @@
      "repeats": "per-cycle",
      "targets": [
       {
-       "type": "creature"
+       "type": "creature",
+       "unread": true
       }
      ]
     }

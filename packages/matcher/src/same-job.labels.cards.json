@@ -4726,7 +4726,8 @@
      "repeats": "once",
      "targets": [
       {
-       "type": "spell"
+       "type": "spell",
+       "unread": true
       }
      ]
     }

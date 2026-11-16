@@ -586,7 +586,8 @@
          "type": "land"
         }
        ],
-       "control": "opp"
+       "control": "opp",
+       "unread": true
       }
      ]
     },
@@ -646,7 +647,8 @@
          "type": "land"
         }
        ],
-       "control": "opp"
+       "control": "opp",
+       "unread": true
       }
      ]
     },
@@ -707,7 +709,8 @@
          "type": "land"
         }
        ],
-       "control": "opp"
+       "control": "opp",
+       "unread": true
       }
      ],
      "toZone": "battlefield"
@@ -756,7 +759,8 @@
          "type": "land"
         }
        ],
-       "control": "opp"
+       "control": "opp",
+       "unread": true
       }
      ]
     }

@@ -1373,5 +1373,29 @@
   "power": "2",
   "toughness": "2",
   "keywords": []
+ },
+ "Femeref Archers": {
+  "typeLine": "Creature — Human Archer",
+  "oracleText": "{T}: This creature deals 4 damage to target attacking creature with flying.",
+  "colors": [
+   "G"
+  ],
+  "colorIdentity": [
+   "G"
+  ],
+  "manaValue": 3,
+  "power": "2",
+  "toughness": "2",
+  "keywords": []
+ },
+ "Mech Hangar": {
+  "typeLine": "Land",
+  "oracleText": "{T}: Add {C}.\n{T}: Add one mana of any color. Spend this mana only to cast a Pilot or Vehicle spell.\n{3}, {T}: Target Vehicle becomes an artifact creature until end of turn.",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 0,
+  "power": null,
+  "toughness": null,
+  "keywords": []
  }
 }

@@ -30,7 +30,7 @@ const aims = (t: string) => targetSlotsOf([t], undefined, parse, selfAsTilde);
 test("targets: a class per phrase, whose it is, and nothing for a relative clause", () => {
   expect(aims("{T}: This creature deals 1 damage to any target.")).toEqual([{}]);
   expect(aims("Target creature you control gains protection from the color of your choice until end of turn.")).toEqual([{ type: "creature", control: "you" }]);
-  expect(aims("Destroy target creature with flying an opponent controls.")).toEqual([{ type: "creature", control: "opp" }]);
+  expect(aims("Destroy target creature with flying an opponent controls.")).toEqual([{ type: "creature", control: "opp", unread: true }]) // "with flying" is no slot field, so the slot says so;
   expect(aims("Target player gains 3 life.")).toEqual([{ player: true }]);
   expect(aims("Target opponent loses 2 life.")).toEqual([{ player: true, control: "opp" }]);
   expect(aims("Choose target artifact a player controls and target artifact card in that player's graveyard.")).toHaveLength(2);
@@ -49,9 +49,9 @@ test("targets: an opponent's permanent said as 'that player controls' and 'defen
 });
 
 test("targets: an unread phrase keeps its head noun, a list keeps every noun, a quoted grant is not the clause's, 'for each opponent' is a target each", () => {
-  expect(aims("When this creature enters, counter target spell with mana value X or less.")).toEqual([{ type: "spell" }]);
-  expect(aims("Whenever this creature attacks, destroy target creature with power 2 or less.")).toEqual([{ type: "creature" }]);
-  expect(aims("Destroy target nonland permanent that player controls.")).toEqual([{ control: "opp" }]);
+  expect(aims("When this creature enters, counter target spell with mana value X or less.")).toEqual([{ type: "spell", unread: true }]); // "mana value X or less" is no slot field
+  expect(aims("Whenever this creature attacks, destroy target creature with power 2 or less.")).toEqual([{ type: "creature", unread: true }]);
+  expect(aims("Destroy target nonland permanent that player controls.")).toEqual([{ control: "opp", unread: true }]);
   expect(aims("{1}, {T}: Tap target artifact, creature, or land.")).toEqual([{ type: ["artifact", "creature", "land"] }]);
   expect(aims("Tap target artifact, creature, enchantment, or planeswalker.")).toEqual([{ type: ["artifact", "creature", "enchantment", "planeswalker"] }]);
   expect(aims("Exile target artifacts, creatures, and/or enchantments.")).toEqual([{ type: ["artifact", "creature", "enchantment"] }]);
