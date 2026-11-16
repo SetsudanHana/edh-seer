@@ -155,13 +155,49 @@ test("an amount behind a condition on the card's text has a floor of 0 and keeps
   expect(tuskcaller).toMatchObject({ floor: 0, ceiling: 2, conditional: true, delayed: true });
 });
 
-/** AN ACTIVATION THAT CHARGES MORE THAN MANA says so: "{R}, Sacrifice this creature: 6 damage" is
- *  not six for one. The rate stands, the flag lets a per-mana sort leave it out. */
+/** AN ACTIVATION THAT CHARGES MORE THAN MANA says so: "{R}, Sacrifice another creature: 6 damage" is
+ *  not six for one. The rate stands, the flag lets a per-mana sort leave it out. Bloodfire Colossus's own
+ *  "{R}, Sacrifice this creature" is priced instead: six damage for the {6}{R}{R} cast plus the {R}, once (#698). */
 test("an activation cost with words in it is flagged as more than mana", () => {
   const sac = [{ kind: "activated", cost: "{R}, Sacrifice this creature", effect: { kind: "damage", subject: { control: "any", token: null } }, amount: "6", repeats: "once" }];
-  expect(ratesOf(card("Bloodfire Colossus", "{6}{R}{R}", sac, { types: ["creature"] }))[0]).toMatchObject({ mana: 1, floor: 6, extraCost: true });
+  expect(ratesOf(card("Bloodfire Colossus", "{6}{R}{R}", sac, { types: ["creature"] }))[0]).toMatchObject({ mana: 1, cast: 8, floor: 6 });
+  expect(ratesOf(card("Bloodfire Colossus", "{6}{R}{R}", sac, { types: ["creature"] }))[0]).not.toHaveProperty("extraCost");
+  const other = [{ ...sac[0]!, cost: "{R}, Sacrifice another creature" }];
+  expect(ratesOf(card("Bloodfire-like", "{6}{R}{R}", other, { types: ["creature"] }))[0]).toMatchObject({ mana: 1, floor: 6, extraCost: true });
   const tap = [{ kind: "activated", cost: "{4}, {T}", effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: "1", repeats: "repeatable" }];
   expect(ratesOf(card("Jayemdae Tome", "{4}", tap))[0]).not.toHaveProperty("extraCost");
+});
+
+/** #698: THE COSTS THE CARD ALREADY PRICES ARE NOT "MORE THAN MANA". Rows are the corpus's (derive 2026-11-16):
+ *  Courier's Briefcase "{W}{U}{B}{R}{G}, {T}, Sacrifice this artifact: Draw three cards." {1}{G}; Rummaging Goblin
+ *  "{T}, Discard a card: Draw a card." {2}{R} (derive adds a companion ability with a `discard` emit on the same cost). */
+const drawAbility = (cost: string, amount: string, repeats: string, extra: Record<string, unknown> = {}) =>
+  ({ kind: "activated", cost, effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount, repeats, emits: [{ verb: "draw", subject: { control: "you" } }], ...extra });
+test("a self-sacrifice activation is priced by the cast it already carries; another permanent's sacrifice is not", () => {
+  const briefcase = ratesOf(card("Courier's Briefcase", "{1}{G}", [drawAbility("{W}{U}{B}{R}{G}, {T}, Sacrifice this artifact", "3", "once")], { types: ["artifact"] }));
+  expect(briefcase).toEqual([{ family: "cards", kind: "activated", amount: 3, mana: 5, cast: 2, repeats: "once", floor: 3, ceiling: 3 }]);
+  const spellbomb = ratesOf(card("Sunbeam Spellbomb", "{1}", [drawAbility("{1}, Sacrifice this artifact", "1", "once")], { types: ["artifact"] }));
+  expect(spellbomb[0]).not.toHaveProperty("extraCost");
+  // Greta, Sweettooth Scourge "{1}{B}, Sacrifice a Food: You draw a card and you lose 1 life.": a Food is a permanent the card does not carry, and no price is stated for it.
+  const greta = ratesOf(card("Greta, Sweettooth Scourge", "{1}{B}{G}", [drawAbility("{1}{B}, Sacrifice a Food", "1", "repeatable")], { types: ["creature"] }));
+  expect(greta[0]).toMatchObject({ extraCost: true });
+  // Ruthless Knave "Sacrifice three Treasures: Draw a card.": no mana symbol, no price stated: refused.
+  expect(ratesOf(card("Ruthless Knave", "{2}{B}", [drawAbility("Sacrifice three Treasures", "1", "repeatable")], { types: ["creature"] }))).toEqual([]);
+});
+test("a discard cost is netted against the draw by the companion's discard, as a loot is; without the companion it stays more than mana", () => {
+  const discard = { kind: "activated", cost: "{T}, Discard a card", effect: { kind: "", subject: { control: "any" } }, amount: "1", repeats: "per-cycle", emits: [{ verb: "discard", subject: { control: "you" } }] };
+  const goblin = ratesOf(card("Rummaging Goblin", "{2}{R}", [discard, drawAbility("{T}, Discard a card", "1", "per-cycle")], { types: ["creature"] }));
+  expect(goblin).toEqual([{ family: "cards", kind: "activated", amount: 0, back: 1, mana: 0, cast: 3, repeats: "per-cycle", floor: 0, ceiling: 0, delayed: true }]);
+  expect(ratesOf(card("Rummaging Goblin", "{2}{R}", [drawAbility("{T}, Discard a card", "1", "per-cycle")], { types: ["creature"] }))[0]).toMatchObject({ extraCost: true });
+});
+/** A SCALING AMOUNT CARRIES ITS DERIVED INTERVAL, whatever the family (owner 2026-10-17, #1265, for mana; #698 for the rest).
+ *  Theft of Dreams "Draw a card for each tapped creature target opponent controls." {2}{U}: floor 0, no ceiling the card states. */
+test("a scaling draw reads as its derived interval, not as no rate", () => {
+  const theft = ratesOf(card("Theft of Dreams", "{2}{U}", [{ kind: "on-cast", effect: { kind: "draw-card", scaling: "per-opponent", subject: { control: "you", token: null } },
+    amount: "for each tapped creature target opponent controls", repeats: "once", count: { floor: 0, ceiling: null } }]));
+  expect(theft).toEqual([{ family: "cards", kind: "on-cast", amount: 0, mana: 3, repeats: "once", floor: 0, ceiling: null }]);
+  // an amount that is neither a number nor an interval ("that many") stays no row
+  expect(ratesOf(card("Windfall-like", "{2}{U}", [{ kind: "on-cast", effect: { kind: "draw-card", scaling: "per-opponent", subject: { control: "you", token: null } }, amount: "that many", repeats: "once" }]))).toEqual([]);
 });
 
 /** THE ORDER A SEARCH ROW SORTS BY: floor per mana, then ceiling per mana with open above bounded,

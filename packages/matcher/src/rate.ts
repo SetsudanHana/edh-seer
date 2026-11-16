@@ -143,6 +143,26 @@ const CONDITION = new RegExp(`\\bif\\b|${CONDITION_BESIDES_IF.source}`, "i");
 /** The card's text carries a condition OTHER than a plain "if": a gated ability's own "if" is priced by its weight (#1357 task 2), and only a condition beside it still makes the amount unreadable. */
 export const hasConditionBesidesIf = (oracleText: string | undefined): boolean => CONDITION_BESIDES_IF.test(oracleText ?? "");
 
+/** THE NON-MANA PARTS OF AN ACTIVATION COST THE RATE DOES NOT ALREADY PRICE (#698). `{T}` and the like are not words. Two kinds of word are priced, and nothing else is:
+ *  - "Sacrifice this <permanent>" on a `once` ability: the permanent IS the card, whose cast is already in the first yield's price (`cast`), and it can pay the cost only once. CR 701.21a (Sacrifice):
+ *    the card leaves the battlefield, so there is no second activation to amortise over.
+ *  - "Discard N cards" on a draw: the companion ability's `discard` emit already took those cards off the amount (`backOf`, the loot rule), so the draw is net of them. `back` must cover the discards.
+ *  Anything else (another permanent's sacrifice, life, a counter, a mill, a tap of another creature) has no stated price in mana and no exchange rate between families is allowed (see the file head), so it
+ *  stays `extraCost`: a row a per-mana sort leaves out, never a guessed price. A Treasure's sacrifice is worth a mana (its own text), but one ability in the corpus pays it (Ruthless Knave), so it stays unpriced until a ruling asks.
+ *  CEILING: card-wide words, read off the cost string; the upgrade path is a derived cost list on the ability. */
+const NUMBER_WORD: Record<string, number> = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4 };
+function unpricedCost(cost: string, repeats: string | undefined, back: number): boolean {
+  const parts = cost.replace(/\{[^{}]+\}/g, "").split(",").map((p) => p.trim()).filter((p) => p !== "");
+  let discards = 0;
+  for (const part of parts) {
+    if (/^sacrifice this [a-z]+$/i.test(part) && repeats === "once") continue;
+    const d = /^discard (a|an|one|two|three|four) [a-z ]*cards?(?: at random)?$/i.exec(part);
+    if (d) { discards += NUMBER_WORD[d[1]!.toLowerCase()]!; continue; }
+    return true;
+  }
+  return discards > back;
+}
+
 const integer = (s: string | undefined): number | null => {
   if (s === undefined || s.trim() === "") return null;
   const n = Number(s.replace(/,/g, ""));
@@ -152,7 +172,7 @@ const integer = (s: string | undefined): number | null => {
 /** EVERY RATE THE CARD'S ABILITIES STATE, one per ability that a family reads and that has a
  *  number to read. Refuses, per ability and silently, when: the effect is another player's
  *  (`control` not you); the amount is a count of something rather than a number, except an X on an
- *  X cost; the ability's cost has no mana to read; or the payment that stops it is YOURS, which is
+ *  X cost and a count that derive gave an interval (`Ability.count`); the ability's cost has no mana to read; or the payment that stops it is YOURS, which is
  *  an upkeep cost and not a rate. A refusal here is an ability with no row, never a guessed row.
  *  AN UNSET AMOUNT IS REFUSED TOO: 578 of your-draw abilities carry none (census 2026-09-17), and
  *  468 of those print "draw a card", but the other 110 print "draw two cards" or "draw cards equal
@@ -239,25 +259,28 @@ export function ratesOf(d: DeckCard): Rate[] {
     const equipped = equipment && a.kind !== "on-cast";
     if (equipped && equipCost === null) continue;
     const castOf = { ...(cast === undefined ? {} : { cast }), ...(equipped && equipCost ? { equip: equipCost } : {}) };
-    const extra = a.kind === "activated" && (imprint || /[A-Za-z]/.test(cost.replace(/\{[^{}]+\}/g, "")));
     const repeats = a.repeats ?? (a.kind === "on-cast" ? "once" : "repeatable");
     const mana = manaOf(cost);
     // AN X COST IS A SLOPE: the fixed pips are the mana, each further mana is one of the unit.
     if (mana === null) {
       if (a.effect?.scaling !== "x-cost") continue;
       const fixed = manaOf(cost.replace(/\{X\}/gi, "")) ?? 0;
-      out.push({ family, kind: a.kind, amount: 0, mana: fixed, ...castOf, slope: 1, repeats, floor: 0, ceiling: null, ...(extra ? { extraCost: true as const } : {}), ...(sick(a) ? { delayed: true as const } : {}) });
+      const slopeExtra = a.kind === "activated" && (imprint || unpricedCost(cost, a.repeats, 0));
+      out.push({ family, kind: a.kind, amount: 0, mana: fixed, ...castOf, slope: 1, repeats, floor: 0, ceiling: null, ...(slopeExtra ? { extraCost: true as const } : {}), ...(sick(a) ? { delayed: true as const } : {}) });
       continue;
     }
     // A SCALING MANA ADD CARRIES AN INTERVAL (owner ruling 2026-10-17, #1265): derive stamped `Ability.count` with the same {floor, ceiling} the ManaLine's `amount` carries (read here from the
     // ability, which `ratesOf` already holds; no line to match). Without it the add was skipped, and quality scored a missing rate as the worst in its family (Faeburrow Elder 50.5 -> 0.9). A colour
     // ceiling stays 5: a rate is deck-free. Only the mana family, and only where the amount is not already a number; an add with no interval ("that much", Photon) stays no row.
-    const interval = family === "mana" && integer(a.amount) === null && a.count ? a.count : null;
+    // #698: the same for every family -- a scaling draw or damage ("for each tapped creature") states its derived {floor, ceiling} the way a scaling add does, and read as floor 0 and an open ceiling it is a
+    // trigger-shaped row, not a missing one. An amount with no interval ("that many", Windfall) stays no row.
+    const interval = integer(a.amount) === null && a.count ? a.count : null;
     const gross = interval ? interval.floor : integer(a.amount);
     if (gross === null || (!interval && a.effect?.scaling !== undefined && a.effect.scaling !== "fixed")) continue;
     const back = family === "cards" ? backOf(a) : 0;
     if (back === null) continue;
     const amount = Math.max(0, gross - back);
+    const extra = a.kind === "activated" && (imprint || unpricedCost(cost, a.repeats, family === "cards" ? back : 0));
     const stats = (a.effect?.subject as { stats?: { metric: string; op: string; value: number }[] } | undefined)?.stats ?? [];
     const power = stats.find((x) => x.metric === "power" && x.op === "eq")?.value, toughness = stats.find((x) => x.metric === "toughness" && x.op === "eq")?.value;
     const size = family === "tokens" && power !== undefined && toughness !== undefined ? `${power}/${toughness}` : undefined;

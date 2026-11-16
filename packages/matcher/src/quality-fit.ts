@@ -34,9 +34,10 @@ const MIN_PAIRS = 150;
  *  at 16), timing 0-2 x 0.5. An ANSWER ranks on mana value
  *  and timing, as before: moving protection, wipes and counters onto the ladder lost agreement on each
  *  (protection 24 -> 18 of 32 cuts), and the fitted removal weights put timing far above frequency too.
- *  CEILING: a yield card whose rate cannot be read (1,253 of 3,283 scored draw cards, 660 of 1,576 ramp,
- *  2026-09-28) adds no rate term, so it sorts below every card with one in its frequency class. Upgrade
- *  path: read those rates (a conditional draw, an extra-cost activation) rather than impute one. */
+ *  CEILING: a yield card whose rate cannot be read (719 of 3,302 scored draw cards, 569 of 1,675 ramp, 389 of 1,642 burn, 87 of 452 tutor, counted 2026-11-16 on #698's census) adds no rate term, so it sorts
+ *  below every card with one in its frequency class. #698 read the self-sacrifice and discard-cost activations and the scaling amounts that state an interval (was 1,046, 628, 606, 97). What stays unread, and why:
+ *  an amount that is a bare count with no derived interval (X-less "equal to", "that many"); a cost paid in another permanent, life or a counter, which no ruling prices in mana; a loyalty cost (CR 606.5);
+ *  another player's yield (Windfall); and the Treasure/Food/token makers the ramp role counts, which add no mana themselves. Upgrade path: a ruling that prices a non-mana cost, and a derived interval on a bare count. */
 const ANSWER_ROLES: ReadonlySet<Role> = new Set(["targetedRemoval", "stackInteraction", "boardWipe", "protection"]);
 export const fallbackWeights = (role: Role): Partial<Record<Ingredient, number>> =>
   ANSWER_ROLES.has(role) ? { manaValue: -1, timing: 0.5 } : { frequency: 1e6, rateFloor: 1e3, manaValue: -2, timing: 0.5 };
