@@ -63,6 +63,8 @@ export function selfPronouns(effect: string): string {
  *  "a Garruk" or "each Garruk"; "other than Ral" is still the card.
  *  The same holds after "empower" (CR 701.71, Empower Jace): the word there is the planeswalker TYPE the keyword action names, so on a card named
  *  "Jace, ..." (Jace, Reality Sculptor: "Empower Jace X") it stays "Jace" and the keyword action reads. */
+// CEILING: the adjectives a class may take between its determiner and the name are a finite list (colours, combat and
+// tap states, token, legendary, P/T); a class phrase with any other adjective, or a bare "target Garruk", still reads as the card.
 const CLASS_BEFORE = /(?:\b(?:each|an?|another|other)\s+|\bnon-?|\bempower\s+)(?:(?:other|attacking|blocking|tapped|untapped|nontoken|token|legendary|nonlegendary|\d+\/\d+|white|blue|black|red|green|colorless|multicolored|monocolored)\s+)*$/i;
 const CLASS_AFTER = /^ planeswalkers?\b/;
 
