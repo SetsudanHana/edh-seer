@@ -1397,5 +1397,45 @@
   "power": null,
   "toughness": null,
   "keywords": []
+ },
+ "Dogged Hunter": {
+  "typeLine": "Creature — Human Nomad",
+  "oracleText": "{T}: Destroy target creature token.",
+  "colors": [
+   "W"
+  ],
+  "colorIdentity": [
+   "W"
+  ],
+  "manaValue": 3,
+  "power": "1",
+  "toughness": "1",
+  "keywords": []
+ },
+ "Magewright's Stone": {
+  "typeLine": "Artifact",
+  "oracleText": "{1}, {T}: Untap target creature that has an activated ability with {T} in its cost.",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 2,
+  "power": null,
+  "toughness": null,
+  "keywords": []
+ },
+ "Lightwielder Paladin": {
+  "typeLine": "Creature — Human Knight",
+  "oracleText": "First strike (This creature deals combat damage before creatures without first strike.)\nWhenever this creature deals combat damage to a player, you may exile target black or red permanent that player controls.",
+  "colors": [
+   "W"
+  ],
+  "colorIdentity": [
+   "W"
+  ],
+  "manaValue": 5,
+  "power": "4",
+  "toughness": "4",
+  "keywords": [
+   "First strike"
+  ]
  }
 }

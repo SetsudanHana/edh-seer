@@ -8913,7 +8913,8 @@
      "repeats": "once",
      "targets": [
       {
-       "type": "spell"
+       "type": "spell",
+       "unread": true
       }
      ]
     }
@@ -13243,7 +13244,8 @@
         "enchantment",
         "planeswalker",
         "battle"
-       ]
+       ],
+       "unread": true
       }
      ]
     },

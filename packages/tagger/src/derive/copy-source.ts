@@ -106,20 +106,28 @@ const QUOTED = /"[^"]*"|\u201c[^\u201c\u201d]*\u201d/g;
 /** THE WORDS OF A TARGET PHRASE THE SLOT DOES NOT CAPTURE (#1650 review round 4). A slot carries a head noun, subtypes, colours, negations and whose; a keyword ("with flying"), a state ("attacking", "tapped"), a number
  *  ("with power 2 or less"), a supertype ("legendary"), a head the grammar missed ("target Vehicle becomes an artifact": the pattern took the noun after it) are none of them. The phrase is stripped of every word the
  *  slot does say, and what is left is the qualifier it dropped: the slot is then marked `unread`, and a demand that must know the target is the copier ("targets only Bill Potts") refuses it.
- *  CEILING: the refusal under-claims. A slot whose qualifier is harmless to the demand ("target creature you control with power 2 or less" can still be Bill Potts) is refused too; the count of marked slots is in the DERIVE 534 note. */
-const KNOWN_WORDS = /\b(?:any|target|other|another|opposing|up|to|one|two|three|four|five|a|an|the|and|or|and\/or|you|control|controls|own|owns|your|opponents?|that|player|they|you|don't|doesn't|defending|cards?|tokens?|battles?|creatures?|artifacts?|enchantments?|lands?|planeswalkers?|permanents?|players?|spells?|abilit(?:y|ies)|white|blue|black|red|green|colorless|non-?)\b/gi;
-const COLOUR_LETTER: Readonly<Record<string, string>> = { white: "W", blue: "U", black: "B", red: "R", green: "G" };
-export function uncapturedWords(phrase: string, slot: Partial<SubjectFilter>): string[] {
+ *  CEILING: the refusal under-claims. A slot whose qualifier is harmless to the demand ("target creature you control with power 2 or less" can still be Bill Potts) is refused too, and so is a harmless tail ("that entered this turn"): a relative or qualifying word after the matched phrase (that, which, who, whose, without, named, not, other than, with, if) and a `token` head mark the slot whatever they say, and colour words count only when the slot carries the colour. The count of marked slots is in the DERIVE 534 note. */
+const KNOWN_WORDS = /\b(?:any|target|other|another|opposing|up|to|one|two|three|four|five|a|an|the|and|or|and\/or|you|control|controls|own|owns|your|opponents?|that|player|they|you|don't|doesn't|defending|cards?|battles?|creatures?|artifacts?|enchantments?|lands?|planeswalkers?|permanents?|players?|spells?|abilit(?:y|ies)|non-?)\b/gi;
+const COLOUR_LETTER: Readonly<Record<string, string>> = { white: "W", blue: "U", black: "B", red: "R", green: "G", colorless: "C", colourless: "C" };
+/** A relative or qualifying tail AFTER the matched phrase ("untap target creature that has an activated ability with {T} in its cost", Magewright's Stone): the pattern stops at the noun, so what follows it is read here (`token` too: the pattern stops at "target creature" and leaves "token"). */
+const QUALIFYING_TAIL = /^\s+(?:tokens?|that|which|who|whose|without|named|not|other than|with|if)\b/i;
+export function uncapturedWords(phrase: string, slot: Partial<SubjectFilter>, rest = ""): string[] {
   const said = [slot.subtype, slot.notSubtype, slot.notType, slot.type].flat().filter((x): x is string => typeof x === "string").map((x) => x.toLowerCase());
+  // THE COLOURS AND THE TOKEN-NESS THE SLOT SAYS: only a word the slot carries is read ("target black or red permanent" with no colour on its slot is not; "target creature token" with no `token` is not).
+  const colours = new Set([slot.colors, slot.notColors, slot.anyOf?.flatMap((x) => x.colors ?? [])].flat().filter((x): x is string => typeof x === "string"));
   const left = phrase.toLowerCase().replace(/and\/or/g, " and ").replace(/(?:don|doesn)['\u2019]t/g, " ").replace(/['\u2019,]/g, " ").replace(KNOWN_WORDS, " ").split(/\s+/).filter(Boolean);
   const saysWord = (w: string): boolean => said.some((x) => w === x || w === `${x}s` || w === `${x}es`);
-  return left.filter((w) => {
+  const tail = QUALIFYING_TAIL.exec(rest) ? ["(tail)"] : [];
+  return [...left.filter((w) => {
     if (saysWord(w)) return false;
+    const colour = COLOUR_LETTER[w];
+    if (colour !== undefined) return !colours.has(colour);
+    if (/^tokens?$/.test(w)) return true; // the slot never records `token`: a token head is always unread
     const neg = /^non-?(.+)$/.exec(w)?.[1];
     if (neg === undefined) return true;
     const letter = COLOUR_LETTER[neg];
     return !(saysWord(neg) || (letter !== undefined && slot.notColors?.includes(letter)));
-  });
+  }), ...tail];
 }
 
 export function targetSlotsOf(
@@ -155,7 +163,7 @@ export function targetSlotsOf(
           else if (slot.type === undefined && player) slot.player = true;
         }
       }
-      if (uncapturedWords(m[0], slot).length > 0) slot.unread = true;
+      if (uncapturedWords(m[0], slot, text.slice(m.index + m[0].length)).length > 0) slot.unread = true;
       // WHOSE: "an opponent controls" / "you don't control" is an opponent's, "you control" is yours. A player slot is the opponent when it says so.
       if (/\b(?:an opponent|your opponents|target opponent|that player|they|opponents|defending player|the defending player) (?:control|controls|own|owns)\b|\byou don't (?:control|own)\b|^target (?:other |opposing )?opponents?$/i.test(m[0])) slot.control = "opp";
       else if (/\byou (?:control|own)\b/i.test(m[0])) slot.control = "you";

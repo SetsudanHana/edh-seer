@@ -44,7 +44,7 @@ test("targets: a class per phrase, whose it is, and nothing for a relative claus
   expect(aims("Draw a card.")).toBeUndefined();
 });
 test("targets: an opponent's permanent said as 'that player controls' and 'defending player controls'", () => {
-  expect(aims("When this creature enters, for each opponent, exile up to one target permanent that player controls with mana value 3 or greater.")).toEqual([{ control: "opp" }, { control: "opp" }]);
+  expect(aims("When this creature enters, for each opponent, exile up to one target permanent that player controls with mana value 3 or greater.")).toEqual([{ control: "opp", unread: true }, { control: "opp", unread: true }]);
   expect(aims("Whenever this creature attacks, destroy target creature defending player controls.")).toEqual([{ type: "creature", control: "opp" }]);
 });
 

@@ -244,4 +244,10 @@ describe("review round 3 (#1650)", () => {
     expect(slots("Exorcist").some((x) => x.unread === true)).toBe(false);
     expect(copies("Wyll's Reversal", "Femeref Archers")).toEqual(["copies:activated"]);
   });
+  test("a TOKEN head, a colour the slot does not carry, and a relative tail after the matched phrase are unread: Bill Potts (a nontoken red creature) is refused Dogged Hunter, Magewright's Stone and Lightwielder Paladin", () => {
+    for (const s of ["Dogged Hunter", "Magewright's Stone", "Lightwielder Paladin"]) expect([s, copies("Bill Potts", s)]).toEqual([s, []]);
+    expect(copies("Bill Potts", "Akki Drillmaster")).toEqual(["copies:activated"]);
+    expect(card("Dogged Hunter").tags!.abilities.flatMap((a) => a.targets ?? []).some((x) => x.unread === true)).toBe(true);
+    expect(card("Magewright's Stone").tags!.abilities.flatMap((a) => a.targets ?? []).some((x) => x.unread === true)).toBe(true);
+  });
 });
