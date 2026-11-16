@@ -32,7 +32,8 @@ import { deckLandTypes, deckSubtypeCounts, resolveChosenTypes } from "./chosen-t
 import { computeCardBuckets } from "./buckets.js";
 import { groupEdgesByArchetype } from "./mechanisms.js";
 import { cardSignalOf } from "./card-signal.js";
-import { buildAxis, maxAxisWeight } from "./axis.js";
+import { buildAxis, maxAxisWeight, relationThemeFreq } from "./axis.js";
+import { loadRelationStats } from "./relation-stats.js";
 import { AXIS_ON_THRESHOLD, FEEDER_SHARE, edgeWeight } from "./card-strength.js";
 import { makeFold } from "./theme-fold.js";
 import { unmetConditionTags } from "./deck-fit.js";
@@ -463,15 +464,20 @@ export function analyzeDeckStructured(
       for (const tag of axisThemeTags(dc.tags)) commanderThemeTags.add(tag);
     }
   }
-  const axis = buildAxis(commanderThemeTags, deckFreq, themeStats);
+  // The own-theme relation families (tutor, copies, doubles, ...) are weighed as themes of their own: the
+  // cards holding the relation x its cross-deck rarity (#1095). Nothing else about the axis moves.
+  const axis = buildAxis(commanderThemeTags, deckFreq, themeStats, { freq: relationThemeFreq(edges.flatMap((e) => e.reasons)), stats: loadRelationStats() });
   // A POLYMORPH DECK'S PLAN IS ITS TWO RELATIONS (#965): the tokens it eats and the big creatures it
   // cheats out. The axis is built from cards' own theme tags, so a relation tag never reaches it --
   // and the suggestions weighed Transmogrify, which feeds both, as off-plan. Full weight, only when
   // the plan is detected; the same signals `detectArchetypes` reads below.
-  // CEILING: step 1 of #972 covers fodder/scales/cheat/creates: `RELATION_PARENTS` (axis.ts) lets
-  // them inherit their parent theme's axis weight. The parentless families (graveyard-recursion,
-  // recursion-target, ramp-target, tutor, prowess, threshold, copies, play-from-top,
-  // land-condition, reuse, doubles, ...) still weigh 0 pending an owner ruling (#1095).
+  // Relation families that carry no axis tag of their own take a weight from `axis.ts`: a parent theme
+  // (`RELATION_PARENTS`, #972 step 1 and #1095), their own TF-IDF (`OWN_THEME_FAMILIES`, above), or 0 on
+  // purpose (`ZERO_ON_PURPOSE`: ramp-target, land-condition, prowess -- owner ruling 2026-11-16).
+  // CEILING: the three lists are closed and were drawn from the families the 71 calibration decks emit;
+  // edges.ts's generic granted-effect channel keys any non-static effect as `<kind>:<subject>`, so a
+  // family no calibration deck produced (counter-placement, untap, type-grant, ...) is in no list and
+  // weighs 0 silently, as every parentless family did before #1095.
   const earlySignals = resolved.filter((dc) => dc.tags && !isLand(dc)).map((dc) => cardSignalOf(dc.card, dc.tags!));
   if (detectPolymorph(earlySignals, resolved.filter((dc) => !isLand(dc)).length)) for (const tag of POLYMORPH_AXIS) axis.set(tag, 1);
   // AXIS_BOOST, AXIS_ON_THRESHOLD and FEEDER_SHARE live in `card-strength.ts`, which swaps read too.
