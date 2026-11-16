@@ -111,12 +111,16 @@ export function planSteps(mode: Mode): Step[] {
     // theme-stats.json is the IDF table behind every headline theme; an absent tag scores log(N+1),
     // so a stale file mis-ranks decks (#1428). Regenerated from the fresh derive, then re-counted.
     tsx("gen-theme-stats", "packages/matcher/src/bin/gen-theme-stats.ts"),
+    // relation-stats.json is the cross-deck rarity behind the own-theme relation weights (#1095); it records
+    // the DERIVE_VERSION it was generated at and `relation-stats.test.ts` fails when it is stale.
+    tsx("gen-relation-stats", "packages/matcher/src/bin/gen-relation-stats.ts"),
     tsx("gen-schema-docs", "packages/tagger/src/bin/gen-schema-docs.ts"),
     tsx("role-ratchet", "packages/instruments/src/role-ratchet.ts", [], false),
     tsx("dropped-clauses", "packages/instruments/src/dropped-clauses.ts", [], false),
     tsx("theme-stats-fresh", "packages/instruments/src/theme-stats-fresh.ts", [], false),
     vitest("src/fixture-derive-version.test.ts", "packages/matcher"),
     vitest("src/quality-weights.test.ts", "packages/matcher"),
+    vitest("src/relation-stats.test.ts", "packages/matcher"),
     vitest("src/bin/gen-schema-docs.test.ts", "packages/tagger"),
   );
   return steps;

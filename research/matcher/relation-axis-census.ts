@@ -10,7 +10,7 @@ import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
 import { ComboIndex } from "../../packages/engine/src/index.js";
 import { createTagsLookup } from "../../packages/tagger/src/index.js";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../../packages/matcher/src/index.js";
-import { axisWeightOf } from "../../packages/matcher/src/axis.js";
+import { OWN_THEME_FAMILIES, RELATION_PARENTS, ZERO_ON_PURPOSE, reasonAxisWeight } from "../../packages/matcher/src/axis.js";
 
 const store = await connect(loadConfig());
 const lookup = mongoLookup(store);
@@ -42,9 +42,9 @@ for (const file of readdirSync(CALIBRATION_DECKS).filter((f) => f.endsWith(".txt
   const axis = new Map((report.axis ?? []).map((a: { tag: string; weight: number }) => [a.tag, a.weight]));
   const deck = file.replace(/\.txt$/, "");
   let dEdges = 0, dOff = 0;
-  for (const edge of report.edges as { reasons: { tag: string }[] }[]) {
+  for (const edge of report.edges as { reasons: { tag: string; scaling?: string }[] }[]) {
     dEdges++;
-    const onW = Math.max(0, ...edge.reasons.map((r) => axisWeightOf(r.tag, axis)));
+    const onW = Math.max(0, ...edge.reasons.map((r) => reasonAxisWeight(r, axis)));
     for (const r of edge.reasons) {
       const f = fam(famOf(r.tag));
       f.reasons++; f.decks.add(deck);
@@ -68,10 +68,10 @@ for (const file of readdirSync(CALIBRATION_DECKS).filter((f) => f.endsWith(".txt
 await store.close();
 
 console.log(`71-deck totals: edges ${totalEdges}, off-plan (axis weight 0) ${offPlanEdges} (${(100 * offPlanEdges / totalEdges).toFixed(1)}%), edges counted per family below (an edge can carry several)\n`);
-console.log("family                reasons  on-axis%  decks  off-plan-edges-with-it  inherit-would-be-on%");
+console.log("family                reasons  on-axis%  decks  off-plan-edges-with-it  inherit-would-be-on%  plan (axis.ts, #1095)");
 for (const [name, f] of [...fams].sort((a, b) => b[1].reasons - a[1].reasons)) {
   const inherit = PARENTS[name] ? `${(100 * f.inheritOn / f.reasons).toFixed(1)}%` : "-";
-  console.log(`${name.padEnd(20)} ${String(f.reasons).padStart(8)}  ${(100 * f.onAxis / f.reasons).toFixed(1).padStart(7)}%  ${String(f.decks.size).padStart(5)}  ${String(f.edgesOnlyVia).padStart(22)}  ${inherit.padStart(20)}`);
+  console.log(`${name.padEnd(20)} ${String(f.reasons).padStart(8)}  ${(100 * f.onAxis / f.reasons).toFixed(1).padStart(7)}%  ${String(f.decks.size).padStart(5)}  ${String(f.edgesOnlyVia).padStart(22)}  ${inherit.padStart(20)}  ${Object.hasOwn(RELATION_PARENTS, name) ? "parent" : OWN_THEME_FAMILIES.includes(name) ? "own-theme" : ZERO_ON_PURPOSE.includes(name) ? "zero-on-purpose" : ""}`);
 }
 console.log("\nper deck:");
 for (const l of perDeck) console.log(l);

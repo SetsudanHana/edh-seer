@@ -193,3 +193,7 @@ test("a basic-land-type grant is refused, an animate-lands static keeps its cred
   expect(sw.payoffs).not.toContain("Swamp Granter");
   expect(ln.payoffs).toEqual(["Land Animator", "Land Lord"]);
 });
+
+test("an own-theme relation tag on the axis (tutor:creature) is a weight, never a theme candidate (#1095)", () => {
+  expect(themeCandidates(["enters:wizard", "tutor:creature", "doubles:enters", "scales:goblin"])).toEqual(["enters:wizard", "scales:goblin"]);
+});

@@ -63,6 +63,7 @@
   },
   "scripts": {
     "gen:quality-weights": "tsx src/bin/gen-quality-weights.ts",
+    "gen:relation-stats": "tsx src/bin/gen-relation-stats.ts",
     "gen:staples-snapshot": "tsx src/bin/gen-staples-snapshot.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",

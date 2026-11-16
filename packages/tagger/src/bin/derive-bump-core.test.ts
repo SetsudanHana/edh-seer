@@ -113,6 +113,19 @@ describe("planSteps", () => {
   });
 });
 
+describe("relation-stats (#1095)", () => {
+  it("regenerates relation-stats.json after the derive and pins it with relation-stats.test.ts", () => {
+    for (const mode of ["bump", "restamp"] as const) {
+      const p = planSteps(mode);
+      const names = p.map((s) => s.name);
+      const gen = p.find((s) => s.args.some((a) => a.endsWith("gen-relation-stats.ts")));
+      expect(gen?.stopOnFail).toBe(true);
+      expect(names.indexOf(gen!.name)).toBeGreaterThan(names.indexOf("derive-corpus"));
+      expect(p.some((s) => s.args.includes("src/relation-stats.test.ts"))).toBe(true);
+    }
+  });
+});
+
 describe("preflight (#1484)", () => {
   const CACHE = ".edhrec-cache/precon/precon.json";
   const PAGES_DIR = ".edhrec-cache/precon";

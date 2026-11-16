@@ -1,6 +1,7 @@
 import type { Reason } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
 import { supplyTagKeys, themeSubjectKey } from "./edges.js";
+import { isOwnThemeTag } from "./axis.js";
 import { normalizeZoneEvent, tagKey } from "./zones.js";
 import { BASIC_LAND_TYPE_SET } from "./typeline.js";
 import type { DeckCard } from "./types.js";
@@ -10,7 +11,7 @@ import type { DeckCard } from "./types.js";
  *  head of a `static:pump` zone holding all 90 creatures. A replacement effect is a SURPLUS
  *  PRODUCER of the event it replaces. Either way the theme is named by the event, not the static. */
 export function themeCandidates(tags: string[]): string[] {
-  return tags.filter((t) => !t.startsWith("static:"));
+  return tags.filter((t) => !t.startsWith("static:") && !isOwnThemeTag(t));
 }
 
 /** A card's own authored emits, keyed identically to reason tags (normalizeZoneEvent +
