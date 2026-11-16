@@ -12,6 +12,7 @@ import { parseSubject, spellMove } from "./subject.js";
 import { readToHand, type ToHandRead } from "./to-hand.js";
 import { damageReplacementOf, preventionOf } from "./prevention.js";
 import { counterImmunityOf, graveyardLockOf, playerLockOf, targetingBanOf, triggerSuppressionOf, untapDenialFor } from "./cant-kinds.js";
+import { SUBTYPE_TYPES } from "./subtypes.js";
 
 /** Zone-sensitive rules, checked before the plain lookup. Order matters within this list.
  *  `from`/`to` omitted means "don't care"; `from: null` means the clause STATED NO ORIGIN.
@@ -133,6 +134,18 @@ export function playsFromTop(text: string): boolean {
  *  planeswalkers, or the card's own. A cost increase (Carth the Lion) names no permission. String
  *  search per sentence, no regex over the text. */
 const AGAIN = ["twice", "as though none", "any time you could cast an instant", "on any player's turn"];
+/** The planeswalker TYPE a loyalty-ability permission is limited to ("loyalty abilities of Jace planeswalkers you control", Jace's Machinations), lower case, or undefined for every planeswalker you control.
+ *  Only a word the subtype table knows as a planeswalker type counts (`SUBTYPE_TYPES`), so "of the planeswalkers you control" / "of your planeswalkers" stay the whole class. String search, no regex over the text. */
+export function extraLoyaltyType(text: string): string | undefined {
+  for (const sentence of text.toLowerCase().split(".")) {
+    const at = sentence.indexOf("loyalty abilities of ");
+    if (at < 0) continue;
+    const words = sentence.slice(at + "loyalty abilities of ".length).split(" ");
+    if (words[1] !== undefined && /^planeswalkers?$/.test(words[1]) && SUBTYPE_TYPES[words[0]!]?.includes("planeswalker")) return words[0];
+  }
+  return undefined;
+}
+
 export function extraLoyalty(text: string): "yours" | "self" | undefined {
   for (const sentence of text.toLowerCase().split(".")) {
     const at = sentence.indexOf("you may activate");

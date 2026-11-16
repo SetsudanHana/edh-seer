@@ -216,3 +216,10 @@ test("over the census: deterministic, every event a clause-vocabulary word, cove
   expect(read).toBe(preambles.size);
   expect(uses).toBe(total);
 });
+
+// #1349: a permanent put onto the battlefield enters it (CR 603.6a); "this way" narrows it to the card's own action (CR 603.12), so the reading claims nothing about creatures entering in general.
+test("'is put onto the battlefield' is an enters event, and 'this way' is its narrowing", () => {
+  expect(one("When a creature is put onto the battlefield this way")).toMatchObject({ event: "enters", narrowing: "this way", subject: { type: "creature" } });
+  expect(one("Whenever a creature is put onto the battlefield")).toMatchObject({ event: "enters", subject: { type: "creature" } });
+  expect(one("Whenever a creature is put onto the battlefield").narrowing).toBeUndefined();
+});

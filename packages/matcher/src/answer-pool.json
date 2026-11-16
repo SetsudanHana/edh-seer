@@ -128,7 +128,7 @@
     "graveyard": 286
   },
   "G": {
-    "creature": 332,
+    "creature": 333,
     "artifact": 219,
     "enchantment": 202,
     "planeswalker": 138,
@@ -136,7 +136,7 @@
     "graveyard": 81
   },
   "WG": {
-    "creature": 809,
+    "creature": 810,
     "artifact": 411,
     "enchantment": 447,
     "planeswalker": 257,
@@ -144,7 +144,7 @@
     "graveyard": 118
   },
   "UG": {
-    "creature": 751,
+    "creature": 752,
     "artifact": 387,
     "enchantment": 353,
     "planeswalker": 289,
@@ -152,7 +152,7 @@
     "graveyard": 97
   },
   "WUG": {
-    "creature": 1277,
+    "creature": 1278,
     "artifact": 595,
     "enchantment": 618,
     "planeswalker": 422,
@@ -160,7 +160,7 @@
     "graveyard": 135
   },
   "BG": {
-    "creature": 1205,
+    "creature": 1206,
     "artifact": 262,
     "enchantment": 257,
     "planeswalker": 281,
@@ -168,7 +168,7 @@
     "graveyard": 220
   },
   "WBG": {
-    "creature": 1756,
+    "creature": 1757,
     "artifact": 479,
     "enchantment": 527,
     "planeswalker": 434,
@@ -176,7 +176,7 @@
     "graveyard": 276
   },
   "UBG": {
-    "creature": 1673,
+    "creature": 1674,
     "artifact": 445,
     "enchantment": 423,
     "planeswalker": 447,
@@ -184,7 +184,7 @@
     "graveyard": 250
   },
   "WUBG": {
-    "creature": 2282,
+    "creature": 2283,
     "artifact": 680,
     "enchantment": 717,
     "planeswalker": 617,
@@ -192,7 +192,7 @@
     "graveyard": 309
   },
   "RG": {
-    "creature": 1278,
+    "creature": 1279,
     "artifact": 390,
     "enchantment": 229,
     "planeswalker": 774,
@@ -200,7 +200,7 @@
     "graveyard": 92
   },
   "WRG": {
-    "creature": 1827,
+    "creature": 1828,
     "artifact": 598,
     "enchantment": 487,
     "planeswalker": 936,
@@ -208,7 +208,7 @@
     "graveyard": 130
   },
   "URG": {
-    "creature": 1772,
+    "creature": 1773,
     "artifact": 565,
     "enchantment": 384,
     "planeswalker": 980,
@@ -216,7 +216,7 @@
     "graveyard": 109
   },
   "WURG": {
-    "creature": 2380,
+    "creature": 2381,
     "artifact": 790,
     "enchantment": 663,
     "planeswalker": 1163,
@@ -224,7 +224,7 @@
     "graveyard": 149
   },
   "BRG": {
-    "creature": 2262,
+    "creature": 2263,
     "artifact": 455,
     "enchantment": 294,
     "planeswalker": 977,
@@ -232,7 +232,7 @@
     "graveyard": 241
   },
   "WBRG": {
-    "creature": 2899,
+    "creature": 2900,
     "artifact": 691,
     "enchantment": 580,
     "planeswalker": 1180,
@@ -240,7 +240,7 @@
     "graveyard": 298
   },
   "UBRG": {
-    "creature": 2824,
+    "creature": 2825,
     "artifact": 651,
     "enchantment": 470,
     "planeswalker": 1211,
@@ -248,7 +248,7 @@
     "graveyard": 275
   },
   "WUBRG": {
-    "creature": 3545,
+    "creature": 3546,
     "artifact": 912,
     "enchantment": 787,
     "planeswalker": 1449,
