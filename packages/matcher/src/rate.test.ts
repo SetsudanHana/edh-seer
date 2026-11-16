@@ -219,6 +219,31 @@ test("a scaling amount the text bounds carries the bound and the card's own cont
     amount: "1 plus the number of basic land types among lands you control", repeats: "once", count: { floor: 0, ceiling: null, scalesWith: { type: "land" } } }]));
   expect(blast).toMatchObject([{ family: "damage", floor: 1, ceiling: 6 }]);
 });
+/** #698 review round 2, three rows from the corpus (derive 536):
+ *  Brilliant Spectrum {3}{U} "Draw X cards, where X is the number of colors of mana spent to cast this spell. Then discard two cards.": the CEILING is net of the discard, as the floor is (5 - 2 = 3).
+ *  Stadium Headliner {R} "{1}{R}, Sacrifice this creature: It deals damage equal to the number of creatures you control to target creature.": the card is gone before it counts, so it adds nothing to its own count.
+ *  Emrakul's Evangel {2}{G} "{T}, Sacrifice this creature and any number of other non-Eldrazi creatures: ...": a payment that also sacrifices OTHER creatures is not the card's own price. */
+test("an interval's ceiling is net of the cards given back", () => {
+  const spectrum = ratesOf(card("Brilliant Spectrum", "{3}{U}", [
+    { kind: "on-cast", effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: "the number of colors of mana spent to cast this spell", repeats: "once",
+      count: { floor: 0, ceiling: null, scalesWith: { control: "any", token: null, type: "spell" } }, emits: [{ verb: "draw", subject: { control: "you" } }] },
+    { kind: "on-cast", effect: { kind: "", subject: { control: "any" } }, amount: "2", repeats: "once", count: { floor: 2, ceiling: 2 }, emits: [{ verb: "discard", subject: { control: "you" } }] },
+  ], { types: ["sorcery"] }));
+  expect(spectrum).toMatchObject([{ family: "cards", back: 2, floor: 0, ceiling: 3 }]);
+});
+test("a card that sacrifices itself to pay adds nothing to its own count", () => {
+  const headliner = ratesOf(card("Stadium Headliner", "{R}", [{ kind: "activated", cost: "{1}{R}, Sacrifice this creature", payment: { mana: "{1}{R}", sacrifice: [{ amount: "1", subject: { self: true } }] },
+    effect: { kind: "damage", scaling: "per-creature", subject: { control: "any", token: null, type: "creature", scope: "target" } }, amount: "the number of creatures you control", repeats: "once",
+    count: { floor: 0, ceiling: null, scalesWith: { control: "you", token: null, type: "creature", scope: "all" } } }], { types: ["creature"] }));
+  expect(headliner).toMatchObject([{ family: "damage", floor: 0 }]);
+});
+test("a payment that also sacrifices other creatures stays more than mana", () => {
+  const evangel = ratesOf(card("Emrakul's Evangel", "{2}{G}", [{ kind: "activated", cost: "{T}, Sacrifice this creature and any number of other non-Eldrazi creatures",
+    payment: { tap: true, sacrifice: [{ amount: "1", subject: { self: true } }, { amount: "any", subject: { control: "you", token: null, other: true, type: "creature", notSubtype: ["eldrazi"] } }] },
+    effect: { kind: "token-generation", scaling: "per-creature", subject: { control: "you", token: true, type: "creature", stats: [{ metric: "power", op: "eq", value: 3 }, { metric: "toughness", op: "eq", value: 2 }] } },
+    amount: "1 for each creature sacrificed this way", repeats: "once", count: { floor: 0, ceiling: null, scalesWith: { control: "any", token: null, type: "creature" } } }], { types: ["creature"] }));
+  expect(evangel[0]).toMatchObject({ extraCost: true });
+});
 
 /** A SCALING AMOUNT CARRIES ITS DERIVED INTERVAL, whatever the family (owner 2026-10-17, #1265, for mana; #698 for the rest).
  *  Theft of Dreams "Draw a card for each tapped creature target opponent controls." {2}{U}: floor 0, no ceiling the card states. */

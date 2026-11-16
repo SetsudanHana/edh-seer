@@ -183,10 +183,13 @@ const integer = (s: string | undefined): number | null => {
  *  to", so a default of 1 would be a guess wrong one time in five. The fix is a refresh, not a
  *  default (`dropsUnitAmount`, not yet written). */
 /** The interval a non-mana scaling amount spans, by `scaleBounds` (see its caller). */
-function scaleBoundsOf(amount: string, d: DeckCard): { floor: number; ceiling: number | null } {
+function scaleBoundsOf(amount: string, d: DeckCard, a: { payment?: { sacrifice?: { subject?: { self?: boolean } }[] } }): { floor: number; ceiling: number | null } {
   const name = (d.card.name ?? "").toLowerCase();
   const selfNames = ["~", name, ...name.split(" // ").map((n) => n.split(",")[0]!.trim())].filter(Boolean);
-  const permanent = !(d.tags?.characteristics.types ?? []).some((t) => /^(?:instant|sorcery)$/i.test(t));
+  // A CARD THAT SACRIFICES ITSELF TO PAY is gone before its effect counts (Stadium Headliner's "Sacrifice this creature: It deals damage equal to the number of creatures you control"), so it adds
+  // nothing to its own count. CEILING: a dies or leaves trigger is the same case and still adds itself, but a trigger's floor is 0 and its ceiling open anyway, so only its `amount` reads 1 high (Moonveil Regent).
+  const sacrificesItself = (a.payment?.sacrifice ?? []).some((s) => s.subject?.self === true);
+  const permanent = !sacrificesItself && !(d.tags?.characteristics.types ?? []).some((t) => /^(?:instant|sorcery)$/i.test(t));
   const { floor, ceiling } = scaleBounds(amount, amount, d.tags!.characteristics, selfNames, permanent, d.card.oracleText ?? "", 0, 1, (d.card as { manaCost?: string }).manaCost);
   return { floor, ceiling };
 }
@@ -290,7 +293,7 @@ export function ratesOf(d: DeckCard): Rate[] {
     // rate, and an amount with no interval ("that many", Windfall) stays no row. CEILING: `scaleBounds` is derive's reading of a MANA line's text; a count it has no shape for ("colors of mana spent") stays open.
     const interval = integer(a.amount) !== null || !a.count ? null
       : family === "mana" ? a.count
-        : a.count.scalesWith !== undefined && a.amount !== undefined && d.tags ? scaleBoundsOf(a.amount, d) : null;
+        : a.count.scalesWith !== undefined && a.amount !== undefined && d.tags ? scaleBoundsOf(a.amount, d, a) : null;
     const gross = interval ? interval.floor : integer(a.amount);
     if (gross === null || (!interval && a.effect?.scaling !== undefined && a.effect.scaling !== "fixed")) continue;
     const back = family === "cards" ? backOf(a) : 0;
@@ -307,7 +310,8 @@ export function ratesOf(d: DeckCard): Rate[] {
       family, kind: a.kind, amount, ...(back > 0 ? { back } : {}), ...(size ? { size } : {}), mana, ...castOf, repeats,
       floor: open || stopped || conditional ? 0 : amount,
       // A triggered or static add's bounded ceiling is NOT carried ("a trigger may never fire": `open` -> null), so `bound: players` on a trigger is derive-only data.
-      ceiling: open ? null : interval ? interval.ceiling : amount,
+      // NET OF WHAT IS GIVEN BACK, as the floor is: Brilliant Spectrum draws up to 5 and discards 2, so at most 3.
+      ceiling: open ? null : interval ? (interval.ceiling === null ? null : Math.max(0, interval.ceiling - back)) : amount,
       ...(stopped ? { fallback: { cost: a.unless!.cost, payer: a.unless!.payer } } : {}),
       ...(conditional && !open && !stopped ? { conditional: true as const } : {}),
       ...(extra ? { extraCost: true as const } : {}),
