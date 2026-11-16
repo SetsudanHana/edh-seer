@@ -69,6 +69,7 @@ const TESTED: Record<string, string> = {
   "702.108a": "edges.test.ts — prowess reads as the creature getting +1/+1, and only a noncreature spell feeds it",
   "118.12a": "rate.test.ts — the payment that stops an effect is the rate's fallback, floor 0 (Rhystic Study)",
   "606.5": "rate.test.ts — a loyalty cost is not mana; the ability has no rate (Teferi, Temporal Pilgrim)",
+  "701.21a": "rate.test.ts — a self-sacrifice activation is priced by the cast it already carries (Courier's Briefcase, Sunbeam Spellbomb)",
   "714.3": "edges.test.ts — a Saga carries lore counters, so it can satisfy a counter-presence condition (AL4)",
   "714.3a": "edges.test.ts — a Saga enters with a lore counter, so it feeds a remove-a-counter cost (issue #511)",
   "702.24": "edges.test.ts — cumulative upkeep carries age counters, same (AL4)",

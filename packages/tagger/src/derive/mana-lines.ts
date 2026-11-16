@@ -453,9 +453,14 @@ export function scaleBounds(scales: string, text: string, chars: Characteristics
   const printedToughness = chars.toughness !== null && /^-?\d+$/.test(chars.toughness ?? "") ? Number(chars.toughness) : 0;
   const toughness = proto && /^-?\d+$/.test(proto[2]!) ? Math.min(printedToughness, Number(proto[2])) : printedToughness;
   const out: ScaleBounds = { floor: fixedPart, ceiling: null };
-  if (/\bbasic land types? among\b/.test(s)) return { ...out, ceiling: 5, bound: "basic-land-types" };
+  // "1 plus the number of basic land types among ..." (Artillery Blast, a non-mana count read by the rate): the printed lead is a fixed part of both ends of a BOUNDED count.
+  const lead = new RegExp(`^(\\d+|${WORD}) plus\\b`).exec(s)?.[1];
+  const leadN = lead === undefined ? 0 : /^\d+$/.test(lead) ? Number(lead) : NUMBER_WORD[lead]!;
+  if (/\bbasic land types? among\b/.test(s)) return { ...out, floor: out.floor + leadN, ceiling: 5 + leadN, bound: "basic-land-types" };
+  // CONVERGE ("the number of colors of mana spent to cast this spell", Kaleidoscorch, Brilliant Spectrum): at most the five colours. No mana line prints it today; the rate reads it (#698).
+  if (/\bcolou?rs? of mana spent\b/.test(s)) return { ...out, floor: out.floor + leadN, ceiling: 5 + leadN, bound: "colours" };
   if (/\bcolou?rs? among\b/.test(s)) {
-    out.ceiling = 5; out.bound = "colours";
+    out.floor += leadN; out.ceiling = 5 + leadN; out.bound = "colours";
     const among = /\bamong (monocolou?red )?permanents you control$/.exec(s);
     if (among && permanent) out.floor += among[1] ? (chars.colors.length === 1 ? 1 : 0) : chars.colors.length;
     return out;

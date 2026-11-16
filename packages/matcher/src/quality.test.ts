@@ -67,11 +67,15 @@ test("oneSided: Wrath hits everyone; a wipe of only opponents' creatures is one-
   expect(ingredients(oneSided, "boardWipe").oneSided).toBe(1);
 });
 
-test("rate percentiles for the yield roles: Arcane Signet out-rates Wayfarer's Bauble as ramp", () => {
+test("rate percentiles for the yield roles: Wayfarer's Bauble is read now (#698), and the frequency class still puts Arcane Signet above it", () => {
   const signet = ingredients(dc("Arcane Signet"), "ramp");
   const bauble = ingredients(dc("Wayfarer's Bauble"), "ramp");
   expect(signet.rateFloor).toBeTypeOf("number");
-  expect(signet.rateFloor!).toBeGreaterThan(bauble.rateFloor ?? -1);
+  // "{2}, {T}, Sacrifice this artifact: search for a basic land" is a once-only fetch priced by its cast (#698), so it has a rate. Its
+  // percentile sits in the SEARCH family, where a one-shot fetch (Rampant Growth reads 93) tops a mana rock's in the MANA family:
+  // the percentile bridge compares families, so the rock's edge is the frequency class (the owner's ladder puts it first), not the floor.
+  expect(bauble.rateFloor).toBeTypeOf("number");
+  expect(signet.frequency!).toBeGreaterThan(bauble.frequency!);
 });
 
 test("drawback: a gift to the opponent (a token, life, a land) or a cost to you", () => {

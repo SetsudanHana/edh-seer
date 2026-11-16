@@ -18,6 +18,7 @@
     "./characteristics": "./src/characteristics.ts",
     "./verb-accounting": "./src/derive/verb-accounting.ts",
     "./gate": "./src/derive/gate.ts",
+    "./mana-bounds": "./src/derive/mana-lines.ts",
     "./emblem": "./src/emblem.ts",
     "./segment": "./src/segment.ts",
     "./clause-record": "./src/grammar/clause-record.ts",
