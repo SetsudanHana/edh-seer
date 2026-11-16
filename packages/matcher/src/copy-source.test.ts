@@ -121,3 +121,73 @@ describe("Ability.targets read from the head noun, outside quotes, through comma
     expect(copies("Agrus Kos, Eternal Soldier", "Teferi, Time Raveler")).toEqual(["copies:activated"]);
   });
 });
+
+/** #1650: "that isn't a mana ability" is a NEGATION of the kind (the legacy `parseSubject` read the word "mana" and dropped the "isn't": Ashnod, Verrak, Dynaheir and Pit Automaton derived `["mana"]`,
+ *  claimed `copies:mana` to the mana abilities they cannot copy and missed every activated ability they can); "mana cost" is no mana ability (Magus Lucea Kane, Unbound Flourishing); and the
+ *  pronoun "that spell or ability" is not a spell-typed subject (it made `typeMatchesCharacteristics("spell")` drop every ability producer: Bill Potts, Wyll's Reversal, Sunken Palace,
+ *  Repeated Reverberation, Magus Lucea Kane, Unbound Flourishing). Oracle text and clauses are the corpus's own (DERIVE 532) in the fixtures file. */
+const KIND_SOURCES = [...REACH, "Sol Ring", "Pacesetter Paragon"];
+const kindReach = (copier: string): string[] => KIND_SOURCES.filter((s) => copies(copier, s).length > 0);
+
+describe("a negated mana ability is the activated kind, never `mana` (#1650)", () => {
+  test("derive: Ashnod, Verrak, Dynaheir, Pit Automaton read activated", () => {
+    expect(copySubject("Ashnod the Uncaring").abilityKind).toEqual(["activated"]);
+    expect(copySubject("Verrak, Warped Sengir").abilityKind).toEqual(["activated"]);
+    expect(copySubject("Dynaheir, Invoker Adept").abilityKind).toEqual(["activated"]);
+    expect(copySubject("Pit Automaton")).toMatchObject({ abilityKind: ["activated"], keyword: ["exhaust"] });
+  });
+  test("derive: a mana COST is not a mana ability (Magus Lucea Kane, Unbound Flourishing)", () => {
+    expect(copySubject("Magus Lucea Kane").abilityKind).toEqual(["activated"]);
+    expect(copySubject("Unbound Flourishing").abilityKind).toEqual(["activated"]);
+  });
+  test("match: no copier of a non-mana ability claims copies:mana, and none reaches Sol Ring", () => {
+    for (const c of ["Ashnod the Uncaring", "Verrak, Warped Sengir", "Dynaheir, Invoker Adept", "Pit Automaton", "Magus Lucea Kane", "Unbound Flourishing"]) {
+      expect(copies(c, "Sol Ring")).toEqual([]);
+    }
+  });
+  test("Verrak: every non-mana activated ability (Sol Ring's is a mana ability and is not one)", () => {
+    expect(kindReach("Verrak, Warped Sengir")).toEqual(["Mistrise Village", "Vexing Shusher", "Prodigal Sorcerer", "Chandra's Regulator", "Chandra, Torch of Defiance", "Ugin, the Spirit Dragon", "Mother of Runes", "Goblin Welder", "Pacesetter Paragon"]);
+  });
+  test("Ashnod: a creature's or artifact's non-mana ability", () => {
+    expect(kindReach("Ashnod the Uncaring")).toEqual(["Vexing Shusher", "Prodigal Sorcerer", "Chandra's Regulator", "Mother of Runes", "Goblin Welder", "Pacesetter Paragon"]);
+  });
+  // CEILING in the test's words: "{T}: When you next activate ..." is a delayed trigger the derive does not read, and the effect behind it names the trigger's object ("that ability"),
+  // so it claims nothing (#1592): Dynaheir, Pit Automaton and Magus Lucea Kane carry the right demand and meet no producer until that trigger is read.
+  test("Dynaheir, Pit Automaton, Magus Lucea Kane: the demand is right and the delayed trigger claims nothing (#1592)", () => {
+    for (const c of ["Dynaheir, Invoker Adept", "Pit Automaton", "Magus Lucea Kane"]) {
+      expect(card(c).tags!.abilities.find((a) => a.effect.kind === "copy-ability")!.claimsNothing).toBe("refused-trigger");
+      expect(kindReach(c)).toEqual([]);
+    }
+  });
+});
+
+describe("a copier of 'that spell or ability' pairs with abilities (#1650)", () => {
+  test("derive: no spell type left on the subject", () => {
+    for (const c of ["Bill Potts", "Wyll's Reversal", "Sunken Palace", "Repeated Reverberation", "Magus Lucea Kane", "Unbound Flourishing"]) expect(copySubject(c).type).toBeUndefined();
+  });
+  test("an ability being ACTIVATED is the activated kind (Sunken Palace, Bill Potts); a loyalty ability is loyalty (Repeated Reverberation)", () => {
+    expect(copySubject("Sunken Palace").abilityKind).toEqual(["activated"]);
+    expect(copySubject("Bill Potts")).toMatchObject({ abilityKind: ["activated"], targets: { self: true }, targetsOnly: true });
+    expect(copySubject("Repeated Reverberation").abilityKind).toEqual(["loyalty"]);
+    expect(copySubject("Wyll's Reversal").abilityKind).toBeUndefined();
+  });
+  test("Sunken Palace and Unbound Flourishing: a non-mana activated ability", () => {
+    expect(kindReach("Sunken Palace")).toEqual(kindReach("Verrak, Warped Sengir"));
+    expect(kindReach("Unbound Flourishing")).toEqual(kindReach("Verrak, Warped Sengir"));
+  });
+  test("Repeated Reverberation: a loyalty ability only", () => {
+    expect(kindReach("Repeated Reverberation")).toEqual(["Chandra, Torch of Defiance", "Ugin, the Spirit Dragon"]);
+  });
+  test("Wyll's Reversal: 'with one or more targets' is a demand that the copied ability aims at something", () => {
+    expect(copySubject("Wyll's Reversal").targets).toEqual({});
+    expect(copies("Wyll's Reversal", "Mistrise Village")).toEqual([]);
+    expect(copies("Wyll's Reversal", "Prodigal Sorcerer")).toEqual(["copies:activated"]);
+    expect(copies("Wyll's Reversal", "Mother of Runes")).toEqual(["copies:activated"]);
+  });
+  test("Wyll's Reversal: an ability with a target (not Mistrise Village or Sledge-Captain, whose backup derives no target slot)", () => {
+    expect(kindReach("Wyll's Reversal")).toEqual(["Vexing Shusher", "Prodigal Sorcerer", "Chandra, Torch of Defiance", "Ugin, the Spirit Dragon", "Mother of Runes", "Goblin Welder"]);
+  });
+  test("Bill Potts: an activated ability that could target only a creature (Bill Potts is one)", () => {
+    expect(kindReach("Bill Potts")).toEqual(["Prodigal Sorcerer", "Chandra, Torch of Defiance", "Ugin, the Spirit Dragon", "Mother of Runes"]);
+  });
+});

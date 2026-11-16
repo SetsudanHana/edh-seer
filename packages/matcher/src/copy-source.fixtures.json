@@ -762,5 +762,478 @@
     ]
    }
   ]
+ },
+ "Ashnod the Uncaring": {
+  "typeLine": "Legendary Creature — Human Artificer",
+  "oracleText": "Deathtouch\nWhenever you activate an ability of an artifact or creature that isn't a mana ability, if one or more permanents were sacrificed to activate it, you may copy that ability. You may choose new targets for the copy. (Sacrificing an artifact for mana to activate an ability doesn't count.)",
+  "colors": [
+   "B",
+   "R",
+   "U"
+  ],
+  "colorIdentity": [
+   "B",
+   "R",
+   "U"
+  ],
+  "manaValue": 5,
+  "power": "1",
+  "toughness": "4",
+  "keywords": [
+   "Deathtouch"
+  ]
+ },
+ "Verrak, Warped Sengir": {
+  "typeLine": "Legendary Creature — Vampire",
+  "oracleText": "Flying, deathtouch, lifelink\nWhenever you activate an ability that isn't a mana ability, if life was paid to activate it, you may pay that much life again. If you do, copy that ability. You may choose new targets for the copy.",
+  "colors": [
+   "B",
+   "W"
+  ],
+  "colorIdentity": [
+   "B",
+   "W"
+  ],
+  "manaValue": 3,
+  "power": "2",
+  "toughness": "2",
+  "keywords": [
+   "Deathtouch",
+   "Flying",
+   "Lifelink"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, deathtouch, lifelink"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "activate",
+     "subject": "an ability that isn't a mana ability",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "that ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Dynaheir, Invoker Adept": {
+  "typeLine": "Legendary Creature — Human Wizard",
+  "oracleText": "Haste\nYou may activate abilities of other creatures you control as though those creatures had haste.\n{T}: When you next activate an ability that isn't a mana ability this turn by spending four or more mana to activate it, copy that ability. You may choose new targets for the copy.",
+  "colors": [
+   "R",
+   "U",
+   "W"
+  ],
+  "colorIdentity": [
+   "R",
+   "U",
+   "W"
+  ],
+  "manaValue": 4,
+  "power": "4",
+  "toughness": "4",
+  "keywords": [
+   "Haste"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Haste"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "other creatures you control may be activated as though those creatures had haste",
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "trigger": {
+     "event": "activate",
+     "subject": "an ability that isn't a mana ability activated by spending four or more mana",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "that ability",
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "other",
+      "object": "you may choose new targets for the copy",
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Magus Lucea Kane": {
+  "typeLine": "Legendary Creature — Human Tyranid Wizard",
+  "oracleText": "Spiritual Leader — At the beginning of combat on your turn, put a +1/+1 counter on target creature.\nPsychic Stimulus — {T}: Add {C}{C}. When you next cast a spell with {X} in its mana cost or activate an ability with {X} in its activation cost this turn, copy that spell or ability. You may choose new targets for the copy. (A copy of a permanent spell becomes a token.)",
+  "colors": [
+   "G",
+   "R",
+   "U"
+  ],
+  "colorIdentity": [
+   "G",
+   "R",
+   "U"
+  ],
+  "manaValue": 4,
+  "power": "1",
+  "toughness": "1",
+  "keywords": [
+   "Spiritual Leader",
+   "Psychic Stimulus"
+  ]
+ },
+ "Unbound Flourishing": {
+  "typeLine": "Enchantment",
+  "oracleText": "Whenever you cast a permanent spell with a mana cost that contains {X}, double the value of X.\nWhenever you cast an instant or sorcery spell or activate an ability, if that spell's mana cost or that ability's activation cost contains {X}, copy that spell or ability. You may choose new targets for the copy.",
+  "colors": [
+   "G"
+  ],
+  "colorIdentity": [
+   "G"
+  ],
+  "manaValue": 3,
+  "power": null,
+  "toughness": null,
+  "keywords": [
+   "Double"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a permanent spell with a mana cost that contains {X}",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "double",
+      "object": "the value of X",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant or sorcery spell or activate an ability, if that spell's mana cost or that ability's activation cost contains {X}",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "that spell or ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Pit Automaton": {
+  "typeLine": "Artifact Creature — Construct",
+  "oracleText": "Defender\n{T}: Add {C}{C}. Spend this mana only to activate abilities.\n{2}, {T}: When you next activate an exhaust ability that isn't a mana ability this turn, copy it. You may choose new targets for the copy.",
+  "colors": [],
+  "colorIdentity": [],
+  "manaValue": 2,
+  "power": "0",
+  "toughness": "4",
+  "keywords": [
+   "Defender"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "an exhaust ability that isn't a mana ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Wyll's Reversal": {
+  "typeLine": "Instant",
+  "oracleText": "Choose target spell or ability with one or more targets. Roll a d20 and add the greatest power among creatures you control.\n1—14 | You may choose new targets for that spell or ability.\n15+ | You may choose new targets for that spell or ability. Then copy it. You may choose new targets for the copy.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 3,
+  "power": null,
+  "toughness": null,
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "roll-dice",
+      "object": "a d20 and add the greatest power among creatures you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose new targets for the target spell or ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "choose new targets for the target spell or ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "copy",
+      "object": "that spell or ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "other",
+      "object": "choose new targets for the copy",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Sunken Palace": {
+  "typeLine": "Land — Cave",
+  "oracleText": "This land enters tapped.\n{T}: Add {U}.\n{1}{U}, {T}, Exile seven cards from your graveyard: Add {U}. When you spend this mana to cast a spell or activate an ability, copy that spell or ability. You may choose new targets for the copy. (Mana abilities can't be copied.)",
+  "colors": [],
+  "colorIdentity": [
+   "U"
+  ],
+  "manaValue": 0,
+  "power": null,
+  "toughness": null,
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "tap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{U}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "seven cards from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": "seven",
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{U}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "tapped-for-mana",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "that spell or ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Repeated Reverberation": {
+  "typeLine": "Instant",
+  "oracleText": "When you next cast an instant spell, cast a sorcery spell, or activate a loyalty ability this turn, copy that spell or ability twice. You may choose new targets for the copies.",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 4,
+  "power": null,
+  "toughness": null,
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant spell, a sorcery spell, or a loyalty ability activation",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "copy",
+      "object": "that spell or ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Pacesetter Paragon": {
+  "typeLine": "Creature — Human Pilot",
+  "oracleText": "Exhaust — {2}{R}: Put a +1/+1 counter on this creature. It gains double strike until end of turn. (Activate each exhaust ability only once.)",
+  "colors": [
+   "R"
+  ],
+  "colorIdentity": [
+   "R"
+  ],
+  "manaValue": 3,
+  "power": "2",
+  "toughness": "3",
+  "keywords": [
+   "Exhaust"
+  ]
  }
 }

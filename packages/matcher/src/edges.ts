@@ -3867,6 +3867,7 @@ function copyTargetsAdmit(pa: CardTags["abilities"][number], demand: SubjectFilt
   if (want === undefined) return true;
   const slots = pa.targets ?? [];
   if (slots.length === 0 || (demand!.targetsOnly === true && slots.length !== 1)) return false;
+  if (Object.keys(want).length === 0) return true; // "with one or more targets" (Wyll's Reversal, #1650): any target at all, a spell or a card included
   const self = want.self === true && copier.tags ? characteristicsSubject(copier.tags, copier.card.name) : undefined;
   return slots.some((cls) => {
     if (self !== undefined && cls.control === "opp") return false; // an opponent's permanent is never the copier

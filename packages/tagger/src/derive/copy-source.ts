@@ -37,6 +37,12 @@ export function copySourceOf(
  *  CEILING: "a spell ... that targets only X" is the spell half of the same sentence and is not read here; a copier whose object is a spell never meets this pass. */
 const ABILITY_TARGETS = /\babilit(?:y|ies) that targets? (only )?([^,.;]+)$/i;
 
+/** "target spell or ability WITH ONE OR MORE TARGETS" (Wyll's Reversal, #1650): the copied ability must aim at something, whatever it is, so the demand is an empty class (`targets: {}`) the matcher answers with "the producer's ability has a
+ *  target slot". The text is the clause's, else the card's: Wyll's Reversal says it in the header line and copies in a later mode bullet ("15+ | ... Then copy it"), and the pronoun object "that spell or ability" says nothing of it. */
+const WITH_TARGETS = /\b(?:spell or abilit(?:y|ies)|abilit(?:y|ies)) with (?:one or more|at least one) targets?\b/i;
+export const copyHasTargetsOf = (clauseText: string | undefined): CopyTargets | undefined =>
+  clauseText !== undefined && WITH_TARGETS.test(clauseText) ? { targets: {} } : undefined;
+
 export interface CopyTargets { targets: Partial<SubjectFilter>; targetsOnly?: true }
 
 export function copyTargetsOf(
@@ -65,7 +71,9 @@ export function copyKeywordOf(
   clauseText: string | undefined,
   parseFilter: (text: string) => SubjectFilter | null,
 ): { keyword: string[]; abilityKind: NonNullable<SubjectFilter["abilityKind"]> } | undefined {
-  const m = clauseText === undefined ? null : NAMED_KEYWORD_ABILITY.exec(clauseText.split(",")[0]!);
+  // An activated copier's COST is not the sentence ("{2}, {T}: When you next activate an exhaust ability that isn't a mana ability this turn, copy it", Pit Automaton, #1650): read from after it.
+  const body = clauseText === undefined ? undefined : clauseText.includes(": ") ? clauseText.slice(clauseText.indexOf(": ") + 2) : clauseText;
+  const m = body === undefined ? null : NAMED_KEYWORD_ABILITY.exec(body.split(",")[0]!);
   if (!m) return undefined;
   const f = parseFilter(m[1]!);
   if (!f?.keyword?.length || !f.abilityKind?.length) return undefined;

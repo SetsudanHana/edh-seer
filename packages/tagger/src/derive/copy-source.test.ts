@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import { parse } from "../grammar/filter.js";
 import { copySourceOf, targetSlotsOf } from "./copy-source.js";
 import { selfAsTilde } from "../grammar/self-as-tilde.js";
+import { parseSubject } from "./subject.js";
 
 /** #1648: the source a triggered copier names, from its trigger's subject text. */
 const of = (t: string | undefined) => copySourceOf(t, parse);
@@ -56,4 +57,25 @@ test("targets: an unread phrase keeps its head noun, a list keeps every noun, a 
   expect(aims("Exile target artifacts, creatures, and/or enchantments.")).toEqual([{ type: ["artifact", "creature", "enchantment"] }]);
   expect(aims('Create a Rock token with "Equipped creature gets +1/+1. {T}: Deal 1 damage to target creature."')).toBeUndefined();
   expect(aims("When this creature enters, for each opponent, exile up to one target creature that player controls.")).toEqual([{ type: "creature", control: "opp" }, { type: "creature", control: "opp" }]);
+});
+
+/** #1650: the ability-kind words of an OBJECT phrase. A negated "mana ability" excludes mana, and only "mana ability" names the kind ("mana cost" does not). */
+const kinds = (t: string) => parseSubject(t).abilityKind;
+test("kind: 'isn't a mana ability' is no mana kind, every phrasing the corpus holds", () => {
+  expect(kinds("an ability that isn't a mana ability")).toBeUndefined();
+  expect(kinds("an activated ability that isn't a mana ability")).toEqual(["activated"]);
+  expect(kinds("an exhaust ability that isn't a mana ability")).toBeUndefined();
+  expect(kinds("abilities that aren't mana abilities")).toBeUndefined();
+  expect(kinds("abilities other than mana abilities")).toBeUndefined();
+  expect(kinds("abilities you activate that aren't mana abilities")).toBeUndefined();
+  expect(kinds("an ability of an artifact or creature that isn't a mana ability")).toBeUndefined();
+  expect(kinds("a land with an activated ability that isn't a mana ability")).toEqual(["activated"]);
+  expect(kinds("activated abilities except mana abilities")).toEqual(["activated"]);
+  expect(kinds("a non-mana activated ability")).toEqual(["activated"]);
+});
+test("kind: a mana ability named positively keeps its kind; 'mana cost' is not one", () => {
+  expect(kinds("a mana ability")).toEqual(["mana"]);
+  expect(kinds("an activated or mana ability")).toEqual(["activated", "mana"]);
+  expect(kinds("a creature with a mana ability")).toEqual(["mana"]);
+  expect(kinds("a spell with {X} in its mana cost or an ability with {X} in its activation cost")).toBeUndefined();
 });
