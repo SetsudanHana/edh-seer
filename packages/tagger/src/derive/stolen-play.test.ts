@@ -50,9 +50,11 @@ describe.each(["Mezzio Mugger", "Lidless Gaze", "Evelyn, the Covetous", "Extract
     for (const s of [...cast, ...land]) expect({ control: s.control, owner: s.owner }).toEqual({ control: "you", owner: undefined });
   });
 });
-// CEILING pinned: a play of a card off YOUR OWN library derives no cast, as before (296 corpus cards print "you may play" with no cast emit at DERIVE 496; the thieves and the mixed sources are the ones this change reads).
-test.each(["Professional Face-Breaker", "Jeska's Will", "Light Up the Stage", "Act on Impulse"])("%s plays cards off your own library: unchanged, no cast and no land play", (own) => {
-  expect(emits(own, "cast")).toEqual([]);
+// #1665 (owner ruling 2026-11-17): a play of a card off YOUR OWN library derives a CAST FROM EXILE, `owner: you`, marked `originOnly` so only a payoff that asks where the spell came from hears it (matcher: impulse-cast-pairs.test.ts).
+// CEILING pinned: still NO land play, the ruling names the cast.
+test.each(["Professional Face-Breaker", "Jeska's Will", "Light Up the Stage", "Act on Impulse"])("%s plays cards off your own library: a cast from exile of a card you own, and no land play", (own) => {
+  const cast = rowOf(own).tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "cast" && e.subject.self !== true);
+  expect(cast).toEqual([{ verb: "cast", subject: { control: "you", token: null, type: "spell", owner: "you", fromZone: "exile" }, originOnly: true }]);
   expect(emits(own, "land-play")).toEqual([]);
 });
 

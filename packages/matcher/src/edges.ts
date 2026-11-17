@@ -1334,6 +1334,9 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // Lightning Bolt. This is a fact about the deck, not about the words, so it is read here and not in derive; a cast of ANOTHER card says whose it is in its emit (`owner: you / opp`, derive).
   const castFrom = (producer.verb === "cast" || producer.verb === "land-play") && (producer.implied === true || producer.subject.self === true) && fromHand.owner === undefined
     ? { ...fromHand, owner: "you" as const } : fromHand;
+  // AN IMPULSE DRAW'S CAST IS HEARD ONLY BY A PAYOFF THAT ASKS WHERE IT CAME FROM (#1665, owner ruling 2026-11-17): "whenever you cast a spell from exile" and "from anywhere other than your hand" state an origin; a plain "whenever you cast
+  // a spell", prowess or a class trigger states none and does not hear a cast derived only so those payoffs can (`GameEvent.originOnly`). The cast of the card itself (the implied event) is a different event and is heard as ever.
+  if (producer.originOnly === true && consumer.subject.fromZone === undefined && consumer.subject.notFromZone === undefined) return false;
   if (!originMatches(castFrom, consumer.subject, consumer.verb)) return false;
   if (combatSelfSupplied(producer, consumer)) return false;
   if (castSelfSupplied(producer, asked)) return false;

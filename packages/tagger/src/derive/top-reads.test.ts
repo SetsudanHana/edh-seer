@@ -16,7 +16,14 @@ const derive = (name: string, typeLine: string, oracleText: string) => {
 describe("impulse: the clause exiles from the top of YOUR library and lets you play the cards", () => {
   test("Light Up the Stage", () => {
     const a = derive("Light Up the Stage", "Sorcery", "Spectacle {R} (You may cast this spell for its spectacle cost rather than its mana cost if an opponent lost life this turn.)\nExile the top two cards of your library. Until the end of your next turn, you may play those cards.");
-    expect(a.filter((x) => x.impulse).map((x) => x.emits?.map((e) => e.verb))).toEqual([["exiled"]]);
+    // #1665: the impulse draw is also a cast from exile, heard only by an origin-aware payoff.
+    expect(a.filter((x) => x.impulse).map((x) => x.emits?.map((e) => e.verb))).toEqual([["exiled", "cast"]]);
+    const cast = a.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "cast" && e.subject.self !== true);
+    expect(cast).toEqual([{ verb: "cast", subject: { control: "you", token: null, type: "spell", owner: "you", fromZone: "exile" }, originOnly: true }]);
+  });
+  test("a card with two impulse abilities carries the cast once", () => {
+    const a = derive("Two Impulses", "Enchantment", "At the beginning of your upkeep, exile the top card of your library. You may play that card this turn.\nAt the beginning of your end step, exile the top card of your library. You may play that card this turn.");
+    expect(a.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "cast" && e.originOnly === true)).toHaveLength(1);
   });
   test("Count on Luck: an upkeep trigger, one card", () => {
     const a = derive("Count on Luck", "Enchantment", "At the beginning of your upkeep, exile the top card of your library. You may play that card this turn.");
