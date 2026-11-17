@@ -697,3 +697,27 @@ test("Pulse of Llanowar credits only the BASIC lands that were not blue; audit a
   expect(uOf(nonbasicOnly).fixedBy).toBeUndefined();
   expect(fixerSupply(nonbasicOnly)("U", 4)).toBe(0);
 });
+
+/** OWNER RULING 2026-11-17 (#727): an {X} spell's colour deadline is its smallest useful cast, X=1:
+ *  mana value plus one per {X} symbol. The coloured pips stay checked; only the turn moves. */
+describe("an {X} spell's colour deadline (#727)", () => {
+  const demandTurns = (deck: DeckCard[], colour: "U" | "B") =>
+    manaAudit(fillTo(100, deck)).find((r) => r.color === colour)!.demands.map((d) => ({ pips: d.pips, turn: d.turn }));
+
+  test("Blue Sun's Zenith {X}{U}{U}{U} wants UUU by turn 4", () => {
+    expect(demandTurns([card("Blue Sun's Zenith", "{X}{U}{U}{U}", 3)], "U")).toEqual([{ pips: 3, turn: 4 }]);
+  });
+  test("The Meathook Massacre {X}{B}{B} wants BB by turn 3", () => {
+    expect(demandTurns([card("The Meathook Massacre", "{X}{B}{B}", 2)], "B")).toEqual([{ pips: 2, turn: 3 }]);
+  });
+  test("a double-X cost is +2: {X}{X}{U}{U} (mv 2) is due turn 4", () => {
+    expect(demandTurns([card("Extraordinary Journey", "{X}{X}{U}{U}", 2)], "U")).toEqual([{ pips: 2, turn: 4 }]);
+  });
+  test("a non-X card keeps its mana value", () => {
+    expect(demandTurns([card("Damnation", "{2}{B}{B}", 4)], "B")).toEqual([{ pips: 2, turn: 4 }]);
+  });
+  test("only the cost you pay counts: an adventure whose {X} half is not the castable one is not shifted", () => {
+    // castableManaCost picks the cheaper half; {U} here, so no {X}.
+    expect(demandTurns([card("Elusive Otter // Grove's Bounty", "{U} // {X}{G}", 1, { layout: "adventure" })], "U")).toEqual([{ pips: 1, turn: 1 }]);
+  });
+});

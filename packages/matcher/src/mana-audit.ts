@@ -1,5 +1,5 @@
 import { minCopies } from "@edh-seer/engine";
-import { castableManaCost } from "./split-cost.js";
+import { castableManaCost, type SplitCostCard } from "./split-cost.js";
 import { minSources, pCanPayByTurn } from "./mulligan.js";
 import { classifyLand, entersTapped } from "./land-conditions.js";
 import { fetchedLandEntersTapped } from "./fetch-land.js";
@@ -101,12 +101,25 @@ export const isManaSource = (dc: DeckCard): boolean =>
   !/\b(instant|sorcery)\b/i.test(dc.card.typeLine)
   || /\b(artifact|creature|enchantment|land)\b/i.test(dc.card.typeLine);
 
+/** THE TURN A CARD'S COLOUR DEMAND IS DUE (owner ruling 2026-11-17, #727). A card's mana value, floored
+ *  at turn 1 -- except an {X} spell, which is judged at its smallest useful cast, X=1: mana value
+ *  plus one for each {X} symbol in the cost you pay (`castableManaCost`, so the {X} half of an
+ *  adventure or prepare card that is not the one cast from hand adds nothing). Mana value counts X
+ *  as 0, which is a cast that does nothing: Blue Sun's Zenith {X}{U}{U}{U} wants UUU by turn 4, The
+ *  Meathook Massacre {X}{B}{B} BB by turn 3, {X}{X}{U}{U} by turn 4. The coloured pips are still
+ *  checked; only the turn moves. */
+export function colourDeadline(card: SplitCostCard & { manaValue: number }): number {
+  const xs = (castableManaCost(card)?.match(/\{X\}/gi) ?? []).length;
+  return Math.max(1, Math.round(card.manaValue) + xs);
+}
+
 /** One "N cards want this many pips by this turn" demand, and whether the deck supplies it. */
 export interface ColorDemand {
   pips: number;
-  /** The deadline: the card's own mana value. You want to cast a 3-drop on turn 3, which is a
-   *  defensible assumption rather than a fitted parameter -- and it is the one place the spec's
-   *  per-card idea kills a Tier C guess outright. */
+  /** The deadline: the card's own mana value, plus one per {X} symbol for an {X} spell (owner ruling
+   *  2026-11-17, #727: the smallest useful cast, X=1; `colourDeadline`). You want to cast a 3-drop on
+   *  turn 3, which is a defensible assumption rather than a fitted parameter -- and it is the one
+   *  place the spec's per-card idea kills a Tier C guess outright. */
   turn: number;
   /** Sources needed for `SOURCE_CONFIDENCE` of having `pips` of them by `turn`, WITH the free
    *  mulligan priced in (`mulligan.ts`). An UPPER BOUND on the mulligan's help: the keep band reads
@@ -337,7 +350,7 @@ export function manaAuditFull(
       const pips = pipsByColor(castableManaCost(dc.card))[color];
       if (!pips) continue;
       // A 0-drop still has to be castable on turn 1 -- there is no turn 0 to draw into.
-      const turn = Math.max(1, Math.round(dc.card.manaValue));
+      const turn = colourDeadline(dc.card);
       const key = `${pips}:${turn}`;
       const existing = groups.get(key);
       if (existing) {
@@ -394,7 +407,7 @@ export function manaAuditFull(
     const pipsOf = plainPips(castableManaCost(dc.card));
     const colours = COLORS.filter((c) => (pipsOf[c] ?? 0) > 0);
     if (colours.length < 2 || colours.length > 3) continue;
-    const turn = Math.max(1, Math.round(dc.card.manaValue));
+    const turn = colourDeadline(dc.card);
     // CEILING: a three-colour cost due after turn 6 is skipped: the exact joint costs ~0.4 s at turn 6 and ~1.3 s at turn 8.
     if (colours.length === 3 && turn > 6) continue;
     const key = `${colours.map((c) => c + pipsOf[c]).join("")}:${turn}`;
