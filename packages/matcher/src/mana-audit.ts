@@ -1,5 +1,5 @@
 import { minCopies } from "@edh-seer/engine";
-import { castableManaCost, type SplitCostCard } from "./split-cost.js";
+import { castableManaCost, convertedTotal, type SplitCostCard } from "./split-cost.js";
 import { minSources, pCanPayByTurn } from "./mulligan.js";
 import { classifyLand, entersTapped } from "./land-conditions.js";
 import { fetchedLandEntersTapped } from "./fetch-land.js";
@@ -109,7 +109,14 @@ export const isManaSource = (dc: DeckCard): boolean =>
  *  Meathook Massacre {X}{B}{B} BB by turn 3, {X}{X}{U}{U} by turn 4. The coloured pips are still
  *  checked; only the turn moves. */
 export function colourDeadline(card: SplitCostCard & { manaValue: number }): number {
-  const xs = (castableManaCost(card)?.match(/\{X\}/gi) ?? []).length;
+  const cast = castableManaCost(card);
+  const xs = (cast?.match(/\{X\}/gi) ?? []).length;
+  // A JOINED COST WHOSE CAST HALF CARRIES THE {X}: `manaValue` is the whole card's (Illithid Harvester
+  // // Plant Tadpoles, {4}{U} // {X}{U}{U}, is mv 5), and adding X to it prices the cheap half at the
+  // expensive one's turn. The half you cast is priced alone, X as 1 (`convertedTotal`): {X}{U}{U} is turn 3.
+  if (xs > 0 && cast !== card.manaCost) return Math.max(1, convertedTotal(cast!));
+  // CEILING: a joined cost WITHOUT an {X} keeps the whole card's mana value (a split's two halves summed)
+  // as its deadline, though the half you cast costs less. Out of the 2026-11-17 X ruling's scope (#727).
   return Math.max(1, Math.round(card.manaValue) + xs);
 }
 

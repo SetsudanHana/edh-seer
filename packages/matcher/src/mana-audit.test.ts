@@ -43,7 +43,8 @@ test("pips are counted per colour, and generic costs are not pips", () => {
 });
 
 /** The stub's insight, and the reason this is not another Tier C guess: a card's DEADLINE is its
- *  own mana value. You want to cast a 3-drop on turn 3. */
+ *  own mana value (an {X} spell's is its X=1 cast, mana value plus one per {X}: #727, below).
+ *  You want to cast a 3-drop on turn 3. */
 test("a card's deadline is its own mana value", () => {
   const deck = fillTo(100, [
     card("Doom Blade", "{1}{B}", 2),
@@ -701,6 +702,7 @@ test("Pulse of Llanowar credits only the BASIC lands that were not blue; audit a
 /** OWNER RULING 2026-11-17 (#727): an {X} spell's colour deadline is its smallest useful cast, X=1:
  *  mana value plus one per {X} symbol. The coloured pips stay checked; only the turn moves. */
 describe("an {X} spell's colour deadline (#727)", () => {
+  const GOLD_SRC = 24;
   const demandTurns = (deck: DeckCard[], colour: "U" | "B") =>
     manaAudit(fillTo(100, deck)).find((r) => r.color === colour)!.demands.map((d) => ({ pips: d.pips, turn: d.turn }));
 
@@ -715,6 +717,22 @@ describe("an {X} spell's colour deadline (#727)", () => {
   });
   test("a non-X card keeps its mana value", () => {
     expect(demandTurns([card("Damnation", "{2}{B}{B}", 4)], "B")).toEqual([{ pips: 2, turn: 4 }]);
+  });
+  test("an {X} gold card's joint demand moves too: {X}{G}{G}{W} (mv 3) is due turn 4", () => {
+    // {X}{G}{W} cannot surface a gold finding at any land split (each colour alone must pass 90%, and then the joint clears 80%), so a heavier cost.
+    const deck = fillTo(100, [card("Forth-ish", "{X}{G}{G}{W}", 3), ...many(GOLD_SRC, ["G"], "Forest"), ...many(GOLD_SRC, ["W"], "Plains")]);
+    const { gold } = manaAuditFull(deck);
+    expect(gold).toBeDefined();
+    expect(gold!.turn).toBe(4);
+  });
+  test("the castable half carries the X: Illithid Harvester // Plant Tadpoles ({4}{U} // {X}{U}{U}, mv 5) is due turn 3", () => {
+    expect(demandTurns([card("Illithid Harvester // Plant Tadpoles", "{4}{U} // {X}{U}{U}", 5, { layout: "adventure" })], "U")).toEqual([{ pips: 2, turn: 3 }]);
+  });
+  test("Crime // Punishment ({3}{W}{B} // {X}{B}{G}, mv 7): the cheaper X half is priced alone, turn 3", () => {
+    expect(demandTurns([card("Crime // Punishment", "{3}{W}{B} // {X}{B}{G}", 7, { layout: "split" })], "B")).toEqual([{ pips: 1, turn: 3 }]);
+  });
+  test("a prepare card casts its front half: Stensian Sanguinist {1}{B} // {X}{B}{B} (mv 2) is not shifted", () => {
+    expect(demandTurns([card("Stensian Sanguinist // Exsanguinate", "{1}{B} // {X}{B}{B}", 2, { layout: "prepare", keywords: ["Prepared"] })], "B")).toEqual([{ pips: 1, turn: 2 }]);
   });
   test("only the cost you pay counts: an adventure whose {X} half is not the castable one is not shifted", () => {
     // castableManaCost picks the cheaper half; {U} here, so no {X}.
