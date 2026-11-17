@@ -60,3 +60,13 @@ describe("a host-death trigger that acts on the dead creature's controller is th
     expect(hostDies("Massacre Wurm", aura).length).toBeGreaterThan(0);
   });
 });
+
+describe("an Aura made for an opponent's creature, or one that moves to a host it does not choose, keeps main's reading", () => {
+  // Ghoulish Impetus goads its host (a drawback on your own creature, CR 701.15b); Infectious Rage re-attaches "to a creature at random": its next host can be anyone's.
+  test.each(["Ghoulish Impetus", "Infectious Rage"])("Massacre Wurm -> %s still forms its reason", (aura) => {
+    expect(hostDies("Massacre Wurm", aura).length).toBeGreaterThan(0);
+  });
+  test("Reins of the Vinesteed re-attaches to a creature of YOUR choice: own-side, Massacre Wurm feeds nothing", () => {
+    expect(hostDies("Massacre Wurm", "Reins of the Vinesteed")).toEqual([]);
+  });
+});

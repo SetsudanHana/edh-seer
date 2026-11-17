@@ -2136,6 +2136,15 @@ function hostDeathLineActsOnController(oracleText: string): boolean {
   return false;
 }
 
+/** The printed host-death line returns the Aura "at random" (Infectious Rage: "choose a creature at random this Aura can enchant"). Plain string tests over one line. */
+function hostDeathLineReattachesAtRandom(oracleText: string): boolean {
+  for (const raw of oracleText.split("\n")) {
+    const line = raw.toLowerCase();
+    if ((line.startsWith("when enchanted ") || line.startsWith("whenever enchanted ") || line.startsWith("when equipped ") || line.startsWith("whenever equipped ")) && line.includes(" at random")) return true;
+  }
+  return false;
+}
+
 /** "WHEN ENCHANTED / EQUIPPED CREATURE DIES" IS A CREATURE YOU CONTROL (#736, owner 2026-11-16). Derive stores the host's death as a plain `creature` of `control: any` (the printed words name no player), so
  *  Massacre Wurm's "creatures your opponents control get -2/-2" and "Destroy target creature an opponent controls" satisfied it. An Aura or Equipment you put on your own creature is fed by whatever can kill YOURS: a
  *  sacrifice outlet, a self-sacrifice, a board wipe (control `any` reaches yours, and still does). So the trigger is judged with `control: you`, and a producer that can only kill an opponent's creature fails it.
@@ -2153,6 +2162,9 @@ function hostDiesAsYours(t: GameEvent, a: CardTags["abilities"][number], chars: 
   if (enchants !== undefined && auraHostSide(enchants, abilities) !== "own") return t;
   // A TRIGGER THAT ACTS ON THE DEAD CREATURE'S CONTROLLER is the opponent side's ("this Aura deals 3 damage to that creature's controller", Impending Doom; "its controller loses 2 life", Decomposition; "its controller chooses target creature one of their opponents controls", Necrotic Plague), whatever the pump says: main's reading. Read from the trigger's own printed line, not the whole card.
   if (hostDeathLineActsOnController(consumerText)) return t;
+  // A GOAD AURA is made for an opponent's creature (Ghoulish Impetus: on your own creature goad is only a drawback), and an Aura that re-attaches "at random" (Infectious Rage) moves to a host that can be anyone's: main's reading. Local to this
+  // function; `auraHostSide` still reads both as own-side for its other callers. Reins of the Vinesteed re-attaches to a creature YOU choose and stays own-side.
+  if (abilities.some((x) => (x.emits ?? []).some((m) => m.verb === "goad")) || hostDeathLineReattachesAtRandom(consumerText)) return t;
   // A creature the producer itself sacrifices or loses is the producer's: yours ("Its controller sacrifices it", Goblin Ski Patrol).
   if (e0.subject.self === true) return t;
   if (e0.subject.control === "opp") {
