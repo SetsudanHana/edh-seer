@@ -10,7 +10,8 @@ import type { Ability } from "@edh-seer/tagger";
  *  as `you`. The effect subject is right there, so a join (`you` + `any` = `any`) keeps both sides.
  *  CEILING: an ability with neither a mill subject nor a mill emit (Bruvac the Grandiloquent, The Water
  *  Crystal: replacements whose text names opponents) has an undefined scope and earns no win-condition
- *  credit. Follow-up #1663. */
+ *  credit. Riddlekeeper reads too wide: "that creature's controller" after a creature attacks you is
+ *  always an opponent, but the join can only say `any`, so it also joins graveyard-matters. Follow-up #1663. */
 export type MillScope = "you" | "opp" | "any";
 
 export function millScopeOf(a: Pick<Ability, "effect" | "emits">): MillScope | undefined {
