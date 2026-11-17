@@ -40,7 +40,7 @@ import { repeatsFor } from "./repeats.js";
  *  refusal. The ratchet reads `cost` correctly; this fixture simply cannot exercise that arm. */
 const FIXTURE = new URL("repeats-refused.json", import.meta.url);
 
-/** Raise ONLY with a written reason. Lower it whenever a rule is added.
+/** Raise ONLY with a written reason. Lower it whenever a rule is added (arm 1 is `toBe`: a smaller fixture fails too).
  *
  *  Dropped 595 -> 579 (task 4, 2026-08-11): `ORDINAL_EACH_TURN` in `repeats.ts` resolved 16 refused
  *  abilities, including Faerie Mastermind's own trigger -- the card the taxonomy was built around
@@ -71,15 +71,18 @@ const FIXTURE = new URL("repeats-refused.json", import.meta.url);
  *  `return` the clause text sends "to its owner's hand" the same (Otawara). 582 such actions
  *  became abilities (37,912 -> 38,494) and 25 of them -- exiles and bounces on triggers the rules
  *  cannot name -- refuse honestly. Refusal share unchanged at 3.7%. */
-/** Re-banked 1438 -> 2812 (2026-11-17, #722, owner ruling "regenerate + keep fresh"). The fixture had not been
- *  regenerated since 2026-09-05; the corpus went from 21k to 32,804 derived rows and the stored abilities were
- *  re-shaped by derive since. Regenerated on DERIVE 537: 2,812 refused rows, 4.4% of abilities (the fixture
- *  was a bare array; it is now `{ deriveVersion, rows }`). Of the 1,438 old rows 707 are gone: about 430 cards
- *  now resolve (derive re-shaped the stored ability and the old fixture fed `repeatsFor` the old shape, so arm 2
- *  never saw it), 32 cards lost the ability, 11 still refuse under new clause text. 2,052 rows are new, 2,015 of
- *  them on cards that were not in the old corpus. The cap now tracks a FRESH fixture: `derive:bump`
- *  regenerates it and the version test above fails when it is stale, so arm 1 bounds the live refusal count
- *  as of the last derive bump rather than a 2026-09 capture. Arm 2 is kept as it was. */
+/** Re-banked 1438 -> 2812 (2026-11-17, #722, owner ruling "regenerate + keep fresh"). The fixture was a bare array
+ *  last captured 2026-09-05; it is now `{ deriveVersion, rows }`, regenerated on DERIVE 537: 2,812 refused rows, 4.4% of
+ *  abilities. Diffed by (name, clauseText): 707 old keys are gone and 2,052 new keys appear (as a multiset 711 gone,
+ *  2,085 new; duplicate keys are why neither adds up to 2,812). 699 of the 707 were `kind: "triggered"` with no
+ *  `trigger` object; derive now recognises the trigger and the ability resolves (Hornet Nest and Flumph now carry
+ *  `trigger.verbs: ["damaged"]`, `repeats: "repeatable"`), which arm 2 could not see on the old shape. By card, loosely
+ *  matched on `effect.kind`: about 440 of the 467 cards behind the gone rows resolve, 21-39 lost the ability
+ *  (depending on how mixed cards count), 11 still refuse under new clause text. Of the 2,052 new keys 2,015 are on
+ *  cards with no row in the old fixture (1,435 grammar-sourced, 520 model-sourced): derived rows went 21,317 -> 32,804.
+ *  2,679 of the 2,812 rows are triggered abilities with no `trigger` object; that is what the fixture mostly pins.
+ *  The cap tracks a FRESH fixture: `derive:bump` regenerates it and the version test fails when it is stale. Arm 1 is
+ *  two-sided (`toBe`): a regeneration that SHRINKS the set must be banked here too. Arm 2 is kept as it was. */
 const REFUSED_CAP = 2812;
 
 /** `repeatsFor` takes THREE arguments -- `cost` feeds rules 1-2 (self-sacrifice, {T}/{Q}),
@@ -96,9 +99,9 @@ test("the refused fixture was generated at the current derive version (regenerat
   expect(load().deriveVersion).toBe(DERIVE_VERSION);
 });
 
-test("the refused set has not grown", () => {
+test("the refused set is exactly the banked size (grows and shrinks both fail)", () => {
   const { rows } = load();
-  expect(rows.length).toBeLessThanOrEqual(REFUSED_CAP);
+  expect(rows.length).toBe(REFUSED_CAP);
 });
 
 test("a refused ability that now resolves must be banked, not silently absorbed", () => {

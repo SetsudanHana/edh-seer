@@ -23,7 +23,7 @@ const counts = new Map<string, number>();
 const samples = new Map<string, string[]>();
 let abilities = 0;
 
-for await (const d of derived.find({}) as never as AsyncIterable<CardTags & { name?: string }>) {
+for await (const d of derived.find({}).sort({ oracleId: 1 }) as never as AsyncIterable<CardTags & { name?: string }>) {
   const abilitiesArr = d.abilities ?? [];
   // Recover the (text, cost) that fed EVERY ability of this card, not just the refused ones, so
   // they line up positionally with `abilitiesArr` -- only bother when there is a refusal to record.
@@ -53,7 +53,7 @@ for (const [k, n] of [...counts].sort((a, b) => b[1] - a[1])) {
   for (const s of samples.get(k) ?? []) console.log(`      ${s}`);
 }
 if (refusedOut) {
-  writeFileSync(refusedOut, `{"deriveVersion":${DERIVE_VERSION},"rows":[\n${refused.map((r) => JSON.stringify(r)).join(",\n")}\n]}\n`);
+  writeFileSync(refusedOut, `{"deriveVersion":${DERIVE_VERSION},"rows":[\n${refused.sort((a, b) => a.name.localeCompare(b.name) || a.clauseText.localeCompare(b.clauseText)).map((r) => JSON.stringify(r)).join(",\n")}\n]}\n`);
   console.log(`\nwrote ${refused.length} refused abilities (DERIVE ${DERIVE_VERSION}) -> ${refusedOut}`);
 }
 process.exit(0);
