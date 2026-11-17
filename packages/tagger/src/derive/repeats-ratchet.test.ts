@@ -21,20 +21,23 @@ import { repeatsFor } from "./repeats.js";
  *      Thorn of the Dusk Rose, Marauding Blight-Priest, Starscape Cleric, Heliod Sun-Crowned, and
  *      Ratchet Field Medic // Ratchet Rescue Racer (twice, one per face).
  *
- *  THE TWO ARMS ARE NOT EQUIVALENT (2026-08-11 review, finding 2). Arm 2 ("a refused ability that
- *  now resolves...") is LIVE on every run -- it calls `repeatsFor` fresh against the checked-in
- *  fixture, so any rule change that newly resolves one of these 579 rows fails immediately. Arm 1
- *  ("the refused set has not grown") only bounds the CHECKED-IN FIXTURE'S row count; it says nothing
- *  about the live corpus until a human regenerates `repeats-refused.json` and re-derives, unlike
- *  `KNOWN_DEFECT_CAP`, which is checked against a live count every run. A code change that makes
- *  MORE abilities refuse today will not fail this test -- it will only show up once someone reruns:
+ *  THE TWO ARMS ARE NOT EQUIVALENT (2026-08-11 review, finding 2; rewritten 2026-11-17, #722). Arm 2
+ *  ("a refused ability that now resolves...") is LIVE on every run -- it calls `repeatsFor` fresh against
+ *  the checked-in fixture, so any rule change that newly resolves one of its rows fails immediately. Arm 1
+ *  ("the refused set has not grown") bounds the CHECKED-IN FIXTURE'S row count only. The fixture is
+ *  stamped with the DERIVE_VERSION it was generated at, the freshness test fails when it is stale, and
+ *  `derive:bump` regenerates it, so arm 1 follows the live refusal count as of the last bump:
  *
- *    npx tsx --env-file=packages/tagger/.env research/tagger/repeats-report.ts --refused packages/tagger/src/derive/repeats-refused.json
+ *    npx tsx research/tagger/repeats-report.ts --refused packages/tagger/src/derive/repeats-refused.json
  *
- *  and notices the row count moved past REFUSED_CAP. Also note: every row in this fixture carries
- *  `cost: ""` structurally -- rules 1-2 (`repeats.ts`) run against `cost` BEFORE the trigger branch,
- *  so any ability with a real, non-empty cost resolves via rule 1 or 2 and can never reach refusal.
- *  The ratchet reads `cost` correctly; this fixture simply cannot exercise that arm. */
+ *  THE REMAINING GAP: `repeats` is computed at DERIVE time (`repeatsFor` is called from `derive.ts`), so a
+ *  change to `repeats.ts` is a derive semantics change. CLAUDE.md says to bump DERIVE_VERSION for those,
+ *  which stales the stamp and forces the regeneration. Skip the bump and the stamp stays "fresh" over a
+ *  fixture the new rules would not produce: arm 2 still catches newly resolving rows, but a rule that
+ *  makes MORE abilities refuse is not seen until the next bump. Also note: every row in this fixture
+ *  carries `cost: ""` structurally -- rules 1-2 (`repeats.ts`) run against `cost` BEFORE the trigger
+ *  branch, so any ability with a real, non-empty cost resolves via rule 1 or 2 and can never reach
+ *  refusal. The ratchet reads `cost` correctly; this fixture simply cannot exercise that arm. */
 const FIXTURE = new URL("repeats-refused.json", import.meta.url);
 
 /** Raise ONLY with a written reason. Lower it whenever a rule is added.

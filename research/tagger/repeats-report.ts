@@ -53,7 +53,7 @@ for (const [k, n] of [...counts].sort((a, b) => b[1] - a[1])) {
   for (const s of samples.get(k) ?? []) console.log(`      ${s}`);
 }
 if (refusedOut) {
-  writeFileSync(refusedOut, JSON.stringify({ deriveVersion: DERIVE_VERSION, rows: refused }, null, 1));
+  writeFileSync(refusedOut, `{"deriveVersion":${DERIVE_VERSION},"rows":[\n${refused.map((r) => JSON.stringify(r)).join(",\n")}\n]}\n`);
   console.log(`\nwrote ${refused.length} refused abilities (DERIVE ${DERIVE_VERSION}) -> ${refusedOut}`);
 }
 process.exit(0);
