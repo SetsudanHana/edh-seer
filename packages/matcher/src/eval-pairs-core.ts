@@ -1,4 +1,4 @@
-import type { Reason } from "@edh-seer/engine";
+import type { Reason, SynergyEdge } from "@edh-seer/engine";
 import type { DeckCard } from "./types.js";
 import { cardThemeTags } from "./edges.js";
 import { categoryMatches, type MechanismCategory } from "./mechanisms.js";
@@ -61,7 +61,7 @@ export function classifyPair(pair: CompassPair, reasons: Reason[], a: DeckCard, 
 
 /** One curated pair that must NEVER join on this category. The mirror of `CompassPair`.
  *
- *  `compass-pairs.json` asks only "did we find the edge" and reads 55/55 — a score an engine that
+ *  `compass-pairs.json` asks only "did we find the edge" and reads full marks — a score an engine that
  *  joined EVERY pair would also get. These are the other half of the equivalence-class set: one
  *  representative per CLASS of false edge, so a mesh regression fails on a NAME instead of drifting
  *  through a percentage. The class names are the panel's own `cause` values, and each row is drawn
@@ -88,4 +88,37 @@ export interface AntiPair {
  *  the false one. */
 export function classifyAntiPair(pair: AntiPair, reasons: Reason[]): "clean" | "false-edge" {
   return reasons.some((r) => r.tag === pair.tag) ? "false-edge" : "clean";
+}
+
+/** Does `endpoint` (an edge end, keyed by FACE name on a multi-face card) name the physical card
+ *  `name`? A token or third card never matches. */
+function endpointIs(endpoint: string, name: string): boolean {
+  return endpoint === name || name.split(" // ").includes(endpoint);
+}
+
+/** DECK-MODE JOIN (#728). The real pipeline's answer to "do these two cards join": a
+ *  `SynergyEdge` whose two ENDS are the pair, in either direction, carrying at least one reason that
+ *  does not run through a token node (a token can share a name with a card).
+ *  Edges to a third card (the basics of the synthetic deck, a token node) never count -- an edge is
+ *  keyed on its endpoints (`SynergyEdge.a`/`.b`), so a reason on a third-party edge is not the pair's. */
+export function deckJoins(edges: readonly SynergyEdge[], a: string, b: string): boolean {
+  return edges.some((e) =>
+    e.reasons.some((r) => !r.producerIsToken && !r.consumerIsToken)
+    && ((endpointIs(e.a, a) && endpointIs(e.b, b)) || (endpointIs(e.a, b) && endpointIs(e.b, a))));
+}
+
+/** One compass row's join answer in each mode. */
+export interface ModeRow {
+  /** `pair a / b`, for the printed list. */
+  label: string;
+  /** Joined by `pairReasons` in isolation (any reason). */
+  iso: boolean;
+  /** Joined by `analyzeDeckStructured` in the synthetic deck (`deckJoins`). NULL: deck mode could not
+   *  build the deck for a row the isolated side resolved -- a disagreement, never a silent skip. */
+  deck: boolean | null;
+}
+
+/** The rows whose isolated and deck answers differ -- in EITHER direction. */
+export function modeDisagreements(rows: readonly ModeRow[]): ModeRow[] {
+  return rows.filter((r) => r.iso !== r.deck);
 }

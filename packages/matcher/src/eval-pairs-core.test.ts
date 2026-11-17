@@ -95,3 +95,51 @@ test("a pair's producer, repeatability, perTurn and wording must all match the s
   expect(classifyPair(says, [{ ...fenrir, text: "puts that many growth counters on itself" }], a, b).status).toBe("PASS");
   expect(classifyPair(says, [{ ...fenrir, text: "puts that many counters on a permanent" }], a, b).status).toBe("WRONG-REASON");
 });
+
+// ---- deck-mode agreement (#728) ----
+import type { SynergyEdge } from "@edh-seer/engine";
+import { deckJoins, modeDisagreements, type ModeRow } from "./eval-pairs-core.js";
+
+const edge = (a: string, b: string, nReasons = 1): SynergyEdge =>
+  ({ a, b, score: 1, reasons: Array.from({ length: nReasons }, () => reason({ tag: "x" })) });
+
+test("deckJoins: an edge between the two names joins, in either direction", () => {
+  expect(deckJoins([edge("A", "B")], "A", "B")).toBe(true);
+  expect(deckJoins([edge("B", "A")], "A", "B")).toBe(true);
+});
+
+test("deckJoins: an edge to a third card, or with no reasons, does not join", () => {
+  expect(deckJoins([edge("A", "Plains"), edge("Plains", "B")], "A", "B")).toBe(false);
+  expect(deckJoins([edge("A", "B", 0)], "A", "B")).toBe(false);
+  expect(deckJoins([], "A", "B")).toBe(false);
+});
+
+test("deckJoins: an edge keyed by a face name joins the physical card", () => {
+  expect(deckJoins([edge("Front", "B")], "Front // Back", "B")).toBe(true);
+  expect(deckJoins([edge("Back", "B")], "Front // Back", "B")).toBe(true);
+  expect(deckJoins([edge("Other", "B")], "Front // Back", "B")).toBe(false);
+});
+
+const row = (iso: boolean, deck: boolean, label = "r"): ModeRow => ({ label, iso, deck });
+
+test("modeDisagreements: reports a row that joins isolated but not in the deck", () => {
+  expect(modeDisagreements([row(true, false, "lost"), row(true, true)])).toEqual([row(true, false, "lost")]);
+});
+
+test("modeDisagreements: reports a row that joins in the deck but not isolated", () => {
+  expect(modeDisagreements([row(false, true, "gained"), row(false, false)])).toEqual([row(false, true, "gained")]);
+});
+
+test("modeDisagreements: agreeing rows give nothing", () => {
+  expect(modeDisagreements([row(true, true), row(false, false)])).toEqual([]);
+});
+
+test("deckJoins: a reason through a token node does not join the pair (name collision)", () => {
+  const e: SynergyEdge = { a: "A", b: "B", score: 1, reasons: [reason({ tag: "x", producerIsToken: true }), reason({ tag: "y", consumerIsToken: true })] };
+  expect(deckJoins([e], "A", "B")).toBe(false);
+});
+
+test("modeDisagreements: a row deck mode could not resolve (deck null) is a disagreement", () => {
+  expect(modeDisagreements([{ label: "gone", iso: false, deck: null }])).toHaveLength(1);
+  expect(modeDisagreements([{ label: "gone", iso: true, deck: null }])).toHaveLength(1);
+});
