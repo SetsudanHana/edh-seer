@@ -114,6 +114,9 @@ export function planSteps(mode: Mode): Step[] {
     // relation-stats.json is the cross-deck rarity behind the own-theme relation weights (#1095); it records
     // the DERIVE_VERSION it was generated at and `relation-stats.test.ts` fails when it is stale.
     tsx("gen-relation-stats", "packages/matcher/src/bin/gen-relation-stats.ts"),
+    // repeats-refused.json is the fixture behind repeats-ratchet.test.ts (#722); it records the DERIVE_VERSION it was
+    // generated at and the test fails when it is stale. Reads the fresh cardTagsDerived, so it comes after the derive.
+    tsx("gen-repeats-refused", "research/tagger/repeats-report.ts", ["--refused", "packages/tagger/src/derive/repeats-refused.json"]),
     tsx("gen-schema-docs", "packages/tagger/src/bin/gen-schema-docs.ts"),
     tsx("role-ratchet", "packages/instruments/src/role-ratchet.ts", [], false),
     tsx("dropped-clauses", "packages/instruments/src/dropped-clauses.ts", [], false),
@@ -121,6 +124,7 @@ export function planSteps(mode: Mode): Step[] {
     vitest("src/fixture-derive-version.test.ts", "packages/matcher"),
     vitest("src/quality-weights.test.ts", "packages/matcher"),
     vitest("src/relation-stats.test.ts", "packages/matcher"),
+    vitest("src/derive/repeats-ratchet.test.ts", "packages/tagger"),
     vitest("src/bin/gen-schema-docs.test.ts", "packages/tagger"),
   );
   return steps;

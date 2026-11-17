@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import { readFileSync } from "node:fs";
 import type { Ability } from "../schema.js";
+import { DERIVE_VERSION } from "./derive.js";
 import { repeatsFor } from "./repeats.js";
 
 /** Abilities the rules cannot name, as a FIXED list captured from the corpus. Both directions are
@@ -20,23 +21,26 @@ import { repeatsFor } from "./repeats.js";
  *      Thorn of the Dusk Rose, Marauding Blight-Priest, Starscape Cleric, Heliod Sun-Crowned, and
  *      Ratchet Field Medic // Ratchet Rescue Racer (twice, one per face).
  *
- *  THE TWO ARMS ARE NOT EQUIVALENT (2026-08-11 review, finding 2). Arm 2 ("a refused ability that
- *  now resolves...") is LIVE on every run -- it calls `repeatsFor` fresh against the checked-in
- *  fixture, so any rule change that newly resolves one of these 579 rows fails immediately. Arm 1
- *  ("the refused set has not grown") only bounds the CHECKED-IN FIXTURE'S row count; it says nothing
- *  about the live corpus until a human regenerates `repeats-refused.json` and re-derives, unlike
- *  `KNOWN_DEFECT_CAP`, which is checked against a live count every run. A code change that makes
- *  MORE abilities refuse today will not fail this test -- it will only show up once someone reruns:
+ *  THE TWO ARMS ARE NOT EQUIVALENT (2026-08-11 review, finding 2; rewritten 2026-11-17, #722). Arm 2
+ *  ("a refused ability that now resolves...") is LIVE on every run -- it calls `repeatsFor` fresh against
+ *  the checked-in fixture, so any rule change that newly resolves one of its rows fails immediately. Arm 1
+ *  ("the refused set has not grown") bounds the CHECKED-IN FIXTURE'S row count only. The fixture is
+ *  stamped with the DERIVE_VERSION it was generated at, the freshness test fails when it is stale, and
+ *  `derive:bump` regenerates it, so arm 1 follows the live refusal count as of the last bump:
  *
- *    npx tsx --env-file=packages/tagger/.env research/tagger/repeats-report.ts --refused packages/tagger/src/derive/repeats-refused.json
+ *    npx tsx research/tagger/repeats-report.ts --refused packages/tagger/src/derive/repeats-refused.json
  *
- *  and notices the row count moved past REFUSED_CAP. Also note: every row in this fixture carries
- *  `cost: ""` structurally -- rules 1-2 (`repeats.ts`) run against `cost` BEFORE the trigger branch,
- *  so any ability with a real, non-empty cost resolves via rule 1 or 2 and can never reach refusal.
- *  The ratchet reads `cost` correctly; this fixture simply cannot exercise that arm. */
+ *  THE REMAINING GAP: `repeats` is computed at DERIVE time (`repeatsFor` is called from `derive.ts`), so a
+ *  change to `repeats.ts` is a derive semantics change. CLAUDE.md says to bump DERIVE_VERSION for those,
+ *  which stales the stamp and forces the regeneration. Skip the bump and the stamp stays "fresh" over a
+ *  fixture the new rules would not produce: arm 2 still catches newly resolving rows, but a rule that
+ *  makes MORE abilities refuse is not seen until the next bump. Also note: every row in this fixture
+ *  carries `cost: ""` structurally -- rules 1-2 (`repeats.ts`) run against `cost` BEFORE the trigger
+ *  branch, so any ability with a real, non-empty cost resolves via rule 1 or 2 and can never reach
+ *  refusal. The ratchet reads `cost` correctly; this fixture simply cannot exercise that arm. */
 const FIXTURE = new URL("repeats-refused.json", import.meta.url);
 
-/** Raise ONLY with a written reason. Lower it whenever a rule is added.
+/** Raise ONLY with a written reason. Lower it whenever a rule is added (arm 1 is `toBe`: a smaller fixture fails too).
  *
  *  Dropped 595 -> 579 (task 4, 2026-08-11): `ORDINAL_EACH_TURN` in `repeats.ts` resolved 16 refused
  *  abilities, including Faerie Mastermind's own trigger -- the card the taxonomy was built around
@@ -67,20 +71,41 @@ const FIXTURE = new URL("repeats-refused.json", import.meta.url);
  *  `return` the clause text sends "to its owner's hand" the same (Otawara). 582 such actions
  *  became abilities (37,912 -> 38,494) and 25 of them -- exiles and bounces on triggers the rules
  *  cannot name -- refuse honestly. Refusal share unchanged at 3.7%. */
-const REFUSED_CAP = 1438;
+/** Re-banked 1438 -> 2812 (2026-11-17, #722, owner ruling "regenerate + keep fresh"). The fixture was a bare array
+ *  last captured 2026-09-05; it is now `{ deriveVersion, rows }`, regenerated on DERIVE 537: 2,812 refused rows, 4.4% of
+ *  abilities. Diffed by (name, clauseText): 707 old keys are gone and 2,052 new keys appear (as a multiset 711 gone,
+ *  2,085 new; duplicate keys are why neither adds up to 2,812). 699 of the 707 were `kind: "triggered"` with no
+ *  `trigger` object; derive now recognises the trigger and the ability resolves (Hornet Nest and Flumph now carry
+ *  `trigger.verbs: ["damaged"]`, `repeats: "repeatable"`), which arm 2 could not see on the old shape. By card, loosely
+ *  matched on `effect.kind`: about 440 of the 467 cards behind the gone rows resolve, 21-39 lost the ability
+ *  (depending on how mixed cards count), 11 still refuse under new clause text. Of the 2,052 new keys 2,015 are on
+ *  cards with no row in the old fixture (1,435 grammar-sourced, 520 model-sourced): derived rows went 21,317 -> 32,804.
+ *  2,679 of the 2,812 rows are triggered abilities with no `trigger` object; that is what the fixture mostly pins.
+ *  The cap tracks a FRESH fixture: `derive:bump` regenerates it and the version test fails when it is stale. Arm 1 is
+ *  two-sided (`toBe`): a regeneration that SHRINKS the set must be banked here too. Arm 2 is kept as it was. */
+const REFUSED_CAP = 2812;
 
 /** `repeatsFor` takes THREE arguments -- `cost` feeds rules 1-2 (self-sacrifice, {T}/{Q}),
  *  `clauseText` feeds rule 3 ("once each turn"). A fixture row missing `cost` would half-disable the
  *  second arm: a refusal later resolved by a cost rule would never be detected. */
 type Row = { name: string; clauseText: string; cost: string; ability: Ability };
 
-test("the refused set has not grown", () => {
-  const rows = JSON.parse(readFileSync(FIXTURE, "utf8")) as Row[];
-  expect(rows.length).toBeLessThanOrEqual(REFUSED_CAP);
+/** The fixture is `{ deriveVersion, rows }`: the DERIVE_VERSION it was generated at, then the refused abilities. */
+const load = () => JSON.parse(readFileSync(FIXTURE, "utf8")) as { deriveVersion: number; rows: Row[] };
+
+// Without this the fixture went 1,438 -> 2,812 rows unnoticed (#722): arm 1 bounds only the checked-in row count and arm 2 feeds
+// `repeatsFor` the abilities as they were shaped when the file was captured. Mongo-free, so it runs in CI.
+test("the refused fixture was generated at the current derive version (regenerate: npx tsx research/tagger/repeats-report.ts --refused packages/tagger/src/derive/repeats-refused.json, or npm run derive:bump)", () => {
+  expect(load().deriveVersion).toBe(DERIVE_VERSION);
+});
+
+test("the refused set is exactly the banked size (grows and shrinks both fail)", () => {
+  const { rows } = load();
+  expect(rows.length).toBe(REFUSED_CAP);
 });
 
 test("a refused ability that now resolves must be banked, not silently absorbed", () => {
-  const rows = JSON.parse(readFileSync(FIXTURE, "utf8")) as Row[];
+  const { rows } = load();
   const resolved = rows.filter((r) => repeatsFor(r.ability, r.clauseText, r.cost) !== undefined);
   expect(
     resolved.map((r) => r.name),

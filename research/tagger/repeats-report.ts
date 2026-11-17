@@ -4,6 +4,7 @@
  *  Usage: tsx src/bin/repeats-report.ts [--sample N] [--refused <path.json>] */
 import { writeFileSync } from "node:fs";
 import { connect, loadConfig } from "@edh-seer/data";
+import { DERIVE_VERSION } from "../../packages/tagger/src/derive/derive.js";
 import type { Ability, CardTags } from "../../packages/tagger/src/schema.js";
 import { grantedToOwnToken, segment } from "../../packages/tagger/src/segment.js";
 import { deriveAbilities } from "../../packages/tagger/src/derive/derive.js";
@@ -22,7 +23,7 @@ const counts = new Map<string, number>();
 const samples = new Map<string, string[]>();
 let abilities = 0;
 
-for await (const d of derived.find({}) as never as AsyncIterable<CardTags & { name?: string }>) {
+for await (const d of derived.find({}).sort({ oracleId: 1 }) as never as AsyncIterable<CardTags & { name?: string }>) {
   const abilitiesArr = d.abilities ?? [];
   // Recover the (text, cost) that fed EVERY ability of this card, not just the refused ones, so
   // they line up positionally with `abilitiesArr` -- only bother when there is a refusal to record.
@@ -52,8 +53,8 @@ for (const [k, n] of [...counts].sort((a, b) => b[1] - a[1])) {
   for (const s of samples.get(k) ?? []) console.log(`      ${s}`);
 }
 if (refusedOut) {
-  writeFileSync(refusedOut, JSON.stringify(refused, null, 1));
-  console.log(`\nwrote ${refused.length} refused abilities -> ${refusedOut}`);
+  writeFileSync(refusedOut, `{"deriveVersion":${DERIVE_VERSION},"rows":[\n${refused.sort((a, b) => a.name.localeCompare(b.name) || a.clauseText.localeCompare(b.clauseText)).map((r) => JSON.stringify(r)).join(",\n")}\n]}\n`);
+  console.log(`\nwrote ${refused.length} refused abilities (DERIVE ${DERIVE_VERSION}) -> ${refusedOut}`);
 }
 process.exit(0);
 
