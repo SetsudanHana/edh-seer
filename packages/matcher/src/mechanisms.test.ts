@@ -247,3 +247,15 @@ test("an exile-processing reason is neither reanimator nor graveyard-matters (#1
   expect(categoryMatches(r, "reanimator")).toBe(false);
   expect(categoryMatches(r, "graveyard-matters")).toBe(false);
 });
+
+// #721 (owner 2026-11-17): a mill of YOUR library is a graveyard plan; a mill of the opponent's is a win route; "target player" / "each player" can be either, so it is both.
+test("a self-mill reason counts for graveyard-matters, an opponent-mill reason does not, an either-side mill does (#721)", () => {
+  expect(categoryMatches(reason({ effectKind: "mill", millScope: "you" }), "graveyard-matters")).toBe(true);
+  expect(categoryDefines(reason({ effectKind: "mill", millScope: "you" }), "graveyard-matters")).toBe(true);
+  expect(categoryMatches(reason({ effectKind: "mill", millScope: "any" }), "graveyard-matters")).toBe(true);
+  expect(categoryMatches(reason({ effectKind: "mill", millScope: "opp" }), "graveyard-matters")).toBe(false);
+  expect(categoryMatches(reason({ effectKind: "mill" }), "graveyard-matters")).toBe(false);
+  // surveil's fill is optional (CR 701.25a): it stays out
+  expect(categoryMatches(reason({ effectKind: "surveil", millScope: "you" }), "graveyard-matters")).toBe(false);
+  expect(categoryMatches(reason({ effectKind: "graveyard-recursion" }), "graveyard-matters")).toBe(true);
+});

@@ -82,3 +82,45 @@ test("an unmapped effect kind (pump) contributes to no bucket", () => {
   const b = computeCardBuckets(t, SEED_IMPACT_WEIGHTS);
   expect(b).toEqual({ consistency: 0, efficiency: 0, "win-condition": 0 });
 });
+
+// #721 (owner 2026-11-17): self-mill and surveil are in no bucket; an opponent mill is a win condition; an either-side mill is a win condition too and is not consistency.
+const millAbility = (control: "you" | "opp" | "any"): CardTags["abilities"] => [{
+  kind: "on-cast", effect: { kind: "mill", subject: { control, token: null } },
+  emits: [{ verb: "mill", subject: { control, token: null } }],
+}];
+test("self-mill contributes to no bucket (#721)", () => {
+  const b = computeCardBuckets(tags(millAbility("you")), SEED_IMPACT_WEIGHTS);
+  expect(b).toEqual({ consistency: 0, efficiency: 0, "win-condition": 0 });
+});
+test("surveil contributes to no bucket (#721)", () => {
+  const b = computeCardBuckets(tags([{ kind: "on-cast", effect: { kind: "surveil" } }]), SEED_IMPACT_WEIGHTS);
+  expect(b).toEqual({ consistency: 0, efficiency: 0, "win-condition": 0 });
+});
+test("an opponent mill is a win condition and not consistency (#721)", () => {
+  const b = computeCardBuckets(tags(millAbility("opp")), SEED_IMPACT_WEIGHTS);
+  expect(b["win-condition"]).toBeGreaterThan(0);
+  expect(b.consistency).toBe(0);
+});
+test("an either-side mill (target player, each player) is a win condition and not consistency (#721)", () => {
+  const b = computeCardBuckets(tags(millAbility("any")), SEED_IMPACT_WEIGHTS);
+  expect(b["win-condition"]).toBeGreaterThan(0);
+  expect(b.consistency).toBe(0);
+});
+test("a mill whose milled player derive left unread is in no bucket (#721)", () => {
+  const b = computeCardBuckets(tags([{ kind: "static", effect: { kind: "mill" } }]), SEED_IMPACT_WEIGHTS);
+  expect(b).toEqual({ consistency: 0, efficiency: 0, "win-condition": 0 });
+});
+test("the effect subject and the emit are joined, so a misread emit does not hide an `any` mill (Mesmeric Orb: 'that permanent's controller mills')", () => {
+  const b = computeCardBuckets(tags([{
+    kind: "triggered", trigger: { verbs: ["untaps"], subject: { control: "any", token: null, type: "permanent" } },
+    effect: { kind: "mill", subject: { control: "any", token: null, type: "permanent" } },
+    emits: [{ verb: "mill", subject: { control: "you", token: null } }],
+  }]), SEED_IMPACT_WEIGHTS);
+  expect(b["win-condition"]).toBeGreaterThan(0);
+  expect(b.consistency).toBe(0);
+});
+test.each(["scry", "search", "top-set"])("%s stays in consistency (#721)", (kind) => {
+  const b = computeCardBuckets(tags([{ kind: "on-cast", effect: { kind } }]), SEED_IMPACT_WEIGHTS);
+  expect(b.consistency).toBeGreaterThan(0);
+  expect(b["win-condition"]).toBe(0);
+});

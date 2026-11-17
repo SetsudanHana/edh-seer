@@ -1,18 +1,29 @@
 import type { Reason, ImpactWeights } from "@edh-seer/engine";
 import { impactWeightOf } from "@edh-seer/engine";
 import type { CardTags, Ability } from "@edh-seer/tagger";
+import { millScopeOf } from "./mill-scope.js";
 
 const CARD_BUCKETS = ["consistency", "efficiency", "win-condition"] as const;
 export type CardBucket = (typeof CARD_BUCKETS)[number];
 
-// ALL FIVE successors of `top-manipulation`, so no card's bucket moves when the kind splits
-// (2026-09-07). Whether `mill` and `surveil` belong in CONSISTENCY at all -- they fill a graveyard,
-// they do not fix your draws -- is a real question and its own measured item.
+// `top-manipulation` split into five kinds on 2026-09-07 and all five inherited CONSISTENCY. Whether
+// `mill` and `surveil` belong there -- they fill a graveyard, they do not fix your draws -- was left
+// as a question; the owner answered it on 2026-11-17 (#721): NO. scry, search and top-set stay (they
+// fix what you draw). Self-mill and surveil are in NO bucket: there is no graveyard bucket, and none
+// is invented. A mill of the opponent's library is a win route, so it is WIN_CONDITION; so is a mill
+// that can hit either side ("target player", "each player"), which is also a self-mill strategy.
+// `mill` and `surveil` are therefore not in the set; `millReachesOpponent` carries the mill half.
 // Exported for the EFFECT_KINDS ratchet in `effect-class.test.ts`; nothing else reads them.
 export const CONSISTENCY_KINDS = new Set(["draw-card", "graveyard-recursion",
-  "scry", "surveil", "mill", "search", "top-set"]);
+  "scry", "search", "top-set"]);
 export const EFFICIENCY_KINDS = new Set(["mana-generation", "fast-mana", "ritual", "cost-reduction", "untap"]);
 export const WIN_CONDITION_KINDS = new Set(["damage", "drain", "player-life-loss", "forced-sacrifice"]);
+
+/** A mill that can empty an opponent's library: `opp`, or `any` ("target player", "each player"). */
+function millReachesOpponent(a: Ability): boolean {
+  const scope = millScopeOf(a);
+  return scope === "opp" || scope === "any";
+}
 
 function abilityRepeatability(kind: Ability["kind"]): "static" | "activated" | "oneshot" | "triggered" {
   return kind === "static" ? "static" : kind === "activated" ? "activated" : kind === "on-cast" ? "oneshot" : "triggered";
@@ -53,6 +64,7 @@ export function computeCardBuckets(
     if (CONSISTENCY_KINDS.has(kind)) consistency += abilityWeight(a, weights);
     if (EFFICIENCY_KINDS.has(kind)) efficiency += abilityWeight(a, weights);
     if (WIN_CONDITION_KINDS.has(kind)) winCondition += abilityWeight(a, weights);
+    if (kind === "mill" && millReachesOpponent(a)) winCondition += abilityWeight(a, weights);
     if (kind === "counter-placement" && isWinConditionCounterPlacement(a)) winCondition += abilityWeight(a, weights);
   }
   return { consistency, efficiency, "win-condition": winCondition };

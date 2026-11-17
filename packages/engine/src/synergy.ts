@@ -32,6 +32,10 @@ export interface Reason {
   enabledBy?: Marker[];
   /** Repeatability class: "triggered" | "activated" | "static" | "oneshot". Set by the structured matcher. */
   repeatability?: string;
+  /** WHOSE LIBRARY the consuming ability mills, set only when `effectKind` is `mill` (#721): `you` is a
+   *  self-mill (a graveyard plan), `opp` an opponent mill (a win route), `any` can hit either ("target
+   *  player", "each player") and is both. Absent when derive kept no player. Read by the category table. */
+  millScope?: "you" | "opp" | "any";
   /** THE CONSUMER FIRES AT MOST ONCE A TURN ("Do this only once each turn", Terrasymbiosis; issue
    *  #518). A display fact, read only when `repeatability` is "triggered"; the repeatability stays
    *  what it was, so scoring does not move. */
