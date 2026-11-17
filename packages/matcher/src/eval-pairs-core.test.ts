@@ -133,3 +133,13 @@ test("modeDisagreements: reports a row that joins in the deck but not isolated",
 test("modeDisagreements: agreeing rows give nothing", () => {
   expect(modeDisagreements([row(true, true), row(false, false)])).toEqual([]);
 });
+
+test("deckJoins: a reason through a token node does not join the pair (name collision)", () => {
+  const e: SynergyEdge = { a: "A", b: "B", score: 1, reasons: [reason({ tag: "x", producerIsToken: true }), reason({ tag: "y", consumerIsToken: true })] };
+  expect(deckJoins([e], "A", "B")).toBe(false);
+});
+
+test("modeDisagreements: a row deck mode could not resolve (deck null) is a disagreement", () => {
+  expect(modeDisagreements([{ label: "gone", iso: false, deck: null }])).toHaveLength(1);
+  expect(modeDisagreements([{ label: "gone", iso: true, deck: null }])).toHaveLength(1);
+});

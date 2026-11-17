@@ -97,12 +97,13 @@ function endpointIs(endpoint: string, name: string): boolean {
 }
 
 /** DECK-MODE JOIN (#728). The real pipeline's answer to "do these two cards join": a
- *  `SynergyEdge` whose two ENDS are the pair, in either direction, carrying at least one reason.
+ *  `SynergyEdge` whose two ENDS are the pair, in either direction, carrying at least one reason that
+ *  does not run through a token node (a token can share a name with a card).
  *  Edges to a third card (the basics of the synthetic deck, a token node) never count -- an edge is
  *  keyed on its endpoints (`SynergyEdge.a`/`.b`), so a reason on a third-party edge is not the pair's. */
 export function deckJoins(edges: readonly SynergyEdge[], a: string, b: string): boolean {
   return edges.some((e) =>
-    e.reasons.length > 0
+    e.reasons.some((r) => !r.producerIsToken && !r.consumerIsToken)
     && ((endpointIs(e.a, a) && endpointIs(e.b, b)) || (endpointIs(e.a, b) && endpointIs(e.b, a))));
 }
 
@@ -112,8 +113,9 @@ export interface ModeRow {
   label: string;
   /** Joined by `pairReasons` in isolation (any reason). */
   iso: boolean;
-  /** Joined by `analyzeDeckStructured` in the synthetic deck (`deckJoins`). */
-  deck: boolean;
+  /** Joined by `analyzeDeckStructured` in the synthetic deck (`deckJoins`). NULL: deck mode could not
+   *  build the deck for a row the isolated side resolved -- a disagreement, never a silent skip. */
+  deck: boolean | null;
 }
 
 /** The rows whose isolated and deck answers differ -- in EITHER direction. */
