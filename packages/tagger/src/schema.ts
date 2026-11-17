@@ -1508,7 +1508,8 @@ export interface Ability {
      *  producer aimed only at players. Written by damage-result triggers and, since #1458, by damage MULTIPLIERS that print a recipient (Torbran: `opponent-or-permanent`); every other damage trigger leaves the recipient open. */
     victim?: DamageVictim;
     /** THE TRIGGER WATCHES THE PERMANENT THIS CARD IS ATTACHED TO (#1471): "Whenever enchanted creature deals damage, you gain that much life" (Armadillo Cloak, Spirit Link), "equipped creature" (Neko-Te). Written on damage triggers only;
-     *  the subject is a plain creature (the host's identity is not a filter), so this is the one record that it is the HOST and not every creature. The matcher then hears only a damage producer whose dealer can be a creature you control. */
+     *  the subject is a plain creature (the host's identity is not a filter), so this is the one record that it is the HOST and not every creature. The matcher then hears only a damage producer whose dealer can be a creature you control. Since #736 it is also written on a
+     *  dies / leaves trigger ("When enchanted creature dies", Fungal Fortitude, Skullclamp): the matcher then judges the death as a creature of yours (unless the Aura goes on an opponent's creature), so a producer that can only kill an opponent's creature is not heard. */
     host?: true;
     /** BATTALION (#1082, owner 2026-11-06): "Whenever this creature and at least two other creatures attack" is this card's OWN attack trigger (`subject.self`); the other attackers are recorded here and NOT checked,
      *  the way `oncePerTurn` is a cap and not a narrowing (an explicit exception to the 2026-10-01 rule that an unrepresented narrowing refuses the claim). Only that exact shape; "at least one other",
