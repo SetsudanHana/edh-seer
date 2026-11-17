@@ -12,7 +12,7 @@ const H: Hierarchy = {};
 /** Only reasons into the card's HOST-death trigger (`trigger.host`): Necrosynthesis also GRANTS "Whenever another creature dies, put a +1/+1 counter", which an opponent's death does feed. */
 const hostDies = (producer: string, consumer: string) => {
   const hostAbility = new Set(F[consumer]!.tags!.abilities.flatMap((a, i) => (a.trigger?.host === true ? [i] : [])));
-  return pairReasonsAcrossFaces(F[producer]!, F[consumer]!, H).filter((r) => (r.tag === "dies:creature" || r.tag === "dies:aura") && r.impliedProducer !== true && hostAbility.has(r.consumerAbility!));
+  return pairReasonsAcrossFaces(F[producer]!, F[consumer]!, H).filter((r) => (r.tag === "dies:creature" || r.tag === "dies:aura" || r.tag === "leaves:creature") && r.impliedProducer !== true && hostAbility.has(r.consumerAbility!));
 };
 test.each(["Fungal Fortitude", "Necrosynthesis", "Demonic Vigor", "Skullclamp", "Kaya's Ghostform"])("%s has a host-death trigger", (n) => {
   expect(F[n]!.tags!.abilities.some((a) => a.trigger?.host === true)).toBe(true);
@@ -31,5 +31,25 @@ describe("a producer that can kill YOUR creature still does", () => {
   });
   test.each(["Village Rites", "Plaguecrafter", "Toxic Deluge", "Cacophony Unleashed"])("%s -> Fungal Fortitude, Skullclamp", (producer) => {
     for (const consumer of ["Fungal Fortitude", "Skullclamp"]) expect(hostDies(producer, consumer).length, `${producer} -> ${consumer}`).toBeGreaterThan(0);
+  });
+});
+
+describe("an Aura of unknown side keeps main's reading (#1513 stays on the host-death route)", () => {
+  // Creature Bond, Funeral March and Minion's Return print a plain "Enchant creature" and do nothing that names a side (`auraHostSide` is undefined): the pair is kept as it was, fed by an opponent's creature dying.
+  test.each(["Creature Bond", "Funeral March", "Minion's Return"])("Massacre Wurm -> %s still forms its reason", (aura) => {
+    expect(hostDies("Massacre Wurm", aura).length).toBeGreaterThan(0);
+  });
+  test("an Aura printed 'Enchant creature an opponent controls' (Dead Man's Chest) is fed by Massacre Wurm and not by your own sacrifice", () => {
+    expect(hostDies("Massacre Wurm", "Dead Man's Chest").length).toBeGreaterThan(0);
+    expect(hostDies("Village Rites", "Dead Man's Chest")).toEqual([]);
+  });
+});
+
+describe("a creature that is sacrificed by 'its controller' is yours", () => {
+  test.each(["Goblin Ski Patrol", "Cauldron Dance", "Killing Wave", "Fade Away"])("%s -> Fungal Fortitude", (producer) => {
+    expect(hostDies(producer, "Fungal Fortitude").length).toBeGreaterThan(0);
+  });
+  test("Fungal Fortitude, Necrosynthesis and Demonic Vigor read as own-side", () => {
+    for (const n of ["Fungal Fortitude", "Necrosynthesis", "Demonic Vigor"]) expect(hostDies("Massacre Wurm", n), n).toEqual([]);
   });
 });

@@ -2132,13 +2132,20 @@ function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abiliti
  *  An unrestricted TARGET ("Destroy target creature", Murder) is stored `control: opp` but can be aimed at your own, so an event stored `opp` that `eventReachesAura` says a creature of yours can be (the one reading the Aura
  *  routes use: a target counts unless every printed targeting sentence says "an opponent controls", a mass `opp` event and an opponent's edict do not) is judged with `any`.
  *  An Aura that goes on an OPPONENT's creature (`auraHostSide`, #1513: a debuff Aura such as Pacifism with a death trigger) keeps the side it printed. `trigger.host` is derive's mark (DERIVE 537).
- *  CEILING: a `control: any` host Aura whose side is unknown (`undefined`) is judged as yours, the commoner case (all 5 corpus host-dies cards in the calibration decks put on your own creature). An event stored `opp` for a card that
- *  prints no such cue but is read as opponent-only by derive (Killing Wave's "for each creature, its controller sacrifices it": a mass `opp`) stays refused, as it already is for Skullclamp. */
+ *  CEILING: an Aura whose side `auraHostSide` cannot read (a plain "Enchant creature" that gives and takes nothing: Creature Bond, Funeral March, Minion's Return, the steal Auras, Fool's Demise) keeps the pre-#736 reading, so an opponent-only
+ *  kill still feeds it; so does an Aura on an opponent's creature. "Its controller sacrifices" is read by the printed phrase over the whole producer card, so a card with that phrase and a separate opponent-only edict keeps both.
+*/
 function hostDiesAsYours(t: GameEvent, a: CardTags["abilities"][number], chars: CardTags["characteristics"], abilities: CardTags["abilities"], e0: GameEvent, producer: readonly GameEvent[], producerText: string, h: Hierarchy): GameEvent {
   if (a.trigger?.host !== true || a.grantedBy !== undefined || (t.verb !== "dies" && t.verb !== "leaves") || t.subject.control !== "any") return t;
+  // ONLY A HOST KNOWN TO BE YOURS IS NARROWED: Equipment (no Enchant line) or an Aura `auraHostSide` reads as own-side (Fungal Fortitude, Demonic Vigor, Necrosynthesis give a pump or grant). An Aura of unknown side (Creature Bond,
+  // Funeral March, Minion's Return, the steal Auras, Fool's Demise: `undefined`) and an opponent-side one keep main's reading, as `aura-host-control.test.ts` pins.
   const enchants = chars.enchants;
-  if (enchants !== undefined && auraHostSide(enchants, abilities) === "opp") return t;
+  if (enchants !== undefined && auraHostSide(enchants, abilities) !== "own") return t;
+  // A creature the producer itself sacrifices or loses is the producer's: yours ("Its controller sacrifices it", Goblin Ski Patrol).
+  if (e0.subject.self === true) return t;
   if (e0.subject.control === "opp") {
+    // "Its controller sacrifices" names whoever controls the thing, not an opponent (Cauldron Dance's put creature, Killing Wave and Fade Away's "for each creature, its controller sacrifices"); derive stores them `opp`.
+    if (/\bits controller sacrifices\b/i.test(producerText)) return t;
     // The question here is WHOSE creature the event can take, not which: the host is a creature of yours (a token, a coloured one), so the colour, count, subtype and token the event names ("Destroy target black creature", "target monocolored
     // creature", "creature token", "if it's blue") are no bar. `eventMatches` below still judges the class itself.
     const { colors: _c, colorCount: _cc, subtype: _st, notSubtype: _nst, anyOf: _any, historic: _hi, token: _tk, ...kind } = e0.subject;
