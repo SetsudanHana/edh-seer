@@ -1004,8 +1004,8 @@ function DeckMathRows({
           <h4 className="eyebrow">Colors</h4>
           <ul className="flex flex-col gap-1">
             {colors.map((c) => {
-              // The deadline is the CARD's own mana value, not a chosen turn: a 3-drop wants its
-              // pips on turn 3. That is why this row can name a turn without guessing one.
+              // The deadline is the CARD's own mana value (plus one per {X} for an {X} spell, its X=1
+              // cast, #727), not a chosen turn: a 3-drop wants its pips on turn 3. That is why this row can name a turn without guessing one.
               const label = colourRowLabel(c)
                 ?? (c.countBound
                   ? `${c.color}, ${c.supplied} sources; its hardest costs need more mana, not other colors`

@@ -252,7 +252,7 @@ function answerFinding(report: DeckReport): Finding | null {
 
 /** ONE EARLY MULTI-PIP CAST THE DECK CANNOT RELIABLY MAKE ON TIME. `deckMath.colors[].worst` is the
  *  hardest cost the deck actually prints in that colour, with the sources Karsten's mulligan-corrected
- *  model wants for it by that card's own mana value.
+ *  model wants for it by that card's own mana value (plus one per {X} for an {X} spell: its X=1 cast, #727).
  *
  *  THE SUBJECT IS THE CARD, NOT THE COLOUR (owner, 2026-09-04). This said *"Blue is short at the top
  *  of your curve"* over a MONO-BLUE deck running 39 blue sources, which is not a claim a reader can

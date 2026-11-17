@@ -43,7 +43,7 @@ const has = (keywords: readonly string[] | undefined, kw: string): boolean =>
 /** Converted total of one cost string — generic numbers plus one per symbol. Only ever used to
  *  compare two halves of the same card against each other, so an `{X}` (which no reader here can
  *  price anyway) simply counts as one. */
-function convertedTotal(cost: string): number {
+export function convertedTotal(cost: string): number {
   let total = 0;
   for (const symbol of cost.match(/\{[^{}]+\}/g) ?? []) {
     const inner = symbol.slice(1, -1);

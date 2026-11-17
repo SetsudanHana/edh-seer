@@ -83,8 +83,9 @@ export interface CardCastability {
    *  `Fable of the Mirror-Breaker // Reflection of Kiki-Jiki`. Carried, not looked up. */
   manaCost?: string;
   manaValue: number;
-  /** The turn this is priced at: the card's own mana value, the same deadline rule the mana audit
-   *  uses. You want to cast a 3-drop on turn 3. */
+  /** The turn this is priced at: the card's own mana value. The mana audit's deadline rule differs for an
+   *  {X} spell (its X=1 cast, mana value plus one per {X}, #727); this keeps refusing X costs. You want
+   *  to cast a 3-drop on turn 3. */
   turn: number;
   /** P(YOU CAN CAST IT) by `turn` -- mana and colours together, as the POLICY interval.
    *

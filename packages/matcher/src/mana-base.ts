@@ -233,6 +233,8 @@ export function colourMiss(deck: readonly DeckCard[], supplied: ReadonlyMap<Colo
       const best = options.reduce((a, b) => ((supplied.get(b) ?? 0) > (supplied.get(a) ?? 0) ? b : a));
       need.set(best, (need.get(best) ?? 0) + 1);
     }
+    // CEILING: the deadline here is the card's mana value, the X=0 cast. `manaAudit` moved an {X} spell's deadline to its X=1 cast (#727, owner
+    // 2026-11-17), so the two diverge on X cards until MANA_BASE_COST (0.151) is refit on the new deadline; it was fitted on this one.
     const turn = Math.max(1, Math.round(dc.card.manaValue));
     let ok = 1;
     for (const [colour, pipsOf] of need) ok *= pAtLeast(pipsOf, Math.min(99, (supplied.get(colour) ?? 0) + fixed(colour, turn)), seen(turn));
