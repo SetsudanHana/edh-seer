@@ -1580,8 +1580,10 @@ export function dedupeReasons(reasons: Reason[]): Reason[] {
   for (const r of reasons) {
     // `magnitude` is display data on a claim, never a claim of its own (edge magnitude, 2026-09-29):
     // two readings of one claim collapse as before and keep the larger magnitude.
-    const claim = JSON.stringify({ ...r, repeatability: undefined, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined, magnitude: undefined });
-    const k = JSON.stringify({ ...r, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined, magnitude: undefined });
+    const claim = JSON.stringify({ ...r, repeatability: undefined, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined, magnitude: undefined, millScope: undefined });
+    // `millScope` is routing too (#721): it is stamped from the ability a reason points at, so two reasons
+    // that differ only in it are one claim. They collapse and the kept row's scope is the join of both.
+    const k = JSON.stringify({ ...r, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined, magnitude: undefined, millScope: undefined });
     const at = byClaim.get(claim);
     // Only a ONCE against a repeatable tag is this split; two repeatable tags (triggered and
     // activated) were two rows before and stay two. The merged row's key is recorded, so a later
@@ -1590,6 +1592,7 @@ export function dedupeReasons(reasons: Reason[]): Reason[] {
       if (r.repeatability !== "oneshot") out[at] = { ...out[at]!, repeatability: r.repeatability };
       const m = mergeMagnitude(out[at]!.magnitude, r.magnitude);
       if (m) out[at] = { ...out[at]!, magnitude: m };
+      joinScopeInto(out, at, r);
       seen.add(k);
       continue;
     }
@@ -1602,8 +1605,15 @@ export function dedupeReasons(reasons: Reason[]): Reason[] {
     const at2 = byClaim.get(claim);
     const m = at2 !== undefined ? mergeMagnitude(out[at2]!.magnitude, r.magnitude) : undefined;
     if (m && at2 !== undefined) out[at2] = { ...out[at2]!, magnitude: m };
+    if (at2 !== undefined) joinScopeInto(out, at2, r);
   }
   return out;
+}
+
+/** A collapsed reason keeps the sides both readings hit (#721): `you` + `opp` is `any`. */
+function joinScopeInto(out: Reason[], at: number, r: Reason): void {
+  const scope = joinMillScopes([out[at]!.millScope, r.millScope]);
+  if (scope !== undefined && scope !== out[at]!.millScope) out[at] = { ...out[at]!, millScope: scope };
 }
 
 /** How many DISTINCT CLAIMS a reason set makes — the edge score, and not `reasons.length`.
@@ -2428,7 +2438,7 @@ export function directedReasons(p0: DeckCard, c0: DeckCard, h: Hierarchy, opts: 
 /** WHOSE LIBRARY THE CONSUMER MILLS, stamped on a `mill` reason (#721) so the category table, which sees only the reason, can tell a self-mill from an opponent mill.
  *  Read from the ability the reason points at (`consumerAbility`) when it is a mill; otherwise from every mill ability the consumer prints.
  *  CEILING: a reason that names no ability (a channel other than the event pass) on a card with a self-mill AND an opponent-mill ability reads `any`, so it joins graveyard-matters and win-condition both. */
-function withMillScope(r: Reason, consumerAbilities: CardTags["abilities"]): Reason {
+export function withMillScope(r: Reason, consumerAbilities: CardTags["abilities"]): Reason {
   if (r.effectKind !== "mill") return r;
   const named = r.consumerAbility !== undefined ? consumerAbilities[r.consumerAbility] : undefined;
   const scope = joinMillScopes((named?.effect.kind === "mill" ? [named] : consumerAbilities).map(millScopeOf));

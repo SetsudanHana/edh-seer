@@ -4,16 +4,19 @@ import type { Ability } from "@edh-seer/tagger";
  *  opponent mill, `any` can hit either side ("target player", "each player"). Undefined when derive
  *  kept no player at all (a replacement such as Bruvac's, which has no mill emit and no effect subject).
  *
- *  THE EMIT IS AUTHORITATIVE, the effect subject only a fallback. The emit's subject is the player
- *  whose cards move; the effect's is whatever the ability's own filter said, and the two part on 18
- *  of the 780 mill abilities in the corpus: Mesmeric Orb ("that permanent's controller mills") stores
- *  an `any` permanent as the effect subject and `you` as the milled player. */
+ *  THE EFFECT SUBJECT AND THE EMIT ARE JOINED, neither is authoritative. They part on 7 abilities
+ *  (Mesmeric Orb, Riddlekeeper, Eye Spy, Draugr Thought-Thief, Lurking Informant, Dakra Mystic, Fraying
+ *  Sanity): "that player" / "target player" is stored as an `any` effect subject but the emit misreads it
+ *  as `you`. The effect subject is right there, so a join (`you` + `any` = `any`) keeps both sides.
+ *  CEILING: an ability with neither a mill subject nor a mill emit (Bruvac the Grandiloquent, The Water
+ *  Crystal: replacements whose text names opponents) has an undefined scope and earns no win-condition
+ *  credit. Follow-up #1663. */
 export type MillScope = "you" | "opp" | "any";
 
 export function millScopeOf(a: Pick<Ability, "effect" | "emits">): MillScope | undefined {
   if (a.effect.kind !== "mill") return undefined;
-  const emitted = (a.emits ?? []).filter((e) => e.verb === "mill").map((e) => e.subject.control);
-  const controls = new Set<string>(emitted.length > 0 ? emitted : a.effect.subject?.control !== undefined ? [a.effect.subject.control] : []);
+  const controls = new Set<string>((a.emits ?? []).filter((e) => e.verb === "mill").map((e) => e.subject.control));
+  if (a.effect.subject?.control !== undefined) controls.add(a.effect.subject.control);
   const you = controls.has("you");
   const opp = controls.has("opp");
   if (controls.has("any") || (you && opp)) return "any";

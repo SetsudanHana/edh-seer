@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { isManaRock, pairReasons, pairReasonsAcrossFaces, directedReasons, revenantToughness, cardThemeTags, cardSupplyTags, themeSubjectKey, eventTagKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons } from "./edges.js";
+import { isManaRock, pairReasons, pairReasonsAcrossFaces, directedReasons, revenantToughness, cardThemeTags, cardSupplyTags, themeSubjectKey, eventTagKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons, withMillScope } from "./edges.js";
 import { normalizeZoneEvent } from "./zones.js";
 import { faceDeckCards } from "./faces.js";
 import { fixtureDeckCard } from "./fixture-cards.js";
@@ -7823,4 +7823,23 @@ test.each([["you", "you"], ["opp", "opp"], ["any", "any"]] as const)("a mill con
   const reasons = pairReasons(producer, consumer, H).filter((r) => r.effectKind === "mill");
   expect(reasons.length).toBeGreaterThan(0);
   expect(reasons.every((r) => r.millScope === scope)).toBe(true);
+});
+
+test("a mill reason with no consumerAbility takes the joined scope of the consumer's mill abilities (#721)", () => {
+  const mill = (control: "you" | "opp") => ({
+    kind: "static" as const, effect: { kind: "mill", subject: { control, token: null } },
+    emits: [{ verb: "mill", subject: { control, token: null } }],
+  });
+  const consumer = base("Two Mills", [mill("you"), mill("opp")] as never);
+  const stamped = withMillScope({ tag: "mill:any", text: "", effectKind: "mill" } as Reason, consumer.tags!.abilities);
+  expect(stamped.millScope).toBe("any");
+  const one = base("One Mill", [mill("you")] as never);
+  expect(withMillScope({ tag: "mill:any", text: "", effectKind: "mill" } as Reason, one.tags!.abilities).millScope).toBe("you");
+});
+
+test("two mill reasons that differ only in millScope are one claim, scope joined (#721)", () => {
+  const r = (millScope: "you" | "opp") => ({ tag: "mill:any", text: "t", effectKind: "mill", millScope }) as Reason;
+  const out = dedupeReasons([r("you"), r("opp")]);
+  expect(out).toHaveLength(1);
+  expect(out[0]!.millScope).toBe("any");
 });

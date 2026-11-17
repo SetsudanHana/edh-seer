@@ -110,13 +110,14 @@ test("a mill whose milled player derive left unread is in no bucket (#721)", () 
   const b = computeCardBuckets(tags([{ kind: "static", effect: { kind: "mill" } }]), SEED_IMPACT_WEIGHTS);
   expect(b).toEqual({ consistency: 0, efficiency: 0, "win-condition": 0 });
 });
-test("the emit decides who is milled, not the effect subject (Mesmeric Orb: 'that permanent's controller mills')", () => {
+test("the effect subject and the emit are joined, so a misread emit does not hide an `any` mill (Mesmeric Orb: 'that permanent's controller mills')", () => {
   const b = computeCardBuckets(tags([{
     kind: "triggered", trigger: { verbs: ["untaps"], subject: { control: "any", token: null, type: "permanent" } },
     effect: { kind: "mill", subject: { control: "any", token: null, type: "permanent" } },
     emits: [{ verb: "mill", subject: { control: "you", token: null } }],
   }]), SEED_IMPACT_WEIGHTS);
-  expect(b["win-condition"]).toBe(0);
+  expect(b["win-condition"]).toBeGreaterThan(0);
+  expect(b.consistency).toBe(0);
 });
 test.each(["scry", "search", "top-set"])("%s stays in consistency (#721)", (kind) => {
   const b = computeCardBuckets(tags([{ kind: "on-cast", effect: { kind } }]), SEED_IMPACT_WEIGHTS);

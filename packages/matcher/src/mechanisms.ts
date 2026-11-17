@@ -148,6 +148,10 @@ export const CATEGORY_MATCH: Record<MechanismCategory, CategoryMatchEntry> = {
   //     win-condition mill as well (see `buckets.ts`). The owner: "anything that targets you or forces
   //     you to mill is a self-mill strategy, but milling your opponents is a valid win condition".
   //   - `opp`: does not. An opponent's mill is a win route, not a graveyard plan.
+  //   - CEILING: an OPTIONAL self-mill ("you may mill N", "you may put it into your graveyard") still
+  //     joins. Derive keeps no optional flag, so it cannot be told from a forced one; at least 47
+  //     abilities (Territory Culler alone supplies 36 of the 183 new pairs in fairdrazi-5-color-less).
+  //     The owner ruled it counts like surveil, i.e. out (2026-11-17). Follow-up #1662.
   //   - SURVEIL stays out: its graveyard fill is optional (CR 701.25a: you put "any number of
   //     them" into your graveyard, which may be none), so a surveil card promises no graveyard.
   "graveyard-matters": { effectKinds: ["graveyard-recursion"], selfMill: true },
