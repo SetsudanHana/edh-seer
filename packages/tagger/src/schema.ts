@@ -913,6 +913,10 @@ export interface GameEvent {
    *  the role's `notVictimMay` refuses it. Set by derive on the emits of an action whose own verb the
    *  clause hands to the victim (`victimDeclines`); never set by the LLM. */
   victimMay?: true;
+  /** THIS CAST IS HEARD ONLY BY A PAYOFF THAT ASKS WHERE THE SPELL WAS CAST FROM (#1665, owner ruling 2026-11-17): an own-library impulse draw ("Exile the top card of your library. You may play it this turn", Light Up the Stage) is a cast from
+   *  exile (`fromZone: exile`, `owner: you`), and "whenever you cast a spell from exile" / "from anywhere other than your hand" hear it; a cast trigger that states no origin ("whenever you cast a spell", prowess, "a creature spell") does not,
+   *  or every own-cast payoff would hear every impulse draw. Set by derive (`impulseCast`); the matcher reads it in `eventSatisfies` (an origin-less consumer refuses the event). */
+  originOnly?: true;
   /** THIS DAMAGE IS A REDIRECT (#1294): "the next 2 damage that would be dealt to you is dealt to any target instead" (Harm's Way, Glarecaster). The card deals no damage of its own; it hands damage that was coming at you to a target, so the
    *  removal role refuses it (`notRedirect`). Set by derive on the `non-combat-damage` emits of an action whose clause says "is dealt to ... instead"; never by the LLM. "Prevent ... then this card deals that much" (Refraction Trap) is not one. */
   redirect?: true;
@@ -1474,7 +1478,7 @@ export interface Ability {
   netZero?: true;
   /** THE CLAUSE EXILES CARDS FROM THE TOP OF YOUR LIBRARY AND LETS YOU PLAY THEM (#1266, the impulse draw): "Exile the top two cards of your library. Until the end of your next turn, you may play those cards" (Light Up the Stage),
    *  "exile the top card of your library. You may play that card this turn" (Count on Luck). Stamped on the ability of that clause whose emits include an `exiled` from YOUR library, read by the impulse-draw role (`abilityMark`).
-   *  Only `play`: "you may cast" is not read (Aminatou's Augury, Apex of Power), as the printed pattern it replaced did not. NOT a cast emit: whether an own-library impulse should derive one is #1608 item 7, an owner ruling.
+   *  Only `play`: "you may cast" is not read (Aminatou's Augury, Apex of Power), as the printed pattern it replaced did not. It also carries a cast emit marked `originOnly` (#1665, owner ruling 2026-11-17), where the card has no cast of its own.
    *  Only `true` is written. */
   impulse?: true;
   /** THE CLAUSE LOOKS AT THE TOP CARDS OF A LIBRARY (#1266): "look at the top four cards of your library" (Impulse, Dig Through Time, Armored Skyhunter) and a manifest dread, which looks at the top two. Stamped on every ability
