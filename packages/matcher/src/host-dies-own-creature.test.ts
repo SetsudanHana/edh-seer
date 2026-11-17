@@ -53,3 +53,10 @@ describe("a creature that is sacrificed by 'its controller' is yours", () => {
     for (const n of ["Fungal Fortitude", "Necrosynthesis", "Demonic Vigor"]) expect(hostDies("Massacre Wurm", n), n).toEqual([]);
   });
 });
+
+describe("a host-death trigger that acts on the dead creature's controller is the opponent's side (read from the trigger's own line)", () => {
+  // Impending Doom ("deals 3 damage to that creature's controller"), Decomposition ("its controller loses 2 life") and Necrotic Plague ("its controller chooses ...") read own-side by `auraHostSide` (a pump or grant), but are put on an opponent's creature.
+  test.each(["Impending Doom", "Decomposition", "Necrotic Plague"])("Massacre Wurm -> %s still forms its reason", (aura) => {
+    expect(hostDies("Massacre Wurm", aura).length).toBeGreaterThan(0);
+  });
+});
