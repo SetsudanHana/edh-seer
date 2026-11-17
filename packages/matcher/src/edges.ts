@@ -2126,6 +2126,60 @@ function auraHostLeaves(chars: CardTags["characteristics"], a: CardTags["abiliti
   return subjectMatches({ ...printed, zone: e.subject.zone ?? "battlefield" }, host.zone === undefined ? { ...host, zone: "battlefield" } : host, h);
 }
 
+/** The printed line of a host-death trigger ("When / Whenever enchanted|equipped creature dies ...") names the dead creature's controller. Plain string tests over one line, no backtracking. */
+function hostDeathLineActsOnController(oracleText: string): boolean {
+  for (const raw of oracleText.split("\n")) {
+    const line = raw.toLowerCase();
+    if (!(line.startsWith("when enchanted ") || line.startsWith("whenever enchanted ") || line.startsWith("when equipped ") || line.startsWith("whenever equipped "))) continue;
+    if (line.includes(" its controller") || line.includes(" that creature's controller") || line.includes(" that creature\u2019s controller")) return true;
+  }
+  return false;
+}
+
+/** The printed host-death line returns the Aura "at random" (Infectious Rage: "choose a creature at random this Aura can enchant"). Plain string tests over one line. */
+function hostDeathLineReattachesAtRandom(oracleText: string): boolean {
+  for (const raw of oracleText.split("\n")) {
+    const line = raw.toLowerCase();
+    if ((line.startsWith("when enchanted ") || line.startsWith("whenever enchanted ") || line.startsWith("when equipped ") || line.startsWith("whenever equipped ")) && line.includes(" at random")) return true;
+  }
+  return false;
+}
+
+/** "WHEN ENCHANTED / EQUIPPED CREATURE DIES" IS A CREATURE YOU CONTROL (#736, owner 2026-11-16). Derive stores the host's death as a plain `creature` of `control: any` (the printed words name no player), so
+ *  Massacre Wurm's "creatures your opponents control get -2/-2" and "Destroy target creature an opponent controls" satisfied it. An Aura or Equipment you put on your own creature is fed by whatever can kill YOURS: a
+ *  sacrifice outlet, a self-sacrifice, a board wipe (control `any` reaches yours, and still does). So the trigger is judged with `control: you`, and a producer that can only kill an opponent's creature fails it.
+ *  An unrestricted TARGET ("Destroy target creature", Murder) is stored `control: opp` but can be aimed at your own, so an event stored `opp` that `eventReachesAura` says a creature of yours can be (the one reading the Aura
+ *  routes use: a target counts unless every printed targeting sentence says "an opponent controls", a mass `opp` event and an opponent's edict do not) is judged with `any`.
+ *  An Aura that goes on an OPPONENT's creature (`auraHostSide`, #1513: a debuff Aura such as Pacifism with a death trigger) keeps the side it printed. `trigger.host` is derive's mark (DERIVE 537).
+ *  CEILING: an Aura whose side `auraHostSide` cannot read (a plain "Enchant creature" that gives and takes nothing: Creature Bond, Funeral March, Minion's Return, the steal Auras, Fool's Demise) keeps the pre-#736 reading, so an opponent-only
+ *  kill still feeds it; so does an Aura on an opponent's creature, and an Aura whose host-death line names the dead creature's controller (`hostDeathLineActsOnController`, a printed-words read: a line that merely mentions it keeps main's reading too). "Its controller sacrifices" is read by the printed phrase over the whole producer card, so a card with that phrase and a separate opponent-only edict keeps both.
+*/
+function hostDiesAsYours(t: GameEvent, a: CardTags["abilities"][number], chars: CardTags["characteristics"], abilities: CardTags["abilities"], e0: GameEvent, producer: readonly GameEvent[], producerText: string, h: Hierarchy, consumerText: string): GameEvent {
+  if (a.trigger?.host !== true || a.grantedBy !== undefined || (t.verb !== "dies" && t.verb !== "leaves") || t.subject.control !== "any") return t;
+  // ONLY A HOST KNOWN TO BE YOURS IS NARROWED: Equipment (no Enchant line) or an Aura `auraHostSide` reads as own-side (Fungal Fortitude, Demonic Vigor, Necrosynthesis give a pump or grant). An Aura of unknown side (Creature Bond,
+  // Funeral March, Minion's Return, the steal Auras, Fool's Demise: `undefined`) and an opponent-side one keep main's reading, as `aura-host-control.test.ts` pins.
+  const enchants = chars.enchants;
+  if (enchants !== undefined && auraHostSide(enchants, abilities) !== "own") return t;
+  // A TRIGGER THAT ACTS ON THE DEAD CREATURE'S CONTROLLER is the opponent side's ("this Aura deals 3 damage to that creature's controller", Impending Doom; "its controller loses 2 life", Decomposition; "its controller chooses target creature one of their opponents controls", Necrotic Plague), whatever the pump says: main's reading. Read from the trigger's own printed line, not the whole card.
+  if (hostDeathLineActsOnController(consumerText)) return t;
+  // A GOAD AURA is made for an opponent's creature (Ghoulish Impetus: on your own creature goad is only a drawback), and an Aura that re-attaches "at random" (Infectious Rage) moves to a host that can be anyone's: main's reading. Local to this
+  // function; `auraHostSide` still reads both as own-side for its other callers. Reins of the Vinesteed re-attaches to a creature YOU choose and stays own-side.
+  if (abilities.some((x) => (x.emits ?? []).some((m) => m.verb === "goad")) || hostDeathLineReattachesAtRandom(consumerText)) return t;
+  // A creature the producer itself sacrifices or loses is the producer's: yours ("Its controller sacrifices it", Goblin Ski Patrol).
+  if (e0.subject.self === true) return t;
+  if (e0.subject.control === "opp") {
+    // "Its controller sacrifices" names whoever controls the thing, not an opponent (Cauldron Dance's put creature, Killing Wave and Fade Away's "for each creature, its controller sacrifices"); derive stores them `opp`.
+    if (/\bits controller sacrifices\b/i.test(producerText)) return t;
+    // The question here is WHOSE creature the event can take, not which: the host is a creature of yours (a token, a coloured one), so the colour, count, subtype and token the event names ("Destroy target black creature", "target monocolored
+    // creature", "creature token", "if it's blue") are no bar. `eventMatches` below still judges the class itself.
+    const { colors: _c, colorCount: _cc, subtype: _st, notSubtype: _nst, anyOf: _any, historic: _hi, token: _tk, ...kind } = e0.subject;
+    const yours: SubjectFilter = { control: "you", token: null, ...(kind.type !== undefined ? { type: kind.type } : {}) };
+    const probe: GameEvent = { ...e0, subject: { ...kind, token: null } };
+    if (eventReachesAura(probe, auraReachContext(producer, producerText, { ...yours, colors: ["W", "U", "B", "R", "G"] }), yours, h)) return t;
+  }
+  return { ...t, subject: { ...t.subject, control: "you" } };
+}
+
 /** THE DIRECT ROUTE: A REMOVAL THAT TAKES THE AURA ITSELF (#1575). An Aura's own "when this Aura leaves the battlefield" trigger is stored with the subtype `aura`, and a removal event typed `enchantment` or `permanent` ("Destroy all enchantments":
  *  Cleanfall; "destroy all permanents other than this Equipment": Worldslayer; "sacrifice a permanent": Saw) states no subtype, so `eventMatches` could not show it is an Aura and refused it. Here the event is compared with the Aura
  *  itself: it counts when `eventReachesAura` says it could take the Aura off the battlefield (the rules of the host route, aura-reach.ts), and the trigger is then judged without its subtype and control. The self-identity gate
@@ -2495,7 +2549,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly, cAbiliti
       for (const rawVerb of a.trigger.verbs) {
         // YOUR OWN ACTION INTO A PUNISHER OF "THAT PLAYER" IS A COST, NOT A PAYOFF (#1591): see `punishesItsActor`.
         if (e0.subject.control === "you" && punishesItsActor(a, rawVerb, c.card.oracleText)) continue;
-        const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject, ...(a.trigger.amount ? { amountIs: a.trigger.amount } : {}), ...(a.trigger.victim ? { victimIs: a.trigger.victim } : {}) });
+        const t = hostDiesAsYours(normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject, ...(a.trigger.amount ? { amountIs: a.trigger.amount } : {}), ...(a.trigger.victim ? { victimIs: a.trigger.victim } : {}) }), a, c.tags.characteristics, cAbilitiesRaw ?? c.tags.abilities, e0, pEvents, p.card.oracleText ?? "", h, c.card.oracleText ?? "");
         // `e` is `e0` when it matches as authored, or an untyped land put resolved against the
         // deck's lands to the subtype this trigger names (`landPutFor`); null is no match.
         const viaHost = auraHostLeaves(c.tags.characteristics, a, e0, t, h, cAbilitiesRaw ?? c.tags.abilities, pEvents, p.card.oracleText ?? "");
