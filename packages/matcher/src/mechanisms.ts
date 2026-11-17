@@ -45,6 +45,9 @@ export interface CategoryMatchEntry {
    *  (power-matters, toughness-matters), where the linking tag alone is shared with
    *  unconditional producers of the same event. */
   requireStatPredicate?: boolean;
+  /** A `mill` reason defines the category when its consumer mills YOUR library, or either side's
+   *  (`millScope` `you` or `any`). An opponent-only mill does not (#721). */
+  selfMill?: boolean;
 }
 
 /** Category -> accepted reason signatures. This table is the ONLY coupling between the gold set
@@ -136,13 +139,18 @@ export const CATEGORY_MATCH: Record<MechanismCategory, CategoryMatchEntry> = {
   // graveyard claim and the KIND cannot separate it from a fetchland, so it cannot carry the
   // category; a self-mill deck reaches `mill-self` on `enters-graveyard:*` instead.
   //
-  // THAT PRECONDITION IS NOW SATISFIED, AND THE RULING IS STILL NOT MADE HERE. The kind split on
-  // 2026-09-07 gave `mill` its own name, so it IS separable from a fetchland (which is `search`) and
-  // this category COULD take it. Deliberately not in that change: G3 moved 3,206 pairs when it
-  // landed, and folding a category ruling into a behaviour-preserving rename would leave any
-  // regression with two candidate causes. It is its own measured item now, which is the point of
-  // having split the kind.
-  "graveyard-matters": { effectKinds: ["graveyard-recursion"] },
+  // SELF-MILL JOINS (owner ruling 2026-11-17, #721). `mill` has had its own kind since 2026-09-07, so
+  // it is separable from a fetchland (which is `search`), and a mill of YOUR library is a graveyard
+  // plan: it fills the yard the category's payoffs and recursion read. `selfMill` is that, and it is
+  // read off the reason's `millScope`, not the kind, because the kind cannot say whose library.
+  //   - `you`: joins.
+  //   - `any` ("target player", "each player"): joins, since you can aim it at yourself, and it is a
+  //     win-condition mill as well (see `buckets.ts`). The owner: "anything that targets you or forces
+  //     you to mill is a self-mill strategy, but milling your opponents is a valid win condition".
+  //   - `opp`: does not. An opponent's mill is a win route, not a graveyard plan.
+  //   - SURVEIL stays out: its graveyard fill is optional (CR 701.25a: you put "any number of
+  //     them" into your graveyard, which may be none), so a surveil card promises no graveyard.
+  "graveyard-matters": { effectKinds: ["graveyard-recursion"], selfMill: true },
   "attack-matters": { tags: ["attacks:creature"] },
   "blink-etb": { effectKinds: ["flicker", "clone"] },
   "mill-self": { tags: ["enters-graveyard:creature", "enters-graveyard:any"] },
@@ -175,6 +183,7 @@ export function categoryMatches(reason: Reason, category: MechanismCategory): bo
 export function categoryDefines(reason: Reason, category: MechanismCategory): boolean {
   const entry = CATEGORY_MATCH[category];
   const hit =
+    (entry.selfMill === true && reason.effectKind === "mill" && (reason.millScope === "you" || reason.millScope === "any")) ||
     (reason.tag !== undefined && (entry.tags?.includes(reason.tag) ?? false)) ||
     (reason.effectKind !== undefined && (entry.effectKinds?.includes(reason.effectKind) ?? false));
   if (!hit) return false;

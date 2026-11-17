@@ -10,6 +10,7 @@ import { isEveryoneEdict, isZonedCardGrant, subjectMatches, graveyardFillMatches
 import { enterAsCopyAbilities, impliedEvents, preparedAbilities, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, printedAllTypes, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { normalizeZoneEvent, tagKey, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
+import { joinMillScopes, millScopeOf } from "./mill-scope.js";
 import { baseSetStrength, nodePower, pairsAsUpgrade, powerNeeds, raisedToken, readsPower } from "./base-pt-set.js";
 import { hasMediatingToken } from "./tokens.js";
 import { auraReachContext, eventReachesAura, namesAClass, removalReachesAura } from "./aura-reach.js";
@@ -2421,7 +2422,17 @@ export function directedReasons(p0: DeckCard, c0: DeckCard, h: Hierarchy, opts: 
   copyFamilyEdges(s);
   landConditionEdges(s);
   creatureConditionEdges(s);
-  return dedupeReasons(s.reasons.map((r) => stampSides(r, p, c)));
+  return dedupeReasons(s.reasons.map((r) => withMillScope(stampSides(r, p, c), c.tags!.abilities)));
+}
+
+/** WHOSE LIBRARY THE CONSUMER MILLS, stamped on a `mill` reason (#721) so the category table, which sees only the reason, can tell a self-mill from an opponent mill.
+ *  Read from the ability the reason points at (`consumerAbility`) when it is a mill; otherwise from every mill ability the consumer prints.
+ *  CEILING: a reason that names no ability (a channel other than the event pass) on a card with a self-mill AND an opponent-mill ability reads `any`, so it joins graveyard-matters and win-condition both. */
+function withMillScope(r: Reason, consumerAbilities: CardTags["abilities"]): Reason {
+  if (r.effectKind !== "mill") return r;
+  const named = r.consumerAbility !== undefined ? consumerAbilities[r.consumerAbility] : undefined;
+  const scope = joinMillScopes((named?.effect.kind === "mill" ? [named] : consumerAbilities).map(millScopeOf));
+  return scope === undefined ? r : { ...r, millScope: scope };
 }
 
 /** A card whose tags are known. `directedReasons` checks both sides before any channel runs. */

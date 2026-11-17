@@ -7807,3 +7807,20 @@ describe("mill action vs a library-to-graveyard move (#1444)", () => {
     expect(directedReasons(archghoul, reanimator, H).length).toBeGreaterThan(0);
   });
 });
+
+// #721: the reason carries WHOSE library the consumer's mill empties, read from the consumer's own ability, so the category table can tell a self-mill from an opponent mill.
+test.each([["you", "you"], ["opp", "opp"], ["any", "any"]] as const)("a mill consumer's reason carries millScope %s -> %s (#721)", (control, scope) => {
+  const producer = base("Land Maker", [{
+    kind: "on-cast", effect: { kind: "token-generation" },
+    emits: [{ verb: "enters", subject: { control: "you", token: null, type: "land" } }],
+  }]);
+  const consumer = base("Mill Crab", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "land" } },
+    effect: { kind: "mill", subject: { control, token: null } },
+    emits: [{ verb: "mill", subject: { control, token: null } }],
+  }]);
+  const reasons = pairReasons(producer, consumer, H).filter((r) => r.effectKind === "mill");
+  expect(reasons.length).toBeGreaterThan(0);
+  expect(reasons.every((r) => r.millScope === scope)).toBe(true);
+});
