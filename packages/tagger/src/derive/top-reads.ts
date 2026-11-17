@@ -22,12 +22,17 @@ const exilesYourLibrary = (a: Ability): boolean => (a.emits ?? []).some((e) => e
 
 /** The cast an own-library impulse draw derives (#1665): see the CEILING above. */
 const IMPULSE_CAST: GameEvent = { verb: "cast", subject: { control: "you", token: null, type: "spell", owner: "you", fromZone: "exile" }, originOnly: true };
+const ownExileCast = (e: GameEvent): boolean => e.verb === "cast" && e.subject.self !== true && e.subject.type === "spell" && e.subject.fromZone === "exile" && e.subject.control === "you" && e.subject.owner !== "opp" && e.originOnly !== true;
 const castsAnotherCard = (a: Ability): boolean => (a.emits ?? []).some((e) => e.verb === "cast" && e.subject.self !== true);
 
 export function topReadsFromText(abilities: Ability[], clauseTexts: Record<number, string> | undefined, cardText: string): Ability[] {
   const impulseCard = IMPULSE.test(cardText), cardLooks = LOOKS_AT_TOP.test(cardText);
   let castAdded = abilities.some(castsAnotherCard);
+  // A card that already derived the cast of its own exiled cards (Theater of Horrors, Colfenor's Plans, Nahiri, Brilliant Ultimatum, Jacob Hauken: `type: spell`, `fromZone: exile`) is the same permission, so that cast is origin-only
+  // too and Beast Whisperer and Sai do not hear it (#1665 review). Chandra, Heart of Fire and Chandra, Pyromaster state a typed instant-or-sorcery cast of their own: left as they are.
+  const marksOwn = impulseCard && abilities.some(exilesYourLibrary);
   return abilities.map((a) => {
+    if (marksOwn && (a.emits ?? []).some(ownExileCast)) a = { ...a, emits: a.emits!.map((e) => (ownExileCast(e) ? { ...e, originOnly: true as const } : e)) };
     const text = a.clause === undefined ? undefined : clauseTexts?.[Math.trunc(Number(a.clause))];
     const looks = text !== undefined && (LOOKS_AT_TOP.test(text) || (MANIFESTS_DREAD.test(text) && cardLooks)), impulse = impulseCard && exilesYourLibrary(a);
     if (!looks && !impulse) return a;

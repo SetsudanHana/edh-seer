@@ -385,6 +385,8 @@ function themeTags(tags: CardTags, keepRockEntry: boolean): Set<string> {
     }
     for (const e of a.emits ?? []) {
       if (opponentsPermanent(e.subject)) continue;
+      // AN ORIGIN-ONLY CAST CREDITS NO THEME (#1665 review): its key `cast:spell` is the plain cast triggers' key, and they do not hear it, so counting it moved 25 decks' `cast:spell` theme count.
+      if (e.originOnly === true) continue;
       const t = normalizeZoneEvent(e);
       for (const k of supplyTagKeys(t, tags.characteristics?.types)) out.add(k);
     }
