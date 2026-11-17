@@ -4,6 +4,7 @@
  *  Usage: tsx src/bin/repeats-report.ts [--sample N] [--refused <path.json>] */
 import { writeFileSync } from "node:fs";
 import { connect, loadConfig } from "@edh-seer/data";
+import { DERIVE_VERSION } from "../../packages/tagger/src/derive/derive.js";
 import type { Ability, CardTags } from "../../packages/tagger/src/schema.js";
 import { grantedToOwnToken, segment } from "../../packages/tagger/src/segment.js";
 import { deriveAbilities } from "../../packages/tagger/src/derive/derive.js";
@@ -52,8 +53,8 @@ for (const [k, n] of [...counts].sort((a, b) => b[1] - a[1])) {
   for (const s of samples.get(k) ?? []) console.log(`      ${s}`);
 }
 if (refusedOut) {
-  writeFileSync(refusedOut, JSON.stringify(refused, null, 1));
-  console.log(`\nwrote ${refused.length} refused abilities -> ${refusedOut}`);
+  writeFileSync(refusedOut, JSON.stringify({ deriveVersion: DERIVE_VERSION, rows: refused }, null, 1));
+  console.log(`\nwrote ${refused.length} refused abilities (DERIVE ${DERIVE_VERSION}) -> ${refusedOut}`);
 }
 process.exit(0);
 

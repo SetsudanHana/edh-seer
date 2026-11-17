@@ -126,6 +126,22 @@ describe("relation-stats (#1095)", () => {
   });
 });
 
+describe("repeats-refused (#722)", () => {
+  it("regenerates repeats-refused.json after the derive and pins it with repeats-ratchet.test.ts", () => {
+    for (const mode of ["bump", "restamp"] as const) {
+      const p = planSteps(mode);
+      const names = p.map((s) => s.name);
+      const gen = p.find((s) => s.args.some((a) => a.endsWith("repeats-report.ts")));
+      expect(gen?.args).toContain("packages/tagger/src/derive/repeats-refused.json");
+      expect(gen?.stopOnFail).toBe(true);
+      expect(names.indexOf(gen!.name)).toBeGreaterThan(names.indexOf("derive-corpus"));
+      const v = p.find((s) => s.args.includes("src/derive/repeats-ratchet.test.ts"));
+      expect(v?.cwd).toBe("packages/tagger");
+      expect(names.indexOf(v!.name)).toBeGreaterThan(names.indexOf(gen!.name));
+    }
+  });
+});
+
 describe("preflight (#1484)", () => {
   const CACHE = ".edhrec-cache/precon/precon.json";
   const PAGES_DIR = ".edhrec-cache/precon";

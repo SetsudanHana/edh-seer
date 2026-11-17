@@ -3,11 +3,12 @@
  *    2 derive-corpus --force       3 research/mana/refresh-fixtures.mts
  *    4 gen-quality-weights         5 gen-theme-stats (packages/matcher/theme-stats.json)
  *      gen-relation-stats (packages/matcher/relation-stats.json, #1095)
+ *      gen-repeats-refused (packages/tagger/src/derive/repeats-refused.json, #722)
  *    6 gen-schema-docs
  *    7 role-ratchet + dropped-clauses, CHECK mode only (never --bank: a moved line needs a written
  *      explanation by a human; a non-zero verdict is reported and makes this bin exit non-zero)
  *      and theme-stats-fresh (count check; reported the same way)
- *    8 the stamp tests (fixture-derive-version, quality-weights, relation-stats, gen-schema-docs)
+ *    8 the stamp tests (fixture-derive-version, quality-weights, relation-stats, repeats-ratchet, gen-schema-docs)
  *  BEFORE step 1 edits anything, PREFLIGHT (derive-bump-core.ts) checks the files steps 2-8 read: a
  *  missing required one is refused naming path and step; a missing or empty optional one warns (the
  *  run goes on, on less input). --dry-run reports both. --restamp applies the same check.

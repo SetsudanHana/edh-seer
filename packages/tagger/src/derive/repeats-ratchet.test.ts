@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import { readFileSync } from "node:fs";
 import type { Ability } from "../schema.js";
+import { DERIVE_VERSION } from "./derive.js";
 import { repeatsFor } from "./repeats.js";
 
 /** Abilities the rules cannot name, as a FIXED list captured from the corpus. Both directions are
@@ -67,20 +68,38 @@ const FIXTURE = new URL("repeats-refused.json", import.meta.url);
  *  `return` the clause text sends "to its owner's hand" the same (Otawara). 582 such actions
  *  became abilities (37,912 -> 38,494) and 25 of them -- exiles and bounces on triggers the rules
  *  cannot name -- refuse honestly. Refusal share unchanged at 3.7%. */
-const REFUSED_CAP = 1438;
+/** Re-banked 1438 -> 2812 (2026-11-17, #722, owner ruling "regenerate + keep fresh"). The fixture had not been
+ *  regenerated since 2026-09-05; the corpus went from 21k to 32,804 derived rows and the stored abilities were
+ *  re-shaped by derive since. Regenerated on DERIVE 537: 2,812 refused rows, 4.4% of abilities (the fixture
+ *  was a bare array; it is now `{ deriveVersion, rows }`). Of the 1,438 old rows 707 are gone: about 430 cards
+ *  now resolve (derive re-shaped the stored ability and the old fixture fed `repeatsFor` the old shape, so arm 2
+ *  never saw it), 32 cards lost the ability, 11 still refuse under new clause text. 2,052 rows are new, 2,015 of
+ *  them on cards that were not in the old corpus. The cap now tracks a FRESH fixture: `derive:bump`
+ *  regenerates it and the version test above fails when it is stale, so arm 1 bounds the live refusal count
+ *  as of the last derive bump rather than a 2026-09 capture. Arm 2 is kept as it was. */
+const REFUSED_CAP = 2812;
 
 /** `repeatsFor` takes THREE arguments -- `cost` feeds rules 1-2 (self-sacrifice, {T}/{Q}),
  *  `clauseText` feeds rule 3 ("once each turn"). A fixture row missing `cost` would half-disable the
  *  second arm: a refusal later resolved by a cost rule would never be detected. */
 type Row = { name: string; clauseText: string; cost: string; ability: Ability };
 
+/** The fixture is `{ deriveVersion, rows }`: the DERIVE_VERSION it was generated at, then the refused abilities. */
+const load = () => JSON.parse(readFileSync(FIXTURE, "utf8")) as { deriveVersion: number; rows: Row[] };
+
+// Without this the fixture went 1,438 -> 2,812 rows unnoticed (#722): arm 1 bounds only the checked-in row count and arm 2 feeds
+// `repeatsFor` the abilities as they were shaped when the file was captured. Mongo-free, so it runs in CI.
+test("the refused fixture was generated at the current derive version (regenerate: npx tsx research/tagger/repeats-report.ts --refused packages/tagger/src/derive/repeats-refused.json, or npm run derive:bump)", () => {
+  expect(load().deriveVersion).toBe(DERIVE_VERSION);
+});
+
 test("the refused set has not grown", () => {
-  const rows = JSON.parse(readFileSync(FIXTURE, "utf8")) as Row[];
+  const { rows } = load();
   expect(rows.length).toBeLessThanOrEqual(REFUSED_CAP);
 });
 
 test("a refused ability that now resolves must be banked, not silently absorbed", () => {
-  const rows = JSON.parse(readFileSync(FIXTURE, "utf8")) as Row[];
+  const { rows } = load();
   const resolved = rows.filter((r) => repeatsFor(r.ability, r.clauseText, r.cost) !== undefined);
   expect(
     resolved.map((r) => r.name),
