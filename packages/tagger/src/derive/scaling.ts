@@ -165,6 +165,10 @@ export function scalingSubject(action: Action, clauseText?: string): SubjectFilt
   const counted = COUNTED.exec(text);
   if (!counted) return undefined;
   const noun = counted[1];
+  // A COUNT OF DISTINCT CHARACTERISTICS ("the number of creature types among non-Borg creatures you control", Starfleet Academy; "colors among permanents you control") is raised by an object only when it adds a NEW
+  // type or colour, so no class of objects scales it: naming one (every creature you control) made every creature a supplier (21,017 pairs on one card, most of them false). The amount text stays; no subject is read.
+  // CEILING: no counted class for a characteristic count, so a card that really adds a new type or colour (a changeling) is not paired with it.
+  if (/\b(?:types?|colou?rs?|names?)\s+among\b/i.test(noun)) return undefined;
 
   if (GRAVEYARD_COUNT.test(text)) {
     const subject = parseSubject(noun.split(/\s{1,4}in\s{1,4}/i)[0]);

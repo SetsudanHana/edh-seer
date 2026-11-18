@@ -1987,8 +1987,17 @@ test("'for every N' (a divisor the schema has no field for) and a count of what 
 
 test("a creature-type-count mana add and a differently-named-lands count derive their scaling (Starfleet Academy, Chief Montgomery Scott, #1673)", () => {
   const [, , academy, , , scott] = QUANTIFIED as [unknown, unknown, (typeof QUANTIFIED)[number], unknown, unknown, (typeof QUANTIFIED)[number]];
-  const derive = (card: typeof academy) => { const g = grammarClauseRecords(card); return deriveCardTags(deriveInputOf({ name: card.name, typeLine: card.typeLine, oracleText: "" } as never, "x", card.name, g.records, undefined, g.readings)); };
+  const derive = (card: typeof academy) => { const g = grammarClauseRecords(card); return deriveCardTags(deriveInputOf({ name: card.name, typeLine: card.typeLine, oracleText: card.oracleText } as never, "x", card.name, g.records, undefined, g.readings)); };
   expect(derive(academy).manaLines?.[1]?.amount).toMatchObject({ fixed: null, scales: "number of creature types among non-borg creatures you control" });
+  // The mana count is read as text (floor 0, ceiling null) with NO counted class: a count of creature TYPES among non-Borg creatures is raised only by a creature that adds a new type, so no creature class scales it
+  // (`scalingSubject` unset, and no `count.scalesWith`); "opponents you attacked this turn" (the Beacon) is a history and names no class either.
+  const beacon = QUANTIFIED[3]!;
+  for (const card of [academy, beacon]) {
+    const scaled = derive(card).abilities.filter((a) => a.effect.kind === "mana-generation")[1]!;
+    expect(scaled.count, card.name).toMatchObject({ floor: 0, ceiling: null });
+    expect(scaled.count?.scalesWith, card.name).toBeUndefined();
+    expect(scaled.effect.scalingSubject, card.name).toBeUndefined();
+  }
   const counters = derive(scott).abilities.filter((a) => a.emits?.some((e) => e.verb === "counter-added"));
   expect(counters).toHaveLength(2);
   for (const a of counters) expect(a.count?.scalesWith).toMatchObject({ type: "land", control: "you" });
