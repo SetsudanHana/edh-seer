@@ -87,7 +87,10 @@ const FIXTURE = new URL("repeats-refused.json", import.meta.url);
  *  re-ingest; 93 -> 87 cards in derive scope with no row after this change, on a clean database): 38 rows added,
  *  0 gone, every one of the 38 on a card with no row in the 2,812-row fixture, i.e. newly derived cards whose
  *  triggers the rules cannot name. */
-const REFUSED_CAP = 2850;
+/** 2850 -> 2853 (2026-11-18, #1678, DERIVE 540): three rows added on newly derived cards whose triggers the rules
+ *  cannot name -- Sash and Waistcoat (evasion), Rikala (its 'tap an Island for mana' mana line) and Sylvia Tilly
+ *  (the reflexive counter). 0 gone. */
+const REFUSED_CAP = 2853;
 
 /** `repeatsFor` takes THREE arguments -- `cost` feeds rules 1-2 (self-sacrifice, {T}/{Q}),
  *  `clauseText` feeds rule 3 ("once each turn"). A fixture row missing `cost` would half-disable the
