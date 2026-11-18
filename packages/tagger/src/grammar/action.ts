@@ -11,7 +11,7 @@
  *    field for it.
  *  - VERB FAMILIES are added one per PR, in the owner's order (2026-10-01): draw/search first. */
 import type { Control, SubjectFilter } from "../schema.js";
-import { counterKindOf, spellMove } from "../derive/subject.js";
+import { counterKindOf, parseSubject, spellMove } from "../derive/subject.js";
 import { SELF_REFERENCE } from "../derive/self-reference.js";
 import { KEYWORD_ABILITIES, SUBTYPES } from "../derive/subtypes.js";
 import { parse } from "./filter.js";
@@ -251,7 +251,8 @@ function damageOf(rest: string): Args | Args[] | null {
     if (each.every((e) => e)) return each.map((e, i) => ({ object: e!.object, amount: amount!, text: many[i]!, ...(e!.object.ref ? { phrase: many[i]! } : {}) }));
   }
   // "divided as you choose among one, two, or three targets": any targets, however many.
-  const r = m && amount ? objectOf(m[2]!) ?? (/^(?:one|one or two|one, two, or three|any number of|up to \w+) (?:other )?targets$/.test(m[2]!) ? { object: ANY_TARGET } : null) : null;
+  // "to a random opponent" (Alexander, Ship's Fool; #1673): an opponent, picked by the game and not targeted. CEILING: the randomness is not recorded; it is any opponent, as "each opponent" is.
+  const r = m && amount ? objectOf(m[2]!.replace(/^a random opponent$/, "an opponent")) ?? (/^(?:one|one or two|one, two, or three|any number of|up to \w+) (?:other )?targets$/.test(m[2]!) ? { object: ANY_TARGET } : null) : null;
   // A back-referenced recipient ("1 damage to each creature that player controls") keeps its words.
   return r && amount ? { object: r.object, amount, text: m![2], ...(r.object.ref ? { phrase: m![2]! } : {}) } : null;
 }
@@ -486,6 +487,9 @@ function moveObject(phrase: string, onField = false): Args | null {
   // "all other permanents with the same name as that permanent" (Maelstrom Pulse): a relation the
   // filter grammar cannot hold -- it read "all other permanents" and dropped the rest. Unread.
   if (/\bwith the same name as\b/i.test(phrase)) return null;
+  // "a creature card from that player's graveyard that was put there from their library this turn" (The Weaver King, Assimilate the Wounded): the card comes out of an OPPONENT's graveyard, but derive reads the later
+  // "from <zone>" (where it was put there from) as the origin and the card as any player's, which pairs it with every own-graveyard trigger (about 6,800 false pairs). Unread until the emit can carry the zone and its owner.
+  if (/ from that player's (?:graveyard|hand|library) that (?:was|were) put there from /i.test(phrase)) return null;
   const t = phrase.replace(/ in a face-(?:down|up) pile$/, "").replace(/ at random$/, "").replace(/ of (?:their|his or her|your) choice$/, "").replace(/ from among (?:them|those cards|the (?:cards )?milled (?:this way|cards)|the cards milled this way)$/, "");
   // "target player's graveyard", "all graveyards": a whole graveyard.
   if (/^(?:target player's|target opponent's|each opponent's|your|their|all|each player's|all opponents'|any number of target players'|target players') graveyards?$/.test(t)) return { object: { control: "any", token: null }, fromZone: "graveyard", text: phrase };
@@ -654,6 +658,11 @@ const MANA_TAP: Record<string, [string, Handler]> = {
     // "an amount of {G} equal to this creature's power": the amount is what it equals.
     const eq = /^an amount of ((?:\{[WUBRGC]\})+) equal to (.+)$/i.exec(rest);
     if (eq) return { object: { control: "any", token: null }, text: eq[1]!, amount: eq[2]! };
+    // "Choose a color. Add an amount of mana of that color equal to the number of opponents you attacked this turn" (The Beacon of Kahless; Starfleet Academy's creature types): the count is the amount,
+    // the colour the one the sentence before chose, as "one mana of that color for each ..." reads (mana-lines names the scaling and the chosen colour off these words).
+    // CEILING: the count is the words ("the number of ..."), as for the {G} form above; what it counts is read by derive's scaling, and a number of creature TYPES is no object class it can name.
+    const eqMana = /^an amount of mana of (that color|the chosen color) equal to (.+)$/i.exec(rest);
+    if (eqMana) return { object: { control: "any", token: null }, text: `an amount of mana of ${eqMana[1]!.toLowerCase()}`, amount: eqMana[2]! };
     const each = rest.indexOf(" for each ");
     const mana = each >= 0 ? rest.slice(0, each) : rest;
     if (!manaOf(mana)) return null;
@@ -1507,6 +1516,24 @@ function readPhrase(quoted: string, condition: string | undefined, carried?: Act
   return cond > 0 ? readPhraseOnce(phrase.slice(0, cond), [condition, phrase.slice(cond + 1)].filter(Boolean).join(", "), carried) : null;
 }
 
+/** A "for each" COUNT THE AMOUNT CAN CARRY WHOLE (#1673 review). The amount keeps the printed words, but derive scales with the CLASS it reads off them, so a count whose qualifier that class drops scales with too much
+ *  (Sovereign Okinec Ahau's "creature you control with power greater than that creature's base power" scaled with every creature you control: 20,791 false `scales` pairs). Accepted only when the filter grammar reads the whole
+ *  count AND every characteristic it reads is the one `parseSubject` reads too; a count only the grammar understands in part (a stat comparison) or not at all (a history, "attached to", "that you've put a counter on this turn")
+ *  is refused. Refused too: a count that names what an earlier action or choice did ("of those creatures", "who does", "flip you win", "different result", "this way", "revealed", "discarded", "spent", "exiled", "chosen")
+ *  and a self-reference ("this spell", "this creature", "~"), which no class names (Malfegor's "for each card discarded this way" is refused the same way).
+ *  CEILING: the check is on words and on two readings, not on the whole sentence; a count both readings agree on but whose qualifier neither reads would pass. */
+const COUNT_BACKREF = /\b(?:of (?:those|them|these)|who (?:can't|can|does|do|didn't|did|doesn't|is|are|chose|has|have)|(?:you|they) (?:won|win)|different result|this way|attached to|revealed|discarded|spent|exiled|chosen|that (?:player|creature|card|spell|permanent))\b|\bthis (?:spell|creature|permanent|artifact|enchantment|land|card)\b|~/i;
+function countIsPlainClass(count: string): boolean {
+  // "for each player, ... that player controls" (Nils, Discipline Enforcer; Turf War) repeats the action per PLAYER; a player is no counted object class, and read as one it scaled the card with every permanent. Unread, as 'for each opponent' is stripped only where nothing counts.
+  if (/^(?:other )?(?:players?|opponents?)$/i.test(count.trim())) return false;
+  if (/\btarget\b/i.test(count)) return false;
+  if (COUNT_BACKREF.test(count)) return false;
+  const read = parse(count);
+  if (!read) return false;
+  const seen = parseSubject(count, "pick") as unknown as Record<string, unknown>;
+  return Object.entries(read).every(([k, v]) => v === null || v === undefined || JSON.stringify(seen[k]) === JSON.stringify(v));
+}
+
 function readPhraseOnce(quoted: string, condition: string | undefined, carried?: ActionReading["actor"]): ActionReading[] | null {
   const phrase = quoted.replace(/\uE000(\d+)\uE001/g, (_m, i: string) => quotes[Number(i)]!);
   let t = phrase.trim().replace(/^(?:then|instead|also) /i, "").replace(/,$/, "");
@@ -1554,6 +1581,14 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   // "pay life equal to its mana value rather than pay its mana cost": the whole phrase, as stored.
   // ...and the life it costs is lost (Bolas's Citadel feeds Rowan, Scion of War).
   if (/^pay life equal to its mana value rather than pay its mana cost$/i.test(t)) return [{ verb: "cost-modify", object: REF, text: t, ...(condition ? { condition } : {}) }, { verb: "lose-life", object: parse("you")!, text: "you", amount: "its mana value" }];
+  // "It enters with X additional +1/+1 counters on it if it's a creature and X additional charge counters on it if it's a Spacecraft, where X is the number of differently named lands you control" (Chief
+  // Montgomery Scott, #1673): a counter kind per type of the card put, each under its own "if it's a ..." condition, X defined by the where-clause (kept in the amount, as every "where X is" amount is).
+  // CEILING: "it" is the card the sentence before put onto the battlefield (a back-reference, not the card itself); which condition holds is left to the condition text, as every condition is.
+  const condEnters = /^it enters with x additional ([\w+/-]+) counters on it if it's (an? [a-z]+) and x additional ([\w+/-]+) counters on it if it's (an? [a-z]+)$/i.exec(t);
+  if (condEnters && counted !== undefined) {
+    const each = (kind: string, type: string): ActionReading => ({ verb: "add-counter", object: REF, counter: counterKindOf(`${kind} counter`) ?? kind.toLowerCase(), amount: `X, where X is ${counted}`, condition: [condition, `if it's ${type}`].filter(Boolean).join(", ") });
+    return [each(condEnters[1]!, condEnters[2]!), each(condEnters[3]!, condEnters[4]!)];
+  }
   const tail = whenTail(t);
   if (tail) { condition = [condition, tail.text].filter(Boolean).join(", "); t = t.slice(0, tail.at); }
   // A REDIRECTION (CR 615): "All damage that would be dealt to you is dealt to enchanted creature
@@ -2157,13 +2192,23 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // "For each opponent, goad target creature that player controls" (Frenzied Gorespawn, Grasp of Fate, Tempted by the Oriq): the repetition per opponent is no action
     // and the store keeps no trace of it, only the verb phrase behind (the "that player" in it is the sentence's back-reference).
     // CEILING: the per-opponent repetition is not carried, as the stored actions do not carry it.
-    const forEachOpponent = /^for each opponent, /i.test(s);
-    s = s.replace(/^for each opponent, /i, "");
+    const forEachOpponent = /^(?:then )?for each opponent, /i.test(s);
+    s = s.replace(/^(?:then )?for each opponent, /i, "");
     // "For each creature target player controls, create a token that's a copy of that creature" (Clone Legion, Face Yourself, Multiversal Incursion; Mirror Universe Intrusion's kicked
     // "instead for each creature target opponent controls, ..."): the store keeps only the copy, and derive reads the count off the copied creature.
     // CEILING: the per-object repetition is not carried (the stored object has none); only a copy of "that creature/permanent" is read, no other token created per object.
     const eachCopy = /^(?:instead )?for each [^,]+? controls?, (create a token that's a copy of that (?:creature|permanent)\b.*)$/i.exec(s);
     if (eachCopy) s = eachCopy[1]!;
+    // "For each nonland card revealed this way, put a +1/+1 counter on ~" (Ambassador K'Ehleyr), "For each attacking non-Faerie creature, create a tapped and attacking 1/1 ... token" (Worf, Still Not Merry),
+    // "..., for each creature token you control, create a token that's a copy of it" (Chief Magistrate of Mercadia) (#1673): the action's own "for each" tail, said first, so it is read as the tail form.
+    // Only the verbs that read a tail (create, counters, draw, gain life), one phrase behind the lead (a tail binds the last phrase alone, the lead binds all of them), the count up to the first comma
+    // (the negated class excludes the comma that closes it, so the scan is linear).
+    // A count that is what an earlier action did ("for each nonland card revealed this way", Ambassador K'Ehleyr) stays unread, as "for each card discarded this way" does (Malfegor): no class names it.
+    // CEILING: the repetition is the amount's scaling and no more; "a copy of it" is a copy of what the card names, not one copy per counted object (as the eachCopy reading above).
+    // The count must be a PLAIN CLASS (`countIsPlainClass`): one the filter grammar reads whole and derive's subject reading agrees with. A count that carries a qualifier derive's class drops (Sovereign Okinec Ahau's
+    // "with power greater than that creature's base power", La Forge's "that you've put a counter on this turn", Rite of Ascension's "you attacked this turn"), or names what an earlier action or choice did, or a self-reference, is refused.
+    const eachLead = /^for each ([^,]+), ((?:create|draw|you gain|gain) .+|put .+ counters? on .+)$/i.exec(s);
+    if (eachLead && countIsPlainClass(eachLead[1]!) && !/\bthat (?:player|opponent)\b/i.test(eachLead[2]!) && phrases(eachLead[2]!).length === 1) s = `${eachLead[2]!} for each ${eachLead[1]!}`;
     // "You may pay {1}. If you do, <effect>" (Wooden Sphere, Marooned): the payment records no action, as the store has it, and the first action after "If you do" carries
     // the payment's optionality (`ifYouDoAfterMay`). Only a mana payment, and only with that reflexive sentence behind it: a payment nothing follows claims nothing here.
     // CEILING: the payment itself (its mana, its energy) is not recorded, as the store drops it too; the effect reads as optional but not as costing anything.

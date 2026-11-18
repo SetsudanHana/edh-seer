@@ -520,3 +520,9 @@ test("a token's quoted ability does not add types (#1385)", () => {
   expect(parse('a colorless Equipment artifact token named Axe with "Equipped creature gets +1/+0"'))
     .toMatchObject({ type: "artifact", subtype: "equipment", token: true });
 });
+
+test("'from that player's graveyard' is a graveyard, whose the filter does not narrow, like 'target player's' (The Weaver King, #1673)", () => {
+  expect(parse("a creature card from that player's graveyard that was put there from their library this turn"))
+    .toEqual(parse("a creature card from a graveyard that was put there from their library this turn"));
+  expect(parse("a creature card from that player's graveyard")).toMatchObject({ type: "creature", fromZone: "graveyard" });
+});

@@ -4869,7 +4869,9 @@ export function createsForYou(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
   const { allTypes: _printedAll, ...consumerSubject } = characteristicsSubject(c.tags, c.card.name);
   return p.tags.abilities.some((pa) => !isRefusedTrigger(pa) &&
     (pa.emits ?? []).some((e) =>
-      e.verb === "create-token" && e.subject.control !== "opp" && subjectMatches(consumerSubject, e.subject, h)));
+      // The token's STATE on arrival ("tapped and attacking") is not what it IS: the token card named here is the same card whether it enters attacking or not, so the state stays out of the identity join
+      // (#1673: a created token's `combat` made `subjectMatches` refuse the link and every pair through the token went). What the arrival state means for an attack trigger is judged by the event pairs.
+      e.verb === "create-token" && e.subject.control !== "opp" && subjectMatches(consumerSubject, (({ combat: _combat, tapped: _tapped, ...made }) => made)(e.subject), h)));
 }
 
 /** THE EMBLEM MAKER EDGE (spec 2026-09-08). Keyed on the producer's `emblem` ability rather than an

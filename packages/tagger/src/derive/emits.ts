@@ -1085,6 +1085,10 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     const left = [subject.subtype].flat().filter((t) => !kinds.has(String(t).toLowerCase()));
     if (left.length === 0) delete subject.subtype; else subject.subtype = left.length === 1 ? left[0]! : left;
   }
+  // THE CARD YOU PUT ONTO THE BATTLEFIELD FROM YOUR OWN ZONE IS YOURS (Chief Montgomery Scott, #1673 review): "You may put a creature or Spacecraft card from your hand onto the battlefield. It enters with X additional +1/+1 counters on it"
+  // puts the counters on a permanent you control, not on an any-controller object that opponent-only counter triggers (Generous Patron, Kros, Bold Plagiarist) would hear.
+  // CEILING: only "it enters with ... counters" straight after a put from your hand or graveyard onto the battlefield.
+  if (action.verb === "add-counter" && recipient === undefined && subject.control === "any" && /\bput\b[^.]*\bfrom your (?:hand|graveyard)\b[^.]*\bonto the battlefield\b[^.]*\.\s*it enters with\b/i.test(clauseText ?? "")) subject.control = "you";
   // ...and alternatives are read AFTER the counter kinds left the subtype (#1575): "gold counters" is no Gold subtype for the grammar's alternatives to be offered instead.
   if (listed === undefined && playerOnly === undefined) subject = withAlternatives(subjectText, subject);
   // A MASS REMOVAL KEEPS THE CONDITION THE NOUNS DO NOT SAY (#1586): "with mana value X or less", "that entered this turn", "with the same name as", "that's not historic", "Artifacts ... you control gain indestructible. Destroy all nonland permanents" (sweep-narrowing.ts).
@@ -1105,6 +1109,14 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     // create a token that's a copy of target artifact you control" names a player that is not the actor.
     subject.control = h.control === "any" && !PLAYER_CREATES.test(clauseText ?? "") ? "you" : h.control;
     delete subject.scope; // a created token is not targeted, and the effect subject already carries the plural
+    // "For each creature token you control, create a token that's a copy of it" (Chief Magistrate of Mercadia, #1673): "it" is one of the counted objects, so the copy is of the class the count names
+    // (a creature token), and an untyped copy would be a wildcard that every non-creature's own enters trigger hears. Only a copy of "it" / "that creature" with a count whose class parses to a type.
+    // CEILING: a copy of "them" / "each of those creatures" (Kambal, Doppelgang) names no class the count carries, so it stays untyped.
+    const countedCopy = subject.type === undefined ? /\bcop(?:y|ies) of (?:it|that (?:creature|permanent|token)) for each ([^,.]+)$/i.exec(action.object ?? "") : null;
+    if (countedCopy) {
+      const counted = parseSubject(countedCopy[1]!);
+      if (counted.type !== undefined) { subject.type = counted.type; subject.token = true; }
+    }
   }
   // A control the object's own words state without a control word (#1295): "attacking you" is theirs, "that crewed it" is yours.
   // "attacking you or a planeswalker you control" (Soul Snare) reads `you` off the planeswalker, so an attacker overrides any control; "crewed it" only fills a blank.

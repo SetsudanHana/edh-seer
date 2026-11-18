@@ -1085,3 +1085,9 @@ test("#1629: 'attacking you or a planeswalker you control' names the defender, n
   // a planeswalker named as a target type stays
   expect(parseSubject("target creature or planeswalker that's attacking you").type).toEqual(["creature", "planeswalker"]);
 });
+
+test("'differently named lands' is the lands, not lands NAMED something (Chief Montgomery Scott, #1673)", () => {
+  expect(parseSubject("the number of differently named lands you control").named).toBeUndefined();
+  expect(parseSubject("differently named lands you control")).toMatchObject({ type: "land", control: "you" });
+  expect(parseSubject("a card named TARDIS").named).toBe("tardis");
+});

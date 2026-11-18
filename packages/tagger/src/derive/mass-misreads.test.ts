@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { deriveRow } from "../derive-worker.js";
+import { parseSubject } from "./subject.js";
 import fixtures from "./mass-misreads.fixtures.json" with { type: "json" };
 
 /** #1549 -- DERIVE MISREADS THAT MAKE THE `boardWipe.text` RULE MISS A REAL WIPE OR CLAIM A NON-WIPE.
@@ -105,8 +106,9 @@ describe('"of your choice" on a non-permanent choice keeps its `you` (review of 
   test("Boneyard Parley: the cards put onto the battlefield under your control are `you`", () => {
     expect(emits("Boneyard Parley", "enters").map((e) => e.subject.control)).toEqual(["you"]);
   });
-  test("Nyx Lotus: the mana is yours", () => {
-    const a = rowOf("Nyx Lotus").tags.abilities.find((x) => x.effect.kind === "mana-generation")!;
-    expect(a.effect.subject?.control).toBe("you");
+  // #1673: in this fixture run `deriveRow` takes the grammar reading of Nyx Lotus's add (control `any`, as every grammar-read add is), so the fixture no longer exercises the subject parser's `you`. The corpus row itself stays
+  // model -> model (derive-impact vs 504bb191), where the stored reading keeps `you`; the rule is asserted on the parser, which every stored "of your choice" non-permanent choice still goes through.
+  test("Nyx Lotus: 'a color of your choice' is yours", () => {
+    expect(parseSubject("a color of your choice").control).toBe("you");
   });
 });

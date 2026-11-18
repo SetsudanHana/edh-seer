@@ -165,7 +165,6 @@ export function scalingSubject(action: Action, clauseText?: string): SubjectFilt
   const counted = COUNTED.exec(text);
   if (!counted) return undefined;
   const noun = counted[1];
-
   if (GRAVEYARD_COUNT.test(text)) {
     const subject = parseSubject(noun.split(/\s{1,4}in\s{1,4}/i)[0]);
     subject.zone = "graveyard";
@@ -174,6 +173,13 @@ export function scalingSubject(action: Action, clauseText?: string): SubjectFilt
       : "you";
     return subject;
   }
+
+  // A COUNT OF DISTINCT CHARACTERISTICS read by the add that #1673 newly derives ("Choose a color. Add an amount of mana of that color equal to the number of creature types among non-Borg creatures you control",
+  // Starfleet Academy) is raised by an object only when it adds a NEW type, so no class of objects scales it: naming "creature" made every creature a supplier (21,017 pairs on one card, most of them false).
+  // The amount text stays; no subject is read.
+  // CEILING: deliberately narrow. Only that add (an "amount of mana of that color" over a "<types|colors|names> among" count) reads no class. The characteristic counts that derived before it (Valiant Changeling, Saavik,
+  // Infinite Diversity, Karn Gilded Guardian, Faeburrow Elder, Bloom Tender, Earthen Ally, Tam) keep the class they had: whether they should is a separate decision with its own measurement (about 88,800 scales pairs), a follow-up.
+  if (action.verb === "add-mana" && /^an amount of mana of (?:that|the chosen) colou?r$/i.test((action.object ?? "").trim()) && /\b(?:types?|colou?rs?|names?)\s+among\b/i.test(noun)) return undefined;
 
   if (DONATED_COUNT.test(noun)) {
     const subject = parseSubject(noun.split(/\s{1,4}you own\b/i)[0]!);

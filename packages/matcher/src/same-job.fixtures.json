@@ -2,7 +2,7 @@
  "Arcane Signet": {
   "card": {
    "_id": "0bc7f093-bef0-4f1a-852c-4b75ebf54838",
-   "artCrop": "https://cards.scryfall.io/art_crop/front/c/6/c6b6117c-faab-4bbb-b851-07bd8061ef03.jpg?1789644435",
+   "artCrop": "https://cards.scryfall.io/art_crop/front/7/9/795df2ee-fbfc-4961-852c-e3ec50cc52da.jpg?1793021117",
    "colorIdentity": [],
    "colors": [],
    "commanderLegality": "legal",
@@ -47,7 +47,7 @@
     "U",
     "W"
    ],
-   "releasedAt": "2026-10-02",
+   "releasedAt": "2026-11-13",
    "reserved": false,
    "searchNames": [
     "arcane signet",
@@ -104,7 +104,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "manaLines": [
     {
      "amount": {
@@ -235,7 +235,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "489a60f1-83f8-465b-918f-7d63d4f76d14",
@@ -255,7 +255,7 @@
     "G"
    ],
    "commanderLegality": "legal",
-   "edhrecRank": 219,
+   "edhrecRank": 221,
    "gameChanger": true,
    "keywords": [],
    "layout": "normal",
@@ -437,7 +437,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -582,7 +582,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "manaLines": [
     {
      "amount": {
@@ -633,7 +633,7 @@
  "Cultivate": {
   "card": {
    "_id": "8b755881-a72d-4e21-a369-d2924eb4585a",
-   "artCrop": "https://cards.scryfall.io/art_crop/front/e/6/e60deb92-f7dd-4f4e-9036-e47dd586f985.jpg?1783903229",
+   "artCrop": "https://cards.scryfall.io/art_crop/front/a/7/a78f5d3f-74d6-4ec1-89c4-e24639d3f4ba.jpg?1793281380",
    "colorIdentity": [
     "G"
    ],
@@ -675,7 +675,7 @@
    "name": "Cultivate",
    "oracleText": "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.",
    "power": null,
-   "releasedAt": "2026-06-26",
+   "releasedAt": "2026-11-13",
    "reserved": false,
    "searchNames": [
     "cultivate"
@@ -791,7 +791,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -946,7 +946,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "4e183439-17d2-47ff-9d99-5e22821d91e3",
@@ -1080,7 +1080,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "manaLines": [
     {
      "amount": {
@@ -1399,7 +1399,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -1555,7 +1555,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "24882fa2-3fe9-4c1b-aa3d-0e6488b9db27",
@@ -1575,7 +1575,7 @@
     "R"
    ],
    "commanderLegality": "legal",
-   "edhrecRank": 107,
+   "edhrecRank": 108,
    "gameChanger": true,
    "keywords": [],
    "layout": "normal",
@@ -1727,7 +1727,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "isOneShot": true,
    "manaLines": [
     {
@@ -1788,7 +1788,7 @@
    "colorIdentity": [],
    "colors": [],
    "commanderLegality": "legal",
-   "edhrecRank": 742,
+   "edhrecRank": 740,
    "gameChanger": true,
    "keywords": [],
    "layout": "normal",
@@ -1996,7 +1996,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "isOneShot": true,
    "manaLines": [
     {
@@ -2056,7 +2056,7 @@
    "colorIdentity": [],
    "colors": [],
    "commanderLegality": "legal",
-   "edhrecRank": 153,
+   "edhrecRank": 152,
    "gameChanger": true,
    "keywords": [],
    "layout": "normal",
@@ -2234,7 +2234,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "manaLines": [
     {
      "amount": {
@@ -2434,7 +2434,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "manaLines": [
     {
      "amount": {
@@ -2483,7 +2483,7 @@
    "colorIdentity": [],
    "colors": [],
    "commanderLegality": "legal",
-   "edhrecRank": 247,
+   "edhrecRank": 249,
    "gameChanger": true,
    "keywords": [],
    "layout": "normal",
@@ -2648,7 +2648,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "manaLines": [
     {
      "amount": {
@@ -2760,7 +2760,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "manaLines": [
     {
      "amount": {
@@ -2906,7 +2906,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "manaLines": [
     {
      "amount": {
@@ -2964,7 +2964,7 @@
  "Painful Truths": {
   "card": {
    "_id": "58a2d15f-1b4b-4303-b524-8cc0d1b3e7d2",
-   "artCrop": "https://cards.scryfall.io/art_crop/front/f/a/faa82f09-0693-4cc6-8770-8c6a35aa627b.jpg?1783904558",
+   "artCrop": "https://cards.scryfall.io/art_crop/front/6/6/66376402-2b5b-4568-a507-e2f1dc367a54.jpg?1793197488",
    "colorIdentity": [
     "B"
    ],
@@ -2972,7 +2972,7 @@
     "B"
    ],
    "commanderLegality": "legal",
-   "edhrecRank": 1743,
+   "edhrecRank": 1755,
    "gameChanger": false,
    "keywords": [
     "Converge"
@@ -3008,7 +3008,7 @@
    "name": "Painful Truths",
    "oracleText": "Converge — You draw X cards and lose X life, where X is the number of colors of mana spent to cast this spell.",
    "power": null,
-   "releasedAt": "2026-01-23",
+   "releasedAt": "2026-11-13",
    "reserved": false,
    "searchNames": [
     "painful truths"
@@ -3102,7 +3102,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "58a2d15f-1b4b-4303-b524-8cc0d1b3e7d2",
@@ -3350,7 +3350,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "manaLines": [
     {
      "amount": {
@@ -3556,7 +3556,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "manaLines": [
     {
      "amount": {
@@ -3789,7 +3789,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "model": "derived",
    "normalizeVersion": 21,
    "oracleId": "53236dd7-845a-444c-96d5-f41ed7325d8f",
@@ -3989,7 +3989,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "manaLines": [
     {
      "amount": {
@@ -4159,7 +4159,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "manaLines": [
     {
      "amount": {
@@ -4473,7 +4473,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "landFetch": {
     "kind": "spell",
     "reach": [
@@ -4542,11 +4542,11 @@
  "Skullclamp": {
   "card": {
    "_id": "65986c1b-8e51-4604-b685-d82fa7d1263a",
-   "artCrop": "https://cards.scryfall.io/art_crop/front/1/d/1d8b007b-3169-4ee3-80c7-781fc096fc7a.jpg?1783903215",
+   "artCrop": "https://cards.scryfall.io/art_crop/front/e/1/e1da8b79-249b-439a-a0ad-c8784bd716df.jpg?1793021175",
    "colorIdentity": [],
    "colors": [],
    "commanderLegality": "legal",
-   "edhrecRank": 39,
+   "edhrecRank": 38,
    "gameChanger": false,
    "keywords": [
     "Equip"
@@ -4582,7 +4582,7 @@
    "name": "Skullclamp",
    "oracleText": "Equipped creature gets +1/-1.\nWhenever equipped creature dies, draw two cards.\nEquip {1}",
    "power": null,
-   "releasedAt": "2026-06-26",
+   "releasedAt": "2026-11-13",
    "reserved": false,
    "searchNames": [
     "skullclamp"
@@ -4671,7 +4671,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "65986c1b-8e51-4604-b685-d82fa7d1263a",
@@ -4739,7 +4739,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "manaLines": [
     {
      "amount": {
@@ -4980,7 +4980,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "model": "derived",
    "normalizeVersion": 12,
    "oracleId": "9a107e48-3d50-4941-95b1-10f2b29a4245",
@@ -5112,7 +5112,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "model": "derived",
    "normalizeVersion": 22,
    "oracleId": "9381b4a5-a8e0-412d-bc7f-ae15afa0f135",
@@ -5332,7 +5332,7 @@
     ]
    },
    "clauseSource": "grammar",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "model": "derived",
    "normalizeVersion": 13,
    "oracleId": "3aa83ed2-f48b-4ce6-a614-2c54ddf50538",
@@ -5418,7 +5418,7 @@
     ]
    },
    "clauseSource": "model",
-   "deriveVersion": 538,
+   "deriveVersion": 539,
    "model": "derived",
    "normalizeVersion": 14,
    "oracleId": "41d16975-d6c0-4343-bea2-4f360ead9a1c",
