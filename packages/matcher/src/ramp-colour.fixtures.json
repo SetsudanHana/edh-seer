@@ -2145,6 +2145,13 @@
      "effect": {
       "kind": "draw-card",
       "scaling": "per-permanent",
+      "scalingSubject": {
+       "control": "you",
+       "scope": "all",
+       "token": null,
+       "type": "permanent",
+       "zone": "battlefield"
+      },
       "subject": {
        "control": "you",
        "token": null
@@ -5392,7 +5399,14 @@
      },
      "effect": {
       "kind": "pump",
-      "scaling": "per-permanent"
+      "scaling": "per-permanent",
+      "scalingSubject": {
+       "control": "you",
+       "scope": "all",
+       "token": null,
+       "type": "permanent",
+       "zone": "battlefield"
+      }
      },
      "kind": "static",
      "repeats": "continuous"

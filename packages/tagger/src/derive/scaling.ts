@@ -174,12 +174,12 @@ export function scalingSubject(action: Action, clauseText?: string): SubjectFilt
     return subject;
   }
 
-  // A COUNT OF DISTINCT CHARACTERISTICS ("the number of creature types among non-Borg creatures you control", Starfleet Academy; "colors among permanents you control") is raised by an object only when it adds a NEW
-  // type or colour, so no class of objects on the battlefield scales it: naming one (every creature you control) made every creature a supplier (21,017 pairs on one card, most of them false). The amount text stays; no subject is read.
-  // A GRAVEYARD count keeps its graveyard (above): a fill raises it whatever type it adds (Tarmogoyf).
-  // CEILING: no counted class for a characteristic count, so a card that really adds a new type or colour (a changeling) is not paired with it.
-  if (/\b(?:types?|colou?rs?|names?)\s+among\b/i.test(noun)) return undefined;
-
+  // A COUNT OF DISTINCT CHARACTERISTICS read by the add that #1673 newly derives ("Choose a color. Add an amount of mana of that color equal to the number of creature types among non-Borg creatures you control",
+  // Starfleet Academy) is raised by an object only when it adds a NEW type, so no class of objects scales it: naming "creature" made every creature a supplier (21,017 pairs on one card, most of them false).
+  // The amount text stays; no subject is read.
+  // CEILING: deliberately narrow. Only that add (an "amount of mana of that color" over a "<types|colors|names> among" count) reads no class. The characteristic counts that derived before it (Valiant Changeling, Saavik,
+  // Infinite Diversity, Karn Gilded Guardian, Faeburrow Elder, Bloom Tender, Earthen Ally, Tam) keep the class they had: whether they should is a separate decision with its own measurement (about 88,800 scales pairs), a follow-up.
+  if (action.verb === "add-mana" && /^an amount of mana of (?:that|the chosen) colou?r$/i.test((action.object ?? "").trim()) && /\b(?:types?|colou?rs?|names?)\s+among\b/i.test(noun)) return undefined;
 
   if (DONATED_COUNT.test(noun)) {
     const subject = parseSubject(noun.split(/\s{1,4}you own\b/i)[0]!);
