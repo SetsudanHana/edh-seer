@@ -11,7 +11,7 @@
  *    field for it.
  *  - VERB FAMILIES are added one per PR, in the owner's order (2026-10-01): draw/search first. */
 import type { Control, SubjectFilter } from "../schema.js";
-import { counterKindOf, spellMove } from "../derive/subject.js";
+import { counterKindOf, parseSubject, spellMove } from "../derive/subject.js";
 import { SELF_REFERENCE } from "../derive/self-reference.js";
 import { KEYWORD_ABILITIES, SUBTYPES } from "../derive/subtypes.js";
 import { parse } from "./filter.js";
@@ -487,6 +487,9 @@ function moveObject(phrase: string, onField = false): Args | null {
   // "all other permanents with the same name as that permanent" (Maelstrom Pulse): a relation the
   // filter grammar cannot hold -- it read "all other permanents" and dropped the rest. Unread.
   if (/\bwith the same name as\b/i.test(phrase)) return null;
+  // "a creature card from that player's graveyard that was put there from their library this turn" (The Weaver King, Assimilate the Wounded): the card comes out of an OPPONENT's graveyard, but derive reads the later
+  // "from <zone>" (where it was put there from) as the origin and the card as any player's, which pairs it with every own-graveyard trigger (about 6,800 false pairs). Unread until the emit can carry the zone and its owner.
+  if (/ from that player's (?:graveyard|hand|library) that (?:was|were) put there from /i.test(phrase)) return null;
   const t = phrase.replace(/ in a face-(?:down|up) pile$/, "").replace(/ at random$/, "").replace(/ of (?:their|his or her|your) choice$/, "").replace(/ from among (?:them|those cards|the (?:cards )?milled (?:this way|cards)|the cards milled this way)$/, "");
   // "target player's graveyard", "all graveyards": a whole graveyard.
   if (/^(?:target player's|target opponent's|each opponent's|your|their|all|each player's|all opponents'|any number of target players'|target players') graveyards?$/.test(t)) return { object: { control: "any", token: null }, fromZone: "graveyard", text: phrase };
@@ -1513,6 +1516,21 @@ function readPhrase(quoted: string, condition: string | undefined, carried?: Act
   return cond > 0 ? readPhraseOnce(phrase.slice(0, cond), [condition, phrase.slice(cond + 1)].filter(Boolean).join(", "), carried) : null;
 }
 
+/** A "for each" COUNT THE AMOUNT CAN CARRY WHOLE (#1673 review). The amount keeps the printed words, but derive scales with the CLASS it reads off them, so a count whose qualifier that class drops scales with too much
+ *  (Sovereign Okinec Ahau's "creature you control with power greater than that creature's base power" scaled with every creature you control: 20,791 false `scales` pairs). Accepted only when the filter grammar reads the whole
+ *  count AND every characteristic it reads is the one `parseSubject` reads too; a count only the grammar understands in part (a stat comparison) or not at all (a history, "attached to", "that you've put a counter on this turn")
+ *  is refused. Refused too: a count that names what an earlier action or choice did ("of those creatures", "who does", "flip you win", "different result", "this way", "revealed", "discarded", "spent", "exiled", "chosen")
+ *  and a self-reference ("this spell", "this creature", "~"), which no class names (Malfegor's "for each card discarded this way" is refused the same way).
+ *  CEILING: the check is on words and on two readings, not on the whole sentence; a count both readings agree on but whose qualifier neither reads would pass. */
+const COUNT_BACKREF = /\b(?:of (?:those|them|these)|who (?:can't|can|does|do|didn't|did|doesn't|is|are|chose|has|have)|(?:you|they) (?:won|win)|different result|this way|revealed|discarded|spent|exiled|chosen|that (?:player|creature|card|spell|permanent))\b|\bthis (?:spell|creature|permanent|artifact|enchantment|land|card)\b|~/i;
+function countIsPlainClass(count: string): boolean {
+  if (COUNT_BACKREF.test(count)) return false;
+  const read = parse(count);
+  if (!read) return false;
+  const seen = parseSubject(count, "pick") as Record<string, unknown>;
+  return Object.entries(read).every(([k, v]) => v === null || v === undefined || JSON.stringify(seen[k]) === JSON.stringify(v));
+}
+
 function readPhraseOnce(quoted: string, condition: string | undefined, carried?: ActionReading["actor"]): ActionReading[] | null {
   const phrase = quoted.replace(/\uE000(\d+)\uE001/g, (_m, i: string) => quotes[Number(i)]!);
   let t = phrase.trim().replace(/^(?:then|instead|also) /i, "").replace(/,$/, "");
@@ -2184,10 +2202,10 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // (the negated class excludes the comma that closes it, so the scan is linear).
     // A count that is what an earlier action did ("for each nonland card revealed this way", Ambassador K'Ehleyr) stays unread, as "for each card discarded this way" does (Malfegor): no class names it.
     // CEILING: the repetition is the amount's scaling and no more; "a copy of it" is a copy of what the card names, not one copy per counted object (as the eachCopy reading above).
-    // CEILING: a count's own narrowing is not carried by the scaling class derive reads off it: "for each permanent you control that you've put a counter on this turn" (La Forge) scales with every permanent you control,
-    // "for each opponent you attacked this turn" (Rite of Ascension) with every opponent, "for each attacking non-Faerie creature" keeps its combat state but not "this turn": the amount text keeps the full words, the class is wider.
+    // The count must be a PLAIN CLASS (`countIsPlainClass`): one the filter grammar reads whole and derive's subject reading agrees with. A count that carries a qualifier derive's class drops (Sovereign Okinec Ahau's
+    // "with power greater than that creature's base power", La Forge's "that you've put a counter on this turn", Rite of Ascension's "you attacked this turn"), or names what an earlier action or choice did, or a self-reference, is refused.
     const eachLead = /^for each ([^,]+), ((?:create|draw|you gain|gain) .+|put .+ counters? on .+)$/i.exec(s);
-    if (eachLead && !/ this way$/i.test(eachLead[1]!) && phrases(eachLead[2]!).length === 1) s = `${eachLead[2]!} for each ${eachLead[1]!}`;
+    if (eachLead && countIsPlainClass(eachLead[1]!) && phrases(eachLead[2]!).length === 1) s = `${eachLead[2]!} for each ${eachLead[1]!}`;
     // "You may pay {1}. If you do, <effect>" (Wooden Sphere, Marooned): the payment records no action, as the store has it, and the first action after "If you do" carries
     // the payment's optionality (`ifYouDoAfterMay`). Only a mana payment, and only with that reflexive sentence behind it: a payment nothing follows claims nothing here.
     // CEILING: the payment itself (its mana, its energy) is not recorded, as the store drops it too; the effect reads as optional but not as costing anything.

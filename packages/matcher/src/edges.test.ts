@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { isManaRock, pairReasons, pairReasonsAcrossFaces, directedReasons, revenantToughness, cardThemeTags, cardSupplyTags, themeSubjectKey, eventTagKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons, withMillScope } from "./edges.js";
+import { createsForYou, isManaRock, pairReasons, pairReasonsAcrossFaces, directedReasons, revenantToughness, cardThemeTags, cardSupplyTags, themeSubjectKey, eventTagKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons, withMillScope } from "./edges.js";
 import { normalizeZoneEvent } from "./zones.js";
 import { faceDeckCards } from "./faces.js";
 import { fixtureDeckCard } from "./fixture-cards.js";
@@ -7842,4 +7842,12 @@ test("two mill reasons that differ only in millScope are one claim, scope joined
   const out = dedupeReasons([r("you"), r("opp")]);
   expect(out).toHaveLength(1);
   expect(out[0]!.millScope).toBe("any");
+});
+
+test("a token that enters tapped and attacking is still the token its maker creates (createsForYou, #1673)", () => {
+  const emit = { verb: "create-token", subject: { control: "you", token: true, type: "creature", subtype: "goblin", combat: "attacking", tapped: true } } as GameEvent;
+  const maker = base("Goblin Traprunner", [{ kind: "triggered", trigger: { verbs: ["attacks"], subject: { control: "you", token: null, self: true } }, effect: { kind: "token-generation", subject: emit.subject }, emits: [emit] }]);
+  const token = base("Goblin", [], ["goblin"]);
+  (token.tags.characteristics as { token: boolean }).token = true;
+  expect(createsForYou(maker, token, { goblin: ["creature"] })).toBe(true);
 });

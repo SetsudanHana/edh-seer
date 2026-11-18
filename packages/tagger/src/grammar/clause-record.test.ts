@@ -1963,16 +1963,13 @@ test("'each player exiles all but the bottom six cards of their library face dow
 // #1673: the cards whose first blocker was a quantifier ahead of an action. Printed text as the corpus holds it (Scryfall, queried 2026-11-18).
 const QUANTIFIED = [
   { name: "Chief Magistrate of Mercadia", typeLine: "Legendary Creature \u2014 Human Noble", oracleText: "When Chief Magistrate of Mercadia enters, you become the monarch.\nAt the beginning of your upkeep, create a 2/1 red Goblin creature token with haste. Then if you're the monarch, for each creature token you control, create a token that's a copy of it." },
-  { name: "La Forge, Thoughtful as Ever", typeLine: "Legendary Creature \u2014 Human Artificer", oracleText: "{T}: For each permanent you control that you've put a counter on this turn, create a 1/1 blue Faerie creature token with flying." },
-  { name: "Rite of Ascension", typeLine: "Enchantment", oracleText: "Battlefront \u2014 Whenever you attack, for each opponent you attacked this turn, create a tapped and attacking 2/1 red Klingon Warrior creature token with haste." },
   { name: "Worf, Still Not Merry", typeLine: "Legendary Creature \u2014 Klingon Warrior Officer", oracleText: "Whenever Worf attacks, for each attacking non-Faerie creature, create a tapped and attacking 1/1 blue Faerie creature token with flying." },
-  { name: "The Weaver King", typeLine: "Legendary Creature \u2014 Horror Wizard", oracleText: "Shadow (This creature can block or be blocked by only creatures with shadow.)\nWhenever The Weaver King deals combat damage to a player, they mill that many cards. Then for each opponent, put a creature card from that player's graveyard that was put there from their library this turn onto the battlefield under your control." },
   { name: "Starfleet Academy", typeLine: "Legendary Land", oracleText: "{T}: Add {C}.\nFederation \u2014 {5}, {T}: Choose a color. Add an amount of mana of that color equal to the number of creature types among non-Borg creatures you control." },
   { name: "The Beacon of Kahless", typeLine: "Legendary Artifact", oracleText: "{T}: Add one mana of any color.\nBattlefront \u2014 {T}: Choose a color. Add an amount of mana of that color equal to the number of opponents you attacked this turn." },
   { name: "Alexander, Ship's Fool", typeLine: "Legendary Creature \u2014 Klingon Human", oracleText: "Vigilance, haste\n{T}: Each player reveals the top card of their library, then draws a card. Alexander deals X damage to a random opponent, where X is the greatest mana value among cards revealed this way." },
   { name: "Chief Montgomery Scott", typeLine: "Legendary Creature \u2014 Human Artificer", oracleText: "Strange new worlds \u2014 {6}, {T}: You may put a creature or Spacecraft card from your hand onto the battlefield. It enters with X additional +1/+1 counters on it if it's a creature and X additional charge counters on it if it's a Spacecraft, where X is the number of differently named lands you control." },
 ];
-test("a quantifier ahead of an action reads: each of these cards is complete with no blocker (#1673)", () => {
+test("a quantifier ahead of an action reads: each of these cards is complete with no blocker (#1673 review: Worf, the Magistrate, Starfleet Academy, the Beacon, Alexander, Montgomery Scott)", () => {
   for (const card of QUANTIFIED) {
     const g = grammarClauseRecords(card);
     expect([card.name, g.blocker]).toEqual([card.name, undefined]);
@@ -1989,7 +1986,7 @@ test("'for every N' (a divisor the schema has no field for) and a count of what 
 });
 
 test("a creature-type-count mana add and a differently-named-lands count derive their scaling (Starfleet Academy, Chief Montgomery Scott, #1673)", () => {
-  const [, , , , , academy, , , scott] = QUANTIFIED as [unknown, unknown, unknown, unknown, unknown, (typeof QUANTIFIED)[number], unknown, unknown, (typeof QUANTIFIED)[number]];
+  const [, , academy, , , scott] = QUANTIFIED as [unknown, unknown, (typeof QUANTIFIED)[number], unknown, unknown, (typeof QUANTIFIED)[number]];
   const derive = (card: typeof academy) => { const g = grammarClauseRecords(card); return deriveCardTags(deriveInputOf({ name: card.name, typeLine: card.typeLine, oracleText: "" } as never, "x", card.name, g.records, undefined, g.readings)); };
   expect(derive(academy).manaLines?.[1]?.amount).toMatchObject({ fixed: null, scales: "number of creature types among non-borg creatures you control" });
   const counters = derive(scott).abilities.filter((a) => a.emits?.some((e) => e.verb === "counter-added"));
@@ -2006,4 +2003,19 @@ test("'for each creature token you control, create a token that's a copy of it' 
   expect(copies).toEqual([]);
   const made = tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => (e.verb === "create-token" || e.verb === "enters") && e.subject.type === "creature");
   expect(made.length).toBe(4);
+  expect(made.map((e) => [e.verb, e.subject.token])).toEqual([["create-token", true], ["enters", true], ["create-token", true], ["enters", true]]);
+  // the copies' own emits (the last two) are creature tokens you make, the class the count names
+  expect(made.slice(2).every((e) => e.subject.control === "you" && e.subject.type === "creature")).toBe(true);
+});
+
+test("cards whose lead or zone cannot be carried stay blocked, at the grammar the derive reads (La Forge, Rite of Ascension, The Weaver King, Assimilate the Wounded, #1673 review)", () => {
+  const blocked = (name: string, typeLine: string, oracleText: string) => grammarClauseRecords({ name, typeLine, oracleText });
+  // dropped qualifiers: "that you've put a counter on this turn", "you attacked this turn"
+  expect(blocked("La Forge, Thoughtful as Ever", "Legendary Creature \u2014 Human Engineer", "{T}: For each permanent you control that you've put a counter on this turn, create a 1/1 blue Faerie creature token with flying.").blocker).toMatchObject({ phrase: "for each permanent you control that you've put a counter on this turn" });
+  expect(blocked("Rite of Ascension", "Enchantment", "Whenever you attack, for each opponent you attacked this turn, create a tapped and attacking 2/1 red Klingon Warrior creature token with haste.").blocker).toMatchObject({ phrase: "for each opponent you attacked this turn" });
+  // a card out of an opponent's graveyard that "was put there from" a zone: derive would read it as any player's, from that zone
+  expect(blocked("The Weaver King", "Legendary Creature \u2014 Horror Wizard", "Whenever The Weaver King deals combat damage to a player, they mill that many cards. Then for each opponent, put a creature card from that player's graveyard that was put there from their library this turn onto the battlefield under your control.").complete).toBe(false);
+  expect(blocked("Assimilate the Wounded", "Instant", "For each opponent, assimilate up to one target creature card from that player's graveyard that was put there from the battlefield this turn.").complete).toBe(false);
+  // Sovereign Okinec Ahau: the count's "with power greater than that creature's base power" would read as every creature you control
+  expect(blocked("Sovereign Okinec Ahau", "Legendary Creature \u2014 Human Noble", "Ward {2}\nWhenever Sovereign Okinec Ahau attacks, for each creature you control with power greater than that creature's base power, put a number of +1/+1 counters on that creature equal to the difference.").complete).toBe(false);
 });

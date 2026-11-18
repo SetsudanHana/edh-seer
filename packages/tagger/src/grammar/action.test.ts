@@ -897,17 +897,17 @@ test("a sacrifice 'for each card discarded this way' is unread (Malfegor)", () =
 
 // #1673: "For each <what>, <action>" is the action's own "for each" tail, said first. The count is the amount; the action is read as it is when the tail comes last.
 test("a leading 'for each X, <create / counter / draw / gain>' is the action with X as its count (#1673)", () => {
-  expect(read("For each opponent you attacked this turn, put a +1/+1 counter on ~.")).toMatchObject([{ verb: "add-counter", counter: "+1/+1", amount: "1 for each opponent you attacked this turn" }]);
+  expect(read("For each land you control, put a +1/+1 counter on ~.")).toMatchObject([{ verb: "add-counter", counter: "+1/+1", amount: "1 for each land you control" }]);
   // A count that is what an earlier action of the effect did ("revealed this way", Ambassador K'Ehleyr) is no class the amount can name: left unread, as Malfegor's "for each card discarded this way" is.
   expect(unreadPhrases("For each nonland card revealed this way, put a +1/+1 counter on ~.", "triggered")).toEqual(["for each nonland card revealed this way"]);
   expect(read("For each attacking non-Faerie creature, create a tapped and attacking 1/1 blue Faerie creature token with flying.")[0]).toMatchObject({ verb: "create", amount: "1 for each attacking non-Faerie creature" });
   expect(read("For each creature token you control, create a token that's a copy of it.")[0]).toMatchObject({ verb: "create", amount: "1 for each creature token you control" });
-  expect(read("For each card in your graveyard, draw a card.")).toMatchObject([{ verb: "draw", amount: "for each card in your graveyard" }]);
+  expect(read("For each land you control, draw a card.")).toMatchObject([{ verb: "draw", amount: "for each land you control" }]);
   // Two phrases behind the lead: the count could bind to both, and a tail is read on the last alone, so it is refused.
   expect(unreadPhrases("For each creature you control, draw a card and create a Treasure token.", "spell").length).toBeGreaterThan(0);
 });
 
-test("'Then for each opponent, <action>' is the action, as 'For each opponent' is (The Weaver King, #1673)", () => {
+test("'Then for each opponent, <action>' is the action, as 'For each opponent' is (#1673)", () => {
   expect(unreadPhrases("Then for each opponent, put a creature card from that player's graveyard onto the battlefield under your control.", "triggered")).toEqual([]);
 });
 
@@ -928,4 +928,30 @@ test("'It enters with X additional A counters on it if it's a creature and X add
   expect(r.map((a) => a.verb)).toEqual(["put", "add-counter", "add-counter"]);
   expect(r[1]).toMatchObject({ counter: "+1/+1", condition: "if it's a creature", amount: "X, where X is the number of differently named lands you control", object: { ref: "sentence" } });
   expect(r[2]).toMatchObject({ counter: "charge", condition: "if it's a Spacecraft", object: { ref: "sentence" } });
+});
+
+// #1673 review: a leading for-each is read only when its count is a plain class the amount can carry whole. Each shape below stays unread (the card keeps its stored reading or its blocker).
+test("a leading for-each whose count drops a qualifier or names what an earlier action did stays unread (#1673)", () => {
+  const refused: [string, string][] = [
+    // a qualifier derive's class reading drops (Sovereign Okinec Ahau: "with power greater than that creature's base power" read as every creature)
+    ["For each creature you control with power greater than that creature's base power, put a number of +1/+1 counters on that creature equal to the difference.", "for each creature you control with power greater than that creature's base power"],
+    ["For each permanent you control that you've put a counter on this turn, create a 1/1 blue Faerie creature token with flying.", "for each permanent you control that you've put a counter on this turn"],
+    ["For each opponent you attacked this turn, create a tapped and attacking 2/1 red Klingon Warrior creature token with haste.", "for each opponent you attacked this turn"],
+    // back-references to what an earlier action or choice did
+    ["For each of those creatures, create a token that's a copy of that creature.", "for each of those creatures"],
+    ["For each opponent who does, create a Treasure token.", "for each opponent who does"],
+    ["For each flip you win, create a 1/1 red Goblin creature token that's tapped and attacking.", "for each flip you win"],
+    ["For each different result, create a 1/1 white Clown Robot artifact creature token.", "for each different result"],
+    ["For each opponent who didn't discard a card with mana value 4 or greater, draw a card.", "for each opponent who didn't discard a card with mana value 4 or greater"],
+    // a self-reference read as a class
+    ["For each mana from a Desert spent to cast this spell, create a tapped Treasure token.", "for each mana from a Desert spent to cast this spell"],
+  ];
+  for (const [text, lead] of refused) expect(unreadPhrases(text, "spell"), text).toContain(lead);
+  // ...and the plain classes still read.
+  for (const text of ["For each creature token you control, create a token that's a copy of it.", "For each attacking non-Faerie creature, create a tapped and attacking 1/1 blue Faerie creature token with flying.", "For each land you control, create a Treasure token."]) expect(unreadPhrases(text, "spell"), text).toEqual([]);
+});
+
+test("'from that player's graveyard that was put there from <zone>' stays unread: derive reads the later 'from' as the origin of a card taken from an opponent's graveyard (The Weaver King, Assimilate the Wounded, #1673)", () => {
+  expect(unreadPhrases("Then for each opponent, put a creature card from that player's graveyard that was put there from their library this turn onto the battlefield under your control.", "triggered")).toHaveLength(1);
+  expect(unreadPhrases("For each opponent, assimilate up to one target creature card from that player's graveyard that was put there from the battlefield this turn.", "spell")).toHaveLength(1);
 });
