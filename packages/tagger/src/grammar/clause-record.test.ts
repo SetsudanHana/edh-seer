@@ -1372,13 +1372,16 @@ test("the top card of the library, looked at or revealed, claims nothing: Captai
   expect(deriveDiff(magus.a.abilities, magus.b.abilities)).toBeNull();
 });
 
-test("'choose a color' / 'choose a number between 0 and 10' drop the choice (a replacement's is the store's unclaimed `other`) and the chosen reference rides in the later words: Nyota Uhura; Starfleet Academy's 'of that color' stays unread; parity Rhystic Cave, Talion, Heraldic Banner", () => {
+test("'choose a color' / 'choose a number between 0 and 10' drop the choice (a replacement's is the store's unclaimed `other`) and the chosen reference rides in the later words: Nyota Uhura; Starfleet Academy's 'of that color' is the chosen colour's add (#1673); parity Rhystic Cave, Talion, Heraldic Banner", () => {
   const nyota = grammarClauseRecords(NYOTA_UHURA__COMMUNICATIONS);
   expect(nyota.blocker).toBeUndefined();
   expect(nyota.records[0]!.actions).toEqual([expect.objectContaining({ verb: "other", object: "choose a number between 0 and 10" })]);
   expect(nyota.records[1]!.trigger).toMatchObject({ event: "cast", subject: "a spell with mana value equal to the chosen number", control: "opp" });
-  // "that color" is no filter this grammar can carry, so the card stops there rather than reading it as any color.
-  expect(grammarClauseRecords(STARFLEET_ACADEMY).blocker).toEqual({ clause: 2, kind: "action", phrase: "add an amount of mana of that color equal to the number of creature types among non-Borg creatures you control" });
+  // "that color" is no filter this grammar can carry, so a COLOUR filter on it stays unread. #1673: "Choose a color. Add an amount of mana of that color equal to <count>" is the add whose colour is the one chosen
+  // in the same clause, which mana-lines reads as any colour as it does for Selvala's "one mana of that color for each ...": the add is read, the count its amount.
+  const academy = grammarClauseRecords(STARFLEET_ACADEMY);
+  expect(academy.blocker).toBeUndefined();
+  expect(academy.records[1]!.actions).toEqual([expect.objectContaining({ verb: "add-mana", object: "an amount of mana of that color", amount: "the number of creature types among non-Borg creatures you control" })]);
   const cave = parity(RHYSTIC_CAVE, STORED_RHYSTIC_CAVE);
   // "unless ANY player pays {1}": anyone's payment, as the stored answer has it, not the controller's.
   expect(cave.g.records[0]!.actions![0]).toMatchObject({ verb: "add-mana", unless: { cost: "{1}", payer: "any" } });
@@ -1466,12 +1469,15 @@ test("'For each opponent, <verb phrase>' is the verb phrase alone, as the store 
   }
 });
 
-test("'[instead] for each creature <player> controls, create a token that's a copy of that creature' is the copy alone: Mirror Universe Intrusion; any other per-object creation stays unread (Brass's Bounty); parity Clone Legion, Multiversal Incursion", () => {
+test("'[instead] for each creature <player> controls, create a token that's a copy of that creature' is the copy alone: Mirror Universe Intrusion; any other per-object creation is the create counted by its for-each (Brass's Bounty, #1673); parity Clone Legion, Multiversal Incursion", () => {
   const mirror = grammarClauseRecords(MIRROR_UNIVERSE_INTRUSION);
   expect(mirror.blocker).toBeUndefined();
   // The kicked sentence's per-creature creation is the copy alone, beside the unkicked one's copy of the target.
   expect(mirror.records.at(-1)!.actions!.map((a) => [a.verb, a.object])).toEqual([["create", "a token that's a copy of target creature an opponent controls, except it has menace"], ["create", "a token that's a copy of that creature, except it has menace"]]);
-  expect(grammarClauseRecords(BRASS_S_BOUNTY).blocker).toEqual({ clause: 1, kind: "action", phrase: "for each land you control" });
+  // #1673: a leading "for each X, create ..." is the create with X as its count, as "Create a Treasure token for each land you control" reads; only the copy-of-that-creature form above is a per-object repetition.
+  const brass = grammarClauseRecords(BRASS_S_BOUNTY);
+  expect(brass.blocker).toBeUndefined();
+  expect(brass.records[0]!.actions![0]).toMatchObject({ verb: "create", amount: "1 for each land you control" });
   for (const [c, stored] of [[CLONE_LEGION, STORED_CLONE_LEGION], [MULTIVERSAL_INCURSION, STORED_MULTIVERSAL_INCURSION]] as const) {
     const p = parity(c, stored as never);
     expect(deriveDiff(p.a.abilities, p.b.abilities), c.name).toBeNull();
@@ -1952,4 +1958,42 @@ test("'each player exiles all but the bottom six cards of their library face dow
   expect(g.complete).toBe(true);
   const tags = deriveCardTags(deriveInputOf({ name: "Doomsday Excruciator", typeLine: "Creature \u2014 Demon", oracleText: "" } as never, "x", "Doomsday Excruciator", g.records, undefined, g.readings));
   expect(tags.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "exiled")!.subject).toMatchObject({ scope: "each", fromZone: "library" });
+});
+
+// #1673: the cards whose first blocker was a quantifier ahead of an action. Printed text as the corpus holds it (Scryfall, queried 2026-11-18).
+const QUANTIFIED = [
+  { name: "Chief Magistrate of Mercadia", typeLine: "Legendary Creature \u2014 Human Noble", oracleText: "When Chief Magistrate of Mercadia enters, you become the monarch.\nAt the beginning of your upkeep, create a 2/1 red Goblin creature token with haste. Then if you're the monarch, for each creature token you control, create a token that's a copy of it." },
+  { name: "La Forge, Thoughtful as Ever", typeLine: "Legendary Creature \u2014 Human Artificer", oracleText: "{T}: For each permanent you control that you've put a counter on this turn, create a 1/1 blue Faerie creature token with flying." },
+  { name: "Rite of Ascension", typeLine: "Enchantment", oracleText: "Battlefront \u2014 Whenever you attack, for each opponent you attacked this turn, create a tapped and attacking 2/1 red Klingon Warrior creature token with haste." },
+  { name: "Worf, Still Not Merry", typeLine: "Legendary Creature \u2014 Klingon Warrior Officer", oracleText: "Whenever Worf attacks, for each attacking non-Faerie creature, create a tapped and attacking 1/1 blue Faerie creature token with flying." },
+  { name: "The Weaver King", typeLine: "Legendary Creature \u2014 Horror Wizard", oracleText: "Shadow (This creature can block or be blocked by only creatures with shadow.)\nWhenever The Weaver King deals combat damage to a player, they mill that many cards. Then for each opponent, put a creature card from that player's graveyard that was put there from their library this turn onto the battlefield under your control." },
+  { name: "Starfleet Academy", typeLine: "Legendary Land", oracleText: "{T}: Add {C}.\nFederation \u2014 {5}, {T}: Choose a color. Add an amount of mana of that color equal to the number of creature types among non-Borg creatures you control." },
+  { name: "The Beacon of Kahless", typeLine: "Legendary Artifact", oracleText: "{T}: Add one mana of any color.\nBattlefront \u2014 {T}: Choose a color. Add an amount of mana of that color equal to the number of opponents you attacked this turn." },
+  { name: "Alexander, Ship's Fool", typeLine: "Legendary Creature \u2014 Klingon Human", oracleText: "Vigilance, haste\n{T}: Each player reveals the top card of their library, then draws a card. Alexander deals X damage to a random opponent, where X is the greatest mana value among cards revealed this way." },
+  { name: "Chief Montgomery Scott", typeLine: "Legendary Creature \u2014 Human Artificer", oracleText: "Strange new worlds \u2014 {6}, {T}: You may put a creature or Spacecraft card from your hand onto the battlefield. It enters with X additional +1/+1 counters on it if it's a creature and X additional charge counters on it if it's a Spacecraft, where X is the number of differently named lands you control." },
+];
+test("a quantifier ahead of an action reads: each of these cards is complete with no blocker (#1673)", () => {
+  for (const card of QUANTIFIED) {
+    const g = grammarClauseRecords(card);
+    expect([card.name, g.blocker]).toEqual([card.name, undefined]);
+    expect(g.complete).toBe(true);
+  }
+});
+
+test("'for every N' (a divisor the schema has no field for) and a count of what an earlier action did stay blockers (#1673)", () => {
+  const sarek = grammarClauseRecords({ name: "Sarek, Federation Ambassador", typeLine: "Legendary Creature \u2014 Vulcan Advisor", oracleText: "Federation \u2014 At the beginning of combat on your turn, draw a card for every five creature types among non-Borg creatures you control." });
+  expect(sarek.complete).toBe(false);
+  expect(sarek.blocker).toMatchObject({ phrase: "draw a card for every five creature types among non-Borg creatures you control" });
+  const ambassador = grammarClauseRecords({ name: "Ambassador K'Ehleyr", typeLine: "Legendary Creature \u2014 Klingon Human Ambassador", oracleText: "At the beginning of combat on your turn, each player reveals the top card of their library, then draws a card. For each nonland card revealed this way, put a +1/+1 counter on Ambassador K'Ehleyr." });
+  expect(ambassador.blocker).toMatchObject({ phrase: "for each nonland card revealed this way" });
+});
+
+test("a creature-type-count mana add and a differently-named-lands count derive their scaling (Starfleet Academy, Chief Montgomery Scott, #1673)", () => {
+  const [, , , , , academy, , , scott] = QUANTIFIED as [unknown, unknown, unknown, unknown, unknown, (typeof QUANTIFIED)[number], unknown, unknown, (typeof QUANTIFIED)[number]];
+  const derive = (card: typeof academy) => { const g = grammarClauseRecords(card); return deriveCardTags(deriveInputOf({ name: card.name, typeLine: card.typeLine, oracleText: "" } as never, "x", card.name, g.records, undefined, g.readings)); };
+  expect(derive(academy).manaLines?.[1]?.amount).toMatchObject({ fixed: null, scales: "number of creature types among non-borg creatures you control" });
+  const counters = derive(scott).abilities.filter((a) => a.emits?.some((e) => e.verb === "counter-added"));
+  expect(counters).toHaveLength(2);
+  for (const a of counters) expect(a.count?.scalesWith).toMatchObject({ type: "land", control: "you" });
+  for (const a of counters) expect(a.count?.scalesWith).not.toHaveProperty("named");
 });

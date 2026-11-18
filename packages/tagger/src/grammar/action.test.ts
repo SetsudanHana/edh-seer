@@ -894,3 +894,38 @@ test("a sacrifice 'for each card discarded this way' is unread (Malfegor)", () =
   // A count the board states is read as before (Thoughts of Ruin).
   expect(unreadPhrases("Each player sacrifices a land of their choice for each card in your hand.", "spell")).toEqual([]);
 });
+
+// #1673: "For each <what>, <action>" is the action's own "for each" tail, said first. The count is the amount; the action is read as it is when the tail comes last.
+test("a leading 'for each X, <create / counter / draw / gain>' is the action with X as its count (#1673)", () => {
+  expect(read("For each opponent you attacked this turn, put a +1/+1 counter on ~.")).toMatchObject([{ verb: "add-counter", counter: "+1/+1", amount: "1 for each opponent you attacked this turn" }]);
+  // A count that is what an earlier action of the effect did ("revealed this way", Ambassador K'Ehleyr) is no class the amount can name: left unread, as Malfegor's "for each card discarded this way" is.
+  expect(unreadPhrases("For each nonland card revealed this way, put a +1/+1 counter on ~.", "triggered")).toEqual(["for each nonland card revealed this way"]);
+  expect(read("For each attacking non-Faerie creature, create a tapped and attacking 1/1 blue Faerie creature token with flying.")[0]).toMatchObject({ verb: "create", amount: "1 for each attacking non-Faerie creature" });
+  expect(read("For each creature token you control, create a token that's a copy of it.")[0]).toMatchObject({ verb: "create", amount: "1 for each creature token you control" });
+  expect(read("For each card in your graveyard, draw a card.")).toMatchObject([{ verb: "draw", amount: "for each card in your graveyard" }]);
+  // Two phrases behind the lead: the count could bind to both, and a tail is read on the last alone, so it is refused.
+  expect(unreadPhrases("For each creature you control, draw a card and create a Treasure token.", "spell").length).toBeGreaterThan(0);
+});
+
+test("'Then for each opponent, <action>' is the action, as 'For each opponent' is (The Weaver King, #1673)", () => {
+  expect(unreadPhrases("Then for each opponent, put a creature card from that player's graveyard onto the battlefield under your control.", "triggered")).toEqual([]);
+});
+
+test("'add an amount of mana of that color equal to <count>' is an add-mana whose amount is the count (Starfleet Academy, The Beacon of Kahless, #1673)", () => {
+  expect(read("Choose a color. Add an amount of mana of that color equal to the number of opponents you attacked this turn.", "{T}"))
+    .toMatchObject([{ verb: "add-mana", text: "an amount of mana of that color", amount: "the number of opponents you attacked this turn" }]);
+  expect(unreadPhrases("Choose a color. Add an amount of mana of that color equal to the number of creature types among non-Borg creatures you control.", "activated")).toEqual([]);
+});
+
+test("damage to 'a random opponent' is damage to an opponent, none targeted (Alexander, Ship's Fool, #1673)", () => {
+  expect(read("~ deals X damage to a random opponent, where X is the greatest mana value among cards revealed this way.", "{T}")[0])
+    .toMatchObject({ verb: "deal-damage", amount: "the greatest mana value among cards revealed this way", object: { control: "opp" } });
+  expect(read("~ deals 3 damage to a random opponent.")[0]!.object).not.toHaveProperty("scope");
+});
+
+test("'It enters with X additional A counters on it if it's a creature and X additional B counters on it if it's a Spacecraft, where X is ...' is a counter per kind, each on the card put, each under its own type condition (Chief Montgomery Scott, #1673)", () => {
+  const r = read("You may put a creature or Spacecraft card from your hand onto the battlefield. It enters with X additional +1/+1 counters on it if it's a creature and X additional charge counters on it if it's a Spacecraft, where X is the number of differently named lands you control.", "{6}, {T}");
+  expect(r.map((a) => a.verb)).toEqual(["put", "add-counter", "add-counter"]);
+  expect(r[1]).toMatchObject({ counter: "+1/+1", condition: "if it's a creature", amount: "X, where X is the number of differently named lands you control", object: { ref: "sentence" } });
+  expect(r[2]).toMatchObject({ counter: "charge", condition: "if it's a Spacecraft", object: { ref: "sentence" } });
+});

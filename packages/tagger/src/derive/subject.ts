@@ -861,7 +861,7 @@ const NOT_MANA_ABILITY = /\b(?:(?:isn['’]t|aren['’]t|is not|are not|not)(?: 
 /** What follows a cut negation, still inside it: "... mana abilities OR LOYALTY ABILITIES" (the cut leaves \uE000 where it stood). */
 const NEGATION_TAIL = /\uE000(?:,? (?:or|and|nor) (?:an? )?(?:loyalty|triggered|activated) abilit(?:y|ies))+/gi;
 const withoutNegatedAbilities = (t: string): string => t.replace(NOT_MANA_ABILITY, "\uE000").replace(NEGATION_TAIL, " ").replace(/\uE000/g, " ");
-const NAMED = /\bnamed\s{1,4}([^,.]{1,80}?)(?=\s{1,4}(?:in|on|from|under|with|that|you|an?\b|to)\s|[,.]|$)/i;
+const NAMED = /(?<!\bdifferently\s)\bnamed\s{1,4}([^,.]{1,80}?)(?=\s{1,4}(?:in|on|from|under|with|that|you|an?\b|to)\s|[,.]|$)/i;
 
 /** A TARGETING RESTRICTION, WHICH NOTHING HERE MODELS. "an instant or sorcery spell that targets
  *  only a single creature you control". Anchored on "targets only", the printed template — 24 corpus

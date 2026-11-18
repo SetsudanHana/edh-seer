@@ -899,7 +899,7 @@ const ZONE_OWNERS: ReadonlyArray<readonly [string[], Control | undefined]> = [
   [["your", "opponents'"], "opp"], [["all", "opponents'"], "opp"],
   [["your"], "you"], [["an", "opponent's"], "opp"], [["target", "opponent's"], "opp"],
   [["each", "opponent's"], "opp"], [["defending", "player's"], "opp"], [["their"], undefined],
-  [["target", "player's"], undefined], [["a", "chosen", "player's"], undefined], [["a", "single"], undefined], [["any"], undefined], [["its", "owner's"], undefined],
+  [["target", "player's"], undefined], [["that", "player's"], undefined], [["a", "chosen", "player's"], undefined], [["a", "single"], undefined], [["any"], undefined], [["its", "owner's"], undefined],
   [["each", "player's"], undefined], [["each"], undefined], [["other", "players'"], "opp"], [["a"], undefined], [["the"], undefined],
 ];
 const ZONES = new Map([
