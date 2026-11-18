@@ -218,3 +218,10 @@ test("a battlefield choice of permanents you OWN keeps its board count: Leave //
   // ...while a reveal that merely mentions a commander you own is still a reveal.
   expect(actionScaling({ verb: "put", object: "any number of permanent cards from among them" })).toBeUndefined();
 });
+
+test("a count of characteristics names no battlefield class, but one among cards in a graveyard still names the graveyard (Starfleet Academy, Tarmogoyf, #1673)", () => {
+  expect(scalingSubject({ verb: "add-mana", amount: "the number of creature types among non-Borg creatures you control" })).toBeUndefined();
+  expect(scalingSubject({ verb: "modify-pt", amount: "the number of colors among permanents you control" })).toBeUndefined();
+  // a fill of a graveyard raises a graveyard count whatever type it adds, so the graveyard class stays
+  expect(scalingSubject({ verb: "modify-pt", amount: "the number of card types among cards in all graveyards" })).toMatchObject({ zone: "graveyard" });
+});
