@@ -1,6 +1,6 @@
 {
   "_what": "H3 for the filter grammar (#896 task 2): every group of phrases on which packages/tagger/src/grammar/filter.ts and parseSubject disagree, grouped by the SubjectFilter fields that differ, over packages/tagger/phrases.jsonl. Each group is labelled after reading EVERY member, not a sample. 'grammar right' cites the rule or the printed text; 'grammar wrong' must be fixed before task 3 switches derive over; 'both wrong' says what neither reads. phrase-diff-triage.test.ts fails when a group appears, disappears or changes size, and when the parsed count moves, so a change to either parser is re-triaged and banked here.",
-  "parsed": 6820,
+  "parsed": 6845,
   "groups": {
     "control": {
       "distinct": 79,
@@ -27,16 +27,16 @@
       "why": "'up to one other target creature', 'one or more other creatures', 'any number of other permanents': 'other' after a count. parseSubject's `other` regex accepts at most one word before it. Also 'target creature other than this creature', 'all creatures other than this creature': the same fact as 'another' written out. #1585: a batched trigger subject is read as an event (parseSubject role \"event\"), never counted; +12 members, 'one or more other <class> (you control)': 'other' after a count, grammar right ('one or more other creatures' is the case above)."
     },
     "fromZone": {
-      "distinct": 126,
+      "distinct": 146,
       "label": "grammar right",
       "rule": "CR 400.1",
-      "why": "'target card from an opponent's graveyard', '... from defending player's graveyard': the same ORIGIN_ZONE possessive gap as the fromZone,scope group, where the possessive carries no 'target'. Also 'lands from the top of your library' and 'creature spells from the top of your library' (Courser/Future Sight family: the origin is the library), and 'up to two target cards from a single graveyard' / 'from graveyards' / 'from all graveyards' (the cards come from a graveyard; 'single' constrains how many graveyards, not the class). parseSubject's ORIGIN_ZONE reads none of these."
+      "why": "'target card from an opponent's graveyard', '... from defending player's graveyard': the same ORIGIN_ZONE possessive gap as the fromZone,scope group, where the possessive carries no 'target'. Also 'lands from the top of your library' and 'creature spells from the top of your library' (Courser/Future Sight family: the origin is the library), and 'up to two target cards from a single graveyard' / 'from graveyards' / 'from all graveyards' (the cards come from a graveyard; 'single' constrains how many graveyards, not the class). parseSubject's ORIGIN_ZONE reads none of these. Re-banked 2026-11-18 (#1673): 'from that player's graveyard / hand / library' is a zone owner like 'target player's' (filter.ts), so 25 more phrases parse and the fromZone, zone and anyOf groups grow by 20, 3 and 2 in the same families."
     },
     "zone": {
-      "distinct": 44,
+      "distinct": 47,
       "label": "grammar right",
       "rule": "CR 400.1",
-      "why": "'target creature card in your graveyard', 'all cards in your hand': `zone` is where the subject lives and absent means the battlefield (schema), so parseSubject's reading puts every one of these on the battlefield. TASK 3 CAUTION: on a producer, zone graveyard is read as a graveyard FILL by graveyardFillMatches; the switch must check each consumer of `zone` before trusting this field from the grammar. The two OR-lists whose alternatives have different heads ('target spell, nonland permanent, or card in a graveyard', 'an artifact or a card in your hand') are refused, not zoned. Also 'Enchant creature card in a graveyard' (Animate Dead's enchant line, CR 303.4a) and 'cards in graveyards' (plural)."
+      "why": "'target creature card in your graveyard', 'all cards in your hand': `zone` is where the subject lives and absent means the battlefield (schema), so parseSubject's reading puts every one of these on the battlefield. TASK 3 CAUTION: on a producer, zone graveyard is read as a graveyard FILL by graveyardFillMatches; the switch must check each consumer of `zone` before trusting this field from the grammar. The two OR-lists whose alternatives have different heads ('target spell, nonland permanent, or card in a graveyard', 'an artifact or a card in your hand') are refused, not zoned. Also 'Enchant creature card in a graveyard' (Animate Dead's enchant line, CR 303.4a) and 'cards in graveyards' (plural). Re-banked 2026-11-18 (#1673): 'from that player's graveyard / hand / library' is a zone owner like 'target player's' (filter.ts), so 25 more phrases parse and the fromZone, zone and anyOf groups grow by 20, 3 and 2 in the same families."
     },
     "owner": {
       "distinct": 4,
@@ -549,10 +549,10 @@
       "why": "Every member read. notSubtype: 'that isn't a Demon, Devil, or Imp'; a negated subtype inside a token's quoted ability is not the token's; subtype: a word inside a name, a counter kind, a Role's name or a token's quoted ability is not a subtype; Adventure is a card's layout (`status`), not its subtype; a planeswalker subtype counts before 'planeswalker'."
     },
     "anyOf": {
-      "distinct": 11,
+      "distinct": 13,
       "label": "grammar right",
       "rule": "printed text",
-      "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'."
+      "why": "Every member read. anyOf: alternatives the schema can only say as branches: whole noun-phrase lists (their union), a player beside an object ('target player or planeswalker', `player`), alternatives with types of their own ('a creature card or Garruk planeswalker card'), 'enchanted or equipped', 'power or toughness N or less'. Re-banked 2026-11-18 (#1673): 'from that player's graveyard / hand / library' is a zone owner like 'target player's' (filter.ts), so 25 more phrases parse and the fromZone, zone and anyOf groups grow by 20, 3 and 2 in the same families."
     },
     "shares,type": {
       "distinct": 3,
