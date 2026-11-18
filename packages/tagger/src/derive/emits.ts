@@ -1085,6 +1085,10 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     const left = [subject.subtype].flat().filter((t) => !kinds.has(String(t).toLowerCase()));
     if (left.length === 0) delete subject.subtype; else subject.subtype = left.length === 1 ? left[0]! : left;
   }
+  // THE CARD YOU PUT ONTO THE BATTLEFIELD FROM YOUR OWN ZONE IS YOURS (Chief Montgomery Scott, #1673 review): "You may put a creature or Spacecraft card from your hand onto the battlefield. It enters with X additional +1/+1 counters on it"
+  // puts the counters on a permanent you control, not on an any-controller object that opponent-only counter triggers (Generous Patron, Kros, Bold Plagiarist) would hear.
+  // CEILING: only "it enters with ... counters" straight after a put from your hand or graveyard onto the battlefield.
+  if (action.verb === "add-counter" && recipient === undefined && subject.control === "any" && /\bput\b[^.]*\bfrom your (?:hand|graveyard)\b[^.]*\bonto the battlefield\b[^.]*\.\s*it enters with\b/i.test(clauseText ?? "")) subject.control = "you";
   // ...and alternatives are read AFTER the counter kinds left the subtype (#1575): "gold counters" is no Gold subtype for the grammar's alternatives to be offered instead.
   if (listed === undefined && playerOnly === undefined) subject = withAlternatives(subjectText, subject);
   // A MASS REMOVAL KEEPS THE CONDITION THE NOUNS DO NOT SAY (#1586): "with mana value X or less", "that entered this turn", "with the same name as", "that's not historic", "Artifacts ... you control gain indestructible. Destroy all nonland permanents" (sweep-narrowing.ts).

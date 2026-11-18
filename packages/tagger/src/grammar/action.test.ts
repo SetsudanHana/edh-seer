@@ -955,3 +955,13 @@ test("'from that player's graveyard that was put there from <zone>' stays unread
   expect(unreadPhrases("Then for each opponent, put a creature card from that player's graveyard that was put there from their library this turn onto the battlefield under your control.", "triggered")).toHaveLength(1);
   expect(unreadPhrases("For each opponent, assimilate up to one target creature card from that player's graveyard that was put there from the battlefield this turn.", "spell")).toHaveLength(1);
 });
+
+test("'for each player, <action on that player's permanent>' is per-player repetition, not a count of objects: it stays unread (Nils, Discipline Enforcer; Turf War; #1673 review)", () => {
+  expect(unreadPhrases("For each player, put a +1/+1 counter on up to one target creature that player controls.", "triggered")).toContain("for each player");
+  expect(unreadPhrases("For each player, put a contested counter on target land that player controls.", "triggered")).toContain("for each player");
+  // a count that names an attachment or a target is a relation the class reading drops
+  expect(unreadPhrases("For each nontoken permanent attached to it, create a Treasure token.", "triggered")).toContain("for each nontoken permanent attached to it");
+  expect(unreadPhrases("For each creature target player controls, create a Treasure token.", "triggered")).toContain("for each creature target player controls");
+  // a plain object class still reads
+  expect(unreadPhrases("For each land you control, put a +1/+1 counter on ~.", "triggered")).toEqual([]);
+});

@@ -1522,8 +1522,11 @@ function readPhrase(quoted: string, condition: string | undefined, carried?: Act
  *  is refused. Refused too: a count that names what an earlier action or choice did ("of those creatures", "who does", "flip you win", "different result", "this way", "revealed", "discarded", "spent", "exiled", "chosen")
  *  and a self-reference ("this spell", "this creature", "~"), which no class names (Malfegor's "for each card discarded this way" is refused the same way).
  *  CEILING: the check is on words and on two readings, not on the whole sentence; a count both readings agree on but whose qualifier neither reads would pass. */
-const COUNT_BACKREF = /\b(?:of (?:those|them|these)|who (?:can't|can|does|do|didn't|did|doesn't|is|are|chose|has|have)|(?:you|they) (?:won|win)|different result|this way|revealed|discarded|spent|exiled|chosen|that (?:player|creature|card|spell|permanent))\b|\bthis (?:spell|creature|permanent|artifact|enchantment|land|card)\b|~/i;
+const COUNT_BACKREF = /\b(?:of (?:those|them|these)|who (?:can't|can|does|do|didn't|did|doesn't|is|are|chose|has|have)|(?:you|they) (?:won|win)|different result|this way|attached to|revealed|discarded|spent|exiled|chosen|that (?:player|creature|card|spell|permanent))\b|\bthis (?:spell|creature|permanent|artifact|enchantment|land|card)\b|~/i;
 function countIsPlainClass(count: string): boolean {
+  // "for each player, ... that player controls" (Nils, Discipline Enforcer; Turf War) repeats the action per PLAYER; a player is no counted object class, and read as one it scaled the card with every permanent. Unread, as 'for each opponent' is stripped only where nothing counts.
+  if (/^(?:other )?(?:players?|opponents?)$/i.test(count.trim())) return false;
+  if (/\btarget\b/i.test(count)) return false;
   if (COUNT_BACKREF.test(count)) return false;
   const read = parse(count);
   if (!read) return false;
@@ -2205,7 +2208,7 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // The count must be a PLAIN CLASS (`countIsPlainClass`): one the filter grammar reads whole and derive's subject reading agrees with. A count that carries a qualifier derive's class drops (Sovereign Okinec Ahau's
     // "with power greater than that creature's base power", La Forge's "that you've put a counter on this turn", Rite of Ascension's "you attacked this turn"), or names what an earlier action or choice did, or a self-reference, is refused.
     const eachLead = /^for each ([^,]+), ((?:create|draw|you gain|gain) .+|put .+ counters? on .+)$/i.exec(s);
-    if (eachLead && countIsPlainClass(eachLead[1]!) && phrases(eachLead[2]!).length === 1) s = `${eachLead[2]!} for each ${eachLead[1]!}`;
+    if (eachLead && countIsPlainClass(eachLead[1]!) && !/\bthat (?:player|opponent)\b/i.test(eachLead[2]!) && phrases(eachLead[2]!).length === 1) s = `${eachLead[2]!} for each ${eachLead[1]!}`;
     // "You may pay {1}. If you do, <effect>" (Wooden Sphere, Marooned): the payment records no action, as the store has it, and the first action after "If you do" carries
     // the payment's optionality (`ifYouDoAfterMay`). Only a mana payment, and only with that reflexive sentence behind it: a payment nothing follows claims nothing here.
     // CEILING: the payment itself (its mana, its energy) is not recorded, as the store drops it too; the effect reads as optional but not as costing anything.

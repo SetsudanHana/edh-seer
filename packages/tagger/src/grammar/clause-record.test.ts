@@ -2002,6 +2002,8 @@ test("a creature-type-count mana add and a differently-named-lands count derive 
   expect(counters).toHaveLength(2);
   for (const a of counters) expect(a.count?.scalesWith).toMatchObject({ type: "land", control: "you" });
   for (const a of counters) expect(a.count?.scalesWith).not.toHaveProperty("named");
+  // the counters go on the card Scott puts onto the battlefield from YOUR hand, which you control: not an any-controller counter, which opponent-only counter triggers would hear
+  for (const a of counters) expect(a.emits!.filter((e) => e.verb === "counter-added").every((e) => e.subject.control === "you"), "counter-added control").toBe(true);
 });
 
 test("'for each creature token you control, create a token that's a copy of it' makes creature tokens, so a non-creature's own enters trigger does not hear it (Chief Magistrate of Mercadia, #1673)", () => {

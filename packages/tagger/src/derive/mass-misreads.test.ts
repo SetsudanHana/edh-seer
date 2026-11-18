@@ -106,8 +106,8 @@ describe('"of your choice" on a non-permanent choice keeps its `you` (review of 
   test("Boneyard Parley: the cards put onto the battlefield under your control are `you`", () => {
     expect(emits("Boneyard Parley", "enters").map((e) => e.subject.control)).toEqual(["you"]);
   });
-  // #1673: Nyx Lotus now derives from the grammar (its "add an amount of mana of that color equal to ..." reads), whose mana effect is control `any` as every grammar-read add is, so the row no longer exercises the
-  // subject parser's `you`; the rule is asserted on the parser, which the stored reading of every other "of your choice" non-permanent choice still goes through.
+  // #1673: in this fixture run `deriveRow` takes the grammar reading of Nyx Lotus's add (control `any`, as every grammar-read add is), so the fixture no longer exercises the subject parser's `you`. The corpus row itself stays
+  // model -> model (derive-impact vs 504bb191), where the stored reading keeps `you`; the rule is asserted on the parser, which every stored "of your choice" non-permanent choice still goes through.
   test("Nyx Lotus: 'a color of your choice' is yours", () => {
     expect(parseSubject("a color of your choice").control).toBe("you");
   });
