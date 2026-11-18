@@ -1527,7 +1527,7 @@ function countIsPlainClass(count: string): boolean {
   if (COUNT_BACKREF.test(count)) return false;
   const read = parse(count);
   if (!read) return false;
-  const seen = parseSubject(count, "pick") as Record<string, unknown>;
+  const seen = parseSubject(count, "pick") as unknown as Record<string, unknown>;
   return Object.entries(read).every(([k, v]) => v === null || v === undefined || JSON.stringify(seen[k]) === JSON.stringify(v));
 }
 
