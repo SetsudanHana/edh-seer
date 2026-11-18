@@ -39,7 +39,9 @@ const HEADS = [
   /^do this /i,
   // "Only your opponents may activate this ability and only as a sorcery" (Detention Vortex), "Only the
   // player this creature is attacking may activate this ability and only during the declare attackers step".
-  /^only (?:your opponents|you|the player [a-z ']{1,40}|any player|each opponent|an opponent) may activate this ability /i,
+  /^only (?:your opponents|you|the player [a-z ']{1,40}|any player|each opponent|an opponent) may activate this ability /i,  // "Any player may activate this ability but only as a sorcery" (Sash and Waistcoat, Unmen).
+  // CEILING: WHO may activate (any player) is not recorded; derive reads the timing off the printed clause, and the widened activator is in no field.
+  /^any player may activate this ability but /i,
 ];
 
 /** Whether a sentence (its final period already cut) is an ability restriction and nothing more. */
@@ -50,7 +52,7 @@ export function isRestrictionSentence(sentence: string): boolean {
     if (!m) continue;
     const tail = s.slice(m[0].length);
     // A "may activate this ability" head is followed by its own "and only ..." limits, the others by the limits directly.
-    const limits = limitsOf(i === HEADS.length - 1 ? tail.replace(/^and /i, "") : tail);
+    const limits = limitsOf(i >= HEADS.length - 2 ? tail.replace(/^and /i, "") : tail);
     return limits.length > 0 && limits.every((l) => LIMIT.test(l.trim()) && !SOURCE_ZONE.test(l.trim()));
   }
   return false;

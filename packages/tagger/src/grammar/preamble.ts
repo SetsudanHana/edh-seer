@@ -76,20 +76,20 @@ export function missedCost(text: string): { cost: string; effect: string } | nul
 /** The preamble of a triggered clause's printed text, or null when the text opens with no trigger
  *  word. The name becomes "~" BEFORE the cut: a name with a comma ("Gisela, the Broken Blade") would
  *  otherwise end it. */
-export function printedPreamble(text: string, cardName: string): string | null {
+export function printedPreamble(text: string, cardName: string, typeLine?: string): string | null {
   text = withoutAbilityWord(text);
-  const m = PREAMBLE.exec(cardName ? selfAsTilde(text, cardName) : text);
+  const m = PREAMBLE.exec(cardName ? selfAsTilde(text, cardName, typeLine) : text);
   return m ? (cardName ? shortNameAsTilde(m[1]!.trim(), cardName) : m[1]!.trim()) : null;
 }
 
 /** THE EFFECT a clause prints (#896 task 6): its text with the card's name as "~", after the trigger
  *  preamble and an intervening "if ...," when it has them. An activated clause's text already
  *  excludes its cost (`segment()` keeps that apart). */
-export function effectText(text: string, cardName: string): string {
+export function effectText(text: string, cardName: string, typeLine?: string): string {
   text = withoutAbilityWord(text);
   // A TOKEN's name is its type ("Rat"): "for each other Rat you control" is the class, never the card.
   const typeName = cardName.split(" ").every((w) => SUBTYPES.has(w.toLowerCase()));
-  const named = cardName && !typeName ? selfAsTilde(text, cardName) : text;
+  const named = cardName && !typeName ? selfAsTilde(text, cardName, typeLine) : text;
   const m = PREAMBLE.exec(named);
   const rest = m ? named.slice(m[0].length).trim() : named.trim();
   // "Whenever Beckett Mariner becomes tapped, put a counter on her": the card named, so its pronoun is the card.

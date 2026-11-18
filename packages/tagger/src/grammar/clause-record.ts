@@ -422,7 +422,7 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     // CEILING: a chapter that states a trigger further in ("III — Until end of turn, whenever a Salamander deals combat damage to a player,
     // it deals that much damage ...", Nightmares and Daydreams) is REFUSED, not read as a chapter: read so, its effect would fire at the chapter
     // with the "whenever" dropped, a claim the text does not make (the stored answer keeps it unclaimed or triggered).
-    const bareChapter = c.kind === "chapter" && type === "triggered" && c.marker !== undefined && printedPreamble(c.text, card.name) === null;
+    const bareChapter = c.kind === "chapter" && type === "triggered" && c.marker !== undefined && printedPreamble(c.text, card.name, card.typeLine) === null;
     const delayedWord = bareChapter ? DELAYED_TRIGGER_WORD.exec(c.text.replace(/"[^"]*"/g, " ")) : null;
     if (delayedWord) {
       const rest = c.text.slice(c.text.toLowerCase().indexOf(delayedWord[0].toLowerCase()));
@@ -440,8 +440,8 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     // A MODE of a triggered modal ability is typed triggered (the store's convention) but has no trigger of
     // its own: the parent's trigger is its trigger. Only a mode that prints its own ("When ..., ...") reads one.
     if (!chapterOnly && type === "triggered" && !(c.kind === "mode" && !/^\s*(?:whenever|when|at the beginning of|at end of)\b/i.test(c.text))) {
-      const preamble = printedPreamble(c.text, card.name);
-      const read = preamble ? parseTrigger(preamble, interveningIfOf(selfAsTilde(c.text, card.name))) : null;
+      const preamble = printedPreamble(c.text, card.name, card.typeLine);
+      const read = preamble ? parseTrigger(preamble, interveningIfOf(selfAsTilde(c.text, card.name, card.typeLine))) : null;
       if (!read) return { records, complete: false, blocker: { clause: c.id, kind: "trigger", ...(preamble ? { phrase: preamble } : {}) } };
       const reads = [read].flat();
       readings[c.id] = { trigger: reads };
@@ -454,10 +454,10 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       // The segmenter's two-event flag is anchored at the front and stops at the first comma, so a label
       // ("Do You Like Squirrels? — ") or a comma in the card's name ("Wernog, Rider's Chaplain") hides it.
       // Ask it again about the text with the label cut and the name as "~".
-      const multi = c.multiTrigger || (reads.length > 1 && segment(withoutAbilityWord(selfAsTilde(c.text, card.name)), [], "Creature")[0]?.multiTrigger === true);
+      const multi = c.multiTrigger || (reads.length > 1 && segment(withoutAbilityWord(selfAsTilde(c.text, card.name, card.typeLine)), [], "Creature")[0]?.multiTrigger === true);
       if (multi) for (const r of reads.slice(1)) if (r.event !== first.event) overflow.push({ id: nextId++, abilityType: type, trigger: { event: r.event, subject: second ? triggerSubjectText(`Whenever ${second}`) : record.trigger.subject, control: r.control ?? record.trigger.control ?? "any" }, actions: [] });
     }
-    let effect = labelled ? effectText(labelled.effect, card.name) : effectText(c.text, card.name);
+    let effect = labelled ? effectText(labelled.effect, card.name, card.typeLine) : effectText(c.text, card.name, card.typeLine);
     // "AFTER YOU ROLL A DIE, you may ...": no when/whenever/at, so no triggered ability -- it modifies
     // the roll (CR 706.2, a modifier to the natural result), a static clause. The roll it waits on is the
     // clause's trigger all the same, the whole-clause way a delayed "whenever ... this turn" is, so
@@ -489,7 +489,7 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     // (Cursed Recording did until #1592 read "remove those counters and it deals 20 damage to you": its "{T}: When you next cast ..." is now read here).
     let delayedCast = false;
     const untilLead = type !== "triggered" ? /^until end of turn, (?=whenever )/i.exec(c.text) : null;
-    const delayedLead = type !== "triggered" && !record.trigger ? printedPreamble(untilLead ? c.text.slice(untilLead[0].length) : c.text, card.name) : null;
+    const delayedLead = type !== "triggered" && !record.trigger ? printedPreamble(untilLead ? c.text.slice(untilLead[0].length) : c.text, card.name, card.typeLine) : null;
     if (delayedLead && (untilLead ? /^whenever /i.test(delayedLead) : /^when you next (?:cast|activate) /i.test(delayedLead))) {
       const read = parseTrigger(delayedLead, null);
       // A trigger reading that carries an unread NARROWING (Dynaheir's "by spending four or more mana to activate it", Magus Lucea Kane's "with {X} in its mana cost") would fire on more than the card says: refused like the
@@ -499,12 +499,12 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       const first = [read].flat()[0]!;
       readings[c.id] = { trigger: [read].flat() };
       record.trigger = { event: first.event, subject: delayedSubjectText(delayedLead), control: first.control ?? "any" };
-      if (untilLead) effect = effectText(c.text.slice(untilLead[0].length), card.name);
+      if (untilLead) effect = effectText(c.text.slice(untilLead[0].length), card.name, card.typeLine);
       delayedCast = first.event === "cast";
     }
     // The card's own name in its cost ("{2}, Sacrifice Kirk:") is the card: "~", as in the effect.
     const rawCost = labelled ? labelled.cost : c.cost;
-    const cost = rawCost ? selfAsTilde(rawCost, card.name) : rawCost;
+    const cost = rawCost ? selfAsTilde(rawCost, card.name, card.typeLine) : rawCost;
     // AN ACTIVATED COST BEHIND A LABEL THE SEGMENTER MISSED ("Go for the Goal! — {3}, {T}: ..."): it
     // left the clause cost-less and static, and reading the text past the label would drop the cost and
     // bank a static grant. Refused, as before the label strip existed. A cost of mana alone ("I LOVE

@@ -641,7 +641,7 @@ const NOT_MODIFIED = /\b(?:un|non-?)modified\b|\bprotection from modified\b/i;
  *  legendary") it would refuse a legendary artifact as the copied object, so it stays unset. */
 const LEGENDARY = /\blegendary\b/i;
 const NON_LEGENDARY = /\bnon-?legendary\b/i;
-const ISNT_LEGENDARY = /\b(?:isn'?t|is not|isn’t)\s*legendary\b/i;
+const ISNT_LEGENDARY = /\b(?:isn'?t|is not|isn’t|aren'?t|are not|aren’t)\s*legendary\b/i;
 const NOT_HISTORIC = /\b(?:not|non-?)\s*historic\b/i;
 
 /** The BASIC supertype, and the two ways of not meaning it.

@@ -461,7 +461,8 @@ test("fragments 9: inner triggers, counted entries, ordinal subjects, graveyard 
   expect(parseActions("the next creature spell you cast this turn has cascade.", "triggered")[0]).toMatchObject({ verb: "grant-ability", object: { ref: "sentence" } });
   expect(parseActions("you may exile one of them from your graveyard.", "triggered")[0]).toMatchObject({ verb: "exile", fromZone: "graveyard" });
   expect(verbs("discards half the cards in their hand.")).toEqual(["discard"]);
-  expect(verbs("untap target attacking creature an opponent controls and remove it from combat.")).toEqual(["untap"]);
+  // "remove it from combat" is read since #1678 (the store's `other`, claiming no event); it was an unread phrase before.
+  expect(verbs("untap target attacking creature an opponent controls and remove it from combat.")).toEqual(["untap", "other"]);
   expect(parseActions("The next instant or sorcery spell you cast this turn costs {X} less to cast, where X is the number of Wizards you control as this ability resolves.", "activated")[0])
     .toMatchObject({ verb: "cost-modify", amount: "the number of Wizards you control as this ability resolves" });
   expect(parseActions("create two of those tokens.", "triggered")[0]).toMatchObject({ verb: "create", amount: "2" });

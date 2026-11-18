@@ -127,7 +127,7 @@ function objectOf(phrase: string): { amount?: string; object: SubjectFilter } | 
   const typed = /^enchanted ([A-Z][a-z]+)$/.exec(t);
   if (typed && parse(`a ${typed[1]}`)) return { object: parse(`a ${typed[1]}`)! };
   // "that land", "that artifact": a back-reference to an object the sentence named.
-  if (/^that (?:land|artifact|enchantment|planeswalker|aura|equipment|vehicle|dragon)$/i.test(t) || /^that [A-Z][a-z]+$/.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
+  if (/^that (?:land|artifact|enchantment|planeswalker|aura|equipment|vehicle|dragon|(?:nonland|noncreature|creature|land|artifact|enchantment|instant|sorcery|permanent|planeswalker) card)$/i.test(t) || /^that [A-Z][a-z]+$/.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
   if (/^(?:it|them|that card|those cards|the revealed card|that spell|that player|that creature|that permanent|itself|that source|those creatures|those players|its controller|its owner|each of them|the chosen player|the player or planeswalker (?:it's|that creature is) attacking|(?:that|the) [a-z]+(?: or [a-z]+)?'s controller|that player or planeswalker|that permanent or player|that creature and that player|that ability|that spell or ability|that triggered ability|the copy|that token|the (?:spell|ability|creature|permanent|card|token)|the creature you control|the chosen [a-z]+|(?:one|two|either|any number) of (?:them|those cards)|each of (?:those|them|these)(?: [a-z]+)?|those (?:permanents|lands|artifacts|tokens|spells)|the (?:exiled|revealed|chosen|milled|discarded) cards?|(?:any number of )?the copies)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
   // "one or two target creatures": at most two, the store's "up to two".
   if (/^one or two /i.test(t)) return objectOf(t.replace(/^one or two /i, "up to two "));
@@ -381,7 +381,7 @@ function tokenOf(phrase: string): Args | null {
   // "a token that's a copy of it, except it isn't legendary": the exception changes the copy, and is
   // read so nothing is skipped; the text keeps it, as the store writes it.
   const except = t.search(/, except /);
-  if (except > 0 && /\bcopy of\b/.test(t)) {
+  if (except > 0 && /\bcop(?:y|ies) of\b/.test(t)) {
     if (!exceptOf(t.slice(except + ", except ".length), SELF)) return null;
     const r = tokenOf(t.slice(0, except));
     return r && { ...r, ...(r.text !== undefined ? { text: phrase.trim() } : {}) };
@@ -558,6 +558,8 @@ const OBJECT_JOINT = /,? and (?=(?:target|another target|up to one|each|all|this
 function moveList(text: string, onField = false): Args | Args[] | null {
   const parts = text.split(OBJECT_JOINT);
   if (parts.length < 2) return moveObject(text, onField);
+  // "all black and all red creature cards" (Balthor the Defiled): a limb of colours alone shares the noun that closes the list, so it is no object of its own; the list is left unread rather than made two moves.
+  if (parts.slice(0, -1).some((p) => /^(?:all|each|an?|another) (?:(?:white|blue|black|red|green|colorless|legendary|nonlegendary|basic|snow|tapped|untapped|nontoken|token|attacking|blocking)(?: |$))+$/i.test(p))) return null;
   const from = / from (?:your|their|a|an opponent's|target player's|all) (?:graveyards?|hands?|librar(?:y|ies))$/.exec(parts[parts.length - 1]!)?.[0] ?? "";
   const each = parts.map((p) => {
     // A limb that names its OWN zone keeps it ("... lands from the battlefield, all cards from all graveyards, and all cards from all hands":
@@ -950,6 +952,12 @@ function subjectAction(t: string): ActionReading[] | null {
   const phases = /^(.+?) phases? (in|out)$/i.exec(t);
   // CEILING: a phased-out class ("all phased-out creatures", Time and Tide) the object parser cannot name
   // keeps its words as the phrase, on a back-reference object; no filter field is invented for the status.
+  // "It and up to one target creature you control phase out" (U.S.S. Defiant, Mirror Migrant): one phase-out per subject, the card's own back-reference first, each read as it is alone.
+  const phasePair = phases && /^(it|they) and (.+)$/i.exec(phases[1]!);
+  if (phasePair && !objectOf(phases![1]!)) {
+    const rest = objectOf(phasePair[2]!);
+    if (rest && !rest.object.ref && rest.object.scope === "target") return [{ verb: phases![2]!.toLowerCase() === "in" ? "phase-in" : "phase-out", object: REF, phrase: phasePair[1]! }, { verb: phases![2]!.toLowerCase() === "in" ? "phase-in" : "phase-out", object: rest.object, text: phasePair[2]! }];
+  }
   if (phases && (objectOf(phases[1]!) || THEY.test(phases[1]!) || /^(?:all|each) [a-z -]{1,50}$/i.test(phases[1]!))) {
     const who = objectOf(phases[1]!)?.object ?? REF;
     return [{ verb: phases[2]!.toLowerCase() === "in" ? "phase-in" : "phase-out", object: who, ...(who.ref ? { phrase: phases[1]! } : { text: phases[1]! }) }];
@@ -1162,6 +1170,8 @@ function whenTail(t: string): { at: number; text: string } | undefined {
   // spell only if ...".
   if (t.endsWith(" if able") || /^cast this spell only /i.test(t)) return undefined;
   const at = t.lastIndexOf(" if ");
+  // An " if " inside a quoted ability ('gains "Draw a card if ..."', Q, Stacking the Deck) is the granted ability's own, never this phrase's condition.
+  if (at <= t.lastIndexOf('"')) return undefined;
   return at > 0 && !t.includes(",", at) ? { at, text: t.slice(at + 1) } : undefined;
 }
 
@@ -1221,9 +1231,17 @@ function pumpOrGrant(t: string): ActionReading[] | null {
 }
 
 function pumpOrGrantOne(t: string): ActionReading[] | null {
+  // "During your turn, this Spacecraft and creatures you control have hexproof": the condition leads a
+  // self-and-class pair, which the pair reading below only sees without it. The condition is carried
+  // onto both readings (or the phrase stays unread).
+  const duringPair = /^(during your turn), ((?:~|this [a-z]+|it) and .+)$/i.exec(t);
+  if (duringPair) {
+    const r = pumpOrGrantOne(duringPair[2]!);
+    if (r) return withCondition(r, duringPair[1]!);
+  }
   // "~ and other Knights you control have flying", "it and other creatures you control that share a
   // creature type with it each get +2/+0": the card, and the class, each a reading.
-  const pair = /^(~|this creature|it) and ((?:other |another )?[a-z][\w ]{0,60}?) (?:each )?(gets?|gains?|has|have|get) (.+)$/i.exec(t);
+  const pair = /^(~|this [a-z]+|it) and ((?:other |another )?[a-z][\w ]{0,60}?) (?:each )?(gets?|gains?|has|have|get) (.+)$/i.exec(t);
   // Not a counted pump: its amount is the store's, which derive's scaling reads whole (Eidolon of
   // Countless Battles' "+1/+1 for each creature you control and +1/+1 for each Aura you control").
   if (pair && objectOf(pair[2]!) && !/ for each /i.test(pair[4]!)) {
@@ -1256,7 +1274,8 @@ function pumpOrGrantOne(t: string): ActionReading[] | null {
   else {
     for (const v of body.matchAll(/ (gets?|gains?|has|have|is|are|becomes?|loses?|assigns?|can) /gi)) {
       const who = body.slice(0, v.index).replace(/ each$/i, "");
-      if (who.length > 80 || !(who === "you" || objectOf(who) || THEY.test(who) || /^(?:they|they each|he|she|that token|those tokens|those creatures|each of those creatures|both creatures)$/i.test(who))) continue;
+      // A list of subtypes ("Other Officers, Artificers, Doctors, Pilots, Scientists, and Spacecraft creatures you control", Kirk) is a long subject the filter grammar reads whole: up to 120 characters for one it reads, 80 for the rest.
+      if (who.length > (who.length <= 120 && objectOf(who) ? 120 : 80) || !(who === "you" || objectOf(who) || THEY.test(who) || /^(?:they|they each|he|she|that token|those tokens|those creatures|each of those creatures|both creatures)$/i.test(who))) continue;
       subject = who; verb = v[1]!.toLowerCase(); rest = body.slice(v.index + v[0].length); break;
     }
   }
@@ -1466,6 +1485,8 @@ function exceptOf(text: string, object: SubjectFilter): ActionReading[] | null {
   const out: ActionReading[] = [];
   // A named copy's pronouns ("his name is ~, he's 4/4, and he has flying") read as "it".
   text = text.replace(/\b(?:he|she)'s\b/gi, "it's").replace(/\b(?:he|she) (has|is)\b/gi, "it $1").replace(/\b(?:his|her) name\b/gi, "its name");
+  // Several copies' exceptions ("create two tokens that are copies of that creature, except they're 2/2 and they aren't legendary", Uugguu): each copy takes the exception alone, so "they" is read as "it".
+  text = text.replace(/\bthey're\b/gi, "it's").replace(/\bthey aren't\b/gi, "it isn't").replace(/\bthey (has|have|are)\b/gi, (_m, v: string) => (v.toLowerCase() === "are" ? "it is" : "it has"));
   for (const raw of text.split(/,? and (?=(?:it|its|is|isn't|has|the token|the copy)\b)|, (?=(?:it|its|is|isn't|has|the token|the copy)\b)/i)) {
     const full = raw.trim();
     // "its name is ~": the copy keeps the card's own name, which no action records.
@@ -1565,6 +1586,12 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   if (loyaltyTiming && (/^(?:~|this [a-z]+)$/i.test(loyaltyTiming[1]!) || /^(?:[\p{L}]+ )?planeswalkers you control$/iu.test(loyaltyTiming[1]!))) {
     return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t, optional: true, ...(condition ? { condition } : {}) }];
   }
+  // "You may end the combat phase" (Merciful Mandate), "remove it from combat" (Nivea, Beloved Battlemage; CR 506.4: a permanent removed from combat stops being an attacking, blocking, blocked
+  // and/or unblocked creature): combat's own state, which no verb carries. The store's `other` with the sentence as its words, which derive leaves unclaimed: no zone moves and no event is made.
+  // CEILING: nothing is claimed for either (a removal from combat is no "leaves" and an ended combat no "end of combat" step event); the optional "you may" is kept.
+  if (/^(?:you may )?end the combat phase$/i.test(t)) return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t, ...(/^you may /i.test(t) ? { optional: true as const } : {}), ...(condition ? { condition } : {}) }];
+  const fromCombat = /^remove (it|them|that creature|those creatures) from combat$/i.exec(t);
+  if (fromCombat) return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t, ...(condition ? { condition } : {}) }];
   // "It becomes day [as this creature enters]" (Sunstreak Phoenix, CR 731.1 Day and Night): the game's day/night state, not a permanent that becomes something -- the store's `other`.
   // Read as a "becomes" it was an animate of the card itself, a claim the text never makes.
   if (/^it becomes (?:day|night)(?: as (?:~|this [a-z]+) enters)?$/i.test(t)) return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t, ...(condition ? { condition } : {}) }];
@@ -1643,7 +1670,8 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   // "Then if there are three or more promotion counters on ~, remove those counters" (Beckett Mariner, Prize Pig): every counter of the kind the condition counts, on
   // the card itself. The store reads this as a removal of that kind, and writes the condition's threshold into the amount ("three or more", Prize Pig), which is not an
   // amount: "all" is what the words say ("remove all of them", Replicating Ring, is stored "all").
-  const removeAll = /^remove (?:those counters|all of them|them all)$/i.exec(t);
+  // "remove them" (Rikala, Homarid King, #1678) is the same words when the condition counts the counters ("if there are four or more tide counters on ~"); with no such condition it has no antecedent here and stays unread.
+  const removeAll = /^remove (?:those counters|all of them|them all|them)$/i.exec(t);
   // The condition is read by index (CodeQL polynomial-redos): "if there are three or more promotion counters on ~" / "if it has eight or more night counters on it".
   const heldIf = removeAll ? /^if (?:there are|it has|~ has|this [a-z]+ has) \w+ or more /i.exec(condition ?? "") : null;
   const heldRest = heldIf ? (condition ?? "").slice(heldIf[0].length) : "";
@@ -2213,6 +2241,11 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // the payment's optionality (`ifYouDoAfterMay`). Only a mana payment, and only with that reflexive sentence behind it: a payment nothing follows claims nothing here.
     // CEILING: the payment itself (its mana, its energy) is not recorded, as the store drops it too; the effect reads as optional but not as costing anything.
     if (condition === undefined && /^you may pay /i.test(s) && paysMana(s.slice("you may pay ".length)) && /^if you do, /i.test(sentences[sentenceAt + 1]?.trim() ?? "")) continue;
+    // "You may pay {1} and exile a card from your graveyard" (Sylvia Tilly, Joy of Discovery): the payment records no action here either, and the action it is joined to is read alone, optional by the "may".
+    // Not an alternative cost ("... rather than pay this spell's mana cost", Sephara, the Borderposts): that is the cost-modify, whole.
+    // CEILING: as above, the mana is not recorded; the other half of the cost (the exile) is, since it is an event a graveyard payoff hears.
+    const payAnd = condition === undefined && !/\brather than\b/i.test(s) ? /^you may pay ((?:\{[^{}]+\})+) and (.+)$/i.exec(s) : null;
+    if (payAnd && paysMana(payAnd[1]!)) s = `you may ${payAnd[2]}`;
     // "You may reveal an artifact card from among them and put it into your hand" (Harald, Courageous Outrider): the dig's pick, read as the put it is
     // ("you may put an artifact card from among them into your hand"); the reveal is bookkeeping the store drops.
     const revealPick = /^you may reveal (.+) from among (them|those cards) and put (?:it|that card) into your hand$/i.exec(s);

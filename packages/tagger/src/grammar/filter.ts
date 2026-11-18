@@ -1492,8 +1492,8 @@ function post(c: Cursor, r: Reading): boolean | null {
       if (w === "," || w === "and" || w === "or") { if (items.at(-1)!.length) items.push([]); continue; }
       items.at(-1)!.push(w);
     }
-    // "except for Mageta": one word no class reads, a card's name.
-    const parsed = items.filter((x) => x.length).map((x) => parse(x.join(" ")) ?? (x.length === 1 && /^[a-z]+$/.test(x[0]!) && !SUBTYPES.has(x[0]!) && !TYPE_WORDS.has(x[0]!) ? { control: "any" as const, token: null, named: x[0]! } : null));
+    // "except for Mageta": one word no class reads, a card's name; "except for ~" is the card's own name written as the grammar writes it (a card whose short name is one word, Mageta the Lion, #1678).
+    const parsed = items.filter((x) => x.length).map((x) => parse(x.join(" ")) ?? (x.length === 1 && (x[0] === "~" || (/^[a-z]+$/.test(x[0]!) && !SUBTYPES.has(x[0]!) && !TYPE_WORDS.has(x[0]!))) ? { control: "any" as const, token: null, named: x[0]! } : null));
     if (parsed.length === 0 || parsed.some((x) => x === null)) return null;
     r.except = parsed.map((x) => {
       const { control, token, scope: _s, ...rest } = x!;
@@ -1896,6 +1896,12 @@ function post(c: Cursor, r: Reading): boolean | null {
       // Read off the end first, so the original is parsed without them. An exception that sets new
       // characteristics ("except it's a 1/1 green Frog") is refused.
       const ex = c.t.findIndex((w, k) => k >= c.i && w === "," && c.t[k + 1] === "except");
+      // SEVERAL COPIES' EXCEPTIONS ("two tokens that are copies of that creature, except they're 2/2 and they aren't legendary", Uugguu): each copy takes the exception alone, so the plural words are read as the singular ones.
+      const pluralCopies = c.t[c.i - 2] === "copies";
+      if (ex >= 0 && pluralCopies) {
+        const sing: Record<string, string> = { "they're": "it's", they: "it", "aren't": "isn't", have: "has" };
+        c.t = [...c.t.slice(0, ex + 2), ...c.t.slice(ex + 2).map((w) => sing[w] ?? w)];
+      }
       let exception: { legendary?: boolean; keywords: string[]; notKeywords: string[]; counter?: string; sets?: Reading } | undefined;
       if (ex >= 0) {
         const e = new Cursor(c.t.slice(ex + 2), c.spellNoun);
@@ -1968,6 +1974,8 @@ function post(c: Cursor, r: Reading): boolean | null {
         if (c.t[c.i - 2] === "sacrificed") refNoun.groups[0]!.types.push("creature");
         const types = refNoun.groups[0]!.types.filter((t) => t !== "card"), subs = refNoun.groups[0]!.subtypes;
         if (types.length || subs.length) { r.groups = [{ types, subtypes: subs, adj: [] }]; r.copyOf = copiedClass({ ...r, token: null }); }
+        // CEILING: "two" copies WITH an exception is a count, not the class `all` (Uugguu: the plural scope paired its 2/2 tokens with every self-entering creature); copies with no exception keep the plural scope as before.
+        if (exception && pluralCopies) r.plural = false;
         return applyException() || null;
       }
       if (self) {
