@@ -2184,6 +2184,8 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // (the negated class excludes the comma that closes it, so the scan is linear).
     // A count that is what an earlier action did ("for each nonland card revealed this way", Ambassador K'Ehleyr) stays unread, as "for each card discarded this way" does (Malfegor): no class names it.
     // CEILING: the repetition is the amount's scaling and no more; "a copy of it" is a copy of what the card names, not one copy per counted object (as the eachCopy reading above).
+    // CEILING: a count's own narrowing is not carried by the scaling class derive reads off it: "for each permanent you control that you've put a counter on this turn" (La Forge) scales with every permanent you control,
+    // "for each opponent you attacked this turn" (Rite of Ascension) with every opponent, "for each attacking non-Faerie creature" keeps its combat state but not "this turn": the amount text keeps the full words, the class is wider.
     const eachLead = /^for each ([^,]+), ((?:create|draw|you gain|gain) .+|put .+ counters? on .+)$/i.exec(s);
     if (eachLead && !/ this way$/i.test(eachLead[1]!) && phrases(eachLead[2]!).length === 1) s = `${eachLead[2]!} for each ${eachLead[1]!}`;
     // "You may pay {1}. If you do, <effect>" (Wooden Sphere, Marooned): the payment records no action, as the store has it, and the first action after "If you do" carries

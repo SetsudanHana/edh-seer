@@ -1105,6 +1105,14 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     // create a token that's a copy of target artifact you control" names a player that is not the actor.
     subject.control = h.control === "any" && !PLAYER_CREATES.test(clauseText ?? "") ? "you" : h.control;
     delete subject.scope; // a created token is not targeted, and the effect subject already carries the plural
+    // "For each creature token you control, create a token that's a copy of it" (Chief Magistrate of Mercadia, #1673): "it" is one of the counted objects, so the copy is of the class the count names
+    // (a creature token), and an untyped copy would be a wildcard that every non-creature's own enters trigger hears. Only a copy of "it" / "that creature" with a count whose class parses to a type.
+    // CEILING: a copy of "them" / "each of those creatures" (Kambal, Doppelgang) names no class the count carries, so it stays untyped.
+    const countedCopy = subject.type === undefined ? /\bcop(?:y|ies) of (?:it|that (?:creature|permanent|token)) for each ([^,.]+)$/i.exec(action.object ?? "") : null;
+    if (countedCopy) {
+      const counted = parseSubject(countedCopy[1]!);
+      if (counted.type !== undefined) { subject.type = counted.type; subject.token = true; }
+    }
   }
   // A control the object's own words state without a control word (#1295): "attacking you" is theirs, "that crewed it" is yours.
   // "attacking you or a planeswalker you control" (Soul Snare) reads `you` off the planeswalker, so an attacker overrides any control; "crewed it" only fills a blank.

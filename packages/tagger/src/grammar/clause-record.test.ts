@@ -1997,3 +1997,13 @@ test("a creature-type-count mana add and a differently-named-lands count derive 
   for (const a of counters) expect(a.count?.scalesWith).toMatchObject({ type: "land", control: "you" });
   for (const a of counters) expect(a.count?.scalesWith).not.toHaveProperty("named");
 });
+
+test("'for each creature token you control, create a token that's a copy of it' makes creature tokens, so a non-creature's own enters trigger does not hear it (Chief Magistrate of Mercadia, #1673)", () => {
+  const card = QUANTIFIED[0]!;
+  const g = grammarClauseRecords(card);
+  const tags = deriveCardTags(deriveInputOf({ name: card.name, typeLine: card.typeLine, oracleText: "" } as never, "x", card.name, g.records, undefined, g.readings));
+  const copies = tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.subject.token === true && e.subject.control === "you" && e.subject.type === undefined);
+  expect(copies).toEqual([]);
+  const made = tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => (e.verb === "create-token" || e.verb === "enters") && e.subject.type === "creature");
+  expect(made.length).toBe(4);
+});
