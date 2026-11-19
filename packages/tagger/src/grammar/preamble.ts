@@ -17,8 +17,9 @@ import { selfAsTilde, selfPronouns } from "./self-as-tilde.js";
  *  first comma (Repeated Reverberation: "when you next cast an instant spell, cast a sorcery spell,
  *  or activate a loyalty ability"), and the trigger reads its first item only.
  *  and a list never continues after a whole "spell" or "card" ("whenever you cast a noncreature
- *  spell, Birds, Frogs, Otters, and Rats you control get +1/+1"). */
-const PREAMBLE = /^\s*((?:whenever|when|at the beginning of|at end of)\b(?:[^,]|(?<!\b(?:spells?|cards?)), (?!(?:each|choose|you|target|draw|create|put|return|exile|it|that|this|up to) )(?=(?:[^, ]+(?: [^, ]+)?, )+(?:or|and|and\/or) )|, (?:or|and|and\/or) (?=[^,]+,)|, (?=non-?[a-z]+ [a-z]+))*),/i;
+ *  spell, Birds, Frogs, Otters, and Rats you control get +1/+1"). The one list of longer items it reads is the random one (Chira, All In, #1675): "..., select one or more targets at random, choose
+ *  one or more modes at random, flip one or more coins, or roll one or more dice,". */
+const PREAMBLE = /^\s*((?:whenever|when|at the beginning of|at end of)\b(?:[^,]|(?<!\b(?:spells?|cards?)), (?!(?:each|choose|you|target|draw|create|put|return|exile|it|that|this|up to) )(?=(?:[^, ]+(?: [^, ]+)?, )+(?:or|and|and\/or) )|, (?:or|and|and\/or) (?=[^,]+,)|, (?=non-?[a-z]+ [a-z]+)|, (?=(?:select|choose) one or more [a-z]+ at random, )|, (?=flip one or more coins, or roll ))*),/i;
 
 /** A card with no comma in its name still shortens itself to its first word ("When Imskir enters",
  *  Imskir Iron-Eater) -- the rule `isSelfSubject` already reads, never for a creature type or an

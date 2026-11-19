@@ -17,6 +17,9 @@ import { emblemRecipient } from "../emblem.js";
 
 const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b"]);
 const TESTED: Record<string, string> = {
+  "508.7": "grammar/choose-1675.test.ts — 'you may reselect which player or permanent ... is attacking' is an unclaimed `other`, never a control change (Tuvok, Chief Tactical Officer; #1675)",
+  "508.7a": "grammar/choose-1675.test.ts — the reselected creature attacks nothing a second time, so the reselection claims no attack event (Tuvok, Chief Tactical Officer; #1675)",
+  "701.9b": "grammar/choose-1675.test.ts — a random discard is the discard narrowed by its randomness: Chira's 'discard one or more cards at random' claims nothing (#1675)",
   "707.12": "derive/cast-class.test.ts — a cast copy is created in the zone the copied card is in: a copy of a card the clause exiled is cast from exile (Flawless Forgery, Isochron Scepter, Mizzix's Mastery, #1608)",
   "701.57a": "derive/cast-class.test.ts — discover exiles until a nonland card and lets you cast it: the keyword action's cast is yours, of any spell, from exile (Trumpeting Carnosaur; 'that player discovers' stays any player's, Zoyowa's Justice; #1608)",
   "701.18b": "derive/stolen-play.test.ts — to play a card is to play it as a land or cast it as a spell: 'you may play those cards' of cards taken from another player is a cast and a land play (Brainstealer Dragon, #1596)",

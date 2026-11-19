@@ -388,7 +388,7 @@ const ACTOR_VERBS: [RegExp, string, boolean][] = [
   // Star Trek (owner 2026-10-26, #1349): "you face a dilemma as you choose one or more modes", fed by every modal spell or ability (derive/modal.ts).
   [/^faces? a dilemma$/, "face-a-dilemma", false],
   [/^rolls? (?:a die|one or more dice)$/, "roll-dice", false],
-  [/^flips? a coin$/, "flip-coin", false],
+  [/^flips? (?:a coin|one or more coins)$/, "flip-coin", false],
   [/^proliferate$/, "proliferate", false],
   [/^search(?:es)? (?:their|your) library$/, "search", false],
   [/^(?:fully )?unlocks? (.+)$/, "unlocked", true],
@@ -792,6 +792,22 @@ const SPECIAL: [RegExp, (m: RegExpExecArray) => TriggerReading | TriggerReading[
   }],
   // "it's put into a graveyard this turn": the contraction.
   [/^it's (.+)$/, (m) => objectReading(`it is ${m[1]}`)],
+  // A LIST OF RANDOM EVENTS (Chira, All In; #1675): "you discard one or more cards at random, select one or more targets at random, choose one or more modes at random, flip one or more coins, or roll one or more dice". Each
+  // item is its own trigger, as "enters or attacks" is. A random discard is the discard (CR 701.9b) narrowed by its randomness; the Comprehensive Rules name no event for selecting targets or choosing modes at random, so those are `other`,
+  // named by their words (as "chooses one or more targets" is). The flip and the roll are the vocabulary's own. CEILING: only a list that has an "at random" item in it, and only YOUR actions; every item must read or the whole is refused.
+  [/^(you (?:discard|select|choose|flip|roll) .+)$/, (m) => {
+    if (!/ at random, /.test(m[1]!)) return null;
+    const out: TriggerReading[] = [];
+    for (const item of m[1]!.split(/, (?:or )?/)) {
+      const part = /^you /.test(item) ? item : `you ${item}`;
+      const picked = /^you (?:select|choose) one or more (?:targets|modes) at random$/.test(part);
+      const discarded = /^you discard (.+) at random$/.exec(part);
+      const read = picked ? { event: "other", control: "you" as const, narrowing: part.slice(4) } : discarded ? (() => { const d = bodyPlain(`when you discard ${discarded[1]}`); return d && withNarrowing(d, "at random"); })() : bodyPlain(`when ${part}`);
+      if (!read) return null;
+      out.push(...[read].flat());
+    }
+    return out.length > 1 ? out : null;
+  }],
 ];
 
 function special(rest: string): TriggerReading | TriggerReading[] | null {

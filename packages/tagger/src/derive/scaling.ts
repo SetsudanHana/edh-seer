@@ -75,7 +75,9 @@ const COUNTED = /\b(?:for each|number of)\s+([^.,;]{1,60}(?:,\s*(?:(?:or\s+)?[A-
  *  tokens, where X is the number of creatures in your party" -- keeps the tail on neither action
  *  after normalization, so both derived `x-cost` and no subject (owner, 2026-09-05). */
 const DEFINES_X = /\bwhere x is (?:the number of|equal to the number of)\s+([^.,;]{1,60})/i;
-const isBareX = (action: Action): boolean => /^x$/i.test((action.amount ?? "").trim());
+// A numeric multiple of X ("2X", Drown in Dreams and The Master of Keys' "mills twice X cards"; #1675) is the X the player paid, times a number. CEILING: the multiplier stays in the action's amount; the scaling basis
+// and the count (`scalesWith: mana`) have no slot for it, so they say "scales with the X paid" and not by how much.
+const isBareX = (action: Action): boolean => /^(?:\d+)?x$/i.test((action.amount ?? "").trim());
 /** The text the count is read from: the action's own, or the clause's definition of its X.
  *  CEILING: ONE X PER CLAUSE. The first "where X is …" in the clause is handed to every bare-X
  *  action; a clause defining X twice (none in the corpus on 2026-09-05, but the templating exists)
