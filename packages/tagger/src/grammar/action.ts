@@ -635,7 +635,7 @@ const ZONE: Record<string, [string, Handler]> = {
     // "put it into your hand or graveyard" (Hela's Dark Tutor, Dina's Guidance): one move to each of the two zones, as the store writes it, and `optional` is set by the dispatch below (one of the two happens).
     // CEILING: the either-or is two optional puts, not a choice node; only the player's own hand and graveyard, either order, of "it" / "that card".
     const either = /^(it|that card) into your (hand|graveyard) or (?:into )?(?:your )?(hand|graveyard)$/.exec(rest);
-    if (either && either[2] !== either[3]) { const r = moveObject(either[1]!); return r && [either[2]!, either[3]!].map((toZone) => ({ ...r, toZone })); }
+    if (either && either[2] !== either[3]) { const r = moveObject(either[1]!); return r && [either[2]!, either[3]!].map((toZone) => ({ ...r, toZone, phrase: `${either[1]} into your ${toZone}` })); }
     rest = rest.replace(/ instead of putting (?:it|that card) (?:into (?:your|its owner's|a) graveyard|anywhere else)$/, "");
     const at = rest.search(/ (?:onto|into|on top of|on the bottom of) (?=the battlefield|its owner's|their owners'|your|a graveyard|exile|their|that player's)/);
     if (at < 0) return null;

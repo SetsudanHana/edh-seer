@@ -108,10 +108,21 @@ test("derive: Overflow Submatrix puts a finality counter on a creature it cast, 
   const c = emitsOf(a).filter((e) => e.verb === "counter-added");
   expect(c).toMatchObject([{ subject: { counter: "finality" } }]);
   expect(c[0]!.subject.self).toBeUndefined();
+  // the creature you cast from your graveyard is yours (CR 122.6a: the object's controller puts the counters), so no opponent-only counter trigger (Generous Patron, Kros) hears it
+  expect(c[0]!.subject.control).toBe("you");
+  expect([c[0]!.subject.type].flat().sort()).toEqual(["artifact", "creature"]);
 });
 
 test("derive: Warp Speed's untapped lands claim nothing; Dark Tutor puts to the hand or the graveyard, yours", () => {
   expect(emitsOf(derived("Warp Speed", "Enchantment", "Lands you control enter untapped.")).map((e) => e.verb)).not.toContain("tap");
   const t = derived("Dark Tutor", "Sorcery", "Search your library for a card, put it into your hand or graveyard, then shuffle. You lose 3 life.");
   expect(emitsOf(t).map((e) => [e.verb, e.subject.control])).toEqual(expect.arrayContaining([["lose-life", "you"]]));
+  // the card is searched from YOUR library and put into YOUR graveyard: an opponent-graveyard trigger (Bloodchief Ascension, Compost) must not hear it
+  for (const [name, text] of [["Dark Tutor", "Search your library for a card, put it into your hand or graveyard, then shuffle. You lose 3 life."], ["Dina's Guidance", "Search your library for a creature card, put it into your hand or graveyard, then shuffle."]] as const) {
+    const g = emitsOf(derived(name, "Instant", text)).filter((e) => e.verb === "enters-graveyard");
+    expect(g, name).toMatchObject([{ subject: { control: "you", fromZone: "library" } }]);
+  }
+  // each put names the card as the first does: the second put's object is not left blank
+  const recs = grammarClauseRecords(card("Dark Tutor", "Sorcery", "Search your library for a card, put it into your hand or graveyard, then shuffle.")).records.flatMap((r) => r.actions ?? []).filter((a) => a.verb === "put");
+  expect(recs.map((a) => [a.object, a.fromZone, a.toZone])).toEqual([["it", "library", "hand"], ["it", "library", "graveyard"]]);
 });
