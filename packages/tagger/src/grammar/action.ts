@@ -867,7 +867,8 @@ function subjectAction(t: string): ActionReading[] | null {
   // this turn have undaunted"). The keyword is the spell's, never the board's, so no grant-ability. Emerge (CR 702.119),
   // undaunted (702.125) and assist (702.132) change what the spell costs: the store's cost-modify with the whole phrase,
   // as the affinity grant below. Demonstrate (702.144) copies the spell on cast and changes no cost: an unclaimed `other`.
-  // CEILING: the spell class stays in the text; no filter holds "the first / the next ... you cast", so no spell filter is read.
+  // CEILING: the spell class stays in the text; no filter holds "the first / the next ... you cast", so no spell filter is read. What the keyword DOES is not read either: demonstrate's copy of the spell and the
+  // opponent's copy of it (CR 702.144a) emit nothing, and emerge's sacrifice of a creature as part of the cost, with the total cost reduced by its mana value (702.119a), emits no sacrifice and no cost change.
   const spellKw = /^((?:each|the (?:first|next)) (?:[\w ]{1,60}? )?spells?(?: and the (?:first|next) [\w ]{1,40}? spell)? you cast(?: each turn| this turn| during each of your turns)?) (?:has|have) (emerge|demonstrate|undaunted|assist)$/i.exec(t);
   if (spellKw) return [{ verb: /^demonstrate$/i.test(spellKw[2]!) ? "other" : "cost-modify", object: { control: "you", token: null }, text: t }];
   // "The emerge cost is equal to its mana cost": the cost the grant above names, a cost note with no amount.
@@ -2203,6 +2204,11 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // several cards, "a card of that color", "that player reveals their hand" stay unread, so the card blocks); one reference only, and the pick is read as optional by `mayBefore` like any "you may".
     const handShown = /^(?:look at (target opponent's|target player's) hand|(target opponent|target player) reveals their hand)$/i.exec(s);
     if (handShown) { handOf = `${(handShown[1] ?? `${handShown[2]!}'s`).toLowerCase()} hand`; handOwner = handOf.slice(0, handOf.indexOf("'s ")); }
+    // #1672: "You may exile a nonland card from it" straight after a look at a TARGET player's hand (Zero, Incorporeal Sensate): the "it" is that hand, written out as the pick above writes it, so the exile is
+    // the opponent's, from the hand. Only an exile of a single typed card; with no hand looked at the sentence stays unread.
+    // CEILING: the hand stays the one looked at until another sentence shows or looks at a hand; no check that the exile is the next sentence.
+    const exileFromIt = handOf !== undefined ? /^(you may exile (?:a|an) [\w ]{1,40}? card) from it$/i.exec(s) : null;
+    if (exileFromIt) s = `${exileFromIt[1]!} from ${handOf!}`;
     const pick = handOf !== undefined ? handPickCard(s, handOwner) : null;
     if (pick) {
       if (handPick && !handPick.used) { unread?.push(handPick.sentence); }
@@ -2501,6 +2507,8 @@ function readActions(effect: string, type: string | null, cost: string | undefin
         else if (o.verb === "reveal") { out[i] = { ...o, lookedAt: lookedAtLibrary }; pendingLook = null; }
       }
     }
+    // The exile written out above leaves the looked-at hand: its zone, as the pick's exile carries it.
+    if (exileFromIt) for (let i = at; i < out.length; i++) if (out[i]!.verb === "exile" && !out[i]!.fromZone) out[i] = { ...out[i]!, fromZone: "hand" };
     if (pickedHere && handPick) {
       const owner = ACTORS.find(([w]) => w === handOwner)?.[1];
       for (let i = at; i < out.length; i++) if (owner && out[i]!.text !== handPick.text && out[i]!.actor?.scope === "that") out[i] = { ...out[i]!, actor: { ...owner, text: handOwner } };

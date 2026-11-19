@@ -8062,7 +8062,7 @@
 "Invasion of Eldraine // Prickle Faeries": ["role:burn","wincon:burn"],
 "Invasion of Ergamon // Truga Cliffcharger": ["role:draw","role:ramp","role:tutor"],
 "Invasion of Fiora // Marchesa, Resolute Monarch": ["role:boardWipe","role:draw"],
-"Invasion of Gobakhan // Lightshield Array": ["answer:artifact","answer:creature","answer:enchantment","answer:planeswalker","role:protection"],
+"Invasion of Gobakhan // Lightshield Array": ["role:protection"],
 "Invasion of Ikoria // Zilortha, Apex of Ikoria": ["role:tutor"],
 "Invasion of Innistrad // Deluge of the Dead": ["answer:creature","answer:graveyard","role:graveyardHate","role:targetedRemoval","wincon:go-wide"],
 "Invasion of Ixalan // Belligerent Regisaur": ["role:cardSelection"],

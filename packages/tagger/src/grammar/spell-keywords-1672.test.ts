@@ -77,3 +77,15 @@ test("Scotty stays blocked: beam me up is no Comprehensive Rules keyword, so its
   expect(g.complete).toBe(false);
   expect(g.blocker).toBeDefined();
 });
+
+// Round 2: "exile a nonland card from it" after "look at target opponent's hand" is a card from THAT hand (Zero, Incorporeal Sensate).
+test("Zero's exile is a card from the looked-at opponent's hand: control opp, fromZone hand (never any, no zone)", () => {
+  const r = parseActions("look at target opponent's hand. You may exile a nonland card from it. For as long as that card remains exiled, its owner may play it. A spell cast this way costs {2} more to cast.", "triggered");
+  expect(r[0]).toMatchObject({ verb: "exile", optional: true, object: { control: "opp", fromZone: "hand" } });
+  const a = derived("Zero, Incorporeal Sensate", "Legendary Artifact Creature — Medusan Scientist", "Lifelink\nWhen Zero enters, look at target opponent's hand. You may exile a nonland card from it. For as long as that card remains exiled, its owner may play it. A spell cast this way costs {2} more to cast.", ["Lifelink"]);
+  const emits = a.flatMap((x) => x.emits ?? []).filter((e) => e.verb === "exiled");
+  expect(emits.length).toBeGreaterThan(0);
+  for (const e of emits) { expect(e.subject?.control).toBe("opp"); expect(e.subject?.fromZone).toBe("hand"); }
+  // "from it" with no hand looked at is not given a hand
+  expect(parseActions("you may exile a nonland card from it", "triggered")[0]!.object).not.toMatchObject({ control: "opp" });
+});
