@@ -6726,6 +6726,34 @@ test("a token copy 'except it's 1/1' still copies a creature of any size", () =>
   expect(directedReasons(assault, disciple, H).some((r) => r.tag.startsWith("enters:"))).toBe(true);
 });
 
+/** A COPY OF AN OPPONENT'S CREATURE IS NOT A COPY OF A DECK-MATE (#1675 review): Dominion Infiltration copies "creatures your opponents control", so it never re-fires Mulldrifter's own entry trigger in your deck.
+ *  A copy of a creature YOU control (Echoing Assault, above) still does. */
+test("a token copy of an opponent's creature does not pair with a deck-mate's own enters trigger", () => {
+  const maker = (name: string, control: string, text: string) => {
+    const d = base(name, [{
+      kind: "on-cast", repeats: "once",
+      effect: { kind: "token-generation", subject: { type: "creature", control: "you", token: true, copyOf: { type: "creature", control } } },
+    }] as unknown as CardTags["abilities"]);
+    (d.card as { oracleText: string }).oracleText = text;
+    return d;
+  };
+  const dominion = maker("Dominion Infiltration", "opp", "Choose X target creatures your opponents control. For each of them, create a token that's a copy of a creature, except it has changeling. Those tokens gain haste.");
+  const yours = maker("Twinflame", "you", "Choose any number of target creatures you control. For each of them, create a token that's a copy of a creature, except it has haste.");
+  const mulldrifter = base("Mulldrifter", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null, self: true } }, effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]);
+  const pairs = (p: ReturnType<typeof base>) => directedReasons(p, mulldrifter, H).some((r) => r.producer === p.card.name && r.tag.startsWith("enters:"));
+  expect(pairs(yours)).toBe(true);
+  expect(pairs(dominion)).toBe(false);
+  // Saw in Half: the OPPONENT in its subject is the token's controller ("its controller creates two tokens that are copies of that creature"); what is copied is any creature, yours included
+  const saw = base("Saw in Half", [{
+    kind: "on-cast", repeats: "once",
+    effect: { kind: "token-generation", subject: { type: "creature", control: "opp", token: true, scope: "each" } },
+  }] as unknown as CardTags["abilities"]);
+  (saw.card as { oracleText: string }).oracleText = "Destroy target creature. If that creature dies this way, its controller creates two tokens that are copies of that creature, except their power is half that creature's power.";
+  expect(pairs(saw)).toBe(true);
+});
+
 /** A MILL IS RANDOM, A DISCARD IS CHOSEN (#716). Takenuma's mill does not enable Emry's artifact
  *  recursion (owner FALSE); a discard does, and a mill still feeds a LAND recursion (compass: Ark
  *  of Hunger -> Life from the Loam). */

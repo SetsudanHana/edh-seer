@@ -444,6 +444,9 @@ function timesOf(rest: string): string | null {
 const TOKENS: Record<string, [string, Handler]> = {
   create: ["create", (rest) => {
     const r = tokenList(rest);
+    // "a token that's a copy of each of X target creatures" (Dominion Infiltration, carried from "Choose X target creatures ... For each of them, create ..."; #1675): one copy per target, X of them, so the amount is X (the
+    // store's X, which derive reads as the X paid). CEILING: only a literal X count; "any number of" / "up to N" targets keep the amount 1 the same sentence read before (Twinflame).
+    if (r && !Array.isArray(r) && /^an? token that's a copy of each of X target /i.test(rest)) return { ...r, amount: "X" };
     // "create a tapped Powerstone token": the tap on what was made.
     return r && /^(?:a|an|two|three|x|that many|\w+) tapped /i.test(rest) ? [...[r].flat(), TAPPED] : r;
   }],

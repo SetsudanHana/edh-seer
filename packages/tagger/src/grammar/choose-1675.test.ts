@@ -55,6 +55,12 @@ test("'Choose X target creatures. For each of them, create a token that's a copy
   expect(create).toMatchObject({ verb: "create" });
   expect(create!.object).toContain("each of X target creatures your opponents control");
   expect(create!.object).toContain("except it has changeling");
+  // X targets make X copies: the amount is the X paid, and the copy is of OPPONENTS' creatures only (the matcher refuses its pairs with deck-mates' own enters triggers on that control)
+  expect(create!.amount).toBe("X");
+  const tags = deriveCardTags(deriveInputOf(DOMINION as never, "x", DOMINION.name, g.records, undefined, g.readings));
+  const make = tags.abilities.find((a) => a.effect.kind === "token-generation");
+  expect(make?.effect.subject?.copyOf).toMatchObject({ type: "creature", control: "opp" });
+  expect(make).toMatchObject({ amount: "X", count: { floor: 0, ceiling: null, scalesWith: "mana" } });
 });
 
 test("T'Pring reads completely: the fight, and the draw behind a trigger no engine event carries (Whenever a creature that fought this way dies this turn)", () => {
@@ -126,8 +132,10 @@ test("Chira's five-way trigger is read whole: a coin flip and a die roll are tri
   const tags = deriveCardTags(deriveInputOf(CHIRA as never, "x", CHIRA.name, g.records, undefined, g.readings));
   // every printed alternative is a trigger of the card: the flip and the roll claim their events, the three "at random" ones are named and claim nothing
   const verbs = tags.abilities.flatMap((a) => a.trigger?.verbs ?? []);
-  expect(verbs).toEqual(expect.arrayContaining(["flip-coin", "dice-rolled"]));
-  expect(tags.unknownTriggers?.length).toBeGreaterThanOrEqual(1);
+  // exactly the flip and the roll, once per effect (counter, Treasure): the discard at random is REFUSED (a narrowed trigger claims nothing), and so are the two random picks
+  expect(verbs).toEqual(["flip-coin", "dice-rolled", "flip-coin", "dice-rolled"]);
+  expect(verbs).not.toContain("discarded");
+  expect(tags.unknownTriggers).toEqual(["narrowing:discarded", "other", "other"]);
 });
 
 test("'mills twice X cards' keeps its amount, the stored '2X': Drown in Dreams keeps its mill magnitude through the modal-rider flip", () => {
