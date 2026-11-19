@@ -1089,6 +1089,23 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // puts the counters on a permanent you control, not on an any-controller object that opponent-only counter triggers (Generous Patron, Kros, Bold Plagiarist) would hear.
   // CEILING: only "it enters with ... counters" straight after a put from your hand or graveyard onto the battlefield.
   if (action.verb === "add-counter" && recipient === undefined && subject.control === "any" && /\bput\b[^.]*\bfrom your (?:hand|graveyard)\b[^.]*\bonto the battlefield\b[^.]*\.\s*it enters with\b/i.test(clauseText ?? "")) subject.control = "you";
+  // THE CREATURE YOU CAST FROM YOUR GRAVEYARD IS YOURS (Overflow Submatrix, #1677 review; CR 122.6a: the effect that gives an entering object counters names no player, so the object's controller puts them): "If you cast a spell this way, that artifact creature enters with a
+  // finality counter on it" is a creature you control, not an any-controller object that opponent-only counter triggers (Generous Patron, Kros, Defense Contractor, Bold Plagiarist) would hear. Typed by the noun the sentence names.
+  // A BARE "artifact" IS ARTIFACT OR CREATURE (Noctis, Prince of Lucis, #1677 round 3): an artifact spell can be an artifact creature, and the effect that gives it counters is the existing 122.6a reading above, so its counter can land on a creature you control. Typed `artifact` alone it dropped 10 real pairs with
+  // creature-counter consumers (Hollowmurk Siege, Mikey & Leo, Danny Pink, Rikku, Lae'zel, Loading Zone, Fain, Lieutenant Commander Data, Tayam ...). Emitted as the union [artifact, creature], no `allTypes` (Winding Constrictor's trigger shape).
+  // CEILING: only "If you cast a spell this way, that <type> enters with ... counter", the back-reference of a cast clause's own spell; the bare "artifact" noun reads as the union, though a cast artifact that is no creature is not one (the union over-claims by that much).
+  const castThisWay = action.verb === "add-counter" && recipient === undefined && subject.control === "any" ? /\bif you cast a spell this way, that ([a-z]+(?: [a-z]+){0,3}) enters with\b/i.exec(clauseText ?? "") : null;
+  if (castThisWay) {
+    const typed = parseSubject(castThisWay[1]!);
+    subject.control = "you";
+    if (typed.type !== undefined && subject.type === undefined) {
+      subject.type = typed.type === "artifact" && typed.allTypes === undefined ? ["artifact", "creature"] : typed.type;
+      if (typed.allTypes !== undefined) subject.allTypes = typed.allTypes;
+    }
+  }
+  // THE CARD "put it into your hand or graveyard" PUTS IS FROM AND TO YOUR OWN ZONES (Hela // Dark Tutor, Dina's Guidance, #1677 review): an any-controller graveyard put made false edges into every "a card is put into an opponent's graveyard" trigger.
+  // CEILING: only that printed either-or ("put it into your hand or graveyard"); a plain tutor to the graveyard (Entomb, Buried Alive) keeps its any-controller reading.
+  if (action.verb === "put" && action.toZone === "graveyard" && action.optional === true && /\bput (?:it|that card) into your (?:hand or graveyard|graveyard or hand)\b/i.test(clauseText ?? "")) subject.control = "you";
   // ...and alternatives are read AFTER the counter kinds left the subtype (#1575): "gold counters" is no Gold subtype for the grammar's alternatives to be offered instead.
   if (listed === undefined && playerOnly === undefined) subject = withAlternatives(subjectText, subject);
   // A MASS REMOVAL KEEPS THE CONDITION THE NOUNS DO NOT SAY (#1586): "with mana value X or less", "that entered this turn", "with the same name as", "that's not historic", "Artifacts ... you control gain indestructible. Destroy all nonland permanents" (sweep-narrowing.ts).

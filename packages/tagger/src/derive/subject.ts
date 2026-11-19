@@ -1061,7 +1061,9 @@ export function parseSubject(text: string, role: "pick" | "event" = "pick"): Sub
     if (kinds.length) out.abilityKind = [...new Set(kinds)];
   }
   const origin = t.match(ORIGIN_ZONE);
-  if (origin) out.fromZone = origin[1].toLowerCase();
+  // "that wasn't cast from your hand" (Venser, Visionary Traveler) is the NEGATION of an origin: read as `fromZone: hand` the emit claimed creatures that WERE cast from the hand (#1677).
+  // CEILING: only "wasn't / weren't cast" ahead of the zone; `notFromZone` is a consumer-side narrowing (subject.ts in the matcher), so on a producer it records the words and narrows nothing.
+  if (origin) out[/\b(?:wasn't|weren't) cast\s*$/i.test(t.slice(0, origin.index)) ? "notFromZone" : "fromZone"] = origin[1].toLowerCase();
   if (colors) out.colors = colors;
   // A SET NARROWED BY A RULE NO OTHER FIELD CARRIES (#1557): the subject is not "every <class>", and a bare `permanent` must not read as Apocalypse's.
   // CEILING: a marker, not a filter -- nothing matches on it, and the all-but number, the vote and the pile are not modelled.

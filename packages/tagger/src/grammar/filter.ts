@@ -1163,6 +1163,8 @@ function post(c: Cursor, r: Reading): boolean | null {
   if (c.eat("in", "excess", "of") && !c.done) { c.i = c.t.length; return true; }
   // "target spell that wasn't cast from its owner's hand": cast from anywhere else.
   if (c.eat("that", "wasn't", "cast", "from", "its", "owner's", "hand")) { r.notFromZone = "hand"; return true; }
+  // "each nontoken creature you control that wasn't cast from your hand" (Venser, Visionary Traveler): it came from anywhere else, or was not cast.
+  if (c.eat("that", "wasn't", "cast", "from", "your", "hand")) { r.notFromZone = "hand"; return true; }
   // "a creature card put into your graveyard from anywhere this turn".
   if (c.eat("put", "into", "your", "graveyard", "from", "anywhere", "this", "turn")) { if (!r.history.includes("put-into-graveyard")) r.history.push("put-into-graveyard"); return true; }
   // "each creature you control that didn't attack or enter this turn": neither.
