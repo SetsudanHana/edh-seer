@@ -75,6 +75,7 @@ const ACTORS: [string, ActionReading["actor"]][] = ([
   ["they", { control: "any", scope: "that" }],
   ["that player or that planeswalker's controller", { control: "any", scope: "that" }],
   ["the player to your right", { control: "opp" }], ["the player to your left", { control: "opp" }],
+  ["the player who exiled it", { control: "any", scope: "that" }],
   ["any player", { control: "any" }], ["any opponent", { control: "opp" }], ["the player", { control: "any", scope: "that" }],
   ["this creature's owner", { control: "any", scope: "that" }], ["~'s owner", { control: "any", scope: "that" }],
   ["the controller of the permanent it becomes", { control: "any", scope: "that" }],
@@ -837,7 +838,7 @@ function castOrPlay(rest: string, what: RegExp): Args | null {
   // "a spell from your hand with mana value 3 or less": the zone mid-phrase, moved to the end.
   const mid = / from (your hand|your graveyard|exile)(?= with )/i.exec(t);
   if (mid) t = `${t.slice(0, mid.index)}${t.slice(mid.index + mid[0].length)} from ${mid[1]}`;
-  const from = / from (?:the top of (?:your|their) library|your graveyard(?: or from exile)?|that player's graveyard|your hand|exile|among them|among those (?:exiled )?cards|among (?:the )?cards? exiled [\w ]+)$/i.exec(t);
+  const from = / from (?:the top of (?:your|their) library|your graveyard(?: or from exile)?|that player's graveyard|your hand|(?:target opponent's|that player's) hand|exile|among them|among those (?:exiled )?cards|among (?:the )?cards? exiled [\w ]+)$/i.exec(t);
   if (!what.test(from ? t.slice(0, from.index) : t)) return null;
   const zone = from ? (/library/.test(from[0]) ? "library" : /graveyard/.test(from[0]) ? "graveyard" : /hand/.test(from[0]) ? "hand" : /exile/.test(from[0]) ? "exile" : undefined) : undefined;
   const r = objectOf(from ? t.slice(0, from.index) : t) ?? (/^(?:a|an|one|two) additional lands?$/i.test(t) ? { object: parse("a land")! } : null);
@@ -1790,15 +1791,22 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   const payEnergy = /^pay ((?:\{E\})+)$/i.exec(t);
   if (payEnergy) return [{ verb: "remove-counter", object: parse("you")!, counter: "energy", amount: String(payEnergy[1]!.length / 3), ...(condition ? { condition } : {}) }];
   // "you may have target player discard a card": the actor is who is made to.
-  const have = /^you (may )?have (.+)$/i.exec(t);
+  // ...or with no "you may" ahead of it, in a list ("sacrifice him unless you sacrifice three creatures, pay 3 life, and have target opponent draw three cards", Tresserhorn's Lord; #1676).
+  // CEILING: a list item after an "unless" payment carries no `unless` / optional marker (only the first payment does, as "pay 3 life" beside it): the opponent's draw reads as always happening.
+  const have = /^(?:you (may )?)?have (.+)$/i.exec(t);
   const made = have && ACTORS.find(([w]) => have[2]!.toLowerCase().startsWith(w + " "));
   if (have && made) {
     optional = Boolean(have[1]);
     t = have[2]!;
   }
+  // A PUNISHER'S OFFER (#1676): "target opponent may have you draw a card" (Tell Me What You See, Combustible Gearhulk, Bane): the opponent CHOOSES and you ACT, so the action is yours and optional, as the stored readings write it
+  // (a `draw` of "a card", optional, which derive reads as yours). The chooser is the clause's "target opponent", carried to "If they don't, they lose 4 life" by `oppChoice` in the sentence loop.
+  // CEILING: the chooser is not recorded on the action (the store has no field for who decides); only "target opponent" / "defending player" / "any opponent" and only "you" made to act.
+  const offer = /^(?:target opponent|defending player|any opponent) may have you (.+)$/i.exec(t);
+  if (offer) { optional = true; t = `you ${offer[1]!}`; }
   // "target artifact creature's controller sacrifices it": a target's controller.
   // "the owners of up to two target cards in graveyards shuffle ..." (#1452): the owners of a chosen target, once "those cards" is the target.
-  const owner = /^(target [a-z -]{1,40}?'s (?:controller|owner)|the controller of target [a-z -]{1,40}?|the owners of (?:up to \w+|any number of) target [a-z -]{1,40}?) (?=sacrifices|discards|draws|loses|gains|returns|puts|creates|mills|exiles|shuffles?\b)/i.exec(t);
+  const owner = /^(target [a-z -]{1,40}?'s (?:controller|owner)|the controller of target [a-z -]{1,40}?|the owners? of (?:up to \w+|any number of) target [a-z -]{1,40}?) (?=sacrifices|discards|draws|loses|gains|returns|puts|creates|mills|exiles|shuffles?\b)/i.exec(t);
   if (owner && !actor) { actor = { control: "any", scope: "that", text: owner[1]! }; t = t.slice(owner[0].length); }
   else for (const [word, who] of ACTORS) {
     if (t.toLowerCase().startsWith(word + " ")) { actor = { ...who!, text: t.slice(0, word.length) }; t = t.slice(word.length + 1); break; }
@@ -2178,9 +2186,21 @@ function readActions(effect: string, type: string | null, cost: string | undefin
   let chosen: Chosen | undefined, refusedAny = false;
   // The hand a sentence just revealed or looked at ("Target opponent reveals their hand", "Look at target opponent's hand"), and the card chosen from it (#1349).
   let handOf: string | undefined, handOwner = "", handPick: { sentence: string; text: string; used: boolean; fresh: boolean } | undefined;
+  // #1676: the opponent a sentence opened with ("Target opponent may draw four cards", "target opponent may have you draw a card") is the "they" / "that player" of the "If they do / don't" sentences behind it.
+  // CEILING: the chosen opponent is carried only to a sentence that opens "If they do," / "If they don't," and then "they" / "that player" (and to "look at that player's hand and you may cast ... from their hand"), until a sentence
+  // opens with another player who is not you; "they" anywhere else keeps its any / that reading, as before.
+  let oppChoice = false;
+  // #1676: where the "each opponent secretly chooses a number" run of Itazura has got to: "chosen", "revealed", "picked" (an opponent with the highest number).
+  let secretNumbers: "chosen" | "revealed" | "picked" | "put" | undefined;
   for (const [sentenceAt, raw] of sentences.entries()) {
     let s = raw.trim().replace(/\.$/, "");
     if (s === "") continue;
+    // "Target opponent whose turn it is may cast ..." (Cmdr. Troi): the turn only narrows who can be targeted; the actor is the target opponent.
+    // CEILING: the narrowing (only the opponent whose turn it is) is not recorded; the action claims an opponent, which the narrowed target still is.
+    s = s.replace(/^target opponent whose turn it is\b/i, "target opponent");
+    if (oppChoice) s = s.replace(/^(if they (?:do|don't), )(?:they|that player) (?=\S)/i, "$1target opponent ");
+    const sentenceActor = actorOf(s);
+    if (sentenceActor && sentenceActor.control !== "you") oppChoice = sentenceActor.text?.toLowerCase() === "target opponent";
     // "Activate only as a sorcery", "This ability triggers only once each turn": a restriction the store drops and
     // derive reads off the printed clause (restriction.ts). It claims no action and is not unread.
     if (isRestrictionSentence(s)) continue;
@@ -2305,9 +2325,42 @@ function readActions(effect: string, type: string | null, cost: string | undefin
       s = s.slice(open[0].length);
     }
     s = s.replace(/^([A-Z])/, (c) => c.toLowerCase());
+    // "look at that player's hand and you may cast a spell from their hand without paying its mana cost" (Kuroki, Thief of Talents; #1676) after the chosen opponent drew: the look moves nothing and records no
+    // action, and "their hand" is that opponent's, written out as the hand-pick shapes write it, so the cast is of a card in THEIR hand (object control opp), yours to cast.
+    const lookAnd = oppChoice ? /^look at that player's hand and (you may cast .+)$/i.exec(s) : null;
+    if (lookAnd) s = lookAnd[1]!.replace(/ from their hand\b/i, " from target opponent's hand");
+    // EACH OPPONENT SECRETLY CHOOSES A NUMBER (Itazura, Lingering Wick; #1676): "Each opponent secretly chooses a number 0 or greater. Then those numbers are revealed. Choose an opponent with the highest number. ~ deals that much
+    // damage to them, then they may cast ...". The choice is each opponent's and nothing here consumes a number: it is read as the store reads a choice it keeps, an unclaimed `other` of each opponent (the words as its object). The
+    // reveal moves nothing and the pick of "an opponent with the highest number" records no action (as "Choose target creature" above); "them" / "they" after the pick are THAT opponent, an opponent (control opp, not targeted), where
+    // read bare they were any player (which `you` satisfies).
+    // CEILING: the three sentences must come in this order, the opponent picked is not named beyond "an opponent" / "that opponent" (no tie rule, no highest-number test), and the pronouns are rewritten only in the sentence straight
+    // after the pick, "to them" at the end of a phrase and ", then they ", and the narrowing only in the one sentence after that (a third sentence is read as printed).
+    if (/^each opponent secretly chooses a number 0 or greater$/i.test(s)) { out.push({ verb: "other", object: REF, phrase: s, actor: { control: "opp", scope: "each", text: "each opponent" } }); secretNumbers = "chosen"; mayBefore = false; continue; }
+    if (secretNumbers === "chosen" && /^then those numbers are revealed$/i.test(s)) { secretNumbers = "revealed"; continue; }
+    if (secretNumbers === "revealed" && /^choose an opponent with the highest number$/i.test(s)) { secretNumbers = "picked"; continue; }
+    // The state lasts exactly TWO sentences after the pick (round 2: it used to last the whole clause): the damage-and-cast sentence ("picked": the pronouns), then the put sentence ("put": the narrowing), after which it is gone.
+    if (secretNumbers === "picked") {
+      s = s.replace(/ to them(?=,|$)/i, " to an opponent").replace(/, then they /i, ", then that opponent ");
+      secretNumbers = "put";
+    } else if (secretNumbers === "put") {
+      // "put a card from among them that wasn't cast this way into your hand": the cards left exiled, a narrowing the reading drops; CEILING: the claim is the put of a card from among those exiled, which the narrowed put still is.
+      s = s.replace(/^(you put a card from among them) that wasn't cast this way( into your hand)$/i, "$1$2");
+      secretNumbers = undefined;
+    }
     // "For each opponent, goad target creature that player controls" (Frenzied Gorespawn, Grasp of Fate, Tempted by the Oriq): the repetition per opponent is no action
     // and the store keeps no trace of it, only the verb phrase behind (the "that player" in it is the sentence's back-reference).
     // CEILING: the per-opponent repetition is not carried, as the stored actions do not carry it.
+    // "For each card exiled this way, the player who exiled it may play it for as long as it remains exiled" (Vulcan Mind-Meld; #1676): each card's exiler plays it, and who that was is the card's, not the sentence's: the actor
+    // reads as any player, back-referenced ("the player who exiled it"), and the per-card repetition is no action.
+    // CEILING: the per-card repetition is not carried (the stored action has none), and "the player who exiled it" is any player, never narrowed to the two who exiled in the sentences before it.
+    s = s.replace(/^for each card exiled this way, (?=the player who exiled it )/i, "");
+    // "Target opponent looks at the top card of your library, then exiles it face down. You look at the top two cards of their library, then exile them face down" (Vulcan Mind-Meld; #1676): the look moves nothing and records no
+    // action; the exile is the looker's, of the top cards of the library named, "their library" being the chosen opponent's. Rewritten as the exile it says, which the grammar reads (actor and library as printed).
+    // CEILING: only these two shapes (the opponent of "your library", you of "their library" after the opponent was chosen); the look is not recorded, and the exile reads as one of the top cards, which is what the look decides.
+    const lookExile = /^(target opponent|you) (?:looks?) at (the top (?:card|\w+ cards) of (your|their) library), then exiles? (?:it|them)( face down)$/i.exec(s);
+    if (lookExile && ((lookExile[1]!.toLowerCase() === "target opponent" && lookExile[3]!.toLowerCase() === "your") || (oppChoice && lookExile[1]!.toLowerCase() === "you" && lookExile[3]!.toLowerCase() === "their"))) {
+      s = `${lookExile[1]!.toLowerCase() === "you" ? "you exile" : "target opponent exiles"} ${lookExile[2]!.replace(/ of their library$/i, " of target opponent's library")}${lookExile[4]!}`;
+    }
     const forEachOpponent = /^(?:then )?for each opponent, /i.test(s);
     s = s.replace(/^(?:then )?for each opponent, /i, "");
     // "For each creature target player controls, create a token that's a copy of that creature" (Clone Legion, Face Yourself, Multiversal Incursion; Mirror Universe Intrusion's kicked
@@ -2359,6 +2412,13 @@ function readActions(effect: string, type: string | null, cost: string | undefin
       const counter = readPhrase("put a +1/+1 counter on it", condition);
       if (put && counter) out.push(...put, ...counter, { verb: "animate", object: REF, text: "it as a Borg artifact creature", ...(condition ? { condition } : {}) });
       else unread?.push(s);
+      continue;
+    }
+    // "Mana of any type can be spent to cast spells this way" (Vulcan Mind-Meld; #1676) as a sentence of its own after the play it widens: the same rider as the `SPEND_RIDER` tail (CR 609.4b), never stripped silently, so it rides
+    // after the cast or play as the store's unclaimed `other`.
+    // CEILING: only straight after a cast or play this clause read, and only "spells this way" / "a spell this way"; nothing says which cards "this way" is, so the rider is the sentence's words alone.
+    if (/^mana of any type can be spent to cast (?:spells|a spell) this way$/i.test(s) && (out[out.length - 1]?.verb === "play" || out[out.length - 1]?.verb === "cast")) {
+      out.push({ verb: "other", object: { control: "any", token: null, ref: "sentence" }, phrase: s.toLowerCase() });
       continue;
     }
     // CEILING: "If you do, increase or decrease the result by 1" (Xenosquirrels, CR 706.2) modifies a die

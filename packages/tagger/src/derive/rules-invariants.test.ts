@@ -17,6 +17,7 @@ import { emblemRecipient } from "../emblem.js";
 
 const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b"]);
 const TESTED: Record<string, string> = {
+  "601.2a": "grammar/other-actor-1676.test.ts — proposing a cast makes the proposer the spell's controller: Itazura's 'then they may cast a spell from among those cards' after the pick is the chosen opponent's cast, `control: opp` on the emit (#1676)",
   "702.119": "grammar/spell-keywords-1672.test.ts — 'each sea monster spell you cast has emerge' is a cost note on those spells, never a keyword on the board (Zekes, Acid Rock Fan; #1672)",
   "702.144a": "grammar/spell-keywords-1672.test.ts — demonstrate is a triggered ability on casting the spell: its copy is not read, so the grant claims no cost change (Elda, Conjurer of Spectacle; #1672)",
   "702.144": "grammar/spell-keywords-1672.test.ts — 'the first nonlegendary creature spell you cast each turn has demonstrate' copies the spell and claims no cost change (Elda, Conjurer of Spectacle; #1672)",
@@ -110,7 +111,7 @@ const TESTED: Record<string, string> = {
   "602.2b": "derive/mana-lines.test.ts — an activated ability that targets (Deathrite Shaman, Red Death, Shipwrecker) holds only while a legal target exists, so its mana line is gated on it (#1188)",
   "605.1a": "derive.test.ts — a mana ability's amount is the mana its object adds (Sol Ring 2, Talisman 1, Gilded Lotus 3)",
   "701.9a": "grammar/action.test.ts — only a card in a hand is discarded, so 'they discard it' straight after a hand pick is the picked card (Binding Negotiation, #1592)",
-  "701.21a": "payment.test.ts — a sacrifice in a cost is of your own permanents, so its class is control you",
+  "701.21a": "payment.test.ts — a sacrifice in a cost is of your own permanents, so its class is control you; grammar/other-actor-1676.test.ts — so is the sacrifice paid \"unless you sacrifice\" in a sentence that names another player (Tresserhorn's Lord, Returned, #1676)",
   "702.14": "derive.test.ts — a landwalk grant names its [type]walk (Lord of Atlantis islandwalk, Vectis Gloves landwalk)",
   "702.4": "effect-kind.test.ts — Double Strike is a keyword, not the verb double (Akim, the Soaring Wind) (#1141)",
   "702.153a": "emits.test.ts / derive.test.ts — casualty N sacrifices a creature with power N or greater (Anhelo's grant, Make Disappear's keyword line)",
