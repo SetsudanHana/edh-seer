@@ -128,7 +128,7 @@ function objectOf(phrase: string): { amount?: string; object: SubjectFilter } | 
   const typed = /^enchanted ([A-Z][a-z]+)$/.exec(t);
   if (typed && parse(`a ${typed[1]}`)) return { object: parse(`a ${typed[1]}`)! };
   // "that land", "that artifact": a back-reference to an object the sentence named.
-  if (/^that (?:land|artifact|enchantment|planeswalker|aura|equipment|vehicle|dragon|(?:nonland|noncreature|creature|land|artifact|enchantment|instant|sorcery|permanent|planeswalker) card)$/i.test(t) || /^that [A-Z][a-z]+$/.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
+  if (/^that (?:land|artifact|enchantment|planeswalker|aura|equipment|vehicle|dragon|artifact creature|(?:nonland|noncreature|creature|land|artifact|enchantment|instant|sorcery|permanent|planeswalker) card)$/i.test(t) || /^that [A-Z][a-z]+$/.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
   if (/^(?:it|them|that card|those cards|the revealed card|that spell|that player|that creature|that permanent|itself|that source|those creatures|those players|its controller|its owner|each of them|the chosen player|the player or planeswalker (?:it's|that creature is) attacking|(?:that|the) [a-z]+(?: or [a-z]+)?'s controller|that player or planeswalker|that permanent or player|that creature and that player|that ability|that spell or ability|that triggered ability|the copy|that token|the (?:spell|ability|creature|permanent|card|token)|the creature you control|the chosen [a-z]+|(?:one|two|either|any number) of (?:them|those cards)|each of (?:those|them|these)(?: [a-z]+)?|those (?:permanents|lands|artifacts|tokens|spells)|the (?:exiled|revealed|chosen|milled|discarded) cards?|(?:any number of )?the copies)$/i.test(t)) return { object: { control: "any", token: null, ref: "sentence" } };
   // "one or two target creatures": at most two, the store's "up to two".
   if (/^one or two /i.test(t)) return objectOf(t.replace(/^one or two /i, "up to two "));
@@ -632,6 +632,10 @@ const ZONE: Record<string, [string, Handler]> = {
       const a = ZONE.put![1](rest.slice(0, pair.index)), b = ZONE.put![1](rest.slice(pair.index + pair[0].length));
       if (a && b) return [a, b].flat();
     }
+    // "put it into your hand or graveyard" (Hela's Dark Tutor, Dina's Guidance): one move to each of the two zones, as the store writes it, and `optional` is set by the dispatch below (one of the two happens).
+    // CEILING: the either-or is two optional puts, not a choice node; only the player's own hand and graveyard, either order, of "it" / "that card".
+    const either = /^(it|that card) into your (hand|graveyard) or (?:into )?(?:your )?(hand|graveyard)$/.exec(rest);
+    if (either && either[2] !== either[3]) { const r = moveObject(either[1]!); return r && [either[2]!, either[3]!].map((toZone) => ({ ...r, toZone })); }
     rest = rest.replace(/ instead of putting (?:it|that card) (?:into (?:your|its owner's|a) graveyard|anywhere else)$/, "");
     const at = rest.search(/ (?:onto|into|on top of|on the bottom of) (?=the battlefield|its owner's|their owners'|your|a graveyard|exile|their|that player's)/);
     if (at < 0) return null;
@@ -1069,6 +1073,14 @@ function restrictionOf(t: string): ActionReading[] | null {
   if (tapped) {
     const who = objectOf(tapped[1]!);
     return who ? [{ verb: "tap", object: who.object, ...(who.object.self || who.object.ref ? {} : { text: tapped[1]! }), ...(tapped[2] ? { condition: tapped[2] } : {}) }] : null;
+  }
+  // "Lands you control enter untapped" (Warp Speed; Spelunking, Gond Gate): a static that stops a class entering tapped. The tapped form above is the verb `tap`, which this is not (the opposite), and no verb names "enters
+  // untapped", so it is the unclaimed `other`, its class as the filter grammar reads it. By index, no regex over the subject (CodeQL polynomial-redos).
+  // CEILING: recorded, claiming no event; only a class "you control" (never the card itself, a tapped-or-not choice, or a "this turn" duration, which stay unread).
+  if (t.toLowerCase().endsWith(" enter untapped") && t.length <= 75) {
+    const who = t.slice(0, t.length - " enter untapped".length);
+    const r = / you control$/i.test(who) && !who.includes(",") ? objectOf(who) : null;
+    if (r && !r.object.self && !r.object.ref) return [{ verb: "other", object: r.object, text: t }];
   }
   // "~ isn't a creature": the store's "be a creature".
   const isnt = /^(.+?) isn't a creature$/i.exec(t);
@@ -1825,6 +1837,8 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
     if (!args) return null;
     // "destroy up to one target artifact": a zone move of up to N may move none (the store's optional).
     if ((ZONE[base] || base === "tap" || base === "untap") && /^(?:up to |any number of )/i.test(rest)) optional = true;
+    // "put it into your hand or graveyard": the player picks one zone, so each put is a may (the store's optional on both).
+    if (base === "put" && /^(?:it|that card) into your (?:hand|graveyard) or (?:into )?(?:your )?(?:hand|graveyard)$/.test(rest)) optional = true;
     const all: Args[] = [args].flat().map((a) => (counted && a.amount !== undefined && /\bX\b/.test(a.amount) ? { ...a, amount: counted } : a))
       // "an X/X ... token, where X is the number of land cards in your graveyard": the X is in the
       // TEXT, so its definition stays with it (Formless Genesis's scaling reads it there).
@@ -1896,6 +1910,17 @@ function actorOf(phrase: string): ActionReading["actor"] | undefined {
 /** The timing of a game-start delayed effect, in front of its effect or behind it. */
 const GAME_START_LEAD = /^(?:at the beginning of (?:the|your) first (?:upkeep|main phase of the game)|when each opponent casts their first spell of the game), /i;
 const GAME_START_TAIL = / at the beginning of (?:the|your) first (?:upkeep|main phase of the game)$/i;
+
+/** "~ deals 4 damage to that creature instead if a creature died this turn" as "if a creature died this turn, ~ deals 4 damage to that creature instead", or null. A damage or life-loss head with a fixed amount,
+ *  a condition of one comma-free clause. By index (CodeQL polynomial-redos): the head is cut at the LAST " instead if ". */
+function insteadIfLead(s: string): string | null {
+  const at = s.lastIndexOf(" instead if ");
+  if (at <= 0 || /^if /i.test(s)) return null;
+  const head = s.slice(0, at), cond = s.slice(at + " instead if ".length);
+  if (cond === "" || cond.includes(",") || head.includes(",") || head.length > 120) return null;
+  const verb = /(?:^| )(?:deals?|loses?) (?:\d+|x) (?:damage|life)(?: to [^,]+)?$/i.exec(head);
+  return verb && verb.index <= 70 ? `if ${cond}, ${head} instead` : null;
+}
 
 /** A sentence's opener: "If you do, ...", "If ..., ...", "Otherwise, ...". */
 const OPENER = /^(?:then )?(if you do|if you don't|if [^,]+|otherwise|then|as an additional cost to cast this spell|as long as [^,]+|during [^,]+|starting with you|whenever [^,]+|each time [^,]+), /i;
@@ -2319,6 +2344,9 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // By index, not one regex over both words (CodeQL polynomial-redos).
     const lead = s.toLowerCase().startsWith("if ") ? s.slice(0, s.includes(",") ? s.indexOf(",") : s.length) : "";
     if (durationLead && /\bcounters?\b/i.test(lead) && /\bwould (?:be )?put\b/i.test(lead)) { unread?.push(raw.trim().replace(/\.$/, "")); continue; }
+    // "<damage or life loss> instead if <condition>" (Planetary Bombardment, Steer Clear, Vengeance Mission): the printed order of "If <condition>, <it> instead", which the opener below reads: the improved amount
+    // as one more action, as Frost Bite's. CEILING: only a damage or life-loss amount (never a different effect, a count of tokens or counters); the condition is read as the opener reads one.
+    s = insteadIfLead(s) ?? s;
     // Openers stack: "As long as ~ is equipped, if a triggered ability ... triggers, ...".
     for (let open = OPENER.exec(s), k = 0; open && k < 2; open = OPENER.exec(s), k++) {
       if (!/^then$/i.test(open[1]!)) condition = [condition, open[1]!.toLowerCase()].filter(Boolean).join(", ");

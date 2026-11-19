@@ -1098,3 +1098,9 @@ test("a relative 'that aren't legendary' restricts the object to nonlegendary", 
   expect(parseSubject("creatures that aren't legendary").legendary).toBe(false);
   expect(parseSubject("creatures that aren’t legendary").legendary).toBe(false);
 });
+
+test("'that wasn't cast from your hand' is the negation of an origin, never the origin itself (Venser, Visionary Traveler; #1677)", () => {
+  expect(parseSubject("each nontoken creature you control that wasn't cast from your hand")).toEqual({ control: "you", token: false, notFromZone: "hand", type: "creature", scope: "each" });
+  // the plain origin is untouched
+  expect(parseSubject("a creature card from your graveyard")).toMatchObject({ fromZone: "graveyard" });
+});
