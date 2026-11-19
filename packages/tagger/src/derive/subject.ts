@@ -738,6 +738,8 @@ const COUNTER_KINDS = [
   "takeover", "reprieve", "saurian", "impostor", "enlightened",
   // ...and two more a self-reference census found (#1349): The Darkhold's sin, Beckett Mariner's promotion.
   "sin", "promotion",
+  // ...and Peace in Our Time's (#1676): the one card in the corpus that prints a peace counter (census over every oracle text, 2026-11-19).
+  "peace",
   // KEYWORD counters, verbatim from Comprehensive Rules 122.1b — "flying, first strike, double
   // strike, deathtouch, decayed, exalted, haste, hexproof, indestructible, lifelink, menace, reach,
   // shadow, trample, and vigilance". The hand-written version of this list invented a `ward` counter,
