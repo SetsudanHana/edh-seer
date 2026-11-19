@@ -625,8 +625,8 @@ test("the self-name cards move past their self-reference and stop at the NEXT ph
   // ...and their restriction sentence, which task 3 reads as a rider (no action, nothing unread).
   expect(reads("Picard, Leading by Example", "{1}, {T}: Another target creature gets +X/+X until end of turn, where X is Picard's power. Activate only as a sorcery.").complete).toBe(true);
   expect(reads("Seven of Nine, Unassimilated", "{6}{U}: Seven of Nine's base power and toughness become 7/9. Activate only if you control seven or more differently named lands.").complete).toBe(true);
-  // ...and the next blocker (Chekov's "For each opponent," is read since task C2; Beckett Mariner's "Then if ..., remove those counters" too).
-  expect(reads("Ensign Pavel Chekov", "Strange new worlds — When Ensign Chekov enters, each opponent exiles the top X cards of their library, where X is the number of differently named lands you control. For each opponent, choose a land card that player owns exiled this way. You may play the chosen cards for as long as they remain exiled.").blocker?.phrase).toBe("choose a land card that player owns exiled this way");
+  // ...and the next blocker (Chekov's "For each opponent," is read since task C2, and his "choose a land card that player owns exiled this way" since #1675; Beckett Mariner's "Then if ..., remove those counters" too).
+  expect(reads("Ensign Pavel Chekov", "Strange new worlds — When Ensign Chekov enters, each opponent exiles the top X cards of their library, where X is the number of differently named lands you control. For each opponent, choose a land card that player owns exiled this way. You may play the chosen cards for as long as they remain exiled.").complete).toBe(true);
   expect(reads("Beckett Mariner, Impetuous Ensign", "Reckless Behavior — Whenever Beckett Mariner becomes tapped, put a promotion counter on her. Then if there are three or more promotion counters on her, remove those counters and she deals 2 damage to each opponent.").complete).toBe(true);
 });
 
@@ -1458,11 +1458,12 @@ const TAYAM_LUMINOUS_ENIGMA = {"name":"Tayam, Luminous Enigma","typeLine":"Legen
 const STORED_TAYAM_LUMINOUS_ENIGMA = [{"id":1,"abilityType":"static","actions":[{"verb":"add-counter","object":"vigilance","optional":false,"fromZone":null,"toZone":null}]},{"id":2,"abilityType":"activated","actions":[{"verb":"remove-counter","object":"any","optional":false,"fromZone":null,"toZone":null},{"verb":"mill","object":"three cards","amount":"3","optional":false,"fromZone":null,"toZone":null},{"verb":"return","object":"a permanent card with mana value 3 or less from your graveyard","fromZone":"graveyard","toZone":"battlefield","optional":false}]}];
 const BRASS_S_BOUNTY = {"name":"Brass's Bounty","typeLine":"Sorcery","keywords":["Treasure"],"oracleText":"For each land you control, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")"};
 
-test("'For each opponent, <verb phrase>' is the verb phrase alone, as the store has it: Worf; Chekov reads it and stops at his next phrase; parity Frenzied Gorespawn, Tempted by the Oriq", () => {
+test("'For each opponent, <verb phrase>' is the verb phrase alone, as the store has it: Worf; Chekov reads it; parity Frenzied Gorespawn, Tempted by the Oriq", () => {
   const worf = grammarClauseRecords(WORF_INTELLIGENCE_CONTRACTOR);
   expect(worf.blocker).toBeUndefined();
   expect(worf.records[0]!.actions![0]).toMatchObject({ verb: "gain-control", object: expect.stringContaining("up to one target creature that player controls with mana value 3 or less") });
-  expect(grammarClauseRecords(ENSIGN_PAVEL_CHEKOV).blocker).toEqual({ clause: 1, kind: "action", phrase: "choose a land card that player owns exiled this way" });
+  // Chekov's "For each opponent, choose a land card that player owns exiled this way" is carried into "the chosen cards" since #1675 (choose-1675.test.ts); the sentence before it is read as it was.
+  expect(grammarClauseRecords(ENSIGN_PAVEL_CHEKOV).blocker).toBeUndefined();
   for (const [c, stored] of [[FRENZIED_GORESPAWN, STORED_FRENZIED_GORESPAWN], [TEMPTED_BY_THE_ORIQ, STORED_TEMPTED_BY_THE_ORIQ]] as const) {
     const p = parity(c, stored as never);
     expect(deriveDiff(p.a.abilities, p.b.abilities), c.name).toBeNull();

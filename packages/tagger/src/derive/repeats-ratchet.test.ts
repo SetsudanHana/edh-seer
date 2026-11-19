@@ -90,7 +90,9 @@ const FIXTURE = new URL("repeats-refused.json", import.meta.url);
 /** 2850 -> 2853 (2026-11-18, #1678, DERIVE 540): three rows added on newly derived cards whose triggers the rules
  *  cannot name -- Sash and Waistcoat (evasion), Rikala (its 'tap an Island for mana' mana line) and Sylvia Tilly
  *  (the reflexive counter). 0 gone. */
-const REFUSED_CAP = 2853;
+/** 2853 -> 2854 (2026-11-19, #1675, DERIVE 542): one row added, T'Pring, Never Parted's draw, whose trigger
+ *  ("a creature that fought this way dies this turn") the rules cannot name. 0 gone. */
+const REFUSED_CAP = 2854;
 
 /** `repeatsFor` takes THREE arguments -- `cost` feeds rules 1-2 (self-sacrifice, {T}/{Q}),
  *  `clauseText` feeds rule 3 ("once each turn"). A fixture row missing `cost` would half-disable the

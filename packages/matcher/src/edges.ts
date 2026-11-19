@@ -1740,14 +1740,16 @@ const strip = (s: Partial<SubjectFilter>): Partial<SubjectFilter> => {
  *  shapes: on "create a token that's a copy of target creature" it describes what is CREATED, on a
  *  populate effect what is COPIED, and only the printed cue tells them apart.
  *
- *  CEILING (`CEILING:` -- read before trusting a claim): `control` is ignored, so a card making an
- *  OPPONENT copy something over-claims, and Coiling Rebirth's copy is conditioned on "that creature
+ *  `control` is stripped from the subject (it describes the copied object, not the consumer), but a copy that can ONLY copy an OPPONENT's creature ("creatures your opponents control", Dominion Infiltration)
+ *  is refused for the self-trigger pass: a deck-mate's own enters / dies / leaves trigger is never re-fired by it (`opponentsOnly`; #1675 review measured 3,539 such pairs on that one card, the family the
+ *  earlier CEILING said to gate "if a measurement finds it bigger").
+ *
+ *  CEILING (`CEILING:` -- read before trusting a claim): Coiling Rebirth's copy is conditioned on "that creature
  *  isn't legendary" -- an intervening-if the engine has refused generally, not the literal word
- *  `notLegendary` catches. Both single cards; gate on control only if a measurement finds the
- *  family bigger than that. */
+ *  `notLegendary` catches. A single card. The clone-permanent pass ("enters as a copy of a creature an opponent controls") still ignores control. */
 function copySubject(
   p: DeckCard,
-): { subject: SubjectFilter; enters: boolean; notLegendary: boolean } | undefined {
+): { subject: SubjectFilter; enters: boolean; notLegendary: boolean; opponentsOnly: boolean } | undefined {
   const oracle = p.card.oracleText ?? "";
   if (COPY_OF_TOKEN_CUE.test(oracle)) return undefined;
   const enters = COPY_ENTERS_CUE.test(oracle);
@@ -1771,6 +1773,16 @@ function copySubject(
     ...abilities
       .filter((a) => a.effect.kind === "clone")
       .flatMap((a) => (a.emits ?? []).filter((e) => e.verb === "copy" && hasClass(e.subject)).map((e) => e.subject as Partial<SubjectFilter>)),
+  ];
+  // WHO OWNS WHAT THE FIRST TYPED BRANCH COPIES (#1675 review): only a `copyOf` or a clone's `copy` emit says it ("create a token that's a copy of ... creatures your opponents control"); the effect subject's own
+  // control is the TOKEN's ("its controller creates two tokens that are copies of that creature", Saw in Half) and says nothing about what is copied.
+  const typedOpp: boolean[] = [
+    ...abilities
+      .filter((a) => (a.effect.kind === "clone" || a.effect.kind === "token-generation") && hasClass(a.effect.subject?.copyOf ?? a.effect.subject))
+      .map((a) => a.effect.subject?.copyOf?.control === "opp"),
+    ...abilities
+      .filter((a) => a.effect.kind === "clone")
+      .flatMap((a) => (a.emits ?? []).filter((e) => e.verb === "copy" && hasClass(e.subject)).map((e) => e.subject.control === "opp")),
   ];
   // THE FIRST typed branch, not all of them. Merging every branch into an `anyOf` was built and
   // MEASURED: it recovers Saheeli's Artistry's creature mode (its artifact mode derives first) and
@@ -1809,7 +1821,7 @@ function copySubject(
   // narrowing on the TARGET ("with power 2 or less") has no "except" and keeps its stats.
   const { stats: _stats, ...unstatted } = strip(raw);
   const target = COPY_PT_EXCEPTION_CUE.test(oracle) ? unstatted : strip(raw);
-  return { subject: { ...target, control: "any", token: null } as SubjectFilter, enters, notLegendary };
+  return { subject: { ...target, control: "any", token: null } as SubjectFilter, enters, notLegendary, opponentsOnly: copiesThatCreature === undefined && typed.length > 0 && typedOpp[0] === true };
 }
 
 /** Could the producer ITSELF be the object its own emit describes?
@@ -4682,7 +4694,7 @@ function copyFamilyEdges({ p, c, h, reasons }: PairScope): void {
     const legendary = c.tags.characteristics.types.includes("legendary");
     // A copy ability that prints "nonlegendary" cannot ever copy a legendary consumer, by ANY verb
     // -- CR gives no way around a printed restriction. See `COPY_EXCLUDES_LEGENDARY_CUE`.
-    if (!(copy.notLegendary && legendary)) {
+    if (!(copy.notLegendary && legendary) && !copy.opponentsOnly) {
       for (const a of c.tags.abilities) {
         if (!a.trigger?.subject.self) continue;
         for (const rawVerb of a.trigger.verbs) {

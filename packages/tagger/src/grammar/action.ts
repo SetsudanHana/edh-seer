@@ -90,7 +90,7 @@ const CARD = parse("a card")!;
 const SELF: SubjectFilter = { control: "you", token: null, self: true };
 
 /** A COUNT before a noun phrase, as the store spells the amount: "two cards" 2, "up to two cards" 2, "any number of cards", "X cards", "that many cards", "an additional card" 1. */
-const COUNT = /^(?:(up to )?(a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|twenty|x|\d+)|(any number of|(?:up to )?that many|all the|all|half)) (?:additional )?/i;
+const COUNT = /^(?:(up to )?(a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|twenty|x|\d+)|(any number of|(?:up to )?that many|all the|all|half|twice x)) (?:additional )?/i;
 
 /** The object of an action: a counted class ("two basic land cards"), the card itself ("this card"),
  *  or a back-reference ("it", "that card", "those cards"), which task 4's resolver owns. */
@@ -133,7 +133,8 @@ function objectOf(phrase: string): { amount?: string; object: SubjectFilter } | 
   if (/^one or two /i.test(t)) return objectOf(t.replace(/^one or two /i, "up to two "));
   const m = COUNT.exec(t);
   // "up to two" is the store's "2", the convention derive's scaling reads ("up to X ... where X is").
-  const amount = m ? (m[2] ? amountOf(m[2]) : m[3]!.toLowerCase().replace(/^all the$/, "all").replace(/^up to /, "")) : undefined;
+  // "twice X cards" (Drown in Dreams' mill, #1675) is the store's "2X". CEILING: only the card-count shape "twice X <class>"; "twice that many" has no number to double and keeps its words.
+  const amount = m ? (m[2] ? amountOf(m[2]) : m[3]!.toLowerCase().replace(/^all the$/, "all").replace(/^up to /, "").replace(/^twice x$/, "2X")) : undefined;
   const rest = m ? t.slice(m[0].length) : t;
   const object = parse(m && !/^(?:a|an)$/i.test(m[2] ?? "") ? `a ${rest.replace(/cards\b/, "card")}` : rest) ?? parse(rest);
   return object ? { ...(amount ? { amount } : {}), object } : null;
@@ -334,6 +335,11 @@ const COUNTERS: Record<string, [string, Handler]> = {
       const each = [twoWho[2]!, twoWho[3]!].map((r) => COUNTERS.put![1](`${twoWho[1]} on ${r}`));
       return each.every((e) => e) ? each.flatMap((e) => [e!].flat()) : null;
     }
+    // "another counter of that kind on target enchantment you control" (Dathon, His Heart Open; #1675): the kind was chosen on the target, so none is named, as in "your choice of a reach counter ... on it" above.
+    // CEILING: only "another" / "an additional" and only a TARGET: "a counter of that kind on this creature / each other creature you control / target permanent" (Crystalline Giant, Contractual Safeguard, Aven Courier) keep
+    // their stored readings, whose kind is chosen elsewhere (at random, "a kind of counter", "if it doesn't have one").
+    const sameKind = /^(?:another|an additional) counter of that kind on (target .+)$/.exec(rest);
+    if (sameKind) { const on = objectOf(sameKind[1]!); return on && { object: on.object, amount: "1", text: sameKind[1]! }; }
     const m = /^(.+? counters?) on (.+?)(?: for each (.+))?$/.exec(rest);
     const cs = m ? counterList(m[1]!) : null;
     const on = m ? objectOf(m[2]!.replace(/^each of /, "")) : null;
@@ -438,6 +444,9 @@ function timesOf(rest: string): string | null {
 const TOKENS: Record<string, [string, Handler]> = {
   create: ["create", (rest) => {
     const r = tokenList(rest);
+    // "a token that's a copy of each of X target creatures" (Dominion Infiltration, carried from "Choose X target creatures ... For each of them, create ..."; #1675): one copy per target, X of them, so the amount is X (the
+    // store's X, which derive reads as the X paid). CEILING: only a literal X count; "any number of" / "up to N" targets keep the amount 1 the same sentence read before (Twinflame).
+    if (r && !Array.isArray(r) && /^an? token that's a copy of each of X target /i.test(rest)) return { ...r, amount: "X" };
     // "create a tapped Powerstone token": the tap on what was made.
     return r && /^(?:a|an|two|three|x|that many|\w+) tapped /i.test(rest) ? [...[r].flat(), TAPPED] : r;
   }],
@@ -1241,12 +1250,15 @@ function pumpOrGrantOne(t: string): ActionReading[] | null {
   }
   // "~ and other Knights you control have flying", "it and other creatures you control that share a
   // creature type with it each get +2/+0": the card, and the class, each a reading.
-  const pair = /^(~|this [a-z]+|it) and ((?:other |another )?[a-z][\w ]{0,60}?) (?:each )?(gets?|gains?|has|have|get) (.+)$/i.exec(t);
+  // "~ and target creature an opponent controls are goaded for as long as you control ~" (Kang, Suspicious Captain; #1675): the card and the target each goaded, as "~ is goaded" and "<target> is goaded" read alone.
+  // CEILING: "are goaded" only; no other "are ..." predicate is a pair here ("~ and other Knights you control are Elves" is a type grant the pair reading does not carry).
+  const pair = /^(~|this [a-z]+|it) and ((?:other |another )?[a-z][\w ]{0,60}?) (?:each )?(gets?|gains?|has|have|get|are(?= goaded\b)) (.+)$/i.exec(t);
   // Not a counted pump: its amount is the store's, which derive's scaling reads whole (Eidolon of
   // Countless Battles' "+1/+1 for each creature you control and +1/+1 for each Aura you control").
   if (pair && objectOf(pair[2]!) && !/ for each /i.test(pair[4]!)) {
-    const a = pumpOrGrantOne(`${pair[1]} ${pair[3]!.replace(/^(?:get|have)$/i, (v) => (v.toLowerCase() === "get" ? "gets" : "has"))} ${pair[4]}`);
-    const b = pumpOrGrantOne(`${pair[2]} ${pair[3]} ${pair[4]}`);
+    const goaded = /^are$/i.test(pair[3]!);
+    const a = pumpOrGrantOne(`${pair[1]} ${goaded ? "is" : pair[3]!.replace(/^(?:get|have)$/i, (v) => (v.toLowerCase() === "get" ? "gets" : "has"))} ${pair[4]}`);
+    const b = pumpOrGrantOne(`${pair[2]} ${goaded ? "is" : pair[3]} ${pair[4]}`);
     if (a && b) return [...a, ...b];
   }
   // "it's a creature in addition to its other types": "it is".
@@ -1590,6 +1602,12 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   // and/or unblocked creature): combat's own state, which no verb carries. The store's `other` with the sentence as its words, which derive leaves unclaimed: no zone moves and no event is made.
   // CEILING: nothing is claimed for either (a removal from combat is no "leaves" and an ended combat no "end of combat" step event); the optional "you may" is kept.
   if (/^(?:you may )?end the combat phase$/i.test(t)) return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t, ...(/^you may /i.test(t) ? { optional: true as const } : {}), ...(condition ? { condition } : {}) }];
+  // "You may reselect which player or permanent target attacking creature is attacking" (CR 508.7: a creature already attacking is attacking another player, planeswalker or battle; Tuvok, Chief Tactical Officer, #1675):
+  // no verb carries it, so the store's `other` with the sentence as its words, which derive leaves unclaimed. (The stored Misleading Signpost, Portal Mage and Windshaper Planetar file it as a gain-control, which it is not.)
+  // CEILING: nothing is claimed for the new target: the creature leaves no combat and attacks nothing a second time (CR 508.7a), so no attack event is made.
+  const reselect = /^(?:you may )?reselect which player(?: or permanent)? (?:each of )?(.+?) (?:is|are) attacking$/i.exec(t);
+  const reselected = reselect ? objectOf(reselect[1]!) : null;
+  if (reselect && reselected) return [{ verb: "other", object: reselected.object, text: t, ...(/^you may /i.test(t) ? { optional: true as const } : {}), ...(condition ? { condition } : {}) }];
   const fromCombat = /^remove (it|them|that creature|those creatures) from combat$/i.exec(t);
   if (fromCombat) return [{ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: t, ...(condition ? { condition } : {}) }];
   // "It becomes day [as this creature enters]" (Sunstreak Phoenix, CR 731.1 Day and Night): the game's day/night state, not a permanent that becomes something -- the store's `other`.
@@ -1868,11 +1886,18 @@ const OR_ALTERNATIVE = / or (?=(?:pay|sacrifice|discard|draw|mill|exile|lose|rev
 /** The sentences of a modal ability that choose its modes: "choose one —", "choose one or both —",
  *  "choose any number —", "choose one that hasn't been chosen —" (a Case-like mode memory), "choose up to five {P}
  *  worth of modes" with its "You may choose the same mode more than once", and an override that widens the choice
- *  ("If you have no cards in hand, choose one or more instead", Captain James T. Kirk). */
-const MODAL_INTRO = /^(?:(?:if [^,]{1,80}, )?choose (?:(?:one|two|three|four|five|up to \w+)(?: or (?:more|both))?(?: that hasn't been chosen)?|any number|up to \w+ (?:\{P\})+ worth of modes)(?: instead)?(?: —)?|you may choose the same mode more than once)$/i;
+ *  ("If you have no cards in hand, choose one or more instead", Captain James T. Kirk), or both ("If you control a commander as you cast this spell, you may choose both instead", Collective Override,
+ *  #1675: a mode-count rider on a modal spell (CR 700.2), not an action; the store records the intro and the rider with no action, as it does Jeska's Will). */
+const MODAL_INTRO = /^(?:(?:if [^,]{1,80}, )?choose (?:(?:one|two|three|four|five|up to \w+)(?: or (?:more|both))?(?: that hasn't been chosen)?|any number|up to \w+ (?:\{P\})+ worth of modes)(?: instead)?(?: —)?|if [^,]{1,80}, (?:you may )?choose (?:both|one or more) instead|you may choose the same mode more than once)$/i;
 
 /** "Choose target creature." / "Choose another target creature you control." / "Choose up to two target cards in graveyards." as a sentence of its own (#1452). */
-const CHOOSE_TARGET = /^choose ((?:another |other |up to (?:one|two|three|four|five|\d+) |any number of )?target .+)$/i;
+const CHOOSE_TARGET = /^choose ((?:another |other |up to (?:one|two|three|four|five|\d+) |any number of |x )?target .+)$/i;
+/** "Choose a counter on target enchantment you control." (Dathon, His Heart Open; #1675): the target is the enchantment, and the counter chosen on it is the KIND a later "counter of that kind" names. */
+const CHOOSE_COUNTER = /^choose a counter on (target .+)$/i;
+/** "Choose another target creature you control and target creature an opponent controls." (T'Pring, Never Parted; #1675): two creature targets, each named, which only "the chosen creatures fight each other" refers back to. */
+const CHOOSE_TWO = /^((?:another |other )?target creature [^,]+?) and (target creature [^,]+)$/i;
+/** "For each opponent, choose a land card that player owns exiled this way." (Ensign Pavel Chekov; #1675): a card of each opponent's exiled cards, which "the chosen cards" names. */
+const CHOOSE_PICK = /^(?:for each opponent, )?choose an? ([a-z-]+ card) that player owns exiled this way$/i;
 /** The nouns a chosen target and a later reference to it are compared by ("that creature" refers back to a "target creature you control"). */
 const CHOSEN_NOUNS = /\b(creature|permanent|card|player|opponent|planeswalker|artifact|land|enchantment|spell|vehicle|battle)(s?)\b/gi;
 /** A reference back to the chosen target: "the chosen permanent", "that creature", "those cards", or a bare "it" / "them". Not "its" or "that creature's" (a possessive is read as it is). */
@@ -1891,12 +1916,23 @@ interface Chosen {
   since: string;
   used: boolean;
   refused: boolean;
+  /** Two creature targets (T'Pring), named in the order printed: only "the chosen creatures fight each other" refers back to them. */
+  pair?: readonly [string, string];
+  /** A counter chosen on the target (Dathon): "put another counter of that kind on it" is the one sentence that refers back to it. */
+  counterKind?: true;
 }
 
 function chosenTarget(s: string): Chosen | undefined {
-  const m = CHOOSE_TARGET.exec(s);
+  const sentence = s.replace(/^([A-Z])/, (ch) => ch.toLowerCase());
+  // CEILING: one card per opponent, read as the class "<kind> cards exiled this way"; the per-opponent choice is not carried (the store keeps none, as for "For each opponent, goad ...").
+  const pick = CHOOSE_PICK.exec(s);
+  if (pick) return { sentence: sentence.replace(/^for each opponent, /i, ""), text: `${pick[1]!.toLowerCase()}s exiled this way`, plural: true, nouns: new Set(["card"]), since: "", used: false, refused: false };
+  const counter = CHOOSE_COUNTER.exec(s);
+  const m = counter ?? CHOOSE_TARGET.exec(s);
   if (!m) return undefined;
   const words = m[1]!;
+  const two = !counter && !/,? then |\bfor each\b|\band\/or players\b/i.test(words) ? CHOOSE_TWO.exec(words) : null;
+  if (two) return { sentence, text: words, plural: true, nouns: new Set(["creature"]), since: "", used: false, refused: false, pair: [two[1]!, two[2]!] };
   // Two targets ("Choose target creature you control and target creature you don't control"), a count per kicker, a roll or a coin after it: "it" does not say which.
   if (words.split(/\btarget\b/i).length !== 2 || /,? then |\bfor each\b|\band\/or players\b/i.test(words)) return undefined;
   const nouns = new Set<string>();
@@ -1906,7 +1942,7 @@ function chosenTarget(s: string): Chosen | undefined {
     if (first) { plural ||= n[2] !== ""; first = false; }
   }
   if (nouns.size === 0) return undefined;
-  return { sentence: s.replace(/^([A-Z])/, (ch) => ch.toLowerCase()), text: words.replace(/^up to one /i, ""), plural, nouns, since: "", used: false, refused: false };
+  return { sentence, text: words.replace(/^up to one /i, ""), plural, nouns, since: "", used: false, refused: false, ...(counter ? { counterKind: true as const } : {}) };
 }
 
 /** The sentence with each reference back to the chosen target replaced by the target as stated. A reference this cannot carry (another kind of thing, a number that does not match, a bare
@@ -1920,7 +1956,22 @@ function carriedSentence(s: string, c: Chosen, ownTrigger = false): string {
   // condition, and the first half vanishes with no unclaimed record. Refused here, narrower than un-reading "becomes saddled" for every card.
   // CEILING: only a CARRIED sentence is refused; the same sentence with the target stated in it still reads as one animate.
   if (/\bbecomes\b[^.]*\band becomes\b/i.test(s)) { CHOSEN_REF.lastIndex = 0; if (CHOSEN_REF.test(s)) { c.refused = true; return s; } }
-  if (!ownTrigger && /\b(?:whenever|when|at the beginning of)\b/i.test(s)) { CHOSEN_REF.lastIndex = 0; if (CHOSEN_REF.test(s)) { c.refused = true; return s; } }
+  // Only a reference this carries counts: "Exile those tokens at the beginning of the next end step" names the tokens a sentence before made, not the chosen creatures (Dominion Infiltration, #1675).
+  if (!ownTrigger && /\b(?:whenever|when|at the beginning of)\b/i.test(s) && [...s.matchAll(CHOSEN_REF)].some((r) => r[2] !== undefined || CHOSEN_KINDS.has(r[1]!.toLowerCase().replace(/s$/, "")))) { c.refused = true; return s; }
+  if (c.pair) return carriedPair(s, c);
+  // "Put another counter of that kind on it": the counter chosen on the target is the kind, so the "another" before "it" does not make the pronoun ambiguous (CEILING: no counter kind is carried, the add-counter has none).
+  const kind = c.counterKind ? /^put (another|an additional) counter of that kind on (?:it|that ([a-z]+))$/i.exec(s) : null;
+  if (kind && (kind[2] === undefined || c.nouns.has(kind[2].toLowerCase()) || kind[2].toLowerCase() === "permanent")) { c.used = true; return `put ${kind[1]} counter of that kind on ${c.text}`; }
+  // "For each of them, create a token that's a copy of that creature, except ..." (Dominion Infiltration), "For each of them, you may reselect which player or permanent that creature is attacking" (Tuvok, Chief
+  // Tactical Officer): the count the sentence repeats over is the chosen targets themselves, so the targets stand where "each of them" is, as the stored readings write "a copy of each of X target creatures".
+  // CEILING: only these two predicates; any other "for each of them" sentence refuses the choose, as every "for each" after a choose did.
+  const each = c.plural ? /^for each of (?:them|those (?:creatures|permanents|cards)), (.+)$/i.exec(s) : null;
+  if (each) {
+    const copy = /^create a token that's a copy of that (creature|permanent|card)(, except .+)?$/i.exec(each[1]!);
+    if (copy && (c.nouns.has(copy[1]!.toLowerCase()) || copy[1]!.toLowerCase() === "permanent")) { c.used = true; return `create a token that's a copy of each of ${c.text}${copy[2] ?? ""}`; }
+    if (/^you may reselect which player or permanent that creature is attacking$/i.test(each[1]!) && c.nouns.has("creature")) { c.used = true; return `you may reselect which player or permanent each of ${c.text} is attacking`; }
+    c.refused = true; return s;
+  }
   return s.replace(CHOSEN_REF, (m: string, noun: string | undefined, pronoun: string | undefined, at: number) => {
     if (c.refused) return m;
     let plural: boolean;
@@ -1942,6 +1993,18 @@ function carriedSentence(s: string, c: Chosen, ownTrigger = false): string {
     c.used = true;
     return c.text;
   });
+}
+
+const CHOSEN_KINDS: ReadonlySet<string> = new Set(["creature", "permanent", "card", "player", "opponent", "planeswalker", "artifact", "land", "enchantment", "spell", "vehicle", "battle"]);
+
+/** Two chosen creatures and the sentence about them: "You may have the chosen creatures fight each other" is the first fighting the second (T'Pring, Never Parted; #1675), the pair the stored fight writes
+ *  ("A and B"). Anything else said of them refuses the choose: "it" and "that creature" do not say which of the two. */
+function carriedPair(s: string, c: Chosen): string {
+  const fight = /^(you may have )?(?:the chosen|those) creatures fight each other$/i.exec(s);
+  if (fight) { c.used = true; return `${fight[1] ?? ""}${c.pair![0]} fight ${c.pair![1]}`; }
+  CHOSEN_REF.lastIndex = 0;
+  if (CHOSEN_REF.test(s)) c.refused = true;
+  return s;
 }
 
 /** A clause that is only "Choose target X." (a Saga chapter's first sentence, which the segmenter splits from the "Whenever it deals combat damage to a player this turn, ..." after it): the text of
