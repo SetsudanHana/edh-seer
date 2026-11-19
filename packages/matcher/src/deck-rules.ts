@@ -1,4 +1,5 @@
 import type { Card } from "@edh-seer/engine";
+import { isDeckbuildingPermission } from "@edh-seer/tagger/segment";
 import { isLandCard } from "./typeline.js";
 
 /** CARDS THAT CHANGE HOW A DECK IS BUILT, AS DATA (owner, 2026-09-22).
@@ -218,4 +219,129 @@ export function constructionFindings(deck: StartingDeck): RuleFinding[] {
  *  when the outsiders need two or more. */
 export function allowsChosenColour(commanders: readonly Card[]): boolean {
   return commanders.some(choosesColour);
+}
+
+/** THE COMMANDER'S PRINTED DECK RULES (#1670, owner 2026-11-18: deck-construction clauses are READ
+ *  and feed legality). Only a COMMANDER grants these -- the caller passes `commanders`, never a card
+ *  from the 99. The sentence test is tagger's `isDeckbuildingPermission` (matcher already depends on
+ *  `@edh-seer/tagger`), so the segmenter, the grammar and this reader agree on what a deck rule is.
+ *
+ *  Corpus shapes (Mongo `cards`, 2026-11-19; legal in Commander): Maular ("creature cards with mana
+ *  value 7 or greater"), Seluma ("Angel cards"), The Everforger ("artifact creature and Equipment
+ *  cards"), The Unluckiest Planeswalker ("Aura cards"), Valko Indorian ("Phyrexian cards"), each
+ *  "... of any color identity and any basic land cards"; Grizzlegom "any land cards"; Whtz "has no
+ *  maximum deck size"; Tolabow "instant and sorcery cards ... one color of your choice ... and your
+ *  deck can have any basic land cards". */
+export interface IdentityExemption {
+  /** What the finding says is exempt, e.g. "Angel cards" or "basic land cards". */
+  label: string;
+  test: (c: Card) => boolean;
+}
+export interface CommanderDeckRules {
+  /** Cards that may carry any colour identity. */
+  exemptions: IdentityExemption[];
+  /** "has no maximum deck size": suppresses the too-many finding, never the too-few. */
+  noMaxDeckSize: boolean;
+  /** Tolabow: instant and sorcery cards may use ONE extra colour, the same for all of them. */
+  instantSorceryColour: boolean;
+  /** Printed exemptions whose card set this reader cannot parse. They exempt NOTHING. */
+  unread: string[];
+}
+
+const DECK_WITH = "a deck with this commander can have ";
+const NO_MAX = "a deck with this commander has no maximum deck size";
+const OF_ANY_IDENTITY = " of any color identity";
+const TOLABOW_SENTENCE = " is your commander, the color identity of instant and sorcery cards in your deck can include one color of your choice not in your commander's color identity";
+const TYPE_WORDS = new Set([...CARD_TYPES, "legendary", "basic", "snow", "world", "token"]);
+
+const startsWithCI = (text: string, prefix: string): boolean => text.slice(0, prefix.length).toLowerCase() === prefix;
+const includesCI = (text: string, part: string): boolean => text.toLowerCase().includes(part);
+/** "Rulebreaker — If ..." : drop a short ability-word label so the sentence test sees the sentence. */
+function stripLabel(line: string): string {
+  const dash = line.indexOf(" — ");
+  return dash > 0 && dash <= 30 ? line.slice(dash + 3) : line;
+}
+const typeWords = (c: Card): Set<string> => new Set(frontType(c).split(/[\s—–-]+/).filter(Boolean));
+const isBasicLand = (c: Card): boolean => /\bbasic\b/i.test(frontType(c)) && isLand(c);
+const BASIC_LANDS: IdentityExemption = { label: "basic land cards", test: isBasicLand };
+
+/** One list term, "artifact creature" or "Equipment": every word must be in the card's front type
+ *  line. A word is readable when it is a card type/supertype (lower case) or capitalised (a subtype
+ *  as printed); anything else ("nonland", "colorless") is unreadable and the whole X is refused. */
+function termTest(term: string): ((c: Card) => boolean) | undefined {
+  const words = term.split(" ").filter(Boolean);
+  if (words.length === 0) return undefined;
+  for (const w of words) {
+    if (!/^[A-Za-z']+$/.test(w)) return undefined;
+    if (!TYPE_WORDS.has(w) && !/^[A-Z]/.test(w)) return undefined;
+  }
+  const lower = words.map((w) => w.toLowerCase());
+  return (c) => { const have = typeWords(c); return lower.every((w) => have.has(w)); };
+}
+
+/** X in "can have X of any color identity". CEILING: only card types, subtypes, "A and B" unions and
+ *  one trailing "with mana value N or greater/less" are read; any other X returns undefined, exempts
+ *  nothing, and the caller reports the printed X as unread. "A and B" is a UNION of the two terms:
+ *  "artifact creature and Equipment cards" is (artifact creature) or Equipment, matching the card's
+ *  own trigger "artifact creature or Equipment spell". The noun "cards" ends the whole list. */
+function parseCardSet(x: string): ((c: Card) => boolean) | undefined {
+  let head = x.trim();
+  let mv: ((c: Card) => boolean) | undefined;
+  const at = head.toLowerCase().indexOf(" with mana value ");
+  if (at >= 0) {
+    const m = /^(\d{1,3}) or (greater|less)$/.exec(head.slice(at + " with mana value ".length).trim());
+    if (!m) return undefined;
+    const n = Number(m[1]);
+    mv = m[2] === "greater" ? (c) => c.manaValue >= n : (c) => c.manaValue <= n;
+    head = head.slice(0, at);
+  }
+  if (!head.toLowerCase().endsWith(" cards")) return undefined;
+  head = head.slice(0, -" cards".length);
+  const tests = head.split(" and ").map(termTest);
+  if (tests.some((t) => t === undefined)) return undefined;
+  const any = (c: Card): boolean => tests.some((t) => t!(c));
+  return mv ? (c) => any(c) && mv!(c) : any;
+}
+
+/** What the commander(s) print about building the deck. Empty rules for any commander that prints
+ *  none, so a caller can apply it unconditionally. */
+export function commanderDeckRules(commanders: readonly Card[]): CommanderDeckRules {
+  const rules: CommanderDeckRules = { exemptions: [], noMaxDeckSize: false, instantSorceryColour: false, unread: [] };
+  for (const cmd of commanders) {
+    for (const raw of (cmd.oracleText ?? "").split("\n")) {
+      const line = stripLabel(raw.trim());
+      if (!isDeckbuildingPermission(line)) continue;
+      if (startsWithCI(line, NO_MAX)) { rules.noMaxDeckSize = true; continue; }
+      if (startsWithCI(line, DECK_WITH)) {
+        const rest = line.slice(DECK_WITH.length).replace(/\.$/, "");
+        if (startsWithCI(rest, "any land cards")) { rules.exemptions.push({ label: "land cards", test: isLand }); continue; }
+        const at = rest.toLowerCase().indexOf(OF_ANY_IDENTITY);
+        if (at >= 0) {
+          const x = rest.slice(0, at);
+          const test = parseCardSet(x);
+          if (test) rules.exemptions.push({ label: x, test }); else rules.unread.push(x);
+        }
+        if (includesCI(rest, "any basic land cards")) rules.exemptions.push(BASIC_LANDS);
+        continue;
+      }
+      if (startsWithCI(line, "if ") && includesCI(line, TOLABOW_SENTENCE)) {
+        rules.instantSorceryColour = true;
+        if (includesCI(line, "your deck can have any basic land cards")) rules.exemptions.push(BASIC_LANDS);
+      }
+    }
+  }
+  return rules;
+}
+
+/** Instant and sorcery cards, read off the front face like every other card-type test here. */
+export const isInstantOrSorcery = (c: Card): boolean => /\b(instant|sorcery)\b/.test(frontType(c));
+
+/** A sentence for the colour-identity finding: what this commander exempts. Empty when nothing. */
+export function exemptionNote(rules: CommanderDeckRules, commanders: readonly Card[]): string {
+  const parts = [...new Set(rules.exemptions.map((e) => e.label))];
+  if (rules.instantSorceryColour) parts.push("one extra colour for instant and sorcery cards");
+  const who = [...new Set(commanders.map((c) => c.name))].join(" and ");
+  let note = parts.length > 0 ? `${who} exempts ${parts.join(", ")}` : "";
+  if (rules.unread.length > 0) note += `${note ? "; " : ""}not read, so not exempted: ${rules.unread.join(", ")}`;
+  return note;
 }

@@ -9,7 +9,7 @@ import { isDeckbuildingPermission } from "../segment.js";
 const card = (name: string, typeLine: string, oracleText: string, keywords: string[] = []) => ({ name, typeLine, oracleText, keywords });
 
 const PERMISSIONS: [string, string, string][] = [
-  ["Dyfed, the Guiding Hand", "Legendary Creature — Human Warlock", "Dyfed, the Guiding Hand can be your commander."],
+  ["Dyfed, the Guiding Hand", "Legendary Planeswalker — Dyfed", "Dyfed, the Guiding Hand can be your commander."],
   ["Grizzlegom, Hurloon Hero", "Legendary Creature — Minotaur Warrior", "A deck with this commander can have any land cards."],
   ["Maular, the Next Evolution", "Legendary Creature — Phyrexian Elemental", "A deck with this commander can have creature cards with mana value 7 or greater of any color identity and any basic land cards."],
   ["Whtz, the Bibliophile", "Legendary Creature — Frog Wizard", "A deck with this commander has no maximum deck size."],
@@ -31,7 +31,7 @@ test("a deckbuilding clause is claimed as a record with no ability, its printed 
 });
 
 test("the rest of the card derives normally beside the clause (Lord Windgrace's own shape)", () => {
-  const c = card("Dyfed, the Guiding Hand", "Legendary Creature — Human Warlock", "Whenever you draw a card, scry 1.\nDyfed, the Guiding Hand can be your commander.");
+  const c = card("Dyfed, the Guiding Hand", "Legendary Planeswalker — Dyfed", "+1: Create two tapped Powerstone tokens.\nDyfed, the Guiding Hand can be your commander.");
   const g = grammarClauseRecords(c);
   expect(g.complete).toBe(true);
   const abilities = deriveCardTags(deriveInputOf(c as never, "x", c.name, g.records, undefined, g.readings)).abilities;
