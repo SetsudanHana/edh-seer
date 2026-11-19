@@ -38,7 +38,8 @@ const OUTSIDE_SOURCE_RE = new RegExp(`^${OUTSIDE_SOURCE}$`);
 // the controller default: your removal gained YOU the life. Read as anyone (`controlOf`), an opponent only where the words before the phrase say one. "Its controller" itself keeps its older `opp` reading (Swords to Plowshares).
 // CEILING: the gain-life and draw cues only. The same words before "creates" (Rapid Hybridization, Genesis Chamber), "sacrifices" (Burning Sands, Animate Dead), "searches" (Verdant Succession) or "mills" (Mesmeric Orb) are
 // still unread and default to you; "that creature's controller sacrifices" is pinned unread in recipient.test.ts.
-const GIVEN_TO = "(?:its|their) owners?|that [a-z]+['’]s (?:controller|owner)|the controllers? of each of those [a-z]+";
+// "The owner of up to one target creature draws two cards" (Unification, #1676 review): the owner of a chosen target is anyone (it may be you), so the draw is `any`, not the controller default. Bounded words after "target", no run of spaces to backtrack.
+const GIVEN_TO = "(?:its|their) owners?|that [a-z]+['’]s (?:controller|owner)|the controllers? of each of those [a-z]+|the owners? of (?:up to \\w+|any number of) target [a-z]+(?: [a-z]+){0,3}";
 const GIVEN_TO_RE = new RegExp(`^(?:${GIVEN_TO})$`, "i");
 const WHO = `its controller|their controller|${OUTSIDE_SOURCE}|target opponent|each opponent|each other player|defending player|attacking player|that player|target player|each player|those players`;
 

@@ -108,6 +108,11 @@ test("Unification: 'the owner of up to one target creature draws' is anyone's dr
   const fx = effects(UNIFICATION).filter((f) => f.kind === "draw-card");
   // chapter I (the owner: anyone) and chapter III (you, and target opponent): never a lone `you`/`opp` for the owner's draw
   expect(fx.map((f) => f.control).sort()).toEqual(["any", "opp", "you"]);
+  // the EMIT carries the same player (round 2): chapter I's draw event is the owner's (any), chapter III's are yours and the opponent's
+  const draws = tagsOf(UNIFICATION).abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.verb === "draw").map((e) => e.subject.control));
+  expect(draws.sort()).toEqual(["any", "opp", "you"]);
+  const chapterI = tagsOf(UNIFICATION).abilities.find((a) => a.effect.kind === "draw-card" && a.effect.subject?.control === "any");
+  expect(chapterI?.emits?.filter((e) => e.verb === "draw").map((e) => e.subject.control)).toEqual(["any"]);
 });
 
 test("Vulcan Mind-Meld: each exile is its own player's, the play is by whoever exiled the card, and nothing is claimed for you that the opponent does", () => {
@@ -144,6 +149,9 @@ test("Itazura: the secret numbers are an unclaimed choice of each opponent; the 
   // the damage is an opponent's, not yours or any player's
   const dmg = tagsOf(ITAZURA).abilities.filter((a) => a.effect.kind === "damage");
   expect(dmg.map((a) => a.effect.subject?.control)).toEqual(["opp"]);
+  // the free cast's EMIT is the chosen opponent's too (CR 601.2a: the player who proposes the cast becomes the spell's controller): `any` met every "whenever you cast" class trigger and own-cast self trigger (round 2)
+  const castEmits = tagsOf(ITAZURA).abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.verb === "cast"));
+  expect(castEmits.map((e) => e.subject.control)).toEqual(["opp"]);
   // the pronouns are the chosen opponent's only behind the pick: with no pick, "they may cast" keeps its any / that reading
   expect(parseActions("~ deals that much damage to them, then they may cast a spell from among those cards.", "triggered")[1]).toMatchObject({ actor: { control: "any", scope: "that" } });
   // the numbers must be picked in order: a pick with no choice before it is unread
@@ -180,4 +188,12 @@ test("a punisher's offer is read for every printed chooser the grammar names, an
   expect(parseActions("Any opponent may have you put that card into your hand.", "triggered")[0]).toMatchObject({ actor: { control: "you" }, optional: true });
   // not "target opponent may have target player draw": no 'you', so the offer shape is not taken (the old 'you may have' shape does not apply either)
   expect(unreadPhrases("Target opponent may have target player draw a card.", "triggered")).not.toEqual([]);
+});
+
+test("the secret-number rewrite reaches only the pick's damage-and-cast sentence and the one put sentence after it, not every later sentence (round 2)", () => {
+  const head = "Exile the top three cards of your library. Each opponent secretly chooses a number 0 or greater. Then those numbers are revealed. Choose an opponent with the highest number. ~ deals that much damage to them, then they may cast a spell from among those cards without paying its mana cost. You put a card from among them that wasn't cast this way into your hand.";
+  // a third sentence's "to them" is no longer the chosen opponent's: it is not rewritten to "an opponent"
+  const later = parseActions(`${head} ~ deals 1 damage to them.`, "triggered").filter((a) => a.verb === "deal-damage");
+  expect(later[0]).toMatchObject({ object: { control: "opp" } });
+  expect(later[1]?.object).not.toMatchObject({ control: "opp" });
 });

@@ -2191,7 +2191,7 @@ function readActions(effect: string, type: string | null, cost: string | undefin
   // opens with another player who is not you; "they" anywhere else keeps its any / that reading, as before.
   let oppChoice = false;
   // #1676: where the "each opponent secretly chooses a number" run of Itazura has got to: "chosen", "revealed", "picked" (an opponent with the highest number).
-  let secretNumbers: "chosen" | "revealed" | "picked" | undefined;
+  let secretNumbers: "chosen" | "revealed" | "picked" | "put" | undefined;
   for (const [sentenceAt, raw] of sentences.entries()) {
     let s = raw.trim().replace(/\.$/, "");
     if (s === "") continue;
@@ -2334,14 +2334,18 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // reveal moves nothing and the pick of "an opponent with the highest number" records no action (as "Choose target creature" above); "them" / "they" after the pick are THAT opponent, an opponent (control opp, not targeted), where
     // read bare they were any player (which `you` satisfies).
     // CEILING: the three sentences must come in this order, the opponent picked is not named beyond "an opponent" / "that opponent" (no tie rule, no highest-number test), and the pronouns are rewritten only in the sentence straight
-    // after the pick, "to them" at the end of a phrase and ", then they ".
+    // after the pick, "to them" at the end of a phrase and ", then they ", and the narrowing only in the one sentence after that (a third sentence is read as printed).
     if (/^each opponent secretly chooses a number 0 or greater$/i.test(s)) { out.push({ verb: "other", object: REF, phrase: s, actor: { control: "opp", scope: "each", text: "each opponent" } }); secretNumbers = "chosen"; mayBefore = false; continue; }
     if (secretNumbers === "chosen" && /^then those numbers are revealed$/i.test(s)) { secretNumbers = "revealed"; continue; }
     if (secretNumbers === "revealed" && /^choose an opponent with the highest number$/i.test(s)) { secretNumbers = "picked"; continue; }
+    // The state lasts exactly TWO sentences after the pick (round 2: it used to last the whole clause): the damage-and-cast sentence ("picked": the pronouns), then the put sentence ("put": the narrowing), after which it is gone.
     if (secretNumbers === "picked") {
       s = s.replace(/ to them(?=,|$)/i, " to an opponent").replace(/, then they /i, ", then that opponent ");
+      secretNumbers = "put";
+    } else if (secretNumbers === "put") {
       // "put a card from among them that wasn't cast this way into your hand": the cards left exiled, a narrowing the reading drops; CEILING: the claim is the put of a card from among those exiled, which the narrowed put still is.
       s = s.replace(/^(you put a card from among them) that wasn't cast this way( into your hand)$/i, "$1$2");
+      secretNumbers = undefined;
     }
     // "For each opponent, goad target creature that player controls" (Frenzied Gorespawn, Grasp of Fate, Tempted by the Oriq): the repetition per opponent is no action
     // and the store keeps no trace of it, only the verb phrase behind (the "that player" in it is the sentence's back-reference).

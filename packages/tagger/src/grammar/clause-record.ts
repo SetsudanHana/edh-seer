@@ -356,6 +356,10 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
       ...(r.amount !== undefined ? { amount: r.amount } : wordsAmount(r.verb, object) !== undefined ? { amount: wordsAmount(r.verb, object) } : {}),
       optional: r.optional === true,
       ...(unlessOf(r.condition) ? { unless: unlessOf(r.condition) } : {}),
+      // ANOTHER PLAYER'S CAST IS THAT PLAYER'S (#1676 review, CR 601.2a: the player who proposes the cast becomes the spell's controller). "...they may cast a spell from among those cards" after "Choose an opponent" (Itazura) names the caster only
+      // by a back-reference, which the stored words ("a spell from among those cards") cannot carry; the actor rides on the record as for a token maker and derive reads it for a cast / play.
+      // CEILING: an opponent only (`opp`); another back-referenced player (`any`: "that player may cast", Spellshift) keeps its object's reading.
+      ...((r.verb === "cast" || r.verb === "play") && r.actor?.control === "opp" ? { actor: "opp" } : {}),
     } as Action);
     if (transformed) out.push({ verb: "transform", object, fromZone: null, toZone: null, optional: false } as Action);
   }
