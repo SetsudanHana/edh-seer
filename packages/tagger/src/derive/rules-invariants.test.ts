@@ -17,6 +17,9 @@ import { emblemRecipient } from "../emblem.js";
 
 const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b"]);
 const TESTED: Record<string, string> = {
+  "702.119": "grammar/spell-keywords-1672.test.ts — 'each sea monster spell you cast has emerge' is a cost note on those spells, never a keyword on the board (Zekes, Acid Rock Fan; #1672)",
+  "702.144a": "grammar/spell-keywords-1672.test.ts — demonstrate is a triggered ability on casting the spell: its copy is not read, so the grant claims no cost change (Elda, Conjurer of Spectacle; #1672)",
+  "702.144": "grammar/spell-keywords-1672.test.ts — 'the first nonlegendary creature spell you cast each turn has demonstrate' copies the spell and claims no cost change (Elda, Conjurer of Spectacle; #1672)",
   "508.7": "grammar/choose-1675.test.ts — 'you may reselect which player or permanent ... is attacking' is an unclaimed `other`, never a control change (Tuvok, Chief Tactical Officer; #1675)",
   "508.7a": "grammar/choose-1675.test.ts — the reselected creature attacks nothing a second time, so the reselection claims no attack event (Tuvok, Chief Tactical Officer; #1675)",
   "701.9b": "grammar/choose-1675.test.ts — a random discard is the discard narrowed by its randomness: Chira's 'discard one or more cards at random' claims nothing (#1675)",

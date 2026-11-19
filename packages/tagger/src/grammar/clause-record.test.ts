@@ -1318,7 +1318,8 @@ test("'look at target opponent's hand' claims nothing (a lone none), and '..., t
   const salt = grammarClauseRecords(SALT_VAMPIRE);
   expect(salt.blocker).toBeUndefined();
   expect(salt.records.find((r) => r.id === 2)!.actions).toEqual([expect.objectContaining({ verb: "exile", object: "a nonland card from target opponent's hand", optional: true }), expect.objectContaining({ verb: "draw", optional: false })]);
-  expect(grammarClauseRecords(ZERO__INCORPOREAL_SENSATE).blocker).toEqual({ clause: 2, kind: "action", phrase: "a spell cast this way costs {2} more to cast" });
+  // Zero is complete since #1672: "a spell cast this way costs {2} more to cast" is an unclaimed `other`.
+  expect(grammarClauseRecords(ZERO__INCORPOREAL_SENSATE).blocker).toBeUndefined();
   const thief = parity(INGENIOUS_THIEF, STORED_INGENIOUS_THIEF);
   expect(thief.g.records[1]!.actions).toEqual([{ verb: "none", object: "" }]);
   parity(SORCEROUS_SIGHT, STORED_SORCEROUS_SIGHT);
