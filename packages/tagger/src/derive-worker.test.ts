@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { deriveAsCorpus, deriveRow } from "./derive-worker.js";
+import { carryStoredAmounts, deriveAsCorpus, deriveRow } from "./derive-worker.js";
 import { grammarClauseRecords } from "./grammar/clause-record.js";
 import { deriveCardTags, foldGrantTwins } from "./derive/derive.js";
 import { deriveInputOf } from "./derive-input.js";
@@ -383,4 +383,26 @@ test("Malfegor keeps its stored reading: a sacrifice 'for each card discarded th
   const row = deriveRow({ doc: { oracleId: "x", name: MALFEGOR.name, canonical: MALFEGOR_STORED } as never, source: MALFEGOR, isToken: false });
   expect(row.fromGrammar).toBe(false);
   expect(row.tags.abilities.find((a) => (a.emits ?? []).some((e) => e.verb === "sacrifice"))!.amount).toBe("one for each card discarded this way");
+});
+
+// #1678: a damage the grammar splits per recipient ("it deals that much damage to each creature and each player" is one stored deal-damage, two grammar readings) carries the stored amount on BOTH halves.
+// Ashling the Pilgrim (real oracle text and stored canonical, dumped from Mongo 2026-11-18): the player half said "that much" and no count, so it read as one unknown while the creature half scaled with the +1/+1 counters removed.
+const ASHLING = { name: "Ashling the Pilgrim", typeLine: "Legendary Creature — Elemental Shaman", keywords: [] as string[], oracleText: "{1}{R}: Put a +1/+1 counter on Ashling. If this is the third time this ability has resolved this turn, remove all +1/+1 counters from Ashling, and it deals that much damage to each creature and each player." };
+const ASHLING_STORED = [{ id: 1, abilityType: "activated", actions: [{ verb: "add-counter", object: "+1/+1", fromZone: null, toZone: null, amount: null, optional: false }, { verb: "remove-counter", object: "+1/+1", fromZone: null, toZone: null, amount: "all", optional: false }, { verb: "deal-damage", object: "each creature and each player", fromZone: null, toZone: null, amount: "the number of +1/+1 counters removed", optional: false }] }];
+
+test("Ashling the Pilgrim: the player half of a split 'that much' damage carries the creature half's amount and count (#1678)", () => {
+  const g = grammarClauseRecords(ASHLING as never);
+  expect(g.complete).toBe(true);
+  const records = carryStoredAmounts(g.records, ASHLING_STORED as never);
+  const tags = deriveCardTags(deriveInputOf(ASHLING as never, "x", ASHLING.name, records, undefined, g.readings), { foldGrantTwins: false, collapseZoneSearches: false });
+  const damage = tags.abilities.filter((a) => a.effect.kind === "damage");
+  expect(damage).toHaveLength(2);
+  expect(damage.map((a) => a.amount)).toEqual(["the number of +1/+1 counters removed", "the number of +1/+1 counters removed"]);
+  expect(damage.map((a) => (a.count?.scalesWith as { counter?: string } | undefined)?.counter)).toEqual(["+1/+1", "+1/+1"]);
+});
+
+test("a 'that much' with no split damage before it keeps its reading (carryStoredAmounts)", () => {
+  const grammar = [{ id: 1, abilityType: "triggered", actions: [{ verb: "lose-life", object: "you", amount: "that much" }, { verb: "deal-damage", object: "each opponent", amount: "that much" }] }];
+  const stored = [{ id: 1, abilityType: "triggered", actions: [{ verb: "lose-life", object: "you", amount: "that much" }, { verb: "deal-damage", object: "each opponent", amount: "that much" }] }];
+  expect(carryStoredAmounts(grammar as never, stored as never)).toEqual(grammar);
 });

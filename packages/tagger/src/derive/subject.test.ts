@@ -1091,3 +1091,10 @@ test("'differently named lands' is the lands, not lands NAMED something (Chief M
   expect(parseSubject("differently named lands you control")).toMatchObject({ type: "land", control: "you" });
   expect(parseSubject("a card named TARDIS").named).toBe("tardis");
 });
+
+/** #1678: "nonland permanents that aren't legendary" (Urza's Ruinous Blast, oracle text from Mongo) is the object's own restriction, nonlegendary, as "nonlegendary permanents" is. It was read as legendary: true (the word, with the negation dropped). */
+test("a relative 'that aren't legendary' restricts the object to nonlegendary", () => {
+  expect(parseSubject("nonland permanents that aren't legendary").legendary).toBe(false);
+  expect(parseSubject("creatures that aren't legendary").legendary).toBe(false);
+  expect(parseSubject("creatures that aren’t legendary").legendary).toBe(false);
+});

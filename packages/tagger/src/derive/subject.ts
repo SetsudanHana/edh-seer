@@ -642,6 +642,8 @@ const NOT_MODIFIED = /\b(?:un|non-?)modified\b|\bprotection from modified\b/i;
 const LEGENDARY = /\blegendary\b/i;
 const NON_LEGENDARY = /\bnon-?legendary\b/i;
 const ISNT_LEGENDARY = /\b(?:isn'?t|is not|isn’t|aren'?t|are not|aren’t)\s*legendary\b/i;
+/** "nonland permanents THAT aren't legendary" (Urza's Ruinous Blast, #1678) is a relative clause on the object, the same restriction as "nonlegendary permanents", unlike "except it isn't legendary". */
+const THAT_ISNT_LEGENDARY = /\bthat (?:isn'?t|is not|isn’t|aren'?t|are not|aren’t)\s*legendary\b/i;
 const NOT_HISTORIC = /\b(?:not|non-?)\s*historic\b/i;
 
 /** The BASIC supertype, and the two ways of not meaning it.
@@ -997,7 +999,7 @@ export function parseSubject(text: string, role: "pick" | "event" = "pick"): Sub
   // and Zombie creatures". That NARROWS the claim and never widens it. The grammar keeps them per branch;
   // the disagreements are banked in grammar-triage.json (groups anyOf,tapped,type; anyOf,basic,type;
   // anyOf,combat,tapped; anyOf,snow; anyOf,snow,subtype).
-  if (NON_LEGENDARY.test(t) || (ISNT_LEGENDARY.test(t) && out.token === true)) out.legendary = false;
+  if (NON_LEGENDARY.test(t) || THAT_ISNT_LEGENDARY.test(t) || (ISNT_LEGENDARY.test(t) && out.token === true)) out.legendary = false;
   else if (LEGENDARY.test(t) && !ISNT_LEGENDARY.test(t)) out.legendary = true;
   if (NOT_BASIC.test(t)) { if (!BASIC_LAND_TYPE.test(t)) out.basic = false; }
   else if (BASIC.test(t) && !BASIC_LAND_TYPE.test(t)) out.basic = true;

@@ -23,7 +23,7 @@ test("'During your turn, this X and creatures you control have ...' carries the 
 test("a short name 'Grakk' is the card, never a class (Grakk the Pacifist)", () => {
   expect(selfAsTilde("Grakk can't attack or block.", "Grakk the Pacifist", "Legendary Creature — Orc")).toBe("~ can't attack or block.");
   // a class word that is also the first word of a "X the Y" name stays a class
-  expect(selfAsTilde("Other Goblins you control get +1/+1, and each Goblin has haste.", "Goblin the Brave")).toBe("Other Goblins you control get +1/+1, and each Goblin has haste.");
+  expect(selfAsTilde("Other Goblins you control get +1/+1, and each Goblin has haste.", "Goblin the Brave", "Legendary Creature — Goblin")).toBe("Other Goblins you control get +1/+1, and each Goblin has haste.");
   const g = grammarClauseRecords(card("Grakk the Pacifist", "Legendary Creature — Orc", "Grakk can't attack or block.\nWhenever you cast an Aura spell that targets a creature an opponent controls, draw a card. This ability triggers only once each turn."));
   expect(g.blocker).toBeUndefined();
   expect(g.complete).toBe(true);
