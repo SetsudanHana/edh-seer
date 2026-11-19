@@ -5,7 +5,7 @@ const TITLES = new Set(["Captain", "Dr.", "Doctor", "Ensign", "Lieutenant", "Com
 /** The forms a card calls itself by, longest first: each face's full name, the part before the comma
  *  ("Gandalf" for "Gandalf, Shadow's Foe"), and title + surname ("Captain Archer" for "Captain Jonathan
  *  Archer", "Dr. Crusher" for "Dr. Beverly Crusher"). */
-function selfNames(name: string): string[] {
+function selfNames(name: string, legendary = false): string[] {
   const names = new Set<string>();
   for (const face of name.split(" // ")) {
     names.add(face);
@@ -13,6 +13,10 @@ function selfNames(name: string): string[] {
     if (short !== face) names.add(short);
     const words = short.split(" ");
     if (words.length >= 3 && TITLES.has(words[0]!)) names.add(`${words[0]} ${words[words.length - 1]}`);
+    // "Grakk the Pacifist" calls itself "Grakk": a LEGENDARY card whose name has no comma and whose first word is followed by "the" (an epithet). Only a card whose type line says Legendary:
+    // "Awaken the Inferno" (a sorcery) never answers to "Awaken" (its first word is a verb). The caller passes the type line; one that does not (derive's own re-reads) gets the forms above only.
+    // CEILING: any legendary "Word the ..." name; the class guard (CLASS_BEFORE) and the whole-word match keep a creature type that is the first word ("each Goblin") a class.
+    if (legendary && short === face && words.length >= 3 && words[1] === "the" && /^[A-Z][a-z'-]{2,}$/.test(words[0]!)) names.add(words[0]!);
   }
   return [...names].sort((a, b) => b.length - a.length);
 }
@@ -68,9 +72,9 @@ export function selfPronouns(effect: string): string {
 const CLASS_BEFORE = /(?:\b(?:each|an?|another|other)\s+|\bnon-?|\bempower\s+)(?:(?:other|attacking|blocking|tapped|untapped|nontoken|token|legendary|nonlegendary|\d+\/\d+|white|blue|black|red|green|colorless|multicolored|monocolored)\s+)*$/i;
 const CLASS_AFTER = /^ planeswalkers?\b/;
 
-export function selfAsTilde(phrase: string, name: string): string {
+export function selfAsTilde(phrase: string, name: string, typeLine?: string): string {
   let out = phrase.replace(/\bCARDNAME\b/g, "~");
-  for (const n of selfNames(name)) {
+  for (const n of selfNames(name, /\bLegendary\b/.test(typeLine ?? ""))) {
     out = out.replace(new RegExp(`(?<![\\w'])${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?!\\w|'(?!s\\b)|'s [A-Z])`, "g"), (m, offset: number, whole: string) =>
       CLASS_BEFORE.test(whole.slice(0, offset)) || CLASS_AFTER.test(whole.slice(offset + m.length)) ? m : "~");
   }

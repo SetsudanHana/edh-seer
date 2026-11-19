@@ -29,9 +29,19 @@ export function carryStoredAmounts(grammar: ClauseRecord[], stored: ClauseRecord
     const was = stored.find((c) => c.id === rec.id);
     if (!was?.actions?.length || !rec.actions?.length) return rec;
     const actions = rec.actions.map((a) => ({ ...a }));
+    const aligned = new Set<number>();
     for (const [i, j] of alignVerbs(was.actions.map((a) => a.verb ?? ""), actions.map((a) => a.verb ?? ""))) {
+      aligned.add(j);
       const old = was.actions[i]!.amount, now = actions[j]!.amount;
       if (typeof now === "string" && BACK_REF_AMOUNT.test(now) && typeof old === "string" && old !== "" && !BACK_REF_AMOUNT.test(old) && !QUANTIFIER_AMOUNT.test(old)) actions[j] = { ...actions[j]!, amount: old };
+    }
+    // THE SECOND HALF OF A SPLIT DAMAGE (#1678, Ashling the Pilgrim): "it deals that much damage to each creature and each player" is one stored deal-damage and two grammar readings; the
+    // stored amount lands on the first, so the second ("that much" again, no stored action of its own) takes the amount its sibling just carried. Only a damage right after a damage the
+    // store aligned, and only the exact "that much": a "that many", or a damage with a stored action of its own, keeps its reading.
+    for (let j = 1; j < actions.length; j++) {
+      const prev = actions[j - 1]!, a = actions[j]!;
+      if (aligned.has(j) || !aligned.has(j - 1) || a.verb !== "deal-damage" || prev.verb !== "deal-damage") continue;
+      if (typeof a.amount === "string" && /^that much$/i.test(a.amount) && typeof prev.amount === "string" && !BACK_REF_AMOUNT.test(prev.amount) && prev.amount !== "" && prev.amount !== rec.actions[j - 1]!.amount) actions[j] = { ...a, amount: prev.amount };
     }
     return { ...rec, actions };
   });

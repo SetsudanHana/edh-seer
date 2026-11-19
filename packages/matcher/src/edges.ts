@@ -1786,7 +1786,8 @@ function copySubject(
   // in the deck pass; refused unresolved), and an opponent's creatures for Faerie Artisans, which
   // names no deck-mate and is refused on control. 73 corpus "copy of that/it" clauses; a self
   // trigger (Ochre Jelly copying itself) keeps the old path.
-  const copiesThatCreature = /copy of that creature\b/i.test(oracle)
+  // CEILING: the plural "copies of that creature" takes the trigger's class only WITH an exception (Uugguu: "..., except they're 2/2 and they aren't legendary", #1678); a plain plural ("two tokens that are copies of that creature") still reads the broad copy class.
+  const copiesThatCreature = /copy of that creature\b|copies of that creature, except\b/i.test(oracle)
     ? abilities.find((a) => a.effect.kind === "token-generation" && a.trigger !== undefined
       && a.trigger.subject.self !== true && a.trigger.subject.chosenType !== true && a.trigger.subject.chosenColor !== true && a.trigger.subject.control !== "opp"
       && (a.trigger.subject.type !== undefined || a.trigger.subject.subtype !== undefined))?.trigger?.subject

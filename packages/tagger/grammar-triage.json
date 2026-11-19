@@ -1,5 +1,5 @@
 {
-  "_what": "H3 for the filter grammar (#896 task 2): every group of phrases on which packages/tagger/src/grammar/filter.ts and parseSubject disagree, grouped by the SubjectFilter fields that differ, over packages/tagger/phrases.jsonl. Each group is labelled after reading EVERY member, not a sample. 'grammar right' cites the rule or the printed text; 'grammar wrong' must be fixed before task 3 switches derive over; 'both wrong' says what neither reads. phrase-diff-triage.test.ts fails when a group appears, disappears or changes size, and when the parsed count moves, so a change to either parser is re-triaged and banked here.",
+  "_what": "H3 for the filter grammar (#896 task 2): every group of phrases on which packages/tagger/src/grammar/filter.ts and parseSubject disagree, grouped by the SubjectFilter fields that differ, over packages/tagger/phrases.jsonl. Each group is labelled after reading EVERY member, not a sample. 'grammar right' cites the rule or the printed text; 'grammar wrong' must be fixed before task 3 switches derive over; 'both wrong' says what neither reads. phrase-diff-triage.test.ts fails when a group appears, disappears or changes size, and when the parsed count moves, so a change to either parser is re-triaged and banked here. Re-banked 2026-11-19 (#1678): the 'legendary' group (1 phrase, 'grammar right') is gone because parseSubject now reads a relative 'that aren't legendary' as legendary false (derive/subject.ts THAT_ISNT_LEGENDARY), so the two parsers agree.",
   "parsed": 6845,
   "groups": {
     "control": {
@@ -163,12 +163,6 @@
       "label": "grammar right",
       "rule": "CR 105.2a, CR 105.2b",
       "why": "'a multicolored spell', 'target monocolored creature' (`colorCount`); parseSubject dropped the word."
-    },
-    "legendary": {
-      "distinct": 1,
-      "label": "grammar right",
-      "rule": "printed text",
-      "why": "'target nonlegendary creature' (`legendary: false`); parseSubject dropped the negation."
     },
     "hasCounter": {
       "distinct": 13,
