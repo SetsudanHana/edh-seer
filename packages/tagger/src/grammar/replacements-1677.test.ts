@@ -126,3 +126,12 @@ test("derive: Warp Speed's untapped lands claim nothing; Dark Tutor puts to the 
   const recs = grammarClauseRecords(card("Dark Tutor", "Sorcery", "Search your library for a card, put it into your hand or graveyard, then shuffle.")).records.flatMap((r) => r.actions ?? []).filter((a) => a.verb === "put");
   expect(recs.map((a) => [a.object, a.fromZone, a.toZone])).toEqual([["it", "library", "hand"], ["it", "library", "graveyard"]]);
 });
+
+test("derive: Noctis's finality counter lands on an artifact OR creature you control (an artifact spell can be a creature), a union and no allTypes", () => {
+  const a = derived("Noctis, Prince of Lucis", "Legendary Creature — Human Noble", "Lifelink\nYou may cast artifact spells from your graveyard by paying 3 life in addition to paying their other costs. If you cast a spell this way, that artifact enters with a finality counter on it.");
+  const c = emitsOf(a).filter((e) => e.verb === "counter-added");
+  expect(c).toHaveLength(1);
+  expect(c[0]!.subject.control).toBe("you");
+  expect([c[0]!.subject.type].flat().sort()).toEqual(["artifact", "creature"]);
+  expect(c[0]!.subject.allTypes).toBeUndefined();
+});
