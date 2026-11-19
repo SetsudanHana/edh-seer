@@ -9,7 +9,7 @@ import type { Action, ClauseRecord } from "../canonicalize.js";
 import { effectGates } from "../derive/effect-gate.js";
 import { interveningIfOf } from "../derive/intervening-if.js";
 import { SELF_REFERENCE } from "../derive/self-reference.js";
-import { segment, STATION_BAR } from "../segment.js";
+import { isDeckbuildingPermission, segment, STATION_BAR } from "../segment.js";
 import { amountOf, carriedIntoNextClause, parseActions, unreadPhrases, type ActionReading } from "./action.js";
 import { effectText, missedCost, printedPreamble, withoutAbilityWord } from "./preamble.js";
 import { selfAsTilde } from "./self-as-tilde.js";
@@ -411,6 +411,10 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       continue;
     }
     if (c.kind === "keyword") { records.push({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text } as Action] }); continue; }
+    // A DECKBUILDING CLAUSE ("~ can be your commander", "A deck with this commander can have ...", #1670) is read as such: no ability, the printed words kept
+    // as the one `none` action, the keyword line's record. NOT `other`: the bought answer for Lord Windgrace stores `other`, but dropped-clauses counts every `other` as a drop
+    // (measured: 15 new drops, Tevesh Szat's already-bought "can be your commander" among them), and this clause is READ (owner 2026-11-18), not dropped. Task 2's legality reads the printed text.
+    if (isDeckbuildingPermission(c.text)) { records.push({ id: c.id, abilityType: "none", actions: [{ verb: "none", object: c.text } as Action] }); continue; }
     // A mana cost behind a label the segmenter missed makes the clause ACTIVATED, carrying that cost.
     const labelled = !c.cost && (c.abilityType ?? "static") === "static" ? missedCost(c.text) : null;
     const type = labelled ? "activated" : c.abilityType ?? "static";
