@@ -862,6 +862,21 @@ function subjectAction(t: string): ActionReading[] | null {
   // STRIVE, an ability word: "This spell costs {1}{G} more to cast for each
   // target beyond the first" -- the store's cost-modify, the whole phrase its text.
   if (/^this spell costs (?:\{[^}]+\})+ more to cast for each target beyond the first$/i.test(t)) return [{ verb: "cost-modify", object: SELF, text: t }];
+  // #1672: a CAST keyword given to a class of SPELLS ("each sea monster spell you cast has emerge", "the first spell you
+  // cast during each of your turns has assist", "the next artifact creature spell and the next Spacecraft spell you cast
+  // this turn have undaunted"). The keyword is the spell's, never the board's, so no grant-ability. Emerge (CR 702.119),
+  // undaunted (702.125) and assist (702.132) change what the spell costs: the store's cost-modify with the whole phrase,
+  // as the affinity grant below. Demonstrate (702.144) copies the spell on cast and changes no cost: an unclaimed `other`.
+  // CEILING: the spell class stays in the text; no filter holds "the first / the next ... you cast", so no spell filter is read.
+  const spellKw = /^((?:each|the (?:first|next)) (?:[\w ]{1,60}? )?spells?(?: and the (?:first|next) [\w ]{1,40}? spell)? you cast(?: each turn| this turn| during each of your turns)?) (?:has|have) (emerge|demonstrate|undaunted|assist)$/i.exec(t);
+  if (spellKw) return [{ verb: /^demonstrate$/i.test(spellKw[2]!) ? "other" : "cost-modify", object: { control: "you", token: null }, text: t }];
+  // "The emerge cost is equal to its mana cost": the cost the grant above names, a cost note with no amount.
+  if (/^the emerge cost is equal to its mana cost$/i.test(t)) return [{ verb: "cost-modify", object: { control: "you", token: null }, text: t }];
+  // "A spell cast this way costs {2} more to cast" (Zero): a tax on one exiled card, whose owner is the one who pays. As a
+  // cost-modify it was read as a tax on every spell, so it is an unclaimed `other`.
+  if (/^a spell cast this way costs (?:\{[^{}]+\})+ (?:more|less) to cast$/i.test(t)) return [{ verb: "other", text: t }];
+  // "You may have the value of X become 5" (Glava): a choice of X, which no verb carries.
+  if (/^you may have the value of x become \d+$/i.test(t)) return [{ verb: "other", optional: true, text: t }];
   // "Enchantment spells you cast have affinity for Auras" (Pearl-Ear): a cost reduction, the store's
   // cost-modify with the whole phrase -- as a keyword grant it linked every enchantment, any controller.
   const affinity = /^((?:[\w ]+ )?spells you cast) have affinity for [\w ]+$/i.exec(t);
@@ -1570,6 +1585,10 @@ function countIsPlainClass(count: string): boolean {
 function readPhraseOnce(quoted: string, condition: string | undefined, carried?: ActionReading["actor"]): ActionReading[] | null {
   const phrase = quoted.replace(/\uE000(\d+)\uE001/g, (_m, i: string) => quotes[Number(i)]!);
   let t = phrase.trim().replace(/^(?:then|instead|also) /i, "").replace(/,$/, "");
+  // CEILING: "This ability costs {X} less to activate, where X is the number of ..." (Astute Terraformer, Suus Mahna
+  // Practitioner) records no action: a discount on the card's own ability changes what it costs, not what it does, and no verb
+  // names it (cost-modify is for spells and for classes of abilities).
+  if (/^this ability costs \{x\} less to activate, where x is [\w ]{1,80}$/i.test(t)) return [];
   // "draw X cards, where X is the number of ...": X is the amount, the rest says what it counts.
   const where = t.indexOf(", where X is ");
   // The store writes the counted thing as the amount ("the greatest number of creatures you control

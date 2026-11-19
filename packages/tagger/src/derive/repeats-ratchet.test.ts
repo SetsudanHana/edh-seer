@@ -92,7 +92,10 @@ const FIXTURE = new URL("repeats-refused.json", import.meta.url);
  *  (the reflexive counter). 0 gone. */
 /** 2853 -> 2854 (2026-11-19, #1675, DERIVE 542): one row added, T'Pring, Never Parted's draw, whose trigger
  *  ("a creature that fought this way dies this turn") the rules cannot name. 0 gone. */
-const REFUSED_CAP = 2854;
+/** 2854 -> 2858 (2026-11-19, #1672, DERIVE 543): four rows added on newly derived cards whose triggers the rules
+ *  cannot name -- Zekes, Acid Rock Fan's draw and discard ("if it was cast for its emerge cost") and Yume, Chronicler
+ *  of Valor's two draws. 0 gone. */
+const REFUSED_CAP = 2858;
 
 /** `repeatsFor` takes THREE arguments -- `cost` feeds rules 1-2 (self-sacrifice, {T}/{Q}),
  *  `clauseText` feeds rule 3 ("once each turn"). A fixture row missing `cost` would half-disable the

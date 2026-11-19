@@ -18627,6 +18627,7 @@
 "Yuki-Onna": ["answer:artifact","role:targetedRemoval"],
 "Yukora, the Prisoner": ["wincon:stompy"],
 "Yuma, Proud Protector": ["role:draw","wincon:go-wide"],
+"Yume, Chronicler of Valor": ["role:draw"],
 "Yuna's Decision": ["role:draw"],
 "Yuna's Whistle": ["role:handFill"],
 "Yuna, Grand Summoner": ["role:ramp"],
