@@ -751,6 +751,9 @@ export function actionEffectKind(action: Action, clauseText = "", occurrence = 0
     // CEILING: only when the object names no counters/damage/life/mana, i.e. nothing real is doubled.
     if (/\bdouble strike\b/i.test(clauseText) && (fromObject === null || fromObject === "token-doubling")) return "speed-increase";
     if (fromObject) return fromObject;
+    // THE OBJECT'S "power" DECIDES BEFORE THE CLAUSE'S WORDS (#1670 review): Maular's "Whenever a creature you control with mana value 7 or greater attacks, double its
+    // power and toughness" names mana only in its trigger, and the clause fallback read that "mana value" as doubled mana (a ramp card).
+    if (/\bpower\b/i.test(action.object ?? "")) return "pump";
     const fromClause = doubledKind(clauseText);
     if (fromClause) return fromClause;
     // "Double the power and toughness of each creature you control" (Unnatural Growth, #711) is a

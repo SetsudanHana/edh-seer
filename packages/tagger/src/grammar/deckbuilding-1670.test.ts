@@ -76,3 +76,23 @@ test("The Ignoble Serpent: 'your first upkeep' reads as an upkeep trigger NARROW
   // refused and LISTED (the quoted name keeps the command-zone `if` unrepresented; the "first" narrowing would refuse it too), not silently claimed
   expect(d.unknownTriggers).toEqual(["if:upkeep"]);
 });
+
+test("Ashiok: a loyalty ability that ends in 'can be your commander' is NOT claimed as deckbuilding; only a clause of deckbuilding sentences is", () => {
+  const exile = "−3: Exile target creature and put a deceit counter on it. Ashiok can be your commander.";
+  expect(isDeckbuildingPermission(exile)).toBe(false);
+  expect(isDeckbuildingPermission("Ashiok can be your commander.")).toBe(true);
+  expect(isDeckbuildingPermission("Ashiok can be your commander. A deck with this commander has no maximum deck size.")).toBe(true);
+  const c = card("Ashiok, Genderfear", "Legendary Planeswalker — Ashiok", exile);
+  const g = grammarClauseRecords(c);
+  // the grammar may refuse the card (it does: "put a deceit counter on it" is a blocker) but never call it complete with the exile dropped
+  expect(g.complete && !g.records.some((r) => (r.actions ?? []).some((a) => a.verb === "exile")), "complete with the exile dropped").toBe(false);
+  expect(g.records.some((r) => r.abilityType === "none")).toBe(false);
+});
+
+test("Maular: 'double its power and toughness' is a pump, not mana, though the trigger names 'mana value 7'", () => {
+  const text = "Rulebreaker — A deck with this commander can have creature cards with mana value 7 or greater of any color identity and any basic land cards.\nWhenever a creature you control with mana value 7 or greater attacks, double its power and toughness until end of turn.";
+  const c = card("Maular, the Next Evolution", "Legendary Creature — Dinosaur Mutant", text, ["Rulebreaker", "Double"]);
+  const g = grammarClauseRecords(c);
+  const abilities = deriveCardTags(deriveInputOf(c as never, "x", c.name, g.records, undefined, g.readings)).abilities;
+  expect(abilities.map((a) => a.effect.kind)).toEqual(["pump"]);
+});

@@ -1,5 +1,6 @@
 import type { Card } from "@edh-seer/engine";
 import { isDeckbuildingPermission } from "@edh-seer/tagger/segment";
+import { CREATURE_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import { isLandCard } from "./typeline.js";
 
 /** CARDS THAT CHANGE HOW A DECK IS BUILT, AS DATA (owner, 2026-09-22).
@@ -263,6 +264,11 @@ function stripLabel(line: string): string {
 }
 const typeWords = (c: Card): Set<string> => new Set(frontType(c).split(/[\s—–-]+/).filter(Boolean));
 const isBasicLand = (c: Card): boolean => /\bbasic\b/i.test(frontType(c)) && isLand(c);
+const CREATURE_SUBTYPE_SET: ReadonlySet<string> = new Set(CREATURE_SUBTYPES.map((t) => t.toLowerCase()));
+/** CR 702.73a: a changeling "is every creature type", outside the game too, so in a deck it is every
+ *  creature subtype. The keyword, or the printed sentence a card with no keyword uses. */
+const isEveryCreatureType = (c: Card): boolean =>
+  (c.keywords ?? []).some((k) => k.toLowerCase() === "changeling") || includesCI(c.oracleText ?? "", "is every creature type");
 const BASIC_LANDS: IdentityExemption = { label: "basic land cards", test: isBasicLand };
 
 /** One list term, "artifact creature" or "Equipment": every word must be in the card's front type
@@ -276,7 +282,12 @@ function termTest(term: string): ((c: Card) => boolean) | undefined {
     if (!TYPE_WORDS.has(w) && !/^[A-Z]/.test(w)) return undefined;
   }
   const lower = words.map((w) => w.toLowerCase());
-  return (c) => { const have = typeWords(c); return lower.every((w) => have.has(w)); };
+  // A creature subtype is also met by a changeling (Graveshifter is an Angel for Seluma); a card type, a
+  // supertype and a non-creature subtype ("equipment") are not.
+  return (c) => {
+    const have = typeWords(c);
+    return lower.every((w) => have.has(w) || (CREATURE_SUBTYPE_SET.has(w) && isEveryCreatureType(c)));
+  };
 }
 
 /** X in "can have X of any color identity". CEILING: only card types, subtypes, "A and B" unions and

@@ -352,8 +352,17 @@ const COMMANDER_DECK_RULE = /^(?:a deck with this commander (?:can have|has)\b|i
  *  One test for the segmenter and the grammar path; the grammar records it as `abilityType: "none"` with one `other` action carrying the
  *  printed text, the shape the bought answer stores for Lord Windgrace's "can be your commander". */
 export function isDeckbuildingPermission(text: string): boolean {
-  return COMMANDER_PERMISSION.test(text) || DECK_LIMIT_PERMISSION.test(text) || COMMANDER_DECK_RULE.test(text.trim());
+  // A permission carried only by a reminder ("Spell commander (This card can be your commander. ...)", Wizard from Beyond) states the keyword's rule: claimed as before.
+  const outside = text.replace(/\([^()]*\)/g, " ").trim();
+  const sentences = outside.split(/(?<=\.)\s+/).map((s) => s.trim()).filter((s) => s !== "");
+  if (!sentences.some(isDeckbuildingSentence)) return isDeckbuildingSentence(text);
+  return sentences.every((s) => isDeckbuildingSentence(s) || DECK_FOLLOW_UP.test(s));
 }
+/** EVERY sentence outside a reminder must be one, or the follow-up "If she is, a Nissa card can also be your commander." (Saheeli, Waffle Restaurant):
+ *  Ashiok, Genderfear's "-3: Exile target creature ... Ashiok can be your commander." is an ability with a permission after it, and claiming the
+ *  whole clause dropped the exile. */
+const DECK_FOLLOW_UP = /^if (?:it|he|she|they) (?:is|are),\s.{0,200}\b(?:your commanders?|your deck|in your deck)\b/i;
+const isDeckbuildingSentence = (s: string): boolean => COMMANDER_PERMISSION.test(s) || DECK_LIMIT_PERMISSION.test(s) || COMMANDER_DECK_RULE.test(s);
 
 /** A Spacecraft prints its station-threshold abilities behind "N+ |". The bar is a LABEL, not part
  *  of the ability, and `LABEL` has known that since Uthros Research Craft — but it was consulted on

@@ -439,6 +439,21 @@ test("Seluma: Angel cards of any colour identity, and basics, but not other off-
   expect(identityFinding(seluma, [angel, swamp])).toBeUndefined();
 });
 
+test("702.73a: a changeling is an Angel, so Seluma exempts it; an Equipment term it does not meet", () => {
+  const seluma = RULEBREAKER("Seluma, Light of Aysen", "Legendary Creature — Angel Warrior", ["W"],
+    "Rulebreaker — A deck with this commander can have Angel cards of any color identity and any basic land cards.\nFlying");
+  const shifter = card("Graveshifter", "Creature — Shapeshifter", { colorIdentity: ["B"], keywords: ["Changeling"],
+    oracleText: "Changeling (This card is every creature type.)\nWhen this creature enters, you may return target creature card from your graveyard to your hand." });
+  const wings = card("Wings of Velis Vel", "Kindred Instant — Shapeshifter", { colorIdentity: ["U"], keywords: ["Changeling"],
+    oracleText: "Changeling (This card is every creature type.)\nUntil end of turn, target creature has base power and toughness 4/4, gains all creature types, and gains flying." });
+  const bear = card("Grizzly Bears", "Creature — Bear", { colorIdentity: ["G"] });
+  expect(identityFinding(plainCmd(["W"]), [shifter, wings])!.cards).toEqual(["Graveshifter", "Wings of Velis Vel"]);
+  expect(identityFinding(seluma, [shifter, wings, bear])!.cards).toEqual(["Grizzly Bears"]);
+  const everforger = RULEBREAKER("The Everforger", "Legendary Artifact Creature — Construct", [],
+    "Rulebreaker — A deck with this commander can have artifact creature and Equipment cards of any color identity and any basic land cards.");
+  expect(identityFinding(everforger, [shifter])!.cards).toEqual(["Graveshifter"]);
+});
+
 test("Maular: creature cards with mana value 7 or greater, not a small creature", () => {
   const maular = RULEBREAKER("Maular, the Next Evolution", "Legendary Creature — Dinosaur Mutant", ["G"],
     "Rulebreaker — A deck with this commander can have creature cards with mana value 7 or greater of any color identity and any basic land cards.");
