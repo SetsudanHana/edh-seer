@@ -341,6 +341,29 @@ const COMMANDER_PERMISSION = /\bcan be your commander\b/i;
  *  these 13 cards, and two of them were stuck at the gate. */
 const DECK_LIMIT_PERMISSION = /\bdeck can have any number of cards named\b/i;
 
+/** "A deck with this commander can have any land cards / has no maximum deck size" and "If <name> is your commander, the color identity of
+ *  ... cards in your deck can include ... and your deck can have any basic land cards" (#1670): the COMMANDER-SCOPED deck-construction
+ *  clauses (deck size, colour identity, basic lands: CR 903 and 100.2a). Same kind as the two permissions above: no ability, a rule about what
+ *  may go in the deck. Anchored at the clause start; the name in the "If ... is your commander" form may hold a comma ("Tolabow, Loch Rascal"),
+ *  hence a bounded `.`, not a negated class. */
+const COMMANDER_DECK_RULE = /^(?:a deck with this commander (?:can have|has)\b|if .{1,80}? is your commander, (?:the color identity of\b|your deck can have\b))/i;
+
+/** A DECKBUILDING CLAUSE (#1670, owner 2026-11-18: READ, not dropped): it feeds legality and colour identity (task 2) and grants no ability.
+ *  One test for the segmenter and the grammar path; the grammar records it as `abilityType: "none"` with one `other` action carrying the
+ *  printed text, the shape the bought answer stores for Lord Windgrace's "can be your commander". */
+export function isDeckbuildingPermission(text: string): boolean {
+  // A permission carried only by a reminder ("Spell commander (This card can be your commander. ...)", Wizard from Beyond) states the keyword's rule: claimed as before.
+  const outside = text.replace(/\([^()]*\)/g, " ").trim();
+  const sentences = outside.split(/(?<=\.)\s+/).map((s) => s.trim()).filter((s) => s !== "");
+  if (!sentences.some(isDeckbuildingSentence)) return isDeckbuildingSentence(text);
+  return sentences.every((s) => isDeckbuildingSentence(s) || DECK_FOLLOW_UP.test(s));
+}
+/** EVERY sentence outside a reminder must be one, or the follow-up "If she is, a Nissa card can also be your commander." (Saheeli, Waffle Restaurant):
+ *  Ashiok, Genderfear's "-3: Exile target creature ... Ashiok can be your commander." is an ability with a permission after it, and claiming the
+ *  whole clause dropped the exile. */
+const DECK_FOLLOW_UP = /^if (?:it|he|she|they) (?:is|are),\s.{0,200}\b(?:your commanders?|your deck|in your deck)\b/i;
+const isDeckbuildingSentence = (s: string): boolean => COMMANDER_PERMISSION.test(s) || DECK_LIMIT_PERMISSION.test(s) || COMMANDER_DECK_RULE.test(s);
+
 /** A Spacecraft prints its station-threshold abilities behind "N+ |". The bar is a LABEL, not part
  *  of the ability, and `LABEL` has known that since Uthros Research Craft — but it was consulted on
  *  ONE line, the trigger cue, so the cost scan and the keyword test never saw it stripped. 40 cards,
@@ -380,7 +403,7 @@ function classify(text: string, kind: ClauseKind, typeLine: string): { abilityTy
   // NO abilityType RATHER THAN A NEW INERT KIND, deliberately: `validateOne` only checks the type
   // where the segmenter assigned one, so this is the whole fix, and the clause still reaches the
   // model instead of being silently dropped from a card's text.
-  if (COMMANDER_PERMISSION.test(text) || DECK_LIMIT_PERMISSION.test(text)) return { body: text };
+  if (isDeckbuildingPermission(text)) return { body: text };
   // A bare keyword row behind a station bar is a printed keyword, exactly like an unbarred one.
   const bar = STATION_BAR.exec(text);
   if (bar && isBareKeywordRow(text.slice(bar[0].length))) return { body: text };

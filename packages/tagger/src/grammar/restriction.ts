@@ -44,9 +44,15 @@ const HEADS = [
   /^any player may activate this ability but /i,
 ];
 
+/** "This ability triggers only if ~ is in the command zone or on the battlefield" (Sahir, Visitor in Darkness; Eminence, functioning
+ *  zones): WHERE the ability functions, the trigger's own rider. The trigger the sentence follows still derives, as Inalla's eminence does
+ *  (intervening-if.ts `SOURCE_ZONE`). The card's name arrives as "~" or as itself. Anchored whole, no unbounded repeats. */
+const TRIGGER_ZONE_RIDER = /^[Tt]his ability triggers only if (?:~|[A-Z][\w',-]{0,30}(?: [\w',-]{1,30}){0,4}) is in the command zone or on the battlefield$/;
+
 /** Whether a sentence (its final period already cut) is an ability restriction and nothing more. */
 export function isRestrictionSentence(sentence: string): boolean {
   const s = sentence.trim().replace(/\.$/, "");
+  if (TRIGGER_ZONE_RIDER.test(s)) return true;
   for (const [i, head] of HEADS.entries()) {
     const m = head.exec(s);
     if (!m) continue;

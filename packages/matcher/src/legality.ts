@@ -1,5 +1,5 @@
 import type { Card } from "@edh-seer/engine";
-import { allowsChosenColour, companionFindings, constructionFindings, copyLimit } from "./deck-rules.js";
+import { allowsChosenColour, commanderDeckRules, companionFindings, constructionFindings, copyLimit, exemptionNote, isInstantOrSorcery } from "./deck-rules.js";
 
 /** DECK LEGALITY AS A REPORT, NEVER A GATE (roadmap J4, CR 903.3 and 903.5a-d).
  *
@@ -175,8 +175,11 @@ export function deckLegality({ cards, commanders, companions = [], unresolvedCom
   const out: LegalityFinding[] = [];
 
   // 903.5a — one hundred cards, the commander included.
+  // #1670: "A deck with this commander has no maximum deck size" lifts the too-many half only; the
+  // 100-card minimum (903.5a) still binds. Rules come from the COMMANDERS, never a card in the 99.
+  const deckRules = commanderDeckRules(commanders);
   const total = cards.length;
-  if (total !== 100) {
+  if (total !== 100 && !(deckRules.noMaxDeckSize && total > 100)) {
     out.push({
       rule: "size",
       detail: `${total} cards, and a Commander deck is exactly 100`,
@@ -212,19 +215,32 @@ export function deckLegality({ cards, commanders, companions = [], unresolvedCom
     const identity = new Set(commanders.flatMap((c) => c.colorIdentity ?? []));
     const seen = new Set<string>();
     const off: string[] = [];
+    // Tolabow: instants and sorceries outside the identity, kept apart so their ONE shared extra
+    // colour is judged on its own. name -> the colours that card needs.
+    const spellOutside = new Map<string, string[]>();
     for (const c of cards) {
       if (seen.has(c.name)) continue;
       seen.add(c.name);
       const outside = (c.colorIdentity ?? []).filter((x) => !identity.has(x));
-      if (outside.length > 0) { off.push(c.name); outside.forEach((x) => extra.add(x)); }
+      if (outside.length === 0) continue;
+      // A printed exemption ("Angel cards of any color identity", basic lands, any land cards).
+      if (deckRules.exemptions.some((e) => e.test(c))) continue;
+      if (deckRules.instantSorceryColour && isInstantOrSorcery(c)) { spellOutside.set(c.name, outside); continue; }
+      off.push(c.name);
+      outside.forEach((x) => extra.add(x));
+    }
+    const spellColours = new Set([...spellOutside.values()].flat());
+    if (spellColours.size > 1) {
+      for (const [name, outside] of spellOutside) { off.push(name); outside.forEach((x) => extra.add(x)); }
     }
     // CR 903.4b: a commander that chooses its colour before the game widens the identity by ONE
     // colour the decklist does not name. Outsiders that all need the same single colour are that
     // choice; two or more colours outside is still a finding.
     if (off.length > 0 && !(allowsChosenColour(commanders) && extra.size <= 1)) {
+      const note = exemptionNote(deckRules, commanders);
       out.push({
         rule: "color-identity",
-        detail: `${off.length} card${off.length === 1 ? " is" : "s are"} outside ${[...identity].sort().join("") || "colourless"}, your commander's colour identity`,
+        detail: `${off.length} card${off.length === 1 ? " is" : "s are"} outside ${[...identity].sort().join("") || "colourless"}, your commander's colour identity${note ? ` (${note})` : ""}`,
         cards: off.sort(),
       });
     }

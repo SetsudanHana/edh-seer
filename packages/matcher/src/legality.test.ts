@@ -412,3 +412,150 @@ test("an upcoming card is no violation and is listed with its date; a real not_l
   expect(upcomingCards(filler(3))).toEqual([]);
   expect(deckLegality({ cards: [cmd, bad, ...filler(98)], commanders: [cmd] }).map((f) => f.rule)).toEqual(["not-legal"]);
 });
+
+// #1670 (owner 2026-11-18): the commander's printed deck rules feed legality. Oracle text is the
+// corpus's own (Mongo `cards`, 2026-11-19). Each commander gets a synthetic deck that shows the
+// finding BEFORE the rule is read (the same cards under a commander without it) and its absence AFTER.
+const RULEBREAKER = (name: string, typeLine: string, ci: string[], oracleText: string): Card =>
+  card(name, typeLine, { colorIdentity: ci, oracleText });
+const basicIn = (n: string, ci: string): Card => card(n, `Basic Land — ${n}`, { colorIdentity: [ci], manaValue: 0 });
+const plainCmd = (ci: string[]): Card => card("Plain Commander", "Legendary Creature — Bear", { colorIdentity: ci });
+// Colourless padding, so the Mountain filler's red never shows up in an identity finding.
+const wastes = (n: number): Card[] => Array.from({ length: n }, () => card("Wastes", "Basic Land", { colorIdentity: [], manaValue: 0 }));
+const identityFinding = (commander: Card, cards: Card[]) =>
+  deckLegality({ cards: [commander, ...cards, ...wastes(99 - cards.length)], commanders: [commander] }).find((f) => f.rule === "color-identity");
+
+test("Seluma: Angel cards of any colour identity, and basics, but not other off-colour cards", () => {
+  const seluma = RULEBREAKER("Seluma, Light of Aysen", "Legendary Creature — Angel Warrior", ["W"],
+    "Rulebreaker — A deck with this commander can have Angel cards of any color identity and any basic land cards.\nFlying");
+  const angel = card("Angel of the Dire Hour", "Creature — Angel", { colorIdentity: ["B"] });
+  const bear = card("Grizzly Bears", "Creature — Bear", { colorIdentity: ["G"] });
+  const swamp = basicIn("Swamp", "B");
+  const deck = [angel, swamp, bear];
+  expect(identityFinding(plainCmd(["W"]), deck)!.cards).toEqual(["Angel of the Dire Hour", "Grizzly Bears", "Swamp"]);
+  const after = identityFinding(seluma, deck)!;
+  expect(after.cards).toEqual(["Grizzly Bears"]);
+  expect(after.detail).toMatch(/Seluma, Light of Aysen exempts Angel cards, basic land cards/);
+  expect(identityFinding(seluma, [angel, swamp])).toBeUndefined();
+});
+
+test("702.73a: a changeling is an Angel, so Seluma exempts it; an Equipment term it does not meet", () => {
+  const seluma = RULEBREAKER("Seluma, Light of Aysen", "Legendary Creature — Angel Warrior", ["W"],
+    "Rulebreaker — A deck with this commander can have Angel cards of any color identity and any basic land cards.\nFlying");
+  const shifter = card("Graveshifter", "Creature — Shapeshifter", { colorIdentity: ["B"], keywords: ["Changeling"],
+    oracleText: "Changeling (This card is every creature type.)\nWhen this creature enters, you may return target creature card from your graveyard to your hand." });
+  const wings = card("Wings of Velis Vel", "Kindred Instant — Shapeshifter", { colorIdentity: ["U"], keywords: ["Changeling"],
+    oracleText: "Changeling (This card is every creature type.)\nUntil end of turn, target creature has base power and toughness 4/4, gains all creature types, and gains flying." });
+  const bear = card("Grizzly Bears", "Creature — Bear", { colorIdentity: ["G"] });
+  expect(identityFinding(plainCmd(["W"]), [shifter, wings])!.cards).toEqual(["Graveshifter", "Wings of Velis Vel"]);
+  expect(identityFinding(seluma, [shifter, wings, bear])!.cards).toEqual(["Grizzly Bears"]);
+  const everforger = RULEBREAKER("The Everforger", "Legendary Artifact Creature — Construct", [],
+    "Rulebreaker — A deck with this commander can have artifact creature and Equipment cards of any color identity and any basic land cards.");
+  expect(identityFinding(everforger, [shifter])!.cards).toEqual(["Graveshifter"]);
+});
+
+test("Maular: creature cards with mana value 7 or greater, not a small creature", () => {
+  const maular = RULEBREAKER("Maular, the Next Evolution", "Legendary Creature — Dinosaur Mutant", ["G"],
+    "Rulebreaker — A deck with this commander can have creature cards with mana value 7 or greater of any color identity and any basic land cards.");
+  const big = card("Elesh Norn, Grand Cenobite", "Legendary Creature — Phyrexian Praetor", { colorIdentity: ["W"], manaValue: 7 });
+  const small = card("Angel of Serenity Jr", "Creature — Angel", { colorIdentity: ["W"], manaValue: 6 });
+  const bigSpell = card("Big Sorcery", "Sorcery", { colorIdentity: ["W"], manaValue: 8 });
+  expect(identityFinding(plainCmd(["G"]), [big])!.cards).toEqual(["Elesh Norn, Grand Cenobite"]);
+  expect(identityFinding(maular, [big])).toBeUndefined();
+  expect(identityFinding(maular, [big, small, bigSpell])!.cards).toEqual(["Angel of Serenity Jr", "Big Sorcery"]);
+});
+
+test("The Everforger: (artifact creature) or Equipment, never a plain artifact", () => {
+  const ever = RULEBREAKER("The Everforger", "Legendary Artifact Creature — Construct", [],
+    "Rulebreaker — A deck with this commander can have artifact creature and Equipment cards of any color identity and any basic land cards.");
+  const golem = card("Red Golem", "Artifact Creature — Golem", { colorIdentity: ["R"] });
+  const sword = card("Sword of Fire", "Artifact — Equipment", { colorIdentity: ["R"] });
+  const vial = card("Red Vial", "Artifact", { colorIdentity: ["R"] });
+  const cr = card("Plain Creature", "Creature — Elf", { colorIdentity: ["R"] });
+  expect(identityFinding(ever, [golem, sword, vial, cr])!.cards).toEqual(["Plain Creature", "Red Vial"]);
+  expect(identityFinding(ever, [golem, sword])).toBeUndefined();
+  expect(identityFinding(plainCmd([]), [golem, sword])!.cards).toEqual(["Red Golem", "Sword of Fire"]);
+});
+
+test("The Unluckiest Planeswalker (Aura) and Valko Indorian (Phyrexian)", () => {
+  const walker = RULEBREAKER("The Unluckiest Planeswalker", "Legendary Planeswalker", ["R"],
+    "Rulebreaker — A deck with this commander can have Aura cards of any color identity and any basic land cards.\nThe Unluckiest Planeswalker can be your commander.");
+  const aura = card("Rancor", "Enchantment — Aura", { colorIdentity: ["G"] });
+  const ench = card("Phyrexian Arena", "Enchantment", { colorIdentity: ["B"] });
+  expect(identityFinding(plainCmd(["R"]), [aura])).toBeDefined();
+  expect(identityFinding(walker, [aura])).toBeUndefined();
+  expect(identityFinding(walker, [aura, ench])!.cards).toEqual(["Phyrexian Arena"]);
+  const valko = RULEBREAKER("Valko Indorian", "Legendary Creature — Human Wizard", ["B"],
+    "Rulebreaker — A deck with this commander can have Phyrexian cards of any color identity and any basic land cards.");
+  const norn = card("Elesh Norn, Grand Cenobite", "Legendary Creature — Phyrexian Praetor", { colorIdentity: ["W"] });
+  const angel = card("Angel", "Creature — Angel", { colorIdentity: ["W"] });
+  expect(identityFinding(plainCmd(["B"]), [norn])).toBeDefined();
+  expect(identityFinding(valko, [norn])).toBeUndefined();
+  expect(identityFinding(valko, [norn, angel])!.cards).toEqual(["Angel"]);
+});
+
+test("a printed X this reader cannot parse exempts nothing and says so", () => {
+  const odd = RULEBREAKER("Odd Commander", "Legendary Creature — Bear", ["W"],
+    "Rulebreaker — A deck with this commander can have nonland cards from any set of any color identity and any basic land cards.");
+  const bolt = card("Lightning Bolt", "Instant", { colorIdentity: ["R"] });
+  const f = identityFinding(odd, [bolt, basicIn("Mountain", "R")])!;
+  expect(f.cards).toEqual(["Lightning Bolt"]);
+  expect(f.detail).toMatch(/not read, so not exempted: nonland cards from any set/);
+});
+
+test("Grizzlegom: any land cards, not a nonland card", () => {
+  const griz = RULEBREAKER("Grizzlegom, Hurloon Hero", "Legendary Creature — Minotaur Warrior", ["G", "R"],
+    "Rulebreaker — A deck with this commander can have any land cards.");
+  const land = card("Watery Grave", "Land — Island Swamp", { colorIdentity: ["U", "B"] });
+  const bolt = card("Counterspell", "Instant", { colorIdentity: ["U"] });
+  expect(identityFinding(plainCmd(["G", "R"]), [land])).toBeDefined();
+  expect(identityFinding(griz, [land])).toBeUndefined();
+  expect(identityFinding(griz, [land, bolt])!.cards).toEqual(["Counterspell"]);
+});
+
+test("a deck rule printed on a card in the 99 grants nothing", () => {
+  const griz = RULEBREAKER("Grizzlegom, Hurloon Hero", "Legendary Creature — Minotaur Warrior", ["G", "R"],
+    "Rulebreaker — A deck with this commander can have any land cards.");
+  const land = card("Watery Grave", "Land — Island Swamp", { colorIdentity: ["U", "B"] });
+  const out = deckLegality({ cards: [cmd, griz, land, ...filler(97)], commanders: [cmd] });
+  expect(out.find((f) => f.rule === "color-identity")!.cards).toEqual(["Grizzlegom, Hurloon Hero", "Watery Grave"]);
+});
+
+test("Whtz: no maximum deck size suppresses too many, never too few", () => {
+  const whtz = RULEBREAKER("Whtz, the Bibliophile", "Legendary Creature — Homunculus", ["U", "W"],
+    "Rulebreaker — A deck with this commander has no maximum deck size.\n{3}, {T}: You draw a card and gain 1 life.");
+  const mt = (n: number): Card[] => Array.from({ length: n }, () => card("Island", "Basic Land — Island", { colorIdentity: ["U"] }));
+  const over = (c: Card) => deckLegality({ cards: [c, ...mt(149)], commanders: [c] }).map((f) => f.rule);
+  expect(over(plainCmd(["U"]))).toContain("size");
+  expect(over(whtz)).not.toContain("size");
+  const few = deckLegality({ cards: [whtz, ...mt(59)], commanders: [whtz] });
+  expect(few.find((f) => f.rule === "size")!.detail).toMatch(/60 cards/);
+});
+
+test("Tolabow: ONE extra colour for instants and sorceries, the same for all, and basics", () => {
+  const tolabow = RULEBREAKER("Tolabow, Loch Rascal", "Legendary Creature — Otter", ["U"],
+    "Rulebreaker — If Tolabow, Loch Rascal is your commander, the color identity of instant and sorcery cards in your deck can include one color of your choice not in your commander's color identity, and your deck can have any basic land cards.");
+  const bolt = card("Lightning Bolt", "Instant", { colorIdentity: ["R"] });
+  const char = card("Char", "Instant", { colorIdentity: ["R"] });
+  const fire = card("Wrath of God", "Sorcery", { colorIdentity: ["W"] });
+  const goblin = card("Goblin Guide", "Creature — Goblin", { colorIdentity: ["R"] });
+  expect(identityFinding(plainCmd(["U"]), [bolt, char])!.cards).toEqual(["Char", "Lightning Bolt"]);
+  expect(identityFinding(tolabow, [bolt, char, basicIn("Mountain", "R")])).toBeUndefined();
+  // two different extra colours among instants/sorceries: not one colour
+  expect(identityFinding(tolabow, [bolt, fire])!.cards).toEqual(["Lightning Bolt", "Wrath of God"]);
+  // the extra colour does not extend to a creature
+  expect(identityFinding(tolabow, [bolt, goblin])!.cards).toEqual(["Goblin Guide"]);
+});
+
+// 903.3: "can be your commander" is a legal commander. Corpus texts, 2026-11-19; the code already
+// accepted them, so these were green from the start.
+test.each([
+  ["Ashaya's Enduring Bond", "Legendary Sorcery", "Ashaya's Enduring Bond can be your commander."],
+  ["Dyfed, the Guiding Hand", "Legendary Planeswalker — Dyfed", "Dyfed, the Guiding Hand can be your commander."],
+  ["Feroz, Ulgrotha's Warden", "Legendary Planeswalker — Feroz", "Feroz, Ulgrotha's Warden can be your commander."],
+  ["Greensleeves", "Legendary Planeswalker — Greensleeves", "Greensleeves can be your commander."],
+  ["Sifa Grent", "Legendary Planeswalker — Sifa", "Sifa Grent can be your commander."],
+])("%s is a legal commander", (name, typeLine, oracleText) => {
+  const c = card(name, typeLine, { oracleText, colorIdentity: ["R"] });
+  expect(deckLegality({ cards: [c, ...filler(99)], commanders: [c] })).toEqual([]);
+});

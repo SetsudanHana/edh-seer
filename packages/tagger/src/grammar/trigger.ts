@@ -426,11 +426,12 @@ function phaseTrigger(rest: string): TriggerReading | null {
   m = PHASE_OWNER_RE.exec(rest);
   if (!m) return null;
   const whose = PHASE_OWNER[m[1]!]!;
-  // "your NEXT upkeep" is one upkeep, a narrowing of the event.
-  const next = /^next (.+)$/.exec(m[2]!);
-  const phase = PHASES.find(([re]) => re.test(next?.[1] ?? m![2]!))?.[1];
+  // "your NEXT upkeep" is one upkeep, a narrowing of the event. So is "your FIRST upkeep" (The Ignoble Serpent, #1670): the first of the game, which no
+  // producer's event tells apart, so `narrowing: "first"` is not a TEMPORAL word and derive REFUSES the claim (`narrowing:upkeep`) rather than read an every-upkeep trigger.
+  const next = /^(next|first) (.+)$/.exec(m[2]!);
+  const phase = PHASES.find(([re]) => re.test(next?.[2] ?? m![2]!))?.[1];
   const read = phase ? actorReading(phase, whose) : null;
-  return read && next ? { ...read, narrowing: "next" } : read;
+  return read && next ? { ...read, narrowing: next[1] } : read;
 }
 
 function actorReading(event: string, control: Control): TriggerReading | null {
