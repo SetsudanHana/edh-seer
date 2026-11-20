@@ -110,6 +110,12 @@ const COVERED_BATCH6: MechanicEntry[] = [
   ...["connive", "monstrosity"].map(
     (m): MechanicEntry => ({ mechanic: m, source: "keyword-action", status: "covered", tags: ["counter:+1/+1"], patterns: ["counter-keyword-source"] }),
   ),
+  // #1669: assimilate always puts a +1/+1 counter (reminder text; owner 2026-10-26 #1349; read by derive.ts assimilatedAreYours), as adapt and bolster.
+  { mechanic: "assimilate", source: "keyword-action", status: "covered", tags: ["counter:+1/+1"], patterns: ["counter-keyword-source"] },
+  // #1669: recruit (CR 701.70) is connive with a 1/1 Human Soldier token where connive puts a counter; Bard's Company and Great Gilded Boat are tagged token.
+  { mechanic: "recruit", source: "keyword-action", status: "covered", tags: ["token"], patterns: ["token-keyword-maker"] },
+  // #1669: beam me up casts the card from your graveyard (Open Communications, Energize; owner #1349), as flashback.
+  { mechanic: "beam me up", source: "keyword-ability", status: "covered", tags: ["graveyard"], patterns: ["graveyard-payoff"] },
 ];
 
 const COVERED_BATCH7: MechanicEntry[] = [
@@ -169,7 +175,12 @@ const ARCHETYPES: MechanicEntry[] = [
 ];
 
 // --- Planned: synergy-relevant, no pattern yet. ---
-const PLANNED: MechanicEntry[] = [];
+const PLANNED: MechanicEntry[] = [
+  // #1669: battlefront is an attack trigger ("Battlefront — Whenever you attack", Rite of Ascension, Worf), raid's shape, but the stored tags of its cards carry no attack-trigger yet.
+  { mechanic: "battlefront", source: "ability-word", status: "planned", note: "attack trigger like raid; its cards are not tagged attack-trigger yet (#1669)" },
+  // #1669: empower Jace (CR 701.71) creates a Jace planeswalker token or puts loyalty counters on it, amass's shape, but its cards are not tagged token yet.
+  { mechanic: "empower jace", source: "keyword-action", status: "planned", note: "token + loyalty counters like amass; its cards are not tagged token yet (#1669)" },
+];
 
 // --- Skip: no plausible synergy axis (pure evasion / combat-math / cosmetic). ---
 // Filled from mechanics.catalog.json: every snapshot keyword not classified above.
@@ -204,6 +215,8 @@ const SKIP: MechanicEntry[] = [
     "shadow", "warp", "station", "undaunted", "gift", "impending", "harmonize", "exhaust", "max speed",
     "tiered", "job select", "mayhem", "web-slinging", "prowl", "solved", "sneak", "increment", "paradigm",
     "teamwork", "firebending", "power-up",
+    // #1669 (CR 702.195 Storied: a designation, no cross-card axis); halflingcycling is a typecycling variant like slivercycling (CR 702.29e; Hobbit Hole); affinitycycling is a cycling variant that searches by keyword, not by type (Sojourner's Enforcermite)
+    "storied", "halflingcycling", "affinitycycling",
     // spellslinger single-spell value: no cross-card producer/payoff axis
     "cascade", "replicate", "conspire", "buyback", "overload", "spectacle",
     // 5-color-mana gated; no clean cross-card producer/payoff axis
@@ -219,6 +232,8 @@ const SKIP: MechanicEntry[] = [
     "behold", "double", "triple",
     // no cross-card synergy axis: explore is conditional card-selection; conjure is hand advantage; goad is political/combat
     "explore", "conjure", "goad",
+    // #1669: face a dilemma is a trigger event fed by modal spells (owner 2026-10-26 #1349; no CR rule yet), not a producer keyword
+    "face a dilemma",
   ]),
   ...skips("ability-word", [
     "channel", "chroma", "cohort", "converge", "fateful hour", "grandeur", "hellbent", "heroic",
@@ -233,6 +248,8 @@ const SKIP: MechanicEntry[] = [
     "revolt",
     // no clean cross-card axis: domain (land types), coven (different powers), corrupted (poison), void (permanent-left/gy-cast), survival (tapped creature), addendum (main-phase cast)
     "domain", "coven", "corrupted", "void", "survival", "addendum",
+    // #1669 Star Trek set ability words, no cross-card axis: strange new worlds (differently named lands), seek out (second card drawn each turn), federation (creature types among non-Borg creatures); actualize has no card in the snapshot corpus (0 oracle/keyword hits) and no CR entry
+    "actualize", "strange new worlds", "seek out", "federation",
   ]),
 ];
 
