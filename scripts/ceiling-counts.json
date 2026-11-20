@@ -101,7 +101,7 @@
   "packages/tagger/src/derive/life-set.ts": 1,
   "packages/tagger/src/derive/mana-lines.ts": 29,
   "packages/tagger/src/derive/meld-pair.ts": 1,
-  "packages/tagger/src/derive/mill-owner.ts": 2,
+  "packages/tagger/src/derive/mill-owner.ts": 3,
   "packages/tagger/src/derive/modal.ts": 3,
   "packages/tagger/src/derive/own-name.ts": 1,
   "packages/tagger/src/derive/prevention.ts": 4,

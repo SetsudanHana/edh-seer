@@ -6,6 +6,7 @@ import { grammarClauseRecords } from "../grammar/clause-record.js";
 
 // #1663: WHOSE LIBRARY a mill empties. Oracle texts and stored clauses (the `cardClauses` answer each model row derives from) read from the corpus 2026-11-20;
 // the grammar-path cards derive from their printed text alone, as `derive-corpus` does for them.
+// `canonical` is what derive reads for a model row in production (derive-worker.ts deriveRow): `reveal` is dropped from it (canonicalize.ts DROPPED_VERBS).
 const FX = JSON.parse(readFileSync(new URL("./mill-player.fixtures.json", import.meta.url), "utf8")) as Record<string, { typeLine: string; oracleText: string; keywords: string[]; clauses: never }>;
 const cardOf = (name: string) => ({ name, typeLine: FX[name]!.typeLine, oracleText: FX[name]!.oracleText, keywords: FX[name]!.keywords });
 const viaStored = (name: string) => deriveCardTags(deriveInputOf(cardOf(name) as never, "x", name, FX[name]!.clauses));

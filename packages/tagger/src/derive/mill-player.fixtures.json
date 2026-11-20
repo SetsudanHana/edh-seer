@@ -28,14 +28,6 @@
     },
     "actions": [
      {
-      "verb": "reveal",
-      "object": "the top two cards of your library",
-      "fromZone": null,
-      "toZone": null,
-      "amount": null,
-      "optional": false
-     },
-     {
       "verb": "put",
       "object": "one of them",
       "fromZone": "library",
@@ -54,14 +46,6 @@
      "control": "any"
     },
     "actions": [
-     {
-      "verb": "reveal",
-      "object": "the top two cards of your library",
-      "fromZone": null,
-      "toZone": null,
-      "amount": null,
-      "optional": false
-     },
      {
       "verb": "put",
       "object": "one of them",
@@ -82,7 +66,11 @@
    {
     "id": 1,
     "abilityType": "static",
-    "actions": []
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
    },
    {
     "id": 2,
@@ -171,14 +159,6 @@
     },
     "actions": [
      {
-      "verb": "reveal",
-      "object": "the top three cards of target opponent's library",
-      "fromZone": null,
-      "toZone": null,
-      "amount": null,
-      "optional": false
-     },
-     {
       "verb": "put",
       "object": "a creature card from among them",
       "fromZone": "library",
@@ -191,14 +171,6 @@
       "object": "the rest",
       "fromZone": "library",
       "toZone": "graveyard",
-      "amount": null,
-      "optional": false
-     },
-     {
-      "verb": "reveal",
-      "object": "the top three cards of your library",
-      "fromZone": null,
-      "toZone": null,
       "amount": null,
       "optional": false
      },
@@ -243,7 +215,9 @@
     "actions": [
      {
       "verb": "none",
-      "object": "Flying"
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
      }
     ]
    },
@@ -276,7 +250,7 @@
       "verb": "cast",
       "object": "that card",
       "fromZone": "exile",
-      "toZone": "stack",
+      "toZone": null,
       "amount": null,
       "optional": true
      }
@@ -370,7 +344,9 @@
     "actions": [
      {
       "verb": "none",
-      "object": "({U/B} can be paid with either {U} or {B}.)"
+      "object": "({U/B} can be paid with either {U} or {B}.)",
+      "fromZone": null,
+      "toZone": null
      }
     ]
    },
@@ -399,14 +375,6 @@
     "id": 1,
     "abilityType": "activated",
     "actions": [
-     {
-      "verb": "reveal",
-      "object": "the top card of each player's library",
-      "fromZone": null,
-      "toZone": null,
-      "amount": null,
-      "optional": false
-     },
      {
       "verb": "put",
       "object": "the revealed cards",
@@ -441,7 +409,9 @@
     "actions": [
      {
       "verb": "none",
-      "object": "Enchant player"
+      "object": "Enchant player",
+      "fromZone": null,
+      "toZone": null
      }
     ]
    },
@@ -602,14 +572,6 @@
     },
     "actions": [
      {
-      "verb": "reveal",
-      "object": "cards from the top of target opponent's library until they reveal a land card",
-      "fromZone": null,
-      "toZone": null,
-      "amount": null,
-      "optional": false
-     },
-     {
       "verb": "put",
       "object": "that land card",
       "fromZone": "library",
@@ -714,7 +676,9 @@
     "actions": [
      {
       "verb": "none",
-      "object": "Flying"
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
      }
     ]
    },
@@ -727,14 +691,6 @@
      "control": "you"
     },
     "actions": [
-     {
-      "verb": "reveal",
-      "object": "cards from the top of their library until they reveal four land cards",
-      "fromZone": null,
-      "toZone": null,
-      "amount": null,
-      "optional": false
-     },
      {
       "verb": "put",
       "object": "those cards",

@@ -38,12 +38,19 @@ function libraryOwner(m: RegExpExecArray, full: string, ctx: MillOwnerCtx): Cont
   return last === undefined ? undefined : ownerOfPlayerPhrase(last, ctx, full);
 }
 
+/** The owner of each library a text names, in printed order. */
+function libraryOwners(full: string, ctx: MillOwnerCtx): (Control | undefined)[] {
+  return [...full.matchAll(new RegExp(LIBRARY.source, "gi"))].map((m) => libraryOwner(m as RegExpExecArray, full, ctx));
+}
+
 /** The one owner EVERY library a text names has, or undefined when it names none, one the words do not resolve, or two different owners. */
 function soleLibraryOwner(full: string, ctx: MillOwnerCtx): Control | undefined {
-  const owners = new Set<Control | undefined>();
-  for (const m of full.matchAll(new RegExp(LIBRARY.source, "gi"))) owners.add(libraryOwner(m as RegExpExecArray, full, ctx));
+  const owners = new Set(libraryOwners(full, ctx));
   return owners.size === 1 ? [...owners][0] : undefined;
 }
+
+/** A library->graveyard put's own place among the clause's such puts. */
+const isLibraryPut = (a: Action): boolean => a.verb === "put" && a.toZone === "graveyard" && a.fromZone === "library";
 
 /** The control of the library the mill at `actions[idx]` empties, or undefined when the words do not say (the generic reading stands). */
 export function milledLibraryOwner(actions: readonly Action[], idx: number, ctx: MillOwnerCtx): Control | undefined {
@@ -73,5 +80,13 @@ export function milledLibraryOwner(actions: readonly Action[], idx: number, ctx:
   // No action names a library: the libraries the clause's own words name, or the card's when the stored record has no text of its own (Gathering Stone's second record, Celestus Sanctifier's twin).
   // CEILING: every library the text names must have ONE owner; a clause that mills both players' (and names no reveal per action) keeps the generic reading.
   const text = ctx.clauseText.trim() !== "" ? ctx.clauseText : ctx.cardText;
+  // THE Nth LIBRARY PUT READS THE Nth LIBRARY OF THE TEXT, in printed order, when there are as many of each (Guild Feud: "target opponent reveals the top three cards of their library ... puts the rest into their graveyard. You do the same with the top three cards of your library"; the canonical form has dropped the reveals, so no action names a library).
+  // CEILING: positional; a text whose library count differs from its library-put count (a library named by a search or a look) falls back to the one-owner rule.
+  if (isLibraryPut(action)) {
+    const puts = actions.filter(isLibraryPut);
+    const owners = libraryOwners(text, ctx);
+    const nth = puts.indexOf(action);
+    if (puts.length >= 2 && owners.length === puts.length && nth >= 0) return owners[nth];
+  }
   return soleLibraryOwner(text, ctx) ?? (millsOwnLibrary(action, text) ? "you" : undefined);
 }
