@@ -4888,33 +4888,28 @@ export function createsForYou(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
     return p.tags.abilities.some((pa) => !isRefusedTrigger(pa) && pa.effect.kind === "emblem" && pa.effect.subject?.control !== "opp");
   }
   if (c.tags.characteristics.token !== true) return false;
-  // THE NODE SAYS WHOSE SEAT IT IS READ FROM (#1666): an opponent's token (`heldByOpponent`) is made by an emit that gives it to an opponent, ours by one that does not. The hop through an opponent's node is
-  // kept, because its own events already read `opp` and a "you control" payoff cannot hear them.
-  const held = c.tags.characteristics.heldByOpponent === true;
-  // The token card is the CONSUMER argument here: the creator's emit may state one of its types only (#1385), so its printed conjunction is not demanded.
-  const { allTypes: _printedAll, ...consumerSubject } = characteristicsSubject(c.tags, c.card.name);
-  return p.tags.abilities.some((pa) => !isRefusedTrigger(pa) &&
-    (pa.emits ?? []).some((e) =>
-      // The token's STATE on arrival ("tapped and attacking") is not what it IS: the token card named here is the same card whether it enters attacking or not, so the state stays out of the identity join
-      // (#1673: a created token's `combat` made `subjectMatches` refuse the link and every pair through the token went). What the arrival state means for an attack trigger is judged by the event pairs.
-      e.verb === "create-token" && (e.subject.control === "opp") === held && subjectMatches(consumerSubject, (({ combat: _combat, tapped: _tapped, ...made }) => made)(e.subject), h)));
+  // THE NODE SAYS WHOSE SEAT IT IS READ FROM (#1666): an opponent's token (`heldByOpponent`) is made by an emit that gives it to an opponent, ours by one that does not (or by the printed-text reading `tokenSeats` makes of a maker whose second sentence derive did not
+  // store). The hop through an opponent's node is kept, because its own events already read `opp` and a "you control" payoff cannot hear them.
+  const seats = tokenSeats(p, c, h);
+  return c.tags.characteristics.heldByOpponent === true ? seats.opp : seats.ours && seats.matched;
 }
 
 /** WHICH SEATS `p` MAKES TOKEN `c` FOR (#1666): `opp` when an emit of it that makes the token gives it to an opponent ("Its controller creates a 3/3 green Beast", "enchanted opponent creates a Clue token"), `ours` when another does not
  *  (any, you, or nothing stated). `c` is the token as printed, read from our seat. `collectTokenNodes` builds one node per seat, so a maker that splits ("you and target opponent each create a Treasure", "Eiganjo Uprising") is the creator of both.
- *  A SEAT IT CANNOT READ IS OURS, NEVER AN OPPONENT'S: a card whose printed text has YOU creating or investigating (Tempting Contract: "For each opponent who does, you create a Treasure token") while derive stored only the opponent's emit is read as yours,
- *  because a missing `#opp` node loses an edge and a wrong one invents one.
+ *  A SEAT DERIVE DID NOT STORE IS READ OFF THE PRINTED TEXT: a card whose text has YOU creating or investigating (Tempting Contract: "each opponent may create a Treasure token. For each opponent who does, you create a Treasure token") while derive stored only the opponent's
+ *  emit makes the token for both seats.
  *  CEILING: that read is a regex on the maker's printed text (`you create` / `you investigate`), not a parse; one card needs it today (Tempting Contract, whose second sentence derive does not store), and a card that says it of another token loses its `#opp` node. */
-export function tokenSeats(p: DeckCard, c: DeckCard, h: Hierarchy): { opp: boolean; ours: boolean } {
-  if (!p.tags || !c.tags) return { opp: false, ours: true };
+export function tokenSeats(p: DeckCard, c: DeckCard, h: Hierarchy): { opp: boolean; ours: boolean; matched: boolean } {
+  if (!p.tags || !c.tags) return { opp: false, ours: true, matched: false };
   const { allTypes: _printedAll, ...consumerSubject } = characteristicsSubject(c.tags, c.card.name);
   const made = p.tags.abilities.filter((pa) => !isRefusedTrigger(pa))
     .flatMap((pa) => pa.emits ?? [])
     .filter((e) => e.verb === "create-token" && subjectMatches({ ...consumerSubject, control: "any" }, (({ combat: _combat, tapped: _tapped, ...m }) => m)(e.subject), h));
   const opp = made.some((e) => e.subject.control === "opp");
   const ours = made.some((e) => e.subject.control !== "opp") || made.length === 0;
-  if (opp && !ours && /\byou (?:may )?(?:create|investigate)\b/i.test(p.card.oracleText ?? "")) return { opp: false, ours: true };
-  return { opp, ours };
+  // The opponent's emit is right ("each opponent may create a Treasure token") and the printed "you create" is the other seat, which derive did not store: both seats, so the maker is the creator of both nodes.
+  if (opp && !ours && /\byou (?:may )?(?:create|investigate)\b/i.test(p.card.oracleText ?? "")) return { opp: true, ours: true, matched: true };
+  return { opp, ours, matched: made.length > 0 };
 }
 
 /** THE EMBLEM MAKER EDGE (spec 2026-09-08). Keyed on the producer's `emblem` ability rather than an

@@ -6,7 +6,7 @@ import type { DeckCard } from "./types.js";
 import fixtures from "./fixtures/opp-token-perspective.json" with { type: "json" };
 
 /** #1666: a token an opponent receives from your card (Overencumbered's Clue, Food and Junk; Generous Gift's Elephant) is read from the opponent's seat. A payoff of any control or of an opponent's still hears it
- *  (Disciple of the Vault, Mayhem Devil, Kothophed); a payoff of tokens or creatures "you control" does not. Cards and token rows dumped from Mongo 2026-11-20 (DERIVE 556). */
+ *  (Disciple of the Vault, Mayhem Devil, Kothophed); a payoff of tokens or creatures "you control" does not. Cards and token rows dumped from Mongo 2026-11-20 (DERIVE 557: derived rows carry the #1666 review's seat fixes). */
 const F = fixtures as unknown as { cards: Record<string, { source: Record<string, unknown>; tags: CardTags }>; tokens: Record<string, CardTags> };
 const dc = (name: string): DeckCard => ({ card: F.cards[name]!.source as unknown as DeckCard["card"], tags: F.cards[name]!.tags });
 const vanilla = (name: string, typeLine: string, p: string): CardTags => synthesizeTokenTags({ _id: `test-${name}`, name, typeLine, ...(p ? { power: p, toughness: p } : {}), colors: name === "Samurai" || name === "Spirit" ? ["W"] : name === "Inkling" ? ["W", "B"] : name === "Plant" || name === "Elephant" || name === "Beast" ? ["G"] : [], keywords: name === "Samurai" ? ["Vigilance"] : [], printingIds: [] });
@@ -87,9 +87,12 @@ describe("seats of one token", () => {
     expect(r.tokenNodes!.every((t) => (t.madeBy ?? []).join() === "Eiganjo Uprising")).toBe(true);
     expect(r.cards.find((c) => c.name === "Eiganjo Uprising")!.topPartners.map((p) => p.name)).toContain("Blood Seeker");
   });
-  test("a token derive stores for an opponent only where the printed text has YOU creating it (Tempting Contract) is read as yours: no opponent node", () => {
-    expect(report(["Tempting Contract"]).tokenNodes!.map((t) => t.name)).toEqual(["Treasure"]);
-    expect(nodes(["Tempting Contract"]).map((n) => n.tags!.characteristics.heldByOpponent)).toEqual([undefined]);
+  test("a token derive stores for an opponent only where the printed text has YOU creating it (Tempting Contract) is the maker of BOTH seats' Treasure", () => {
+    expect(report(["Tempting Contract"]).tokenNodes!.map((t) => t.name).sort()).toEqual(["Treasure", "Treasure (opponent's)"]);
+    expect(nodes(["Tempting Contract"]).map((n) => n.tags!.characteristics.heldByOpponent).sort()).toEqual([true, undefined]);
+  });
+  test("Tempting Contract is the creator of its Treasure and pairs with Mayhem Devil through it (the printed 'you create' seat has edges, not a dead node)", () => {
+    expect(partners("Tempting Contract", ["Mayhem Devil"])).toContain("Mayhem Devil");
   });
   test("Jolene's Treasure goes to whoever attacked: the plain node, not an opponent's", () => {
     expect(report(["Jolene, the Plunder Queen"]).tokenNodes!.map((t) => t.name)).toEqual(["Treasure"]);
