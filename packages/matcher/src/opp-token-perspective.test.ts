@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
 import { analyzeDeckStructured, collectTokenNodes, loadHierarchy } from "./index.js";
+import { detectWincons } from "./wincon.js";
+import { createsForYou } from "./edges.js";
 import { synthesizeTokenTags } from "./token-tags.js";
 import type { DeckCard } from "./types.js";
 import fixtures from "./fixtures/opp-token-perspective.json" with { type: "json" };
@@ -91,8 +93,15 @@ describe("seats of one token", () => {
     expect(report(["Tempting Contract"]).tokenNodes!.map((t) => t.name).sort()).toEqual(["Treasure", "Treasure (opponent's)"]);
     expect(nodes(["Tempting Contract"]).map((n) => n.tags!.characteristics.heldByOpponent).sort()).toEqual([true, undefined]);
   });
-  test("Tempting Contract is the creator of its Treasure and pairs with Mayhem Devil through it (the printed 'you create' seat has edges, not a dead node)", () => {
-    expect(partners("Tempting Contract", ["Mayhem Devil"])).toContain("Mayhem Devil");
+  test("Tempting Contract is the creator of its own Treasure and pairs with Captain Lannery Storm, who hears only YOUR sacrificed Treasure (\"Whenever you sacrifice a Treasure\"); An Offer You Can't Refuse, whose Treasure is the opponent's, does not", () => {
+    expect(partners("Tempting Contract", ["Captain Lannery Storm"])).toContain("Captain Lannery Storm");
+    expect(partners("An Offer You Can't Refuse", ["Captain Lannery Storm"])).not.toContain("Captain Lannery Storm");
+  });
+  test("createsForYou accepts Tempting Contract on both its nodes, and An Offer You Can't Refuse on the opponent's only", () => {
+    const ns = nodes(["Tempting Contract", "An Offer You Can't Refuse"]);
+    const mine = ns.find((n) => n.card.name === "Treasure")!, theirs = ns.find((n) => n.card.name === "Treasure (opponent's)")!;
+    expect([createsForYou(dc("Tempting Contract"), mine, H), createsForYou(dc("Tempting Contract"), theirs, H)]).toEqual([true, true]);
+    expect([createsForYou(dc("An Offer You Can't Refuse"), mine, H), createsForYou(dc("An Offer You Can't Refuse"), theirs, H)]).toEqual([false, true]);
   });
   test("Jolene's Treasure goes to whoever attacked: the plain node, not an opponent's", () => {
     expect(report(["Jolene, the Plunder Queen"]).tokenNodes!.map((t) => t.name)).toEqual(["Treasure"]);
@@ -104,5 +113,16 @@ describe("seats of one token", () => {
     expect(p).not.toContain("Orcish Bowmasters");
     expect(p).not.toContain("Smothering Tithe");
     expect(p).toContain("Tireless Tracker");
+  });
+});
+
+// ROUND 4: a token paid per REMOVED permanent is the victim's board, whoever derive says gets it (it reads `any` for a wipe or a "for each ... this way"), so it is no go-wide plan (#574). A token you simply make still is.
+describe("go-wide", () => {
+  const goWide = (n: string): boolean => detectWincons([dc(n)]).get("go-wide")?.has(n) === true;
+  test.each(["March of Souls", "The Phasing of Zhalfir", "Rampage of the Clans", "The Curse of Fenric", "Curse of the Swine", "Soul of Emancipation", "Rowan, Scholar of Sparks // Will, Scholar of Frost", "Terastodon", "Descent of the Dragons", "Hour of Need"])("%s: a token handed to each removed permanent's controller is not a go-wide card", (n) => {
+    expect(goWide(n)).toBe(false);
+  });
+  test.each(["Combat Calligrapher", "Ellie, Brick Master", "Curse of Shallow Graves", "Parallel Evolution"])("%s: a token the attacker or the copier makes is", (n) => {
+    expect(goWide(n)).toBe(true);
   });
 });

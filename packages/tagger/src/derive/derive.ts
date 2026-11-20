@@ -4014,7 +4014,7 @@ export function deriveAbilities(
       // A TOKEN GIVEN TO ANOTHER PLAYER IS THEIRS (#1665 review; CR 111.2: the player who creates a token owns it and it enters under their control): "When this Aura enters, enchanted opponent creates a Clue token, a Food token, and a Junk
       // token" (Overencumbered, stored `any`) and "That permanent's controller creates a Junk token" (Commander Sofia Daguerre, stored `you`) made the opponent's Junk impulse feed YOUR from-exile payoffs (56 pairs). Their token emits read `opp`.
       // CEILING: these two phrasings only (the corpus's two such makers of a Junk token); "that permanent's controller" is read as an opponent as "its controller" is (`controlOf`), though Sofia's target may be your own permanent.
-      // And `control: opp` drops every maker -> token pair through `createsForYou`, so any-control and opponent-side payoffs (Disciple of the Vault, Mazirek, Ich-Tekik; ~46 pairs) lose a true pair too, as Beast Within's already do (#1666).
+      // A `control: opp` token emit makes the matcher build the token's node from the opponent's seat (`opponentHeld`, #1666): your "you control" payoffs no longer hear it, and any-control and opponent-side ones (Disciple of the Vault, Mazirek, Ich-Tekik) still do.
       if (action.verb === "create" && GIVES_TOKEN_TO_ANOTHER.test(text)) for (const e of emits) if (e.subject.token === true) e.subject.control = "opp";
       // A PLAY OF A CARD THAT IS NOT ONLY YOURS IS A CAST AND A LAND PLAY (#1596, CR 701.18b; `playsCardsNotOnlyYours`). Both are yours; the owner is written below, with every stolen cast's.
       let playsTaken = false;

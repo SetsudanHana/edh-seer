@@ -4898,7 +4898,9 @@ export function createsForYou(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
  *  (any, you, or nothing stated). `c` is the token as printed, read from our seat. `collectTokenNodes` builds one node per seat, so a maker that splits ("you and target opponent each create a Treasure", "Eiganjo Uprising") is the creator of both.
  *  A SEAT DERIVE DID NOT STORE IS READ OFF THE PRINTED TEXT: a card whose text has YOU creating or investigating (Tempting Contract: "each opponent may create a Treasure token. For each opponent who does, you create a Treasure token") while derive stored only the opponent's
  *  emit makes the token for both seats.
- *  CEILING: that read is a regex on the maker's printed text (`you create` / `you investigate`), not a parse; one card needs it today (Tempting Contract, whose second sentence derive does not store), and a card that says it of another token loses its `#opp` node. */
+ *  CEILING: that read is a regex on the maker's printed text (`you create` / `you investigate`), not a parse; one card needs it today (Tempting Contract, whose second sentence derive does not store), and a card that says it of another token loses its `#opp` node.
+ *  CEILING: a maker that takes its tokens BACK ("gain control of all Rat tokens", Tribute to Horobi // Echo of Death's Wail; "gain control of all Survivors", Varchild, Betrayer of Kjeldor) still reads as opponent-only: its tokens have no plain node and none
+ *  of the edges they would have in your hands. Not a regression, pairs it never had. */
 export function tokenSeats(p: DeckCard, c: DeckCard, h: Hierarchy): { opp: boolean; ours: boolean; matched: boolean } {
   if (!p.tags || !c.tags) return { opp: false, ours: true, matched: false };
   const { allTypes: _printedAll, ...consumerSubject } = characteristicsSubject(c.tags, c.card.name);
