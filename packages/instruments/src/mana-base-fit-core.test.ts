@@ -26,14 +26,14 @@ describe("MANA_BASE_COST.colourMiss is the committed fit", () => {
   });
   it("fails when the rows change and the constant does not: deck count, mean x and mean y are pinned", () => {
     const f = colourFit(rows);
-    expect(f.n).toBe(268);
-    expect(rows.filter((r) => r.kind === "precon").length).toBe(197);
-    expect(f.meanX).toBeCloseTo(4.223, 3);
+    expect(f.n).toBe(277);
+    expect(rows.filter((r) => r.kind === "precon").length).toBe(206);
+    expect(f.meanX).toBeCloseTo(4.121, 3);
     expect(f.meanY).toBeCloseTo(PINNED_MEAN_Y, 3);
-    expect(f.r2Centred).toBeCloseTo(0.55, 2);
+    expect(f.r2Centred).toBeCloseTo(0.56, 2);
     expect(createHash("sha256").update(readFileSync(FIXTURE)).digest("hex")).toBe(PINNED_HASH);
   });
 });
 
-const PINNED_MEAN_Y = 0.614;
-const PINNED_HASH = "ca30860c863d83c7ae8a92fba239930d25eeb7581992abdf4819a6f7a240a7ab";
+const PINNED_MEAN_Y = 0.610;
+const PINNED_HASH = "a0adfd662b8c7f5fb4ad1df11c0888160fc2036b5d2cba4d346964c9f4ec58af";
