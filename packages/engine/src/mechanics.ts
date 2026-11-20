@@ -204,6 +204,8 @@ const SKIP: MechanicEntry[] = [
     "shadow", "warp", "station", "undaunted", "gift", "impending", "harmonize", "exhaust", "max speed",
     "tiered", "job select", "mayhem", "web-slinging", "prowl", "solved", "sneak", "increment", "paradigm",
     "teamwork", "firebending", "power-up",
+    // #1669 (CR 702.195 Storied: a designation, no cross-card axis); Beam me up (cast from graveyard + own-creature bounce, owner 2026-10-26 #1349; no CR rule yet, read off Open Communications / Energize); halflingcycling and affinitycycling are type-cycling variants like slivercycling (Hobbit Hole, Sojourner's Enforcermite)
+    "storied", "beam me up", "halflingcycling", "affinitycycling",
     // spellslinger single-spell value: no cross-card producer/payoff axis
     "cascade", "replicate", "conspire", "buyback", "overload", "spectacle",
     // 5-color-mana gated; no clean cross-card producer/payoff axis
@@ -219,6 +221,8 @@ const SKIP: MechanicEntry[] = [
     "behold", "double", "triple",
     // no cross-card synergy axis: explore is conditional card-selection; conjure is hand advantage; goad is political/combat
     "explore", "conjure", "goad",
+    // #1669: no cross-card axis. empower Jace = Jace token + loyalty counters (CR 701.71); recruit = draw, discard, token only if a nonland was discarded (CR 701.70, loot-like conditional, as explore); assimilate (put + counter + Borg artifact creature, owner 2026-10-26 #1349; read by derive.ts assimilatedAreYours, no CR rule yet); face a dilemma is a trigger event fed by modal spells (owner #1349; no CR rule yet), not a producer keyword
+    "empower jace", "assimilate", "face a dilemma", "recruit",
   ]),
   ...skips("ability-word", [
     "channel", "chroma", "cohort", "converge", "fateful hour", "grandeur", "hellbent", "heroic",
@@ -233,6 +237,8 @@ const SKIP: MechanicEntry[] = [
     "revolt",
     // no clean cross-card axis: domain (land types), coven (different powers), corrupted (poison), void (permanent-left/gy-cast), survival (tapped creature), addendum (main-phase cast)
     "domain", "coven", "corrupted", "void", "survival", "addendum",
+    // #1669 Star Trek set ability words, no cross-card axis: strange new worlds (differently named lands), seek out (second card drawn each turn), battlefront (whenever you attack, per opponent attacked), federation (creature types among non-Borg creatures); actualize has no card in the snapshot corpus (0 oracle/keyword hits) and no CR entry
+    "actualize", "strange new worlds", "seek out", "battlefront", "federation",
   ]),
 ];
 
