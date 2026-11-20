@@ -151,3 +151,13 @@ test("a blue-short deck's colour cost drops with Chromatic Lantern, beyond Lante
   const early = (x: DeckCard) => manaBaseScore([...basic(30, "Mountain", "R"), ...basic(4, "Island", "U"), x, spell("Early", "{U}{U}", 3)], { target: 35, actual: 35 }).colourMiss;
   expect(early(lantern)).toBe(early(twin));
 });
+
+/** #1659: colourMiss dates an {X} spell at X=1 (`colourDeadline`, owner 2026-11-17, #727), the same turn the colour audit does. */
+test("an {X} spell's colour demand is due at its X=1 cast, not at its mana value", () => {
+  const supply = sources([["U", 8]]);
+  const xSpell = colourMiss([spell("Blue Sun", "{X}{U}{U}{U}", 3)], supply);
+  const fourDrop = colourMiss([spell("Four", "{1}{U}{U}{U}", 4)], supply);
+  const threeDrop = colourMiss([spell("Three", "{U}{U}{U}", 3)], supply);
+  expect(xSpell).toBeCloseTo(fourDrop, 10);
+  expect(xSpell).toBeLessThan(threeDrop);
+});
