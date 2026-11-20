@@ -5,7 +5,7 @@
  *  lands near the recorded part sizes (colours 0.62 lost turns on average, tapped lands 0.19, the land count 0.08; colour R^2 0.70, tapped 0.48). It is run once per refit;
  *  a coefficient is only as good as that check.
  *
- *  WHAT IT MEASURES. 268 decks (the 197 Commander precons of `packages/data/precons.json` and the 71 calibration decks), `--trials` games each (default 2,000), ten turns,
+ *  WHAT IT MEASURES. 277 decks (the 206 Commander precons of `packages/data/precons.json` and the 71 calibration decks), `--trials` games each (default 2,000), ten turns,
  *  through `goldfish.ts`'s own board (mulligans by `keepsHand`, land first, accelerants next, draw, the mana-base's colours and tapped lands), with this file's `observe` hook
  *  casting the dearest spells the mana and its colours can pay and counting the ways a turn is LOST:
  *    SCREW   no land drop, and a spell costing no more than the turn number is stuck for mana (its mana value is above what the board has left);
@@ -30,7 +30,7 @@
  *    npx tsx research/matcher/mana-base-fit.ts --check                                                          re-derive every colourMiss (x) from Mongo, diff against the fixture
  *
  *  THE RECORD OF `MANA_BASE_COST.colourMiss` is the fit module `packages/instruments/src/mana-base-fit-core.ts` over the fixture `packages/instruments/data/mana-base-fit-rows.json`
- *  (`--write-fixture` makes it from the shards of `rows`); a test pins the constant to that slope. The fixture's x values come from Mongo `cardTagsDerived` (DERIVE_VERSION 307), so
+ *  (`--write-fixture` makes it from the shards of `rows`); a test pins the constant to that slope. The fixture's x values come from Mongo `cardTagsDerived` (DERIVE_VERSION 554), so
  *  RUN `--check` AFTER ANY CHANGE TO `colourSources`, `colourMiss`, `fixerSupply` OR DERIVE: it exits non-zero when the code no longer gives the x the slope was fitted on.
  *  `--or` reads a turn's lost-ness as once however many of its three ways hold, instead of the sum (the description does not say which; the sum is the one that reproduces the record).
  */
@@ -126,6 +126,7 @@ function toTarget(library: DeckCard[], target: number, deckAll: readonly DeckCar
       deck.push(add);
       byName.get(add.card.name)!.push(add);
     } else {
+      if (byName.size === 0) break; // every basic already traded out (a colourless singleton deck, #1659): no more swaps to make
       const gone = most();
       const at = deck.lastIndexOf(gone);
       if (at < 0) break;

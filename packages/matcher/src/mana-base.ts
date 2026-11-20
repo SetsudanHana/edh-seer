@@ -2,7 +2,7 @@ import { pAtLeast, seen } from "@edh-seer/engine";
 import { castableManaCost } from "./split-cost.js";
 import { classifyLand } from "./land-conditions.js";
 import { fetchedLandEntersTapped } from "./fetch-land.js";
-import { COLORS, deckBasicTypes, landOnlineBy, type Color } from "./mana-audit.js";
+import { COLORS, colourDeadline, deckBasicTypes, landOnlineBy, type Color } from "./mana-audit.js";
 import { fixerCredit, isBasicLand, libraryFixers } from "./static-fixers.js";
 import { colourSourceCards } from "./colour-sources.js";
 import { deckIdentity, isFetchSource, makesAnyMana } from "./mana-lines.js";
@@ -131,18 +131,22 @@ export function landTarget(inputs: LandFormulaInputs): number {
  *    every deck's own curve against the formula's target: 1-3 lands off costs about 0.03, 3-6 about
  *    0.1, 6-10 about 0.3. Flat near the target and steep past it, which is why a two-land miss is
  *    not a finding (`LAND_BAND`) and a seven-land one is.
- *  - COLOUR: 0.151 per `colourMiss` card, against what the same deck saves with every land making
+ *  - COLOUR: 0.153 per `colourMiss` card, against what the same deck saves with every land making
  *    every colour. It is the RAW least-squares slope through the origin of `research/matcher/mana-base-fit.ts` (owner ruling
- *    2026-10-13, #1169 task 3): 268 decks (197 precons + 71 calibration), 2,000 games each, ten turns, seed 20261013, 4 shards;
- *    R^2 0.55 centred / 0.78 through the origin; fitted on the precons alone the slope is 0.163 and explains 13% of the
- *    calibration decks' own. The record is the rows fixture `packages/instruments/data/mana-base-fit-rows.json` and a test
- *    (`mana-base-fit-core.test.ts`) pinning this constant to its slope. The fit is reproducible ONLY at that fixed seed: other
- *    seeds move the slope by +-0.001-0.002 (seeds 11 and 22 gave 0.149 and 0.150). It depends on Mongo `cardTagsDerived` at
- *    DERIVE_VERSION 307, `packages/data/precons.json`, the 71 calibration decks and the `colourSources` / `colourMiss` code, so
+ *    2026-10-13, #1169 task 3; refit 2026-11-20 for #1659): 277 decks (206 precons + 71 calibration), 2,000 games each, ten turns,
+ *    seed 20261013, 4 shards; R^2 0.56 centred / 0.79 through the origin; fitted on the precons alone the slope is 0.165 and
+ *    explains 18% of the calibration decks' own variance (calibration alone fits 0.107, R^2 0.32). The record is the rows fixture
+ *    `packages/instruments/data/mana-base-fit-rows.json` and a test (`mana-base-fit-core.test.ts`) pinning this constant to its
+ *    slope. The fit is reproducible ONLY at that fixed seed: other seeds move the slope by +-0.001-0.002 (seeds 11 and 22 gave
+ *    0.149 and 0.150 on the previous population). It depends on Mongo `cardTagsDerived` at DERIVE_VERSION 554,
+ *    `packages/data/precons.json`, the 71 calibration decks and the `colourSources` / `colourMiss` code, so
  *    RUN `npx tsx research/matcher/mana-base-fit.ts --check` AFTER ANY CHANGE TO `colourSources`, `colourMiss`, `fixerSupply` OR
- *    DERIVE: it re-derives the 268 `colourMiss` values and exits non-zero when they no longer match the fixture.
+ *    DERIVE: it re-derives the 277 `colourMiss` values and exits non-zero when they no longer match the fixture.
  *    History: 0.133 on the old, narrower colour count (the original script was never committed); the unified count moved the
- *    mean `colourMiss` over the 268 from 4.60 to 4.22 (mean x now 4.223), and the refit is this raw slope, not 0.133 scaled.
+ *    mean `colourMiss` from 4.60 to 4.22 and the refit was 0.151 (268 decks). #1659 moved an {X} spell's deadline to its X=1 cast
+ *    (`colourDeadline`, as the audit; #727) and the fixture had gone stale against DERIVE 554 and nine new precons: the refit on
+ *    277 decks is 0.153 (mean x 4.121). On the SAME 277 rows (same simulated y), the old deadline's x gives 0.1510 and the new
+ *    deadline's 0.1528: the {X} change is +0.0018, inside the seed noise, and the refit lands on 0.153 (the old fixture's 268 decks gave 0.1507).
  *  - TAPPED: 0.025 per land that always enters tapped, against the same deck with every land
  *    untapped (R^2 0.48: a tapped land costs most when it arrives early, which a count cannot see).
  *    The tapped count did not move in #1169 (268 of 268 decks identical), so it keeps the original fit;
@@ -157,7 +161,7 @@ export function landTarget(inputs: LandFormulaInputs): number {
  *  CEILING: only `colourMiss` comes from a committed script. `short` / `over` (0.005 / 0.004) and `tapped` (0.025) are the ORIGINAL
  *  fit's, unrecoverable. The script's tapped slope is 0.021 (shipped 0.025), and its count arm does not reproduce the record
  *  (slope -0.185, R^2 0.003; the 6-10 lands-off band reads 0.062 measured against 0.216 modelled), so neither is refit from it. */
-export const MANA_BASE_COST = { short: 0.005, over: 0.004, colourMiss: 0.151, tapped: 0.025 } as const;
+export const MANA_BASE_COST = { short: 0.005, over: 0.004, colourMiss: 0.153, tapped: 0.025 } as const;
 
 const PIP_COLOURS = new Set<string>(COLORS);
 
@@ -193,7 +197,7 @@ export function colourSources(deck: readonly DeckCard[], commanderNames: readonl
 
 /** THE STATIC-FIXER CREDIT `colourMiss` ADDS to a colour's supply at a card's deadline (#1115): the colour audit's own
  *  `fixerCredit`, so the two give one number. This score has no turn axis of its own, so the deadline is the one
- *  `colourMiss` already prices each card at (its mana value), and "newly reached" is read off the deck's flat
+ *  `colourMiss` prices each card at (`colourDeadline`, the audit's own: mana value, an {X} spell at its X=1 cast; #1659), and "newly reached" is read off the deck's flat
  *  counts rather than a per-turn board: every land that was not already a source of the colour, and for an all-mana
  *  fixer every other source of any mana. A fixer is out by that turn on the audit's clock. */
 export function fixerSupply(deck: readonly DeckCard[], commanderNames: readonly string[] = []): (colour: Color, turn: number) => number {
@@ -216,7 +220,7 @@ export function fixerSupply(deck: readonly DeckCard[], commanderNames: readonly 
 
 /** THE CARDS WHOSE COLOURS ARE MISSING ON THEIR OWN TURN, expected: for every nonland in the deck
  *  and every commander, the chance that the sources of some colour it asks for are not there by the
- *  turn its mana value names, summed over the deck.
+ *  turn named by `colourDeadline` (its mana value; an {X} spell at its X=1 cast, #1659), summed over the deck.
  *
  *  The same draw model the colour audit uses (`seen(turn)` cards from a 99-card library), over
  *  `colourSources`. Colours are multiplied as if independent, which they are not
@@ -233,9 +237,7 @@ export function colourMiss(deck: readonly DeckCard[], supplied: ReadonlyMap<Colo
       const best = options.reduce((a, b) => ((supplied.get(b) ?? 0) > (supplied.get(a) ?? 0) ? b : a));
       need.set(best, (need.get(best) ?? 0) + 1);
     }
-    // CEILING: the deadline here is the card's mana value, the X=0 cast. `manaAudit` moved an {X} spell's deadline to its X=1 cast (#727, owner
-    // 2026-11-17), so the two diverge on X cards until MANA_BASE_COST (0.151) is refit on the new deadline; it was fitted on this one.
-    const turn = Math.max(1, Math.round(dc.card.manaValue));
+    const turn = colourDeadline(dc.card);
     let ok = 1;
     for (const [colour, pipsOf] of need) ok *= pAtLeast(pipsOf, Math.min(99, (supplied.get(colour) ?? 0) + fixed(colour, turn)), seen(turn));
     total += 1 - ok;
@@ -268,7 +270,7 @@ export interface ManaBaseScore {
   /** Lost turns per ten turns each part of the mana base costs, against a perfect one of the same deck. */
   costs: { count: number; colour: number; tapped: number };
   /** Their sum: the mana base's one quality number. 0 is a perfect mana base; the 268 decks run
-   *  0.1-2.6 (at colourMiss 0.151), a median of 0.78 and 1.39 at the 90th percentile. */
+   *  0.1-2.6 (at colourMiss 0.151, not re-measured at 0.153), a median of 0.78 and 1.39 at the 90th percentile. */
   total: number;
   /** The expected number of cards whose colours are missing on their own turn (`colourMiss`). */
   colourMiss: number;
