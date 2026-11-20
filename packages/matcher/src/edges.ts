@@ -3579,6 +3579,8 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
       || (a.kind === "triggered" && (a.repeats === "per-cycle" || a.repeats === "per-turn") && a.effect.kind === "pump"
         && a.effect.subject?.control === "you" && (a.effect.subject.scope === "each" || a.effect.subject.scope === "all"));
     if (!appliesTo || !a.effect.subject) return undefined;
+    // A STATIC MILL (a replacement: "if an opponent would mill ... twice that many", #1663) keeps WHOSE mill it changes, a player and no class: it applies to no card of the deck.
+    if (a.effect.kind === "mill") return undefined;
     // DECK ROLES ARE NOT PAIRWISE SYNERGIES (user rulings, 2026-08-06) — WITH `cost-reduction`
     // REMOVED FROM THAT SET BY THE OWNER, 2026-08-18: "your cost reducing card is as good as many
     // cards it can reduce."

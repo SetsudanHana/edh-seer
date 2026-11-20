@@ -2,16 +2,18 @@ import type { Ability } from "@edh-seer/tagger";
 
 /** WHOSE LIBRARY A MILL ABILITY EMPTIES (#721, owner 2026-11-17): `you` is a self-mill, `opp` an
  *  opponent mill, `any` can hit either side ("target player", "each player"). Undefined when derive
- *  kept no player at all (a replacement such as Bruvac's, which has no mill emit and no effect subject).
+ *  kept no player at all.
  *
- *  THE EFFECT SUBJECT AND THE EMIT ARE JOINED, neither is authoritative. They part on 7 abilities
- *  (Mesmeric Orb, Riddlekeeper, Eye Spy, Draugr Thought-Thief, Lurking Informant, Dakra Mystic, Fraying
- *  Sanity): "that player" / "target player" is stored as an `any` effect subject but the emit misreads it
- *  as `you`. The effect subject is right there, so a join (`you` + `any` = `any`) keeps both sides.
- *  CEILING: an ability with neither a mill subject nor a mill emit (Bruvac the Grandiloquent, The Water
- *  Crystal: replacements whose text names opponents) has an undefined scope and earns no win-condition
- *  credit. Riddlekeeper reads too wide: "that creature's controller" after a creature attacks you is
- *  always an opponent, but the join can only say `any`, so it also joins graveyard-matters. Follow-up #1663. */
+ *  THE EFFECT SUBJECT AND THE EMIT ARE JOINED, neither is authoritative (`you` + `any` = `any`). Since
+ *  derive 556 (#1663) they agree on every corpus mill: the seven abilities whose emit read `you` where the
+ *  effect subject said `any` (Mesmeric Orb, Riddlekeeper, Eye Spy, Draugr Thought-Thief, Lurking Informant,
+ *  Dakra Mystic, Fraying Sanity) are read from the printed player now (derive/mill-owner.ts), and a mill REPLACEMENT
+ *  ("if an opponent would mill", Bruvac the Grandiloquent, The Water Crystal) carries the miller on its effect
+ *  subject, so it is `opp` with no emit. The join stays as the cheap guard for a stored answer or a reading that
+ *  disagrees again; it is no longer what makes those cards right.
+ *  CEILING: the emit and the effect subject are still two readings of one player; a card whose library the words
+ *  do not resolve ("that player" with no opponent named and no combat damage; a clause that mills your library
+ *  and an opponent's with no reveal per action) keeps `any` or the generic reading. */
 export type MillScope = "you" | "opp" | "any";
 
 export function millScopeOf(a: Pick<Ability, "effect" | "emits">): MillScope | undefined {
