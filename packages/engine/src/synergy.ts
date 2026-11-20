@@ -36,6 +36,9 @@ export interface Reason {
    *  self-mill (a graveyard plan), `opp` an opponent mill (a win route), `any` can hit either ("target
    *  player", "each player") and is both. Absent when derive kept no player. Read by the category table. */
   millScope?: "you" | "opp" | "any";
+  /** THE MILL IS THE CONSUMER'S CHOICE (#1662; owner 2026-11-17, #721: an optional self-mill counts like surveil), set only when `effectKind` is `mill` and EVERY mill ability the reason points at is a "you may"
+   *  (`Ability.optional`). A forced mill among them leaves it unset. An optional mill fills no graveyard for certain, so it does not define graveyard-matters; one that reaches an opponent is still a win condition. */
+  millOptional?: true;
   /** THE CONSUMER FIRES AT MOST ONCE A TURN ("Do this only once each turn", Terrasymbiosis; issue
    *  #518). A display fact, read only when `repeatability` is "triggered"; the repeatability stays
    *  what it was, so scoring does not move. */

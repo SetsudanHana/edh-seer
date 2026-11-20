@@ -46,7 +46,7 @@ export interface CategoryMatchEntry {
    *  unconditional producers of the same event. */
   requireStatPredicate?: boolean;
   /** A `mill` reason defines the category when its consumer mills YOUR library, or either side's
-   *  (`millScope` `you` or `any`). An opponent-only mill does not (#721). */
+   *  (`millScope` `you` or `any`) unless the mill is optional (#1662). An opponent-only mill does not (#721). */
   selfMill?: boolean;
 }
 
@@ -148,10 +148,9 @@ export const CATEGORY_MATCH: Record<MechanismCategory, CategoryMatchEntry> = {
   //     win-condition mill as well (see `buckets.ts`). The owner: "anything that targets you or forces
   //     you to mill is a self-mill strategy, but milling your opponents is a valid win condition".
   //   - `opp`: does not. An opponent's mill is a win route, not a graveyard plan.
-  //   - CEILING: an OPTIONAL self-mill ("you may mill N", "you may put it into your graveyard") still
-  //     joins. Derive keeps no optional flag, so it cannot be told from a forced one; at least 47
-  //     abilities (Territory Culler alone supplies 36 of the 183 new pairs in fairdrazi-5-color-less).
-  //     The owner ruled it counts like surveil, i.e. out (2026-11-17). Follow-up #1662.
+  //   - An OPTIONAL mill ("you may mill N", `millOptional`, #1662) does not, `you` or `any`: the owner
+  //     ruled it counts like surveil (2026-11-17), since the graveyard fill is the player's choice.
+  //     It stays a win-condition mill when it reaches an opponent (`buckets.ts`).
   //   - SURVEIL stays out: its graveyard fill is optional (CR 701.25a: you put "any number of
   //     them" into your graveyard, which may be none), so a surveil card promises no graveyard.
   "graveyard-matters": { effectKinds: ["graveyard-recursion"], selfMill: true },
@@ -187,7 +186,7 @@ export function categoryMatches(reason: Reason, category: MechanismCategory): bo
 export function categoryDefines(reason: Reason, category: MechanismCategory): boolean {
   const entry = CATEGORY_MATCH[category];
   const hit =
-    (entry.selfMill === true && reason.effectKind === "mill" && (reason.millScope === "you" || reason.millScope === "any")) ||
+    (entry.selfMill === true && reason.effectKind === "mill" && reason.millOptional !== true && (reason.millScope === "you" || reason.millScope === "any")) ||
     (reason.tag !== undefined && (entry.tags?.includes(reason.tag) ?? false)) ||
     (reason.effectKind !== undefined && (entry.effectKinds?.includes(reason.effectKind) ?? false));
   if (!hit) return false;

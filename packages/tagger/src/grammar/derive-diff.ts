@@ -21,7 +21,9 @@ function byClause(abilities: readonly Ability[]): Map<number, Ability[]> {
     // search action and leaves the ability without it. Counted, 49 cards read from their printed text would have un-switched.
     // `grantsSelf` (#1266) is stamped only beside `grants`, from the clause text both readings share: it differs exactly when `grants` does, which the key already says. Counted, the labelled `grants` group
     // (the grammar names the keyword the stored answer left out) became `grants,grantsSelf`, and 17 cards un-switched and lost their keywords (Deep Spawn, Naya Hushblade, Arctic Aven).
-    const { claimsNothing: _claims, toZone: _to, grantsSelf: _self, ...a } = a0;
+    // `optional` (#1662) is read off the mill action's own "you may", and the stored answer and the grammar can disagree on it. Counted, it entered the group key of 6 cards (Territory Culler, Archghoul of Thraben, Bison Whistle, Sarinth Steelseeker,
+    // The Biblioplex, Traveling Botanist) and un-switched them from the grammar's reading to the model's (derive-impact, first run of #1662). The comparison reads the abilities without it.
+    const { claimsNothing: _claims, toZone: _to, grantsSelf: _self, optional: _opt, ...a } = a0;
     const k = a.clause ?? -1;
     (out.get(k) ?? out.set(k, []).get(k)!).push(a);
   }

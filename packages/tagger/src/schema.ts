@@ -1645,6 +1645,12 @@ export interface Ability {
    *  return it": Vindictive Triumph). On the other branch the exile is permanent, so a `flicker` carrying this is not an immediate blink and `notFlickered` does not refuse
    *  the card. Not set by "if you do" / "if you don't" or any "... this way", which confirm a cost and pick no branch. */
   returnIf?: true;
+  /** THE MILL IS THE PLAYER'S CHOICE (#1662; owner ruling 2026-11-17, #721: "an optional self-mill counts like surveil"): the `mill` ability's own action is a "you may" ("You may mill two cards";
+   *  "If you don't put the card into your hand, you may put it into your graveyard", Territory Culler, a library-to-graveyard put the effect table reads as a mill; "you may have target player mill ..."). Milling is putting the top cards of
+   *  a library into its owner's graveyard (CR 701.17a), so the graveyard fill is not certain, as surveil's is not (CR 701.25a). Read off the action's `optional` flag, whichever path wrote it. `true` or absent, never `false`.
+   *  An optional mill of an OPPONENT's library is still the controller's choice either way: this field marks the fact and the reader decides what it is worth.
+   *  CEILING: only `mill` is marked; an optional action of any other verb carries no marker (its clause action keeps `optional`, no ability reads it). A "may" that governs only an earlier action of the clause is not told apart from one on the mill itself. */
+  optional?: true;
   /** THE ACTION HAPPENS ON ONE SIDE OF A COIN FLIP ONLY (CR 705; #1295 item 5): its sentence opens "If you win the flip, ..." / "If you lose the flip, ..." (`win` / `lose`) or "If it comes up
    *  heads / tails, ..." (`heads` / `tails`). Orcish Captain ("If you win the flip, target Orc creature gets +2/+0 ... If you lose the flip, it gets -0/-2") shrinks your OWN Orc half the time, which
    *  `removal.targeted` read as a debuff of a target; its `notOnFlip` refuses an ability carrying this. Unset on the flip itself, on a flip with no branch, and on "Otherwise, ..." (Plasma Caster). */
