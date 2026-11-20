@@ -259,3 +259,12 @@ test("a self-mill reason counts for graveyard-matters, an opponent-mill reason d
   expect(categoryMatches(reason({ effectKind: "surveil", millScope: "you" }), "graveyard-matters")).toBe(false);
   expect(categoryMatches(reason({ effectKind: "graveyard-recursion" }), "graveyard-matters")).toBe(true);
 });
+
+// #1662 (owner 2026-11-17: "an optional self-mill counts like surveil"): an optional mill fills the yard only if the player chooses, so it does not define graveyard-matters.
+test("an optional self-mill reason does not define graveyard-matters, a forced one does (#1662)", () => {
+  for (const millScope of ["you", "any"] as const) {
+    expect(categoryDefines(reason({ effectKind: "mill", millScope, millOptional: true }), "graveyard-matters")).toBe(false);
+    expect(categoryMatches(reason({ effectKind: "mill", millScope, millOptional: true }), "graveyard-matters")).toBe(false);
+    expect(categoryDefines(reason({ effectKind: "mill", millScope }), "graveyard-matters")).toBe(true);
+  }
+});

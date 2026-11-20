@@ -124,3 +124,12 @@ test.each(["scry", "search", "top-set"])("%s stays in consistency (#721)", (kind
   expect(b.consistency).toBeGreaterThan(0);
   expect(b["win-condition"]).toBe(0);
 });
+
+// #1662: an optional mill is still the controller's choice whichever library it empties, so one that reaches an opponent stays a win condition; an optional self-mill stays in no bucket.
+test("an optional either-side mill is still a win condition, an optional self-mill in no bucket (#1662)", () => {
+  const opt = (control: "you" | "any") => millAbility(control).map((a) => ({ ...a, optional: true as const }));
+  const any = computeCardBuckets(tags(opt("any")), SEED_IMPACT_WEIGHTS);
+  expect(any["win-condition"]).toBeGreaterThan(0);
+  const you = computeCardBuckets(tags(opt("you")), SEED_IMPACT_WEIGHTS);
+  expect(you).toEqual({ consistency: 0, efficiency: 0, "win-condition": 0 });
+});

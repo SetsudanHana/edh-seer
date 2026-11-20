@@ -1585,10 +1585,10 @@ export function dedupeReasons(reasons: Reason[]): Reason[] {
   for (const r of reasons) {
     // `magnitude` is display data on a claim, never a claim of its own (edge magnitude, 2026-09-29):
     // two readings of one claim collapse as before and keep the larger magnitude.
-    const claim = JSON.stringify({ ...r, repeatability: undefined, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined, magnitude: undefined, millScope: undefined });
+    const claim = JSON.stringify({ ...r, repeatability: undefined, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined, magnitude: undefined, millScope: undefined, millOptional: undefined });
     // `millScope` is routing too (#721): it is stamped from the ability a reason points at, so two reasons
     // that differ only in it are one claim. They collapse and the kept row's scope is the join of both.
-    const k = JSON.stringify({ ...r, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined, magnitude: undefined, millScope: undefined });
+    const k = JSON.stringify({ ...r, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined, magnitude: undefined, millScope: undefined, millOptional: undefined });
     const at = byClaim.get(claim);
     // Only a ONCE against a repeatable tag is this split; two repeatable tags (triggered and
     // activated) were two rows before and stay two. The merged row's key is recorded, so a later
@@ -1619,6 +1619,8 @@ export function dedupeReasons(reasons: Reason[]): Reason[] {
 function joinScopeInto(out: Reason[], at: number, r: Reason): void {
   const scope = joinMillScopes([out[at]!.millScope, r.millScope]);
   if (scope !== undefined && scope !== out[at]!.millScope) out[at] = { ...out[at]!, millScope: scope };
+  // `millOptional` is routing too (#1662): the merged reason is optional only if both readings are.
+  if (out[at]!.millOptional && !r.millOptional) { const { millOptional: _o, ...rest } = out[at]!; out[at] = rest; }
 }
 
 /** How many DISTINCT CLAIMS a reason set makes — the edge score, and not `reasons.length`.
@@ -2460,7 +2462,10 @@ export function withMillScope(r: Reason, consumerAbilities: CardTags["abilities"
   if (r.effectKind !== "mill") return r;
   const named = r.consumerAbility !== undefined ? consumerAbilities[r.consumerAbility] : undefined;
   const scope = joinMillScopes((named?.effect.kind === "mill" ? [named] : consumerAbilities).map(millScopeOf));
-  return scope === undefined ? r : { ...r, millScope: scope };
+  if (scope === undefined) return r;
+  const mills = (named?.effect.kind === "mill" ? [named] : consumerAbilities).filter((a) => a.effect.kind === "mill");
+  const optional = mills.length > 0 && mills.every((a) => a.optional === true);
+  return optional ? { ...r, millScope: scope, millOptional: true } : { ...r, millScope: scope };
 }
 
 /** A card whose tags are known. `directedReasons` checks both sides before any channel runs. */

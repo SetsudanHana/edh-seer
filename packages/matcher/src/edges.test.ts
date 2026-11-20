@@ -7879,3 +7879,25 @@ test("a token that enters tapped and attacking is still the token its maker crea
   (token.tags.characteristics as { token: boolean }).token = true;
   expect(createsForYou(maker, token, { goblin: ["creature"] })).toBe(true);
 });
+
+// #1662: the optional flag rides the reason like millScope, only when EVERY mill ability it points at is optional.
+test("withMillScope stamps millOptional only when every mill ability is optional (#1662)", () => {
+  const mill = (optional: boolean) => ({
+    kind: "static" as const, effect: { kind: "mill", subject: { control: "you", token: null } },
+    emits: [{ verb: "mill", subject: { control: "you", token: null } }], ...(optional ? { optional: true } : {}),
+  });
+  const r = { tag: "mill:any", text: "", effectKind: "mill" } as Reason;
+  expect(withMillScope(r, base("Opt", [mill(true)] as never).tags!.abilities).millOptional).toBe(true);
+  expect(withMillScope(r, base("Forced", [mill(false)] as never).tags!.abilities).millOptional).toBeUndefined();
+  expect(withMillScope(r, base("Both", [mill(true), mill(false)] as never).tags!.abilities).millOptional).toBeUndefined();
+});
+
+test("merging an optional and a forced mill reason keeps it forced (#1662)", () => {
+  const r = (millOptional?: true) => ({ tag: "mill:any", text: "t", effectKind: "mill", millScope: "you", ...(millOptional ? { millOptional } : {}) }) as Reason;
+  for (const order of [[r(true), r()], [r(), r(true)]]) {
+    const out = dedupeReasons(order);
+    expect(out).toHaveLength(1);
+    expect(out[0]!.millOptional).toBeUndefined();
+  }
+  expect(dedupeReasons([r(true), r(true)])[0]!.millOptional).toBe(true);
+});
