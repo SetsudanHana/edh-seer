@@ -840,7 +840,8 @@ function keywordList(c: Cursor): string[] | undefined {
     const k = KEYWORD_WORDS.find((ws) => ws.every((w, j) => c.peek(j) === w));
     if (!k) return undefined;
     c.i += k.length;
-    if (k.join(" ") === "protection" && c.eat("from")) { if (c.done) return undefined; c.i++; }
+    // "protection from Demons and from Dragons" (Baneslayer Angel's token): each "and from <quality>" is another parameter of the same keyword.
+    if (k.join(" ") === "protection" && c.eat("from")) { if (c.done) return undefined; c.i++; while (c.peek() === "and" && c.peek(1) === "from" && c.i + 2 < c.t.length) c.i += 3; }
     else if (/^\d+$/.test(c.peek() ?? "")) c.i++;
     // A keyword's cost: "ward {2}", "equip {0}", "cumulative upkeep {G}".
     else while (/^\{[^}]+\}$/.test(c.peek() ?? "")) c.i++;
@@ -1466,7 +1467,8 @@ function post(c: Cursor, r: Reading): boolean | null {
     // ...and one a zone phrase ends: "a card named Nissa, Genesis Mage FROM your graveyard".
     else if (c.peek() === ",") {
       const k = c.t.findIndex((w, j) => j > c.i && NAME_ENDS.has(w));
-      if (k > c.i + 1 && (c.t[k] === "from" || c.t[k] === "in") && c.t.slice(c.i + 1, k).every((w) => !NP_START.has(w) && !["or", "and"].includes(w))) c.i = k;
+      // ...and, for a TOKEN's name, the "with <abilities>" that follows it ("a ... token named Akroma, Angel of Wrath with flying", #1671).
+      if (k > c.i + 1 && (c.t[k] === "from" || c.t[k] === "in" || (r.tokenHead && c.t[k] === "with")) && c.t.slice(c.i + 1, k).every((w) => !NP_START.has(w) && !["or", "and"].includes(w))) c.i = k;
     }
     if (!r.tokenHead) r.named = c.t.slice(start, c.i).join(" ").replace(/ ,/g, ",");
     return true;
@@ -2432,8 +2434,8 @@ export function parse(text: string): SubjectFilter | null {
   // rules text the token has, not a class it belongs to. Read past, after "with" or "and".
   // CEILING: the ability is not kept; a demand on a granted ability would need it.
   // ", \"Equipped creature gets +5/+5 ...,\" and equip {0}": a quoted ability inside a keyword list too.
-  // "and that ability" / "and this ability" names one the sentence quoted.
-  if (/\btokens?\b/i.test(text)) text = text.replace(/ with "[^"]*" and /g, " with ").replace(/,? and "[^"]*"/g, "").replace(/ (?:and|with) "[^"]*"/g, "").replace(/, "[^"]*"/g, "").replace(/,? and (?:that|this) ability$/, "").replace(/ with (?:that|this) ability$/, "");
+  // "and that ability" / "and this ability" names one the sentence quoted; "haste, that ability and that ability" (Ginger, Queen of Sweets' Gingerbrute, #1671) two of them.
+  if (/\btokens?\b/i.test(text)) text = text.replace(/ with "[^"]*" and /g, " with ").replace(/,? and "[^"]*"/g, "").replace(/ (?:and|with) "[^"]*"/g, "").replace(/, "[^"]*"/g, "").replace(/(?:(?:,| and|, and) (?:that|this) ability)+$/, "").replace(/ with (?:that|this) ability$/, "");
   // A GRANTED ABILITY after the recipient ("Planeswalkers you control, \"[-4]: ...\"", "... and the
   // ability: Whenever this token enters, ..."), and a copy's exception that only grants one: the
   // ability is the action's, as above.

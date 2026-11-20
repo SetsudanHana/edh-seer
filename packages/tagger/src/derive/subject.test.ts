@@ -1104,3 +1104,12 @@ test("'that wasn't cast from your hand' is the negation of an origin, never the 
   // the plain origin is untouched
   expect(parseSubject("a creature card from your graveyard")).toMatchObject({ fromZone: "graveyard" });
 });
+
+// #1671: a created token's "protection from X and from Y" names what it is protected from, not what it is (Baneslayer Angel's token in Balefang the Unslayable; Akroma's in Nivea).
+test("a token's protection parameters are not its subtypes or colours", () => {
+  const demon = parseSubject("a tapped 5/5 white Angel creature token named Baneslayer Angel with flying, first strike, lifelink, and protection from Demons and from Dragons");
+  expect(demon.subtype).toBe("angel");
+  expect(demon.colors).toEqual(["W"]);
+  const akroma = parseSubject("a 6/6 white legendary Angel creature token named Akroma, Angel of Wrath with flying, first strike, vigilance, trample, haste, and protection from black and from red");
+  expect(akroma.colors).toEqual(["W"]);
+});

@@ -17,6 +17,9 @@ import { emblemRecipient } from "../emblem.js";
 
 const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b"]);
 const TESTED: Record<string, string> = {
+  "111.3": "grammar/named-tokens-1671.test.ts — a named token's characteristics are the ones its reminder prints (Black Lotus, Lord of the Pit, Scryb Sprites, Akroma, Baneslayer Angel; #1671)",
+  "202.2": "grammar/named-tokens-1671.test.ts — the named token's colour is the colour of the mana symbols of the cost its reminder prints (#1671)",
+  "701.15a": "grammar/named-tokens-1671.test.ts — 'The token is goaded for the rest of the game' reads as the goad alone; the duration is a CEILING (Balefang the Unslayable; #1671)",
   "601.2a": "grammar/other-actor-1676.test.ts — proposing a cast makes the proposer the spell's controller: Itazura's 'then they may cast a spell from among those cards' after the pick is the chosen opponent's cast, `control: opp` on the emit (#1676)",
   "702.119": "grammar/spell-keywords-1672.test.ts — 'each sea monster spell you cast has emerge' is a cost note on those spells, never a keyword on the board (Zekes, Acid Rock Fan; #1672)",
   "702.144a": "grammar/spell-keywords-1672.test.ts — demonstrate is a triggered ability on casting the spell: its copy is not read, so the grant claims no cost change (Elda, Conjurer of Spectacle; #1672)",

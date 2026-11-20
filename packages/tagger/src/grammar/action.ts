@@ -1575,8 +1575,9 @@ const withCondition = (out: ActionReading[], condition: string | undefined) => (
 
 /** A trailing duration says how long, not what happens: "you may play that card for as long as you
  *  control ~", "spells with the chosen name cost {1} less to cast this turn". Tried only when the
- *  phrase does not read with it. */
-const TRAILING_DURATION = / (?:this turn|for as long as [^,]+|until (?:end of turn|your next turn|the end of your next turn))$/i;
+ *  phrase does not read with it. CEILING: the duration is dropped, not carried; "for the rest of the game" (Balefang's "The token is goaded for the rest of the game", #1671) reads as the goad alone, which the store
+ *  cannot tell from a goad "until your next turn" (CR 701.15a). */
+const TRAILING_DURATION = / (?:this turn|for the rest of the game|for as long as [^,]+|until (?:end of turn|your next turn|the end of your next turn))$/i;
 
 function readPhrase(quoted: string, condition: string | undefined, carried?: ActionReading["actor"]): ActionReading[] | null {
   const r = readPhraseOnce(quoted, condition, carried);
@@ -1621,7 +1622,9 @@ function readPhraseOnce(quoted: string, condition: string | undefined, carried?:
   const counted = where >= 0 ? t.slice(where + ", where X is ".length) : undefined;
   if (where >= 0) t = t.slice(0, where);
   // "each player who controls a creature with power 4 or greater draws a card": that subset.
-  const who = /^(each player|each opponent) who [^,]+? (?=(?:draws?|discards?|mills?|scr(?:y|ies)|surveils?|search(?:es)?|reveals?|shuffles?|may)\b)/i.exec(t);
+  // "Each opponent who does can't attack you during their next turn" (Zagorka, #1671): the opponents who made the token, read as the condition "who does" on a `cant` of each opponent.
+  // CEILING: the stored record has no field for the subset, so the `cant` is recorded and left unclaimed (as for any restriction the store cannot place); no edge is drawn from it.
+  const who = /^(each player|each opponent) who [^,]+? (?=(?:draws?|discards?|mills?|scr(?:y|ies)|surveils?|search(?:es)?|reveals?|shuffles?|may|can't)\b)/i.exec(t);
   if (who) { condition = [condition, t.slice(who[1]!.length + 1, who[0].length - 1)].filter(Boolean).join(", "); t = `${who[1]} ${t.slice(who[0].length)}`; }
   // "each player ... each draw": the second "each" repeats the actor.
   t = t.replace(/^((?:two|any number of) target (?:players|opponents)) each /i, "$1 ");
