@@ -206,6 +206,7 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
   // "Reveal a card IN YOUR HAND, then put that card onto the battlefield": the reveal is dropped, its
   // zone is the antecedent's (Retraced Image).
   let revealedFrom: string | null = null;
+  let revealedUntil = false, untilClass: string | undefined;
   // A folded pronoun animate carries its unfolded readings (`alt`): used in its place when the pronoun is not the card itself.
   const work = [...readings];
   for (let wi = 0; wi < work.length; wi++) {
@@ -218,7 +219,7 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     const r: ActionReading = becomesHead === "it" ? { ...reading, phrase: "it" } : reading;
     // "Reveal it" is bookkeeping the store drops (canonicalize's DROPPED_VERBS).
     // "reveal the top card of your library. If it's a land card, put it onto the battlefield" (Thrasios).
-    if (r.verb === "reveal") { const rv = r.phrase ?? r.text ?? ""; revealedFrom = /\b(?:in|from) your hand\b/i.test(rv) ? "hand" : /\btop (?:\w+ )?cards? of (?:your|their) library\b/i.test(rv) ? "library" : null; continue; }
+    if (r.verb === "reveal") { const rv = r.phrase ?? r.text ?? ""; revealedUntil = / until (?:you|they) reveal /i.test(rv); untilClass = untilClassOf(rv); revealedFrom = /\b(?:in|from) your hand\b/i.test(rv) ? "hand" : /\b(?:top (?:\w+ )?cards? of|cards from the top of) (?:your|their) library\b/i.test(rv) ? "library" : null; continue; }
     // "When this creature blocks, return IT": with nothing before it, "it" is the card itself, written
     // as the trigger names it ("this creature"), which derive's self and type readings key on.
     // As derive's grammar switch writes a player verb's object: a named actor ("target player mills")
@@ -303,6 +304,9 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
       // "return target creature that player controls to its owner's hand": a permanent, so from the battlefield.
       : r.verb === "return" && r.toZone === "hand" && /\bcontrols?\b/i.test(object) && !/\bcards?\b/i.test(object) ? "battlefield"
       : (/\brevealed this way\b/i.test(object) || (/^the rest$/i.test(object) && before === undefined && out.some((a) => /\brevealed this way\b/i.test(a.object ?? "")))) ? "library"
+      // #1674: "reveal cards ... until you reveal two land cards. Put THOSE LAND CARDS onto the battlefield", "Put THE REVEALED CARDS on the bottom" (Calibrated Blast): the cards the reveal-until took off the library. By the reveal's own words, so
+      // "those cards" after a plain reveal of the top card is not read here.
+      : revealedUntil && /^(?:those [a-z -]+ cards?|the (?:rest of the )?revealed cards)$/i.test(object) ? "library"
       // An EXILE of a permanent named outright leaves the battlefield, the zone the store writes for an
       // exile (Baleful Mastery, Thassa); a destroy or sacrifice it leaves unstated, so they are not.
       : r.verb === "exile" && r.object && !r.object.ref && !r.object.self && !/\bcards?\b|\bspells?\b/i.test(object) && r.object.zone === undefined ? "battlefield" : null);
@@ -321,7 +325,11 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     // trigger's own card.
     const exiledBefore = pronoun && r.verb === "cast" ? /^an? (?:([\w -]+?) )?card\b/i.exec([...out].reverse().find((a) => a.verb === "exile")?.object ?? "") : null;
     const exiledCard = exiledBefore ? `the exiled ${exiledBefore[1] ? `${exiledBefore[1]} ` : ""}card` : undefined;
-    const named = target ?? exiledCard ?? (!pronoun ? undefined : out.length > 0 && selfTrigger ? selfTrigger
+    // #1674: "that card" after a reveal-until, with a TARGET named earlier in the clause (Proteus Staff, Polymorph), is the card the reveal found, not the target: the store writes the class the reveal stopped at
+    // ("a creature card"), where derive would take "that card" for the target (`scope: target`).
+    // CEILING: only a singular "a/an <class> card" reveal-until class and only the bare "that card"; a clause with no earlier target keeps "that card", which derive reads off the reveal's own words.
+    const revealedCard = untilClass !== undefined && /^that card$/i.test(object) && out.some((a) => /\btarget\b/i.test(a.object ?? "")) ? untilClass : undefined;
+    const named = target ?? exiledCard ?? revealedCard ?? (!pronoun ? undefined : out.length > 0 && selfTrigger ? selfTrigger
       : /^(?:enchanted|equipped) [a-z]+$/i.test(triggerSubject ?? "") ? triggerSubject : undefined);
     const itsAntecedent = named ?? "";
     // ...and the card itself when nothing names another: the first action of a clause naming "this <noun>" (the Opal cycle's "if this permanent is an enchantment, it becomes a 3/4
@@ -364,6 +372,14 @@ function actionsOf(readings: ActionReading[], selfTrigger: string | undefined, t
     if (transformed) out.push({ verb: "transform", object, fromZone: null, toZone: null, optional: false } as Action);
   }
   return out;
+}
+
+/** The class a reveal-until stops at, "a creature card" of "... until you reveal a creature card" (#1674), or undefined. By index and word, no regex over card text (CodeQL polynomial-redos). */
+function untilClassOf(text: string): string | undefined {
+  const lc = text.toLowerCase(), you = lc.lastIndexOf(" until you reveal "), they = lc.lastIndexOf(" until they reveal ");
+  const at = Math.max(you, they), tail = at < 0 ? "" : text.slice(at + (at === you ? " until you reveal ".length : " until they reveal ".length));
+  const words = tail.split(" ");
+  return (words[0] === "a" || words[0] === "an") && words.length >= 2 && words[words.length - 1] === "card" && words.every((w) => /^[a-z,-]+$/i.test(w)) ? tail : undefined;
 }
 
 /** The card itself ("this land", "this creature") and nothing after it. An animate's words open with a bare "this" then, the store's spelling: derive cuts "this land becomes ..." at the

@@ -112,9 +112,9 @@ test("'choose a land card that player owns exiled this way ... play the chosen c
   expect(actionsOf(CHEKOV).map((a) => [a.verb, a.object])).toEqual([["exile", "the top X cards of each opponent's library"], ["play", "land cards exiled this way"]]);
 });
 
-test("a delayed trigger that names the chosen creature stays a blocker (McCoy), as does a reveal-until draw replacement (Chekov, First Posting)", () => {
+test("a delayed trigger that names the chosen creature stays a blocker (McCoy); Chekov, First Posting's reveal-until draw replacement is read since #1674 (reveal-until-1674.test.ts)", () => {
   expect(grammarClauseRecords(MCCOY).blocker).toMatchObject({ kind: "action", phrase: "choose up to one other target creature" });
-  expect(grammarClauseRecords(CHEKOV_FP).complete).toBe(false);
+  expect(grammarClauseRecords(CHEKOV_FP).complete).toBe(true);
 });
 
 test("a chosen creature that a LATER sentence's own delayed trigger names is still refused; one that does not is carried", () => {
