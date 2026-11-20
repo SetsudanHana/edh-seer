@@ -495,7 +495,7 @@ export function characteristicsSubject(tags: CardTags, name?: string): SubjectFi
     // The PRINTED colours are known, and none is a fact: `[]` says "colourless" where `undefined` would say "unrecorded", which
     // `subjectMatches` abstains on (#1360). Every colour reader there treats `[]` as it treated `undefined`.
     colors: c.colors,
-    control: "you",
+    control: c.heldByOpponent === true ? "opp" : "you",
     token: c.token,
     power: parseStat(c.power),
     toughness: parseStat(c.toughness),
@@ -3927,6 +3927,9 @@ function copyAbilityEdges({ p, c, h, reasons }: PairScope): void {
     // a `copies:triggered` edge to every triggered-ability card in the deck. `any` is not `opp`:
     // Rings of Brighthearth derives `any` and really does copy yours.
     if (a.effect.subject?.control === "opp") continue;
+    // AN OPPONENT'S TOKEN'S ABILITY IS NOT ONE YOU ACTIVATE OR CONTROL (#1666). Its node is read from their seat (`heldByOpponent`), and a copier that triggers off "you activate" (Rings of Brighthearth, Kurkesh, Ashnod: stored `any`)
+    // or targets one "you control" (Gogo, Adric: `you`) never meets it. Only a copier that aims at any ability of any controller (Return the Favor) does.
+    if (p.tags?.characteristics.heldByOpponent === true && !(a.effect.subject?.control === "any" && a.effect.subject.scope === "target")) continue;
     const kinds = a.effect.subject?.abilityKind ?? ["activated", "triggered"];
     const wanted = a.effect.subject?.type;
     if (wanted !== undefined && !typeMatchesCharacteristics(wanted, p.tags?.characteristics, h)) continue;
@@ -4885,13 +4888,27 @@ export function createsForYou(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
     return p.tags.abilities.some((pa) => !isRefusedTrigger(pa) && pa.effect.kind === "emblem" && pa.effect.subject?.control !== "opp");
   }
   if (c.tags.characteristics.token !== true) return false;
+  // THE NODE SAYS WHOSE SEAT IT IS READ FROM (#1666): an opponent's token (`heldByOpponent`) is made by an emit that gives it to an opponent, ours by one that does not. The hop through an opponent's node is
+  // kept, because its own events already read `opp` and a "you control" payoff cannot hear them.
+  const held = c.tags.characteristics.heldByOpponent === true;
   // The token card is the CONSUMER argument here: the creator's emit may state one of its types only (#1385), so its printed conjunction is not demanded.
   const { allTypes: _printedAll, ...consumerSubject } = characteristicsSubject(c.tags, c.card.name);
   return p.tags.abilities.some((pa) => !isRefusedTrigger(pa) &&
     (pa.emits ?? []).some((e) =>
       // The token's STATE on arrival ("tapped and attacking") is not what it IS: the token card named here is the same card whether it enters attacking or not, so the state stays out of the identity join
       // (#1673: a created token's `combat` made `subjectMatches` refuse the link and every pair through the token went). What the arrival state means for an attack trigger is judged by the event pairs.
-      e.verb === "create-token" && e.subject.control !== "opp" && subjectMatches(consumerSubject, (({ combat: _combat, tapped: _tapped, ...made }) => made)(e.subject), h)));
+      e.verb === "create-token" && (e.subject.control === "opp") === held && subjectMatches(consumerSubject, (({ combat: _combat, tapped: _tapped, ...made }) => made)(e.subject), h)));
+}
+
+/** DOES EVERY EMIT OF `p` THAT MAKES TOKEN `c` GIVE IT TO AN OPPONENT (#1666)? `c` is the token as printed, read from our seat. Decides which seat `collectTokenNodes` builds the node from: a maker that gives it to
+ *  an opponent ("Its controller creates a 3/3 green Beast", "enchanted opponent creates a Clue token") and one that does not never share a node. */
+export function givesTokenToOpponent(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
+  if (!p.tags || !c.tags) return false;
+  const { allTypes: _printedAll, ...consumerSubject } = characteristicsSubject(c.tags, c.card.name);
+  const made = p.tags.abilities.filter((pa) => !isRefusedTrigger(pa))
+    .flatMap((pa) => pa.emits ?? [])
+    .filter((e) => e.verb === "create-token" && subjectMatches({ ...consumerSubject, control: "any" }, (({ combat: _combat, tapped: _tapped, ...m }) => m)(e.subject), h));
+  return made.length > 0 && made.every((e) => e.subject.control === "opp");
 }
 
 /** THE EMBLEM MAKER EDGE (spec 2026-09-08). Keyed on the producer's `emblem` ability rather than an

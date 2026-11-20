@@ -1846,6 +1846,10 @@ export interface Characteristics {
    *  time and are exactly the ones a commander-matters consumer needs: a commander's combat damage,
    *  entry and death. Stamping only the authored emits left Kediss unable to see its own partner. */
   commander?: boolean;
+  /** A TOKEN NODE READ FROM THE OPPONENT'S SEAT (#1666). Set by the matcher (`opponentHeld`, perspective.ts), never by extraction, on the node of a token an opponent
+   *  receives from your card (Beast Within's Beast, Overencumbered's Junk): its own events (`selfSubject`) and its characteristics as a consumer (`characteristicsSubject`)
+   *  read `control: opp`, so a payoff of tokens "you control" no longer hears it and one of any control or of an opponent's does. Absent on every other card and token. */
+  heldByOpponent?: true;
   keywords: string[];
   /** WHAT AN AURA CAN BE ATTACHED TO, from its printed "Enchant ..." line (CR 702.5a), parsed as a
    *  subject: "Enchant creature" is `{type: creature}`, "Enchant creature you control" adds the
