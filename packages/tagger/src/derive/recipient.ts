@@ -137,6 +137,14 @@ export function thatPlayerIsOpponent(clauseText: string, triggerIsSelf: boolean,
  *  and that is where they get pointed, and because being wrong here only ever removes an edge. */
 function controlOf(phrase: string, text: string, at: number, ctx: ActorContext, verb = ""): Control | undefined {
   const p = phrase.toLowerCase();
+  // "OTHER THAN ITS CONTROLLER" IS NOT ITS CONTROLLER (#1666 review): "each player other than its controller creates a token that's a copy of it" (Fractured Identity) and "target player other than its controller create a token" (Lucy MacLean) name the players
+  // who are NOT the controller, which is any of them, you included.
+  if ((p === "its controller" || p === "their controller") && /\bother than\s*$/i.test(text.slice(0, at))) return "any";
+  // "WHENEVER A PLAYER ATTACKS ..., THAT ATTACKING PLAYER" IS ANY PLAYER (#1666 review): Jolene, Combat Calligrapher, Ellie and Curse of Shallow Graves give the token to whoever attacked, you included. Any other "attacking player" is the attacker of your
+  // permanent or of you ("Souls of the Faultless", "Contested Game Ball"), an opponent.
+  if (p === "attacking player" && /\bwhenever a player attacks\b/i.test(text.slice(0, at))) return "any";
+  // "FOR EACH CREATURE TOKEN ON THE BATTLEFIELD, ITS CONTROLLER" IS EVERY TOKEN'S CONTROLLER (#1666 review, Parallel Evolution): yours among them.
+  if ((p === "its controller" || p === "their controller") && /\bfor each (?:[a-z-]+ )*token on the battlefield\b/i.test(text.slice(0, at))) return "any";
   // AFTER AN UNTARGETED TRIGGER SUBJECT IT IS ANYONE (#650): "Whenever a creature enters, its
   // controller sacrifices ..." (Tainted Aether) points at the creature that entered, which can be
   // yours. A target or an opponent named first keeps the removal reading, as does a bare fragment.

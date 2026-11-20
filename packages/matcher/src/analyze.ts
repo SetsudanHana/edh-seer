@@ -23,7 +23,7 @@ import { loadHierarchy, subsumptionMap } from "./hierarchy.js";
 import { makeGateWeigher } from "./effect-gate-weight.js";
 import { deckSentence } from "./deck-sentence.js";
 import { applyAnthems, applyState, reachableMarkers } from "./layers.js";
-import { givesTokenToOpponent, pairReasons, cardThemeTags, axisThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason, revenantToughness, type ReasonOptions } from "./edges.js";
+import { tokenSeats, pairReasons, cardThemeTags, axisThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason, revenantToughness, type ReasonOptions } from "./edges.js";
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { GETS_AN_EMBLEM } from "@edh-seer/tagger/emblem";
 import { flipPerspective, opponentHeld } from "./perspective.js";
@@ -202,8 +202,12 @@ export function collectTokenNodes(
       // The faces that print the creation decide it, as `facesCreating` does for the maker relation below, so a card's faces agree on the seat.
       const printers = facesCreating(siblings, ref);
       const token = tokenDeckCard(ref, tags);
-      const opp = tags.characteristics.emblem !== true && printers.length > 0 && printers.every((f) => givesTokenToOpponent(f, token, hierarchy));
-      made.push({ dc, ref, tags, opp });
+      // A maker that splits ("you and target opponent each create a Treasure") makes the token for BOTH seats and is the creator of each node.
+      const seats = printers.map((f) => tokenSeats(f, token, hierarchy));
+      const opp = tags.characteristics.emblem !== true && seats.some((x) => x.opp);
+      const ours = !opp || seats.some((x) => x.ours);
+      if (ours) made.push({ dc, ref, tags, opp: false });
+      if (opp) made.push({ dc, ref, tags, opp: true });
     }
   }
   const ours = new Set(made.filter((m) => !m.opp).map((m) => m.tags.oracleId));

@@ -4900,15 +4900,21 @@ export function createsForYou(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
       e.verb === "create-token" && (e.subject.control === "opp") === held && subjectMatches(consumerSubject, (({ combat: _combat, tapped: _tapped, ...made }) => made)(e.subject), h)));
 }
 
-/** DOES EVERY EMIT OF `p` THAT MAKES TOKEN `c` GIVE IT TO AN OPPONENT (#1666)? `c` is the token as printed, read from our seat. Decides which seat `collectTokenNodes` builds the node from: a maker that gives it to
- *  an opponent ("Its controller creates a 3/3 green Beast", "enchanted opponent creates a Clue token") and one that does not never share a node. */
-export function givesTokenToOpponent(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
-  if (!p.tags || !c.tags) return false;
+/** WHICH SEATS `p` MAKES TOKEN `c` FOR (#1666): `opp` when an emit of it that makes the token gives it to an opponent ("Its controller creates a 3/3 green Beast", "enchanted opponent creates a Clue token"), `ours` when another does not
+ *  (any, you, or nothing stated). `c` is the token as printed, read from our seat. `collectTokenNodes` builds one node per seat, so a maker that splits ("you and target opponent each create a Treasure", "Eiganjo Uprising") is the creator of both.
+ *  A SEAT IT CANNOT READ IS OURS, NEVER AN OPPONENT'S: a card whose printed text has YOU creating or investigating (Tempting Contract: "For each opponent who does, you create a Treasure token") while derive stored only the opponent's emit is read as yours,
+ *  because a missing `#opp` node loses an edge and a wrong one invents one.
+ *  CEILING: that read is a regex on the maker's printed text (`you create` / `you investigate`), not a parse; one card needs it today (Tempting Contract, whose second sentence derive does not store), and a card that says it of another token loses its `#opp` node. */
+export function tokenSeats(p: DeckCard, c: DeckCard, h: Hierarchy): { opp: boolean; ours: boolean } {
+  if (!p.tags || !c.tags) return { opp: false, ours: true };
   const { allTypes: _printedAll, ...consumerSubject } = characteristicsSubject(c.tags, c.card.name);
   const made = p.tags.abilities.filter((pa) => !isRefusedTrigger(pa))
     .flatMap((pa) => pa.emits ?? [])
     .filter((e) => e.verb === "create-token" && subjectMatches({ ...consumerSubject, control: "any" }, (({ combat: _combat, tapped: _tapped, ...m }) => m)(e.subject), h));
-  return made.length > 0 && made.every((e) => e.subject.control === "opp");
+  const opp = made.some((e) => e.subject.control === "opp");
+  const ours = made.some((e) => e.subject.control !== "opp") || made.length === 0;
+  if (opp && !ours && /\byou (?:may )?(?:create|investigate)\b/i.test(p.card.oracleText ?? "")) return { opp: false, ours: true };
+  return { opp, ours };
 }
 
 /** THE EMBLEM MAKER EDGE (spec 2026-09-08). Keyed on the producer's `emblem` ability rather than an

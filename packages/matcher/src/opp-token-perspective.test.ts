@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
-import { analyzeDeckStructured, loadHierarchy } from "./index.js";
+import { analyzeDeckStructured, collectTokenNodes, loadHierarchy } from "./index.js";
 import { synthesizeTokenTags } from "./token-tags.js";
 import type { DeckCard } from "./types.js";
 import fixtures from "./fixtures/opp-token-perspective.json" with { type: "json" };
@@ -9,8 +9,13 @@ import fixtures from "./fixtures/opp-token-perspective.json" with { type: "json"
  *  (Disciple of the Vault, Mayhem Devil, Kothophed); a payoff of tokens or creatures "you control" does not. Cards and token rows dumped from Mongo 2026-11-20 (DERIVE 556). */
 const F = fixtures as unknown as { cards: Record<string, { source: Record<string, unknown>; tags: CardTags }>; tokens: Record<string, CardTags> };
 const dc = (name: string): DeckCard => ({ card: F.cards[name]!.source as unknown as DeckCard["card"], tags: F.cards[name]!.tags });
-const vanilla = (name: string, typeLine: string, p: string): CardTags => synthesizeTokenTags({ _id: `test-${name}`, name, typeLine, power: p, toughness: p, colors: ["G"], printingIds: [] });
-const tokenTags = (ref: { name: string }): CardTags | null => F.tokens[ref.name] ?? (ref.name === "Elephant" ? vanilla("Elephant", "Token Creature — Elephant", "3") : ref.name === "Beast" ? vanilla("Beast", "Token Creature — Beast", "3") : null);
+const vanilla = (name: string, typeLine: string, p: string): CardTags => synthesizeTokenTags({ _id: `test-${name}`, name, typeLine, ...(p ? { power: p, toughness: p } : {}), colors: name === "Samurai" || name === "Spirit" ? ["W"] : name === "Inkling" ? ["W", "B"] : name === "Plant" || name === "Elephant" || name === "Beast" ? ["G"] : [], keywords: name === "Samurai" ? ["Vigilance"] : [], printingIds: [] });
+const VANILLA: Record<string, [string, string]> = {
+  Elephant: ["Token Creature — Elephant", "3"], Beast: ["Token Creature — Beast", "3"], Samurai: ["Token Creature — Samurai", "2"], Plant: ["Token Creature — Plant", "0"], Spirit: ["Token Creature — Spirit", "1"],
+  Inkling: ["Token Creature — Inkling", "2"], Treasure: ["Token Artifact — Treasure", ""],
+};
+const tokenTags = (ref: { name: string }): CardTags | null => F.tokens[ref.name] ?? (VANILLA[ref.name] ? vanilla(ref.name, VANILLA[ref.name]![0], VANILLA[ref.name]![1]) : null);
+const report = (names: string[]) => analyzeDeckStructured(names.map(dc), undefined, H, undefined, undefined, undefined, tokenTags as never);
 const H = loadHierarchy();
 const partners = (maker: string, others: string[]): string[] => {
   const r = analyzeDeckStructured([dc(maker), ...others.map(dc)], undefined, H, undefined, undefined, undefined, tokenTags as never);
@@ -52,4 +57,49 @@ test("Beast Within's Beast is an opponent's node of its own, named for the token
   const r = analyzeDeckStructured([dc("Beast Within"), dc("Kothophed, Soul Hoarder")], undefined, H, undefined, undefined, undefined, tokenTags as never);
   expect(r.tokenNodes!.map((t) => t.name)).toEqual(["Beast"]);
   expect(r.cards.find((c) => c.name === "Beast Within")!.topPartners.map((p) => p.name)).toContain("Kothophed, Soul Hoarder");
+});
+
+// REVIEW (#1666): the seat is read from derive's emit, so the nodes must split, name and refuse as the review's probes showed.
+describe("seats of one token", () => {
+  const nodes = (names: string[]) => collectTokenNodes(names.map(dc), tokenTags as never).nodes;
+  test("a deck with An Offer You Can't Refuse and a maker that gives YOU a Treasure has two nodes: the plain Treasure and Treasure (opponent's), whose oracle id and seat mark it", () => {
+    const r = report(["An Offer You Can't Refuse", "Unexpected Windfall"]);
+    expect(r.tokenNodes!.map((t) => t.name).sort()).toEqual(["Treasure", "Treasure (opponent's)"]);
+    const ns = nodes(["An Offer You Can't Refuse", "Unexpected Windfall"]);
+    const opp = ns.find((n) => n.card.name === "Treasure (opponent's)")!, mine = ns.find((n) => n.card.name === "Treasure")!;
+    expect(opp.tags!.oracleId.endsWith("#opp")).toBe(true);
+    expect(opp.tags!.characteristics.heldByOpponent).toBe(true);
+    expect(mine.tags!.oracleId.endsWith("#opp")).toBe(false);
+    expect(mine.tags!.characteristics.heldByOpponent).toBeUndefined();
+    expect(r.tokenNodes!.find((t) => t.name === "Treasure")!.madeBy).toEqual(["Unexpected Windfall"]);
+    expect(r.tokenNodes!.find((t) => t.name === "Treasure (opponent's)")!.madeBy).toEqual(["An Offer You Can't Refuse"]);
+  });
+  test("orchestrate's call (collectTokenNodes on the unsplit deck, default hierarchy) names the nodes as analyzeDeckStructured does, a double-faced maker among them", () => {
+    const deck = ["An Offer You Can't Refuse", "Unexpected Windfall", "Dowsing Dagger // Lost Vale", "Eiganjo Uprising"];
+    const viaOrchestrate = collectTokenNodes(deck.map(dc), tokenTags as never).nodes.map((n) => `${n.card.name}|${n.tags!.oracleId}`).sort();
+    const viaAnalyze = report(deck).tokenNodes!.map((t) => t.name).sort();
+    expect(viaOrchestrate.map((x) => x.split("|")[0]).sort()).toEqual(viaAnalyze);
+    expect(viaAnalyze).toContain("Plant");
+  });
+  test("a maker that splits its token (Eiganjo Uprising: yours, and X minus one for each opponent) creates both nodes and pairs with Blood Seeker through the opponent's", () => {
+    const r = report(["Eiganjo Uprising", "Blood Seeker"]);
+    expect(r.tokenNodes!.map((t) => t.name).sort()).toEqual(["Samurai", "Samurai (opponent's)"]);
+    expect(r.tokenNodes!.every((t) => (t.madeBy ?? []).join() === "Eiganjo Uprising")).toBe(true);
+    expect(r.cards.find((c) => c.name === "Eiganjo Uprising")!.topPartners.map((p) => p.name)).toContain("Blood Seeker");
+  });
+  test("a token derive stores for an opponent only where the printed text has YOU creating it (Tempting Contract) is read as yours: no opponent node", () => {
+    expect(report(["Tempting Contract"]).tokenNodes!.map((t) => t.name)).toEqual(["Treasure"]);
+    expect(nodes(["Tempting Contract"]).map((n) => n.tags!.characteristics.heldByOpponent)).toEqual([undefined]);
+  });
+  test("Jolene's Treasure goes to whoever attacked: the plain node, not an opponent's", () => {
+    expect(report(["Jolene, the Plunder Queen"]).tokenNodes!.map((t) => t.name)).toEqual(["Treasure"]);
+    expect(nodes(["Jolene, the Plunder Queen"]).map((n) => n.tags!.characteristics.heldByOpponent)).toEqual([undefined]);
+    expect(report(["Combat Calligrapher"]).tokenNodes!.map((t) => t.name)).toEqual(["Inkling"]);
+  });
+  test("Teysa's Clue is yours: she pairs with Tireless Tracker and not with the opponent-draw payoffs Orcish Bowmasters and Smothering Tithe", () => {
+    const p = partners("Teysa, Opulent Oligarch", ["Orcish Bowmasters", "Smothering Tithe", "Tireless Tracker"]);
+    expect(p).not.toContain("Orcish Bowmasters");
+    expect(p).not.toContain("Smothering Tithe");
+    expect(p).toContain("Tireless Tracker");
+  });
 });
