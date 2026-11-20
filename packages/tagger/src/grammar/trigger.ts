@@ -236,6 +236,8 @@ const OBJECT_VERBS: [RegExp, string, VerbPatch?][] = [
   [/^(?:is|are) put into exile from anywhere$/, "exiled"],
   [/^(?:is|are) put into exile (?<n>from .+)$/, "exiled"],
   [/^(?:is|are) exiled$/, "exiled"],
+  // "One or more cards ARE EXILED FROM AN OPPONENT'S LIBRARY" (The Madcap Jester, #1679): the cards are an opponent's, taken from the library zone. CEILING: only an opponent's library; "a library", "your library" and "a player's library" stay unread.
+  [/^(?:is|are) exiled from an opponent's library$/, "exiled", { fromZone: "library", control: "opp" }],
   [/^(?:is|are) put into your hand from your graveyard$/, "returned-to-hand", { fromZone: "graveyard" }],
   [/^(?:is|are) returned to hand$/, "returned-to-hand"],
   [/^(?:is|are) returned to your hand from the battlefield$/, "returned-to-hand"],
@@ -790,6 +792,9 @@ const SPECIAL: [RegExp, (m: RegExpExecArray) => TriggerReading | TriggerReading[
     const self = m[1] === "its" ? { control: "any" as const, token: null, ref: "sentence" as const } : subjectOf(m[1]!.slice(0, -2));
     return self && { ...reading("other", self, self.self ? "you" : "any"), narrowing: m[2]! };
   }],
+  // "A creature BLOCKS THIS CREATURE" (Extraction Integrant, #1679): this creature becomes blocked by that creature, the same event worded from the blocker's side (CR 509.3d is the
+  // per-blocker "becomes blocked by a creature" trigger). Read through the "becomes blocked by" template so the blocker filter and its refusals are that template's own.
+  [/^(an? [^,]+?) blocks (this creature|~)$/, (m) => objectReading(`${m[2]} becomes blocked by ${m[1]}`)],
   // "it's put into a graveyard this turn": the contraction.
   [/^it's (.+)$/, (m) => objectReading(`it is ${m[1]}`)],
   // A LIST OF RANDOM EVENTS (Chira, All In; #1675): "you discard one or more cards at random, select one or more targets at random, choose one or more modes at random, flip one or more coins, or roll one or more dice". Each

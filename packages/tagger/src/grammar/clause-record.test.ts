@@ -2028,7 +2028,8 @@ test("cards whose lead or zone cannot be carried stay blocked, at the grammar th
   expect(blocked("Rite of Ascension", "Enchantment", "Whenever you attack, for each opponent you attacked this turn, create a tapped and attacking 2/1 red Klingon Warrior creature token with haste.").blocker).toMatchObject({ phrase: "for each opponent you attacked this turn" });
   // a card out of an opponent's graveyard that "was put there from" a zone: derive would read it as any player's, from that zone
   expect(blocked("The Weaver King", "Legendary Creature \u2014 Horror Wizard", "Whenever The Weaver King deals combat damage to a player, they mill that many cards. Then for each opponent, put a creature card from that player's graveyard that was put there from their library this turn onto the battlefield under your control.").complete).toBe(false);
-  expect(blocked("Assimilate the Wounded", "Instant", "For each opponent, assimilate up to one target creature card from that player's graveyard that was put there from the battlefield this turn.").complete).toBe(false);
+  // Assimilate the Wounded: "put there from the battlefield this turn" is read off (#1679), the others stay blocked
+  expect(blocked("Assimilate the Wounded", "Instant", "For each opponent, assimilate up to one target creature card from that player's graveyard that was put there from the battlefield this turn.").complete).toBe(true);
   // Sovereign Okinec Ahau: the count's "with power greater than that creature's base power" would read as every creature you control
   expect(blocked("Sovereign Okinec Ahau", "Legendary Creature \u2014 Human Noble", "Ward {2}\nWhenever Sovereign Okinec Ahau attacks, for each creature you control with power greater than that creature's base power, put a number of +1/+1 counters on that creature equal to the difference.").complete).toBe(false);
 });

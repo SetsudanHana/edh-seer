@@ -375,6 +375,16 @@ function selfOnly(object: string): boolean {
 
 /** A trigger word inside a sentence: the "whenever" of a delayed trigger a chapter creates. */
 const DELAYED_TRIGGER_WORD = /\b(?:whenever|when|at the beginning of|at the end of|at end of)\b/i;
+/** A RETURN TIMED TO THE NEXT END STEP is the return's own timing, not a trigger the chapter sets up (#1679, Balance of Terror: "Exile up to one other target permanent you control. Return that card to the battlefield under
+ *  its owner's control at the beginning of the next end step."): the sentence opens with "Return" and ends with the phrase, which the action grammar reads as the flicker's `delayedUntil` as it does on Oath of Teferi.
+ *  CEILING: only a sentence that opens with "Return " and ends with exactly "at the beginning of the next end step"; "Exile it at the beginning of the next end step" and every other delayed word still refuse the chapter. */
+const NEXT_END_STEP_TAIL = " at the beginning of the next end step";
+function withoutTimedReturn(text: string): string {
+  return text.split(". ").map((sentence) => {
+    const bare = sentence.endsWith(".") ? sentence.slice(0, -1) : sentence;
+    return bare.startsWith("Return ") && bare.endsWith(NEXT_END_STEP_TAIL) ? bare.slice(0, -NEXT_END_STEP_TAIL.length) : sentence;
+  }).join(". ");
+}
 
 /** A STATION ROW'S "Flying, first strike" is ONE grant of a keyword list, as the store writes it for Wedgelight Rammer: derive reads the whole
  *  list off each grant-ability action, so one action per keyword derived the same gated keyword-grant once per keyword. Plain keywords, side by side.
@@ -431,7 +441,7 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
     // it deals that much damage ...", Nightmares and Daydreams) is REFUSED, not read as a chapter: read so, its effect would fire at the chapter
     // with the "whenever" dropped, a claim the text does not make (the stored answer keeps it unclaimed or triggered).
     const bareChapter = c.kind === "chapter" && type === "triggered" && c.marker !== undefined && printedPreamble(c.text, card.name, card.typeLine) === null;
-    const delayedWord = bareChapter ? DELAYED_TRIGGER_WORD.exec(c.text.replace(/"[^"]*"/g, " ")) : null;
+    const delayedWord = bareChapter ? DELAYED_TRIGGER_WORD.exec(withoutTimedReturn(c.text).replace(/"[^"]*"/g, " ")) : null;
     if (delayedWord) {
       const rest = c.text.slice(c.text.toLowerCase().indexOf(delayedWord[0].toLowerCase()));
       const comma = rest.indexOf(",");
@@ -502,7 +512,10 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
       const read = parseTrigger(delayedLead, null);
       // A trigger reading that carries an unread NARROWING (Dynaheir's "by spending four or more mana to activate it", Magus Lucea Kane's "with {X} in its mana cost") would fire on more than the card says: refused like the
       // trigger it cannot read. The words "next" and "this turn" are the delay itself, not a narrowing.
-      const unreadNarrowing = (r: TriggerReading): boolean => (r.narrowing ?? "").split(" ").some((w) => w !== "" && w !== "next" && w !== "this" && w !== "turn");
+      // The ONE narrowing let through is the recipient of a damage event, "deals combat damage TO YOU" (Right of Vengeance, #1679): no trigger field says whose player was hit, so derive REFUSES the trigger (`narrowing:damage-dealt`,
+      // exactly as it does for the triggered clauses of Teysa, Envoy of Ghosts and Norn's Decree) and the effect that names the damager claims nothing (`temporaryUnread`, #1592). The trigger is never read wider than printed.
+      // CEILING: only that recipient; "to a creature", "to an opponent" and every other narrowing still refuse the card.
+      const unreadNarrowing = (r: TriggerReading): boolean => !(r.event === "damage-dealt" && r.narrowing === "to you") && (r.narrowing ?? "").split(" ").some((w) => w !== "" && w !== "next" && w !== "this" && w !== "turn");
       if (!read || [read].flat().some(unreadNarrowing)) return { records, complete: false, blocker: { clause: c.id, kind: "trigger", phrase: delayedLead } };
       const first = [read].flat()[0]!;
       readings[c.id] = { trigger: [read].flat() };
