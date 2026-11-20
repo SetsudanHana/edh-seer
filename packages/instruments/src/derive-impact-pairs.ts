@@ -61,7 +61,11 @@ export function pairContext(m: MatcherModule, tagsOf: Map<string, any>, cardOf: 
 export type PairContext = ReturnType<typeof pairContext>;
 
 /** Does the subject exist in this world? A card needs a derived row and a document, a token a node some card makes. */
-export const hasSubject = (ctx: PairContext, id: string, isToken: boolean): boolean => (isToken ? ctx.nodeByOracle.has(id) : ctx.cards.has(id));
+export const hasSubject = (ctx: PairContext, id: string, isToken: boolean): boolean => (isToken ? tokenNodeIds(ctx, id).length > 0 : ctx.cards.has(id));
+
+/** THE NODES A TOKEN DOC STANDS FOR (#1666): the token read from our seat (`id`) and from the opponent's (`${id}#opp`, `collectTokenNodes`). A token only ever given to an opponent has the second alone, so a lookup of the bare id
+ *  alone read all its BASE reasons as lost. */
+export const tokenNodeIds = (ctx: PairContext, id: string): string[] => [id, `${id}#opp`].filter((k) => ctx.nodeByOracle.has(k));
 
 const physical = (dc: any): string => (dc.parentName ?? dc.card.name) as string;
 
@@ -94,11 +98,12 @@ export function reasonsOf(ctx: PairContext, id: string, isToken: boolean): Reaso
     if (ctx.producerTokenOracles.get(face.card.name)?.has(node.tags.oracleId)) out.push(...ctx.m.createsReasons(face, node, hier));
   };
   if (isToken) {
-    const node = ctx.nodeByOracle.get(id);
-    if (!node) return out;
-    for (const faces of ctx.facesOf.values()) for (const f of faces) withToken(f, node);
-    const makers = ctx.ourMakers.get(id);
-    if (makers?.length) out.push(...hopReasons(ctx, node, makers, ctx.allFaces));
+    for (const key of tokenNodeIds(ctx, id)) {
+      const node = ctx.nodeByOracle.get(key);
+      for (const faces of ctx.facesOf.values()) for (const f of faces) withToken(f, node);
+      const makers = ctx.ourMakers.get(key);
+      if (makers?.length) out.push(...hopReasons(ctx, node, makers, ctx.allFaces));
+    }
     return out;
   }
   const subject = ctx.cards.get(id);

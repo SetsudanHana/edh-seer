@@ -23,10 +23,10 @@ import { loadHierarchy, subsumptionMap } from "./hierarchy.js";
 import { makeGateWeigher } from "./effect-gate-weight.js";
 import { deckSentence } from "./deck-sentence.js";
 import { applyAnthems, applyState, reachableMarkers } from "./layers.js";
-import { pairReasons, cardThemeTags, axisThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason, revenantToughness, type ReasonOptions } from "./edges.js";
+import { tokenSeats, pairReasons, cardThemeTags, axisThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason, revenantToughness, type ReasonOptions } from "./edges.js";
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { GETS_AN_EMBLEM } from "@edh-seer/tagger/emblem";
-import { flipPerspective } from "./perspective.js";
+import { flipPerspective, opponentHeld } from "./perspective.js";
 import { commanderSubtypes, markCommander, resolveSharedTypes } from "./commander.js";
 import { deckLandTypes, deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { computeCardBuckets } from "./buckets.js";
@@ -170,6 +170,7 @@ const POLYMORPH_AXIS = ["cheat:creature", "fodder:creature"] as const;
 export function collectTokenNodes(
   deck: DeckCard[],
   tokenTags: (ref: TokenRef) => CardTags | null,
+  hierarchy: Hierarchy = loadHierarchy(),
 ): {
   nodes: DeckCard[];
   /** FACE name (Task 7, faces-as-nodes: `deck`'s own entries, one per printed face) -> the
@@ -186,6 +187,10 @@ export function collectTokenNodes(
   const producerTokenOracles = new Map<string, Set<string>>();
   const tokenCreators = new Map<string, Set<string>>();
   const byOracle = new Map<string, DeckCard>();
+  // WHO GETS THE TOKEN (#1666): a token an opponent receives from your card (Beast Within's Beast, Overencumbered's Junk) is its own node, read from the receiving opponent's seat (`opponentHeld`), and a maker
+  // that gives it to you is another. The oracle id carries the seat, as a Role face's carries its face, so makers of one seat share a node and the two never merge.
+  type Made = { dc: DeckCard; ref: TokenRef; tags: CardTags; opp: boolean };
+  const made: Made[] = [];
   for (const dc of deck) {
     // The sibling faces, so a face can ask whether ANY face prints the token before falling back.
     // `dc.parent` is set by `faceDeckCards` and absent on a single-face card and on a token.
@@ -194,27 +199,43 @@ export function collectTokenNodes(
       const tags0 = tokenTags(ref0);
       if (!tags0) continue; // unresolved -- refuse, never fall back to a (name, typeLine) lookup
       const { ref, tags } = roleFace(ref0, tags0, siblings);
-      if (!byOracle.has(tags.oracleId)) {
-        // WHO CONTROLS AN EMBLEM is whoever the granting ability names (CR 114.2), and the node is
-        // read from OUR seat: an opponent's emblem gets its `you`/`opp` swapped (`flipPerspective`).
-        // Read off the sibling faces' own abilities, because the grant sits on one face.
-        const givenToOpp = ref.emblem === true && siblings.some((f) =>
-          (f.tags?.abilities ?? []).some((a) => a.effect.kind === "emblem" && a.effect.subject?.control === "opp"));
-        const node = tokenDeckCard(ref, givenToOpp ? flipPerspective(tags) : tags);
-        byOracle.set(tags.oracleId, node);
-        nodes.push(node);
-      }
-      // THE NODE EXISTS FOR THE CARD AND THE CREATION BELONGS TO A FACE. A token the deck can make
-      // is on the graph whichever face makes it, so node building above is card-scoped; only the
-      // maker relation below asks which face.
-      if (!facesCreating(siblings, ref).some((f) => f.face === dc.face)) continue;
-      let oracles = producerTokenOracles.get(dc.card.name);
-      if (!oracles) producerTokenOracles.set(dc.card.name, (oracles = new Set()));
-      oracles.add(tags.oracleId);
-      let creators = tokenCreators.get(tags.oracleId);
-      if (!creators) tokenCreators.set(tags.oracleId, (creators = new Set()));
-      creators.add(dc.card.name);
+      // The faces that print the creation decide it, as `facesCreating` does for the maker relation below, so a card's faces agree on the seat.
+      const printers = facesCreating(siblings, ref);
+      const token = tokenDeckCard(ref, tags);
+      // A maker that splits ("you and target opponent each create a Treasure") makes the token for BOTH seats and is the creator of each node.
+      const seats = printers.map((f) => tokenSeats(f, token, hierarchy));
+      const opp = tags.characteristics.emblem !== true && seats.some((x) => x.opp);
+      const ours = !opp || seats.some((x) => x.ours);
+      if (ours) made.push({ dc, ref, tags, opp: false });
+      if (opp) made.push({ dc, ref, tags, opp: true });
     }
+  }
+  const ours = new Set(made.filter((m) => !m.opp).map((m) => m.tags.oracleId));
+  for (const { dc, ref, tags: tags1, opp } of made) {
+    const siblings = dc.parent ? faceDeckCards(dc.parent) : [dc];
+    const tags = opp ? { ...opponentHeld(tags1), oracleId: `${tags1.oracleId}#opp` } : tags1;
+    if (!byOracle.has(tags.oracleId)) {
+      // WHO CONTROLS AN EMBLEM is whoever the granting ability names (CR 114.2), and the node is
+      // read from OUR seat: an opponent's emblem gets its `you`/`opp` swapped (`flipPerspective`).
+      // Read off the sibling faces' own abilities, because the grant sits on one face.
+      const givenToOpp = ref.emblem === true && siblings.some((f) =>
+        (f.tags?.abilities ?? []).some((a) => a.effect.kind === "emblem" && a.effect.subject?.control === "opp"));
+      // A node's name is its identity on the graph, so an opponent's token that shares a deck with the same token for you takes the seat in its name.
+      const named = opp && ours.has(tags1.oracleId) ? { ...ref, name: `${ref.name} (opponent's)` } : ref;
+      const node = tokenDeckCard(named, givenToOpp ? flipPerspective(tags) : tags);
+      byOracle.set(tags.oracleId, node);
+      nodes.push(node);
+    }
+    // THE NODE EXISTS FOR THE CARD AND THE CREATION BELONGS TO A FACE. A token the deck can make
+    // is on the graph whichever face makes it, so node building above is card-scoped; only the
+    // maker relation below asks which face.
+    if (!facesCreating(siblings, ref).some((f) => f.face === dc.face)) continue;
+    let oracles = producerTokenOracles.get(dc.card.name);
+    if (!oracles) producerTokenOracles.set(dc.card.name, (oracles = new Set()));
+    oracles.add(tags.oracleId);
+    let creators = tokenCreators.get(tags.oracleId);
+    if (!creators) tokenCreators.set(tags.oracleId, (creators = new Set()));
+    creators.add(dc.card.name);
   }
   return { nodes, producerTokenOracles, tokenCreators };
 }
@@ -349,7 +370,7 @@ export function analyzeDeckStructured(
   // make it. It feeds `tokenNodesReport` below: a token's "creator" set is what a partnering edge
   // must NOT be to count (an edge back to your own maker is not a partner, see that block).
   const { nodes: tokenNodes, producerTokenOracles, tokenCreators } = tokenTags
-    ? collectTokenNodes(unique, tokenTags)
+    ? collectTokenNodes(unique, tokenTags, hierarchy)
     : { nodes: [] as DeckCard[], producerTokenOracles: new Map<string, Set<string>>(), tokenCreators: new Map<string, Set<string>>() };
 
   // Pairwise edges over unordered pairs; i < j guarantees no self-pair and no double-count
@@ -422,7 +443,7 @@ export function analyzeDeckStructured(
   const madeBy = (dc: DeckCard): string[] => [...(tokenCreators.get(dc.tags!.oracleId) ?? [])].sort();
   const tokenRoles = rolesByCard(detectBuildCategories(tokenNodes.map((dc) => ({
     ...dc,
-    card: { ...dc.card, oracleText: madeBy(dc).map((m) => tokenQuotes(uniqueByName.get(m)?.card ?? {}, dc.card.name)).filter(Boolean).join("\n") },
+    card: { ...dc.card, oracleText: madeBy(dc).map((m) => tokenQuotes(uniqueByName.get(m)?.card ?? {}, dc.card.name.replace(/ \(opponent's\)$/, ""))).filter(Boolean).join("\n") },
   }))));
   const tokenNodesReport = tokenNodes.map((dc) => {
     const roles = tokenRoles.get(dc.card.name);

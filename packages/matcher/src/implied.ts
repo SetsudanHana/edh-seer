@@ -44,7 +44,7 @@ function selfSubject(chars: Characteristics): SubjectFilter {
   // genuinely IS a token, and reading `chars.token` (already correct on a real card, which is always
   // false per `Characteristics.token`'s own doc comment) is what lets "whenever a token enters" match
   // it, exactly as `characteristicsSubject` (edges.ts) already reads it for the consumer side.
-  const out: SubjectFilter = { control: "you", token: chars.token === true };
+  const out: SubjectFilter = { control: chars.heldByOpponent === true ? "opp" : "you", token: chars.token === true };
   const type = collapse(types);
   const subtype = collapse(subtypes);
   if (type !== undefined) out.type = type;

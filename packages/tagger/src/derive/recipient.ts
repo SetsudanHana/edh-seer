@@ -134,9 +134,32 @@ export function thatPlayerIsOpponent(clauseText: string, triggerIsSelf: boolean,
  *
  *  "its controller" is a DECISION, not a reading: the rules let you point Pongify at your own
  *  creature, so the honest rules answer is "any". It is called `opp` because these are removal spells
- *  and that is where they get pointed, and because being wrong here only ever removes an edge. */
+ *  and that is where they get pointed. Since #1666 that is NOT harmless: a token's `opp` emit makes the matcher build an opponent's node for it, and a wrong `opp` there invents false edges instead of
+ *  only removing one, so a wipe that hands a token to every controller (untargeted "destroy all", "for each player") reads `any` below. */
 function controlOf(phrase: string, text: string, at: number, ctx: ActorContext, verb = ""): Control | undefined {
   const p = phrase.toLowerCase();
+  // "OTHER THAN ITS CONTROLLER" IS NOT ITS CONTROLLER (#1666 review): "each player other than its controller creates a token that's a copy of it" (Fractured Identity) and "target player other than its controller create a token" (Lucy MacLean) name the players
+  // who are NOT the controller, which is any of them, you included.
+  if ((p === "its controller" || p === "their controller") && /\bother than\s*$/i.test(text.slice(0, at))) return "any";
+  // "WHENEVER A PLAYER ATTACKS ..., THAT ATTACKING PLAYER" IS ANY PLAYER (#1666 review): Jolene, Combat Calligrapher, Ellie and Curse of Shallow Graves give the token to whoever attacked, you included. Any other "attacking player" is the attacker of your
+  // permanent or of you ("Souls of the Faultless", "Contested Game Ball"), an opponent.
+  if (p === "attacking player" && /\bwhenever a player attacks\b/i.test(text.slice(0, at))) return "any";
+  // "FOR EACH CREATURE TOKEN ON THE BATTLEFIELD, ITS CONTROLLER" IS EVERY TOKEN'S CONTROLLER (#1666 review, Parallel Evolution): yours among them.
+  if ((p === "its controller" || p === "their controller") && /\bfor each (?:[a-z-]+ )*token on the battlefield\b/i.test(text.slice(0, at))) return "any";
+  // "DESTROY ALL ..., ITS CONTROLLER" IS EVERYONE'S (#1666 round 3): after an untargeted "destroy / exile all" (March of Souls, The Phasing of Zhalfir, Rampage of the Clans), or a "for each player ... that player controls" (The Curse of Fenric), the creatures that
+  // went are the controllers' of every board, yours included. A wipe of TARGETS you pick ("destroy any number of target creatures", Descent of the Dragons) keeps the removal decision below.
+  if (p === "its controller" || p === "their controller") {
+    const before = text.slice(0, at);
+    const wipe = /\b(?:destroy|exile) all\b/ig;
+    let w: RegExpExecArray | null, last = -1;
+    while ((w = wipe.exec(before)) !== null) last = w.index;
+    if (last >= 0 && !/\btarget\b/i.test(before.slice(last))) return "any";
+    if (/\bfor each player\b[^.]*\bthat player controls\b/i.test(before)) return "any";
+    // "FOR EACH CREATURE DESTROYED THIS WAY, ITS CONTROLLER" HAS NO ONE CONTROLLER (#1666 round 3): several objects, each its own controller's (Descent of the Dragons, Hour of Need, Curse of the Swine, Soul of Emancipation, Terastodon: Terastodon's are
+    // usually your own lands). A single target ("Its controller creates", Beast Within) keeps the removal decision below.
+    // ...unless the objects are named as an opponent's ("for each opponent, exile up to one target permanent that player controls. For each permanent exiled this way, its controller draws a card", King Solomon's Frogs).
+    if (/\bfor each\b[^.]*\b(?:this way|of those (?:permanents|creatures))\b/i.test(before) && !/\bfor each opponent\b|\bopponents? controls?\b|\byou don'?t control\b/i.test(before)) return "any";
+  }
   // AFTER AN UNTARGETED TRIGGER SUBJECT IT IS ANYONE (#650): "Whenever a creature enters, its
   // controller sacrifices ..." (Tainted Aether) points at the creature that entered, which can be
   // yours. A target or an opponent named first keeps the removal reading, as does a bare fragment.

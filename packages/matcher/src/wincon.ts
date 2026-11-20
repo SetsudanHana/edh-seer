@@ -50,6 +50,7 @@ export { RESOURCE_TOKENS } from "./archetypes.js";
  *  Measured cost of getting this wrong: keying go-wide on `token-generation` alone put it in all 71
  *  calibration decks and made it the PRIMARY plan of 52, because "An Offer You Can't Refuse",
  *  "Pirate's Pillage" and "Unexpected Windfall" all create tokens -- Treasures. */
+const PAID_PER_REMOVED = /\bfor each [^.]*\b(?:this way|of those (?:permanents|creatures))\b[^.]*\bits controller creates\b/i;
 function makesCreatureTokens(dc: DeckCard): boolean {
   return (dc.tags?.abilities ?? []).some((a) => {
     if (!["token-generation", "token-doubling"].includes(a.effect.kind)) return false;
@@ -72,6 +73,11 @@ function makesCreatureTokens(dc: DeckCard): boolean {
     // A TOKEN AN OPPONENT GETS IS THEIR BOARD (#574): Beast Within, Generous Gift, Crib Swap and
     // Stroke of Midnight are removal that pays the victim a token, and were 3 of Yuna's 7 go-wide cards.
     if (subject.control === "opp") return false;
+    // ...AND SO IS ONE PAID PER REMOVED PERMANENT (#1666 round 4): "Destroy all creatures. For each creature destroyed this way, its controller creates a 1/1 Spirit" (March of Souls), "For each creature destroyed this way, its controller creates a
+    // 4/4 Dragon" (Descent of the Dragons) read `any` since derive stopped calling several controllers an opponent, but the token is still the victim's. Read off the printed sentence, because no ability field says it: a "for each ... this way /
+    // of those permanents" followed by "its controller creates". A single removal ("That creature's controller creates", Rapid Hybridization) is not matched and keeps counting, as it did on main.
+    // CEILING: Terastodon, Descent of the Dragons and Hour of Need are sometimes aimed at your own permanents for the tokens, and Rowan's -7 likewise; they are read as removal, so none counts as go-wide (an under-claim, as before #1666).
+    if (subject.control === "any" && PAID_PER_REMOVED.test(dc.card.oracleText ?? "")) return false;
     const subtypes = (Array.isArray(subject.subtype) ? subject.subtype : subject.subtype ? [subject.subtype] : [])
       .map((s) => s.toLowerCase());
     if (subtypes.some((s) => RESOURCE_TOKENS.has(s))) return false;

@@ -31,3 +31,12 @@ export function flipPerspective(tags: CardTags): CardTags {
     })),
   };
 }
+
+/** A TOKEN AN OPPONENT RECEIVES FROM YOUR CARD (#1666): Beast Within's Beast, Overencumbered's Clue, Food and Junk. The token's own text is written for whoever controls it, and that is the opponent, so the
+ *  node is read from their seat: `flipPerspective` for what its abilities say, and `heldByOpponent` for what it IS (its own enters and dies, and the filter a producer must meet to make it). A payoff of tokens "you
+ *  control" then fails to hear it, and one of any control ("whenever an artifact is put into a graveyard", Disciple of the Vault) or of an opponent's does.
+ *  CEILING: a keyword the token carries (`keywordAbilities`) is still read from your seat; none of the opponent-given tokens in the corpus has a keyword whose trigger a payoff hears. */
+export function opponentHeld(tags: CardTags): CardTags {
+  const flipped = flipPerspective(tags);
+  return { ...flipped, characteristics: { ...flipped.characteristics, heldByOpponent: true } };
+}
