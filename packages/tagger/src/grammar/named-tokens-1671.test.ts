@@ -18,7 +18,7 @@ const THOMIL = '−5: Create a Lord of the Pit token. (It\'s a {4}{B}{B}{B} 7/7 
 
 test("the reminder's type line is the named token's characteristics, in the clause the grammar reads", () => {
   expect(segment(WORZEL, [], "Legendary Planeswalker — Worzel")[0]!.text).toBe("Create ten 1/1 green Faerie creature tokens with flying.");
-  expect(segment(NIVEA, [], "Legendary Creature — Human Wizard")[0]!.text).toBe("Create a 6/6 white legendary Angel creature token with flying, first strike, vigilance, trample, haste, and protection from black and from red.");
+  expect(segment(NIVEA, [], "Legendary Creature — Human Wizard Warrior")[0]!.text).toBe("Create a 6/6 white legendary Angel creature token with flying, first strike, vigilance, trample, haste, and protection from black and from red.");
 });
 
 test.each([
@@ -26,7 +26,7 @@ test.each([
   ["Nivea, Beloved Battlemage", "Legendary Creature — Human Wizard Warrior", NIVEA],
   ["Arzakon", "Legendary Planeswalker — Arzakon", ARZAKON],
   ["Thomil, the Destroyer", "Legendary Planeswalker — Thomil", THOMIL],
-  ["Balefang the Unslayable", "Legendary Creature — Angel Warrior", BALEFANG],
+  ["Balefang the Unslayable", "Legendary Creature — Demon Dragon", BALEFANG],
 ])("%s derives from its named token's reminder", (name, typeLine, text) => {
   const g = grammarClauseRecords(card(name, typeLine, text));
   expect(g.blocker, JSON.stringify(g.blocker)).toBeUndefined();
@@ -46,7 +46,7 @@ test("a predefined token's reminder is left alone (Food, Treasure)", () => {
 
 // Zagorka, Mother of Sanctum (Mongo `cards`): the boundary the quote-strip lost, then "Each opponent who does can't attack you during their next turn".
 test("Zagorka: the sentence after the quoted land ability stands alone, 'who does' read as the opponents' condition", () => {
-  const g = grammarClauseRecords(card("Zagorka, Mother of Sanctum", "Legendary Creature — Human Warlock",
+  const g = grammarClauseRecords(card("Zagorka, Mother of Sanctum", "Legendary Creature — Human Peasant",
     'At the beginning of your end step, each player may create a tapped land token named Sanctum with "{T}: Add one mana of any color." Each opponent who does can\'t attack you during their next turn.'));
   expect(g.blocker, JSON.stringify(g.blocker)).toBeUndefined();
   expect(g.complete).toBe(true);
@@ -61,7 +61,7 @@ const derived = (name: string, typeLine: string, text: string) => {
 };
 
 test("derive: Balefang's token is an OPPONENT's tapped Angel, protection from Demons and Dragons names no subtype, and the goad is its own action", () => {
-  const t = derived("Balefang the Unslayable", "Legendary Creature — Angel Warrior", BALEFANG);
+  const t = derived("Balefang the Unslayable", "Legendary Creature — Demon Dragon", BALEFANG);
   const made = t.abilities.find((a) => a.effect.kind === "token-generation")!;
   expect(made.emits?.filter((e) => e.verb === "create-token" || e.verb === "enters").map((e) => [e.subject.control, e.subject.subtype])).toEqual([["opp", "angel"], ["opp", "angel"]]);
   expect(made.emits?.find((e) => e.verb === "enters")?.subject.entersTapped).toBe(true);
@@ -78,7 +78,7 @@ test("derive: Black Lotus is a colourless artifact (its NAME is no colour), Akro
 
 // Ral and the Implicit Maze (Mongo `cards`): its grammar row before #1671 read "Spellgorger Weird" as a Weird; the reminder's own ability names the token, which reads as "this token".
 test("a named token's ability that names the token reads as this token (Ral and the Implicit Maze keeps its grammar row)", () => {
-  const ral = "I — This Saga deals 2 damage to each creature and planeswalker your opponents control.\nII — You may discard a card. If you do, exile the top two cards of your library. You may play them until the end of your next turn.\nIII — Create a Spellgorger Weird token. (It's a {2}{R} 2/2 Weird creature with \"Whenever you cast a noncreature spell, put a +1/+1 counter on Spellgorger Weird.\")";
+  const ral = "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — This Saga deals 2 damage to each creature and planeswalker your opponents control.\nII — You may discard a card. If you do, exile the top two cards of your library. You may play them until the end of your next turn.\nIII — Create a Spellgorger Weird token. (It's a {2}{R} 2/2 Weird creature with \"Whenever you cast a noncreature spell, put a +1/+1 counter on Spellgorger Weird.\")";
   expect(segment(ral, [], "Enchantment — Saga").map((c) => c.text)).toContain("Create a 2/2 red Weird creature token with that ability.");
   const g = grammarClauseRecords(card("Ral and the Implicit Maze", "Enchantment — Saga", ral));
   expect(g.blocker, JSON.stringify(g.blocker)).toBeUndefined();
@@ -89,4 +89,12 @@ test("a named token with two quoted abilities reads (Ginger, Queen of Sweets kee
   const ginger = 'At the beginning of each upkeep, if you\'re the monarch, create a Gingerbrute token. (It\'s a {1} 1/1 Food Golem artifact creature with haste, "{1}: This token can\'t be blocked this turn except by creatures with haste," and "{2}, {T}, Sacrifice this token: You gain 3 life.")';
   const g = grammarClauseRecords(card("Ginger, Queen of Sweets", "Legendary Artifact Creature — Food Noble", ginger));
   expect(g.blocker, JSON.stringify(g.blocker)).toBeUndefined();
+});
+
+test("a line that names TWO tokens is not rewritten: the Food stays a Food (reviewer round 2)", () => {
+  const text = "When this creature enters, create a Food token. Then create a Lord of the Pit token. (It's a {4}{B}{B}{B} 7/7 Demon creature with flying and trample.)";
+  const out = segment(text, [], "Creature — Test").map((c) => c.text).join(" | ");
+  expect(out).not.toContain("Demon");
+  expect(out).toContain("create a Food token");
+  expect(out).toContain("create a Lord of the Pit token");
 });

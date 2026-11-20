@@ -561,6 +561,10 @@ function namedTokenReminder(raw: string): string {
   const maker = NAMED_TOKEN_MAKER.exec(before);
   if (!maker) return raw;
   const [, lead, name, tokenWord, tail] = maker as unknown as [string, string, string, string, string];
+  // ONE token-making sentence only: the lazy maker binds to the FIRST capitalised token, so "create a Food token. Then create a Lord of the Pit token. (reminder)" would
+  // turn the Food into the reminder's Demon. Another "create(s) ... token(s)" in the line means the reminder's owner is not knowable; leave the text unchanged.
+  // ("The token is goaded" is not a second maker: it has no "create".)
+  if ((before.match(/\bcreates?\b[^.]*?\btokens?\b/g) ?? []).length > 1) return raw;
   // The sentence ends after the token phrase, or the next sentence is another ("The token is goaded ..."); a token word followed by a clause is not read.
   if (!/^(?:\.|\.(?: [A-Z].*)?)$/.test(tail)) return raw;
   const [, cost, legendary, pt, typeWords, abilities] = rem as unknown as [string, string, string | undefined, string | undefined, string, string | undefined];
