@@ -797,6 +797,9 @@ const CONTROL_CHANGE_PRINTED = [
   // player is you -- an emit whose subject reads "you gain control" is a wrong answer there. CEILING: Mindslaver, Sorin Markov's -7 and Emrakul keep their player-control emit (the
   // `target` pattern above), which the matcher reads as a control change although CR 723.3 says no permanent changes hands; that is a wider ruling than this task.
   /\bcontrols?\s+your\s+opponents?\b/i,
+  // ASSIMILATE a permanent (#1679, owner 2026-10-26 #1349; The Best of Both Worlds' reminder: "Gain control of it and put a +1/+1 counter on it"): the keyword stands for the control change, and its reminder is stripped from the clause. Only the verb itself,
+  // never "assimilated" (chapter III's "the Borg assimilated with this Saga"). CEILING: a card that assimilates a CARD in a zone is a put, and the grammar reads it so (`action.ts`), so this word only reaches a clause whose gain-control action the grammar made of a permanent.
+  /\bassimilates?\b/i,
 ];
 export function printsControlChange(clauseText: string): boolean {
   return CONTROL_CHANGE_PRINTED.some((re) => re.test(clauseText));

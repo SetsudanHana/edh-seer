@@ -499,7 +499,13 @@ function moveObject(phrase: string, onField = false): Args | null {
   if (/\bwith the same name as\b/i.test(phrase)) return null;
   // "a creature card from that player's graveyard that was put there from their library this turn" (The Weaver King, Assimilate the Wounded): the card comes out of an OPPONENT's graveyard, but derive reads the later
   // "from <zone>" (where it was put there from) as the origin and the card as any player's, which pairs it with every own-graveyard trigger (about 6,800 false pairs). Unread until the emit can carry the zone and its owner.
-  if (/ from that player's (?:graveyard|hand|library) that (?:was|were) put there from /i.test(phrase)) return null;
+  if (/ from that player's (?:graveyard|hand|library) that (?:was|were) put there from /i.test(phrase)) {
+    // ...EXCEPT "that was put there from the battlefield this turn" (Assimilate the Wounded, #1679), a creature card that DIED this turn: the tail is read off, the card is the opponent's creature card in a graveyard, and derive never sees
+    // a "from the battlefield" to take for the origin. CEILING: the condition (died this turn) is dropped, so the card is any creature card in that player's graveyard: a wider claim, not a different one. "from their library" (The Weaver King) stays unread.
+    const died = / that (?:was|were) put there from the battlefield this turn$/i.exec(phrase);
+    if (!died) return null;
+    return moveObject(phrase.slice(0, died.index), onField);
+  }
   const t = phrase.replace(/ in a face-(?:down|up) pile$/, "").replace(/ at random$/, "").replace(/ of (?:their|his or her|your) choice$/, "").replace(/ from among (?:them|those cards|the (?:cards )?milled (?:this way|cards)|the cards milled this way)$/, "");
   // "target player's graveyard", "all graveyards": a whole graveyard.
   if (/^(?:target player's|target opponent's|each opponent's|your|their|all|each player's|all opponents'|any number of target players'|target players') graveyards?$/.test(t)) return { object: { control: "any", token: null }, fromZone: "graveyard", text: phrase };
@@ -521,6 +527,10 @@ function moveObject(phrase: string, onField = false): Args | null {
   // CEILING: the count is the words ("all but the bottom card"), as for the top-N phrase's `text`; the one card that stays is not a separate claim.
   // "their library" is the actor's, a back-reference, as for the top-N phrase (Doomsday Excruciator: "each player exiles all but the bottom six cards of their library face down").
   if (/^all but the bottom (?:card|(?:\w+|\d+) cards) of (?:your|their|target player's|each player's|that player's|each opponent's|target opponent's) library$/.test(rest)) return / of their library$/.test(rest) ? { object: { ...CARD, ref: "sentence" }, fromZone: "library", text: phrase } : { object: CARD, fromZone: "library", text: phrase };
+  // "the Borg assimilated with this Saga" (The Best of Both Worlds' chapter III, #1679): the creature chapter I took, which assimilate made a Borg artifact creature (the keyword's reminder). The words ride as "the Borg creature":
+  // derive reads a stored object's nouns as subtypes, and "assimilated with this Saga" would add the subtype Saga to the exile, and a back-reference's words are kept as printed.
+  // CEILING: the class is any Borg creature, wider than the one creature chapter I took; no field says "the one assimilated with this card".
+  if (/^the Borg assimilated with (?:~|this [A-Za-z]+|it)$/.test(rest)) return { object: parse("a Borg creature")!, text: "the Borg creature" };
   const r = objectOf(rest);
   if (!r) return null;
   // "from their graveyard": whose is a back-reference ("target opponent mills three cards. Put a land
@@ -2436,7 +2446,9 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // ("this as a 3/6 Golem artifact creature"), which #1352 says the grammar's own animate drops. CEILING: "loses all other creature types" is not read.
     const assimilate = /^assimilate (.+)$/i.exec(s);
     if (assimilate) {
-      const put = readPhrase(`put ${assimilate[1]} onto the battlefield under your control`, condition);
+      // A PERMANENT is assimilated by taking it (The Best of Both Worlds' reminder: "Gain control of it and put a +1/+1 counter on it", #1679): a phrase that names no card is read as a gain-control, never as a put "onto the battlefield" from the battlefield.
+      // CEILING: "card" in the phrase is what says it is in a zone; a permanent phrase that also prints a zone ("a creature in a graveyard") would read as a gain-control.
+      const put = /\bcards?\b/i.test(assimilate[1]!) ? readPhrase(`put ${assimilate[1]} onto the battlefield under your control`, condition) : readPhrase(`gain control of ${assimilate[1]}`, condition);
       const counter = readPhrase("put a +1/+1 counter on it", condition);
       if (put && counter) out.push(...put, ...counter, { verb: "animate", object: REF, text: "it as a Borg artifact creature", ...(condition ? { condition } : {}) });
       else unread?.push(s);

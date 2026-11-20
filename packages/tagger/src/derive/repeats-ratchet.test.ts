@@ -95,7 +95,10 @@ const FIXTURE = new URL("repeats-refused.json", import.meta.url);
 /** 2854 -> 2858 (2026-11-19, #1672, DERIVE 543): four rows added on newly derived cards whose triggers the rules
  *  cannot name -- Zekes, Acid Rock Fan's draw and discard ("if it was cast for its emerge cost") and Yume, Chronicler
  *  of Valor's two draws. 0 gone. */
-const REFUSED_CAP = 2858;
+/** 2858 -> 2859 (2026-11-20, #1679, DERIVE 551): one row added, The Madcap Jester's play of opponent-owned cards
+ *  from exile, whose trigger ("a spell or ability you control causes one or more cards to be exiled from an
+ *  opponent's library") derive refuses as a narrowing, so the rules cannot name it. 0 gone. */
+const REFUSED_CAP = 2859;
 
 /** `repeatsFor` takes THREE arguments -- `cost` feeds rules 1-2 (self-sacrifice, {T}/{Q}),
  *  `clauseText` feeds rule 3 ("once each turn"). A fixture row missing `cost` would half-disable the

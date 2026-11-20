@@ -952,9 +952,11 @@ test("a leading for-each whose count drops a qualifier or names what an earlier 
   for (const text of ["For each creature token you control, create a token that's a copy of it.", "For each attacking non-Faerie creature, create a tapped and attacking 1/1 blue Faerie creature token with flying.", "For each land you control, create a Treasure token."]) expect(unreadPhrases(text, "spell"), text).toEqual([]);
 });
 
-test("'from that player's graveyard that was put there from <zone>' stays unread: derive reads the later 'from' as the origin of a card taken from an opponent's graveyard (The Weaver King, Assimilate the Wounded, #1673)", () => {
+test("'from that player's graveyard that was put there from <zone>' stays unread: derive reads the later 'from' as the origin of a card taken from an opponent's graveyard (The Weaver King, #1673; Assimilate the Wounded reads since #1679)", () => {
   expect(unreadPhrases("Then for each opponent, put a creature card from that player's graveyard that was put there from their library this turn onto the battlefield under your control.", "triggered")).toHaveLength(1);
-  expect(unreadPhrases("For each opponent, assimilate up to one target creature card from that player's graveyard that was put there from the battlefield this turn.", "spell")).toHaveLength(1);
+  // ...except "from the battlefield this turn" (#1679): the tail is read off, so there is no "from the battlefield" for derive to take as the origin (trigger-heads-1679.test.ts)
+  expect(unreadPhrases("For each opponent, assimilate up to one target creature card from that player's graveyard that was put there from the battlefield this turn.", "spell")).toEqual([]);
+  expect(unreadPhrases("For each opponent, put up to one target creature card from that player's graveyard that was put there from their hand this turn onto the battlefield under your control.", "spell")).toHaveLength(1);
 });
 
 test("'for each player, <action on that player's permanent>' is per-player repetition, not a count of objects: it stays unread (Nils, Discipline Enforcer; Turf War; #1673 review)", () => {
