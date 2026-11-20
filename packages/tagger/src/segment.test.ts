@@ -768,3 +768,14 @@ test("reminder stripping is linear, and still strips a reminder", () => {
   // The ordinary case is unchanged: the reminder goes and the spacing around it closes up.
   expect(segment("You get {E}{E} (two energy counters).")[0].text).toBe("You get {E}{E} .");
 });
+
+// #1671: the period INSIDE a quoted grant ends the sentence; "that ability" must not glue the next sentence on.
+test("a quoted grant that ends in a period keeps the sentence boundary (Saurian Explorer, Zagorka)", () => {
+  const sa = segment('{6}: Create a tapped Planet land token named New Planet with "{T}: Add one mana of any color." Activate only as a sorcery.');
+  expect(sa[0]!.text).toContain("with that ability. Activate only as a sorcery");
+  const za = segment('At the beginning of your end step, each player may create a tapped land token named Sanctum with "{T}: Add one mana of any color." Each opponent who does can\'t attack you during their next turn.');
+  expect(za[0]!.text).toContain("with that ability. Each opponent who does");
+  // A grant that ends the text, or a quote with no inner period, is unchanged.
+  const end = segment('Create a 1/1 Wizard creature token with "{T}: Add one mana of any color."');
+  expect(end[0]!.text).toBe("Create a 1/1 Wizard creature token with that ability");
+});

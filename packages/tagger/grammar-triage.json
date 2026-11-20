@@ -111,10 +111,10 @@
       "why": "'a token that's a copy of target creature you control': control and target belong to the ORIGINAL. The token copies only copiable values (CR 707.2) and is its creator's (CR 111.2); parseSubject read 'you control' and 'target' as the token's. The copiable values the original states (a chosen type, a keyword) are kept, so 'each creature you control of the chosen type' and '... with haste' land here too."
     },
     "keyword": {
-      "distinct": 32,
+      "distinct": 33,
       "label": "grammar right",
       "rule": "printed text",
-      "why": "'a spell that has convoke', 'another spell that has flash': the keyword the spell has, the same demand as 'a spell with convoke'. parseSubject reads keywords only after 'with'. (#1387: two phrases moved in from keyword,scope once parseSubject stopped reading a token's quoted scope. The GRAMMAR reads the whole keyword list and parseSubject stops at the first or misses one: The Void -- grammar [flying, indestructible], parseSubject [flying]; Toggo's Rock 'Equipment artifact token named Rock with \"...\" and equip {1}' -- grammar [equip], parseSubject none. Grammar right on both; the same keyword-list disagreement keyword,scope already labelled.)"
+      "why": "'a spell that has convoke', 'another spell that has flash': the keyword the spell has, the same demand as 'a spell with convoke'. parseSubject reads keywords only after 'with'. (#1387: two phrases moved in from keyword,scope once parseSubject stopped reading a token's quoted scope. The GRAMMAR reads the whole keyword list and parseSubject stops at the first or misses one: The Void -- grammar [flying, indestructible], parseSubject [flying]; Toggo's Rock 'Equipment artifact token named Rock with \"...\" and equip {1}' -- grammar [equip], parseSubject none. Grammar right on both; the same keyword-list disagreement keyword,scope already labelled.) (#1671: one phrase moved in from colors,keyword once parseSubject stopped reading a token protection colour as the token colour: 'a 2/2 black Knight creature token with flanking, protection from white, and haste' -- colours now agree, parseSubject still misses protection in the comma list.)"
     },
     "combat,targetPlayer": {
       "distinct": 1,
@@ -315,10 +315,10 @@
       "why": "Every member read. anyOf: whole noun phrases joined by and/or ('target creature you control and target creature you don't control', 'another creature you control or a land you control'): their union, shared fields outside and the differing ones per branch; or 'power or toughness N or less' as one branch per stat; subtype: a word inside a name, a counter kind, a Role's name or a token's quoted ability is not the subject's subtype; 'Mice' is Mouse."
     },
     "colors": {
-      "distinct": 3,
+      "distinct": 1,
       "label": "grammar right",
       "rule": "printed text",
-      "why": "Every member read. colors: a colour inside 'protection from white' is the keyword's, not the token's."
+      "why": "Every member read. colors: a colour inside 'protection from white' is the keyword's, not the token's. (#1671: two of the three resolved once parseSubject strips a token's protection parameters, stripTokenProtection in derive/subject.ts.)"
     },
     "anyOf,colors": {
       "distinct": 12,
@@ -403,12 +403,6 @@
       "label": "grammar right",
       "rule": "printed text",
       "why": "Every member read. anyOf: whole noun phrases joined by and/or ('target creature you control and target creature you don't control', 'another creature you control or a land you control'): their union, shared fields outside and the differing ones per branch; or 'power or toughness N or less' as one branch per stat; type: the type is the head noun's: not a word from a targets-only clause or a token's quoted ability."
-    },
-    "colors,keyword": {
-      "distinct": 1,
-      "label": "grammar right",
-      "rule": "printed text",
-      "why": "Every member read. colors: a colour inside 'protection from white' is the keyword's, not the token's; keyword: keyword lists joined by commas ('flanking, protection from white, and haste') and 'that has convoke'."
     },
     "control,scope,subtype": {
       "distinct": 1,

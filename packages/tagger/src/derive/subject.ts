@@ -901,6 +901,13 @@ export function stripTokenAbility(text: string): string {
   if (q < 0 || !/\btokens?\b/i.test(text.slice(0, q))) return text;
   return text.replace(QUOTED_ABILITY, " ");
 }
+/** The qualities a TOKEN's keyword "protection from X [and from Y]" names (#1671) are what it is protected from, not its colours or subtypes: "a 5/5 white Angel creature token with ... protection from Demons and from Dragons"
+ *  (Baneslayer Angel's token) is an Angel, not a Demon or a Dragon. Cut only AFTER the word "token" (a filter's own "creature with protection from red" is read as before). One `\S+` word per parameter, no nesting. */
+export function stripTokenProtection(text: string): string {
+  const at = text.search(/\btokens?\b/i);
+  if (at < 0) return text;
+  return text.slice(0, at) + text.slice(at).replace(/\bprotection from \S+(?: and from \S+)*/gi, "protection");
+}
 /** A double-quoted span not introduced by "named", or a single-quoted ability after "with" (nested inside a quote). An UNCLOSED quote runs
  *  to the end: `COUNT_PHRASE` cuts "for each quest counter" out of Moira Brown's ability before the sweep sees it. */
 const QUOTED_ABILITY = /(?<!\bnamed\s)"[^"]*(?:"|$)|\bwith\s+'[^']*(?:'|$)/gi;
@@ -943,7 +950,7 @@ export function parseSubject(text: string, role: "pick" | "event" = "pick"): Sub
   // words are not subtypes (The Dogronmaster).
   // WHAT AN "except for" LIST SPARES IS NOT THE CLASS (#1549): Elspeth Tirel's "all other permanents except for lands and tokens" read `token: true`, type `land`, and Scourglass's "all permanents except for a ..." the spared types. Cut at the list, as the damage path does (`cutExceptTail`).
   // The spared card types and subtypes are carried as `notType` / `notSubtype` (#1582, `sparedClasses`); only the "except for" form (a bare "except creatures chosen this way" or "except it's" keeps its words).
-  const lowered = stripTokenAbility(text.toLowerCase().trim());
+  const lowered = stripTokenProtection(stripTokenAbility(text.toLowerCase().trim()));
   const whole = lowered.split(ATTACHED_TO)[0].split(AND_ATTACH)[0].split(EXCEPT_FOR)[0]
     .replace(COPY_OF_NAMED_CARD, "$1").trim();
   // A COUNT IS A MAGNITUDE, NOT A CLASS (recall v6 #77, 2026-09-10). "a Treasure token for each

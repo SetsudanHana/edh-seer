@@ -262,10 +262,17 @@ export function costActions(cost: string): string[] {
  *  grants a triggered ability, Urza's Saga grants an activated one. The model tried to split these
  *  itself and invented clause ids to do it, breaking the completeness invariant, so split here. */
 const GRANTED = /"([^"]{12,})"/g;
+/** CEILING: "It's still a land." after a quoted grant stays glued to the animate ("... Elemental creature with that ability It's still a land", Raging Ravine). The grammar reads that tail only as the end of the animate's own sentence
+ *  (`stillOf`); a sentence of its own is a blocker for it (Faerie Conclave, Restless Spire), a family of its own that the boundary fix of #1671 does not touch. */
+const STILL_A_TYPE = /^\s+It's still an? /;
 function extractGranted(text: string): { body: string; granted: string[] } {
   const granted: string[] = [];
-  const body = text.replace(GRANTED, (m, inner: string) =>
-    /^(When|Whenever|At\b)|^\{[^{}]*\}[^:]*:/.test(inner.trim()) ? (granted.push(inner.trim()), "that ability") : m);
+  // The period INSIDE the quote ends the sentence ("... with "{T}: Add one mana of any color." Activate only as a sorcery."):
+  // when text follows the closing quote, "that ability" keeps that period, or the next sentence glues on (Saurian Explorer, Zagorka; #1671).
+  const body = text.replace(GRANTED, (m, inner: string, at: number) =>
+    /^(When|Whenever|At\b)|^\{[^{}]*\}[^:]*:/.test(inner.trim())
+      ? (granted.push(inner.trim()), inner.trimEnd().endsWith(".") && /^\s+\S/.test(text.slice(at + m.length)) && !STILL_A_TYPE.test(text.slice(at + m.length)) ? "that ability." : "that ability")
+      : m);
   return { body, granted };
 }
 
@@ -534,6 +541,42 @@ const LEVEL = /^(\{[^{}]*\}(?:\s*\{[^{}]*\})*)\s*:\s*(Level\s+\d+)/i;
 /** A planeswalker loyalty cost: "+1:", "-3:", "0:", "+X:", using either hyphen or minus sign. */
 const LOYALTY = /^([+\u2212-]?(?:\d+|X))\s*:\s+/;
 
+/** A TOKEN NAMED AFTER A REAL CARD gives its characteristics ONLY in the reminder printed after the sentence that makes it (#1671): "Create a Lord
+ *  of the Pit token. (It's a {4}{B}{B}{B} 7/7 Demon creature with flying, trample, and "...")". CR 111.3: the effect defines the token's
+ *  characteristics, and the reminder is where this card prints them. Read for one shape only: the line has ONE "create(s) [count] [tapped] <Name>
+ *  token(s)" with a capitalised name, and ends in a reminder "(It's|They're|She's|He's a[n] {cost} [legendary] [P/T] <types> [with <abilities>])"
+ *  whose types are plain words. The token's phrase is rewritten to what the grammar already reads ("a 7/7 black Demon creature token with flying, ..."), and the reminder is stripped as before.
+ *  The token's own name inside its quoted ability is the token ("put a +1/+1 counter on Spellgorger Weird", Ral and the Implicit Maze), written "this token".
+ *  CEILING: the token's NAME is not carried into the clause. The filter grammar never kept a token's "named X" (`tokenHead`), and `parseSubject` reads
+ *  colour and subtype words anywhere in the phrase, so "Black Lotus" would have made the Lotus black and "Baneslayer Angel" an Angel twice. Any other line, a predefined token (Food, Treasure, Map: its reminder
+ *  prints no mana cost) or a reminder without a type line returns unchanged, so the card keeps its blocker.
+ *  CEILING: the colour is read from the mana symbols of the cost (CR 202.2); the cost itself (its mana value) is not carried. */
+const NAMED_TOKEN_REMINDER = /\((?:It's|They're|She's|He's) (?:an? )?((?:\{[WUBRG0-9]+\})+) ?(legendary )?(?:(\d+\/\d+) )?((?:artifact|creature|[A-Z][a-z]+)(?: [A-Za-z]+){0,4}?)(?: with (.+?))?\.?\)\s*$/;
+const NAMED_TOKEN_MAKER = /^(.*?\b[Cc]reates? (?:(?:an?|one|two|three|four|five|six|seven|eight|nine|ten|\d+) )?(?:tapped )?)([A-Z][A-Za-z']*(?:,? (?:[A-Z][A-Za-z']*|of|the|in|and))*) (tokens?)\b(.*)$/;
+const MANA_COLOR: Record<string, string> = { W: "white", U: "blue", B: "black", R: "red", G: "green" };
+function namedTokenReminder(raw: string): string {
+  const rem = NAMED_TOKEN_REMINDER.exec(raw);
+  if (!rem) return raw;
+  const before = raw.slice(0, rem.index).trimEnd();
+  const maker = NAMED_TOKEN_MAKER.exec(before);
+  if (!maker) return raw;
+  const [, lead, name, tokenWord, tail] = maker as unknown as [string, string, string, string, string];
+  // ONE token-making sentence only: the lazy maker binds to the FIRST capitalised token, so "create a Food token. Then create a Lord of the Pit token. (reminder)" would
+  // turn the Food into the reminder's Demon. Another "create(s) ... token(s)" in the line means the reminder's owner is not knowable; leave the text unchanged.
+  // ("The token is goaded" is not a second maker: it has no "create".)
+  if ((before.match(/\bcreates?\b[^.]*?\btokens?\b/g) ?? []).length > 1) return raw;
+  // The sentence ends after the token phrase, or the next sentence is another ("The token is goaded ..."); a token word followed by a clause is not read.
+  if (!/^(?:\.|\.(?: [A-Z].*)?)$/.test(tail)) return raw;
+  const [, cost, legendary, pt, typeWords, abilities] = rem as unknown as [string, string, string | undefined, string | undefined, string, string | undefined];
+  const colors = [...new Set(cost.match(/[WUBRG]/g) ?? [])].map((c) => MANA_COLOR[c]!);
+  const types = typeWords.replace(/\b(creature|artifact)s\b/g, "$1").trim();
+  if (!/\b(?:artifact|creature)\b/.test(types)) return raw;
+  const chars = [pt, colors.join(" and "), legendary?.trim(), types].filter(Boolean).join(" ");
+  const article = /^(.*?\b)(an?) (tapped )?$/.exec(lead);
+  const lead2 = article ? `${article[1]}${/^[aeiou]/i.test(chars) ? "an" : "a"} ${article[3] ?? ""}` : lead;
+  return `${lead2}${chars} ${tokenWord}${abilities ? ` with ${abilities.split(name).join("this token")}` : ""}${tail}`.replace(/\s+/g, " ").trim();
+}
+
 /** Strip reminder text but remember whether anything else remained. */
 function stripReminder(line: string): string {
   // NO SURROUNDING `\s*`: the collapse on the next call already makes them redundant, and they were
@@ -625,7 +668,7 @@ function segmentRaw(oracleText: string, keywords: string[] = [], typeLine = ""):
     // and paying for the answer -- on all 116 multi-face cards in the calibration scope. It is also
     // the only marker of where one face ends and the next begins.
     if (raw === "//") { face++; continue; }
-    const line = stripReminder(raw);
+    const line = stripReminder(namedTokenReminder(raw));
     // A line that was ONLY reminder text still gets a slot, so clause ids account for every line.
     if (line === "") { next({ kind: "reminder", text: raw }); continue; }
 
