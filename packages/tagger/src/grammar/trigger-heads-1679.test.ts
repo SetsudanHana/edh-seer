@@ -101,7 +101,10 @@ test("assimilating a PERMANENT takes it; the Borg it made is exiled and returned
   const exile = d.abilities!.flatMap((a) => a.emits ?? []).find((e) => e.verb === "exiled")!;
   expect(exile.subject).toMatchObject({ type: "creature", subtype: "borg", fromZone: "battlefield" });
   expect(JSON.stringify(exile.subject)).not.toContain("saga");
-  expect(d.abilities!.find((a) => a.effect.kind === "flicker" && a.clause === 4)!.emits).toMatchObject([{ verb: "enters", subject: { fromZone: "exile", subtype: "borg" } }]);
+  // CR 400.7: what returns is a NEW object, no longer the Borg (the animate ended), and it is its OWNER's (the opponent's) card entering under its owner's control
+  const reentry = d.abilities!.find((a) => a.effect.kind === "flicker" && a.clause === 4)!.emits!;
+  expect(reentry).toMatchObject([{ verb: "enters", subject: { fromZone: "exile", owner: "opp", control: "opp" } }]);
+  expect(reentry[0]!.subject.subtype).toBeUndefined();
   // a card in a zone is still a put: Death Is Irrelevant
   const dir = grammarClauseRecords(card("Death Is Irrelevant", "Enchantment", "Artifact creatures you control have indestructible.\nAt the beginning of your end step, assimilate target creature card from a graveyard. (Put it onto the battlefield under your control with a +1/+1 counter. It's a Borg artifact creature and loses all other creature types.)"));
   expect(dir.records.flatMap((r) => r.actions ?? []).map((a) => a.verb)).toContain("put");
@@ -122,22 +125,24 @@ test("Assimilate the Wounded: the creature enters under YOUR control, leaves THA
   expect(a.emitsOf("enters")).toMatchObject([{ subject: { control: "you", type: "creature", fromZone: "graveyard", owner: "opp" } }]);
   expect(a.emitsOf("leaves")).toMatchObject([{ subject: { control: "opp", type: "creature", fromZone: "graveyard" } }]);
   expect(a.effect("graveyard-recursion")[0]!.effect.subject).toMatchObject({ control: "opp", type: "creature", fromZone: "graveyard" });
-  expect(a.emitsOf("counter-added")).toMatchObject([{ subject: { control: "you", counter: "+1/+1" } }]);
-  expect(a.effect("counter-placement")[0]!.effect.subject!.control).toBe("you");
-  expect(a.effect("animate")[0]!.effect.subject).toMatchObject({ control: "you", subtype: "borg" });
+  expect(a.emitsOf("counter-added")).toMatchObject([{ subject: { control: "you", counter: "+1/+1", owner: "opp" } }]);
+  expect(a.effect("counter-placement")[0]!.effect.subject).toMatchObject({ control: "you", owner: "opp" });
+  expect(a.effect("animate")[0]!.effect.subject).toMatchObject({ control: "you", subtype: "borg", owner: "opp" });
 });
 
 test("Borg Queen, Perfection Manifest: a card from an opponent's graveyard enters under YOUR control (was opp), owned by the opponent; Death Is Irrelevant keeps any graveyard", () => {
   const bq = assimilated("Borg Queen, Perfection Manifest", "Legendary Artifact Creature — Borg Noble", `Artifact creatures you control get +2/+0.\nWhen Borg Queen enters, assimilate target creature card from an opponent's graveyard. ${REMINDER}`);
   expect(bq.emitsOf("enters")).toMatchObject([{ subject: { control: "you", fromZone: "graveyard", owner: "opp" } }]);
   expect(bq.emitsOf("leaves")).toMatchObject([{ subject: { control: "opp", fromZone: "graveyard" } }]);
-  expect(bq.emitsOf("counter-added")[0]!.subject.control).toBe("you");
-  expect(bq.effect("animate")[0]!.effect.subject!.control).toBe("you");
+  expect(bq.emitsOf("counter-added")[0]!.subject).toMatchObject({ control: "you", owner: "opp" });
+  expect(bq.effect("animate")[0]!.effect.subject).toMatchObject({ control: "you", owner: "opp" });
   const dir = assimilated("Death Is Irrelevant", "Enchantment", `Artifact creatures you control have indestructible.\nAt the beginning of your end step, assimilate target creature card from a graveyard. ${REMINDER}`);
   expect(dir.emitsOf("enters")).toMatchObject([{ subject: { control: "you", fromZone: "graveyard" } }]);
   expect(dir.emitsOf("enters")[0]!.subject.owner).toBeUndefined();
   expect(dir.emitsOf("leaves")).toMatchObject([{ subject: { control: "any", fromZone: "graveyard" } }]);
   expect(dir.emitsOf("counter-added")[0]!.subject.control).toBe("you");
+  expect(dir.emitsOf("counter-added")[0]!.subject.owner).toBeUndefined();
+  expect(dir.effect("animate")[0]!.effect.subject!.owner).toBeUndefined();
 });
 
 test("The Borg Queen and Assimilation Assessor: the card taken out of exile enters under YOUR control", () => {
@@ -145,23 +150,26 @@ test("The Borg Queen and Assimilation Assessor: the card taken out of exile ente
   expect(queen.emitsOf("enters").map((e) => [e.subject.control, e.subject.fromZone])).toEqual([["you", "exile"], ["you", "exile"]]);
   // the exiled card is the OPPONENT'S (target opponent exiles cards from the top of THEIR library): owned by them, never a card of your deck
   expect(queen.emitsOf("enters").map((e) => e.subject.owner)).toEqual(["opp", "opp"]);
-  expect(queen.emitsOf("counter-added").every((e) => e.subject.control === "you")).toBe(true);
-  expect(queen.effect("animate").every((a) => a.effect.subject!.control === "you")).toBe(true);
+  expect(queen.emitsOf("counter-added").every((e) => e.subject.control === "you" && e.subject.owner === "opp")).toBe(true);
+  expect(queen.effect("animate").every((a) => a.effect.subject!.control === "you" && a.effect.subject!.owner === "opp")).toBe(true);
   const aa = assimilated("Assimilation Assessor", "Artifact Creature — Borg", `When this creature enters, exile target opponent's graveyard.\nWhenever this creature attacks, assimilate a creature card exiled with it. ${REMINDER}`);
   expect(aa.emitsOf("enters")).toMatchObject([{ subject: { control: "you", fromZone: "exile", owner: "opp" } }]);
   // Borg Cube: the card exiled with it is whatever "up to one target creature" was, any player's: no owner
   const cube = assimilated("Borg Cube", "Artifact — Spacecraft", `Affinity for artifact creatures\nWhenever this Spacecraft enters or attacks, assimilate a creature card exiled with it. If you can't, exile up to one target creature. ${REMINDER}\nStation\n12+ | Artifact creatures you control have flying.`);
   expect(cube.emitsOf("enters").length).toBeGreaterThan(0);
   expect(cube.emitsOf("enters").every((e) => e.subject.owner === undefined && e.subject.control === "you")).toBe(true);
-  expect(aa.emitsOf("counter-added")[0]!.subject.control).toBe("you");
+  expect(aa.emitsOf("counter-added")[0]!.subject).toMatchObject({ control: "you", owner: "opp" });
+  expect(cube.emitsOf("counter-added")[0]!.subject.owner).toBeUndefined();
 });
 
 test("The Best of Both Worlds: chapter I's counter and Borg animate are yours; chapter III's return stays under its owner's control", () => {
   const b = assimilated("The Best of Both Worlds", "Enchantment — Saga", `(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Assimilate target nonartifact creature an opponent controls. (Gain control of it and put a +1/+1 counter on it. It's a Borg artifact creature and loses all other creature types.)\nII — Artifact creatures you control get +2/+2 until end of turn.\nIII — Exile the Borg assimilated with this Saga, then return it to the battlefield under its owner's control.`);
-  expect(b.emitsOf("counter-added")[0]!.subject.control).toBe("you");
-  expect(b.effect("counter-placement")[0]!.effect.subject!.control).toBe("you");
-  expect(b.effect("animate")[0]!.effect.subject!.control).toBe("you");
-  expect(b.emitsOf("gains-control")[0]!.subject.control).toBe("you");
+  // the creature taken is the opponent's ("an opponent controls"): a card of theirs, never one of your deck, so no self trigger of a deck-mate is fired by its counter
+  expect(b.emitsOf("counter-added")[0]!.subject).toMatchObject({ control: "you", owner: "opp" });
+  expect(b.effect("counter-placement")[0]!.effect.subject).toMatchObject({ control: "you", owner: "opp" });
+  expect(b.effect("animate")[0]!.effect.subject).toMatchObject({ control: "you", owner: "opp" });
+  expect(b.emitsOf("gains-control")[0]!.subject).toMatchObject({ control: "you", owner: "opp" });
   const flicker = b.effect("flicker")[0]!;
-  expect(flicker.emits).toMatchObject([{ verb: "enters", subject: { control: "any", fromZone: "exile" } }]);
+  expect(flicker.emits).toMatchObject([{ verb: "enters", subject: { control: "opp", owner: "opp", fromZone: "exile" } }]);
+  expect(flicker.emits![0]!.subject.subtype).toBeUndefined();
 });

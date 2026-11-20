@@ -529,7 +529,8 @@ function moveObject(phrase: string, onField = false): Args | null {
   if (/^all but the bottom (?:card|(?:\w+|\d+) cards) of (?:your|their|target player's|each player's|that player's|each opponent's|target opponent's) library$/.test(rest)) return / of their library$/.test(rest) ? { object: { ...CARD, ref: "sentence" }, fromZone: "library", text: phrase } : { object: CARD, fromZone: "library", text: phrase };
   // "the Borg assimilated with this Saga" (The Best of Both Worlds' chapter III, #1679): the creature chapter I took, which assimilate made a Borg artifact creature (the keyword's reminder). The words ride as "the Borg creature":
   // derive reads a stored object's nouns as subtypes, and "assimilated with this Saga" would add the subtype Saga to the exile, and a back-reference's words are kept as printed.
-  // CEILING: the class is any Borg creature, wider than the one creature chapter I took; no field says "the one assimilated with this card".
+  // CEILING: the exile names the class Borg creature (it IS a Borg when exiled), wider than the one creature chapter I took; no field says "the one assimilated with this card". The RETURN is not a Borg (CR 400.7: a new object, the animate over) and
+  // derive (`assimilatedAreYours`) rewrites its `enters` to the opponent's card under its owner's control, with no Borg subtype.
   if (/^the Borg assimilated with (?:~|this [A-Za-z]+|it)$/.test(rest)) return { object: parse("a Borg creature")!, text: "the Borg creature" };
   const r = objectOf(rest);
   if (!r) return null;
