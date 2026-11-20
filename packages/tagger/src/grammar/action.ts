@@ -179,6 +179,10 @@ const DRAW_SEARCH: Record<string, [string, Handler]> = {
     if (WHOLE_HAND.test(rest)) return { object: { ...CARD, zone: "hand" } };
     const top = /^the top (card|two cards|three cards|four cards|five cards|x cards) of (?:your|their) library$/i.exec(rest);
     if (top) return { amount: amountOf(top[1]!.split(" ")[0]!.replace(/^card$/, "a")) ?? "1", object: CARD, fromZone: "library" };
+    // #1674: "reveal cards from the top of your library until you reveal a land card": the until is WHICH card, not how long. Read whole, the until clause in its text, the form the store writes for a model-read
+    // dig (Hermit Druid, Fathom Trawl), so derive's typed dig, to-hand count and notMillAction readings apply unchanged. "their library until they reveal" is the actor's own library (the actor is read off the subject).
+    // CEILING: only the class forms "a/an/two/three/four/five <words> card(s)" and "a card of the chosen kind"; "a card with that name", a mana-value comparison and a number of cards that is not a plain count stay unread.
+    if (/^cards from the top of (?:your|their) library until (?:you|they) reveal (?:(?:an? |two |three |four |five )[a-z, -]{1,40}? cards?|a card of the chosen kind)$/.test(rest)) return { object: CARD, fromZone: "library", text: rest };
     return objectOf(rest);
   }],
 };
@@ -488,7 +492,8 @@ function fromOf(phrase: string): { rest: string; from?: string } {
   return { rest: phrase.slice(0, at), from: zoneOf(phrase.slice(at + " from ".length).replace(/ or from exile$/, "").replace(/^(?:your|their|its owner's|a|an opponent's|target player's|that player's|each player's|each opponent's|all|the) /, "")) };
 }
 
-const MOVE_REF = /^(?:(?:one|two|three|up to (?:one|two|three)|any number) of (?:them|those cards)|the rest|the other|the tokens?|the (?:chosen |blocking |blocked |attacking |other )?creatures?|the rest of (?:the|those) (?:[a-z]+ )*cards|both creatures|the creatures? you chose|one|that [a-z]+(?: card)?|those [a-z]+(?: cards)?|(?:one|that) pile|all (?:[a-z]+ )*cards revealed this way|the (?:exiled|chosen|revealed|milled) cards?|the cards? exiled (?:this way|with (?:it|~))|all cards exiled with (?:it|~)|her|his)$/;
+// #1674: "one of the creature cards revealed this way" (Gift of Perfection: the card of a reveal-until) and "the other cards they revealed this way": the cards the reveal took, whoever revealed them.
+const MOVE_REF = /^(?:(?:one|two|three|up to (?:one|two|three)|any number) of (?:them|those cards|the [a-z]+ cards revealed this way)|the other cards (?:you|they) revealed this way|the rest|the other|the tokens?|the (?:chosen |blocking |blocked |attacking |other )?creatures?|the rest of (?:the|those) (?:[a-z]+ )*cards|both creatures|the creatures? you chose|one|that [a-z]+(?: card)?|those [a-z]+(?: cards)?|(?:one|that) pile|all (?:[a-z]+ )*cards revealed this way|the (?:exiled|chosen|revealed|milled) cards?|the cards? exiled (?:this way|with (?:it|~))|all cards exiled with (?:it|~)|her|his)$/;
 
 /** A zone move's object: a class, the card itself, or a back-reference (kept as stored). The COUNT
  *  stays in the text, as the store writes a zone move ("two creatures", no amount): derive's counts
@@ -2321,6 +2326,11 @@ function readActions(effect: string, type: string | null, cost: string | undefin
     // the same choice inside an effect it drops.
     // CEILING: the choice is never carried: a later "of that color" / "the chosen number" is read (or left unread) by its own words, and "of the chosen color" is the filter's `chosenColor` (#1360), as for a bought card.
     if (/^(?:you may look at the top card of your library any time|play with the top card of your library revealed|choose a color|choose a number between \d+ and \d+)$/i.test(s)) { mayBefore = false; continue; }
+    // #1674: "Choose land or nonland." (Abundant Harvest) and "..., you may instead choose land or nonland and reveal cards ... until you reveal a card of the chosen kind" (Abundance, Pavel Chekov): the store
+    // drops the choice (Abundant Harvest's stored clause opens on the reveal) and keeps the reference, "a card of the chosen kind", which the reveal-until reads whole.
+    // CEILING: the kind chosen is never carried; "a card of the chosen kind" is the whole of what says which.
+    if (/^choose land or nonland$/i.test(s)) { mayBefore = false; continue; }
+    s = s.replace(/^(.*?\b)(?:instead )?choose land or nonland and (?=reveal cards from the top of your library until you reveal a card of the chosen kind\b)/i, "$1");
     // CEILING (#1349): the type / name choices are read only as a replacement ("As this enters, ..."), where the store writes the same `other`; the reference behind them ("of the chosen type") is read, or left unread, by its own words.
     const asEnters = /^as (?:~|this [a-z]+) enters, (choose a color|choose a number between \d+ and \d+|choose a creature type|choose a card name|choose a nonland card name|choose a basic land type|choose a land type|choose a card type)$/i.exec(s);
     if (asEnters) { mayBefore = false; out.push({ verb: "other", object: { control: "any", token: null, ref: "sentence" }, text: asEnters[1]! }); continue; }
