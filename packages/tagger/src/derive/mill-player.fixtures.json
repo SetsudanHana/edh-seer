@@ -1,0 +1,706 @@
+{
+ "Celestus Sanctifier": {
+  "typeLine": "Creature — Human Cleric",
+  "oracleText": "If it's neither day nor night, it becomes day as this creature enters.\nWhenever day becomes night or night becomes day, look at the top two cards of your library. Put one of them into your graveyard.",
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "day-night",
+     "subject": "day becomes night",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "one of them",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "day-night",
+     "subject": "night becomes day",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "one of them",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Gathering Stone": {
+  "typeLine": "Artifact",
+  "oracleText": "As this artifact enters, choose a creature type.\nSpells you cast of the chosen type cost {1} less to cast.\nWhen this artifact enters and at the beginning of your upkeep, look at the top card of your library. If it's a card of the chosen type, you may reveal it and put it into your hand. If you don't put the card into your hand, you may put it into your graveyard.",
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "Spells you cast of the chosen type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this artifact",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "a card of the chosen type",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "the card",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "a card of the chosen type",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "the card",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Guild Feud": {
+  "typeLine": "Enchantment",
+  "oracleText": "At the beginning of your upkeep, target opponent reveals the top three cards of their library, may put a creature card from among them onto the battlefield, then puts the rest into their graveyard. You do the same with the top three cards of your library. If two creatures are put onto the battlefield this way, those creatures fight each other.",
+  "keywords": [
+   "Fight"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "a creature card from among them",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "a creature card from among them",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "fight",
+      "object": "those creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Thief of Sanity": {
+  "typeLine": "Creature — Specter",
+  "oracleText": "Flying\nWhenever this creature deals combat damage to a player, look at the top three cards of that player's library, exile one of them face down, then put the rest into their graveyard. You may cast that card for as long as it remains exiled, and mana of any type can be spent to cast that spell.",
+  "keywords": [
+   "Flying"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "one card from the top three cards of that player's library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest into their graveyard",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Mesmeric Orb": {
+  "typeLine": "Artifact",
+  "oracleText": "Whenever a permanent becomes untapped, that permanent's controller mills a card.",
+  "keywords": [
+   "Mill"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "untaps",
+     "subject": "a permanent",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "that permanent's controller",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Eye Spy": {
+  "typeLine": "Sorcery",
+  "oracleText": "Look at the top card of target player's library. You may put that card into their graveyard.",
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "the top card of target player's library",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Draugr Thought-Thief": {
+  "typeLine": "Creature — Zombie Rogue",
+  "oracleText": "When this creature enters, look at the top card of target player's library. You may put that card into their graveyard.",
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "that card",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Lurking Informant": {
+  "typeLine": "Creature — Human Rogue",
+  "oracleText": "({U/B} can be paid with either {U} or {B}.)\n{2}, {T}: Look at the top card of target player's library. You may put that card into that player's graveyard.",
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "({U/B} can be paid with either {U} or {B}.)",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "the top card of target player's library",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Dakra Mystic": {
+  "typeLine": "Creature — Merfolk Wizard",
+  "oracleText": "{U}, {T}: Each player reveals the top card of their library. You may put the revealed cards into their owners' graveyards. If you don't, each player draws a card.",
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "the revealed cards",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Fraying Sanity": {
+  "typeLine": "Enchantment — Aura Curse",
+  "oracleText": "Enchant player\nAt the beginning of each end step, enchanted player mills X cards, where X is the number of cards put into their graveyard from anywhere this turn.",
+  "keywords": [
+   "Enchant",
+   "Mill"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant player",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "you",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "enchanted player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Bruvac the Grandiloquent": {
+  "typeLine": "Legendary Creature — Human Advisor",
+  "oracleText": "If an opponent would mill one or more cards, they mill twice that many cards instead. (To mill a card, a player puts the top card of their library into their graveyard.)",
+  "keywords": [
+   "Mill"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "twice that many",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "The Water Crystal": {
+  "typeLine": "Legendary Artifact",
+  "oracleText": "Blue spells you cast cost {1} less to cast.\nIf an opponent would mill one or more cards, they mill that many cards plus four instead.\n{4}{U}{U}, {T}: Each opponent mills cards equal to the number of cards in your hand.",
+  "keywords": [
+   "Mill"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "Blue spells you cast cost {1} less to cast",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "an opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that many cards plus four",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "each opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "equal to the number of cards in your hand",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Riddlekeeper": {
+  "typeLine": "Creature — Homunculus",
+  "oracleText": "Whenever a creature attacks you or a planeswalker you control, that creature's controller mills two cards.",
+  "keywords": [
+   "Mill"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "a creature",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "that creature's controller",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Sméagol, Helpful Guide": {
+  "typeLine": "Legendary Creature — Halfling Horror",
+  "oracleText": "At the beginning of your end step, if a creature died under your control this turn, the Ring tempts you.\nWhenever the Ring tempts you, target opponent reveals cards from the top of their library until they reveal a land card. Put that card onto the battlefield tapped under your control and the rest into their graveyard.",
+  "keywords": [],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "ring-tempts",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "ring-tempts",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "that land card",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ },
+ "Krydle of Baldur's Gate": {
+  "typeLine": "Legendary Creature — Human Elf Rogue",
+  "oracleText": "Whenever Krydle deals combat damage to a player, that player loses 1 life and mills a card, then you gain 1 life and scry 1.\nWhenever you attack, you may pay {2}. If you do, target creature can't be blocked this turn.",
+  "keywords": [
+   "Mill",
+   "Scry"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "Krydle",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "that player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "mill",
+      "object": "that player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "scry",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "be blocked",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ]
+ },
+ "Mirko Vosk, Mind Drinker": {
+  "typeLine": "Legendary Creature — Vampire",
+  "oracleText": "Flying\nWhenever Mirko Vosk deals combat damage to a player, that player reveals cards from the top of their library until they reveal four land cards, then puts those cards into their graveyard.",
+  "keywords": [
+   "Flying"
+  ],
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "Mirko Vosk",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "those cards",
+      "fromZone": "library",
+      "toZone": "graveyard",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ]
+ }
+}

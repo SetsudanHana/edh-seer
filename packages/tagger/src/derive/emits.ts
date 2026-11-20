@@ -1302,6 +1302,9 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     && !NAMES_A_PLAYER.test(sentenceHead ?? "")
     // "that creature's controller loses 2 life" names its player in the object, not as "player"/"opponent" (Banewasp Affliction).
     && !(action.verb === "lose-life" && (isControllerPhrase(action.object ?? "") || OBJECT_NAMES_A_PLAYER.test(action.object ?? "")))
+    // ...and so does a mill (#1663): "that permanent's controller mills a card" (Mesmeric Orb) and "enchanted player mills X cards" (Fraying Sanity) name their player in the object, which the clause-wide player test above does not see.
+    // CEILING: mill only; the same shape on a draw or a discard keeps the controller default (no corpus consumer is measured for it).
+    && !(action.verb === "mill" && (isControllerPhrase(action.object ?? "") || OBJECT_NAMES_A_PLAYER.test(action.object ?? "")))
     ? "you" as const
     : subject.control === "any" && distributiveOpponent(action.object ?? "", clauseText ?? "") ? "opp" as const
     : subject.control;
