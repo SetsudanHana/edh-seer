@@ -75,10 +75,10 @@
       "why": "'a non-creature card from your graveyard': hyphenated. parseSubject's \\bcreature\\b matches inside 'non-creature', the negation then removes the only type, and it falls through to type creature -- the inverse of the text."
     },
     "scope,zone": {
-      "distinct": 4,
+      "distinct": 5,
       "label": "grammar right",
       "rule": "CR 115.1, CR 400.1",
-      "why": "'each card in target opponent's hand': the player is targeted and the cards live in a hand."
+      "why": "'each card in target opponent's hand': the player is targeted and the cards live in a hand. #1713: 'creature card in your graveyard chosen by each opponent' (Rejoin the Fight) joined this group when parseSubject stopped reading a chooser ('chosen by each opponent') as the card's controller (it left control,scope,zone, where only the control disagreement was the chooser's); the grammar still reads the quantifier and the zone ('in your graveyard') on the right nouns."
     },
     "allTypes,anyOf,subtype,type": {
       "distinct": 1,
@@ -781,12 +781,6 @@
       "label": "grammar right",
       "rule": "CR 108.3, CR 112.2, CR 115.1, CR 400.1",
       "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; owner: 'you own', 'an opponent owns', 'you control but don't own'; zone: where the subject lives ('in your graveyard', 'an exiled card')."
-    },
-    "control,scope,zone": {
-      "distinct": 1,
-      "label": "grammar right",
-      "rule": "CR 108.3, CR 112.2, CR 115.1, CR 400.1",
-      "why": "Every member read. control: control belongs to the right noun: the caster controls a spell; a possessive, a relative clause or an 'among' set names another object's controller; 'your graveyard' names an owner; a chooser is not a controller; scope: the quantifier belongs to the right noun: a targeted player or original is not the subject; zone: where the subject lives ('in your graveyard', 'an exiled card')."
     },
     "control,status,subtype": {
       "distinct": 2,

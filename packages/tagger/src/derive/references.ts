@@ -375,3 +375,17 @@ export function permanentAnaphorsResolved(clause: ClauseRecord, lastTarget: stri
   });
   return { clause: out.some((a, i) => a !== actions[i]) ? { ...clause, actions: out } : clause, lastTarget: target };
 }
+
+/** THE REST / THE OTHER OF A SEARCH'S CARDS ARE CARDS OF THE CLASS THE SEARCH NAMED (#1713): "Search your library for up to four land cards ... Put the chosen cards into your graveyard and the rest onto the battlefield" (Elemental Teachings, Realms Uncharted),
+ *  "Search ... for up to two creature cards. Put one into your hand and the other into your graveyard" (Jarad's Orders, Fork in the Road). A put whose object is only a share of the searched cards carried no class, so its emit was a wildcard
+ *  (Realms Uncharted's untyped `enters-graveyard` met every "When this is put into a graveyard from anywhere" self-trigger in the corpus). The class is the object of the clause's FIRST library search; "the two cards chosen by an opponent" is a share too.
+ *  CEILING: a put INTO A GRAVEYARD (the caller's gate) that follows a library search in the same clause and whose whole object is "the rest", "the other(s)", "one", "one of them", "two of them" or "<N> cards chosen by <a player>"; a share named with its own class
+ *  ("the other land") is not this shape and parses itself. The same untyped share put onto the BATTLEFIELD ("the rest onto the battlefield tapped": Elemental Teachings, Ecological Appreciation, the "one onto the battlefield" fetches) is not read here: it is a wider change (see #1713). */
+const SEARCHED_SHARE = /^(?:the (?:(?:two|three|four|five|six|\d+) )?cards? chosen by (?:an?|each|target|that) (?:opponent|player)|the (?:rest|others?)(?: of (?:them|those cards))?|one|(?:one|two|three|both) of them|both cards)$/i;
+export function searchedShareClass(actions: readonly Action[], idx: number): string | undefined {
+  const a = actions[idx];
+  if (a?.verb !== "put" || !SEARCHED_SHARE.test((a.object ?? "").trim()) || (a.fromZone !== null && a.fromZone !== undefined && a.fromZone !== "library")) return undefined;
+  const search = actions.slice(0, idx).find((x) => x.verb === "search" && x.fromZone === "library");
+  const object = (search?.object ?? "").trim();
+  return object === "" ? undefined : object;
+}
