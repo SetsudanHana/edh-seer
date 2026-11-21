@@ -1,0 +1,1594 @@
+{
+ "Wight of Precinct Six": {
+  "source": {
+   "name": "Wight of Precinct Six",
+   "typeLine": "Creature \u2014 Zombie",
+   "oracleText": "This creature gets +1/+1 for each creature card in your opponents' graveyards.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this creature",
+      "amount": "+1/+1 for each creature card in your opponents' graveyards",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6d512f7932cb19cbf39b23840341ed244b8dc68e14a387e0c0189ea7baaf8f71"
+ },
+ "Detritivore": {
+  "source": {
+   "name": "Detritivore",
+   "typeLine": "Creature \u2014 Lhurgoyf",
+   "oracleText": "Detritivore's power and toughness are each equal to the number of nonbasic land cards in your opponents' graveyards.\nSuspend X\u2014{X}{3}{R}. X can't be 0. (Rather than cast this card from your hand, you may pay {X}{3}{R} and exile it with X time counters on it. At the beginning of your upkeep, remove a time counter. When the last is removed, you may cast it without paying its mana cost. It has haste.)\nWhenever a time counter is removed from this card while it's exiled, destroy target nonbasic land.",
+   "keywords": [
+    "Suspend"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "*",
+   "toughness": "*",
+   "manaCost": "{2}{R}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "this",
+      "amount": "the number of nonbasic land cards in your opponents' graveyards",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "level-up",
+     "subject": "a time counter",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target nonbasic land",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "becd1c8dd46ec04c208a83124d1fd761428792d1681eab386d3b92ee01a4ee83"
+ },
+ "Havengul Lich": {
+  "source": {
+   "name": "Havengul Lich",
+   "typeLine": "Creature \u2014 Zombie Wizard",
+   "oracleText": "{1}: You may cast target creature card in a graveyard this turn. When you cast it this turn, this creature gains all activated abilities of that card until end of turn.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{3}{U}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "target creature card in a graveyard",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "it",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "all activated abilities of that card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "9affc6d4178ea83428a85165ee2ea0601140731d05ad7b8499a1d49db22b6d89"
+ },
+ "Nighthawk Scavenger": {
+  "source": {
+   "name": "Nighthawk Scavenger",
+   "typeLine": "Creature \u2014 Vampire Rogue",
+   "oracleText": "Flying, deathtouch, lifelink\nNighthawk Scavenger's power is equal to 1 plus the number of card types among cards in your opponents' graveyards.",
+   "keywords": [
+    "Deathtouch",
+    "Flying",
+    "Lifelink"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "1+*",
+   "toughness": "3",
+   "manaCost": "{1}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, deathtouch, lifelink",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Nighthawk Scavenger's power is equal to 1 plus the number of card types among cards in your opponents' graveyards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "a71879b8f46877e37acc935c594f178d3a7682fc2132f56adc375ee3c6d6d30c"
+ },
+ "Consuming Aberration": {
+  "source": {
+   "name": "Consuming Aberration",
+   "typeLine": "Creature \u2014 Horror",
+   "oracleText": "Consuming Aberration's power and toughness are each equal to the number of cards in your opponents' graveyards.\nWhenever you cast a spell, each opponent reveals cards from the top of their library until they reveal a land card, then puts those cards into their graveyard.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": "*",
+   "toughness": "*",
+   "manaCost": "{3}{U}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Consuming Aberration",
+      "amount": "number of cards in your opponents' graveyards",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "those cards",
+      "fromZone": "library",
+      "toZone": "graveyard"
+     }
+    ]
+   }
+  ],
+  "segmentHash": "5b1fe9495b3a8a3c5eb8fda946fd03c2b56f0ce97c65679038a3bef0b0948833"
+ },
+ "Soulless One": {
+  "source": {
+   "name": "Soulless One",
+   "typeLine": "Creature \u2014 Zombie Avatar",
+   "oracleText": "Soulless One's power and toughness are each equal to the number of Zombies on the battlefield plus the number of Zombie cards in all graveyards.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "*",
+   "toughness": "*",
+   "manaCost": "{3}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Soulless One's power and toughness are each equal to the number of Zombies on the battlefield plus the number of Zombie cards in all graveyards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "06214f22521c1577e4925fd5fbd2e5f632d410a77c87b03a0ab8b51701bdd3b6"
+ },
+ "Master Pakku": {
+  "source": {
+   "name": "Master Pakku",
+   "typeLine": "Legendary Creature \u2014 Human Advisor Ally",
+   "oracleText": "Prowess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.)\nWhenever Master Pakku becomes tapped, target player mills X cards, where X is the number of Lesson cards in your graveyard. (They put the top X cards of their library into their graveyard.)",
+   "keywords": [
+    "Prowess",
+    "Mill"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "1",
+   "toughness": "3",
+   "manaCost": "{1}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Prowess",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "taps",
+     "subject": "Master Pakku",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "target player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "bac88257aa3848cdc969c9e6fd0b3bfcc3b40135023fb14a7c8d5157ad4222da"
+ },
+ "Neva, Stalked by Nightmares": {
+  "source": {
+   "name": "Neva, Stalked by Nightmares",
+   "typeLine": "Legendary Creature \u2014 Human Noble",
+   "oracleText": "Menace\nWhen Neva enters, return target creature or enchantment card from your graveyard to your hand.\nWhenever an enchantment you control is put into a graveyard from the battlefield, put a +1/+1 counter on Neva, then scry 1.",
+   "keywords": [
+    "Menace",
+    "Scry"
+   ],
+   "colors": [
+    "B",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "W"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{2}{W}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Menace",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target creature or enchantment card",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "an enchantment you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "scry",
+      "object": "1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "59d7edc15192bc44ad4cdbcd0cc48be11ae5a53291c799af841a942d7872c992"
+ },
+ "Impulsivity": {
+  "source": {
+   "name": "Impulsivity",
+   "typeLine": "Creature \u2014 Elemental Incarnation",
+   "oracleText": "When this creature enters, you may cast target instant or sorcery card from a graveyard without paying its mana cost. If that spell would be put into a graveyard, exile it instead.\nEncore {7}{R}{R} ({7}{R}{R}, Exile this card from your graveyard: For each opponent, create a token copy that attacks that opponent this turn if able. They gain haste. Sacrifice them at the beginning of the next end step. Activate only as a sorcery.)",
+   "keywords": [
+    "Encore"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": "7",
+   "toughness": "5",
+   "manaCost": "{6}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "target instant or sorcery card from a graveyard",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cast",
+      "object": "target instant or sorcery card from a graveyard",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "that spell",
+      "fromZone": "stack",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Encore {7}{R}{R}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "c346334d261107e4e0f5bffec521eaab095c0d37185bb08bbb5e4e9cfe53b822"
+ },
+ "Quistis Trepe": {
+  "source": {
+   "name": "Quistis Trepe",
+   "typeLine": "Legendary Creature \u2014 Human Wizard",
+   "oracleText": "Blue Magic \u2014 When Quistis Trepe enters, you may cast target instant or sorcery card from a graveyard, and mana of any type can be spent to cast that spell. If that spell would be put into a graveyard, exile it instead.",
+   "keywords": [
+    "Blue Magic"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{2}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Quistis Trepe",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "target instant or sorcery card from a graveyard",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "exile",
+      "object": "that spell",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "7882cf6032a126cd6dc366ccc31549a18362c20c3110310d254719ca222ce7f6"
+ },
+ "Halo Forager": {
+  "source": {
+   "name": "Halo Forager",
+   "typeLine": "Creature \u2014 Faerie Rogue",
+   "oracleText": "Flying\nWhen this creature enters, you may pay {X}. When you do, you may cast target instant or sorcery card with mana value X from a graveyard without paying its mana cost. If that spell would be put into a graveyard, exile it instead.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "B",
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "U"
+   ],
+   "power": "3",
+   "toughness": "1",
+   "manaCost": "{1}{U}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{X}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "other",
+     "subject": "you pay {X}",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "target instant or sorcery card with mana value X",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "exile",
+      "object": "that spell",
+      "fromZone": "graveyard",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "33f80be841ba68cc326bb14f17409d4d8a7b64f2b8f68b7df27a5b44259ac7b1"
+ },
+ "Coram, the Undertaker": {
+  "source": {
+   "name": "Coram, the Undertaker",
+   "typeLine": "Legendary Creature \u2014 Human Warrior",
+   "oracleText": "Coram gets +X/+0, where X is the greatest power among creature cards in all graveyards.\nWhenever Coram attacks, each player mills a card.\nDuring each of your turns, you may play a land and cast a spell from among cards in graveyards that were put there from libraries this turn.",
+   "keywords": [
+    "Mill"
+   ],
+   "colors": [
+    "B",
+    "G",
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "G",
+    "R"
+   ],
+   "power": "0",
+   "toughness": "5",
+   "manaCost": "{1}{B}{R}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Coram",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+X/+0, where X is the greatest power among creature cards in all graveyards",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "Coram",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "each player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "play",
+      "object": "a land from among cards in graveyards that were put there from libraries this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cast",
+      "object": "a spell from among cards in graveyards that were put there from libraries this turn",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "fec64f05ce48241c22e8fb02f2d164e7d708a236b24dc3d6e30ddc88853bc109"
+ },
+ "Spectral Arcanist": {
+  "source": {
+   "name": "Spectral Arcanist",
+   "typeLine": "Creature \u2014 Spirit Wizard",
+   "oracleText": "Flying\nWhen this creature enters, you may cast an instant or sorcery spell with mana value less than or equal to the number of Spirits you control from a graveyard without paying its mana cost. If that spell would be put into a graveyard, exile it instead.",
+   "keywords": [
+    "Flying"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "3",
+   "toughness": "2",
+   "manaCost": "{3}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "an instant or sorcery spell with mana value less than or equal to the number of Spirits you control",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "exile",
+      "object": "that spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "a733a291bbbf0d3d5b5d808664f48280445a9ee69fdb20479856cf0aab6bfe61"
+ },
+ "Liliana, the Necromancer": {
+  "source": {
+   "name": "Liliana, the Necromancer",
+   "typeLine": "Legendary Planeswalker \u2014 Liliana",
+   "oracleText": "+1: Target player loses 2 life.\n\u22121: Return target creature card from your graveyard to your hand.\n\u22127: Destroy up to two target creatures. Put up to two creature cards from graveyards onto the battlefield under your control.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "target player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target creature card",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "up to two target creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "up to two creature cards from graveyards",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "555991fb7b081669d0cea78c91abb41fa347617d876a0b0ccea1950e04f10b61"
+ },
+ "Animate Dead": {
+  "source": {
+   "name": "Animate Dead",
+   "typeLine": "Enchantment \u2014 Aura",
+   "oracleText": "Enchant creature card in a graveyard\nWhen this Aura enters, if it's on the battlefield, it loses \"enchant creature card in a graveyard\" and gains \"enchant creature put onto the battlefield with this Aura.\" Return enchanted creature card to the battlefield under your control and attach this Aura to it. When this Aura leaves the battlefield, that creature's controller sacrifices it.\nEnchanted creature gets -1/-0.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature card in a graveyard",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this Aura",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "enchanted creature card",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "attach",
+      "object": "this Aura",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "leaves",
+     "subject": "this Aura",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "that creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "enchanted creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-1/-0",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6fb619300fb8786178e36a598c9afa188613d9e17586f13240a227466a012b0f"
+ },
+ "Reanimate": {
+  "source": {
+   "name": "Reanimate",
+   "typeLine": "Sorcery",
+   "oracleText": "Put target creature card from a graveyard onto the battlefield under your control. You lose life equal to that card's mana value.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "target creature card from a graveyard",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that card's mana value",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "e8ab336796096a8555d57f1874a81855878b6f46c4230f751a03e7f387f2baad"
+ },
+ "Bonehoard": {
+  "source": {
+   "name": "Bonehoard",
+   "typeLine": "Artifact \u2014 Equipment",
+   "oracleText": "Living weapon (When this Equipment enters, create a 0/0 black Phyrexian Germ creature token, then attach this to it.)\nEquipped creature gets +X/+X, where X is the number of creature cards in all graveyards.\nEquip {2}",
+   "keywords": [
+    "Equip",
+    "Living weapon"
+   ],
+   "colors": [],
+   "manaValue": 4,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{4}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Living weapon",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "equipped creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X, where X is the number of creature cards in all graveyards",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Equip {2}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "1de6a853903ba47432e82272c986fad483d55c24bd5475a0713bff44eca597b9"
+ },
+ "Jailbreak": {
+  "source": {
+   "name": "Jailbreak",
+   "typeLine": "Sorcery",
+   "oracleText": "Return target permanent card in an opponent's graveyard to the battlefield under their control. When that permanent enters, return up to one target permanent card with equal or lesser mana value from your graveyard to the battlefield.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target permanent card in an opponent's graveyard",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "that permanent",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "up to one target permanent card with equal or lesser mana value from your graveyard",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "27431961f46ebc389c86a54e0fdd68687087f05e1b3af7701cb306ff03d37a6f"
+ },
+ "Eldritch Pact": {
+  "source": {
+   "name": "Eldritch Pact",
+   "typeLine": "Sorcery",
+   "oracleText": "Target player draws X cards and loses X life, where X is the number of cards in their graveyard.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 7,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{6}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "target player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the number of cards in their graveyard",
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "target player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "the number of cards in their graveyard",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "8b488bce4222728a727d3493c7d364b73fb6049e560357e9d5b20b930a349655"
+ },
+ "Riverchurn Monument": {
+  "source": {
+   "name": "Riverchurn Monument",
+   "typeLine": "Artifact",
+   "oracleText": "{1}, {T}: Any number of target players each mill two cards. (Each of them puts the top two cards of their library into their graveyard.)\nExhaust \u2014 {2}{U}{U}, {T}: Any number of target players each mill cards equal to the number of cards in their graveyard. (Activate each exhaust ability only once.)",
+   "keywords": [
+    "Exhaust",
+    "Mill"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "any number of target players",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "any number of target players",
+      "amount": "the number of cards in their graveyard",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "564665471c7f7eb4e806182b0ef13ece65999d3588b3089ff52f17979bc6ff92"
+ },
+ "Nature's Resurgence": {
+  "source": {
+   "name": "Nature's Resurgence",
+   "typeLine": "Sorcery",
+   "oracleText": "Each player draws a card for each creature card in their graveyard.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{G}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "for each creature card in their graveyard",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "674f6905c23170700d627b0ea55350907e305f9c04db9395e31064d8d2c6ed7e"
+ },
+ "Lurrus of the Dream-Den": {
+  "source": {
+   "name": "Lurrus of the Dream-Den",
+   "typeLine": "Legendary Creature \u2014 Cat Nightmare",
+   "oracleText": "Companion \u2014 Each permanent card in your starting deck has mana value 2 or less. (If this card is your chosen companion, you may put it into your hand from outside the game for {3} as a sorcery.)\nLifelink\nOnce during each of your turns, you may cast a permanent spell with mana value 2 or less from your graveyard.",
+   "keywords": [
+    "Lifelink",
+    "Companion"
+   ],
+   "colors": [
+    "B",
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "2",
+   "manaCost": "{1}{W/B}{W/B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "each permanent card in your starting deck has mana value 2 or less",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Lifelink",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "a permanent spell with mana value 2 or less",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "248d8b83843575592ba986dcd69e075ca8e8067ed5810401538dc5f2cd38fe22"
+ },
+ "Zask, Skittering Swarmlord": {
+  "source": {
+   "name": "Zask, Skittering Swarmlord",
+   "typeLine": "Legendary Creature \u2014 Insect",
+   "oracleText": "You may play lands and cast Insect spells from your graveyard.\nWhenever another Insect you control dies, put it on the bottom of its owner's library, then mill two cards. (Put the top two cards of your library into your graveyard.)\n{1}{B/G}: Target Insect gets +1/+0 and gains deathtouch until end of turn. ({B/G} can be paid with either {B} or {G}.)",
+   "keywords": [
+    "Mill"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "G"
+   ],
+   "power": "5",
+   "toughness": "5",
+   "manaCost": "{3}{G}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "play",
+      "object": "lands",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "cast",
+      "object": "Insect spells",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "another Insect you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "graveyard",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "mill",
+      "object": "two cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Target Insect",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "+1/+0",
+      "optional": false
+     },
+     {
+      "verb": "grant-ability",
+      "object": "deathtouch",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "c3e8209e34a68f231d8951cc3f694a9255b05a7823130ab06d0cc19155f34193"
+ },
+ "Gale, Waterdeep Prodigy": {
+  "source": {
+   "name": "Gale, Waterdeep Prodigy",
+   "typeLine": "Legendary Creature \u2014 Human Wizard",
+   "oracleText": "Whenever you cast an instant or sorcery spell from your hand, you may cast up to one target card of the other type from your graveyard. If a spell cast from your graveyard this way would be put into your graveyard, exile it instead.\nChoose a Background (You can have a Background as a second commander.)",
+   "keywords": [
+    "Choose a background"
+   ],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "1",
+   "toughness": "3",
+   "manaCost": "{2}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant or sorcery spell from your hand",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "up to one target card of the other type",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "exile",
+      "object": "a spell cast from your graveyard this way",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Choose a Background",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6dc7510390a1b0283f610b33eda666d87f24848964282b610539d98e4d230830"
+ },
+ "The Eighth Doctor": {
+  "source": {
+   "name": "The Eighth Doctor",
+   "typeLine": "Legendary Creature \u2014 Time Lord Doctor",
+   "oracleText": "When The Eighth Doctor enters, mill three cards.\nOnce during each of your turns, you may play a historic land or cast a historic permanent spell from your graveyard. If you do, it gains \"If this permanent would leave the battlefield, exile it instead of putting it anywhere else.\"",
+   "keywords": [
+    "Mill"
+   ],
+   "colors": [
+    "U",
+    "W"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "U",
+    "W"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{4}{W}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "mill",
+      "object": "card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "play",
+      "object": "a historic land or a historic permanent spell",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "grant-ability",
+      "object": "If this permanent would leave the battlefield, exile it instead of putting it anywhere else.",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "4460e01c72a8c4c0f8717f74b14ea4faeeeb712b927641952db5ff0c44ecb135"
+ },
+ "Abandoned Sarcophagus": {
+  "source": {
+   "name": "Abandoned Sarcophagus",
+   "typeLine": "Artifact",
+   "oracleText": "You may cast spells that have a cycling ability from your graveyard.\nIf a card that has a cycling ability would be put into your graveyard from anywhere and it wasn't cycled, exile it instead.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cast",
+      "object": "spells that have a cycling ability",
+      "fromZone": "graveyard",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "a card that has a cycling ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "43e0c89d11de3660143076801a9de5cd4acfbe5db2373e02b3179e9f156bc40b"
+ }
+}

@@ -112,7 +112,7 @@
   "packages/tagger/src/derive/references.ts": 8,
   "packages/tagger/src/derive/repeats.ts": 2,
   "packages/tagger/src/derive/replacement.ts": 10,
-  "packages/tagger/src/derive/scaling.ts": 6,
+  "packages/tagger/src/derive/scaling.ts": 7,
   "packages/tagger/src/derive/selection-text.ts": 2,
   "packages/tagger/src/derive/self-exception.ts": 1,
   "packages/tagger/src/derive/self-reference.ts": 1,

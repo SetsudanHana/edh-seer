@@ -148,6 +148,19 @@ const PARTY_TYPES = ["cleric", "rogue", "warrior", "wizard"];
  *  graveyard feeds it, opponent-directed ones too. An opponent, target or defending player in the clause keeps "their" as the opponent's. */
 const EACH_PLAYER = /^(?!.*\b(?:opponents?|target players?|defending player|enchanted player|that player)\b).*\beach player\b/is;
 
+/** WHOSE GRAVEYARD A COUNT READS (#1706), from the possessive the graveyard phrase prints: "in your graveyard" is yours, "in your opponents' graveyards" / "in an opponent's graveyard" the opponents', "in all graveyards" /
+ *  "in each graveyard" / "in a graveyard" anyone's, and "their" the opponent's (but "each player ... their", anyone's). The phrase is read from the whole counted text, not the 60-character noun: Soulless One's "the number of Zombies
+ *  on the battlefield plus the number of Zombie cards in all graveyards" keeps only its first half in the noun. Before this, only "their" and "all graveyards" were read, so "your opponents' graveyards" fell through to `you` (Wight of
+ *  Precinct Six, Detritivore, Nighthawk Scavenger, Consuming Aberration), disagreeing with `count.scalesWith`, which parseSubject reads as `opp`.
+ *  CEILING: a phrase none of these name ("its owner's graveyard") keeps `you`, as before. */
+function graveyardCountOwner(text: string, noun: string, clauseText?: string): "you" | "opp" | "any" {
+  const phrase = GRAVEYARD_COUNT.exec(text)?.[0] ?? noun;
+  if (/\btheir\b/i.test(phrase)) return EACH_PLAYER.test(clauseText ?? "") ? "any" : "opp";
+  if (/\bopponents?\b/i.test(phrase)) return "opp";
+  if (/^in (?:all|each|an?|any) /i.test(phrase)) return "any";
+  return "you";
+}
+
 /** WHAT a graveyard count counts, as a subject the matcher can compare a fill against.
  *
  *  The BASIS is not the subject: Cavalier of Flame counts LAND cards in your graveyard, Glamdring
@@ -170,9 +183,7 @@ export function scalingSubject(action: Action, clauseText?: string): SubjectFilt
   if (GRAVEYARD_COUNT.test(text)) {
     const subject = parseSubject(noun.split(/\s{1,4}in\s{1,4}/i)[0]);
     subject.zone = "graveyard";
-    subject.control = /\btheir\b/i.test(noun) ? (EACH_PLAYER.test(clauseText ?? "") ? "any" : "opp")
-      : /\ball graveyards?\b|\beach graveyard\b/i.test(noun) ? "any"
-      : "you";
+    subject.control = graveyardCountOwner(text, noun, clauseText);
     return subject;
   }
 
