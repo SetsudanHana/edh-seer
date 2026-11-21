@@ -88,7 +88,7 @@ test("a draw doubler is a draw replacement; dredge and Laboratory Maniac are not
 // token multiplier as Xorn's "you would create". Printed text, 2026-09-30.
 test("a token multiplier in the passive, or with an effect as its actor", () => {
   const stride = replacementOf("If one or more artifact tokens would be created under your control, those tokens plus an additional 1/1 colorless Thopter artifact creature token with flying are created instead.");
-  expect(stride).toMatchObject({ verbs: ["create-token"], kind: "token-doubling", subjectText: "one or more artifact tokens" });
+  expect(stride).toMatchObject({ verbs: ["create-token"], kind: "token-doubling", subjectText: "one or more artifact tokens under your control" }); // the passive frame's control is read (#1696)
   expect(replacementOf("If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.")?.kind).toBe("token-doubling");
   // Without "instead" it is not a replacement at all.
   expect(replacementOf("Whenever one or more artifact tokens are created under your control, draw a card.")).toBeNull();
@@ -97,7 +97,7 @@ test("a token multiplier in the passive, or with an effect as its actor", () => 
 /** A TOKEN LIST IS READ WHOLE (#794): Academy Manufactor's "a Clue, Food, or Treasure token" was cut
  *  at its first comma, and Treasure makers never met it. */
 test("a token replacement keeps every token its phrase names, and 'under your control'", () => {
-  expect(replacementOf("If you would create a Clue, Food, or Treasure token, instead create one of each.")?.subjectText).toBe("a Clue, Food, or Treasure token");
+  expect(replacementOf("If you would create a Clue, Food, or Treasure token, instead create one of each.")?.subjectText).toBe("a Clue, Food, or Treasure token under your control"); // "If YOU would create" is your tokens (#1696)
   expect(replacementOf("If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.")?.subjectText).toBe("one or more tokens under your control");
 });
 

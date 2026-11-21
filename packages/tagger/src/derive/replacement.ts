@@ -200,6 +200,10 @@ const TEMPLATES: {
    *  half: a counter template's "would be put on X" is passive and names only the receiving
    *  permanent, which IS the half emits record; a damage template's source IS its subject. */
   actor?: number;
+  /** Capture group appended to the subject phrase: the "under your control" a passive token frame prints AFTER its verb. */
+  tail?: number;
+  /** Capture group holding who creates ("If YOU would create ..."): you makes the subject "... under your control" unless the phrase already names a controller (#1696). */
+  creator?: number;
 }[] = [
   // "If one or more +1/+1 counters would be put on a creature you control, ... instead."
   // The kind stays `counter-placement`: the closed EFFECT_KINDS list has no counter-doubling, and
@@ -226,16 +230,17 @@ const TEMPLATES: {
   // (Academy Manufactor) was cut at its first comma and read as Clues alone. "under your control"
   // after it stays on the subject, as before.
   {
-    re: /\bif\s+(?:you|a player|an opponent|one or more players|an effect|a spell or ability)\s+would create\s+([^.]*?\btokens?\b(?:\s+under\s+[^,.]+)?|[^,.]+)/i,
-    verbs: ["create-token"], kind: "token-doubling", subject: 1,
+    re: /\bif\s+(you|a player|an opponent|one or more players|an effect|a spell or ability)\s+would create\s+([^.]*?\btokens?\b(?:\s+under\s+[^,.]+)?|[^,.]+)/i,
+    verbs: ["create-token"], kind: "token-doubling", subject: 2, creator: 1,
   },
   // THE PASSIVE FRAME (#858): "If one or more artifact tokens would be created under your control,
   // those tokens plus an additional Thopter ... are created instead" (Stridehangar Automaton, 18
   // corpus cards). It derived a static `token-generation` whose emit never fires, and nothing heard
   // another card's token being made.
   {
-    re: /\bif\s+((?:one or more|a|an)\s+[a-z0-9/ ,-]{0,40}?\btokens?)\s+would be created\b/i,
-    verbs: ["create-token"], kind: "token-doubling", subject: 1,
+    // THE CONTROL IS PART OF THE FRAME (#1696): "would be created under your control" is read with the token phrase (`tail`), so the consumer hears only the tokens you get (Chatterfang, Mondrak, Divine Visitation).
+    re: /\bif\s+((?:one or more|a|an)\s+[a-z0-9/ ,-]{0,40}?\btokens?)\s+would be created((?:\s+under\s+[^,.]+)?)/i,
+    verbs: ["create-token"], kind: "token-doubling", subject: 1, tail: 2,
   },
   // "If a creature you control would deal damage TO a permanent or player, it deals double that
   // damage instead." BOTH damage verbs: the printed word is "damage", which covers combat and
@@ -294,7 +299,9 @@ export function replacementOf(clauseText: string): Replacement | null {
       // A damage multiplier hears the damage it names: "would deal combat damage" is combat only (Inquisitor's Flail, Blind Fury), "noncombat damage" only non-combat, bare "damage" both (#1462).
       verbs: t.kind === "damage-multiplier" ? damageResultVerbs(clauseText) : t.verbs,
       kind: t.kind,
-      subjectText: (t.subject === 0 ? "" : t.kind === "counter-placement" ? classOf(m[t.subject] ?? "") : m[t.subject] ?? "").trim(),
+      subjectText: (t.subject === 0 ? "" : t.kind === "counter-placement" ? classOf(m[t.subject] ?? "") : m[t.subject] ?? "").trim()
+        + (t.tail !== undefined ? (m[t.tail] ?? "").trimEnd() : "")
+        + (t.creator !== undefined && /^you$/i.test(m[t.creator] ?? "") && !/\bunder\b/i.test(m[t.subject] ?? "") ? " under your control" : ""),
       ...(t.kind === "token-doubling" ? { tokenMultiplier: tokenMultiplierOf(clauseText) } : {}),
       ...(() => { const change = changeOf(clauseText); return change ? { change } : {}; })(),
       ...(t.counter !== undefined && m[t.counter] ? { counter: m[t.counter].trim() } : {}),
