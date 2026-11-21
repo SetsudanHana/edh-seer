@@ -4492,8 +4492,7 @@ export function deriveAbilities(
       // A STATED "you" INSIDE A GRANTED ABILITY IS THE RECIPIENT'S CONTROLLER (Hellish Rebuke: "You
       // lose 2 life" is said by the opponent's permanent), the same flip line 1154 applied to the
       // object's own "you" -- the actor cue runs after it and must not undo it.
-      // #1715: a create the grammar read as YOURS ("... For each opponent who does, you create a Treasure token") beside another create the actor cue named an opponent for: the cue speaks for the opponent's, not for this one.
-      const cued = action.verb === "create" && action.actor === "you" && (clause.actions ?? []).filter((a) => a.verb === "create").length > 1 ? "you" : actorFor(action.verb, !costSacrifice);
+      const cued = actorFor(action.verb, !costSacrifice);
       // THE ACTOR OWNS WHAT IT ACTS ON only for sacrifice, discard, draw, mill, search, counters and life. For a verb that MOVES a card between zones, "an opponent exiles a nonland card from among
       // them" (Allure of the Unknown) chooses, and the card is still yours: the reading's player is written only where the object or zone names theirs ("from their hand", "that player controls").
       // CEILING: a word list on the stored object / zone, not a parse; a chooser whose phrase names no owner stays `any`.

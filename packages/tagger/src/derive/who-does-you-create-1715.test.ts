@@ -20,10 +20,10 @@ describe("the maker of the second create is you", () => {
     expect(emits("Tempting Contract", "create-token").map((e) => e.subject.subtype).sort()).toEqual(["treasure", "treasure"]);
     expect(controls("Tempting Contract", "enters").sort()).toEqual(["opp", "you"]);
   });
-  test("Tempt with Reflections / Vengeance: 'For each opponent who does, create ...' is yours (the opponent's own stays opp)", () => {
+  test("Tempt with Reflections / Vengeance: 'For each opponent who does, create ...' is yours (the opponent's own stays opp); the leading imperative create still reads any -- KNOWN GAP #1728", () => {
     for (const n of ["Tempt with Reflections", "Tempt with Vengeance"]) expect(controls(n, "create-token"), n).toEqual(["any", "opp", "you"]);
   });
-  test("Tempt with Bunnies (already right): you, the opponent, you", () => expect(controls("Tempt with Bunnies", "create-token")).toEqual(["any", "opp", "you"]));
+  test("Tempt with Bunnies: the opponent's create opp, the trailing one you; the leading imperative create still reads any -- KNOWN GAP #1728", () => expect(controls("Tempt with Bunnies", "create-token")).toEqual(["any", "opp", "you"]));
 });
 
 describe("controls: only the opponent acts, or only you act, stays as it was", () => {
