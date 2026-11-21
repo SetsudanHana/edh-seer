@@ -74,7 +74,11 @@ const CUES: [string, RegExp][] = [
   // object is the opponent's creature, but it parses to `any` -- "of their choice" names no
   // controller the vocabulary knows -- and `any` matched every payoff for YOUR creatures dying.
   ["sacrifice", new RegExp(`\\b(${WHO})\\s+${ADVERB}sacrifices?\\b`, "i")],
-  ["discard", new RegExp(`\\b(${WHO})\\s+${ADVERB}discards?\\b`, "i")],
+  // THE DISCARDER IS NAMED BEFORE ITS VERB, NOT ALWAYS AGAINST IT (#1722): "Any number of target players EACH discard ..." (Cabal Conditioning: the players, any of them you) and a verb joined to an earlier one of the same player, "each opponent loses 4 life unless that
+  // player sacrifices a nonland permanent of their choice OR DISCARDS a card" (Rottenmouth Viper), "target opponent loses 2 life AND discards a card". Unread, the discard fell to the object's "you control" or the controller default and was yours, which fed no counter of cards in an
+  // OPPONENT's graveyard (Wight of Precinct Six, Detritivore). The joined form stops at a period or semicolon, and a "you discard" between is no match (the `yours` test in `actionRecipients`).
+  // CEILING: the joined form reads the nearest earlier player before an "and"/"or" within 100 characters; a comma list ("each opponent sacrifices a creature, discards a card, and loses 4 life", Dusk Mangler) is not joined by this cue (its discard is read `opp` off the object's "each").
+  ["discard", new RegExp(`\\b(${WHO}|(?:any number of )?target players)\\s+(?:each\\s+)?${ADVERB}(?:[^.;]{0,100}?\\s(?:and|or)\\s+${ADVERB})?discards?\\b`, "i")],
   // Mind Funeral: "Target opponent reveals cards ... That player puts all cards revealed this way
   // into their graveyard" -- a mill written as a put, and the only verb the actor table did not
   // know, so the fill derived `any` and the delve pass had to read the printed "target opponent"
