@@ -17,7 +17,8 @@
     "./moxfield": "./src/moxfield.ts",
     "./archidekt": "./src/archidekt.ts",
     "./precons": "./src/precons.ts",
-    "./parallel": "./src/parallel.ts"
+    "./parallel": "./src/parallel.ts",
+    "./ingest-tokens-core": "./src/bin/ingest-tokens-core.ts"
   },
   "scripts": {
     "test": "vitest run",

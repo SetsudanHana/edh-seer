@@ -1,3 +1,4 @@
+import { tokenGapMessage, unresolvedTokenMakers } from "./bin/ingest-tokens-core.js";
 import type { AnyBulkWriteOperation, Collection } from "mongodb";
 import {
   normalizeScryfallCard,
@@ -162,6 +163,13 @@ export async function runIngest(): Promise<void> {
     const k = await ingestCombos(streamVariants(), store.combos, countReporter("Combos:"), c.stickerNames);
     process.stdout.write("\n");
     console.log(`Combos: ${k.processed} processed, ${k.skipped} skipped (${k.stickers} name a sticker card, outside the engine)`);
+
+    // Tokens older than the cards leave a maker's all_parts naming a printing no token holds (#1709).
+    const gap = tokenGapMessage(unresolvedTokenMakers(
+      await store.cards.find({ allParts: { $exists: true } }, { projection: { name: 1, allParts: 1 } }).toArray() as never,
+      await store.db.collection<{ printingIds: string[] }>("tokens").find({}, { projection: { printingIds: 1 } }).toArray(),
+    ));
+    console.log(gap ? `WARNING: ${gap}` : "Token printing ids: every maker's all_parts token resolves.");
   } finally {
     await store.close();
   }

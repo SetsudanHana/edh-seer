@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { mergeTokenDocs, tokenDoc, tokenKey } from "./ingest-tokens-core.js";
+import { mergeTokenDocs, tokenDoc, tokenKey, tokenGapMessage, unresolvedPrintingIds, unresolvedTokenMakers } from "./ingest-tokens-core.js";
 
 test("a token becomes a document keyed on its oracle id", () => {
   const d = tokenDoc({
@@ -78,4 +78,65 @@ test("an emblem payload becomes a token document carrying its layout and text", 
   expect(d.typeLine).toBe("Emblem — Chandra");
   expect(d.oracleText).toContain("deals 3 damage");
   expect(d.printingIds).toEqual(["4a8123a6"]);
+});
+
+/** #1709: Beast Within's Beast part names printing ca8e8a9a-..., released after the token ingest ran.
+ *  The token doc for oracle 6bb61f34 existed (name + type line matched), so the name-only coverage
+ *  line read 100% while the exact join resolved nothing. */
+test("a token part whose printing id no token doc holds is reported, though its name matches", () => {
+  const beast = { _id: "6bb61f34", name: "Beast", typeLine: "Token Creature — Beast", printingIds: ["old-print"] };
+  const parts = [
+    { component: "token", name: "Beast", typeLine: "Token Creature — Beast", printingId: "ca8e8a9a" },
+    { component: "token", name: "Beast", typeLine: "Token Creature — Beast", printingId: "old-print" },
+    { component: "combo_piece", name: "Some Card", typeLine: "Creature", printingId: "zzz" },
+    { component: "combo_piece", name: "X Emblem", typeLine: "Emblem — X", printingId: "emb-1" },
+  ];
+  expect(unresolvedPrintingIds(parts, [beast])).toEqual(["ca8e8a9a", "emb-1"]);
+  expect(unresolvedPrintingIds(parts, [{ ...beast, printingIds: ["old-print", "ca8e8a9a", "emb-1"] }])).toEqual([]);
+  // `\b`, as the tagger's isEmblemPart: a type line merely starting "Emblematic" is not an emblem.
+  expect(unresolvedPrintingIds([{ component: "combo_piece", typeLine: "Emblematic Thing", printingId: "q" }], [])).toEqual([]);
+});
+
+test("makers of an unresolved printing are named, and the gap message carries count, examples and the cure", () => {
+  const docs = [{ printingIds: ["old"] }];
+  const mk = (n: number) => Array.from({ length: n }, (_, i) => ({
+    name: `Maker ${i}`, allParts: [{ component: "token", typeLine: "Token Creature — Beast", printingId: "new" }],
+  }));
+  const gaps = unresolvedTokenMakers([...mk(2), { name: "Fine", allParts: [{ component: "token", printingId: "old" }] }, { name: "NoParts" }], docs);
+  expect(gaps).toEqual([{ printingId: "new", makers: ["Maker 0", "Maker 1"] }]);
+  expect(tokenGapMessage([])).toBeNull();
+  const many = Array.from({ length: 7 }, (_, i) => ({ printingId: `id${i}`, makers: ["M"] }));
+  const msg = tokenGapMessage(many)!;
+  expect(msg).toContain("7 token printing id(s)");
+  expect(msg).toContain("id4 (M)");
+  expect(msg).not.toContain("id5");
+  expect(msg).toContain("packages/data/src/bin/ingest-tokens.ts");
+});
+
+/** A `reversible_card` token has no top-level oracle_id, type line, text or P/T: they live on
+ *  `card_faces`. Real payload (Secret Lair Mechtitan, fetched from Scryfall, minimised). Both faces
+ *  carry oracle_id a4fecf0a, so face 0 names the token. */
+const MECHTITAN_FACE = {
+  oracle_id: "a4fecf0a-a7b3-49e4-bbb2-9690dff5a8f4", name: "Mechtitan",
+  type_line: "Token Legendary Artifact Creature \u2014 Construct",
+  oracle_text: "Mechtitan is all colors.\nFlying, vigilance, trample, lifelink, haste",
+  power: "10", toughness: "10", colors: ["B", "G", "R", "U", "W"],
+  image_uris: { normal: "n.jpg", art_crop: "a.jpg" },
+};
+test("a reversible token with no top-level oracle id is read from face 0 and merges into that token's doc", () => {
+  const rev = tokenDoc({
+    id: "5d02dee4-2071-448f-9fd3-58d63635d712", name: "Mechtitan // Mechtitan", layout: "reversible_card",
+    keywords: ["Flying"], card_faces: [MECHTITAN_FACE, MECHTITAN_FACE],
+  })!;
+  expect(rev._id).toBe("a4fecf0a-a7b3-49e4-bbb2-9690dff5a8f4");
+  expect(rev.printingIds).toEqual(["5d02dee4-2071-448f-9fd3-58d63635d712"]);
+  expect(rev.typeLine).toBe("Token Legendary Artifact Creature \u2014 Construct");
+  expect(rev.oracleText).toContain("all colors");
+  expect([rev.power, rev.toughness]).toEqual(["10", "10"]);
+  expect(rev.colors).toEqual(["B", "G", "R", "U", "W"]);
+  expect(rev.image).toBe("n.jpg");
+  const plain = tokenDoc({ id: "other-print", oracle_id: MECHTITAN_FACE.oracle_id, name: "Mechtitan", type_line: MECHTITAN_FACE.type_line })!;
+  const merged = mergeTokenDocs([plain, rev]);
+  expect(merged).toHaveLength(1);
+  expect(merged[0]!.printingIds.sort()).toEqual(["5d02dee4-2071-448f-9fd3-58d63635d712", "other-print"]);
 });
