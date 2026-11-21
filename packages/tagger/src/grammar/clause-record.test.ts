@@ -362,9 +362,9 @@ test("Kratos, Stoic Father as shipped (grammar path): attacks, dies, end-step, a
     oracleText: "Whenever you attack with one or more Gods and whenever a God dies, you get an experience counter.\nAt the beginning of your end step, put a number of +1/+1 counters on target creature equal to the number of experience counters you have.\nPartner\u2014Father & son" };
   const g = grammarClauseRecords(card);
   const tags = deriveCardTags(deriveInputOf(card as never, "x", card.name, g.records, undefined, g.readings));
-  // CEILING: the second event of a two-event trigger is an overflow record numbered after the last clause (the store's convention), so the
-  // `dies` the first record already reads off the sentence is read a second time (c4). A twin, harmless to edges; not deduplicated here.
-  expect(tags.abilities.map((a) => [a.clause, a.trigger?.verbs?.[0]])).toEqual([[1, "attacks"], [1, "dies"], [2, "end-step"], [4, "dies"]]);
+  // The second event of a two-event trigger is an overflow record numbered after the last clause (the store's convention), so the `dies` the first record already reads off the sentence
+  // was read a second time (c4) until #1699: derive folds a twin that says nothing its covering clause does not (`abilityIsCoveredBy`). Kratos' twin is poorer (no `batched`), so it folds.
+  expect(tags.abilities.map((a) => [a.clause, a.trigger?.verbs?.[0]])).toEqual([[1, "attacks"], [1, "dies"], [2, "end-step"]]);
   expect(tags.abilities.find((a) => a.trigger?.verbs?.[0] === "end-step")?.emits?.[0]?.subject).toMatchObject({ counter: "+1/+1" });
 });
 

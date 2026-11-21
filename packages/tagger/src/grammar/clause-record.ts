@@ -426,7 +426,7 @@ export function grammarClauseRecords(card: CardText): GrammarRecords {
   // second numbered after the card's last clause -- the store's convention (`validate-clauses.ts`),
   // which derive reads back to the parent's text.
   // CEILING: when the first record's own reading already yields the second event ("Whenever you attack ... and whenever a God dies", Kratos), the overflow
-  // record reads it a second time: a harmless twin, kept because the store's convention numbers it.
+  // record reads it a second time: a twin, kept because the store's convention numbers it. Derive folds it when it says nothing its covering clause does not (#1699: Kratos, Janice Rand); one that says more stays.
   const overflow: ClauseRecord[] = [];
   let nextId = Math.max(0, ...clauses.map((c) => c.id)) + 1;
   const readings: Record<number, { trigger?: TriggerReading[]; actions?: ActionReading[] }> = {};

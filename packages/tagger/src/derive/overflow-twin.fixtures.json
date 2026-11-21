@@ -1,0 +1,1006 @@
+{
+ "Janice Rand, Essential Aide": {
+  "source": {
+   "name": "Janice Rand, Essential Aide",
+   "typeLine": "Legendary Creature — Human Advisor",
+   "oracleText": "Whenever a commander you control enters or attacks, put a +1/+1 counter on it, then reveal cards from the top of your library until you reveal a land card. Put that card onto the battlefield tapped and the rest on the bottom of your library in a random order.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "3",
+   "toughness": "3",
+   "manaCost": "{3}{G}",
+   "layout": "normal"
+  }
+ },
+ "Haazda Vigilante": {
+  "source": {
+   "name": "Haazda Vigilante",
+   "typeLine": "Creature — Giant Soldier",
+   "oracleText": "Whenever this creature enters or attacks, put a +1/+1 counter on target creature you control with power 2 or less.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{4}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "d71d699207c24b5d018bf872a481c3faf0686c8ae1cb0346faaf6ef1b99e7570"
+ },
+ "Queen's Bay Paladin": {
+  "source": {
+   "name": "Queen's Bay Paladin",
+   "typeLine": "Creature — Vampire Knight",
+   "oracleText": "Whenever this creature enters or attacks, return up to one target Vampire card from your graveyard to the battlefield with a finality counter on it. You lose life equal to its mana value. (If a creature with a finality counter on it would die, exile it instead.)",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "5",
+   "toughness": "4",
+   "manaCost": "{3}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "up to one target Vampire card",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "add-counter",
+      "object": "finality",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "its mana value",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "up to one target Vampire card",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "add-counter",
+      "object": "finality",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "its mana value",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "2c4f7beb89141e8d61963882683a4d08211dd8f95674ffc732c92f2a776ef4e3"
+ },
+ "Search for Dagger": {
+  "source": {
+   "name": "Search for Dagger",
+   "typeLine": "Enchantment",
+   "oracleText": "Whenever your commander enters or attacks, look at the top six cards of your library. You may reveal a legendary creature card from among them and put it into your hand. Put the rest on the bottom of your library in a random order.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "your commander",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "your commander",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "230c46df125ebd5a827a625867cfa5ec02099669b4b587a9355b5302e675e454"
+ },
+ "Sun Titan": {
+  "source": {
+   "name": "Sun Titan",
+   "typeLine": "Creature — Giant",
+   "oracleText": "Vigilance\nWhenever this creature enters or attacks, you may return target permanent card with mana value 3 or less from your graveyard to the battlefield.",
+   "keywords": [
+    "Vigilance"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "6",
+   "toughness": "6",
+   "manaCost": "{4}{W}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Vigilance",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target permanent card with mana value 3 or less",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target permanent card with mana value 3 or less",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "b09b031ffbd41f3ed9bafc9e3c38d684952a5f96a0d043fddf3f76a39f6437ea"
+ },
+ "Dwalin, Weaponmaster": {
+  "source": {
+   "name": "Dwalin, Weaponmaster",
+   "typeLine": "Legendary Creature — Dwarf Warrior",
+   "oracleText": "First strike\nWhenever Dwalin enters or attacks, put a hone counter on each Equipment you control. (Each hone counter on an Equipment grants +1/+0 to equipped creature.)",
+   "keywords": [
+    "First strike"
+   ],
+   "colors": [
+    "R",
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "R",
+    "W"
+   ],
+   "power": "2",
+   "toughness": "1",
+   "manaCost": "{1}{R/W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "First strike",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Dwalin, Weaponmaster",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "hone counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "Dwalin, Weaponmaster",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "hone counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "c455df213624bb3d2d8189daab9b25ef9741d01d465c851df4ed84d182ea7ff3"
+ },
+ "Mage Hunter": {
+  "source": {
+   "name": "Mage Hunter",
+   "typeLine": "Creature — Horror",
+   "oracleText": "Whenever an opponent casts or copies an instant or sorcery spell, they lose 1 life.",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "manaCost": "{3}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant or sorcery spell",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "copy",
+     "subject": "an instant or sorcery spell",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "opponent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "bbdb4b8c68783a4c02862a0e2b8be84d51bf1d5768a095e152786b36f230193d"
+ },
+ "Quandrix Apprentice": {
+  "source": {
+   "name": "Quandrix Apprentice",
+   "typeLine": "Creature — Human Wizard",
+   "oracleText": "Magecraft — Whenever you cast or copy an instant or sorcery spell, look at the top three cards of your library. You may reveal a land card from among them and put that card into your hand. Put the rest on the bottom of your library in any order.",
+   "keywords": [
+    "Magecraft"
+   ],
+   "colors": [
+    "G",
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "G",
+    "U"
+   ],
+   "power": "2",
+   "toughness": "2",
+   "manaCost": "{G}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "an instant or sorcery spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "that card",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "copy",
+     "subject": "an instant or sorcery spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "that card",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "6073bdad544b29ea18bce357994416153346e30de77f58bddd2bcf6567bca6cb"
+ },
+ "Spitting Slug": {
+  "source": {
+   "name": "Spitting Slug",
+   "typeLine": "Creature — Slug",
+   "oracleText": "Whenever this creature blocks or becomes blocked, you may pay {1}{G}. If you do, this creature gains first strike until end of turn. Otherwise, each creature blocking or blocked by this creature gains first strike until end of turn.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "4",
+   "manaCost": "{1}{G}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "blocks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "grant-ability",
+      "object": "each creature blocking or blocked by this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "becomes-blocked",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "grant-ability",
+      "object": "each creature blocking or blocked by this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "cce9745664010e5823388fb370c80961580876ec513c80db9b358bd8dbdf839c"
+ },
+ "Jhoira, Weatherlight Corsair": {
+  "source": {
+   "name": "Jhoira, Weatherlight Corsair",
+   "typeLine": "Legendary Creature — Human Pirate",
+   "oracleText": "Whenever Jhoira enters or attacks, target opponent reveals cards from the top of their library until they reveal a historic permanent card. You put that card onto the battlefield under your control and lose life equal to that permanent's mana value. That player puts the rest of the revealed cards on the bottom of their library in a random order. (Artifacts, legendaries, and Sagas are historic.)",
+   "keywords": [],
+   "colors": [
+    "B"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "B"
+   ],
+   "power": "4",
+   "toughness": "5",
+   "manaCost": "{4}{B}{B}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Jhoira",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "that card",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "equal to that permanent's mana value",
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest of the revealed cards",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "Jhoira",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "put",
+      "object": "that card",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "equal to that permanent's mana value",
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest of the revealed cards",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "9cb3e50472ddbd9ca74d7fb85b73ea9f369c6e8fb3a2c226ad6ca2cef0a1558c"
+ },
+ "Kratos, Stoic Father": {
+  "source": {
+   "name": "Kratos, Stoic Father",
+   "typeLine": "Legendary Creature — God Warrior",
+   "oracleText": "Whenever you attack with one or more Gods and whenever a God dies, you get an experience counter.\nAt the beginning of your end step, put a number of +1/+1 counters on target creature equal to the number of experience counters you have.\nPartner—Father & son (You can have two commanders if both have this ability.)",
+   "keywords": [
+    "Partner"
+   ],
+   "colors": [
+    "R",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R",
+    "W"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{2}{R}{W}",
+   "layout": "normal",
+   "allParts": [
+    {
+     "component": "combo_piece",
+     "name": "Experience",
+     "typeLine": "Card",
+     "printingId": "edf99449-b176-460b-afb3-14a35e3ae35a"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "one or more Gods",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "experience counter",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "a God",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "experience counter",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "end-step",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1 counter",
+      "amount": "the number of experience counters you have",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Partner—Father & son",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "d042b59af4ae12d43543aeee4b641c5fd896107363b50dd7f8efc0eaf8b44e6f"
+ },
+ "Galadriel, Gift-Giver": {
+  "source": {
+   "name": "Galadriel, Gift-Giver",
+   "typeLine": "Legendary Creature — Elf Noble",
+   "oracleText": "Whenever Galadriel enters or attacks, choose one —\n• Put a +1/+1 counter on another target creature.\n• Create a Food token. (It's an artifact with \"{2}, {T}, Sacrifice this token: You gain 3 life.\")\n• Create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+   "keywords": [
+    "Treasure",
+    "Food"
+   ],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{3}{G}{G}",
+   "producedMana": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+   ],
+   "layout": "normal",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "b29d7556-9051-4451-812e-91513ef10e62"
+    },
+    {
+     "component": "token",
+     "name": "Food",
+     "typeLine": "Token Artifact — Food",
+     "printingId": "4a029bdc-92e3-4d85-8af5-e33429a5f017"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Galadriel, Gift-Giver",
+     "typeLine": "Legendary Creature — Elf Noble",
+     "printingId": "9bbc8de9-6f74-468f-834c-46d10864e36b"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Galadriel",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "Food token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "Galadriel",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "none"
+     }
+    ]
+   }
+  ],
+  "segmentHash": "a279773f9b4064e8713ac1e9275fa9576087fadbecf06b98e61fd6a4978957ca"
+ },
+ "Necklace of Girion": {
+  "source": {
+   "name": "Necklace of Girion",
+   "typeLine": "Legendary Artifact",
+   "oracleText": "Whenever you cast a green spell and whenever a Forest you control enters, put a +1/+1 counter on target creature you control.\n{T}: Add {G}.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{G}",
+   "producedMana": [
+    "G"
+   ],
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a green spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{G}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "a Forest you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "1e2aab1af95a3d89b499ac46f1d11493eb26b861994573146e914ec36e4f15ce"
+ }
+}
