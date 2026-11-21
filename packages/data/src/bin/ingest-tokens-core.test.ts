@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { mergeTokenDocs, tokenDoc, tokenKey } from "./ingest-tokens-core.js";
+import { mergeTokenDocs, tokenDoc, tokenKey, tokenGapMessage, unresolvedPrintingIds, unresolvedTokenMakers } from "./ingest-tokens-core.js";
 
 test("a token becomes a document keyed on its oracle id", () => {
   const d = tokenDoc({
@@ -78,4 +78,34 @@ test("an emblem payload becomes a token document carrying its layout and text", 
   expect(d.typeLine).toBe("Emblem — Chandra");
   expect(d.oracleText).toContain("deals 3 damage");
   expect(d.printingIds).toEqual(["4a8123a6"]);
+});
+
+/** #1709: Beast Within's Beast part names printing ca8e8a9a-..., released after the token ingest ran.
+ *  The token doc for oracle 6bb61f34 existed (name + type line matched), so the name-only coverage
+ *  line read 100% while the exact join resolved nothing. */
+test("a token part whose printing id no token doc holds is reported, though its name matches", () => {
+  const beast = { _id: "6bb61f34", name: "Beast", typeLine: "Token Creature — Beast", printingIds: ["old-print"] };
+  const parts = [
+    { component: "token", name: "Beast", typeLine: "Token Creature — Beast", printingId: "ca8e8a9a" },
+    { component: "token", name: "Beast", typeLine: "Token Creature — Beast", printingId: "old-print" },
+    { component: "combo_piece", name: "Some Card", typeLine: "Creature", printingId: "zzz" },
+  ];
+  expect(unresolvedPrintingIds(parts, [beast])).toEqual(["ca8e8a9a"]);
+  expect(unresolvedPrintingIds(parts, [{ ...beast, printingIds: ["old-print", "ca8e8a9a"] }])).toEqual([]);
+});
+
+test("makers of an unresolved printing are named, and the gap message carries count, examples and the cure", () => {
+  const docs = [{ printingIds: ["old"] }];
+  const mk = (n: number) => Array.from({ length: n }, (_, i) => ({
+    name: `Maker ${i}`, allParts: [{ component: "token", typeLine: "Token Creature — Beast", printingId: "new" }],
+  }));
+  const gaps = unresolvedTokenMakers([...mk(2), { name: "Fine", allParts: [{ component: "token", printingId: "old" }] }, { name: "NoParts" }], docs);
+  expect(gaps).toEqual([{ printingId: "new", makers: ["Maker 0", "Maker 1"] }]);
+  expect(tokenGapMessage([])).toBeNull();
+  const many = Array.from({ length: 7 }, (_, i) => ({ printingId: `id${i}`, makers: ["M"] }));
+  const msg = tokenGapMessage(many)!;
+  expect(msg).toContain("7 token printing id(s)");
+  expect(msg).toContain("id4 (M)");
+  expect(msg).not.toContain("id5");
+  expect(msg).toContain("packages/data/src/bin/ingest-tokens.ts");
 });

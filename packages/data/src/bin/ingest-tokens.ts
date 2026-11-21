@@ -20,7 +20,7 @@
  */
 import { fileURLToPath } from "node:url";
 import { connect, loadConfig, scryfallSearch, scryfallSearchUrl } from "@edh-seer/data";
-import { mergeTokenDocs, tokenDoc, tokenKey, type ScryfallToken } from "./ingest-tokens-core.js";
+import { mergeTokenDocs, tokenDoc, tokenKey, unresolvedPrintingIds, type ScryfallToken } from "./ingest-tokens-core.js";
 
 /** TWO SEARCHES, ONE COLLECTION. `is:token` does not return layout `emblem` (checked live
  *  2026-09-08: 0 of its rows are emblems, while `t:emblem` returns 138 printings across `emblem`
@@ -59,13 +59,18 @@ async function main(): Promise<void> {
   const cards = store.db.collection("cards");
   const referencing = await cards.find(
     { allParts: { $exists: true } }, { projection: { allParts: 1 } },
-  ).toArray() as unknown as { allParts: { component?: string; name: string; typeLine?: string }[] }[];
+  ).toArray() as unknown as { allParts: { component?: string; name: string; typeLine?: string; printingId?: string }[] }[];
   const wanted = new Set<string>();
   for (const c of referencing) {
     for (const p of c.allParts) if (p.component === "token") wanted.add(tokenKey(p.name, p.typeLine));
   }
   const covered = [...wanted].filter((k) => byKey.has(k));
   console.log(`token references in the corpus: ${wanted.size} distinct | resolvable: ${covered.length} (${(100 * covered.length / wanted.size).toFixed(1)}%)`);
+
+  // The EXACT join, which the name-keyed line above cannot see (#1709): a printing newer than this
+  // ingest leaves its token doc present by name and absent by printing id.
+  const unresolved = unresolvedPrintingIds(referencing.flatMap((c) => c.allParts), docs);
+  console.log(`printing ids the corpus names that no token holds: ${unresolved.length}${unresolved.length ? " -- re-ingest cards or tokens so both see the same Scryfall day" : ""}`);
 
   if (dryRun) {
     console.log("DRY RUN — nothing written.");

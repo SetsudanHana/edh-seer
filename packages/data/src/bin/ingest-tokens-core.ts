@@ -127,3 +127,50 @@ export function mergeTokenDocs(docs: TokenDoc[]): TokenDoc[] {
 export function tokenKey(name: string, typeLine?: string): string {
   return `${name.toLowerCase()}|${(typeLine ?? "").toLowerCase()}`;
 }
+
+/** Printing ids a card's `allParts` token parts name that no token doc holds in `printingIds` — the
+ *  coverage the EXACT join actually has (#1709). `tokenKey` coverage is by name and type line and read
+ *  100% while 27 ids (451 makers) resolved nothing: the cards were ingested after a new printing of an
+ *  existing token (Beast, TTRC 2026-11-13) and the token ingest had not seen it. Cure: re-run
+ *  `ingest-tokens`. Emblem parts (`combo_piece` with an "Emblem" type line) join the same way. */
+export function unresolvedPrintingIds(
+  parts: { component?: string; typeLine?: string; printingId?: string }[],
+  docs: { printingIds: string[] }[],
+): string[] {
+  const known = new Set(docs.flatMap((d) => d.printingIds));
+  const out = new Set<string>();
+  for (const p of parts) {
+    const isToken = p.component === "token" || (p.component === "combo_piece" && /^Emblem/.test(p.typeLine ?? ""));
+    if (isToken && p.printingId !== undefined && !known.has(p.printingId)) out.add(p.printingId);
+  }
+  return [...out];
+}
+
+export interface TokenGap { printingId: string; makers: string[] }
+
+/** The same check as `unresolvedPrintingIds`, with the card names that name each unresolved id. This is
+ *  where stale tokens bite: `ingest-tokens` fetches fresh and sees none, but a `cards` ingest (or a
+ *  static build) run against an OLDER `tokens` collection names printings no token holds (#1709). */
+export function unresolvedTokenMakers(
+  cards: { name: string; allParts?: { component?: string; typeLine?: string; printingId?: string }[] }[],
+  docs: { printingIds: string[] }[],
+): TokenGap[] {
+  const out = new Map<string, string[]>();
+  for (const c of cards) {
+    for (const id of unresolvedPrintingIds(c.allParts ?? [], docs)) {
+      const m = out.get(id) ?? [];
+      m.push(c.name);
+      out.set(id, m);
+    }
+  }
+  return [...out].map(([printingId, makers]) => ({ printingId, makers }));
+}
+
+/** The message a build or ingest prints for a gap, or null when there is none. Up to 5 examples. */
+export function tokenGapMessage(gaps: TokenGap[]): string | null {
+  if (gaps.length === 0) return null;
+  const makers = new Set(gaps.flatMap((g) => g.makers)).size;
+  const ex = gaps.slice(0, 5).map((g) => `  ${g.printingId} (${g.makers.slice(0, 3).join(", ")})`).join("\n");
+  return `${gaps.length} token printing id(s) named by ${makers} card(s) resolve to no token doc, so those makers get no token node (#1709). Examples:\n${ex}\n`
+    + "Re-run packages/data/src/bin/ingest-tokens.ts (the tokens collection is older than the cards).";
+}

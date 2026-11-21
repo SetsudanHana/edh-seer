@@ -17,6 +17,7 @@ import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, wri
 import { join } from "node:path";
 import { connect, docToCard, loadConfig } from "@edh-seer/data";
 import { DERIVED_COLLECTION, DERIVE_VERSION, type CardTags } from "@edh-seer/tagger";
+import { tokenGapMessage, unresolvedTokenMakers } from "@edh-seer/data/ingest-tokens-core";
 import { loadTokenTags } from "../index.js";
 import { SHARD_COUNT, comboIndex, shardOf, shippedTags, shippedTokenTags, staleRows, type StaticCombo } from "./build-static-core.js";
 import { browseSlices, buildPartnerArtifact, commanderPlayable, hasPage, isLandPoolMember, partnerShardOf, type PartnerId } from "../partners-core.js";
@@ -138,6 +139,13 @@ const resolveToken = await loadTokenTags(store.db);
 const tokens = await store.db.collection<{ _id: string; artCrop?: string; oracleText?: string; printingIds: string[] }>(
   "tokens",
 ).find({}).toArray();
+// A SHIPPED BUILD WITH SILENTLY MISSING TOKEN NODES IS A SILENT WRONG ANSWER (#1709): a card whose all_parts
+// names a token printing no `tokens` row holds gets no token node. Refuse, like the stale-rows gate above.
+const tokenGap = tokenGapMessage(unresolvedTokenMakers(cards as never, tokens));
+if (tokenGap) {
+  console.error(`build-static refused: ${tokenGap}`);
+  process.exit(1);
+}
 const tokenTags = shippedTokenTags(tokens.flatMap((t) => t.printingIds), (pid) => resolveToken({ name: "", typeLine: "", printingId: pid }));
 writeFileSync(join(stagingDir, "token-tags.json"), JSON.stringify(tokenTags));
 
