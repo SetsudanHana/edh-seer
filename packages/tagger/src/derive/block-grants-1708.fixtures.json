@@ -1,0 +1,1201 @@
+{
+ "Brave the Sands": {
+  "source": {
+   "name": "Brave the Sands",
+   "typeLine": "Enchantment",
+   "oracleText": "Creatures you control have vigilance.\nEach creature you control can block an additional creature each combat.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "vigilance",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "each creature you control can block an additional creature each combat",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f7a72d4f6353459ebdf8dba1be50cd7a407ca630a66470c1d88fc0b638814275"
+ },
+ "Cenn's Tactician": {
+  "source": {
+   "name": "Cenn's Tactician",
+   "typeLine": "Creature — Kithkin Soldier",
+   "oracleText": "{W}, {T}: Put a +1/+1 counter on target Soldier creature.\nEach creature you control with a +1/+1 counter on it can block an additional creature each combat.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "amount": null,
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "Each creature you control with a +1/+1 counter on it can block an additional creature each combat",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "c7eb236a2bbe95fb9bb3c99492e3b69fe61c7d29422bd12d9d27cd9a7f477234"
+ },
+ "Foriysian Interceptor": {
+  "source": {
+   "name": "Foriysian Interceptor",
+   "typeLine": "Creature — Human Soldier",
+   "oracleText": "Flash (You may cast this spell any time you could cast an instant.)\nDefender\nThis creature can block an additional creature each combat.",
+   "keywords": [
+    "Flash",
+    "Defender"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "0",
+   "toughness": "5",
+   "manaCost": "{3}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "can block an additional creature each combat",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f1b09358e26c05b4da2202fc6b1ea9a32ac7df4715e2f334bf0e932d5b1710cf"
+ },
+ "Chief Engineer": {
+  "source": {
+   "name": "Chief Engineer",
+   "typeLine": "Creature — Vedalken Artificer",
+   "oracleText": "Artifact spells you cast have convoke. (Your creatures can help cast those spells. Each creature you tap while casting an artifact spell pays for {1} or one mana of that creature's color.)",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "1",
+   "toughness": "3",
+   "manaCost": "{1}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "convoke",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ef6da385339d48b7105a5b5fdf6090eb32d4fefbae92cf321d2f89200e06adad"
+ },
+ "Hugh, First of Many": {
+  "source": {
+   "name": "Hugh, First of Many",
+   "typeLine": "Legendary Artifact Creature — Borg",
+   "oracleText": "Artifact spells you cast have replicate {2}{U}. (Whenever you cast an artifact spell, copy it for each time you paid its replicate cost. Each copy becomes a token.)",
+   "keywords": [],
+   "colors": [
+    "B",
+    "U",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "U",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "manaCost": "{1}{W}{U}{B}",
+   "layout": "normal"
+  }
+ },
+ "Quicksilver, Speedster": {
+  "source": {
+   "name": "Quicksilver, Speedster",
+   "typeLine": "Legendary Creature — Mutant Hero",
+   "oracleText": "Flash\nDouble strike, haste\nAs long as Quicksilver is tapped, you may cast spells as though they had flash.",
+   "keywords": [
+    "Haste",
+    "Double strike",
+    "Flash"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "manaCost": "{3}{U}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Double strike, haste",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "spells you cast may be cast as though they had flash",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "9d3bad8225b1e59e9f8d70d3f5614b89d665379fb1d9f7db656b8d996fce4341"
+ },
+ "High Ground": {
+  "source": {
+   "name": "High Ground",
+   "typeLine": "Enchantment",
+   "oracleText": "Each creature you control can block an additional creature each combat.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 1,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "Each creature you control can block an additional creature each combat",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "aba7c54b61a33dcbb386912eba8169aa4bbefda35285a8149aa55c760fc786ea"
+ },
+ "Echo Circlet": {
+  "source": {
+   "name": "Echo Circlet",
+   "typeLine": "Artifact — Equipment",
+   "oracleText": "Equipped creature can block an additional creature each combat.\nEquip {1}",
+   "keywords": [
+    "Equip"
+   ],
+   "colors": [],
+   "manaValue": 2,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "equipped creature can block an additional creature each combat",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Equip {1}",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "7ecb5a0953e1960680842e1f62c1651673be5673218eb78af90aeaebb686fb4e"
+ },
+ "Iona's Blessing": {
+  "source": {
+   "name": "Iona's Blessing",
+   "typeLine": "Enchantment — Aura",
+   "oracleText": "Enchant creature\nEnchanted creature gets +2/+2, has vigilance, and can block an additional creature each combat.",
+   "keywords": [
+    "Enchant"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Enchant creature",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "enchanted creature",
+      "amount": "+2/+2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "grant-ability",
+      "object": "enchanted creature has vigilance",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "grant-ability",
+      "object": "enchanted creature can block an additional creature each combat",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "c064f3c43b28c8881054a345eb12bbdfeb98cecee4b6d263bc2a0e5fe62e3c68"
+ },
+ "Palace Guard": {
+  "source": {
+   "name": "Palace Guard",
+   "typeLine": "Creature — Human Soldier",
+   "oracleText": "This creature can block any number of creatures.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "1",
+   "toughness": "4",
+   "manaCost": "{2}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "can block any number of creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "912146dad9bcca2976732d75c1cbeac0a39ebb0e22c1a5462b9715288dfea4e4"
+ },
+ "Mounted Archers": {
+  "source": {
+   "name": "Mounted Archers",
+   "typeLine": "Creature — Human Soldier Archer",
+   "oracleText": "Reach (This creature can block creatures with flying.)\n{W}: This creature can block an additional creature this turn.",
+   "keywords": [
+    "Reach"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "2",
+   "toughness": "3",
+   "manaCost": "{3}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Reach",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "this creature can block an additional creature this turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "da0aa55c3918664370d73ddc7e5b7280479f5750e2426e08f3ae04a0e8673565"
+ },
+ "Foriysian Totem": {
+  "source": {
+   "name": "Foriysian Totem",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Add {R}.\n{4}{R}: This artifact becomes a 4/4 red Giant artifact creature with trample until end of turn.\nAs long as this artifact is a creature, it can block an additional creature each combat.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 3,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{3}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{R}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "animate",
+      "object": "this artifact becomes a 4/4 red Giant artifact creature with trample",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "it can block an additional creature each combat",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "547a6d9012f5fce060d8b7c223201f35ac76c2a0b434e6472b485f74a7db22a9"
+ },
+ "Rolling Stones": {
+  "source": {
+   "name": "Rolling Stones",
+   "typeLine": "Enchantment",
+   "oracleText": "Wall creatures can attack as though they didn't have defender.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "Wall creatures can't be restricted from attacking by defender",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "b5b130e539b3383a6b35a9c9f1cc58a3eb630f07c3b518246add65996362e8cf"
+ },
+ "Winged Sliver": {
+  "source": {
+   "name": "Winged Sliver",
+   "typeLine": "Creature — Sliver",
+   "oracleText": "All Sliver creatures have flying.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "1",
+   "toughness": "1",
+   "manaCost": "{1}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "flying",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "81292dc8a529b0a78c887064b26b210b0b9582e0e9abca2dd3f5ee2d8804c801"
+ },
+ "Tidal Barracuda": {
+  "source": {
+   "name": "Tidal Barracuda",
+   "typeLine": "Creature — Fish",
+   "oracleText": "Any player may cast spells as though they had flash.\nYour opponents can't cast spells during your turn.",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "manaCost": "{3}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "spells can be cast as though they had flash",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "cast spells during your turn",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "7291ba29a7f989f05af57eda8b484ea62ee0d2efb128721e2fcbb8fad5a914c9"
+ },
+ "Radagast of Rhosgobel": {
+  "source": {
+   "name": "Radagast of Rhosgobel",
+   "typeLine": "Legendary Creature — Avatar Wizard",
+   "oracleText": "The first creature spell you cast each turn costs {2} less to cast and can be cast as though it had flash.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "2",
+   "toughness": "5",
+   "manaCost": "{2}{G}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "the first creature spell you cast each turn",
+      "amount": "-2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "grant-ability",
+      "object": "the first creature spell you cast each turn; flash",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "5478b8aba9622385cbb52b9bedf6c9a78b46e242ebcb6fc5c76e1eaad475cce7"
+ },
+ "We Ride at Dawn": {
+  "source": {
+   "name": "We Ride at Dawn",
+   "typeLine": "Enchantment",
+   "oracleText": "Legendary creature spells you cast have convoke. (Your creatures can help cast those spells. Each creature you tap while casting a legendary creature spell pays for {1} or one mana of that creature's color.)\nWhenever your commander attacks, create a 1/1 red Mercenary creature token with \"{T}: Target creature you control gets +1/+0 until end of turn. Activate only as a sorcery.\"",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "convoke",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "your commander",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "1/1 red Mercenary creature token with that ability",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Target creature you control",
+      "amount": "+1/+0",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "2616f53067c401ed83189e3926f6dca8698a7d68c7d058791143a40b7a700c62"
+ },
+ "Anhelo, the Painter": {
+  "source": {
+   "name": "Anhelo, the Painter",
+   "typeLine": "Legendary Creature — Vampire Assassin",
+   "oracleText": "Deathtouch\nThe first instant or sorcery spell you cast each turn has casualty 2. (As you cast that spell, you may sacrifice a creature with power 2 or greater. When you do, copy the spell and you may choose new targets for the copy.)",
+   "keywords": [
+    "Deathtouch"
+   ],
+   "colors": [
+    "B",
+    "R",
+    "U"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "B",
+    "R",
+    "U"
+   ],
+   "power": "1",
+   "toughness": "3",
+   "manaCost": "{U}{B}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Deathtouch",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "casualty 2",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "a2a9f83540a0a0a61026298b1b080fbb8cf8d077baa67bb87a23643c9ac542f1"
+ },
+ "Eirdu, Carrier of Dawn // Isilu, Carrier of Twilight": {
+  "source": {
+   "name": "Eirdu, Carrier of Dawn // Isilu, Carrier of Twilight",
+   "typeLine": "Legendary Creature — Elemental God // Legendary Creature — Elemental God",
+   "oracleText": "Flying, lifelink\nCreature spells you cast have convoke. (Your creatures can help cast those spells. Each creature you tap while casting a creature spell pays for {1} or one mana of that creature's color.)\nAt the beginning of your first main phase, you may pay {B}. If you do, transform Eirdu.\n//\nFlying, lifelink\nEach other nontoken creature you control has persist. (When it dies, if it had no -1/-1 counters on it, return it to the battlefield under its owner's control with a -1/-1 counter on it.)\nAt the beginning of your first main phase, you may pay {W}. If you do, transform Isilu.",
+   "keywords": [
+    "Flying",
+    "Lifelink",
+    "Transform"
+   ],
+   "colors": [
+    "W",
+    "B"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "B",
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "layout": "transform",
+   "faces": [
+    {
+     "name": "Eirdu, Carrier of Dawn",
+     "typeLine": "Legendary Creature — Elemental God",
+     "oracleText": "Flying, lifelink\nCreature spells you cast have convoke. (Your creatures can help cast those spells. Each creature you tap while casting a creature spell pays for {1} or one mana of that creature's color.)\nAt the beginning of your first main phase, you may pay {B}. If you do, transform Eirdu.",
+     "colors": [
+      "W"
+     ],
+     "manaCost": "{3}{W}{W}",
+     "power": "5",
+     "toughness": "5",
+     "artCrop": "https://cards.scryfall.io/art_crop/front/b/2/b2d9d5ca-7e15-437a-bdfc-5972b42148fe.jpg?1783904521"
+    },
+    {
+     "name": "Isilu, Carrier of Twilight",
+     "typeLine": "Legendary Creature — Elemental God",
+     "oracleText": "Flying, lifelink\nEach other nontoken creature you control has persist. (When it dies, if it had no -1/-1 counters on it, return it to the battlefield under its owner's control with a -1/-1 counter on it.)\nAt the beginning of your first main phase, you may pay {W}. If you do, transform Isilu.",
+     "colors": [
+      "B"
+     ],
+     "manaCost": "",
+     "power": "5",
+     "toughness": "5",
+     "colorIndicator": [
+      "B"
+     ],
+     "artCrop": "https://cards.scryfall.io/art_crop/back/b/2/b2d9d5ca-7e15-437a-bdfc-5972b42148fe.jpg?1783904521"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, lifelink",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "Creature spells you cast have convoke",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "main-phase",
+     "subject": "your first main phase",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "Eirdu",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flying, lifelink",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "Each other nontoken creature you control has persist",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 6,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "main-phase",
+     "subject": "your first main phase",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "transform",
+      "object": "Isilu",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "segmentHash": "1625c737b8fff1b65010ae36078057d9440d89cf32d4d2ae553210c5502025f5"
+ },
+ "Felothar the Steadfast": {
+  "source": {
+   "name": "Felothar the Steadfast",
+   "typeLine": "Legendary Creature — Human Warrior",
+   "oracleText": "Each creature you control assigns combat damage equal to its toughness rather than its power.\nCreatures you control can attack as though they didn't have defender.\n{3}, {T}, Sacrifice another creature: Draw cards equal to the sacrificed creature's toughness, then discard cards equal to its power.",
+   "keywords": [],
+   "colors": [
+    "B",
+    "G",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "G",
+    "W"
+   ],
+   "power": "0",
+   "toughness": "5",
+   "manaCost": "{1}{W}{B}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "modify-pt",
+      "object": "Each creature you control assigns combat damage equal to its toughness rather than its power",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "Creatures you control can attack as though they didn't have defender",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "another creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "cards equal to the sacrificed creature's toughness",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "equal to the sacrificed creature's toughness",
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "cards equal to the sacrificed creature's power",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "equal to the sacrificed creature's power",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "12eed2c447fc1f1d1d0a27cc92986e87174e0398e2279353c3358c8fef3c8cc0"
+ },
+ "Entourage of Trest": {
+  "source": {
+   "name": "Entourage of Trest",
+   "typeLine": "Creature — Elf Soldier",
+   "oracleText": "When this creature enters, you become the monarch.\nThis creature can block an additional creature each combat as long as you're the monarch.",
+   "keywords": [],
+   "colors": [
+    "G"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "G"
+   ],
+   "power": "4",
+   "toughness": "4",
+   "manaCost": "{4}{G}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "monarch",
+      "object": "you",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "this creature can block an additional creature each combat",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "segmentHash": "193e62aa766928e4a3ed2b8ac1ddcc5194824d04ee577eea70896b401ac40c3c"
+ },
+ "Lairwatch Giant": {
+  "source": {
+   "name": "Lairwatch Giant",
+   "typeLine": "Creature — Giant Warrior",
+   "oracleText": "This creature can block an additional creature each combat.\nWhenever this creature blocks two or more creatures, it gains first strike until end of turn.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 6,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "5",
+   "toughness": "3",
+   "manaCost": "{5}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "can block an additional creature each combat",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "blocks",
+     "subject": "this creature blocking two or more creatures",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "first strike until end of turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "2be0286a7d22d992a271b4b95932720f7766471f7e7ab3788fa9b805c7642508"
+ }
+}

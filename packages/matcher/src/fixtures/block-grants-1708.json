@@ -1,0 +1,451 @@
+{
+ "Brave the Sands": {
+  "source": {
+   "name": "Brave the Sands",
+   "typeLine": "Enchantment",
+   "oracleText": "Creatures you control have vigilance.\nEach creature you control can block an additional creature each combat.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "vigilance",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "each creature you control can block an additional creature each combat",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "f7a72d4f6353459ebdf8dba1be50cd7a407ca630a66470c1d88fc0b638814275"
+ },
+ "Chief Engineer": {
+  "source": {
+   "name": "Chief Engineer",
+   "typeLine": "Creature — Vedalken Artificer",
+   "oracleText": "Artifact spells you cast have convoke. (Your creatures can help cast those spells. Each creature you tap while casting an artifact spell pays for {1} or one mana of that creature's color.)",
+   "keywords": [],
+   "colors": [
+    "U"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "U"
+   ],
+   "power": "1",
+   "toughness": "3",
+   "manaCost": "{1}{U}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "convoke",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "ef6da385339d48b7105a5b5fdf6090eb32d4fefbae92cf321d2f89200e06adad"
+ },
+ "Hugh, First of Many": {
+  "source": {
+   "name": "Hugh, First of Many",
+   "typeLine": "Legendary Artifact Creature — Borg",
+   "oracleText": "Artifact spells you cast have replicate {2}{U}. (Whenever you cast an artifact spell, copy it for each time you paid its replicate cost. Each copy becomes a token.)",
+   "keywords": [],
+   "colors": [
+    "B",
+    "U",
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "B",
+    "U",
+    "W"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "manaCost": "{1}{W}{U}{B}",
+   "layout": "normal"
+  }
+ },
+ "Quicksilver, Speedster": {
+  "source": {
+   "name": "Quicksilver, Speedster",
+   "typeLine": "Legendary Creature — Mutant Hero",
+   "oracleText": "Flash\nDouble strike, haste\nAs long as Quicksilver is tapped, you may cast spells as though they had flash.",
+   "keywords": [
+    "Haste",
+    "Double strike",
+    "Flash"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "manaValue": 5,
+   "colorIdentity": [
+    "R",
+    "U"
+   ],
+   "power": "3",
+   "toughness": "4",
+   "manaCost": "{3}{U}{R}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Double strike, haste",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "spells you cast may be cast as though they had flash",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "9d3bad8225b1e59e9f8d70d3f5614b89d665379fb1d9f7db656b8d996fce4341"
+ },
+ "Generous Gift": {
+  "source": {
+   "name": "Generous Gift",
+   "typeLine": "Instant",
+   "oracleText": "Destroy target permanent. Its controller creates a 3/3 green Elephant creature token.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 3,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{W}",
+   "layout": "normal",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Elephant",
+     "typeLine": "Token Creature — Elephant",
+     "printingId": "e96f22c0-b9c8-418a-8224-e7d0b2841bd2"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target permanent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a 3/3 green Elephant creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "21c24a79ac6d749f0041079f3a92dc61dca68fc8fc55e1f0a4853c79eb29ac0a"
+ },
+ "Commander Sofia Daguerre": {
+  "source": {
+   "name": "Commander Sofia Daguerre",
+   "typeLine": "Legendary Creature — Human Pilot",
+   "oracleText": "Flash\nCrash Landing — When Commander Sofia Daguerre enters, destroy up to one target legendary permanent. That permanent's controller creates a Junk token. (It's an artifact with \"{T}, Sacrifice this token: Exile the top card of your library. You may play that card this turn. Activate only as a sorcery.\")",
+   "keywords": [
+    "Crash Landing",
+    "Flash"
+   ],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": "1",
+   "toughness": "3",
+   "manaCost": "{3}{W}",
+   "layout": "normal",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Junk",
+     "typeLine": "Token Artifact — Junk",
+     "printingId": "62c4a6f6-6425-4c0c-b35a-880fcab42aad"
+    },
+    {
+     "component": "combo_piece",
+     "name": "Commander Sofia Daguerre",
+     "typeLine": "Legendary Creature — Human Pilot",
+     "printingId": "63259e39-7267-465e-8600-9104c34bfcba"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Commander Sofia Daguerre",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "up to one target legendary permanent",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "Junk token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "835e39bfac9ba02ebc9b96a85c920f8c3c2ba60fd6acec58b293d88989dfc974"
+ },
+ "Unexpected Windfall": {
+  "source": {
+   "name": "Unexpected Windfall",
+   "typeLine": "Instant",
+   "oracleText": "As an additional cost to cast this spell, discard a card.\nDraw two cards and create two Treasure tokens. (They're artifacts with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "R"
+   ],
+   "manaValue": 4,
+   "colorIdentity": [
+    "R"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{2}{R}{R}",
+   "layout": "normal",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Treasure",
+     "typeLine": "Token Artifact — Treasure",
+     "printingId": "a3a684b7-27e0-4d9e-a064-9e03c6e50c89"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "a Treasure token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "044ea1c91778fbea067858bce92f345f16f26d801c63bbe23e42921d41431a23"
+ },
+ "Sol Ring": {
+  "source": {
+   "name": "Sol Ring",
+   "typeLine": "Artifact",
+   "oracleText": "{T}: Add {C}{C}.",
+   "keywords": [],
+   "colors": [],
+   "manaValue": 1,
+   "colorIdentity": [],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}",
+   "layout": "normal"
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "17632accec9769553f4e43cfe11a932c81a8cc736f9d74c13d2af1c0166c4b97"
+ },
+ "Raise the Alarm": {
+  "source": {
+   "name": "Raise the Alarm",
+   "typeLine": "Instant",
+   "oracleText": "Create two 1/1 white Soldier creature tokens.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "manaValue": 2,
+   "colorIdentity": [
+    "W"
+   ],
+   "power": null,
+   "toughness": null,
+   "manaCost": "{1}{W}",
+   "layout": "normal",
+   "allParts": [
+    {
+     "component": "token",
+     "name": "Soldier",
+     "typeLine": "Token Creature — Soldier",
+     "printingId": "d093322e-a717-4e2d-8199-fa560792bcf6"
+    }
+   ]
+  },
+  "canonical": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "create",
+      "object": "two 1/1 white Soldier creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "segmentHash": "a80cf06c4d460700b4a18e21e381b5dc30877e34b481d663829ab802c66aab4b"
+ }
+}
