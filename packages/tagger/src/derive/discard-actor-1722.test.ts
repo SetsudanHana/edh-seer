@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { deriveAsCorpus } from "../derive-worker.js";
 import fixtures from "./discard-actor-1722.fixtures.json" with { type: "json" };
+import { actionRecipients } from "./recipient.js";
 
 /** #1722 (a): AN OPPONENT'S DISCARD IS NOT YOURS. Cabal Conditioning ("Any number of target players each discard ...") read the "you control" of its COUNT ("the greatest mana value among permanents you control") as the discarders, and Rottenmouth Viper ("each
  *  opponent loses 4 life unless that player sacrifices a nonland permanent ... or discards a card") had its second verb's player unread: both stored `discard {control: you}`, so neither fed a counter of cards in an OPPONENT's graveyard (Wight of Precinct Six, Detritivore).
@@ -25,4 +26,14 @@ describe("controls: a discard nobody else makes stays yours; an opponent's stays
   test("Zabaz: 'destroy target artifact you control' stays your own death", () => {
     expect(rowOf("Zabaz, the Glimmerwasp").tags.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "dies").map((e) => e.subject.control)).toEqual(["you"]);
   });
+});
+
+// #1722 review: the joined form must not reach past ANOTHER actor named between the player and the joined discard.
+describe("a discard joined to an earlier verb belongs to the nearest actor, not the leftmost", () => {
+  test("'each opponent loses 2 life and you draw a card and discard a card' is not the opponent's discard", () =>
+    expect(actionRecipients("Each opponent loses 2 life and you draw a card and discard a card.").discard).not.toBe("opp"));
+  test("'target opponent loses 2 life and each player draws a card and discards a card' is not the opponent's alone", () =>
+    expect(actionRecipients("Target opponent loses 2 life and each player draws a card and discards a card.").discard).not.toBe("opp"));
+  test("'target opponent loses 2 life and discards a card' still joins", () =>
+    expect(actionRecipients("Target opponent loses 2 life and discards a card.").discard).toBe("opp"));
 });
