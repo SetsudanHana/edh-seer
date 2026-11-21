@@ -58,7 +58,15 @@ describe("CONTROLS: what the grant really reaches still pairs", () => {
     const r = onToken("Raise the Alarm", "Brave the Sands", "Soldier");
     expect(r).toEqual(expect.arrayContaining([expect.stringContaining("vigilance"), expect.stringContaining("an extra ability")]));
   });
-  test("Quicksilver, Speedster -> Generous Gift, an instant CARD you cast: still pairs", () => {
-    expect(reasons("Generous Gift", "Quicksilver, Speedster").some((x) => x.startsWith("static:keyword-grant"))).toBe(true);
+  test.each(["Quicksilver, Speedster", "Alchemist's Refuge", "Ride the Avalanche"])("%s -> Sol Ring, a non-instant spell you cast: the flash still pairs", (g) => {
+    expect(reasons("Sol Ring", g).some((x) => x.includes("keyword-grant"))).toBe(true);
+  });
+});
+
+describe("flash granted to an INSTANT is a no-op (CR 702.8a: flash lets you cast it any time you could cast an instant)", () => {
+  test.each(["Quicksilver, Speedster", "Alchemist's Refuge", "Ride the Avalanche"])("%s -> Generous Gift / Unexpected Windfall (instants): no keyword-grant pair", (g) => {
+    for (const instant of ["Generous Gift", "Unexpected Windfall"]) {
+      expect(reasons(instant, g).filter((x) => x.includes("keyword-grant"))).toEqual([]);
+    }
   });
 });
